@@ -4,22 +4,12 @@ import { EventChannel } from 'redux-saga';
 
 import { PayloadAction } from '@reduxjs/toolkit';
 import {
-  loadWorkflowsListFailed,
-  TLoadWorkflow,
   TWorkflowFinished,
   TEditWorkflow,
   TSendWorkflowLogComment,
-  setIsEditKickoff,
-  setIsEditWorkflowName,
-  setIsSavingWorkflowName,
-  setIsSavingKickoff,
   editWorkflowSuccess,
-  setWorkflowEdit,
-  loadWorkflowsFilterTemplatesSuccess,
-  loadWorkflowsFilterTemplatesFailed,
   TDeleteWorkflow,
   openRunWorkflowModal,
-  loadWorkflowsFilterStepsSuccess,
   ETaskListActions,
   setGeneralLoaderVisibility,
   setCurrentTask,
@@ -34,8 +24,28 @@ import {
   changeWorkflowsSearchText,
   setWorkflowIsLoading,
   loadWorkflowsList,
-  openWorkflowLogPopup, closeWorkflowLogPopup, updateWorkflowLogItem } from './slice';
-import { IChangeWorkflowLogViewSettingsPayload , TOpenWorkflowLogPopupPayload } from './types';
+  openWorkflowLogPopup,
+  closeWorkflowLogPopup,
+  updateWorkflowLogItem,
+  loadWorkflow,
+  loadWorkflowsListFailed,
+  loadFilterTemplates,
+  loadFilterTemplatesSuccess as loadWorkflowsFilterTemplatesSuccess,
+  loadFilterTemplatesFailed as loadWorkflowsFilterTemplatesFailed,
+  loadFilterSteps,
+  loadFilterStepsSuccess as loadWorkflowsFilterStepsSuccess,
+  loadFilterStepsFailed as loadWorkflowsFilterStepsFailed,
+  setIsEditWorkflowName,
+  setIsEditKickoff,
+  setIsSavingWorkflowName,
+  setIsSavingKickoff,
+  setWorkflowEdit,
+} from './slice';
+import {
+  IChangeWorkflowLogViewSettingsPayload,
+  TLoadWorkflowsFilterStepsPayload,
+  TOpenWorkflowLogPopupPayload,
+} from './types';
 import {
   IWorkflowLogItem,
   EWorkflowsLogSorting,
@@ -74,13 +84,11 @@ import { TChannelAction } from '../tasks/saga';
 import { ITemplateStep } from '../../types/tasks';
 import { getTemplateSteps } from '../../api/getTemplateSteps';
 import {
-  loadWorkflowsFilterStepsFailed,
   TCloneWorkflow,
   TReturnWorkflowToTask,
   setCurrentPerformersCounters,
   setWorkflowStartersCounters,
   TWorkflowResumed,
-  TLoadWorkflowsFilterSteps,
   setWorkflowsTemplateStepsCounters,
   TSnoozeWorkflow,
   patchWorkflowInList,
@@ -96,10 +104,6 @@ import {
   setWorkflowsPresetsRedux,
   TSaveWorkflowsPreset,
 } from './actions';
-
-
-
-
 import { handleLoadTemplateVariables } from '../templates/saga';
 
 import { deleteWorkflow } from '../../api/deleteWorkflow';
@@ -179,7 +183,7 @@ function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: nu
   }
 }
 
-function* fetchWorkflow({ payload: id }: TLoadWorkflow) {
+function* fetchWorkflow({ payload: id }: PayloadAction<number>) {
   try {
     yield fork(handleLoadWorkflow, { workflowId: id });
   } catch (error) {
@@ -605,7 +609,9 @@ export function* cloneWorkflowSaga({ payload: { workflowId, workflowName, templa
   }
 }
 
-export function* fetchFilterSteps({ payload: { templateId, onAfterLoaded } }: TLoadWorkflowsFilterSteps) {
+export function* fetchFilterSteps({
+  payload: { templateId, onAfterLoaded },
+}: PayloadAction<TLoadWorkflowsFilterStepsPayload>) {
   try {
     const [steps]: [ITemplateStep[]] = yield all([
       call(getTemplateSteps, { id: templateId }),
@@ -757,7 +763,7 @@ export function* watchOpenWorkflowLogPopup() {
 }
 
 export function* watchFetchWorkflow() {
-  yield takeLatest(EWorkflowsActions.LoadWorkflow, fetchWorkflow);
+  yield takeLatest(loadWorkflow.type, fetchWorkflow);
 }
 
 export function* watchEidtWorkflow() {
@@ -920,11 +926,11 @@ export function* watchEditComment() {
 }
 
 export function* watchLoadFilterTemplates() {
-  yield takeEvery(EWorkflowsActions.LoadFilterTemplates, fetchFilterTemplates);
+  yield takeEvery(loadFilterTemplates.type, fetchFilterTemplates);
 }
 
 export function* watchLoadFilterSteps() {
-  yield takeEvery(EWorkflowsActions.LoadFilterSteps, fetchFilterSteps);
+  yield takeEvery(loadFilterSteps.type, fetchFilterSteps);
 }
 
 export function* watchSendWorkflowLogComment() {

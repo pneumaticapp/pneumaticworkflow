@@ -13,7 +13,6 @@ import {
 } from '../../types/workflow';
 import { IKickoff } from '../../types/template';
 import { isDesktop } from '../../utils/media';
-import { isObjectChanged } from '../../utils/helpers';
 import { EGeneralActions, TGeneralActions } from '../actions';
 import { getWorkflowViewStorageState, setWorkflowViewStorageState } from '../../utils/workflows/filters';
 
@@ -83,109 +82,6 @@ export const INIT_STATE: IStoreWorkflows = {
 
 export const reducer = (state = INIT_STATE, action: TWorkflowsActions | TGeneralActions): IStoreWorkflows => {
   switch (action.type) {
-    case EWorkflowsActions.LoadWorkflow:
-      return produce(state, (draftState) => {
-        draftState.workflowLog.workflowId = action.payload;
-      });
-    case EWorkflowsActions.LoadWorkflowsListFailed:
-      return {
-        ...state,
-        workflowsLoadingStatus: EWorkflowsLoadingStatus.Loaded,
-      };
-    case EWorkflowsActions.LoadFilterTemplates:
-      return produce(state, (draftState) => {
-        draftState.workflowsSettings.templateList.isLoading = true;
-      });
-    case EWorkflowsActions.LoadFilterTemplatesSuccess:
-      return produce(state, (draftState) => {
-        draftState.workflowsSettings.templateList.isLoading = false;
-        draftState.workflowsSettings.templateList.items = action.payload.map((template, index) => ({
-          ...template,
-          steps: draftState.workflowsSettings.templateList.items[index]?.steps || [],
-          areStepsLoading: false,
-        }));
-      });
-    case EWorkflowsActions.LoadFilterTemplatesFailed:
-      return produce(state, (draftState) => {
-        draftState.workflowsSettings.templateList.isLoading = false;
-      });
-    case EWorkflowsActions.LoadFilterSteps: {
-      const templateIndex = state.workflowsSettings.templateList.items.findIndex((template) => {
-        return template.id === action.payload.templateId;
-      });
-
-      if (templateIndex === -1) {
-        return state;
-      }
-
-      return produce(state, (draftState) => {
-        draftState.workflowsSettings.templateList.items[templateIndex].areStepsLoading = true;
-      });
-    }
-    case EWorkflowsActions.LoadFilterStepsSuccess: {
-      const templateIndex = state.workflowsSettings.templateList.items.findIndex((template) => {
-        return template.id === action.payload.templateId;
-      });
-      if (templateIndex === -1) {
-        return state;
-      }
-
-      return produce(state, (draftState) => {
-        draftState.workflowsSettings.templateList.items[templateIndex].areStepsLoading = false;
-        draftState.workflowsSettings.templateList.items[templateIndex].steps = action.payload.steps;
-      });
-    }
-    case EWorkflowsActions.LoadFilterStepsFailed: {
-      const templateIndex = state.workflowsSettings.templateList.items.findIndex((template) => {
-        return template.id === action.payload.templateId;
-      });
-
-      if (templateIndex === -1) {
-        return state;
-      }
-
-      return produce(state, (draftState) => {
-        draftState.workflowsSettings.templateList.items[templateIndex].areStepsLoading = false;
-      });
-    }
-    case EWorkflowsActions.SetFilterStatus:
-      return updateWorkflowsFilterValue(state, 'statusFilter', action.payload);
-    case EWorkflowsActions.SetFilterTemplate:
-      return updateWorkflowsFilterValue(state, 'templatesIdsFilter', action.payload);
-    case EWorkflowsActions.SetFilterTemplateSteps:
-      return updateWorkflowsFilterValue(state, 'stepsIdsFilter', action.payload);
-    case EWorkflowsActions.SetFilterPerformers:
-      return updateWorkflowsFilterValue(state, 'performersIdsFilter', action.payload);
-    case EWorkflowsActions.SetFilterPerformersGroup:
-      return updateWorkflowsFilterValue(state, 'performersGroupIdsFilter', action.payload);
-    case EWorkflowsActions.SetFilterWorkflowStarters:
-      return updateWorkflowsFilterValue(state, 'workflowStartersIdsFilter', action.payload);
-    case EWorkflowsActions.SetIsEditWorkflowName:
-      return produce(state, (draftState) => {
-        draftState.workflowEdit.isWorkflowNameEditing = action.payload;
-      });
-    case EWorkflowsActions.SetIsEditKickoff:
-      return produce(state, (draftState) => {
-        draftState.workflowEdit.isKickoffEditing = action.payload;
-      });
-    case EWorkflowsActions.SetIsSavingWorkflowName:
-      return produce(state, (draftState) => {
-        draftState.workflowEdit.isWorkflowNameSaving = action.payload;
-      });
-    case EWorkflowsActions.SetIsSavingKickoff:
-      return produce(state, (draftState) => {
-        draftState.workflowEdit.isKickoffSaving = action.payload;
-      });
-    case EWorkflowsActions.SetWorkflowEdit:
-      return produce(state, (draftState) => {
-        draftState.workflowEdit.workflow = action.payload;
-      });
-    case EWorkflowsActions.ResetWorkflows:
-      return produce(state, (draftState) => {
-        draftState.workflowsList = INIT_WORKFLOWS_LIST;
-        draftState.workflowLog.isOpen = false;
-      });
-    case EWorkflowsActions.ClearFilters:
     case EGeneralActions.ClearAppFilters:
       return produce(state, (draftState) => {
         draftState.workflowsSettings.values = INITIAL_WORKFLOWS_FILTERS;
@@ -293,19 +189,4 @@ export const reducer = (state = INIT_STATE, action: TWorkflowsActions | TGeneral
     default:
       return { ...state };
   }
-};
-
-const updateWorkflowsFilterValue = <T extends keyof IWorkflowsSettings['values']>(
-  state: IStoreWorkflows,
-  filter: T,
-  newValue: IWorkflowsSettings['values'][T],
-) => {
-  return produce(state, (draftState) => {
-    draftState.workflowsSettings.values[filter] = newValue;
-    draftState.workflowsSettings.areFiltersChanged = checkFiltersChanged(draftState);
-  });
-};
-
-const checkFiltersChanged = (state: IStoreWorkflows) => {
-  return isObjectChanged(INITIAL_WORKFLOWS_FILTERS, state.workflowsSettings.values);
 };

@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
-import { setWorkflowsFilterTemplate } from '../../redux/actions';
+import { setFilterTemplate as setWorkflowsFilterTemplate } from '../../redux/workflows/slice';
 import { IApplicationState } from '../../types/redux';
 
 import { FilterSelect } from '../../components/UI';

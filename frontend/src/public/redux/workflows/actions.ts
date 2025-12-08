@@ -1,18 +1,14 @@
 import { ITypedReduxAction } from '../../types/redux';
 import { actionGenerator } from '../../utils/redux';
 import {
-  EWorkflowsLogSorting,
-  IWorkflowEditData,
-  EWorkflowsStatus,
   TUserCounter,
   TTemplateStepCounter,
   EWorkflowsView,
   IWorkflowClient,
   IWorkflowDetailsClient,
 } from '../../types/workflow';
-import { IKickoff, TTemplatePreset, TOrderedFields, ITemplateTitleBaseWithCount } from '../../types/template';
+import { IKickoff, TTemplatePreset, TOrderedFields } from '../../types/template';
 import { TUploadedFile } from '../../utils/uploadFiles';
-import { ITemplateStep } from '../../types/tasks';
 import { IDeleteComment } from '../../api/workflows/deleteComment';
 import { IEditComment } from '../../api/workflows/editComment';
 import { IWatchedComment } from '../../api/workflows/watchedComment';
@@ -20,29 +16,14 @@ import { ICreateReaction } from '../../api/workflows/createReactionComment';
 import { IDeleteReaction } from '../../api/workflows/deleteReactionComment';
 
 export const enum EWorkflowsActions {
-  SetFilterStatus = 'CHANGE_WORKFLOWS_TYPE_SORTING',
-  ResetWorkflows = 'RESET_WORKFLOWS',
   ResetWorkflowsList = 'RESET_WORKFLOWS_LIST',
-  LoadWorkflowsListFailed = 'LOAD_WORKFLOWS_LIST_FAILED',
-  LoadWorkflow = 'LOAD_WORKFLOW',
   SetWorkflowFinished = 'SET_WORKFLOW_FINISHED',
   SetWorkflowResumed = 'SET_WORKFLOW_RESUMED',
   EditWorkflow = 'EDIT_WORKFLOW',
   EditWorkflowFail = 'EDIT_WORKFLOW_FAIL',
   EditWorkflowSuccess = 'EDIT_WORKFLOW_SUCCESS',
-  SetIsEditWorkflowName = 'SET_IS_EDIT_WORKFLOW_NAME',
-  SetIsEditKickoff = 'SET_IS_EDIT_KICKOFF',
-  SetIsSavingWorkflowName = 'SET_IS_SAVING_WORKFLOW_NAME',
-  SetIsSavingKickoff = 'SET_IS_SAVING_KICKOFF',
-  SetWorkflowEdit = 'SET_WORKFLOW_EDIT',
   ClearWorkflow = 'CLEAR_WORKFLOW',
-  LoadFilterTemplates = 'LOAD_WORKFLOWS_FITLER_TEMPLATES',
-  LoadFilterTemplatesSuccess = 'LOAD_WORKFLOWS_FITLER_TEMPLATES_SUCCESS',
-  LoadFilterTemplatesFailed = 'LOAD_WORKFLOWS_FITLER_TEMPLATES_FAILED',
-  SetFilterTemplate = 'SET_WORKFLOWS_FILTER_TEMPLATE',
-  SetFilterWorkflowStarters = 'SET_WORKFLOWS_FILTER_WORKFLOWS_STARTERS',
   ApplyFilters = 'APPLY_WORKFLOWS_FITLERS',
-  ClearFilters = 'CLEAR_WORKFLOWS_FILTERS',
   DeleteWorkflow = 'DELETE_WORKFLOW',
   ReturnWorkflowToTask = 'RETURN_WORKFLOW_TO_TASK',
   CloneWorkflow = 'CLONE_WORKFLOW',
@@ -55,15 +36,9 @@ export const enum EWorkflowsActions {
   RemoveWorkflowFromList = 'REMOVE_WORKFLOW_FROM_LIST',
   SetWorkflowsView = 'SET_WORKFLOWS_VIEW',
 
-  SetFilterPerformers = 'SET_WORKFLOWS_FILTER_PERFORMERS',
-  SetFilterPerformersGroup = 'SET_WORKFLOWS_FILTER_PERFORMERS_GROUP',
   UpdateCurrentPerformersCounters = 'UPDATE_CURRENT_PERFORMERS_COUNTERS',
   SetCurrentPerformersCounters = 'SET_CURRENT_PERFORMERS_COUNTERS',
 
-  SetFilterTemplateSteps = 'SET_WORKFLOWS_FILTER_TEMPLATE_STEPS',
-  LoadFilterSteps = 'LOAD_WORKFLOWS_FITLER_STEPS',
-  LoadFilterStepsSuccess = 'LOAD_WORKFLOWS_FITLER_STEPS_SUCCESS',
-  LoadFilterStepsFailed = 'LOAD_WORKFLOWS_FITLER_STEPS_FAILED',
   SetWorkflowsTemplateStepsCounters = 'SET_WORKFLOW_TEMPLATE_STEPS_COUNTERS',
   UpdateWorkflowsTemplateStepsCounters = 'UPDATE_WORKFLOW_TEMPLATE_STEPS_COUNTERS',
 
@@ -133,36 +108,6 @@ export const editWorkflow: (payload: TEditWorkflowPayload) => TEditWorkflow = ac
   TEditWorkflowPayload
 >(EWorkflowsActions.EditWorkflow);
 
-export interface IChangeWorkflowLogViewSettingsPayload {
-  id: number;
-  sorting: EWorkflowsLogSorting;
-  comments: boolean;
-  isOnlyAttachmentsShown: boolean;
-}
-
-export type TResetWorkflows = ITypedReduxAction<EWorkflowsActions.ResetWorkflows, void>;
-export const resetWorkflows: (payload?: void) => TResetWorkflows = actionGenerator<
-  EWorkflowsActions.ResetWorkflows,
-  void
->(EWorkflowsActions.ResetWorkflows);
-
-export type TLoadWorkflow = ITypedReduxAction<EWorkflowsActions.LoadWorkflow, number>;
-export const loadWorkflow: (payload: number) => TLoadWorkflow = actionGenerator<EWorkflowsActions.LoadWorkflow, number>(
-  EWorkflowsActions.LoadWorkflow,
-);
-
-export type TLoadWorkflowsListFailed = ITypedReduxAction<EWorkflowsActions.LoadWorkflowsListFailed, void>;
-export const loadWorkflowsListFailed: (payload?: void) => TLoadWorkflowsListFailed = actionGenerator<
-  EWorkflowsActions.LoadWorkflowsListFailed,
-  void
->(EWorkflowsActions.LoadWorkflowsListFailed);
-
-export type TSetWorkflowsFilterStatus = ITypedReduxAction<EWorkflowsActions.SetFilterStatus, EWorkflowsStatus>;
-export const setWorkflowsFilterStatus: (payload: EWorkflowsStatus) => TSetWorkflowsFilterStatus = actionGenerator<
-  EWorkflowsActions.SetFilterStatus,
-  EWorkflowsStatus
->(EWorkflowsActions.SetFilterStatus);
-
 export type TSetWorkflowResumedPayload = {
   workflowId: number;
   onSuccess?(): void;
@@ -185,96 +130,6 @@ export const setWorkflowFinished: (payload: TSetWorkflowFinishedPayload) => TWor
   TSetWorkflowFinishedPayload
 >(EWorkflowsActions.SetWorkflowFinished);
 
-export type TLoadWorkflowsFilterTemplates = ITypedReduxAction<EWorkflowsActions.LoadFilterTemplates, void>;
-export const loadWorkflowsFilterTemplates: (payload?: void) => TLoadWorkflowsFilterTemplates = actionGenerator<
-  EWorkflowsActions.LoadFilterTemplates,
-  void
->(EWorkflowsActions.LoadFilterTemplates);
-
-export type TLoadWorkflowsFilterTemplatesSuccess = ITypedReduxAction<
-  EWorkflowsActions.LoadFilterTemplatesSuccess,
-  ITemplateTitleBaseWithCount[]
->;
-export const loadWorkflowsFilterTemplatesSuccess: (
-  payload: ITemplateTitleBaseWithCount[],
-) => TLoadWorkflowsFilterTemplatesSuccess = actionGenerator<
-  EWorkflowsActions.LoadFilterTemplatesSuccess,
-  ITemplateTitleBaseWithCount[]
->(EWorkflowsActions.LoadFilterTemplatesSuccess);
-
-export type TLoadWorkflowsFilterTemplatesFailed = ITypedReduxAction<EWorkflowsActions.LoadFilterTemplatesFailed, void>;
-export const loadWorkflowsFilterTemplatesFailed: (payload?: void) => TLoadWorkflowsFilterTemplatesFailed =
-  actionGenerator<EWorkflowsActions.LoadFilterTemplatesFailed, void>(EWorkflowsActions.LoadFilterTemplatesFailed);
-
-export type TSetWorkflowsFilterTemplate = ITypedReduxAction<EWorkflowsActions.SetFilterTemplate, number[]>;
-export const setWorkflowsFilterTemplate: (payload: number[]) => TSetWorkflowsFilterTemplate = actionGenerator<
-  EWorkflowsActions.SetFilterTemplate,
-  number[]
->(EWorkflowsActions.SetFilterTemplate);
-
-export type TLoadWorkflowsFilterStepsPayload = {
-  templateId: number;
-  onAfterLoaded?(steps: ITemplateStep[]): void;
-};
-export type TLoadWorkflowsFilterSteps = ITypedReduxAction<
-  EWorkflowsActions.LoadFilterSteps,
-  TLoadWorkflowsFilterStepsPayload
->;
-export const loadWorkflowsFilterSteps: (payload: TLoadWorkflowsFilterStepsPayload) => TLoadWorkflowsFilterSteps =
-  actionGenerator<EWorkflowsActions.LoadFilterSteps, TLoadWorkflowsFilterStepsPayload>(
-    EWorkflowsActions.LoadFilterSteps,
-  );
-
-type TLoadWorkflowsFilterStepsSuccessPayload = {
-  templateId: number;
-  steps: ITemplateStep[];
-};
-export type TLoadWorkflowsFilterStepsSuccess = ITypedReduxAction<
-  EWorkflowsActions.LoadFilterStepsSuccess,
-  TLoadWorkflowsFilterStepsSuccessPayload
->;
-export const loadWorkflowsFilterStepsSuccess: (
-  payload: TLoadWorkflowsFilterStepsSuccessPayload,
-) => TLoadWorkflowsFilterStepsSuccess = actionGenerator<
-  EWorkflowsActions.LoadFilterStepsSuccess,
-  TLoadWorkflowsFilterStepsSuccessPayload
->(EWorkflowsActions.LoadFilterStepsSuccess);
-
-type TLoadWorkflowsFilterStepsFailedPayload = { templateId: number };
-export type TLoadWorkflowsFilterStepsFailed = ITypedReduxAction<
-  EWorkflowsActions.LoadFilterStepsFailed,
-  TLoadWorkflowsFilterStepsFailedPayload
->;
-export const loadWorkflowsFilterStepsFailed: (
-  payload: TLoadWorkflowsFilterStepsFailedPayload,
-) => TLoadWorkflowsFilterStepsFailed = actionGenerator<
-  EWorkflowsActions.LoadFilterStepsFailed,
-  TLoadWorkflowsFilterStepsFailedPayload
->(EWorkflowsActions.LoadFilterStepsFailed);
-
-export type TSetWorkflowsFilterSteps = ITypedReduxAction<EWorkflowsActions.SetFilterTemplateSteps, number[]>;
-export const setWorkflowsFilterSteps: (payload: number[]) => TSetWorkflowsFilterSteps = actionGenerator<
-  EWorkflowsActions.SetFilterTemplateSteps,
-  number[]
->(EWorkflowsActions.SetFilterTemplateSteps);
-
-export type TSetWorkflowsFilterPerfomers = ITypedReduxAction<EWorkflowsActions.SetFilterPerformers, number[]>;
-export const setWorkflowsFilterPerfomers: (payload: number[]) => TSetWorkflowsFilterPerfomers = actionGenerator<
-  EWorkflowsActions.SetFilterPerformers,
-  number[]
->(EWorkflowsActions.SetFilterPerformers);
-
-export type TSetWorkflowsFilterPerfomersGroup = ITypedReduxAction<EWorkflowsActions.SetFilterPerformersGroup, number[]>;
-export const setWorkflowsFilterPerfomersGroup: (payload: number[]) => TSetWorkflowsFilterPerfomersGroup =
-  actionGenerator<EWorkflowsActions.SetFilterPerformersGroup, number[]>(EWorkflowsActions.SetFilterPerformersGroup);
-
-export type TSetWorkflowsFilterWorkflowStarters = ITypedReduxAction<
-  EWorkflowsActions.SetFilterWorkflowStarters,
-  number[]
->;
-export const setWorkflowsFilterWorkflowStarters: (payload: number[]) => TSetWorkflowsFilterWorkflowStarters =
-  actionGenerator<EWorkflowsActions.SetFilterWorkflowStarters, number[]>(EWorkflowsActions.SetFilterWorkflowStarters);
-
 export interface ISendWorkflowLogComment {
   text: string;
   attachments: TUploadedFile[];
@@ -290,42 +145,6 @@ export const sendWorkflowLogComments: (payload: ISendWorkflowLogComment) => TSen
   EWorkflowsActions.SendWorkflowLogComment,
   ISendWorkflowLogComment
 >(EWorkflowsActions.SendWorkflowLogComment);
-
-export type TSetIsEditWorkflowName = ITypedReduxAction<EWorkflowsActions.SetIsEditWorkflowName, boolean>;
-export const setIsEditWorkflowName: (payload: boolean) => TSetIsEditWorkflowName = actionGenerator<
-  EWorkflowsActions.SetIsEditWorkflowName,
-  boolean
->(EWorkflowsActions.SetIsEditWorkflowName);
-
-export type TSetIsEditKickoff = ITypedReduxAction<EWorkflowsActions.SetIsEditKickoff, boolean>;
-export const setIsEditKickoff: (payload: boolean) => TSetIsEditKickoff = actionGenerator<
-  EWorkflowsActions.SetIsEditKickoff,
-  boolean
->(EWorkflowsActions.SetIsEditKickoff);
-
-export type TSetIsSavingWorkflowName = ITypedReduxAction<EWorkflowsActions.SetIsSavingWorkflowName, boolean>;
-export const setIsSavingWorkflowName: (payload: boolean) => TSetIsSavingWorkflowName = actionGenerator<
-  EWorkflowsActions.SetIsSavingWorkflowName,
-  boolean
->(EWorkflowsActions.SetIsSavingWorkflowName);
-
-export type TSetIsSavingKickoff = ITypedReduxAction<EWorkflowsActions.SetIsSavingKickoff, boolean>;
-export const setIsSavingKickoff: (payload: boolean) => TSetIsSavingKickoff = actionGenerator<
-  EWorkflowsActions.SetIsSavingKickoff,
-  boolean
->(EWorkflowsActions.SetIsSavingKickoff);
-
-export type TSetWorkflowEdit = ITypedReduxAction<EWorkflowsActions.SetWorkflowEdit, IWorkflowEditData>;
-export const setWorkflowEdit: (payload: IWorkflowEditData) => TSetWorkflowEdit = actionGenerator<
-  EWorkflowsActions.SetWorkflowEdit,
-  IWorkflowEditData
->(EWorkflowsActions.SetWorkflowEdit);
-
-export type TClearWorkflowsFilters = ITypedReduxAction<EWorkflowsActions.ClearFilters, void>;
-export const clearWorkflowsFilters: (payload?: void) => TClearWorkflowsFilters = actionGenerator<
-  EWorkflowsActions.ClearFilters,
-  void
->(EWorkflowsActions.ClearFilters);
 
 export type TApplyWorkflowsFilters = ITypedReduxAction<EWorkflowsActions.ApplyFilters, void>;
 export const applyWorkflowsFilters: (payload?: void) => TApplyWorkflowsFilters = actionGenerator<
@@ -540,30 +359,10 @@ export const saveWorkflowsPreset: (payload: {
 >(EWorkflowsActions.SaveWorkflowsPreset);
 
 export type TWorkflowsActions =
-  | TSetWorkflowsFilterStatus
-  | TLoadWorkflowsListFailed
-  | TLoadWorkflow
   | TWorkflowFinished
   | TEditWorkflow
   | TEditWorkflowSuccess
-  | TLoadWorkflowsFilterTemplates
-  | TLoadWorkflowsFilterTemplatesSuccess
-  | TLoadWorkflowsFilterTemplatesFailed
-  | TSetWorkflowsFilterTemplate
-  | TLoadWorkflowsFilterSteps
-  | TLoadWorkflowsFilterStepsSuccess
-  | TLoadWorkflowsFilterStepsFailed
-  | TSetWorkflowsFilterSteps
-  | TSetWorkflowsFilterPerfomers
-  | TSetWorkflowsFilterPerfomersGroup
-  | TSetWorkflowsFilterWorkflowStarters
   | TSendWorkflowLogComment
-  | TSetIsEditWorkflowName
-  | TSetIsEditKickoff
-  | TSetWorkflowEdit
-  | TSetIsSavingKickoff
-  | TSetIsSavingWorkflowName
-  | TResetWorkflows
   | TApplyWorkflowsFilters
   | TClearWorkflow
   | TDeleteWorkflow
@@ -573,7 +372,6 @@ export type TWorkflowsActions =
   | TSetCurrentPerformersCounters
   | TUpdateWorkflowStartersCounters
   | TSetWorkflowStartersCounters
-  | TClearWorkflowsFilters
   | TUpdateWorkflowsTemplateStepsCounters
   | TSetWorkflowsTemplateStepsCounters
   | TSnoozeWorkflow

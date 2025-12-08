@@ -3,7 +3,7 @@ import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 import { Avatar, FilterSelect } from '../../components/UI';
 import { IApplicationState } from '../../types/redux';
-import { setWorkflowsFilterWorkflowStarters } from '../../redux/actions';
+import { setFilterWorkflowStarters as setWorkflowsFilterWorkflowStarters } from '../../redux/workflows/slice';
 import { EXTERNAL_USER, getActiveUsers, getUserFullName } from '../../utils/users';
 import { StarterFilterIcon } from '../../components/icons';
 import styles from './WorkflowsLayout.css';

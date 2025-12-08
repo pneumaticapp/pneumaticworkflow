@@ -8,8 +8,7 @@ import WorkflowsTablePage from './WorkflowsTablePage';
 import { getWorkflowsView } from '../../redux/selectors/workflows';
 import { EWorkflowsView } from '../../types/workflow';
 import { TITLES } from '../../constants/titles';
-import { resetWorkflows } from '../../redux/actions';
-import { openWorkflowLogPopup } from '../../redux/workflows/slice';
+import { openWorkflowLogPopup, resetWorkflows } from '../../redux/workflows/slice';
 
 export interface IWorkflowsLocationMatchParams {
   id?: string;

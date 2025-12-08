@@ -11,7 +11,6 @@ import { sanitizeText } from '../../utils/strings';
 import { ITask } from '../../types/tasks';
 import {
   ETaskStatus,
-  IChangeWorkflowLogViewSettingsPayload,
   ISendWorkflowLogComment,
   TAddTaskPerformerPayload,
   TOpenModalPayload,
@@ -20,7 +19,7 @@ import {
   TSetTaskRevertedPayload,
   TSetWorkflowFinishedPayload,
 } from '../../redux/actions';
-import { TOpenWorkflowLogPopupPayload } from '../../redux/workflows/types';
+import { IChangeWorkflowLogViewSettingsPayload, TOpenWorkflowLogPopupPayload } from '../../redux/workflows/types';
 import { ExtraFieldsHelper } from '../TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
 import { getTaskDetailRoute, getWorkflowDetailedRoute, isTaskDetailRoute } from '../../utils/routes';
 import { Header } from '../UI/Typeography/Header';

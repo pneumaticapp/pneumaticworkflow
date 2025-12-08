@@ -7,19 +7,18 @@ import {
   TWorkflowsFiltersStoreProps,
   createWorkflowsFiltersContainer,
 } from '../../components/Workflows/createWorkflowsFiltersContainer';
+import { removeWorkflowFromList, setWorkflowsView, setWorkflowsFilterSelectedFields } from '../../redux/actions';
 import {
-  removeWorkflowFromList,
-  setWorkflowsFilterPerfomers,
-  setWorkflowsFilterStatus,
-  setWorkflowsFilterSteps,
-  setWorkflowsFilterTemplate,
-  setWorkflowsFilterWorkflowStarters,
-  setWorkflowsView,
-  clearWorkflowsFilters,
-  setWorkflowsFilterPerfomersGroup,
-  setWorkflowsFilterSelectedFields,
-} from '../../redux/actions';
-import { closeWorkflowLogPopup, changeWorkflowsSorting } from '../../redux/workflows/slice';
+  closeWorkflowLogPopup,
+  changeWorkflowsSorting,
+  setFilterStatus as setWorkflowsFilterStatus,
+  setFilterTemplate as setWorkflowsFilterTemplate,
+  setFilterTemplateSteps as setWorkflowsFilterSteps,
+  setFilterPerformers as setWorkflowsFilterPerfomers,
+  setFilterPerformersGroup as setWorkflowsFilterPerfomersGroup,
+  setFilterWorkflowStarters as setWorkflowsFilterWorkflowStarters,
+  clearFilters as clearWorkflowsFilters,
+} from '../../redux/workflows/slice';
 
 import { withSyncedQueryString } from '../../HOCs/withSyncedQueryString';
 import { EWorkflowsSorting, EWorkflowsStatus, EWorkflowsView } from '../../types/workflow';

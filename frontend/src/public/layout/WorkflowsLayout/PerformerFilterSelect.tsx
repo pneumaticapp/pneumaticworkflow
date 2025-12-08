@@ -2,8 +2,10 @@ import React, { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 
 import { useDispatch, useSelector } from 'react-redux';
-import { setWorkflowsFilterPerfomers, setWorkflowsFilterPerfomersGroup } from '../../redux/workflows/actions';
-
+import {
+  setFilterPerformers as setWorkflowsFilterPerfomers,
+  setFilterPerformersGroup as setWorkflowsFilterPerfomersGroup,
+} from '../../redux/workflows/slice';
 import { IGroup } from '../../redux/team/types';
 import { IApplicationState } from '../../types/redux';
 import { TUserListItem } from '../../types/user';

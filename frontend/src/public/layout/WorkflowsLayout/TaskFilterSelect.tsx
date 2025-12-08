@@ -5,7 +5,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { IApplicationState } from '../../types/redux';
 
 import styles from './WorkflowsLayout.css';
-import { setWorkflowsFilterSteps } from '../../redux/actions';
+import { setFilterTemplateSteps as setWorkflowsFilterSteps } from '../../redux/workflows/slice';
 import { FilterSelect, TOptionBase } from '../../components/UI';
 import { StepName } from '../../components/StepName';
 import { TaskFilterIcon } from '../../components/icons';

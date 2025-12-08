@@ -1,3 +1,4 @@
+import { ITemplateStep } from '../../types/tasks';
 import { EWorkflowsLogSorting } from '../../types/workflow';
 
 export type TOpenWorkflowLogPopupPayload = {
@@ -12,3 +13,8 @@ export interface IChangeWorkflowLogViewSettingsPayload {
   comments: boolean;
   isOnlyAttachmentsShown: boolean;
 }
+
+export type TLoadWorkflowsFilterStepsPayload = {
+  templateId: number;
+  onAfterLoaded?(steps: ITemplateStep[]): void;
+};
