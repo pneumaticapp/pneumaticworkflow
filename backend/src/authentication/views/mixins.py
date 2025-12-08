@@ -53,8 +53,6 @@ class SignUpMixin:
     def join_existing_account(
         self,
         account: Account,
-        user_agent: str,
-        user_ip: str,
         email: str,
         company_name: Optional[str] = None,
         phone: Optional[str] = None,
@@ -65,7 +63,7 @@ class SignUpMixin:
         language: Language.LITERALS = None,
         timezone: Optional[str] = None,
         password: Optional[str] = None,
-    ) -> Tuple[UserModel, PneumaticToken]:
+    ) -> UserModel:
 
         request = getattr(self, 'request', None)
         is_superuser = getattr(request, 'is_superuser', False)
@@ -90,13 +88,8 @@ class SignUpMixin:
             except UserServiceException as ex:
                 raise_validation_error(message=ex.message)
             else:
-                token = AuthService.get_auth_token(
-                    user=user,
-                    user_agent=user_agent,
-                    user_ip=user_ip,
-                )
                 self.after_signup(user)
-                return user, token
+                return user
 
     def signup(
         self,
