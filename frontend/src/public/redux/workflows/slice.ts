@@ -15,6 +15,7 @@ import {
 import { isDesktop } from '../../utils/media';
 import { getWorkflowViewStorageState, setWorkflowViewStorageState } from '../../utils/workflows/filters';
 import { isArrayWithItems, isObjectChanged } from '../../utils/helpers';
+import { EGeneralActions } from '../general/actions';
 
 const initialWorkflowsList = {
   count: -1,
@@ -245,13 +246,6 @@ const workflowsSlice = createSlice({
       state.workflowsLoadingStatus = EWorkflowsLoadingStatus.LoadingList;
       state.workflowsSearchText = '';
     },
-    clearAppFilters: (state) => {
-      state.workflowsSettings.values = initialWorkflowsFilters;
-      state.workflowsSettings.areFiltersChanged = false;
-      state.workflowsSettings.sorting = EWorkflowsSorting.DateDesc;
-      state.workflowsLoadingStatus = EWorkflowsLoadingStatus.LoadingList;
-      state.workflowsSearchText = '';
-    },
     applyFilters: (state) => {
       state.workflowsLoadingStatus = EWorkflowsLoadingStatus.LoadingList;
     },
@@ -327,6 +321,15 @@ const workflowsSlice = createSlice({
       state.workflowsSettings.presets = action.payload;
     },
   },
+  extraReducers: (builder) => {
+    builder.addCase(EGeneralActions.ClearAppFilters, (state) => {
+      state.workflowsSettings.values = initialWorkflowsFilters;
+      state.workflowsSettings.areFiltersChanged = false;
+      state.workflowsSettings.sorting = EWorkflowsSorting.DateDesc;
+      state.workflowsLoadingStatus = EWorkflowsLoadingStatus.LoadingList;
+      state.workflowsSearchText = '';
+    });
+  },
 });
 
 export const {
@@ -362,7 +365,6 @@ export const {
   setWorkflowEdit,
   resetWorkflows,
   clearFilters,
-  clearAppFilters,
   applyFilters,
   clearWorkflow,
   setCurrentPerformersCounters,
