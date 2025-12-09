@@ -40,6 +40,15 @@ import {
   setIsSavingWorkflowName,
   setIsSavingKickoff,
   setWorkflowEdit,
+  applyFilters,
+  setCurrentPerformersCounters,
+  setWorkflowStartersCounters,
+  setWorkflowsTemplateStepsCounters,
+  patchWorkflowInList,
+  patchWorkflowDetailed,
+  setFilterSelectedFields as setWorkflowsFilterSelectedFields,
+  setLastLoadedTemplateId,
+  setWorkflowsPresetsRedux,
 } from './slice';
 import {
   IChangeWorkflowLogViewSettingsPayload,
@@ -86,22 +95,14 @@ import { getTemplateSteps } from '../../api/getTemplateSteps';
 import {
   TCloneWorkflow,
   TReturnWorkflowToTask,
-  setCurrentPerformersCounters,
-  setWorkflowStartersCounters,
   TWorkflowResumed,
-  setWorkflowsTemplateStepsCounters,
   TSnoozeWorkflow,
-  patchWorkflowInList,
-  patchWorkflowDetailed,
   EWorkflowsActions,
   TDeleteComment,
   TEditComment,
   TWatchedComment,
   TDeleteReactionComment,
   TCreateReactionComment,
-  setWorkflowsFilterSelectedFields,
-  setLastLoadedTemplateId,
-  setWorkflowsPresetsRedux,
   TSaveWorkflowsPreset,
 } from './actions';
 import { handleLoadTemplateVariables } from '../templates/saga';
@@ -966,7 +967,7 @@ export function* watchUpdateWorkflowsTemplateStepsCounters() {
 }
 
 export function* watchChangeWorkflowsSettings() {
-  yield takeLatest(EWorkflowsActions.ApplyFilters, handleApplyFilters);
+  yield takeLatest(applyFilters.type, handleApplyFilters);
 }
 
 export function* watchSnoozeWorkflow() {

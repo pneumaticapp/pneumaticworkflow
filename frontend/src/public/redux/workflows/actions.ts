@@ -1,13 +1,7 @@
 import { ITypedReduxAction } from '../../types/redux';
 import { actionGenerator } from '../../utils/redux';
-import {
-  TUserCounter,
-  TTemplateStepCounter,
-  EWorkflowsView,
-  IWorkflowClient,
-  IWorkflowDetailsClient,
-} from '../../types/workflow';
-import { IKickoff, TTemplatePreset, TOrderedFields } from '../../types/template';
+import { IWorkflowClient } from '../../types/workflow';
+import { IKickoff, TOrderedFields } from '../../types/template';
 import { TUploadedFile } from '../../utils/uploadFiles';
 import { IDeleteComment } from '../../api/workflows/deleteComment';
 import { IEditComment } from '../../api/workflows/editComment';
@@ -22,24 +16,15 @@ export const enum EWorkflowsActions {
   EditWorkflow = 'EDIT_WORKFLOW',
   EditWorkflowFail = 'EDIT_WORKFLOW_FAIL',
   EditWorkflowSuccess = 'EDIT_WORKFLOW_SUCCESS',
-  ClearWorkflow = 'CLEAR_WORKFLOW',
-  ApplyFilters = 'APPLY_WORKFLOWS_FITLERS',
   DeleteWorkflow = 'DELETE_WORKFLOW',
   ReturnWorkflowToTask = 'RETURN_WORKFLOW_TO_TASK',
   CloneWorkflow = 'CLONE_WORKFLOW',
   ToggleIsUrgent = 'TOGGLE_IS_URGENT',
   UpdateWorkflowStartersCounters = 'UPDATE_WORKFLOW_STARTERS_COUNTERS',
-  SetWorkflowStartersCounters = 'SET_WORKFLOW_STARTERS_COUNTERS',
   SnoozeWorkflow = 'SNOOZE_WORKFLOW',
-  PatchWorkflowInList = 'PATCH_WORKFLOW_IN_LIST',
-  PatchWorkflowDetailed = 'PATCH_WORKFLOW_DETAILED',
-  RemoveWorkflowFromList = 'REMOVE_WORKFLOW_FROM_LIST',
-  SetWorkflowsView = 'SET_WORKFLOWS_VIEW',
 
   UpdateCurrentPerformersCounters = 'UPDATE_CURRENT_PERFORMERS_COUNTERS',
-  SetCurrentPerformersCounters = 'SET_CURRENT_PERFORMERS_COUNTERS',
 
-  SetWorkflowsTemplateStepsCounters = 'SET_WORKFLOW_TEMPLATE_STEPS_COUNTERS',
   UpdateWorkflowsTemplateStepsCounters = 'UPDATE_WORKFLOW_TEMPLATE_STEPS_COUNTERS',
 
   SetLoadingWorkflowLogComments = 'SET_LOADING_WORKFLOW_LOG_COMMENTS',
@@ -50,11 +35,6 @@ export const enum EWorkflowsActions {
   CreateReactionComment = 'CREATE_REACTION_COMMENT',
   DeleteReactionComment = 'DELETE_REACTION_COMMENT',
 
-  OpenTuneViewModal = 'OPEN_TUNE_VIEW_MODAL',
-  CloseTuneViewModal = 'CLOSE_TUNE_VIEW_MODAL',
-  SetFilterSelectedFields = 'SET_WORKFLOWS_FILTER_SELECTED_FIELDS',
-  SetLastLoadedTemplateId = 'SET_LAST_LOADED_TEMPLATE_ID',
-  SetWorkflowsPresetsRedux = 'SET_WORKFLOWS_PRESETS_REDUX',
   SaveWorkflowsPreset = 'SAVE_WORKFLOWS_PRESET',
 }
 
@@ -146,17 +126,6 @@ export const sendWorkflowLogComments: (payload: ISendWorkflowLogComment) => TSen
   ISendWorkflowLogComment
 >(EWorkflowsActions.SendWorkflowLogComment);
 
-export type TApplyWorkflowsFilters = ITypedReduxAction<EWorkflowsActions.ApplyFilters, void>;
-export const applyWorkflowsFilters: (payload?: void) => TApplyWorkflowsFilters = actionGenerator<
-  EWorkflowsActions.ApplyFilters,
-  void
->(EWorkflowsActions.ApplyFilters);
-
-export type TClearWorkflow = ITypedReduxAction<EWorkflowsActions.ClearWorkflow, void>;
-export const clearWorkflow: (payload?: void) => TClearWorkflow = actionGenerator<EWorkflowsActions.ClearWorkflow, void>(
-  EWorkflowsActions.ClearWorkflow,
-);
-
 type TDeleteWorkflowPayload = {
   workflowId: number;
   onSuccess?(): void;
@@ -201,29 +170,11 @@ export const updateCurrentPerformersCounters: (payload?: void) => TUpdateCurrent
   void
 >(EWorkflowsActions.UpdateCurrentPerformersCounters);
 
-export type TSetCurrentPerformersCounters = ITypedReduxAction<
-  EWorkflowsActions.SetCurrentPerformersCounters,
-  TUserCounter[]
->;
-export const setCurrentPerformersCounters: (payload: TUserCounter[]) => TSetCurrentPerformersCounters = actionGenerator<
-  EWorkflowsActions.SetCurrentPerformersCounters,
-  TUserCounter[]
->(EWorkflowsActions.SetCurrentPerformersCounters);
-
 export type TUpdateWorkflowStartersCounters = ITypedReduxAction<EWorkflowsActions.UpdateWorkflowStartersCounters, void>;
 export const updateWorkflowStartersCounters: (payload?: void) => TUpdateWorkflowStartersCounters = actionGenerator<
   EWorkflowsActions.UpdateWorkflowStartersCounters,
   void
 >(EWorkflowsActions.UpdateWorkflowStartersCounters);
-
-export type TSetWorkflowStartersCounters = ITypedReduxAction<
-  EWorkflowsActions.SetWorkflowStartersCounters,
-  TUserCounter[]
->;
-export const setWorkflowStartersCounters: (payload: TUserCounter[]) => TSetWorkflowStartersCounters = actionGenerator<
-  EWorkflowsActions.SetWorkflowStartersCounters,
-  TUserCounter[]
->(EWorkflowsActions.SetWorkflowStartersCounters);
 
 export type TUpdateWorkflowsTemplateStepsCounters = ITypedReduxAction<
   EWorkflowsActions.UpdateWorkflowsTemplateStepsCounters,
@@ -233,17 +184,6 @@ export const updateWorkflowsTemplateStepsCounters: (payload?: void) => TUpdateWo
   actionGenerator<EWorkflowsActions.UpdateWorkflowsTemplateStepsCounters, void>(
     EWorkflowsActions.UpdateWorkflowsTemplateStepsCounters,
   );
-
-export type TSetWorkflowsTemplateStepsCounters = ITypedReduxAction<
-  EWorkflowsActions.SetWorkflowsTemplateStepsCounters,
-  TTemplateStepCounter[]
->;
-export const setWorkflowsTemplateStepsCounters: (
-  payload: TTemplateStepCounter[],
-) => TSetWorkflowsTemplateStepsCounters = actionGenerator<
-  EWorkflowsActions.SetWorkflowsTemplateStepsCounters,
-  TTemplateStepCounter[]
->(EWorkflowsActions.SetWorkflowsTemplateStepsCounters);
 
 export type TSnoozeWorkflowPayload = {
   workflowId: number;
@@ -255,50 +195,6 @@ export const snoozeWorkflow: (payload: TSnoozeWorkflowPayload) => TSnoozeWorkflo
   EWorkflowsActions.SnoozeWorkflow,
   TSnoozeWorkflowPayload
 >(EWorkflowsActions.SnoozeWorkflow);
-
-export type TPatchWorkflowInListPayload = {
-  workflowId: number;
-  changedFields: Partial<IWorkflowClient>;
-};
-export type TPatchWorkflowInList = ITypedReduxAction<
-  EWorkflowsActions.PatchWorkflowInList,
-  TPatchWorkflowInListPayload
->;
-export const patchWorkflowInList: (payload: TPatchWorkflowInListPayload) => TPatchWorkflowInList = actionGenerator<
-  EWorkflowsActions.PatchWorkflowInList,
-  TPatchWorkflowInListPayload
->(EWorkflowsActions.PatchWorkflowInList);
-
-export type TPatchWorkflowDetailedPayload = {
-  workflowId: number;
-  changedFields: Partial<IWorkflowDetailsClient>;
-};
-export type TPatchWorkflowDetailed = ITypedReduxAction<
-  EWorkflowsActions.PatchWorkflowDetailed,
-  TPatchWorkflowDetailedPayload
->;
-export const patchWorkflowDetailed: (payload: TPatchWorkflowDetailedPayload) => TPatchWorkflowDetailed =
-  actionGenerator<EWorkflowsActions.PatchWorkflowDetailed, TPatchWorkflowDetailedPayload>(
-    EWorkflowsActions.PatchWorkflowDetailed,
-  );
-
-export type TRemoveWorkflowFromListPayload = {
-  workflowId: number | null;
-};
-export type TRemoveWorkflowFromList = ITypedReduxAction<
-  EWorkflowsActions.RemoveWorkflowFromList,
-  TRemoveWorkflowFromListPayload
->;
-export const removeWorkflowFromList: (payload: TRemoveWorkflowFromListPayload) => TRemoveWorkflowFromList =
-  actionGenerator<EWorkflowsActions.RemoveWorkflowFromList, TRemoveWorkflowFromListPayload>(
-    EWorkflowsActions.RemoveWorkflowFromList,
-  );
-
-export type TSetWorkflowsView = ITypedReduxAction<EWorkflowsActions.SetWorkflowsView, EWorkflowsView>;
-export const setWorkflowsView: (payload: EWorkflowsView) => TSetWorkflowsView = actionGenerator<
-  EWorkflowsActions.SetWorkflowsView,
-  EWorkflowsView
->(EWorkflowsActions.SetWorkflowsView);
 
 export type TDeleteCommentPayload = IDeleteComment;
 export type TDeleteComment = ITypedReduxAction<EWorkflowsActions.DeleteComment, TDeleteCommentPayload>;
@@ -313,36 +209,6 @@ export const editComment: (payload: TEditCommentPayload) => TEditComment = actio
   EWorkflowsActions.EditComment,
   TEditCommentPayload
 >(EWorkflowsActions.EditComment);
-
-export type TOpenTuneViewModal = ITypedReduxAction<EWorkflowsActions.OpenTuneViewModal, void>;
-export const openTuneViewModal: () => TOpenTuneViewModal = actionGenerator<EWorkflowsActions.OpenTuneViewModal, void>(
-  EWorkflowsActions.OpenTuneViewModal,
-);
-
-export type TCloseTuneViewModal = ITypedReduxAction<EWorkflowsActions.CloseTuneViewModal, void>;
-export const closeTuneViewModal: () => TCloseTuneViewModal = actionGenerator<EWorkflowsActions.CloseTuneViewModal>(
-  EWorkflowsActions.CloseTuneViewModal,
-);
-
-export type TSetWorkflowsFilterSelectedFields = ITypedReduxAction<EWorkflowsActions.SetFilterSelectedFields, string[]>;
-
-export const setWorkflowsFilterSelectedFields: (payload: string[]) => TSetWorkflowsFilterSelectedFields =
-  actionGenerator<EWorkflowsActions.SetFilterSelectedFields, string[]>(EWorkflowsActions.SetFilterSelectedFields);
-
-export type TSetLastLoadedTemplateId = ITypedReduxAction<EWorkflowsActions.SetLastLoadedTemplateId, string | null>;
-export const setLastLoadedTemplateId: (payload: string | null) => TSetLastLoadedTemplateId = actionGenerator<
-  EWorkflowsActions.SetLastLoadedTemplateId,
-  string | null
->(EWorkflowsActions.SetLastLoadedTemplateId);
-
-export type TSetWorkflowsPresetsRedux = ITypedReduxAction<
-  EWorkflowsActions.SetWorkflowsPresetsRedux,
-  TTemplatePreset[]
->;
-export const setWorkflowsPresetsRedux: (presets: TTemplatePreset[]) => TSetWorkflowsPresetsRedux = actionGenerator<
-  EWorkflowsActions.SetWorkflowsPresetsRedux,
-  TTemplatePreset[]
->(EWorkflowsActions.SetWorkflowsPresetsRedux);
 
 export type TSaveWorkflowsPreset = ITypedReduxAction<
   EWorkflowsActions.SaveWorkflowsPreset,
@@ -363,30 +229,16 @@ export type TWorkflowsActions =
   | TEditWorkflow
   | TEditWorkflowSuccess
   | TSendWorkflowLogComment
-  | TApplyWorkflowsFilters
-  | TClearWorkflow
   | TDeleteWorkflow
   | TReturnWorkflowToTask
   | TCloneWorkflow
   | TUpdateCurrentPerformersCounters
-  | TSetCurrentPerformersCounters
   | TUpdateWorkflowStartersCounters
-  | TSetWorkflowStartersCounters
   | TUpdateWorkflowsTemplateStepsCounters
-  | TSetWorkflowsTemplateStepsCounters
   | TSnoozeWorkflow
-  | TPatchWorkflowInList
-  | TPatchWorkflowDetailed
-  | TRemoveWorkflowFromList
-  | TSetWorkflowsView
   | TDeleteComment
   | TWatchedComment
   | TCreateReactionComment
   | TDeleteReactionComment
   | TEditComment
-  | TOpenTuneViewModal
-  | TCloseTuneViewModal
-  | TSetWorkflowsFilterSelectedFields
-  | TSetLastLoadedTemplateId
-  | TSetWorkflowsPresetsRedux
   | TSaveWorkflowsPreset;

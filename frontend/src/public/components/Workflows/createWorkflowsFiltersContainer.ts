@@ -3,7 +3,6 @@ import { connect } from 'react-redux';
 
 import { IApplicationState } from '../../types/redux';
 import {
-  applyWorkflowsFilters,
   updateCurrentPerformersCounters,
   updateWorkflowStartersCounters,
   updateWorkflowsTemplateStepsCounters,
@@ -19,6 +18,7 @@ import {
   setFilterPerformersGroup as setWorkflowsFilterPerfomersGroup,
   setFilterWorkflowStarters as setWorkflowsFilterWorkflowStarters,
   clearFilters as clearWorkflowsFilters,
+  applyFilters as applyWorkflowsFilters,
 } from '../../redux/workflows/slice';
 import { getActiveUsers } from '../../utils/users';
 import { getIsUserSubsribed } from '../../redux/selectors/user';

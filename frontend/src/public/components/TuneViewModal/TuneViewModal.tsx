@@ -4,7 +4,11 @@ import { useSelector, useDispatch } from 'react-redux';
 
 import { useDelayUnmount } from '../../hooks/useDelayUnmount';
 import { IApplicationState } from '../../types/redux';
-import { closeTuneViewModal, saveWorkflowsPreset, setWorkflowsFilterSelectedFields } from '../../redux/actions';
+import { saveWorkflowsPreset } from '../../redux/actions';
+import {
+  closeTuneViewModal,
+  setFilterSelectedFields as setWorkflowsFilterSelectedFields,
+} from '../../redux/workflows/slice';
 
 import { IExtraField, TOrderedFields, TTransformedTask } from '../../types/template';
 import { Button, Checkbox, SideModal, Tooltip } from '../UI';

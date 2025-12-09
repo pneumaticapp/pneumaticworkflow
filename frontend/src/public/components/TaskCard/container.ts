@@ -6,7 +6,6 @@ import {
   setWorkflowFinished,
   ETaskStatus,
   setCurrentTask,
-  clearWorkflow,
   addTaskPerformer,
   removeTaskPerformer,
   setCurrentTaskDueDate,
@@ -16,7 +15,7 @@ import {
   changeTaskWorkflowLog,
   sendTaskWorkflowLogComments,
 } from '../../redux/actions';
-import { openWorkflowLogPopup } from '../../redux/workflows/slice';
+import { openWorkflowLogPopup, clearWorkflow } from '../../redux/workflows/slice';
 import { IApplicationState } from '../../types/redux';
 import { getNotDeletedUsers } from '../../utils/users';
 

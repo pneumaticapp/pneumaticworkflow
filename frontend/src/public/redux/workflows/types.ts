@@ -18,3 +18,7 @@ export type TLoadWorkflowsFilterStepsPayload = {
   templateId: number;
   onAfterLoaded?(steps: ITemplateStep[]): void;
 };
+
+export type TRemoveWorkflowFromListPayload = {
+  workflowId: number | null;
+};

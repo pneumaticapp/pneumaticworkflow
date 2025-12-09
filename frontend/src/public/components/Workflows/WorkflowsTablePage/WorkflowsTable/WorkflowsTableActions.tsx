@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useIntl } from 'react-intl';
 
 import { IApplicationState } from '../../../../types/redux';
-import { openTuneViewModal } from '../../../../redux/actions';
+import { openTuneViewModal } from '../../../../redux/workflows/slice';
 import { EWorkflowsLoadingStatus } from '../../../../types/workflow';
 import { EPageTitle } from '../../../../constants/defaultValues';
 import { Button, Tooltip } from '../../../UI';
