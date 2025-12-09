@@ -5,17 +5,11 @@ import { IKickoff, TOrderedFields } from '../../types/template';
 import { TUploadedFile } from '../../utils/uploadFiles';
 import { IDeleteComment } from '../../api/workflows/deleteComment';
 import { IEditComment } from '../../api/workflows/editComment';
-import { IWatchedComment } from '../../api/workflows/watchedComment';
-import { ICreateReaction } from '../../api/workflows/createReactionComment';
-import { IDeleteReaction } from '../../api/workflows/deleteReactionComment';
 
 export const enum EWorkflowsActions {
   ResetWorkflowsList = 'RESET_WORKFLOWS_LIST',
-  SetWorkflowFinished = 'SET_WORKFLOW_FINISHED',
-  SetWorkflowResumed = 'SET_WORKFLOW_RESUMED',
   EditWorkflow = 'EDIT_WORKFLOW',
   EditWorkflowFail = 'EDIT_WORKFLOW_FAIL',
-  EditWorkflowSuccess = 'EDIT_WORKFLOW_SUCCESS',
   DeleteWorkflow = 'DELETE_WORKFLOW',
   ReturnWorkflowToTask = 'RETURN_WORKFLOW_TO_TASK',
   CloneWorkflow = 'CLONE_WORKFLOW',
@@ -31,30 +25,9 @@ export const enum EWorkflowsActions {
   SendWorkflowLogComment = 'SEND_WORKFLOW_LOG_COMMENT',
   DeleteComment = 'DELETE_COMMENT',
   EditComment = 'EDIT_COMMENT',
-  WatchedComment = 'WATCHED_COMMENT',
-  CreateReactionComment = 'CREATE_REACTION_COMMENT',
-  DeleteReactionComment = 'DELETE_REACTION_COMMENT',
 
   SaveWorkflowsPreset = 'SAVE_WORKFLOWS_PRESET',
 }
-
-export type TDeleteReactionComment = ITypedReduxAction<EWorkflowsActions.DeleteReactionComment, IDeleteReaction>;
-export const deleteReactionComment: (payload: IDeleteReaction) => TDeleteReactionComment = actionGenerator<
-  EWorkflowsActions.DeleteReactionComment,
-  IDeleteReaction
->(EWorkflowsActions.DeleteReactionComment);
-
-export type TCreateReactionComment = ITypedReduxAction<EWorkflowsActions.CreateReactionComment, ICreateReaction>;
-export const createReactionComment: (payload: ICreateReaction) => TCreateReactionComment = actionGenerator<
-  EWorkflowsActions.CreateReactionComment,
-  ICreateReaction
->(EWorkflowsActions.CreateReactionComment);
-
-export type TWatchedComment = ITypedReduxAction<EWorkflowsActions.WatchedComment, IWatchedComment>;
-export const watchedComment: (payload: IWatchedComment) => TWatchedComment = actionGenerator<
-  EWorkflowsActions.WatchedComment,
-  IWatchedComment
->(EWorkflowsActions.WatchedComment);
 
 export interface IStartWorkflowPayload {
   id: number;
@@ -66,12 +39,6 @@ export interface IStartWorkflowPayload {
   isUrgent?: boolean;
   dueDateTsp?: number | null;
 }
-
-export type TEditWorkflowSuccess = ITypedReduxAction<EWorkflowsActions.EditWorkflowSuccess, void>;
-export const editWorkflowSuccess: (payload?: void) => TEditWorkflowSuccess = actionGenerator<
-  EWorkflowsActions.EditWorkflowSuccess,
-  void
->(EWorkflowsActions.EditWorkflowSuccess);
 
 export type TEditWorkflowPayload = {
   typeChange?: string;
@@ -93,22 +60,10 @@ export type TSetWorkflowResumedPayload = {
   onSuccess?(): void;
 };
 
-export type TWorkflowResumed = ITypedReduxAction<EWorkflowsActions.SetWorkflowResumed, TSetWorkflowResumedPayload>;
-export const setWorkflowResumed: (payload: TSetWorkflowResumedPayload) => TWorkflowResumed = actionGenerator<
-  EWorkflowsActions.SetWorkflowResumed,
-  TSetWorkflowResumedPayload
->(EWorkflowsActions.SetWorkflowResumed);
-
 export type TSetWorkflowFinishedPayload = {
   workflowId: number;
   onWorkflowEnded?(): void;
 };
-
-export type TWorkflowFinished = ITypedReduxAction<EWorkflowsActions.SetWorkflowFinished, TSetWorkflowFinishedPayload>;
-export const setWorkflowFinished: (payload: TSetWorkflowFinishedPayload) => TWorkflowFinished = actionGenerator<
-  EWorkflowsActions.SetWorkflowFinished,
-  TSetWorkflowFinishedPayload
->(EWorkflowsActions.SetWorkflowFinished);
 
 export interface ISendWorkflowLogComment {
   text: string;
@@ -225,9 +180,7 @@ export const saveWorkflowsPreset: (payload: {
 >(EWorkflowsActions.SaveWorkflowsPreset);
 
 export type TWorkflowsActions =
-  | TWorkflowFinished
   | TEditWorkflow
-  | TEditWorkflowSuccess
   | TSendWorkflowLogComment
   | TDeleteWorkflow
   | TReturnWorkflowToTask
@@ -237,8 +190,5 @@ export type TWorkflowsActions =
   | TUpdateWorkflowsTemplateStepsCounters
   | TSnoozeWorkflow
   | TDeleteComment
-  | TWatchedComment
-  | TCreateReactionComment
-  | TDeleteReactionComment
   | TEditComment
   | TSaveWorkflowsPreset;

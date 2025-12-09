@@ -1,6 +1,4 @@
-import {
-  EWorkflowsActions,
-} from '../actions';
+import { EWorkflowsActions } from '../actions';
 import {
   watchCloneWorkflow,
   cloneWorkflowSaga,
@@ -13,12 +11,12 @@ import {
 import * as deleteApi from '../../../api/deleteWorkflow';
 import * as finishWorkflowApi from '../../../api/finishWorkflow';
 import { NotificationManager } from '../../../components/UI/Notifications';
+import { setWorkflowFinished } from '../slice';
 
 describe('workflows saga', () => {
   it('deleteWorkflowSaga work', () => {
     const saga = deleteWorkflowSaga({ type: EWorkflowsActions.DeleteWorkflow, payload: { workflowId: 1 } });
-    const deleteApiMock = jest.spyOn(deleteApi, 'deleteWorkflow')
-      .mockImplementation(() => Promise.resolve(null));
+    const deleteApiMock = jest.spyOn(deleteApi, 'deleteWorkflow').mockImplementation(() => Promise.resolve(null));
     const notificationManagerSuccessMock = jest.spyOn(NotificationManager, 'success');
     saga.next();
     saga.next();
@@ -27,11 +25,15 @@ describe('workflows saga', () => {
     expect(deleteApiMock).toHaveBeenCalled();
   });
   it('setWorkflowFinishedSaga work', () => {
-    const saga = setWorkflowFinishedSaga({ type: EWorkflowsActions.SetWorkflowFinished, payload: {
-      workflowId: 1,
-      onWorkflowEnded: () => {},
-    }});
-    const finishWorkflowApiMock = jest.spyOn(finishWorkflowApi, 'finishWorkflow')
+    const saga = setWorkflowFinishedSaga({
+      type: setWorkflowFinished.type,
+      payload: {
+        workflowId: 1,
+        onWorkflowEnded: () => {},
+      },
+    });
+    const finishWorkflowApiMock = jest
+      .spyOn(finishWorkflowApi, 'finishWorkflow')
       .mockImplementation(() => Promise.resolve(null));
     const notificationManagerSuccessMock = jest.spyOn(NotificationManager, 'success');
     saga.next();

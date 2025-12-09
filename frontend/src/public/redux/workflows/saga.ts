@@ -4,10 +4,8 @@ import { EventChannel } from 'redux-saga';
 
 import { PayloadAction } from '@reduxjs/toolkit';
 import {
-  TWorkflowFinished,
   TEditWorkflow,
   TSendWorkflowLogComment,
-  editWorkflowSuccess,
   TDeleteWorkflow,
   openRunWorkflowModal,
   ETaskListActions,
@@ -49,11 +47,18 @@ import {
   setFilterSelectedFields as setWorkflowsFilterSelectedFields,
   setLastLoadedTemplateId,
   setWorkflowsPresetsRedux,
-} from './slice';
+  createReactionComment as createReactionCommentAction,
+  watchedComment as watchedCommentAction,
+  editWorkflowSuccess,
+  setWorkflowResumed,
+  setWorkflowFinished,
+  deleteReactionComment as deleteReactionCommentAction } from './slice';
 import {
   IChangeWorkflowLogViewSettingsPayload,
   TLoadWorkflowsFilterStepsPayload,
   TOpenWorkflowLogPopupPayload,
+  TSetWorkflowFinishedPayload,
+  TSetWorkflowResumedPayload,
 } from './types';
 import {
   IWorkflowLogItem,
@@ -95,16 +100,13 @@ import { getTemplateSteps } from '../../api/getTemplateSteps';
 import {
   TCloneWorkflow,
   TReturnWorkflowToTask,
-  TWorkflowResumed,
   TSnoozeWorkflow,
   EWorkflowsActions,
   TDeleteComment,
   TEditComment,
-  TWatchedComment,
-  TDeleteReactionComment,
-  TCreateReactionComment,
   TSaveWorkflowsPreset,
 } from './actions';
+
 import { handleLoadTemplateVariables } from '../templates/saga';
 
 import { deleteWorkflow } from '../../api/deleteWorkflow';
@@ -122,9 +124,9 @@ import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { mergePaths } from '../../utils/urls';
 import { parseCookies } from '../../utils/cookie';
 import { createWebSocketChannel } from '../utils/createWebSocketChannel';
-import { deleteReactionComment } from '../../api/workflows/deleteReactionComment';
-import { createReactionComment } from '../../api/workflows/createReactionComment';
-import { watchedComment } from '../../api/workflows/watchedComment';
+import { deleteReactionComment, IDeleteReaction } from '../../api/workflows/deleteReactionComment';
+import { createReactionComment, ICreateReaction } from '../../api/workflows/createReactionComment';
+import { IWatchedComment, watchedComment } from '../../api/workflows/watchedComment';
 import { envWssURL } from '../../constants/enviroment';
 import {
   mapBackandworkflowLogToRedux,
@@ -480,7 +482,9 @@ function* editWorkflowInWork({ payload }: TEditWorkflow) {
   }
 }
 
-export function* setWorkflowResumedSaga({ payload: { workflowId, onSuccess } }: TWorkflowResumed) {
+export function* setWorkflowResumedSaga({
+  payload: { workflowId, onSuccess },
+}: PayloadAction<TSetWorkflowResumedPayload>) {
   try {
     yield put(setGeneralLoaderVisibility(true));
     const workflow: IEditWorkflowResponse = yield continueWorkflow(workflowId);
@@ -507,7 +511,9 @@ export function* setWorkflowResumedSaga({ payload: { workflowId, onSuccess } }: 
   }
 }
 
-export function* setWorkflowFinishedSaga({ payload: { workflowId, onWorkflowEnded } }: TWorkflowFinished) {
+export function* setWorkflowFinishedSaga({
+  payload: { workflowId, onWorkflowEnded },
+}: PayloadAction<TSetWorkflowFinishedPayload>) {
   try {
     yield put(setGeneralLoaderVisibility(true));
     yield finishWorkflow({ id: workflowId });
@@ -772,7 +778,7 @@ export function* watchEidtWorkflow() {
 }
 
 export function* watchSetWorkflowResumed() {
-  yield takeEvery(EWorkflowsActions.SetWorkflowResumed, setWorkflowResumedSaga);
+  yield takeEvery(setWorkflowResumed.type, setWorkflowResumedSaga);
 }
 
 export function* handleSearchTextChanged() {
@@ -781,13 +787,16 @@ export function* handleSearchTextChanged() {
 }
 
 export function* watchSetWorkflowFinished() {
-  yield takeEvery(EWorkflowsActions.SetWorkflowFinished, function* finishedWorkflow(action: TWorkflowFinished) {
-    const handlerAction: TChannelAction = {
-      type: ETaskListActions.ChannelAction,
-      handler: () => setWorkflowFinishedSaga(action),
-    };
-    yield put(handlerAction);
-  });
+  yield takeEvery(
+    setWorkflowFinished.type,
+    function* finishedWorkflow(action: PayloadAction<TSetWorkflowFinishedPayload>) {
+      const handlerAction: TChannelAction = {
+        type: ETaskListActions.ChannelAction,
+        handler: () => setWorkflowFinishedSaga(action),
+      };
+      yield put(handlerAction);
+    },
+  );
 }
 
 export function* deleteCommentSaga({ payload: { id } }: TDeleteComment) {
@@ -841,7 +850,7 @@ export function* watchNewWorkflowsEvent() {
   }
 }
 
-export function* watchedCommentSaga({ payload: { id } }: TWatchedComment) {
+export function* watchedCommentSaga({ payload: { id } }: PayloadAction<IWatchedComment>) {
   try {
     yield watchedComment({ id });
   } catch (error) {
@@ -849,7 +858,7 @@ export function* watchedCommentSaga({ payload: { id } }: TWatchedComment) {
   }
 }
 
-export function* deleteReactionCommentSaga({ payload: { id, value } }: TDeleteReactionComment) {
+export function* deleteReactionCommentSaga({ payload: { id, value } }: PayloadAction<IDeleteReaction>) {
   try {
     yield put(setGeneralLoaderVisibility(true));
     yield deleteReactionComment({ id, value });
@@ -860,7 +869,7 @@ export function* deleteReactionCommentSaga({ payload: { id, value } }: TDeleteRe
   }
 }
 
-export function* createReactionCommentSaga({ payload: { id, value } }: TCreateReactionComment) {
+export function* createReactionCommentSaga({ payload: { id, value } }: PayloadAction<ICreateReaction>) {
   try {
     yield put(setGeneralLoaderVisibility(true));
     yield createReactionComment({ id, value });
@@ -907,15 +916,15 @@ function* saveWorkflowsPresetSaga({ payload: { orderedFields, type, templateId }
 }
 
 export function* watchDeleteReactionComment() {
-  yield takeEvery(EWorkflowsActions.DeleteReactionComment, deleteReactionCommentSaga);
+  yield takeEvery(deleteReactionCommentAction.type, deleteReactionCommentSaga);
 }
 
 export function* watchCreateReactionComment() {
-  yield takeEvery(EWorkflowsActions.CreateReactionComment, createReactionCommentSaga);
+  yield takeEvery(createReactionCommentAction.type, createReactionCommentSaga);
 }
 
 export function* watchWatchedComment() {
-  yield takeEvery(EWorkflowsActions.WatchedComment, watchedCommentSaga);
+  yield takeEvery(watchedCommentAction.type, watchedCommentSaga);
 }
 
 export function* watchDeleteComment() {

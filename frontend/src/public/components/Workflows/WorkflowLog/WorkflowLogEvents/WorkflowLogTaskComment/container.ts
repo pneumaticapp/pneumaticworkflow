@@ -1,10 +1,6 @@
 import { connect } from 'react-redux';
-import {
-  createReactionComment,
-  deleteReactionComment,
-  editComment,
-  watchedComment,
-} from '../../../../../redux/workflows/actions';
+import { editComment } from '../../../../../redux/workflows/actions';
+import { deleteReactionComment, createReactionComment, watchedComment } from '../../../../../redux/workflows/slice';
 import { TWorkflowLogTaskCommentProps, WorkflowLogTaskComment } from './WorkflowLogTaskComment';
 import { deleteComment } from '../../../../../redux/actions';
 import { IApplicationState } from '../../../../../types/redux';
@@ -15,10 +11,15 @@ type TDispatchProps = Pick<
   'deleteComment' | 'editComment' | 'watchedComment' | 'createReactionComment' | 'deleteReactionComment'
 >;
 
-export function mapStateToProps({ authUser: { id: currentUserId }, workflows: {workflowLog: {isOpen}} }: IApplicationState): TStoreProps {
+export function mapStateToProps({
+  authUser: { id: currentUserId },
+  workflows: {
+    workflowLog: { isOpen },
+  },
+}: IApplicationState): TStoreProps {
   return {
     currentUserId,
-    workflowModal: isOpen
+    workflowModal: isOpen,
   };
 }
 
