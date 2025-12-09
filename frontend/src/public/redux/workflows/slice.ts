@@ -1,4 +1,17 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createAction, createSlice, PayloadAction } from '@reduxjs/toolkit';
+
+import { isDesktop } from '../../utils/media';
+import { getWorkflowViewStorageState, setWorkflowViewStorageState } from '../../utils/workflows/filters';
+import { isArrayWithItems, isObjectChanged } from '../../utils/helpers';
+
+import { EGeneralActions } from '../general/actions';
+
+import { IDeleteReaction } from '../../api/workflows/deleteReactionComment';
+import { ICreateReaction } from '../../api/workflows/createReactionComment';
+import { IWatchedComment } from '../../api/workflows/watchedComment';
+import { IDeleteComment } from '../../api/workflows/deleteComment';
+import { IEditComment } from '../../api/workflows/editComment';
+
 import { IStoreWorkflows, IWorkflowsList } from '../../types/redux';
 import { IKickoff } from '../../types/template';
 import {
@@ -12,10 +25,18 @@ import {
   IWorkflowsSettings,
   TTemplateStepCounter,
 } from '../../types/workflow';
-import { isDesktop } from '../../utils/media';
-import { getWorkflowViewStorageState, setWorkflowViewStorageState } from '../../utils/workflows/filters';
-import { isArrayWithItems, isObjectChanged } from '../../utils/helpers';
-import { EGeneralActions } from '../general/actions';
+
+import {
+  ISaveWorkflowsPresetPayload,
+  ISendWorkflowLogComment,
+  TCloneWorkflowPayload,
+  TDeleteWorkflowPayload,
+  TEditWorkflowPayload,
+  TReturnWorkflowToTaskPayload,
+  TSetWorkflowFinishedPayload,
+  TSetWorkflowResumedPayload,
+  TSnoozeWorkflowPayload,
+} from './types';
 
 const initialWorkflowsList = {
   count: -1,
@@ -331,6 +352,29 @@ const workflowsSlice = createSlice({
     });
   },
 });
+
+export const deleteReactionComment = createAction<IDeleteReaction>('workflows/deleteReactionComment');
+export const createReactionComment = createAction<ICreateReaction>('workflows/createReactionComment');
+export const watchedComment = createAction<IWatchedComment>('workflows/watchedComment');
+export const editWorkflowSuccess = createAction<void>('workflows/editWorkflowSuccess');
+export const editWorkflow = createAction<TEditWorkflowPayload>('workflows/editWorkflow');
+export const setWorkflowResumed = createAction<TSetWorkflowResumedPayload>('workflows/setWorkflowResumed');
+export const setWorkflowFinished = createAction<TSetWorkflowFinishedPayload>('workflows/setWorkflowFinished');
+export const sendWorkflowLogComments = createAction<ISendWorkflowLogComment>('workflows/sendWorkflowLogComments');
+export const deleteWorkflowAction = createAction<TDeleteWorkflowPayload>('workflows/deleteWorkflowAction');
+export const returnWorkflowToTaskAction = createAction<TReturnWorkflowToTaskPayload>(
+  'workflows/returnWorkflowToTaskAction',
+);
+export const cloneWorkflowAction = createAction<TCloneWorkflowPayload>('workflows/cloneWorkflowAction');
+export const updateCurrentPerformersCounters = createAction<void>('workflows/updateCurrentPerformersCounters');
+export const updateWorkflowStartersCounters = createAction<void>('workflows/updateWorkflowStartersCounters');
+export const updateWorkflowsTemplateStepsCounters = createAction<void>(
+  'workflows/updateWorkflowsTemplateStepsCounters',
+);
+export const snoozeWorkflow = createAction<TSnoozeWorkflowPayload>('workflows/snoozeWorkflow');
+export const deleteComment = createAction<IDeleteComment>('workflows/deleteComment');
+export const editComment = createAction<IEditComment>('workflows/editComment');
+export const saveWorkflowsPreset = createAction<ISaveWorkflowsPresetPayload>('workflows/saveWorkflowsPreset');
 
 export const {
   openWorkflowLogPopup,
