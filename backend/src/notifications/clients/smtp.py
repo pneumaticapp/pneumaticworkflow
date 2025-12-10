@@ -29,6 +29,7 @@ class SMTPEmailClient(EmailClient):
         EmailType.USER_TRANSFER: DEFAULT_TEMPLATE_AUTH,
         EmailType.WORKFLOWS_DIGEST: DEFAULT_TEMPLATE_DIGESTS,
         EmailType.TASKS_DIGEST: DEFAULT_TEMPLATE_DIGESTS,
+        EmailType.INVITE: DEFAULT_TEMPLATE_AUTH,
     }
 
     def __init__(self, account_id: int):
@@ -121,6 +122,7 @@ class SMTPEmailClient(EmailClient):
             EmailType.WORKFLOWS_DIGEST: 'Workflow Digest',
             EmailType.TASKS_DIGEST: 'Tasks Digest',
             EmailType.UNREAD_NOTIFICATIONS: 'Unread Notifications',
+            EmailType.INVITE: 'You are invited to join Pneumatic',
         }
 
         return subjects.get(template_code, f'Pneumatic - {template_code}')

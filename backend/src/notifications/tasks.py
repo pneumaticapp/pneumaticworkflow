@@ -67,6 +67,7 @@ __all__ = [
     'send_group_deleted_notification',
     'send_group_updated_notification',
     'send_guest_new_task',
+    'send_invite_notification',
     'send_mention_notification',
     'send_new_task_notification',
     'send_new_task_websocket',
@@ -495,6 +496,32 @@ def _send_verification_notification(
 @shared_task(base=NotificationTask)
 def send_verification_notification(**kwargs):
     _send_verification_notification(**kwargs)
+
+
+def _send_invite_notification(
+    user_id: int,
+    user_email: str,
+    account_id: int,
+    token: str,
+    logo_lg: Optional[str] = None,
+    logging: bool = False,
+):
+    """Send invite notification through notification system."""
+    _send_notification(
+        method_name=NotificationMethod.invite,
+        account_id=account_id,
+        user_id=user_id,
+        user_email=user_email,
+        logo_lg=logo_lg,
+        logging=logging,
+        token=token,
+        sync=True,
+    )
+
+
+@shared_task(base=NotificationTask)
+def send_invite_notification(**kwargs):
+    _send_invite_notification(**kwargs)
 
 
 def _send_resumed_workflow_notification(

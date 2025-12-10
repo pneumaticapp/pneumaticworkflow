@@ -35,6 +35,7 @@ class NotificationMethod:
     user_deactivated = 'user_deactivated'
     user_transfer = 'user_transfer'
     verification = 'verification'
+    invite = 'invite'
 
     LITERALS = Literal[
         new_task,
@@ -67,6 +68,7 @@ class NotificationMethod:
         user_deactivated,
         user_transfer,
         verification,
+        invite,
     ]
 
 
@@ -95,6 +97,7 @@ class EmailType:
     GUEST_NEW_TASK = 'guest_new_task'
     OVERDUE_TASK = 'overdue_task'
     MENTION = 'mention'
+    INVITE = 'invite'
 
     LITERALS = Literal[
         RESET_PASSWORD,
@@ -109,6 +112,7 @@ class EmailType:
         GUEST_NEW_TASK,
         OVERDUE_TASK,
         MENTION,
+        INVITE,
     ]
 
     CHOICES = [
@@ -124,6 +128,7 @@ class EmailType:
         (GUEST_NEW_TASK, 'Guest New Task'),
         (OVERDUE_TASK, 'Overdue Task'),
         (MENTION, 'Mention'),
+        (INVITE, 'Invite'),
     ]
 
 
@@ -161,4 +166,7 @@ email_titles = {
     ),
     NotificationMethod.user_transfer: 'invited you to join team on Pneumatic!',
     NotificationMethod.verification: 'Welcome to Pneumatic!',
+    NotificationMethod.invite: (
+        "✅ You've been invited to join your team in Pneumatic"
+    ),
 }
