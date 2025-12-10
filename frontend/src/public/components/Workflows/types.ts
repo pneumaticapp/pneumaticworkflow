@@ -1,10 +1,10 @@
 import { IWorkflowsList } from '../../types/redux';
+import { openSelectTemplateModal } from '../../redux/actions';
 import {
-  openSelectTemplateModal,
   TLoadWorkflowsFilterStepsPayload,
   TOpenWorkflowLogPopupPayload,
   TRemoveWorkflowFromListPayload,
-} from '../../redux/actions';
+} from '../../redux/workflows/types';
 import { IRunWorkflow } from '../WorkflowEditPopup/types';
 import { ITemplateTitle } from '../../types/template';
 import {

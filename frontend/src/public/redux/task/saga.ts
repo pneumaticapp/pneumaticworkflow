@@ -11,6 +11,7 @@ import {
   actionChannel,
   takeLatest,
 } from 'redux-saga/effects';
+import { PayloadAction } from '@reduxjs/toolkit';
 import {
   ETaskActions,
   TLoadCurrentTask,
@@ -49,7 +50,6 @@ import {
   patchTaskInList,
   setGeneralLoaderVisibility,
   shiftTaskList,
-  TSendWorkflowLogComment,
   usersFetchFinished,
 } from '../actions';
 import { getErrorMessage } from '../../utils/getErrorMessage';
@@ -96,6 +96,7 @@ import { ETemplateOwnerType, RawPerformer } from '../../types/template';
 import { getTaskWorkflowLog } from '../../api/getTaskWorkflowLog';
 import { sendTaskComment } from '../../api/sendTaskComment';
 import { getWorkflowAddComputedPropsToRedux } from '../../components/Workflows/utils/getWorfkflowClientProperties';
+import { ISendWorkflowLogComment } from '../workflows/types';
 
 function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
   const {
@@ -219,7 +220,7 @@ function* loadTaskWorkflowLog({
   }
 }
 
-function* saveWorkflowLogComment({ payload: { text, attachments, taskId } }: TSendWorkflowLogComment) {
+function* saveWorkflowLogComment({ payload: { text, attachments, taskId } }: PayloadAction<ISendWorkflowLogComment>) {
   const {
     workflowLog: { items, workflowId: processId, sorting },
   }: ReturnType<typeof getTaskStore> = yield select(getTaskStore);

@@ -54,7 +54,8 @@
 
 /* Radio checked */
 
-.radio__input:checked + .radio__box {
+.radio__input:checked + .radio__box,
+.select-menu__radio--checked .radio__box {
   background-color: var(--pneumatic-color-link);
   border: 0;
 

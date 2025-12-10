@@ -1,21 +1,16 @@
 import { toTspDate } from '../utils/dateTime';
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { ITemplateTitle } from '../types/template';
-import { EWorkflowsStatus } from '../types/workflow';
+import { ITemplateTitleBaseWithCount } from '../types/template';
 
-export type TGetHighlightsTitlesResponse = ITemplateTitle[];
+export type TGetHighlightsTitlesResponse = ITemplateTitleBaseWithCount[];
 
-export interface IGetHighlightsTitlesRequesConfig {
+export interface IGetHighlightsTitlesRequestConfig {
   eventDateFrom?: Date;
   eventDateTo?: Date;
-  fetchActive?: boolean;
-  withTasksInProgress?: boolean;
-  withRunningWorkflows?: boolean;
-  workflowStatus?: EWorkflowsStatus;
 }
 
-export function getHighlightsTitles(config: IGetHighlightsTitlesRequesConfig = {}) {
+export function getHighlightsTitles(config: IGetHighlightsTitlesRequestConfig = {}) {
   const {
     api: { urls },
   } = getBrowserConfigEnv();
@@ -26,7 +21,7 @@ export function getHighlightsTitles(config: IGetHighlightsTitlesRequesConfig = {
   return commonRequest<TGetHighlightsTitlesResponse>(url, {}, { shouldThrow: true });
 }
 
-export function getHighlightsTitlesQueryString({ eventDateFrom, eventDateTo }: IGetHighlightsTitlesRequesConfig = {}) {
+export function getHighlightsTitlesQueryString({ eventDateFrom, eventDateTo }: IGetHighlightsTitlesRequestConfig = {}) {
   const params = [
     eventDateFrom && `date_from_tsp=${toTspDate(eventDateFrom)}`,
     eventDateTo && `date_to_tsp=${toTspDate(eventDateTo)}`,

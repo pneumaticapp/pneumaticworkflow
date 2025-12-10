@@ -21,11 +21,6 @@ import { EditKickoffContainer } from '../../KickoffEdit';
 import { getEditKickoff } from '../../../utils/workflows';
 import { getPercent } from '../../../utils/helpers';
 import { getUserFullName } from '../../../utils/users';
-import {
-  IChangeWorkflowLogViewSettingsPayload,
-  ISendWorkflowLogComment,
-  TEditWorkflowPayload,
-} from '../../../redux/actions';
 import { IntlMessages } from '../../IntlMessages';
 import { EUserStatus } from '../../../types/user';
 import { EKickoffOutputsViewModes, KickoffOutputs } from '../../KickoffOutputs';
@@ -40,6 +35,11 @@ import { UserData } from '../../UserData';
 import { DateFormat } from '../../UI/DateFormat';
 
 import styles from './WorkflowModal.css';
+import {
+  IChangeWorkflowLogViewSettingsPayload,
+  ISendWorkflowLogComment,
+  TEditWorkflowPayload,
+} from '../../../redux/workflows/types';
 
 export interface IWorkflowModalOwnProps {
   onClose?(): void;

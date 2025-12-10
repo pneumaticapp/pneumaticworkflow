@@ -11,7 +11,6 @@ import { genericTemplates } from './genericTemplates';
 import { initialState } from './store';
 import { menu } from './menu';
 import { notifications } from './notifications';
-import { workflows } from './workflows';
 import { profile } from './profile';
 import { settings } from './settings';
 import { task } from './task';
@@ -28,6 +27,7 @@ import { EAuthActions } from './actions';
 import { groups } from './groups';
 import pages from './pages/slice';
 import team from './team/slice';
+import workflows from './workflows/slice';
 
 export const reducers = combineReducers({
   general,
