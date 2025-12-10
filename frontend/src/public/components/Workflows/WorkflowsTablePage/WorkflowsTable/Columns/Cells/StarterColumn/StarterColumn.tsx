@@ -1,14 +1,20 @@
-import * as React from 'react';
+import React from 'react';
 import { CellProps } from 'react-table';
+import { useDispatch } from 'react-redux';
+
+import { setFilterWorkflowStarters as setWorkflowsFilterWorkflowStarters } from '../../../../../../../redux/workflows/slice';
+import { UserData } from '../../../../../../UserData';
+import { EXTERNAL_USER } from '../../../../../../../utils/users';
 import { Avatar } from '../../../../../../UI';
 
-import { UserData } from '../../../../../../UserData';
 import { TableColumns } from '../../../types';
-import { EXTERNAL_USER } from '../../../../../../../utils/users';
+import styles from './StarterColumn.css';
 
 type TProps = React.PropsWithChildren<CellProps<TableColumns, TableColumns['system-column-starter']>>;
 
 export function StarterColumn({ value: { workflowStarter, isExternal } }: TProps) {
+  const dispatch = useDispatch();
+
   return (
     <UserData userId={workflowStarter}>
       {(user) => {
@@ -22,7 +28,17 @@ export function StarterColumn({ value: { workflowStarter, isExternal } }: TProps
           currentUser = EXTERNAL_USER;
         }
 
-        return <Avatar user={currentUser} size="sm" withTooltip />;
+        return (
+          <div className={styles['starter-column']}>
+            <button
+              onClick={() => dispatch(setWorkflowsFilterWorkflowStarters([currentUser.id]))}
+              type="button"
+              aria-label="select this starter for filtering"
+            >
+              <Avatar user={currentUser} size="sm" withTooltip />
+            </button>
+          </div>
+        );
       }}
     </UserData>
   );
