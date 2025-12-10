@@ -122,7 +122,16 @@ But you can almost immediately check that your backend is up by going to `http:/
 
 Once the containers are up and running go to http://your-server-address (http://localhost if you're connecting from the same machine) in your browser, register a free account and you're good to go.
 
-For more information about how to deploy Pneumatic in production see [Configuration](https://github.com/pneumaticapp/pneumaticworkflow/wiki/Configuration)
+
+### Deploying to Production
+
+Deploying an instance of Pneumatic in production involves such steps as:
+
+- setting up SSL
+- setting up SSO
+- setting up AuthSSO
+  
+These steps are described in detail in [this wiki article](https://github.com/pneumaticapp/pneumaticworkflow/wiki/Configuration)
 
 ## License
 
