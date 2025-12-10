@@ -1,8 +1,12 @@
 import { connect } from 'react-redux';
-import { editComment } from '../../../../../redux/workflows/actions';
-import { deleteReactionComment, createReactionComment, watchedComment } from '../../../../../redux/workflows/slice';
+import {
+  deleteReactionComment,
+  createReactionComment,
+  watchedComment,
+  editComment,
+  deleteComment } from '../../../../../redux/workflows/slice';
 import { TWorkflowLogTaskCommentProps, WorkflowLogTaskComment } from './WorkflowLogTaskComment';
-import { deleteComment } from '../../../../../redux/actions';
+
 import { IApplicationState } from '../../../../../types/redux';
 
 type TStoreProps = Pick<TWorkflowLogTaskCommentProps, 'currentUserId' | 'workflowModal'>;

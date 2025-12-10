@@ -79,3 +79,14 @@ export interface ISaveWorkflowsPresetPayload {
   type: 'personal' | 'account';
   templateId: number;
 }
+
+export interface IStartWorkflowPayload {
+  id: number;
+  name: string;
+  kickoff: {
+    [key: string]: string;
+  } | null;
+  ancestorTaskId?: number;
+  isUrgent?: boolean;
+  dueDateTsp?: number | null;
+}

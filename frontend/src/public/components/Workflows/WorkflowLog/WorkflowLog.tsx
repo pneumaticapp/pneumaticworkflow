@@ -11,7 +11,6 @@ import {
   EWorkflowStatus,
 } from '../../../types/workflow';
 import { ETaskStatus } from '../../../types/tasks';
-import { ISendWorkflowLogComment } from '../../../redux/actions';
 import { IntlMessages } from '../../IntlMessages';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { PopupCommentFieldContainer } from './PopupCommentField';
@@ -40,7 +39,7 @@ import { WorkflowLogAddedPerformerGroup } from './WorkflowLogEvents/WorkflowLogA
 import { WorkflowLogRemovedPerformerGroup } from './WorkflowLogEvents/WorkflowLogRemovedPerformerGroup';
 
 import styles from './WorkflowLog.css';
-import { IChangeWorkflowLogViewSettingsPayload } from '../../../redux/workflows/types';
+import { IChangeWorkflowLogViewSettingsPayload, ISendWorkflowLogComment } from '../../../redux/workflows/types';
 
 export const WorkflowLog = ({
   theme,

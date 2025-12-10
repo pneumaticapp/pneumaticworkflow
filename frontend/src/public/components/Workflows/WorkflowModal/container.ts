@@ -1,12 +1,13 @@
 import { connect } from 'react-redux';
 
-import { editWorkflow, sendWorkflowLogComments } from '../../../redux/workflows/actions';
 import {
   closeWorkflowLogPopup,
   changeWorkflowLogViewSettings,
   setIsEditWorkflowName,
   setIsEditKickoff,
   setWorkflowEdit,
+  sendWorkflowLogComments,
+  editWorkflow,
 } from '../../../redux/workflows/slice';
 
 import { IApplicationState } from '../../../types/redux';

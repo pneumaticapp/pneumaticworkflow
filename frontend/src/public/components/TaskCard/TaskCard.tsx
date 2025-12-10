@@ -11,15 +11,18 @@ import { sanitizeText } from '../../utils/strings';
 import { ITask } from '../../types/tasks';
 import {
   ETaskStatus,
-  ISendWorkflowLogComment,
   TAddTaskPerformerPayload,
   TOpenModalPayload,
   TRemoveTaskPerformerPayload,
   TSetTaskCompletedPayload,
   TSetTaskRevertedPayload,
-  TSetWorkflowFinishedPayload,
 } from '../../redux/actions';
-import { IChangeWorkflowLogViewSettingsPayload, TOpenWorkflowLogPopupPayload } from '../../redux/workflows/types';
+import {
+  IChangeWorkflowLogViewSettingsPayload,
+  ISendWorkflowLogComment,
+  TOpenWorkflowLogPopupPayload,
+  TSetWorkflowFinishedPayload,
+} from '../../redux/workflows/types';
 import { ExtraFieldsHelper } from '../TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
 import { getTaskDetailRoute, getWorkflowDetailedRoute, isTaskDetailRoute } from '../../utils/routes';
 import { Header } from '../UI/Typeography/Header';

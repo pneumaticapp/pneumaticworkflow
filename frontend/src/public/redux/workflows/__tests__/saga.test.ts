@@ -1,4 +1,3 @@
-import { EWorkflowsActions } from '../actions';
 import {
   watchCloneWorkflow,
   cloneWorkflowSaga,
@@ -11,11 +10,11 @@ import {
 import * as deleteApi from '../../../api/deleteWorkflow';
 import * as finishWorkflowApi from '../../../api/finishWorkflow';
 import { NotificationManager } from '../../../components/UI/Notifications';
-import { setWorkflowFinished } from '../slice';
+import { cloneWorkflowAction, deleteWorkflowAction, returnWorkflowToTaskAction, setWorkflowFinished } from '../slice';
 
 describe('workflows saga', () => {
   it('deleteWorkflowSaga work', () => {
-    const saga = deleteWorkflowSaga({ type: EWorkflowsActions.DeleteWorkflow, payload: { workflowId: 1 } });
+    const saga = deleteWorkflowSaga({ type: deleteWorkflowAction.type, payload: { workflowId: 1 } });
     const deleteApiMock = jest.spyOn(deleteApi, 'deleteWorkflow').mockImplementation(() => Promise.resolve(null));
     const notificationManagerSuccessMock = jest.spyOn(NotificationManager, 'success');
     saga.next();
@@ -43,9 +42,9 @@ describe('workflows saga', () => {
   });
   describe('generator', () => {
     it.each([
-      [watchCloneWorkflow, EWorkflowsActions.CloneWorkflow, cloneWorkflowSaga],
-      [watchDeleteWorfklow, EWorkflowsActions.DeleteWorkflow, deleteWorkflowSaga],
-      [watchReturnWorkflowToTask, EWorkflowsActions.ReturnWorkflowToTask, returnWorkflowToTaskSaga],
+      [watchCloneWorkflow, cloneWorkflowAction.type, cloneWorkflowSaga],
+      [watchDeleteWorfklow, deleteWorkflowAction.type, deleteWorkflowSaga],
+      [watchReturnWorkflowToTask, returnWorkflowToTaskAction.type, returnWorkflowToTaskSaga],
     ])(
       'for the function %s, calls takeEvery with parameters %s and %s',
       (testingFn: any, action: any, expectedFn: any) => {

@@ -20,13 +20,14 @@ import { getAuthUser } from '../../../redux/selectors/user';
 import { EWorkflowStatus, IPassedTask, IWorkflowClient, IWorkflowDetailsClient } from '../../../types/workflow';
 import { NotificationManager } from '../../UI/Notifications';
 import {
+  setWorkflowResumed,
+  setWorkflowFinished,
   deleteWorkflowAction,
+  editWorkflow,
   returnWorkflowToTaskAction,
   cloneWorkflowAction,
-  editWorkflow,
   snoozeWorkflow,
-} from '../../../redux/actions';
-import { setWorkflowResumed, setWorkflowFinished } from '../../../redux/workflows/slice';
+} from '../../../redux/workflows/slice';
 import { getSnoozeOptions } from '../utils/getSnoozeOptions';
 import { getTemplateEditRoute } from '../../../utils/routes';
 import { history } from '../../../utils/history';
