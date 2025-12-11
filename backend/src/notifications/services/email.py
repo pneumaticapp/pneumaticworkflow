@@ -404,7 +404,6 @@ class EmailService(NotificationService):
                 'button_text': 'View Notifications',
                 'unsubscribe_token': unsubscribe_token,
                 'unsubscribe_link': unsubscribe_link,
-                'notifications_link': notifications_link,
                 'link': notifications_link,
                 'logo_lg': self.logo_lg,
             },
@@ -418,7 +417,7 @@ class EmailService(NotificationService):
     ):
         token = ResetPasswordToken.for_user_id(user_id).__str__()
         reset_link = (
-            f'{settings.FRONTEND_URL}/auth/reset-password?token={token}'
+            f'{settings.FRONTEND_URL}/auth/reset-password/?token={token}'
         )
         content = 'We got a request to reset your Pneumatic account password.'
         additional_content = (
@@ -440,7 +439,6 @@ class EmailService(NotificationService):
                 'button_text': 'Reset my password',
                 'token': token,
                 'link': reset_link,
-                'reset_link': reset_link,
                 'logo_lg': self.logo_lg,
             },
         )
@@ -492,6 +490,7 @@ class EmailService(NotificationService):
             data={
                 'title': email_titles[NotificationMethod.user_deactivated],
                 'logo_lg': self.logo_lg,
+                'image_url': True,
             },
         )
 
@@ -531,7 +530,6 @@ class EmailService(NotificationService):
                 'button_text': 'Transfer My Profile',
                 'token': token,
                 'link': transfer_link,
-                'transfer_link': transfer_link,
                 'sender_name': invited_by_name,
                 'company_name': company_name,
                 'user_id': user_id,
@@ -595,6 +593,7 @@ class EmailService(NotificationService):
                 'button_text': 'Join Your Team',
                 'link': invite_link,
                 'logo_lg': self.logo_lg,
+                'is_invite': True,
             },
         )
 
