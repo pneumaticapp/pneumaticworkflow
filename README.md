@@ -73,8 +73,8 @@ You can grab your own copy of Pneumatic by cloning this repository and self-host
 * Git (optional, if you want to clone the repository)
 * Docker version 2.27 or above
 * Docker compose version 27.0 or above
-* At least 16GB of RAM
-* At least 100GB of diskspace
+* At least 8GB of RAM (recommended 16GB)
+* At least 50GB of diskspace(recommended 100GB)
 * Ports 80, 443, and 8001 must be open and not in use by any other process(like apache or nginx)
 
 
