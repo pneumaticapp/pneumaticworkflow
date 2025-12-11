@@ -418,7 +418,7 @@ class EmailService(NotificationService):
     ):
         token = ResetPasswordToken.for_user_id(user_id).__str__()
         reset_link = (
-            f'{settings.FRONTEND_URL}/auth/reset-password?token={token}'
+            f'{settings.FRONTEND_URL}/auth/reset-password/?token={token}'
         )
         content = 'We got a request to reset your Pneumatic account password.'
         additional_content = (

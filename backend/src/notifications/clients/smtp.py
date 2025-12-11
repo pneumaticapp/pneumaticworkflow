@@ -99,30 +99,46 @@ class SMTPEmailClient(EmailClient):
         try:
             # Use Django template loader for proper inheritance support
             template = get_template(template_name)
-            subject = self._get_default_subject(template_code)
+            subject = self._get_default_subject(template_code, message_data)
             html_content = template.render(message_data)
             return subject, html_content
         except Exception:  # noqa: BLE001
             # Template loading or rendering failed, use fallback
             pass
-        return self._get_fallback_template(template_code)
+        return self._get_fallback_template(template_code, message_data)
 
-    def _get_default_subject(self, template_code: EmailType.LITERALS) -> str:
+    def _get_default_subject(
+        self,
+        template_code: EmailType.LITERALS,
+        message_data: Dict[str, Any],
+    ) -> str:
         """Get default subject for template code."""
+
+        task_types_with_name = {
+            EmailType.NEW_TASK,
+            EmailType.TASK_RETURNED,
+            EmailType.OVERDUE_TASK,
+            EmailType.GUEST_NEW_TASK,
+        }
+
+        task_name = message_data.get('task_name', '')
+        if template_code in task_types_with_name and task_name:
+            return task_name
+
         subjects = {
             EmailType.NEW_TASK: 'New Task Assigned',
             EmailType.TASK_RETURNED: 'Task Returned',
             EmailType.OVERDUE_TASK: 'Task Overdue',
             EmailType.GUEST_NEW_TASK: 'New Task Assigned',
-            EmailType.MENTION: 'You were mentioned',
-            EmailType.RESET_PASSWORD: 'Password Reset Request',
+            EmailType.MENTION: 'You have been mentioned on Pneumatic',
+            EmailType.RESET_PASSWORD: 'Password Reset',
             EmailType.ACCOUNT_VERIFICATION: 'Account Verification',
-            EmailType.USER_DEACTIVATED: 'Account Deactivated',
+            EmailType.USER_DEACTIVATED: 'Your account was deactivated',
             EmailType.USER_TRANSFER: 'Account Transfer',
             EmailType.WORKFLOWS_DIGEST: 'Workflow Digest',
             EmailType.TASKS_DIGEST: 'Tasks Digest',
             EmailType.UNREAD_NOTIFICATIONS: 'Unread Notifications',
-            EmailType.INVITE: 'You are invited to join Pneumatic',
+            EmailType.INVITE: 'Join your team :busts_in_silhouette:',
         }
 
         return subjects.get(template_code, f'Pneumatic - {template_code}')
@@ -130,9 +146,10 @@ class SMTPEmailClient(EmailClient):
     def _get_fallback_template(
             self,
             template_code: EmailType.LITERALS,
+            message_data: Dict[str, Any],
     ) -> Tuple[str, str]:
         """Get simple fallback template when no file template exists."""
-        subject = self._get_default_subject(template_code)
+        subject = self._get_default_subject(template_code, message_data)
         html_content = f"""
         <html>
         <body>
