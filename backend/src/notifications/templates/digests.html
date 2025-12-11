@@ -12,9 +12,9 @@
       <tr style="outline:0;font-weight:inherit;font-style:inherit;font-size:100%;font-family:inherit;vertical-align:baseline;border-collapse:collapse;line-height:inherit;margin:0;padding:0;border:0">
         <td align="center" style="outline:0;font-weight:normal;font-style:inherit;font-size:100%;font-family:inherit;vertical-align:baseline;text-align:left;border-collapse:collapse;line-height:inherit;margin:0;padding:0;border:0" valign="baseline">
           <p style="outline:0;font-weight:inherit;font-style:inherit;font-size:100%;font-family:inherit;vertical-align:baseline;display:block;line-height:inherit;margin:0;padding:0;border:0">
-            <span style="outline:0;font-weight:800;font-style:inherit;font-size:28px;font-family:inherit;vertical-align:baseline;line-height:32px;text-align:center;letter-spacing:-0.01em;color:#262522;display:block;margin:0;padding:0;border:0">
-              Workflows Weekly Digest
-            </span>
+          <span style="outline:0;font-weight:800;font-style:inherit;font-size:28px;font-family:inherit;vertical-align:baseline;line-height:32px;text-align:center;letter-spacing:-0.01em;color:#262522;display:block;margin:0;padding:0;border:0">
+                                {% if is_tasks_digest %}Tasks Weekly Digest{% else %}Workflows Weekly Digest{% endif %}
+                            </span>
             {% if date_from and date_to %}
             <span style="outline:0;font-weight:800;font-style:inherit;font-size:20px;font-family:inherit;vertical-align:baseline;line-height:24px;text-align:center;color:#979795;display:block;margin:0;padding:0;border:0">
               {{ date_from }} to {{ date_to }}
@@ -136,26 +136,26 @@
                 <tbody>
                   <tr style="vertical-align:top;border-collapse:collapse;line-height:inherit">
                     <td style="text-align:right;vertical-align:top;border-collapse:collapse;line-height:inherit" align="right" valign="top">
-                      <table style="border-collapse:collapse;border-spacing:0;margin-left:auto;vertical-align:middle;line-height:inherit;"
+                      <table style="border-collapse:collapse;border-spacing:0;margin-left:auto;vertical-align:middle;line-height:inherit;">
                         <tbody>
                           <tr style="vertical-align:top;border-collapse:collapse;line-height:inherit">
                             <td style="vertical-align:top;border-collapse:collapse;line-height:inherit" valign="top">
-                              <div style="text-align:center;width:40px;height:40px;padding:8px;font-weight:800;font-size:20px;line-height:24px;border-radius:8px;background-color:#e9f5fe;color:#2196f3;border-left:4px solid white;border-right:4px solid white;font-family:inherit;display:flex;align-items:center;justify-content:center;" align="center">
+                              <div style="display:table-cell;text-align:center;vertical-align:middle;width:40px;height:40px;font-weight:800;font-size:20px;border-radius:8px;background-color:#e9f5fe;color:#2196f3;border-left:4px solid white;border-right:4px solid white;font-family:inherit;" align="center">
                                 {{ template.started|default:0 }}
                               </div>
                             </td>
                             <td style="vertical-align:top;border-collapse:collapse;line-height:inherit" valign="top">
-                              <div style="text-align:center;width:40px;height:40px;padding:8px;font-weight:800;font-size:20px;line-height:24px;border-radius:8px;background-color:#fff9e7;color:#ffc107;border-left:4px solid white;border-right:4px solid white;font-family:inherit;display:flex;align-items:center;justify-content:center;" align="center">
+                              <div style="display:table-cell;text-align:center;vertical-align:middle;width:40px;height:40px;font-weight:800;font-size:20px;border-radius:8px;background-color:#fff9e7;color:#ffc107;border-left:4px solid white;border-right:4px solid white;font-family:inherit;" align="center">
                                 {{ template.in_progress|default:0 }}
                               </div>
                             </td>
                             <td style="vertical-align:top;border-collapse:collapse;line-height:inherit" valign="top">
-                              <div style="text-align:center;width:40px;height:40px;padding:8px;font-weight:800;font-size:20px;line-height:24px;border-radius:8px;background-color:#feedeb;color:#f44336;border-left:4px solid white;border-right:4px solid white;font-family:inherit;display:flex;align-items:center;justify-content:center;" align="center">
+                              <div style="display:table-cell;text-align:center;vertical-align:middle;width:40px;height:40px;font-weight:800;font-size:20px;border-radius:8px;background-color:#feedeb;color:#f44336;border-left:4px solid white;border-right:4px solid white;font-family:inherit;" align="center">
                                 {{ template.overdue|default:0 }}
                               </div>
                             </td>
                             <td style="vertical-align:top;border-collapse:collapse;line-height:inherit" valign="top">
-                              <div style="text-align:center;width:40px;height:40px;padding:8px;font-weight:800;font-size:20px;line-height:24px;border-radius:8px;background-color:#eef7ee;color:#4caf50;border-left:4px solid white;border-right:4px solid white;font-family:inherit;display:flex;align-items:center;justify-content:center;" align="center">
+                              <div style="display:table-cell;text-align:center;vertical-align:middle;width:40px;height:40px;font-weight:800;font-size:20px;border-radius:8px;background-color:#eef7ee;color:#4caf50;border-left:4px solid white;border-right:4px solid white;font-family:inherit;" align="center">
                                 {{ template.completed|default:0 }}
                               </div>
                             </td>
@@ -180,18 +180,18 @@
                 </a>
               </div>
               <div style="width:35%;display:inline-block;vertical-align:middle;text-align:right;">
-                <div style="text-align:center;width:40px;height:32px;padding:4px;font-size:15px;line-height:20px;border-radius:8px;background-color:white;color:#2196F3;border-left:4px solid white;border-right:4px solid white;font-family:'Arial',sans-serif;font-weight:bold;display:inline-block;margin-right:4px;vertical-align:middle;">
-                  {{ task.started|default:0 }}
-                </div>
-                <div style="text-align:center;width:40px;height:32px;padding:4px;font-size:15px;line-height:20px;border-radius:8px;background-color:white;color:#FFC107;border-left:4px solid white;border-right:4px solid white;font-family:'Arial',sans-serif;font-weight:bold;display:inline-block;margin-right:4px;vertical-align:middle;">
-                  {{ task.in_progress|default:0 }}
-                </div>
-                <div style="text-align:center;width:40px;height:32px;padding:4px;font-size:15px;line-height:20px;border-radius:8px;background-color:white;color:#F44336;border-left:4px solid white;border-right:4px solid white;font-family:'Arial',sans-serif;font-weight:bold;display:inline-block;margin-right:4px;vertical-align:middle;">
-                  {{ task.overdue|default:0 }}
-                </div>
-                <div style="text-align:center;width:40px;height:32px;padding:4px;font-size:15px;line-height:20px;border-radius:8px;background-color:white;color:#4CAF50;border-left:4px solid white;border-right:4px solid white;font-family:'Arial',sans-serif;font-weight:bold;display:inline-block;vertical-align:middle;">
-                  {{ task.completed|default:0 }}
-                </div>
+                <span style="display:inline-table;text-align:center;width:40px;height:32px;font-size:15px;border-radius:8px;background-color:white;color:#2196F3;border-left:4px solid white;border-right:4px solid white;font-family:'Arial',sans-serif;font-weight:bold;margin-right:4px;vertical-align:middle;">
+                  <span style="display:table-cell;vertical-align:middle;">{{ task.started|default:0 }}</span>
+                </span>
+                <span style="display:inline-table;text-align:center;width:40px;height:32px;font-size:15px;border-radius:8px;background-color:white;color:#FFC107;border-left:4px solid white;border-right:4px solid white;font-family:'Arial',sans-serif;font-weight:bold;margin-right:4px;vertical-align:middle;">
+                  <span style="display:table-cell;vertical-align:middle;">{{ task.in_progress|default:0 }}</span>
+                </span>
+                <span style="display:inline-table;text-align:center;width:40px;height:32px;font-size:15px;border-radius:8px;background-color:white;color:#F44336;border-left:4px solid white;border-right:4px solid white;font-family:'Arial',sans-serif;font-weight:bold;margin-right:4px;vertical-align:middle;">
+                  <span style="display:table-cell;vertical-align:middle;">{{ task.overdue|default:0 }}</span>
+                </span>
+                <span style="display:inline-table;text-align:center;width:40px;height:32px;font-size:15px;border-radius:8px;background-color:white;color:#4CAF50;border-left:4px solid white;border-right:4px solid white;font-family:'Arial',sans-serif;font-weight:bold;vertical-align:middle;">
+                  <span style="display:table-cell;vertical-align:middle;">{{ task.completed|default:0 }}</span>
+                </span>
               </div>
             </div>
             {% endfor %}
