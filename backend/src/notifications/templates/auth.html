@@ -60,7 +60,7 @@
                         <div class="" style="font-size:12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;mso-line-height-alt:21.6px;color:#262522;line-height:1.8">
                           <p style="margin:0;font-size:12px;mso-line-height-alt:28.8px">
                             <span style="font-size:16px;">
-                              <span style="">{{ content }}</span>
+                              <span style="">{{ content|safe }}</span>
                               <span style=""><br></span>
                             </span>
                           </p>
@@ -119,32 +119,41 @@
 
                 <!-- Pneumatic Description (only for invites) -->
                 {% if is_invite %}
+                <table width="100%" border="0" cellpadding="24" cellspacing="0" role="presentation">
+                  <tr>
+                    <td>
+                      <h2 style="margin:0;color:#262522;direction:ltr;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:20px;font-weight:400;letter-spacing:normal;line-height:150%;text-align:left;margin-top:0;margin-bottom:0">
+                        <strong>What is Pneumatic</strong>
+                      </h2>
+                    </td>
+                  </tr>
+                </table>
                 <table class="text_block"
                        width="100%"
                        border="0"
-                       cellpadding="24"
+                       cellpadding="0"
                        cellspacing="0"
                        role="presentation"
                        style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word">
                   <tr>
-                    <td class="pad">
+                    <td class="pad" style="padding-bottom:24px;padding-left:24px;padding-right:24px">
                       <div style="font-family:Arial,sans-serif">
                         <div style="font-size:12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#262522;line-height:1.8">
-                          <h2 style="margin:24px 0 16px 0;font-size:20px;font-weight:400;line-height:1.5;">
-                            <strong>What is Pneumatic</strong>
-                          </h2>
-                          <p style="margin:0 0 16px 0;font-size:16px;line-height:1.8;">
-                            Pneumatic makes workflow management easy and accessible through an intuitive user interface that encourages exploration, experimentation, iterative refinement and continuous business improvement.
+                          <p style="margin:0;font-size:16px;">
+                            <span style="font-size:16px;">Pneumatic makes workflow management easy and accessible through an intuitive user interface that encourages exploration, experimentation, iterative refinement and continuous business improvement. <a href="{{ link }}" style="color:#ffc107;text-decoration:underline;">{{ link }}</a></span>
                           </p>
-                          <p style="margin:0 0 16px 0;font-size:16px;line-height:1.8;">
-                            Pneumatic makes sure you:
+                          <p style="margin:0;font-size:16px;">
+                            &nbsp;
                           </p>
-                          <ul style="margin:0 0 16px 0;padding-left:20px;font-size:16px;line-height:1.8;">
-                            <li>Increase personal efficiency by focusing on your part of the workflow</li>
-                            <li>Receive a comprehensive task description using flexible data variables</li>
-                            <li>Enjoy peace of mind, always having everything required to complete a task</li>
-                            <li>Get important updates relevant to the context of your workflows</li>
-                            <li>Save time by providing structured easy-to-fill task outputs</li>
+                          <p style="margin:0;font-size:16px;">
+                            <span style="font-size:16px;">Pneumatic makes sure you:</span>
+                          </p>
+                          <ul style="line-height:1.8;font-size:16px;">
+                            <li><span style="font-size:16px;">Increase personal efficiency by focusing on your part of the workflow</span></li>
+                            <li><span style="font-size:16px;">Receive a comprehensive task description using flexible data variables</span></li>
+                            <li><span style="font-size:16px;">Enjoy peace of mind, always having everything required to complete a task</span></li>
+                            <li><p style="margin:0;">Get important updates relevant to the context of your workflows</p></li>
+                            <li><span style="font-size:16px;">Save time by providing structured easy-to-fill task outputs</span></li>
                           </ul>
                         </div>
                       </div>
@@ -153,20 +162,12 @@
                 </table>
 
                 <!-- Video Section -->
-                <table class="text_block"
-                       width="100%"
-                       border="0"
-                       cellpadding="24"
-                       cellspacing="0"
-                       role="presentation"
-                       style="mso-table-lspace:0;mso-table-rspace:0;word-break:break-word">
+                <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation">
                   <tr>
-                    <td class="pad">
-                      <div style="font-family:Arial,sans-serif">
-                        <h2 style="margin:24px 0 16px 0;font-size:20px;font-weight:400;line-height:1.5;text-align:center;">
-                          <strong>Start by watching our introductory video</strong>
-                        </h2>
-                      </div>
+                    <td style="padding-left:24px;padding-right:24px;padding-top:24px;text-align:center;width:100%">
+                      <h2 style="margin:0;color:#262522;direction:ltr;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;font-size:20px;font-weight:400;letter-spacing:normal;line-height:150%;text-align:center;margin-top:0;margin-bottom:0">
+                        <strong>Start by watching our introductory video</strong>
+                      </h2>
                     </td>
                   </tr>
                 </table>
@@ -182,9 +183,13 @@
                   <tr>
                     <td class="pad">
                       <div class="alignment" align="center" style="line-height:10px">
-                        <img src="https://ci3.googleusercontent.com/meips/ADKq_NYGPhDaSPIpZanJQz8K0DJtT3kPMb-2hSxD5f3F9WsVMhmVfn4gFTTvwKrIv6pOGYCJpRyvQ2FoDyXVc6AUy5IbAEo21r2qYjZsAdEpZ_QaDgplbe7RtP-DbTc391yCl3ACZ8Tasj9OCrOC=s0-d-e1-ft"
-                             style="display:block;height:auto;border:0;max-width:592px;width:100%"
-                             alt="Video thumbnail">
+                        <a href="https://support.pneumatic.app/en/articles/5605999-video-quick-product-overview"
+                           target="_blank"
+                           style="outline:none">
+                          <img src="https://ci3.googleusercontent.com/meips/ADKq_NYGPhDaSPIpZanJQz8K0DJtT3kPMb-2hSxD5f3F9WsVMhmVfn4gFTTvwKrIv6pOGYCJpRyvQ2FoDyXVc6AUy5IbAEo21r2qYjZsAdEpZ_QaDgplbe7RtP-DbTc391yCl3ACZ8Tasj9OCrOC=s0-d-e1-ft"
+                               style="display:block;height:auto;border:0;max-width:592px;width:100%"
+                               alt="Video thumbnail">
+                        </a>
                       </div>
                     </td>
                   </tr>
@@ -226,7 +231,7 @@
                         <div style="font-size:12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;color:#262522;line-height:1.8;text-align:center;">
                           <p style="margin:0;font-size:18px;line-height:1.5;">
                             Want to learn more about Pneumatic features?<br>
-                            <a href="#" style="color:#ffc107;text-decoration:underline;">Schedule</a> a free introductory call today!
+                            <a href="https://calendly.com/pneumatic/pneumatic-intro" style="color:#ffc107;text-decoration:underline;">Schedule</a> a free introductory call today!
                           </p>
                         </div>
                       </div>
@@ -250,7 +255,7 @@
                         <div class="" style="font-size:12px;font-family:'Helvetica Neue',Helvetica,Arial,sans-serif;mso-line-height-alt:21.6px;color:#262522;line-height:1.8">
                           <p style="margin:0;font-size:12px;mso-line-height-alt:28.8px">
                             <span style="font-size:16px;">
-                              <span style="">{{ additional_content }}</span>
+                              <span style="">{{ additional_content|safe }}</span>
                               <span style=""><br></span>
                             </span>
                           </p>

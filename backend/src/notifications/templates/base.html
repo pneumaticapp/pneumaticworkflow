@@ -132,12 +132,18 @@
   color: #62625f;
 }
 
+.dynamic-content {
+  margin: 0;
+  padding: 0;
+}
+
 .dynamic-content ul,
 .dynamic-content ol,
 .dynamic-content p {
       font-size: 16px;
   line-height: 19px;
   word-break: break-word;
+  margin-top: 0;
 }
 
 .dynamic-content img {
@@ -206,7 +212,7 @@
                                      target="_blank"
                                      style="outline:none"
                                      tabindex="-1">
-                                    <img src="{{ logo_lg }}"
+                                    <img src="{{ logo_lg|default:'https://www.pneumatic.app/images/logos/pneumatic.svg' }}"
                                          style="display:block;height:auto;border:0;width:160px;max-width:100%"
                                          width="160"
                                          alt="Pneumatic"

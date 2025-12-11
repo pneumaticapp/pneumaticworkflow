@@ -492,6 +492,7 @@ class EmailService(NotificationService):
             data={
                 'title': email_titles[NotificationMethod.user_deactivated],
                 'logo_lg': self.logo_lg,
+                'image_url': True,
             },
         )
 
@@ -595,6 +596,7 @@ class EmailService(NotificationService):
                 'button_text': 'Join Your Team',
                 'link': invite_link,
                 'logo_lg': self.logo_lg,
+                'is_invite': True,
             },
         )
 
