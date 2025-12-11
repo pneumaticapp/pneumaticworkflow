@@ -213,7 +213,7 @@ export function WorkflowsLayoutComponent({
     if (canFilterByTemplateStep(statusFilter)) {
       updateWorkflowsTemplateStepsCounters();
     }
-  }, [statusFilter, performersIdsFilter, workflowStartersIdsFilter]);
+  }, [statusFilter, performersIdsFilter, workflowStartersIdsFilter, stepsIdsFilter]);
 
   useEffect(() => {
     updateWorkflowStartersCounters();
