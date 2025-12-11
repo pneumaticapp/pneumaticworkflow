@@ -100,6 +100,7 @@ If you want to be accessing Pneumatic over the Internet and the machine you plan
   FRONTEND_DOMAIN=your-address
   BACKEND_DOMAIN=your-address
   FORM_DOMAIN=form.your-address
+  WSS_URL=ws://your-address:8001
 </pre>
 
 save the .env file and you're good to go.
