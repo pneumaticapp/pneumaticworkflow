@@ -66,6 +66,7 @@ class EmailService(NotificationService):
         NotificationMethod.user_deactivated,
         NotificationMethod.user_transfer,
         NotificationMethod.verification,
+        NotificationMethod.invite,
     }
 
     def _send_email_to_console(
@@ -568,6 +569,31 @@ class EmailService(NotificationService):
                 'token': token,
                 'link': verification_link,
                 'first_name': user_first_name,
+                'logo_lg': self.logo_lg,
+            },
+        )
+
+    def send_invite(
+        self,
+        user_id: int,
+        user_email: str,
+        token: str,
+        **kwargs,
+    ):
+        invite_link = (
+            f'{settings.FRONTEND_URL}/auth/signup/invite/?token={token}'
+        )
+
+        self._send(
+            title=str(messages.MSG_NF_0020),
+            user_id=user_id,
+            user_email=user_email,
+            template_code=EmailType.INVITE,
+            method_name=NotificationMethod.invite,
+            data={
+                'title': email_titles[NotificationMethod.invite],
+                'button_text': 'Join Your Team',
+                'link': invite_link,
                 'logo_lg': self.logo_lg,
             },
         )

@@ -187,7 +187,7 @@
                         </div>
                         
                         <!-- Tasks for Tasks Digest -->
-                        {% if template.tasks %}
+                        {% if is_tasks_digest and template.tasks %}
                         {% for task in template.tasks %}
                         <div style="margin-top: 16px; border-top: 1px solid #f0f0f0; padding-top: 16px;">
                           <div style="width:64%;display:inline-block;vertical-align:middle;">
