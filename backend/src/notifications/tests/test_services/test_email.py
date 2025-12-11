@@ -894,7 +894,6 @@ def test_send_unread_notifications__ok(mocker):
             'button_text': 'View Notifications',
             'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
-            'notifications_link': notifications_link,
             'link': notifications_link,
             'logo_lg': None,
         },
@@ -1128,7 +1127,7 @@ def test_send_reset_password__ok(mocker):
     # assert
     reset_password_token_mock.assert_called_once_with(recipient_id)
     reset_link = (
-        f'{settings.FRONTEND_URL}/auth/reset-password?token={token}'
+        f'{settings.FRONTEND_URL}/auth/reset-password/?token={token}'
     )
     send_mock.assert_called_once_with(
         title=str(messages.MSG_NF_0014),
@@ -1150,7 +1149,6 @@ def test_send_reset_password__ok(mocker):
             'button_text': 'Reset my password',
             'token': token,
             'link': reset_link,
-            'reset_link': reset_link,
             'logo_lg': logo_lg,
         },
     )
@@ -1253,6 +1251,7 @@ def test_send_user_deactivated_email__ok(mocker):
         template_code=EmailType.USER_DEACTIVATED,
         method_name=NotificationMethod.user_deactivated,
         data={
+            'image_url': True,
             'title': email_titles[NotificationMethod.user_deactivated],
             'logo_lg': logo_lg,
         },
@@ -1321,7 +1320,6 @@ def test_send_user_transfer_email__ok(mocker):
             'button_text': 'Transfer My Profile',
             'token': token,
             'link': transfer_link,
-            'transfer_link': transfer_link,
             'sender_name': invited_by_mock.get_full_name(),
             'company_name': invited_by_mock.account.name,
             'user_id': user_id,
@@ -1650,7 +1648,6 @@ def test_send_user_transfer_email__no_logo__ok(mocker):
             'button_text': 'Transfer My Profile',
             'token': token,
             'link': transfer_link,
-            'transfer_link': transfer_link,
             'sender_name': invited_by_mock.get_full_name(),
             'company_name': invited_by_mock.account.name,
             'user_id': user_id,

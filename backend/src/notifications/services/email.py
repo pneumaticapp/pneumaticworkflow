@@ -404,7 +404,6 @@ class EmailService(NotificationService):
                 'button_text': 'View Notifications',
                 'unsubscribe_token': unsubscribe_token,
                 'unsubscribe_link': unsubscribe_link,
-                'notifications_link': notifications_link,
                 'link': notifications_link,
                 'logo_lg': self.logo_lg,
             },
@@ -440,7 +439,6 @@ class EmailService(NotificationService):
                 'button_text': 'Reset my password',
                 'token': token,
                 'link': reset_link,
-                'reset_link': reset_link,
                 'logo_lg': self.logo_lg,
             },
         )
@@ -532,7 +530,6 @@ class EmailService(NotificationService):
                 'button_text': 'Transfer My Profile',
                 'token': token,
                 'link': transfer_link,
-                'transfer_link': transfer_link,
                 'sender_name': invited_by_name,
                 'company_name': company_name,
                 'user_id': user_id,
