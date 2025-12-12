@@ -313,7 +313,7 @@
   &:hover {
     color: var(--pneumatic-color-link-hover);
     border-color: var(--pneumatic-color-link-hover);
-    box-shadow: 0 0.8rem 24rem rgba(98, 98, 95, 0.08);
+    box-shadow: 0 0.8rem 24rem var(--pneumatic-color-black95);
   }
 }
 

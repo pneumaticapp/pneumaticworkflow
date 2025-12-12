@@ -20,7 +20,7 @@
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: red !important;
+  color: var(--pneumatic-color-red) !important;
 
   @media screen and (min-width: 576rem) {
     max-width: 10.5rem !important;
@@ -254,7 +254,7 @@
 }
 
 .dropdown-item-content__title {
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06rem;
   text-transform: uppercase;
   color: var(--pneumatic-color-black48);
 

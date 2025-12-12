@@ -8,7 +8,7 @@
   .tune-view-modal__header {
     margin-bottom: 2.6rem;
     flex-shrink: 0;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06rem;
     text-transform: uppercase;
     color: var(--pneumatic-color-white);
 
