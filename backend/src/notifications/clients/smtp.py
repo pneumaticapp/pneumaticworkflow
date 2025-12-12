@@ -114,16 +114,16 @@ class SMTPEmailClient(EmailClient):
     ) -> str:
         """Get default subject for template code."""
 
-        task_types_with_name = {
+        task_types_with_workflow_name = {
             EmailType.NEW_TASK,
             EmailType.TASK_RETURNED,
             EmailType.OVERDUE_TASK,
-            EmailType.GUEST_NEW_TASK,
         }
 
-        task_name = message_data.get('task_name', '')
-        if template_code in task_types_with_name and task_name:
-            return task_name
+        if template_code in task_types_with_workflow_name:
+            workflow_name = message_data.get('workflow_name', '')
+            if workflow_name:
+                return workflow_name
 
         subjects = {
             EmailType.NEW_TASK: 'New Task Assigned',
