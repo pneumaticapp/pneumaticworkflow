@@ -58,7 +58,7 @@ import { removeOutputFromLocalStorage } from '../../components/TaskCard/utils/st
 import { ETaskCardViewMode } from '../../components/TaskCard';
 import { deleteRemovedFilesFromFields } from '../../api/deleteRemovedFilesFromFields';
 import { TChannelAction } from '../tasks/saga';
-import { getCurrentTask, getTaskPerformers } from '../selectors/task';
+import { getCurrentTask, getTaskPerformers , getTaskStore } from '../selectors/task';
 import { addTaskPerformer } from '../../api/addTaskPerformer';
 import { removeTaskPerformer } from '../../api/removeTaskPerformer';
 import { addTaskPerformerGroup } from '../../api/addTaskPerformerGroup';
@@ -66,7 +66,7 @@ import { removeTaskPerformerGroup } from '../../api/removeTaskPerformerGroup';
 import { addTaskGuest } from '../../api/addTaskGuest';
 import { removeTaskGuest } from '../../api/removeTaskGuest';
 import { TUserListItem } from '../../types/user';
-import { getTaskStore } from '../selectors/workflows';
+
 import { EResponseStatuses } from '../../constants/defaultValues';
 import { getNormalizedTask, getTaskChecklist, getTaskChecklistItem } from '../../utils/tasks';
 import { markChecklistItem } from '../../api/markChecklistItem';

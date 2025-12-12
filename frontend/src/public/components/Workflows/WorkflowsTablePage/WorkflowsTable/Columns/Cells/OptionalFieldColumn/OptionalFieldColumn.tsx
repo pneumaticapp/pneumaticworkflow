@@ -3,7 +3,6 @@ import { useSelector } from 'react-redux';
 import { CellProps } from 'react-table';
 
 import { toDateString } from '../../../../../../../utils/dateTime';
-import { IApplicationState } from '../../../../../../../types/redux';
 import { TableColumns } from '../../../types';
 import { EExtraFieldType, ETaskPerformerType, ITableViewFields } from '../../../../../../../types/template';
 import { getUserById } from '../../../../../../UserData/utils/getUserById';
@@ -13,6 +12,9 @@ import { DocumentInfoIcon, ImageFileIcon } from '../../../../../../icons';
 import { urlWithProtocolRegex } from '../../../../../../../constants/defaultValues';
 
 import styles from './OptionalFieldColumn.css';
+import { getGroups } from '../../../../../../../redux/selectors/groups';
+import { getAccountsUsers } from '../../../../../../../redux/selectors/accounts';
+import { getTimezone } from '../../../../../../../redux/selectors/authUser';
 
 type TProps = React.PropsWithChildren<CellProps<TableColumns, ITableViewFields>>;
 
@@ -21,9 +23,9 @@ export function OptionalFieldColumn({ value }: TProps) {
     return null;
   }
 
-  const users = useSelector((state: IApplicationState) => state.accounts.users);
-  const groups = useSelector((state: IApplicationState) => state.groups.list);
-  const timezone = useSelector((state: IApplicationState) => state.authUser.timezone);
+  const users = useSelector(getAccountsUsers);
+  const groups = useSelector(getGroups);
+  const timezone = useSelector(getTimezone);
 
   const isUrl = (str: string) => {
     return urlWithProtocolRegex.test(str);
