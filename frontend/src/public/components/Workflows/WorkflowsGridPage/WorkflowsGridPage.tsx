@@ -3,28 +3,32 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
-import StickyBox from 'react-sticky-box';
 import { debounce } from 'throttle-debounce';
 
 import { Header } from '../../UI/Typeography/Header';
 import { isArrayWithItems } from '../../../utils/helpers';
-import { EPageTitle, NAVBAR_HEIGHT } from '../../../constants/defaultValues';
+import { EPageTitle } from '../../../constants/defaultValues';
 import { SearchLargeIcon, StartRoundIcon } from '../../icons';
 import { getTemplate } from '../../../api/getTemplate';
 import { getRunnableWorkflow } from '../../TemplateEdit/utils/getRunnableWorkflow';
 import { logger } from '../../../utils/logger';
 import { NotificationManager } from '../../UI/Notifications';
 import { getErrorMessage } from '../../../utils/getErrorMessage';
-import { InputField, Loader } from '../../UI';
+import {
+  InputField,
+  Loader,
+  //  Placeholder
+} from '../../UI';
 import { PageTitle } from '../../PageTitle/PageTitle';
 import { IWorkflowsProps } from '../types';
 import { EWorkflowsLoadingStatus } from '../../../types/workflow';
 
 import { WorkflowCardContainer } from './WorkflowCard';
 import { WorkflowCardLoader } from './WorkflowCardLoader';
-import { WorkflowsFiltersContainer } from './WorkflowsFilters';
 
 import styles from './WorkflowsGridPage.css';
+// import { createWorkflowsPlaceholderIcon } from '../WorkflowsPlaceholderIcon';
+// import { useCheckDevice } from '../../../hooks/useCheckDevice';
 
 const useSearchWithDebounce = (initialSearchText: string, onSearch: (query: string) => void, debounceTime = 800) => {
   const [searchQuery, setSearchQuery] = useState(initialSearchText);
@@ -65,15 +69,11 @@ export const WorkflowsGridPage = function Workflows({
   openSelectTemplateModal,
   openRunWorkflowModal,
   removeWorkflowFromList,
-  loadTemplatesTitles,
 }: IWorkflowsProps) {
   const { formatMessage } = useIntl();
   const { searchQuery, handleSearch } = useSearchWithDebounce(searchText, onSearch);
   const [isRunningNewWorkflow, setIsRunningNewWorkflow] = useState(false);
-
-  useEffect(() => {
-    loadTemplatesTitles();
-  }, []);
+  // const { isMobile } = useCheckDevice();
 
   React.useEffect(() => {
     if (workflowsLoadingStatus === EWorkflowsLoadingStatus.EmptyList && stepsIdsFilter.length) {
@@ -130,7 +130,7 @@ export const WorkflowsGridPage = function Workflows({
         className={classnames(styles['card-wrapper'], styles['run-workflow-card'])}
       >
         <Loader isLoading={isRunningNewWorkflow} />
-        <StartRoundIcon />
+
         <Header size="6" tag="p" className={styles['run-workflow-card__text']}>
           {templatesFilter.length !== 1
             ? formatMessage({ id: 'workflows.run-workflow' })
@@ -139,6 +139,12 @@ export const WorkflowsGridPage = function Workflows({
                 .join(', ')
                 .trim()}`}
         </Header>
+        {templatesFilter.length !== 1 && (
+          <div className={styles['run-workflow-card__extra-text']}>
+            {formatMessage({ id: 'workflows.run-workflow-extra-text' })}
+          </div>
+        )}
+        <StartRoundIcon className={styles['run-workflow-card__icon']} />
       </button>
     );
   };
@@ -166,6 +172,16 @@ export const WorkflowsGridPage = function Workflows({
         scrollableTarget="app-container"
       >
         {renderRunWorkflowButton()}
+        {/* {items.length !== 0 ? (
+          renderRunWorkflowButton()
+        ) : (
+          <Placeholder
+            title={formatMessage({ id: 'workflows.empty-placeholder-title' })}
+            description={formatMessage({ id: 'workflows.empty-placeholder-description' })}
+            Icon={() => createWorkflowsPlaceholderIcon(isMobile)}
+            containerClassName={styles['empty-list-placeholder-container']}
+          />
+        )} */}
         {items.map((item) => (
           <WorkflowCardContainer
             key={item.id}
@@ -181,13 +197,7 @@ export const WorkflowsGridPage = function Workflows({
 
   return (
     <div className={styles['container']}>
-      <div className={styles['filters']}>
-        <StickyBox offsetTop={NAVBAR_HEIGHT} offsetBottom={20}>
-          <PageTitle titleId={EPageTitle.Workflows} className={styles['title']} withUnderline={false} />
-          <WorkflowsFiltersContainer />
-        </StickyBox>
-      </div>
-
+      <PageTitle titleId={EPageTitle.Workflows} className={styles['title']} withUnderline={false} />
       <div className={styles['content']}>
         <div className={styles['search']}>
           <SearchLargeIcon className={styles['search__icon']} />

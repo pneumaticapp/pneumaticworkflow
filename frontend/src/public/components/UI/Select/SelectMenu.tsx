@@ -6,8 +6,10 @@ import { ExpandIcon } from '../../icons';
 import { IntlMessages } from '../../IntlMessages';
 
 import styles from './Select.css';
+import radioStyles from '../Fields/RadioButton/RadioButton.css';
 
 export interface ISelectMenuProps<T extends string> {
+  withRadio?: boolean;
   activeValue: T;
   values: T[];
   toggleClassName?: string;
@@ -35,6 +37,7 @@ export const SelectMenu = <T extends string>({
   onChange,
   Icon,
   isFromCheckIfConditions,
+  withRadio = false,
 }: ISelectMenuProps<T>) => {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const getIntlId = (value: T) => `sorting.${value}`;
@@ -87,7 +90,21 @@ export const SelectMenu = <T extends string>({
               })}
               onClick={handleClickItem(value)}
             >
-              <IntlMessages id={getIntlId(value)} />
+              {withRadio ? (
+                <span
+                  className={classnames(
+                    radioStyles['radio'],
+                    value === activeValue && radioStyles['select-menu__radio--checked'],
+                  )}
+                >
+                  <span className={radioStyles['radio__box']}></span>
+                  <span className={radioStyles['radio__title']}>
+                    <IntlMessages id={getIntlId(value)} />
+                  </span>
+                </span>
+              ) : (
+                <IntlMessages id={getIntlId(value)} />
+              )}
             </DropdownItem>
           );
         })}

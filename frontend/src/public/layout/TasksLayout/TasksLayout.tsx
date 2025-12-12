@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { matchPath } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
 import { TasksSortingContainer } from './TasksSortingContainer';
-import { loadWorkflowsList, TLoadTasksFilterStepsPayload } from '../../redux/actions';
+import { TLoadTasksFilterStepsPayload } from '../../redux/actions';
+import { loadWorkflowsList } from '../../redux/workflows/slice';
 import { TopNavContainer } from '../../components/TopNav';
 import { ERoutes } from '../../constants/routes';
 import { FilterIcon } from '../../components/icons';
@@ -18,7 +19,7 @@ import {
   ETaskListSorting,
   ITemplateStep,
 } from '../../types/tasks';
-import { ITemplateTitle } from '../../types/template';
+import { ITemplateTitleBaseWithCount } from '../../types/template';
 import { StepName } from '../../components/StepName';
 import { WorkflowModalContainer } from '../../components/Workflows/WorkflowModal';
 
@@ -28,7 +29,7 @@ export interface ITasksLayoutStoreProps {
   children?: React.ReactNode;
   isHasFilter: boolean;
   sorting: ETaskListSorting | ETaskListCompleteSorting;
-  filterTemplates: ITemplateTitle[];
+  filterTemplates: ITemplateTitleBaseWithCount[];
   filterSteps: ITemplateStep[];
   templateIdFilter: number | null;
   stepIdFilter: number | null;
@@ -68,6 +69,13 @@ export function TasksLayoutComponent({
 }: TTasksLayoutProps) {
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
+
+  const optionsWithoutCount = useMemo(() => {
+    return filterTemplates.map(({ id, name }) => ({
+      id,
+      name,
+    }));
+  }, [filterTemplates]);
 
   useEffect(() => {
     loadTasksFilterTemplates();
@@ -163,7 +171,7 @@ export function TasksLayoutComponent({
               noValueLabel={formatMessage({ id: 'sorting.all-templates' })}
               placeholderText={formatMessage({ id: 'sorting.no-template-found' })}
               selectedOption={templateIdFilter}
-              options={filterTemplates}
+              options={optionsWithoutCount}
               optionIdKey="id"
               optionLabelKey="name"
               onChange={setTasksFilterTemplate}
