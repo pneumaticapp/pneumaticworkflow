@@ -1,3 +1,0 @@
-Hey, {{name}}!
-
-You was successfully registered on Pneumatic. You can use this password to sign in: {{password}}.

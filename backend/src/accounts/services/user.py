@@ -32,7 +32,7 @@ from src.notifications.tasks import send_user_deleted_notification
 from src.processes.services.remove_user_from_draft import (
     remove_user_from_draft,
 )
-from src.services.email import EmailService
+from src.notifications.tasks import send_user_deactivated_notification
 
 UserModel = get_user_model()
 
@@ -202,7 +202,12 @@ class UserService(
 
     @classmethod
     def _deactivate_actions(cls, user: UserModel):
-        EmailService.send_user_deactivated_email(user=user)
+        send_user_deactivated_notification.delay(
+            user_id=user.id,
+            user_email=user.email,
+            account_id=user.account_id,
+            logo_lg=user.account.logo_lg,
+        )
 
     @classmethod
     def _validate_deactivate(cls, user):
