@@ -26,20 +26,20 @@ from src.utils.logging import (
 UserModel = get_user_model()
 
 
-class Auth0Service(BaseSSOService):
+class OktaService(BaseSSOService):
 
-    cache_key_prefix = 'auth0'
+    cache_key_prefix = 'okta_flow'
     cache_timeout = 600  # 10 min
-    source = SourceType.AUTH0
-    sso_provider = SSOProvider.AUTH0
-    exception_class = exceptions.Auth0ServiceException
+    source = SourceType.OKTA
+    sso_provider = SSOProvider.OKTA
+    exception_class = exceptions.OktaServiceException
 
     def __init__(
         self,
         domain: Optional[str] = None,
     ):
         super().__init__(domain)
-        self.scope = 'openid email profile offline_access'
+        self.scope = 'openid email profile'
 
     def _get_config_by_domain(self, domain: str) -> SSOConfigData:
         try:
@@ -52,7 +52,7 @@ class Auth0Service(BaseSSOService):
                 client_id=sso_config.client_id,
                 client_secret=sso_config.client_secret,
                 domain=sso_config.domain,
-                redirect_uri=settings.AUTH0_REDIRECT_URI,
+                redirect_uri=settings.OKTA_REDIRECT_URI,
             )
         except SSOConfig.DoesNotExist as exc:
             capture_sentry_message(
@@ -62,61 +62,60 @@ class Auth0Service(BaseSSOService):
             raise self.exception_class(MSG_AU_0018(domain)) from exc
 
     def _get_default_config(self) -> Optional[SSOConfigData]:
-        if not settings.AUTH0_CLIENT_SECRET:
+        if not settings.OKTA_CLIENT_SECRET:
             return None
         return SSOConfigData(
-            client_id=settings.AUTH0_CLIENT_ID,
-            client_secret=settings.AUTH0_CLIENT_SECRET,
-            domain=settings.AUTH0_DOMAIN,
-            redirect_uri=settings.AUTH0_REDIRECT_URI,
+            client_id=settings.OKTA_CLIENT_ID,
+            client_secret=settings.OKTA_CLIENT_SECRET,
+            domain=settings.OKTA_DOMAIN,
+            redirect_uri=settings.OKTA_REDIRECT_URI,
         )
 
     def _get_first_access_token(self, code: str, state: str) -> str:
-
         """
-        Receive an access token for the first time on an authorization flow
+        Gets access token during initial authorization
 
-        Example success response:
+        Example successful response:
         {
-           "access_token": "eyJz93a...k4laUWw",
-           "refresh_token": "GEbRxBN...edjnXbL",
-           "id_token": "eyJ0XAi...4faeEoQ",
-           "token_type": "Bearer",
-           "expires_in": 86400
+            "token_type": "Bearer",
+            "expires_in": 3600,
+            "access_token": "eyJraWQiOiJYa2pXdjMzTDRBYU1ZSzNGM...",
+            "scope": "openid email profile",
+            "id_token": "eyJraWQiOiJYa2pXdjMzTDRBYU1ZSzNGM..."
         }
 
-        Example bad response: 403
+        Example error:
         {
-            'error': 'invalid_grant',
-            'error_description': 'Invalid authorization code'
+            "error": "invalid_grant",
+            "error_description": "Authorization code invalid or has expired."
         }
         """
 
-        cached_state = self._get_cache(key=state)
-        if not cached_state:
+        code_verifier = self._get_cache(key=state)
+        if not code_verifier:
             raise exceptions.TokenInvalidOrExpired
         try:
             response = requests.post(
-                f'https://{self.config.domain}/oauth/token',
+                f'https://{self.config.domain}/oauth2/default/v1/token',
                 data={
                     'grant_type': 'authorization_code',
                     'client_id': self.config.client_id,
                     'client_secret': self.config.client_secret,
                     'code': code,
                     'redirect_uri': self.config.redirect_uri,
+                    'code_verifier': code_verifier,
                 },
                 timeout=10,
             )
         except requests.RequestException as ex:
             capture_sentry_message(
-                message=f'Get Auth0 access token return an error: {ex}',
+                message=f'Get Okta access token return an error: {ex}',
                 level=SentryLogLevel.ERROR,
             )
             raise exceptions.TokenInvalidOrExpired from ex
-
         if not response.ok:
             capture_sentry_message(
-                message='Get Auth0 access token failed',
+                message='Get Okta access token failed',
                 data={
                     'status_code': response.status_code,
                     'response': response.text,
@@ -125,23 +124,22 @@ class Auth0Service(BaseSSOService):
             )
             raise exceptions.TokenInvalidOrExpired
         self.tokens = response.json()
-        return self.tokens["access_token"]
+        return self.tokens['access_token']
 
     def _get_user_profile(self, access_token: str) -> dict:
-
         """
         Response example:
         {
-            'sub': 'google-oauth2|114320...',
-            'given_name': 'Azat',
-            'family_name': 'Zakirov',
-            'nickname': 'azat.zakirov',
-            'name': 'Azat Zakirov',
-            'picture': 'https://lh3.googlCK0yz_=s96-c',
-            'locale': 'en',
-            'updated_at': '2024-01-16T16:00:59.519Z',
-            'email': 'azat.zakirov@pneumatic.app',
-            'email_verified': True
+            "sub": "00uid4BxXw6I6TV4m0g3",
+            "name": "John Doe",
+            "locale": "en-US",
+            "email": "john.doe@example.com",
+            "preferred_username": "john.doe@example.com",
+            "given_name": "John",
+            "family_name": "Doe",
+            "zoneinfo": "America/Los_Angeles",
+            "updated_at": 1311280970,
+            "email_verified": true
         }
         """
 
@@ -150,19 +148,19 @@ class Auth0Service(BaseSSOService):
         if cached_profile:
             return cached_profile
 
-        url = f'https://{self.config.domain}/userinfo'
+        url = f'https://{self.config.domain}/oauth2/default/v1/userinfo'
         headers = {'Authorization': f'Bearer {access_token}'}
         try:
             response = requests.get(url, headers=headers, timeout=10)
         except requests.RequestException as ex:
             capture_sentry_message(
-                message=f'Auth0 user profile request failed: {ex}',
+                message=f'Okta user profile request failed: {ex}',
                 level=SentryLogLevel.ERROR,
             )
             raise exceptions.TokenInvalidOrExpired from ex
         if not response.ok:
             capture_sentry_message(
-                message='Auth0 user profile request failed',
+                message='Okta user profile request failed',
                 data={
                     'status_code': response.status_code,
                     'response': response.text,
@@ -178,20 +176,26 @@ class Auth0Service(BaseSSOService):
         state = str(uuid4())
         encrypted_domain = self.encrypt(self.config.domain)
         state = f"{state}{encrypted_domain}"
-        self._set_cache(value=True, key=state)
+        code_verifier, code_challenge = self._generate_pkce()
+        self._set_cache(value=code_verifier, key=state)
         query_params = {
             'client_id': self.config.client_id,
             'redirect_uri': self.config.redirect_uri,
             'scope': self.scope,
             'state': state,
+            'code_challenge': code_challenge,
+            'code_challenge_method': 'S256',
             'response_type': 'code',
+            'response_mode': 'query',
         }
 
         query = requests.compat.urlencode(query_params)
-        return f'https://{self.config.domain}/authorize?{query}'
+        return (
+            f'https://{self.config.domain}/oauth2/default/v1/authorize?{query}'
+        )
 
     def get_user_data(self, user_profile: dict) -> UserData:
-        """ Retrieve user details during signin / signup process """
+        """Retrieve user details during signin / signup process"""
         email = user_profile.get('email')
         if not email:
             raise exceptions.EmailNotExist(
@@ -199,31 +203,25 @@ class Auth0Service(BaseSSOService):
             )
         first_name = (
             user_profile.get('given_name') or
-            user_profile.get('name', '').split(' ')[0] or
             email.split('@')[0]
         )
-        last_name = (
-            user_profile.get('family_name') or
-            ' '.join(user_profile.get('name', '').split(' ')[1:])
-        )
-        job_title = user_profile.get('job_title')
-        photo = user_profile.get('picture')
+        last_name = user_profile.get('family_name', '')
+
         capture_sentry_message(
-            message=f'Auth0 user profile {email}',
+            message=f'Okta user profile {email}',
             data={
-                'photo': photo,
                 'first_name': first_name,
+                'last_name': last_name,
                 'user_profile': user_profile,
                 'email': email,
             },
             level=SentryLogLevel.INFO,
         )
+
         return UserData(
-            email=email,
+            email=email.lower(),
             first_name=first_name,
             last_name=last_name,
-            job_title=job_title,
-            photo=photo,
         )
 
     def save_tokens_for_user(self, user: UserModel):
@@ -232,7 +230,7 @@ class Auth0Service(BaseSSOService):
             user=user,
             defaults={
                 'expires_in': self.tokens['expires_in'],
-                'refresh_token': self.tokens['refresh_token'],
+                'refresh_token': '',
                 'access_token': self.tokens['access_token'],
             },
         )
@@ -245,7 +243,7 @@ class Auth0Service(BaseSSOService):
         user_ip: Optional[str] = None,
         **kwargs,
     ) -> Tuple[UserModel, PneumaticToken]:
-        """Authenticate user via Auth0 and auto-create user if needed"""
+        """Authenticate user via Okta and auto-create user if needed"""
         access_token = self._get_first_access_token(code, state)
         user_profile = self._get_user_profile(access_token)
         user_data = self.get_user_data(user_profile)
