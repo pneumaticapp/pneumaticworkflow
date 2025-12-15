@@ -629,7 +629,6 @@ class EmailService(NotificationService):
             'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'workflows_link': workflows_link,
-            'link': workflows_link,
             'logo_lg': self.logo_lg,
             'is_tasks_digest': False,
             'status_labels': {
@@ -689,7 +688,6 @@ class EmailService(NotificationService):
             'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'tasks_link': tasks_link,
-            'link': tasks_link,
             'logo_lg': self.logo_lg,
             'is_tasks_digest': True,
             'status_labels': {
