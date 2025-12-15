@@ -1,4 +1,3 @@
-/* eslint-disable indent */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useIntl } from 'react-intl';
@@ -14,11 +13,7 @@ import { getRunnableWorkflow } from '../../TemplateEdit/utils/getRunnableWorkflo
 import { logger } from '../../../utils/logger';
 import { NotificationManager } from '../../UI/Notifications';
 import { getErrorMessage } from '../../../utils/getErrorMessage';
-import {
-  InputField,
-  Loader,
-  //  Placeholder
-} from '../../UI';
+import { InputField, Loader } from '../../UI';
 import { PageTitle } from '../../PageTitle/PageTitle';
 import { IWorkflowsProps } from '../types';
 import { EWorkflowsLoadingStatus } from '../../../types/workflow';
@@ -27,8 +22,6 @@ import { WorkflowCardContainer } from './WorkflowCard';
 import { WorkflowCardLoader } from './WorkflowCardLoader';
 
 import styles from './WorkflowsGridPage.css';
-// import { createWorkflowsPlaceholderIcon } from '../WorkflowsPlaceholderIcon';
-// import { useCheckDevice } from '../../../hooks/useCheckDevice';
 
 const useSearchWithDebounce = (initialSearchText: string, onSearch: (query: string) => void, debounceTime = 800) => {
   const [searchQuery, setSearchQuery] = useState(initialSearchText);
@@ -73,7 +66,6 @@ export const WorkflowsGridPage = function Workflows({
   const { formatMessage } = useIntl();
   const { searchQuery, handleSearch } = useSearchWithDebounce(searchText, onSearch);
   const [isRunningNewWorkflow, setIsRunningNewWorkflow] = useState(false);
-  // const { isMobile } = useCheckDevice();
 
   React.useEffect(() => {
     if (workflowsLoadingStatus === EWorkflowsLoadingStatus.EmptyList && stepsIdsFilter.length) {
@@ -135,9 +127,9 @@ export const WorkflowsGridPage = function Workflows({
           {templatesFilter.length !== 1
             ? formatMessage({ id: 'workflows.run-workflow' })
             : `${formatMessage({ id: 'workflows.run-workflows' })} ${templatesFilter
-                .map((t) => t.name)
-                .join(', ')
-                .trim()}`}
+              .map((t) => t.name)
+              .join(', ')
+              .trim()}`}
         </Header>
         {templatesFilter.length !== 1 && (
           <div className={styles['run-workflow-card__extra-text']}>
@@ -172,16 +164,6 @@ export const WorkflowsGridPage = function Workflows({
         scrollableTarget="app-container"
       >
         {renderRunWorkflowButton()}
-        {/* {items.length !== 0 ? (
-          renderRunWorkflowButton()
-        ) : (
-          <Placeholder
-            title={formatMessage({ id: 'workflows.empty-placeholder-title' })}
-            description={formatMessage({ id: 'workflows.empty-placeholder-description' })}
-            Icon={() => createWorkflowsPlaceholderIcon(isMobile)}
-            containerClassName={styles['empty-list-placeholder-container']}
-          />
-        )} */}
         {items.map((item) => (
           <WorkflowCardContainer
             key={item.id}

@@ -1,4 +1,3 @@
-/* eslint-disable consistent-return */
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
@@ -26,7 +25,6 @@ import {
 } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable';
 import { WorkflowsTableProvider } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/WorkflowsTableContext';
 
-import { IApplicationState } from '../../types/redux';
 import { useCheckDevice } from '../../hooks/useCheckDevice';
 import { StarterFilterSelect } from './StarterFilterSelect';
 import { TemplateFilterSelect } from './TemplateFilterSelect';
@@ -35,6 +33,7 @@ import { TaskFilterSelect } from './TaskFilterSelect';
 import { checkFilterDependenciesChanged } from '../../utils/helpers';
 
 import styles from './WorkflowsLayout.css';
+import { getWorkflowsLoadingStatus } from '../../redux/selectors/workflows';
 
 export interface IWorkflowsLayoutComponentProps extends IWorkflowsFiltersProps {
   workflowId: number | null;
@@ -73,7 +72,7 @@ export function WorkflowsLayoutComponent({
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
   const { isMobile } = useCheckDevice();
-  const workflowsLoadingStatus = useSelector((state: IApplicationState) => state.workflows.workflowsLoadingStatus);
+  const workflowsLoadingStatus = useSelector(getWorkflowsLoadingStatus);
 
   const [isTableWiderThanScreen, setIsTableWiderThanScreen] = useState(false);
 
@@ -124,7 +123,7 @@ export function WorkflowsLayoutComponent({
 
   useEffect(() => {
     if (workflowsView !== EWorkflowsView.Table) {
-      return;
+      return undefined;
     }
 
     const checkWidth = () => {
@@ -134,25 +133,39 @@ export function WorkflowsLayoutComponent({
       }
     };
 
+    let observer: ResizeObserver | null = null;
+    let timeoutId: number | null = null;
+    let cancelled = false;
+
     const setupObserver = () => {
+      if (cancelled) return;
+
       if (!tableViewContainerRef.current?.element) {
-        setTimeout(setupObserver, 100);
+        timeoutId = window.setTimeout(setupObserver, 100);
         return;
       }
 
-      const observer = new ResizeObserver(checkWidth);
+      observer = new ResizeObserver(checkWidth);
       observer.observe(tableViewContainerRef.current.element);
 
       window.addEventListener('resize', checkWidth);
       checkWidth();
-
-      return () => {
-        window.removeEventListener('resize', checkWidth);
-        observer.disconnect();
-      };
     };
 
-    return setupObserver();
+    setupObserver();
+
+    return () => {
+      cancelled = true;
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
+
+      if (observer) {
+        observer.disconnect();
+      }
+
+      window.removeEventListener('resize', checkWidth);
+    };
   }, [workflowsView]);
 
   useEffect(() => {

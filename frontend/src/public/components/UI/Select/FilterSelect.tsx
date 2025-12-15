@@ -1,16 +1,15 @@
-/* eslint-disable */
 import React, { ChangeEvent, ReactNode, SVGAttributes, useState } from 'react';
 import classnames from 'classnames';
 import * as PerfectScrollbar from 'react-perfect-scrollbar';
 import { DropdownItem, DropdownMenu, DropdownToggle, Dropdown } from 'reactstrap';
 
+import OutsideClickHandler from 'react-outside-click-handler';
 import { ClearIcon, ExpandIcon } from '../../icons';
 import { isArrayWithItems } from '../../../utils/helpers';
-import { Skeleton } from '../../UI/Skeleton';
+import { Skeleton } from "../Skeleton";
 import { Checkbox, InputField } from '..';
 
 import styles from './Select.css';
-import OutsideClickHandler from 'react-outside-click-handler';
 
 const ScrollBar = PerfectScrollbar as unknown as Function;
 
@@ -100,8 +99,13 @@ export function FilterSelect<
     selectAllLabel,
     resetFilter,
     Icon,
+    isMultiple,
+    onChange,
+    selectedOptions,
+    selectedOption,
+    renderPlaceholder,
   } = props;
-  const allOptions = flatGroupedOptions ? flatGroupedOptions : options;
+  const allOptions = flatGroupedOptions || options;
   const [searchText, setSearchText] = useState('');
   const [isSelectAll, setIsSelectAll] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -118,21 +122,21 @@ export function FilterSelect<
 
     const optionId = option[optionIdKey];
 
-    if (!props.isMultiple) {
-      props.onChange(optionId);
+    if (!isMultiple) {
+      onChange(optionId);
 
       return;
     }
 
-    const newIsChecked = !props.selectedOptions.includes(optionId);
+    const newIsChecked = !selectedOptions.includes(optionId);
 
     const newSelectedOptions = newIsChecked
-      ? [...props.selectedOptions, optionId]
-      : props.selectedOptions.filter((selectedOption) => selectedOption !== optionId);
+      ? [...selectedOptions, optionId]
+      : selectedOptions.filter((selectedOptionElement) => selectedOptionElement !== optionId);
 
     const mapSelectedOption = allOptions.filter((item) => newSelectedOptions.includes(item[optionIdKey]));
 
-    props.onChange(newSelectedOptions, mapSelectedOption);
+    onChange(newSelectedOptions, mapSelectedOption);
   };
 
   const renderSearchInput = () => {
@@ -158,12 +162,12 @@ export function FilterSelect<
     );
   };
 
-  function getFilteredOptions(options: TOption[], normalizedSearchText: string): TOption[] {
+  function getFilteredOptions(optionsParam: TOption[], normalizedSearchText: string): TOption[] {
     if (!normalizedSearchText) {
-      return options;
+      return optionsParam;
     }
 
-    return options.filter((option) => {
+    return optionsParam.filter((option) => {
       if (option.searchByText) {
         return option.searchByText.toLowerCase().includes(normalizedSearchText);
       }
@@ -188,7 +192,7 @@ export function FilterSelect<
     }
 
     const filteredValues: (TOption | string)[] = [];
-
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     Array.from(groupedOptions.entries()).forEach(([_, group]) => {
       if (!searchText) {
         filteredValues.push(group.title, ...group.options);
@@ -233,14 +237,14 @@ export function FilterSelect<
     };
 
     const renderSelectAllOption = () => {
-      if (!props.isMultiple || !selectAllLabel) {
+      if (!isMultiple || !selectAllLabel) {
         return null;
       }
 
       const handleSelectAll = () => {
         if (!isSelectAll) {
           setIsSelectAll(true);
-          props.onChange(
+          onChange(
             allOptions.map((option) => option[optionIdKey]),
             allOptions,
           );
@@ -251,10 +255,10 @@ export function FilterSelect<
       };
 
       const areAllSelected =
-        props.isMultiple &&
-        Array.isArray(props.selectedOptions) &&
+        isMultiple &&
+        Array.isArray(selectedOptions) &&
         allOptions.length > 0 &&
-        props.selectedOptions.length === allOptions.length;
+        selectedOptions.length === allOptions.length;
 
       return (
         <DropdownItem
@@ -263,9 +267,6 @@ export function FilterSelect<
           toggle={false}
         >
           <Checkbox
-            // Required improvements:
-            //1. Clarify the desynchronization issue with the default
-            //2. Identical backend request when working with a checkbox
             checked={isSelectAll || areAllSelected}
             title={<span>{selectAllLabel}</span>}
             onClick={(e) => e.stopPropagation()}
@@ -280,7 +281,7 @@ export function FilterSelect<
 
     return (
       <>
-        {props.selectedOption && renderResetOption()}
+        {selectedOption !== null && renderResetOption()}
         {renderSelectAllOption()}
         {foundValues.map((option) => {
           let label: ReactNode | null = null;
@@ -304,11 +305,11 @@ export function FilterSelect<
               key={typeof option !== 'string' ? option[optionIdKey] : option}
               className={classnames('dropdown-item-sm', styles['value-item'])}
               onClick={typeof option !== 'string' ? handleChange(option) : () => {}}
-              toggle={!props.isMultiple}
+              toggle={!isMultiple}
             >
-              {props.isMultiple && typeof option !== 'string' ? (
+              {isMultiple && typeof option !== 'string' ? (
                 <Checkbox
-                  checked={props.selectedOptions.includes(option[optionIdKey])}
+                  checked={selectedOptions.includes(option[optionIdKey])}
                   title={label}
                   onClick={(e) => e.stopPropagation()}
                   onChange={() => {}}
@@ -370,9 +371,10 @@ export function FilterSelect<
           )}
         >
           {Icon && <Icon className={styles['icon']} />}
-          <span className={styles['active-value__text']}>{props.renderPlaceholder(allOptions)}</span>
-          {props.isMultiple && isArrayWithItems(props.selectedOptions) ? (
+          <span className={styles['active-value__text']}>{renderPlaceholder(allOptions)}</span>
+          {isMultiple && isArrayWithItems(selectedOptions) ? (
             <span
+              aria-label="Clear selected options"
               aria-disabled={!!isDisabled}
               onClick={(e) => {
                 if (isDisabled) {

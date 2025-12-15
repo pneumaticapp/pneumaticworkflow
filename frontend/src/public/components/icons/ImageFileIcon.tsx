@@ -1,4 +1,4 @@
-/* eslint-disable */
+/* eslint-disable max-len */
 import React from 'react';
 
 export function ImageFileIcon({ fill = '#FEC336', ...rest }: React.SVGAttributes<SVGElement>) {
