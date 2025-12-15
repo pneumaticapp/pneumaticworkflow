@@ -123,8 +123,8 @@ class TestSendDigest:
             user_id=user.id,
             user_email=user.email,
             account_id=user.account_id,
-            date_to=date_to - timedelta(days=1),
-            date_from=date_from,
+            date_to=(date_to - timedelta(days=1)).strftime('%d %b, %Y'),
+            date_from=date_from.strftime('%d %b'),
             digest={
                 'started': 3,
                 'in_progress': 3,
@@ -279,8 +279,8 @@ class TestSendDigest:
             user_id=user.id,
             user_email=user.email,
             account_id=user.account_id,
-            date_to=date_to - timedelta(days=1),
-            date_from=date_from,
+            date_to=(date_to - timedelta(days=1)).strftime('%d %b, %Y'),
+            date_from=date_from.strftime('%d %b'),
             digest={
                 'started': 1,
                 'in_progress': 1,
@@ -435,8 +435,8 @@ class TestSendDigest:
             user_id=user.id,
             user_email=user.email,
             account_id=user.account_id,
-            date_to=date_to - timedelta(days=1),
-            date_from=date_from,
+            date_to=(date_to - timedelta(days=1)).strftime('%d %b, %Y'),
+            date_from=date_from.strftime('%d %b'),
             digest={
                 'started': 2,
                 'in_progress': 2,
@@ -497,8 +497,8 @@ class TestSendDigest:
             user_id=user.id,
             user_email=user.email,
             account_id=user.account_id,
-            date_to=date_to - timedelta(days=1),
-            date_from=date_from,
+            date_to=(date_to - timedelta(days=1)).strftime('%d %b, %Y'),
+            date_from=date_from.strftime('%d %b'),
             digest={
                 'started': 2,
                 'in_progress': 2,
