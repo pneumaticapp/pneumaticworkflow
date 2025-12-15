@@ -5,13 +5,13 @@ from rest_framework.viewsets import GenericViewSet
 from src.analysis.mixins import BaseIdentifyMixin
 from src.authentication.permissions import SSOPermission
 from src.authentication.serializers import (
-    SSOTokenSerializer,
     AuthUriSerializer,
+    SSOTokenSerializer,
 )
-from src.authentication.services.auth0 import Auth0Service
 from src.authentication.services.exceptions import (
     AuthException,
 )
+from src.authentication.services.okta import OktaService
 from src.authentication.throttling import (
     SSOAuthUriThrottle,
     SSOTokenThrottle,
@@ -29,7 +29,7 @@ from src.utils.validation import raise_validation_error
 UserModel = get_user_model()
 
 
-class Auth0ViewSet(
+class OktaViewSet(
     AnonymousMixin,
     CustomViewSetMixin,
     BaseIdentifyMixin,
@@ -50,7 +50,7 @@ class Auth0ViewSet(
         slz = SSOTokenSerializer(data=request.GET)
         slz.is_valid(raise_exception=True)
         try:
-            service = Auth0Service(
+            service = OktaService(
                 domain=slz.validated_data.get('domain'),
             )
             user, token = service.authenticate_user(
@@ -69,7 +69,7 @@ class Auth0ViewSet(
         slz = AuthUriSerializer(data=request.GET)
         slz.is_valid(raise_exception=True)
         try:
-            service = Auth0Service(**slz.validated_data)
+            service = OktaService(**slz.validated_data)
             auth_uri = service.get_auth_uri()
         except AuthException as ex:
             raise_validation_error(message=ex.message)
@@ -81,7 +81,7 @@ class Auth0ViewSet(
     @action(methods=('GET',), detail=False)
     def logout(self, *args, **kwargs):
         capture_sentry_message(
-            message='Auth0 logout request',
+            message='Okta logout request',
             data=self.request.GET,
             level=SentryLogLevel.INFO,
         )
