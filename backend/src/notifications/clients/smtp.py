@@ -138,7 +138,7 @@ class SMTPEmailClient(EmailClient):
             EmailType.WORKFLOWS_DIGEST: 'Workflow Digest',
             EmailType.TASKS_DIGEST: 'Tasks Digest',
             EmailType.UNREAD_NOTIFICATIONS: 'Unread Notifications',
-            EmailType.INVITE: 'Join your team :busts_in_silhouette:',
+            EmailType.INVITE: 'Join your team 👥',
         }
 
         return subjects.get(template_code, f'Pneumatic - {template_code}')
