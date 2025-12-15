@@ -129,7 +129,6 @@ Deploying an instance of Pneumatic in production involves such steps as:
 
 - setting up SSL
 - setting up SSO
-- setting up AuthSSO
   
 These steps are described in detail in [this wiki article](https://github.com/pneumaticapp/pneumaticworkflow/wiki/Configuration)
 
