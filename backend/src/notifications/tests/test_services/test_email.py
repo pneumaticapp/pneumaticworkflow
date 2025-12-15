@@ -1393,8 +1393,8 @@ def test_send_workflows_digest_email__ok(mocker):
 
     logo_lg = 'https://digest-logo.jpg'
 
-    date_from = timezone.now().date() - timedelta(days=7)
-    date_to = timezone.now().date()
+    date_from = (timezone.now().date() - timedelta(days=7)).strftime('%d %b')
+    date_to = timezone.now().date().strftime('%d %b')
     digest_data = {
         'workflows_count': 5,
         'completed_workflows': 3,
@@ -1456,12 +1456,11 @@ def test_send_workflows_digest_email__ok(mocker):
         method_name=NotificationMethod.workflows_digest,
         data={
             'title': email_titles[NotificationMethod.workflows_digest],
-            'date_from': date_from.strftime('%d %b'),
-            'date_to': date_to.strftime('%d %b, %Y'),
+            'date_from': date_from,
+            'date_to': date_to,
             'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'workflows_link': workflows_link,
-            'link': workflows_link,
             'logo_lg': logo_lg,
             'is_tasks_digest': False,
             'status_labels': {
@@ -1495,8 +1494,8 @@ def test_send_tasks_digest_email__ok(mocker):
 
     logo_lg = 'https://tasks-logo.jpg'
 
-    date_from = timezone.now().date() - timedelta(days=7)
-    date_to = timezone.now().date()
+    date_from = (timezone.now().date() - timedelta(days=7)).strftime('%d %b')
+    date_to = timezone.now().date().strftime('%d %b')
     digest_data = {
         'tasks_count': 10,
         'completed_tasks': 7,
@@ -1557,12 +1556,11 @@ def test_send_tasks_digest_email__ok(mocker):
         method_name=NotificationMethod.tasks_digest,
         data={
             'title': email_titles[NotificationMethod.tasks_digest],
-            'date_from': date_from.strftime('%d %b'),
-            'date_to': date_to.strftime('%d %b, %Y'),
+            'date_from': date_from,
+            'date_to': date_to,
             'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'tasks_link': tasks_link,
-            'link': tasks_link,
             'logo_lg': logo_lg,
             'is_tasks_digest': True,
             'status_labels': {
@@ -1721,8 +1719,8 @@ def test_send_workflows_digest_email__empty_digest__ok(mocker):
 
     logo_lg = 'https://digest-logo.jpg'
 
-    date_from = timezone.now().date() - timedelta(days=7)
-    date_to = timezone.now().date()
+    date_from = (timezone.now().date() - timedelta(days=7)).strftime('%d %b')
+    date_to = timezone.now().date().strftime('%d %b')
     digest_data = {}
 
     unsubscribe_token = 'unsubscribe_token_123'
@@ -1775,12 +1773,11 @@ def test_send_workflows_digest_email__empty_digest__ok(mocker):
         method_name=NotificationMethod.workflows_digest,
         data={
             'title': email_titles[NotificationMethod.workflows_digest],
-            'date_from': date_from.strftime('%d %b'),
-            'date_to': date_to.strftime('%d %b, %Y'),
+            'date_from': date_from,
+            'date_to': date_to,
             'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'workflows_link': workflows_link,
-            'link': workflows_link,
             'logo_lg': logo_lg,
             'is_tasks_digest': False,
             'status_labels': {
@@ -1811,8 +1808,8 @@ def test_send_tasks_digest_email__empty_digest__ok(mocker):
 
     logo_lg = None
 
-    date_from = timezone.now().date() - timedelta(days=7)
-    date_to = timezone.now().date()
+    date_from = (timezone.now().date() - timedelta(days=7)).strftime('%d %b')
+    date_to = timezone.now().date().strftime('%d %b')
     digest_data = {}
 
     unsubscribe_token = 'tasks_unsubscribe_456'
@@ -1864,12 +1861,11 @@ def test_send_tasks_digest_email__empty_digest__ok(mocker):
         method_name=NotificationMethod.tasks_digest,
         data={
             'title': email_titles[NotificationMethod.tasks_digest],
-            'date_from': date_from.strftime('%d %b'),
-            'date_to': date_to.strftime('%d %b, %Y'),
+            'date_from': date_from,
+            'date_to': date_to,
             'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'tasks_link': tasks_link,
-            'link': tasks_link,
             'logo_lg': None,
             'is_tasks_digest': True,
             'status_labels': {
