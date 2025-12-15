@@ -8,7 +8,8 @@ const { api: { urls }} = getBrowserConfigEnv();
 export const OAUTH_URL_MAP: {[key in EOAuthType]: string} = {
   [EOAuthType.Microsoft]: urls.googleAuth,
   [EOAuthType.Google]: urls.googleAuth,
-  [EOAuthType.SSO]: urls.googleAuth,
+  [EOAuthType.SSOAuth0]: urls.googleAuth,
+  [EOAuthType.SSOOkta]: urls.googleAuth,
 };
 
 export function setOAuthRegistrationCompleted(id: string, type: EOAuthType) {
