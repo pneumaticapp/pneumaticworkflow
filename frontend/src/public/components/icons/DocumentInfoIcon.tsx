@@ -1,6 +1,5 @@
-/* eslint-disable */
-/* prettier-ignore */
-import * as React from 'react';
+/* eslint-disable max-len */
+import React from 'react';
 
 export type TDocumentInfoIconProps = React.SVGAttributes<SVGElement>;
 

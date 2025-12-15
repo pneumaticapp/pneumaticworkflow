@@ -1,6 +1,4 @@
-/* eslint-disable */
-/* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
@@ -71,7 +69,9 @@ export function TemplatesFilter({
     }
 
     const templatesToShow = templatesTitles.slice(0, MAX_SHOW_TEMPLATES);
-    const isSelectedWorkflowsHidden = selectedTemplates.some((id) => !templatesToShow.map(({ id }) => id).includes(id));
+    const isSelectedWorkflowsHidden = selectedTemplates.some(
+      (templateId) => !templatesToShow.map(({ id }) => id).includes(templateId),
+    );
 
     if (isSelectedWorkflowsHidden) {
       handleShowAll();
@@ -97,6 +97,7 @@ export function TemplatesFilter({
           placeholder={formatMessage({ id: 'process-highlights.search-workflows-placeholder' })}
           value={searchText}
           onChange={changeTemplatesSearchText}
+          // eslint-disable-next-line jsx-a11y/no-autofocus
           autoFocus
         />
       )}
@@ -117,9 +118,11 @@ export function TemplatesFilter({
       </div>
       {isShowAllVisibleState && (
         <button
+          type="button"
           className={classnames('mb-4', styles['filter__button-show-all'])}
           onClick={handleShowAll}
           disabled={isFiltersLoading}
+          aria-label={formatMessage({ id: 'process-highlights.show-all-workflows' })}
         >
           <IntlMessages id="process-highlights.show-all-workflows" />
         </button>

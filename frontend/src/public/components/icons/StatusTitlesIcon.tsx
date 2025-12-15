@@ -1,10 +1,9 @@
-/* eslint-disable */
-/* prettier-ignore */
-import * as React from 'react';
+/* eslint-disable max-len */
+import React from 'react';
 
 export type TStatusTitlesIconProps = React.SVGAttributes<SVGElement>;
 
-export function StatusTitlesIcon({ className, fill = 'currentColor', ...rest }: TStatusTitlesIconProps) {
+export function StatusTitlesIcon({ className }: TStatusTitlesIconProps) {
   return (
     <svg
       width="20"
