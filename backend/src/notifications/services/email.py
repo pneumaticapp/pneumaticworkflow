@@ -601,8 +601,8 @@ class EmailService(NotificationService):
         self,
         user_id: int,
         user_email: str,
-        date_from,
-        date_to,
+        date_from: str,
+        date_to: str,
         digest: Dict[str, Any],
         **kwargs,
     ):
@@ -624,8 +624,8 @@ class EmailService(NotificationService):
 
         data = {
             'title': email_titles[NotificationMethod.workflows_digest],
-            'date_from': date_from.strftime('%d %b'),
-            'date_to': date_to.strftime('%d %b, %Y'),
+            'date_from': date_from,
+            'date_to': date_to,
             'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'workflows_link': workflows_link,
@@ -660,8 +660,8 @@ class EmailService(NotificationService):
         self,
         user_id: int,
         user_email: str,
-        date_from,
-        date_to,
+        date_from: str,
+        date_to: str,
         digest: Dict[str, Any],
         **kwargs,
     ):
@@ -683,8 +683,8 @@ class EmailService(NotificationService):
 
         data = {
             'title': email_titles[NotificationMethod.tasks_digest],
-            'date_from': date_from.strftime('%d %b'),
-            'date_to': date_to.strftime('%d %b, %Y'),
+            'date_from': date_from,
+            'date_to': date_to,
             'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'tasks_link': tasks_link,

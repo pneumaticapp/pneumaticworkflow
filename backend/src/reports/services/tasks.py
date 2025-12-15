@@ -118,8 +118,11 @@ class SendTasksDigest(SendDigest):
                     user_id=user.id,
                     user_email=user.email,
                     account_id=user.account_id,
-                    date_from=self._date_from,
-                    date_to=self._date_to - timedelta(days=1),
+                    date_from=self._date_from.strftime('%d %b'),
+                    date_to=(
+                        (self._date_to - timedelta(days=1))
+                        .strftime('%d %b, %Y')
+                    ),
                     digest=asdict(digest),
                     logo_lg=user.account.logo_lg,
                 )

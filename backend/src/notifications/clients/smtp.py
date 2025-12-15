@@ -135,9 +135,11 @@ class SMTPEmailClient(EmailClient):
             EmailType.ACCOUNT_VERIFICATION: 'Account Verification',
             EmailType.USER_DEACTIVATED: 'Your account was deactivated',
             EmailType.USER_TRANSFER: 'Account Transfer',
-            EmailType.WORKFLOWS_DIGEST: 'Workflow Digest',
-            EmailType.TASKS_DIGEST: 'Tasks Digest',
-            EmailType.UNREAD_NOTIFICATIONS: 'Unread Notifications',
+            EmailType.WORKFLOWS_DIGEST: 'Workflows Weekly Digest',
+            EmailType.TASKS_DIGEST: 'Tasks Weekly Digest',
+            EmailType.UNREAD_NOTIFICATIONS: (
+                'You have unread notifications on Pneumatic'
+            ),
             EmailType.INVITE: 'Join your team 👥',
         }
 
