@@ -603,8 +603,7 @@ def test_list__inactive_users_from_another_acc_with_invite__ok(
     )
 
     mocker.patch(
-        'src.services.email.EmailService.'
-        'send_user_deactivated_email',
+        'src.notifications.tasks.send_user_deactivated_notification.delay',
     )
     api_client.token_authenticate(account_owner)
 

@@ -18,7 +18,7 @@ from src.reports.queries.workflows import (
 from src.reports.services.base import (
     SendDigest,
 )
-from src.services.email import EmailService
+from src.notifications.tasks import send_workflows_digest_notification
 
 UserModel = get_user_model()
 
@@ -72,10 +72,12 @@ class SendWorkflowsDigest(SendDigest):
         for user in users:
             digest = digests.get(user.id)
             if digest:
-                EmailService.send_workflows_digest_email(
-                    user=user,
-                    date_to=self._date_to - timedelta(days=1),  # Last Sunday
+                send_workflows_digest_notification.delay(
+                    user_id=user.id,
+                    user_email=user.email,
+                    account_id=user.account_id,
                     date_from=self._date_from,  # Last Monday
+                    date_to=self._date_to - timedelta(days=1),  # Last Sunday
                     digest=asdict(digest),
                     logo_lg=user.account.logo_lg,
                 )

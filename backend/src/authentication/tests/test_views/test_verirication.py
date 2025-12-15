@@ -166,8 +166,9 @@ class TestVerificationTokenResendView:
         account.is_verified = False
         account.save()
 
-        mailing_mock = mocker.patch(
-            'src.authentication.views.verification.EmailService',
+        send_verification_notification_mock = mocker.patch(
+            'src.authentication.views.verification.'
+            'send_verification_notification.delay',
         )
         api_client.token_authenticate(user)
 
@@ -175,7 +176,7 @@ class TestVerificationTokenResendView:
 
         assert response.status_code == 200
         assert response.data['email'] == user.email
-        mailing_mock.send_verification_email.assert_called()
+        send_verification_notification_mock.assert_called_once()
 
     def test_resend_mail__disable_verification__not_sent(
         self,
@@ -188,8 +189,9 @@ class TestVerificationTokenResendView:
         account.is_verified = False
         account.save()
 
-        mailing_mock = mocker.patch(
-            'src.authentication.views.verification.EmailService',
+        send_verification_notification_mock = mocker.patch(
+            'src.authentication.views.verification.'
+            'send_verification_notification.delay',
         )
 
         api_client.token_authenticate(user)
@@ -200,17 +202,18 @@ class TestVerificationTokenResendView:
         # assert
         assert response.status_code == 200
         assert response.data['email'] == user.email
-        mailing_mock.send_verification_email.assert_not_called()
+        send_verification_notification_mock.assert_not_called()
 
     def test_resend_already_verified(self, mocker, api_client):
 
         user = create_test_user(is_account_owner=True, is_admin=True)
-        mailing_mock = mocker.patch(
-            'src.authentication.views.verification.EmailService',
+        send_verification_notification_mock = mocker.patch(
+            'src.authentication.views.verification.'
+            'send_verification_notification.delay',
         )
         api_client.token_authenticate(user)
 
         response = api_client.post('/auth/resend-verification')
 
         assert response.status_code == 200
-        mailing_mock.send_verification_email.assert_not_called()
+        send_verification_notification_mock.assert_not_called()
