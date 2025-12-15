@@ -63,7 +63,7 @@ class SignUpMixin:
         language: Language.LITERALS = None,
         timezone: Optional[str] = None,
         password: Optional[str] = None,
-    ) -> Tuple[UserModel, PneumaticToken]:
+    ) -> UserModel:
 
         request = getattr(self, 'request', None)
         is_superuser = getattr(request, 'is_superuser', False)
@@ -88,16 +88,8 @@ class SignUpMixin:
             except UserServiceException as ex:
                 raise_validation_error(message=ex.message)
             else:
-                token = AuthService.get_auth_token(
-                    user=user,
-                    user_agent=request.headers.get(
-                        'User-Agent',
-                        request.META.get('HTTP_USER_AGENT'),
-                    ),
-                    user_ip=request.META.get('HTTP_X_REAL_IP'),
-                )
                 self.after_signup(user)
-                return user, token
+                return user
 
     def signup(
         self,

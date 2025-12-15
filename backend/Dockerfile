@@ -1,5 +1,13 @@
 FROM python:3.7.11-bullseye
 
+LABEL org.opencontainers.image.title="Pneumatic API" \
+      org.opencontainers.image.source="https://github.com/pneumaticapp/pneumaticworkflow/backend" \
+      org.opencontainers.image.url="https://www.pneumatic.app" \
+      org.opencontainers.image.authors="support@pneumatic.app" \
+      org.opencontainers.image.vendor="Pneumatic Software Inc." \
+      org.opencontainers.image.documentation="https://github.com/pneumaticapp/pneumaticworkflow/wiki" \
+      org.opencontainers.image.licenses="Apache-2.0"
+
 # Install Internationalization requirements
 RUN apt-get update && \
     apt-get -y install gettext

@@ -3,8 +3,16 @@ services:
   postgres:
     image: postgres:15-bookworm
     container_name: pneumatic-postgres
-    env_file:
-      - ./config/postgres.env
+    environment:
+      PGDATA: ${PGDATA:-var/lib/postgresql/data}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_password}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres_db}
+      POSTGRES_REPLICA_HOST: ${POSTGRES_REPLICA_HOST:-postgres}
+      POSTGRES_REPLICA_USER: ${POSTGRES_REPLICA_USER:-postgres_user}
+      POSTGRES_REPLICA_PASSWORD: ${POSTGRES_REPLICA_PASSWORD:-postgres_password}
+      POSTGRES_REPLICA_DB: ${POSTGRES_REPLICA_DB:-postgres_db}
     volumes:
       - ./postgres/data:/var/lib/postgresql/data:rw
       - ./postgres/backups:/backups:rw
@@ -24,7 +32,7 @@ services:
       --databases 16
       --dbfilename dump.rdb
       --dir /data
-      --requirepass redis_password
+      --requirepass ${REDIS_PASSWORD:-redis_password}
       --save 20 1 300 100 60 10000
     volumes:
       - ./redis/data:/data
@@ -44,8 +52,9 @@ services:
     volumes:
       - ./rabbitmq/data/:/var/lib/rabbitmq/
       - ./rabbitmq/log/:/var/log/rabbitmq
-    env_file:
-      - ./config/rabbitmq.env
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER:-rabbitmq_user}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD:-rabbitmq_password}
     networks:
       - pneumatic
 
@@ -57,11 +66,72 @@ services:
       sh -c "python manage.py migrate &&
              python manage.py collectstatic --no-input &&
              python manage.py compilemessages &&
-             gunicorn src.asgi:application --workers 2 -k uvicorn.workers.UvicornWorker --worker-tmp-dir /dev/shm --bind unix:/tmp/gunicorn/pneumatic-backend.sock --timeout 200"
-    env_file:
-      - ./config/project.env
-      - ./config/postgres.env
-      - ./config/backend.env
+             gunicorn src.asgi:application --workers ${WORKERS_COUNT:-2} -k uvicorn.workers.UvicornWorker --worker-tmp-dir /dev/shm --bind unix:/tmp/gunicorn/pneumatic-backend.sock --timeout 200"
+    environment:
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:8001}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      FORMS_URL: ${FORMS_URL:-http://form.localhost}
+      ENVIRONMENT: ${ENVIRONMENT:-Production}
+      LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru
+      CAPTCHA: ${CAPTCHA:-no}
+      ANALYTICS: ${ANALYTICS:-no}
+      BILLING: ${BILLING:-no}
+      SIGNUP: ${SIGNUP:-yes}
+      MS_AUTH: ${MS_AUTH:-no}
+      GOOGLE_AUTH: ${GOOGLE_AUTH:-no}
+      SSO_AUTH: ${SSO_AUTH:-no}
+      SSO_PROVIDER: ${SSO_PROVIDER} # Allowed values: okta, auth0
+      OKTA_DOMAIN: ${OKTA_DOMAIN}
+      OKTA_CLIENT_ID: ${OKTA_CLIENT_ID}
+      OKTA_CLIENT_SECRET: ${OKTA_CLIENT_SECRET}
+      OKTA_REDIRECT_URI: ${OKTA_REDIRECT_URI}
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
+      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+      AUTH0_REDIRECT_URI: ${AUTH0_REDIRECT_URI}
+      EMAIL: ${EMAIL:-no}           # Disable send emails
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER}
+      CIO_WEBHOOK_API_VERSION: ${CIO_WEBHOOK_API_VERSION}
+      CIO_WEBHOOK_API_KEY: ${CIO_WEBHOOK_API_KEY}
+      CIO_TRANSACTIONAL_API_KEY: ${CIO_TRANSACTIONAL_API_KEY}
+      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_PORT: ${EMAIL_PORT}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS}
+      EMAIL_USE_SSL: ${EMAIL_USE_SSL}
+      EMAIL_TIMEOUT: ${EMAIL_TIMEOUT}
+      AI: ${AI:-no}
+      AI_PROVIDER: ${AI_PROVIDER}
+      PUSH: ${PUSH:-no}
+      PUSH_PROVIDER: ${PUSH_PROVIDER}
+      STORAGE: ${STORAGE:-no}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER}
+      SENTRY_DSN: ${SENTRY_DSN}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_password}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres_db}
+      POSTGRES_REPLICA_HOST: ${POSTGRES_REPLICA_HOST:-postgres}
+      POSTGRES_REPLICA_USER: ${POSTGRES_REPLICA_USER:-postgres_user}
+      POSTGRES_REPLICA_PASSWORD: ${POSTGRES_REPLICA_PASSWORD:-postgres_password}
+      POSTGRES_REPLICA_DB: ${POSTGRES_REPLICA_DB:-postgres_db}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-no}
+      ADMIN_PATH: ${ADMIN_PATH:-admin}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
+      DJANGO_SETTINGS_MODULE: src.settings
+      AUTH_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/1"
+      CACHE_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/0"
+      CHANNELS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/2"
+      SESSION_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/3"
+      CELERY_BROKER_URL: "amqp://${RABBITMQ_USER:-rabbitmq_user}:${RABBITMQ_PASSWORD:-rabbitmq_password}@rabbitmq:5672"
+      ALLOWED_HOSTS: "pneumatic-nginx ${FRONTEND_DOMAIN:-localhost}"
+      VERIFICATION_CHECK: no
+      CORS_ORIGIN_ALLOW_ALL: no
+      CORS_ALLOW_CREDENTIALS: yes
+      CORS_ORIGIN_WHITELIST: "http://localhost:8000 ${FRONTEND_URL:-http://localhost}"
+      ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
+
     volumes:
       - ./backend:/pneumatic_backend
       - backend-socket:/tmp/gunicorn
@@ -83,10 +153,70 @@ services:
     build:
       context: ./backend
     container_name: pneumatic-celery
-    env_file:
-      - ./config/project.env
-      - ./config/postgres.env
-      - ./config/backend.env
+    environment:
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:8001}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      FORMS_URL: ${FORMS_URL:-http://form.localhost}
+      ENVIRONMENT: ${ENVIRONMENT:-Production}
+      LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru
+      CAPTCHA: ${CAPTCHA:-no}
+      ANALYTICS: ${ANALYTICS:-no}
+      BILLING: ${BILLING:-no}
+      SIGNUP: ${SIGNUP:-yes}
+      MS_AUTH: ${MS_AUTH:-no}
+      GOOGLE_AUTH: ${GOOGLE_AUTH:-no}
+      SSO_AUTH: ${SSO_AUTH:-no}
+      SSO_PROVIDER: ${SSO_PROVIDER} # Allowed values: okta, auth0
+      OKTA_DOMAIN: ${OKTA_DOMAIN}
+      OKTA_CLIENT_ID: ${OKTA_CLIENT_ID}
+      OKTA_CLIENT_SECRET: ${OKTA_CLIENT_SECRET}
+      OKTA_REDIRECT_URI: ${OKTA_REDIRECT_URI}
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
+      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+      AUTH0_REDIRECT_URI: ${AUTH0_REDIRECT_URI}
+      EMAIL: ${EMAIL:-no}           # Disable send emails
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER}
+      CIO_WEBHOOK_API_VERSION: ${CIO_WEBHOOK_API_VERSION}
+      CIO_WEBHOOK_API_KEY: ${CIO_WEBHOOK_API_KEY}
+      CIO_TRANSACTIONAL_API_KEY: ${CIO_TRANSACTIONAL_API_KEY}
+      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_PORT: ${EMAIL_PORT}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS}
+      EMAIL_USE_SSL: ${EMAIL_USE_SSL}
+      EMAIL_TIMEOUT: ${EMAIL_TIMEOUT}
+      AI: ${AI:-no}
+      AI_PROVIDER: ${AI_PROVIDER}
+      PUSH: ${PUSH:-no}
+      PUSH_PROVIDER: ${PUSH_PROVIDER}
+      STORAGE: ${STORAGE:-no}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER}
+      SENTRY_DSN: ${SENTRY_DSN}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_password}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres_db}
+      POSTGRES_REPLICA_HOST: ${POSTGRES_REPLICA_HOST:-postgres}
+      POSTGRES_REPLICA_USER: ${POSTGRES_REPLICA_USER:-postgres_user}
+      POSTGRES_REPLICA_PASSWORD: ${POSTGRES_REPLICA_PASSWORD:-postgres_password}
+      POSTGRES_REPLICA_DB: ${POSTGRES_REPLICA_DB:-postgres_db}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-no}
+      ADMIN_PATH: ${ADMIN_PATH:-admin}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
+      DJANGO_SETTINGS_MODULE: src.settings
+      AUTH_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/1"
+      CACHE_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/0"
+      CHANNELS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/2"
+      SESSION_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/3"
+      CELERY_BROKER_URL: "amqp://${RABBITMQ_USER:-rabbitmq_user}:${RABBITMQ_PASSWORD:-rabbitmq_password}@rabbitmq:5672"
+      ALLOWED_HOSTS: "pneumatic-nginx ${FRONTEND_DOMAIN:-localhost}"
+      VERIFICATION_CHECK: no
+      CORS_ORIGIN_ALLOW_ALL: no
+      CORS_ALLOW_CREDENTIALS: yes
+      CORS_ORIGIN_WHITELIST: "http://localhost:8000 ${FRONTEND_URL:-http://localhost}"
+      ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
     volumes:
       - ./backend:/pneumatic_backend
     command: >
@@ -103,10 +233,70 @@ services:
     build:
       context: ./backend
     container_name: pneumatic-celery-beat
-    env_file:
-      - ./config/project.env
-      - ./config/postgres.env
-      - ./config/backend.env
+    environment:
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:8001}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      FORMS_URL: ${FORMS_URL:-http://form.localhost}
+      ENVIRONMENT: ${ENVIRONMENT:-Production}
+      LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru
+      CAPTCHA: ${CAPTCHA:-no}
+      ANALYTICS: ${ANALYTICS:-no}
+      BILLING: ${BILLING:-no}
+      SIGNUP: ${SIGNUP:-yes}
+      MS_AUTH: ${MS_AUTH:-no}
+      GOOGLE_AUTH: ${GOOGLE_AUTH:-no}
+      SSO_AUTH: ${SSO_AUTH:-no}
+      SSO_PROVIDER: ${SSO_PROVIDER} # Allowed values: okta, auth0
+      OKTA_DOMAIN: ${OKTA_DOMAIN}
+      OKTA_CLIENT_ID: ${OKTA_CLIENT_ID}
+      OKTA_CLIENT_SECRET: ${OKTA_CLIENT_SECRET}
+      OKTA_REDIRECT_URI: ${OKTA_REDIRECT_URI}
+      AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
+      AUTH0_CLIENT_SECRET: ${AUTH0_CLIENT_SECRET}
+      AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+      AUTH0_REDIRECT_URI: ${AUTH0_REDIRECT_URI}
+      EMAIL: ${EMAIL:-no}           # Disable send emails
+      EMAIL_PROVIDER: ${EMAIL_PROVIDER}
+      CIO_WEBHOOK_API_VERSION: ${CIO_WEBHOOK_API_VERSION}
+      CIO_WEBHOOK_API_KEY: ${CIO_WEBHOOK_API_KEY}
+      CIO_TRANSACTIONAL_API_KEY: ${CIO_TRANSACTIONAL_API_KEY}
+      EMAIL_HOST: ${EMAIL_HOST}
+      EMAIL_PORT: ${EMAIL_PORT}
+      EMAIL_HOST_USER: ${EMAIL_HOST_USER}
+      EMAIL_HOST_PASSWORD: ${EMAIL_HOST_PASSWORD}
+      EMAIL_USE_TLS: ${EMAIL_USE_TLS}
+      EMAIL_USE_SSL: ${EMAIL_USE_SSL}
+      EMAIL_TIMEOUT: ${EMAIL_TIMEOUT}
+      AI: ${AI:-no}
+      AI_PROVIDER: ${AI_PROVIDER}
+      PUSH: ${PUSH:-no}
+      PUSH_PROVIDER: ${PUSH_PROVIDER}
+      STORAGE: ${STORAGE:-no}
+      STORAGE_PROVIDER: ${STORAGE_PROVIDER}
+      SENTRY_DSN: ${SENTRY_DSN}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_password}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres_db}
+      POSTGRES_REPLICA_HOST: ${POSTGRES_REPLICA_HOST:-postgres}
+      POSTGRES_REPLICA_USER: ${POSTGRES_REPLICA_USER:-postgres_user}
+      POSTGRES_REPLICA_PASSWORD: ${POSTGRES_REPLICA_PASSWORD:-postgres_password}
+      POSTGRES_REPLICA_DB: ${POSTGRES_REPLICA_DB:-postgres_db}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-no}
+      ADMIN_PATH: ${ADMIN_PATH:-admin}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
+      DJANGO_SETTINGS_MODULE: src.settings
+      AUTH_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/1"
+      CACHE_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/0"
+      CHANNELS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/2"
+      SESSION_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/3"
+      CELERY_BROKER_URL: "amqp://${RABBITMQ_USER:-rabbitmq_user}:${RABBITMQ_PASSWORD:-rabbitmq_password}@rabbitmq:5672"
+      ALLOWED_HOSTS: "pneumatic-nginx ${FRONTEND_DOMAIN:-localhost}"
+      VERIFICATION_CHECK: no
+      CORS_ORIGIN_ALLOW_ALL: no
+      CORS_ALLOW_CREDENTIALS: yes
+      CORS_ORIGIN_WHITELIST: "http://localhost:8000 ${FRONTEND_URL:-http://localhost}"
+      ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
     volumes:
       - ./backend:/pneumatic_backend
     command: celery --pidfile= --app src.celery_app:app beat -l warning -S django
@@ -122,18 +312,42 @@ services:
     build:
       context: ./frontend
     container_name: pneumatic-frontend
-    env_file:
-      - ./config/project.env
-      - ./config/frontend.env
+    environment:
+      BACKEND_PRIVATE_URL: ${BACKEND_PRIVATE_URL:-http://pneumatic-nginx/}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:8001}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      WSS_URL: ${WSS_URL:-ws://localhost:8001/}
+      FORM_DOMAIN: ${FORM_DOMAIN:-form.localhost}
+      MCS_RUN_ENV: ${MCS_RUN_ENV:-prod}
+      NODE_OPTIONS: ${NODE_OPTIONS:---max-old-space-size=3072}
+      LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru
+      CAPTCHA: ${CAPTCHA:-no}
+      ANALYTICS: ${ANALYTICS:-no}
+      BILLING: ${BILLING:-no}
+      SIGNUP: ${SIGNUP:-yes}
+      MS_AUTH: ${MS_AUTH:-no}
+      GOOGLE_AUTH: ${GOOGLE_AUTH:-no}
+      SSO_AUTH: ${SSO_AUTH:-no}
+      SSO_PROVIDER: ${SSO_PROVIDER} # Allowed values: okta, auth0
+      AI: ${AI:-no}
+      PUSH: ${PUSH:-no}
+      STORAGE: ${STORAGE:-no}
+      SENTRY_DSN: ${SENTRY_DSN}
+      FIREBASE_VAPID_KEY: ${FIREBASE_VAPID_KEY}
+      FIREBASE_API_KEY: ${FIREBASE_API_KEY}
+      FIREBASE_AUTH_DOMAIN: ${FIREBASE_AUTH_DOMAIN}
+      FIREBASE_PROJECT_ID: ${FIREBASE_PROJECT_ID}
+      FIREBASE_STORAGE_BUCKET: ${FIREBASE_STORAGE_BUCKET}
+      FIREBASE_SENDER_ID: ${FIREBASE_SENDER_ID}
+      FIREBASE_APP_ID: ${FIREBASE_APP_ID}
+      FIREBASE_MEASUREMENT_ID: ${FIREBASE_MEASUREMENT_ID}
+      RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY}
     command: >
       sh -c "
-        npm ci --legacy-peer-deps && 
         npm run build-client:prod && 
         pm2-runtime start pm2.json"
     expose:
       - 8000
-    volumes:
-      - ./frontend:/pneumatic_frontend
     networks:
       - pneumatic
     restart: always
@@ -141,16 +355,18 @@ services:
   nginx:
     image: nginx:1.25.4
     container_name: pneumatic-nginx
-    env_file:
-      - ./config/project.env
     environment:
-      - NGINX_ENVSUBST_OUTPUT_DIR=/etc/nginx/
-      - NGINX_ENVSUBST_TEMPLATE_DIR=/etc/nginx/templates
+      SSL: ${SSL:-no}
+      BACKEND_DOMAIN: ${BACKEND_DOMAIN:-localhost}
+      FRONTEND_DOMAIN: ${FRONTEND_DOMAIN:-localhost}
+      FORM_DOMAIN: ${FORM_DOMAIN:-form.localhost}
+      NGINX_ENVSUBST_OUTPUT_DIR: /etc/nginx/
+      NGINX_ENVSUBST_TEMPLATE_DIR: /etc/nginx/templates
     volumes:
       - ./nginx/logs/:/var/log/nginx/
       - ./nginx/keys/:/etc/keys/:ro
       - ./nginx/www/:/var/www/:ro
-      - ./nginx/templates/:/etc/nginx/templates
+      - ${NGINX_CONF_TEMPLATE:-./nginx/templates/}:/etc/nginx/templates
       - backend-socket:/tmp/gunicorn/
       - backend-staticfiles:/tmp/backend-staticfiles/
     ports:
