@@ -413,6 +413,7 @@ class MicrosoftAuthService(
                     'email': email,
                 },
             )
+
         # account exists if signin
         account = (
             Account.objects.filter(

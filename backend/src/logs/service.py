@@ -2,6 +2,7 @@ from typing import Optional
 
 from django.contrib.auth import get_user_model
 
+from src.accounts.enums import SourceType
 from src.generics.base.service import BaseModelService
 from src.logs.enums import (
     AccountEventStatus,
@@ -204,4 +205,23 @@ class AccountLogService(BaseModelService):
             user=user,
             account_id=user.account_id,
             response_data=data,
+        )
+
+    def signup(
+        self,
+        user: UserModel,
+        source: SourceType.LITERALS,
+    ):
+        """Log user signup with source information"""
+        self.create(
+            event_type=AccountEventType.AUTH,
+            title=f'User signed up via {source}',
+            status=AccountEventStatus.SUCCESS,
+            user_id=user.id,
+            account_id=user.account_id,
+            response_data={
+                'source': source,
+                'email': user.email,
+                'account_id': user.account_id,
+            },
         )
