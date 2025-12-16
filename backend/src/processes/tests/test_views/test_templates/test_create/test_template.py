@@ -3118,3 +3118,117 @@ def test_create__raw_performers_group__ok(
         type=PerformerType.GROUP,
         group=group,
     )
+
+
+def test_create__wf_name_template__with_workflow_id__ok(
+    mocker,
+    api_client,
+):
+
+    # arrange
+    template_create_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    kickoff_create_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    account = create_test_account()
+    user = create_test_user(account=account)
+    api_client.token_authenticate(user)
+    wf_name_template = '{{ template-name }} #{{ workflow-id }}'
+    request_data = {
+        'name': 'Template',
+        'wf_name_template': wf_name_template,
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id,
+            },
+        ],
+        'is_active': True,
+        'kickoff': {},
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'First step',
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
+    }
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    template = Template.objects.get(id=response.data['id'])
+    assert template.wf_name_template == wf_name_template
+    template_create_mock.assert_called_once()
+    kickoff_create_mock.assert_called_once()
+
+
+def test_create__wf_name_template__workflow_id_with_other_sys_vars__ok(
+    mocker,
+    api_client,
+):
+
+    # arrange
+    template_create_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    kickoff_create_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    account = create_test_account()
+    user = create_test_user(account=account)
+    api_client.token_authenticate(user)
+    wf_name_template = '{{ date }} - {{ template-name }} #{{ workflow-id }}'
+    request_data = {
+        'name': 'Template',
+        'wf_name_template': wf_name_template,
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id,
+            },
+        ],
+        'is_active': True,
+        'kickoff': {},
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'First step',
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
+    }
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    template = Template.objects.get(id=response.data['id'])
+    assert template.wf_name_template == wf_name_template
+    template_create_mock.assert_called_once()
+    kickoff_create_mock.assert_called_once()

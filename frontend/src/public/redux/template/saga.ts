@@ -150,7 +150,7 @@ function* fetchTemplateFromSystem({ payload: id }: TLoadTemplateFromSystem) {
     logger.info('fetch system template error : ', error);
     if (error && error.detail === 'Not found.') {
       history.replace(ERoutes.TemplatesCreate);
-      NotificationManager.error({ message: 'template.fetch-template-fail' });
+      NotificationManager.notifyApiError(error, { message: 'template.fetch-template-fail' });
     }
 
     yield put(setTemplateStatus(ETemplateStatus.LoadingFailed));
@@ -172,8 +172,7 @@ function* createOrUpdateTemplate(template: ITemplateRequest, isSubscribed: boole
     }
 
     logger.error('failed to save template:', error);
-
-    NotificationManager.error({
+    NotificationManager.notifyApiError(error, {
       title: 'template.save-failed',
       message: getErrorMessage(error),
       timeOut: 0,
@@ -310,8 +309,7 @@ function* generateAITemplateSaga(action: TGenerateAITemplate | TStopAITemplateGe
   } catch (error) {
     yield put(setAITemplateGenerationStatus('initial'));
     logger.error('failed to generate AI template:', error);
-
-    NotificationManager.error({ message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
     const cancel: CancelledEffect = yield cancelled();
     if (cancel) {

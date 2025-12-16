@@ -495,6 +495,7 @@ class TestWorkflowCountsByWorkflowStarter:
         task_2.taskperformer_set.all().delete()
         group_2 = create_test_group(
             account,
+            name='group 2',
             users=[group_user_2],
         )
         TaskPerformer.objects.create(

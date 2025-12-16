@@ -62,7 +62,7 @@ axiosInstance.interceptors.request.use(
   },
   (error) => {
     return Promise.reject(error);
-  }
+  },
 );
 
 axiosInstance.interceptors.response.use(
@@ -81,14 +81,16 @@ axiosInstance.interceptors.response.use(
       logger.error('Error:', error.message);
     }
 
-    return Promise.reject(error.response.data);
-  }
+    const data = error.response?.data;
+    const payload = typeof data === 'string' ? { error: data } : data ?? {};
+    return Promise.reject(Object.assign(new Error(), payload, { status: error.response?.status }));
+  },
 );
 
 export async function commonRequest<T>(
   rawUrl: string,
   params: Partial<AxiosRequestConfig> = {},
-  options: Partial<ICommonRequestOptions> = {}
+  options: Partial<ICommonRequestOptions> = {},
 ): Promise<T> {
   const {
     api: { publicUrl, urls },

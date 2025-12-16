@@ -116,7 +116,7 @@ def switch_user_avatars(
     ids = []
     with log_operation(user, log_title, account_id):
         for u in qst:
-            if u.photo.find(path_from) > -1:
+            if u.photo and u.photo.find(path_from) > -1:
                 u.photo = u.photo.replace(path_from, path_to)
                 u.save(update_fields=['photo'])
                 ids.append(u.id)
@@ -145,7 +145,7 @@ def switch_user_contacts(
     ids = []
     with log_operation(user, log_title, account_id):
         for contact in qst:
-            if contact.photo.find(path_from) > -1:
+            if contact.photo and contact.photo.find(path_from) > -1:
                 contact.photo = contact.photo.replace(path_from, path_to)
                 contact.save(update_fields=['photo'])
                 ids.append(contact.id)
@@ -174,7 +174,7 @@ def switch_groups(
     ids = []
     with log_operation(user, log_title, account_id):
         for group in qst:
-            if group.photo.find(path_from) > -1:
+            if group.photo and group.photo.find(path_from) > -1:
                 group.photo = group.photo.replace(path_from, path_to)
                 group.save(update_fields=['photo'])
                 ids.append(group.id)
@@ -205,7 +205,7 @@ def switch_attachments(
     with log_operation(user, log_title, account_id):
         for file in qst:
             processed = False
-            if file.url.find(path_from) > -1:
+            if file.url and file.url.find(path_from) > -1:
                 file.url = file.url.replace(path_from, path_to)
                 processed = True
             if file.thumbnail_url and file.thumbnail_url.find(path_from) > -1:
@@ -243,7 +243,10 @@ def switch_task_templates(
     ids = []
     with log_operation(user, log_title, account_id):
         for task_template in qst:
-            if task_template.description.find(path_from) > -1:
+            if (
+                task_template.description
+                and task_template.description.find(path_from) > -1
+            ):
                 task_template.description = task_template.description.replace(
                     path_from,
                     path_to,
@@ -275,7 +278,7 @@ def switch_tasks(
     ids = []
     with log_operation(user, log_title, account_id):
         for task in qst:
-            if task.description.find(path_from) > -1:
+            if task.description and task.description.find(path_from) > -1:
                 task.description = task.description.replace(path_from, path_to)
                 task.save(update_fields=['description'])
                 ids.append(task.id)
@@ -306,9 +309,13 @@ def switch_comments(
     ids = []
     with log_operation(user, log_title, account_id):
         for event in qst:
-            if event.text.find(path_from) > -1:
+            if event.text and event.text.find(path_from) > -1:
                 event.text = event.text.replace(path_from, path_to)
-                event.clear_text = event.clear_text.replace(path_from, path_to)
+                if event.clear_text:
+                    event.clear_text = event.clear_text.replace(
+                        path_from,
+                        path_to,
+                    )
                 event.save(update_fields=['text', 'clear_text'])
                 ids.append(event.id)
 
@@ -338,9 +345,13 @@ def switch_revert_events(
     ids = []
     with log_operation(user, log_title, account_id):
         for event in qst:
-            if event.text.find(path_from) > -1:
+            if event.text and event.text.find(path_from) > -1:
                 event.text = event.text.replace(path_from, path_to)
-                event.clear_text = event.clear_text.replace(path_from, path_to)
+                if event.clear_text:
+                    event.clear_text = event.clear_text.replace(
+                        path_from,
+                        path_to,
+                    )
                 event.save(update_fields=['text', 'clear_text'])
                 ids.append(event.id)
 
@@ -411,11 +422,14 @@ def switch_complete_task_events(
 
                 if field['type'] == FieldType.FILE:
                     for attach in (field.get('attachments') or []):
-                        if attach['url'].find(path_from) > -1:
+                        if (
+                            attach.get('url')
+                            and attach['url'].find(path_from) > -1
+                        ):
                             attach['url'] = (
                                 attach['url'].replace(path_from, path_to)
                             )
-                            if attach['thumbnail_url']:
+                            if attach.get('thumbnail_url'):
                                 attach['thumbnail_url'] = (
                                     attach['thumbnail_url'].replace(
                                         path_from,
@@ -496,10 +510,11 @@ def switch_fields(
                     path_from,
                     path_to,
                 )
-                field.clear_value = field.clear_value.replace(
-                    path_from,
-                    path_to,
-                )
+                if field.clear_value:
+                    field.clear_value = field.clear_value.replace(
+                        path_from,
+                        path_to,
+                    )
                 field.save(
                     update_fields=['value', 'markdown_value', 'clear_value'],
                 )
