@@ -7,6 +7,7 @@ from src.authentication.permissions import SSOPermission
 from src.authentication.serializers import (
     AuthUriSerializer,
     SSOTokenSerializer,
+    OktaLogoutSerializer,
 )
 from src.authentication.services.exceptions import (
     AuthException,
@@ -78,11 +79,16 @@ class OktaViewSet(
                 'auth_uri': auth_uri,
             })
 
-    @action(methods=('GET',), detail=False)
-    def logout(self, *args, **kwargs):
-        capture_sentry_message(
-            message='Okta logout request',
-            data=self.request.GET,
-            level=SentryLogLevel.INFO,
-        )
+    @action(methods=('POST',), detail=False)
+    def logout(self, request, *args, **kwargs):
+        slz = OktaLogoutSerializer(data=request.data)
+        if not slz.is_valid():
+            capture_sentry_message(
+                message='Invalid logout_token in Okta logout request',
+                data={'errors': slz.errors, 'data': dict(request.data)},
+                level=SentryLogLevel.WARNING,
+            )
+            return self.response_ok()
+        service = OktaService()
+        service.process_logout(**slz.validated_data)
         return self.response_ok()

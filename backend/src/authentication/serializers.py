@@ -362,3 +362,14 @@ class ChangePasswordSerializer(
         if not user:
             raise serializers.ValidationError(MSG_AU_0012)
         return value
+
+
+class OktaLogoutSerializer(
+    CustomValidationErrorMixin,
+    serializers.Serializer,
+):
+    logout_token = serializers.CharField(
+        required=True,
+        allow_null=False,
+        allow_blank=False,
+    )

@@ -1,9 +1,14 @@
+from base64 import urlsafe_b64decode
 from typing import Optional, Tuple
 from uuid import uuid4
 
+import jwt
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.cache import caches
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric import rsa
 
 from src.accounts.enums import SourceType
 from src.authentication.entities import UserData, SSOConfigData
@@ -225,6 +230,8 @@ class OktaService(BaseSSOService):
         )
 
     def save_tokens_for_user(self, user: UserModel):
+        """Save tokens and cache sub -> user mapping for GTR"""
+        # Save access token as usual
         AccessToken.objects.update_or_create(
             source=self.source,
             user=user,
@@ -234,6 +241,19 @@ class OktaService(BaseSSOService):
                 'access_token': self.tokens['access_token'],
             },
         )
+        # Extract okta_sub from ID token and cache sub -> user mapping
+        id_token = self.tokens.get('id_token')
+        if id_token:
+            try:
+                # Decode ID token without verification to get sub
+                id_payload = (
+                    jwt.decode(id_token, options={"verify_signature": False})
+                )
+                okta_sub = id_payload.get('sub')
+                if okta_sub:
+                    self._cache_user_by_sub(okta_sub, user)
+            except (jwt.DecodeError, jwt.InvalidTokenError, KeyError):
+                pass
 
     def authenticate_user(
         self,
@@ -252,3 +272,225 @@ class OktaService(BaseSSOService):
             user_agent=user_agent,
             user_ip=user_ip,
         )
+
+    def process_logout(self, logout_token: str):
+        """
+        Process OIDC Back-Channel Logout request from Okta.
+
+        According to OIDC specification:
+        - Validates JWT signature, issuer
+        - Uses sub (subject identifier) to find user
+        - Performs user logout
+
+        Args:
+            logout_token: JWT token from Okta
+        """
+        payload = self._decode_and_verify_logout_token(logout_token)
+        if not payload:
+            return
+        sub = payload.get('sub')
+        if not sub:
+            return
+        user = self._find_user_by_okta_sub(sub)
+        if not user:
+            return
+        self._logout_user(user, okta_sub=sub)
+
+    def _decode_and_verify_logout_token(self, token: str) -> Optional[dict]:
+        """
+        Decode and verify OIDC Back-Channel Logout Token.
+
+        Validates according to OIDC specification:
+        - JWT signature via JWKS
+        - Issuer (must be Okta domain)
+        - Token expiration
+
+        Args:
+            token: JWT logout token
+
+        Returns:
+            Optional[dict]: Validated payload or None on error
+        """
+        jwks = self._get_cached_jwks()
+        header = jwt.get_unverified_header(token)
+        kid = header.get('kid')
+        if not kid:
+            return None
+        public_key = self._get_public_key_from_jwks(jwks, kid)
+        if not public_key:
+            return None
+        try:
+            return jwt.decode(
+                token,
+                public_key,
+                algorithms=['RS256'],
+                issuer=f'https://{self.config.domain}',
+                options={
+                    'verify_signature': True,
+                    'verify_exp': True,
+                    'verify_iss': True,
+                    'verify_aud': False,
+                },
+            )
+        except jwt.InvalidTokenError:
+            return None
+
+    def _get_cached_jwks(self) -> Optional[dict]:
+        """
+        Get JWKS with caching for performance.
+
+        Returns:
+            Optional[dict]: JWKS from Okta or None on error
+        """
+        cache = caches['default']
+        cache_key = f'okta_jwks_{self.config.domain}'
+        jwks = cache.get(cache_key)
+        if jwks:
+            return jwks
+        jwks_url = f'https://{self.config.domain}/oauth2/default/v1/keys'
+        try:
+            response = requests.get(jwks_url, timeout=10)
+            response.raise_for_status()
+            jwks = response.json()
+            cache.set(cache_key, jwks, timeout=3600)
+            return jwks
+        except requests.RequestException:
+            return None
+
+    def _get_public_key_from_jwks(self, jwks: dict, kid: str) -> Optional[str]:
+        """
+        Extract public key from JWKS by kid.
+
+        Args:
+            jwks: JWKS from Okta
+            kid: Key ID from JWT header
+
+        Returns:
+            Optional[str]: PEM-encoded public key or None
+        """
+        for key_data in jwks.get('keys', []):
+            if key_data.get('kid') == kid and key_data.get('kty') == 'RSA':
+                try:
+                    return self._jwk_to_pem(key_data)
+                except (ValueError, KeyError, TypeError):
+                    pass
+        return None
+
+    def _jwk_to_pem(self, jwk_data: dict) -> str:
+        """
+        Convert JWK to PEM format.
+
+        Args:
+            jwk_data: JWK key data
+
+        Returns:
+            str: PEM-encoded public key
+        """
+
+        # Decode n and e from JWK
+        n = int.from_bytes(
+            urlsafe_b64decode(jwk_data['n'] + '=='),
+            byteorder='big',
+        )
+        e = int.from_bytes(
+            urlsafe_b64decode(jwk_data['e'] + '=='),
+            byteorder='big',
+        )
+
+        # Create RSA public key
+        public_key = rsa.RSAPublicNumbers(e, n).public_key()
+
+        # Convert to PEM
+        pem = public_key.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo,
+        )
+
+        return pem.decode('utf-8')
+
+    def _find_user_by_okta_sub(self, okta_sub: str) -> Optional[UserModel]:
+        """
+        Find user by Okta subject identifier via cache.
+
+        Args:
+            okta_sub: Okta subject identifier
+
+        Returns:
+            Optional[UserModel]: Found user or None
+        """
+        # Search in cache
+        user_id = self._get_cached_user_by_sub(okta_sub)
+        if user_id:
+            try:
+                return UserModel.objects.get(id=user_id)
+            except UserModel.DoesNotExist:
+                self._clear_cached_user_by_sub(okta_sub)
+        return None
+
+    def _cache_user_by_sub(self, okta_sub: str, user: UserModel):
+        """
+        Cache okta_sub -> user_id mapping.
+
+        Args:
+            okta_sub: Okta subject identifier
+            user: User instance
+        """
+        cache = caches['default']
+        cache_key = f'okta_sub_to_user_{okta_sub}'
+        cache.set(cache_key, user.id, timeout=2592000)
+
+    def _get_cached_user_by_sub(self, okta_sub: str) -> Optional[int]:
+        """
+        Get user_id from cache by okta_sub.
+
+        Args:
+            okta_sub: Okta subject identifier
+
+        Returns:
+            Optional[int]: user_id or None
+        """
+        cache = caches['default']
+        cache_key = f'okta_sub_to_user_{okta_sub}'
+        return cache.get(cache_key)
+
+    def _clear_cached_user_by_sub(self, okta_sub: str):
+        """
+        Clear cached okta_sub -> user_id mapping.
+
+        Args:
+            okta_sub: Okta subject identifier
+        """
+        cache = caches['default']
+        cache_key = f'okta_sub_to_user_{okta_sub}'
+        cache.delete(cache_key)
+
+    def _logout_user(self, user: UserModel, okta_sub: str):
+        """
+        Perform user logout:
+        - Delete AccessToken for OKTA source
+        - Clear token and profile cache
+        - Terminate session
+
+        Args:
+            user: User to logout
+            okta_sub: Okta subject identifier (for cache cleanup)
+        """
+        # Get access tokens before deletion for profile cache cleanup
+        access_tokens = list(AccessToken.objects.filter(
+            user=user,
+            source=self.source,
+        ).values_list('access_token', flat=True))
+        # Delete AccessToken for OKTA source
+        AccessToken.objects.filter(
+            user=user,
+            source=self.source,
+        ).delete()
+        # Clear user profile cache
+        for access_token in access_tokens:
+            cache_key = f'user_profile_{access_token}'
+            self._delete_cache(key=cache_key)
+        # Clear okta_sub -> user_id mapping cache
+        if okta_sub:
+            self._clear_cached_user_by_sub(okta_sub)
+        # Clear all tokens from cache (terminate all sessions)
+        PneumaticToken.expire_all_tokens(user)
