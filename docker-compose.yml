@@ -108,6 +108,7 @@ services:
       PUSH_PROVIDER: ${PUSH_PROVIDER}
       STORAGE: ${STORAGE:-no}
       STORAGE_PROVIDER: ${STORAGE_PROVIDER}
+      GOOGLE_APPLICATION_CREDENTIALS: /pneumatic_backend/google_api_credentials.json
       SENTRY_DSN: ${SENTRY_DSN}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
@@ -194,6 +195,7 @@ services:
       PUSH_PROVIDER: ${PUSH_PROVIDER}
       STORAGE: ${STORAGE:-no}
       STORAGE_PROVIDER: ${STORAGE_PROVIDER}
+      GOOGLE_APPLICATION_CREDENTIALS: /pneumatic_backend/google_api_credentials.json
       SENTRY_DSN: ${SENTRY_DSN}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
@@ -275,6 +277,7 @@ services:
       PUSH_PROVIDER: ${PUSH_PROVIDER}
       STORAGE: ${STORAGE:-no}
       STORAGE_PROVIDER: ${STORAGE_PROVIDER}
+      GOOGLE_APPLICATION_CREDENTIALS: /pneumatic_backend/google_api_credentials.json
       SENTRY_DSN: ${SENTRY_DSN}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}

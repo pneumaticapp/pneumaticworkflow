@@ -73,8 +73,8 @@ You can grab your own copy of Pneumatic by cloning this repository and self-host
 * Git (optional, if you want to clone the repository)
 * Docker version 2.27 or above
 * Docker compose version 27.0 or above
-* At least 8GB of RAM
-* At least 50GB of diskspace
+* At least 8GB of RAM (recommended 16GB)
+* At least 50GB of diskspace(recommended 100GB)
 * Ports 80, 443, and 8001 must be open and not in use by any other process(like apache or nginx)
 
 
@@ -90,33 +90,20 @@ or, you can simply download the [project's master folder](https://github.com/pne
 ### Edit the configuration files if necessary
 
 
-If you want to be accessing Pneumatic over the Internet and the machine you plan to be running it on has an external IP address/domain name, you need to edit the  **project.env**, **frontend.env**, and **backend.env** files.
-
-In the **backend.env** file, add your machine's external address(IP or domain name) to these lines:
-<pre>
- ALLOWED_HOSTS=pneumatic-nginx localhost:8000 <strong>your-address</strong>:8000
- CORS_ORIGIN_WHITELIST=http://localhost:8000 http://<strong>your-address</strong>:8000
-</pre>
-In the **frontend.env**, replace all references to localhost with references to your machine's address. Specifically, you need to edit these lines:
- <pre>
- BACKEND_URL=http://<strong>your-address</strong>:8001/          
- WSS_URL=ws://<strong>your-address</strong>:8001/                
- FORM_DOMAIN=form.<strong>your-address</strong>                 
-</pre>
-And last, but not least, in the **project.env**, you also want to replace all references to localhost with your address:
+If you want to be accessing Pneumatic over the Internet and the machine you plan to be running it on has an external IP address/domain name, all you need to do is create an .env file in the root directory of the project (touch .env) and add these lines to it:
 
 <pre>
- BACKEND_URL=http://<strong>your-address</strong>:8001
- FRONTEND_URL=http://<strong>your-address</strong>
- FORMS_URL=http://form.<strong>your-address</strong>
- WSS_URL=ws://<strong>your-address</strong>:8001
- BACKEND_DOMAIN=<strong>your-address</strong>
- FRONTEND_DOMAIN=<strong>your-address</strong>
+  # Without SSL
+  BACKEND_URL=http://your-address:8001
+  FRONTEND_URL=http://your-address
+  FORMS_URL=http://form.your-address
+  FRONTEND_DOMAIN=your-address
+  BACKEND_DOMAIN=your-address
+  FORM_DOMAIN=form.your-address
+  WSS_URL=ws://your-address:8001
 </pre>
-In backend.env you need to add your machine's address, whereas in frontend.env and project.env you can just find-and-replace localhost with your machine's addresss.
 
-Note that in this context, your machine's address can be your domain name or the IP address of your server.
-
+save the .env file and you're good to go.
 
 ### Run Pneumatic
 
@@ -136,7 +123,7 @@ But you can almost immediately check that your backend is up by going to `http:/
 
 Once the containers are up and running go to http://your-server-address (http://localhost if you're connecting from the same machine) in your browser, register a free account and you're good to go.
 
-
+For more information about how to deploy Pneumatic in production see [Configuration](https://github.com/pneumaticapp/pneumaticworkflow/wiki/Configuration)
 
 ## License
 

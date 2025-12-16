@@ -16,7 +16,8 @@ export enum ERoutes {
 
   OAuthGoogle = '/oauth/google/',
   OAuthMicrosoft = '/oauth/microsoft/',
-  OAuthSSO = '/oauth/auth0/',
+  OAuthSSOAuth0 = '/oauth/auth0/',
+  OAuthSSOOkta = '/oauth/okta/',
 
   CollectPaymentDetails = '/collect-payment-details',
   AfterPaymentDetailsProvided = '/after-payment-details-provided',

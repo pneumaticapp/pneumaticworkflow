@@ -12,11 +12,16 @@ import { ERoutes } from '../public/constants/routes';
 import { setPublicAuthCookie } from './utils/cookie';
 import { getUserPublic } from './middleware/utils/getUserPublic';
 import { mapToCamelCase } from '../public/utils/mappers';
+import { SSOProvider } from './types';
 
 const webpackConfig = require('../../webpack.config');
 
 const { NODE_ENV = 'development'} = process.env;
 const devMode = NODE_ENV !== 'production';
+
+const isSSOAuth = process.env.SSO_AUTH !== 'no';
+const envSSOProvider = process.env.SSO_PROVIDER;
+
 
 const {
   api: { urls },
@@ -90,13 +95,19 @@ export function initServer() {
 
     return null;
   });
+
   app.use(forwardForSubdomain([formSubdomain], formsRouter));
-
   app.get(ERoutes.AccountVerificationLink, verificateAccountMiddleware);
-
   app.get(ERoutes.OAuthGoogle, oAuthHandler(urls.getGoogleAuthUri, urls.getGoogleAuthToken));
   app.get(ERoutes.OAuthMicrosoft, oAuthHandler(urls.getMicrosoftAuthUri, urls.getMicrosoftAuthToken));
-  app.get(ERoutes.OAuthSSO, oAuthHandler(urls.getSSOAuthUri, urls.getSSOAuthToken));
+  
+  if (isSSOAuth && envSSOProvider === SSOProvider.Auth0) { 
+    app.get(ERoutes.OAuthSSOAuth0, oAuthHandler(urls.getSSOAuthUri, urls.getSSOAuthToken));
+  }
+
+  if (isSSOAuth && envSSOProvider === SSOProvider.Okta) {
+    app.get(ERoutes.OAuthSSOOkta, oAuthHandler(urls.getSSOOktaUri, urls.getSSOOktaToken));
+  }
 
   app.get('*', authMiddleware);
   app.get('*', mainHandler);

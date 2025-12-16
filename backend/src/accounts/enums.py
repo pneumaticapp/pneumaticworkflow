@@ -202,11 +202,14 @@ class SourceType:
     MICROSOFT = 'microsoft'
     GOOGLE = 'google'
     AUTH0 = 'auth0'
+    OKTA = 'okta'
 
     CHOICES = (
         (EMAIL, EMAIL),
         (MICROSOFT, MICROSOFT),
         (GOOGLE, GOOGLE),
+        (AUTH0, AUTH0),
+        (OKTA, OKTA),
     )
 
     LITERALS = Literal[
@@ -214,6 +217,7 @@ class SourceType:
         MICROSOFT,
         GOOGLE,
         AUTH0,
+        OKTA,
     ]
 
 
