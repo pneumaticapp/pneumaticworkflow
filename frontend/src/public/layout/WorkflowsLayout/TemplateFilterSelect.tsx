@@ -2,20 +2,18 @@ import React, { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 import { setFilterTemplate as setWorkflowsFilterTemplate } from '../../redux/workflows/slice';
-import { IApplicationState } from '../../types/redux';
 
 import { FilterSelect } from '../../components/UI';
 import { FilterIcon } from '../../components/icons';
 import { ERenderPlaceholderType, getRenderPlaceholder } from './utils';
 import styles from './WorkflowsLayout.css';
+import { getWorkflowTemplateListItems, getWorkflowTemplatesIdsFilter } from '../../redux/selectors/workflows';
 
 export function TemplateFilterSelect() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const { templatesIdsFilter } = useSelector((state: IApplicationState) => state.workflows.workflowsSettings.values);
-  const { items: filterTemplates } = useSelector(
-    (state: IApplicationState) => state.workflows.workflowsSettings.templateList,
-  );
+  const templatesIdsFilter = useSelector(getWorkflowTemplatesIdsFilter);
+  const filterTemplates = useSelector(getWorkflowTemplateListItems);
 
   const templatesOptions = useMemo(() => {
     return filterTemplates.map(({ count, ...rest }) => ({

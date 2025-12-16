@@ -93,7 +93,13 @@ import {
   EWorkflowsView,
 } from '../../types/workflow';
 import { ERoutes } from '../../constants/routes';
-import { getWorkflowsStore, getWorkflowsSearchText, getWorkflowsStatus, getTaskStore } from '../selectors/workflows';
+import {
+  getWorkflowsStore,
+  getWorkflowsSearchText,
+  getWorkflowsStatus,
+  getLastLoadedTemplateIdForTable,
+} from '../selectors/workflows';
+import { getTaskStore , getCurrentTask } from '../selectors/task';
 import { getEditKickoff, mapFilesToRequest } from '../../utils/workflows';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getWorkflows } from '../../api/getWorkflows';
@@ -101,7 +107,7 @@ import { getWorkflow } from '../../api/getWorkflow';
 import { getWorkflowLog } from '../../api/getWorkflowLog';
 import { returnWorkflowToTask } from '../../api/returnWorkflowToTask';
 import { history } from '../../utils/history';
-import { IApplicationState, IStoreTask, IStoreWorkflows } from '../../types/redux';
+import { IStoreTask, IStoreWorkflows } from '../../types/redux';
 import { logger } from '../../utils/logger';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { sendWorkflowComment } from '../../api/sendWorkflowComment';
@@ -146,7 +152,7 @@ import {
   getNormalizeOutputUsersToEmails,
 } from '../../utils/mappers';
 import { getUserTimezone, getAuthUser, getUsers } from '../selectors/user';
-import { getCurrentTask } from '../selectors/task';
+
 import { formatDateToISOInWorkflow, toTspDate } from '../../utils/dateTime';
 import { getWorkflowAddComputedPropsToRedux } from '../../components/Workflows/utils/getWorfkflowClientProperties';
 import { getTemplatePresets, TGetTemplatePresetsResponse } from '../../api/getTemplatePresets';
@@ -273,9 +279,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: PayloadAction<number>) {
   const currentTemplateId = templatesIdsFilter.length === 1 ? templatesIdsFilter[0] : null;
   const severalTemplateIds = templatesIdsFilter.length > 1 || templatesIdsFilter.length === 0;
 
-  const lastLoadedTemplateIdForTable: number | null = yield select(
-    (state: IApplicationState) => state.workflows.workflowsSettings.lastLoadedTemplateIdForTable,
-  );
+  const lastLoadedTemplateIdForTable: number | null = yield select(getLastLoadedTemplateIdForTable);
 
   const shouldGetAllDefaultFields = Boolean(view === EWorkflowsView.Table && offset === 0 && severalTemplateIds);
 

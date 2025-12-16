@@ -1,6 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
-/* tslint:disable:max-file-line-count */
 import classnames from 'classnames';
 import * as React from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
@@ -172,9 +169,9 @@ export function HighlightsFeed({
       setFilters({ timeRange: selectedTimeRange });
 
       if (selectedTimeRange !== EHighlightsDateFilter.Custom) {
-        const { startDate, endDate } = PROCESS_HIGHLIGHTS_DATE_RANGE_MAP[selectedTimeRange];
+        const { startDate: newStartDate, endDate: newEndDate } = PROCESS_HIGHLIGHTS_DATE_RANGE_MAP[selectedTimeRange];
 
-        setFilters({ startDate, endDate });
+        setFilters({ startDate: newStartDate, endDate: newEndDate });
       }
     },
     [timeRange],
@@ -199,9 +196,9 @@ export function HighlightsFeed({
 
   const [workflowLogWorkflowId, setWorkflowLogWorkflowId] = useState<number | null>(null);
   const handleOpenWorkflowLogPopup = useCallback(
-    (workflowId: number) => () => {
-      setWorkflowLogWorkflowId(workflowId);
-      openWorkflowLogPopup({ workflowId });
+    (workflowIdParam: number) => () => {
+      setWorkflowLogWorkflowId(workflowIdParam);
+      openWorkflowLogPopup({ workflowId: workflowIdParam });
     },
     [workflowLogWorkflowId],
   );
@@ -257,8 +254,8 @@ export function HighlightsFeed({
               startDate={startDate}
               selectedDateFilter={timeRange}
               changeSelectedDateFilter={handleChangeSelectedDateFilter}
-              changeEndDate={(endDate: Date) => setFilters({ endDate })}
-              changeStartDate={(startDate: Date) => setFilters({ startDate })}
+              changeEndDate={(newEndDate: Date) => setFilters({ endDate: newEndDate })}
+              changeStartDate={(newStartDate: Date) => setFilters({ startDate: newStartDate })}
             />
             <TemplatesFilter
               changeTemplatesSearchText={handleChangeTemplatesSearchText}

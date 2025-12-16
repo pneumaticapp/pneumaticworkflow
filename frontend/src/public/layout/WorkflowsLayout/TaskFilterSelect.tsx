@@ -1,18 +1,21 @@
 import React, { useMemo } from 'react';
 import { useIntl } from 'react-intl';
-
 import { useDispatch, useSelector } from 'react-redux';
-import { IApplicationState } from '../../types/redux';
 
 import styles from './WorkflowsLayout.css';
 import { setFilterTemplateSteps as setWorkflowsFilterSteps } from '../../redux/workflows/slice';
 import { FilterSelect, TOptionBase } from '../../components/UI';
 import { StepName } from '../../components/StepName';
 import { TaskFilterIcon } from '../../components/icons';
-import { EWorkflowsStatus, ITemplateFilterItem, TTemplateStepFilter } from '../../types/workflow';
+import { ITemplateFilterItem, TTemplateStepFilter } from '../../types/workflow';
 import { ERenderPlaceholderType, getRenderPlaceholder } from './utils';
 import { isArrayWithItems } from '../../utils/helpers';
 import { canFilterByTemplateStep } from '../../utils/workflows/filters';
+import {
+  getWorkflowsStatus,
+  getWorkflowStepsIdsFilter,
+  getWorkflowTemplatesIdsFilter,
+} from '../../redux/selectors/workflows';
 
 export interface IGroupedStepsValue<TOption extends TOptionBase<'id', 'name'>> {
   title: string;
@@ -26,15 +29,9 @@ export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITe
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
-  const {
-    stepsIdsFilter,
-    templatesIdsFilter,
-    statusFilter,
-  }: {
-    stepsIdsFilter: number[];
-    statusFilter: EWorkflowsStatus;
-    templatesIdsFilter: number[];
-  } = useSelector((state: IApplicationState) => state.workflows.workflowsSettings.values);
+  const stepsIdsFilter = useSelector(getWorkflowStepsIdsFilter);
+  const statusFilter = useSelector(getWorkflowsStatus);
+  const templatesIdsFilter = useSelector(getWorkflowTemplatesIdsFilter);
 
   const mustDisableFilter = !isArrayWithItems(templatesIdsFilter) || !canFilterByTemplateStep(statusFilter);
 

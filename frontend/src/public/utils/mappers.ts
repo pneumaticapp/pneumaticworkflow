@@ -1,4 +1,3 @@
-/* eslint-disable indent */
 import { IExtraField, IKickoff } from '../types/template';
 import { isArrayWithItems } from './helpers';
 import { IRunWorkflow } from '../components/WorkflowEditPopup/types';

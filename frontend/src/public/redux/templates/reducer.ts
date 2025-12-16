@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/default-param-last */
-/* eslint-disable no-param-reassign */
 import produce from 'immer';
 import { ITemplatesList, ITemplatesStore, ITemplatesSystem, ITemplatesSystemList } from '../../types/redux';
 import { ETemplatesActions, ETemplatesSystemStatus, TTemplatesActions } from './actions';

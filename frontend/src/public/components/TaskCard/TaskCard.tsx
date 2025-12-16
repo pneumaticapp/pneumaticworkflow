@@ -41,7 +41,7 @@ import {
 import { getEditedFields } from '../TemplateEdit/ExtraFields/utils/getEditedFields';
 import { IntlMessages } from '../IntlMessages';
 import { Button } from '../UI/Buttons/Button';
-import { IApplicationState, IAuthUser, IWorkflowLog } from '../../types/redux';
+import { IAuthUser, IWorkflowLog } from '../../types/redux';
 import { WorkflowLog } from '../Workflows/WorkflowLog';
 import { DoneInfoIcon, PlayLogoIcon, ReturnTaskInfoIcon, ReturnToIcon } from '../icons';
 import { WorkflowLogSkeleton } from '../Workflows/WorkflowLog/WorkflowLogSkeleton';
@@ -61,6 +61,7 @@ import UserDataWithGroup from '../UserDataWithGroup';
 
 import styles from './TaskCard.css';
 import { ReturnModal } from './ReturnModal';
+import { getGroups } from '../../redux/selectors/groups';
 
 export enum ETaskCardViewMode {
   Single = 'single',
@@ -123,7 +124,7 @@ export function TaskCard({
   const { formatMessage } = useIntl();
   const { isMobile } = useCheckDevice();
 
-  const groups = useSelector((state: IApplicationState) => state.groups.list);
+  const groups = useSelector(getGroups);
   const saveOutputsToStorageDebounced = debounce(300, addOrUpdateStorageOutput);
 
   const guestsControllerRef = useRef<React.ElementRef<typeof GuestController> | null>(null);
