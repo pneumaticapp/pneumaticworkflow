@@ -111,7 +111,7 @@ class OktaViewSet(
             )
             return self.response_ok()
         AccountLogService().send_ws_message(
-            account_id=None,
+            account_id=1,
             data={
                 'action': 'okta_logout_validation_success',
                 'validated_data': slz.validated_data,
