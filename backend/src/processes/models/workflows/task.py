@@ -580,8 +580,6 @@ class Task(
                 if self.due_date else None
             ),
             workflow_name=self.workflow.name,
-            # TODO Remove in https://my.pneumatic.app/workflows/36988/
-            template_task_id=self.workflow.template_id,
             template_task_api_name=self.api_name,
             template_id=self.workflow.template_id,
             is_urgent=self.is_urgent,
@@ -634,8 +632,6 @@ class TaskForList(
     date_completed = models.DateTimeField(null=True)
     date_completed_tsp = models.FloatField(null=True)
     template_id = models.IntegerField(null=True)
-    # TODO Remove in https://my.pneumatic.app/workflows/36988/
-    template_task_id = models.IntegerField(null=True)
     template_task_api_name = models.CharField(max_length=100, null=True)
     is_urgent = models.BooleanField()
     due_date = models.DateTimeField(null=True)

@@ -495,6 +495,7 @@ class TestWorkflowCountsByWorkflowStarter:
         task_2.taskperformer_set.all().delete()
         group_2 = create_test_group(
             account,
+            name='group 2',
             users=[group_user_2],
         )
         TaskPerformer.objects.create(
@@ -796,55 +797,6 @@ class TestWorkflowCountsByCPerformer:
         assert response.data[1]['source_id'] == user_2.id
         assert response.data[1]['workflows_count'] == 1
 
-    def test__filter__template_task_ids__ok(self, api_client):
-
-        # arrange
-        account = create_test_account()
-        user_1 = create_test_user(account=account, email='user1@test.test')
-        user_2 = create_test_user(account=account, email='user2@test.test')
-        template_1 = create_test_template(user_1, tasks_count=1)
-        template_task_1_1 = template_1.tasks.get(number=1)
-
-        template_2 = create_test_template(user_1, tasks_count=1)
-        template_3 = create_test_template(user_1, tasks_count=2)
-        template_task_3_1 = template_3.tasks.get(number=1)
-        template_task_3_1.add_raw_performer(user_2)
-        template_task_3_2 = template_3.tasks.get(number=2)
-
-        workflow_1 = create_test_workflow(
-            user_1,
-            template=template_1,
-            is_external=True,
-        )
-        workflow_1.owners.add(user_2)
-        workflow_2 = create_test_workflow(user_1, template=template_2)
-        workflow_2.owners.add(user_2)
-        workflow_3 = create_test_workflow(user_1, template=template_3)
-        workflow_3.owners.add(user_2)
-        api_client.token_authenticate(user_2)
-
-        template_task_api_names = (
-            f'{template_task_1_1.id},'
-            f'{template_task_3_1.id},'
-            f'{template_task_3_2.id}'
-        )
-
-        # act
-        response = api_client.get(
-            '/workflows/count/by-current-performer',
-            data={'template_task_ids': template_task_api_names},
-        )
-
-        # assert
-        assert response.status_code == 200
-        assert len(response.data) == 2
-        assert response.data[0]['type'] == 'user'
-        assert response.data[0]['source_id'] == user_1.id
-        assert response.data[0]['workflows_count'] == 2
-        assert response.data[1]['type'] == 'user'
-        assert response.data[1]['source_id'] == user_2.id
-        assert response.data[1]['workflows_count'] == 1
-
     def test__filter__workflow_starter_ids__ok(self, api_client):
 
         # arrange
@@ -1016,25 +968,16 @@ class TestWorkflowCountsByTemplateTask:
         # assert
         assert response.status_code == 200
         assert len(response.data) == 3
-        assert response.data[0]['template_task_id'] == template_task_1.id
         assert (
             response.data[0]['template_task_api_name'] ==
             template_task_1.api_name
         )
         assert response.data[0]['workflows_count'] == 2
         assert (
-            response.data[1]['template_task_id'] ==
-            template_task_2.id
-        )
-        assert (
             response.data[1]['template_task_api_name'] ==
             template_task_2.api_name
         )
         assert response.data[1]['workflows_count'] == 1
-        assert (
-            response.data[2]['template_task_id'] ==
-            template_task_3.id
-        )
         assert (
             response.data[2]['template_task_api_name'] ==
             template_task_3.api_name
@@ -1073,13 +1016,11 @@ class TestWorkflowCountsByTemplateTask:
         # assert
         assert response.status_code == 200
         assert len(response.data) == 2
-        assert response.data[0]['template_task_id'] == template_task_1.id
         assert (
             response.data[0]['template_task_api_name'] ==
             template_task_1.api_name
         )
         assert response.data[0]['workflows_count'] == 1
-        assert response.data[1]['template_task_id'] == template_task_2.id
         assert (
             response.data[1]['template_task_api_name'] ==
             template_task_2.api_name
@@ -1122,13 +1063,11 @@ class TestWorkflowCountsByTemplateTask:
         # assert
         assert response.status_code == 200
         assert len(response.data) == 2
-        assert response.data[0]['template_task_id'] == template_task_1.id
         assert (
             response.data[0]['template_task_api_name'] ==
             template_task_1.api_name
         )
         assert response.data[0]['workflows_count'] == 0
-        assert response.data[1]['template_task_id'] == template_task_2.id
         assert (
             response.data[1]['template_task_api_name'] ==
             template_task_2.api_name
@@ -1172,13 +1111,11 @@ class TestWorkflowCountsByTemplateTask:
         # assert
         assert response.status_code == 200
         assert len(response.data) == 2
-        assert response.data[0]['template_task_id'] == template_task_1.id
         assert (
             response.data[0]['template_task_api_name'] ==
             template_task_1.api_name
         )
         assert response.data[0]['workflows_count'] == 0
-        assert response.data[1]['template_task_id'] == template_task_2.id
         assert (
             response.data[1]['template_task_api_name'] ==
             template_task_2.api_name
@@ -1212,13 +1149,11 @@ class TestWorkflowCountsByTemplateTask:
         # assert
         assert response.status_code == 200
         assert len(response.data) == 2
-        assert response.data[0]['template_task_id'] == template_task_1.id
         assert (
             response.data[0]['template_task_api_name'] ==
             template_task_1.api_name
         )
         assert response.data[0]['workflows_count'] == 0
-        assert response.data[1]['template_task_id'] == template_task_2.id
         assert (
             response.data[1]['template_task_api_name'] ==
             template_task_2.api_name
@@ -1290,19 +1225,16 @@ class TestWorkflowCountsByTemplateTask:
         # assert
         assert response.status_code == 200
         assert len(response.data) == 3
-        assert response.data[0]['template_task_id'] == template_task_1.id
         assert (
             response.data[0]['template_task_api_name'] ==
             template_task_1.api_name
         )
         assert response.data[0]['workflows_count'] == 1
-        assert response.data[1]['template_task_id'] == template_task_31.id
         assert (
             response.data[1]['template_task_api_name'] ==
             template_task_31.api_name
         )
         assert response.data[1]['workflows_count'] == 0
-        assert response.data[2]['template_task_id'] == template_task_32.id
         assert (
             response.data[2]['template_task_api_name'] ==
             template_task_32.api_name
@@ -1368,25 +1300,21 @@ class TestWorkflowCountsByTemplateTask:
         assert response.status_code == 200
         assert len(response.data) == 4
         assert response.data[0]['workflows_count'] == 1
-        assert response.data[0]['template_task_id'] == template_task_1.id
         assert (
             response.data[0]['template_task_api_name'] ==
             template_task_1.api_name
         )
         assert response.data[1]['workflows_count'] == 0
-        assert response.data[1]['template_task_id'] == template_task_2_1.id
         assert (
             response.data[1]['template_task_api_name'] ==
             template_task_2_1.api_name
         )
         assert response.data[2]['workflows_count'] == 0
-        assert response.data[2]['template_task_id'] == template_task_2_2.id
         assert (
             response.data[2]['template_task_api_name'] ==
             template_task_2_2.api_name
         )
         assert response.data[3]['workflows_count'] == 1
-        assert response.data[3]['template_task_id'] == template_task_3.id
         assert (
             response.data[3]['template_task_api_name'] ==
             template_task_3.api_name
@@ -1452,25 +1380,21 @@ class TestWorkflowCountsByTemplateTask:
         assert response.status_code == 200
         assert len(response.data) == 4
         assert response.data[0]['workflows_count'] == 1
-        assert response.data[0]['template_task_id'] == template_task_1.id
         assert (
             response.data[0]['template_task_api_name'] ==
             template_task_1.api_name
         )
         assert response.data[1]['workflows_count'] == 0
-        assert response.data[1]['template_task_id'] == template_task_2_1.id
         assert (
             response.data[1]['template_task_api_name'] ==
             template_task_2_1.api_name
         )
         assert response.data[2]['workflows_count'] == 0
-        assert response.data[2]['template_task_id'] == template_task_2_2.id
         assert (
             response.data[2]['template_task_api_name'] ==
             template_task_2_2.api_name
         )
         assert response.data[3]['workflows_count'] == 0
-        assert response.data[3]['template_task_id'] == template_task_3.id
         assert (
             response.data[3]['template_task_api_name'] ==
             template_task_3.api_name
@@ -1537,25 +1461,21 @@ class TestWorkflowCountsByTemplateTask:
         assert response.status_code == 200
         assert len(response.data) == 4
         assert response.data[0]['workflows_count'] == 1
-        assert response.data[0]['template_task_id'] == template_task_1.id
         assert (
             response.data[0]['template_task_api_name'] ==
             template_task_1.api_name
         )
         assert response.data[1]['workflows_count'] == 0
-        assert response.data[1]['template_task_id'] == template_task_2_1.id
         assert (
             response.data[1]['template_task_api_name'] ==
             template_task_2_1.api_name
         )
         assert response.data[2]['workflows_count'] == 0
-        assert response.data[2]['template_task_id'] == template_task_2_2.id
         assert (
             response.data[2]['template_task_api_name'] ==
             template_task_2_2.api_name
         )
         assert response.data[3]['workflows_count'] == 1
-        assert response.data[3]['template_task_id'] == template_task_3.id
         assert (
             response.data[3]['template_task_api_name'] ==
             template_task_3.api_name
@@ -1622,25 +1542,21 @@ class TestWorkflowCountsByTemplateTask:
         assert response.status_code == 200
         assert len(response.data) == 4
         assert response.data[0]['workflows_count'] == 1
-        assert response.data[0]['template_task_id'] == template_task_1.id
         assert (
             response.data[0]['template_task_api_name'] ==
             template_task_1.api_name
         )
         assert response.data[1]['workflows_count'] == 0
-        assert response.data[1]['template_task_id'] == template_task_2_1.id
         assert (
             response.data[1]['template_task_api_name'] ==
             template_task_2_1.api_name
         )
         assert response.data[2]['workflows_count'] == 0
-        assert response.data[2]['template_task_id'] == template_task_2_2.id
         assert (
             response.data[2]['template_task_api_name'] ==
             template_task_2_2.api_name
         )
         assert response.data[3]['workflows_count'] == 1
-        assert response.data[3]['template_task_id'] == template_task_3.id
         assert (
             response.data[3]['template_task_api_name'] ==
             template_task_3.api_name
@@ -1788,19 +1704,16 @@ class TestWorkflowCountsByTemplateTask:
         # assert
         assert response.status_code == 200
         assert len(response.data) == 9
-        assert response.data[0]['template_task_id'] == template_task_1.id
         assert (
             response.data[0]['template_task_api_name'] ==
             template_task_1.api_name
         )
         assert response.data[0]['workflows_count'] == 1
-        assert response.data[1]['template_task_id'] == template_task_2.id
         assert (
             response.data[1]['template_task_api_name'] ==
             template_task_2.api_name
         )
         assert response.data[1]['workflows_count'] == 1
-        assert response.data[3]['template_task_id'] == template_task_21.id
         assert (
             response.data[3]['template_task_api_name'] ==
             template_task_21.api_name
@@ -1827,13 +1740,11 @@ class TestWorkflowCountsByTemplateTask:
         # assert
         assert response.status_code == 200
         assert len(response.data) == 2
-        assert response.data[0]['template_task_id'] == template_task_1.id
         assert (
             response.data[0]['template_task_api_name'] ==
             template_task_1.api_name
         )
         assert response.data[0]['workflows_count'] == 1
-        assert response.data[1]['template_task_id'] == template_task_2.id
         assert (
             response.data[1]['template_task_api_name'] ==
             template_task_2.api_name

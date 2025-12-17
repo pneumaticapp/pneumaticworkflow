@@ -70,8 +70,12 @@ You can grab your own copy of Pneumatic by cloning this repository and self-host
 
 ### Prerequisites
 * Operating System: Linux(Ubuntu/Debian), macOS or Windows(install and run at your own risk)
+* Git (optional, if you want to clone the repository)
 * Docker version 2.27 or above
 * Docker compose version 27.0 or above
+* At least 8GB of RAM (recommended 16GB)
+* At least 50GB of diskspace(recommended 100GB)
+* Ports 80, 443, and 8001 must be open and not in use by any other process(like apache or nginx)
 
 
 ### Get the files
@@ -83,6 +87,24 @@ git clone https://github.com/pneumaticapp/pneumaticworkflow.git
 ```
 or, you can simply download the [project's master folder](https://github.com/pneumaticapp/pneumaticworkflow/archive/refs/heads/master.zip) and unzip it
 
+### Edit the configuration files if necessary
+
+
+If you want to be accessing Pneumatic over the Internet and the machine you plan to be running it on has an external IP address/domain name, all you need to do is create an .env file in the root directory of the project (touch .env) and add these lines to it:
+
+<pre>
+  # Without SSL
+  BACKEND_URL=http://your-address:8001
+  FRONTEND_URL=http://your-address
+  FORMS_URL=http://form.your-address
+  FRONTEND_DOMAIN=your-address
+  BACKEND_DOMAIN=your-address
+  FORM_DOMAIN=form.your-address
+  WSS_URL=ws://your-address:8001
+</pre>
+
+save the .env file and you're good to go.
+
 ### Run Pneumatic
 
 To run Pneumatic cd into the project's directory and run the command
@@ -90,14 +112,18 @@ To run Pneumatic cd into the project's directory and run the command
 ```
 docker compose up -d
 ```
+This will run it in detached mode, if you want to see what's happening omit the -d flag.
 
 Alternatively, you can run the Pneumatic containers from Docker Desktop.
+
+Note, that the way it's currently configured, Pneumatic's frontend takes a while to get up and running.
+But you can almost immediately check that your backend is up by going to `http://your-address:8001/admin`
 
 ### Open Pneumatic and register a free account
 
 Once the containers are up and running go to http://your-server-address (http://localhost if you're connecting from the same machine) in your browser, register a free account and you're good to go.
 
-
+For more information about how to deploy Pneumatic in production see [Configuration](https://github.com/pneumaticapp/pneumaticworkflow/wiki/Configuration)
 
 ## License
 

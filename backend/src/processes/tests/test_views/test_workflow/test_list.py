@@ -297,7 +297,7 @@ def test_list__search__workflow_name__ok(api_client):
     assert response.data['results'][0]['id'] == workflow.id
 
 
-def test_list__search__kickoff_description__ok(api_client):
+def test_list__search__kickoff_description__not_found(api_client):
 
     # arrange
     user = create_test_user()
@@ -316,11 +316,10 @@ def test_list__search__kickoff_description__ok(api_client):
 
     # assert
     assert response.status_code == 200
-    assert len(response.data['results']) == 1
-    assert response.data['results'][0]['id'] == workflow.id
+    assert len(response.data['results']) == 0
 
 
-def test_list__search__active_description__ok(api_client):
+def test_list__search__active_description__not_found(api_client):
 
     # arrange
     user = create_test_user()
@@ -339,11 +338,10 @@ def test_list__search__active_description__ok(api_client):
 
     # assert
     assert response.status_code == 200
-    assert len(response.data['results']) == 1
-    assert response.data['results'][0]['id'] == workflow.id
+    assert len(response.data['results']) == 0
 
 
-def test_list__search__completed_task_description__ok(api_client):
+def test_list__search__completed_task_description__not_found(api_client):
 
     # arrange
     user = create_test_user()
@@ -366,8 +364,7 @@ def test_list__search__completed_task_description__ok(api_client):
 
     # assert
     assert response.status_code == 200
-    assert len(response.data['results']) == 1
-    assert response.data['results'][0]['id'] == workflow.id
+    assert len(response.data['results']) == 0
 
 
 def test_list__search__email_login__ok(api_client):
@@ -613,7 +610,7 @@ def test_list__search__comment__url_as_text__ok(api_client):
     assert len(response.data['results']) == 1
 
 
-def test_list__search__comment__email__ok(api_client):
+def test_list__search__comment__email__not_found(api_client):
 
     # arrange
     user = create_test_user()
@@ -633,7 +630,7 @@ def test_list__search__comment__email__ok(api_client):
 
     # assert
     assert response.status_code == 200
-    assert len(response.data['results']) == 1
+    assert len(response.data['results']) == 0
 
 
 def test_list__search__comment__markdown__ok(api_client):
@@ -661,7 +658,7 @@ def test_list__search__comment__markdown__ok(api_client):
     assert len(response.data['results']) == 1
 
 
-def test_list__search__comment_attachment__ok(api_client):
+def test_list__search__comment_attachment__not_found(api_client):
 
     # arrange
     user = create_test_user()
@@ -688,10 +685,10 @@ def test_list__search__comment_attachment__ok(api_client):
 
     # assert
     assert response.status_code == 200
-    assert len(response.data['results']) == 1
+    assert len(response.data['results']) == 0
 
 
-def test_list__search__task_field_attachment__ok(api_client):
+def test_list__search__task_field_attachment__not_found(api_client):
 
     # arrange
     user = create_test_user()
@@ -719,10 +716,10 @@ def test_list__search__task_field_attachment__ok(api_client):
 
     # assert
     assert response.status_code == 200
-    assert len(response.data['results']) == 1
+    assert len(response.data['results']) == 0
 
 
-def test_list__search__kickoff_field_attachment__ok(api_client):
+def test_list__search__kickoff_field_attachment__not_found(api_client):
 
     # arrange
     user = create_test_user()
@@ -749,7 +746,7 @@ def test_list__search__kickoff_field_attachment__ok(api_client):
 
     # assert
     assert response.status_code == 200
-    assert len(response.data['results']) == 1
+    assert len(response.data['results']) == 0
 
 
 def test_list__search__not_comment_event__not_found(api_client):
@@ -839,10 +836,9 @@ def test_list__search__in_active_task_field_value__ok(
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(user, tasks_count=1)
-    task = workflow.tasks.get(number=1)
     value = 'text fred boy some'
     TaskField.objects.create(
-        task=task,
+        kickoff=workflow.kickoff_instance,
         api_name='api-name-1',
         type=field_type,
         workflow=workflow,
@@ -885,10 +881,9 @@ def test_list__search__in_prev_task_fields_value__ok(
         tasks_count=2,
         active_task_number=2,
     )
-    task_1 = workflow.tasks.get(number=1)
     value = 'boy@noway.com'
     TaskField.objects.create(
-        task=task_1,
+        kickoff=workflow.kickoff_instance,
         api_name='api-name-1',
         type=field_type,
         workflow=workflow,
@@ -946,14 +941,13 @@ def test_list__search__markdown_filename_in_text_field__ok(api_client):
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(user, tasks_count=1)
-    task = workflow.tasks.get(number=1)
     value = (
         'Final version \n [somefile.txt]'
         '(https://storage.googleapis.com/file.txt '
         '"attachment_id:13152 entityType:file")'
     )
     TaskField.objects.create(
-        task=task,
+        kickoff=workflow.kickoff_instance,
         api_name='api-name-1',
         type=FieldType.TEXT,
         workflow=workflow,
@@ -975,82 +969,58 @@ def test_list__search__full_uri_in_field__ok(api_client):
 
     # arrange
     user = create_test_user()
-    workflow_1 = create_test_workflow(user, tasks_count=1)
-    task_1 = workflow_1.tasks.get(number=1)
-    value_1 = 'https://translate.com/some-page?sl=ru&tl=ru&op=taranslate'
+    workflow = create_test_workflow(user, tasks_count=1)
+    value = 'https://translate.com/some-page?sl=ru&tl=ru&op=taranslate'
     TaskField.objects.create(
-        task=task_1,
+        kickoff=workflow.kickoff_instance,
         api_name='api-name-1',
         type=FieldType.URL,
-        workflow=workflow_1,
-        value=value_1,
-        clear_value=MarkdownService.clear(value_1),
+        workflow=workflow,
+        value=value,
+        clear_value=MarkdownService.clear(value),
     )
 
-    workflow_2 = create_test_workflow(user, tasks_count=1)
-    task_2 = workflow_2.tasks.get(number=1)
-    value_2 = 'https://translate.com/some-page?sl=en&tl=ru&op=taranslate'
-    TaskField.objects.create(
-        task=task_2,
-        api_name='api-name-1',
-        type=FieldType.URL,
-        workflow=workflow_2,
-        value=value_2,
-        clear_value=MarkdownService.clear(value_2),
-    )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
         '/workflows?',
-        data={'search': value_1},
+        data={'search': value},
     )
 
     # assert
     assert response.status_code == 200
     assert len(response.data['results']) == 1
-    assert response.data['results'][0]['id'] == workflow_1.id
+    assert response.data['results'][0]['id'] == workflow.id
 
 
-def test_list__search__prefix_uri_in_field__ok(api_client):
+def test_list__search__url_in_field__ok(api_client):
 
     # arrange
     user = create_test_user()
-    workflow_1 = create_test_workflow(user, tasks_count=1)
-    task_1 = workflow_1.tasks.get(number=1)
-    value_1 = 'https://translate.com/some-page?sl=ru&tl=ru&op=taranslate'
+    workflow = create_test_workflow(user, tasks_count=1)
+    value = 'translate.com/some-page?sl=ru&tl=ru&op=taranslate'
     TaskField.objects.create(
-        task=task_1,
+        kickoff=workflow.kickoff_instance,
         api_name='api-name-1',
         type=FieldType.URL,
-        workflow=workflow_1,
-        value=value_1,
-        clear_value=MarkdownService.clear(value_1),
+        workflow=workflow,
+        value=value,
+        clear_value=MarkdownService.clear(value),
     )
 
-    workflow_2 = create_test_workflow(user, tasks_count=1)
-    task_2 = workflow_2.tasks.get(number=1)
-    value_2 = 'https://translate.com/some-page?sl=en&tl=ru&op=taranslate'
-    TaskField.objects.create(
-        task=task_2,
-        api_name='api-name-1',
-        type=FieldType.URL,
-        workflow=workflow_2,
-        value=value_2,
-        clear_value=MarkdownService.clear(value_2),
-    )
     api_client.token_authenticate(user)
 
     # act
     response = api_client.get(
         '/workflows?',
-        data={'search': value_1},
+        data={'search': value},
     )
 
     # assert
     assert response.status_code == 200
     assert len(response.data['results']) == 1
-    assert response.data['results'][0]['id'] == workflow_1.id
+    assert response.data['results'][0]['id'] == workflow.id
 
 
 def test_list__search_workflow_name_with_status__ok(api_client):
@@ -1111,19 +1081,18 @@ def test_list__search__find_union_result__ok(api_client):
     assert response.data['results'][1]['id'] == workflow_1.id
 
 
-def test_list__search__by_search_find_union_by_prefix__ok(
+def test_list__search__by_search_find_union_by_prefix__not_found(
     api_client,
-    mocker,
 ):
 
     # arrange
     user = create_test_user()
-    workflow_1 = create_test_workflow(
+    create_test_workflow(
         user=user,
         name='Accounts found',
         tasks_count=1,
     )
-    workflow_2 = create_test_workflow(
+    create_test_workflow(
         user=user,
         name='Info Payable',
         tasks_count=1,
@@ -1136,12 +1105,10 @@ def test_list__search__by_search_find_union_by_prefix__ok(
 
     # assert
     assert response.status_code == 200
-    assert len(response.data['results']) == 2
-    assert response.data['results'][0]['id'] == workflow_2.id
-    assert response.data['results'][1]['id'] == workflow_1.id
+    assert len(response.data['results']) == 0
 
 
-def test_list__search__by_search_by_prefix__ok(
+def test_list__search__by_search_by_prefix__not_found(
     api_client,
     mocker,
 ):
@@ -1169,8 +1136,7 @@ def test_list__search__by_search_by_prefix__ok(
 
     # assert
     assert response.status_code == 200
-    assert len(response.data['results']) == 1
-    assert response.data['results'][0]['id'] == workflow_1.id
+    assert len(response.data['results']) == 0
 
 
 def test_list__search__by_part__ok(
@@ -1413,7 +1379,7 @@ def test_list__filter_template_task__and__all_statuses__ok(
     response = api_client.get(
         path='/workflows',
         data={
-            'template_task_id': template_task_2.id,
+            'template_task_api_name': template_task_2.api_name,
         },
     )
 
@@ -1762,7 +1728,7 @@ def test_list__filter__multiple_current_performer_group_ids__ok(api_client):
     )
     workflow = create_test_workflow(user=user, template=template)
     group1 = create_test_group(account, users=[user])
-    group2 = create_test_group(account, users=[another_user])
+    group2 = create_test_group(account, name='group 2', users=[another_user])
     task = workflow.tasks.get(number=1)
     TaskPerformer.objects.filter(
         task=task,

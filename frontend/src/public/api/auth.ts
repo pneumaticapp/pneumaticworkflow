@@ -34,7 +34,7 @@ const EMPTY_USER_DATA: IUnsavedUser = {
     trialEnded: false,
     trialIsActive: false,
     isSubscribed: false,
-    billingSync: true
+    billingSync: true,
   },
   photo: '',
   type: 'user',
@@ -78,18 +78,16 @@ class AuthCreator {
   ): Promise<Partial<IAuthUser>> => {
     try {
       const result = await registerUser(user, utmParams, captcha);
-
-      if (!result) {
-        NotificationManager.error({ message: ERR_REGISTER_MSG });
-        throw new Error(ERR_REGISTER_MSG);
-      }
-
       return {
         loading: false,
         token: result.token,
       };
-    } catch (err) {
-      throw new Error(getErrorMessage(err));
+    } catch (error) {
+      NotificationManager.notifyApiError(error, {
+        title: ERR_REGISTER_MSG,
+        message: getErrorMessage(error),
+      });
+      throw new Error(getErrorMessage(error));
     }
   };
 
@@ -107,8 +105,12 @@ class AuthCreator {
         loading: false,
         token: result.token,
       };
-    } catch (err) {
-      throw new Error(getErrorMessage(err));
+    } catch (error) {
+      NotificationManager.notifyApiError(error, {
+        title: ERR_REGISTER_MSG,
+        message: getErrorMessage(error),
+      });
+      throw new Error(getErrorMessage(error));
     }
   };
 
@@ -121,9 +123,9 @@ class AuthCreator {
       }
 
       return result;
-    } catch (err) {
-      logger.error('failed to fetch user data ', err);
-      NotificationManager.error({ message: 'user.fetch-failed' });
+    } catch (error) {
+      logger.error('failed to fetch user data ', error);
+      NotificationManager.notifyApiError(error, { message: 'user.fetch-failed' });
 
       throw new Error('failed to fetch user data');
     }
