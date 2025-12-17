@@ -16,7 +16,6 @@ from rest_framework.serializers import (
     ModelSerializer,
     Serializer,
     SerializerMethodField,
-    ValidationError,
 )
 
 from src.generics.exceptions import BaseServiceException
@@ -35,7 +34,7 @@ from src.processes.enums import (
     PerformerType,
     TemplateOrdering,
     TemplateType,
-    WorkflowApiStatus,
+    WorkflowApiStatus, TaskStatus,
 )
 from src.processes.messages import template as messages
 from src.processes.models.templates.kickoff import Kickoff
@@ -800,32 +799,31 @@ class TemplateOnlyFieldsSerializer(ModelSerializer):
         return self.instance.get_draft()
 
 
-class TemplateTitlesRequestSerializer(
+class TemplateTitlesByWorkflowsSerializer(
     CustomValidationErrorMixin,
     Serializer,
 ):
 
-    with_tasks_in_progress = BooleanField(
-        required=False,
-        allow_null=True,
-        default=None,
-    )
-    workflows_status = ChoiceField(
+    status = ChoiceField(
         choices=WorkflowApiStatus.CHOICES,
         required=False,
         allow_null=False,
     )
 
-    def validate(self, attrs):
-        if (
-            attrs.get('workflows_status') is not None
-            and attrs.get('with_tasks_in_progress') is not None
-        ):
-            raise ValidationError(messages.MSG_PT_0022)
-        return attrs
+
+class TemplateTitlesByTasksSerializer(
+    CustomValidationErrorMixin,
+    Serializer,
+):
+
+    status = ChoiceField(
+        choices=TaskStatus.CHOICES,
+        required=False,
+        allow_null=False,
+    )
 
 
-class TemplateTitlesEventsRequestSerializer(
+class TemplateTitlesByEventsSerializer(
     CustomValidationErrorMixin,
     Serializer,
 ):
@@ -956,4 +954,4 @@ class TemplateTitlesSerializer(Serializer):
 
     id = IntegerField(read_only=True)
     name = CharField(read_only=True)
-    workflows_count = IntegerField(read_only=True)
+    count = IntegerField(read_only=True)

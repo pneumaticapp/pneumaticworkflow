@@ -3,8 +3,11 @@ import { useIntl } from 'react-intl';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { useDelayUnmount } from '../../hooks/useDelayUnmount';
-import { IApplicationState } from '../../types/redux';
-import { closeTuneViewModal, saveWorkflowsPreset, setWorkflowsFilterSelectedFields } from '../../redux/actions';
+import {
+  closeTuneViewModal,
+  setFilterSelectedFields as setWorkflowsFilterSelectedFields,
+  saveWorkflowsPreset,
+} from '../../redux/workflows/slice';
 
 import { IExtraField, TOrderedFields, TTransformedTask } from '../../types/template';
 import { Button, Checkbox, SideModal, Tooltip } from '../UI';
@@ -14,6 +17,8 @@ import { StepName } from '../StepName';
 import styles from './TuneViewModal.css';
 import { TooltipRichContent } from '../TemplateEdit/TooltipRichContent';
 import { TSystemField } from '../Workflows/WorkflowsTablePage/WorkflowsTable/types';
+import { getIsTuneViewModalOpen, getSavedFields, getWorkflowTemplatesIdsFilter } from '../../redux/selectors/workflows';
+import { getTemplateTasks, getVariables } from '../../redux/selectors/templates';
 
 export function TuneViewModal() {
   const dispatch = useDispatch();
@@ -22,18 +27,14 @@ export function TuneViewModal() {
   const [selectedFields, setSelectedFields] = useState<Set<string>>(new Set());
   const [openedTasks, setOpenedTasks] = useState<Set<string>>(new Set());
 
-  const { isOpen } = useSelector((state: IApplicationState) => state.workflows.WorkflowsTuneViewModal);
-  const templatesIdsFilter = useSelector(
-    (state: IApplicationState) => state.workflows.workflowsSettings.values.templatesIdsFilter,
-  );
+  const isOpen = useSelector(getIsTuneViewModalOpen);
+  const templatesIdsFilter = useSelector(getWorkflowTemplatesIdsFilter);
+
   const templateId = templatesIdsFilter[0];
-  const templateTasks: TTransformedTask[] = useSelector(
-    (state: IApplicationState) => state.templates.templatesTasksMap[templateId],
-  );
 
-  const savedFields = useSelector((state: IApplicationState) => state.workflows.workflowsSettings.selectedFields);
-
-  const variables = useSelector((state: IApplicationState) => state.templates.templatesVariablesMap[templateId] || []);
+  const templateTasks: TTransformedTask[] = useSelector(getTemplateTasks(templateId));
+  const savedFields = useSelector(getSavedFields);
+  const variables = useSelector(getVariables(templateId));
 
   useEffect(() => {
     if (isOpen && templateId) {

@@ -20,7 +20,7 @@
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
-  color: red !important;
+  color: var(--pneumatic-color-red) !important;
 
   @media screen and (min-width: 576rem) {
     max-width: 10.5rem !important;
@@ -69,6 +69,7 @@
 .dropdown-item-check__label {
   width: 100%;
   cursor: pointer;
+  align-items: center;
 }
 
 .dropdown-item-check__title {
@@ -106,7 +107,7 @@
 
 .dropdown-item-content__count {
   margin-left: auto;
-  padding: 0 0.4rem;
+  padding: 0 0 0 1.2rem;
   display: flex;
   min-width: 2rem;
   height: 2rem;
@@ -115,7 +116,6 @@
   line-height: 1.6rem;
   letter-spacing: 0.05em;
   color: var(--pneumatic-color-black48);
-  background: var(--pneumatic-color-black4);
   border-radius: 1.2rem;
   align-items: center;
   justify-content: center;
@@ -141,7 +141,7 @@
   border-width: 0;
   align-items: center;
 
-  &:not(.active-value_clear-hovered):hover {
+  &:not(.active-value_clear-hovered):not([disabled]):hover {
     color: var(--pneumatic-color-link-hover);
   }
 
@@ -183,6 +183,10 @@
 
 .active-value_disabled {
   pointer-events: none;
+}
+
+.filter-select_disabled {
+  opacity: 32%;
 }
 
 .value-item {
@@ -244,7 +248,16 @@
   transition: transform 0.3s color 0.1s;
   flex-shrink: 0;
 
-  &:hover {
+  &:not([aria-disabled='true']):hover {
     color: var(--pneumatic-color-link-hover);
   }
+}
+
+.dropdown-item-content__title {
+  letter-spacing: 0.06rem;
+  text-transform: uppercase;
+  color: var(--pneumatic-color-black48);
+
+  @mixin text-small-extra bold;
+  @mixin text-truncate;
 }

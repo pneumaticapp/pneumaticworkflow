@@ -92,6 +92,7 @@
   background: var(--navbar-background-color);
   align-items: center;
   flex-flow: row nowrap !important;
+  transition: padding-left 0.2s ease-out;
 
   @media (--mobile) {
     padding: 0 !important;
@@ -127,11 +128,6 @@
   }
 }
 
-.navbar-left--workflows-grid {
-  padding-right: 0;
-  padding-left: 0;
-}
-
 .navbar-right {
   margin-left: auto;
   display: flex;
@@ -142,6 +138,7 @@
   min-height: 4rem;
   text-align: right;
   white-space: nowrap;
+  align-self: flex-start;
 
   @media (--mobile) {
     margin-top: 1.6rem;

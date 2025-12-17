@@ -1,14 +1,12 @@
-/* eslint-disable indent */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
-import StickyBox from 'react-sticky-box';
 import { debounce } from 'throttle-debounce';
 
 import { Header } from '../../UI/Typeography/Header';
 import { isArrayWithItems } from '../../../utils/helpers';
-import { EPageTitle, NAVBAR_HEIGHT } from '../../../constants/defaultValues';
+import { EPageTitle } from '../../../constants/defaultValues';
 import { SearchLargeIcon, StartRoundIcon } from '../../icons';
 import { getTemplate } from '../../../api/getTemplate';
 import { getRunnableWorkflow } from '../../TemplateEdit/utils/getRunnableWorkflow';
@@ -22,7 +20,6 @@ import { EWorkflowsLoadingStatus } from '../../../types/workflow';
 
 import { WorkflowCardContainer } from './WorkflowCard';
 import { WorkflowCardLoader } from './WorkflowCardLoader';
-import { WorkflowsFiltersContainer } from './WorkflowsFilters';
 
 import styles from './WorkflowsGridPage.css';
 
@@ -65,15 +62,10 @@ export const WorkflowsGridPage = function Workflows({
   openSelectTemplateModal,
   openRunWorkflowModal,
   removeWorkflowFromList,
-  loadTemplatesTitles,
 }: IWorkflowsProps) {
   const { formatMessage } = useIntl();
   const { searchQuery, handleSearch } = useSearchWithDebounce(searchText, onSearch);
   const [isRunningNewWorkflow, setIsRunningNewWorkflow] = useState(false);
-
-  useEffect(() => {
-    loadTemplatesTitles();
-  }, []);
 
   React.useEffect(() => {
     if (workflowsLoadingStatus === EWorkflowsLoadingStatus.EmptyList && stepsIdsFilter.length) {
@@ -130,15 +122,21 @@ export const WorkflowsGridPage = function Workflows({
         className={classnames(styles['card-wrapper'], styles['run-workflow-card'])}
       >
         <Loader isLoading={isRunningNewWorkflow} />
-        <StartRoundIcon />
+
         <Header size="6" tag="p" className={styles['run-workflow-card__text']}>
           {templatesFilter.length !== 1
             ? formatMessage({ id: 'workflows.run-workflow' })
             : `${formatMessage({ id: 'workflows.run-workflows' })} ${templatesFilter
-                .map((t) => t.name)
-                .join(', ')
-                .trim()}`}
+              .map((t) => t.name)
+              .join(', ')
+              .trim()}`}
         </Header>
+        {templatesFilter.length !== 1 && (
+          <div className={styles['run-workflow-card__extra-text']}>
+            {formatMessage({ id: 'workflows.run-workflow-extra-text' })}
+          </div>
+        )}
+        <StartRoundIcon className={styles['run-workflow-card__icon']} />
       </button>
     );
   };
@@ -181,13 +179,7 @@ export const WorkflowsGridPage = function Workflows({
 
   return (
     <div className={styles['container']}>
-      <div className={styles['filters']}>
-        <StickyBox offsetTop={NAVBAR_HEIGHT} offsetBottom={20}>
-          <PageTitle titleId={EPageTitle.Workflows} className={styles['title']} withUnderline={false} />
-          <WorkflowsFiltersContainer />
-        </StickyBox>
-      </div>
-
+      <PageTitle titleId={EPageTitle.Workflows} className={styles['title']} withUnderline={false} />
       <div className={styles['content']}>
         <div className={styles['search']}>
           <SearchLargeIcon className={styles['search__icon']} />

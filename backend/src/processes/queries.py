@@ -1645,7 +1645,7 @@ class UpdateWorkflowEventWatchedQuery(SqlQueryObject):
         return query, self.params
 
 
-class TemplateTitlesEventsQuery(SqlQueryObject):
+class TemplateTitlesByEventsQuery(SqlQueryObject):
     event_types = [
         WorkflowEventType.COMMENT,
         WorkflowEventType.TASK_COMPLETE,
@@ -1704,7 +1704,7 @@ class TemplateTitlesEventsQuery(SqlQueryObject):
         SELECT
           t.id,
           t.name,
-          COUNT(DISTINCT pw.id) FILTER (WHERE pw.status = 0) AS workflows_count
+          COUNT(DISTINCT pw.id) FILTER (WHERE pw.status = 0) AS count
         FROM processes_template AS t
           INNER JOIN processes_workflow AS pw ON (
             t.id = pw.template_id AND pw.is_deleted = False
@@ -1720,45 +1720,95 @@ class TemplateTitlesEventsQuery(SqlQueryObject):
             AND t.account_id = %(account_id)s
             AND NOT (t.type IN {template_types})
         GROUP BY t.id, t.name
-        ORDER BY workflows_count DESC, t.name ASC """
+        ORDER BY count DESC, t.name ASC """
         return sql, self.params
 
 
-class TemplateTitlesQuery(SqlQueryObject, DereferencedPerformersMixin):
+class TemplateTitlesByWorkflowsQuery(
+    SqlQueryObject,
+    DereferencedPerformersMixin,
+    DereferencedOwnersMixin,
+):
 
     def __init__(
         self,
         user: User,
-        with_tasks_in_progress: Optional[bool] = None,
-        workflows_status: Optional[WorkflowStatus] = None,
+        status: Optional[WorkflowStatus] = None,
     ):
         self.params = {
             'account_id': user.account.id,
             'user_id': user.id,
         }
-        self.with_tasks_in_progress = with_tasks_in_progress
-        if workflows_status:
-            self.status = WorkflowApiStatus.MAP[workflows_status]
+        if status:
+            self.status = WorkflowApiStatus.MAP[status]
             self.params['status'] = self.status
         else:
             self.status = None
 
-    def _get_from(self):
+    def _get_filter_by_type(self):
+        result, params = self._to_sql_list(
+            values=TemplateType.TYPES_ONBOARDING,
+            prefix='template_type',
+        )
+        self.params.update(params)
+        return f"t.type NOT IN {result}"
+
+    def _get_workflows_count(self):
         result = """
-            FROM processes_template AS t
-              INNER JOIN processes_workflow pw
-                ON t.id = pw.template_id """
-        if self.with_tasks_in_progress is None:
-            result += """
-                INNER JOIN processes_workflow_owners pto
-                  ON pw.id = pto.workflow_id AND pto.user_id = %(user_id)s"""
-        else:
-            result += f"""
-                INNER JOIN processes_task pt
-                  ON pw.id = pt.workflow_id
-                JOIN ({self.dereferenced_performers()}) dereferenced_performers
-                  ON pt.id = dereferenced_performers.task_id"""
+            SELECT template_id, COUNT(id) AS count
+            FROM processes_workflow
+            WHERE is_deleted IS FALSE
+              AND account_id = %(account_id)s
+        """
+        if self.status is not None:
+            result += "AND status = %(status)s"
+        result += """
+          GROUP BY template_id
+        """
         return result
+
+    def get_sql(self) -> Tuple[str, dict]:
+        return f"""
+        SELECT *
+        FROM (
+            SELECT
+              t.id,
+              t.name,
+              COALESCE(pw.count, 0) AS count
+            FROM (
+              {self.dereferenced_owners()}
+            ) pto
+              INNER JOIN processes_template t
+                ON t.id = pto.template_id
+              LEFT JOIN (
+                {self._get_workflows_count()}
+              ) pw
+                ON t.id = pw.template_id
+            WHERE
+              t.is_deleted IS FALSE
+              AND t.account_id = %(account_id)s
+              AND {self._get_filter_by_type()}
+            GROUP BY t.id, pw.count
+        ) result
+        ORDER BY count DESC, name ASC
+        """, self.params
+
+
+class TemplateTitlesByTasksQuery(
+    SqlQueryObject,
+    DereferencedPerformersMixin,
+):
+
+    def __init__(
+        self,
+        user: User,
+        status: TaskStatus.LITERALS = TaskStatus.ACTIVE,
+    ):
+        self.params = {
+            'account_id': user.account.id,
+            'user_id': user.id,
+        }
+        self.status = status
 
     def _get_filter_by_type(self):
         result, params = self._to_sql_list(
@@ -1773,19 +1823,22 @@ class TemplateTitlesQuery(SqlQueryObject, DereferencedPerformersMixin):
             WHERE t.is_deleted IS FALSE
               AND t.account_id = %(account_id)s
               AND pw.is_deleted IS FALSE
+              AND pt.is_deleted IS FALSE
               AND {self._get_filter_by_type()}"""
-        if self.with_tasks_in_progress is True:
+
+        if self.status == TaskStatus.ACTIVE:
             result += f"""
-                AND pt.is_deleted IS FALSE
                 AND dereferenced_performers.is_completed IS FALSE
                 AND pt.status = '{TaskStatus.ACTIVE}'
                 AND pw.status = {WorkflowStatus.RUNNING}"""
-        elif self.with_tasks_in_progress is False:
+        elif self.status == TaskStatus.DELAYED:
+            result += f"""
+                AND dereferenced_performers.is_completed IS FALSE
+                AND pt.status = '{TaskStatus.DELAYED}'
+                AND pw.status = {WorkflowStatus.RUNNING}"""
+        else:
             result += """
-                AND pt.is_deleted IS FALSE
                 AND dereferenced_performers.is_completed IS TRUE"""
-        elif self.status is not None:
-            result += "AND pw.status = %(status)s"
         return result
 
     def get_sql(self) -> Tuple[str, dict]:
@@ -1793,11 +1846,17 @@ class TemplateTitlesQuery(SqlQueryObject, DereferencedPerformersMixin):
             SELECT
               t.id,
               t.name,
-              COUNT(DISTINCT pw.id) AS workflows_count
-            {self._get_from()}
+              COUNT(DISTINCT pt.id) AS count
+            FROM processes_template AS t
+              INNER JOIN processes_workflow pw
+                ON t.id = pw.template_id
+              INNER JOIN processes_task pt
+                ON pw.id = pt.workflow_id
+              JOIN ({self.dereferenced_performers()}) dereferenced_performers
+                ON pt.id = dereferenced_performers.task_id
             {self._get_where()}
             GROUP BY t.id
-            ORDER BY workflows_count DESC, t.name ASC
+            ORDER BY count DESC, t.name ASC
         """, self.params
 
 

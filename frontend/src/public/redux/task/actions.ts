@@ -4,7 +4,7 @@ import { IExtraField, RawPerformer } from '../../types/template';
 import { ITask } from '../../types/tasks';
 import { ETaskCardViewMode } from '../../components/TaskCard';
 import { EWorkflowsLogSorting, IWorkflowDetailsClient, IWorkflowLogItem } from '../../types/workflow';
-import { ISendWorkflowLogComment } from '../actions';
+import { ISendWorkflowLogComment } from '../workflows/types';
 
 export const enum ETaskActions {
   LoadCurrentTask = 'LOAD_CURRENT_TASK',
