@@ -33,7 +33,7 @@ import { TaskFilterSelect } from './TaskFilterSelect';
 import { checkFilterDependenciesChanged } from '../../utils/helpers';
 
 import styles from './WorkflowsLayout.css';
-import { getWorkflowsLoadingStatus } from '../../redux/selectors/workflows';
+import { getWorkflowPerformersGroupsIdsFilter, getWorkflowsLoadingStatus } from '../../redux/selectors/workflows';
 
 export interface IWorkflowsLayoutComponentProps extends IWorkflowsFiltersProps {
   workflowId: number | null;
@@ -69,6 +69,7 @@ export function WorkflowsLayoutComponent({
   updateWorkflowsTemplateStepsCounters,
   updateWorkflowStartersCounters,
 }: IWorkflowsLayoutComponentProps) {
+  const performersGroupsIdsFilter = useSelector(getWorkflowPerformersGroupsIdsFilter);
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
   const { isMobile } = useCheckDevice();
@@ -86,6 +87,7 @@ export function WorkflowsLayoutComponent({
   const prevStepsIdsFilterRef = useRef<string>('[]');
   const prevWorkflowStartersIdsFilterRef = useRef<string>('[]');
   const prevPerformersIdsFilterRef = useRef<string>('[]');
+  const prevPerformersGroupsIdsFilterRef = useRef<string>('[]');
 
   const currentFiltersValuesRef = useRef({
     statusFilter,
@@ -93,6 +95,7 @@ export function WorkflowsLayoutComponent({
     stepsIdsFilter,
     workflowStartersIdsFilter,
     performersIdsFilter,
+    performersGroupsIdsFilter,
     sorting,
   });
 
@@ -107,9 +110,11 @@ export function WorkflowsLayoutComponent({
         ['stepsIdsFilter', prevStepsIdsFilterRef],
         ['workflowStartersIdsFilter', prevWorkflowStartersIdsFilterRef],
         ['performersIdsFilter', prevPerformersIdsFilterRef],
+        ['performersGroupsIdsFilter', prevPerformersGroupsIdsFilterRef],
       ]),
     [],
   );
+  const isFirstRenderRef = useRef(true);
 
   const selectedTemplates: ITemplateFilterItem[] = useMemo(() => {
     const filterTemplatesMap: Map<number, ITemplateFilterItem> = new Map(
@@ -213,7 +218,7 @@ export function WorkflowsLayoutComponent({
       workflowStartersIdsFilter,
     });
 
-    if (!hasChanges) {
+    if (!isFirstRenderRef.current && !hasChanges) {
       return;
     }
 
@@ -238,6 +243,7 @@ export function WorkflowsLayoutComponent({
       templatesIdsFilter,
       stepsIdsFilter,
       performersIdsFilter,
+      performersGroupsIdsFilter,
       workflowStartersIdsFilter,
       sorting,
     });
@@ -245,9 +251,16 @@ export function WorkflowsLayoutComponent({
     if (!hasChanges) {
       return;
     }
-
     applyFilters();
-  }, [statusFilter, templatesIdsFilter, stepsIdsFilter, performersIdsFilter, workflowStartersIdsFilter, sorting]);
+  }, [
+    statusFilter,
+    templatesIdsFilter,
+    stepsIdsFilter,
+    performersIdsFilter,
+    performersGroupsIdsFilter,
+    workflowStartersIdsFilter,
+    sorting,
+  ]);
 
   useEffect(() => {
     if (checkSortingIsIncorrect(statusFilter, sorting)) {
@@ -262,9 +275,24 @@ export function WorkflowsLayoutComponent({
       stepsIdsFilter,
       workflowStartersIdsFilter,
       performersIdsFilter,
+      performersGroupsIdsFilter,
       sorting,
     };
-  }, [statusFilter, templatesIdsFilter, stepsIdsFilter, workflowStartersIdsFilter, performersIdsFilter, sorting]);
+  }, [
+    statusFilter,
+    templatesIdsFilter,
+    stepsIdsFilter,
+    workflowStartersIdsFilter,
+    performersIdsFilter,
+    performersGroupsIdsFilter,
+    sorting,
+  ]);
+
+  useEffect(() => {
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false;
+    }
+  }, []);
 
   useLayoutEffect(() => {
     if (changedFiltersRef.current.size === 0) return;
