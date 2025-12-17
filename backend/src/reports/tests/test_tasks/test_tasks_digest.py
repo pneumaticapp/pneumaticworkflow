@@ -109,8 +109,8 @@ class TestSendTasksDigest:
         second_workflow.date_completed = date_to - timedelta(days=1)
         second_workflow.save()
         email_service_tasks_digest = mocker.patch(
-            'src.services.email.EmailService.'
-            'send_tasks_digest_email',
+            'src.notifications.tasks.'
+            'send_tasks_digest_notification.delay',
         )
 
         # act
@@ -122,9 +122,11 @@ class TestSendTasksDigest:
         st_second_task = template_2.tasks.get(number=2)
         st_third_task = template_2.tasks.get(number=3)
         email_service_tasks_digest.assert_called_with(
-            user=user,
-            date_to=date_to - timedelta(days=1),
-            date_from=date_from,
+            user_id=user.id,
+            user_email=user.email,
+            account_id=user.account_id,
+            date_to=(date_to - timedelta(days=1)).strftime('%d %b, %Y'),
+            date_from=date_from.strftime('%d %b'),
             digest={
                 'started': 5,
                 'in_progress': 5,
@@ -233,8 +235,8 @@ class TestSendTasksDigest:
             auth_type=AuthTokenType.USER,
         )
         email_service_tasks_digest = mocker.patch(
-            'src.services.email.EmailService.'
-            'send_tasks_digest_email',
+            'src.notifications.tasks.'
+            'send_tasks_digest_notification.delay',
         )
 
         # act
@@ -243,9 +245,11 @@ class TestSendTasksDigest:
         # assert
         datetime_patch.assert_called()
         email_service_tasks_digest.assert_called_once_with(
-            user=template_owner,
-            date_to=date_to - timedelta(days=1),
-            date_from=date_from,
+            user_id=template_owner.id,
+            user_email=template_owner.email,
+            account_id=template_owner.account_id,
+            date_to=(date_to - timedelta(days=1)).strftime('%d %b, %Y'),
+            date_from=date_from.strftime('%d %b'),
             digest={
                 'started': 1,
                 'in_progress': 1,
@@ -339,8 +343,8 @@ class TestSendTasksDigest:
                 },
             )
         email_service_tasks_digest = mocker.patch(
-            'src.services.email.EmailService.'
-            'send_tasks_digest_email',
+            'src.notifications.tasks.'
+            'send_tasks_digest_notification.delay',
         )
 
         # act
@@ -389,8 +393,8 @@ class TestSendTasksDigest:
             date_created=date_from + timedelta(days=2),
         )
         email_service_tasks_digest = mocker.patch(
-            'src.services.email.EmailService.'
-            'send_tasks_digest_email',
+            'src.notifications.tasks.'
+            'send_tasks_digest_notification.delay',
         )
 
         # act
@@ -399,9 +403,11 @@ class TestSendTasksDigest:
         # assert
         task_1 = template_2.tasks.get(number=1)
         email_service_tasks_digest.assert_called_with(
-            user=user,
-            date_to=date_to - timedelta(days=1),
-            date_from=date_from,
+            user_id=user.id,
+            user_email=user.email,
+            account_id=user.account_id,
+            date_to=(date_to - timedelta(days=1)).strftime('%d %b, %Y'),
+            date_from=date_from.strftime('%d %b'),
             digest={
                 'started': 1,
                 'in_progress': 1,
@@ -449,8 +455,8 @@ class TestSendTasksDigest:
         template_data['is_active'] = True
         api_client.post('/templates', data=template_data)
         email_service_tasks_digest = mocker.patch(
-            'src.services.email.EmailService.'
-            'send_tasks_digest_email',
+            'src.notifications.tasks.'
+            'send_tasks_digest_notification.delay',
         )
 
         # act
@@ -552,8 +558,8 @@ class TestSendTasksDigest:
         second_workflow.date_completed = date_to - timedelta(days=1)
         second_workflow.save()
         email_service_tasks_digest = mocker.patch(
-            'src.services.email.EmailService.'
-            'send_tasks_digest_email',
+            'src.notifications.tasks.'
+            'send_tasks_digest_notification.delay',
         )
 
         # act
@@ -564,9 +570,11 @@ class TestSendTasksDigest:
         task_2 = template_2.tasks.get(number=2)
         task_3 = template_2.tasks.get(number=3)
         email_service_tasks_digest.assert_called_with(
-            user=user,
-            date_to=date_to - timedelta(days=1),
-            date_from=date_from,
+            user_id=user.id,
+            user_email=user.email,
+            account_id=user.account_id,
+            date_to=(date_to - timedelta(days=1)).strftime('%d %b, %Y'),
+            date_from=date_from.strftime('%d %b'),
             digest={
                 'started': 4,
                 'in_progress': 4,
@@ -643,8 +651,8 @@ class TestSendTasksDigest:
             date_created=date_from + timedelta(days=2),
         )
         email_service_tasks_digest = mocker.patch(
-            'src.services.email.EmailService.'
-            'send_tasks_digest_email',
+            'src.notifications.tasks.'
+            'send_tasks_digest_notification.delay',
         )
         api_client.token_authenticate(user)
 
@@ -653,9 +661,11 @@ class TestSendTasksDigest:
 
         # assert
         email_service_tasks_digest.assert_called_with(
-            user=user,
-            date_to=date_to - timedelta(days=1),
-            date_from=date_from,
+            user_id=user.id,
+            user_email=user.email,
+            account_id=user.account_id,
+            date_to=(date_to - timedelta(days=1)).strftime('%d %b, %Y'),
+            date_from=date_from.strftime('%d %b'),
             digest={
                 'started': 2,
                 'in_progress': 2,
