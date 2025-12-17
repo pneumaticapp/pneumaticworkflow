@@ -313,6 +313,7 @@ export enum EInputNameBackgroundColor {
 
 export type TTemplateStepFilter = ITemplateStep & {
   count?: number;
+  apiName?: string; // optional and missing from ITemplateStep?
 };
 
 export type ITemplateFilterItem = ITemplateTitle & {
@@ -327,7 +328,7 @@ export type TUserCounter = {
 };
 
 export type TTemplateStepCounter = {
-  templateTaskId: number;
+  templateTaskApiName: string;
   workflowsCount: number;
 };
 

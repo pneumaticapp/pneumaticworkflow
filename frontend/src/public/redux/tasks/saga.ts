@@ -80,7 +80,7 @@ export function* removeTaskFromList(taskId: number) {
   const {
     taskList: initialTaskList,
     tasksSettings: {
-      filterValues: { templateIdFilter, stepIdFilter },
+      filterValues: { templateIdFilter, taskApiNameFilter },
     },
     tasksSearchText,
   }: IStoreTasks = yield select(getTasksStore);
@@ -99,7 +99,7 @@ export function* removeTaskFromList(taskId: number) {
     count: tasksCount - 1,
     offset: tasksOffset - 1,
   };
-  const withSettings = templateIdFilter || stepIdFilter || tasksSearchText;
+  const withSettings = templateIdFilter || taskApiNameFilter || tasksSearchText;
   const emptyListStatus = withSettings ? ETaskListStatus.LastFilteredTaskFinished : ETaskListStatus.LastTaskFinished;
   yield put(changeTaskList({ taskList: newTaskList, emptyListStatus }));
 }
@@ -126,7 +126,7 @@ function* fetchTaskList(offset: number, nextStatus: ETaskListStatus) {
     tasksSettings: {
       sorting,
       completionStatus,
-      filterValues: { templateIdFilter, stepIdFilter },
+      filterValues: { templateIdFilter, taskApiNameFilter },
     },
   }: IStoreTasks = yield select(getTasksStore);
   const isEmptyList = offset === 0;
@@ -143,7 +143,7 @@ function* fetchTaskList(offset: number, nextStatus: ETaskListStatus) {
       sorting,
       searchText,
       templateId: templateIdFilter,
-      templateStepId: stepIdFilter,
+      templateTaskApiName: taskApiNameFilter,
       status: completionStatus,
     });
     const formattedResults = mapTasksToISOStringToRedux(results);
@@ -152,7 +152,7 @@ function* fetchTaskList(offset: number, nextStatus: ETaskListStatus) {
       ? uniqBy([...taskList.items, ...formattedResults], 'id')
       : formattedResults;
 
-    const withSettings = templateIdFilter || stepIdFilter || searchText;
+    const withSettings = templateIdFilter || taskApiNameFilter || searchText;
     const emptyListStatus = withSettings ? ETaskListStatus.EmptySearchResult : ETaskListStatus.NoTasks;
     yield put(changeTaskList({ taskList: { count, offset, items }, emptyListStatus }));
 

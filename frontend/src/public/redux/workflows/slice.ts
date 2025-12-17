@@ -283,7 +283,7 @@ const workflowsSlice = createSlice({
     setWorkflowsTemplateStepsCounters: (state, action: PayloadAction<TTemplateStepCounter[]>) => {
       state.workflowsSettings.templateList.items.forEach((template) => {
         template.steps.forEach((step) => {
-          const stepCountInfo = action.payload.find(({ templateTaskId }) => templateTaskId === step.id);
+          const stepCountInfo = action.payload.find(({ templateTaskApiName }) => templateTaskApiName === step.apiName);
           step.count = stepCountInfo ? stepCountInfo.workflowsCount : 0;
         });
       });

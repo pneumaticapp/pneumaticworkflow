@@ -160,10 +160,10 @@ export const loadTasksFilterStepsFailed: (payload?: void) => TLoadTasksFilterSte
   void
 >(ETaskListActions.LoadFilterStepsFailed);
 
-export type TSetTasksFilterStep = ITypedReduxAction<ETaskListActions.SetFilterStep, number | null>;
-export const setTasksFilterStep: (payload: number | null) => TSetTasksFilterStep = actionGenerator<
+export type TSetTasksFilterStep = ITypedReduxAction<ETaskListActions.SetFilterStep, string | null>;
+export const setTasksFilterStep: (payload: string | null) => TSetTasksFilterStep = actionGenerator<
   ETaskListActions.SetFilterStep,
-  number | null
+  string | null
 >(ETaskListActions.SetFilterStep);
 
 export type TShowNewTasksNotification = ITypedReduxAction<ETaskListActions.ShowNewTasksNotification, boolean>;

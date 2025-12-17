@@ -10,8 +10,8 @@ import {
   changeTasksSorting,
   changeTasksCompleteStatus,
 } from '../../redux/actions';
-import { closeWorkflowLogPopup } from '../../redux/workflows/slice';
 
+import { closeWorkflowLogPopup } from '../../redux/workflows/slice';
 import { ITasksLayoutDispatchProps, ITasksLayoutStoreProps, TasksLayoutComponent } from './TasksLayout';
 
 const mapStateToProps = ({
@@ -20,7 +20,7 @@ const mapStateToProps = ({
       sorting,
       isHasFilter,
       completionStatus,
-      filterValues: { templateIdFilter, stepIdFilter },
+      filterValues: { templateIdFilter, taskApiNameFilter },
       templateList,
       templateStepList,
     },
@@ -32,7 +32,7 @@ const mapStateToProps = ({
     filterTemplates: templateList.items,
     filterSteps: templateStepList.items,
     templateIdFilter,
-    stepIdFilter,
+    taskApiNameFilter,
     completionStatus,
   };
 };
