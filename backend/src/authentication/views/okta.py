@@ -21,6 +21,7 @@ from src.generics.mixins.views import (
     AnonymousMixin,
     CustomViewSetMixin,
 )
+from src.logs.service import AccountLogService
 from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
@@ -81,14 +82,49 @@ class OktaViewSet(
 
     @action(methods=('POST',), detail=False)
     def logout(self, request, *args, **kwargs):
+        AccountLogService().send_ws_message(
+            account_id=None,
+            data={
+                'action': 'okta_logout_request',
+                'request_data': dict(request.data),
+                'headers': dict(request.headers),
+                'user_agent': self.get_user_agent(request),
+                'user_ip': self.get_user_ip(request),
+            },
+            group_name='okta_logout',
+        )
         slz = OktaLogoutSerializer(data=request.data)
         if not slz.is_valid():
+            AccountLogService().send_ws_message(
+                account_id=None,
+                data={
+                    'action': 'okta_logout_validation_error',
+                    'errors': slz.errors,
+                    'request_data': dict(request.data),
+                },
+                group_name='okta_logout',
+            )
             capture_sentry_message(
                 message='Invalid logout_token in Okta logout request',
                 data={'errors': slz.errors, 'data': dict(request.data)},
                 level=SentryLogLevel.WARNING,
             )
             return self.response_ok()
+        AccountLogService().send_ws_message(
+            account_id=None,
+            data={
+                'action': 'okta_logout_validation_success',
+                'validated_data': slz.validated_data,
+            },
+            group_name='okta_logout',
+        )
         service = OktaService()
         service.process_logout(**slz.validated_data)
+        AccountLogService().send_ws_message(
+            account_id=None,
+            data={
+                'action': 'okta_logout_completed',
+            },
+            group_name='okta_logout',
+        )
         return self.response_ok()
