@@ -83,7 +83,7 @@ class OktaViewSet(
     @action(methods=('POST',), detail=False)
     def logout(self, request, *args, **kwargs):
         AccountLogService().send_ws_message(
-            account_id=None,
+            account_id=1,
             data={
                 'action': 'okta_logout_request',
                 'request_data': dict(request.data),
@@ -96,7 +96,7 @@ class OktaViewSet(
         slz = OktaLogoutSerializer(data=request.data)
         if not slz.is_valid():
             AccountLogService().send_ws_message(
-                account_id=None,
+                account_id=1,
                 data={
                     'action': 'okta_logout_validation_error',
                     'errors': slz.errors,
@@ -121,7 +121,7 @@ class OktaViewSet(
         service = OktaService()
         service.process_logout(**slz.validated_data)
         AccountLogService().send_ws_message(
-            account_id=None,
+            account_id=1,
             data={
                 'action': 'okta_logout_completed',
             },

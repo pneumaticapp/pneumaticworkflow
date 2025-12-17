@@ -287,7 +287,7 @@ class OktaService(BaseSSOService):
             logout_token: JWT token from Okta
         """
         AccountLogService().send_ws_message(
-            account_id=None,
+            account_id=1,
             data={
                 'action': 'process_logout_start',
                 'logout_token_length': (
@@ -300,7 +300,7 @@ class OktaService(BaseSSOService):
         payload = self._decode_and_verify_logout_token(logout_token)
         if not payload:
             AccountLogService().send_ws_message(
-                account_id=None,
+                account_id=1,
                 data={
                     'action': 'process_logout_token_validation_failed',
                     'logout_token_length': (
@@ -311,7 +311,7 @@ class OktaService(BaseSSOService):
             )
             return
         AccountLogService().send_ws_message(
-            account_id=None,
+            account_id=1,
             data={
                 'action': 'process_logout_token_validated',
                 'payload_keys': list(payload.keys()) if payload else [],
@@ -322,7 +322,7 @@ class OktaService(BaseSSOService):
         sub = payload.get('sub')
         if not sub:
             AccountLogService().send_ws_message(
-                account_id=None,
+                account_id=1,
                 data={
                     'action': 'process_logout_no_sub',
                     'payload': payload,
@@ -331,7 +331,7 @@ class OktaService(BaseSSOService):
             )
             return
         AccountLogService().send_ws_message(
-            account_id=None,
+            account_id=1,
             data={
                 'action': 'process_logout_sub_found',
                 'sub': sub,
@@ -341,7 +341,7 @@ class OktaService(BaseSSOService):
         user = self._find_user_by_okta_sub(sub)
         if not user:
             AccountLogService().send_ws_message(
-                account_id=None,
+                account_id=1,
                 data={
                     'action': 'process_logout_user_not_found',
                     'sub': sub,
@@ -350,7 +350,7 @@ class OktaService(BaseSSOService):
             )
             return
         AccountLogService().send_ws_message(
-            account_id=user.account_id if user.account_id else None,
+            account_id=1,
             data={
                 'action': 'process_logout_user_found',
                 'sub': sub,
@@ -362,7 +362,7 @@ class OktaService(BaseSSOService):
         )
         self._logout_user(user, okta_sub=sub)
         AccountLogService().send_ws_message(
-            account_id=user.account_id if user.account_id else None,
+            account_id=1,
             data={
                 'action': 'process_logout_completed',
                 'sub': sub,
@@ -388,7 +388,7 @@ class OktaService(BaseSSOService):
             Optional[dict]: Validated payload or None on error
         """
         AccountLogService().send_ws_message(
-            account_id=None,
+            account_id=1,
             data={
                 'action': 'decode_logout_token_start',
                 'token_length': len(token) if token else 0,
@@ -399,7 +399,7 @@ class OktaService(BaseSSOService):
         jwks = self._get_cached_jwks()
         if not jwks:
             AccountLogService().send_ws_message(
-                account_id=None,
+                account_id=1,
                 data={
                     'action': 'decode_logout_token_jwks_failed',
                     'domain': self.config.domain,
@@ -408,7 +408,7 @@ class OktaService(BaseSSOService):
             )
             return None
         AccountLogService().send_ws_message(
-            account_id=None,
+            account_id=1,
             data={
                 'action': 'decode_logout_token_jwks_success',
                 'jwks_keys_count': len(jwks.get('keys', [])),
@@ -419,7 +419,7 @@ class OktaService(BaseSSOService):
             header = jwt.get_unverified_header(token)
         except jwt.DecodeError as e:
             AccountLogService().send_ws_message(
-                account_id=None,
+                account_id=1,
                 data={
                     'action': 'decode_logout_token_header_error',
                     'error': str(e),
@@ -428,7 +428,7 @@ class OktaService(BaseSSOService):
             )
             return None
         AccountLogService().send_ws_message(
-            account_id=None,
+            account_id=1,
             data={
                 'action': 'decode_logout_token_header_parsed',
                 'header': header,
@@ -438,7 +438,7 @@ class OktaService(BaseSSOService):
         kid = header.get('kid')
         if not kid:
             AccountLogService().send_ws_message(
-                account_id=None,
+                account_id=1,
                 data={
                     'action': 'decode_logout_token_no_kid',
                     'header': header,
@@ -447,7 +447,7 @@ class OktaService(BaseSSOService):
             )
             return None
         AccountLogService().send_ws_message(
-            account_id=None,
+            account_id=1,
             data={
                 'action': 'decode_logout_token_kid_found',
                 'kid': kid,
@@ -457,7 +457,7 @@ class OktaService(BaseSSOService):
         public_key = self._get_public_key_from_jwks(jwks, kid)
         if not public_key:
             AccountLogService().send_ws_message(
-                account_id=None,
+                account_id=1,
                 data={
                     'action': 'decode_logout_token_public_key_failed',
                     'kid': kid,
@@ -469,7 +469,7 @@ class OktaService(BaseSSOService):
             )
             return None
         AccountLogService().send_ws_message(
-            account_id=None,
+            account_id=1,
             data={
                 'action': 'decode_logout_token_public_key_success',
                 'kid': kid,
@@ -490,7 +490,7 @@ class OktaService(BaseSSOService):
                 },
             )
             AccountLogService().send_ws_message(
-                account_id=None,
+                account_id=1,
                 data={
                     'action': 'decode_logout_token_success',
                     'payload_keys': list(payload.keys()),
@@ -503,7 +503,7 @@ class OktaService(BaseSSOService):
             return payload
         except jwt.InvalidTokenError as e:
             AccountLogService().send_ws_message(
-                account_id=None,
+                account_id=1,
                 data={
                     'action': 'decode_logout_token_validation_error',
                     'error': str(e),
@@ -597,7 +597,7 @@ class OktaService(BaseSSOService):
             Optional[UserModel]: Found user or None
         """
         AccountLogService().send_ws_message(
-            account_id=None,
+            account_id=1,
             data={
                 'action': 'find_user_by_sub_start',
                 'okta_sub': okta_sub,
@@ -608,7 +608,7 @@ class OktaService(BaseSSOService):
         user_id = self._get_cached_user_by_sub(okta_sub)
         if user_id:
             AccountLogService().send_ws_message(
-                account_id=None,
+                account_id=1,
                 data={
                     'action': 'find_user_by_sub_cache_hit',
                     'okta_sub': okta_sub,
@@ -619,7 +619,7 @@ class OktaService(BaseSSOService):
             try:
                 user = UserModel.objects.get(id=user_id)
                 AccountLogService().send_ws_message(
-                    account_id=user.account_id if user.account_id else None,
+                    account_id=1,
                     data={
                         'action': 'find_user_by_sub_db_success',
                         'okta_sub': okta_sub,
@@ -632,7 +632,7 @@ class OktaService(BaseSSOService):
                 return user
             except UserModel.DoesNotExist:
                 AccountLogService().send_ws_message(
-                    account_id=None,
+                    account_id=1,
                     data={
                         'action': 'find_user_by_sub_db_not_found',
                         'okta_sub': okta_sub,
@@ -644,7 +644,7 @@ class OktaService(BaseSSOService):
                 self._clear_cached_user_by_sub(okta_sub)
         else:
             AccountLogService().send_ws_message(
-                account_id=None,
+                account_id=1,
                 data={
                     'action': 'find_user_by_sub_cache_miss',
                     'okta_sub': okta_sub,
@@ -652,7 +652,7 @@ class OktaService(BaseSSOService):
                 group_name='okta_logout',
             )
         AccountLogService().send_ws_message(
-            account_id=None,
+            account_id=1,
             data={
                 'action': 'find_user_by_sub_not_found',
                 'okta_sub': okta_sub,
@@ -710,7 +710,7 @@ class OktaService(BaseSSOService):
             okta_sub: Okta subject identifier (for cache cleanup)
         """
         AccountLogService().send_ws_message(
-            account_id=user.account_id if user.account_id else None,
+            account_id=1,
             data={
                 'action': 'logout_user_start',
                 'user_id': user.id,
@@ -726,7 +726,7 @@ class OktaService(BaseSSOService):
             source=self.source,
         ).values_list('access_token', flat=True))
         AccountLogService().send_ws_message(
-            account_id=user.account_id if user.account_id else None,
+            account_id=1,
             data={
                 'action': 'logout_user_tokens_found',
                 'user_id': user.id,
@@ -745,7 +745,7 @@ class OktaService(BaseSSOService):
             source=self.source,
         ).delete()
         AccountLogService().send_ws_message(
-            account_id=user.account_id if user.account_id else None,
+            account_id=1,
             data={
                 'action': 'logout_user_tokens_deleted',
                 'user_id': user.id,
@@ -760,7 +760,7 @@ class OktaService(BaseSSOService):
             self._delete_cache(key=cache_key)
             cache_keys_cleared.append(cache_key)
         AccountLogService().send_ws_message(
-            account_id=user.account_id if user.account_id else None,
+            account_id=1,
             data={
                 'action': 'logout_user_profile_cache_cleared',
                 'user_id': user.id,
@@ -772,7 +772,7 @@ class OktaService(BaseSSOService):
         if okta_sub:
             self._clear_cached_user_by_sub(okta_sub)
             AccountLogService().send_ws_message(
-                account_id=user.account_id if user.account_id else None,
+                account_id=1,
                 data={
                     'action': 'logout_user_sub_cache_cleared',
                     'user_id': user.id,
@@ -783,7 +783,7 @@ class OktaService(BaseSSOService):
         # Clear all tokens from cache (terminate all sessions)
         PneumaticToken.expire_all_tokens(user)
         AccountLogService().send_ws_message(
-            account_id=user.account_id if user.account_id else None,
+            account_id=1,
             data={
                 'action': 'logout_user_completed',
                 'user_id': user.id,
