@@ -43,3 +43,6 @@ export const getWorkflowTemplatesIdsFilter = (state: IApplicationState): number[
 
 export const getWorkflowStepsIdsFilter = (state: IApplicationState): number[] =>
   state.workflows.workflowsSettings.values.stepsIdsFilter;
+
+export const getWorkflowPerformersGroupsIdsFilter = (state: IApplicationState): number[] =>
+  state.workflows.workflowsSettings.values.performersGroupIdsFilter;
