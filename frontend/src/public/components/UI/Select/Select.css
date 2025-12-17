@@ -15,18 +15,6 @@
   }
 }
 
-.dropdown__active-value {
-  margin: 0;
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: var(--pneumatic-color-red) !important;
-
-  @media screen and (min-width: 576rem) {
-    max-width: 10.5rem !important;
-  }
-}
-
 .dropdown-menu {
   margin-top: 0.6rem !important;
   margin-left: -1.6rem !important;
