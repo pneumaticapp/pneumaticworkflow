@@ -100,7 +100,7 @@ export function initServer() {
   app.get(ERoutes.AccountVerificationLink, verificateAccountMiddleware);
   app.get(ERoutes.OAuthGoogle, oAuthHandler(urls.getGoogleAuthUri, urls.getGoogleAuthToken));
   app.get(ERoutes.OAuthMicrosoft, oAuthHandler(urls.getMicrosoftAuthUri, urls.getMicrosoftAuthToken));
-  
+
   if (isSSOAuth && envSSOProvider === SSOProvider.Auth0) { 
     app.get(ERoutes.OAuthSSOAuth0, oAuthHandler(urls.getSSOAuthUri, urls.getSSOAuthToken));
   }
