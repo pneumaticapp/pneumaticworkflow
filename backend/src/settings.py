@@ -269,8 +269,8 @@ class Common(Configuration):
         'Pneumatic <no-reply@pneumatic.app>',
     )
     EMAIL_DATE_FORMAT = '%a, %d %b %Y %I:%M:%S %p UTC'
+    EMAIL_PROVIDER = env.get('EMAIL_PROVIDER')
     if env.get('EMAIL') == 'yes':
-        EMAIL_PROVIDER = env.get('EMAIL_PROVIDER')
         if EMAIL_PROVIDER == EmailProvider.CUSTOMERIO:
             EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
             CUSTOMERIO_WEBHOOK_API_VERSION = env.get('CIO_WEBHOOK_API_VERSION')
