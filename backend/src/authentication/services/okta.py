@@ -793,3 +793,249 @@ class OktaService(BaseSSOService):
             },
             group_name='okta_logout',
         )
+
+    def process_event_hook(
+        self,
+        event_type: str,
+        event_id: str,
+        data: dict,
+    ):
+        """
+        Process Okta Event Hook for user lifecycle events.
+
+        Supported events:
+        - user.lifecycle.deactivate: User deactivated in Okta
+        - application.user_membership.remove: User access revoked
+        - user.lifecycle.activate: User reactivated (optional)
+
+        Args:
+            event_type: Type of event from Okta
+            event_id: Unique event identifier
+            data: Event data containing user information
+        """
+        AccountLogService().send_ws_message(
+            account_id=1,
+            data={
+                'action': 'process_event_hook_start',
+                'eventType': event_type,
+                'eventId': event_id,
+                'data_keys': list(data.keys()),
+            },
+            group_name='okta_events',
+        )
+
+        # Extract user email from event data
+        email = None
+        target = data.get('target')
+        if isinstance(target, list):
+            for item in target:
+                if (
+                    isinstance(item, dict)
+                    and item.get('type') == 'User'
+                ):
+                    alternate_id = (
+                        item.get('alternateId') or
+                        item.get('alternate_id')
+                    )
+                    if alternate_id:
+                        email = alternate_id.lower()
+                        break
+
+        if not email:
+            AccountLogService().send_ws_message(
+                account_id=1,
+                data={
+                    'action': 'process_event_hook_email_not_found',
+                    'eventType': event_type,
+                    'eventId': event_id,
+                    'data': data,
+                },
+                group_name='okta_events',
+            )
+            capture_sentry_message(
+                message='Email not found in Okta Event Hook',
+                data={
+                    'eventType': event_type,
+                    'eventId': event_id,
+                    'data': data,
+                },
+                level=SentryLogLevel.WARNING,
+            )
+            return
+
+        AccountLogService().send_ws_message(
+            account_id=1,
+            data={
+                'action': 'process_event_hook_email_found',
+                'eventType': event_type,
+                'eventId': event_id,
+                'email': email,
+            },
+            group_name='okta_events',
+        )
+
+        # Find user by email
+        try:
+            user = UserModel.objects.get(email=email)
+        except UserModel.DoesNotExist:
+            AccountLogService().send_ws_message(
+                account_id=1,
+                data={
+                    'action': 'process_event_hook_user_not_found',
+                    'eventType': event_type,
+                    'eventId': event_id,
+                    'email': email,
+                },
+                group_name='okta_events',
+            )
+            capture_sentry_message(
+                message='User not found for Okta Event Hook',
+                data={
+                    'eventType': event_type,
+                    'eventId': event_id,
+                    'email': email,
+                },
+                level=SentryLogLevel.WARNING,
+            )
+            return
+
+        AccountLogService().send_ws_message(
+            account_id=1,
+            data={
+                'action': 'process_event_hook_user_found',
+                'eventType': event_type,
+                'eventId': event_id,
+                'email': email,
+                'user_id': user.id,
+                'account_id': user.account_id,
+            },
+            group_name='okta_events',
+        )
+
+        # Handle event based on type
+        if event_type in (
+            'user.lifecycle.deactivate',
+            'application.user_membership.remove',
+        ):
+            self._handle_user_deactivation(
+                user,
+                event_type,
+                event_id,
+            )
+        elif event_type == 'user.lifecycle.activate':
+            self._handle_user_activation(
+                user,
+                event_type,
+                event_id,
+            )
+        else:
+            AccountLogService().send_ws_message(
+                account_id=1,
+                data={
+                    'action': 'process_event_hook_unsupported_event',
+                    'eventType': event_type,
+                    'eventId': event_id,
+                },
+                group_name='okta_events',
+            )
+
+    def _handle_user_deactivation(
+        self,
+        user: UserModel,
+        event_type: str,
+        event_id: str,
+    ):
+        """
+        Handle user deactivation events from Okta.
+        Logout user and delete Okta access tokens.
+        """
+        AccountLogService().send_ws_message(
+            account_id=1,
+            data={
+                'action': 'handle_user_deactivation_start',
+                'eventType': event_type,
+                'eventId': event_id,
+                'user_id': user.id,
+                'user_email': user.email,
+            },
+            group_name='okta_events',
+        )
+
+        # Delete Okta access tokens
+        deleted_count = AccessToken.objects.filter(
+            user=user,
+            source=self.source,
+        ).delete()
+
+        AccountLogService().send_ws_message(
+            account_id=1,
+            data={
+                'action': 'handle_user_deactivation_tokens_deleted',
+                'eventType': event_type,
+                'eventId': event_id,
+                'user_id': user.id,
+                'deleted_count': deleted_count[0] if deleted_count else 0,
+            },
+            group_name='okta_events',
+        )
+
+        # Terminate all user sessions
+        PneumaticToken.expire_all_tokens(user)
+
+        AccountLogService().send_ws_message(
+            account_id=1,
+            data={
+                'action': 'handle_user_deactivation_completed',
+                'eventType': event_type,
+                'eventId': event_id,
+                'user_id': user.id,
+                'user_email': user.email,
+            },
+            group_name='okta_events',
+        )
+
+        capture_sentry_message(
+            message='User deactivated via Okta Event Hook',
+            data={
+                'eventType': event_type,
+                'eventId': event_id,
+                'user_id': user.id,
+                'user_email': user.email,
+                'account_id': user.account_id,
+            },
+            level=SentryLogLevel.INFO,
+        )
+
+    def _handle_user_activation(
+        self,
+        user: UserModel,
+        event_type: str,
+        event_id: str,
+    ):
+        """
+        Handle user activation events from Okta (optional).
+        Currently just logs the event.
+        """
+        AccountLogService().send_ws_message(
+            account_id=1,
+            data={
+                'action': 'handle_user_activation',
+                'eventType': event_type,
+                'eventId': event_id,
+                'user_id': user.id,
+                'user_email': user.email,
+            },
+            group_name='okta_events',
+        )
+
+        capture_sentry_message(
+            message='User activated via Okta Event Hook',
+            data={
+                'eventType': event_type,
+                'eventId': event_id,
+                'user_id': user.id,
+                'user_email': user.email,
+                'account_id': user.account_id,
+            },
+            level=SentryLogLevel.INFO,
+        )

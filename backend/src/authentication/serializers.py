@@ -373,3 +373,22 @@ class OktaLogoutSerializer(
         allow_null=False,
         allow_blank=False,
     )
+
+
+class OktaEventHookSerializer(
+    CustomValidationErrorMixin,
+    serializers.Serializer,
+):
+    """
+    Serializer for Okta Event Hooks.
+    Docs: https://developer.okta.com/docs/concepts/event-hooks/
+    """
+    event_type = serializers.CharField(
+        required=True,
+        source='eventType',
+    )
+    event_id = serializers.CharField(
+        required=True,
+        source='eventId',
+    )
+    data = serializers.DictField(required=True)
