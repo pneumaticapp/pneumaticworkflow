@@ -1,4 +1,3 @@
-from base64 import urlsafe_b64decode
 from typing import Optional, Tuple
 from uuid import uuid4
 
@@ -7,8 +6,6 @@ import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import caches
-from cryptography.hazmat.primitives import serialization
-from cryptography.hazmat.primitives.asymmetric import rsa
 
 from src.accounts.enums import SourceType
 from src.authentication.entities import UserData, SSOConfigData
@@ -274,62 +271,25 @@ class OktaService(BaseSSOService):
             user_ip=user_ip,
         )
 
-    def process_logout(self, logout_token: str):
+    def process_logout(self, sub_id: dict):
         """
-        Process OIDC Back-Channel Logout request from Okta.
-
-        According to OIDC specification:
-        - Validates JWT signature, issuer
-        - Uses sub (subject identifier) to find user
-        - Performs user logout
+        Process Okta Global Token Revocation (GTR) request.
 
         Args:
-            logout_token: JWT token from Okta
+            sub_id: Subject identifier dict from Okta GTR format
         """
+        sub = sub_id.get('sub')
+        iss = sub_id.get('iss')
         AccountLogService().send_ws_message(
             account_id=1,
             data={
-                'action': 'process_logout_start',
-                'logout_token_length': (
-                    len(logout_token) if logout_token else 0
-                ),
-                'has_logout_token': bool(logout_token),
+                'action': 'process_gtr_logout_start',
+                'sub': sub,
+                'iss': iss,
+                'format': sub_id.get('format'),
             },
             group_name='okta_logout',
         )
-        payload = self._decode_and_verify_logout_token(logout_token)
-        if not payload:
-            AccountLogService().send_ws_message(
-                account_id=1,
-                data={
-                    'action': 'process_logout_token_validation_failed',
-                    'logout_token_length': (
-                        len(logout_token) if logout_token else 0
-                    ),
-                },
-                group_name='okta_logout',
-            )
-            return
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'process_logout_token_validated',
-                'payload_keys': list(payload.keys()) if payload else [],
-                'has_sub': 'sub' in payload if payload else False,
-            },
-            group_name='okta_logout',
-        )
-        sub = payload.get('sub')
-        if not sub:
-            AccountLogService().send_ws_message(
-                account_id=1,
-                data={
-                    'action': 'process_logout_no_sub',
-                    'payload': payload,
-                },
-                group_name='okta_logout',
-            )
-            return
         AccountLogService().send_ws_message(
             account_id=1,
             data={
@@ -356,7 +316,6 @@ class OktaService(BaseSSOService):
                 'sub': sub,
                 'user_id': user.id,
                 'user_email': user.email,
-                'account_id': user.account_id,
             },
             group_name='okta_logout',
         )
@@ -371,220 +330,6 @@ class OktaService(BaseSSOService):
             },
             group_name='okta_logout',
         )
-
-    def _decode_and_verify_logout_token(self, token: str) -> Optional[dict]:
-        """
-        Decode and verify OIDC Back-Channel Logout Token.
-
-        Validates according to OIDC specification:
-        - JWT signature via JWKS
-        - Issuer (must be Okta domain)
-        - Token expiration
-
-        Args:
-            token: JWT logout token
-
-        Returns:
-            Optional[dict]: Validated payload or None on error
-        """
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'decode_logout_token_start',
-                'token_length': len(token) if token else 0,
-                'domain': self.config.domain,
-            },
-            group_name='okta_logout',
-        )
-        jwks = self._get_cached_jwks()
-        if not jwks:
-            AccountLogService().send_ws_message(
-                account_id=1,
-                data={
-                    'action': 'decode_logout_token_jwks_failed',
-                    'domain': self.config.domain,
-                },
-                group_name='okta_logout',
-            )
-            return None
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'decode_logout_token_jwks_success',
-                'jwks_keys_count': len(jwks.get('keys', [])),
-            },
-            group_name='okta_logout',
-        )
-        try:
-            header = jwt.get_unverified_header(token)
-        except jwt.DecodeError as e:
-            AccountLogService().send_ws_message(
-                account_id=1,
-                data={
-                    'action': 'decode_logout_token_header_error',
-                    'error': str(e),
-                },
-                group_name='okta_logout',
-            )
-            return None
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'decode_logout_token_header_parsed',
-                'header': header,
-            },
-            group_name='okta_logout',
-        )
-        kid = header.get('kid')
-        if not kid:
-            AccountLogService().send_ws_message(
-                account_id=1,
-                data={
-                    'action': 'decode_logout_token_no_kid',
-                    'header': header,
-                },
-                group_name='okta_logout',
-            )
-            return None
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'decode_logout_token_kid_found',
-                'kid': kid,
-            },
-            group_name='okta_logout',
-        )
-        public_key = self._get_public_key_from_jwks(jwks, kid)
-        if not public_key:
-            AccountLogService().send_ws_message(
-                account_id=1,
-                data={
-                    'action': 'decode_logout_token_public_key_failed',
-                    'kid': kid,
-                    'available_kids': [
-                        key.get('kid') for key in jwks.get('keys', [])
-                    ],
-                },
-                group_name='okta_logout',
-            )
-            return None
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'decode_logout_token_public_key_success',
-                'kid': kid,
-            },
-            group_name='okta_logout',
-        )
-        try:
-            payload = jwt.decode(
-                token,
-                public_key,
-                algorithms=['RS256'],
-                issuer=f'https://{self.config.domain}',
-                options={
-                    'verify_signature': True,
-                    'verify_exp': True,
-                    'verify_iss': True,
-                    'verify_aud': False,
-                },
-            )
-            AccountLogService().send_ws_message(
-                account_id=1,
-                data={
-                    'action': 'decode_logout_token_success',
-                    'payload_keys': list(payload.keys()),
-                    'sub': payload.get('sub'),
-                    'iss': payload.get('iss'),
-                    'exp': payload.get('exp'),
-                },
-                group_name='okta_logout',
-            )
-            return payload
-        except jwt.InvalidTokenError as e:
-            AccountLogService().send_ws_message(
-                account_id=1,
-                data={
-                    'action': 'decode_logout_token_validation_error',
-                    'error': str(e),
-                    'error_type': type(e).__name__,
-                },
-                group_name='okta_logout',
-            )
-            return None
-
-    def _get_cached_jwks(self) -> Optional[dict]:
-        """
-        Get JWKS with caching for performance.
-
-        Returns:
-            Optional[dict]: JWKS from Okta or None on error
-        """
-        cache = caches['default']
-        cache_key = f'okta_jwks_{self.config.domain}'
-        jwks = cache.get(cache_key)
-        if jwks:
-            return jwks
-        jwks_url = f'https://{self.config.domain}/oauth2/default/v1/keys'
-        try:
-            response = requests.get(jwks_url, timeout=10)
-            response.raise_for_status()
-            jwks = response.json()
-            cache.set(cache_key, jwks, timeout=3600)
-            return jwks
-        except requests.RequestException:
-            return None
-
-    def _get_public_key_from_jwks(self, jwks: dict, kid: str) -> Optional[str]:
-        """
-        Extract public key from JWKS by kid.
-
-        Args:
-            jwks: JWKS from Okta
-            kid: Key ID from JWT header
-
-        Returns:
-            Optional[str]: PEM-encoded public key or None
-        """
-        for key_data in jwks.get('keys', []):
-            if key_data.get('kid') == kid and key_data.get('kty') == 'RSA':
-                try:
-                    return self._jwk_to_pem(key_data)
-                except (ValueError, KeyError, TypeError):
-                    pass
-        return None
-
-    def _jwk_to_pem(self, jwk_data: dict) -> str:
-        """
-        Convert JWK to PEM format.
-
-        Args:
-            jwk_data: JWK key data
-
-        Returns:
-            str: PEM-encoded public key
-        """
-
-        # Decode n and e from JWK
-        n = int.from_bytes(
-            urlsafe_b64decode(jwk_data['n'] + '=='),
-            byteorder='big',
-        )
-        e = int.from_bytes(
-            urlsafe_b64decode(jwk_data['e'] + '=='),
-            byteorder='big',
-        )
-
-        # Create RSA public key
-        public_key = rsa.RSAPublicNumbers(e, n).public_key()
-
-        # Convert to PEM
-        pem = public_key.public_bytes(
-            encoding=serialization.Encoding.PEM,
-            format=serialization.PublicFormat.SubjectPublicKeyInfo,
-        )
-
-        return pem.decode('utf-8')
 
     def _find_user_by_okta_sub(self, okta_sub: str) -> Optional[UserModel]:
         """
@@ -806,7 +551,6 @@ class OktaService(BaseSSOService):
         Supported events:
         - user.lifecycle.deactivate: User deactivated in Okta
         - application.user_membership.remove: User access revoked
-        - user.lifecycle.activate: User reactivated (optional)
 
         Args:
             event_type: Type of event from Okta
@@ -852,15 +596,6 @@ class OktaService(BaseSSOService):
                 },
                 group_name='okta_events',
             )
-            capture_sentry_message(
-                message='Email not found in Okta Event Hook',
-                data={
-                    'eventType': event_type,
-                    'eventId': event_id,
-                    'data': data,
-                },
-                level=SentryLogLevel.WARNING,
-            )
             return
 
         AccountLogService().send_ws_message(
@@ -888,15 +623,6 @@ class OktaService(BaseSSOService):
                 },
                 group_name='okta_events',
             )
-            capture_sentry_message(
-                message='User not found for Okta Event Hook',
-                data={
-                    'eventType': event_type,
-                    'eventId': event_id,
-                    'email': email,
-                },
-                level=SentryLogLevel.WARNING,
-            )
             return
 
         AccountLogService().send_ws_message(
@@ -907,7 +633,6 @@ class OktaService(BaseSSOService):
                 'eventId': event_id,
                 'email': email,
                 'user_id': user.id,
-                'account_id': user.account_id,
             },
             group_name='okta_events',
         )
@@ -917,17 +642,7 @@ class OktaService(BaseSSOService):
             'user.lifecycle.deactivate',
             'application.user_membership.remove',
         ):
-            self._handle_user_deactivation(
-                user,
-                event_type,
-                event_id,
-            )
-        elif event_type == 'user.lifecycle.activate':
-            self._handle_user_activation(
-                user,
-                event_type,
-                event_id,
-            )
+            self._handle_user_deactivation(user)
         else:
             AccountLogService().send_ws_message(
                 account_id=1,
@@ -942,100 +657,16 @@ class OktaService(BaseSSOService):
     def _handle_user_deactivation(
         self,
         user: UserModel,
-        event_type: str,
-        event_id: str,
     ):
         """
         Handle user deactivation events from Okta.
         Logout user and delete Okta access tokens.
         """
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'handle_user_deactivation_start',
-                'eventType': event_type,
-                'eventId': event_id,
-                'user_id': user.id,
-                'user_email': user.email,
-            },
-            group_name='okta_events',
-        )
 
-        # Delete Okta access tokens
-        deleted_count = AccessToken.objects.filter(
+        AccessToken.objects.filter(
             user=user,
             source=self.source,
         ).delete()
 
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'handle_user_deactivation_tokens_deleted',
-                'eventType': event_type,
-                'eventId': event_id,
-                'user_id': user.id,
-                'deleted_count': deleted_count[0] if deleted_count else 0,
-            },
-            group_name='okta_events',
-        )
-
         # Terminate all user sessions
         PneumaticToken.expire_all_tokens(user)
-
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'handle_user_deactivation_completed',
-                'eventType': event_type,
-                'eventId': event_id,
-                'user_id': user.id,
-                'user_email': user.email,
-            },
-            group_name='okta_events',
-        )
-
-        capture_sentry_message(
-            message='User deactivated via Okta Event Hook',
-            data={
-                'eventType': event_type,
-                'eventId': event_id,
-                'user_id': user.id,
-                'user_email': user.email,
-                'account_id': user.account_id,
-            },
-            level=SentryLogLevel.INFO,
-        )
-
-    def _handle_user_activation(
-        self,
-        user: UserModel,
-        event_type: str,
-        event_id: str,
-    ):
-        """
-        Handle user activation events from Okta (optional).
-        Currently just logs the event.
-        """
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'handle_user_activation',
-                'eventType': event_type,
-                'eventId': event_id,
-                'user_id': user.id,
-                'user_email': user.email,
-            },
-            group_name='okta_events',
-        )
-
-        capture_sentry_message(
-            message='User activated via Okta Event Hook',
-            data={
-                'eventType': event_type,
-                'eventId': event_id,
-                'user_id': user.id,
-                'user_email': user.email,
-                'account_id': user.account_id,
-            },
-            level=SentryLogLevel.INFO,
-        )

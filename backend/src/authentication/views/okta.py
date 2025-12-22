@@ -23,10 +23,6 @@ from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
 from src.logs.service import AccountLogService
-from src.utils.logging import (
-    SentryLogLevel,
-    capture_sentry_message,
-)
 from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
@@ -83,38 +79,23 @@ class OktaViewSet(
 
     @action(methods=('POST',), detail=False)
     def logout(self, request, *args, **kwargs):
-        if request.content_type == 'application/x-www-form-urlencoded':
-            logout_data = dict(request.POST)
-        else:
-            logout_data = dict(request.data)
-
         AccountLogService().send_ws_message(
             account_id=1,
             data={
                 'action': 'okta_logout_request',
-                'request_data': logout_data,
-                'headers': dict(request.headers),
-                'content_type': request.content_type,
-                'user_agent': self.get_user_agent(request),
-                'user_ip': self.get_user_ip(request),
             },
             group_name='okta_logout',
         )
-        slz = OktaLogoutSerializer(data=logout_data)
+        slz = OktaLogoutSerializer(data=request.data)
         if not slz.is_valid():
             AccountLogService().send_ws_message(
                 account_id=1,
                 data={
                     'action': 'okta_logout_validation_error',
                     'errors': slz.errors,
-                    'request_data': dict(request.data),
+                    'request_data': request.data,
                 },
                 group_name='okta_logout',
-            )
-            capture_sentry_message(
-                message='Invalid logout_token in Okta logout request',
-                data={'errors': slz.errors, 'data': dict(request.data)},
-                level=SentryLogLevel.WARNING,
             )
             return self.response_ok()
         AccountLogService().send_ws_message(
@@ -135,40 +116,6 @@ class OktaViewSet(
             group_name='okta_logout',
         )
         return self.response_ok()
-
-    @action(methods=('POST', 'GET'), detail=False, url_path='debug-logout')
-    def debug_logout(self, request, *args, **kwargs):
-        debug_data = {
-            'method': request.method,
-            'headers': dict(request.headers),
-            'get_params': dict(request.GET),
-            'post_data': dict(request.POST),
-            'json_data': getattr(request, 'data', {}),
-            'content_type': request.content_type,
-            'body_raw': request.body.decode('utf-8', errors='ignore')[:1000],
-            'user_agent': self.get_user_agent(request),
-            'user_ip': self.get_user_ip(request),
-        }
-
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'okta_debug_logout_request',
-                'debug_data': debug_data,
-            },
-            group_name='okta_debug',
-        )
-
-        capture_sentry_message(
-            message='Okta Debug Logout Request',
-            data=debug_data,
-            level=SentryLogLevel.INFO,
-        )
-
-        return self.response_ok({
-            'message': 'Debug data logged',
-            'debug_data': debug_data,
-        })
 
     @action(methods=('POST',), detail=False, url_path='event-hooks')
     def event_hooks(self, request, *args, **kwargs):
@@ -200,11 +147,6 @@ class OktaViewSet(
                     'request_data': dict(request.data),
                 },
                 group_name='okta_events',
-            )
-            capture_sentry_message(
-                message='Invalid Okta Event Hook request',
-                data={'errors': slz.errors, 'data': dict(request.data)},
-                level=SentryLogLevel.WARNING,
             )
             return self.response_ok()
         AccountLogService().send_ws_message(

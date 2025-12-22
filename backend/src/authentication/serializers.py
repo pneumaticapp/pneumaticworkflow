@@ -368,10 +368,9 @@ class OktaLogoutSerializer(
     CustomValidationErrorMixin,
     serializers.Serializer,
 ):
-    logout_token = serializers.CharField(
+    sub_id = serializers.DictField(
         required=True,
         allow_null=False,
-        allow_blank=False,
     )
 
 
