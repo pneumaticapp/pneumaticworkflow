@@ -117,15 +117,67 @@ class OktaViewSet(
         )
         return self.response_ok()
 
-    @action(methods=('POST',), detail=False, url_path='event-hooks')
+    @action(methods=('POST', 'GET'), detail=False, url_path='event-hooks')
     def event_hooks(self, request, *args, **kwargs):
         """
         Handle Okta Event Hooks for user lifecycle events.
+        GET: Webhook verification challenge
+        POST: Actual event processing
         Events: user.lifecycle.deactivate,
                 user.lifecycle.activate,
                 application.user_membership.remove
         Docs: https://developer.okta.com/docs/concepts/event-hooks/
         """
+        # Debug logging for all requests
+        AccountLogService().send_ws_message(
+            account_id=1,
+            data={
+                'action': 'okta_event_hook_debug',
+                'method': request.method,
+                'headers': dict(request.headers),
+                'get_params': dict(request.GET),
+                'post_data': (
+                    dict(request.POST) if hasattr(request, 'POST') else {}
+                ),
+                'json_data': getattr(request, 'data', {}),
+                'content_type': request.content_type,
+                'body_raw': (
+                    request.body.decode('utf-8', errors='ignore')[:1000]
+                ),
+                'user_agent': self.get_user_agent(request),
+                'user_ip': self.get_user_ip(request),
+            },
+            group_name='okta_events',
+        )
+
+        # Handle GET request for webhook verification
+        if request.method == 'GET':
+            verification_challenge = (
+                request.headers.get('X-Okta-Verification-Challenge')
+            )
+            if verification_challenge:
+                AccountLogService().send_ws_message(
+                    account_id=1,
+                    data={
+                        'action': 'okta_webhook_verification',
+                        'challenge': verification_challenge,
+                    },
+                    group_name='okta_events',
+                )
+                # Return the challenge in JSON format as per Okta docs
+                return self.response_ok({
+                    'verification': verification_challenge,
+                })
+            AccountLogService().send_ws_message(
+                account_id=1,
+                data={
+                    'action': 'webhook_verification_missing_challenge',
+                },
+                group_name='okta_events',
+            )
+            return self.response_ok()
+
+        # Handle POST request for event processing
         AccountLogService().send_ws_message(
             account_id=1,
             data={
