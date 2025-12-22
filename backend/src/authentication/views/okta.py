@@ -167,3 +167,31 @@ class OktaViewSet(
             group_name='okta_events',
         )
         return self.response_ok()
+
+    @action(methods=('POST', 'GET'), detail=False, url_path='debug-logout')
+    def debug_logout(self, request, *args, **kwargs):
+        debug_data = {
+            'method': request.method,
+            'headers': dict(request.headers),
+            'get_params': dict(request.GET),
+            'post_data': dict(request.POST),
+            'json_data': getattr(request, 'data', {}),
+            'content_type': request.content_type,
+            'body_raw': request.body.decode('utf-8', errors='ignore')[:1000],
+            'user_agent': self.get_user_agent(request),
+            'user_ip': self.get_user_ip(request),
+        }
+
+        AccountLogService().send_ws_message(
+            account_id=1,
+            data={
+                'action': 'okta_debug_logout_request',
+                'debug_data': debug_data,
+            },
+            group_name='okta_debug',
+        )
+
+        return self.response_ok({
+            'message': 'Debug data logged',
+            'debug_data': debug_data,
+        })
