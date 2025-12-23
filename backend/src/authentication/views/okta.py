@@ -36,6 +36,11 @@ class OktaViewSet(
 ):
     permission_classes = (SSOPermission,)
 
+    def get_authenticators(self):
+        if self.action in ('logout', 'event_hooks', 'debug_logout'):
+            return []
+        return super().get_authenticators()
+
     @property
     def throttle_classes(self):
         if self.action == 'token':

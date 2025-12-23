@@ -134,6 +134,9 @@ http {
         server_name ${FRONTEND_DOMAIN};
 
         # Okta logout redirect to backend (temporary workaround)
+        # Issue: Okta requires logout URL without port (https://staging.pneumatic.app/auth/okta/logout)
+        # but backend runs on port 8001. This location intercepts Okta requests
+        # and redirects them directly to backend, bypassing frontend.
         location /auth/okta/logout {
             proxy_pass http://backend;
             proxy_http_version 1.1;
