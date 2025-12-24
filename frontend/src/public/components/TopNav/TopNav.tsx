@@ -179,16 +179,7 @@ export function TopNav({
     >
       {renderPaywallContent()}
       <nav className={classnames('navbar', styles['navbar'], workflowNavbarClassname)}>
-        {leftContent && (
-          <div
-            className={classnames(
-              styles['navbar-left'],
-              workflowsView === EWorkflowsView.Grid && styles['navbar-left--workflows-grid'],
-            )}
-          >
-            {leftContent}
-          </div>
-        )}
+        {leftContent && <div className={styles['navbar-left']}>{leftContent}</div>}
         <div className={rightNavbarClassname}>
           <div className={styles['notifications']}>
             <button

@@ -3,7 +3,7 @@ import { connect } from 'react-redux';
 import { AnyAction } from 'redux';
 
 import { IApplicationState } from '../../types/redux';
-import { openWorkflowLogPopup } from '../../redux/workflows/actions';
+import { openWorkflowLogPopup } from '../../redux/workflows/slice';
 import {
   loadHighlights,
   loadHighlightsTemplatesTitles,

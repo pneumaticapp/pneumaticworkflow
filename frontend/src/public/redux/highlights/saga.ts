@@ -2,7 +2,6 @@ import { all, fork, put, select, takeEvery, takeLatest } from 'redux-saga/effect
 
 import { getHighlightsStore, getHighlightsFilters } from '../selectors/highlights';
 import { getHighlights, IGetHighlightsResponse, IGetHighlightsFilters } from '../../api/getHighlights';
-import { TGetTemplatesTitlesResponse } from '../../api/getTemplatesTitles';
 import { logger } from '../../utils/logger';
 
 import {
@@ -14,14 +13,14 @@ import {
   TLoadHighlights,
   TLoadHighlightsTemplatesTitles,
 } from './actions';
-import { getHighlightsTitles } from '../../api/getHighlightsTitles';
+import { getHighlightsTitles, TGetHighlightsTitlesResponse } from '../../api/getHighlightsTitles';
 import { mapWorkflowsForSetHighlights } from '../../utils/mappers';
 import { getUserTimezone } from '../selectors/user';
 import { NotificationManager } from '../../components/UI/Notifications';
 
 function* fetchTemplatesTitles({ payload: { eventDateFrom, eventDateTo } }: TLoadHighlightsTemplatesTitles) {
   try {
-    const templatesTitles: TGetTemplatesTitlesResponse = yield getHighlightsTitles({
+    const templatesTitles: TGetHighlightsTitlesResponse = yield getHighlightsTitles({
       eventDateFrom,
       eventDateTo,
     });
