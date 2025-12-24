@@ -247,7 +247,7 @@ class OktaService(BaseSSOService):
                 okta_sub = id_payload.get('sub')
                 if okta_sub:
                     self._cache_user_by_sub(okta_sub, user)
-            except (jwt.DecodeError, jwt.InvalidTokenError, KeyError):
+            except (jwt.DecodeError, jwt.InvalidTokenError):
                 pass
 
     def authenticate_user(

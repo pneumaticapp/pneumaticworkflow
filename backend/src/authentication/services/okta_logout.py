@@ -15,14 +15,10 @@ class OktaLogoutService:
 
     source = SourceType.OKTA
 
-    def process_logout(self, sub_id: dict):
+    def process_logout(self, sub: str, **kwargs):
         """
         Process Okta Global Token Revocation (GTR) request.
-
-        Args:
-            sub_id: Subject identifier dict from Okta GTR format
         """
-        sub = sub_id.get('sub')
         user = self._find_user_by_okta_sub(sub)
         if user:
             self._logout_user(user, okta_sub=sub)

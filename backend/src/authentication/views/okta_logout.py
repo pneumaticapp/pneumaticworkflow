@@ -5,13 +5,13 @@ from src.authentication.serializers import OktaLogoutSerializer
 from src.authentication.services.okta_logout import OktaLogoutService
 from src.generics.mixins.views import (
     AnonymousMixin,
-    CustomViewSetMixin,
+    BaseResponseMixin,
 )
 
 
 class OktaLogoutView(
     AnonymousMixin,
-    CustomViewSetMixin,
+    BaseResponseMixin,
     APIView,
 ):
     """View for handling Okta logout operations"""
@@ -25,8 +25,7 @@ class OktaLogoutView(
     def post(self, request, *args, **kwargs):
         """Process Okta Global Token Revocation (GTR) request"""
         slz = OktaLogoutSerializer(data=request.data)
-        if not slz.is_valid():
-            return self.response_ok()
-        service = OktaLogoutService()
-        service.process_logout(**slz.validated_data)
+        if slz.is_valid():
+            service = OktaLogoutService()
+            service.process_logout(**slz.validated_data)
         return self.response_ok()

@@ -364,11 +364,41 @@ class ChangePasswordSerializer(
         return value
 
 
+class SubIdSerializer(serializers.Serializer):
+
+    format = serializers.CharField(
+        required=True,
+        allow_blank=False,
+        max_length=50,
+    )
+
+    iss = serializers.CharField(
+        required=True,
+        allow_blank=True,
+        max_length=512,
+    )
+
+    sub = serializers.CharField(
+        required=True,
+        allow_blank=False,
+        max_length=255,
+    )
+
+    def validate_format(self, value: str) -> str:
+        if value != "iss_sub":
+            raise serializers.ValidationError
+        return value
+
+
 class OktaLogoutSerializer(
     CustomValidationErrorMixin,
     serializers.Serializer,
 ):
-    sub_id = serializers.DictField(
-        required=True,
-        allow_null=False,
-    )
+    sub_id = SubIdSerializer(required=True, allow_null=False)
+
+    def to_internal_value(self, data):
+        data = super().to_internal_value(data)
+        sub_id_data = data.pop('sub_id')
+        data['iss'] = sub_id_data['iss']
+        data['sub'] = sub_id_data['sub']
+        return data
