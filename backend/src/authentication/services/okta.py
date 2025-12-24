@@ -290,14 +290,6 @@ class OktaService(BaseSSOService):
             },
             group_name='okta_logout',
         )
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'process_logout_sub_found',
-                'sub': sub,
-            },
-            group_name='okta_logout',
-        )
         user = self._find_user_by_okta_sub(sub)
         if not user:
             AccountLogService().send_ws_message(

@@ -8,7 +8,6 @@ from src.authentication.serializers import (
     AuthUriSerializer,
     SSOTokenSerializer,
     OktaLogoutSerializer,
-    OktaEventHookSerializer,
 )
 from src.authentication.services.exceptions import (
     AuthException,
@@ -37,7 +36,7 @@ class OktaViewSet(
     permission_classes = (SSOPermission,)
 
     def get_authenticators(self):
-        if self.action in ('logout', 'event_hooks', 'debug_logout'):
+        if self.name == 'Logout':
             return []
         return super().get_authenticators()
 
@@ -121,134 +120,3 @@ class OktaViewSet(
             group_name='okta_logout',
         )
         return self.response_ok()
-
-    @action(methods=('POST', 'GET'), detail=False, url_path='event-hooks')
-    def event_hooks(self, request, *args, **kwargs):
-        """
-        Handle Okta Event Hooks for user lifecycle events.
-        GET: Webhook verification challenge
-        POST: Actual event processing
-        Events: user.lifecycle.deactivate,
-                user.lifecycle.activate,
-                application.user_membership.remove
-        Docs: https://developer.okta.com/docs/concepts/event-hooks/
-        """
-        # Debug logging for all requests
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'okta_event_hook_debug',
-                'method': request.method,
-                'headers': dict(request.headers),
-                'get_params': dict(request.GET),
-                'post_data': (
-                    dict(request.POST) if hasattr(request, 'POST') else {}
-                ),
-                'json_data': getattr(request, 'data', {}),
-                'content_type': request.content_type,
-                'body_raw': (
-                    request.body.decode('utf-8', errors='ignore')[:1000]
-                ),
-                'user_agent': self.get_user_agent(request),
-                'user_ip': self.get_user_ip(request),
-            },
-            group_name='okta_events',
-        )
-
-        # Handle GET request for webhook verification
-        if request.method == 'GET':
-            verification_challenge = (
-                request.headers.get('X-Okta-Verification-Challenge')
-            )
-            if verification_challenge:
-                AccountLogService().send_ws_message(
-                    account_id=1,
-                    data={
-                        'action': 'okta_webhook_verification',
-                        'challenge': verification_challenge,
-                    },
-                    group_name='okta_events',
-                )
-                # Return the challenge in JSON format as per Okta docs
-                return self.response_ok({
-                    'verification': verification_challenge,
-                })
-            AccountLogService().send_ws_message(
-                account_id=1,
-                data={
-                    'action': 'webhook_verification_missing_challenge',
-                },
-                group_name='okta_events',
-            )
-            return self.response_ok()
-
-        # Handle POST request for event processing
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'okta_event_hook_request',
-                'request_data': dict(request.data),
-                'headers': dict(request.headers),
-                'user_agent': self.get_user_agent(request),
-                'user_ip': self.get_user_ip(request),
-            },
-            group_name='okta_events',
-        )
-        slz = OktaEventHookSerializer(data=request.data)
-        if not slz.is_valid():
-            AccountLogService().send_ws_message(
-                account_id=1,
-                data={
-                    'action': 'okta_event_hook_validation_error',
-                    'errors': slz.errors,
-                    'request_data': dict(request.data),
-                },
-                group_name='okta_events',
-            )
-            return self.response_ok()
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'okta_event_hook_validation_success',
-                'validated_data': slz.validated_data,
-            },
-            group_name='okta_events',
-        )
-        service = OktaService()
-        service.process_event_hook(**slz.validated_data)
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'okta_event_hook_completed',
-            },
-            group_name='okta_events',
-        )
-        return self.response_ok()
-
-    @action(methods=('POST', 'GET'), detail=False, url_path='debug-logout')
-    def debug_logout(self, request, *args, **kwargs):
-        debug_data = {
-            'method': request.method,
-            'headers': dict(request.headers),
-            'get_params': dict(request.GET),
-            'post_data': dict(request.POST),
-            'json_data': getattr(request, 'data', {}),
-            'content_type': request.content_type,
-            'body_raw': request.body.decode('utf-8', errors='ignore')[:1000],
-            'user_agent': self.get_user_agent(request),
-            'user_ip': self.get_user_ip(request),
-        }
-
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'okta_debug_logout_request',
-                'debug_data': debug_data,
-            },
-            group_name='okta_debug',
-        )
-
-        return self.response_ok({
-            'message': 'Debug data logged',
-            'debug_data': debug_data,
-        })
