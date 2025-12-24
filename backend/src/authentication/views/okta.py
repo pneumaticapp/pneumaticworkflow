@@ -21,7 +21,6 @@ from src.generics.mixins.views import (
     AnonymousMixin,
     CustomViewSetMixin,
 )
-from src.logs.service import AccountLogService
 from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
@@ -83,40 +82,9 @@ class OktaViewSet(
 
     @action(methods=('POST',), detail=False)
     def logout(self, request, *args, **kwargs):
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'okta_logout_request',
-            },
-            group_name='okta_logout',
-        )
         slz = OktaLogoutSerializer(data=request.data)
         if not slz.is_valid():
-            AccountLogService().send_ws_message(
-                account_id=1,
-                data={
-                    'action': 'okta_logout_validation_error',
-                    'errors': slz.errors,
-                    'request_data': request.data,
-                },
-                group_name='okta_logout',
-            )
             return self.response_ok()
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'okta_logout_validation_success',
-                'validated_data': slz.validated_data,
-            },
-            group_name='okta_logout',
-        )
         service = OktaService()
         service.process_logout(**slz.validated_data)
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'okta_logout_completed',
-            },
-            group_name='okta_logout',
-        )
         return self.response_ok()

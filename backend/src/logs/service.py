@@ -225,19 +225,3 @@ class AccountLogService(BaseModelService):
                 'account_id': user.account_id,
             },
         )
-
-    def send_ws_message(
-        self,
-        account_id,
-        data: dict,
-        group_name: str,
-    ):
-        self.create(
-            event_type=AccountEventType.API,
-            status=AccountEventStatus.SUCCESS,
-            direction=RequestDirection.SENT,
-            contractor='Customer.io',
-            title=group_name,
-            response_data=data,
-            account_id=account_id,
-        )

@@ -20,7 +20,6 @@ from src.authentication.models import (
 from src.authentication.services import exceptions
 from src.authentication.services.base_sso import BaseSSOService
 from src.authentication.tokens import PneumaticToken
-from src.logs.service import AccountLogService
 from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
@@ -285,158 +284,31 @@ class OktaService(BaseSSOService):
             sub_id: Subject identifier dict from Okta GTR format
         """
         sub = sub_id.get('sub')
-        iss = sub_id.get('iss')
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'process_gtr_logout_start',
-                'sub': sub,
-                'iss': iss,
-                'format': sub_id.get('format'),
-            },
-            group_name='okta_logout',
-        )
         user = self._find_user_by_okta_sub(sub)
         if not user:
-            AccountLogService().send_ws_message(
-                account_id=1,
-                data={
-                    'action': 'process_logout_user_not_found',
-                    'sub': sub,
-                },
-                group_name='okta_logout',
-            )
             return
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'process_logout_user_found',
-                'sub': sub,
-                'user_id': user.id,
-                'user_email': user.email,
-            },
-            group_name='okta_logout',
-        )
         self._logout_user(user, okta_sub=sub)
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'process_logout_completed',
-                'sub': sub,
-                'user_id': user.id,
-                'user_email': user.email,
-            },
-            group_name='okta_logout',
-        )
 
     def _find_user_by_okta_sub(self, okta_sub: str) -> Optional[UserModel]:
-        """
-        Find user by Okta subject identifier via cache.
-
-        Args:
-            okta_sub: Okta subject identifier
-
-        Returns:
-            Optional[UserModel]: Found user or None
-        """
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'find_user_by_sub_start',
-                'okta_sub': okta_sub,
-            },
-            group_name='okta_logout',
-        )
-        # Search in cache
         user_id = self._get_cached_user_by_sub(okta_sub)
         if user_id:
-            AccountLogService().send_ws_message(
-                account_id=1,
-                data={
-                    'action': 'find_user_by_sub_cache_hit',
-                    'okta_sub': okta_sub,
-                    'user_id': user_id,
-                },
-                group_name='okta_logout',
-            )
             try:
-                user = UserModel.objects.get(id=user_id)
-                AccountLogService().send_ws_message(
-                    account_id=1,
-                    data={
-                        'action': 'find_user_by_sub_db_success',
-                        'okta_sub': okta_sub,
-                        'user_id': user.id,
-                        'user_email': user.email,
-                        'account_id': user.account_id,
-                    },
-                    group_name='okta_logout',
-                )
-                return user
+                return UserModel.objects.get(id=user_id)
             except UserModel.DoesNotExist:
-                AccountLogService().send_ws_message(
-                    account_id=1,
-                    data={
-                        'action': 'find_user_by_sub_db_not_found',
-                        'okta_sub': okta_sub,
-                        'user_id': user_id,
-                        'cache_cleared': True,
-                    },
-                    group_name='okta_logout',
-                )
                 self._clear_cached_user_by_sub(okta_sub)
-        else:
-            AccountLogService().send_ws_message(
-                account_id=1,
-                data={
-                    'action': 'find_user_by_sub_cache_miss',
-                    'okta_sub': okta_sub,
-                },
-                group_name='okta_logout',
-            )
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'find_user_by_sub_not_found',
-                'okta_sub': okta_sub,
-            },
-            group_name='okta_logout',
-        )
         return None
 
     def _cache_user_by_sub(self, okta_sub: str, user: UserModel):
-        """
-        Cache okta_sub -> user_id mapping.
-
-        Args:
-            okta_sub: Okta subject identifier
-            user: User instance
-        """
         cache = caches['default']
         cache_key = f'okta_sub_to_user_{okta_sub}'
         cache.set(cache_key, user.id, timeout=2592000)
 
     def _get_cached_user_by_sub(self, okta_sub: str) -> Optional[int]:
-        """
-        Get user_id from cache by okta_sub.
-
-        Args:
-            okta_sub: Okta subject identifier
-
-        Returns:
-            Optional[int]: user_id or None
-        """
         cache = caches['default']
         cache_key = f'okta_sub_to_user_{okta_sub}'
         return cache.get(cache_key)
 
     def _clear_cached_user_by_sub(self, okta_sub: str):
-        """
-        Clear cached okta_sub -> user_id mapping.
-
-        Args:
-            okta_sub: Okta subject identifier
-        """
         cache = caches['default']
         cache_key = f'okta_sub_to_user_{okta_sub}'
         cache.delete(cache_key)
@@ -447,224 +319,25 @@ class OktaService(BaseSSOService):
         - Delete AccessToken for OKTA source
         - Clear token and profile cache
         - Terminate session
-
-        Args:
-            user: User to logout
-            okta_sub: Okta subject identifier (for cache cleanup)
         """
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'logout_user_start',
-                'user_id': user.id,
-                'user_email': user.email,
-                'okta_sub': okta_sub,
-                'account_id': user.account_id,
-            },
-            group_name='okta_logout',
-        )
         # Get access tokens before deletion for profile cache cleanup
         access_tokens = list(AccessToken.objects.filter(
             user=user,
             source=self.source,
         ).values_list('access_token', flat=True))
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'logout_user_tokens_found',
-                'user_id': user.id,
-                'tokens_count': len(access_tokens),
-                'source': (
-                    self.source.value
-                    if hasattr(self.source, 'value')
-                    else str(self.source)
-                ),
-            },
-            group_name='okta_logout',
-        )
         # Delete AccessToken for OKTA source
-        deleted_count = AccessToken.objects.filter(
+        AccessToken.objects.filter(
             user=user,
             source=self.source,
         ).delete()
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'logout_user_tokens_deleted',
-                'user_id': user.id,
-                'deleted_count': deleted_count[0] if deleted_count else 0,
-            },
-            group_name='okta_logout',
-        )
         # Clear user profile cache
         cache_keys_cleared = []
         for access_token in access_tokens:
             cache_key = f'user_profile_{access_token}'
             self._delete_cache(key=cache_key)
             cache_keys_cleared.append(cache_key)
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'logout_user_profile_cache_cleared',
-                'user_id': user.id,
-                'cache_keys_count': len(cache_keys_cleared),
-            },
-            group_name='okta_logout',
-        )
         # Clear okta_sub -> user_id mapping cache
         if okta_sub:
             self._clear_cached_user_by_sub(okta_sub)
-            AccountLogService().send_ws_message(
-                account_id=1,
-                data={
-                    'action': 'logout_user_sub_cache_cleared',
-                    'user_id': user.id,
-                    'okta_sub': okta_sub,
-                },
-                group_name='okta_logout',
-            )
         # Clear all tokens from cache (terminate all sessions)
-        PneumaticToken.expire_all_tokens(user)
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'logout_user_completed',
-                'user_id': user.id,
-                'user_email': user.email,
-                'okta_sub': okta_sub,
-                'all_sessions_terminated': True,
-            },
-            group_name='okta_logout',
-        )
-
-    def process_event_hook(
-        self,
-        event_type: str,
-        event_id: str,
-        data: dict,
-    ):
-        """
-        Process Okta Event Hook for user lifecycle events.
-
-        Supported events:
-        - user.lifecycle.deactivate: User deactivated in Okta
-        - application.user_membership.remove: User access revoked
-
-        Args:
-            event_type: Type of event from Okta
-            event_id: Unique event identifier
-            data: Event data containing user information
-        """
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'process_event_hook_start',
-                'eventType': event_type,
-                'eventId': event_id,
-                'data_keys': list(data.keys()),
-            },
-            group_name='okta_events',
-        )
-
-        # Extract user email from event data
-        email = None
-        target = data.get('target')
-        if isinstance(target, list):
-            for item in target:
-                if (
-                    isinstance(item, dict)
-                    and item.get('type') == 'User'
-                ):
-                    alternate_id = (
-                        item.get('alternateId') or
-                        item.get('alternate_id')
-                    )
-                    if alternate_id:
-                        email = alternate_id.lower()
-                        break
-
-        if not email:
-            AccountLogService().send_ws_message(
-                account_id=1,
-                data={
-                    'action': 'process_event_hook_email_not_found',
-                    'eventType': event_type,
-                    'eventId': event_id,
-                    'data': data,
-                },
-                group_name='okta_events',
-            )
-            return
-
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'process_event_hook_email_found',
-                'eventType': event_type,
-                'eventId': event_id,
-                'email': email,
-            },
-            group_name='okta_events',
-        )
-
-        # Find user by email
-        try:
-            user = UserModel.objects.get(email=email)
-        except UserModel.DoesNotExist:
-            AccountLogService().send_ws_message(
-                account_id=1,
-                data={
-                    'action': 'process_event_hook_user_not_found',
-                    'eventType': event_type,
-                    'eventId': event_id,
-                    'email': email,
-                },
-                group_name='okta_events',
-            )
-            return
-
-        AccountLogService().send_ws_message(
-            account_id=1,
-            data={
-                'action': 'process_event_hook_user_found',
-                'eventType': event_type,
-                'eventId': event_id,
-                'email': email,
-                'user_id': user.id,
-            },
-            group_name='okta_events',
-        )
-
-        # Handle event based on type
-        if event_type in (
-            'user.lifecycle.deactivate',
-            'application.user_membership.remove',
-        ):
-            self._handle_user_deactivation(user)
-        else:
-            AccountLogService().send_ws_message(
-                account_id=1,
-                data={
-                    'action': 'process_event_hook_unsupported_event',
-                    'eventType': event_type,
-                    'eventId': event_id,
-                },
-                group_name='okta_events',
-            )
-
-    def _handle_user_deactivation(
-        self,
-        user: UserModel,
-    ):
-        """
-        Handle user deactivation events from Okta.
-        Logout user and delete Okta access tokens.
-        """
-
-        AccessToken.objects.filter(
-            user=user,
-            source=self.source,
-        ).delete()
-
-        # Terminate all user sessions
         PneumaticToken.expire_all_tokens(user)
