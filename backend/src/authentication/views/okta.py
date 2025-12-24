@@ -35,7 +35,7 @@ class OktaViewSet(
     permission_classes = (SSOPermission,)
 
     def get_authenticators(self):
-        if self.name == 'Logout':
+        if self.action_map.get(self.request.method.lower()) == 'logout':
             return []
         return super().get_authenticators()
 

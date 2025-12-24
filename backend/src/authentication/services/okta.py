@@ -9,9 +9,7 @@ from django.core.cache import caches
 
 from src.accounts.enums import SourceType
 from src.authentication.entities import UserData, SSOConfigData
-from src.authentication.enums import (
-    SSOProvider,
-)
+from src.authentication.enums import SSOProvider
 from src.authentication.messages import MSG_AU_0018
 from src.authentication.models import (
     AccessToken,
@@ -36,10 +34,7 @@ class OktaService(BaseSSOService):
     sso_provider = SSOProvider.OKTA
     exception_class = exceptions.OktaServiceException
 
-    def __init__(
-        self,
-        domain: Optional[str] = None,
-    ):
+    def __init__(self, domain: Optional[str] = None):
         super().__init__(domain)
         self.scope = 'openid email profile'
 
@@ -203,10 +198,7 @@ class OktaService(BaseSSOService):
             raise exceptions.EmailNotExist(
                 details={'user_profile': user_profile},
             )
-        first_name = (
-            user_profile.get('given_name') or
-            email.split('@')[0]
-        )
+        first_name = user_profile.get('given_name') or email.split('@')[0]
         last_name = user_profile.get('family_name', '')
 
         capture_sentry_message(
@@ -285,9 +277,8 @@ class OktaService(BaseSSOService):
         """
         sub = sub_id.get('sub')
         user = self._find_user_by_okta_sub(sub)
-        if not user:
-            return
-        self._logout_user(user, okta_sub=sub)
+        if user:
+            self._logout_user(user, okta_sub=sub)
 
     def _find_user_by_okta_sub(self, okta_sub: str) -> Optional[UserModel]:
         user_id = self._get_cached_user_by_sub(okta_sub)
@@ -313,7 +304,7 @@ class OktaService(BaseSSOService):
         cache_key = f'okta_sub_to_user_{okta_sub}'
         cache.delete(cache_key)
 
-    def _logout_user(self, user: UserModel, okta_sub: str):
+    def _logout_user(self, user: UserModel, okta_sub: Optional[str]):
         """
         Perform user logout:
         - Delete AccessToken for OKTA source
@@ -325,18 +316,9 @@ class OktaService(BaseSSOService):
             user=user,
             source=self.source,
         ).values_list('access_token', flat=True))
-        # Delete AccessToken for OKTA source
-        AccessToken.objects.filter(
-            user=user,
-            source=self.source,
-        ).delete()
-        # Clear user profile cache
-        cache_keys_cleared = []
+        AccessToken.objects.filter(user=user, source=self.source).delete()
         for access_token in access_tokens:
-            cache_key = f'user_profile_{access_token}'
-            self._delete_cache(key=cache_key)
-            cache_keys_cleared.append(cache_key)
-        # Clear okta_sub -> user_id mapping cache
+            self._delete_cache(key=f'user_profile_{access_token}')
         if okta_sub:
             self._clear_cached_user_by_sub(okta_sub)
         # Clear all tokens from cache (terminate all sessions)
