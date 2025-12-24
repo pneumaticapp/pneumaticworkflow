@@ -244,8 +244,14 @@ class OktaService(BaseSSOService):
         if id_token:
             try:
                 # Decode ID token without verification to get sub
-                id_payload = (
-                    jwt.decode(id_token, options={"verify_signature": False})
+                id_payload = jwt.decode(
+                    id_token,
+                    options={
+                        "verify_signature": False,
+                        "verify_exp": False,
+                        "verify_aud": False,
+                        "verify_iss": False,
+                    },
                 )
                 okta_sub = id_payload.get('sub')
                 if okta_sub:
