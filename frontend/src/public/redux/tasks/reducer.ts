@@ -20,7 +20,7 @@ const INIT_TASKS_LIST = {
 
 const INIT_FILTER_VALUES = {
   templateIdFilter: null,
-  stepIdFilter: null,
+  taskApiNameFilter: null,
 };
 
 const INIT_TASKS_SETTINGS: ITasksSettings = {
@@ -50,7 +50,6 @@ export const INIT_STATE: IStoreTasks = {
 
 export const reducer = (state = INIT_STATE, action: TTaskListActions | TGeneralActions): IStoreTasks => {
   switch (action.type) {
-
     case ETaskListActions.SetTaskListStatus:
       return { ...state, taskListStatus: action.payload };
 
@@ -118,7 +117,7 @@ export const reducer = (state = INIT_STATE, action: TTaskListActions | TGeneralA
     case ETaskListActions.SetFilterTemplate: {
       return produce(state, (draftState) => {
         draftState.tasksSettings.filterValues.templateIdFilter = action.payload;
-        draftState.tasksSettings.filterValues.stepIdFilter = null;
+        draftState.tasksSettings.filterValues.taskApiNameFilter = null;
         draftState.tasksSettings.templateStepList.items = [];
 
         draftState.tasksSettings.isHasFilter = areFiltersChanged(draftState.tasksSettings);
@@ -142,7 +141,7 @@ export const reducer = (state = INIT_STATE, action: TTaskListActions | TGeneralA
       });
     case ETaskListActions.SetFilterStep:
       return produce(state, (draftState) => {
-        draftState.tasksSettings.filterValues.stepIdFilter = action.payload;
+        draftState.tasksSettings.filterValues.taskApiNameFilter = action.payload;
       });
     case ETaskListActions.ShowNewTasksNotification:
       return { ...state, hasNewTasks: action.payload };
@@ -158,7 +157,7 @@ export const reducer = (state = INIT_STATE, action: TTaskListActions | TGeneralA
           if (task.id === action.payload.taskId) {
             list[index] = { ...list[index], ...action.payload.task };
           }
-        })
+        });
       });
 
     default:

@@ -28,7 +28,7 @@ type TTasksStoreProps = Pick<
   | 'taskSorting'
   | 'completionStatus'
   | 'templateIdFilter'
-  | 'stepIdFilter'
+  | 'taskApiNameFilter'
   | 'taskListStatus'
   | 'withPaywall'
   | 'hasNewTasks'
@@ -57,7 +57,7 @@ export function mapStateToProps({
     tasksSettings: {
       sorting,
       completionStatus,
-      filterValues: { templateIdFilter, stepIdFilter },
+      filterValues: { templateIdFilter, taskApiNameFilter },
     },
   },
   task: { data: detailedTask },
@@ -78,7 +78,7 @@ export function mapStateToProps({
     taskSorting: sorting,
     completionStatus,
     templateIdFilter,
-    stepIdFilter,
+    taskApiNameFilter,
     hasNewTasks,
     searchText: tasksSearchText,
     isAdmin: Boolean(isAdmin),
@@ -127,13 +127,13 @@ const SyncedTasks = withSyncedQueryString<TTasksStoreProps>(
       getQueryParamByProp: String,
     },
     {
-      propName: 'stepIdFilter',
-      queryParamName: 'template-step',
+      propName: 'taskApiNameFilter',
+      queryParamName: 'template-task',
       defaultAction: setTasksFilterStep(null),
       createAction: (queryParam) => {
-        const stepId = Number(queryParam);
-        if (Number.isInteger(stepId)) {
-          return setTasksFilterStep(stepId);
+        const taskApiNAme = queryParam;
+        if (taskApiNAme) {
+          return setTasksFilterStep(taskApiNAme);
         }
 
         return setTasksFilterStep(null);
