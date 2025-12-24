@@ -350,21 +350,6 @@ class WorkflowViewSet(
             raise_validation_error(message=ex.message)
         return self.response_ok()
 
-    @action(methods=['post'], detail=True, url_path='close')
-    def terminate(self, request, *args, **kwargs):
-        # Deprecated. Will be removed in my.pneumatic.app/workflows/34225/
-        service = WorkflowActionService(
-            workflow=self.get_object(),
-            user=request.user,
-            auth_type=request.token_type,
-            is_superuser=request.is_superuser,
-        )
-        try:
-            service.terminate_workflow()
-        except WorkflowActionServiceException as ex:
-            raise_validation_error(message=ex.message)
-        return self.response_ok()
-
     @action(methods=['post'], detail=True)
     def resume(self, request, *args, **kwargs):
         workflow = self.get_object()
