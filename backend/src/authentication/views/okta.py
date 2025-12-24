@@ -7,7 +7,6 @@ from src.authentication.permissions import SSOPermission
 from src.authentication.serializers import (
     AuthUriSerializer,
     SSOTokenSerializer,
-    OktaLogoutSerializer,
 )
 from src.authentication.services.exceptions import (
     AuthException,
@@ -33,11 +32,6 @@ class OktaViewSet(
     GenericViewSet,
 ):
     permission_classes = (SSOPermission,)
-
-    def get_authenticators(self):
-        if self.action_map.get(self.request.method.lower()) == 'logout':
-            return []
-        return super().get_authenticators()
 
     @property
     def throttle_classes(self):
@@ -79,12 +73,3 @@ class OktaViewSet(
             return self.response_ok({
                 'auth_uri': auth_uri,
             })
-
-    @action(methods=('POST',), detail=False)
-    def logout(self, request, *args, **kwargs):
-        slz = OktaLogoutSerializer(data=request.data)
-        if not slz.is_valid():
-            return self.response_ok()
-        service = OktaService()
-        service.process_logout(**slz.validated_data)
-        return self.response_ok()
