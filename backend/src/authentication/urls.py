@@ -9,6 +9,7 @@ from src.authentication.views.google import (
 )
 from src.authentication.views.microsoft import MSAuthViewSet
 from src.authentication.views.okta import OktaViewSet
+from src.authentication.views.okta_logout import OktaLogoutView
 from src.authentication.views.password import (
     ChangePasswordView,
     ResetPasswordViewSet,
@@ -55,6 +56,11 @@ urlpatterns = [
     path('verification', VerificationTokenView.as_view()),
     path('resend-verification', VerificationTokenResendView.as_view()),
     path('superuser/token', SuperuserEmailTokenView.as_view()),
+    path(
+        'okta/logout',
+        OktaLogoutView.as_view(),
+        name='okta-logout',
+    ),
 ]
 
 router = DefaultRouter(trailing_slash=False)
