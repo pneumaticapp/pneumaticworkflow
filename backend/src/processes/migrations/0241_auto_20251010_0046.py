@@ -9,7 +9,7 @@ import src.generics.mixins.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('processes', '0237_auto_20250916_2245'),
+        ('processes', '0240_populate_user_group_predicates'),
     ]
 
     operations = [
