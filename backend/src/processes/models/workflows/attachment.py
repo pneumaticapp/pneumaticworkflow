@@ -1,16 +1,18 @@
 from typing import Optional
 from urllib.parse import unquote
-from django.db import models
+
+from django.contrib.auth import get_user_model
 from django.contrib.postgres.search import SearchVectorField
+from django.db import models
+
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
-from src.processes.querysets import FileAttachmentQuerySet
+from src.processes.enums import FileAttachmentAccessType
+from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.workflow import Workflow
-from src.processes.models.workflows.event import WorkflowEvent
-from src.processes.enums import FileAttachmentAccessType
-from django.contrib.auth import get_user_model
+from src.processes.querysets import FileAttachmentQuerySet
 
 UserModel = get_user_model()
 
@@ -31,19 +33,19 @@ class FileAttachment(
         max_length=64,
         unique=True,
         null=True,
-        blank=True
+        blank=True,
     )
     event = models.ForeignKey(
         WorkflowEvent,
         on_delete=models.CASCADE,
         null=True,
-        related_name='attachments'
+        related_name='attachments',
     )
     output = models.ForeignKey(
         TaskField,
         on_delete=models.CASCADE,
         null=True,
-        related_name='attachments'
+        related_name='attachments',
     )
     workflow = models.ForeignKey(
         Workflow,
@@ -54,7 +56,7 @@ class FileAttachment(
     access_type = models.CharField(
         max_length=20,
         choices=FileAttachmentAccessType.CHOICES,
-        default=FileAttachmentAccessType.ACCOUNT
+        default=FileAttachmentAccessType.ACCOUNT,
     )
     search_content = SearchVectorField(null=True)
 
@@ -84,9 +86,9 @@ class FileAttachment(
         size = float(self.size)
         for unit in ['B', 'KiB', 'MiB']:
             if abs(size) < 1024.0:
-                return '%3.1f%s' % (size, unit)
+                return '%3.1f%s' % (size, unit)  # noqa: UP031
             size /= 1024.0
-        return "%.1f%s" % (size, 'MiB')
+        return "%.1f%s" % (size, 'MiB')  # noqa: UP031
 
 
 class FileAttachmentPermission(
@@ -99,10 +101,10 @@ class FileAttachmentPermission(
     user = models.ForeignKey(
         UserModel,
         on_delete=models.CASCADE,
-        related_name='file_permissions'
+        related_name='file_permissions',
     )
     attachment = models.ForeignKey(
         FileAttachment,
         on_delete=models.CASCADE,
-        related_name='permissions'
+        related_name='permissions',
     )

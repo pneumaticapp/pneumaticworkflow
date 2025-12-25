@@ -1,15 +1,16 @@
 from django.db import models
+
+from src.generics.managers import BaseSoftDeleteManager
+from src.generics.models import SoftDeleteModel
 from src.payment.enums import (
-    PriceType,
     BillingPeriod,
     PriceStatus,
+    PriceType,
 )
 from src.payment.querysets import (
     PriceQuerySet,
-    ProductQuerySet
+    ProductQuerySet,
 )
-from src.generics.managers import BaseSoftDeleteManager
-from src.generics.models import SoftDeleteModel
 
 
 class Product(SoftDeleteModel):
@@ -25,14 +26,14 @@ class Product(SoftDeleteModel):
             'Used to identify the product. '
             'Available values: "fractionalcoo", "premium", "unlimited"'
         ),
-        null=True  # TODO remove
+        null=True,  # TODO remove
     )
     is_subscription = models.BooleanField(
-        help_text='Set to true if the product is subscription'
+        help_text='Set to true if the product is subscription',
     )
     stripe_id = models.CharField(max_length=250, unique=True, null=True)
     is_active = models.BooleanField(
-        help_text='False if product archived'
+        help_text='False if product archived',
     )
 
     objects = BaseSoftDeleteManager.from_queryset(ProductQuerySet)()
@@ -44,12 +45,12 @@ class Product(SoftDeleteModel):
 class Price(SoftDeleteModel):
 
     class Meta:
-        ordering = ('product_id', 'id',)
+        ordering = ('product_id', 'id')
 
     product = models.ForeignKey(
         Product,
         on_delete=models.CASCADE,
-        related_name='prices'
+        related_name='prices',
     )
     status = models.CharField(
         max_length=255,
@@ -57,23 +58,23 @@ class Price(SoftDeleteModel):
         help_text=(
             '"Archived" status allows only update, '
             '"inactive" disables the price'
-        )
+        ),
     )
     name = models.CharField(max_length=500)
     code = models.CharField(
         max_length=100,
         unique=True,
-        help_text='Used to identify the product price'
+        help_text='Used to identify the product price',
     )
     stripe_id = models.CharField(max_length=250, unique=True)
     max_quantity = models.PositiveIntegerField(
         help_text=(
             'Limit the maximum quantity to buy. '
             'You can specify a value up to 10000'
-        )
+        ),
     )
     min_quantity = models.PositiveIntegerField(
-        help_text='Minimum quantity, must be less then the "max_quantity"'
+        help_text='Minimum quantity, must be less then the "max_quantity"',
     )
     price_type = models.CharField(choices=PriceType.CHOICES, max_length=50)
     price = models.PositiveIntegerField(help_text='in cents')
@@ -88,7 +89,7 @@ class Price(SoftDeleteModel):
         choices=BillingPeriod.CHOICES,
         help_text='For "Recurring" price type only',
         blank=True,
-        null=True
+        null=True,
     )
 
     objects = BaseSoftDeleteManager.from_queryset(PriceQuerySet)()

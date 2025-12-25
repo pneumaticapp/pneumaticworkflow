@@ -1,38 +1,40 @@
-from django.contrib.auth import get_user_model, authenticate
+from django.contrib.auth import authenticate, get_user_model
 from rest_framework.exceptions import (
     AuthenticationFailed,
 )
 from rest_framework.generics import (
-    get_object_or_404,
     CreateAPIView,
+    get_object_or_404,
 )
 from rest_framework.permissions import AllowAny
+
+from src.accounts.enums import SourceType
 from src.accounts.tokens import (
     VerificationToken,
 )
+from src.analysis.mixins import BaseIdentifyMixin
+from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
-from src.accounts.enums import SourceType
-from src.services.email import EmailService
-from src.authentication.permissions import (
-    PrivateApiPermission,
-    IsSuperuserPermission
-)
-from src.authentication.services import AuthService
 from src.authentication.messages import (
     MSG_AU_0002,
     MSG_AU_0003,
 )
-from src.generics.mixins.views import (
-    BaseResponseMixin
+from src.authentication.permissions import (
+    IsSuperuserPermission,
+    PrivateApiPermission,
 )
-from src.analytics.mixins import BaseIdentifyMixin
-from src.analytics.services import AnalyticService
-
+from src.authentication.services.user_auth import AuthService
+from src.authentication.views.mixins import SSORestrictionMixin
+from src.generics.mixins.views import (
+    BaseResponseMixin,
+)
+from src.notifications.tasks import send_verification_notification
 
 UserModel = get_user_model()
 
 
 class TokenObtainPairCustomView(
+    SSORestrictionMixin,
     CreateAPIView,
     BaseIdentifyMixin,
     BaseResponseMixin,
@@ -46,12 +48,17 @@ class TokenObtainPairCustomView(
         if not user:
             raise AuthenticationFailed(MSG_AU_0003)
 
+        self.check_sso_restrictions(user)
+
         if user.account.is_verification_timed_out():
             owner = user.account.users.get(is_account_owner=True)
-            EmailService.send_verification_email(
-                user=owner,
+            send_verification_notification.delay(
+                user_id=owner.id,
+                user_email=owner.email,
+                account_id=owner.account_id,
+                user_first_name=owner.first_name,
                 token=str(VerificationToken.for_user(owner)),
-                logo_lg=user.account.logo_lg
+                logo_lg=user.account.logo_lg,
             )
             raise AuthenticationFailed(MSG_AU_0002(owner.email))
 
@@ -66,7 +73,7 @@ class TokenObtainPairCustomView(
             user=user,
             user_agent=request.headers.get(
                 'User-Agent',
-                request.META.get('HTTP_USER_AGENT')
+                request.META.get('HTTP_USER_AGENT'),
             ),
             user_ip=request.META.get('HTTP_X_REAL_IP'),
         )

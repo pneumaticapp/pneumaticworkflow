@@ -1,6 +1,9 @@
-from django.db.models import Q
 from decimal import Decimal
-from src.processes.models import TaskField
+
+from django.db.models import Q
+
+from src.processes.models.workflows.fields import TaskField
+
 from .base import Resolver
 
 

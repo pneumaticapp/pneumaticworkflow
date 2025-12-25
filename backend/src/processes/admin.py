@@ -2,17 +2,18 @@ from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.contrib.postgres import fields as pg_fields
 from django_json_widget.widgets import JSONEditorWidget
-from src.processes.models import (
+
+from src.processes.models.templates.system_template import (
     SystemTemplate,
-    SystemWorkflowKickoffData,
     SystemTemplateCategory,
+    SystemWorkflowKickoffData,
 )
 
 
 @admin.register(SystemTemplateCategory)
 class SystemTemplateCategoryAdmin(ModelAdmin):
 
-    list_display = ('name', 'order', 'color', 'is_active',)
+    list_display = ('name', 'order', 'color', 'is_active')
     exclude = ('is_deleted',)
 
 
@@ -30,12 +31,12 @@ class SystemTemplateAdmin(ModelAdmin):
             ),
         }),
     )
-    list_display = ('name', 'type', 'category', 'is_active',)
+    list_display = ('name', 'type', 'category', 'is_active')
     list_filter = ('type', 'category', 'is_active')
 
     formfield_overrides = {
         pg_fields.JSONField: {
-            'widget': JSONEditorWidget
+            'widget': JSONEditorWidget,
         },
     }
 
@@ -58,6 +59,6 @@ class SystemWorkflowKickoffDataAdmin(ModelAdmin):
 
     formfield_overrides = {
         pg_fields.JSONField: {
-            'widget': JSONEditorWidget
-        }
+            'widget': JSONEditorWidget,
+        },
     }

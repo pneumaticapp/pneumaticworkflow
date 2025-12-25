@@ -1,34 +1,32 @@
 import pytest
 from django.contrib.auth.hashers import check_password
-from src.accounts.models import (
-    UserInvite,
-    APIKey,
-    Contact,
-)
-from src.authentication.enums import AuthTokenType
+
 from src.accounts.enums import (
-    UserStatus,
+    Language,
     LeaseLevel,
     SourceType,
-    Language,
     UserDateFormat,
     UserFirstDayWeek,
-)
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_account,
-    create_test_guest,
-    create_invited_user,
-)
-from src.accounts.services.exceptions import (
-    UserIsPerformerException,
-    AlreadyRegisteredException,
-)
-from src.accounts.services import (
-    UserService
+    UserStatus,
 )
 from src.accounts.messages import MSG_A_0005
-
+from src.accounts.models import (
+    APIKey,
+    Contact,
+    UserInvite,
+)
+from src.accounts.services.exceptions import (
+    AlreadyRegisteredException,
+    UserIsPerformerException,
+)
+from src.accounts.services.user import UserService
+from src.authentication.enums import AuthTokenType
+from src.processes.tests.fixtures import (
+    create_invited_user,
+    create_test_account,
+    create_test_guest,
+    create_test_user, create_test_owner,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -54,7 +52,7 @@ def test_create_instance__all_fields__ok(mocker):
     safe_password = 'some safe password'
     make_password_mock = mocker.patch(
         'src.accounts.services.user.make_password',
-        return_value=safe_password
+        return_value=safe_password,
     )
     service = UserService()
 
@@ -115,12 +113,12 @@ def test_create_instance__only_required_fields__set_defaults(mocker):
     random_password_mock = mocker.patch(
         'src.accounts.services.user.UserModel.'
         'objects.make_random_password',
-        return_value=random_password
+        return_value=random_password,
     )
     safe_password = 'some safe password'
     make_password_mock = mocker.patch(
         'src.accounts.services.user.make_password',
-        return_value=safe_password
+        return_value=safe_password,
     )
     service = UserService()
 
@@ -149,6 +147,109 @@ def test_create_instance__only_required_fields__set_defaults(mocker):
     make_password_mock.assert_called_once_with(random_password)
 
 
+def test_create_instance__first_account_owner__is_superuser(mocker):
+
+    # arrange
+    account = create_test_account()
+    email = 'test@test.com'
+    random_password = '12123'
+    random_password_mock = mocker.patch(
+        'src.accounts.services.user.UserModel.'
+        'objects.make_random_password',
+        return_value=random_password,
+    )
+    safe_password = 'some safe password'
+    make_password_mock = mocker.patch(
+        'src.accounts.services.user.make_password',
+        return_value=safe_password,
+    )
+    service = UserService()
+
+    # act
+    user = service._create_instance(
+        account=account,
+        email=email,
+        is_account_owner=True,
+    )
+
+    # assert
+    assert user.account == account
+    assert user.email == email
+    assert user.is_superuser is True
+    assert user.is_staff is True
+    random_password_mock.assert_called_once()
+    make_password_mock.assert_called_once_with(random_password)
+
+
+def test_create_instance__not_first_account_owner__is_not_superuser(mocker):
+
+    # arrange
+    account = create_test_account()
+    create_test_owner(account=account)
+    email = 'test@test.com'
+    random_password = '12123'
+    random_password_mock = mocker.patch(
+        'src.accounts.services.user.UserModel.'
+        'objects.make_random_password',
+        return_value=random_password,
+    )
+    safe_password = 'some safe password'
+    make_password_mock = mocker.patch(
+        'src.accounts.services.user.make_password',
+        return_value=safe_password,
+    )
+    service = UserService()
+
+    # act
+    user = service._create_instance(
+        account=account,
+        email=email,
+    )
+
+    # assert
+    assert user.account == account
+    assert user.email == email
+    assert user.is_superuser is False
+    assert user.is_staff is False
+    random_password_mock.assert_called_once()
+    make_password_mock.assert_called_once_with(random_password)
+
+
+def test_create_instance__not_first_db_user__is_not_superuser(mocker):
+
+    # arrange
+    account = create_test_account()
+    create_test_owner()
+    email = 'test@test.com'
+    random_password = '12123'
+    random_password_mock = mocker.patch(
+        'src.accounts.services.user.UserModel.'
+        'objects.make_random_password',
+        return_value=random_password,
+    )
+    safe_password = 'some safe password'
+    make_password_mock = mocker.patch(
+        'src.accounts.services.user.make_password',
+        return_value=safe_password,
+    )
+    service = UserService()
+
+    # act
+    user = service._create_instance(
+        account=account,
+        email=email,
+        is_account_owner=True,
+    )
+
+    # assert
+    assert user.account == account
+    assert user.email == email
+    assert user.is_superuser is False
+    assert user.is_staff is False
+    random_password_mock.assert_called_once()
+    make_password_mock.assert_called_once_with(random_password)
+
+
 def test_create_instance__not_account_owner___ok(mocker):
 
     # arrange
@@ -160,7 +261,7 @@ def test_create_instance__not_account_owner___ok(mocker):
     safe_password = 'some safe password'
     make_password_mock = mocker.patch(
         'src.accounts.services.user.make_password',
-        return_value=safe_password
+        return_value=safe_password,
     )
     account_owner = create_test_user(
         account=account,
@@ -252,10 +353,10 @@ def test_create_instance__email_already_exists__raise_exception(mocker):
     password = '12112323'
     mocker.patch(
         'src.accounts.services.user.UserModel.'
-        'objects.make_random_password'
+        'objects.make_random_password',
     )
     mocker.patch(
-        'src.accounts.services.user.make_password'
+        'src.accounts.services.user.make_password',
     )
     create_test_user(
         email=email,
@@ -284,10 +385,10 @@ def test_create_instance__invited_email_exists__ok(mocker):
     password = '12112323'
     mocker.patch(
         'src.accounts.services.user.UserModel.'
-        'objects.make_random_password'
+        'objects.make_random_password',
     )
     mocker.patch(
-        'src.accounts.services.user.make_password'
+        'src.accounts.services.user.make_password',
     )
     create_test_user(
         email=email,
@@ -315,10 +416,10 @@ def test_create_instance__inactive_email_exists__ok(mocker):
     password = '12112323'
     mocker.patch(
         'src.accounts.services.user.UserModel.'
-        'objects.make_random_password'
+        'objects.make_random_password',
     )
     mocker.patch(
-        'src.accounts.services.user.make_password'
+        'src.accounts.services.user.make_password',
     )
     create_test_user(
         email=email,
@@ -346,10 +447,10 @@ def test_create_instance__deleted_email_exists__ok(mocker):
     password = '12112323'
     mocker.patch(
         'src.accounts.services.user.UserModel.'
-        'objects.make_random_password'
+        'objects.make_random_password',
     )
     mocker.patch(
-        'src.accounts.services.user.make_password'
+        'src.accounts.services.user.make_password',
     )
     existent_user = create_test_user(email=email)
     existent_user.delete()
@@ -373,20 +474,20 @@ def test_create_instance__guest_email_exists__ok(mocker):
     create_test_user(
         is_account_owner=True,
         email='owner@test.test',
-        account=account
+        account=account,
     )
     email = 'test@test.test'
     password = '12112323'
     mocker.patch(
         'src.accounts.services.user.UserModel.'
-        'objects.make_random_password'
+        'objects.make_random_password',
     )
     mocker.patch(
-        'src.accounts.services.user.make_password'
+        'src.accounts.services.user.make_password',
     )
     create_test_guest(
         email=email,
-        account=account
+        account=account,
     )
     service = UserService()
 
@@ -409,7 +510,7 @@ def test_create_instance__owner__set_default_language(mocker):
     password = '12123'
     service = UserService()
     settings_mock = mocker.patch(
-       'src.accounts.services.user.settings'
+       'src.accounts.services.user.settings',
     )
     language = Language.fr
     settings_mock.LANGUAGE_CODE = language
@@ -420,7 +521,7 @@ def test_create_instance__owner__set_default_language(mocker):
         is_account_owner=True,
         account=account,
         email=email,
-        password=password
+        password=password,
     )
 
     # assert
@@ -437,7 +538,7 @@ def test_create_instance__not_owner__inherit_owner_language():
     create_test_user(
         account=account,
         is_account_owner=True,
-        language=language
+        language=language,
     )
     email = 'test@test.test'
     password = '12123'
@@ -448,7 +549,7 @@ def test_create_instance__not_owner__inherit_owner_language():
         is_account_owner=False,
         account=account,
         email=email,
-        password=password
+        password=password,
     )
 
     # assert
@@ -465,7 +566,7 @@ def test_create_instance__owner__set_default_timezone(mocker):
     password = '12123'
     service = UserService()
     settings_mock = mocker.patch(
-       'src.accounts.services.user.settings'
+       'src.accounts.services.user.settings',
     )
     tz = 'Atlantic/Faeroe'
     settings_mock.LANGUAGE_CODE = Language.fr
@@ -476,7 +577,7 @@ def test_create_instance__owner__set_default_timezone(mocker):
         is_account_owner=True,
         account=account,
         email=email,
-        password=password
+        password=password,
     )
 
     # assert
@@ -493,7 +594,7 @@ def test_create_instance__not_owner__inherit_owner_timezone():
     create_test_user(
         account=account,
         is_account_owner=True,
-        tz=tz
+        tz=tz,
     )
     email = 'test@test.test'
     password = '12123'
@@ -504,7 +605,7 @@ def test_create_instance__not_owner__inherit_owner_timezone():
         is_account_owner=False,
         account=account,
         email=email,
-        password=password
+        password=password,
     )
 
     # assert
@@ -521,7 +622,7 @@ def test_create_related__ok(mocker):
     key = '!@#q2qwe'
     create_token_mock = mocker.patch(
         'src.accounts.services.user.PneumaticToken.create',
-        return_value=key
+        return_value=key,
     )
 
     service = UserService(instance=user)
@@ -534,18 +635,18 @@ def test_create_related__ok(mocker):
         user=user,
         name=user.get_full_name(),
         account=user.account,
-        key=key
+        key=key,
     )
     create_token_mock.assert_called_once_with(
         user=user,
-        for_api_key=True
+        for_api_key=True,
     )
 
 
 def test_create_actions__account_owner__ok(
     mocker,
     identify_mock,
-    group_mock
+    group_mock,
 ):
 
     # arrange
@@ -557,23 +658,23 @@ def test_create_actions__account_owner__ok(
         email=user.email,
         account=user.account,
         invited_by=user,
-        invited_user=user
+        invited_user=user,
     )
     is_superuser = True
     auth_type = AuthTokenType.API
     account_created_mock = mocker.patch(
         'src.accounts.services.user'
-        '.AnalyticService.account_created'
+        '.AnalyticService.account_created',
     )
     account_verified_mock = mocker.patch(
         'src.accounts.services.user'
-        '.AnalyticService.account_verified'
+        '.AnalyticService.account_verified',
     )
 
     service = UserService(
         instance=user,
         auth_type=auth_type,
-        is_superuser=is_superuser
+        is_superuser=is_superuser,
     )
 
     # act
@@ -598,7 +699,7 @@ def test_create_actions__account_owner__ok(
 def test_create_actions__account_owner__not_verified__ok(
     mocker,
     identify_mock,
-    group_mock
+    group_mock,
 ):
 
     # arrange
@@ -610,17 +711,17 @@ def test_create_actions__account_owner__not_verified__ok(
     auth_type = AuthTokenType.API
     account_created_mock = mocker.patch(
         'src.accounts.services.user'
-        '.AnalyticService.account_created'
+        '.AnalyticService.account_created',
     )
     account_verified_mock = mocker.patch(
         'src.accounts.services.user'
-        '.AnalyticService.account_verified'
+        '.AnalyticService.account_verified',
     )
 
     service = UserService(
         instance=user,
         auth_type=auth_type,
-        is_superuser=is_superuser
+        is_superuser=is_superuser,
     )
 
     # act
@@ -648,7 +749,7 @@ def test_get_free_email__free__ok():
     email = service._get_free_email(
         local=local,
         number=number,
-        domain=domain
+        domain=domain,
     )
 
     # assert
@@ -668,7 +769,7 @@ def test_get_free_email__active_user_already_exist__increment_number():
     email = service._get_free_email(
         local=local,
         number=number,
-        domain=domain
+        domain=domain,
     )
 
     # assert
@@ -683,7 +784,7 @@ def test_get_free_email__invited_user_already_exist__increment_number():
     domain = 'test.com'
     create_test_user(
         status=UserStatus.INVITED,
-        email=f'{local}+{number}@{domain}'
+        email=f'{local}+{number}@{domain}',
     )
     user = create_test_user()
     service = UserService(instance=user)
@@ -692,7 +793,7 @@ def test_get_free_email__invited_user_already_exist__increment_number():
     email = service._get_free_email(
         local=local,
         number=number,
-        domain=domain
+        domain=domain,
     )
 
     # assert
@@ -707,11 +808,11 @@ def test_get_free_email__multiple_objects_returned__increment_number():
     domain = 'test.com'
     create_test_user(
         status=UserStatus.INVITED,
-        email=f'{local}+{number}@{domain}'
+        email=f'{local}+{number}@{domain}',
     )
     create_test_user(
         status=UserStatus.INACTIVE,
-        email=f'{local}+{number}@{domain}'
+        email=f'{local}+{number}@{domain}',
     )
     user = create_test_user()
     service = UserService(instance=user)
@@ -720,7 +821,7 @@ def test_get_free_email__multiple_objects_returned__increment_number():
     email = service._get_free_email(
         local=local,
         number=number,
-        domain=domain
+        domain=domain,
     )
 
     # assert
@@ -735,7 +836,7 @@ def test_get_free_email__inactive_user_already_exist__increment_number():
     domain = 'test.com'
     create_test_user(
         status=UserStatus.INACTIVE,
-        email=f'{local}+{number}@{domain}'
+        email=f'{local}+{number}@{domain}',
     )
     user = create_test_user()
     service = UserService(instance=user)
@@ -744,7 +845,7 @@ def test_get_free_email__inactive_user_already_exist__increment_number():
     email = service._get_free_email(
         local=local,
         number=number,
-        domain=domain
+        domain=domain,
     )
 
     # assert
@@ -758,7 +859,7 @@ def test_get_free_email__deleted_user_already_exist__not_increment_number():
     number = 1
     domain = 'test.com'
     deleted_user = create_test_user(
-        email=f'{local}+{number}@{domain}'
+        email=f'{local}+{number}@{domain}',
     )
     deleted_user.delete()
     user = create_test_user()
@@ -768,7 +869,7 @@ def test_get_free_email__deleted_user_already_exist__not_increment_number():
     email = service._get_free_email(
         local=local,
         number=number,
-        domain=domain
+        domain=domain,
     )
 
     # assert
@@ -784,7 +885,7 @@ def test_get_free_email__guest_already_exist__increment_number():
     user = create_test_user()
     create_test_guest(
         account=user.account,
-        email=f'{local}+{number}@{domain}'
+        email=f'{local}+{number}@{domain}',
     )
     service = UserService(instance=user)
 
@@ -792,7 +893,7 @@ def test_get_free_email__guest_already_exist__increment_number():
     email = service._get_free_email(
         local=local,
         number=number,
-        domain=domain
+        domain=domain,
     )
 
     # assert
@@ -811,7 +912,7 @@ def test_get_incremented_email__free__ok(mocker):
     get_free_email_mock = mocker.patch(
         'src.accounts.services.user'
         '.UserService._get_free_email',
-        return_value=incremented_email
+        return_value=incremented_email,
     )
 
     service = UserService(instance=user)
@@ -824,7 +925,7 @@ def test_get_incremented_email__free__ok(mocker):
     get_free_email_mock.assert_called_once_with(
         local=local,
         number=number,
-        domain=domain
+        domain=domain,
     )
 
 
@@ -840,7 +941,7 @@ def test_get_incremented_email__already_incremented__ok(mocker):
     get_free_email_mock = mocker.patch(
         'src.accounts.services.user'
         '.UserService._get_free_email',
-        return_value=incremented_email
+        return_value=incremented_email,
     )
 
     service = UserService(instance=user)
@@ -853,7 +954,7 @@ def test_get_incremented_email__already_incremented__ok(mocker):
     get_free_email_mock.assert_called_once_with(
         local=local,
         number=number,
-        domain=domain
+        domain=domain,
     )
 
 
@@ -869,7 +970,7 @@ def test_get_incremented_email__email_format__ok(mocker):
     get_free_email_mock = mocker.patch(
         'src.accounts.services.user'
         '.UserService._get_free_email',
-        return_value=incremented_email
+        return_value=incremented_email,
     )
 
     service = UserService(instance=user)
@@ -882,7 +983,7 @@ def test_get_incremented_email__email_format__ok(mocker):
     get_free_email_mock.assert_called_once_with(
         local=local,
         number=number,
-        domain=domain
+        domain=domain,
     )
 
 
@@ -901,26 +1002,26 @@ def test_create_tenant_account_owner__ok(mocker):
     )
     tenant_account = create_test_account(
         master_account=master_account_owner.account,
-        lease_level=LeaseLevel.TENANT
+        lease_level=LeaseLevel.TENANT,
     )
     tenant_account_owner = mocker.Mock()
     create_mock = mocker.patch(
         'src.accounts.services.user'
         '.UserService.create',
-        return_value=tenant_account_owner
+        return_value=tenant_account_owner,
     )
     incremented_email = 'test+1@test.com'
     get_incremented_email_mock = mocker.patch(
         'src.accounts.services.user'
         '.UserService._get_incremented_email',
-        return_value=incremented_email
+        return_value=incremented_email,
     )
     service = UserService()
 
     # act
     result = service.create_tenant_account_owner(
         tenant_account=tenant_account,
-        master_account=master_account_owner.account
+        master_account=master_account_owner.account,
     )
 
     # assert
@@ -935,7 +1036,7 @@ def test_create_tenant_account_owner__ok(mocker):
         photo=photo,
         phone=phone,
         is_admin=True,
-        is_account_owner=True
+        is_account_owner=True,
     )
     get_incremented_email_mock.assert_called_once_with(master_account_owner)
 
@@ -946,7 +1047,7 @@ def test_validate_deactivate__user_is_performer__raise_exception(mocker):
     user = create_test_user()
     user_is_performer_mock = mocker.patch(
         'src.accounts.services.user.user_is_last_performer',
-        return_value=True
+        return_value=True,
     )
 
     # act
@@ -963,7 +1064,7 @@ def test_validate_deactivate__user_is_not_performer__ok(mocker):
     user = create_test_user()
     user_is_performer_mock = mocker.patch(
         'src.accounts.services.user.user_is_last_performer',
-        return_value=False
+        return_value=False,
     )
 
     # act
@@ -980,19 +1081,19 @@ def test_deactivate__ok(mocker):
 
     deactivate_mock = mocker.patch(
         'src.accounts.services.user.UserService.'
-        '_deactivate'
+        '_deactivate',
     )
     deactivate_actions_mock = mocker.patch(
         'src.accounts.services.user.UserService'
-        '._deactivate_actions'
+        '._deactivate_actions',
     )
     validate_deactivate_mock = mocker.patch(
         'src.accounts.services.user.UserService'
-        '._validate_deactivate'
+        '._validate_deactivate',
     )
     send_user_deleted_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_deleted_notification.delay'
+        'send_user_deleted_notification.delay',
     )
 
     # act
@@ -1012,8 +1113,8 @@ def test_deactivate__ok(mocker):
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
 
 
@@ -1024,19 +1125,19 @@ def test_deactivate__skip_validation__ok(mocker):
 
     deactivate_mock = mocker.patch(
         'src.accounts.services.user.UserService.'
-        '_deactivate'
+        '_deactivate',
     )
     deactivate_actions_mock = mocker.patch(
         'src.accounts.services.user.UserService'
-        '._deactivate_actions'
+        '._deactivate_actions',
     )
     validate_deactivate_mock = mocker.patch(
         'src.accounts.services.user.UserService'
-        '._validate_deactivate'
+        '._validate_deactivate',
     )
     send_user_deleted_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_deleted_notification.delay'
+        'send_user_deleted_notification.delay',
     )
 
     # act
@@ -1056,8 +1157,8 @@ def test_deactivate__skip_validation__ok(mocker):
             'email': user.email,
             'photo': user.photo,
             'is_admin': user.is_admin,
-            'is_account_owner': user.is_account_owner
-        }
+            'is_account_owner': user.is_account_owner,
+        },
     )
 
 
@@ -1068,19 +1169,19 @@ def test_deactivate__not_call_actions_for_invited_user__ok(mocker):
     invited_user = create_invited_user(user)
     validate_deactivate_mock = mocker.patch(
         'src.accounts.services.user.UserService'
-        '._validate_deactivate'
+        '._validate_deactivate',
     )
     deactivate_mock = mocker.patch(
         'src.accounts.services.user.UserService.'
-        '_deactivate'
+        '_deactivate',
     )
     deactivate_actions_mock = mocker.patch(
         'src.accounts.services.user.UserService'
-        '._deactivate_actions'
+        '._deactivate_actions',
     )
     send_user_deleted_mock = mocker.patch(
         'src.notifications.tasks.'
-        'send_user_deleted_notification.delay'
+        'send_user_deleted_notification.delay',
     )
 
     # act
@@ -1100,8 +1201,8 @@ def test_deactivate__not_call_actions_for_invited_user__ok(mocker):
             'email': invited_user.email,
             'photo': invited_user.photo,
             'is_admin': invited_user.is_admin,
-            'is_account_owner': invited_user.is_account_owner
-        }
+            'is_account_owner': invited_user.is_account_owner,
+        },
     )
 
 
@@ -1113,15 +1214,15 @@ def test_private_deactivate__ok(mocker):
     invited_user = create_invited_user(user)
     remove_user_from_draft_mock = mocker.patch(
         'src.accounts.services.user.'
-        'remove_user_from_draft'
+        'remove_user_from_draft',
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.AccountService.'
-        'update_users_counts'
+        'src.accounts.services.account.AccountService.'
+        'update_users_counts',
     )
     identify_mock = mocker.patch(
         'src.accounts.services.user.UserService.'
-        'identify'
+        'identify',
     )
 
     # act
@@ -1134,7 +1235,7 @@ def test_private_deactivate__ok(mocker):
     assert invited_user.is_active is False
     remove_user_from_draft_mock.assert_called_once_with(
         user_id=invited_user.id,
-        account_id=account.id
+        account_id=account.id,
     )
     update_users_counts_mock.assert_called_once()
     identify_mock.assert_called_once_with(invited_user)
@@ -1149,52 +1250,52 @@ def test_private_deactivate__activate_contacts__ok(mocker):
     another_user = create_test_user(
         account=account,
         email='another@email.com',
-        is_account_owner=False
+        is_account_owner=False,
     )
     another_account_user = create_test_user(
         email='anotheraccount@email.com',
     )
     mocker.patch(
         'src.accounts.services.user.'
-        'remove_user_from_draft'
+        'remove_user_from_draft',
     )
     mocker.patch(
-        'src.accounts.services.AccountService.'
-        'update_users_counts'
+        'src.accounts.services.account.AccountService.'
+        'update_users_counts',
     )
     mocker.patch(
         'src.accounts.services.user.UserService.'
-        'identify'
+        'identify',
     )
     google_contact = Contact.objects.create(
         account=account,
         user_id=user.id,
         source=SourceType.GOOGLE,
-        email=invited_user.email
+        email=invited_user.email,
     )
     ms_contact = Contact.objects.create(
         account=account,
         user_id=user.id,
         source=SourceType.MICROSOFT,
-        email=invited_user.email
+        email=invited_user.email,
     )
     another_user_contact = Contact.objects.create(
         account=account,
         user_id=another_user.id,
         source=SourceType.MICROSOFT,
-        email=invited_user.email
+        email=invited_user.email,
     )
     another_account_contact = Contact.objects.create(
         account=another_account_user.account,
         user_id=another_account_user.id,
         source=SourceType.GOOGLE,
-        email=invited_user.email
+        email=invited_user.email,
     )
     another_contact = Contact.objects.create(
         account=account,
         user_id=user.id,
         source=SourceType.MICROSOFT,
-        email='another@email.com'
+        email='another@email.com',
     )
 
     # act
@@ -1221,16 +1322,20 @@ def test_deactivate_actions__ok(mocker):
 
     # arrange
     user = create_test_user(status=UserStatus.INACTIVE)
-    send_user_deactivated_email_mock = mocker.patch(
-        'src.services.email.EmailService.'
-        'send_user_deactivated_email'
+    send_user_deactivated_notification_mock = mocker.patch(
+        'src.notifications.tasks.send_user_deactivated_notification.delay',
     )
 
     # act
     UserService._deactivate_actions(user)
 
     # assert
-    send_user_deactivated_email_mock.assert_called_once_with(user=user)
+    send_user_deactivated_notification_mock.assert_called_once_with(
+        user_id=user.id,
+        user_email=user.email,
+        account_id=user.account_id,
+        logo_lg=user.account.logo_lg,
+    )
 
 
 def test_change_password__ok():
@@ -1246,4 +1351,4 @@ def test_change_password__ok():
     # assert
     user.refresh_from_db()
     assert check_password(new_password, user.password)
-    assert not new_password == user.password
+    assert new_password != user.password

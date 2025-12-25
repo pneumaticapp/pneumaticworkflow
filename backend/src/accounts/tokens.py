@@ -3,21 +3,22 @@ from datetime import timedelta
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
-from rest_framework_simplejwt.tokens import Token
-from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.exceptions import TokenError
-from src.analytics.enums import MailoutType
+from rest_framework_simplejwt.settings import api_settings
+from rest_framework_simplejwt.tokens import Token
+
 from src.accounts.enums import (
-    UserStatus
-)
-from src.accounts.services.exceptions import (
-    InvalidOrExpiredToken,
-    AlreadyAcceptedInviteException,
-    AlreadyRegisteredException,
+    UserStatus,
 )
 from src.accounts.messages import (
-    MSG_A_0008
+    MSG_A_0008,
 )
+from src.accounts.services.exceptions import (
+    AlreadyAcceptedInviteException,
+    AlreadyRegisteredException,
+    InvalidOrExpiredToken,
+)
+from src.analysis.enums import MailoutType
 
 UserModel = get_user_model()
 
@@ -41,29 +42,29 @@ class InviteToken(BaseToken):
         self.invite = None
         try:
             super().__init__(token, verify)
-        except TokenError:
-            raise InvalidOrExpiredToken()
+        except TokenError as ex:
+            raise InvalidOrExpiredToken from ex
 
     def verify(self):
         try:
             super().verify()
-        except TokenError:
-            raise InvalidOrExpiredToken()
+        except TokenError as ex:
+            raise InvalidOrExpiredToken from ex
 
         try:
             self.user = UserModel.objects.get(
-                id=self.payload[api_settings.USER_ID_CLAIM]
+                id=self.payload[api_settings.USER_ID_CLAIM],
             )
-        except ObjectDoesNotExist:
-            raise InvalidOrExpiredToken()
+        except ObjectDoesNotExist as ex:
+            raise InvalidOrExpiredToken from ex
 
         if self.user.status == UserStatus.ACTIVE:
-            raise AlreadyAcceptedInviteException()
+            raise AlreadyAcceptedInviteException
         if UserModel.objects.filter(email=self.user.email).active().exists():
-            raise AlreadyRegisteredException()
+            raise AlreadyRegisteredException
         self.invite = self.user.invite
         if not self.invite:
-            raise InvalidOrExpiredToken()
+            raise InvalidOrExpiredToken
 
 
 class ResetPasswordToken(BaseToken):
@@ -75,8 +76,8 @@ class ResetPasswordToken(BaseToken):
         user_id = self.payload[api_settings.USER_ID_CLAIM]
         try:
             UserModel.objects.active().get(id=user_id)
-        except ObjectDoesNotExist:
-            raise TokenError(MSG_A_0008)
+        except ObjectDoesNotExist as ex:
+            raise TokenError(MSG_A_0008) from ex
 
 
 class AuthToken(BaseToken):

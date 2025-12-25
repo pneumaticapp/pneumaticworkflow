@@ -1,19 +1,21 @@
 import datetime
-from django.utils import timezone
+
 import pytest
-from src.authentication.services import GuestJWTAuthService
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_group,
-    create_test_account,
-    create_test_guest,
-    create_test_workflow
-)
-from src.processes.models import TaskPerformer
-from src.utils.validation import ErrorCode
+from django.utils import timezone
+
 from src.accounts.enums import (
     BillingPlanType,
 )
+from src.authentication.services.guest_auth import GuestJWTAuthService
+from src.processes.models.workflows.task import TaskPerformer
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_group,
+    create_test_guest,
+    create_test_user,
+    create_test_workflow,
+)
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
@@ -25,19 +27,23 @@ def test_list__ok(api_client):
     user_1 = create_test_user(account=account, last_name='Cjo')
     user_2 = create_test_user(email='1@test.com', account=account)
     user_3 = create_test_user(
-        email='2@test.com', account=account, last_name='Ajo'
+        email='2@test.com', account=account, last_name='Ajo',
     )
     user_4 = create_test_user(
-        email='4@test.com', account=account, last_name='Bjo1'
+        email='4@test.com', account=account, last_name='Bjo1',
     )
     create_test_user(email='3@test.com', account=account)
     api_client.token_authenticate(user_1)
-    group_1 = create_test_group(account, users=[user_4, user_1, user_3])
-    group_2 = create_test_group(account, users=[user_2])
+    group_1 = create_test_group(
+        account,
+        name='group 1',
+        users=[user_4, user_1, user_3],
+    )
+    group_2 = create_test_group(account, name='group 2', users=[user_2])
 
     # act
     response = api_client.get(
-        path='/accounts/groups'
+        path='/accounts/groups',
     )
 
     # assert
@@ -63,14 +69,14 @@ def test_list__not_admin__ok(api_client):
         account=account,
         email='no_admin@test.com',
         is_admin=False,
-        is_account_owner=False
+        is_account_owner=False,
     )
 
     api_client.token_authenticate(no_admin_user)
 
     # act
     response = api_client.get(
-        path='/accounts/groups'
+        path='/accounts/groups',
     )
 
     # assert
@@ -93,18 +99,18 @@ def test_list__guest__ok(api_client):
     task = workflow.tasks.first()
     TaskPerformer.objects.create(
         task_id=task.id,
-        user_id=guest.id
+        user_id=guest.id,
     )
     str_token = GuestJWTAuthService.get_str_token(
         task_id=task.id,
         user_id=guest.id,
-        account_id=account.id
+        account_id=account.id,
     )
 
     # act
     response = api_client.get(
         path='/accounts/groups',
-        **{'X-Guest-Authorization': str_token}
+        **{'X-Guest-Authorization': str_token},
     )
 
     # assert
@@ -124,7 +130,7 @@ def test_list__not_auth__permission_denied(api_client):
 
     # act
     response = api_client.get(
-        path='/accounts/groups'
+        path='/accounts/groups',
     )
 
     # assert
@@ -136,7 +142,7 @@ def test_list__expired_subscription__ok(api_client):
     # arrange
     account = create_test_account(
         plan=BillingPlanType.UNLIMITED,
-        plan_expiration=timezone.now() - datetime.timedelta(hours=1)
+        plan_expiration=timezone.now() - datetime.timedelta(hours=1),
     )
     user = create_test_user(account=account)
     group = create_test_group(account, users=[user])
@@ -144,7 +150,7 @@ def test_list__expired_subscription__ok(api_client):
 
     # act
     response = api_client.get(
-        path='/accounts/groups'
+        path='/accounts/groups',
     )
 
     # assert
@@ -167,7 +173,7 @@ def test_list__default_ordering__ok(api_client):
 
     # act
     response = api_client.get(
-        path='/accounts/groups'
+        path='/accounts/groups',
     )
 
     # assert
@@ -190,7 +196,7 @@ def test_list__order_by_reverse_name__ok(api_client):
 
     # act
     response = api_client.get(
-        path='/accounts/groups?ordering=-name'
+        path='/accounts/groups?ordering=-name',
     )
 
     # assert
@@ -213,7 +219,7 @@ def test_list__order_name__ok(api_client):
 
     # act
     response = api_client.get(
-        path='/accounts/groups?ordering=name'
+        path='/accounts/groups?ordering=name',
     )
 
     # assert
@@ -237,7 +243,7 @@ def test_list__invalid_ordering__validation_error(value, api_client):
 
     # act
     response = api_client.get(
-        path=f'/accounts/groups?ordering={value}'
+        path=f'/accounts/groups?ordering={value}',
     )
 
     # assert

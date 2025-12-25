@@ -1,34 +1,35 @@
+# ruff: noqa: PLC0415
 from ast import literal_eval
-from typing import Optional, List, Tuple
 from datetime import datetime
+from typing import List, Optional, Tuple
+
 from django.contrib.auth import get_user_model
+
 from src.accounts.models import User, UserGroup
 from src.generics.mixins.managers import SearchSqlQueryMixin
-from src.processes.paginations import WorkflowListPagination
-from src.queries import (
-    SqlQueryObject,
-    OrderByMixin,
+from src.generics.mixins.queries import (
+    DereferencedOwnersMixin,
+    DereferencedPerformersMixin,
 )
 from src.processes.enums import (
-    WorkflowStatus,
-    WorkflowApiStatus,
-    WorkflowOrdering,
     DirectlyStatus,
-    WorkflowEventType, TaskStatus,
-)
-from src.processes.enums import (
-    TemplateOrdering,
     TaskOrdering,
+    TaskStatus,
+    TemplateOrdering,
     TemplateType,
+    WorkflowApiStatus,
+    WorkflowEventType,
+    WorkflowOrdering,
+    WorkflowStatus,
 )
 from src.processes.messages.workflow import (
     MSG_PW_0024,
 )
-from src.generics.mixins.queries import (
-    DereferencedOwnersMixin,
-    DereferencedPerformersMixin
+from src.processes.paginations import WorkflowListPagination
+from src.queries import (
+    OrderByMixin,
+    SqlQueryObject,
 )
-
 
 UserModel = get_user_model()
 
@@ -94,17 +95,14 @@ class WorkflowListQuery(
               {self._search_in(table='pt', tsquery=tsquery)}
               OR {self._search_in(table='pw', tsquery=tsquery)}
               OR {self._search_in(table='we', tsquery=tsquery)}
-              OR {self._search_in(table='t', tsquery=tsquery)}
-              OR {self._search_in(table='fa', tsquery=tsquery)}
               OR {self._search_in(table='ptf', tsquery=tsquery)}
-              OR {self._search_in(table='kv', tsquery=tsquery)}
             )
         """
 
     def _get_template(self):
         result, params = self._to_sql_list(
             values=self.template,
-            prefix='template'
+            prefix='template',
         )
         self.params.update(params)
         return f"pw.template_id in {result}"
@@ -112,7 +110,7 @@ class WorkflowListQuery(
     def _get_template_task(self):
         result, params = self._to_sql_list(
             values=self.task_api_name,
-            prefix='task_api_name'
+            prefix='task_api_name',
         )
         self.params.update(params)
         return f"""
@@ -123,7 +121,7 @@ class WorkflowListQuery(
     def _get_current_performer(self):
         result, params = self._to_sql_list(
             values=self.current_performer,
-            prefix='current_performer'
+            prefix='current_performer',
         )
         self.params.update(params)
         return f"ptp.user_id in {result}"
@@ -131,7 +129,7 @@ class WorkflowListQuery(
     def _get_current_performer_group_ids(self):
         result, params = self._to_sql_list(
             values=self.current_performer_group_ids,
-            prefix='current_performer_group_ids'
+            prefix='current_performer_group_ids',
         )
         self.params.update(params)
         return f"ptp.group_id in {result}"
@@ -139,7 +137,7 @@ class WorkflowListQuery(
     def _get_workflow_starter(self):
         result, params = self._to_sql_list(
             values=self.workflow_starter,
-            prefix='workflow_starter'
+            prefix='workflow_starter',
         )
         self.params.update(params)
         return f"pw.workflow_starter_id in {result}"
@@ -155,7 +153,7 @@ class WorkflowListQuery(
         return ""
 
     def _get_where(self):
-        where = f"""
+        where = """
             WHERE pw.is_deleted IS FALSE
             AND pw.account_id = %(account_id)s """
 
@@ -222,7 +220,7 @@ class WorkflowListQuery(
         return where
 
     def _get_from(self):
-        result = f"""
+        result = """
             FROM processes_workflow pw
             LEFT JOIN processes_workflow_owners pwo ON (
                 pw.id = pwo.workflow_id
@@ -243,24 +241,16 @@ class WorkflowListQuery(
 
         if self.search_text:
             result += """
-                LEFT JOIN processes_template t ON (
-                    t.id = pw.template_id AND
-                    t.is_deleted IS FALSE
-                )
-                LEFT JOIN processes_kickoffvalue kv ON pw.id = kv.workflow_id
                 LEFT JOIN processes_workflowevent we ON (
                     pw.id = we.workflow_id AND
                     we.is_deleted IS FALSE AND
                     we.status != 'deleted' AND
                     we.type = 5
                 )
-                LEFT JOIN processes_fileattachment fa ON (
-                    pw.id=fa.workflow_id AND
-                    fa.is_deleted is FALSE
-                )
                 LEFT JOIN processes_taskfield ptf ON (
                     ptf.workflow_id = pw.id AND
-                    ptf.is_deleted IS FALSE
+                    ptf.is_deleted IS FALSE AND
+                    ptf.kickoff_id IS NOT NULL
                 )
             """
         return result
@@ -295,7 +285,7 @@ class WorkflowListQuery(
             post_columns = default_column
         order_by = self.get_order_by(
             default_column=default_column,
-            post_columns=post_columns
+            post_columns=post_columns,
         )
         return f"""
             SELECT *
@@ -325,7 +315,7 @@ class WorkflowListQuery(
 
 
 class WorkflowCountsByWfStarterQuery(
-    SqlQueryObject
+    SqlQueryObject,
 ):
 
     def __init__(
@@ -341,7 +331,7 @@ class WorkflowCountsByWfStarterQuery(
         self.params = {
             'user_id': user_id,
             'account_id': account_id,
-            'status': self.status
+            'status': self.status,
         }
         self.template_ids = template_ids
         self.current_performer_ids = current_performer_ids
@@ -363,7 +353,7 @@ class WorkflowCountsByWfStarterQuery(
     def _get_template_ids(self):
         result, params = self._to_sql_list(
             values=self.template_ids,
-            prefix='template_id'
+            prefix='template_id',
         )
         self.params.update(params)
         return f"pw.template_id IN {result}"
@@ -371,7 +361,7 @@ class WorkflowCountsByWfStarterQuery(
     def _get_current_performer_ids(self):
         result, params = self._to_sql_list(
             values=self.current_performer_ids,
-            prefix='current_performer_id'
+            prefix='current_performer_id',
         )
         self.params.update(params)
         return f"ptp.user_id in {result}"
@@ -379,7 +369,7 @@ class WorkflowCountsByWfStarterQuery(
     def _get_current_performer_group_ids(self):
         result, params = self._to_sql_list(
             values=self.current_performer_group_ids,
-            prefix='current_performer_group_ids'
+            prefix='current_performer_group_ids',
         )
         self.params.update(params)
         return f"ptp.group_id in {result}"
@@ -475,7 +465,7 @@ class WorkflowCountsByWfStarterQuery(
 
 
 class WorkflowCountsByCPerformerQuery(
-    SqlQueryObject
+    SqlQueryObject,
 ):
 
     def __init__(
@@ -491,7 +481,7 @@ class WorkflowCountsByCPerformerQuery(
         self.params = {
             'user_id': user_id,
             'account_id': account_id,
-            'status': self.status
+            'status': self.status,
         }
         self.is_external = is_external
         # Works for running workflows only
@@ -502,7 +492,7 @@ class WorkflowCountsByCPerformerQuery(
     def _get_template_ids(self):
         result, params = self._to_sql_list(
             values=self.template_ids,
-            prefix='template_id'
+            prefix='template_id',
         )
         self.params.update(params)
         return f"pw.template_id in {result}"
@@ -510,7 +500,7 @@ class WorkflowCountsByCPerformerQuery(
     def _get_template_task_api_names(self):
         result, params = self._to_sql_list(
             values=self.template_task_api_names,
-            prefix='template_task_api_names'
+            prefix='template_task_api_names',
         )
         self.params.update(params)
         return f"pt.api_name in {result}"
@@ -518,7 +508,7 @@ class WorkflowCountsByCPerformerQuery(
     def _get_workflow_starter_ids(self):
         result, params = self._to_sql_list(
             values=self.workflow_starter_ids,
-            prefix='workflow_starter_id'
+            prefix='workflow_starter_id',
         )
         self.params.update(params)
         return f"pw.workflow_starter_id in {result}"
@@ -561,7 +551,7 @@ class WorkflowCountsByCPerformerQuery(
         return where
 
     def _get_from(self):
-        result = f"""
+        return f"""
         FROM processes_workflow pw
             LEFT JOIN processes_workflow_owners ptra
               ON pw.id = ptra.workflow_id
@@ -572,7 +562,6 @@ class WorkflowCountsByCPerformerQuery(
             INNER JOIN processes_taskperformer ptp
               ON pt.id = ptp.task_id
         """
-        return result
 
     def _get_inner_sql(self):
         return f"""
@@ -670,13 +659,13 @@ class WorkflowCountsByCPerformerQuery(
         if self.template_task_api_names:
             conditions.append(
                 f"{self._get_template_task_api_names()}"
-                f" AND pt.is_deleted IS FALSE"
+                f" AND pt.is_deleted IS FALSE",
             )
 
         if self.workflow_starter_ids and self.is_external:
             conditions.append(
                 f"({self._get_workflow_starter_ids()}"
-                f" OR {self._get_is_external()})"
+                f" OR {self._get_is_external()})",
             )
         elif self.workflow_starter_ids:
             conditions.append(f"{self._get_workflow_starter_ids()}")
@@ -684,7 +673,7 @@ class WorkflowCountsByCPerformerQuery(
             conditions.append(f"{self._get_is_external()}")
 
         if self.status is not None:
-            conditions.append(f"pw.status = %(status)s")
+            conditions.append("pw.status = %(status)s")
 
         if conditions:
             return "AND " + " AND ".join(conditions)
@@ -715,7 +704,7 @@ class WorkflowCountsByTemplateTaskQuery(
         self.params = {
             'user_id': user_id,
             'account_id': account_id,
-            'status': self.status
+            'status': self.status,
         }
         self.is_external = is_external
         self.template_ids = template_ids
@@ -739,7 +728,7 @@ class WorkflowCountsByTemplateTaskQuery(
     def _get_template_ids(self):
         result, params = self._to_sql_list(
             values=self.template_ids,
-            prefix='template_id'
+            prefix='template_id',
         )
         self.params.update(params)
         return f"pw.template_id in {result}"
@@ -747,7 +736,7 @@ class WorkflowCountsByTemplateTaskQuery(
     def _get_current_performer_ids(self):
         result, params = self._to_sql_list(
             values=self.current_performer_ids,
-            prefix='current_performer_id'
+            prefix='current_performer_id',
         )
         self.params.update(params)
         return f"ptp.user_id in {result}"
@@ -755,7 +744,7 @@ class WorkflowCountsByTemplateTaskQuery(
     def _get_current_performer_group_ids(self):
         result, params = self._to_sql_list(
             values=self.current_performer_group_ids,
-            prefix='current_performer_group_ids'
+            prefix='current_performer_group_ids',
         )
         self.params.update(params)
         return f"ptp.group_id in {result}"
@@ -763,7 +752,7 @@ class WorkflowCountsByTemplateTaskQuery(
     def _get_workflow_starter_ids(self):
         result, params = self._to_sql_list(
             values=self.workflow_starter_ids,
-            prefix='workflow_starter_id'
+            prefix='workflow_starter_id',
         )
         self.params.update(params)
         return f"pw.workflow_starter_id in {result}"
@@ -775,7 +764,7 @@ class WorkflowCountsByTemplateTaskQuery(
     def _get_cte_where(self):
         result, params = self._to_sql_list(
             values=TemplateType.TYPES_ONBOARDING,
-            prefix='template_type'
+            prefix='template_type',
         )
         self.params.update(params)
         where = f"""
@@ -787,7 +776,7 @@ class WorkflowCountsByTemplateTaskQuery(
         if self.template_ids:
             result, params = self._to_sql_list(
                 values=self.template_ids,
-                prefix='template_id'
+                prefix='template_id',
             )
             self.params.update(params)
             where += f' AND t.id in {result}'
@@ -846,7 +835,7 @@ class WorkflowCountsByTemplateTaskQuery(
         return where
 
     def _get_from(self):
-        result = f"""
+        return f"""
         FROM processes_workflow pw
             INNER JOIN processes_task pt
               ON pw.id = pt.workflow_id
@@ -854,7 +843,6 @@ class WorkflowCountsByTemplateTaskQuery(
             INNER JOIN processes_taskperformer ptp
               ON pt.id = ptp.task_id
         """
-        return result
 
     def _get_inner_sql(self):
         return f"""
@@ -921,7 +909,7 @@ class TaskListQuery(
         assigned_to: Optional[int] = None,
         search: Optional[str] = None,
         is_completed: bool = False,
-        **kwargs
+        **kwargs,
     ):
 
         """ Search string should be validated """
@@ -946,25 +934,16 @@ class TaskListQuery(
             OR
             {self._search_in(table='pw', tsquery=tsquery)}
             OR
-            {self._search_in(table='au', tsquery=tsquery)}
-            OR
             {self._search_in(table='we', tsquery=tsquery)}
             OR
-            {self._search_in(table='t', tsquery=tsquery)}
-            OR
-            {self._search_in(table='fa', tsquery=tsquery)}
-            OR
             {self._search_in(table='ptf', tsquery=tsquery)}
-            OR
-            {self._search_in(table='kv', tsquery=tsquery)}
             )
         """
 
     def get_is_completed_where(self):
         if self.is_completed:
             return 'ptp.is_completed IS TRUE'
-        else:
-            return f"""
+        return f"""
                 pt.status = '{TaskStatus.ACTIVE}'
                 AND ptp.is_completed IS FALSE
                 AND pw.status = '{WorkflowStatus.RUNNING}'
@@ -1096,7 +1075,7 @@ class TemplateListQuery(
     SqlQueryObject,
     SearchSqlQueryMixin,
     OrderByMixin,
-    DereferencedOwnersMixin
+    DereferencedOwnersMixin,
 ):
     ordering_map = TemplateOrdering.MAP
 
@@ -1104,7 +1083,6 @@ class TemplateListQuery(
         self,
         user_id: int,
         account_id: int,
-        is_account_owner: bool,
         ordering: Optional[str] = None,
         search_text: Optional[str] = None,
         is_active: Optional[bool] = None,
@@ -1112,7 +1090,6 @@ class TemplateListQuery(
     ):
 
         self.user_id = user_id
-        self.is_account_owner = is_account_owner
         self.account_id = account_id
         self.params = {
             'account_id': self.account_id,
@@ -1150,7 +1127,7 @@ class TemplateListQuery(
     def _get_filter_by_type(self):
         result, params = self._to_sql_list(
             values=TemplateType.TYPES_ONBOARDING,
-            prefix='template_type'
+            prefix='template_type',
         )
         self.params.update(params)
         return f"pt.type NOT IN {result}"
@@ -1158,7 +1135,7 @@ class TemplateListQuery(
     def get_workflows_join(self):
         if self.ordering in {
             TemplateOrdering.USAGE,
-            TemplateOrdering.REVERSE_USAGE
+            TemplateOrdering.REVERSE_USAGE,
         }:
             return """
                 LEFT JOIN processes_workflow workflows ON (
@@ -1171,7 +1148,7 @@ class TemplateListQuery(
     def get_workflows_select(self):
         if self.ordering in {
             TemplateOrdering.USAGE,
-            TemplateOrdering.REVERSE_USAGE
+            TemplateOrdering.REVERSE_USAGE,
         }:
             return 'COUNT(DISTINCT workflows.id) AS workflows_count,'
         return ''
@@ -1238,7 +1215,7 @@ class TemplateListQuery(
     def get_sql(self):
         order_by = self.get_order_by(
             pre_columns='templates.is_active DESC',
-            default_column='templates.id'
+            default_column='templates.id',
         )
         return f"""
         SELECT *
@@ -1250,7 +1227,7 @@ class TemplateListQuery(
 class TemplateExportQuery(
     SqlQueryObject,
     OrderByMixin,
-    DereferencedOwnersMixin
+    DereferencedOwnersMixin,
 ):
     ordering_map = TemplateOrdering.MAP
 
@@ -1281,7 +1258,7 @@ class TemplateExportQuery(
     def _get_owners_ids(self):
         result, params = self._to_sql_list(
             values=self.owners_ids,
-            prefix='owners_ids'
+            prefix='owners_ids',
         )
         self.params.update(params)
         return f'pto.user_id in {result}'
@@ -1289,7 +1266,7 @@ class TemplateExportQuery(
     def _get_owners_group_ids(self):
         result, params = self._to_sql_list(
             values=self.owners_group_ids,
-            prefix='owners_group_ids'
+            prefix='owners_group_ids',
         )
         self.params.update(params)
         return f'pto.group_id in {result}'
@@ -1305,7 +1282,7 @@ class TemplateExportQuery(
     def _get_filter_by_type(self):
         result, params = self._to_sql_list(
             values=TemplateType.TYPES_ONBOARDING,
-            prefix='template_type'
+            prefix='template_type',
         )
         self.params.update(params)
         return f"t.type NOT IN {result}"
@@ -1355,7 +1332,7 @@ class TemplateExportQuery(
     def get_sql(self):
         order_by = self.get_order_by(
             pre_columns='templates.is_active DESC',
-            default_column='templates.id'
+            default_column='templates.id',
         )
         return f"""
             SELECT DISTINCT *
@@ -1399,7 +1376,7 @@ class RunningTaskTemplateQuery(SqlQueryObject):
 class TemplateStepsQuery(
     SqlQueryObject,
     DereferencedOwnersMixin,
-    DereferencedPerformersMixin
+    DereferencedPerformersMixin,
 ):
 
     def __init__(
@@ -1438,7 +1415,7 @@ class TemplateStepsQuery(
     def _get_filter_by_type(self):
         result, params = self._to_sql_list(
             values=TemplateType.TYPES_ONBOARDING,
-            prefix='template_type'
+            prefix='template_type',
         )
         self.params.update(params)
         return f"t.type NOT IN {result}"
@@ -1457,7 +1434,7 @@ class TemplateStepsQuery(
                 AND pt.status = '{TaskStatus.ACTIVE}'
                 AND pw.status = {WorkflowStatus.RUNNING}"""
         elif self.with_tasks_in_progress is False:
-            result += f"""
+            result += """
                 AND pt.is_deleted IS FALSE
                 AND dereferenced_performers.is_completed IS TRUE"""
         return result
@@ -1514,16 +1491,16 @@ class HighlightsQuery(SqlQueryObject):
         if templates is not None:
             try:
                 self.templates = literal_eval(templates)
-            except (SyntaxError, ValueError):
-                raise ValidationError(MSG_PW_0024('templates'))
+            except (SyntaxError, ValueError) as ex:
+                raise ValidationError(MSG_PW_0024('templates')) from ex
 
         if current_performer_ids is not None:
             try:
                 self.users = current_performer_ids
                 if isinstance(self.users, int):
                     self.users = (self.users,)
-            except (SyntaxError, ValueError):
-                raise ValidationError(MSG_PW_0024('users'))
+            except (SyntaxError, ValueError) as ex:
+                raise ValidationError(MSG_PW_0024('users')) from ex
 
         if current_performer_group_ids is not None:
             group_users_ids = (
@@ -1545,7 +1522,7 @@ class HighlightsQuery(SqlQueryObject):
             self.date_after_tsp = date_after_tsp
 
     def get_sql(self):
-        subquery = f"""
+        subquery = """
         SELECT DISTINCT ON (we.workflow_id)
           we.id,
           we.type,
@@ -1578,30 +1555,30 @@ class HighlightsQuery(SqlQueryObject):
         result, params = self._to_sql_list(self.event_types, 'type')
         self.sql_params.update(params)
         additional_where.append(
-            f'we.type in {result}'
+            f'we.type in {result}',
         )
 
         if hasattr(self, 'users'):
             result, params = self._to_sql_list(self.users, 'user')
             self.sql_params.update(params)
             additional_where.append(
-                f'we.user_id in {result}'
+                f'we.user_id in {result}',
             )
 
         if hasattr(self, 'templates'):
             result, params = self._to_sql_list(self.templates, 'template')
             self.sql_params.update(params)
             additional_where.append(
-                f'workflow.template_id in {result}'
+                f'workflow.template_id in {result}',
             )
 
         if hasattr(self, 'date_before_tsp'):
             self.sql_params['date_before_tsp'] = self.date_before_tsp
-            where.append(f'we.created <= %(date_before_tsp)s')
+            where.append('we.created <= %(date_before_tsp)s')
 
         if hasattr(self, 'date_after_tsp'):
             self.sql_params['date_after_tsp'] = self.date_after_tsp
-            where.append(f'we.created >= %(date_after_tsp)s')
+            where.append('we.created >= %(date_after_tsp)s')
 
         if additional_where:
             additional_where = ' AND '.join(additional_where)
@@ -1631,7 +1608,7 @@ class UpdateWorkflowEventWatchedQuery(SqlQueryObject):
 
     def __init__(
         self,
-        actions_ids: List[int]
+        actions_ids: List[int],
     ):
         self.actions_ids = actions_ids
         self.params = {}
@@ -1717,12 +1694,12 @@ class TemplateTitlesEventsQuery(SqlQueryObject):
     def get_sql(self):
         event_types, event_params = self._to_sql_list(
             values=self.event_types,
-            prefix='event_type'
+            prefix='event_type',
         )
         self.params.update(event_params)
         template_types, template_params = self._to_sql_list(
             values=TemplateType.TYPES_ONBOARDING,
-            prefix='template_type'
+            prefix='template_type',
         )
         self.params.update(template_params)
 
@@ -1789,7 +1766,7 @@ class TemplateTitlesQuery(SqlQueryObject, DereferencedPerformersMixin):
     def _get_filter_by_type(self):
         result, params = self._to_sql_list(
             values=TemplateType.TYPES_ONBOARDING,
-            prefix='template_type'
+            prefix='template_type',
         )
         self.params.update(params)
         return f"t.type NOT IN {result}"
@@ -1807,11 +1784,11 @@ class TemplateTitlesQuery(SqlQueryObject, DereferencedPerformersMixin):
                 AND pt.status = '{TaskStatus.ACTIVE}'
                 AND pw.status = {WorkflowStatus.RUNNING}"""
         elif self.with_tasks_in_progress is False:
-            result += f"""
+            result += """
                 AND pt.is_deleted IS FALSE
                 AND dereferenced_performers.is_completed IS TRUE"""
         elif self.status is not None:
-            result += f"AND pw.status = %(status)s"
+            result += "AND pw.status = %(status)s"
         return result
 
     def get_sql(self) -> Tuple[str, dict]:
@@ -1831,7 +1808,7 @@ class UpdateWorkflowOwnersQuery(
     SqlQueryObject,
     SearchSqlQueryMixin,
     OrderByMixin,
-    DereferencedOwnersMixin
+    DereferencedOwnersMixin,
 ):
 
     def __init__(
@@ -1841,6 +1818,9 @@ class UpdateWorkflowOwnersQuery(
         self.params = {
             'template_id': template_id,
         }
+
+    def get_sql(self) -> Tuple[str, dict]:
+        pass
 
     def insert_sql(self):
         return f"""
@@ -1861,7 +1841,7 @@ class UpdateWorkflowMemberQuery(
     SqlQueryObject,
     SearchSqlQueryMixin,
     OrderByMixin,
-    DereferencedOwnersMixin
+    DereferencedOwnersMixin,
 ):
 
     def __init__(
@@ -1872,6 +1852,9 @@ class UpdateWorkflowMemberQuery(
         self.params = {
             'template_id': template_id,
         }
+
+    def get_sql(self) -> Tuple[str, dict]:
+        pass
 
     def insert_sql(self):
         return f"""

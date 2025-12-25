@@ -1,24 +1,26 @@
-from rest_framework import serializers
-from django.contrib.auth import get_user_model, authenticate
-from drf_recaptcha.fields import ReCaptchaV2Field
+from django.contrib.auth import authenticate, get_user_model
 from django.core.validators import RegexValidator
-from src.accounts.models import Account
-from src.generics.fields import TimeStampField, DateFormatField
-from src.generics.serializers import CustomValidationErrorMixin
-from src.accounts.enums import Language
-from src.authentication.messages import (
-    MSG_AU_0013,
-    MSG_AU_0012,
-    MSG_AU_0006,
-)
+from drf_recaptcha.fields import ReCaptchaV2Field
+from rest_framework import serializers
+from typing import Any, Dict, Optional
 
+from src.accounts.enums import Language
+from src.accounts.models import Account
+from src.authentication.messages import (
+    MSG_AU_0006,
+    MSG_AU_0012,
+    MSG_AU_0013,
+)
+from src.generics.fields import DateFormatField, TimeStampField
+from src.generics.mixins.services import EncryptionMixin
+from src.generics.serializers import CustomValidationErrorMixin
 
 UserModel = get_user_model()
 
 
 class SignUpSerializer(
     CustomValidationErrorMixin,
-    serializers.ModelSerializer
+    serializers.ModelSerializer,
 ):
 
     class Meta:
@@ -47,18 +49,18 @@ class SignUpSerializer(
         required=False,
         allow_null=True,
         validators=[
-            RegexValidator(regex=r'^\+?\d{9,16}$', message=MSG_AU_0006)
-        ]
+            RegexValidator(regex=r'^\+?\d{9,16}$', message=MSG_AU_0006),
+        ],
     )
     password = serializers.CharField(
         required=False,
         allow_null=True,
-        min_length=6
+        min_length=6,
     )
     company_name = serializers.CharField(required=False)
     language = serializers.ChoiceField(
         choices=Language.EURO_CHOICES,
-        required=False
+        required=False,
     )
     utm_source = serializers.CharField(required=False, allow_null=True)
     utm_medium = serializers.CharField(required=False, allow_null=True)
@@ -98,7 +100,7 @@ class SecuredSignUpSerializer(SignUpSerializer):
             'utm_term',
             'utm_content',
             'gclid',
-            'captcha'
+            'captcha',
         ]
 
     captcha = ReCaptchaV2Field()
@@ -140,7 +142,7 @@ class ContextAccountSerializer(serializers.ModelSerializer):
     date_joined_tsp = TimeStampField(source='date_joined', read_only=True)
     plan_expiration_tsp = TimeStampField(
         source='plan_expiration',
-        read_only=True
+        read_only=True,
     )
     is_blocked = serializers.SerializerMethodField()
 
@@ -200,16 +202,12 @@ class BaseAuthSerializerMeta:
         'last_name',
         'phone',
         'photo',
-        'is_active'
+        'is_active',
     )
     read_only_fields = ('id', )
     extra_kwargs = {
-        'email': {'validators': []}
+        'email': {'validators': []},
     }
-
-
-class SignInWithGoogleSerializer(serializers.Serializer):
-    email = serializers.EmailField()
 
 
 class UserResetPasswordSerializer(serializers.ModelSerializer):
@@ -228,18 +226,18 @@ class UserResetPasswordSerializer(serializers.ModelSerializer):
 
 class AuthTokenSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
 
     code = serializers.CharField(
         allow_null=False,
         allow_blank=False,
-        required=True
+        required=True,
     )
     state = serializers.CharField(
         allow_null=False,
         allow_blank=False,
-        required=True
+        required=True,
     )
 
     utm_source = serializers.CharField(required=False, allow_null=True)
@@ -255,48 +253,86 @@ class MSTokenSerializer(AuthTokenSerializer):
     session_state = serializers.CharField(
         allow_null=False,
         allow_blank=False,
-        required=True
+        required=True,
     )
     client_info = serializers.CharField(
         allow_null=False,
         allow_blank=False,
-        required=True
+        required=True,
     )
 
 
-class Auth0TokenSerializer(AuthTokenSerializer):
+class SSOTokenSerializer(
+    EncryptionMixin,
+    CustomValidationErrorMixin,
+    serializers.Serializer,
+):
+    code = serializers.CharField(
+        allow_null=False,
+        allow_blank=False,
+        required=True,
+    )
+    state = serializers.CharField(
+        allow_null=False,
+        allow_blank=False,
+        required=True,
+    )
+
+    def _extract_domain_from_state(self, state: str) -> Optional[str]:
+        try:
+            return self.decrypt(state[36:]) or None
+        except ValueError:
+            return None
+
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
+        attrs['domain'] = self._extract_domain_from_state(attrs['state'])
+        return attrs
+
+
+class GoogleTokenSerializer(AuthTokenSerializer):
 
     pass
 
 
+class AuthUriSerializer(
+    CustomValidationErrorMixin,
+    serializers.Serializer,
+):
+    domain = serializers.CharField(
+        required=False,
+        allow_null=True,
+        allow_blank=True,
+    )
+
+
 class TokenSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
     token = serializers.CharField(
         required=True,
         allow_null=False,
-        allow_blank=False
+        allow_blank=False,
     )
 
 
 class ResetPasswordSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
     email = serializers.EmailField(required=True)
 
 
 class ConfirmPasswordSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
     new_password = serializers.CharField()
     confirm_new_password = serializers.CharField()
     token = serializers.CharField(
         required=True,
         allow_null=False,
-        allow_blank=False
+        allow_blank=False,
     )
 
     def validate(self, attrs):
@@ -307,7 +343,7 @@ class ConfirmPasswordSerializer(
 
 class ChangePasswordSerializer(
     CustomValidationErrorMixin,
-    serializers.Serializer
+    serializers.Serializer,
 ):
     old_password = serializers.CharField()
     new_password = serializers.CharField()

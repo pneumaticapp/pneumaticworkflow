@@ -6,6 +6,7 @@ import {
   TConditionPredicateValue,
 } from '../components/TemplateEdit/TaskForm/Conditions';
 import { TUploadedFile } from '../utils/uploadFiles';
+import { TSystemField } from '../components/Workflows/WorkflowsTablePage/WorkflowsTable/types';
 
 export interface ITemplate {
   id?: number;
@@ -35,6 +36,7 @@ export interface ITemplateOwner {
 }
 
 export type TTransformedTask =
+  | { apiName: string; name: string; needSteName: null; fields: TSystemField[] }
   | (Pick<ITemplateTask, 'apiName' | 'fields' | 'name'> & { needSteName?: boolean })
   | (Pick<IKickoff, 'fields'> & { apiName: string; name: string; needSteName: null });
 
@@ -88,8 +90,7 @@ export interface ITemplateTaskPerformer {
   label: string;
   type: ETaskPerformerType;
   sourceId: string | null;
-  apiName?: string;
-  id?: number;
+  apiName: string;
 }
 
 export enum ETemplateOwnerType {
@@ -194,6 +195,8 @@ export interface IExtraField {
   selections?: IExtraFieldSelection[];
   attachments?: TUploadedFile[];
   order: number;
+  userId: number | null;
+  groupId: number | null;
 }
 
 export type TExtraFieldValue = TExtraFieldSingleValue | TExtraFieldMultipleValue | TExtraFieldTimestampValue | null;
@@ -202,7 +205,6 @@ export type TExtraFieldSingleValue = string;
 export type TExtraFieldMultipleValue = string[];
 export type TExtraFieldTimestampValue = number;
 export interface IExtraFieldSelection {
-  id?: number;
   apiName: string;
   isSelected?: boolean;
   value: string;
@@ -269,3 +271,21 @@ export interface RawPerformer {
   type: ETemplateOwnerType;
   sourceId: number;
 }
+
+export type TOrderedFields = {
+  order: number;
+  width: number;
+  apiName: string;
+};
+
+export type TTemplatePreset = {
+  id: number;
+  name: string;
+  author: number;
+  dateCreatedTsp: number;
+  isDefault: boolean;
+  type: 'personal' | 'account';
+  fields: TOrderedFields[];
+};
+
+export type TAddTemplatePreset = Omit<TTemplatePreset, 'id' | 'author' | 'dateCreatedTsp'>;

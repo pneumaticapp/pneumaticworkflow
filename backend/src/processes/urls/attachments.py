@@ -9,7 +9,7 @@ router = DefaultRouter(trailing_slash=False)
 router.register(
     '',
     AttachmentsViewSet,
-    basename='attachments'
+    basename='attachments',
 )
 
 urlpatterns = router.urls

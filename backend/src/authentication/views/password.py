@@ -1,50 +1,53 @@
 from django.contrib.auth import get_user_model
-
 from rest_framework.decorators import action
-from rest_framework.viewsets import GenericViewSet
 from rest_framework.generics import (
-    get_object_or_404,
     CreateAPIView,
+    get_object_or_404,
 )
 from rest_framework.permissions import AllowAny
+from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.exceptions import TokenError
+
+from src.accounts.services.user import UserService
 from src.accounts.tokens import (
     ResetPasswordToken,
 )
-from src.accounts.services.user import UserService
 from src.authentication.enums import (
-    ResetPasswordStatus
+    ResetPasswordStatus,
 )
 from src.authentication.permissions import (
     PrivateApiPermission,
 )
-from src.authentication.tokens import PneumaticToken
-from src.authentication.services import AuthService
 from src.authentication.serializers import (
-    ResetPasswordSerializer,
-    ConfirmPasswordSerializer,
-    TokenSerializer,
     ChangePasswordSerializer,
+    ConfirmPasswordSerializer,
+    ResetPasswordSerializer,
+    TokenSerializer,
 )
-from src.generics.mixins.views import (
-    CustomViewSetMixin,
-    BaseResponseMixin
-)
+from src.authentication.views.mixins import SSORestrictionMixin
+from src.authentication.services.user_auth import AuthService
 from src.authentication.throttling import (
-    AuthResetPasswordThrottle
+    AuthResetPasswordThrottle,
+)
+from src.authentication.tokens import PneumaticToken
+from src.generics.mixins.views import (
+    BaseResponseMixin,
+    CustomViewSetMixin,
 )
 from src.generics.permissions import (
     UserIsAuthenticated,
 )
 from src.notifications.tasks import (
-    send_reset_password_notification
+    send_reset_password_notification,
 )
+
 UserModel = get_user_model()
 
 
 class ResetPasswordViewSet(
+    SSORestrictionMixin,
     CustomViewSetMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     permission_classes = (AllowAny,)
     action_serializer_classes = {
@@ -60,10 +63,23 @@ class ResetPasswordViewSet(
     def create(self, request):
         slz = self.get_serializer(data=request.data)
         slz.is_valid(raise_exception=True)
-        user = UserModel.objects.select_related('account').filter(
-            email=slz.validated_data['email']
-        ).active().only('id', 'email', 'account__logo_lg').first()
+        user = (
+            UserModel.objects
+            .select_related('account')
+            .filter(email=slz.validated_data['email'])
+            .active()
+            .only(
+                'id',
+                'email',
+                'is_account_owner',
+                'account__logo_lg',
+                'account_id',
+                'account__log_api_requests',
+            )
+            .first()
+        )
         if user:
+            self.check_sso_restrictions(user)
             send_reset_password_notification.delay(
                 user_id=user.id,
                 user_email=user.email,
@@ -91,8 +107,9 @@ class ResetPasswordViewSet(
 
         user = get_object_or_404(
             UserModel.objects.active(),
-            id=token_data['user_id']
+            id=token_data['user_id'],
         )
+        self.check_sso_restrictions(user)
         service = UserService(user=user)
         service.change_password(password=slz.validated_data['new_password'])
         PneumaticToken.expire_all_tokens(user)
@@ -100,7 +117,7 @@ class ResetPasswordViewSet(
             user=user,
             user_agent=request.headers.get(
                 'User-Agent',
-                request.META.get('HTTP_USER_AGENT')
+                request.META.get('HTTP_USER_AGENT'),
             ),
             user_ip=request.META.get('HTTP_X_REAL_IP'),
         )
@@ -108,8 +125,9 @@ class ResetPasswordViewSet(
 
 
 class ChangePasswordView(
+    SSORestrictionMixin,
     CreateAPIView,
-    BaseResponseMixin
+    BaseResponseMixin,
 ):
     serializer_class = ChangePasswordSerializer
     permission_classes = (
@@ -123,6 +141,7 @@ class ChangePasswordView(
         return context
 
     def create(self, request, *args, **kwargs):
+        self.check_sso_restrictions(request.user)
         slz = self.get_serializer(data=request.data)
         slz.is_valid(raise_exception=True)
         service = UserService(user=request.user)

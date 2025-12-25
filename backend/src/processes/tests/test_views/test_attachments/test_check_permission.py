@@ -17,15 +17,15 @@ def test_check_permission__has_permission__ok(api_client, mocker):
     check_user_permission_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.views.attachments.'
         'AttachmentService.check_user_permission',
-        return_value=True
+        return_value=True,
     )
 
     # act
     response = api_client.post(
         '/attachments/check-permission',
         data={
-            'file_id': 'test123.pdf'
-        }
+            'file_id': 'test123.pdf',
+        },
     )
 
     # assert
@@ -34,7 +34,7 @@ def test_check_permission__has_permission__ok(api_client, mocker):
     check_user_permission_mock.assert_called_once_with(
         user_id=user.id,
         account_id=user.account_id,
-        file_id='test123.pdf'
+        file_id='test123.pdf',
     )
 
 
@@ -46,15 +46,15 @@ def test_check_permission__no_permission__forbidden(api_client, mocker):
     check_user_permission_mock = mocker.patch(
         'pneumatic_backend.processes.api_v2.views.attachments.'
         'AttachmentService.check_user_permission',
-        return_value=False
+        return_value=False,
     )
 
     # act
     response = api_client.post(
         '/attachments/check-permission',
         data={
-            'file_id': 'test123.pdf'
-        }
+            'file_id': 'test123.pdf',
+        },
     )
 
     # assert
@@ -62,7 +62,7 @@ def test_check_permission__no_permission__forbidden(api_client, mocker):
     check_user_permission_mock.assert_called_once_with(
         user_id=user.id,
         account_id=user.account_id,
-        file_id='test123.pdf'
+        file_id='test123.pdf',
     )
 
 
@@ -75,8 +75,8 @@ def test_check_permission__invalid_data__bad_request(api_client):
     response = api_client.post(
         '/attachments/check-permission',
         data={
-            'file_id': ''
-        }
+            'file_id': '',
+        },
     )
 
     # assert
@@ -92,7 +92,7 @@ def test_check_permission__missing_file_id__bad_request(api_client):
     # act
     response = api_client.post(
         '/attachments/check-permission',
-        data={}
+        data={},
     )
 
     # assert
@@ -105,8 +105,8 @@ def test_check_permission__not_authenticated__unauthorized(api_client):
     response = api_client.post(
         '/attachments/check-permission',
         data={
-            'file_id': 'test.pdf'
-        }
+            'file_id': 'test.pdf',
+        },
     )
 
     # assert

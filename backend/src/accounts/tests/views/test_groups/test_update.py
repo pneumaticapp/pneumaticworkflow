@@ -1,26 +1,28 @@
-import pytest
 import datetime
+
+import pytest
 from django.utils import timezone
-from src.utils.validation import ErrorCode
-from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_group,
-    create_test_account,
-    create_invited_user,
-    create_test_guest,
-)
-from src.accounts.messages import (
-    MSG_A_0039,
-)
-from src.accounts.services.group import UserGroupService
+
 from src.accounts.enums import (
     BillingPlanType,
     UserStatus,
 )
-from src.authentication.enums import AuthTokenType
-from src.accounts.services.exceptions import (
-    UserGroupServiceException
+from src.accounts.messages import (
+    MSG_A_0039,
 )
+from src.accounts.services.exceptions import (
+    UserGroupServiceException,
+)
+from src.accounts.services.group import UserGroupService
+from src.authentication.enums import AuthTokenType
+from src.processes.tests.fixtures import (
+    create_invited_user,
+    create_test_account,
+    create_test_group,
+    create_test_guest,
+    create_test_user,
+)
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
@@ -32,36 +34,40 @@ def test_update__ok(api_client, mocker):
     user = create_test_user(account=account)
     another_user = create_test_user(
         account=account,
-        email='another@pneumatic.app'
+        email='another@pneumatic.app',
     )
     api_client.token_authenticate(user)
     group = create_test_group(account)
     request_data = {
         'name': 'Groups',
         'photo': 'https://foeih.com/image.jpg',
-        'users': [another_user.id]
+        'users': [another_user.id],
     }
+    mocker.patch(
+        'src.accounts.serializers.group.GroupSerializer.validate_name',
+        return_value='Groups',
+    )
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     group_update = create_test_group(
         account,
         name=request_data['name'],
         photo=request_data['photo'],
-        users=[another_user.id]
+        users=[another_user.id],
     )
     update_group_mock = mocker.patch(
         'src.accounts.services.group.UserGroupService.'
         'partial_update',
-        return_value=group_update
+        return_value=group_update,
     )
 
     # act
     response = api_client.put(
         path=f'/accounts/groups/{group.id}',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -69,11 +75,11 @@ def test_update__ok(api_client, mocker):
         user=user,
         instance=group,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     update_group_mock.assert_called_once_with(
         force_save=True,
-        **request_data
+        **request_data,
     )
     assert response.status_code == 200
     data = response.data
@@ -92,29 +98,33 @@ def test_update__yourself__ok(api_client, mocker):
     request_data = {
         'name': 'Groups',
         'photo': 'https://foeih.com/image.jpg',
-        'users': [user.id]
+        'users': [user.id],
     }
+    mocker.patch(
+        'src.accounts.serializers.group.GroupSerializer.validate_name',
+        return_value='Groups',
+    )
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     group_update = create_test_group(
         account,
         name=request_data['name'],
         photo=request_data['photo'],
-        users=[user.id]
+        users=[user.id],
     )
     update_group_mock = mocker.patch(
         'src.accounts.services.group.UserGroupService.'
         'partial_update',
-        return_value=group_update
+        return_value=group_update,
     )
 
     # act
     response = api_client.put(
         path=f'/accounts/groups/{group.id}',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -122,11 +132,11 @@ def test_update__yourself__ok(api_client, mocker):
         user=user,
         instance=group,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     update_group_mock.assert_called_once_with(
         force_save=True,
-        **request_data
+        **request_data,
     )
     assert response.status_code == 200
     data = response.data
@@ -145,7 +155,7 @@ def test_update__not_admin__permission_denied(api_client, mocker):
         account=account,
         email='no_admin@test.com',
         is_admin=False,
-        is_account_owner=False
+        is_account_owner=False,
     )
     api_client.token_authenticate(no_admin_user)
     request_data = {
@@ -155,16 +165,16 @@ def test_update__not_admin__permission_denied(api_client, mocker):
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_group_mock = mocker.patch(
-        'src.accounts.services.group.UserGroupService.create'
+        'src.accounts.services.group.UserGroupService.create',
     )
 
     # act
     response = api_client.put(
         path=f'/accounts/groups/{group.id}',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -185,16 +195,16 @@ def test_update__not_auth__permission_denied(api_client, mocker):
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_group_mock = mocker.patch(
-        'src.accounts.services.group.UserGroupService.create'
+        'src.accounts.services.group.UserGroupService.create',
     )
 
     # act
     response = api_client.put(
         path=f'/accounts/groups/{group.id}',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -208,7 +218,7 @@ def test_update__expired_subscription__permission_denied(api_client, mocker):
     # arrange
     account = create_test_account(
         plan=BillingPlanType.UNLIMITED,
-        plan_expiration=timezone.now() - datetime.timedelta(hours=1)
+        plan_expiration=timezone.now() - datetime.timedelta(hours=1),
     )
     user = create_test_user(account=account)
     group = create_test_group(user.account, users=[user.id])
@@ -220,16 +230,16 @@ def test_update__expired_subscription__permission_denied(api_client, mocker):
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_group_mock = mocker.patch(
-        'src.accounts.services.group.UserGroupService.create'
+        'src.accounts.services.group.UserGroupService.create',
     )
 
     # act
     response = api_client.put(
         path=f'/accounts/groups/{group.id}',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -253,25 +263,29 @@ def test_update__service_exception__validation_error(api_client, mocker):
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     create_test_group(
         account,
         name=request_data['name'],
         photo=request_data['photo'],
-        users=[user.id, another_user.id]
+        users=[user.id, another_user.id],
     )
     message = 'some message'
+    mocker.patch(
+        'src.accounts.serializers.group.GroupSerializer.validate_name',
+        return_value='Groups',
+    )
     update_group_mock = mocker.patch(
         'src.accounts.services.group.UserGroupService.'
         'partial_update',
-        side_effect=UserGroupServiceException(message)
+        side_effect=UserGroupServiceException(message),
     )
 
     # act
     response = api_client.put(
         path=f'/accounts/groups/{group.id}',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -279,7 +293,7 @@ def test_update__service_exception__validation_error(api_client, mocker):
         user=user,
         instance=group,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     update_group_mock.assert_called_once()
     assert response.status_code == 400
@@ -289,26 +303,26 @@ def test_update__service_exception__validation_error(api_client, mocker):
 
 def test_update__user_from_another_account__validation_error(
     api_client,
-    mocker
+    mocker,
 ):
 
     # arrange
     account = create_test_account()
     user = create_test_user(account=account)
     another_user = create_test_user(
-        email='another@pneumatic.app'
+        email='another@pneumatic.app',
     )
     api_client.token_authenticate(user)
     group = create_test_group(account)
     request_data = {
         'name': 'Groups',
         'photo': 'https://foeih.com/image.jpg',
-        'users': [another_user.id]
+        'users': [another_user.id],
     }
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_group_mock = mocker.patch(
         'src.accounts.services.group.UserGroupService.'
@@ -318,7 +332,7 @@ def test_update__user_from_another_account__validation_error(
     # act
     response = api_client.put(
         path=f'/accounts/groups/{group.id}',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -345,29 +359,33 @@ def test_update__invited_user__ok(api_client, mocker):
     request_data = {
         'name': 'Groups',
         'photo': 'https://foeih.com/image.jpg',
-        'users': [invited_user.id]
+        'users': [invited_user.id],
     }
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
+    )
+    mocker.patch(
+        'src.accounts.serializers.group.GroupSerializer.validate_name',
+        return_value='Groups',
     )
     group_update = create_test_group(
         account,
         name=request_data['name'],
         photo=request_data['photo'],
-        users=[invited_user.id]
+        users=[invited_user.id],
     )
     update_group_mock = mocker.patch(
         'src.accounts.services.group.UserGroupService.'
         'partial_update',
-        return_value=group_update
+        return_value=group_update,
     )
 
     # act
     response = api_client.put(
         path=f'/accounts/groups/{group.id}',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -375,11 +393,11 @@ def test_update__invited_user__ok(api_client, mocker):
         user=user,
         instance=group,
         auth_type=AuthTokenType.USER,
-        is_superuser=False
+        is_superuser=False,
     )
     update_group_mock.assert_called_once_with(
         force_save=True,
-        **request_data
+        **request_data,
     )
     assert response.status_code == 200
     data = response.data
@@ -403,12 +421,12 @@ def test_update__user_inactive__validation_error(api_client, mocker):
     request_data = {
         'name': 'Groups',
         'photo': 'https://foeih.com/image.jpg',
-        'users': [another_user.id]
+        'users': [another_user.id],
     }
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_group_mock = mocker.patch(
         'src.accounts.services.group.UserGroupService.'
@@ -418,7 +436,7 @@ def test_update__user_inactive__validation_error(api_client, mocker):
     # act
     response = api_client.put(
         path=f'/accounts/groups/{group.id}',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -444,12 +462,12 @@ def test_update__guest__validation_error(api_client, mocker):
     request_data = {
         'name': 'Groups',
         'photo': 'https://foeih.com/image.jpg',
-        'users': [guest_user.id]
+        'users': [guest_user.id],
     }
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     update_group_mock = mocker.patch(
         'src.accounts.services.group.UserGroupService.'
@@ -459,7 +477,7 @@ def test_update__guest__validation_error(api_client, mocker):
     # act
     response = api_client.put(
         path=f'/accounts/groups/{group.id}',
-        data=request_data
+        data=request_data,
     )
 
     # assert
@@ -481,23 +499,23 @@ def test_update__fake_user_id__validation_error(api_client, mocker):
     request_data = {
         'name': 'Group',
         'photo': '',
-        'users': [2152]
+        'users': [2152],
     }
     service_init_mock = mocker.patch.object(
         UserGroupService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
 
     update_group_mock = mocker.patch(
         'src.accounts.services.group.UserGroupService.'
-        'partial_update'
+        'partial_update',
     )
 
     # act
     response = api_client.put(
         path=f'/accounts/groups/{group.id}',
-        data=request_data
+        data=request_data,
     )
 
     # assert

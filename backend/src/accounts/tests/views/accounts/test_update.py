@@ -1,23 +1,24 @@
 import pytest
+
 from src.accounts.enums import (
     BillingPlanType,
     LeaseLevel,
 )
+from src.accounts.messages import (
+    MSG_A_0003,
+)
 from src.processes.tests.fixtures import (
-    create_test_user,
     create_test_account,
+    create_test_user,
 )
 from src.utils.validation import ErrorCode
-from src.accounts.messages import (
-    MSG_A_0003
-)
 
 pytestmark = pytest.mark.django_db
 
 
 def test_partial_update__free_plan_name__ok(
     api_client,
-    group_mock
+    group_mock,
 ):
 
     # arrange
@@ -37,7 +38,7 @@ def test_partial_update__free_plan_name__ok(
         '/accounts/account',
         data={
             'name': new_name,
-        }
+        },
     )
 
     # assert
@@ -68,8 +69,8 @@ def test_partial_update__free_plan_change_logo_lg__ok(
     response = api_client.put(
         '/accounts/account',
         data={
-            'logo_lg': logo_lg
-        }
+            'logo_lg': logo_lg,
+        },
     )
 
     # assert
@@ -99,8 +100,8 @@ def test_partial_update__free_plan_change_logo_sm__ok(
     response = api_client.put(
         '/accounts/account',
         data={
-            'logo_sm': logo_sm
-        }
+            'logo_sm': logo_sm,
+        },
     )
 
     # assert
@@ -127,13 +128,13 @@ def test_partial_update__tenant__name__ok(
         logo_lg=logo_lg,
         logo_sm=logo_sm,
         lease_level=LeaseLevel.TENANT,
-        plan=BillingPlanType.PREMIUM
+        plan=BillingPlanType.PREMIUM,
     )
     user = create_test_user(account=account)
     api_client.token_authenticate(user)
     new_name = 'New name'
     group_mock = mocker.patch(
-        'src.analytics.mixins.BaseIdentifyMixin.group'
+        'src.analysis.mixins.BaseIdentifyMixin.group',
     )
 
     # act
@@ -141,7 +142,7 @@ def test_partial_update__tenant__name__ok(
         '/accounts/account',
         data={
             'name': new_name,
-        }
+        },
     )
 
     assert response.status_code == 200
@@ -166,7 +167,7 @@ def test_partial_update__tenant__logo_lg__validation__error(
     logo_lg = 'https://some-site.com/image-2.jpg'
     account = create_test_account(
         lease_level=LeaseLevel.TENANT,
-        plan=BillingPlanType.PREMIUM
+        plan=BillingPlanType.PREMIUM,
     )
     user = create_test_user(account=account)
     api_client.token_authenticate(user)
@@ -176,7 +177,7 @@ def test_partial_update__tenant__logo_lg__validation__error(
         '/accounts/account',
         data={
             'logo_lg': logo_lg,
-        }
+        },
     )
 
     assert response.status_code == 400
@@ -192,7 +193,7 @@ def test_partial_update__tenant__logo_sm__validation__error(
     logo_sm = 'https://some-site.com/image-2.jpg'
     account = create_test_account(
         lease_level=LeaseLevel.TENANT,
-        plan=BillingPlanType.PREMIUM
+        plan=BillingPlanType.PREMIUM,
     )
     user = create_test_user(account=account)
     api_client.token_authenticate(user)
@@ -202,7 +203,7 @@ def test_partial_update__tenant__logo_sm__validation__error(
         '/accounts/account',
         data={
             'logo_sm': logo_sm,
-        }
+        },
     )
 
     assert response.status_code == 400
@@ -214,7 +215,7 @@ def test_partial_update__tenant__logo_sm__validation__error(
 
 def test_partial_update__not_admin__permission_denied(
     api_client,
-    group_mock
+    group_mock,
 ):
 
     account = create_test_account(
@@ -223,7 +224,7 @@ def test_partial_update__not_admin__permission_denied(
     user = create_test_user(
         account=account,
         is_account_owner=False,
-        is_admin=False
+        is_admin=False,
     )
     api_client.token_authenticate(user)
     new_name = 'New name'
@@ -232,8 +233,8 @@ def test_partial_update__not_admin__permission_denied(
     response = api_client.put(
         '/accounts/account',
         data={
-            'name': new_name
-        }
+            'name': new_name,
+        },
     )
 
     # assert
@@ -242,7 +243,7 @@ def test_partial_update__not_admin__permission_denied(
 
 def test_partial_update__fractionalcoo_plan_all_fields__ok(
     api_client,
-    group_mock
+    group_mock,
 ):
 
     # arrange
@@ -262,8 +263,8 @@ def test_partial_update__fractionalcoo_plan_all_fields__ok(
         data={
             'name': new_name,
             'logo_sm': logo_sm,
-            'logo_lg': logo_lg
-        }
+            'logo_lg': logo_lg,
+        },
     )
 
     # assert
@@ -279,7 +280,7 @@ def test_partial_update__fractionalcoo_plan_all_fields__ok(
 
 def test_partial_update__unlimited_plan_all_fields__ok(
     api_client,
-    group_mock
+    group_mock,
 ):
 
     # arrange
@@ -299,8 +300,8 @@ def test_partial_update__unlimited_plan_all_fields__ok(
         data={
             'name': new_name,
             'logo_sm': logo_sm,
-            'logo_lg': logo_lg
-        }
+            'logo_lg': logo_lg,
+        },
     )
 
     # assert
@@ -316,7 +317,7 @@ def test_partial_update__unlimited_plan_all_fields__ok(
 
 def test_partial_update__premium_plan_all_fields__ok(
     api_client,
-    group_mock
+    group_mock,
 ):
 
     # arrange
@@ -333,8 +334,8 @@ def test_partial_update__premium_plan_all_fields__ok(
         data={
             'name': new_name,
             'logo_sm': logo_sm,
-            'logo_lg': logo_lg
-        }
+            'logo_lg': logo_lg,
+        },
     )
 
     # assert
@@ -350,7 +351,7 @@ def test_partial_update__premium_plan_all_fields__ok(
 
 def test_partial_update__name__ok(
     api_client,
-    group_mock
+    group_mock,
 ):
 
     plan = BillingPlanType.PREMIUM
@@ -358,7 +359,7 @@ def test_partial_update__name__ok(
     account = create_test_account(
         plan=plan,
         lease_level=LeaseLevel.STANDARD,
-        logo_lg=logo_lg
+        logo_lg=logo_lg,
     )
     user = create_test_user(account=account)
     api_client.token_authenticate(user)
@@ -366,8 +367,8 @@ def test_partial_update__name__ok(
     response = api_client.put(
         '/accounts/account',
         data={
-            'name': new_name
-        }
+            'name': new_name,
+        },
     )
 
     assert response.status_code == 200
@@ -385,12 +386,12 @@ def test_partial_update__name__ok(
 
 def test_partial_update__plan__skip(
     api_client,
-    group_mock
+    group_mock,
 ):
 
     # arrange
     account = create_test_account(
-        plan=BillingPlanType.FREEMIUM
+        plan=BillingPlanType.FREEMIUM,
     )
     user = create_test_user(account=account)
     api_client.token_authenticate(user)
@@ -398,7 +399,7 @@ def test_partial_update__plan__skip(
     # act
     response = api_client.put(
         '/accounts/account',
-        data={'plan':  BillingPlanType.PREMIUM}
+        data={'plan':  BillingPlanType.PREMIUM},
     )
 
     # assert
@@ -422,8 +423,8 @@ def test_partial_update__logo_sm_invalid_url__validation_error(
     response = api_client.put(
         '/accounts/account',
         data={
-            'logo_sm': '/some-site/image.jpg'
-        }
+            'logo_sm': '/some-site/image.jpg',
+        },
     )
 
     assert response.status_code == 400
@@ -448,8 +449,8 @@ def test_partial_update__logo_lg_invalid_url__validation_error(
     response = api_client.put(
         '/accounts/account',
         data={
-            'logo_lg': '/some-site/image.jpg'
-        }
+            'logo_lg': '/some-site/image.jpg',
+        },
     )
 
     assert response.status_code == 400

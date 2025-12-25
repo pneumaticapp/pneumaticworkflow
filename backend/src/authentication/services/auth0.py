@@ -1,50 +1,80 @@
-import json
-import requests
-from typing import Union, Optional
+from typing import Optional, Tuple
 from uuid import uuid4
+
+import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
+
 from src.accounts.enums import SourceType
-from src.authentication.models import AccessToken
-from src.authentication.entities import UserData
-from src.generics.mixins.services import CacheMixin
+from src.authentication.entities import UserData, SSOConfigData
+from src.authentication.enums import (
+    SSOProvider,
+)
+from src.authentication.messages import MSG_AU_0018
+from src.authentication.models import (
+    AccessToken,
+    SSOConfig,
+)
 from src.authentication.services import exceptions
+from src.authentication.services.base_sso import BaseSSOService
+from src.authentication.tokens import PneumaticToken
 from src.utils.logging import (
-    capture_sentry_message,
     SentryLogLevel,
+    capture_sentry_message,
 )
 
 UserModel = get_user_model()
 
 
-class Auth0Service(CacheMixin):
+class Auth0Service(BaseSSOService):
 
     cache_key_prefix = 'auth0'
     cache_timeout = 600  # 10 min
+    source = SourceType.AUTH0
+    sso_provider = SSOProvider.AUTH0
+    exception_class = exceptions.Auth0ServiceException
 
-    def __init__(self):
-        self.tokens = None
-        self.client_id = settings.AUTH0_CLIENT_ID
-        self.client_secret = settings.AUTH0_CLIENT_SECRET
-        self.domain = settings.AUTH0_DOMAIN
-        self.redirect_uri = settings.AUTH0_REDIRECT_URI
-        self.scope = 'openid email profile'
+    def __init__(
+        self,
+        domain: Optional[str] = None,
+    ):
+        super().__init__(domain)
+        self.scope = 'openid email profile offline_access'
 
-    def _serialize_value(self, value: Union[str, dict]) -> str:
-        return json.dumps(value, ensure_ascii=False)
+    def _get_config_by_domain(self, domain: str) -> SSOConfigData:
+        try:
+            sso_config = SSOConfig.objects.get(
+                domain=domain,
+                provider=self.sso_provider,
+                is_active=True,
+            )
+            return SSOConfigData(
+                client_id=sso_config.client_id,
+                client_secret=sso_config.client_secret,
+                domain=sso_config.domain,
+                redirect_uri=settings.AUTH0_REDIRECT_URI,
+            )
+        except SSOConfig.DoesNotExist as exc:
+            capture_sentry_message(
+                message=str(MSG_AU_0018(domain)),
+                level=SentryLogLevel.ERROR,
+            )
+            raise self.exception_class(MSG_AU_0018(domain)) from exc
 
-    def _deserialize_value(self, value: Optional[str]) -> dict:
-        return json.loads(value) if value else None
+    def _get_default_config(self) -> Optional[SSOConfigData]:
+        if not settings.AUTH0_CLIENT_SECRET:
+            return None
+        return SSOConfigData(
+            client_id=settings.AUTH0_CLIENT_ID,
+            client_secret=settings.AUTH0_CLIENT_SECRET,
+            domain=settings.AUTH0_DOMAIN,
+            redirect_uri=settings.AUTH0_REDIRECT_URI,
+        )
 
-    def _get_first_access_token(self, auth_response: dict) -> str:
+    def _get_first_access_token(self, code: str, state: str) -> str:
 
         """
         Receive an access token for the first time on an authorization flow
-
-        Example auth_response = {
-            'code': '0.Ab0Aa_jrV8Qkv...9UWtS972sufQ',
-            'state': 'KvpfgTSUmwtOaPny',
-        }
 
         Example success response:
         {
@@ -62,28 +92,40 @@ class Auth0Service(CacheMixin):
         }
         """
 
-        state = self._get_cache(key=auth_response['state'])
-        if not state:
-            raise exceptions.TokenInvalidOrExpired()
-        response = requests.post(
-            f'https://{self.domain}/oauth/token',
-            data={
-                'grant_type': 'authorization_code',
-                'client_id': self.client_id,
-                'client_secret': self.client_secret,
-                'code': auth_response['code'],
-                'redirect_uri': self.redirect_uri,
-            }
-        )
+        cached_state = self._get_cache(key=state)
+        if not cached_state:
+            raise exceptions.TokenInvalidOrExpired
+        try:
+            response = requests.post(
+                f'https://{self.config.domain}/oauth/token',
+                data={
+                    'grant_type': 'authorization_code',
+                    'client_id': self.config.client_id,
+                    'client_secret': self.config.client_secret,
+                    'code': code,
+                    'redirect_uri': self.config.redirect_uri,
+                },
+                timeout=10,
+            )
+        except requests.RequestException as ex:
+            capture_sentry_message(
+                message=f'Get Auth0 access token return an error: {ex}',
+                level=SentryLogLevel.ERROR,
+            )
+            raise exceptions.TokenInvalidOrExpired from ex
+
         if not response.ok:
             capture_sentry_message(
-                message='Get Auth0 access token return an error',
-                data={'content': response.content},
-                level=SentryLogLevel.ERROR
+                message='Get Auth0 access token failed',
+                data={
+                    'status_code': response.status_code,
+                    'response': response.text,
+                },
+                level=SentryLogLevel.ERROR,
             )
-            raise exceptions.TokenInvalidOrExpired()
+            raise exceptions.TokenInvalidOrExpired
         self.tokens = response.json()
-        return f'{self.tokens["token_type"]} {self.tokens["access_token"]}'
+        return self.tokens["access_token"]
 
     def _get_user_profile(self, access_token: str) -> dict:
 
@@ -103,50 +145,69 @@ class Auth0Service(CacheMixin):
         }
         """
 
-        response = requests.get(
-            f'https://{self.domain}/userinfo',
-            headers={'Authorization': f'Bearer {access_token}'}
-        )
+        cache_key = f'user_profile_{access_token}'
+        cached_profile = self._get_cache(key=cache_key)
+        if cached_profile:
+            return cached_profile
+
+        url = f'https://{self.config.domain}/userinfo'
+        headers = {'Authorization': f'Bearer {access_token}'}
+        try:
+            response = requests.get(url, headers=headers, timeout=10)
+        except requests.RequestException as ex:
+            capture_sentry_message(
+                message=f'Auth0 user profile request failed: {ex}',
+                level=SentryLogLevel.ERROR,
+            )
+            raise exceptions.TokenInvalidOrExpired from ex
         if not response.ok:
             capture_sentry_message(
-                message='Get Auth0 user profile return an error',
-                data={'content': response.content},
-                level=SentryLogLevel.ERROR
+                message='Auth0 user profile request failed',
+                data={
+                    'status_code': response.status_code,
+                    'response': response.text,
+                },
+                level=SentryLogLevel.ERROR,
             )
-            raise exceptions.TokenInvalidOrExpired()
-        return response.json()
+            raise exceptions.TokenInvalidOrExpired
+        profile = response.json()
+        self._set_cache(value=profile, key=cache_key)
+        return profile
 
     def get_auth_uri(self) -> str:
-
         state = str(uuid4())
+        encrypted_domain = self.encrypt(self.config.domain)
+        state = f"{state}{encrypted_domain}"
         self._set_cache(value=True, key=state)
         query_params = {
-            'client_id': self.client_id,
-            'redirect_uri': self.redirect_uri,
+            'client_id': self.config.client_id,
+            'redirect_uri': self.config.redirect_uri,
             'scope': self.scope,
             'state': state,
             'response_type': 'code',
         }
 
         query = requests.compat.urlencode(query_params)
-        return f'https://{self.domain}/authorize?{query}'
+        return f'https://{self.config.domain}/authorize?{query}'
 
-    def get_user_data(self, auth_response: dict) -> UserData:
-
+    def get_user_data(self, user_profile: dict) -> UserData:
         """ Retrieve user details during signin / signup process """
-
-        access_token = self._get_first_access_token(auth_response)
-        user_profile = self._get_user_profile(access_token)
-        email = user_profile['email']
-        photo = user_profile['picture']
+        email = user_profile.get('email')
         if not email:
             raise exceptions.EmailNotExist(
-                details={
-                    'user_profile': user_profile,
-                    'email': email
-                }
+                details={'user_profile': user_profile},
             )
-        first_name = user_profile['given_name'] or email.split('@')[0]
+        first_name = (
+            user_profile.get('given_name') or
+            user_profile.get('name', '').split(' ')[0] or
+            email.split('@')[0]
+        )
+        last_name = (
+            user_profile.get('family_name') or
+            ' '.join(user_profile.get('name', '').split(' ')[1:])
+        )
+        job_title = user_profile.get('job_title')
+        photo = user_profile.get('picture')
         capture_sentry_message(
             message=f'Auth0 user profile {email}',
             data={
@@ -160,22 +221,36 @@ class Auth0Service(CacheMixin):
         return UserData(
             email=email,
             first_name=first_name,
-            last_name=user_profile['family_name'],
-            job_title=None,
+            last_name=last_name,
+            job_title=job_title,
             photo=photo,
-            company_name=None,
         )
 
     def save_tokens_for_user(self, user: UserModel):
         AccessToken.objects.update_or_create(
-            source=SourceType.AUTH0,
+            source=self.source,
             user=user,
             defaults={
                 'expires_in': self.tokens['expires_in'],
                 'refresh_token': self.tokens['refresh_token'],
-                'access_token': (
-                    f'{self.tokens["token_type"]} '
-                    f'{self.tokens["access_token"]}'
-                )
-            }
+                'access_token': self.tokens['access_token'],
+            },
+        )
+
+    def authenticate_user(
+        self,
+        code: str,
+        state: str,
+        user_agent: Optional[str] = None,
+        user_ip: Optional[str] = None,
+        **kwargs,
+    ) -> Tuple[UserModel, PneumaticToken]:
+        """Authenticate user via Auth0 and auto-create user if needed"""
+        access_token = self._get_first_access_token(code, state)
+        user_profile = self._get_user_profile(access_token)
+        user_data = self.get_user_data(user_profile)
+        return self._complete_authentication(
+            user_data,
+            user_agent=user_agent,
+            user_ip=user_ip,
         )

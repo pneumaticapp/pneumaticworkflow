@@ -1,49 +1,51 @@
 import uuid
 from datetime import timedelta
-from typing import Set, Dict
+from typing import Dict, Set
+
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.contrib.postgres.fields import JSONField
 from django.contrib.postgres.search import SearchVectorField
 from django.db import models
-from django.db.models import UniqueConstraint, Q, Manager
+from django.db.models import Manager, Q, UniqueConstraint
 from django.utils import timezone
+
 from src.accounts.enums import (
-    NotificationType,
-    NotificationStatus,
-    UserStatus,
-    UserType,
     BillingPlanType,
-    SourceType,
-    UserInviteStatus,
-    LeaseLevel,
     Language,
+    LeaseLevel,
+    NotificationStatus,
+    NotificationType,
+    SourceType,
+    Timezone,
     UserDateFormat,
     UserFirstDayWeek,
-    Timezone,
+    UserInviteStatus,
+    UserStatus,
+    UserType,
 )
 from src.accounts.fields import (
     EmailLowerField,
-    TruncatingCharField
+    TruncatingCharField,
+)
+from src.accounts.managers import (
+    SoftDeleteGuestManager,
+    SoftDeleteUserManager,
 )
 from src.accounts.querysets import (
-    UserInviteQuerySet,
-    UserQuerySet,
     AccountQuerySet,
     AccountSystemTemplateQuerySet,
     APIKeyQuerySet,
-    NotificationsQuerySet,
-    InactiveUserQuerySet,
-    SystemMessageQuerySet,
-    GuestQuerySet,
     ContactQuerySet,
     GroupQuerySet,
+    GuestQuerySet,
+    InactiveUserQuerySet,
+    NotificationsQuerySet,
+    SystemMessageQuerySet,
+    UserInviteQuerySet,
+    UserQuerySet,
 )
 from src.generics.managers import BaseSoftDeleteManager
-from src.accounts.managers import (
-    SoftDeleteUserManager,
-    SoftDeleteGuestManager
-)
 from src.generics.models import SoftDeleteModel
 from src.payment.enums import BillingPeriod
 
@@ -60,7 +62,7 @@ class Account(SoftDeleteModel):
     date_joined = models.DateTimeField(default=timezone.now)
     billing_sync = models.BooleanField(
         default=True,
-        verbose_name='Stripe synchronization'
+        verbose_name='Stripe synchronization',
     )
     billing_plan = models.CharField(
         max_length=255,
@@ -78,7 +80,7 @@ class Account(SoftDeleteModel):
     plan_expiration = models.DateTimeField(blank=True, null=True)
     trial_ended = models.BooleanField(
         default=False,
-        help_text='Indicates that the trial is no longer available'
+        help_text='Indicates that the trial is no longer available',
     )
     trial_start = models.DateTimeField(null=True, blank=True)
     trial_end = models.DateTimeField(null=True, blank=True)
@@ -98,36 +100,36 @@ class Account(SoftDeleteModel):
     lease_level = models.CharField(
         choices=LeaseLevel.CHOICES,
         default=LeaseLevel.STANDARD,
-        max_length=50
+        max_length=50,
     )
     logo_sm = models.URLField(
         max_length=1024,
         null=True,
-        help_text='80px x 80px'
+        help_text='80px x 80px',
     )
     logo_lg = models.URLField(
         max_length=1024,
         null=True,
-        help_text='340px x 96px'
+        help_text='340px x 96px',
     )
     master_account = models.ForeignKey(
         'Account',
         on_delete=models.SET_NULL,
         related_name='tenants',
-        null=True
+        null=True,
     )
     tenant_name = models.CharField(
         verbose_name='Tenant name',
         null=True,
         blank=True,
-        max_length=255
+        max_length=255,
     )
     tmp_subscription = models.BooleanField(
         default=False,
         help_text=(
             'The system flag means that the temporary subscription changes '
             'is enabled and stripe webhook about changes not received yet'
-        )
+        ),
     )
     log_api_requests = models.BooleanField(default=False)
     bucket_name = models.CharField(max_length=255, blank=True, null=True)
@@ -138,7 +140,7 @@ class Account(SoftDeleteModel):
         if settings.VERIFICATION_CHECK:
             time_after_register = timezone.now() - self.date_joined
             return not self.is_verified and time_after_register > timedelta(
-                days=settings.VERIFICATION_DEADLINE_IN_DAYS
+                days=settings.VERIFICATION_DEADLINE_IN_DAYS,
             )
         return False
 
@@ -154,10 +156,10 @@ class Account(SoftDeleteModel):
         if self.billing_plan == BillingPlanType.FREEMIUM:
             # Free plan
             return False
-        elif self.trial_is_active:
+        if self.trial_is_active:
             # Active trial
             return False
-        elif self.plan_expiration < timezone.now():
+        if self.plan_expiration < timezone.now():  # noqa: SIM103
             # Expired premium
             return False
         # Active premium
@@ -188,13 +190,12 @@ class Account(SoftDeleteModel):
     @property
     def trial_is_active(self):
         current_date = timezone.now()
-        r = bool(
+        return bool(
             not self.trial_ended
             and self.billing_plan in BillingPlanType.PAYMENT_PLANS
             and self.plan_expiration and self.plan_expiration > current_date
-            and self.trial_end and self.trial_end > current_date
+            and self.trial_end and self.trial_end > current_date,
         )
-        return r
 
     @property
     def total_active_users(self) -> int:
@@ -228,19 +229,18 @@ class Account(SoftDeleteModel):
             return User.objects.filter(
                 Q(
                     account_id=self.id,
-                    status=UserStatus.ACTIVE
+                    status=UserStatus.ACTIVE,
                 )
                 | Q(
                     account__lease_level=LeaseLevel.TENANT,
                     account__master_account_id=self.id,
-                    status=UserStatus.ACTIVE
-                )
+                    status=UserStatus.ACTIVE,
+                ),
             ).count()
-        else:
-            return User.objects.filter(
-                account_id=self.id,
-                status=UserStatus.ACTIVE
-            ).count()
+        return User.objects.filter(
+            account_id=self.id,
+            status=UserStatus.ACTIVE,
+        ).count()
 
     @property
     def is_tenant(self):
@@ -289,7 +289,7 @@ class AccountSignupData(
             'utm_campaign': self.utm_campaign,
             'utm_term': self.utm_term,
             'utm_content': self.utm_content,
-            'gclid': self.gclid
+            'gclid': self.gclid,
         }
 
 
@@ -300,49 +300,49 @@ class AccountSystemTemplate(
     account = models.ForeignKey(Account, on_delete=models.CASCADE)
     system_template = models.ForeignKey(
         'processes.SystemTemplate',
-        on_delete=models.CASCADE
+        on_delete=models.CASCADE,
     )
     is_template_added = models.BooleanField(default=False)
 
     objects = BaseSoftDeleteManager.from_queryset(
-        AccountSystemTemplateQuerySet
+        AccountSystemTemplateQuerySet,
     )()
 
 
 class UserInvite(
     SoftDeleteModel,
-    AccountBaseMixin
+    AccountBaseMixin,
 ):
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = EmailLowerField()
     is_staff = models.BooleanField(
         default=False,
-        verbose_name='Should the user be admin (user\'s is_staff property)'
+        verbose_name='Should the user be admin (user\'s is_staff property)',
     )
     status = models.CharField(
         max_length=16,
         default=UserInviteStatus.PENDING,
-        choices=UserInviteStatus.CHOICES
+        choices=UserInviteStatus.CHOICES,
     )
     date_created = models.DateTimeField(
         auto_now_add=True,
-        verbose_name='Created at'
+        verbose_name='Created at',
     )
     date_updated = models.DateTimeField(
         auto_now=True,
-        verbose_name='Last updated at'
+        verbose_name='Last updated at',
     )
     invited_by = models.ForeignKey(
         'User',
         null=True,
         on_delete=models.SET_NULL,
-        related_name='outcoming_invites'
+        related_name='outcoming_invites',
     )
     invited_from = models.CharField(
         max_length=16,
         default=SourceType.EMAIL,
-        choices=SourceType.CHOICES
+        choices=SourceType.CHOICES,
     )
     invited_user = models.ForeignKey(
         'User',
@@ -416,17 +416,17 @@ class User(AbstractUser, SoftDeleteModel):
     status = models.CharField(
         choices=UserStatus.CHOICES,
         max_length=16,
-        default=UserStatus.ACTIVE
+        default=UserStatus.ACTIVE,
     )
     type = models.CharField(
         choices=UserType.CHOICES,
         max_length=16,
-        default=UserType.USER
+        default=UserType.USER,
     )
     language = models.CharField(
         choices=Language.CHOICES,
         max_length=10,
-        default=settings.LANGUAGE_CODE
+        default=settings.LANGUAGE_CODE,
     )
     timezone = models.CharField(
         max_length=100,
@@ -437,12 +437,12 @@ class User(AbstractUser, SoftDeleteModel):
         choices=UserDateFormat.PY_CHOICES,
         max_length=20,
         default=UserDateFormat.PY_USA_12,
-        verbose_name='Date format'
+        verbose_name='Date format',
     )
     date_fdw = models.IntegerField(
         choices=UserFirstDayWeek.CHOICES,
         default=UserFirstDayWeek.SUNDAY,
-        verbose_name='First day of the week'
+        verbose_name='First day of the week',
     )
     is_admin = models.BooleanField(default=True)
     is_account_owner = models.BooleanField(default=False)
@@ -452,11 +452,11 @@ class User(AbstractUser, SoftDeleteModel):
     is_tasks_digest_subscriber = models.BooleanField(default=True)
     is_special_offers_subscriber = models.BooleanField(
         default=True,
-        help_text='intercom emails'
+        help_text='intercom emails',
     )
     is_newsletters_subscriber = models.BooleanField(
         default=True,
-        help_text='customer.io emails'
+        help_text='customer.io emails',
     )
     is_new_tasks_subscriber = models.BooleanField(default=True)
     is_complete_tasks_subscriber = models.BooleanField(default=True)
@@ -468,7 +468,7 @@ class User(AbstractUser, SoftDeleteModel):
     objects = SoftDeleteUserManager.from_queryset(UserQuerySet)()
     guests_objects = SoftDeleteGuestManager.from_queryset(GuestQuerySet)()
     include_inactive = BaseSoftDeleteManager.from_queryset(
-        InactiveUserQuerySet
+        InactiveUserQuerySet,
     )()
 
     search_content = SearchVectorField(null=True)
@@ -483,7 +483,7 @@ class User(AbstractUser, SoftDeleteModel):
 
     def get_account_signup_data(self) -> AccountSignupData:
         return AccountSignupData.objects.get(
-            account_id=self.account_id
+            account_id=self.account_id,
         )
 
     @property
@@ -494,8 +494,7 @@ class User(AbstractUser, SoftDeleteModel):
     def name_by_status(self):
         if self.status == UserStatus.INVITED:
             return f'{self.email} (invited user)'
-        else:
-            return self.name
+        return self.name
 
     @property
     def company_name(self):
@@ -523,17 +522,20 @@ class User(AbstractUser, SoftDeleteModel):
 
 class APIKey(
     SoftDeleteModel,
-    AccountBaseMixin
+    AccountBaseMixin,
 ):
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
-        related_name='apikey'
+        related_name='apikey',
     )
     key = models.CharField(max_length=32)
     name = models.CharField(max_length=200, blank=True)
 
     objects = BaseSoftDeleteManager.from_queryset(APIKeyQuerySet)()
+
+    def __str__(self):
+        return self.key
 
 
 class SystemMessage(models.Model):
@@ -544,10 +546,13 @@ class SystemMessage(models.Model):
 
     objects = Manager.from_queryset(SystemMessageQuerySet)()
 
+    def __str__(self):
+        return self.title
+
 
 class Notification(
     SoftDeleteModel,
-    AccountBaseMixin
+    AccountBaseMixin,
 ):
 
     author = models.ForeignKey(
@@ -571,7 +576,7 @@ class Notification(
     task = models.ForeignKey(
         'processes.Task',
         on_delete=models.SET_NULL,
-        null=True
+        null=True,
     )
     task_json = JSONField(null=True, blank=True)
     workflow_json = JSONField(null=True, blank=True)
@@ -590,13 +595,16 @@ class Notification(
     datetime = models.DateTimeField(auto_now_add=True)
 
     objects = BaseSoftDeleteManager.from_queryset(
-        NotificationsQuerySet
+        NotificationsQuerySet,
     )()
+
+    def __str__(self):
+        return self.text or ''
 
 
 class Contact(
     SoftDeleteModel,
-    AccountBaseMixin
+    AccountBaseMixin,
 ):
 
     class Meta:
@@ -604,7 +612,7 @@ class Contact(
 
     first_name = models.CharField(max_length=150, blank=True, null=True)
     last_name = models.CharField(max_length=150, blank=True, null=True)
-    photo = models.URLField(max_length=1024, null=True, blank=True)
+    photo = models.URLField(max_length=1500, null=True, blank=True)
     job_title = models.CharField(max_length=150, blank=True, null=True)
     source = models.CharField(
         max_length=255,
@@ -615,17 +623,17 @@ class Contact(
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name='contacts'
+        related_name='contacts',
     )
     status = models.CharField(
         max_length=255,
         choices=UserStatus.CHOICES,
-        default=UserStatus.ACTIVE
+        default=UserStatus.ACTIVE,
     )
     search_content = SearchVectorField(null=True)
 
     objects = BaseSoftDeleteManager.from_queryset(
-        ContactQuerySet
+        ContactQuerySet,
     )()
 
     @property
@@ -639,6 +647,13 @@ class Contact(
 class UserGroup(SoftDeleteModel):
     class Meta:
         ordering = ['name']
+        constraints = [
+            UniqueConstraint(
+                fields=['name', 'account'],
+                condition=Q(is_deleted=False),
+                name='usergroup_name_account_unique',
+            ),
+        ]
 
     name = models.CharField(max_length=255)
     photo = models.URLField(max_length=1024, null=True, blank=True)

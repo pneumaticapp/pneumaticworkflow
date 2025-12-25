@@ -5,7 +5,7 @@ import { CellProps } from 'react-table';
 import { toDateString } from '../../../../../../../utils/dateTime';
 import { IApplicationState } from '../../../../../../../types/redux';
 import { TableColumns } from '../../../types';
-import { EExtraFieldType, ITableViewFields } from '../../../../../../../types/template';
+import { EExtraFieldType, ETaskPerformerType, ITableViewFields } from '../../../../../../../types/template';
 import { getUserById } from '../../../../../../UserData/utils/getUserById';
 import { Avatar, TAvatarUser } from '../../../../../../UI';
 import { getAttachmentTypeByFilename } from '../../../../../../Attachments/utils/getAttachmentType';
@@ -22,6 +22,9 @@ export function OptionalFieldColumn({ value }: TProps) {
   if (!value) {
     return null;
   }
+
+  const users = useSelector((state: IApplicationState) => state.accounts.users);
+  const groups = useSelector((state: IApplicationState) => state.groups.list);
   const timezone = useSelector((state: IApplicationState) => state.authUser.timezone);
 
   const isUrl = (str: string) => {
@@ -120,9 +123,22 @@ export function OptionalFieldColumn({ value }: TProps) {
       return toDateString(fieldValue.value as string, timezone);
     }
     if (type === EExtraFieldType.User) {
-      const users = useSelector((state: IApplicationState) => state.accounts.users);
-      const user = getUserById(users, fieldValue.userId);
-      return <Avatar user={user as TAvatarUser} size="sm" />;
+      let unitAvatar = null;
+      if (fieldValue.groupId) {
+        const group = groups.find((groupItem) => groupItem.id === fieldValue.groupId);
+        const groupAvatar = {
+          ...group,
+          type: ETaskPerformerType.UserGroup,
+        };
+        unitAvatar = groupAvatar;
+      } else {
+        unitAvatar = getUserById(users, fieldValue.userId);
+      }
+      return (
+        <div className={styles['field-column__avatar']}>
+          <Avatar user={unitAvatar as TAvatarUser} size="sm" withTooltip />
+        </div>
+      );
     }
     if (type === EExtraFieldType.Url) {
       return (

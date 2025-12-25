@@ -1,4 +1,4 @@
-# pylint: disable=W,C,R
+# ruff: noqa: PLC0415
 """
 Django settings for src project.
 
@@ -11,8 +11,10 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 import datetime
 import os
 from os import environ as env
+
 from configurations import Configuration, values
 from corsheaders.defaults import default_headers
+from src.notifications.enums import EmailProvider
 
 
 class Common(Configuration):
@@ -30,7 +32,7 @@ class Common(Configuration):
     USE_L10N = True  # Enable will display numbers and dates using locale
     LANGUAGE_CODE = env.get('LANGUAGE_CODE', 'en')
     from src.accounts.enums import Language
-    if LANGUAGE_CODE == Language.ru:
+    if Language.ru == LANGUAGE_CODE:
         LANGUAGES = Language.CHOICES
     else:
         LANGUAGES = Language.EURO_CHOICES
@@ -54,7 +56,7 @@ class Common(Configuration):
     ]
     SECRET_KEY = values.SecretValue()
     DEBUG = env.get('DJANGO_DEBUG') == 'yes'
-    
+
     # Frontend
     FRONTEND_URL = env.get('FRONTEND_URL')
     EXPIRED_INVITE_PAGE = f'{FRONTEND_URL}/auth/expired-invite'
@@ -64,7 +66,7 @@ class Common(Configuration):
 
     # Auth
     AUTH_USER_MODEL = 'accounts.User'
-    AUTH_TOKEN_ITERATIONS = int(env.get('AUTH_TOKEN_ITERATIONS', 1))
+    AUTH_TOKEN_ITERATIONS = int(env.get('AUTH_TOKEN_ITERATIONS', '1'))
 
     # Tokens lifetime
     DIGEST_UNSUB_TOKEN_IN_DAYS = 7
@@ -96,10 +98,11 @@ class Common(Configuration):
     # CORS_ALLOW_HEADERS the list of non-standard HTTP headers that you permit
     # in requests from the browser. Sets the Access-Control-Allow-Headers
     # header in responses to preflight requests.
-    CORS_ALLOW_HEADERS = list(default_headers) + [
+    CORS_ALLOW_HEADERS = [
         'X-Guest-Authorization',
         'X-Public-Authorization',
         'Stripe-Signature',
+        *default_headers,
     ]
 
     # A list of origins that are authorized to make cross-site HTTP requests.
@@ -134,12 +137,12 @@ class Common(Configuration):
         'src.authentication',
         'src.applications',
         'src.notifications',
-        'src.celery',
+        'src.celery_app',
         'src.processes',
         'src.reports',
         'src.generics',
         'src.webhooks',
-        'src.analytics',
+        'src.analysis',
         'src.navigation',
         'src.pages',
         'src.faq',
@@ -184,8 +187,8 @@ class Common(Configuration):
     ASGI_APPLICATION = 'src.asgi.application'
     CHANNEL_LAYERS = {
         'default': {
-            'BACKEND': 'channels.layers.InMemoryChannelLayer'
-        }
+            'BACKEND': 'channels.layers.InMemoryChannelLayer',
+        },
     }
 
     AUTH_PASSWORD_VALIDATORS = [
@@ -221,9 +224,9 @@ class Common(Configuration):
             'rest_framework.permissions.IsAuthenticated',
         ),
         'DEFAULT_AUTHENTICATION_CLASSES': (
-            'src.authentication.services.PublicAuthService',
-            'src.authentication.services.GuestJWTAuthService',
-            'src.authentication.services.'
+            'src.authentication.services.public_auth.PublicAuthService',
+            'src.authentication.services.guest_auth.GuestJWTAuthService',
+            'src.authentication.services.user_auth.'
             'PneumaticTokenAuthentication',
             'rest_framework_simplejwt.authentication.JWTAuthentication',
         ),
@@ -243,10 +246,12 @@ class Common(Configuration):
             '06_payment__purchase__api': env.get('THROTTLE_06'),
             '07_auth_ms__token': env.get('THROTTLE_07'),
             '08_auth_ms__auth_uri': env.get('THROTTLE_08'),
-            '09_auth0__token': env.get('THROTTLE_09'),
-            '10_auth0__auth_uri': env.get('THROTTLE_10'),
+            '09_sso__token': env.get('THROTTLE_09'),
+            '10_sso__auth_uri': env.get('THROTTLE_10'),
             '11_auth__reset_password': env.get('THROTTLE_11'),
-        }
+            '12_auth_google__token': env.get('THROTTLE_12'),
+            '13_auth_google__auth_uri': env.get('THROTTLE_13'),
+        },
     }
 
     SIMPLE_JWT = {
@@ -255,21 +260,33 @@ class Common(Configuration):
         'AUTH_TOKEN_CLASSES': (
             'rest_framework_simplejwt.tokens.AccessToken',
             'src.authentication.tokens.GuestToken',
-        )
+        ),
     }
 
     # Email
     DEFAULT_FROM_EMAIL = env.get(
         'DEFAULT_FROM_EMAIL',
-        'Pneumatic <no-reply@pneumatic.app>'
+        'Pneumatic <no-reply@pneumatic.app>',
     )
-    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
     EMAIL_DATE_FORMAT = '%a, %d %b %Y %I:%M:%S %p UTC'
-
-    # Customer.io
-    CUSTOMERIO_WEBHOOK_API_VERSION = env.get('CIO_WEBHOOK_API_VERSION')
-    CUSTOMERIO_WEBHOOK_API_KEY = env.get('CIO_WEBHOOK_API_KEY')
-    CUSTOMERIO_TRANSACTIONAL_API_KEY = env.get('CIO_TRANSACTIONAL_API_KEY')
+    EMAIL_PROVIDER = env.get('EMAIL_PROVIDER')
+    if env.get('EMAIL') == 'yes':
+        if EMAIL_PROVIDER == EmailProvider.CUSTOMERIO:
+            EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+            CUSTOMERIO_WEBHOOK_API_VERSION = env.get('CIO_WEBHOOK_API_VERSION')
+            CUSTOMERIO_WEBHOOK_API_KEY = env.get('CIO_WEBHOOK_API_KEY')
+            CUSTOMERIO_TRANSACTIONAL_API_KEY = (
+                env.get('CIO_TRANSACTIONAL_API_KEY')
+            )
+        elif EMAIL_PROVIDER == EmailProvider.SMTP:
+            EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+            EMAIL_HOST = env.get('EMAIL_HOST')
+            EMAIL_PORT = int(env.get('EMAIL_PORT', '587'))
+            EMAIL_HOST_USER = env.get('EMAIL_HOST_USER')
+            EMAIL_HOST_PASSWORD = env.get('EMAIL_HOST_PASSWORD')
+            EMAIL_USE_TLS = env.get('EMAIL_USE_TLS') == 'yes'
+            EMAIL_USE_SSL = env.get('EMAIL_USE_SSL') == 'yes'
+            EMAIL_TIMEOUT = int(env.get('EMAIL_TIMEOUT', '60'))
 
     # Environments
     CONFIGURATION_DEV = 'Development'
@@ -277,13 +294,13 @@ class Common(Configuration):
     CONFIGURATION_STAGING = 'Staging'
     CONFIGURATION_PROD = 'Production'
     CONFIGURATION_CURRENT = env.get(
-        'ENVIRONMENT', CONFIGURATION_DEV
+        'ENVIRONMENT', CONFIGURATION_DEV,
     ).title()
 
     # Stripe
     STRIPE_SECRET_KEY = env.get('STRIPE_SECRET_KEY')
     STRIPE_WEBHOOK_SECRET = env.get('STRIPE_WEBHOOK_SECRET')
-    STRIPE_WEBHOOK_IP_WHITELIST = env.get('STRIPE_WEBHOOK_IP_WHITELIST', [])
+    STRIPE_WEBHOOK_IP_WHITELIST = env.get('STRIPE_WEBHOOK_IP_WHITELIST')
     if STRIPE_WEBHOOK_IP_WHITELIST:
         STRIPE_WEBHOOK_IP_WHITELIST = STRIPE_WEBHOOK_IP_WHITELIST.split(' ')
     else:
@@ -325,7 +342,7 @@ class Common(Configuration):
     # Notifications
     # In seconds - default 10 min
     UNREAD_NOTIFICATIONS_TIMEOUT = int(
-        env.get('UNREAD_NOTIFICATIONS_TIMEOUT', 600)
+        env.get('UNREAD_NOTIFICATIONS_TIMEOUT', '600'),
     )
 
     # Celery
@@ -338,8 +355,7 @@ class Common(Configuration):
         'src.processes.tasks.update_workflow',
         'src.processes.tasks.webhooks',
         'src.reports.tasks',
-        'src.services.tasks',
-        'src.analytics.tasks',
+        'src.analysis.tasks',
         'src.storage.tasks',
     ]
 
@@ -350,7 +366,7 @@ class Common(Configuration):
 
     # Firebase Credentials
     FIREBASE_PUSH_APPLICATION_CREDENTIALS = env.get(
-        'FIREBASE_PUSH_APPLICATION_CREDENTIALS'
+        'FIREBASE_PUSH_APPLICATION_CREDENTIALS',
     )
 
     # OpenAI
@@ -362,11 +378,22 @@ class Common(Configuration):
     MS_CLIENT_SECRET = env.get('MS_CLIENT_SECRET')
     MS_AUTHORITY = env.get('MS_AUTHORITY')
 
+    # Google auth
+    GOOGLE_OAUTH2_CLIENT_ID = env.get('GOOGLE_OAUTH2_CLIENT_ID')
+    GOOGLE_OAUTH2_CLIENT_SECRET = env.get('GOOGLE_OAUTH2_CLIENT_SECRET')
+    GOOGLE_OAUTH2_REDIRECT_URI = env.get('GOOGLE_OAUTH2_REDIRECT_URI')
+
     # SSO Auth0
     AUTH0_CLIENT_ID = env.get('AUTH0_CLIENT_ID')
     AUTH0_CLIENT_SECRET = env.get('AUTH0_CLIENT_SECRET')
     AUTH0_DOMAIN = env.get('AUTH0_DOMAIN')
     AUTH0_REDIRECT_URI = env.get('AUTH0_REDIRECT_URI')
+
+    # SSO Okta
+    OKTA_CLIENT_ID = env.get('OKTA_CLIENT_ID')
+    OKTA_CLIENT_SECRET = env.get('OKTA_CLIENT_SECRET')
+    OKTA_DOMAIN = env.get('OKTA_DOMAIN')
+    OKTA_REDIRECT_URI = env.get('OKTA_REDIRECT_URI')
 
     REPLICA = 'replica'
     DATABASES = {
@@ -377,7 +404,7 @@ class Common(Configuration):
             'PASSWORD': env.get('POSTGRES_PASSWORD', 'pneumatic'),
             'HOST': env.get('POSTGRES_HOST', 'localhost'),
             'PORT': env.get('POSTGRES_PORT', '5432'),
-        }
+        },
     }
 
     # False value to disable some features.
@@ -389,8 +416,8 @@ class Common(Configuration):
         'MS_AUTH': env.get('MS_AUTH') == 'yes',
         'GOOGLE_AUTH': env.get('GOOGLE_AUTH') == 'yes',
         'SSO_AUTH': env.get('SSO_AUTH') == 'yes',
+        'SSO_PROVIDER': env.get('SSO_PROVIDER'),
         'EMAIL': env.get('EMAIL') == 'yes',
-        'EMAIL_PROVIDER': env.get('EMAIL_PROVIDER'),
         'AI': env.get('AI') == 'yes',
         'AI_PROVIDER': env.get('AI_PROVIDER'),
         'PUSH': env.get('PUSH') == 'yes',
@@ -419,14 +446,13 @@ class Common(Configuration):
                     'handlers': ['file'],
                     'level': 'DEBUG',
                     'propagate': False,
-                }
-            }
+                },
+            },
         }
 
 
 class Testing(Common):
 
-    INSTALLED_APPS = Common.INSTALLED_APPS + ['pylint_django']
     TEST_RUNNER = 'djcelery.contrib.test_runner.CeleryTestSuiteRunner'
 
     # CELERY_ALWAYS_EAGER mean that Celery will not schedule tasks
@@ -462,7 +488,7 @@ class Testing(Common):
         'session': {
             'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
             'LOCATION': 'session',
-        }
+        },
     }
 
 
@@ -477,7 +503,7 @@ class Development(Common):
                 "CONNECTION_POOL_KWARGS": {
                     "retry_on_timeout": True,
                     "health_check_interval": 30,
-                }
+                },
             },
             "KEY_PREFIX": "default",
         },
@@ -489,7 +515,7 @@ class Development(Common):
                 "CONNECTION_POOL_KWARGS": {
                     "retry_on_timeout": True,
                     "health_check_interval": 30,
-                }
+                },
             },
             'KEY_PREFIX': '',
         },
@@ -501,7 +527,7 @@ class Development(Common):
                 "CONNECTION_POOL_KWARGS": {
                     "retry_on_timeout": True,
                     "health_check_interval": 30,
-                }
+                },
             },
             'KEY_PREFIX': '',
         },
@@ -512,9 +538,9 @@ class Development(Common):
         'default': {
             'BACKEND': 'channels_redis.core.RedisChannelLayer',
             'CONFIG': {
-                'hosts': [env.get('CHANNELS_REDIS_URL', '')]
-            }
-        }
+                'hosts': [env.get('CHANNELS_REDIS_URL', '')],
+            },
+        },
     }
 
 
@@ -535,8 +561,8 @@ class Staging(Development):
             'USER': env.get('POSTGRES_REPLICA_USER', 'pneumatic'),
             'PASSWORD': env.get('POSTGRES_REPLICA_PASSWORD', 'pneumatic'),
             'HOST': env.get('POSTGRES_REPLICA_HOST', 'localhost'),
-            'PORT': env.get('POSTGRES_REPLICA_PORT', '5432')
-        }
+            'PORT': env.get('POSTGRES_REPLICA_PORT', '5432'),
+        },
     }
 
 

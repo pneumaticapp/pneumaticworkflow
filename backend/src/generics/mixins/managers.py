@@ -1,5 +1,5 @@
-from typing import Optional, Tuple
 import re
+from typing import Optional, Tuple
 
 
 class NormalizeEmailMixin:
@@ -19,8 +19,7 @@ class SearchSqlQueryMixin:
             Uses r'\\\1' in re.sub, where '\\' produces one backslash,
             and '\1' refers to the captured character.
         """
-        escaped = re.sub(r'([&|!():\\])', r'\\\1', text)
-        return escaped
+        return re.sub(r'([&|!():\\])', r'\\\1', text)
 
     def _get_tsquery(self) -> Tuple[str, dict]:
 
@@ -47,7 +46,7 @@ class SearchSqlQueryMixin:
         escaped_words = [self._escape_tsquery_text(word) for word in words]
 
         result = (" || ' | ' || ".join(
-            [f"''%(search_{i})s'' || ':*'" for i in range(len(escaped_words))]
+            [f"''%(search_{i})s''" for i in range(len(escaped_words))],
         ))
         params = {
             f'search_{i}': value for i, value in enumerate(escaped_words)

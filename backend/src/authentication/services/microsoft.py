@@ -1,5 +1,3 @@
-# pylint: disable=broad-except
-
 import json
 from typing import Optional, Union
 
@@ -17,8 +15,8 @@ from src.generics.mixins.services import CacheMixin
 from src.logs.service import AccountLogService
 from src.storage.google_cloud import GoogleCloudService
 from src.utils.logging import (
-    capture_sentry_message,
     SentryLogLevel,
+    capture_sentry_message,
 )
 from src.utils.salt import get_salt
 
@@ -57,7 +55,7 @@ class MicrosoftGraphApiMixin:
         self,
         access_token: str,
         path: str,
-        raise_exception=True
+        raise_exception=True,
     ) -> requests.Response:
 
         """ Authorization_RequestDenied is returned for personal
@@ -65,7 +63,7 @@ class MicrosoftGraphApiMixin:
 
         response = requests.get(
             url=f'{self.api_url}{path}',
-            headers={'Authorization': access_token}
+            headers={'Authorization': access_token},
         )
         if not response.ok and raise_exception:
             data = response.json()
@@ -74,11 +72,11 @@ class MicrosoftGraphApiMixin:
                     message='Microsoft Graph API return an error',
                     data={
                         'response_data': data,
-                        'uri': f'{self.api_url}{path}'
+                        'uri': f'{self.api_url}{path}',
                     },
-                    level=SentryLogLevel.ERROR
+                    level=SentryLogLevel.ERROR,
                 )
-            raise exceptions.GraphApiRequestError()
+            raise exceptions.GraphApiRequestError
         return response
 
     def _get_user(self, access_token: str) -> dict:
@@ -108,7 +106,7 @@ class MicrosoftGraphApiMixin:
 
         response = self._graph_api_request(
             path=self.me_path,
-            access_token=access_token
+            access_token=access_token,
         )
         return response.json()
 
@@ -116,7 +114,7 @@ class MicrosoftGraphApiMixin:
 
         response = self._graph_api_request(
             path=self.users_path,
-            access_token=access_token
+            access_token=access_token,
         )
         try:
             data = response.json()
@@ -127,7 +125,7 @@ class MicrosoftGraphApiMixin:
                     'https://graph.microsoft.com/v1.0/$metadata'
                     '#users(id,givenName,surname,jobTitle,mail)'
                 ),
-                'value': []
+                'value': [],
             }
         return data
 
@@ -140,13 +138,13 @@ class MicrosoftGraphApiMixin:
 
         """ Save photo in the storage and return public URL """
 
-        public_url = None
+        file_url = None
         if not settings.PROJECT_CONF['STORAGE']:
-            return public_url
+            return file_url
         response = self._graph_api_request(
             path=self.photo_path.format(user_id=user_id),
             access_token=access_token,
-            raise_exception=False
+            raise_exception=False,
         )
         if response.ok:
             binary_photo: bytes = response.content
@@ -157,12 +155,12 @@ class MicrosoftGraphApiMixin:
             else:
                 filepath = f'{get_salt(30)}_photo_96x96'
             storage = GoogleCloudService(account=account)
-            public_url = storage.upload_from_binary(
+            file_url = storage.upload_from_binary(
                 binary=binary_photo,
                 filepath=filepath,
-                content_type=content_type
+                content_type=content_type,
             )
-        return public_url
+        return file_url
 
 
 class MicrosoftAuthService(
@@ -267,18 +265,18 @@ class MicrosoftAuthService(
 
         flow_data = self._get_cache(key=auth_response['state'])
         if not flow_data:
-            raise exceptions.TokenInvalidOrExpired()
+            raise exceptions.TokenInvalidOrExpired
         response = self.auth_client.acquire_token_by_auth_code_flow(
             auth_code_flow=flow_data,
-            auth_response=auth_response
+            auth_response=auth_response,
         )
         if response.get('error'):
             capture_sentry_message(
                 message='Get Microsoft Access token return an error',
                 data=response,
-                level=SentryLogLevel.WARNING
+                level=SentryLogLevel.WARNING,
             )
-            raise exceptions.TokenInvalidOrExpired()
+            raise exceptions.TokenInvalidOrExpired
         self.tokens = response
         return f'{response["token_type"]} {response["access_token"]}'
 
@@ -289,20 +287,20 @@ class MicrosoftAuthService(
         try:
             token = AccessToken.objects.get(
                 user_id=user_id,
-                source=SourceType.MICROSOFT
+                source=SourceType.MICROSOFT,
             )
-        except AccessToken.DoesNotExist:
+        except AccessToken.DoesNotExist as ex:
             capture_sentry_message(
                 message='MS Access  token not found for the user',
                 data={'user_id': user_id},
-                level=SentryLogLevel.ERROR
+                level=SentryLogLevel.ERROR,
             )
-            raise exceptions.AccessTokenNotFound()
+            raise exceptions.AccessTokenNotFound from ex
         else:
             if token.is_expired:
                 tokens_data = self.auth_client.acquire_token_by_refresh_token(
                     refresh_token=token.refresh_token,
-                    scopes=self.scopes
+                    scopes=self.scopes,
                 )
                 token.access_token = tokens_data['access_token']
                 token.refresh_token = tokens_data['refresh_token']
@@ -320,8 +318,9 @@ class MicrosoftAuthService(
             email = value.split('#EXT#')[0]
             if email.find('@') < 1:
                 login, domain = email.rsplit('_', 1)
-                email = '@'.join((login, domain))
-        except Exception:
+                email = f'{login}@{domain}'
+        # TODO Fix the broad "try except"
+        except Exception:  # noqa: BLE001
             email = None
         return email
 
@@ -330,22 +329,22 @@ class MicrosoftAuthService(
         """ Work accounts do have 'userType' and 'creationType' fields
             We cannot trust the email specified in the work account,
             because it is not confirmed, but we can trust userPrincipalName
-            because it is created only in the organization’s domain """
+            because it is created only in the organization's domain """
 
         is_work_account = (
-            'userType' in user_profile.keys()
-            or 'creationType' in user_profile.keys()
+            'userType' in user_profile
+            or 'creationType' in user_profile
         )
         if is_work_account:
             email = self._get_email_from_principal_name(
-                user_profile['userPrincipalName']
+                user_profile['userPrincipalName'],
             )
         else:
             email = user_profile.get('mail')
         if not email:
             capture_sentry_message(
                 message='Email not found in Microsoft account',
-                data={'profile': user_profile}
+                data={'profile': user_profile},
             )
         else:
             email = email.lower()
@@ -361,8 +360,8 @@ class MicrosoftAuthService(
                 'access_token': (
                     f'{self.tokens["token_type"]} '
                     f'{self.tokens["access_token"]}'
-                )
-            }
+                ),
+            },
         )
 
     def get_auth_uri(self) -> str:
@@ -395,7 +394,7 @@ class MicrosoftAuthService(
         } """
 
         flow_data = self.auth_client.initiate_auth_code_flow(
-            scopes=self.scopes
+            scopes=self.scopes,
         )
         self._set_cache(value=flow_data, key=flow_data['state'])
         return flow_data['auth_uri']
@@ -411,21 +410,22 @@ class MicrosoftAuthService(
             raise exceptions.EmailNotExist(
                 details={
                     'user_profile': user_profile,
-                    'email': email
-                }
+                    'email': email,
+                },
             )
+
         # account exists if signin
         account = (
             Account.objects.filter(
                 users__email=email,
-                users__type=UserType.USER
+                users__type=UserType.USER,
             )
             .first()
         )
         photo = self._get_user_photo(
             account=account,
             access_token=access_token,
-            user_id=user_profile['id']
+            user_id=user_profile['id'],
         )
         first_name = user_profile['givenName'] or email.split('@')[0]
         capture_sentry_message(
@@ -436,7 +436,7 @@ class MicrosoftAuthService(
                 'user_profile': user_profile,
                 'email': email,
             },
-            level=SentryLogLevel.INFO
+            level=SentryLogLevel.INFO,
         )
         return UserData(
             email=email,
@@ -465,7 +465,7 @@ class MicrosoftAuthService(
                     photo = self._get_user_photo(
                         access_token=access_token,
                         user_id=user_profile['id'],
-                        account=user.account
+                        account=user.account,
                     )
                     first_name = (
                         user_profile['givenName'] or email.split('@')[0]
@@ -481,18 +481,18 @@ class MicrosoftAuthService(
                             'last_name': user_profile['surname'],
                             'job_title': user_profile['jobTitle'],
                             'source_id': user_profile['id'],
-                        }
+                        },
                     )
                     if created:
                         response_data['created_contacts'].append(email)
                     else:
                         response_data['updated_contacts'].append(email)
-
-        except Exception as ex:
+        # TODO Fix the broad "try except"
+        except Exception as ex:  # noqa: BLE001
             http_status = 400
             response_data['message'] = str(ex)
             response_data['exception_type'] = type(ex)
-            response_data['details'] = getattr(ex, 'details')
+            response_data['details'] = getattr(ex, 'details')  # noqa B009
         finally:
             if user.account.log_api_requests:
                 AccountLogService().contacts_request(

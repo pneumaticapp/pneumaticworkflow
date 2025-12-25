@@ -1,46 +1,50 @@
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import ObjectDoesNotExist
-from django.conf import settings
-from rest_framework.viewsets import GenericViewSet
 from rest_framework.decorators import action
 from rest_framework.exceptions import AuthenticationFailed
-from src.generics.mixins.views import CustomViewSetMixin
-from src.analytics.mixins import BaseIdentifyMixin
+from rest_framework.viewsets import GenericViewSet
+
+from src.analysis.mixins import BaseIdentifyMixin
+from src.authentication.messages import MSG_AU_0003
 from src.authentication.permissions import MSAuthPermission
-from src.authentication.services.user_auth import (
-    AuthService
-)
-from src.authentication.services.exceptions import (
-    AuthException
-)
-from src.authentication.services.microsoft import (
-    MicrosoftAuthService
-)
 from src.authentication.serializers import (
     MSTokenSerializer,
 )
-from src.authentication.views.mixins import SignUpMixin
-from src.utils.validation import raise_validation_error
+from src.authentication.services.exceptions import (
+    AuthException,
+)
+from src.authentication.services.microsoft import (
+    MicrosoftAuthService,
+)
+from src.authentication.services.user_auth import (
+    AuthService,
+)
+from src.authentication.tasks import update_microsoft_contacts
 from src.authentication.throttling import (
     AuthMSAuthUriThrottle,
     AuthMSTokenThrottle,
 )
-from src.authentication.tasks import update_microsoft_contacts
-from src.utils.logging import (
-    capture_sentry_message,
-    SentryLogLevel,
+from src.authentication.views.mixins import (
+    SignUpMixin,
+    SSORestrictionMixin,
 )
-from src.authentication.messages import MSG_AU_0003
-
+from src.generics.mixins.views import CustomViewSetMixin
+from src.utils.logging import (
+    SentryLogLevel,
+    capture_sentry_message,
+)
+from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
 
 
 class MSAuthViewSet(
+    SSORestrictionMixin,
     SignUpMixin,
     CustomViewSetMixin,
     BaseIdentifyMixin,
-    GenericViewSet
+    GenericViewSet,
 ):
     permission_classes = (MSAuthPermission,)
     serializer_class = MSTokenSerializer
@@ -49,7 +53,7 @@ class MSAuthViewSet(
     def throttle_classes(self):
         if self.action == 'token':
             return (AuthMSTokenThrottle,)
-        elif self.action == 'auth_uri':
+        if self.action == 'auth_uri':
             return (AuthMSAuthUriThrottle,)
         return ()
 
@@ -65,22 +69,23 @@ class MSAuthViewSet(
                     'client_info': slz.validated_data['client_info'],
                     'state': slz.validated_data['state'],
                     'session_state': slz.validated_data['session_state'],
-                }
+                },
             )
         except AuthException as ex:
             raise_validation_error(message=ex.message)
         else:
             try:
                 user = UserModel.objects.active().get(email=user_data['email'])
+                self.check_sso_restrictions(user)
                 token = AuthService.get_auth_token(
                     user=user,
                     user_agent=request.headers.get(
                         'User-Agent',
-                        request.META.get('HTTP_USER_AGENT')
+                        request.META.get('HTTP_USER_AGENT'),
                     ),
                     user_ip=request.META.get('HTTP_X_REAL_IP'),
                 )
-            except ObjectDoesNotExist:
+            except ObjectDoesNotExist as ex:
                 if settings.PROJECT_CONF['SIGNUP']:
                     user, token = self.signup(
                         **user_data,
@@ -92,7 +97,7 @@ class MSAuthViewSet(
                         gclid=slz.validated_data.get('gclid'),
                     )
                 else:
-                    raise AuthenticationFailed(MSG_AU_0003)
+                    raise AuthenticationFailed(MSG_AU_0003) from ex
             service.save_tokens_for_user(user)
             update_microsoft_contacts.delay(user.id)
             return self.response_ok({'token': token})
@@ -106,7 +111,7 @@ class MSAuthViewSet(
             raise_validation_error(message=ex.message)
         else:
             return self.response_ok({
-                'auth_uri': auth_uri
+                'auth_uri': auth_uri,
             })
 
     @action(methods=('GET',), detail=False)
@@ -114,6 +119,6 @@ class MSAuthViewSet(
         capture_sentry_message(
             message='Microsoft logout request',
             data=self.request.GET,
-            level=SentryLogLevel.INFO
+            level=SentryLogLevel.INFO,
         )
         return self.response_ok()

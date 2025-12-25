@@ -1,33 +1,33 @@
 from contextlib import contextmanager
-from django.db import transaction
-from django.contrib.auth import get_user_model
+
 from celery import shared_task
 from celery.task import Task as TaskCelery
+from django.contrib.auth import get_user_model
+from django.db import transaction
+
 from src.accounts.enums import NotificationType
-from src.accounts.models import Account, Contact, UserGroup
-from src.logs.models import AccountEvent
+from src.accounts.models import Account, Contact, Notification, UserGroup
 from src.logs.enums import AccountEventStatus
+from src.logs.models import AccountEvent
 from src.logs.service import AccountLogService
 from src.processes.enums import (
-    WorkflowEventType,
     FieldType,
+    WorkflowEventType,
 )
-from src.processes.models import (
-    FileAttachment,
-    TaskTemplate,
-    Task,
-    WorkflowEvent, TaskField, TemplateDraft,
-)
-from src.accounts.models import Notification
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.template import TemplateDraft
+from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.task import Task
 from src.storage.google_cloud import GoogleCloudService
-
 
 # TODO Remove file in https://my.pneumatic.app/workflows/41526
 fields_text_types = (
     FieldType.STRING,
     FieldType.TEXT,
     FieldType.URL,
-    FieldType.FILE
+    FieldType.FILE,
 )
 UserModel = get_user_model()
 
@@ -47,18 +47,19 @@ def log_operation(user, log_title: str, account_id: int):
             title=log_title,
             status=AccountEventStatus.PENDING,
             user=user,
-            data={'status': 'Switching has already been done'}
+            data={'status': 'Switching has already been done'},
         )
     try:
         with transaction.atomic():
             yield
+    # TODO Fix the broad "try except"
     except Exception as ex:
         service = AccountLogService(user)
         service.system_log(
             title=log_title,
             status=AccountEventStatus.FAILED,
             user=user,
-            data={'exception': str(ex)}
+            data={'exception': str(ex)},
         )
         raise
 
@@ -67,7 +68,7 @@ def switch_account_logo(
     user,
     account_id: int,
     path_from: str,
-    path_to: str
+    path_to: str,
 ):
     log_title = 'Switch account logo'
     qst = Account.objects.filter(id=account_id)
@@ -78,7 +79,7 @@ def switch_account_logo(
             if account.logo_lg and account.logo_lg.find(path_from) > -1:
                 account.logo_lg = account.logo_lg.replace(
                     path_from,
-                    path_to
+                    path_to,
                 )
                 processed = True
             if account.logo_sm and account.logo_sm.find(path_from) > -1:
@@ -95,8 +96,8 @@ def switch_account_logo(
         user=user,
         data={
             'processed': len(ids),
-            'ids': ids
-        }
+            'ids': ids,
+        },
     )
 
 
@@ -104,7 +105,7 @@ def switch_user_avatars(
     user,
     account_id: int,
     path_from: str,
-    path_to: str
+    path_to: str,
 ):
     log_title = 'Switch user avatars'
     qst = (
@@ -115,7 +116,7 @@ def switch_user_avatars(
     ids = []
     with log_operation(user, log_title, account_id):
         for u in qst:
-            if u.photo.find(path_from) > -1:
+            if u.photo and u.photo.find(path_from) > -1:
                 u.photo = u.photo.replace(path_from, path_to)
                 u.save(update_fields=['photo'])
                 ids.append(u.id)
@@ -125,7 +126,7 @@ def switch_user_avatars(
         title=log_title,
         status=AccountEventStatus.SUCCESS,
         user=user,
-        data={'processed': len(ids), 'ids': ids}
+        data={'processed': len(ids), 'ids': ids},
     )
 
 
@@ -133,7 +134,7 @@ def switch_user_contacts(
     user,
     account_id: int,
     path_from: str,
-    path_to: str
+    path_to: str,
 ):
     log_title = 'Switch user contacts avatars'
     qst = (
@@ -144,7 +145,7 @@ def switch_user_contacts(
     ids = []
     with log_operation(user, log_title, account_id):
         for contact in qst:
-            if contact.photo.find(path_from) > -1:
+            if contact.photo and contact.photo.find(path_from) > -1:
                 contact.photo = contact.photo.replace(path_from, path_to)
                 contact.save(update_fields=['photo'])
                 ids.append(contact.id)
@@ -154,7 +155,7 @@ def switch_user_contacts(
         title=log_title,
         status=AccountEventStatus.SUCCESS,
         user=user,
-        data={'processed': len(ids), 'ids': ids}
+        data={'processed': len(ids), 'ids': ids},
     )
 
 
@@ -162,7 +163,7 @@ def switch_groups(
     user,
     account_id: int,
     path_from: str,
-    path_to: str
+    path_to: str,
 ):
     log_title = 'Switch groups photos'
     qst = (
@@ -173,7 +174,7 @@ def switch_groups(
     ids = []
     with log_operation(user, log_title, account_id):
         for group in qst:
-            if group.photo.find(path_from) > -1:
+            if group.photo and group.photo.find(path_from) > -1:
                 group.photo = group.photo.replace(path_from, path_to)
                 group.save(update_fields=['photo'])
                 ids.append(group.id)
@@ -183,7 +184,7 @@ def switch_groups(
         title=log_title,
         status=AccountEventStatus.SUCCESS,
         user=user,
-        data={'processed': len(ids), 'ids': ids}
+        data={'processed': len(ids), 'ids': ids},
     )
 
 
@@ -191,7 +192,7 @@ def switch_attachments(
     user,
     account_id: int,
     path_from: str,
-    path_to: str
+    path_to: str,
 ):
     # Migrate FileAttachments
     log_title = 'Switch attachments'
@@ -204,13 +205,13 @@ def switch_attachments(
     with log_operation(user, log_title, account_id):
         for file in qst:
             processed = False
-            if file.url.find(path_from) > -1:
+            if file.url and file.url.find(path_from) > -1:
                 file.url = file.url.replace(path_from, path_to)
                 processed = True
             if file.thumbnail_url and file.thumbnail_url.find(path_from) > -1:
                 file.thumbnail_url = file.thumbnail_url.replace(
                     path_from,
-                    path_to
+                    path_to,
                 )
                 processed = True
             if processed:
@@ -222,7 +223,7 @@ def switch_attachments(
         title=log_title,
         status=AccountEventStatus.SUCCESS,
         user=user,
-        data={'processed': len(ids), 'ids': ids}
+        data={'processed': len(ids), 'ids': ids},
     )
 
 
@@ -230,7 +231,7 @@ def switch_task_templates(
     user,
     account_id: int,
     path_from: str,
-    path_to: str
+    path_to: str,
 ):
     # TemplateTask description
     log_title = 'Switch template tasks'
@@ -242,10 +243,13 @@ def switch_task_templates(
     ids = []
     with log_operation(user, log_title, account_id):
         for task_template in qst:
-            if task_template.description.find(path_from) > -1:
+            if (
+                task_template.description
+                and task_template.description.find(path_from) > -1
+            ):
                 task_template.description = task_template.description.replace(
                     path_from,
-                    path_to
+                    path_to,
                 )
                 task_template.save(update_fields=['description'])
                 ids.append(task_template.id)
@@ -255,7 +259,7 @@ def switch_task_templates(
         title=log_title,
         status=AccountEventStatus.SUCCESS,
         user=user,
-        data={'processed': len(ids), 'ids': ids}
+        data={'processed': len(ids), 'ids': ids},
     )
 
 
@@ -263,7 +267,7 @@ def switch_tasks(
     user,
     account_id: int,
     path_from: str,
-    path_to: str
+    path_to: str,
 ):
     # Task description
     log_title = 'Switch tasks'
@@ -274,7 +278,7 @@ def switch_tasks(
     ids = []
     with log_operation(user, log_title, account_id):
         for task in qst:
-            if task.description.find(path_from) > -1:
+            if task.description and task.description.find(path_from) > -1:
                 task.description = task.description.replace(path_from, path_to)
                 task.save(update_fields=['description'])
                 ids.append(task.id)
@@ -284,7 +288,7 @@ def switch_tasks(
         title=log_title,
         status=AccountEventStatus.SUCCESS,
         user=user,
-        data={'processed': len(ids), 'ids': ids}
+        data={'processed': len(ids), 'ids': ids},
     )
 
 
@@ -292,7 +296,7 @@ def switch_comments(
     user,
     account_id: int,
     path_from: str,
-    path_to: str
+    path_to: str,
 ):
     # WorkflowEvent type comment text
     log_title = 'Switch comments'
@@ -305,9 +309,13 @@ def switch_comments(
     ids = []
     with log_operation(user, log_title, account_id):
         for event in qst:
-            if event.text.find(path_from) > -1:
+            if event.text and event.text.find(path_from) > -1:
                 event.text = event.text.replace(path_from, path_to)
-                event.clear_text = event.clear_text.replace(path_from, path_to)
+                if event.clear_text:
+                    event.clear_text = event.clear_text.replace(
+                        path_from,
+                        path_to,
+                    )
                 event.save(update_fields=['text', 'clear_text'])
                 ids.append(event.id)
 
@@ -316,7 +324,7 @@ def switch_comments(
         title=log_title,
         status=AccountEventStatus.SUCCESS,
         user=user,
-        data={'processed': len(ids), 'ids': ids}
+        data={'processed': len(ids), 'ids': ids},
     )
 
 
@@ -324,7 +332,7 @@ def switch_revert_events(
     user,
     account_id: int,
     path_from: str,
-    path_to: str
+    path_to: str,
 ):
     # WorkflowEvent type revert text
     log_title = 'Switch revert events'
@@ -337,9 +345,13 @@ def switch_revert_events(
     ids = []
     with log_operation(user, log_title, account_id):
         for event in qst:
-            if event.text.find(path_from) > -1:
+            if event.text and event.text.find(path_from) > -1:
                 event.text = event.text.replace(path_from, path_to)
-                event.clear_text = event.clear_text.replace(path_from, path_to)
+                if event.clear_text:
+                    event.clear_text = event.clear_text.replace(
+                        path_from,
+                        path_to,
+                    )
                 event.save(update_fields=['text', 'clear_text'])
                 ids.append(event.id)
 
@@ -348,7 +360,7 @@ def switch_revert_events(
         title=log_title,
         status=AccountEventStatus.SUCCESS,
         user=user,
-        data={'processed': len(ids), 'ids': ids}
+        data={'processed': len(ids), 'ids': ids},
     )
 
 
@@ -356,7 +368,7 @@ def switch_complete_task_events(
     user,
     account_id: int,
     path_from: str,
-    path_to: str
+    path_to: str,
 ):
     # WorkflowEvent type complete task task_json fields
     log_title = 'Switch complete task events'
@@ -378,7 +390,7 @@ def switch_complete_task_events(
             ):
                 task['description'] = task['description'].replace(
                     path_from,
-                    path_to
+                    path_to,
                 )
                 processed = True
             for field in (task.get('output') or []):
@@ -410,15 +422,18 @@ def switch_complete_task_events(
 
                 if field['type'] == FieldType.FILE:
                     for attach in (field.get('attachments') or []):
-                        if attach['url'].find(path_from) > -1:
+                        if (
+                            attach.get('url')
+                            and attach['url'].find(path_from) > -1
+                        ):
                             attach['url'] = (
                                 attach['url'].replace(path_from, path_to)
                             )
-                            if attach['thumbnail_url']:
+                            if attach.get('thumbnail_url'):
                                 attach['thumbnail_url'] = (
                                     attach['thumbnail_url'].replace(
                                         path_from,
-                                        path_to
+                                        path_to,
                                     )
                                 )
                             processed = True
@@ -432,7 +447,7 @@ def switch_complete_task_events(
         title=log_title,
         status=AccountEventStatus.SUCCESS,
         user=user,
-        data={'processed': len(ids), 'ids': ids}
+        data={'processed': len(ids), 'ids': ids},
     )
 
 
@@ -440,7 +455,7 @@ def switch_notifications(
     user,
     account_id: int,
     path_from: str,
-    path_to: str
+    path_to: str,
 ):
     # Notification text
     log_title = 'Switch notifications'
@@ -450,8 +465,8 @@ def switch_notifications(
         .filter(
             type__in=(
                 NotificationType.COMMENT,
-                NotificationType.MENTION
-            )
+                NotificationType.MENTION,
+            ),
         )
     )
     ids = []
@@ -467,7 +482,7 @@ def switch_notifications(
         title=log_title,
         status=AccountEventStatus.SUCCESS,
         user=user,
-        data={'processed': len(ids), 'ids': ids}
+        data={'processed': len(ids), 'ids': ids},
     )
 
 
@@ -475,7 +490,7 @@ def switch_fields(
     user,
     account_id: int,
     path_from: str,
-    path_to: str
+    path_to: str,
 ):
     # TaskField value
     log_title = 'Switch fields'
@@ -483,7 +498,7 @@ def switch_fields(
         TaskField.objects
         .filter(
             type__in=fields_text_types,
-            workflow__account_id=account_id
+            workflow__account_id=account_id,
         )
     )
     ids = []
@@ -493,14 +508,15 @@ def switch_fields(
                 field.value = field.value.replace(path_from, path_to)
                 field.markdown_value = field.markdown_value.replace(
                     path_from,
-                    path_to
+                    path_to,
                 )
-                field.clear_value = field.clear_value.replace(
-                    path_from,
-                    path_to
-                )
+                if field.clear_value:
+                    field.clear_value = field.clear_value.replace(
+                        path_from,
+                        path_to,
+                    )
                 field.save(
-                    update_fields=['value', 'markdown_value', 'clear_value']
+                    update_fields=['value', 'markdown_value', 'clear_value'],
                 )
                 ids.append(field.id)
 
@@ -509,7 +525,7 @@ def switch_fields(
         title=log_title,
         status=AccountEventStatus.SUCCESS,
         user=user,
-        data={'processed': len(ids), 'ids': ids}
+        data={'processed': len(ids), 'ids': ids},
     )
 
 
@@ -517,7 +533,7 @@ def switch_template_drafts(
     user,
     account_id: int,
     path_from: str,
-    path_to: str
+    path_to: str,
 ):
 
     log_title = 'Switch draft: template tasks'
@@ -538,7 +554,7 @@ def switch_template_drafts(
                 ):
                     task['description'] = task['description'].replace(
                         path_from,
-                        path_to
+                        path_to,
                     )
                     processed = True
             if processed:
@@ -551,7 +567,7 @@ def switch_template_drafts(
         title=log_title,
         status=AccountEventStatus.SUCCESS,
         user=user,
-        data={'processed': len(ids), 'ids': ids}
+        data={'processed': len(ids), 'ids': ids},
     )
 
 
@@ -559,7 +575,7 @@ def switch_template_drafts(
 def switch_access_to_files(
     user_id,
     account_id: int,
-    public_access: bool = False
+    public_access: bool = False,
 ):
 
     user = UserModel.objects.get(id=user_id)

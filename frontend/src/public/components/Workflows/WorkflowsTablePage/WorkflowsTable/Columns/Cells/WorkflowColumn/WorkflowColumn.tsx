@@ -12,13 +12,11 @@ import { getWorkflowDetailedRoute } from '../../../../../../../utils/routes';
 
 import styles from './WorkflowColumn.css';
 
-type TProps = Pick<IWorkflowControllsProps,
-  | 'onWorkflowDeleted'
-  | 'onWorkflowEnded'
-  | 'onWorkflowResumed'
-  | 'onWorkflowSnoozed'>
-  & React.PropsWithChildren<CellProps<TableColumns, TableColumns['workflow']>>
-  & {
+type TProps = Pick<
+  IWorkflowControllsProps,
+  'onWorkflowDeleted' | 'onWorkflowEnded' | 'onWorkflowResumed' | 'onWorkflowSnoozed'
+> &
+  React.PropsWithChildren<CellProps<TableColumns, TableColumns['system-column-workflow']>> & {
     handleOpenModal(): void;
   };
 
@@ -42,17 +40,15 @@ export function WorkflowColumn({
         onWorkflowResumed={onWorkflowResumed}
         onChangeUrgent={setIsUrgent}
       >
-        {controllOptions => {
+        {(controllOptions) => {
           if (!isArrayWithItems(controllOptions)) {
             return null;
           }
 
           return (
             <Dropdown
-              renderToggle={isOpen => (
-                <MoreIcon
-                  className={classnames(styles['card-more'], isOpen && styles['card-more_active'])}
-                />
+              renderToggle={(isOpen) => (
+                <MoreIcon className={classnames(styles['card-more'], isOpen && styles['card-more_active'])} />
               )}
               options={controllOptions}
               direction="left"
@@ -61,30 +57,22 @@ export function WorkflowColumn({
         }}
       </WorkflowControlls>
     );
-  }
+  };
 
-  const onClickLink: React.MouseEventHandler<HTMLAnchorElement> = event => {
+  const onClickLink: React.MouseEventHandler<HTMLAnchorElement> = (event) => {
     event.preventDefault();
     handleOpenModal();
-  }
+  };
 
   return (
     <div className={styles['container']}>
-      <div className={styles['dropdown-wrapper']}>
-        {renderDropdown()}
-      </div>
+      <div className={styles['dropdown-wrapper']}>{renderDropdown()}</div>
 
-      <div className={styles['urgent-wrapper']}>
-        {isUrgent && <UrgentColorIcon />}
-      </div>
+      <div className={styles['urgent-wrapper']}>{isUrgent && <UrgentColorIcon />}</div>
 
       <Tooltip content={workflow.name} containerClassName={styles['workflow-link-tooltip']}>
         <span className={styles['workflow-link-tooltip__content']}>
-          <Link
-            to={getWorkflowDetailedRoute(workflow.id)}
-            className={styles['workflow-link']}
-            onClick={onClickLink}
-          >
+          <Link to={getWorkflowDetailedRoute(workflow.id)} className={styles['workflow-link']} onClick={onClickLink}>
             {workflow.name}
           </Link>
         </span>

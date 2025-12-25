@@ -82,7 +82,7 @@ export function WorkflowControllsComponents({
 
   const handleOnClone = () => {
     if (!workflow.template) {
-      NotificationManager.error({
+      NotificationManager.warning({
         title: 'workflows.no-template-access',
       });
 

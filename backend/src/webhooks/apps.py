@@ -1,4 +1,3 @@
-# pylint: disable=unused-import
 from django.apps import AppConfig
 
 

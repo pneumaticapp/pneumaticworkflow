@@ -1,44 +1,39 @@
+from django.conf import settings
 from django.contrib import admin
 from django.urls import include, path, re_path
-from django.conf import settings
 from rest_framework.routers import DefaultRouter
 
-from src.processes.views.workflow import WorkflowViewSet
-from src.processes.views.template import (
-    TemplateViewSet
-)
-from src.processes.views.checklist import (
-    CheckListViewSet
-)
-from src.processes.views.task import (
-    TaskViewSet,
-    TasksListView,
-)
 from src import views
-from src.accounts.views import (
-    AccountPlanView,
-    TenantsViewSet,
+from src.accounts.views.accounts import AccountPlanView
+from src.accounts.views.tenants import TenantsViewSet
+from src.faq.views import FaqViewSet
+from src.notifications.consumers import (
+    EventsConsumer,
+    NewTaskConsumer,
+    NotificationsConsumer,
+    RemovedTaskConsumer,
+    WorkflowEventConsumer,
 )
-from src.webhooks.views import (
-    WebHookViewSet,
-    WebHookEventViewSet,
-    WebHookBufferViewSet
-)
-from src.services.views import ServicesViewSet
 from src.payment.views import (
     PaymentViewSet,
     StripeViewSet,
     SubscriptionViewSet,
 )
-from src.faq.views import FaqViewSet
-from src.notifications.consumers import (
-    NotificationsConsumer,
-    NewTaskConsumer,
-    RemovedTaskConsumer,
-    WorkflowEventConsumer,
-    EventsConsumer,
+from src.processes.views.checklist import (
+    CheckListViewSet,
 )
-
+from src.processes.views.task import (
+    TasksListView,
+    TaskViewSet,
+)
+from src.processes.views.template import (
+    TemplateViewSet,
+)
+from src.processes.views.workflow import WorkflowViewSet
+from src.services.views import ServicesViewSet
+from src.webhooks.views.buffer import WebHookBufferViewSet
+from src.webhooks.views.events import WebHookEventViewSet
+from src.webhooks.views.webhooks import WebHookViewSet
 
 router = DefaultRouter(trailing_slash=False)
 router.register('templates', TemplateViewSet, basename='templates')
@@ -46,11 +41,11 @@ router.register('workflows', WorkflowViewSet, basename='workflows')
 router.register('webhooks', WebHookViewSet, basename='webhooks')
 router.register(
     'webhooks/buffer',
-    WebHookBufferViewSet, basename='webhooks-buffer'
+    WebHookBufferViewSet, basename='webhooks-buffer',
 )
 router.register(
     'webhooks/events',
-    WebHookEventViewSet, basename='webhooks-events'
+    WebHookEventViewSet, basename='webhooks-events',
 )
 router.register('v2/tasks', TaskViewSet, basename='tasks')
 router.register('v2/tasks/checklists', CheckListViewSet, basename='cl')
@@ -70,7 +65,7 @@ urlpatterns = [
     path('accounts/', include('src.accounts.urls', 'accounts')),
     path(
         'analytics/',
-        include('src.analytics.urls')
+        include('src.analysis.urls'),
     ),
     path('v2/accounts/plan', AccountPlanView.as_view()),
     path('applications/', include('src.applications.urls')),

@@ -46,6 +46,7 @@ import {
   IWorkflowDetailsClient,
   EWorkflowTaskStatus,
   IWorkflowTaskClient,
+  EWorkflowsView,
 } from '../../types/workflow';
 import { ERoutes } from '../../constants/routes';
 import { getWorkflowsStore, getWorkflowsSearchText, getWorkflowsStatus, getTaskStore } from '../selectors/workflows';
@@ -56,14 +57,14 @@ import { getWorkflow } from '../../api/getWorkflow';
 import { getWorkflowLog } from '../../api/getWorkflowLog';
 import { returnWorkflowToTask } from '../../api/returnWorkflowToTask';
 import { history } from '../../utils/history';
-import { IStoreTask, IStoreWorkflows } from '../../types/redux';
+import { IApplicationState, IStoreTask, IStoreWorkflows } from '../../types/redux';
 import { logger } from '../../utils/logger';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { sendWorkflowComment } from '../../api/sendWorkflowComment';
 import { finishWorkflow } from '../../api/finishWorkflow';
 import { editWorkflow, IEditWorkflowResponse } from '../../api/editWorkflow';
 import { getTemplatesTitles } from '../../api/getTemplatesTitles';
-import { IKickoff, ITemplateResponse, ITemplateTitle } from '../../types/template';
+import { IKickoff, ITemplateResponse, ITemplateTitle, TTemplatePreset } from '../../types/template';
 import { getWorkflowLogStore } from '../selectors/workflowLog';
 import { deleteRemovedFilesFromFields } from '../../api/deleteRemovedFilesFromFields';
 import { TChannelAction } from '../tasks/saga';
@@ -90,6 +91,10 @@ import {
   TWatchedComment,
   TDeleteReactionComment,
   TCreateReactionComment,
+  setWorkflowsFilterSelectedFields,
+  setLastLoadedTemplateId,
+  setWorkflowsPresetsRedux,
+  TSaveWorkflowsPreset,
 } from './actions';
 import { handleLoadTemplateVariables } from '../templates/saga';
 
@@ -119,11 +124,18 @@ import {
   formatDueDateToEditWorkflow,
   mapWorkflowsToISOStringToRedux,
   mapWorkflowsAddComputedPropsToRedux,
+  getNormalizeOutputUsersToEmails,
 } from '../../utils/mappers';
-import { getUserTimezone } from '../selectors/user';
+import { getUserTimezone, getAuthUser, getUsers } from '../selectors/user';
 import { getCurrentTask } from '../selectors/task';
 import { formatDateToISOInWorkflow, toTspDate } from '../../utils/dateTime';
 import { getWorkflowAddComputedPropsToRedux } from '../../components/Workflows/utils/getWorfkflowClientProperties';
+import { getTemplatePresets, TGetTemplatePresetsResponse } from '../../api/getTemplatePresets';
+import { getCorrectPresetFields } from '../../components/Workflows/utils/getCorrectPresetFields';
+import { updateTemplatePresets } from '../../api/updateTemplatePresets';
+import { addTemplatePreset } from '../../api/addTemplatePreset';
+import { ALL_SYSTEM_FIELD_NAMES } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
+import { TUserListItem } from '../../types/user';
 
 function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: number; showLoader?: boolean }) {
   const {
@@ -167,7 +179,7 @@ function* fetchWorkflow({ payload: id }: TLoadWorkflow) {
   try {
     yield fork(handleLoadWorkflow, { workflowId: id });
   } catch (error) {
-    NotificationManager.error({ message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
@@ -192,8 +204,7 @@ function* handleOpenWorkflowLogPopup({
     if (shouldSetWorkflowDetailUrl) {
       history.push(ERoutes.Workflows);
     }
-
-    NotificationManager.error({ message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
@@ -215,7 +226,7 @@ function* fetchWorkflowLog({
     yield put(changeWorkflowLog({ workflowId: id, items: formattedFetchedProcessLog }));
   } catch (error) {
     logger.info('fetch process log error : ', error);
-    NotificationManager.error({ message: 'workflows.fetch-in-work-process-log-fail' });
+    NotificationManager.notifyApiError(error, { message: 'workflows.fetch-in-work-process-log-fail' });
   } finally {
     yield put(changeWorkflowLog({ isLoading: false }));
   }
@@ -225,6 +236,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
   const {
     workflowsList,
     workflowsSettings: {
+      view,
       sorting,
       values: {
         statusFilter,
@@ -234,14 +246,61 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
         performersGroupIdsFilter,
         workflowStartersIdsFilter,
       },
-      selectedFieldsByTemplate,
+      selectedFields,
     },
   }: IStoreWorkflows = yield select(getWorkflowsStore);
 
   const searchText: ReturnType<typeof getWorkflowsSearchText> = yield select(getWorkflowsSearchText);
   const currentTemplateId = templatesIdsFilter.length === 1 ? templatesIdsFilter[0] : null;
-  const selectedFields = currentTemplateId ? selectedFieldsByTemplate[currentTemplateId] || [] : [];
+  const severalTemplateIds = templatesIdsFilter.length > 1 || templatesIdsFilter.length === 0;
 
+  const lastLoadedTemplateIdForTable: number | null = yield select(
+    (state: IApplicationState) => state.workflows.workflowsSettings.lastLoadedTemplateIdForTable,
+  );
+
+  const shouldGetAllDefaultFields = Boolean(view === EWorkflowsView.Table && offset === 0 && severalTemplateIds);
+
+  const internalNavigation =
+    sessionStorage.getItem('isInternalNavigation') === 'true' &&
+    Boolean(
+      view === EWorkflowsView.Table &&
+        offset === 0 &&
+        currentTemplateId &&
+        String(lastLoadedTemplateIdForTable) !== String(currentTemplateId),
+    );
+  const externalNavigation = Boolean(view === EWorkflowsView.Table && currentTemplateId && selectedFields.length === 0);
+
+  const shouldGetPresets = internalNavigation || externalNavigation;
+  sessionStorage.setItem('isInternalNavigation', 'false');
+
+  let newSelectedFields: string[] = [];
+  let shouldResetFields = false;
+
+  if (view === EWorkflowsView.Grid) {
+    shouldResetFields = true;
+    newSelectedFields = [];
+    yield put(setWorkflowsFilterSelectedFields(newSelectedFields));
+    yield put(setLastLoadedTemplateId(null));
+  }
+
+  if (shouldGetPresets) {
+    try {
+      shouldResetFields = true;
+      const presets: TGetTemplatePresetsResponse = yield call(getTemplatePresets, String(currentTemplateId));
+      yield put(setWorkflowsPresetsRedux(presets));
+
+      newSelectedFields = getCorrectPresetFields(presets);
+      yield put(setWorkflowsFilterSelectedFields(newSelectedFields));
+      yield put(setLastLoadedTemplateId(String(currentTemplateId)));
+    } catch (error) {
+      console.error('fetchWorkflowsList: Failed to load fields for template', currentTemplateId, ':', error);
+    }
+  } else if (shouldGetAllDefaultFields) {
+    shouldResetFields = true;
+    yield put(setLastLoadedTemplateId(null));
+    newSelectedFields = ALL_SYSTEM_FIELD_NAMES;
+    yield put(setWorkflowsFilterSelectedFields(newSelectedFields));
+  }
   try {
     const { count, results }: { count: number; results: TWorkflowResponse[] } = yield getWorkflows({
       offset,
@@ -253,7 +312,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
       performersIdsFilter,
       workflowStartersIdsFilter,
       searchText,
-      fields: selectedFields,
+      fields: shouldResetFields ? newSelectedFields : selectedFields,
     });
     const formattedResults = mapWorkflowsToISOStringToRedux(results);
     const items = offset > 0 ? uniqBy([...workflowsList.items, ...formattedResults], 'id') : formattedResults;
@@ -262,7 +321,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
   } catch (error) {
     logger.info('fetch workflows list error : ', error);
     yield put(loadWorkflowsListFailed());
-    NotificationManager.error({ message: 'workflows.fetch-processes-list-fail' });
+    NotificationManager.notifyApiError(error, { message: 'workflows.fetch-processes-list-fail' });
   }
 }
 
@@ -297,7 +356,7 @@ function* saveWorkflowLogComment({ payload: { text, attachments } }: TSendWorkfl
     yield put(changeWorkflowLog({ items: preLoadedProcessLog }));
   } catch (error) {
     logger.info('send process log comment error:', error);
-    NotificationManager.error({ message: 'workflows.send-process-log-comment-fail' });
+    NotificationManager.notifyApiError(error, { message: 'workflows.send-process-log-comment-fail' });
     yield put(changeWorkflowLog({ items }));
   } finally {
     yield put(setGeneralLoaderVisibility(false));
@@ -339,7 +398,21 @@ function* editWorkflowInWork({ payload }: TEditWorkflow) {
     );
 
     const formattedPayload = formatDueDateToEditWorkflow(payload);
-    const editedWorkflow: IEditWorkflowResponse = yield editWorkflow(formattedPayload);
+
+    const usersList: TUserListItem[] = yield select(getUsers);
+    const setUsers = new Map<number, string>(usersList.map((user) => [user.id, user.email]));
+    const normalizedOutputs = getNormalizeOutputUsersToEmails(formattedPayload.kickoff?.fields || [], setUsers);
+    const normalizedPayload = formattedPayload.kickoff
+      ? {
+        ...formattedPayload,
+        kickoff: {
+          ...formattedPayload.kickoff,
+          fields: normalizedOutputs,
+        },
+      }
+      : formattedPayload;
+
+    const editedWorkflow: IEditWorkflowResponse = yield editWorkflow(normalizedPayload);
     const formattedEditedWorkflow = formatDateToISOInWorkflow(editedWorkflow);
     const formattedWorkflow = getWorkflowAddComputedPropsToRedux(formattedEditedWorkflow) as IWorkflowDetailsClient;
 
@@ -453,7 +526,7 @@ export function* fetchFilterTemplates() {
   } catch (err) {
     yield put(loadWorkflowsFilterTemplatesFailed());
     logger.info('fetch workflow titles error : ', err);
-    NotificationManager.error({ message: 'workflows.load-tasks-count-fail' });
+    NotificationManager.notifyApiError(err, { message: 'workflows.load-tasks-count-fail' });
   }
 }
 
@@ -524,10 +597,7 @@ export function* cloneWorkflowSaga({ payload: { workflowId, workflowName, templa
     );
   } catch (error) {
     logger.info('clone workflow error : ', error);
-
-    NotificationManager.error({
-      title: 'workflows.fail-copy',
-    });
+    NotificationManager.notifyApiError(error, { title: 'workflows.fail-copy' });
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }
@@ -546,7 +616,7 @@ export function* fetchFilterSteps({ payload: { templateId, onAfterLoaded } }: TL
   } catch (error) {
     yield put(loadWorkflowsFilterStepsFailed({ templateId }));
     logger.info('fetch tasks filter steps error : ', error);
-    NotificationManager.error({ message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
@@ -717,8 +787,8 @@ export function* deleteCommentSaga({ payload: { id } }: TDeleteComment) {
     const updateComment: IWorkflowLogItem = yield deleteComment({ id });
     yield put(updateWorkflowLogItem(updateComment));
     yield put(updateTaskWorkflowLogItem(updateComment));
-  } catch (err) {
-    NotificationManager.error({ message: getErrorMessage(err) });
+  } catch (error) {
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }
@@ -730,8 +800,8 @@ export function* editCommentSaga({ payload: { id, text, attachments } }: TEditCo
     const updateComment: IWorkflowLogItem = yield editComment({ id, text, attachments });
     yield put(updateWorkflowLogItem(updateComment));
     yield put(updateTaskWorkflowLogItem(updateComment));
-  } catch (err) {
-    NotificationManager.error({ message: getErrorMessage(err) });
+  } catch (error) {
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }
@@ -765,8 +835,8 @@ export function* watchNewWorkflowsEvent() {
 export function* watchedCommentSaga({ payload: { id } }: TWatchedComment) {
   try {
     yield watchedComment({ id });
-  } catch (err) {
-    NotificationManager.error({ message: getErrorMessage(err) });
+  } catch (error) {
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
@@ -774,8 +844,8 @@ export function* deleteReactionCommentSaga({ payload: { id, value } }: TDeleteRe
   try {
     yield put(setGeneralLoaderVisibility(true));
     yield deleteReactionComment({ id, value });
-  } catch (err) {
-    NotificationManager.error({ message: getErrorMessage(err) });
+  } catch (error) {
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }
@@ -785,11 +855,46 @@ export function* createReactionCommentSaga({ payload: { id, value } }: TCreateRe
   try {
     yield put(setGeneralLoaderVisibility(true));
     yield createReactionComment({ id, value });
-  } catch (err) {
-    NotificationManager.error({ message: getErrorMessage(err) });
+  } catch (error) {
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }
+}
+
+function* saveWorkflowsPresetSaga({ payload: { orderedFields, type, templateId } }: TSaveWorkflowsPreset) {
+  const {
+    workflowsSettings: { presets },
+  }: IStoreWorkflows = yield select(getWorkflowsStore);
+  const defaultPreset = presets.find((preset) => preset.isDefault && preset.type === type);
+
+  const { authUser }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
+  const userName = `${authUser.firstName} ${authUser.lastName}`;
+
+  try {
+    if (defaultPreset) {
+      const updatedPreset: TTemplatePreset = yield call(updateTemplatePresets, {
+        ...defaultPreset,
+        fields: orderedFields,
+        isDefault: true,
+      });
+      const updatedPresets = presets.map((preset) => (preset.id === defaultPreset.id ? updatedPreset : preset));
+      yield put(setWorkflowsPresetsRedux(updatedPresets));
+    } else {
+      const newPreset: TTemplatePreset = yield call(addTemplatePreset, templateId, {
+        name: `Preset ${presets.length + 1} - ${userName}`,
+        type,
+        isDefault: true,
+        fields: orderedFields,
+      });
+      yield put(setWorkflowsPresetsRedux([...presets, newPreset]));
+    }
+  } catch (error) {
+    logger.error('saveWorkflowsPresetSaga: Failed to save preset:', { orderedFields, type, templateId, error });
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+  }
+
+  yield put(loadWorkflowsList(0));
 }
 
 export function* watchDeleteReactionComment() {
@@ -860,6 +965,10 @@ export function* watchSnoozeWorkflow() {
   yield takeEvery(EWorkflowsActions.SnoozeWorkflow, snoozeWorkflowSaga);
 }
 
+export function* watchSaveWorkflowsPreset() {
+  yield takeEvery(EWorkflowsActions.SaveWorkflowsPreset, saveWorkflowsPresetSaga);
+}
+
 export function* rootSaga() {
   yield all([
     fork(watchFetchWorkflow),
@@ -886,5 +995,6 @@ export function* rootSaga() {
     fork(watchWatchedComment),
     fork(watchCreateReactionComment),
     fork(watchDeleteReactionComment),
+    fork(watchSaveWorkflowsPreset),
   ]);
 }

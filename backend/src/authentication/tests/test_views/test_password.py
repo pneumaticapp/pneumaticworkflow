@@ -1,17 +1,17 @@
 import pytest
+
+from src.accounts.enums import UserStatus
 from src.accounts.tokens import (
     ResetPasswordToken,
 )
+from src.authentication import messages
 from src.authentication.enums import ResetPasswordStatus
-from src.accounts.enums import UserStatus
 from src.processes.tests.fixtures import (
-    create_test_user,
-    create_test_guest,
     create_invited_user,
+    create_test_guest,
+    create_test_user, create_test_admin,
 )
 from src.utils.validation import ErrorCode
-from src.authentication import messages
-
 
 pytestmark = pytest.mark.django_db
 
@@ -24,15 +24,15 @@ class TestResetPasswordViewSet:
         user = create_test_user()
         send_reset_password_notification_mock = mocker.patch(
             'src.authentication.views.password.'
-            'send_reset_password_notification.delay'
+            'send_reset_password_notification.delay',
         )
 
         # act
         response = api_client.post(
             '/auth/reset-password',
             {
-                'email': user.email
-            }
+                'email': user.email,
+            },
         )
 
         # assert
@@ -51,15 +51,15 @@ class TestResetPasswordViewSet:
         email = 'test@pneumatic.app'
         send_reset_password_notification_mock = mocker.patch(
             'src.authentication.views.password.'
-            'send_reset_password_notification.delay'
+            'send_reset_password_notification.delay',
         )
 
         # act
         response = api_client.post(
             '/auth/reset-password',
             {
-                'email': email
-            }
+                'email': email,
+            },
         )
 
         # assert
@@ -69,7 +69,7 @@ class TestResetPasswordViewSet:
     def test_create__active_and_invited_user__call_active(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         email = 'owner@test.test'
@@ -78,15 +78,15 @@ class TestResetPasswordViewSet:
         create_invited_user(user=another_owner, email=email)
         send_reset_password_notification_mock = mocker.patch(
             'src.authentication.views.password.'
-            'send_reset_password_notification.delay'
+            'send_reset_password_notification.delay',
         )
 
         # act
         response = api_client.post(
             path='/auth/reset-password',
             data={
-                'email': email
-            }
+                'email': email,
+            },
         )
 
         # assert
@@ -164,7 +164,7 @@ class TestResetPasswordViewSet:
         self,
         mocker,
         api_client,
-        expire_tokens_mock
+        expire_tokens_mock,
     ):
 
         # arrange
@@ -173,13 +173,13 @@ class TestResetPasswordViewSet:
         create_invited_user(user=another_owner, email=user.email)
         user_change_password_mock = mocker.patch(
             'src.accounts.services.user.UserService'
-            '.change_password'
+            '.change_password',
         )
         jwt_key = str(ResetPasswordToken.for_user(user))
         data = {
             'new_password': 'test',
             'confirm_new_password': 'test',
-            'token': jwt_key
+            'token': jwt_key,
         }
 
         # act
@@ -188,7 +188,7 @@ class TestResetPasswordViewSet:
         # assert
         expire_tokens_mock.assert_called_once_with(user)
         user_change_password_mock.assert_called_once_with(
-            password=data['new_password']
+            password=data['new_password'],
         )
         assert response.status_code == 200
         assert response.data['token']
@@ -197,20 +197,20 @@ class TestResetPasswordViewSet:
         self,
         mocker,
         api_client,
-        expire_tokens_mock
+        expire_tokens_mock,
     ):
 
         # arrange
         user = create_test_user()
         user_change_password_mock = mocker.patch(
             'src.accounts.services.user.UserService'
-            '.change_password'
+            '.change_password',
         )
         jwt_key = str(ResetPasswordToken.for_user(user))
         data = {
             'new_password': 'test',
             'confirm_new_password': 'test',
-            'token': jwt_key
+            'token': jwt_key,
         }
 
         # act
@@ -219,7 +219,7 @@ class TestResetPasswordViewSet:
         # assert
         expire_tokens_mock.assert_called_once_with(user)
         user_change_password_mock.assert_called_once_with(
-            password=data['new_password']
+            password=data['new_password'],
         )
         assert response.status_code == 200
         assert response.data['token']
@@ -228,20 +228,20 @@ class TestResetPasswordViewSet:
         self,
         mocker,
         api_client,
-        expire_tokens_mock
+        expire_tokens_mock,
     ):
 
         # arrange
         user = create_test_user()
         user_change_password_mock = mocker.patch(
             'src.accounts.services.user.UserService'
-            '.change_password'
+            '.change_password',
         )
         jwt_key = str(ResetPasswordToken.for_user(user))
         data = {
             'new_password': 'test',
             'confirm_new_password': '12345',
-            'token': jwt_key
+            'token': jwt_key,
         }
 
         # act
@@ -258,7 +258,7 @@ class TestResetPasswordViewSet:
         'new_password, confirm_new_password', [
             ('', ''),
             (' ', ' '),
-        ]
+        ],
     )
     def test_confirm__password_blank__validation_error(
         self,
@@ -273,13 +273,13 @@ class TestResetPasswordViewSet:
         user = create_test_user()
         user_change_password_mock = mocker.patch(
             'src.accounts.services.user.UserService'
-            '.change_password'
+            '.change_password',
         )
         jwt_key = str(ResetPasswordToken.for_user(user))
         data = {
             'new_password': new_password,
             'confirm_new_password': confirm_new_password,
-            'token': jwt_key
+            'token': jwt_key,
         }
 
         # act
@@ -306,13 +306,13 @@ class TestResetPasswordViewSet:
         user = create_test_user()
         user_change_password_mock = mocker.patch(
             'src.accounts.services.user.UserService'
-            '.change_password'
+            '.change_password',
         )
         jwt_key = str(ResetPasswordToken.for_user(user))
         data = {
             'new_password': None,
             'confirm_new_password': None,
-            'token': jwt_key
+            'token': jwt_key,
         }
 
         # act
@@ -328,6 +328,63 @@ class TestResetPasswordViewSet:
         assert response.data['details']['reason'] == message
         assert response.data['details']['name'] == 'new_password'
 
+    def test_create__sso_enabled_not_owner__raise_exception(
+        self,
+        mocker,
+        api_client,
+    ):
+        # arrange
+        user = create_test_admin()
+        settings_mock = mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
+        send_reset_password_notification_mock = mocker.patch(
+            'src.authentication.views.password.'
+            'send_reset_password_notification.delay',
+        )
+
+        # act
+        response = api_client.post(
+            '/auth/reset-password',
+            {
+                'email': user.email,
+            },
+        )
+
+        # assert
+        assert response.status_code == 400
+        send_reset_password_notification_mock.assert_not_called()
+
+    def test_confirm__sso_enabled_not_owner__raise_exception(
+        self,
+        mocker,
+        api_client,
+    ):
+        # arrange
+        user = create_test_admin()
+        token = str(ResetPasswordToken.for_user(user))
+        settings_mock = mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
+        user_change_password_mock = mocker.patch(
+            'src.accounts.services.user.UserService.change_password',
+        )
+
+        # act
+        response = api_client.post(
+            '/auth/reset-password/confirm',
+            {
+                'token': token,
+                'new_password': 'new_password123',
+            },
+        )
+
+        # assert
+        assert response.status_code == 400
+        user_change_password_mock.assert_not_called()
+
 
 class TestChangePassword:
 
@@ -335,7 +392,7 @@ class TestChangePassword:
         self,
         mocker,
         api_client,
-        expire_tokens_mock
+        expire_tokens_mock,
     ):
         # arrange
         user = create_test_user()
@@ -343,12 +400,12 @@ class TestChangePassword:
         user.save()
         user_change_password_mock = mocker.patch(
             'src.accounts.services.user.UserService'
-            '.change_password'
+            '.change_password',
         )
         data = {
             'old_password': '12345',
             'new_password': '54321',
-            'confirm_new_password': '54321'
+            'confirm_new_password': '54321',
         }
         api_client.token_authenticate(user)
 
@@ -360,14 +417,14 @@ class TestChangePassword:
         assert response.data['token']
         expire_tokens_mock.assert_called_once_with(user)
         user_change_password_mock.assert_called_once_with(
-            password=data['new_password']
+            password=data['new_password'],
         )
 
     def test_change__invited_and_active_user__return_active(
         self,
         mocker,
         api_client,
-        expire_tokens_mock
+        expire_tokens_mock,
     ):
         # arrange
         user = create_test_user()
@@ -376,16 +433,16 @@ class TestChangePassword:
         another_account_owner = create_test_user(email='ao@t.t')
         create_invited_user(
             user=another_account_owner,
-            email=user.email
+            email=user.email,
         )
         user_change_password_mock = mocker.patch(
             'src.accounts.services.user.UserService'
-            '.change_password'
+            '.change_password',
         )
         data = {
             'old_password': '12345',
             'new_password': '54321',
-            'confirm_new_password': '54321'
+            'confirm_new_password': '54321',
         }
         api_client.token_authenticate(user)
 
@@ -397,14 +454,14 @@ class TestChangePassword:
         assert response.data['token']
         expire_tokens_mock.assert_called_once_with(user)
         user_change_password_mock.assert_called_once_with(
-            password=data['new_password']
+            password=data['new_password'],
         )
 
     def test_change_wrong_old_password(
         self,
         mocker,
         api_client,
-        expire_tokens_mock
+        expire_tokens_mock,
     ):
         # arrange
         user = create_test_user()
@@ -412,12 +469,12 @@ class TestChangePassword:
         user.save()
         user_change_password_mock = mocker.patch(
             'src.accounts.services.user.UserService'
-            '.change_password'
+            '.change_password',
         )
         data = {
             'old_password': '123',
             'new_password': '54321',
-            'confirm_new_password': '54321'
+            'confirm_new_password': '54321',
         }
         api_client.token_authenticate(user)
 
@@ -435,7 +492,7 @@ class TestChangePassword:
         self,
         mocker,
         api_client,
-        expire_tokens_mock
+        expire_tokens_mock,
     ):
         # arrange
         user = create_test_user()
@@ -443,12 +500,12 @@ class TestChangePassword:
         user.save()
         user_change_password_mock = mocker.patch(
             'src.accounts.services.user.UserService'
-            '.change_password'
+            '.change_password',
         )
         data = {
             'old_password': '12345',
             'new_password': '54321',
-            'confirm_new_password': '12345'
+            'confirm_new_password': '12345',
         }
         api_client.token_authenticate(user)
 
@@ -463,7 +520,7 @@ class TestChangePassword:
         user_change_password_mock.assert_not_called()
 
     @pytest.mark.parametrize(
-        'new_password, confirm_new_password', [('', ''), (' ', ' ')]
+        'new_password, confirm_new_password', [('', ''), (' ', ' ')],
     )
     def test_change__password_blank__validation_error(
         self,
@@ -480,12 +537,12 @@ class TestChangePassword:
         user.save()
         user_change_password_mock = mocker.patch(
             'src.accounts.services.user.UserService'
-            '.change_password'
+            '.change_password',
         )
         data = {
             'old_password': '12345',
             'new_password': new_password,
-            'confirm_new_password': confirm_new_password
+            'confirm_new_password': confirm_new_password,
         }
         api_client.token_authenticate(user)
 
@@ -514,12 +571,12 @@ class TestChangePassword:
         user.save()
         user_change_password_mock = mocker.patch(
             'src.accounts.services.user.UserService'
-            '.change_password'
+            '.change_password',
         )
         data = {
             'old_password': '12345',
             'new_password': None,
-            'confirm_new_password': None
+            'confirm_new_password': None,
         }
         api_client.token_authenticate(user)
 
@@ -535,3 +592,33 @@ class TestChangePassword:
         assert response.data['message'] == message
         assert response.data['details']['reason'] == message
         assert response.data['details']['name'] == 'new_password'
+
+    def test_change_password__sso_enabled_not_owner__raise_exception(
+        self,
+        mocker,
+        api_client,
+    ):
+        # arrange
+        user = create_test_admin()
+        user.set_password('12345')
+        user.save()
+        settings_mock = mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
+        user_change_password_mock = mocker.patch(
+            'src.accounts.services.user.UserService.change_password',
+        )
+        data = {
+            'old_password': '12345',
+            'new_password': 'new_password123',
+            'confirm_new_password': 'new_password123',
+        }
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.post('/auth/change-password', data=data)
+
+        # assert
+        assert response.status_code == 400
+        user_change_password_mock.assert_not_called()

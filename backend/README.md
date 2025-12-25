@@ -6,41 +6,11 @@ Create a file ".env" with the following values in "backend" directory:
 BACKEND_URL=http://localhost:8001
 FRONTEND_URL=http://localhost
 FORMS_URL=http://form.localhost
-
-SSL=no        # Disable using https
 ENVIRONMENT=Development
-LANGUAGE_CODE=en # Allowed langs: en, fr, de, es, ru
-CAPTCHA=no   # Disable using captcha in forms
-ANALYTICS=no # Disable any analytics integrations
-BILLING=no   # Disable stripe integration
-SIGNUP=yes   # Disable signup page
-MS_AUTH=no   # Disable Microsoft auth
-GOOGLE_AUTH=no # Disable Google auth
-SSO_AUTH=no   # Disable SSO Auth0 auth
-EMAIL=no      # Disable send emails
-EMAIL_PROVIDER=
-AI=no         # Disable AI template generation
-AI_PROVIDER=
-PUSH=no       # Disable push notifications
-PUSH_PROVIDER=
-STORAGE=no    # Disable file storage
-STORAGE_PROVIDER=
-
-DJANGO_DEBUG='yes'
-ENABLE_LOGGING='yes'
-ADMIN_PATH='admin'
-DJANGO_SECRET_KEY=django_secret_django_secret_django_secret
+ENABLE_LOGGING=yes
+DJANGO_DEBUG=yes
 DJANGO_SETTINGS_MODULE=src.settings
-AUTH_REDIS_URL=redis://:redis_password@localhost:6379/1
-CACHE_REDIS_URL=redis://:redis_password@localhost:6379/0
-CHANNELS_REDIS_URL=redis://:redis_password@localhost:6379/2
-SESSION_REDIS_URL=redis://:redis_password@localhost:6379/3
-CELERY_BROKER_URL=amqp://rabbitmq_user:rabbitmq_password@localhost:5672
-ALLOWED_HOSTS=0.0.0.0
-CORS_ORIGIN_ALLOW_ALL='no'
-CORS_ALLOW_CREDENTIALS='yes'
-CORS_ORIGIN_WHITELIST=
-
+DJANGO_SECRET_KEY=django_secret_django_secret_django_secret
 POSTGRES_HOST=localhost
 POSTGRES_USER=postgres_user
 POSTGRES_PASSWORD=postgres_password
@@ -60,6 +30,7 @@ Open a terminal in the "backend" directory and run the following commands:
 6. Install the poetry package manager with the command: ``pip install --upgrade pip && pip install poetry``
 7. Create a virtual environment and install the project dependencies. Command: ``poetry install && poetry shell``
 8. Display the virtual environment directory with the command: ``poetry env info``. Use this directory when creating scripts in your IDE.
+9. Install pre-commit hooks. Command: ``pre-commit install``
 
 ### Project Initialization
 #### Initializing a clean database
@@ -77,7 +48,18 @@ Open a terminal in the "backend" directory and run the following commands:
 4. (Optional). Connect to the database and verify the schema. Command: ``docker exec -it pneumatic-postgres sh -c "psql -U postgres_user postgres_db"``
 
 ### Windows
-Will be added later
+Open PowerShell in the backend directory and run the following commands:
+1. Start the backend containers: ``docker compose up -d``.
+2. Download and install Git Bash: ``https://git-scm.com/downloads``.
+3. Download and install Python 3.7.5  ``https://www.python.org/downloads/release/python-375/``. During installation, make sure to check “Add Python to PATH.”
+4. Verify that Python is installed: ``python --version``.
+5. Install Poetry 1.5.1 by running the following command in PowerShell: ``$env:POETRY_VERSION="1.5.1"; (Invoke-WebRequest -Uri https://install.python-poetry.org -UseBasicParsing).Content | py -``
+6. To get started you need to add Poetry's bit directory –C:\Users\{username}\AppData\Roaming\Python\Scripts– to your PATH. Replace {username} with your actual Windows username.
+7. Verify your Poetry installation by running ``poetry --version`` in PowerShell.
+8. Add the path to Poetry to ~/.bashrc by running the command: ``if ! grep -q "export PATH.*poetry" ~/.bashrc; then echo 'export PATH="$PATH:/c/Users/{username}/AppData/Roaming/Python/Scripts"' >> ~/.bashrc; fi && source ~/.bashrc``. Make sure to replace {username} with your actual Windows username.
+9. Check you have the correct version of Poetry by running ``poetry --version`` in Git Bash.
+10. Create a virtual environment and install project dependancies(``poetry install && poetry shell``).
+11. To view the virtual environment directory, run the command ``poetry env info``. That's the directory you need to use when developing scripts in your IDE.
 
 
 ## Testing

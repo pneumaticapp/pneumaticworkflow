@@ -1,33 +1,34 @@
 
 from typing import Optional
-from django.utils import timezone
+
 from django.contrib.auth import get_user_model
+from django.utils import timezone
+
+from src.analysis.actions import (
+    WorkflowActions,
+)
+from src.analysis.services import AnalyticService
+from src.authentication.enums import AuthTokenType
+from src.processes.consts import WORKFLOW_NAME_LENGTH
+from src.processes.models.templates.template import Template
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.serializers.workflows.kickoff_value import (
+    KickoffValueSerializer,
+)
 from src.processes.services.base import (
     BaseWorkflowService,
 )
-from src.processes.models import (
-    Template,
-    Workflow,
+from src.processes.services.tasks.task import TaskService
+from src.processes.services.templates.integrations import (
+    TemplateIntegrationsService,
+)
+from src.processes.utils.common import (
+    contains_fields_vars,
+    contains_workflow_id_var,
+    insert_fields_values_to_text,
+    string_abbreviation,
 )
 from src.utils.dates import date_to_user_fmt
-from src.processes.utils.common import (
-    string_abbreviation,
-    insert_fields_values_to_text,
-    contains_fields_vars,
-)
-from src.processes.serializers.workflows.kickoff_value import (
-    KickoffValueSerializer
-)
-from src.processes.consts import WORKFLOW_NAME_LENGTH
-from src.processes.services.templates.integrations \
-    import TemplateIntegrationsService
-from src.processes.services.tasks.task import TaskService
-from src.analytics.actions import (
-    WorkflowActions
-)
-from src.analytics.services import AnalyticService
-from src.authentication.enums import AuthTokenType
-
 
 UserModel = get_user_model()
 
@@ -52,7 +53,7 @@ class WorkflowService(
         self,
         template: Template,
         workflow_starter: Optional[UserModel] = None,
-        user_provided_name: Optional[str] = None
+        user_provided_name: Optional[str] = None,
     ) -> str:
 
         """ Name filling priority:
@@ -64,7 +65,7 @@ class WorkflowService(
         user = self.user
         values = {
             'date': date_to_user_fmt(date=timezone.now(), user=user),
-            'template-name': template.name
+            'template-name': template.name,
         }
         if workflow_starter:
             values.update(workflow_starter.get_dynamic_mapping())
@@ -72,17 +73,17 @@ class WorkflowService(
         if user_provided_name:
             result = insert_fields_values_to_text(
                 text=user_provided_name,
-                fields_values=values
+                fields_values=values,
             )
         elif template.wf_name_template:
             result = insert_fields_values_to_text(
                 text=template.wf_name_template,
-                fields_values=values
+                fields_values=values,
             )
         elif template.generic_name:
             result = insert_fields_values_to_text(
                 text=template.generic_name,
-                fields_values=values
+                fields_values=values,
             )
         else:
             result = f'{values["date"]} — {values["template-name"]}'
@@ -91,7 +92,7 @@ class WorkflowService(
     def _create_instance(
         self,
         instance_template: Template,
-        **kwargs
+        **kwargs,
     ):
 
         name = self._create_workflow_name(
@@ -112,8 +113,18 @@ class WorkflowService(
             is_external=kwargs.get('is_external') or False,
             is_urgent=kwargs.get('is_urgent') or False,
             due_date=kwargs.get('due_date'),
-            ancestor_task=kwargs.get('ancestor_task')
+            ancestor_task=kwargs.get('ancestor_task'),
         )
+
+        name_changed = False
+        name_template_changed = False
+        if contains_workflow_id_var(self.instance.name_template):
+            self.instance.name = insert_fields_values_to_text(
+                text=self.instance.name_template,
+                fields_values={'workflow-id': str(self.instance.id)},
+            )
+            self.instance.name_template = self.instance.name
+            name_changed, name_template_changed = True, True
 
         # TODO replace KickoffValueSerializer to KickoffValueService
         kickoff = instance_template.kickoff_instance
@@ -122,20 +133,19 @@ class WorkflowService(
                 'account_id': instance_template.account.id,
                 'workflow': self.instance.id,
                 'kickoff': kickoff.id,
-                'fields_data': kwargs.get('kickoff_fields_data', {})
+                'fields_data': kwargs.get('kickoff_fields_data', {}),
             },
-            context={'user': self.user}
+            context={'user': self.user},
         )
         kickoff_value_slz.is_valid(raise_exception=True)
         kickoff_value_slz.save()
 
         # insert kickoff fields values
-        name_changed = False
         if contains_fields_vars(self.instance.name):
             fields_values = self.instance.get_kickoff_fields_values()
             self.instance.name = insert_fields_values_to_text(
                 text=self.instance.name_template,
-                fields_values=fields_values
+                fields_values=fields_values,
             )
             name_changed = True
 
@@ -143,17 +153,23 @@ class WorkflowService(
         if len(self.instance.name) > WORKFLOW_NAME_LENGTH:
             self.instance.name = string_abbreviation(
                 name=self.instance.name,
-                length=WORKFLOW_NAME_LENGTH
+                length=WORKFLOW_NAME_LENGTH,
             )
             name_changed = True
-        if name_changed:
-            self.instance.save(update_fields=['name'])
+
+        if name_changed or name_template_changed:
+            update_fields = []
+            if name_changed:
+                update_fields.append('name')
+            if name_template_changed:
+                update_fields.append('name_template')
+            self.instance.save(update_fields=update_fields)
         return self.instance
 
     def _create_related(
         self,
         instance_template: Template,
-        **kwargs
+        **kwargs,
     ):
 
         for task_template in instance_template.tasks.order_by('number'):
@@ -161,7 +177,7 @@ class WorkflowService(
             task_service.create(
                 instance_template=task_template,
                 workflow=self.instance,
-                redefined_performer=kwargs.get('redefined_performer')
+                redefined_performer=kwargs.get('redefined_performer'),
             )
         self.update_owners()
 
@@ -171,14 +187,14 @@ class WorkflowService(
                 workflow=self.instance,
                 auth_type=self.auth_type,
                 is_superuser=self.is_superuser,
-                anonymous_id=kwargs['anonymous_id']
+                anonymous_id=kwargs['anonymous_id'],
             )
         else:
             AnalyticService.workflows_started(
                 workflow=self.instance,
                 auth_type=self.auth_type,
                 is_superuser=self.is_superuser,
-                user=self.user
+                user=self.user,
             )
         if self.instance.is_urgent:
             AnalyticService.workflows_urgent(
@@ -186,23 +202,23 @@ class WorkflowService(
                 auth_type=self.auth_type,
                 is_superuser=self.is_superuser,
                 user=self.user,
-                action=WorkflowActions.marked
+                action=WorkflowActions.marked,
             )
 
         if self.auth_type == AuthTokenType.API:
             service = TemplateIntegrationsService(
                 account=self.user.account,
                 is_superuser=self.is_superuser,
-                user=self.user
+                user=self.user,
             )
             service.api_request(
                 template=self.instance.template,
-                user_agent=kwargs.get('user_agent')
+                user_agent=kwargs.get('user_agent'),
             )
 
     def update_owners(self):
         user_ids = Template.objects.filter(
-            id=self.instance.template_id
+            id=self.instance.template_id,
         ).get_owners_as_users()
         self.instance.owners.set(user_ids)
         self.instance.members.add(*user_ids)

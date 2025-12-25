@@ -74,3 +74,27 @@ msgstr "La contraseña actual es incorrecta."
 #: authentication/messages.py:31
 msgid "The new password and its confirmation don't match."
 msgstr "La nueva contraseña y su confirmación no coinciden."
+
+#: authentication/messages.py:32
+msgid "Failed to fetch organization members."
+msgstr "Error al obtener los miembros de la organización."
+
+#: authentication/messages.py:34
+msgid "The system is configured to use a different SSO provider. Please contact your administrator."
+msgstr "El sistema está configurado para usar otro proveedor de SSO. Por favor, contacte a su administrador."
+
+#: authentication/messages.py:37
+msgid "This account uses SSO authentication. Please sign in through your organization's SSO portal."
+msgstr "Esta cuenta utiliza autenticación SSO. Por favor, inicie sesión a través del portal SSO de su organización."
+
+#: authentication/messages.py:41
+msgid "SSO authentication is currently unavailable. Please contact support."
+msgstr "La autenticación SSO no está disponible en este momento. Por favor, contacte con soporte."
+
+#: authentication/messages.py:43
+msgid "No active SSO configuration found for the domain: \"{domain}\"."
+msgstr "No se encontró una configuración SSO activa para el dominio: \"{domain}\"."
+
+#: authentication/messages.py:46
+msgid "This account does not use SSO authentication. Please contact support."
+msgstr "Esta cuenta no utiliza autenticación SSO. Por favor, contacte con soporte."

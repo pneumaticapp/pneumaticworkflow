@@ -1,45 +1,45 @@
+# ruff: noqa: PLC0415
 import re
 from typing import Optional
+
+from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import make_password
-from django.db import transaction, IntegrityError
-from django.conf import settings
-from src.analytics.mixins import BaseIdentifyMixin
-from src.accounts.serializers.user import UserWebsocketSerializer
-from src.processes.services.remove_user_from_draft import (
-    remove_user_from_draft,
-)
-from src.accounts.validators import user_is_last_performer
-from src.accounts.services.exceptions import (
-    UserIsPerformerException,
-)
+from django.db import IntegrityError, transaction
+
 from src.accounts.enums import (
-    UserStatus,
     Language,
     UserDateFormat,
     UserFirstDayWeek,
+    UserStatus,
 )
 from src.accounts.models import (
-    APIKey,
     Account,
+    APIKey,
     Contact,
 )
-from src.generics.base.service import BaseModelService
-from src.authentication.tokens import PneumaticToken
+from src.accounts.serializers.user import UserWebsocketSerializer
 from src.accounts.services.exceptions import (
     AlreadyRegisteredException,
+    UserIsPerformerException,
 )
-from src.services.email import EmailService
-from src.analytics.services import AnalyticService
+from src.accounts.validators import user_is_last_performer
+from src.analysis.mixins import BaseIdentifyMixin
+from src.analysis.services import AnalyticService
+from src.authentication.tokens import PneumaticToken
+from src.generics.base.service import BaseModelService
 from src.notifications.tasks import send_user_deleted_notification
-
+from src.processes.services.remove_user_from_draft import (
+    remove_user_from_draft,
+)
+from src.notifications.tasks import send_user_deactivated_notification
 
 UserModel = get_user_model()
 
 
 class UserService(
     BaseModelService,
-    BaseIdentifyMixin
+    BaseIdentifyMixin,
 ):
 
     def _create_instance(
@@ -56,10 +56,12 @@ class UserService(
         is_admin: bool = True,
         is_account_owner: bool = False,
         language: Language.LITERALS = None,
-        timezone: str = None,
+        timezone: Optional[str] = None,
         date_fmt: UserDateFormat = None,
         date_fdw: UserFirstDayWeek = None,
-        **kwargs
+        is_superuser: bool = False,
+        is_staff: bool = False,
+        **kwargs,
     ) -> UserModel:
 
         if not password:
@@ -76,6 +78,9 @@ class UserService(
                 language = settings.LANGUAGE_CODE
             if timezone is None:
                 timezone = settings.TIME_ZONE
+            if not UserModel.objects.exists():
+                is_superuser = True
+                is_staff = True
         else:
             if date_fdw is None:
                 date_fdw = account.get_owner().date_fdw
@@ -102,9 +107,11 @@ class UserService(
                 timezone=timezone,
                 date_fmt=date_fmt,
                 date_fdw=date_fdw,
+                is_superuser=is_superuser,
+                is_staff=is_staff,
             )
-        except IntegrityError:
-            raise AlreadyRegisteredException()
+        except IntegrityError as ex:
+            raise AlreadyRegisteredException from ex
         return self.instance
 
     def _create_related(self, **kwargs):
@@ -113,7 +120,7 @@ class UserService(
             user=self.instance,
             name=self.instance.get_full_name(),
             account=self.instance.account,
-            key=key
+            key=key,
         )
 
     def _create_actions(self, **kwargs):
@@ -138,17 +145,16 @@ class UserService(
         self,
         local: str,
         number: int,
-        domain: str
+        domain: str,
     ):
         email = f'{local}+{number}@{domain}'
         if UserModel.include_inactive.filter(email=email).exists():
             return self._get_free_email(
                 local=local,
                 number=number + 1,
-                domain=domain
+                domain=domain,
             )
-        else:
-            return email
+        return email
 
     def _get_incremented_email(self, user: UserModel) -> str:
 
@@ -167,13 +173,13 @@ class UserService(
         return self._get_free_email(
             local=local,
             number=number,
-            domain=domain
+            domain=domain,
         )
 
     def create_tenant_account_owner(
         self,
         tenant_account: Account,
-        master_account: Account
+        master_account: Account,
     ) -> UserModel:
 
         master_user = master_account.get_owner()
@@ -187,7 +193,7 @@ class UserService(
             photo=master_user.photo,
             phone=master_user.phone,
             is_admin=True,
-            is_account_owner=True
+            is_account_owner=True,
         )
 
     def change_password(self, password: str):
@@ -196,17 +202,22 @@ class UserService(
 
     @classmethod
     def _deactivate_actions(cls, user: UserModel):
-        EmailService.send_user_deactivated_email(user=user)
+        send_user_deactivated_notification.delay(
+            user_id=user.id,
+            user_email=user.email,
+            account_id=user.account_id,
+            logo_lg=user.account.logo_lg,
+        )
 
     @classmethod
     def _validate_deactivate(cls, user):
         if user_is_last_performer(user):
-            raise UserIsPerformerException()
+            raise UserIsPerformerException
 
     @classmethod
     def _deactivate(
         cls,
-        user: UserModel
+        user: UserModel,
     ):
         with transaction.atomic():
             remove_user_from_draft(
@@ -220,14 +231,14 @@ class UserService(
             Contact.objects.filter(
                 account=user.account,
                 email=user.email,
-                status=UserStatus.ACTIVE
+                status=UserStatus.ACTIVE,
             ).update(
-                status=UserStatus.INVITED
+                status=UserStatus.INVITED,
             )
-            from src.accounts.services import AccountService
+            from src.accounts.services.account import AccountService
             service = AccountService(
                 instance=user.account,
-                user=user
+                user=user,
             )
             service.update_users_counts()
             cls.identify(user)

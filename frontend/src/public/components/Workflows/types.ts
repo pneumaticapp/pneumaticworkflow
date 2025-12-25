@@ -16,7 +16,7 @@ import {
   TUserCounter,
 } from '../../types/workflow';
 import { TUserListItem } from '../../types/user';
-import { IGroup } from '../../types/team';
+import { IGroup } from '../../redux/team/types';
 
 export interface IWorkflowsProps {
   workflowsLoadingStatus: EWorkflowsLoadingStatus;
@@ -54,6 +54,7 @@ export interface IWorkflowsFiltersProps {
   isSubscribed: boolean;
   performersCounters: TUserCounter[];
   workflowStartersCounters: TUserCounter[];
+  selectedFields: string[];
   loadTemplatesTitles(): void;
   loadTemplateSteps(payload: TLoadWorkflowsFilterStepsPayload): void;
   setTemplatesFilter(value: number[]): void;

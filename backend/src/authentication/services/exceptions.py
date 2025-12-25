@@ -1,12 +1,14 @@
 from typing import Optional
-from src.generics.exceptions import BaseServiceException
+
 from src.authentication.messages import (
     MSG_AU_0001,
     MSG_AU_0004,
     MSG_AU_0005,
     MSG_AU_0008,
     MSG_AU_0009,
+    MSG_AU_0014,
 )
+from src.generics.exceptions import BaseServiceException
 
 
 class AuthException(BaseServiceException):
@@ -14,7 +16,7 @@ class AuthException(BaseServiceException):
     def __init__(
         self,
         message: Optional[str] = None,
-        details: Optional[dict] = None
+        details: Optional[dict] = None,
     ):
         self.details = details
         super().__init__(message)
@@ -43,3 +45,18 @@ class GraphApiRequestError(AuthException):
 class AuthenticationFailed(BaseServiceException):
 
     default_message = MSG_AU_0008
+
+
+class PeopleApiRequestError(AuthException):
+
+    default_message = MSG_AU_0014
+
+
+class Auth0ServiceException(AuthException):
+
+    pass
+
+
+class OktaServiceException(AuthException):
+
+    pass

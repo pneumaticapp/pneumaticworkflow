@@ -1,29 +1,27 @@
 import pytest
-from src.processes.enums import (
-    DirectlyStatus
-)
-from src.processes.models import (
-    TaskPerformer
-)
-from src.processes.tests.fixtures import (
-    create_test_workflow,
-    create_test_user,
-    create_test_account,
-    create_test_guest,
+
+from src.notifications.services.websockets import (
+    WebSocketService,
 )
 from src.notifications.tasks import (
-    _send_workflow_event
+    _send_workflow_event,
 )
+from src.processes.enums import (
+    DirectlyStatus,
+)
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.serializers.workflows.events import (
     WorkflowEventSerializer,
 )
 from src.processes.services.events import (
-    WorkflowEventService
+    WorkflowEventService,
 )
-from src.notifications.services.websockets import (
-    WebSocketService,
+from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_guest,
+    create_test_user,
+    create_test_workflow,
 )
-
 
 pytestmark = pytest.mark.django_db
 
@@ -33,22 +31,22 @@ def test_send_workflow_event__system_task_event__ok(mocker):
     # arrange
     account = create_test_account(
         logo_lg='https://best.com/logo.jpg',
-        log_api_requests=True
+        log_api_requests=True,
     )
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     member = create_test_user(
         email='member@test.test',
         account=account,
         is_admin=False,
-        is_account_owner=False
+        is_account_owner=False,
     )
     create_test_user(
         email='not_member@test.test',
         account=account,
-        is_account_owner=False
+        is_account_owner=False,
     )
     create_test_user(email='another@test.test')
     guest = create_test_guest(account=account)
@@ -60,17 +58,17 @@ def test_send_workflow_event__system_task_event__ok(mocker):
 
     event = WorkflowEventService.task_started_event(
         task=task,
-        after_create_actions=False
+        after_create_actions=False,
     )
     data = WorkflowEventSerializer(instance=event).data
     websocket_service_init_mock = mocker.patch.object(
         WebSocketService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     websocket_notification_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService.send_workflow_event'
+        'WebSocketService.send_workflow_event',
     )
 
     # act
@@ -78,7 +76,7 @@ def test_send_workflow_event__system_task_event__ok(mocker):
         logging=account.log_api_requests,
         account_id=account.id,
         logo_lg=account.logo_lg,
-        data=data
+        data=data,
     )
 
     # assert
@@ -99,7 +97,7 @@ def test_send_workflow_event__system_task_event__ok(mocker):
             logo_lg=account.logo_lg,
             account_id=account.id,
             logging=account.log_api_requests,
-        )
+        ),
     ])
     websocket_notification_mock.has_calls([
         mocker.call(
@@ -119,7 +117,7 @@ def test_send_workflow_event__system_task_event__ok(mocker):
             user_email=guest.email,
             sync=True,
             data=data,
-        )
+        ),
     ])
 
 
@@ -129,18 +127,18 @@ def test_send_workflow_event__system_workflow_event__ok(mocker):
     account = create_test_account()
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     member = create_test_user(
         email='member@test.test',
         account=account,
         is_admin=False,
-        is_account_owner=False
+        is_account_owner=False,
     )
     create_test_user(
         email='not_member@test.test',
         account=account,
-        is_account_owner=False
+        is_account_owner=False,
     )
     create_test_user(email='another@test.test')
     guest = create_test_guest(account=account)
@@ -152,17 +150,17 @@ def test_send_workflow_event__system_workflow_event__ok(mocker):
     event = WorkflowEventService.workflow_ended_event(
         user=account_owner,
         workflow=workflow,
-        after_create_actions=False
+        after_create_actions=False,
     )
     data = WorkflowEventSerializer(instance=event).data
     websocket_service_init_mock = mocker.patch.object(
         WebSocketService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     websocket_notification_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService.send_workflow_event'
+        'WebSocketService.send_workflow_event',
     )
 
     # act
@@ -170,7 +168,7 @@ def test_send_workflow_event__system_workflow_event__ok(mocker):
         logging=account.log_api_requests,
         account_id=account.id,
         logo_lg=account.logo_lg,
-        data=data
+        data=data,
     )
 
     # assert
@@ -200,7 +198,7 @@ def test_send_workflow_event__system_workflow_event__ok(mocker):
             user_email=member.email,
             sync=True,
             data=data,
-        )
+        ),
     ])
 
 
@@ -210,18 +208,18 @@ def test_send_workflow_event__user_task_event__ok(mocker):
     account = create_test_account()
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     member = create_test_user(
         email='member@test.test',
         account=account,
         is_admin=False,
-        is_account_owner=False
+        is_account_owner=False,
     )
     create_test_user(
         email='not_member@test.test',
         account=account,
-        is_account_owner=False
+        is_account_owner=False,
     )
     create_test_user(email='another@test.test')
     guest = create_test_guest(account=account)
@@ -233,17 +231,17 @@ def test_send_workflow_event__user_task_event__ok(mocker):
     event = WorkflowEventService.task_complete_event(
         user=account_owner,
         task=task,
-        after_create_actions=False
+        after_create_actions=False,
     )
     data = WorkflowEventSerializer(instance=event).data
     websocket_service_init_mock = mocker.patch.object(
         WebSocketService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     websocket_notification_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService.send_workflow_event'
+        'WebSocketService.send_workflow_event',
     )
 
     # act
@@ -251,7 +249,7 @@ def test_send_workflow_event__user_task_event__ok(mocker):
         logging=account.log_api_requests,
         account_id=account.id,
         logo_lg=account.logo_lg,
-        data=data
+        data=data,
     )
 
     # assert
@@ -272,7 +270,7 @@ def test_send_workflow_event__user_task_event__ok(mocker):
             logo_lg=account.logo_lg,
             account_id=account.id,
             logging=account.log_api_requests,
-        )
+        ),
     ])
     websocket_notification_mock.has_calls([
         mocker.call(
@@ -292,7 +290,7 @@ def test_send_workflow_event__user_task_event__ok(mocker):
             user_email=guest.email,
             sync=True,
             data=data,
-        )
+        ),
     ])
 
 
@@ -302,18 +300,18 @@ def test_send_workflow_event__comment_event__ok(mocker):
     account = create_test_account()
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     member = create_test_user(
         email='member@test.test',
         account=account,
         is_admin=False,
-        is_account_owner=False
+        is_account_owner=False,
     )
     create_test_user(
         email='not_member@test.test',
         account=account,
-        is_account_owner=False
+        is_account_owner=False,
     )
     create_test_user(email='another@test.test')
     guest = create_test_guest(account=account)
@@ -326,17 +324,17 @@ def test_send_workflow_event__comment_event__ok(mocker):
         user=account_owner,
         task=workflow.tasks.get(number=1),
         text='Some text',
-        after_create_actions=False
+        after_create_actions=False,
     )
     data = WorkflowEventSerializer(instance=event).data
     websocket_service_init_mock = mocker.patch.object(
         WebSocketService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     websocket_notification_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService.send_workflow_event'
+        'WebSocketService.send_workflow_event',
     )
 
     # act
@@ -344,7 +342,7 @@ def test_send_workflow_event__comment_event__ok(mocker):
         logging=account.log_api_requests,
         account_id=account.id,
         logo_lg=account.logo_lg,
-        data=data
+        data=data,
     )
 
     # assert
@@ -365,7 +363,7 @@ def test_send_workflow_event__comment_event__ok(mocker):
             logo_lg=account.logo_lg,
             account_id=account.id,
             logging=account.log_api_requests,
-        )
+        ),
     ])
     websocket_notification_mock.has_calls([
         mocker.call(
@@ -385,7 +383,7 @@ def test_send_workflow_event__comment_event__ok(mocker):
             user_email=guest.email,
             sync=True,
             data=data,
-        )
+        ),
     ])
 
 
@@ -395,7 +393,7 @@ def test_send_workflow_event__directly_deleted_guest__skip(mocker):
     account = create_test_account()
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
 
     guest = create_test_guest(account=account)
@@ -404,24 +402,24 @@ def test_send_workflow_event__directly_deleted_guest__skip(mocker):
     TaskPerformer.objects.create(
         task=task,
         user=guest,
-        directly_status=DirectlyStatus.DELETED
+        directly_status=DirectlyStatus.DELETED,
     )
 
     event = WorkflowEventService.comment_created_event(
         user=account_owner,
         task=task,
         text='Some text',
-        after_create_actions=False
+        after_create_actions=False,
     )
     data = WorkflowEventSerializer(instance=event).data
     websocket_service_init_mock = mocker.patch.object(
         WebSocketService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     websocket_notification_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService.send_workflow_event'
+        'WebSocketService.send_workflow_event',
     )
 
     # act
@@ -429,7 +427,7 @@ def test_send_workflow_event__directly_deleted_guest__skip(mocker):
         logging=account.log_api_requests,
         account_id=account.id,
         logo_lg=account.logo_lg,
-        data=data
+        data=data,
     )
 
     # assert
@@ -440,7 +438,7 @@ def test_send_workflow_event__directly_deleted_guest__skip(mocker):
             logo_lg=account.logo_lg,
             account_id=account.id,
             logging=account.log_api_requests,
-        )
+        ),
     ])
     websocket_notification_mock.has_calls([
         mocker.call(
@@ -448,7 +446,7 @@ def test_send_workflow_event__directly_deleted_guest__skip(mocker):
             user_email=account_owner.email,
             sync=True,
             data=data,
-        )
+        ),
     ])
 
 
@@ -458,12 +456,12 @@ def test_send_workflow_event__another_task_guest__ok(mocker):
     account = create_test_account()
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(
         account_owner,
         tasks_count=3,
-        active_task_number=2
+        active_task_number=2,
     )
 
     task_1 = workflow.tasks.get(number=1)
@@ -482,17 +480,17 @@ def test_send_workflow_event__another_task_guest__ok(mocker):
         user=account_owner,
         task=workflow.tasks.get(number=1),
         text='Some text',
-        after_create_actions=False
+        after_create_actions=False,
     )
     data = WorkflowEventSerializer(instance=event).data
     websocket_service_init_mock = mocker.patch.object(
         WebSocketService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     websocket_notification_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService.send_workflow_event'
+        'WebSocketService.send_workflow_event',
     )
 
     # act
@@ -500,7 +498,7 @@ def test_send_workflow_event__another_task_guest__ok(mocker):
         logging=account.log_api_requests,
         account_id=account.id,
         logo_lg=account.logo_lg,
-        data=data
+        data=data,
     )
 
     # assert
@@ -530,7 +528,7 @@ def test_send_workflow_event__another_task_guest__ok(mocker):
             user_email=guest_2.email,
             sync=True,
             data=data,
-        )
+        ),
     ])
 
 
@@ -540,14 +538,14 @@ def test_send_workflow_event__another_account_guest__ok(mocker):
     account = create_test_account()
     account_owner = create_test_user(
         is_account_owner=True,
-        account=account
+        account=account,
     )
     workflow = create_test_workflow(account_owner, tasks_count=1)
     event = WorkflowEventService.comment_created_event(
         user=account_owner,
         task=workflow.tasks.get(number=1),
         text='Some text',
-        after_create_actions=False
+        after_create_actions=False,
     )
     data = WorkflowEventSerializer(instance=event).data
 
@@ -555,11 +553,11 @@ def test_send_workflow_event__another_account_guest__ok(mocker):
     another_account_owner = create_test_user(
         is_account_owner=True,
         account=another_account,
-        email='another@test.test'
+        email='another@test.test',
     )
     another_workflow = create_test_workflow(
         another_account_owner,
-        tasks_count=1
+        tasks_count=1,
     )
     guest = create_test_guest(account=another_account)
 
@@ -568,11 +566,11 @@ def test_send_workflow_event__another_account_guest__ok(mocker):
     websocket_service_init_mock = mocker.patch.object(
         WebSocketService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     websocket_notification_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService.send_workflow_event'
+        'WebSocketService.send_workflow_event',
     )
 
     # act
@@ -580,7 +578,7 @@ def test_send_workflow_event__another_account_guest__ok(mocker):
         logging=account.log_api_requests,
         account_id=account.id,
         logo_lg=account.logo_lg,
-        data=data
+        data=data,
     )
 
     # assert
@@ -591,12 +589,12 @@ def test_send_workflow_event__another_account_guest__ok(mocker):
             logo_lg=account.logo_lg,
             account_id=account.id,
             logging=account.log_api_requests,
-        )
+        ),
     ])
     websocket_notification_mock.has_calls([
         mocker.call(
             user_id=account_owner.id,
             sync=True,
             data=data,
-        )
+        ),
     ])

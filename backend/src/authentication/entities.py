@@ -1,4 +1,5 @@
-from typing import Optional
+from typing import NamedTuple, Optional
+
 from typing_extensions import TypedDict
 
 
@@ -10,3 +11,11 @@ class UserData(TypedDict):
     company_name: Optional[str]
     photo: Optional[str]
     job_title: Optional[str]
+
+
+class SSOConfigData(NamedTuple):
+
+    client_id: str
+    client_secret: str
+    domain: str
+    redirect_uri: str

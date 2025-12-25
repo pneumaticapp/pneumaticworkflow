@@ -84,7 +84,7 @@ export function* fetchUsers(
     yield put(usersFetchFinished(sortedUsers));
   } catch (error) {
     if (showErrorNotification) {
-      NotificationManager.error({ title: 'users.faied-fetch', message: getErrorMessage(error) });
+      NotificationManager.notifyApiError(error, { title: 'users.faied-fetch', message: getErrorMessage(error) });
     }
 
     console.info('fetch users error : ', error);
@@ -109,7 +109,7 @@ export function* fetchPlan() {
     const currentPlan: TGetPlanResponse = yield call(getPlan);
     yield put(setCurrentPlan(currentPlan));
   } catch (error) {
-    NotificationManager.error({ title: 'plan.fetch-error', message: getErrorMessage(error) });
+    NotificationManager.notifyApiError(error, { title: 'plan.fetch-error', message: getErrorMessage(error) });
     console.info('fetch plan error : ', error);
     yield put(fetchCurrentPlanFailed());
     yield put(
@@ -154,7 +154,7 @@ function* saveUserAdmin({ payload: { isAdmin, email, id } }: TLoadChangeUserAdmi
   } catch (error) {
     console.info('fetch to toggle admin rights : ', error);
     NotificationManager.warning({
-      message: getErrorMessage(error)
+      message: getErrorMessage(error),
     });
 
     yield put(changeUserAdmin({ isAdmin: !isAdmin, email, id }));
@@ -249,7 +249,7 @@ function* startTrialSubscriptionSaga() {
     );
   } catch (error) {
     const message = getErrorMessage(error);
-    NotificationManager.error({ message });
+    NotificationManager.notifyApiError(error, { message });
     logger.error(`failed to start trial subscription: ${message}`);
   } finally {
     yield put(setGeneralLoaderVisibility(false));
@@ -267,7 +267,7 @@ function* startFreeSubscriptionSaga() {
     NotificationManager.success({ message: 'pricing.switched-to-free-plan' });
   } catch (error) {
     const message = getErrorMessage(error);
-    NotificationManager.error({ message });
+    NotificationManager.notifyApiError(error, { message });
     logger.error(`failed to start free subscription: ${message}`);
   } finally {
     yield put(setGeneralLoaderVisibility(false));

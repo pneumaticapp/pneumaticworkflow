@@ -1,14 +1,15 @@
 import os
+
 from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
-from django.forms import ModelForm, forms, CharField
+from django.forms import CharField, ModelForm, forms
 from django.utils.safestring import mark_safe
 from tinymce.widgets import TinyMCE
 
 from src.applications.models import Integration
-from src.storage.google_cloud import GoogleCloudService
 from src.processes.messages.workflow import MSG_PW_0001
+from src.storage.google_cloud import GoogleCloudService
 
 
 class IntegrationCreateForm(ModelForm):
@@ -28,19 +29,21 @@ class IntegrationCreateForm(ModelForm):
     image_file = forms.FileField(
         required=False,
         help_text='Logo of service we integrated with. '
-                  'Only svg files are supported!'
+                  'Only svg files are supported!',
     )
     long_description = CharField(
         widget=TinyMCE(),
-        help_text='Long description to be displayed on the integration page.'
+        help_text='Long description to be displayed on the integration page.',
     )
 
     def clean(self):
-        cleaned_data = super(IntegrationCreateForm, self).clean()
+        cleaned_data = super().clean()
         cleaned_file = cleaned_data.get("image_file")
-        if cleaned_file:
-            if os.path.splitext(cleaned_file.name)[1].lower() != '.svg':
-                self.add_error('image_file', 'SVG image required')
+        if (
+            cleaned_file
+            and os.path.splitext(cleaned_file.name)[1].lower() != '.svg'
+        ):
+            self.add_error('image_file', 'SVG image required')
         return cleaned_data
 
     def clean_image_file(self):
@@ -53,17 +56,17 @@ class IntegrationCreateForm(ModelForm):
 
         image = self.cleaned_data.get('image_file', None)
         if not image:
-            return super(IntegrationCreateForm, self).save(commit=commit)
+            return super().save(commit=commit)
 
         file_path = image.name.replace(' ', '_')
         storage = GoogleCloudService()
-        public_url = storage.upload_from_binary(
+        file_url = storage.upload_from_binary(
             filepath=file_path,
             binary=image.file.getvalue(),
-            content_type='image/svg+xml'
+            content_type='image/svg+xml',
         )
-        integration = super(IntegrationCreateForm, self).save(commit=commit)
-        integration.logo = public_url
+        integration = super().save(commit=commit)
+        integration.logo = file_url
         integration.save()
         return integration
 
@@ -73,7 +76,7 @@ class IntegrationAdmin(ModelAdmin):
 
     def logo_preview(self, obj):
         return mark_safe(
-            f'<image src={obj.logo} style="max-width: 200px;">'
+            f'<image src={obj.logo} style="max-width: 200px;">',
         )
 
     readonly_fields = ['id', 'logo_preview']

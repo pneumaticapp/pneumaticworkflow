@@ -1,9 +1,8 @@
-from django.utils.translation import gettext_lazy as _
 from django.utils.text import format_lazy
-
+from django.utils.translation import gettext_lazy as _
 
 MSG_NF_0001 = lambda reaction: _('Reacted {reaction} to your comment').format(
-    reaction=reaction
+    reaction=reaction,
 )
 MSG_NF_0002 = _('You have a new task')
 MSG_NF_0003 = _('Task was returned')
@@ -21,3 +20,9 @@ MSG_NF_0011 = lambda workflow_name, task_name: format_lazy(
 MSG_NF_0012 = _('Task was completed')
 MSG_NF_0013 = _('You have unread notifications')
 MSG_NF_0014 = _('Password reset')
+MSG_NF_0015 = _('Profile was deactivated')
+MSG_NF_0016 = _('Profile was transfer')
+MSG_NF_0017 = _('Profile was verify')
+MSG_NF_0018 = _('Send workflows digest')
+MSG_NF_0019 = _('Send tasks digest')
+MSG_NF_0020 = _('Join your team')

@@ -1,32 +1,31 @@
-import pytest
 from datetime import timedelta
-from django.utils import timezone
+
+import pytest
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from src.authentication.enums import (
-    AuthTokenType
-)
-from src.accounts.services.exceptions import (
-    AccountServiceException
-)
-from src.payment.enums import BillingPeriod
+from django.utils import timezone
+
 from src.accounts.enums import (
+    BillingPlanType,
     LeaseLevel,
     UserStatus,
-    BillingPlanType,
 )
-from src.accounts.services import (
-    AccountService
+from src.accounts.services.account import AccountService
+from src.accounts.services.exceptions import (
+    AccountServiceException,
 )
+from src.authentication.enums import (
+    AuthTokenType,
+)
+from src.payment.enums import BillingPeriod
+from src.payment.stripe.exceptions import StripeServiceException
+from src.payment.stripe.service import StripeService
 from src.processes.tests.fixtures import (
-    create_test_guest,
-    create_test_user,
     create_invited_user,
     create_test_account,
+    create_test_guest,
+    create_test_user,
 )
-from src.payment.stripe.service import StripeService
-from src.payment.stripe.exceptions import StripeServiceException
-
 
 pytestmark = pytest.mark.django_db
 UserModel = get_user_model()
@@ -35,12 +34,12 @@ UserModel = get_user_model()
 @pytest.mark.parametrize('billing_sync', (True, False))
 def test_create_tenant__master_account_on_premium__inherit_plan(
     billing_sync,
-    mocker
+    mocker,
 ):
 
     # arrange
     settings_mock = mocker.patch(
-        'src.accounts.services.account.settings'
+        'src.accounts.services.account.settings',
     )
     settings_mock.PROJECT_CONF = {'BILLING': True}
     trial_start = timezone.now() - timedelta(days=30)
@@ -55,7 +54,7 @@ def test_create_tenant__master_account_on_premium__inherit_plan(
         trial_ended=trial_ended,
         trial_end=trial_end,
         trial_start=trial_start,
-        billing_sync=billing_sync
+        billing_sync=billing_sync,
     )
     tenant_name = 'test tenant name'
     service = AccountService()
@@ -63,7 +62,7 @@ def test_create_tenant__master_account_on_premium__inherit_plan(
     # act
     tenant_account = service._create_tenant(
         tenant_name=tenant_name,
-        master_account=master_account
+        master_account=master_account,
     )
 
     # assert
@@ -87,12 +86,12 @@ def test_create_tenant__master_account_on_premium__inherit_plan(
 
 
 def test_create_tenant__master_account_on_fractionalcoo__set_plan_freemium(
-    mocker
+    mocker,
 ):
 
     # arrange
     settings_mock = mocker.patch(
-        'src.accounts.services.account.settings'
+        'src.accounts.services.account.settings',
     )
     settings_mock.PROJECT_CONF = {'BILLING': True}
     trial_start = timezone.now() - timedelta(days=30)
@@ -107,7 +106,7 @@ def test_create_tenant__master_account_on_fractionalcoo__set_plan_freemium(
         trial_ended=trial_ended,
         trial_end=trial_end,
         trial_start=trial_start,
-        billing_sync=True
+        billing_sync=True,
     )
     tenant_name = 'test tenant name'
     service = AccountService()
@@ -115,7 +114,7 @@ def test_create_tenant__master_account_on_fractionalcoo__set_plan_freemium(
     # act
     tenant_account = service._create_tenant(
         tenant_name=tenant_name,
-        master_account=master_account
+        master_account=master_account,
     )
 
     # assert
@@ -139,12 +138,12 @@ def test_create_tenant__master_account_on_fractionalcoo__set_plan_freemium(
 
 
 def test_create_tenant__master_account_on_freemium__set_plan_freemium(
-    mocker
+    mocker,
 ):
 
     # arrange
     settings_mock = mocker.patch(
-        'src.accounts.services.account.settings'
+        'src.accounts.services.account.settings',
     )
     settings_mock.PROJECT_CONF = {'BILLING': True}
     master_account = create_test_account(
@@ -156,7 +155,7 @@ def test_create_tenant__master_account_on_freemium__set_plan_freemium(
         trial_ended=False,
         trial_end=None,
         trial_start=None,
-        billing_sync=True
+        billing_sync=True,
     )
     tenant_name = 'test tenant name'
     service = AccountService()
@@ -164,7 +163,7 @@ def test_create_tenant__master_account_on_freemium__set_plan_freemium(
     # act
     tenant_account = service._create_tenant(
         tenant_name=tenant_name,
-        master_account=master_account
+        master_account=master_account,
     )
 
     # assert
@@ -191,7 +190,7 @@ def test_create_tenant__master_account_on_unlimited__set_plan_is_null(mocker):
 
     # arrange
     settings_mock = mocker.patch(
-        'src.accounts.services.account.settings'
+        'src.accounts.services.account.settings',
     )
     settings_mock.PROJECT_CONF = {'BILLING': True}
     trial_start = timezone.now() - timedelta(days=30)
@@ -206,7 +205,7 @@ def test_create_tenant__master_account_on_unlimited__set_plan_is_null(mocker):
         trial_ended=trial_ended,
         trial_end=trial_end,
         trial_start=trial_start,
-        billing_sync=True
+        billing_sync=True,
     )
     tenant_name = 'test tenant name'
     service = AccountService()
@@ -214,7 +213,7 @@ def test_create_tenant__master_account_on_unlimited__set_plan_is_null(mocker):
     # act
     tenant_account = service._create_tenant(
         tenant_name=tenant_name,
-        master_account=master_account
+        master_account=master_account,
     )
 
     # assert
@@ -238,12 +237,12 @@ def test_create_tenant__master_account_on_unlimited__set_plan_is_null(mocker):
 
 
 def test_create_tenant__master_account_on_unlimited_bs_disabled__inherit_plan(
-    mocker
+    mocker,
 ):
 
     # arrange
     settings_mock = mocker.patch(
-        'src.accounts.services.account.settings'
+        'src.accounts.services.account.settings',
     )
     settings_mock.PROJECT_CONF = {'BILLING': False}
     trial_ended = True
@@ -254,7 +253,7 @@ def test_create_tenant__master_account_on_unlimited_bs_disabled__inherit_plan(
         plan=BillingPlanType.UNLIMITED,
         period=BillingPeriod.MONTHLY,
         trial_ended=trial_ended,
-        billing_sync=True
+        billing_sync=True,
     )
     tenant_name = 'test tenant name'
     service = AccountService()
@@ -262,7 +261,7 @@ def test_create_tenant__master_account_on_unlimited_bs_disabled__inherit_plan(
     # act
     tenant_account = service._create_tenant(
         tenant_name=tenant_name,
-        master_account=master_account
+        master_account=master_account,
     )
 
     # assert
@@ -292,7 +291,7 @@ def test_create_instance__tenant__ok(mocker):
     create_tenant_mock = mocker.patch(
         'src.accounts.services.account.AccountService.'
         '_create_tenant',
-        return_value=tenant_account_mock
+        return_value=tenant_account_mock,
     )
     master_account = create_test_account()
     tenant_name = 'test tenant name'
@@ -301,14 +300,14 @@ def test_create_instance__tenant__ok(mocker):
     # act
     tenant_account = service._create_instance(
         tenant_name=tenant_name,
-        master_account=master_account
+        master_account=master_account,
     )
 
     # assert
     assert tenant_account == tenant_account_mock
     create_tenant_mock.assert_called_once_with(
         master_account=master_account,
-        tenant_name=tenant_name
+        tenant_name=tenant_name,
     )
 
 
@@ -320,7 +319,7 @@ def test_create_instance__ok(mocker):
         '_create_tenant',
     )
     settings_mock = mocker.patch(
-        'src.accounts.services.account.settings'
+        'src.accounts.services.account.settings',
     )
     settings_mock.PROJECT_CONF = {'BILLING': True}
     company_name = 'Name'
@@ -330,7 +329,7 @@ def test_create_instance__ok(mocker):
     account = service._create_instance(
         is_verified=True,
         name=company_name,
-        billing_sync=True
+        billing_sync=True,
     )
 
     # assert
@@ -379,7 +378,7 @@ def test_create_instance__disable_billing_sync__set_freemium_plan(mocker):
         '_create_tenant',
     )
     settings_mock = mocker.patch(
-        'src.accounts.services.account.settings'
+        'src.accounts.services.account.settings',
     )
     settings_mock.PROJECT_CONF = {'BILLING': True}
     company_name = 'Company'
@@ -414,7 +413,7 @@ def test_create_instance__disable_global_billing__set_freemium_plan(mocker):
         '_create_tenant',
     )
     settings_mock = mocker.patch(
-        'src.accounts.services.account.settings'
+        'src.accounts.services.account.settings',
     )
     settings_mock.PROJECT_CONF = {'BILLING': False}
     company_name = 'Company'
@@ -506,7 +505,7 @@ def test_get_cached_data__ok(mocker):
     get_cache_mock = mocker.patch(
         'src.accounts.services.account'
         '.AccountService._get_cache',
-        return_value=None
+        return_value=None,
     )
 
     # act
@@ -515,7 +514,7 @@ def test_get_cached_data__ok(mocker):
     # assert
     assert result == {
         'active_users': 2,
-        'tenants_active_users': 3
+        'tenants_active_users': 3,
     }
     get_cache_mock.assert_called_once_with(account.id)
 
@@ -526,12 +525,12 @@ def test_get_cached_data__from_cache__ok(mocker):
     account_id = 456
     account_cache = {
         'active_users': 2,
-        'tenants_active_users': 2
+        'tenants_active_users': 2,
     }
     get_cache_mock = mocker.patch(
         'src.accounts.services.account'
         '.AccountService._get_cache',
-        return_value=account_cache
+        return_value=account_cache,
     )
 
     # act
@@ -552,12 +551,12 @@ def test_get_cached_data__set_account_cache__ok(mocker):
     get_cache_mock = mocker.patch(
         'src.accounts.services.account'
         '.AccountService._get_cache',
-        return_value=None
+        return_value=None,
     )
     set_cache_mock = mocker.patch(
         'src.accounts.services.account'
         '.AccountService._set_cache',
-        return_value=account_cache
+        return_value=account_cache,
     )
 
     # act
@@ -568,7 +567,7 @@ def test_get_cached_data__set_account_cache__ok(mocker):
     get_cache_mock.assert_called_once_with(account.id)
     set_cache_mock.assert_called_once_with(
         key=account.id,
-        value=account
+        value=account,
     )
 
 
@@ -578,11 +577,11 @@ def test_get_cached_data__account_not_exists__raise_exception(mocker):
     get_cache_mock = mocker.patch(
         'src.accounts.services.account'
         '.AccountService._get_cache',
-        return_value=None
+        return_value=None,
     )
     set_cache_mock = mocker.patch(
         'src.accounts.services.account'
-        '.AccountService._set_cache'
+        '.AccountService._set_cache',
     )
 
     # act
@@ -604,48 +603,48 @@ def test_update_users_counts__standard__ok(mocker):
     create_test_user(
         account=account,
         email='test@test.test',
-        status=UserStatus.INACTIVE
+        status=UserStatus.INACTIVE,
     )
     create_test_guest(account=account)
 
     # First tenant
     tenant_account_1 = create_test_account(
         lease_level=LeaseLevel.TENANT,
-        master_account=account
+        master_account=account,
     )
     tenant_account_owner_1 = create_test_user(
         account=tenant_account_1,
-        email='tenant_owner@test.test'
+        email='tenant_owner@test.test',
     )
     create_invited_user(tenant_account_owner_1)
     create_test_user(
         account=tenant_account_1,
         email='inactive@test.test',
-        status=UserStatus.INACTIVE
+        status=UserStatus.INACTIVE,
     )
     create_test_guest(account=tenant_account_1)
 
     # Second tenant
     create_test_account(
         lease_level=LeaseLevel.TENANT,
-        master_account=account
+        master_account=account,
     )
     create_test_user(
         account=tenant_account_1,
-        email='tenant_owner2@test.test'
+        email='tenant_owner2@test.test',
     )
 
     set_cache_mock = mocker.patch(
         'src.accounts.services.account'
-        '.AccountService._set_cache'
+        '.AccountService._set_cache',
     )
     partial_update_mock = mocker.patch(
         'src.accounts.services.account'
-        '.AccountService.partial_update'
+        '.AccountService.partial_update',
     )
     service = AccountService(
         instance=account,
-        user=user
+        user=user,
     )
 
     # act
@@ -655,12 +654,12 @@ def test_update_users_counts__standard__ok(mocker):
     account.refresh_from_db()
     set_cache_mock.assert_called_once_with(
         key=account.id,
-        value=account
+        value=account,
     )
     partial_update_mock.assert_called_once_with(
         active_users=1,
         tenants_active_users=2,
-        force_save=True
+        force_save=True,
     )
 
 
@@ -668,32 +667,32 @@ def test_update_users_counts__tenant__ok(mocker):
 
     # arrange
     account = create_test_account(
-        plan=BillingPlanType.UNLIMITED
+        plan=BillingPlanType.UNLIMITED,
     )
     create_test_user(account=account)
     tenant_account = create_test_account(
         lease_level=LeaseLevel.TENANT,
-        master_account=account
+        master_account=account,
     )
     tenant_account_owner = create_test_user(
         account=tenant_account,
-        email='tenant_owner@test.test'
+        email='tenant_owner@test.test',
     )
     create_invited_user(tenant_account_owner)
     create_test_user(
         account=tenant_account,
         email='inactive@test.test',
-        status=UserStatus.INACTIVE
+        status=UserStatus.INACTIVE,
     )
     create_test_guest(account=tenant_account)
 
     set_cache_mock = mocker.patch(
         'src.accounts.services.account'
-        '.AccountService._set_cache'
+        '.AccountService._set_cache',
     )
     service = AccountService(
         instance=tenant_account,
-        user=tenant_account_owner
+        user=tenant_account_owner,
     )
 
     # act
@@ -705,12 +704,12 @@ def test_update_users_counts__tenant__ok(mocker):
     set_cache_mock.assert_has_calls([
         mocker.call(
             key=account.id,
-            value=account
+            value=account,
         ),
         mocker.call(
             key=tenant_account.id,
-            value=tenant_account
-        )
+            value=tenant_account,
+        ),
     ])
     tenant_account.refresh_from_db()
     assert tenant_account.active_users == 1
@@ -723,54 +722,54 @@ def test_update_users_counts__master__ok(mocker):
 
     # arrange
     account = create_test_account(
-        plan=BillingPlanType.UNLIMITED
+        plan=BillingPlanType.UNLIMITED,
     )
     account_owner = create_test_user(account=account)
     create_invited_user(account_owner)
     create_test_user(
         account=account,
         email='inactive1@test.test',
-        status=UserStatus.INACTIVE
+        status=UserStatus.INACTIVE,
     )
     create_test_guest(
         account=account,
-        email='guest1@test.test'
+        email='guest1@test.test',
     )
 
     # First tenant
     tenant_account_1 = create_test_account(
         lease_level=LeaseLevel.TENANT,
-        master_account=account
+        master_account=account,
     )
     tenant_account_owner_1 = create_test_user(
         account=tenant_account_1,
-        email='tenant_owner@test.test'
+        email='tenant_owner@test.test',
     )
     create_invited_user(tenant_account_owner_1)
     create_test_user(
         account=tenant_account_1,
         email='inactive@test.test',
-        status=UserStatus.INACTIVE
+        status=UserStatus.INACTIVE,
     )
     create_test_guest(account=tenant_account_1)
 
     # Second tenant
     create_test_account(
         lease_level=LeaseLevel.TENANT,
-        master_account=account
+        master_account=account,
     )
     create_test_user(
         account=tenant_account_1,
-        email='tenant_owner2@test.test'
+        email='tenant_owner2@test.test',
     )
 
     set_cache_mock = mocker.patch(
         'src.accounts.services.account'
-        '.AccountService._set_cache'
+        '.AccountService._set_cache',
     )
     service = AccountService(
         instance=account,
-        user=account_owner
+        user=account_owner,
     )
 
     # act
@@ -780,7 +779,7 @@ def test_update_users_counts__master__ok(mocker):
     account.refresh_from_db()
     set_cache_mock.assert_called_once_with(
         key=account.id,
-        value=account
+        value=account,
     )
     account.refresh_from_db()
     assert account.active_users == 1
@@ -792,7 +791,7 @@ def test_partial_update__ok(mocker):
     # arrange
     account = create_test_account(
         lease_level=LeaseLevel.STANDARD,
-        billing_sync=True
+        billing_sync=True,
     )
     user = create_test_user(account=account)
     logo_lg = 'http://site.com/logo_lg.img'
@@ -803,23 +802,23 @@ def test_partial_update__ok(mocker):
         user=user,
     )
     settings_mock = mocker.patch(
-        'src.accounts.services.account.settings'
+        'src.accounts.services.account.settings',
     )
     settings_mock.PROJECT_CONF = {'BILLING': True}
     group_mock = mocker.patch(
-        'src.analytics.mixins.BaseIdentifyMixin.group'
+        'src.analysis.mixins.BaseIdentifyMixin.group',
     )
     update_stripe_account_mock = mocker.patch(
         'src.accounts.services.account.'
-        'AccountService._update_stripe_account'
+        'AccountService._update_stripe_account',
     )
     update_tenants_mock = mocker.patch(
         'src.accounts.services.account.'
-        'AccountService._update_tenants'
+        'AccountService._update_tenants',
     )
     identify_users_mock = mocker.patch(
         'src.accounts.services.account.'
-        'AccountService._identify_users'
+        'AccountService._identify_users',
     )
 
     # act
@@ -827,7 +826,7 @@ def test_partial_update__ok(mocker):
         name=name,
         logo_lg=logo_lg,
         logo_sm=logo_sm,
-        force_save=True
+        force_save=True,
     )
 
     # assert
@@ -851,7 +850,7 @@ def test_partial_update__disabled_billing_sync__ok(mocker):
     # arrange
     account = create_test_account(
         lease_level=LeaseLevel.STANDARD,
-        billing_sync=False
+        billing_sync=False,
     )
     user = create_test_user(account=account)
     logo_lg = 'http://site.com/logo_lg.img'
@@ -862,23 +861,23 @@ def test_partial_update__disabled_billing_sync__ok(mocker):
         user=user,
     )
     settings_mock = mocker.patch(
-        'src.accounts.services.account.settings'
+        'src.accounts.services.account.settings',
     )
     settings_mock.PROJECT_CONF = {'BILLING': True}
     group_mock = mocker.patch(
-        'src.analytics.mixins.BaseIdentifyMixin.group'
+        'src.analysis.mixins.BaseIdentifyMixin.group',
     )
     update_stripe_account_mock = mocker.patch(
         'src.accounts.services.account.'
-        'AccountService._update_stripe_account'
+        'AccountService._update_stripe_account',
     )
     update_tenants_mock = mocker.patch(
         'src.accounts.services.account.'
-        'AccountService._update_tenants'
+        'AccountService._update_tenants',
     )
     identify_users_mock = mocker.patch(
         'src.accounts.services.account.'
-        'AccountService._identify_users'
+        'AccountService._identify_users',
     )
 
     # act
@@ -886,7 +885,7 @@ def test_partial_update__disabled_billing_sync__ok(mocker):
         name=name,
         logo_lg=logo_lg,
         logo_sm=logo_sm,
-        force_save=True
+        force_save=True,
     )
 
     # assert
@@ -914,23 +913,23 @@ def test_partial_update__disabled_billing__ok(mocker):
         user=user,
     )
     settings_mock = mocker.patch(
-        'src.accounts.services.account.settings'
+        'src.accounts.services.account.settings',
     )
     settings_mock.PROJECT_CONF = {'BILLING': False}
     group_mock = mocker.patch(
-        'src.analytics.mixins.BaseIdentifyMixin.group'
+        'src.analysis.mixins.BaseIdentifyMixin.group',
     )
     update_stripe_account_mock = mocker.patch(
         'src.accounts.services.account.'
-        'AccountService._update_stripe_account'
+        'AccountService._update_stripe_account',
     )
     update_tenants_mock = mocker.patch(
         'src.accounts.services.account.'
-        'AccountService._update_tenants'
+        'AccountService._update_tenants',
     )
     identify_users_mock = mocker.patch(
         'src.accounts.services.account.'
-        'AccountService._identify_users'
+        'AccountService._identify_users',
     )
 
     # act
@@ -938,7 +937,7 @@ def test_partial_update__disabled_billing__ok(mocker):
         name=name,
         logo_lg=logo_lg,
         logo_sm=logo_sm,
-        force_save=True
+        force_save=True,
     )
 
     # assert
@@ -979,11 +978,11 @@ def test_update_tenants__premium__ok():
     )
     tenant_account = create_test_account(
         lease_level=LeaseLevel.TENANT,
-        master_account=account
+        master_account=account,
     )
     not_tenant_account_1 = create_test_account(
         lease_level=LeaseLevel.STANDARD,
-        master_account=account
+        master_account=account,
     )
     not_tenant_account_2 = create_test_account(
         lease_level=LeaseLevel.TENANT,
@@ -991,11 +990,11 @@ def test_update_tenants__premium__ok():
     not_tenant_account_3 = create_test_account()
     not_tenant_account_4 = create_test_account(
         lease_level=LeaseLevel.PARTNER,
-        master_account=account
+        master_account=account,
     )
     service = AccountService(
         instance=account,
-        user=user
+        user=user,
     )
 
     # act
@@ -1032,7 +1031,7 @@ def test_update_tenants__premium__ok():
 
 @pytest.mark.parametrize(
     'plan',
-    (BillingPlanType.UNLIMITED, BillingPlanType.FRACTIONALCOO)
+    (BillingPlanType.UNLIMITED, BillingPlanType.FRACTIONALCOO),
 )
 def test_update_tenants__unlimited__ok(plan):
 
@@ -1064,7 +1063,7 @@ def test_update_tenants__unlimited__ok(plan):
     )
     not_tenant_account_1 = create_test_account(
         lease_level=LeaseLevel.STANDARD,
-        master_account=master_account
+        master_account=master_account,
     )
     not_tenant_account_2 = create_test_account(
         lease_level=LeaseLevel.TENANT,
@@ -1072,11 +1071,11 @@ def test_update_tenants__unlimited__ok(plan):
     not_tenant_account_3 = create_test_account()
     not_tenant_account_4 = create_test_account(
         lease_level=LeaseLevel.PARTNER,
-        master_account=master_account
+        master_account=master_account,
     )
     service = AccountService(
         instance=master_account,
-        user=user
+        user=user,
     )
 
     # act
@@ -1118,44 +1117,44 @@ def test_identify_users__premium__ok(mocker):
     account = create_test_account(
         plan=BillingPlanType.UNLIMITED,
         plan_expiration=timezone.now() + timedelta(days=1),
-        lease_level=LeaseLevel.STANDARD
+        lease_level=LeaseLevel.STANDARD,
     )
     user = create_test_user(account=account, is_account_owner=True)
     invited_user = create_test_user(
         account=account,
         email='invited@t.t',
         status=UserStatus.INVITED,
-        is_account_owner=False
+        is_account_owner=False,
     )
     create_test_user(
         account=account,
         email='inactive@t.t',
         status=UserStatus.INACTIVE,
-        is_account_owner=False
+        is_account_owner=False,
     )
     create_test_guest(
         email='guest@t.t',
-        account=account
+        account=account,
     )
 
     another_account = create_test_account(
         lease_level=LeaseLevel.STANDARD,
-        master_account=account
+        master_account=account,
     )
     create_test_user(
         account=another_account,
         email='another_user@test.test',
-        is_account_owner=True
+        is_account_owner=True,
     )
     create_test_guest(
         email='another_guest@t.t',
-        account=another_account
+        account=another_account,
     )
 
     # tenant accounts
     tenant_account = create_test_account(
         lease_level=LeaseLevel.TENANT,
-        master_account=account
+        master_account=account,
     )
     tenant_user = create_test_user(
         account=tenant_account,
@@ -1176,15 +1175,15 @@ def test_identify_users__premium__ok(mocker):
     )
     create_test_guest(
         email='guest_tenant@t.t',
-        account=tenant_account
+        account=tenant_account,
     )
 
     identify_users_mock = mocker.patch(
-        'src.analytics.tasks.identify_users.delay'
+        'src.analysis.tasks.identify_users.delay',
     )
     service = AccountService(
         instance=account,
-        user=user
+        user=user,
     )
 
     # act
@@ -1194,8 +1193,8 @@ def test_identify_users__premium__ok(mocker):
     identify_users_mock.assert_called_once_with(
         user_ids=(
             user.id, invited_user.id,
-            tenant_user.id, tenant_invited_user.id
-        )
+            tenant_user.id, tenant_invited_user.id,
+        ),
     )
 
 
@@ -1205,7 +1204,7 @@ def test_identify_users__lease_level_partner__ok(mocker):
     account = create_test_account(
         lease_level=LeaseLevel.PARTNER,
         plan=BillingPlanType.UNLIMITED,
-        plan_expiration=timezone.now() + timedelta(days=1)
+        plan_expiration=timezone.now() + timedelta(days=1),
     )
     user = create_test_user(account=account, is_account_owner=True)
     invited_user = create_test_user(
@@ -1222,12 +1221,12 @@ def test_identify_users__lease_level_partner__ok(mocker):
     )
     create_test_guest(
         email='guest@t.t',
-        account=account
+        account=account,
     )
 
     tenant_account = create_test_account(
         lease_level=LeaseLevel.TENANT,
-        master_account=account
+        master_account=account,
     )
     tenant_user = create_test_user(
         account=tenant_account,
@@ -1248,15 +1247,15 @@ def test_identify_users__lease_level_partner__ok(mocker):
     )
     create_test_guest(
         email='guest_tenant@t.t',
-        account=tenant_account
+        account=tenant_account,
     )
 
     identify_users_mock = mocker.patch(
-        'src.analytics.tasks.identify_users.delay'
+        'src.analysis.tasks.identify_users.delay',
     )
     service = AccountService(
         instance=account,
-        user=user
+        user=user,
     )
 
     # act
@@ -1266,8 +1265,8 @@ def test_identify_users__lease_level_partner__ok(mocker):
     identify_users_mock.assert_called_once_with(
         user_ids=(
             user.id, invited_user.id,
-            tenant_user.id, tenant_invited_user.id
-        )
+            tenant_user.id, tenant_invited_user.id,
+        ),
     )
 
 
@@ -1276,34 +1275,34 @@ def test_identify_users__expired_subscription__not_identify_tenants(mocker):
     account = create_test_account(
         lease_level=LeaseLevel.STANDARD,
         plan=BillingPlanType.PREMIUM,
-        plan_expiration=timezone.now() - timedelta(hours=1)
+        plan_expiration=timezone.now() - timedelta(hours=1),
     )
     user = create_test_user(account=account, is_account_owner=True)
     invited_user = create_test_user(
         account=account,
         email='invited@t.t',
         status=UserStatus.INVITED,
-        is_account_owner=False
+        is_account_owner=False,
     )
     create_test_user(
         account=account,
         email='inactive@t.t',
         status=UserStatus.INACTIVE,
-        is_account_owner=False
+        is_account_owner=False,
     )
     create_test_guest(
         email='guest@t.t',
-        account=account
+        account=account,
     )
 
     another_account = create_test_account(
         lease_level=LeaseLevel.STANDARD,
-        master_account=account
+        master_account=account,
     )
     create_test_user(
         account=another_account,
         email='another_user@test.test',
-        is_account_owner=True
+        is_account_owner=True,
     )
     create_test_guest(
         account=another_account,
@@ -1313,20 +1312,20 @@ def test_identify_users__expired_subscription__not_identify_tenants(mocker):
     # tenant accounts
     tenant_account = create_test_account(
         lease_level=LeaseLevel.TENANT,
-        master_account=account
+        master_account=account,
     )
     create_test_user(
         account=tenant_account,
         email='tenant_user@t.t',
-        is_account_owner=True
+        is_account_owner=True,
     )
 
     identify_users_mock = mocker.patch(
-        'src.analytics.tasks.identify_users.delay'
+        'src.analysis.tasks.identify_users.delay',
     )
     service = AccountService(
         instance=account,
-        user=user
+        user=user,
     )
 
     # act
@@ -1334,7 +1333,7 @@ def test_identify_users__expired_subscription__not_identify_tenants(mocker):
 
     # assert
     identify_users_mock.assert_called_once_with(
-        user_ids=(user.id, invited_user.id)
+        user_ids=(user.id, invited_user.id),
     )
 
 
@@ -1346,56 +1345,56 @@ def test_identify_users__free_plan__not_identify_tenants(mocker):
     )
     user = create_test_user(
         account=account,
-        is_account_owner=True
+        is_account_owner=True,
     )
     invited_user = create_test_user(
         account=account,
         email='invited@t.t',
         status=UserStatus.INVITED,
-        is_account_owner=False
+        is_account_owner=False,
     )
     create_test_user(
         account=account,
         email='inactive@t.t',
         status=UserStatus.INACTIVE,
-        is_account_owner=False
+        is_account_owner=False,
     )
     create_test_guest(
         email='guest@t.t',
-        account=account
+        account=account,
     )
 
     another_account = create_test_account(
         lease_level=LeaseLevel.STANDARD,
-        master_account=account
+        master_account=account,
     )
     create_test_user(
         account=another_account,
         email='another_user@test.test',
-        is_account_owner=True
+        is_account_owner=True,
     )
     create_test_guest(
         email='another_guest@t.t',
-        account=another_account
+        account=another_account,
     )
 
     # tenant accounts
     tenant_account = create_test_account(
         lease_level=LeaseLevel.TENANT,
-        master_account=account
+        master_account=account,
     )
     create_test_user(
         account=tenant_account,
         email='tenant_user@t.t',
-        is_account_owner=True
+        is_account_owner=True,
     )
 
     identify_users_mock = mocker.patch(
-        'src.analytics.tasks.identify_users.delay'
+        'src.analysis.tasks.identify_users.delay',
     )
     service = AccountService(
         instance=account,
-        user=user
+        user=user,
     )
 
     # act
@@ -1403,7 +1402,7 @@ def test_identify_users__free_plan__not_identify_tenants(mocker):
 
     # assert
     identify_users_mock.assert_called_once_with(
-        user_ids=(user.id, invited_user.id)
+        user_ids=(user.id, invited_user.id),
     )
 
 
@@ -1417,22 +1416,22 @@ def test_update_stripe_account__name_changed__ok(mocker):
     auth_type = AuthTokenType.API
     mocker.patch(
         'src.accounts.services.account.configuration',
-        settings.CONFIGURATION_PROD
+        settings.CONFIGURATION_PROD,
     )
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     stripe_service_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     service = AccountService(
         instance=account,
         user=user,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
 
     # act
@@ -1442,7 +1441,7 @@ def test_update_stripe_account__name_changed__ok(mocker):
     stripe_service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
     stripe_service_mock.assert_called_once()
 
@@ -1457,22 +1456,22 @@ def test_update_stripe_account__phone_changed__ok(mocker):
     auth_type = AuthTokenType.API
     mocker.patch(
         'src.accounts.services.account.configuration',
-        settings.CONFIGURATION_PROD
+        settings.CONFIGURATION_PROD,
     )
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     stripe_service_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     service = AccountService(
         instance=account,
         user=user,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
 
     # act
@@ -1482,7 +1481,7 @@ def test_update_stripe_account__phone_changed__ok(mocker):
     stripe_service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
     stripe_service_mock.assert_called_once()
 
@@ -1499,17 +1498,17 @@ def test_update_stripe_account__not_stripe_id__skip(mocker):
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     stripe_service_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     service = AccountService(
         instance=account,
         user=user,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
 
     # act
@@ -1536,17 +1535,17 @@ def test_update_stripe_account__tenant__skip(mocker):
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     stripe_service_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
-        'update_customer'
+        'update_customer',
     )
     service = AccountService(
         instance=account,
         user=user,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
 
     # act
@@ -1569,27 +1568,27 @@ def test_update_stripe_account__stripe_exc__log(mocker):
     stripe_service_init_mock = mocker.patch.object(
         StripeService,
         attribute='__init__',
-        return_value=None
+        return_value=None,
     )
     message = 'message'
     stripe_service_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
         'update_customer',
-        side_effect=StripeServiceException(message)
+        side_effect=StripeServiceException(message),
     )
     log_mock = mocker.patch(
         'src.accounts.services.account'
-        '.capture_sentry_message'
+        '.capture_sentry_message',
     )
     mocker.patch(
         'src.accounts.services.account.configuration',
-        settings.CONFIGURATION_PROD
+        settings.CONFIGURATION_PROD,
     )
     service = AccountService(
         instance=account,
         user=user,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
 
     # act
@@ -1599,7 +1598,7 @@ def test_update_stripe_account__stripe_exc__log(mocker):
     stripe_service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=is_superuser,
-        auth_type=auth_type
+        auth_type=auth_type,
     )
     stripe_service_mock.assert_called_once()
     log_mock.assert_called_once()

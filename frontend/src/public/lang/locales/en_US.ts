@@ -870,6 +870,7 @@ export const enMessages = {
   'workflows.filter-all-steps': 'All Steps',
   'workflows.filter-column-starter': 'Starter',
   'workflows.filter-column-progress': 'Progress',
+  'workflows.filter-column-template-name': 'Template name',
   'workflows.filter-column-step': 'Step',
   'workflows.filter-column-performers': 'Performers',
   'workflows.comment-edit': 'Edit',
@@ -883,7 +884,7 @@ export const enMessages = {
   'workflow.tune-view-tooltip': 'To fine-tune the table view — select a Template',
   'workflow.tune-view-modal-title': 'tune view',
   'workflow.tune-view-modal-applay-changes': 'Apply changes',
-
+  'workflow.tune-view-modal-save-for-all': 'Save for all',
   'snooze.day': 'For a day',
   'snooze.week': 'For a week',
   'snooze.month': 'For a month',
@@ -921,7 +922,7 @@ export const enMessages = {
   'kickoff.system-varibale': 'System',
   'kickoff.system-varibale-date': 'Date',
   'kickoff.system-varibale-template-name': 'Template name',
-
+  'kickoff.system-varibale-workflow-id': 'Workflow id',
   'sorting.date-asc': 'Oldest first',
   'sorting.date-desc': 'Newest first',
   'sorting.overdue': 'Overdue first',

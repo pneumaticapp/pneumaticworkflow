@@ -1,14 +1,14 @@
 import pytest
+
 from src.accounts.tokens import (
     VerificationToken,
 )
+from src.authentication import messages
+from src.authentication.enums import AuthTokenType
 from src.processes.tests.fixtures import (
     create_test_user,
 )
 from src.utils.validation import ErrorCode
-from src.authentication import messages
-from src.authentication.enums import AuthTokenType
-
 
 pytestmark = pytest.mark.django_db
 
@@ -22,9 +22,9 @@ class TestTokenVerificationView:
         account.is_verified = False
         account.save()
         token = str(VerificationToken.for_user(user))
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.accounts.services.user.'
-            'AnalyticService.account_verified'
+            'AnalyticService.account_verified',
         )
 
         # act
@@ -34,7 +34,7 @@ class TestTokenVerificationView:
         # assert
         assert response.status_code == 204
         assert account.is_verified is True
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             user=user,
             is_superuser=False,
             auth_type=AuthTokenType.USER,
@@ -45,16 +45,16 @@ class TestTokenVerificationView:
         self,
         mocker,
         api_client,
-        token
+        token,
     ):
         # arrange
         user = create_test_user()
         account = user.account
         account.is_verified = False
         account.save()
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.accounts.services.user.'
-            'AnalyticService.account_verified'
+            'AnalyticService.account_verified',
         )
 
         # act
@@ -67,23 +67,23 @@ class TestTokenVerificationView:
         assert response.data['code'] == ErrorCode.VALIDATION_ERROR
         assert response.data['message'] == message
         assert account.is_verified is False
-        analytics_mock.assert_not_called()
+        analysis_mock.assert_not_called()
 
     @pytest.mark.parametrize('token', ('', '?'))
     def test_user_checking__token_missing__validation_error(
         self,
         mocker,
         api_client,
-        token
+        token,
     ):
         # arrange
         user = create_test_user()
         account = user.account
         account.is_verified = False
         account.save()
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.accounts.services.user.'
-            'AnalyticService.account_verified'
+            'AnalyticService.account_verified',
         )
 
         # act
@@ -96,9 +96,9 @@ class TestTokenVerificationView:
         assert response.data['code'] == ErrorCode.VALIDATION_ERROR
         assert response.data['message'] == message
         assert account.is_verified is False
-        analytics_mock.assert_not_called()
+        analysis_mock.assert_not_called()
 
-    def test_double_user_checking__analytics_sent_once(
+    def test_double_user_checking__analysis_sent_once(
         self,
         mocker,
         api_client,
@@ -109,9 +109,9 @@ class TestTokenVerificationView:
         account.is_verified = False
         account.save()
         token = str(VerificationToken.for_user(user))
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.accounts.services.user.'
-            'AnalyticService.account_verified'
+            'AnalyticService.account_verified',
         )
 
         # act
@@ -123,7 +123,7 @@ class TestTokenVerificationView:
         assert response.status_code == 204
         assert response_2.status_code == 204
         assert account.is_verified is True
-        analytics_mock.assert_called_once_with(
+        analysis_mock.assert_called_once_with(
             user=user,
             is_superuser=False,
             auth_type=AuthTokenType.USER,
@@ -137,9 +137,9 @@ class TestTokenVerificationView:
         account.is_verified = False
         account.save()
         token = '12345'
-        analytics_mock = mocker.patch(
+        analysis_mock = mocker.patch(
             'src.accounts.services.user.'
-            'AnalyticService.account_verified'
+            'AnalyticService.account_verified',
         )
 
         # act
@@ -150,7 +150,7 @@ class TestTokenVerificationView:
         assert response.status_code == 400
         assert response.data['code'] == ErrorCode.VALIDATION_ERROR
         assert response.data['message'] == messages.MSG_AU_0008
-        analytics_mock.assert_not_called()
+        analysis_mock.assert_not_called()
 
 
 class TestVerificationTokenResendView:
@@ -166,8 +166,9 @@ class TestVerificationTokenResendView:
         account.is_verified = False
         account.save()
 
-        mailing_mock = mocker.patch(
-            'src.authentication.views.verification.EmailService'
+        send_verification_notification_mock = mocker.patch(
+            'src.authentication.views.verification.'
+            'send_verification_notification.delay',
         )
         api_client.token_authenticate(user)
 
@@ -175,12 +176,12 @@ class TestVerificationTokenResendView:
 
         assert response.status_code == 200
         assert response.data['email'] == user.email
-        mailing_mock.send_verification_email.assert_called()
+        send_verification_notification_mock.assert_called_once()
 
     def test_resend_mail__disable_verification__not_sent(
         self,
         mocker,
-        api_client
+        api_client,
     ):
         # arrange
         user = create_test_user(is_account_owner=True, is_admin=True)
@@ -188,8 +189,9 @@ class TestVerificationTokenResendView:
         account.is_verified = False
         account.save()
 
-        mailing_mock = mocker.patch(
-            'src.authentication.views.verification.EmailService'
+        send_verification_notification_mock = mocker.patch(
+            'src.authentication.views.verification.'
+            'send_verification_notification.delay',
         )
 
         api_client.token_authenticate(user)
@@ -200,17 +202,18 @@ class TestVerificationTokenResendView:
         # assert
         assert response.status_code == 200
         assert response.data['email'] == user.email
-        mailing_mock.send_verification_email.assert_not_called()
+        send_verification_notification_mock.assert_not_called()
 
     def test_resend_already_verified(self, mocker, api_client):
 
         user = create_test_user(is_account_owner=True, is_admin=True)
-        mailing_mock = mocker.patch(
-            'src.authentication.views.verification.EmailService'
+        send_verification_notification_mock = mocker.patch(
+            'src.authentication.views.verification.'
+            'send_verification_notification.delay',
         )
         api_client.token_authenticate(user)
 
         response = api_client.post('/auth/resend-verification')
 
         assert response.status_code == 200
-        mailing_mock.send_verification_email.assert_not_called()
+        send_verification_notification_mock.assert_not_called()
