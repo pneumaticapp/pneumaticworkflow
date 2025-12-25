@@ -9,7 +9,7 @@ from src.authentication.enums import ResetPasswordStatus
 from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_guest,
-    create_test_user,
+    create_test_user, create_test_admin,
 )
 from src.utils.validation import ErrorCode
 
@@ -328,6 +328,63 @@ class TestResetPasswordViewSet:
         assert response.data['details']['reason'] == message
         assert response.data['details']['name'] == 'new_password'
 
+    def test_create__sso_enabled_not_owner__raise_exception(
+        self,
+        mocker,
+        api_client,
+    ):
+        # arrange
+        user = create_test_admin()
+        settings_mock = mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
+        send_reset_password_notification_mock = mocker.patch(
+            'src.authentication.views.password.'
+            'send_reset_password_notification.delay',
+        )
+
+        # act
+        response = api_client.post(
+            '/auth/reset-password',
+            {
+                'email': user.email,
+            },
+        )
+
+        # assert
+        assert response.status_code == 400
+        send_reset_password_notification_mock.assert_not_called()
+
+    def test_confirm__sso_enabled_not_owner__raise_exception(
+        self,
+        mocker,
+        api_client,
+    ):
+        # arrange
+        user = create_test_admin()
+        token = str(ResetPasswordToken.for_user(user))
+        settings_mock = mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
+        user_change_password_mock = mocker.patch(
+            'src.accounts.services.user.UserService.change_password',
+        )
+
+        # act
+        response = api_client.post(
+            '/auth/reset-password/confirm',
+            {
+                'token': token,
+                'new_password': 'new_password123',
+            },
+        )
+
+        # assert
+        assert response.status_code == 400
+        user_change_password_mock.assert_not_called()
+
 
 class TestChangePassword:
 
@@ -535,3 +592,33 @@ class TestChangePassword:
         assert response.data['message'] == message
         assert response.data['details']['reason'] == message
         assert response.data['details']['name'] == 'new_password'
+
+    def test_change_password__sso_enabled_not_owner__raise_exception(
+        self,
+        mocker,
+        api_client,
+    ):
+        # arrange
+        user = create_test_admin()
+        user.set_password('12345')
+        user.save()
+        settings_mock = mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        settings_mock.PROJECT_CONF = {'SSO_AUTH': True}
+        user_change_password_mock = mocker.patch(
+            'src.accounts.services.user.UserService.change_password',
+        )
+        data = {
+            'old_password': '12345',
+            'new_password': 'new_password123',
+            'confirm_new_password': 'new_password123',
+        }
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.post('/auth/change-password', data=data)
+
+        # assert
+        assert response.status_code == 400
+        user_change_password_mock.assert_not_called()

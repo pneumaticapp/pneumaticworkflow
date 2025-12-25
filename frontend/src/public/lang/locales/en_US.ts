@@ -922,7 +922,7 @@ export const enMessages = {
   'kickoff.system-varibale': 'System',
   'kickoff.system-varibale-date': 'Date',
   'kickoff.system-varibale-template-name': 'Template name',
-
+  'kickoff.system-varibale-workflow-id': 'Workflow id',
   'sorting.date-asc': 'Oldest first',
   'sorting.date-desc': 'Newest first',
   'sorting.overdue': 'Overdue first',

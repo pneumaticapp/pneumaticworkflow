@@ -24,15 +24,15 @@ from src.accounts.services.exceptions import (
     UserIsPerformerException,
 )
 from src.accounts.validators import user_is_last_performer
-from src.analytics.mixins import BaseIdentifyMixin
-from src.analytics.services import AnalyticService
+from src.analysis.mixins import BaseIdentifyMixin
+from src.analysis.services import AnalyticService
 from src.authentication.tokens import PneumaticToken
 from src.generics.base.service import BaseModelService
 from src.notifications.tasks import send_user_deleted_notification
 from src.processes.services.remove_user_from_draft import (
     remove_user_from_draft,
 )
-from src.services.email import EmailService
+from src.notifications.tasks import send_user_deactivated_notification
 
 UserModel = get_user_model()
 
@@ -59,6 +59,8 @@ class UserService(
         timezone: Optional[str] = None,
         date_fmt: UserDateFormat = None,
         date_fdw: UserFirstDayWeek = None,
+        is_superuser: bool = False,
+        is_staff: bool = False,
         **kwargs,
     ) -> UserModel:
 
@@ -76,6 +78,9 @@ class UserService(
                 language = settings.LANGUAGE_CODE
             if timezone is None:
                 timezone = settings.TIME_ZONE
+            if not UserModel.objects.exists():
+                is_superuser = True
+                is_staff = True
         else:
             if date_fdw is None:
                 date_fdw = account.get_owner().date_fdw
@@ -102,6 +107,8 @@ class UserService(
                 timezone=timezone,
                 date_fmt=date_fmt,
                 date_fdw=date_fdw,
+                is_superuser=is_superuser,
+                is_staff=is_staff,
             )
         except IntegrityError as ex:
             raise AlreadyRegisteredException from ex
@@ -195,7 +202,12 @@ class UserService(
 
     @classmethod
     def _deactivate_actions(cls, user: UserModel):
-        EmailService.send_user_deactivated_email(user=user)
+        send_user_deactivated_notification.delay(
+            user_id=user.id,
+            user_email=user.email,
+            account_id=user.account_id,
+            logo_lg=user.account.logo_lg,
+        )
 
     @classmethod
     def _validate_deactivate(cls, user):

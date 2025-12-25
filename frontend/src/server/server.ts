@@ -5,24 +5,27 @@ import * as webpack from 'webpack';
 import * as devMiddleware from 'webpack-dev-middleware';
 import * as hotMiddleware from 'webpack-hot-middleware';
 
-import { mainHandler } from './handlers';
-import { authMiddleware, verificateAccountMiddleware } from './middleware';
+import { mainHandler, oAuthHandler, apiProxy } from './handlers';
+import { authMiddleware, verificateAccountMiddleware, forwardForSubdomain } from './middleware';
 import { getConfig, serverConfigToBrowser } from '../public/utils/getConfig';
-import { oauthGoogleHandler } from './handlers/oauthGoogleHandler';
-import { apiProxy } from './handlers/apiProxy';
 import { ERoutes } from '../public/constants/routes';
-import { invitesGoogleHandler } from './handlers/invitesGoogleHandler';
-import { forwardForSubdomain } from './middleware/forwardForSubdomain';
 import { setPublicAuthCookie } from './utils/cookie';
-import { oauthMicrosoftHandler } from './handlers/oauthMicrosoftHandler';
-import { oauthSSOHandler } from './handlers/oauthSSOHandler';
 import { getUserPublic } from './middleware/utils/getUserPublic';
 import { mapToCamelCase } from '../public/utils/mappers';
+import { SSOProvider } from './types';
 
 const webpackConfig = require('../../webpack.config');
 
 const { NODE_ENV = 'development'} = process.env;
 const devMode = NODE_ENV !== 'production';
+
+const isSSOAuth = process.env.SSO_AUTH !== 'no';
+const envSSOProvider = process.env.SSO_PROVIDER;
+
+
+const {
+  api: { urls },
+} = getConfig();
 
 export function initServer() {
   const webpackCompiler = webpack(webpackConfig);
@@ -47,7 +50,6 @@ export function initServer() {
   app.use('/assets/', express.static('assets'));
   app.use('/static/', express.static('public'));
 
-  /* API PATH */
   app.post('/api/:path(*)', apiProxy('post'));
   app.get('/api/:path(*)', apiProxy('get'));
   app.patch('/api/:path(*)', apiProxy('patch'));
@@ -63,9 +65,8 @@ export function initServer() {
     });
   });
 
-  /* FORM SUBDOMAIN */
   const formsRouter = express.Router();
-  formsRouter.get('/', (req, res) => res.redirect(301, mainPage));
+  formsRouter.get('/', (_, res) => res.redirect(301, mainPage));
   formsRouter.get('*', async (req, res) => {
     const token = /[^$/]+$/.exec(req.path)?.[0];
     let userPublic: any;
@@ -94,16 +95,19 @@ export function initServer() {
 
     return null;
   });
+
   app.use(forwardForSubdomain([formSubdomain], formsRouter));
-
-  /* ACCOUNT VERIFICATION */
   app.get(ERoutes.AccountVerificationLink, verificateAccountMiddleware);
+  app.get(ERoutes.OAuthGoogle, oAuthHandler(urls.getGoogleAuthUri, urls.getGoogleAuthToken));
+  app.get(ERoutes.OAuthMicrosoft, oAuthHandler(urls.getMicrosoftAuthUri, urls.getMicrosoftAuthToken));
 
-  app.get(ERoutes.OAuthGoogle, oauthGoogleHandler);
-  app.get(ERoutes.OAuthMicrosoft, oauthMicrosoftHandler);
-  app.get(ERoutes.OAuthSSO, oauthSSOHandler);
+  if (isSSOAuth && envSSOProvider === SSOProvider.Auth0) { 
+    app.get(ERoutes.OAuthSSOAuth0, oAuthHandler(urls.getSSOAuthUri, urls.getSSOAuthToken));
+  }
 
-  app.get(ERoutes.InvitesGoogle, invitesGoogleHandler);
+  if (isSSOAuth && envSSOProvider === SSOProvider.Okta) {
+    app.get(ERoutes.OAuthSSOOkta, oAuthHandler(urls.getSSOOktaUri, urls.getSSOOktaToken));
+  }
 
   app.get('*', authMiddleware);
   app.get('*', mainHandler);

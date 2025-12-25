@@ -19,7 +19,7 @@ const mapStateToProps = (state: IApplicationState, { task }: TOwnProps): TStoreP
       data: { kickoff, tasks, id },
     },
     authUser: { account },
-    teamInvites: { isInvitesPopupOpen: isTeamInvitesModalOpen },
+    team: { isInvitesPopupOpen: isTeamInvitesModalOpen },
   } = state;
   const isSubscribed = getIsUserSubsribed(state);
 

@@ -109,8 +109,8 @@ def test_publish__authenticated_user__ok(mocker):
         'src.processes.services.attachments.'
         'AttachmentService._publish_file',
     )
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService'
         '.attachments_uploaded',
     )
     service = AttachmentService(account=user.account)
@@ -125,7 +125,7 @@ def test_publish__authenticated_user__ok(mocker):
 
     # assert
     publish_file_mock.assert_called_once_with(url=attachment.url)
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         attachment=attachment,
         user=user,
         anonymous_id=None,
@@ -148,7 +148,7 @@ def test_publish__thumbnail__ok(mocker):
         'AttachmentService._publish_file',
     )
     mocker.patch(
-        'src.analytics.services.AnalyticService'
+        'src.analysis.services.AnalyticService'
         '.attachments_uploaded',
     )
     service = AttachmentService(account=user.account)
@@ -182,8 +182,8 @@ def test_publish__anonymous_user__ok(mocker):
         'src.processes.services.attachments.'
         'AttachmentService._publish_file',
     )
-    analytics_mock = mocker.patch(
-        'src.analytics.services.AnalyticService'
+    analysis_mock = mocker.patch(
+        'src.analysis.services.AnalyticService'
         '.attachments_uploaded',
     )
     anonymous_id = 'some id'
@@ -200,7 +200,7 @@ def test_publish__anonymous_user__ok(mocker):
 
     # assert
     publish_file_mock.assert_called_once_with(url=attachment.url)
-    analytics_mock.assert_called_once_with(
+    analysis_mock.assert_called_once_with(
         attachment=attachment,
         user=user,
         anonymous_id=anonymous_id,

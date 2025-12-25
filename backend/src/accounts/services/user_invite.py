@@ -31,23 +31,25 @@ from src.accounts.tokens import (
     InviteToken,
     TransferToken,
 )
-from src.analytics.mixins import (
+from src.analysis.mixins import (
     BaseIdentifyMixin,
 )
-from src.analytics.services import AnalyticService
+from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.tokens import PneumaticToken
 from src.logs.enums import AccountEventStatus
 from src.logs.service import AccountLogService
+from src.notifications.enums import EmailProvider
 from src.notifications.tasks import (
     send_user_created_notification,
     send_user_updated_notification,
+    send_invite_notification,
 )
 from src.payment.tasks import increase_plan_users
 from src.processes.services.system_workflows import (
     SystemWorkflowService,
 )
-from src.services.email import EmailService
+from src.notifications.tasks import send_user_transfer_notification
 
 UserModel = get_user_model()
 
@@ -164,11 +166,21 @@ class UserInviteService(
 
         self.identify(user)
         invite_token = self._get_invite_token(user)
-        AnalyticService.users_invited(
-            invite_to=user,
-            is_superuser=self.is_superuser,
-            invite_token=invite_token,
-        )
+        if settings.EMAIL_PROVIDER == EmailProvider.SMTP:
+            send_invite_notification.delay(
+                user_id=user.id,
+                user_email=user.email,
+                account_id=self.account.id,
+                token=invite_token,
+                logo_lg=self.account.logo_lg,
+                logging=self.account.log_api_requests,
+            )
+        else:
+            AnalyticService.users_invited(
+                invite_to=user,
+                is_superuser=self.is_superuser,
+                invite_token=invite_token,
+            )
         if self.account.log_api_requests:
             AccountLogService().email_message(
                 title=f'Email to: {user.email}: Invite sent',
@@ -179,7 +191,7 @@ class UserInviteService(
                 },
                 account_id=self.account.id,
                 status=AccountEventStatus.SUCCESS,
-                contractor='Customer.io',
+                contractor=settings.EMAIL_PROVIDER,
             )
         AnalyticService.users_invite_sent(
             invite_from=self.request_user,
@@ -198,11 +210,13 @@ class UserInviteService(
             current_account_user=current_account_user,
             another_account_user=another_account_user,
         )
-        EmailService.send_user_transfer_email(
-            email=another_account_user.email,
-            invited_by=self.request_user,
-            token=transfer_token_str,
+        send_user_transfer_notification.delay(
             user_id=current_account_user.id,
+            user_email=another_account_user.email,
+            account_id=self.request_user.account_id,
+            invited_by_name=self.request_user.get_full_name(),
+            company_name=self.request_user.account.name,
+            token=transfer_token_str,
             logo_lg=current_account_user.account.logo_lg,
         )
 

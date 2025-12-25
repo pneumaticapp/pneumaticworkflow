@@ -131,7 +131,7 @@ export function ExtraFieldCreatable({
     editField({ selections: newOptions });
   };
 
-  const renderKickoffOption = ({ value, id }: IExtraFieldSelection, optionIndex: number) => {
+  const renderKickoffOption = ({ value }: IExtraFieldSelection, optionIndex: number) => {
     const isActive = optionIndex === activeOptionIndex;
     const errorMessageIntl = validateCheckboxAndRadioField(value);
     const shouldShowError = Boolean(errorMessageIntl);

@@ -27,13 +27,6 @@ http {
     default_type application/octet-stream;
 
     ##
-    # SSL Settings
-    ##
-
-    ssl_protocols TLSv1 TLSv1.1 TLSv1.2;
-    ssl_prefer_server_ciphers on;
-
-    ##
     # Logging Settings
     ##
     log_format main '[$time_local] $remote_addr [Request: $status $request]';
@@ -42,6 +35,9 @@ http {
     access_log /var/log/nginx/access.log main;
     access_log /var/log/nginx/access-extended.log extended_fmt;
     error_log /var/log/nginx/error.log error;
+
+    # Global definition for 502 error page
+    error_page 502 /502.html;
 
     ##
     # Gzip Settings
@@ -66,12 +62,7 @@ http {
     }
 
     server {
-        listen ${BACKEND_PORT};
-        # Uncomment if using SSL
-        # listen 443 ssl;
-        # ssl_certificate     /etc/keys/backend_domain.crt;
-        # ssl_certificate_key /etc/keys/backend_domain.key;
-
+        listen 8001;
         root /var/www/html;
         index index.html index.nginx-debian.html;
 
@@ -93,6 +84,9 @@ http {
         }
         location /robots.txt {
             alias /var/www/robots.txt;
+        }
+        location = /502.html {
+            alias /var/www/html/502.html;
         }
     }
 
@@ -134,11 +128,6 @@ http {
     }
     server {
         listen 80;
-        # Uncomment if using SSL
-        # listen 443 ssl;
-        # ssl_certificate     /etc/keys/frontend_domain.crt;
-        # ssl_certificate_key /etc/keys/frontend_domain.key;
-
         root /var/www/html;
         index index.html index.nginx-debian.html;
 
@@ -158,6 +147,9 @@ http {
         location /robots.txt {
             alias /var/www/robots.txt;
         }
+        location = /502.html {
+            alias /var/www/html/502.html;
+        }
 
         expires $expires;
         gzip on;
@@ -171,15 +163,10 @@ http {
 
     server {
         listen 80;
-        # Uncomment if using SSL
-        # listen 443 ssl;
-        # ssl_certificate     /etc/keys/form_domain.crt;
-        # ssl_certificate_key /etc/keys/form_domain.key;
-
         root /var/www/html;
         index index.html index.nginx-debian.html;
 
-        server_name form.localhost;
+        server_name ${FORM_DOMAIN};
 
         location / {
             proxy_pass http://frontend;
@@ -194,6 +181,10 @@ http {
 
         location /robots.txt {
             alias /var/www/robots.txt;
+        }
+
+        location = /502.html {
+            alias /var/www/html/502.html;
         }
 
         expires $expires;

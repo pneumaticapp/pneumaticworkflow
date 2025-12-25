@@ -1,7 +1,13 @@
-from typing import Optional, Union
+from typing import Optional, Tuple, Union
+import base64
+import hashlib
+import secrets
 
+from cryptography.fernet import Fernet, InvalidToken
+from django.conf import settings
 from django.core.cache import caches
 from django.db.models import Model
+from django.utils.encoding import force_bytes
 from rest_framework.serializers import ModelSerializer
 
 
@@ -266,3 +272,62 @@ class CacheMixin(BaseClsCache):
         return self._delete_cache_value(
             key=self._get_cache_key(key),
         )
+
+
+class EncryptionMixin:
+
+    @staticmethod
+    def _generate_pkce() -> Tuple[str, str]:
+        """
+        Generates PKCE key pair for OAuth2 extended verification.
+
+        Creates code_verifier (random string) and code_challenge (SHA256 hash)
+        to protect against authorization code interception attacks.
+        Padding '=' symbols are removed from base64url strings as they're
+        not required in URL-safe encoding and make strings more compact.
+
+        Returns:
+            Tuple[str, str]: (code_verifier, code_challenge)
+        """
+        code_verifier = base64.urlsafe_b64encode(
+            secrets.token_bytes(64),
+        ).decode().rstrip('=')
+        code_challenge = base64.urlsafe_b64encode(
+            hashlib.sha256(code_verifier.encode()).digest(),
+        ).decode().rstrip('=')
+        return code_verifier, code_challenge
+
+    @classmethod
+    def _get_fernet_instance(cls) -> Fernet:
+        """
+        Returns Fernet instance for encryption/decryption.
+
+        Django SECRET_KEY cannot be used directly as Fernet requires exactly
+        32 bytes in base64url format. SECRET_KEY has variable length and may
+        contain arbitrary characters. SHA256 is used to derive a fixed-length
+        key (32 bytes) which is then base64url encoded.
+
+        Returns:
+            Fernet: Instance for cryptographic operations
+        """
+        if not hasattr(cls, "_fernet_instance"):
+            raw_key = hashlib.sha256(force_bytes(settings.SECRET_KEY)).digest()
+            cls._fernet_instance = Fernet(base64.urlsafe_b64encode(raw_key))
+        return cls._fernet_instance
+
+    @classmethod
+    def encrypt(cls, value: str) -> str:
+        return (
+            cls._get_fernet_instance()
+            .encrypt(value.encode('utf-8')).decode('utf-8')
+        )
+
+    @classmethod
+    def decrypt(cls, token: str) -> str:
+        try:
+            return (
+                cls._get_fernet_instance()
+                .decrypt(token.encode('utf-8')).decode('utf-8')
+            )
+        except InvalidToken as exc:
+            raise ValueError from exc

@@ -16,7 +16,7 @@ import {
   TUserCounter,
 } from '../../types/workflow';
 import { TUserListItem } from '../../types/user';
-import { IGroup } from '../../types/team';
+import { IGroup } from '../../redux/team/types';
 
 export interface IWorkflowsProps {
   workflowsLoadingStatus: EWorkflowsLoadingStatus;

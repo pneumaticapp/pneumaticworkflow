@@ -5,7 +5,7 @@ from rest_framework.decorators import action
 from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.viewsets import GenericViewSet
 
-from src.analytics.mixins import BaseIdentifyMixin
+from src.analysis.mixins import BaseIdentifyMixin
 from src.authentication.messages import MSG_AU_0003
 from src.authentication.permissions import MSAuthPermission
 from src.authentication.serializers import (
@@ -25,7 +25,10 @@ from src.authentication.throttling import (
     AuthMSAuthUriThrottle,
     AuthMSTokenThrottle,
 )
-from src.authentication.views.mixins import SignUpMixin
+from src.authentication.views.mixins import (
+    SignUpMixin,
+    SSORestrictionMixin,
+)
 from src.generics.mixins.views import CustomViewSetMixin
 from src.utils.logging import (
     SentryLogLevel,
@@ -37,6 +40,7 @@ UserModel = get_user_model()
 
 
 class MSAuthViewSet(
+    SSORestrictionMixin,
     SignUpMixin,
     CustomViewSetMixin,
     BaseIdentifyMixin,
@@ -72,6 +76,7 @@ class MSAuthViewSet(
         else:
             try:
                 user = UserModel.objects.active().get(email=user_data['email'])
+                self.check_sso_restrictions(user)
                 token = AuthService.get_auth_token(
                     user=user,
                     user_agent=request.headers.get(

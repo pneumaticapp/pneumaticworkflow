@@ -25,7 +25,7 @@ from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
     create_test_guest,
-    create_test_user,
+    create_test_user, create_test_owner,
 )
 
 pytestmark = pytest.mark.django_db
@@ -143,6 +143,109 @@ def test_create_instance__only_required_fields__set_defaults(mocker):
     assert user.timezone == tz
     assert user.date_fmt == UserDateFormat.PY_EUROPE_24
     assert user.date_fdw == UserFirstDayWeek.SATURDAY
+    random_password_mock.assert_called_once()
+    make_password_mock.assert_called_once_with(random_password)
+
+
+def test_create_instance__first_account_owner__is_superuser(mocker):
+
+    # arrange
+    account = create_test_account()
+    email = 'test@test.com'
+    random_password = '12123'
+    random_password_mock = mocker.patch(
+        'src.accounts.services.user.UserModel.'
+        'objects.make_random_password',
+        return_value=random_password,
+    )
+    safe_password = 'some safe password'
+    make_password_mock = mocker.patch(
+        'src.accounts.services.user.make_password',
+        return_value=safe_password,
+    )
+    service = UserService()
+
+    # act
+    user = service._create_instance(
+        account=account,
+        email=email,
+        is_account_owner=True,
+    )
+
+    # assert
+    assert user.account == account
+    assert user.email == email
+    assert user.is_superuser is True
+    assert user.is_staff is True
+    random_password_mock.assert_called_once()
+    make_password_mock.assert_called_once_with(random_password)
+
+
+def test_create_instance__not_first_account_owner__is_not_superuser(mocker):
+
+    # arrange
+    account = create_test_account()
+    create_test_owner(account=account)
+    email = 'test@test.com'
+    random_password = '12123'
+    random_password_mock = mocker.patch(
+        'src.accounts.services.user.UserModel.'
+        'objects.make_random_password',
+        return_value=random_password,
+    )
+    safe_password = 'some safe password'
+    make_password_mock = mocker.patch(
+        'src.accounts.services.user.make_password',
+        return_value=safe_password,
+    )
+    service = UserService()
+
+    # act
+    user = service._create_instance(
+        account=account,
+        email=email,
+    )
+
+    # assert
+    assert user.account == account
+    assert user.email == email
+    assert user.is_superuser is False
+    assert user.is_staff is False
+    random_password_mock.assert_called_once()
+    make_password_mock.assert_called_once_with(random_password)
+
+
+def test_create_instance__not_first_db_user__is_not_superuser(mocker):
+
+    # arrange
+    account = create_test_account()
+    create_test_owner()
+    email = 'test@test.com'
+    random_password = '12123'
+    random_password_mock = mocker.patch(
+        'src.accounts.services.user.UserModel.'
+        'objects.make_random_password',
+        return_value=random_password,
+    )
+    safe_password = 'some safe password'
+    make_password_mock = mocker.patch(
+        'src.accounts.services.user.make_password',
+        return_value=safe_password,
+    )
+    service = UserService()
+
+    # act
+    user = service._create_instance(
+        account=account,
+        email=email,
+        is_account_owner=True,
+    )
+
+    # assert
+    assert user.account == account
+    assert user.email == email
+    assert user.is_superuser is False
+    assert user.is_staff is False
     random_password_mock.assert_called_once()
     make_password_mock.assert_called_once_with(random_password)
 
@@ -1219,16 +1322,20 @@ def test_deactivate_actions__ok(mocker):
 
     # arrange
     user = create_test_user(status=UserStatus.INACTIVE)
-    send_user_deactivated_email_mock = mocker.patch(
-        'src.services.email.EmailService.'
-        'send_user_deactivated_email',
+    send_user_deactivated_notification_mock = mocker.patch(
+        'src.notifications.tasks.send_user_deactivated_notification.delay',
     )
 
     # act
     UserService._deactivate_actions(user)
 
     # assert
-    send_user_deactivated_email_mock.assert_called_once_with(user=user)
+    send_user_deactivated_notification_mock.assert_called_once_with(
+        user_id=user.id,
+        user_email=user.email,
+        account_id=user.account_id,
+        logo_lg=user.account.logo_lg,
+    )
 
 
 def test_change_password__ok():

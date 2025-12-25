@@ -5,6 +5,8 @@ import { getErrorMessage } from '../../utils/getErrorMessage';
 import { logger } from '../../utils/logger';
 import { history } from '../../utils/history';
 import {
+  createGroupFailed,
+  updateGroupFailed,
   EGroupsActions,
   loadGroupsSuccess,
   loadGroupSuccess,
@@ -14,7 +16,6 @@ import {
   updateGroupSuccess,
 } from '../actions';
 import { getGroups } from '../../api/team/getGroups';
-import { IGroup } from '../../types/team';
 import { createGroup } from '../../api/team/createGroup';
 import { deleteGroup } from '../../api/team/deleteGroup';
 import { NotificationManager } from '../../components/UI/Notifications';
@@ -24,6 +25,7 @@ import { updateGroupApi } from '../../api/team/updateGroupApi';
 import { getGroup } from '../../api/team/getGroup';
 import { ERoutes } from '../../constants/routes';
 import { EResponseStatuses } from '../../constants/defaultValues';
+import { IGroup } from '../team/types';
 
 function* loadGroupsSaga() {
   try {
@@ -57,6 +59,7 @@ function* createGroupSaga({ payload }: TCreateGroup) {
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to create group', error);
+    yield put(createGroupFailed());
   }
 }
 
@@ -68,6 +71,7 @@ function* updateGroupSaga({ payload }: TUpdateGroup) {
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to update group', error);
+    yield put(updateGroupFailed());
   }
 }
 

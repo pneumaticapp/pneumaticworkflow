@@ -2,6 +2,7 @@ from datetime import datetime, timedelta
 from typing import List, Optional, Tuple
 
 import pytz
+from celery import shared_task
 from celery.task import Task as TaskCelery
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -9,7 +10,6 @@ from django.db import transaction
 from django.utils import timezone
 from firebase_admin.exceptions import FirebaseError
 
-from celery import shared_task
 from src.accounts.enums import (
     NotificationType,
     UserStatus,
@@ -21,7 +21,7 @@ from src.accounts.serializers.notifications import (
     NotificationWorkflowSerializer,
 )
 from src.authentication.services.guest_auth import GuestJWTAuthService
-from src.celery import periodic_lock
+from src.celery_app import periodic_lock
 from src.executor import RawSqlExecutor
 from src.notifications.enums import (
     NotificationMethod,
@@ -67,6 +67,7 @@ __all__ = [
     'send_group_deleted_notification',
     'send_group_updated_notification',
     'send_guest_new_task',
+    'send_invite_notification',
     'send_mention_notification',
     'send_new_task_notification',
     'send_new_task_websocket',
@@ -76,13 +77,18 @@ __all__ = [
     'send_removed_task_notification',
     'send_reset_password_notification',
     'send_resumed_workflow_notification',
+    'send_tasks_digest_notification',
     'send_unread_notifications',
     'send_urgent_notification',
     'send_user_created_notification',
+    'send_user_deactivated_notification',
     'send_user_deleted_notification',
+    'send_user_transfer_notification',
     'send_user_updated_notification',
+    'send_verification_notification',
     'send_workflow_comment_watched',
     'send_workflow_event',
+    'send_workflows_digest_notification',
 ]
 
 
@@ -350,6 +356,174 @@ def send_overdue_task_notification():
     _send_overdue_task_notification()
 
 
+def _send_workflows_digest_notification(
+    user_id: int,
+    user_email: str,
+    account_id: int,
+    date_from: str,
+    date_to: str,
+    digest: dict,
+    logo_lg: Optional[str] = None,
+    logging: bool = False,
+):
+    """Send workflows digest notification through notification system."""
+    _send_notification(
+        method_name=NotificationMethod.workflows_digest,
+        user_id=user_id,
+        user_email=user_email,
+        account_id=account_id,
+        logo_lg=logo_lg,
+        logging=logging,
+        date_from=date_from,
+        date_to=date_to,
+        digest=digest,
+        sync=True,
+    )
+
+
+@shared_task(base=NotificationTask)
+def send_workflows_digest_notification(**kwargs):
+    _send_workflows_digest_notification(**kwargs)
+
+
+def _send_tasks_digest_notification(
+    user_id: int,
+    user_email: str,
+    account_id: int,
+    date_from: str,
+    date_to: str,
+    digest: dict,
+    logo_lg: Optional[str] = None,
+    logging: bool = False,
+):
+    """Send tasks digest notification through notification system."""
+    _send_notification(
+        method_name=NotificationMethod.tasks_digest,
+        user_id=user_id,
+        user_email=user_email,
+        account_id=account_id,
+        logo_lg=logo_lg,
+        logging=logging,
+        date_from=date_from,
+        date_to=date_to,
+        digest=digest,
+        sync=True,
+    )
+
+
+@shared_task(base=NotificationTask)
+def send_tasks_digest_notification(**kwargs):
+    _send_tasks_digest_notification(**kwargs)
+
+
+def _send_user_deactivated_notification(
+    user_id: int,
+    user_email: str,
+    account_id: int,
+    logo_lg: Optional[str] = None,
+    logging: bool = False,
+):
+    """Send user deactivated notification through notification system."""
+    _send_notification(
+        method_name=NotificationMethod.user_deactivated,
+        user_id=user_id,
+        user_email=user_email,
+        account_id=account_id,
+        logo_lg=logo_lg,
+        logging=logging,
+        sync=True,
+    )
+
+
+@shared_task(base=NotificationTask)
+def send_user_deactivated_notification(**kwargs):
+    _send_user_deactivated_notification(**kwargs)
+
+
+def _send_user_transfer_notification(
+    user_id: int,
+    user_email: str,
+    account_id: int,
+    invited_by_name: str,
+    company_name: str,
+    token: str,
+    logo_lg: Optional[str] = None,
+    logging: bool = False,
+):
+    """Send user transfer notification through notification system."""
+    _send_notification(
+        method_name=NotificationMethod.user_transfer,
+        user_id=user_id,
+        user_email=user_email,
+        account_id=account_id,
+        logo_lg=logo_lg,
+        logging=logging,
+        invited_by_name=invited_by_name,
+        company_name=company_name,
+        token=token,
+        sync=True,
+    )
+
+
+@shared_task(base=NotificationTask)
+def send_user_transfer_notification(**kwargs):
+    _send_user_transfer_notification(**kwargs)
+
+
+def _send_verification_notification(
+    user_id: int,
+    user_email: str,
+    account_id: int,
+    user_first_name: str,
+    token: str,
+    logo_lg: Optional[str] = None,
+    logging: bool = False,
+):
+    """Send verification notification through notification system."""
+    _send_notification(
+        method_name=NotificationMethod.verification,
+        user_id=user_id,
+        user_email=user_email,
+        account_id=account_id,
+        logo_lg=logo_lg,
+        logging=logging,
+        user_first_name=user_first_name,
+        token=token,
+        sync=True,
+    )
+
+
+@shared_task(base=NotificationTask)
+def send_verification_notification(**kwargs):
+    _send_verification_notification(**kwargs)
+
+
+def _send_invite_notification(
+    user_id: int,
+    user_email: str,
+    account_id: int,
+    token: str,
+    logo_lg: Optional[str] = None,
+    logging: bool = False,
+):
+    """Send invite notification through notification system."""
+    _send_notification(
+        method_name=NotificationMethod.invite,
+        account_id=account_id,
+        user_id=user_id,
+        user_email=user_email,
+        logo_lg=logo_lg,
+        logging=logging,
+        token=token,
+        sync=True,
+    )
+
+
+@shared_task(base=NotificationTask)
+def send_invite_notification(**kwargs):
+    _send_invite_notification(**kwargs)
+
+
 def _send_resumed_workflow_notification(
     logging: bool,
     author_id: int,
@@ -397,9 +571,7 @@ def _send_resumed_workflow_notification(
 
 
 @shared_task(base=NotificationTask)
-def send_resumed_workflow_notification(
-    **kwargs,
-):
+def send_resumed_workflow_notification(**kwargs):
     _send_resumed_workflow_notification(**kwargs)
 
 

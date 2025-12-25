@@ -3,15 +3,26 @@ import pytest
 from src.accounts.services import exceptions
 from src.accounts.services.reassign import ReassignService
 from src.processes.enums import (
-    FieldType,
+    ConditionAction,
     OwnerType,
     PerformerType,
+    PredicateOperator,
+    PredicateType,
 )
-from src.processes.models.templates.conditions import PredicateTemplate
-from src.processes.models.workflows.conditions import Predicate
+from src.processes.models.templates.conditions import (
+    ConditionTemplate,
+    PredicateTemplate,
+    RuleTemplate,
+)
+from src.processes.models.workflows.conditions import (
+    Condition,
+    Predicate,
+    Rule,
+)
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_admin,
     create_test_group,
     create_test_template,
     create_test_user,
@@ -1307,37 +1318,34 @@ class TestReassignService:
         )
         update_mock.assert_called_once_with(user_id=new_user.id)
 
-    def test_reassign_in_template_conditions__with_old_and_new_user__ok(
-        self,
-        mocker,
-    ):
+    def test_reassign_in_template_conditions__with_old_and_new_user__ok(self):
         # arrange
         account = create_test_account(name='test_account')
-        old_user = create_test_user(account=account, email='old@example.com')
-        new_user = create_test_user(account=account, email='new@example.com')
-
-        query_init_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'DeleteUserFromTemplateConditionsQuery.__init__',
-            return_value=None,
+        old_user = create_test_admin(account=account, email='old@example.com')
+        new_user = create_test_admin(account=account, email='new@example.com')
+        template = create_test_template(
+            old_user,
+            is_active=True,
+            tasks_count=1,
         )
-        query_get_sql_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'DeleteUserFromTemplateConditionsQuery.get_sql',
-            return_value=('SQL_QUERY', {'params': 'values'}),
+        task = template.tasks.get(number=1)
+        condition_template = ConditionTemplate.objects.create(
+            task=task,
+            action=ConditionAction.SKIP_TASK,
+            order=0,
+            template=template,
         )
-        sql_execute_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute',
+        rule_template = RuleTemplate.objects.create(
+            condition=condition_template,
+            template=template,
         )
-
-        filter_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'PredicateTemplate.objects.filter',
-            return_value=PredicateTemplate.objects.none(),
-        )
-        update_mock = mocker.patch.object(
-            filter_mock.return_value, 'update',
+        PredicateTemplate.objects.create(
+            rule=rule_template,
+            operator=PredicateOperator.EQUAL,
+            field_type=PredicateType.USER,
+            field='user_field',
+            user=old_user,
+            template=template,
         )
 
         service = ReassignService(old_user=old_user, new_user=new_user)
@@ -1346,51 +1354,205 @@ class TestReassignService:
         service._reassign_in_template_conditions()
 
         # assert
-        query_init_mock.assert_called_once_with(
-            user_to_delete=str(old_user.id),
-            user_to_substitution=str(new_user.id),
+        predicates = PredicateTemplate.objects.filter(
+            rule=rule_template,
+            field_type=PredicateType.USER,
+            field='user_field',
+            user=new_user,
         )
-        query_get_sql_mock.assert_called_once()
-        sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'},
-        )
-        filter_mock.assert_called_once_with(
-            field_type=FieldType.USER,
-            value=old_user.id,
-        )
-        update_mock.assert_called_once_with(value=new_user.id)
+        assert predicates.count() == 1
+        updated_predicate = predicates.first()
+        assert updated_predicate.group is None
+        assert not PredicateTemplate.objects.filter(
+            rule=rule_template,
+            field_type=PredicateType.USER,
+            field='user_field',
+            user=old_user,
+        ).exists()
 
-    def test_reassign_in_conditions__with_old_and_new_user__ok(
+    def test_reassign_in_template_conditions__with_old_and_new_group__ok(self):
+        # arrange
+        account = create_test_account(name='test_account')
+        user = create_test_admin(account=account, email='user@example.com')
+        old_group = create_test_group(account, name='old_group')
+        new_group = create_test_group(account, name='new_group')
+        template = create_test_template(
+            user,
+            is_active=True,
+            tasks_count=1,
+        )
+        task = template.tasks.get(number=1)
+        condition_template = ConditionTemplate.objects.create(
+            task=task,
+            action=ConditionAction.SKIP_TASK,
+            order=0,
+            template=template,
+        )
+        rule_template = RuleTemplate.objects.create(
+            condition=condition_template,
+            template=template,
+        )
+        PredicateTemplate.objects.create(
+            rule=rule_template,
+            operator=PredicateOperator.EQUAL,
+            field_type=PredicateType.GROUP,
+            field='group_field',
+            group=old_group,
+            template=template,
+        )
+
+        service = ReassignService(old_group=old_group, new_group=new_group)
+
+        # act
+        service._reassign_in_template_conditions()
+
+        # assert
+        predicates = PredicateTemplate.objects.filter(
+            rule=rule_template,
+            field_type=PredicateType.GROUP,
+            field='group_field',
+            group=new_group,
+        )
+        assert predicates.count() == 1
+        updated_predicate = predicates.first()
+        assert updated_predicate.user is None
+        assert not PredicateTemplate.objects.filter(
+            rule=rule_template,
+            field_type=PredicateType.GROUP,
+            field='group_field',
+            group=old_group,
+        ).exists()
+
+    def test_reassign_in_template_conditions__with_old_group_and_new_user__ok(
         self,
-        mocker,
     ):
         # arrange
         account = create_test_account(name='test_account')
-        old_user = create_test_user(account=account, email='old@example.com')
-        new_user = create_test_user(account=account, email='new@example.com')
+        user = create_test_admin(account=account, email='user@example.com')
+        old_group = create_test_group(account, name='old_group')
+        new_user = create_test_admin(account=account, email='new@example.com')
+        template = create_test_template(
+            user,
+            is_active=True,
+            tasks_count=1,
+        )
+        task = template.tasks.get(number=1)
+        condition_template = ConditionTemplate.objects.create(
+            task=task,
+            action=ConditionAction.SKIP_TASK,
+            order=0,
+            template=template,
+        )
+        rule_template = RuleTemplate.objects.create(
+            condition=condition_template,
+            template=template,
+        )
+        PredicateTemplate.objects.create(
+            rule=rule_template,
+            operator=PredicateOperator.EQUAL,
+            field_type=PredicateType.GROUP,
+            field='group_field',
+            group=old_group,
+            template=template,
+        )
 
-        query_init_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'DeleteUserFromConditionsQuery.__init__',
-            return_value=None,
+        service = ReassignService(old_group=old_group, new_user=new_user)
+
+        # act
+        service._reassign_in_template_conditions()
+
+        # assert
+        predicates = PredicateTemplate.objects.filter(
+            rule=rule_template,
+            field_type=PredicateType.USER,
+            field='group_field',
+            user=new_user,
         )
-        query_get_sql_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'DeleteUserFromConditionsQuery.get_sql',
-            return_value=('SQL_QUERY', {'params': 'values'}),
+        assert predicates.count() == 1
+        updated_predicate = predicates.first()
+        assert updated_predicate.group is None
+        assert not PredicateTemplate.objects.filter(
+            rule=rule_template,
+            field_type=PredicateType.GROUP,
+            field='group_field',
+            group=old_group,
+        ).exists()
+
+    def test_reassign_in_template_conditions__with_old_user_and_new_group__ok(
+        self,
+    ):
+        # arrange
+        account = create_test_account(name='test_account')
+        old_user = create_test_admin(account=account, email='old@example.com')
+        new_group = create_test_group(account, name='new_group')
+        template = create_test_template(
+            old_user,
+            is_active=True,
+            tasks_count=1,
         )
-        sql_execute_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'RawSqlExecutor.execute',
+        task = template.tasks.get(number=1)
+        condition_template = ConditionTemplate.objects.create(
+            task=task,
+            action=ConditionAction.SKIP_TASK,
+            order=0,
+            template=template,
+        )
+        rule_template = RuleTemplate.objects.create(
+            condition=condition_template,
+            template=template,
+        )
+        PredicateTemplate.objects.create(
+            rule=rule_template,
+            operator=PredicateOperator.EQUAL,
+            field_type=PredicateType.USER,
+            field='user_field',
+            user=old_user,
+            template=template,
         )
 
-        filter_mock = mocker.patch(
-            'src.accounts.services.reassign.'
-            'Predicate.objects.filter',
-            return_value=Predicate.objects.none(),
+        service = ReassignService(old_user=old_user, new_group=new_group)
+
+        # act
+        service._reassign_in_template_conditions()
+
+        # assert
+        predicates = PredicateTemplate.objects.filter(
+            rule=rule_template,
+            field_type=PredicateType.GROUP,
+            field='user_field',
+            group=new_group,
         )
-        update_mock = mocker.patch.object(
-            filter_mock.return_value, 'update',
+        assert predicates.count() == 1
+        updated_predicate = predicates.first()
+        assert updated_predicate.user is None
+        assert not PredicateTemplate.objects.filter(
+            rule=rule_template,
+            field_type=PredicateType.USER,
+            field='user_field',
+            user=old_user,
+        ).exists()
+
+    def test_reassign_in_conditions__with_old_and_new_user__ok(self):
+        # arrange
+        account = create_test_account(name='test_account')
+        old_user = create_test_admin(account=account, email='old@example.com')
+        new_user = create_test_admin(account=account, email='new@example.com')
+        workflow = create_test_workflow(old_user, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        condition = Condition.objects.create(
+            task=task,
+            action=ConditionAction.SKIP_TASK,
+            order=0,
+        )
+        rule = Rule.objects.create(
+            condition=condition,
+        )
+        Predicate.objects.create(
+            rule=rule,
+            operator=PredicateOperator.EQUAL,
+            field_type=PredicateType.USER,
+            field='user_field',
+            user=old_user,
         )
 
         service = ReassignService(old_user=old_user, new_user=new_user)
@@ -1399,16 +1561,155 @@ class TestReassignService:
         service._reassign_in_conditions()
 
         # assert
-        query_init_mock.assert_called_once_with(
-            user_to_delete=str(old_user.id),
-            user_to_substitution=str(new_user.id),
+        predicates = Predicate.objects.filter(
+            rule=rule,
+            field_type=PredicateType.USER,
+            field='user_field',
+            user=new_user,
         )
-        query_get_sql_mock.assert_called_once()
-        sql_execute_mock.assert_called_once_with(
-            'SQL_QUERY', {'params': 'values'},
+        assert predicates.count() == 1
+        updated_predicate = predicates.first()
+        assert updated_predicate.group is None
+        assert not Predicate.objects.filter(
+            rule=rule,
+            field_type=PredicateType.USER,
+            field='user_field',
+            user=old_user,
+        ).exists()
+
+    def test_reassign_in_conditions__with_old_and_new_group__ok(self):
+        # arrange
+        account = create_test_account(name='test_account')
+        user = create_test_admin(account=account, email='user@example.com')
+        old_group = create_test_group(account, name='old_group')
+        new_group = create_test_group(account, name='new_group')
+        workflow = create_test_workflow(user, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        condition = Condition.objects.create(
+            task=task,
+            action=ConditionAction.SKIP_TASK,
+            order=0,
         )
-        filter_mock.assert_called_once_with(
-            field_type=FieldType.USER,
-            value=old_user.id,
+        rule = Rule.objects.create(
+            condition=condition,
         )
-        update_mock.assert_called_once_with(value=new_user.id)
+        Predicate.objects.create(
+            rule=rule,
+            operator=PredicateOperator.EQUAL,
+            field_type=PredicateType.GROUP,
+            field='group_field',
+            group=old_group,
+        )
+
+        service = ReassignService(old_group=old_group, new_group=new_group)
+
+        # act
+        service._reassign_in_conditions()
+
+        # assert
+        predicates = Predicate.objects.filter(
+            rule=rule,
+            field_type=PredicateType.GROUP,
+            field='group_field',
+            group=new_group,
+        )
+        assert predicates.count() == 1
+        updated_predicate = predicates.first()
+        assert updated_predicate.user is None
+        assert not Predicate.objects.filter(
+            rule=rule,
+            field_type=PredicateType.GROUP,
+            field='group_field',
+            group=old_group,
+        ).exists()
+
+    def test_reassign_in_conditions__with_old_group_and_new_user__ok(self):
+        # arrange
+        account = create_test_account(name='test_account')
+        user = create_test_admin(account=account, email='user@example.com')
+        old_group = create_test_group(account, name='old_group')
+        new_user = create_test_admin(account=account, email='new@example.com')
+        workflow = create_test_workflow(user, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        condition = Condition.objects.create(
+            task=task,
+            action=ConditionAction.SKIP_TASK,
+            order=0,
+        )
+        rule = Rule.objects.create(
+            condition=condition,
+        )
+        Predicate.objects.create(
+            rule=rule,
+            operator=PredicateOperator.EQUAL,
+            field_type=PredicateType.GROUP,
+            field='group_field',
+            group=old_group,
+        )
+
+        service = ReassignService(old_group=old_group, new_user=new_user)
+
+        # act
+        service._reassign_in_conditions()
+
+        # assert
+        predicates = Predicate.objects.filter(
+            rule=rule,
+            field_type=PredicateType.USER,
+            field='group_field',
+            user=new_user,
+        )
+        assert predicates.count() == 1
+        updated_predicate = predicates.first()
+        assert updated_predicate.group is None
+        assert not Predicate.objects.filter(
+            rule=rule,
+            field_type=PredicateType.GROUP,
+            field='group_field',
+            group=old_group,
+        ).exists()
+
+    def test_reassign_in_conditions__with_old_user_and_new_group__ok(self):
+        # arrange
+        account = create_test_account(name='test_account')
+        old_user = create_test_admin(account=account, email='old@example.com')
+        new_group = create_test_group(account, name='new_group')
+        workflow = create_test_workflow(old_user, tasks_count=1)
+        task = workflow.tasks.get(number=1)
+        condition = Condition.objects.create(
+            task=task,
+            action=ConditionAction.SKIP_TASK,
+            order=0,
+        )
+        rule = Rule.objects.create(
+            condition=condition,
+        )
+        Predicate.objects.create(
+            rule=rule,
+            operator=PredicateOperator.EQUAL,
+            field_type=PredicateType.USER,
+            field='user_field',
+            user=old_user,
+        )
+
+        service = ReassignService(old_user=old_user, new_group=new_group)
+
+        # act
+        service._reassign_in_conditions()
+
+        # assert
+        predicates = Predicate.objects.filter(
+            rule=rule,
+            field_type=PredicateType.GROUP,
+            field='user_field',
+            group=new_group,
+        )
+        assert predicates.count() == 1
+        updated_predicate = predicates.first()
+        assert updated_predicate.user is None
+        assert not Predicate.objects.filter(
+            rule=rule,
+            field_type=PredicateType.USER,
+            field='user_field',
+            user=old_user,
+        ).exists()

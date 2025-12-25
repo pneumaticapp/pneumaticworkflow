@@ -8,7 +8,7 @@ from rest_framework.generics import (
 from src.accounts.tokens import (
     VerificationToken,
 )
-from src.analytics.mixins import BaseIdentifyMixin
+from src.analysis.mixins import BaseIdentifyMixin
 from src.authentication.permissions import (
     PrivateApiPermission,
     SignupPermission,
@@ -22,7 +22,7 @@ from src.generics.mixins.views import (
     AnonymousAccountMixin,
     BaseResponseMixin,
 )
-from src.services.email import EmailService
+from src.notifications.tasks import send_verification_notification
 
 UserModel = get_user_model()
 
@@ -53,10 +53,12 @@ class SignUpView(
     def after_signup(self, user: UserModel):
         account = user.account
         if settings.VERIFICATION_CHECK and not account.is_verified:
-            EmailService.send_verification_email(
-                user=user,
-                token=str(
-                    VerificationToken.for_user(user)),
+            send_verification_notification.delay(
+                user_id=user.id,
+                user_email=user.email,
+                account_id=account.id,
+                user_first_name=user.first_name,
+                token=str(VerificationToken.for_user(user)),
                 logo_lg=account.logo_lg,
             )
         self.inc_anonymous_user_account_counter(self.request)
