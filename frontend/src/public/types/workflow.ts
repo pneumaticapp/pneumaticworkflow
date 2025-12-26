@@ -313,7 +313,6 @@ export enum EInputNameBackgroundColor {
 
 export type TTemplateStepFilter = ITemplateStep & {
   count?: number;
-  apiName?: string; // optional and missing from ITemplateStep?
 };
 
 export type ITemplateFilterItem = ITemplateTitle & {
@@ -339,7 +338,7 @@ export interface IWorkflowsSettings {
   values: {
     statusFilter: EWorkflowsStatus;
     templatesIdsFilter: number[];
-    stepsIdsFilter: number[];
+    tasksApiNamesFilter: string[];
     performersIdsFilter: number[];
     performersGroupIdsFilter: number[];
     workflowStartersIdsFilter: number[];

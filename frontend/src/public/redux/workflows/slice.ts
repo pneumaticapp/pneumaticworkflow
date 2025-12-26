@@ -47,7 +47,7 @@ const initialWorkflowsList = {
 export const initialWorkflowsFilters: IWorkflowsSettings['values'] = {
   statusFilter: EWorkflowsStatus.Running,
   templatesIdsFilter: [],
-  stepsIdsFilter: [],
+  tasksApiNamesFilter: [],
   performersIdsFilter: [],
   performersGroupIdsFilter: [],
   workflowStartersIdsFilter: [],
@@ -228,8 +228,8 @@ const workflowsSlice = createSlice({
     setFilterTemplate: (state, action) => {
       updateWorkflowsFilterValue(state, 'templatesIdsFilter', action.payload);
     },
-    setFilterTemplateSteps: (state, action) => {
-      updateWorkflowsFilterValue(state, 'stepsIdsFilter', action.payload);
+    setFilterTemplateTasks: (state, action) => {
+      updateWorkflowsFilterValue(state, 'tasksApiNamesFilter', action.payload);
     },
     setFilterPerformers: (state, action) => {
       updateWorkflowsFilterValue(state, 'performersIdsFilter', action.payload);
@@ -398,7 +398,7 @@ export const {
   loadFilterStepsFailed,
   setFilterStatus,
   setFilterTemplate,
-  setFilterTemplateSteps,
+  setFilterTemplateTasks,
   setFilterPerformers,
   setFilterPerformersGroup,
   setFilterWorkflowStarters,

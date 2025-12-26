@@ -76,12 +76,12 @@ export function WorkflowsTable({
   users,
   workflowStartersCounters,
   workflowStartersIdsFilter,
-  stepsIdsFilter,
+  tasksApiNamesFilter,
   filterTemplates,
   performersIdsFilter,
   performersCounters,
   statusFilter,
-  setStepsFilter,
+  setTasksFilter,
   onSearch,
   loadWorkflowsList,
   removeWorkflowFromList,
@@ -136,8 +136,8 @@ export function WorkflowsTable({
   }, [searchQuery]);
 
   useEffect(() => {
-    if (workflowsLoadingStatus === EWorkflowsLoadingStatus.EmptyList && stepsIdsFilter.length) {
-      setStepsFilter([]);
+    if (workflowsLoadingStatus === EWorkflowsLoadingStatus.EmptyList && tasksApiNamesFilter.length) {
+      setTasksFilter([]);
     }
   }, [workflowsLoadingStatus]);
 
@@ -342,7 +342,7 @@ export function WorkflowsTable({
     workflowStartersIdsFilter.length,
     templatesIdsFilter.length,
     filterTemplates,
-    stepsIdsFilter.length,
+    tasksApiNamesFilter.length,
     performersIdsFilter.length,
     statusFilter,
     performersCounters,

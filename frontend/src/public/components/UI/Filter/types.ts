@@ -1,4 +1,3 @@
-
 export type TOptionId = number | string | null;
 export type TSubOption<IdKey extends string, LabelKey extends string> = TOptionBase<IdKey, LabelKey> & {
   count?: number;
@@ -15,7 +14,6 @@ export type TOptionBase<IdKey extends string, LabelKey extends string> = {
   count?: number;
 };
 
-
 export interface IFilterCommonProps<
   IdKey extends string,
   LabelKey extends string,
@@ -28,6 +26,7 @@ export interface IFilterCommonProps<
   isLoading?: boolean;
   optionIdKey: IdKey;
   optionLabelKey: LabelKey;
+  optionApiNameKey?: string;
   containerClassName?: string;
   withSearch?: boolean;
   selectedSubOptions?: TOptionId[];

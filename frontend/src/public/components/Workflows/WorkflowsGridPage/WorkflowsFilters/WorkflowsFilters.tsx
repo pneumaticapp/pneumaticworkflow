@@ -28,6 +28,7 @@ type TOptionTemplate = {
   name: string;
   subOptions?: {
     id: number;
+    apiName: string;
     name: React.ReactNode;
     number: number;
     count?: number;
@@ -37,10 +38,12 @@ type TOptionTemplate = {
 
 type TOptionTemplateStep = {
   id: number;
+  apiName: string;
   number: number;
   name: string | React.ReactNode;
 };
 
+// @deprecated
 export function WorkflowsFilters({
   sorting,
   areFiltersChanged,
@@ -54,11 +57,11 @@ export function WorkflowsFilters({
   groups,
   areUsersLoading = false,
   areFilterTemplatesLoading = false,
-  stepsIdsFilter,
+  tasksApiNamesFilter,
   performersCounters,
   workflowStartersCounters,
   clearFilters,
-  setStepsFilter,
+  setTasksFilter,
   loadTemplateSteps,
   setTemplatesFilter,
   setPerformersFilter,
@@ -71,12 +74,12 @@ export function WorkflowsFilters({
   const { formatMessage } = useIntl();
   const { useState, useEffect } = React;
 
-  // store steps ids in state to handle async setting
-  const [stepsIdsFilterState, setStepsFilterState] = useState(stepsIdsFilter);
+  // store tasks apiNames in state to handle async setting
+  const [tasksApiNamesFilterState, setTasksApiNamesFilterState] = useState(tasksApiNamesFilter);
 
   useEffect(() => {
-    setStepsFilter(stepsIdsFilterState);
-  }, [stepsIdsFilterState]);
+    setTasksFilter(tasksApiNamesFilterState);
+  }, [tasksApiNamesFilterState]);
 
   const onChangeSetting =
     <T extends unknown>(handleChange: (value: T) => void) =>
@@ -138,16 +141,16 @@ export function WorkflowsFilters({
     }
 
     const handleCheckSteps = (templateSteps: TOptionTemplateStep[]) => {
-      const checkedTemplateSteps = stepsIdsFilterState.filter((checkedStepId) => {
-        return templateSteps.some((templateStep) => templateStep.id === checkedStepId);
+      const checkedTemplateSteps = tasksApiNamesFilterState.filter((checkedTaskApiName) => {
+        return templateSteps.some((templateStep) => templateStep.apiName === checkedTaskApiName);
       });
 
       if (isArrayWithItems(checkedTemplateSteps)) {
         return;
       }
 
-      const newSubOptionsIds = templateSteps.map(({ id }) => id);
-      setStepsFilterState((prevFilters) => [...prevFilters, ...newSubOptionsIds]);
+      const newSubOptionsIds = templateSteps.map(({ apiName }) => apiName);
+      setTasksApiNamesFilterState((prevFilters) => [...prevFilters, ...newSubOptionsIds]);
     };
 
     loadTemplateSteps({
@@ -166,19 +169,21 @@ export function WorkflowsFilters({
       return;
     }
 
-    setStepsFilterState((prevFilters) => prevFilters.filter((id) => !subOptions.some((so) => so.id === id)));
+    setTasksApiNamesFilterState((prevFilters) =>
+      prevFilters.filter((taskApiName) => !subOptions.some((so) => so.apiName === taskApiName)),
+    );
   };
 
-  const onCheckTemplateStepOption = (templateId: number, stepId: number) => {
+  const onCheckTemplateStepOption = (templateId: number, taskApiName: string) => {
     if (!templatesIdsFilter.includes(templateId)) {
       setTemplatesFilter([...templatesIdsFilter, templateId]);
     }
 
-    setStepsFilterState((prevFilters) => [...prevFilters, stepId]);
+    setTasksApiNamesFilterState((prevFilters) => [...prevFilters, taskApiName]);
   };
 
-  const onUncheckTemplateStepOption = (templateId: number, stepId: number) => {
-    setStepsFilterState((prevFilters) => prevFilters.filter((s) => s !== stepId));
+  const onUncheckTemplateStepOption = (templateId: number, taskApiName: string) => {
+    setTasksApiNamesFilterState((prevFilters) => prevFilters.filter((s) => s !== taskApiName));
   };
 
   const onExpandTemplateOption = (checkedTemplate: TOptionTemplate) => {
@@ -245,11 +250,12 @@ export function WorkflowsFilters({
         optionsTitle={formatMessage({ id: 'workflows.filter-template-options' })}
         isLoading={areFilterTemplatesLoading}
         optionIdKey="id"
+        optionApiNameKey="apiName"
         optionLabelKey="name"
         changeFilter={(templates: number[]) => onChangeSetting(setTemplatesFilter)(templates)}
         isMultiple
         selectedOptions={templatesIdsFilter}
-        selectedSubOptions={stepsIdsFilter}
+        selectedSubOptions={tasksApiNamesFilterState}
         containerClassName={styles['filter']}
         onCheckOption={onCheckTemplateOption}
         onUncheckOption={onUncheckTemplateOption}

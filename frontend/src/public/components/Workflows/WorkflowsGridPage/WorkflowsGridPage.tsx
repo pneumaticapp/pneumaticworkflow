@@ -54,9 +54,9 @@ export const WorkflowsGridPage = function Workflows({
   workflowsList: { count, items },
   templatesFilter,
   searchText,
-  stepsIdsFilter,
+  tasksApiNamesFilter,
   onSearch,
-  setStepsFilter,
+  setTasksFilter,
   loadWorkflowsList,
   openWorkflowLogPopup,
   openSelectTemplateModal,
@@ -68,8 +68,8 @@ export const WorkflowsGridPage = function Workflows({
   const [isRunningNewWorkflow, setIsRunningNewWorkflow] = useState(false);
 
   React.useEffect(() => {
-    if (workflowsLoadingStatus === EWorkflowsLoadingStatus.EmptyList && stepsIdsFilter.length) {
-      setStepsFilter([]);
+    if (workflowsLoadingStatus === EWorkflowsLoadingStatus.EmptyList && tasksApiNamesFilter.length) {
+      setTasksFilter([]);
     }
   }, [workflowsLoadingStatus]);
 

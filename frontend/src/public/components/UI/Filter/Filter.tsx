@@ -16,6 +16,7 @@ import { Checkbox, InputField, Loader, RadioButton, TCheckboxTriState } from '..
 
 import styles from './Filter.css';
 
+// @deprecated
 export function Filter<IdKey extends string, LabelKey extends string, TOption extends TOptionBase<IdKey, LabelKey>>(
   props: TFilterProps<IdKey, LabelKey, TOption>,
 ) {
