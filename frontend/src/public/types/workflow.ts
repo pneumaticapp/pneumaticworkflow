@@ -37,7 +37,7 @@ export interface IWorkflowClientProperties {
   completedTasks: IWorkflowTaskClient[];
 
   areMultipleTasks: boolean;
-  namesMultipleTasks: Record<string, string>;
+  multipleTasksNamesByApiNames: Record<string, string>;
   oneActiveTaskName?: string | null;
   selectedUsers: RawPerformer[];
 

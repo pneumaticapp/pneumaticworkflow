@@ -295,7 +295,7 @@ export function WorkflowsTable({
                 </div>
             ),
             accessor: 'system-column-step',
-            Cell: ColumnCells.StepColumn,
+            Cell: ColumnCells.TaskColumn,
             width: savedGlobalWidths['system-column-step'] || ETableViewFieldsWidth['system-column-step'],
             minWidth: EColumnWidthMinWidth['system-column-step'],
             columnType: 'system-column-step',

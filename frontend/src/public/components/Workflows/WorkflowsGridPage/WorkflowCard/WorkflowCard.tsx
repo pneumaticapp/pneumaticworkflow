@@ -51,10 +51,10 @@ export const WorkflowCard = ({
     areOverdueTasks,
     areMultipleTasks,
     selectedUsers,
-    namesMultipleTasks,
+    multipleTasksNamesByApiNames,
   } = workflow;
 
-  const namesTooltip = areMultipleTasks && TaskNamesTooltipContent(namesMultipleTasks);
+  const namesTooltip = areMultipleTasks && TaskNamesTooltipContent(multipleTasksNamesByApiNames);
 
   const getSnoozedText = () => {
     if (!minDelay) return '';
