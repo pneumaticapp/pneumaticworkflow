@@ -62,8 +62,6 @@ import { mergePaths } from '../../utils/urls';
 import { createWebSocketChannel } from '../utils/createWebSocketChannel';
 import { getTaskListWithNewTask } from './utils/getTaskListWithNewTask';
 import { checkShouldInsertNewTask } from './utils/checkShouldInsertNewTask';
-import { ITemplateTitle } from '../../types/template';
-import { getTemplatesTitles } from '../../api/getTemplatesTitles';
 import { handleLoadTemplateVariables } from '../templates/saga';
 import { ETaskListStatus } from '../../components/Tasks/types';
 import { setCurrentTask } from '../actions';
@@ -71,6 +69,7 @@ import { getCurrentTask } from '../selectors/task';
 import { envWssURL } from '../../constants/enviroment';
 import { mapTasksToISOStringToRedux } from '../../utils/mappers';
 import { NotificationManager } from '../../components/UI/Notifications';
+import { getTemplatesTitlesByTasks, TGetTemplatesTitlesByTasksResponse } from '../../api/getTemplatesTitlesByTasks';
 
 export function* setDetailedTask(taskId: number) {
   yield put(setTaskListDetailedTaskId(taskId));
@@ -81,7 +80,7 @@ export function* removeTaskFromList(taskId: number) {
   const {
     taskList: initialTaskList,
     tasksSettings: {
-      filterValues: { templateIdFilter, stepIdFilter },
+      filterValues: { templateIdFilter, taskApiNameFilter },
     },
     tasksSearchText,
   }: IStoreTasks = yield select(getTasksStore);
@@ -100,7 +99,7 @@ export function* removeTaskFromList(taskId: number) {
     count: tasksCount - 1,
     offset: tasksOffset - 1,
   };
-  const withSettings = templateIdFilter || stepIdFilter || tasksSearchText;
+  const withSettings = templateIdFilter || taskApiNameFilter || tasksSearchText;
   const emptyListStatus = withSettings ? ETaskListStatus.LastFilteredTaskFinished : ETaskListStatus.LastTaskFinished;
   yield put(changeTaskList({ taskList: newTaskList, emptyListStatus }));
 }
@@ -127,7 +126,7 @@ function* fetchTaskList(offset: number, nextStatus: ETaskListStatus) {
     tasksSettings: {
       sorting,
       completionStatus,
-      filterValues: { templateIdFilter, stepIdFilter },
+      filterValues: { templateIdFilter, taskApiNameFilter },
     },
   }: IStoreTasks = yield select(getTasksStore);
   const isEmptyList = offset === 0;
@@ -144,7 +143,7 @@ function* fetchTaskList(offset: number, nextStatus: ETaskListStatus) {
       sorting,
       searchText,
       templateId: templateIdFilter,
-      templateStepId: stepIdFilter,
+      templateTaskApiName: taskApiNameFilter,
       status: completionStatus,
     });
     const formattedResults = mapTasksToISOStringToRedux(results);
@@ -153,7 +152,7 @@ function* fetchTaskList(offset: number, nextStatus: ETaskListStatus) {
       ? uniqBy([...taskList.items, ...formattedResults], 'id')
       : formattedResults;
 
-    const withSettings = templateIdFilter || stepIdFilter || searchText;
+    const withSettings = templateIdFilter || taskApiNameFilter || searchText;
     const emptyListStatus = withSettings ? ETaskListStatus.EmptySearchResult : ETaskListStatus.NoTasks;
     yield put(changeTaskList({ taskList: { count, offset, items }, emptyListStatus }));
 
@@ -210,9 +209,7 @@ export function* fetchTasksFilterTemplates() {
     const {
       tasksSettings: { completionStatus },
     }: IStoreTasks = yield select(getTasksStore);
-    const templates: ITemplateTitle[] = yield getTemplatesTitles({
-      withTasksInProgress: completionStatus === ETaskListCompletionStatus.Active,
-    });
+    const templates: TGetTemplatesTitlesByTasksResponse = yield getTemplatesTitlesByTasks(completionStatus);
     yield put(loadTasksFilterTemplatesSuccess(templates));
   } catch (error) {
     yield put(loadTasksFilterTemplatesFailed());

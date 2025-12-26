@@ -1,10 +1,11 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { matchPath } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
 import { TasksSortingContainer } from './TasksSortingContainer';
-import { loadWorkflowsList, TLoadTasksFilterStepsPayload } from '../../redux/actions';
+import { TLoadTasksFilterStepsPayload } from '../../redux/actions';
+import { loadWorkflowsList } from '../../redux/workflows/slice';
 import { TopNavContainer } from '../../components/TopNav';
 import { ERoutes } from '../../constants/routes';
 import { FilterIcon } from '../../components/icons';
@@ -18,7 +19,7 @@ import {
   ETaskListSorting,
   ITemplateStep,
 } from '../../types/tasks';
-import { ITemplateTitle } from '../../types/template';
+import { ITemplateTitleBaseWithCount } from '../../types/template';
 import { StepName } from '../../components/StepName';
 import { WorkflowModalContainer } from '../../components/Workflows/WorkflowModal';
 
@@ -28,10 +29,10 @@ export interface ITasksLayoutStoreProps {
   children?: React.ReactNode;
   isHasFilter: boolean;
   sorting: ETaskListSorting | ETaskListCompleteSorting;
-  filterTemplates: ITemplateTitle[];
+  filterTemplates: ITemplateTitleBaseWithCount[];
   filterSteps: ITemplateStep[];
   templateIdFilter: number | null;
-  stepIdFilter: number | null;
+  taskApiNameFilter: string | null;
   completionStatus: ETaskListCompletionStatus;
 }
 
@@ -39,7 +40,7 @@ export interface ITasksLayoutDispatchProps {
   loadTasksFilterTemplates(): void;
   loadTasksFilterSteps(payload: TLoadTasksFilterStepsPayload): void;
   setTasksFilterTemplate(value: number | null): void;
-  setTasksFilterStep(value: number | null): void;
+  setTasksFilterStep(apiName: string | null): void;
   closeWorkflowLogPopup(): void;
   changeTasksCompleteStatus(status: ETaskListCompletionStatus): void;
   clearFilters(): void;
@@ -55,7 +56,7 @@ export function TasksLayoutComponent({
   filterTemplates,
   filterSteps,
   templateIdFilter,
-  stepIdFilter,
+  taskApiNameFilter,
   completionStatus,
   loadTasksFilterTemplates,
   loadTasksFilterSteps,
@@ -68,6 +69,13 @@ export function TasksLayoutComponent({
 }: TTasksLayoutProps) {
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
+
+  const optionsWithoutCount = useMemo(() => {
+    return filterTemplates.map(({ id, name }) => ({
+      id,
+      name,
+    }));
+  }, [filterTemplates]);
 
   useEffect(() => {
     loadTasksFilterTemplates();
@@ -88,7 +96,7 @@ export function TasksLayoutComponent({
       return [];
     }
 
-    const options = filterSteps.map(({ name, id }) => {
+    const options = filterSteps.map(({ name, id, apiName }) => {
       const stepName =
         typeof name === 'string' ? <StepName initialStepName={name} templateId={templateIdFilter} /> : name;
 
@@ -96,6 +104,10 @@ export function TasksLayoutComponent({
         id,
         name: stepName,
         searchByText: reactElementToText(stepName),
+        apiName,
+        customClickHandler: () => {
+          setTasksFilterStep(apiName);
+        },
       };
     });
 
@@ -163,7 +175,7 @@ export function TasksLayoutComponent({
               noValueLabel={formatMessage({ id: 'sorting.all-templates' })}
               placeholderText={formatMessage({ id: 'sorting.no-template-found' })}
               selectedOption={templateIdFilter}
-              options={filterTemplates}
+              options={optionsWithoutCount}
               optionIdKey="id"
               optionLabelKey="name"
               onChange={setTasksFilterTemplate}
@@ -182,15 +194,15 @@ export function TasksLayoutComponent({
                 isSearchShown
                 noValueLabel={formatMessage({ id: 'sorting.all-steps' })}
                 placeholderText={formatMessage({ id: 'sorting.no-step-found' })}
-                selectedOption={stepIdFilter}
+                selectedOption={taskApiNameFilter}
                 options={getStepsFilterOptions()}
                 optionIdKey="id"
                 optionLabelKey="name"
-                onChange={setTasksFilterStep}
+                onChange={() => {}}
                 resetFilter={() => setTasksFilterStep(null)}
                 Icon={FilterIcon}
                 renderPlaceholder={(steps) => {
-                  const activeOption = steps.find((s) => s.id === stepIdFilter);
+                  const activeOption = steps.find((s) => s.apiName === taskApiNameFilter);
 
                   return activeOption?.name || formatMessage({ id: 'sorting.all-steps' });
                 }}

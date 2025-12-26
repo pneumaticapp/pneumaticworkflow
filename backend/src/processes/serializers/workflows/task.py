@@ -12,7 +12,6 @@ from src.processes.messages.workflow import (
     MSG_PW_0057,
     MSG_PW_0083,
 )
-from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.workflows.task import (
     Task,
     TaskForList,
@@ -191,8 +190,6 @@ class TaskListSerializer(serializers.ModelSerializer):
             'date_started_tsp',
             'date_completed_tsp',
             'template_id',
-            # TODO Remove in https://my.pneumatic.app/workflows/36988/
-            'template_task_id',
             'template_task_api_name',
             'is_urgent',
             'status',
@@ -213,18 +210,8 @@ class TaskListFilterSerializer(
     search = serializers.CharField(required=False)
     template_id = serializers.IntegerField(required=False)
     template_task_api_name = serializers.CharField(required=False)
-    # TODO Remove in https://my.pneumatic.app/workflows/36988/
-    template_task_id = serializers.IntegerField(required=False)
     limit = serializers.IntegerField(required=False)
     offset = serializers.IntegerField(required=False)
-
-    # TODO Remove in https://my.pneumatic.app/workflows/36988/
-    def validate(self, attrs):
-        if attrs.get('template_task_id') is not None:
-            task = TaskTemplate.objects.get(id=attrs['template_task_id'])
-            attrs['template_task_api_name'] = task.api_name
-        attrs.pop('template_task_id', None)
-        return attrs
 
     def validate_search(self, value: str) -> Optional[str]:
         removed_chars_regex = r'\s\s+'
