@@ -290,7 +290,7 @@ services:
     image: chrislusf/seaweedfs:3.95
     container_name: pneumatic-seaweedfs-master
     profiles:
-      - ${COMPOSE_PROFILES:-local-storage}
+      - local-storage
     command: master -ip=seaweedfs-master -port=9333
     ports:
       - "9333:9333"
@@ -304,7 +304,7 @@ services:
     image: chrislusf/seaweedfs:3.95
     container_name: pneumatic-seaweedfs-volume
     profiles:
-      - ${COMPOSE_PROFILES:-local-storage}
+      - local-storage
     command:
       - volume
       - -mserver=seaweedfs-master:9333
@@ -325,7 +325,7 @@ services:
     image: chrislusf/seaweedfs:3.95
     container_name: pneumatic-seaweedfs-filer
     profiles:
-      - ${COMPOSE_PROFILES:-local-storage}
+      - local-storage
     command: filer -master="seaweedfs-master:9333" -s3 -s3.port=8333
     ports:
       - "8888:8888"
