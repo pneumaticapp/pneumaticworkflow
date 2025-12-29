@@ -229,7 +229,7 @@ services:
       context: ../storage
     container_name: pneumatic_file_service
     ports:
-      - "8002:8002"
+      - "8002:8000"
     environment:
       - DEBUG=${FILE_DEBUG:-true}
       - CONFIG=${FILE_CONFIG:-Development}
