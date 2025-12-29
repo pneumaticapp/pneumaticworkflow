@@ -42,10 +42,16 @@ class TestAuthenticationMiddleware:
         # Assert
         assert response.status_code != 401
 
-    def test_auth_check__invalid_session_token__return_401(self, e2e_client):
+    def test_auth_check__invalid_session_token__return_401(
+        self,
+        e2e_client,
+        mock_redis_auth_client_get,
+    ):
         """Test invalid session token authentication."""
         # Arrange
         cookies = {'token': 'invalid-session-token'}
+
+        mock_redis_auth_client_get.return_value = None
 
         # Act
         response = e2e_client.get('/test-file-id', cookies=cookies)

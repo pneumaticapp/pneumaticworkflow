@@ -224,6 +224,128 @@ services:
       - pneumatic
     restart: always
 
+  file-service:
+    build:
+      context: ../storage
+    container_name: pneumatic_file_service
+    ports:
+      - "8002:8002"
+    environment:
+      - DEBUG=${FILE_DEBUG:-true}
+      - CONFIG=${FILE_CONFIG:-Development}
+      - WORKERS=${FILE_WORKERS:-1}
+      - PORT=${FILE_PORT:-8002}
+      - ALLOWED_ORIGINS=${FILE_ALLOWED_ORIGINS:-["*"]}
+      - POSTGRES_USER=${FILE_POSTGRES_USER:-pneumatic}
+      - POSTGRES_PASSWORD=${FILE_POSTGRES_PASSWORD:-pneumatic}
+      - POSTGRES_DB=${FILE_POSTGRES_DB:-pneumatic}
+      - POSTGRES_HOST=${FILE_POSTGRES_HOST:-file-postgres}
+      - POSTGRES_PORT=${FILE_POSTGRES_PORT:-5432}
+      - STORAGE_TYPE=${FILE_STORAGE_TYPE:-local}
+      - SEAWEEDFS_S3_ENDPOINT=${FILE_SEAWEEDFS_S3_ENDPOINT:-http://pneumatic-seaweedfs-filer:8333}
+      - SEAWEEDFS_S3_ACCESS_KEY=${FILE_SEAWEEDFS_S3_ACCESS_KEY:-any-secret-key-will-work}
+      - SEAWEEDFS_S3_SECRET_KEY=${FILE_SEAWEEDFS_S3_SECRET_KEY:-any-secret-key-will-work}
+      - SEAWEEDFS_S3_REGION=${FILE_SEAWEEDFS_S3_REGION:-us-central1}
+      - SEAWEEDFS_S3_USE_SSL=${FILE_SEAWEEDFS_S3_USE_SSL:-false}
+      - GCS_S3_ENDPOINT=${FILE_GCS_S3_ENDPOINT:-https://storage.googleapis.com}
+      - GCS_S3_ACCESS_KEY=${FILE_GCS_S3_ACCESS_KEY:-}
+      - GCS_S3_SECRET_KEY=${FILE_GCS_S3_SECRET_KEY:-}
+      - GCS_S3_REGION=${FILE_GCS_S3_REGION:-us-east-1}
+      - FASTAPI_BASE_URL=${FILE_FASTAPI_BASE_URL:-http://localhost:8002}
+      - BUCKET_PREFIX=${FILE_BUCKET_PREFIX:-pneumatic-dev-test}
+      - MAX_FILE_SIZE=${FILE_MAX_FILE_SIZE:-104857600}
+      - CHUNK_SIZE=${FILE_CHUNK_SIZE:-1048576}
+      - AUTH_REDIS_URL=${FILE_AUTH_REDIS_URL:-redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/1}
+      - KEY_PREFIX_REDIS=${FILE_KEY_PREFIX_REDIS:-:1:}
+      - DJANGO_SECRET_KEY=${FILE_DJANGO_SECRET_KEY:-a7uq)(kz1kyf9m5kt_72x3+co-brb2x)^g#_(1r\=mwv\=fl11pd}
+      - AUTH_TOKEN_ITERATIONS=${FILE_AUTH_TOKEN_ITERATIONS:-1}
+      - JWT_SECRET_KEY=${FILE_JWT_SECRET_KEY:-a7uq)(kz1kyf9m5kt_72x3+co-brb2x)^g#_(1r\=mwv\=fl11pd}
+      - JWT_ALGORITHM=${FILE_JWT_ALGORITHM:-HS256}
+      - DJANGO_BACKEND_URL=${FILE_DJANGO_BACKEND_URL:-http://127.0.0.1:8000}
+    volumes:
+      - file_service_media:/app/media
+    depends_on:
+      - file-postgres
+      - redis
+    networks:
+      - pneumatic
+    restart: unless-stopped
+
+  file-postgres:
+    image: postgres:13
+    container_name: pneumatic_file_postgres
+    environment:
+      - POSTGRES_DB=${FILE_POSTGRES_DB:-pneumatic}
+      - POSTGRES_USER=${FILE_POSTGRES_USER:-pneumatic}
+      - POSTGRES_PASSWORD=${FILE_POSTGRES_PASSWORD:-pneumatic}
+    ports:
+      - "5433:5432"
+    volumes:
+      - file_postgres_data:/var/lib/postgresql/data
+    networks:
+      - pneumatic
+    restart: unless-stopped
+
+  seaweedfs-master:
+    image: chrislusf/seaweedfs:3.95
+    container_name: pneumatic-seaweedfs-master
+    profiles:
+      - ${COMPOSE_PROFILES:-local-storage}
+    command: master -ip=seaweedfs-master -port=9333
+    ports:
+      - "9333:9333"
+      - "19333:19333"
+    volumes:
+      - seaweedfs_master_data:/data
+    networks:
+      - pneumatic
+
+  seaweedfs-volume:
+    image: chrislusf/seaweedfs:3.95
+    container_name: pneumatic-seaweedfs-volume
+    profiles:
+      - ${COMPOSE_PROFILES:-local-storage}
+    command:
+      - volume
+      - -mserver=seaweedfs-master:9333
+      - -port=8080
+      - -ip=seaweedfs-volume
+      - -publicUrl=localhost:8080
+    ports:
+      - "8080:8080"
+      - "18080:18080"
+    depends_on:
+      - seaweedfs-master
+    volumes:
+      - seaweedfs_volume_data:/data
+    networks:
+      - pneumatic
+
+  seaweedfs-filer:
+    image: chrislusf/seaweedfs:3.95
+    container_name: pneumatic-seaweedfs-filer
+    profiles:
+      - ${COMPOSE_PROFILES:-local-storage}
+    command: filer -master="seaweedfs-master:9333" -s3 -s3.port=8333
+    ports:
+      - "8888:8888"
+      - "8333:8333"
+      - "18888:18888"
+    depends_on:
+      - seaweedfs-master
+      - seaweedfs-volume
+    volumes:
+      - ../storage/seaweedfs/filer.toml:/etc/seaweedfs/filer.toml
+      - seaweedfs_filer_data:/data
+    networks:
+      - pneumatic
 
 networks:
   pneumatic:
+
+volumes:
+  file_postgres_data:
+  file_service_media:
+  seaweedfs_master_data:
+  seaweedfs_volume_data:
+  seaweedfs_filer_data:

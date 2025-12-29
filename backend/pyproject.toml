@@ -56,6 +56,7 @@ stripe = "7.0.0"
 msal = "^1.24.1"
 pygments = "2.17.2"
 markdown = "3.4.4"
+django-guardian = "2.4"
 
 
 [tool.poetry.group.dev.dependencies]

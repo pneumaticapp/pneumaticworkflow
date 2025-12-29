@@ -13,15 +13,15 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     CONFIG: str = 'Development'
     WORKERS: int = 1
-    PORT: int = 8000
+    PORT: int = 8002
     ALLOWED_ORIGINS: list[str] = ['*']
 
     # Database
     POSTGRES_USER: str = 'pneumatic'
-    POSTGRES_PASSWORD: str = 'pneumatic'  # noqa: S105
+    POSTGRES_PASSWORD: str = 'pneumatic'
     POSTGRES_DB: str = 'pneumatic'
     POSTGRES_HOST: str = 'localhost'
-    POSTGRES_PORT: int = 5432
+    POSTGRES_PORT: int = 5433
 
     # Storage configuration
     STORAGE_TYPE: Literal['local', 'google'] = 'local'
@@ -35,7 +35,7 @@ class Settings(BaseSettings):
     # SeaweedFS S3 (when STORAGE_TYPE='local')
     SEAWEEDFS_S3_ENDPOINT: str = 'http://seaweedfs-filer:8333'
     SEAWEEDFS_S3_ACCESS_KEY: str = 'any-access-key-will-work'
-    SEAWEEDFS_S3_SECRET_KEY: str = 'any-secret-key-will-work'  # noqa: S105
+    SEAWEEDFS_S3_SECRET_KEY: str = 'any-secret-key-will-work'
     SEAWEEDFS_S3_REGION: str = 'us-east-1'
     SEAWEEDFS_S3_USE_SSL: bool = False
 
@@ -50,20 +50,20 @@ class Settings(BaseSettings):
     KEY_PREFIX_REDIS: str = ':1:'
 
     # Django secret key for token decoding
-    DJANGO_SECRET_KEY: str = 'DJANGO_SECRET_KEY'  # noqa: S105
+    DJANGO_SECRET_KEY: str = 'DJANGO_SECRET_KEY'
     AUTH_TOKEN_ITERATIONS: int = 1
 
     # JWT settings
-    JWT_SECRET_KEY: str = 'JWT_SECRET_KEY'  # noqa: S105
+    JWT_SECRET_KEY: str = 'JWT_SECRET_KEY'
     JWT_ALGORITHM: str = 'HS256'
-
-    # Django backend URL for permission checks
-    CHECK_PERMISSION_URL: str = (
-        'http://pneumatic-backend:8000/attachments/check-permission'
-    )
 
     # Django backend base URL
     DJANGO_BACKEND_URL: str = 'http://pneumatic-backend:8000'
+
+    # Django backend URL for permission checks
+    CHECK_PERMISSION_URL: str = (
+        f'{DJANGO_BACKEND_URL}/attachments/check-permission'
+    )
 
     @property
     def database_url(self) -> str:
