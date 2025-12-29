@@ -8,9 +8,9 @@ import {
   ETaskListActions,
   setGeneralLoaderVisibility,
   setCurrentTask,
-  patchTaskInList,
   updateTaskWorkflowLogItem,
 } from '../actions';
+import { patchTaskInList } from '../tasks/slice';
 import {
   changeWorkflow,
   changeWorkflowsList,

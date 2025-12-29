@@ -45,20 +45,15 @@ import { NotificationManager } from '../../components/UI/Notifications';
 import { history } from '../../utils/history';
 import { completeTask } from '../../api/completeTask';
 import { revertTask } from '../../api/revertTask';
-import {
-  ETaskListActions,
-  patchTaskInList,
-  setGeneralLoaderVisibility,
-  shiftTaskList,
-  usersFetchFinished,
-} from '../actions';
+import { ETaskListActions, setGeneralLoaderVisibility, shiftTaskList, usersFetchFinished } from '../actions';
+import { patchTaskInList } from '../tasks/slice';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getAuthUser, getUsers, getUserTimezone } from '../selectors/user';
 import { removeOutputFromLocalStorage } from '../../components/TaskCard/utils/storageOutputs';
 import { ETaskCardViewMode } from '../../components/TaskCard';
 import { deleteRemovedFilesFromFields } from '../../api/deleteRemovedFilesFromFields';
 import { TChannelAction } from '../tasks/saga';
-import { getCurrentTask, getTaskPerformers , getTaskStore } from '../selectors/task';
+import { getCurrentTask, getTaskPerformers, getTaskStore } from '../selectors/task';
 import { addTaskPerformer } from '../../api/addTaskPerformer';
 import { removeTaskPerformer } from '../../api/removeTaskPerformer';
 import { addTaskPerformerGroup } from '../../api/addTaskPerformerGroup';

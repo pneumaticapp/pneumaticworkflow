@@ -9,14 +9,10 @@ import { IMenuItem } from '../../types/menu';
 import { getTotalTasksCount } from '../selectors/tasks';
 import { getAccountPlan } from '../selectors/accounts';
 import { TMenuCounter } from '../../constants/menu';
-import {
-  EAccountsActions,
-  ETaskListActions,
-  TActiveUsersCountFetchFinished,
-  TChangeTasksCount,
-  TSetCurrentPlan,
-} from '../actions';
+import { EAccountsActions, TActiveUsersCountFetchFinished, TSetCurrentPlan } from '../actions';
+import { changeTasksCount } from '../tasks/slice';
 import { getTenantsCountStore } from '../selectors/tenants';
+import { PayloadAction } from '@reduxjs/toolkit';
 
 export function* generateMenuSaga() {
   try {
@@ -32,7 +28,7 @@ export function* generateMenuSaga() {
   }
 }
 
-type TUpdateCounterAction = TChangeTasksCount | TActiveUsersCountFetchFinished | TSetCurrentPlan;
+type TUpdateCounterAction = PayloadAction<number> | TActiveUsersCountFetchFinished | TSetCurrentPlan;
 
 export function* updateCounterSaga(action: TUpdateCounterAction) {
   const tasksCount: ReturnType<typeof getTotalTasksCount> = yield select(getTotalTasksCount);
@@ -41,7 +37,7 @@ export function* updateCounterSaga(action: TUpdateCounterAction) {
 
   const getCounterByActionMap: { check(): boolean; getCounters(): TMenuCounter[] }[] = [
     {
-      check: () => action.type === ETaskListActions.ChangeTasksCount,
+      check: () => action.type === changeTasksCount.type,
       getCounters: () => [createMenuCounter('tasks', tasksCount, 'alert')].filter(Boolean) as TMenuCounter[],
     },
     {
@@ -69,11 +65,7 @@ export function* watchLoadMenu() {
 
 export function* watchUpdateCounter() {
   yield takeEvery(
-    [
-      ETaskListActions.ChangeTasksCount,
-      EAccountsActions.ActiveUsersCountFetchFinished,
-      EAccountsActions.SetCurrentPlan,
-    ],
+    [changeTasksCount.type, EAccountsActions.ActiveUsersCountFetchFinished, EAccountsActions.SetCurrentPlan],
     updateCounterSaga,
   );
 }

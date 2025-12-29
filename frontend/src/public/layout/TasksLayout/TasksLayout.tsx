@@ -4,7 +4,6 @@ import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
 import { TasksSortingContainer } from './TasksSortingContainer';
-import { TLoadTasksFilterStepsPayload } from '../../redux/actions';
 import { loadWorkflowsList } from '../../redux/workflows/slice';
 import { TopNavContainer } from '../../components/TopNav';
 import { ERoutes } from '../../constants/routes';
@@ -24,6 +23,7 @@ import { StepName } from '../../components/StepName';
 import { WorkflowModalContainer } from '../../components/Workflows/WorkflowModal';
 
 import styles from './TasksLayout.css';
+import { TLoadFilterStepsPayload } from '../../redux/tasks/types';
 
 export interface ITasksLayoutStoreProps {
   children?: ReactNode;
@@ -37,14 +37,14 @@ export interface ITasksLayoutStoreProps {
 }
 
 export interface ITasksLayoutDispatchProps {
-  loadTasksFilterTemplates(): void;
-  loadTasksFilterSteps(payload: TLoadTasksFilterStepsPayload): void;
-  setTasksFilterTemplate(value: number | null): void;
-  setTasksFilterStep(apiName: string | null): void;
+  loadFilterTemplates(): void;
+  loadFilterSteps(payload: TLoadFilterStepsPayload): void;
+  setFilterTemplate(value: number | null): void;
+  setFilterStep(apiName: string | null): void;
   closeWorkflowLogPopup(): void;
-  changeTasksCompleteStatus(status: ETaskListCompletionStatus): void;
+  changeTaskListCompletionStatus(status: ETaskListCompletionStatus): void;
   clearFilters(): void;
-  changeTasksSorting(status: ETaskListSorting | ETaskListCompleteSorting): void;
+  changeTaskListSorting(status: ETaskListSorting | ETaskListCompleteSorting): void;
 }
 
 type TTasksLayoutProps = ITasksLayoutStoreProps & ITasksLayoutDispatchProps;
@@ -58,14 +58,14 @@ export function TasksLayoutComponent({
   templateIdFilter,
   taskApiNameFilter,
   completionStatus,
-  loadTasksFilterTemplates,
-  loadTasksFilterSteps,
-  setTasksFilterTemplate,
-  setTasksFilterStep,
+  loadFilterTemplates,
+  loadFilterSteps,
+  setFilterTemplate,
+  setFilterStep,
   closeWorkflowLogPopup,
-  changeTasksCompleteStatus,
+  changeTaskListCompletionStatus,
   clearFilters,
-  changeTasksSorting,
+  changeTaskListSorting,
 }: TTasksLayoutProps) {
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
@@ -78,12 +78,12 @@ export function TasksLayoutComponent({
   }, [filterTemplates]);
 
   useEffect(() => {
-    loadTasksFilterTemplates();
+    loadFilterTemplates();
   }, []);
 
   useEffect(() => {
     if (templateIdFilter != null) {
-      loadTasksFilterSteps({ templateId: templateIdFilter });
+      loadFilterSteps({ templateId: templateIdFilter });
     }
   }, [templateIdFilter]);
 
@@ -106,7 +106,7 @@ export function TasksLayoutComponent({
         searchByText: reactElementToText(stepName),
         apiName,
         customClickHandler: () => {
-          setTasksFilterStep(apiName);
+          setFilterStep(apiName);
         },
       };
     });
@@ -158,14 +158,14 @@ export function TasksLayoutComponent({
               },
             ]}
             onChange={(value) => {
-              changeTasksCompleteStatus(value);
-              loadTasksFilterTemplates();
+              changeTaskListCompletionStatus(value);
+              loadFilterTemplates();
 
               if (templateIdFilter) {
-                loadTasksFilterSteps({ templateId: templateIdFilter });
+                loadFilterSteps({ templateId: templateIdFilter });
               }
 
-              changeTasksSorting(mapSorting(value, sorting));
+              changeTaskListSorting(mapSorting(value, sorting));
             }}
             containerClassName={styles['completion-status-tabs']}
           />
@@ -178,8 +178,8 @@ export function TasksLayoutComponent({
               options={optionsWithoutCount}
               optionIdKey="id"
               optionLabelKey="name"
-              onChange={setTasksFilterTemplate}
-              resetFilter={() => setTasksFilterTemplate(null)}
+              onChange={setFilterTemplate}
+              resetFilter={() => setFilterTemplate(null)}
               Icon={FilterIcon}
               renderPlaceholder={(templates) => {
                 const activeOption = templates.find((t) => t.id === templateIdFilter);
@@ -199,7 +199,7 @@ export function TasksLayoutComponent({
                 optionIdKey="id"
                 optionLabelKey="name"
                 onChange={() => {}}
-                resetFilter={() => setTasksFilterStep(null)}
+                resetFilter={() => setFilterStep(null)}
                 Icon={FilterIcon}
                 renderPlaceholder={(steps) => {
                   const activeOption = steps.find((s) => s.apiName === taskApiNameFilter);

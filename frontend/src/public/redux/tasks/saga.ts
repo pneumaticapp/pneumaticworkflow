@@ -17,26 +17,21 @@ import {
   delay,
 } from 'redux-saga/effects';
 
+import { PayloadAction } from '@reduxjs/toolkit';
+import { TLoadTaskList, ETaskListActions, insertNewTask, TInsertNewTask, TShiftTaskList } from './actions';
 import {
-  changeTaskList,
-  changeTasksCount,
-  TLoadTaskList,
-  setTaskListDetailedTaskId,
-  ETaskListActions,
-  TLoadTasksFilterSteps,
-  loadTasksFilterStepsFailed,
-  loadTasksFilterStepsSuccess,
-  showNewTasksNotification,
-  insertNewTask,
-  TInsertNewTask,
-  loadTasksFilterTemplatesSuccess,
-  loadTasksFilterTemplatesFailed,
-  loadTasksFilterTemplates,
-  loadTasksFilterSteps,
   setTaskListStatus,
-  TShiftTaskList,
-} from './actions';
-
+  changeTaskList,
+  setTaskListDetailedTaskId,
+  changeTasksCount,
+  loadFilterTemplates,
+  loadFilterTemplatesSuccess,
+  loadFilterTemplatesFailed,
+  loadFilterSteps,
+  loadFilterStepsSuccess,
+  loadFilterStepsFailed,
+  showNewTasksNotification,
+} from './slice';
 import { ERoutes } from '../../constants/routes';
 import { getAuthUser } from '../selectors/user';
 import { getTasksCount, IGetTasksCountResponse } from '../../api/getTasksCount';
@@ -70,6 +65,7 @@ import { envWssURL } from '../../constants/enviroment';
 import { mapTasksToISOStringToRedux } from '../../utils/mappers';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { getTemplatesTitlesByTasks, TGetTemplatesTitlesByTasksResponse } from '../../api/getTemplatesTitlesByTasks';
+import { TLoadFilterStepsPayload } from './types';
 
 export function* setDetailedTask(taskId: number) {
   yield put(setTaskListDetailedTaskId(taskId));
@@ -210,15 +206,15 @@ export function* fetchTasksFilterTemplates() {
       tasksSettings: { completionStatus },
     }: IStoreTasks = yield select(getTasksStore);
     const templates: TGetTemplatesTitlesByTasksResponse = yield getTemplatesTitlesByTasks(completionStatus);
-    yield put(loadTasksFilterTemplatesSuccess(templates));
+    yield put(loadFilterTemplatesSuccess(templates));
   } catch (error) {
-    yield put(loadTasksFilterTemplatesFailed());
+    yield put(loadFilterTemplatesFailed());
     logger.info('fetch tasks filter templates error : ', error);
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
-function* fetchTasksFilterSteps({ payload: { templateId } }: TLoadTasksFilterSteps) {
+function* fetchTasksFilterSteps({ payload: { templateId } }: PayloadAction<TLoadFilterStepsPayload>) {
   try {
     const {
       tasksSettings: { completionStatus },
@@ -230,9 +226,9 @@ function* fetchTasksFilterSteps({ payload: { templateId } }: TLoadTasksFilterSte
       }),
       handleLoadTemplateVariables(templateId),
     ]);
-    yield put(loadTasksFilterStepsSuccess(steps));
+    yield put(loadFilterStepsSuccess(steps));
   } catch (error) {
-    put(loadTasksFilterStepsFailed());
+    put(loadFilterStepsFailed());
     logger.info('fetch tasks filter steps error : ', error);
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
@@ -258,11 +254,11 @@ export function* watchSearchTasks() {
 }
 
 export function* watchLoadTasksFilterTemplates() {
-  yield takeEvery(ETaskListActions.LoadFilterTemplates, fetchTasksFilterTemplates);
+  yield takeEvery(loadFilterTemplates.type, fetchTasksFilterTemplates);
 }
 
 export function* watchLoadTasksFilterSteps() {
-  yield throttle(500, ETaskListActions.LoadFilterSteps, fetchTasksFilterSteps);
+  yield throttle(500, loadFilterSteps.type, fetchTasksFilterSteps);
 }
 
 export function* watchInsertNewTask() {
@@ -314,9 +310,9 @@ function* handleAddTask(newTask: ITaskListItem) {
   }
 
   yield put(insertNewTask(newTask));
-  yield put(loadTasksFilterTemplates());
+  yield put(loadFilterTemplates());
   if (templateIdFilter) {
-    yield put(loadTasksFilterSteps({ templateId: templateIdFilter }));
+    yield put(loadFilterSteps({ templateId: templateIdFilter }));
   }
 }
 
