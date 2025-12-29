@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { Avatar } from '../UI/Avatar';
 import { isArrayWithItems } from '../../utils/helpers';
 import { ETemplateOwnerType, RawPerformer } from '../../types/template';

@@ -1,4 +1,3 @@
-/* eslint-disable react/button-has-type */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import classnames from 'classnames';
 import InfiniteScroll from 'react-infinite-scroll-component';

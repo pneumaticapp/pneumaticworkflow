@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo } from 'react';
+import React, { ReactNode, useEffect, useMemo } from 'react';
 import { matchPath } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
@@ -26,7 +26,7 @@ import { WorkflowModalContainer } from '../../components/Workflows/WorkflowModal
 import styles from './TasksLayout.css';
 
 export interface ITasksLayoutStoreProps {
-  children?: React.ReactNode;
+  children?: ReactNode;
   isHasFilter: boolean;
   sorting: ETaskListSorting | ETaskListCompleteSorting;
   filterTemplates: ITemplateTitleBaseWithCount[];

@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -38,7 +38,7 @@ import { getWorkflowPerformersGroupsIdsFilter, getWorkflowsLoadingStatus } from 
 export interface IWorkflowsLayoutComponentProps extends IWorkflowsFiltersProps {
   workflowId: number | null;
   workflowsView: EWorkflowsView;
-  children: React.ReactNode;
+  children: ReactNode;
   closeWorkflowLogPopup(): void;
   removeWorkflowFromList(payload: TRemoveWorkflowFromListPayload): void;
   setWorkflowsView(view: EWorkflowsView): void;
@@ -79,7 +79,7 @@ export function WorkflowsLayoutComponent({
 
   const workflowsMainRef = useRef<HTMLDivElement>(null);
   const tableViewContainerRef = useRef<TableViewContainerRef>(null);
-  const loadingTaskRef = React.useRef<Set<number>>(new Set());
+  const loadingTaskRef = useRef<Set<number>>(new Set());
 
   const prevStatusFilterRef = useRef<string>(EWorkflowsStatus.Running);
   const prevSortingRef = useRef<string>(EWorkflowsSorting.DateDesc);
@@ -310,8 +310,8 @@ export function WorkflowsLayoutComponent({
     }
   }, [changedFiltersRef.current.size]);
 
-  const statusTitles = React.useMemo(() => Object.values(EWorkflowsStatus), []);
-  const sortingTitles = React.useMemo(() => getSortingsByStatus(statusFilter), [statusFilter]);
+  const statusTitles = useMemo(() => Object.values(EWorkflowsStatus), []);
+  const sortingTitles = useMemo(() => getSortingsByStatus(statusFilter), [statusFilter]);
 
   const renderLeftContent = () => {
     return (

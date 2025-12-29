@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { PropsWithChildren } from 'react';
 import { useDispatch } from 'react-redux';
 import { useIntl } from 'react-intl';
 import classNames from 'classnames';
@@ -11,7 +11,7 @@ import { TableColumns } from '../../../types';
 
 import styles from './TaskColumn.css';
 
-type TProps = React.PropsWithChildren<CellProps<TableColumns, TableColumns['system-column-step']>>;
+type TProps = PropsWithChildren<CellProps<TableColumns, TableColumns['system-column-step']>>;
 
 export function TaskColumn({ value: { oneActiveTaskName, areMultipleTasks, multipleTasksNamesByApiNames } }: TProps) {
   const dispatch = useDispatch();

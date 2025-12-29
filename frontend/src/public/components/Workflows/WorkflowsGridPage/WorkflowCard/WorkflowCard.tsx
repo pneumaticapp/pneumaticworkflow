@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { SyntheticEvent } from 'react';
 import classnames from 'classnames';
 import { IntlShape } from 'react-intl';
 
@@ -20,7 +20,7 @@ import { TaskNamesTooltipContent } from '../../utils/TaskNamesTooltipContent';
 export interface IWorkflowCardProps {
   intl: IntlShape;
   workflow: IWorkflowClient;
-  onCardClick(e: React.SyntheticEvent): void;
+  onCardClick(e: SyntheticEvent): void;
   onWorkflowEnded?(): void;
   onWorkflowSnoozed?(): void;
   onWorkflowDeleted?(): void;

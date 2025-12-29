@@ -1,5 +1,4 @@
-/* eslint-disable indent */
-import * as React from 'react';
+import React, { useCallback } from 'react';
 import classnames from 'classnames';
 import { Link } from 'react-router-dom';
 
@@ -24,8 +23,6 @@ export interface ITaskItemProps {
 }
 
 export function TaskItem({ task, index, mode, templateId }: ITaskItemProps) {
-  const { useCallback } = React;
-
   const getRoute = useCallback(
     (counterType: EDashboardCounterType) => {
       const tasksRouteMap = {
@@ -108,9 +105,9 @@ export function TaskItem({ task, index, mode, templateId }: ITaskItemProps) {
     mode === EDashboardModes.Tasks
       ? getLinkToTasks({ templateId, taskApiNAme: task.apiName })
       : getLinkToWorkflows({
-          templateId,
-          stepId: task.id,
-        });
+        templateId,
+        stepId: task.id,
+      });
 
   return (
     <div className={styles.task__container}>

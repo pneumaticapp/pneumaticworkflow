@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { ITaskListItem, ITasksSettings } from '../../../types/tasks';
 
 export function checkShouldInsertNewTask(

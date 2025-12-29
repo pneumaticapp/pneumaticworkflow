@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { PropsWithChildren } from 'react';
 import { CellProps } from 'react-table';
 import { useDispatch } from 'react-redux';
 
@@ -10,7 +10,7 @@ import { Avatar } from '../../../../../../UI';
 import { TableColumns } from '../../../types';
 import styles from './StarterColumn.css';
 
-type TProps = React.PropsWithChildren<CellProps<TableColumns, TableColumns['system-column-starter']>>;
+type TProps = PropsWithChildren<CellProps<TableColumns, TableColumns['system-column-starter']>>;
 
 export function StarterColumn({ value: { workflowStarter, isExternal } }: TProps) {
   const dispatch = useDispatch();
