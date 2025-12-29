@@ -46,7 +46,7 @@ class Settings(BaseSettings):
     CHUNK_SIZE: int = 1048576  # 1MB chunks for file streaming
 
     # Redis for authentication
-    AUTH_REDIS_URL: str = 'redis://:redis_password@127.0.0.1:6379/1'
+    AUTH_REDIS_URL: str = 'redis://:redis_password@redis:6379/1'
     KEY_PREFIX_REDIS: str = ':1:'
 
     # Django secret key for token decoding

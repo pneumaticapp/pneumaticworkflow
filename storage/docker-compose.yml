@@ -85,4 +85,5 @@ volumes:
 
 networks:
   pneumatic-network:
-    driver: bridge
+    external: true
+    name: pneumatic_pneumatic
