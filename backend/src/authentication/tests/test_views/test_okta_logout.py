@@ -1,7 +1,5 @@
 import pytest
 
-from src.authentication.services.okta_logout import OktaLogoutService
-
 pytestmark = pytest.mark.django_db
 
 
@@ -15,14 +13,8 @@ def test_logout_okta__valid_data__ok(
         'has_permission',
         return_value=True,
     )
-    okta_logout_service_init_mock = mocker.patch.object(
-        OktaLogoutService,
-        attribute='__init__',
-        return_value=None,
-    )
-    process_logout_mock = mocker.patch(
-        'src.authentication.services.okta_logout.'
-        'OktaLogoutService.process_logout',
+    process_okta_logout_mock = mocker.patch(
+        'src.authentication.views.okta_logout.process_okta_logout.delay',
     )
     sub_id_data = {
         'format': 'iss_sub',
@@ -32,24 +24,29 @@ def test_logout_okta__valid_data__ok(
     request_data = {
         'sub_id': sub_id_data,
     }
+    logout_token = 'test_logout_token'
 
     # act
     response = api_client.post(
         '/auth/okta/logout',
         data=request_data,
         format='json',
+        HTTP_AUTHORIZATION=f'Bearer {logout_token}',
     )
 
     # assert
     assert response.status_code == 204
-    okta_logout_service_init_mock.assert_called_once()
-    process_logout_mock.assert_called_once_with(
-        iss=sub_id_data['iss'],
-        sub=sub_id_data['sub'],
+    process_okta_logout_mock.assert_called_once_with(
+        logout_token=logout_token,
+        request_data={
+            'iss': sub_id_data['iss'],
+            'sub': sub_id_data['sub'],
+            'format': sub_id_data['format'],
+        },
     )
 
 
-def test_logout_okta__invalid_data__ok(
+def test_logout_okta__invalid_structure__ok(
     mocker,
     api_client,
 ):
@@ -59,15 +56,13 @@ def test_logout_okta__invalid_data__ok(
         'has_permission',
         return_value=True,
     )
-    okta_logout_service_init_mock = mocker.patch.object(
-        OktaLogoutService,
-        attribute='__init__',
-        return_value=None,
+    capture_sentry_mock = mocker.patch(
+        'src.authentication.views.okta_logout.capture_sentry_message',
     )
-    process_logout_mock = mocker.patch(
-        'src.authentication.services.okta_logout.'
-        'OktaLogoutService.process_logout',
+    process_okta_logout_mock = mocker.patch(
+        'src.authentication.views.okta_logout.process_okta_logout.delay',
     )
+    # Invalid structure - missing required fields
     request_data = {
         'invalid_field': 'invalid_value',
     }
@@ -81,8 +76,8 @@ def test_logout_okta__invalid_data__ok(
 
     # assert
     assert response.status_code == 204
-    okta_logout_service_init_mock.assert_not_called()
-    process_logout_mock.assert_not_called()
+    capture_sentry_mock.assert_called_once()
+    process_okta_logout_mock.assert_not_called()
 
 
 def test_logout_okta__disable_sso_auth__permission_denied(
@@ -95,18 +90,11 @@ def test_logout_okta__disable_sso_auth__permission_denied(
         'has_permission',
         return_value=False,
     )
-    okta_logout_service_init_mock = mocker.patch.object(
-        OktaLogoutService,
-        attribute='__init__',
-        return_value=None,
-    )
-    process_logout_mock = mocker.patch(
-        'src.authentication.services.okta_logout.'
-        'OktaLogoutService.process_logout',
+    process_okta_logout_mock = mocker.patch(
+        'src.authentication.views.okta_logout.process_okta_logout.delay',
     )
     sub_id_data = {
         'format': 'iss_sub',
-        'iss': 'https://dev-123456.okta.com/oauth2/default',
         'sub': '00uid4BxXw6I6TV4m0g3',
     }
     request_data = {
@@ -122,11 +110,10 @@ def test_logout_okta__disable_sso_auth__permission_denied(
 
     # assert
     assert response.status_code == 403
-    okta_logout_service_init_mock.assert_not_called()
-    process_logout_mock.assert_not_called()
+    process_okta_logout_mock.assert_not_called()
 
 
-def test_logout_okta__missing_sub_id__ok(
+def test_logout_okta__empty_data__ok(
     mocker,
     api_client,
 ):
@@ -136,14 +123,11 @@ def test_logout_okta__missing_sub_id__ok(
         'has_permission',
         return_value=True,
     )
-    okta_logout_service_init_mock = mocker.patch.object(
-        OktaLogoutService,
-        attribute='__init__',
-        return_value=None,
+    capture_sentry_mock = mocker.patch(
+        'src.authentication.views.okta_logout.capture_sentry_message',
     )
-    process_logout_mock = mocker.patch(
-        'src.authentication.services.okta_logout.'
-        'OktaLogoutService.process_logout',
+    process_okta_logout_mock = mocker.patch(
+        'src.authentication.views.okta_logout.process_okta_logout.delay',
     )
     request_data = {}
 
@@ -156,5 +140,6 @@ def test_logout_okta__missing_sub_id__ok(
 
     # assert
     assert response.status_code == 204
-    okta_logout_service_init_mock.assert_not_called()
-    process_logout_mock.assert_not_called()
+    # Empty data fails validation, logs to Sentry
+    capture_sentry_mock.assert_called_once()
+    process_okta_logout_mock.assert_not_called()

@@ -624,9 +624,10 @@ def test_save_tokens_for_user__with_id_token__cache_user_by_sub(mocker):
         'src.authentication.services.okta.jwt.decode',
         return_value=id_payload,
     )
-    cache_user_by_sub_mock = mocker.patch(
-        'src.authentication.services.okta.'
-        'OktaService._cache_user_by_sub',
+    cache_mock = Mock()
+    mocker.patch(
+        'src.authentication.services.okta.caches',
+        {'default': cache_mock},
     )
     settings_mock = mocker.patch(
         'src.authentication.services.base_sso.settings',
@@ -663,7 +664,11 @@ def test_save_tokens_for_user__with_id_token__cache_user_by_sub(mocker):
             "verify_iss": False,
         },
     )
-    cache_user_by_sub_mock.assert_called_once_with(okta_sub, user)
+    cache_mock.set.assert_called_once_with(
+        f'okta_sub_to_user_{okta_sub}',
+        user.id,
+        timeout=2592000,
+    )
 
 
 def test_save_tokens_for_user__no_id_token__no_caching(mocker):
@@ -678,9 +683,10 @@ def test_save_tokens_for_user__no_id_token__no_caching(mocker):
     jwt_decode_mock = mocker.patch(
         'src.authentication.services.okta.jwt.decode',
     )
-    cache_user_by_sub_mock = mocker.patch(
-        'src.authentication.services.okta.'
-        'OktaService._cache_user_by_sub',
+    cache_mock = Mock()
+    mocker.patch(
+        'src.authentication.services.okta.caches',
+        {'default': cache_mock},
     )
     settings_mock = mocker.patch(
         'src.authentication.services.base_sso.settings',
@@ -709,7 +715,7 @@ def test_save_tokens_for_user__no_id_token__no_caching(mocker):
     assert token.refresh_token == ''
     assert token.expires_in == expires_in
     jwt_decode_mock.assert_not_called()
-    cache_user_by_sub_mock.assert_not_called()
+    cache_mock.set.assert_not_called()
 
 
 def test_save_tokens_for_user__invalid_id_token__no_caching(mocker):
@@ -727,9 +733,10 @@ def test_save_tokens_for_user__invalid_id_token__no_caching(mocker):
         'src.authentication.services.okta.jwt.decode',
         side_effect=DecodeError('Invalid token'),
     )
-    cache_user_by_sub_mock = mocker.patch(
-        'src.authentication.services.okta.'
-        'OktaService._cache_user_by_sub',
+    cache_mock = Mock()
+    mocker.patch(
+        'src.authentication.services.okta.caches',
+        {'default': cache_mock},
     )
     settings_mock = mocker.patch(
         'src.authentication.services.base_sso.settings',
@@ -758,7 +765,7 @@ def test_save_tokens_for_user__invalid_id_token__no_caching(mocker):
     assert token.refresh_token == ''
     assert token.expires_in == expires_in
     jwt_decode_mock.assert_called_once()
-    cache_user_by_sub_mock.assert_not_called()
+    cache_mock.set.assert_not_called()
 
 
 def test_save_tokens_for_user__invalid_token_error__no_caching(mocker):
@@ -776,9 +783,10 @@ def test_save_tokens_for_user__invalid_token_error__no_caching(mocker):
         'src.authentication.services.okta.jwt.decode',
         side_effect=InvalidTokenError('Invalid token'),
     )
-    cache_user_by_sub_mock = mocker.patch(
-        'src.authentication.services.okta.'
-        'OktaService._cache_user_by_sub',
+    cache_mock = Mock()
+    mocker.patch(
+        'src.authentication.services.okta.caches',
+        {'default': cache_mock},
     )
     settings_mock = mocker.patch(
         'src.authentication.services.base_sso.settings',
@@ -807,7 +815,7 @@ def test_save_tokens_for_user__invalid_token_error__no_caching(mocker):
     assert token.refresh_token == ''
     assert token.expires_in == expires_in
     jwt_decode_mock.assert_called_once()
-    cache_user_by_sub_mock.assert_not_called()
+    cache_mock.set.assert_not_called()
 
 
 def test_save_tokens_for_user__no_sub_in_id_token__no_caching(mocker):
@@ -829,9 +837,10 @@ def test_save_tokens_for_user__no_sub_in_id_token__no_caching(mocker):
         'src.authentication.services.okta.jwt.decode',
         return_value=id_payload,
     )
-    cache_user_by_sub_mock = mocker.patch(
-        'src.authentication.services.okta.'
-        'OktaService._cache_user_by_sub',
+    cache_mock = Mock()
+    mocker.patch(
+        'src.authentication.services.okta.caches',
+        {'default': cache_mock},
     )
     settings_mock = mocker.patch(
         'src.authentication.services.base_sso.settings',
@@ -860,13 +869,29 @@ def test_save_tokens_for_user__no_sub_in_id_token__no_caching(mocker):
     assert token.refresh_token == ''
     assert token.expires_in == expires_in
     jwt_decode_mock.assert_called_once()
-    cache_user_by_sub_mock.assert_not_called()
+    cache_mock.set.assert_not_called()
 
 
 def test_cache_user_by_sub__ok(mocker):
     # arrange
     user = create_test_admin()
     okta_sub = '00uid4BxXw6I6TV4m0g3'
+    id_token = 'test_id_token'
+    expires_in = 3600
+    tokens_data = {
+        'access_token': 'test_access_token',
+        'id_token': id_token,
+        'expires_in': expires_in,
+    }
+    id_payload = {
+        'sub': okta_sub,
+        'iss': 'https://dev-123456.okta.com/oauth2/default',
+        'aud': 'test_client_id',
+    }
+    jwt_decode_mock = mocker.patch(
+        'src.authentication.services.okta.jwt.decode',
+        return_value=id_payload,
+    )
     cache_mock = Mock()
     mocker.patch(
         'src.authentication.services.okta.caches',
@@ -885,11 +910,13 @@ def test_cache_user_by_sub__ok(mocker):
     }
     settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
     service = OktaService()
+    service.tokens = tokens_data
 
     # act
-    service._cache_user_by_sub(okta_sub, user)
+    service.save_tokens_for_user(user)
 
     # assert
+    jwt_decode_mock.assert_called_once()
     cache_mock.set.assert_called_once_with(
         f'okta_sub_to_user_{okta_sub}',
         user.id,

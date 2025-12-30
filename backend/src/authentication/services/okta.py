@@ -219,7 +219,17 @@ class OktaService(BaseSSOService):
         )
 
     def save_tokens_for_user(self, user: UserModel):
-        """Save tokens and cache sub -> user mapping for GTR"""
+        """
+        Save tokens and cache sub -> user mapping for Back-Channel Logout.
+
+        The id_token contains the 'sub' (subject) identifier which Okta
+        uses to identify users in logout requests. We cache this mapping
+        to quickly find users during logout without querying the database.
+
+        Cache lifetime: 30 days (matches Okta session lifetime)
+        Reference: https://developer.okta.com/docs/guides/
+        session-cookie/main/#session-lifetime
+        """
         # Save access token as usual
         AccessToken.objects.update_or_create(
             source=self.source,
@@ -230,7 +240,9 @@ class OktaService(BaseSSOService):
                 'access_token': self.tokens['access_token'],
             },
         )
+
         # Extract okta_sub from ID token and cache sub -> user mapping
+        # We store id_token to extract 'sub' for logout request handling
         id_token = self.tokens.get('id_token')
         if id_token:
             try:
@@ -246,7 +258,11 @@ class OktaService(BaseSSOService):
                 )
                 okta_sub = id_payload.get('sub')
                 if okta_sub:
-                    self._cache_user_by_sub(okta_sub, user)
+                    # Cache sub -> user_id mapping for logout requests
+                    cache = caches['default']
+                    cache_key = f'okta_sub_to_user_{okta_sub}'
+                    # 30 days timeout (Okta session lifetime)
+                    cache.set(cache_key, user.id, timeout=2592000)
             except (jwt.DecodeError, jwt.InvalidTokenError):
                 pass
 
@@ -267,8 +283,3 @@ class OktaService(BaseSSOService):
             user_agent=user_agent,
             user_ip=user_ip,
         )
-
-    def _cache_user_by_sub(self, okta_sub: str, user: UserModel):
-        cache = caches['default']
-        cache_key = f'okta_sub_to_user_{okta_sub}'
-        cache.set(cache_key, user.id, timeout=2592000)
