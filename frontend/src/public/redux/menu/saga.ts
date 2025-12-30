@@ -1,7 +1,7 @@
-/* eslint-disable */
-/* prettier-ignore */
-import { all, fork, put, select, takeEvery  } from 'redux-saga/effects';
+/* eslint-disable no-restricted-syntax */
+import { all, fork, put, select, takeEvery } from 'redux-saga/effects';
 
+import { PayloadAction } from '@reduxjs/toolkit';
 import { EMenuActions, mergeMenuItems, setMenuItemCounter } from './actions';
 import { getAuthUser } from '../selectors/user';
 import { generateMenuItems, createMenuCounter } from '../../utils/menu';
@@ -12,7 +12,6 @@ import { TMenuCounter } from '../../constants/menu';
 import { EAccountsActions, TActiveUsersCountFetchFinished, TSetCurrentPlan } from '../actions';
 import { changeTasksCount } from '../tasks/slice';
 import { getTenantsCountStore } from '../selectors/tenants';
-import { PayloadAction } from '@reduxjs/toolkit';
 
 export function* generateMenuSaga() {
   try {
@@ -54,7 +53,7 @@ export function* updateCounterSaga(action: TUpdateCounterAction) {
 
   const counters = getCounterByActionMap.find(({ check }) => check())?.getCounters() || [];
 
-  for (let counter of counters) {
+  for (const counter of counters) {
     yield put(setMenuItemCounter(counter));
   }
 }

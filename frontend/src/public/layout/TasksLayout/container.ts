@@ -10,8 +10,8 @@ import {
   setFilterStep,
   clearFilters,
 } from '../../redux/tasks/slice';
-
 import { closeWorkflowLogPopup } from '../../redux/workflows/slice';
+
 import { ITasksLayoutDispatchProps, ITasksLayoutStoreProps, TasksLayoutComponent } from './TasksLayout';
 
 const mapStateToProps = ({

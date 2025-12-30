@@ -24,6 +24,7 @@ import { webhooks } from './webhooks';
 import { tenants } from './tenants';
 import { EAuthActions } from './actions';
 import { groups } from './groups';
+
 import pages from './pages/slice';
 import team from './team/slice';
 import workflows from './workflows/slice';

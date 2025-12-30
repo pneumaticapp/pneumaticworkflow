@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import { connect } from 'react-redux';
 import { SelectMenu, ISelectMenuProps } from '../../components/UI';
 import { IApplicationState } from '../../types/redux';
