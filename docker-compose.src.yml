@@ -132,7 +132,8 @@ services:
       CORS_ALLOW_CREDENTIALS: yes
       CORS_ORIGIN_WHITELIST: "http://localhost:8000 ${FRONTEND_URL:-http://localhost}"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
-
+    expose:
+      - 8000
     volumes:
       - ./backend:/pneumatic_backend
       - backend-socket:/tmp/gunicorn
@@ -377,6 +378,7 @@ services:
       - 80:80
       - 443:443
       - 8001:8001
+      - 8002:8002
     networks:
       - pneumatic
     depends_on:
@@ -388,13 +390,12 @@ services:
     build:
       context: ./storage
     container_name: pneumatic_file_service
-    ports:
-      - "8002:8000"
     environment:
+      - BACKEND_PRIVATE_URL=${BACKEND_PRIVATE_URL:-http://pneumatic-nginx/}
       - DEBUG=${FILE_DEBUG:-true}
       - CONFIG=${FILE_CONFIG:-Development}
       - WORKERS=${FILE_WORKERS:-1}
-      - PORT=${FILE_PORT:-8002}
+      - PORT=${FILE_PORT:-8000}
       - ALLOWED_ORIGINS=${FILE_ALLOWED_ORIGINS:-["*"]}
       - POSTGRES_USER=${FILE_POSTGRES_USER:-pneumatic}
       - POSTGRES_PASSWORD=${FILE_POSTGRES_PASSWORD:-pneumatic}
@@ -421,12 +422,12 @@ services:
       - AUTH_TOKEN_ITERATIONS=${FILE_AUTH_TOKEN_ITERATIONS:-1}
       - JWT_SECRET_KEY=${FILE_JWT_SECRET_KEY:-django_secret_django_secret_django_secret}
       - JWT_ALGORITHM=${FILE_JWT_ALGORITHM:-HS256}
-      - DJANGO_BACKEND_URL=${FILE_DJANGO_BACKEND_URL:-http://nginx:8001}
     volumes:
       - file_service_media:/app/media
     depends_on:
       - file-postgres
       - redis
+      - nginx
     networks:
       - pneumatic
     restart: unless-stopped

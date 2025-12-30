@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     CONFIG: str = 'Development'
     WORKERS: int = 1
-    PORT: int = 8002
+    PORT: int = 8000
     ALLOWED_ORIGINS: list[str] = ['*']
 
     # Database
@@ -21,7 +21,7 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = 'pneumatic'
     POSTGRES_DB: str = 'pneumatic'
     POSTGRES_HOST: str = 'localhost'
-    POSTGRES_PORT: int = 5433
+    POSTGRES_PORT: int = 5432
 
     # Storage configuration
     STORAGE_TYPE: Literal['local', 'google'] = 'local'
@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     SEAWEEDFS_S3_USE_SSL: bool = False
 
     # File service
-    FASTAPI_BASE_URL: str = 'http://localhost:8000'
+    FASTAPI_BASE_URL: str = 'http://localhost:8002'
     BUCKET_PREFIX: str = 'pneumatic-dev-test'
     MAX_FILE_SIZE: int = 104857600
     CHUNK_SIZE: int = 1048576  # 1MB chunks for file streaming
@@ -58,12 +58,12 @@ class Settings(BaseSettings):
     JWT_ALGORITHM: str = 'HS256'
 
     # Django backend base URL
-    DJANGO_BACKEND_URL: str = 'http://pneumatic-backend:8000'
+    BACKEND_PRIVATE_URL: str = 'http://pneumatic-nginx/'
 
-    # Django backend URL for permission checks
-    CHECK_PERMISSION_URL: str = (
-        f'{DJANGO_BACKEND_URL}/attachments/check-permission'
-    )
+    @property
+    def check_permission_url(self) -> str:
+        """Generate permission check URL."""
+        return f'{self.BACKEND_PRIVATE_URL}attachments/check-permission'
 
     @property
     def database_url(self) -> str:

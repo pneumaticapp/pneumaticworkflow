@@ -22,4 +22,4 @@ COPY . .
 
 ENV PYTHONPATH=/app
 
-CMD ["sh", "-c", "poetry run alembic -c src/shared_kernel/database/alembic.ini upgrade head && poetry run uvicorn src.main:app --host 0.0.0.0 --port 8000"]
+CMD ["sh", "-c", "poetry run alembic -c src/shared_kernel/database/alembic.ini upgrade head && poetry run python -m src.main"]

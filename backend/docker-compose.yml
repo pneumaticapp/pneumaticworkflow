@@ -224,12 +224,67 @@ services:
       - pneumatic
     restart: always
 
+  backend:
+    build:
+      context: .
+    container_name: pneumatic-backend
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --no-input &&
+             python manage.py compilemessages &&
+             python manage.py runserver 0.0.0.0:8000"
+    environment:
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:8001}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      FORMS_URL: ${FORMS_URL:-http://form.localhost}
+      ENVIRONMENT: ${ENVIRONMENT:-Development}
+      LANGUAGE_CODE: ${LANGUAGE_CODE:-en}
+      CAPTCHA: ${CAPTCHA:-no}
+      ANALYTICS: ${ANALYTICS:-no}
+      BILLING: ${BILLING:-no}
+      SIGNUP: ${SIGNUP:-yes}
+      MS_AUTH: ${MS_AUTH:-no}
+      GOOGLE_AUTH: ${GOOGLE_AUTH:-no}
+      SSO_AUTH: ${SSO_AUTH:-no}
+      EMAIL: ${EMAIL:-no}
+      AI: ${AI:-no}
+      PUSH: ${PUSH:-no}
+      STORAGE: ${STORAGE:-no}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_password}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres_db}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-yes}
+      ADMIN_PATH: ${ADMIN_PATH:-admin}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
+      DJANGO_SETTINGS_MODULE: src.settings
+      AUTH_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/1"
+      CACHE_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/0"
+      CHANNELS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/2"
+      SESSION_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/3"
+      CELERY_BROKER_URL: "amqp://${RABBITMQ_USER:-rabbitmq_user}:${RABBITMQ_PASSWORD:-rabbitmq_password}@rabbitmq:5672"
+      ALLOWED_HOSTS: "backend localhost 127.0.0.1"
+      VERIFICATION_CHECK: no
+      CORS_ORIGIN_ALLOW_ALL: yes
+      CORS_ALLOW_CREDENTIALS: yes
+      CORS_ORIGIN_WHITELIST: "http://localhost:8000 http://localhost:8002 ${FRONTEND_URL:-http://localhost}"
+      ENABLE_LOGGING: ${ENABLE_LOGGING:-yes}
+    volumes:
+      - ./:/pneumatic_backend
+    ports:
+      - "8001:8000"
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
+    networks:
+      - pneumatic
+    restart: always
+
   file-service:
     build:
       context: ../storage
     container_name: pneumatic_file_service
-    ports:
-      - "8002:8000"
     environment:
       - DEBUG=${FILE_DEBUG:-true}
       - CONFIG=${FILE_CONFIG:-Development}
@@ -261,12 +316,13 @@ services:
       - AUTH_TOKEN_ITERATIONS=${FILE_AUTH_TOKEN_ITERATIONS:-1}
       - JWT_SECRET_KEY=${FILE_JWT_SECRET_KEY:-a7uq)(kz1kyf9m5kt_72x3+co-brb2x)^g#_(1r\=mwv\=fl11pd}
       - JWT_ALGORITHM=${FILE_JWT_ALGORITHM:-HS256}
-      - DJANGO_BACKEND_URL=${FILE_DJANGO_BACKEND_URL:-http://127.0.0.1:8000}
+      - DJANGO_BACKEND_URL=${FILE_DJANGO_BACKEND_URL:-http://backend:8000}
     volumes:
       - file_service_media:/app/media
     depends_on:
       - file-postgres
       - redis
+      - backend
     networks:
       - pneumatic
     restart: unless-stopped

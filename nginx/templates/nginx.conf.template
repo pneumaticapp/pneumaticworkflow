@@ -203,7 +203,7 @@ http {
     }
 
     server {
-        listen 80;
+        listen 8002;
         root /var/www/html;
         index index.html index.nginx-debian.html;
 
@@ -227,10 +227,5 @@ http {
         location = /502.html {
             alias /var/www/html/502.html;
         }
-
-        expires $expires;
-        gzip on;
-        gzip_disable "msie6";
-        gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
     }
 }

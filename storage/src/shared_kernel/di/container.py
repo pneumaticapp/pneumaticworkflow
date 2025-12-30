@@ -66,7 +66,7 @@ async def get_download_use_case(
 async def get_http_client() -> AsyncGenerator[HttpClient, None]:
     """Get HTTP client."""
     settings = get_settings()
-    client = HttpClient(base_url=settings.CHECK_PERMISSION_URL)
+    client = HttpClient(base_url=settings.check_permission_url)
     try:
         yield client
     finally:
