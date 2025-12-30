@@ -5,14 +5,13 @@ import {
   loadNotificationsList,
   authenticateUser,
   watchUserWSEventsAction,
-  loadTasksCount,
   usersFetchStarted,
   loadActiveUsersCount,
   generateMenu,
   loadPlan,
   loadTenantsCount,
 } from '../../redux/actions';
-
+import { loadTasksCount } from '../../redux/tasks/slice';
 import { IMainLayoutComponentStoreProps, MainLayout } from './MainLayout';
 import { getUserPendingActions } from '../../redux/selectors/user';
 
@@ -40,7 +39,7 @@ const mapStateToProps = (state: IApplicationState): TMainLayoutComponentStorePro
     notifications,
     general: { isLoaderVisible: isGeneralLoaderVisible },
     authUser,
-    accounts: { users }
+    accounts: { users },
   } = state;
   const { isOpen: isRunWorkflowModalOpen } = runWorkflowModal;
   const { isNotificationsListOpen } = notifications;
@@ -52,7 +51,7 @@ const mapStateToProps = (state: IApplicationState): TMainLayoutComponentStorePro
     isGeneralLoaderVisible,
     user: authUser,
     pendingActions,
-    users
+    users,
   };
 };
 

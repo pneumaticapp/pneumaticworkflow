@@ -1,7 +1,7 @@
-import * as React from 'react';
+import React from 'react';
 import { Avatar } from '../UI/Avatar';
 import { isArrayWithItems } from '../../utils/helpers';
-import { RawPerformer } from '../../types/template';
+import { ETemplateOwnerType, RawPerformer } from '../../types/template';
 import UserDataWithGroup from '../UserDataWithGroup';
 
 import styles from './WorkflowCardUsers.css';
@@ -10,11 +10,17 @@ export interface IWorkflowCardUsersProps {
   users?: RawPerformer[];
   maxUsers?: number;
   showAllUsers?: boolean;
+  applyFilterPerformer?: (performerIds: number[], groupIds: number[]) => void;
 }
 
 const MAX_SHOW_USERS = 5;
 
-export function WorkflowCardUsers({ users, maxUsers = MAX_SHOW_USERS, showAllUsers }: IWorkflowCardUsersProps) {
+export function WorkflowCardUsers({
+  users,
+  maxUsers = MAX_SHOW_USERS,
+  showAllUsers,
+  applyFilterPerformer,
+}: IWorkflowCardUsersProps) {
   if (!isArrayWithItems(users)) {
     return null;
   }
@@ -27,7 +33,7 @@ export function WorkflowCardUsers({ users, maxUsers = MAX_SHOW_USERS, showAllUse
         return (
           <UserDataWithGroup idItem={sourceId} type={type} key={`${type}-${sourceId}`}>
             {(user) => {
-              return (
+              const avatar = (
                 <Avatar
                   key={user?.id}
                   user={user}
@@ -36,6 +42,23 @@ export function WorkflowCardUsers({ users, maxUsers = MAX_SHOW_USERS, showAllUse
                   withTooltip
                   size="sm"
                 />
+              );
+
+              return applyFilterPerformer ? (
+                <button
+                  type="button"
+                  aria-label="apply filter performer"
+                  onClick={() =>
+                    applyFilterPerformer(
+                      type === ETemplateOwnerType.User ? [sourceId] : [],
+                      type === ETemplateOwnerType.UserGroup ? [sourceId] : [],
+                    )
+                  }
+                >
+                  {avatar}
+                </button>
+              ) : (
+                avatar
               );
             }}
           </UserDataWithGroup>
