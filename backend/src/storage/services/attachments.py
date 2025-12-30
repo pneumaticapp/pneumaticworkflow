@@ -5,6 +5,8 @@ from django.db import models
 from guardian.shortcuts import assign_perm, get_objects_for_user
 
 from src.generics.base.service import BaseModelService
+from src.processes.enums import OwnerType
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.template import Template
 from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
@@ -47,19 +49,59 @@ class AttachmentService(BaseModelService):
         if not task:
             return
 
-        # Get task performers
-        performers = task.performers.all()
-        for performer in performers:
+        # Reload task from DB to get latest performers and workflow data
+        task = Task.objects.prefetch_related(
+            'taskperformer_set__user',
+            'taskperformer_set__group',
+            'workflow__owners',
+            'workflow__members',
+            'workflow__template',
+        ).get(id=task.id)
+
+        users_set = set()
+
+        # Get task performers via intermediate model
+        task_performers = task.taskperformer_set.all()
+        for performer in task_performers:
             if performer.user:
+                users_set.add(performer.user)
+
+        # Get workflow owners and members
+        workflow = task.workflow
+        if workflow:
+            workflow_owners = workflow.owners.all()
+            for owner in workflow_owners:
+                users_set.add(owner)
+
+            workflow_members = workflow.members.all()
+            for member in workflow_members:
+                users_set.add(member)
+
+            # Get template owners
+            if workflow.template:
+                template_user_owners = TemplateOwner.objects.filter(
+                    template_id=workflow.template_id,
+                    type=OwnerType.USER,
+                    user__isnull=False,
+                ).select_related('user')
+                for template_owner in template_user_owners:
+                    if template_owner.user:
+                        users_set.add(template_owner.user)
+
+        # Assign permissions to all collected users
+        for user in users_set:
+            assign_perm(
+                'storage.view_file_attachment',
+                user,
+                self.instance,
+            )
+
+        # Assign permissions to groups
+        for performer in task_performers:
+            if performer.group:
                 assign_perm(
                     'storage.view_file_attachment',
-                    performer.user,
-                    self.instance,
-                )
-            elif performer.user_group:
-                assign_perm(
-                    'storage.view_file_attachment',
-                    performer.user_group,
+                    performer.group,
                     self.instance,
                 )
 
@@ -85,16 +127,44 @@ class AttachmentService(BaseModelService):
         if not workflow:
             return
 
+        # Reload workflow from DB to get latest ManyToMany fields
+        workflow = Workflow.objects.prefetch_related(
+            'owners',
+            'members',
+            'template',
+        ).get(id=workflow.id)
+
         # Assign permissions to workflow participants
-        # Get all users from workflow tasks
-        tasks = workflow.tasks.all()
         users_set = set()
 
+        # Get all users from workflow tasks
+        tasks = workflow.tasks.all()
         for task in tasks:
-            performers = task.performers.all()
-            for performer in performers:
+            task_performers = task.taskperformer_set.all()
+            for performer in task_performers:
                 if performer.user:
                     users_set.add(performer.user)
+
+        # Get owners from workflow (if assigned)
+        workflow_owners = workflow.owners.all()
+        for owner in workflow_owners:
+            users_set.add(owner)
+
+        workflow_members = workflow.members.all()
+        for member in workflow_members:
+            users_set.add(member)
+
+        # Also get owners from template (primary source)
+        if workflow.template:
+            # Get user owners directly from TemplateOwner
+            template_user_owners = TemplateOwner.objects.filter(
+                template_id=workflow.template_id,
+                type=OwnerType.USER,
+                user__isnull=False,
+            ).select_related('user')
+            for template_owner in template_user_owners:
+                if template_owner.user:
+                    users_set.add(template_owner.user)
 
         for user in users_set:
             assign_perm(
@@ -185,15 +255,19 @@ class AttachmentService(BaseModelService):
 
         if attachment.access_type == AccessType.RESTRICTED:
             # Use django-guardian for permission check
-            user_model = get_user_model()
-            try:
-                user = user_model.objects.get(id=user_id)
-                return user.has_perm(
-                    'storage.view_file_attachment',
-                    attachment,
-                )
-            except user_model.DoesNotExist:
-                return False
+            # Use self.user if available to avoid permission cache issues
+            if hasattr(self, 'user') and self.user and self.user.id == user_id:
+                user = self.user
+            else:
+                user_model = get_user_model()
+                try:
+                    user = user_model.objects.get(id=user_id)
+                except user_model.DoesNotExist:
+                    return False
+            return user.has_perm(
+                'storage.view_file_attachment',
+                attachment,
+            )
 
         return False
 

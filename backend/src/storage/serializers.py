@@ -1,5 +1,6 @@
 from rest_framework import serializers
 
+from src.generics.mixins.serializers import CustomValidationErrorMixin
 from src.storage.models import Attachment
 
 
@@ -27,7 +28,10 @@ class AttachmentSerializer(serializers.ModelSerializer):
         ]
 
 
-class AttachmentCheckPermissionSerializer(serializers.Serializer):
+class AttachmentCheckPermissionSerializer(
+    CustomValidationErrorMixin,
+    serializers.Serializer,
+):
     """Serializer for checking file access permissions."""
 
     file_id = serializers.CharField(

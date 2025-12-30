@@ -67,6 +67,10 @@ class Common(Configuration):
     # Auth
     AUTH_USER_MODEL = 'accounts.User'
     AUTH_TOKEN_ITERATIONS = int(env.get('AUTH_TOKEN_ITERATIONS', '1'))
+    AUTHENTICATION_BACKENDS = (
+        'django.contrib.auth.backends.ModelBackend',
+        'guardian.backends.ObjectPermissionBackend',
+    )
 
     # Tokens lifetime
     DIGEST_UNSUB_TOKEN_IN_DAYS = 7
@@ -553,6 +557,11 @@ class Development(Common):
         },
     }
 
+    # Django Guardian - using built-in models
+    # Disable anonymous user creation (not needed for this project)
+    ANONYMOUS_USER_NAME = None
+    ANONYMOUS_USER_ID = -1
+
 
 class Staging(Development):
 
@@ -574,10 +583,6 @@ class Staging(Development):
             'PORT': env.get('POSTGRES_REPLICA_PORT', '5432'),
         },
     }
-
-    # Django Guardian - using built-in models
-    # Disable anonymous user creation (not needed for this project)
-    ANONYMOUS_USER_NAME = None
 
     MAX_INVITES = 10
 

@@ -61,7 +61,7 @@ class AttachmentViewSet(CustomViewSetMixin, GenericViewSet):
         )
 
         if has_permission:
-            return self.response_no_content()
+            return self.response_ok()
         return self.response_forbidden()
 
     def list(self, request, *args, **kwargs):

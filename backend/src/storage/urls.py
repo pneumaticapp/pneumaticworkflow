@@ -2,7 +2,7 @@ from rest_framework.routers import DefaultRouter
 
 from src.storage.views import AttachmentViewSet
 
-router = DefaultRouter()
+router = DefaultRouter(trailing_slash=False)
 
 router.register(
     r'attachments',

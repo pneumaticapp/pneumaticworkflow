@@ -27,9 +27,9 @@ def extract_file_ids_from_text(text: str) -> List[str]:
     # Pattern for searching file service links
     # Supports various URL formats
     patterns = [
-        r'/files/([a-zA-Z0-9_-]{16,64})',
-        r'/api/files/([a-zA-Z0-9_-]{16,64})',
-        r'file_id[=:]([a-zA-Z0-9_-]{16,64})',
+        r'/files/([a-zA-Z0-9_-]{8,64})',
+        r'/api/files/([a-zA-Z0-9_-]{8,64})',
+        r'file_id[=:]([a-zA-Z0-9_-]{8,64})',
     ]
 
     file_ids = []

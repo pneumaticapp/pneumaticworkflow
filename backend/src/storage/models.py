@@ -20,6 +20,9 @@ class Attachment(SoftDeleteModel, AccountBaseMixin):
             models.Index(fields=['source_type', 'account']),
         ]
 
+    date_created = models.DateTimeField(auto_now_add=True)
+    date_updated = models.DateTimeField(auto_now=True)
+
     file_id = models.CharField(
         max_length=64,
         unique=True,
