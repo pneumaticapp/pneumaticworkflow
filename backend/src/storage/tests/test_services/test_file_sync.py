@@ -398,9 +398,13 @@ class TestFileSyncServiceDetermineSourceType:
             url='https://storage.com/test.pdf',
             size=1024,
             account=user.account,
-            workflow=workflow,
         )
-        attachment.event = event_mock
+        mocker.patch.object(
+            type(attachment),
+            'event',
+            new_callable=mocker.PropertyMock,
+            return_value=event_mock,
+        )
 
         service = FileSyncService()
 
@@ -425,7 +429,12 @@ class TestFileSyncServiceDetermineSourceType:
             account=user.account,
             workflow=workflow,
         )
-        attachment.event = event_mock
+        mocker.patch.object(
+            type(attachment),
+            'event',
+            new_callable=mocker.PropertyMock,
+            return_value=event_mock,
+        )
 
         service = FileSyncService()
 
@@ -449,9 +458,13 @@ class TestFileSyncServiceDetermineSourceType:
             url='https://storage.com/test.pdf',
             size=1024,
             account=user.account,
-            workflow=workflow,
         )
-        attachment.output = output_mock
+        mocker.patch.object(
+            type(attachment),
+            'output',
+            new_callable=mocker.PropertyMock,
+            return_value=output_mock,
+        )
 
         service = FileSyncService()
 
@@ -497,9 +510,13 @@ class TestFileSyncServiceGetTask:
             url='https://storage.com/test.pdf',
             size=1024,
             account=user.account,
-            workflow=workflow,
         )
-        attachment.event = event_mock
+        mocker.patch.object(
+            type(attachment),
+            'event',
+            new_callable=mocker.PropertyMock,
+            return_value=event_mock,
+        )
 
         service = FileSyncService()
 
@@ -523,9 +540,13 @@ class TestFileSyncServiceGetTask:
             url='https://storage.com/test.pdf',
             size=1024,
             account=user.account,
-            workflow=workflow,
         )
-        attachment.output = output_mock
+        mocker.patch.object(
+            type(attachment),
+            'output',
+            new_callable=mocker.PropertyMock,
+            return_value=output_mock,
+        )
 
         service = FileSyncService()
 

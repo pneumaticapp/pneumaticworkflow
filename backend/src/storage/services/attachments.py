@@ -281,17 +281,19 @@ class AttachmentService(BaseModelService):
             user,
             'storage.view_file_attachment',
             klass=Attachment,
-        )
+        ).filter(is_deleted=False)
 
         # Get account-level attachments
         account_attachments = Attachment.objects.filter(
             account=user.account,
             access_type=AccessType.ACCOUNT,
+            is_deleted=False,
         )
 
         # Get public attachments
         public_attachments = Attachment.objects.filter(
             access_type=AccessType.PUBLIC,
+            is_deleted=False,
         )
 
         # Combine querysets

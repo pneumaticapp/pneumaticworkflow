@@ -1,4 +1,5 @@
 import pytest
+from guardian.shortcuts import assign_perm
 
 from src.processes.tests.fixtures import (
     create_test_account,
@@ -83,6 +84,7 @@ def test_list__restricted_with_permission__ok(api_client):
         source_type=SourceType.TASK,
         task=task,
     )
+    assign_perm('storage.view_file_attachment', user, attachment)
 
     # act
     response = api_client.get('/storage/attachments')
@@ -100,7 +102,7 @@ def test_list__different_account__not_visible(api_client):
     user1 = create_test_admin(account=account1)
 
     account2 = create_test_account()
-    create_test_admin(account=account2)
+    create_test_admin(account=account2, email='admin2@pneumatic.app')
 
     Attachment.objects.create(
         file_id='file_account2_123',
