@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 import { IApplicationState } from '../../types/redux';
 import { ITasksProps, Tasks } from './Tasks';
-import { loadTaskList, loadCurrentTask, searchTasks, openSelectTemplateModal } from '../../redux/actions';
+import { loadCurrentTask, openSelectTemplateModal } from '../../redux/actions';
 import {
   changeTaskListSorting,
   changeTaskListCompletionStatus,
@@ -12,6 +12,8 @@ import {
   setFilterTemplate,
   setFilterStep,
   showNewTasksNotification,
+  loadTaskList,
+  searchTasks,
 } from '../../redux/tasks/slice';
 import { withSyncedQueryString } from '../../HOCs/withSyncedQueryString';
 import { ETaskListCompletionStatus, ETaskListSorting } from '../../types/tasks';

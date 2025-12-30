@@ -5,12 +5,11 @@ import { EventChannel } from 'redux-saga';
 import { PayloadAction } from '@reduxjs/toolkit';
 import {
   openRunWorkflowModal,
-  ETaskListActions,
   setGeneralLoaderVisibility,
   setCurrentTask,
   updateTaskWorkflowLogItem,
 } from '../actions';
-import { patchTaskInList } from '../tasks/slice';
+import { patchTaskInList, ETaskListActions } from '../tasks/slice';
 import {
   changeWorkflow,
   changeWorkflowsList,

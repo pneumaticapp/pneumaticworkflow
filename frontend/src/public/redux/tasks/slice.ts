@@ -1,9 +1,10 @@
-import { createSlice } from '@reduxjs/toolkit';
+import { createAction, createSlice } from '@reduxjs/toolkit';
 import { ETaskListStatus } from '../../components/Tasks/types';
 import { IStoreTasks, ITaskList } from '../../types/redux';
-import { ETaskListCompletionStatus, ETaskListSorting, ITasksSettings } from '../../types/tasks';
+import { ETaskListCompletionStatus, ETaskListSorting, ITaskListItem, ITasksSettings } from '../../types/tasks';
 import { isObjectChanged } from '../../utils/helpers';
 import { EGeneralActions } from '../general/actions';
+import { TShiftTaskListPayload } from './types';
 
 const initTasksList = {
   count: 0,
@@ -111,7 +112,8 @@ const tasksSlice = createSlice({
       state.tasksSettings.isHasFilter = areFiltersChanged(state.tasksSettings);
     },
 
-    loadFilterSteps: (state) => {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    loadFilterSteps: (state, _action) => {
       state.tasksSettings.templateStepList.isLoading = true;
       state.tasksSettings.isHasFilter = areFiltersChanged(state.tasksSettings);
     },
@@ -154,6 +156,12 @@ const tasksSlice = createSlice({
   },
 });
 
+export const loadTasksCount = createAction<void>('tasks/loadTasksCount');
+export const loadTaskList = createAction<number>('tasks/loadTaskList');
+export const insertNewTask = createAction<ITaskListItem>('tasks/insertNewTask');
+export const searchTasks = createAction<void>('tasks/searchTasks');
+export const shiftTaskList = createAction<TShiftTaskListPayload>('tasks/shiftTaskList');
+
 export const {
   setTaskListStatus,
   changeTaskListSorting,
@@ -176,5 +184,9 @@ export const {
   clearFilters,
   patchTaskInList,
 } = tasksSlice.actions;
+
+export const enum ETaskListActions {
+  ChannelAction = 'TASK_LIST_CHANNEL_ACTION',
+}
 
 export default tasksSlice.reducer;

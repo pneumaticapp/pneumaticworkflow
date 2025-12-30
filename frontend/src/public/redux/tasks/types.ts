@@ -6,3 +6,5 @@ export type TPatchTaskInListPayload = {
   taskId: number;
   task: Partial<ITaskListItem>;
 };
+
+export type TShiftTaskListPayload = { currentTaskId: number };

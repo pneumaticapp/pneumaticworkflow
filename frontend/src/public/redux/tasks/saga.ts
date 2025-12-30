@@ -18,8 +18,7 @@ import {
 } from 'redux-saga/effects';
 
 import { PayloadAction } from '@reduxjs/toolkit';
-import { TLoadTaskList, ETaskListActions, insertNewTask, TInsertNewTask, TShiftTaskList } from './actions';
-import {
+import { ETaskListActions ,
   setTaskListStatus,
   changeTaskList,
   setTaskListDetailedTaskId,
@@ -31,7 +30,13 @@ import {
   loadFilterStepsSuccess,
   loadFilterStepsFailed,
   showNewTasksNotification,
+  loadTasksCount,
+  loadTaskList,
+  insertNewTask,
+  searchTasks,
+  shiftTaskList,
 } from './slice';
+
 import { ERoutes } from '../../constants/routes';
 import { getAuthUser } from '../selectors/user';
 import { getTasksCount, IGetTasksCountResponse } from '../../api/getTasksCount';
@@ -65,7 +70,7 @@ import { envWssURL } from '../../constants/enviroment';
 import { mapTasksToISOStringToRedux } from '../../utils/mappers';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { getTemplatesTitlesByTasks, TGetTemplatesTitlesByTasksResponse } from '../../api/getTemplatesTitlesByTasks';
-import { TLoadFilterStepsPayload } from './types';
+import { TLoadFilterStepsPayload, TShiftTaskListPayload } from './types';
 
 export function* setDetailedTask(taskId: number) {
   yield put(setTaskListDetailedTaskId(taskId));
@@ -182,7 +187,7 @@ export function* handleSearchTasks() {
   yield fetchTaskList(0, ETaskListStatus.Searching);
 }
 
-export function* handleInsertNewTask({ payload: newTask }: TInsertNewTask) {
+export function* handleInsertNewTask({ payload: newTask }: PayloadAction<ITaskListItem>) {
   const tasksSettings: ReturnType<typeof getTasksSettings> = yield select(getTasksSettings);
   const searchText: ReturnType<typeof getTasksSearchText> = yield select(getTasksSearchText);
   if (!checkShouldInsertNewTask(newTask, tasksSettings, searchText)) {
@@ -234,23 +239,23 @@ function* fetchTasksFilterSteps({ payload: { templateId } }: PayloadAction<TLoad
   }
 }
 
-function* handleShiftTaskList({ payload: { currentTaskId } }: TShiftTaskList) {
+function* handleShiftTaskList({ payload: { currentTaskId } }: PayloadAction<TShiftTaskListPayload>) {
   yield openNextTask(currentTaskId);
   yield removeTaskFromList(currentTaskId);
 }
 
 export function* watchFetchTaskList() {
-  yield takeEvery(ETaskListActions.LoadTaskList, function* loadTask({ payload: offset }: TLoadTaskList) {
+  yield takeEvery(loadTaskList.type, function* loadTask({ payload: offset }: PayloadAction<number>) {
     yield fetchTaskList(offset, ETaskListStatus.Loading);
   });
 }
 
 export function* watchFetchTasksCount() {
-  yield takeEvery(ETaskListActions.LoadTasksCount, fetchTasksCount);
+  yield takeEvery(loadTasksCount.type, fetchTasksCount);
 }
 
 export function* watchSearchTasks() {
-  yield takeLatest(ETaskListActions.SearchTasks, handleSearchTasks);
+  yield takeLatest(searchTasks.type, handleSearchTasks);
 }
 
 export function* watchLoadTasksFilterTemplates() {
@@ -262,11 +267,11 @@ export function* watchLoadTasksFilterSteps() {
 }
 
 export function* watchInsertNewTask() {
-  yield takeEvery(ETaskListActions.InsertNewTask, handleInsertNewTask);
+  yield takeEvery(insertNewTask.type, handleInsertNewTask);
 }
 
 export function* watchShiftTaskList() {
-  yield takeLatest(ETaskListActions.ShiftTaskList, handleShiftTaskList);
+  yield takeLatest(shiftTaskList.type, handleShiftTaskList);
 }
 
 export function* watchNewTask() {
