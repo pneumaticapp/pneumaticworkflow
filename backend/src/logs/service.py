@@ -225,3 +225,26 @@ class AccountLogService(BaseModelService):
                 'account_id': user.account_id,
             },
         )
+
+    def okta_logout_request(
+        self,
+        logout_token: str,
+        request_data: dict,
+        user_id: Optional[int] = None,
+        account_id: Optional[int] = None,
+        status: AccountEventStatus.LITERALS = AccountEventStatus.PENDING,
+    ):
+        """Log Okta Back-Channel Logout request"""
+        self.create(
+            event_type=AccountEventType.AUTH,
+            title='Okta Back-Channel Logout',
+            status=status,
+            user_id=user_id,
+            account_id=account_id,
+            request_data={
+                'logout_token': logout_token[:50] + '...',
+                **request_data,
+            },
+            direction=RequestDirection.RECEIVED,
+            contractor='Okta',
+        )
