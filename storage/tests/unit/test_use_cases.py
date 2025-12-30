@@ -1,7 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, Mock
 
 import pytest
+
 from src.application.dto.file_dtos import (
     DownloadFileQuery,
     UploadFileCommand,
@@ -43,7 +44,7 @@ class TestUploadFileUseCase:
             size=12,
             user_id=1,
             account_id=1,
-            created_at=datetime.now(),
+            created_at=datetime.now(timezone.utc),
         )
 
         mock_uow = AsyncMock()
@@ -143,7 +144,7 @@ class TestDownloadFileUseCase:
             size=12,
             user_id=1,
             account_id=1,
-            created_at=datetime.now(),
+            created_at=datetime.now(timezone.utc),
         )
 
         mock_repository.get_by_id.return_value = file_record

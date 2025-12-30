@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 import redis.asyncio as redis
+
 from src.shared_kernel.auth.redis_client import (
     RedisAuthClient,
     get_redis_client,

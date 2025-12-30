@@ -2,6 +2,7 @@
 
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+
 from src.shared_kernel.exceptions import (
     VALIDATION_ERROR_CODES,
     AuthenticationError,
@@ -225,7 +226,7 @@ class TestDomainExceptions:
     def test_storage_error_bucket_create_failed(self):
         """Test storage bucket creation failed error."""
         exception = StorageError.bucket_create_failed(
-            'Insufficient permissions'
+            'Insufficient permissions',
         )
 
         assert exception.error_code.code == 'STORAGE_004'
@@ -241,7 +242,7 @@ class TestDomainExceptions:
     def test_storage_error_file_not_found_in_storage(self):
         """Test storage file not found error."""
         exception = StorageError.file_not_found_in_storage(
-            'path/to/file.txt', 'my-bucket'
+            'path/to/file.txt', 'my-bucket',
         )
 
         assert exception.error_code.code == 'STORAGE_005'
@@ -280,7 +281,7 @@ class TestDatabaseExceptions:
     def test_database_constraint_error(self):
         """Test database constraint error."""
         exception = DatabaseConstraintError(
-            'unique_constraint', 'Duplicate key'
+            'unique_constraint', 'Duplicate key',
         )
 
         assert exception.error_code.code == 'DB_004'
@@ -327,7 +328,7 @@ class TestExternalServiceExceptions:
     def test_http_client_error(self):
         """Test HTTP client error."""
         exception = HttpClientError(
-            'http://example.com', details='Request failed'
+            'http://example.com', details='Request failed',
         )
 
         assert exception.error_code.code == 'EXT_003'
@@ -341,7 +342,7 @@ class TestExternalServiceExceptions:
     def test_http_client_error_with_status_code(self):
         """Test HTTP client error with status code."""
         exception = HttpClientError(
-            'http://example.com', status_code=404, details='Not found'
+            'http://example.com', status_code=404, details='Not found',
         )
 
         assert exception.error_code.code == 'EXT_003'
@@ -373,7 +374,7 @@ class TestExternalServiceExceptions:
     def test_external_service_error_base_class(self):
         """Test external service error base class."""
         exception = ExternalServiceError(
-            'REDIS_CONNECTION_ERROR', 'Test error'
+            'REDIS_CONNECTION_ERROR', 'Test error',
         )
 
         assert exception.error_code.code == 'EXT_001'

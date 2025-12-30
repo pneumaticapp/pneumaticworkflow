@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, Mock
 
 import pytest
 from sqlalchemy.exc import IntegrityError, OperationalError
+
 from src.domain.entities.file_record import FileRecord
 from src.infra.repositories.file_record_repository import FileRecordRepository
 from src.shared_kernel.database.models import FileRecordORM
@@ -35,7 +36,7 @@ class TestFileRecordRepository:
             size=1024,
             user_id=1,
             account_id=1,
-            created_at=datetime.now(),
+            created_at=datetime.now(timezone.utc),
         )
 
     @pytest.fixture
@@ -48,7 +49,7 @@ class TestFileRecordRepository:
             size=1024,
             user_id=1,
             account_id=1,
-            created_at=datetime.now(),
+            created_at=datetime.now(timezone.utc),
         )
 
     @pytest.mark.asyncio

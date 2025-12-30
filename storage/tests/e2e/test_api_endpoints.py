@@ -1,6 +1,7 @@
 from unittest.mock import MagicMock
 
 import pytest
+
 from src.shared_kernel.exceptions import DomainFileNotFoundError
 
 

@@ -133,6 +133,8 @@ class Common(Configuration):
         'django_filters',
         'django_celery_beat',
         'drf_recaptcha',
+        'src.permissions',
+        'guardian',
         'src.accounts',
         'src.authentication',
         'src.applications',
@@ -151,6 +153,7 @@ class Common(Configuration):
         'src.ai',
         'src.payment',
         'src.logs',
+        'src.storage',
     ]
 
     MIDDLEWARE = [
@@ -162,6 +165,7 @@ class Common(Configuration):
         'django.middleware.csrf.CsrfViewMiddleware',
         'src.authentication.middleware.UserAgentMiddleware',
         'src.authentication.middleware.AuthMiddleware',
+        'src.storage.middleware.FileServiceAuthMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
     ]
@@ -338,6 +342,12 @@ class Common(Configuration):
     # Attachments
     ATTACHMENT_SIGNED_URL_LIFETIME_MIN = 15
     ATTACHMENT_MAX_SIZE_BYTES = 104857600  # bites = 100 Mb
+
+    # File Service
+    FILE_SERVICE_URL = env.get(
+        'FILE_SERVICE_URL',
+        'http://localhost:8002',
+    )
 
     # Notifications
     # In seconds - default 10 min
@@ -565,7 +575,9 @@ class Staging(Development):
         },
     }
 
-
+    # Django Guardian - using built-in models
+    # Disable anonymous user creation (not needed for this project)
+    ANONYMOUS_USER_NAME = None
 
     MAX_INVITES = 10
 

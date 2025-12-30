@@ -1,6 +1,7 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 import pytest
+
 from src.domain.entities.file_record import FileRecord
 from src.infra.repositories.file_record_repository import FileRecordRepository
 
@@ -23,7 +24,7 @@ class TestFileRecordRepository:
             size=1024,
             user_id=1,
             account_id=1,
-            created_at=datetime.now(),
+            created_at=datetime.now(timezone.utc),
         )
 
         # Act

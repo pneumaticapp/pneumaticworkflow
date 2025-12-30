@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, Mock
 import httpx
 import pytest
 from fastapi import Request
+
 from src.infra.http_client import HttpClient
 from src.shared_kernel.auth.user_types import UserType
 from src.shared_kernel.exceptions import (

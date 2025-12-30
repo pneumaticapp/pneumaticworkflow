@@ -28,6 +28,7 @@ from src.processes.utils.common import (
     insert_fields_values_to_text,
     string_abbreviation,
 )
+from src.storage.utils import refresh_attachments
 from src.utils.dates import date_to_user_fmt
 
 UserModel = get_user_model()
@@ -180,6 +181,9 @@ class WorkflowService(
                 redefined_performer=kwargs.get('redefined_performer'),
             )
         self.update_owners()
+
+        # Update attachments for workflow
+        refresh_attachments(self.instance, self.user)
 
     def _create_actions(self, **kwargs):
         if kwargs.get('anonymous_id'):

@@ -1,7 +1,8 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock
 
 import pytest
+
 from src.application.dto.file_dtos import DownloadFileQuery, UploadFileCommand
 from src.application.use_cases.file_download import DownloadFileUseCase
 from src.application.use_cases.file_upload import UploadFileUseCase
@@ -157,7 +158,7 @@ class TestDownloadFileUseCaseIntegration:
             size=18,
             user_id=1,
             account_id=1,
-            created_at=datetime.now(),
+            created_at=datetime.now(timezone.utc),
         )
         await repository.create(file_record)
         await async_session.commit()

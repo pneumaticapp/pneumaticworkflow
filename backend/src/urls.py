@@ -77,6 +77,7 @@ urlpatterns = [
     path('templates/', include('src.processes.urls.templates')),
     path('workflows/', include('src.processes.urls.workflows')),
     path('attachments/', include('src.processes.urls.attachments')),
+    path('storage/', include('src.storage.urls')),
     path('notifications/', include('src.notifications.urls')),
     path('navigation/', include('src.navigation.urls')),
     path('pages/', include('src.pages.urls')),

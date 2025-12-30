@@ -3,6 +3,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 from fastapi import Request, Response
+
 from src.shared_kernel.auth.user_types import UserType
 from src.shared_kernel.middleware.auth_middleware import (
     AuthenticationMiddleware,
