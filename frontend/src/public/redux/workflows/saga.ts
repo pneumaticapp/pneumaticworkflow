@@ -955,7 +955,7 @@ export function* watchEditComment() {
 }
 
 export function* watchLoadFilterTemplates() {
-  yield takeEvery(loadFilterTemplates.type, fetchFilterTemplates);
+  yield takeLatest(loadFilterTemplates.type, fetchFilterTemplates);
 }
 
 export function* watchLoadFilterSteps() {
@@ -979,11 +979,11 @@ export function* watchCloneWorkflow() {
 }
 
 export function* watchUpdateCurrentPerformersCounters() {
-  yield takeEvery(updateCurrentPerformersCounters.type, updateCurrentPerformersCountersSaga);
+  yield takeLatest(updateCurrentPerformersCounters.type, updateCurrentPerformersCountersSaga);
 }
 
 export function* watchUpdateWorkflowStartersCounters() {
-  yield takeEvery(updateWorkflowStartersCounters.type, updateWorkflowStartersCountersSaga);
+  yield takeLatest(updateWorkflowStartersCounters.type, updateWorkflowStartersCountersSaga);
 }
 
 export function* watchSearchTextChanged() {
