@@ -61,6 +61,7 @@ import {
   deleteComment as deleteCommentAction,
   editComment as editCommentAction,
   saveWorkflowsPreset,
+  setFilterTemplate,
 } from './slice';
 import {
   IChangeWorkflowLogViewSettingsPayload,
@@ -160,6 +161,9 @@ import { updateTemplatePresets } from '../../api/updateTemplatePresets';
 import { addTemplatePreset } from '../../api/addTemplatePreset';
 import { ALL_SYSTEM_FIELD_NAMES } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
 import { TUserListItem } from '../../types/user';
+import { isRequestCanceled } from '../../utils/isRequestCanceled';
+
+const templateRequestsAbortControllers = new Map<string, AbortController>();
 
 function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: number; showLoader?: boolean }) {
   const {
@@ -306,16 +310,31 @@ function* fetchWorkflowsList({ payload: offset = 0 }: PayloadAction<number>) {
   }
 
   if (shouldGetPresets) {
+    const abortController = new AbortController();
+    const keyAbortController = `${currentTemplateId}__presets`;
+    templateRequestsAbortControllers.set(keyAbortController, abortController);
+
     try {
       shouldResetFields = true;
-      const presets: TGetTemplatePresetsResponse = yield call(getTemplatePresets, String(currentTemplateId));
+      const presets: TGetTemplatePresetsResponse = yield call(
+        getTemplatePresets,
+        String(currentTemplateId),
+        abortController.signal,
+      );
       yield put(setWorkflowsPresetsRedux(presets));
 
       newSelectedFields = getCorrectPresetFields(presets);
       yield put(setWorkflowsFilterSelectedFields(newSelectedFields));
       yield put(setLastLoadedTemplateId(String(currentTemplateId)));
     } catch (error) {
+      if (isRequestCanceled(error)) {
+        return;
+      }
       console.error('fetchWorkflowsList: Failed to load fields for template', currentTemplateId, ':', error);
+    } finally {
+      if (templateRequestsAbortControllers.get(keyAbortController) === abortController) {
+        templateRequestsAbortControllers.delete(keyAbortController);
+      }
     }
   } else if (shouldGetAllDefaultFields) {
     shouldResetFields = true;
@@ -634,9 +653,13 @@ export function* cloneWorkflowSaga({
 export function* fetchFilterSteps({
   payload: { templateId, onAfterLoaded },
 }: PayloadAction<TLoadWorkflowsFilterStepsPayload>) {
+  const abortController = new AbortController();
+  const keyAbortController = `${templateId}__tasks`;
+  templateRequestsAbortControllers.set(keyAbortController, abortController);
+
   try {
     const [steps]: [ITemplateStep[]] = yield all([
-      call(getTemplateSteps, { id: templateId }),
+      call(getTemplateSteps, { id: templateId, signal: abortController.signal }),
       handleLoadTemplateVariables(templateId),
     ]);
 
@@ -644,10 +667,32 @@ export function* fetchFilterSteps({
 
     onAfterLoaded?.(steps);
   } catch (error) {
+    if (isRequestCanceled(error)) {
+      return;
+    }
     yield put(loadWorkflowsFilterStepsFailed({ templateId }));
     logger.info('fetch tasks filter steps error : ', error);
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+  } finally {
+    if (templateRequestsAbortControllers.get(keyAbortController) === abortController) {
+      templateRequestsAbortControllers.delete(keyAbortController);
+    }
   }
+}
+
+function* cancelTemplateFilterRequestsSaga({ payload }: PayloadAction<number[]>) {
+  if (payload.length === 0) {
+    templateRequestsAbortControllers.forEach((controller) => {
+      controller.abort();
+    });
+    templateRequestsAbortControllers.clear();
+
+    templateRequestsAbortControllers.forEach((controller) => {
+      controller.abort();
+    });
+    templateRequestsAbortControllers.clear();
+  }
+  yield;
 }
 
 export function* updateCurrentPerformersCountersSaga() {
@@ -962,6 +1007,10 @@ export function* watchLoadFilterSteps() {
   yield takeEvery(loadFilterSteps.type, fetchFilterSteps);
 }
 
+export function* watchCancelTemplateFilterRequests() {
+  yield takeEvery(setFilterTemplate.type, cancelTemplateFilterRequestsSaga);
+}
+
 export function* watchSendWorkflowLogComment() {
   yield takeEvery(sendWorkflowLogComments.type, saveWorkflowLogComment);
 }
@@ -1033,5 +1082,6 @@ export function* rootSaga() {
     fork(watchCreateReactionComment),
     fork(watchDeleteReactionComment),
     fork(watchSaveWorkflowsPreset),
+    fork(watchCancelTemplateFilterRequests),
   ]);
 }
