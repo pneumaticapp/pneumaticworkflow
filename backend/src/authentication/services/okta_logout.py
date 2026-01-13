@@ -5,7 +5,10 @@ from django.contrib.auth import get_user_model
 from django.core.cache import caches
 from typing import Optional
 
-from src.accounts.enums import SourceType
+from src.accounts.enums import (
+    UserStatus,
+    SourceType,
+)
 from src.authentication.models import AccessToken
 from src.authentication.tokens import PneumaticToken
 from src.utils.logging import (
@@ -29,7 +32,7 @@ class OktaLogoutService:
 
     # Constants
     SOURCE = SourceType.OKTA
-    CACHE_TIMEOUT = 2592000  # 30 days (Okta sub lifetime)
+    CACHE_TIMEOUT = 2592000  # 30 days
     CACHE_KEY_PREFIX = 'okta_sub_to_user'
 
     def __init__(self, logout_token: Optional[str] = None):
@@ -47,46 +50,61 @@ class OktaLogoutService:
         Process Okta Back-Channel Logout request.
 
         Supports two logout types:
-        1. iss/sub format: Uses cached sub identifier (current)
-        2. email format: Uses email with domain validation (future)
+        1. iss_sub format: Uses cached sub identifier
+        2. email format: Uses email with domain validation
 
         Args:
-            **request_data: Validated data with 'iss', 'sub', 'format'
-                           or 'email'
+            **request_data: Validated data from serializer containing:
+                - format: 'iss_sub' or 'email'
+                - sub_id_data: Original sub_id object from request
 
-        Raises:
-            UserModel.DoesNotExist: If user not found
-            ValueError: If request format is invalid
+        All errors are logged to Sentry instead of raising exceptions.
         """
-        # Validate logout_token if provided
-        if self.logout_token:
-            self._validate_logout_token()
+        # Validate logout_token
+        if not self._validate_logout_token():
+            return
 
-        # Determine logout type and process accordingly
-        if 'sub' in request_data:
-            self._process_logout_by_sub(request_data)
-        elif 'email' in request_data:
-            self._process_logout_by_email(request_data['email'])
+        # Process based on format type
+        format_type = request_data.get('format')
+        sub_id_data = request_data.get('sub_id_data', {})
+
+        if format_type == 'iss_sub':
+            sub = sub_id_data.get('sub')
+            if not sub:
+                capture_sentry_message(
+                    message="Missing 'sub' field in iss_sub format",
+                    level=SentryLogLevel.ERROR,
+                    data={'request_data': request_data},
+                )
+                return
+            self._process_logout_by_sub(sub)
+        elif format_type == 'email':
+            email = sub_id_data.get('email')
+            if not email:
+                capture_sentry_message(
+                    message="Missing 'email' field in email format",
+                    level=SentryLogLevel.ERROR,
+                    data={'request_data': request_data},
+                )
+                return
+            self._process_logout_by_email(email)
         else:
-            raise ValueError(
-                "Invalid logout request: missing 'sub' or 'email'",
+            capture_sentry_message(
+                message=f"Unsupported format: {format_type}",
+                level=SentryLogLevel.ERROR,
+                data={'request_data': request_data},
             )
 
-    def _process_logout_by_sub(self, request_data: dict):
+    def _process_logout_by_sub(self, sub: str):
         """
         Process logout using sub identifier.
 
-        After logout_token verification, we trust the format from Okta.
-        No need to validate format == "iss_sub" here.
+        After logout_token verification, we trust the sub from Okta.
 
         Args:
-            request_data: Dict with 'format', 'iss', 'sub' fields
+            sub: Okta subject identifier
         """
-        sub = request_data.get('sub')
-        if not sub:
-            raise ValueError("Missing 'sub' in request data")
-
-        # Get user by sub (raises exception if not found)
+        # Get user by sub
         try:
             user = self._get_user_by_sub(sub)
         except UserModel.DoesNotExist:
@@ -95,69 +113,68 @@ class OktaLogoutService:
                 level=SentryLogLevel.WARNING,
                 data={
                     'sub': sub,
-                    'iss': request_data.get('iss'),
-                    'format': request_data.get('format'),
                     'logout_token': self.logout_token,
                 },
             )
-            raise
+            return
 
         # Perform logout
         self._logout_user(user, okta_sub=sub)
 
     def _process_logout_by_email(self, email: str):
         """
-        Process logout using email.
-
-        Future implementation for Okta marketplace app.
-        Will validate domain and find user by email.
+        Process logout using email with domain validation.
 
         Args:
-            email: User email address
+            email: User email address from Okta
         """
-        # TODO: Implement email-based logout
-        # 1. Extract domain from email
-        # 2. Validate domain against allowed domains
-        # 3. Find user by email in domain
-        # 4. Perform logout
-        raise NotImplementedError(
-            "Email-based logout not yet implemented",
-        )
+        # Extract domain from email
+        if '@' not in email:
+            capture_sentry_message(
+                message=f"Invalid email format: {email}",
+                level=SentryLogLevel.ERROR,
+                data={'email': email},
+            )
+            return
 
-    def _validate_logout_token(self):
+        domain = email.split('@')[1].lower()
+
+        # Find user by email with domain validation
+        try:
+            user = UserModel.objects.get(
+                email__iexact=email,
+                status=UserStatus.ACTIVE,
+            )
+        except UserModel.DoesNotExist:
+            capture_sentry_message(
+                message='Okta logout: user not found by email',
+                level=SentryLogLevel.WARNING,
+                data={
+                    'email': email,
+                    'domain': domain,
+                    'logout_token': self.logout_token,
+                },
+            )
+            return
+
+        # Perform logout (no okta_sub for email format)
+        self._logout_user(user, okta_sub=None)
+
+    def _validate_logout_token(self) -> bool:
         """
         Validate logout_token with Okta introspection endpoint.
 
         The logout_token is a JWT that must be verified to ensure
         the request is authentic and not from an attacker.
 
-        Raises:
-            ValueError: If token is invalid or verification fails
+        Returns:
+            bool: True if token is valid, False otherwise
         """
-        if not self.logout_token:
-            return
 
         try:
-            # Decode token without verification to get issuer
-            payload = jwt.decode(
-                self.logout_token,
-                options={
-                    "verify_signature": False,
-                    "verify_exp": False,
-                    "verify_aud": False,
-                    "verify_iss": False,
-                },
-            )
-            issuer = payload.get('iss', '')
-
-            # Extract domain from issuer (e.g., https://domain/oauth2/...)
-            if not issuer:
-                raise ValueError("Token missing issuer")
-
             # Validate token with Okta introspection endpoint
-            domain = issuer.replace('https://', '').split('/')[0]
             response = requests.post(
-                f'https://{domain}/oauth2/default/v1/introspect',
+                f'https://{settings.OKTA_DOMAIN}/oauth2/default/v1/introspect',
                 data={
                     'token': self.logout_token,
                     'token_type_hint': 'logout_token',
@@ -168,13 +185,30 @@ class OktaLogoutService:
             )
 
             if not response.ok:
-                raise ValueError(
-                    f"Token validation failed: {response.status_code}",
+                capture_sentry_message(
+                    message='Okta token validation failed',
+                    level=SentryLogLevel.ERROR,
+                    data={
+                        'logout_token': self.logout_token,
+                        'status_code': response.status_code,
+                        'response': response.text,
+                    },
                 )
+                return False
 
             result = response.json()
             if not result.get('active', False):
-                raise ValueError("Token is not active")
+                capture_sentry_message(
+                    message='Okta token is not active',
+                    level=SentryLogLevel.ERROR,
+                    data={
+                        'logout_token': self.logout_token,
+                        'result': result,
+                    },
+                )
+                return False
+
+            return True
 
         except (
             jwt.DecodeError,
@@ -184,9 +218,9 @@ class OktaLogoutService:
             capture_sentry_message(
                 message=f'Okta logout token validation failed: {ex!s}',
                 level=SentryLogLevel.ERROR,
-                data={'logout_token': self.logout_token},
+                data={'logout_token': self.logout_token, 'error': str(ex)},
             )
-            raise ValueError(f"Invalid logout_token: {ex!s}") from ex
+            return False
 
     def _get_user_by_sub(self, okta_sub: str) -> UserModel:
         """

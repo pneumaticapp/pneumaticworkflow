@@ -38,6 +38,9 @@ class OktaLogoutView(
         1. Respond quickly to Okta (200 OK)
         2. Process validation and logout asynchronously
         3. Handle errors without blocking Okta's request
+
+        The bearer token from Authorization header contains JWT that must
+        be validated against Okta's public keys to ensure request authenticity.
         """
         return []
 
@@ -56,7 +59,8 @@ class OktaLogoutView(
             slz.is_valid(raise_exception=True)
         except ValidationError as ex:
             # Log invalid requests but still return 200 OK
-            # Okta doesn't retry on errors, so we always acknowledge
+            # We process only valid JSON structure requests to avoid
+            # processing malformed or malicious data
             capture_sentry_message(
                 message='Invalid Okta logout request structure',
                 level=SentryLogLevel.WARNING,
@@ -67,18 +71,16 @@ class OktaLogoutView(
             )
             return self.response_ok()
 
-        # Extract logout_token from Authorization header or request body
-        logout_token = (
-            request.META.get('HTTP_AUTHORIZATION', '').replace(
-                'Bearer ', '',
+        auth_header = request.headers.get('Authorization', '').split()
+        if len(auth_header) != 2 or auth_header[0].lower() != 'bearer':
+            capture_sentry_message(
+                message='Missing or invalid Authorization header',
+                level=SentryLogLevel.WARNING,
+                data={'auth_header': auth_header},
             )
-            or request.data.get('logout_token', '')
-        )
-
-        # Process logout asynchronously
+            return self.response_ok()
         process_okta_logout.delay(
-            logout_token=logout_token,
+            logout_token=auth_header[1],
             request_data=slz.validated_data,
         )
-
         return self.response_ok()

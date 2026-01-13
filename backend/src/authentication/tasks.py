@@ -18,12 +18,6 @@ from src.authentication.services.microsoft import (
 from src.authentication.services.okta_logout import (
     OktaLogoutService,
 )
-from src.logs.enums import AccountEventStatus
-from src.logs.service import AccountLogService
-from src.utils.logging import (
-    SentryLogLevel,
-    capture_sentry_message,
-)
 
 UserModel = get_user_model()
 
@@ -94,47 +88,8 @@ def process_okta_logout(logout_token: str, request_data: dict):
     Process Okta Back-Channel Logout request.
 
     This task:
-    1. Logs all incoming data for debugging
-    2. Validates the logout_token (bearer token)
-    3. Processes logout based on token type (iss_sub or email)
-    4. Sends errors to Sentry if validation or processing fails
+    1. Validates the logout_token (bearer token)
+    2. Processes logout based on token type (iss_sub or email)
     """
-    # Log all incoming data for debugging
-    log_service = AccountLogService()
-    log_service.okta_logout_request(
-        logout_token=logout_token,
-        request_data=request_data,
-        status=AccountEventStatus.PENDING,
-    )
-
-    try:
-        service = OktaLogoutService(logout_token=logout_token)
-        service.process_logout(**request_data)
-
-        # Log success
-        log_service.okta_logout_request(
-            logout_token=logout_token,
-            request_data=request_data,
-            status=AccountEventStatus.SUCCESS,
-        )
-    except (
-        ValueError,
-        UserModel.DoesNotExist,
-    ) as ex:
-        # Log failure
-        # Catching specific exceptions that can occur during logout
-        log_service.okta_logout_request(
-            logout_token=logout_token,
-            request_data=request_data,
-            status=AccountEventStatus.FAILED,
-        )
-
-        capture_sentry_message(
-            message=f'Okta logout processing failed: {ex!s}',
-            level=SentryLogLevel.ERROR,
-            data={
-                'logout_token': logout_token,
-                'request_data': request_data,
-                'error': f'{ex!s}',
-            },
-        )
+    service = OktaLogoutService(logout_token=logout_token)
+    service.process_logout(**request_data)
