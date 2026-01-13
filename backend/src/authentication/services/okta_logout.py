@@ -128,18 +128,6 @@ class OktaLogoutService:
         Args:
             email: User email address from Okta
         """
-        # Extract domain from email
-        if '@' not in email:
-            capture_sentry_message(
-                message=f"Invalid email format: {email}",
-                level=SentryLogLevel.ERROR,
-                data={'email': email},
-            )
-            return
-
-        domain = email.split('@')[1].lower()
-
-        # Find user by email with domain validation
         try:
             user = UserModel.objects.get(
                 email__iexact=email,
@@ -151,7 +139,6 @@ class OktaLogoutService:
                 level=SentryLogLevel.WARNING,
                 data={
                     'email': email,
-                    'domain': domain,
                     'logout_token': self.logout_token,
                 },
             )
