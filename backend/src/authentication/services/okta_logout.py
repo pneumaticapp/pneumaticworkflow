@@ -35,13 +35,12 @@ class OktaLogoutService:
         if not payload:
             return
 
-        token_sub = payload.get('sub')
-        format_type = request_data.get('format')
-        sub_id_data = request_data.get('sub_id_data', {})
-
-        user = self._identify_user(format_type, sub_id_data)
+        user = self._identify_user(
+            format_type=request_data.get('format'),
+            sub_id_data=request_data.get('sub_id_data', {}),
+        )
         if user:
-            self._logout_user(user, token_sub)
+            self._logout_user(user, payload.get('sub'))
 
     def _validate_logout_token(self) -> Optional[Dict[str, Any]]:
         """Validate logout_token using JWT with Okta JWKS."""
@@ -83,7 +82,7 @@ class OktaLogoutService:
             return None
 
     def _get_public_key_pem(self, kid: str) -> Optional[str]:
-        """Get PEM public key from JWKS without caching."""
+        """Get PEM public key from JWKS."""
 
         jwks = self._get_jwks()
         if not jwks:
@@ -100,7 +99,7 @@ class OktaLogoutService:
         return None
 
     def _get_jwks(self) -> Optional[Dict[str, Any]]:
-        """Fetch JWKS from Okta without caching."""
+        """Fetch JWKS from Okta."""
 
         try:
             response = requests.get(
@@ -164,23 +163,18 @@ class OktaLogoutService:
             sub = sub_id_data.get('sub')
             if sub:
                 return self._get_user_by_cached_sub(sub)
-            capture_sentry_message(
-                message="Missing 'sub' in iss_sub",
-                level=SentryLogLevel.ERROR,
-            )
-        elif format_type == 'email':
+        if format_type == 'email':
             email = sub_id_data.get('email')
             if email:
-                return self._get_user_by_email(email)
-            capture_sentry_message(
-                message="Missing 'email' in email format",
-                level=SentryLogLevel.ERROR,
-            )
-        else:
-            capture_sentry_message(
-                message=f"Unsupported format: {format_type}",
-                level=SentryLogLevel.ERROR,
-            )
+                return UserModel.objects.filter(
+                    email__iexact=email,
+                    status=UserStatus.ACTIVE,
+                ).first()
+
+        capture_sentry_message(
+            message=f"User identification failed. Format: {format_type}",
+            level=SentryLogLevel.WARNING,
+        )
         return None
 
     def _get_user_by_cached_sub(self, sub: str) -> Optional[UserModel]:
@@ -202,20 +196,6 @@ class OktaLogoutService:
         )
         return None
 
-    def _get_user_by_email(self, email: str) -> Optional[UserModel]:
-        """Get user by email."""
-
-        user = UserModel.objects.filter(
-            email__iexact=email,
-            status=UserStatus.ACTIVE,
-        ).first()
-        if not user:
-            capture_sentry_message(
-                message=f'User not found by email: {email}',
-                level=SentryLogLevel.WARNING,
-            )
-        return user
-
     def _logout_user(self, user: UserModel, okta_sub: Optional[str]) -> None:
         """Perform logout: delete tokens, clear cache."""
 
@@ -227,6 +207,6 @@ class OktaLogoutService:
             self.cache.delete(f'user_profile_{ts}')
 
         if okta_sub:
-            cache_key = f'{self.CACHE_KEY_PREFIX}_{okta_sub}'
-            self.cache.delete(cache_key)
+            self.cache.delete(f'{self.CACHE_KEY_PREFIX}_{okta_sub}')
+
         PneumaticToken.expire_all_tokens(user)
