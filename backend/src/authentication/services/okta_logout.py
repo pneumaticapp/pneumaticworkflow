@@ -740,7 +740,28 @@ class OktaLogoutService:
         logout_event_type = (
             'http://schemas.openid.net/secevent/risc/event-type/logout'
         )
-        if not isinstance(events, dict) or logout_event_type not in events:
+
+        # For Global Token Revocation, events can be empty
+        token_header = jwt.get_unverified_header(self.logout_token)
+        token_type = token_header.get('typ', '')
+        is_gtr_token = 'global-token-revocation' in token_type
+
+        if not isinstance(events, dict):
+            error_msg = 'Logout token events claim must be a dictionary'
+            log_okta_message(
+                message=error_msg,
+                data={'events': events, 'events_type': type(events).__name__},
+                level=SentryLogLevel.ERROR,
+            )
+            capture_sentry_message(
+                message=error_msg,
+                level=SentryLogLevel.ERROR,
+                data={'events': events},
+            )
+            return None
+
+        # Check for logout event only for regular logout tokens
+        if not is_gtr_token and logout_event_type not in events:
             error_msg = (
                 f'Logout token events claim must contain '
                 f'"{logout_event_type}" event'
@@ -756,6 +777,15 @@ class OktaLogoutService:
                 data={'events': events},
             )
             return None
+        if is_gtr_token:
+            log_okta_message(
+                message='Global Token Revocation: events validation skipped',
+                data={
+                    'token_type': token_type,
+                    'events': events,
+                },
+                level=SentryLogLevel.DEBUG,
+            )
 
         log_okta_message(
             message="All required logout token claims validated successfully",
