@@ -40,6 +40,9 @@ class OktaLogoutService:
     - OKTA_LOGOUT_AUTH_SERVER_TYPE: 'org' (default) or 'default'
       Controls which Authorization Server endpoint to try first for JWKS.
       Global Token Revocation typically uses Organization AS (/oauth2/v1/keys).
+    - OKTA_LOGOUT_WEBHOOK_URL: Explicit webhook URL for audience validation
+    - BACKEND_URL: Used to construct webhook URL if not explicitly set
+    - OKTA_CLIENT_ID: Fallback audience for regular logout tokens
     """
 
     # Constants
@@ -435,14 +438,15 @@ class OktaLogoutService:
 
             # Build expected issuer and audience
             expected_issuer = f'https://{settings.OKTA_DOMAIN}'
-            # Audience should be the client_id, not the logout endpoint URL
-            expected_audience = getattr(
-                settings,
-                'OKTA_CLIENT_ID',
-                None,
-            )
+
+            # For Global Token Revocation, Okta uses webhook URL as audience,
+            # not the client_id. Try to determine the correct audience.
+            expected_audience = self._get_expected_audience()
             if not expected_audience:
-                error_msg = 'OKTA_CLIENT_ID not configured'
+                error_msg = (
+                    'Cannot determine expected audience. Configure either '
+                    'OKTA_LOGOUT_WEBHOOK_URL or OKTA_CLIENT_ID'
+                )
                 log_okta_message(
                     message=error_msg,
                     level=SentryLogLevel.ERROR,
@@ -463,19 +467,78 @@ class OktaLogoutService:
             )
 
             # Verify and decode token
-            payload = jwt.decode(
-                self.logout_token,
-                public_key,
-                algorithms=['RS256'],
-                issuer=expected_issuer,
-                audience=expected_audience,
-                options={
-                    'verify_signature': True,
-                    'verify_exp': True,
-                    'verify_iss': True,
-                    'verify_aud': True,
-                },
-            )
+            # First try with expected audience
+            payload = None
+            validation_errors = []
+
+            # Try multiple audience validation strategies
+            audiences_to_try = self._get_possible_audiences()
+
+            for i, aud in enumerate(audiences_to_try):
+                try:
+                    log_okta_message(
+                        message=(
+                            f"Trying audience validation "
+                            f"{i+1}/{len(audiences_to_try)}"
+                        ),
+                        data={
+                            'audience': aud,
+                            'attempt': i+1,
+                        },
+                        level=SentryLogLevel.DEBUG,
+                    )
+
+                    payload = jwt.decode(
+                        self.logout_token,
+                        public_key,
+                        algorithms=['RS256'],
+                        issuer=expected_issuer,
+                        audience=aud,
+                        options={
+                            'verify_signature': True,
+                            'verify_exp': True,
+                            'verify_iss': True,
+                            'verify_aud': True,
+                        },
+                    )
+
+                    log_okta_message(
+                        message="Token validation successful with audience",
+                        data={
+                            'successful_audience': aud,
+                            'attempt': i+1,
+                        },
+                        level=SentryLogLevel.DEBUG,
+                    )
+                    break  # Success, exit loop
+
+                except jwt.InvalidAudienceError as ex:
+                    validation_errors.append(f"Audience '{aud}': {ex!s}")
+                    continue  # Try next audience
+
+            if payload is None:
+                # All audience validations failed
+                error_msg = (
+                    f'Invalid token audience. Tried: {validation_errors}'
+                )
+                log_okta_message(
+                    message=error_msg,
+                    data={
+                        'logout_token': self.logout_token,
+                        'audiences_tried': audiences_to_try,
+                        'validation_errors': validation_errors,
+                    },
+                    level=SentryLogLevel.ERROR,
+                )
+                capture_sentry_message(
+                    message=error_msg,
+                    level=SentryLogLevel.ERROR,
+                    data={
+                        'audiences_tried': audiences_to_try,
+                        'validation_errors': validation_errors,
+                    },
+                )
+                return None
 
             # Verify token type (should be logout token)
             token_type = unverified_header.get('typ')
@@ -684,6 +747,113 @@ class OktaLogoutService:
             level=SentryLogLevel.DEBUG,
         )
         return True
+
+    def _get_expected_audience(self) -> Optional[str]:
+        """
+        Determine the expected audience for logout token validation.
+
+        For Global Token Revocation, Okta uses the webhook URL as audience.
+        For regular Back-Channel Logout, it may use client_id.
+
+        Priority:
+        1. OKTA_LOGOUT_WEBHOOK_URL (explicit webhook URL)
+        2. Construct from BACKEND_URL + logout path
+        3. OKTA_CLIENT_ID (fallback for regular logout tokens)
+
+        Returns:
+            Expected audience string or None if cannot be determined
+        """
+        # Try explicit webhook URL configuration
+        webhook_url = getattr(settings, 'OKTA_LOGOUT_WEBHOOK_URL', None)
+        if webhook_url:
+            log_okta_message(
+                message="Using explicit webhook URL as audience",
+                data={'audience': webhook_url},
+                level=SentryLogLevel.DEBUG,
+            )
+            return webhook_url
+
+        # Try to construct from BACKEND_URL
+        backend_url = getattr(settings, 'BACKEND_URL', None)
+        if backend_url:
+            # Remove trailing slash and add logout path
+            backend_url = backend_url.rstrip('/')
+            webhook_url = f"{backend_url}/auth/okta/logout"
+            log_okta_message(
+                message="Constructed webhook URL from BACKEND_URL",
+                data={
+                    'backend_url': backend_url,
+                    'constructed_audience': webhook_url,
+                },
+                level=SentryLogLevel.DEBUG,
+            )
+            return webhook_url
+
+        # Fallback to client_id for regular logout tokens
+        client_id = getattr(settings, 'OKTA_CLIENT_ID', None)
+        if client_id:
+            log_okta_message(
+                message="Using OKTA_CLIENT_ID as fallback audience",
+                data={'audience': client_id},
+                level=SentryLogLevel.DEBUG,
+            )
+            return client_id
+
+        log_okta_message(
+            message="Cannot determine expected audience - no config found",
+            data={
+                'has_webhook_url': hasattr(
+                    settings, 'OKTA_LOGOUT_WEBHOOK_URL',
+                ),
+                'has_backend_url': hasattr(settings, 'BACKEND_URL'),
+                'has_client_id': hasattr(settings, 'OKTA_CLIENT_ID'),
+            },
+            level=SentryLogLevel.ERROR,
+        )
+        return None
+
+    def _get_possible_audiences(self) -> list:
+        """
+        Get list of possible audiences to try for token validation.
+
+        Returns all configured audience options in priority order:
+        1. Explicit webhook URL
+        2. Constructed webhook URL from BACKEND_URL
+        3. Client ID (fallback)
+
+        Returns:
+            List of audience strings to try
+        """
+        audiences = []
+
+        # Try explicit webhook URL configuration
+        webhook_url = getattr(settings, 'OKTA_LOGOUT_WEBHOOK_URL', None)
+        if webhook_url and webhook_url not in audiences:
+            audiences.append(webhook_url)
+
+        # Try to construct from BACKEND_URL
+        backend_url = getattr(settings, 'BACKEND_URL', None)
+        if backend_url:
+            backend_url = backend_url.rstrip('/')
+            constructed_url = f"{backend_url}/auth/okta/logout"
+            if constructed_url not in audiences:
+                audiences.append(constructed_url)
+
+        # Add client_id as fallback
+        client_id = getattr(settings, 'OKTA_CLIENT_ID', None)
+        if client_id and client_id not in audiences:
+            audiences.append(client_id)
+
+        log_okta_message(
+            message="Generated possible audiences for validation",
+            data={
+                'audiences': audiences,
+                'count': len(audiences),
+            },
+            level=SentryLogLevel.DEBUG,
+        )
+
+        return audiences
 
     def _get_jwks(
             self,
