@@ -18,7 +18,6 @@ from src.authentication.services.microsoft import (
 from src.authentication.services.okta_logout import (
     OktaLogoutService,
 )
-from src.utils.logging import log_okta_message, SentryLogLevel
 
 UserModel = get_user_model()
 
@@ -92,16 +91,5 @@ def process_okta_logout(logout_token: str, request_data: dict):
     1. Validates the logout_token (bearer token)
     2. Processes logout based on token type (iss_sub or email)
     """
-
-    log_okta_message(
-        message="Okta logout task started",
-        data={
-            'task_name': 'process_okta_logout',
-            'request_data': request_data,
-            'token_present': bool(logout_token),
-        },
-        level=SentryLogLevel.INFO,
-    )
-
     service = OktaLogoutService(logout_token=logout_token)
     service.process_logout(**request_data)
