@@ -35,6 +35,11 @@ class OktaLogoutService:
     2. Okta security policy triggers automatic session termination
 
     The service validates the logout_token and terminates user sessions.
+
+    Configuration:
+    - OKTA_LOGOUT_AUTH_SERVER_TYPE: 'org' (default) or 'default'
+      Controls which Authorization Server endpoint to try first for JWKS.
+      Global Token Revocation typically uses Organization AS (/oauth2/v1/keys).
     """
 
     # Constants
@@ -687,6 +692,10 @@ class OktaLogoutService:
         """
         Get JWKS (JSON Web Key Set) from Okta.
 
+        For Global Token Revocation (GTR), Okta uses the Organization
+        Authorization Server, not the Default Authorization Server.
+        This method tries both endpoints to handle different token types.
+
         JWKS is cached for 1 hour to reduce API calls, but can be force
         refreshed when key rotation occurs.
 
@@ -715,49 +724,94 @@ class OktaLogoutService:
             level=SentryLogLevel.DEBUG,
         )
 
-        try:
-            jwks_url = (
-                f'https://{settings.OKTA_DOMAIN}/oauth2/default/v1/keys'
-            )
-            response = requests.get(jwks_url, timeout=10)
-            response.raise_for_status()
+        # Global Token Revocation uses Organization Authorization Server
+        # Try this endpoint first as it's the correct one for logout tokens
+        # Allow configuration override via settings
+        if (hasattr(settings, 'OKTA_LOGOUT_AUTH_SERVER_TYPE') and
+                settings.OKTA_LOGOUT_AUTH_SERVER_TYPE == 'default'):
+            # Use Default Authorization Server first if explicitly configured
+            jwks_endpoints = [
+                f'https://{settings.OKTA_DOMAIN}/oauth2/default/v1/keys',
+                f'https://{settings.OKTA_DOMAIN}/oauth2/v1/keys',
+            ]
+        else:
+            # Default behavior: Organization Authorization Server first
+            jwks_endpoints = [
+                f'https://{settings.OKTA_DOMAIN}/oauth2/v1/keys',
+                f'https://{settings.OKTA_DOMAIN}/oauth2/default/v1/keys',
+            ]
 
-            jwks = response.json()
-            # Cache JWKS for 1 hour
-            self.cache.set(
-                self.JWKS_CACHE_KEY,
-                jwks,
-                timeout=self.JWKS_CACHE_TIMEOUT,
-            )
+        last_error = None
+        for i, jwks_url in enumerate(jwks_endpoints):
+            try:
+                log_okta_message(
+                    message=(
+                        f"Trying JWKS endpoint {i+1}/{len(jwks_endpoints)}"
+                    ),
+                    data={
+                        'endpoint': jwks_url,
+                        'attempt': i+1,
+                    },
+                    level=SentryLogLevel.DEBUG,
+                )
+                response = requests.get(jwks_url, timeout=10)
+                response.raise_for_status()
 
-            available_kids = [k.get('kid') for k in jwks.get('keys', [])]
-            log_okta_message(
-                message="JWKS fetched and cached successfully",
-                data={
-                    'keys_count': len(jwks.get('keys', [])),
-                    'available_kids': available_kids,
-                    'force_refresh': force_refresh,
-                },
-                level=SentryLogLevel.DEBUG,
-            )
-            return jwks
+                jwks = response.json()
+                # Cache JWKS for 1 hour
+                self.cache.set(
+                    self.JWKS_CACHE_KEY,
+                    jwks,
+                    timeout=self.JWKS_CACHE_TIMEOUT,
+                )
 
-        except requests.RequestException as ex:
-            error_msg = f'Failed to fetch JWKS: {ex!s}'
-            log_okta_message(
-                message=error_msg,
-                data={
-                    'okta_domain': settings.OKTA_DOMAIN,
-                    'force_refresh': force_refresh,
-                },
-                level=SentryLogLevel.ERROR,
-            )
-            capture_sentry_message(
-                message=error_msg,
-                level=SentryLogLevel.ERROR,
-                data={'error': str(ex)},
-            )
-            return None
+                available_kids = [k.get('kid') for k in jwks.get('keys', [])]
+                log_okta_message(
+                    message="JWKS fetched and cached successfully",
+                    data={
+                        'endpoint': jwks_url,
+                        'keys_count': len(jwks.get('keys', [])),
+                        'available_kids': available_kids,
+                        'force_refresh': force_refresh,
+                        'successful_attempt': i+1,
+                    },
+                    level=SentryLogLevel.DEBUG,
+                )
+                return jwks
+
+            except requests.RequestException as ex:
+                last_error = ex
+                log_okta_message(
+                    message=f"Failed to fetch JWKS from endpoint {i+1}",
+                    data={
+                        'endpoint': jwks_url,
+                        'error': str(ex),
+                        'attempt': i+1,
+                    },
+                    level=SentryLogLevel.WARNING,
+                )
+                continue
+
+        # All endpoints failed
+        error_msg = f'Failed to fetch JWKS from all endpoints: {last_error!s}'
+        log_okta_message(
+            message=error_msg,
+            data={
+                'okta_domain': settings.OKTA_DOMAIN,
+                'force_refresh': force_refresh,
+                'endpoints_tried': jwks_endpoints,
+            },
+            level=SentryLogLevel.ERROR,
+        )
+        capture_sentry_message(
+            message=error_msg,
+            level=SentryLogLevel.ERROR,
+            data={
+                'error': str(last_error),
+                'endpoints_tried': jwks_endpoints,
+            },
+        )
+        return None
 
     def _get_public_key_from_jwks(self, kid: str) -> Optional[Any]:
         """
@@ -815,7 +869,11 @@ class OktaLogoutService:
             return public_key
 
         # Key still not found even after refresh
-        error_msg = f'Key with kid={kid} not found even after JWKS refresh'
+        error_msg = (
+            f'Key with kid={kid} not found even after JWKS refresh. '
+            f'This may indicate: 1) Token from different Okta domain, '
+            f'2) Key rotation in progress, 3) Wrong Authorization Server type'
+        )
         available_kids = [k.get('kid') for k in fresh_jwks.get('keys', [])]
         log_okta_message(
             message=error_msg,
@@ -823,6 +881,11 @@ class OktaLogoutService:
                 'kid': kid,
                 'available_kids': available_kids,
                 'keys_count': len(fresh_jwks.get('keys', [])),
+                'okta_domain': settings.OKTA_DOMAIN,
+                'troubleshooting_hint': (
+                    'Check if token is from correct Okta domain and '
+                    'Authorization Server type (Org vs Default)'
+                ),
             },
             level=SentryLogLevel.ERROR,
         )
@@ -833,6 +896,10 @@ class OktaLogoutService:
                 'kid': kid,
                 'available_kids': available_kids,
                 'okta_domain': settings.OKTA_DOMAIN,
+                'jwks_endpoints_used': [
+                    f'https://{settings.OKTA_DOMAIN}/oauth2/v1/keys',
+                    f'https://{settings.OKTA_DOMAIN}/oauth2/default/v1/keys',
+                ],
             },
         )
         return None
