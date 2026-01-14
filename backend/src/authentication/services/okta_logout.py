@@ -88,11 +88,34 @@ class OktaLogoutService:
 
         token_payload = self._validate_logout_token()
         if not token_payload:
-            log_okta_message(
-                message="Logout token validation failed, aborting process",
-                level=SentryLogLevel.ERROR,
+            # Check if fallback processing is allowed for invalid tokens
+            allow_fallback = getattr(
+                settings,
+                'OKTA_LOGOUT_ALLOW_FALLBACK_ON_INVALID_TOKEN',
+                False,
             )
-            return
+
+            if allow_fallback:
+                log_okta_message(
+                    message=(
+                        "Logout token validation failed, but fallback "
+                        "processing is enabled. Proceeding with request data."
+                    ),
+                    data={'fallback_enabled': True},
+                    level=SentryLogLevel.WARNING,
+                )
+                # Continue with fallback processing using request data
+                token_payload = {}
+            else:
+                log_okta_message(
+                    message=(
+                        "Logout token validation failed, aborting process. "
+                        "Set OKTA_LOGOUT_ALLOW_FALLBACK_ON_INVALID_TOKEN=True "
+                        "to enable fallback processing."
+                    ),
+                    level=SentryLogLevel.ERROR,
+                )
+                return
 
         log_okta_message(
             message="Logout token validation successful",
@@ -341,7 +364,13 @@ class OktaLogoutService:
 
         log_okta_message(
             message="Starting logout token validation with JWT",
-            data={'okta_domain': settings.OKTA_DOMAIN},
+            data={
+                'okta_domain': settings.OKTA_DOMAIN,
+                'token_length': len(self.logout_token),
+                'has_okta_client_id': bool(
+                    getattr(settings, 'OKTA_CLIENT_ID', None),
+                ),
+            },
             level=SentryLogLevel.DEBUG,
         )
 
@@ -371,19 +400,31 @@ class OktaLogoutService:
                 level=SentryLogLevel.DEBUG,
             )
 
-            # Get public key from JWKS
+            # Get public key from JWKS (with automatic refresh on key rotation)
             public_key = self._get_public_key_from_jwks(kid)
             if not public_key:
-                error_msg = 'Failed to get public key from JWKS'
+                error_msg = (
+                    'Failed to get public key from JWKS. This may indicate '
+                    'key rotation, token from wrong Okta domain, or '
+                    'configuration mismatch.'
+                )
                 log_okta_message(
                     message=error_msg,
-                    data={'kid': kid},
+                    data={
+                        'kid': kid,
+                        'okta_domain': settings.OKTA_DOMAIN,
+                        'token_header': unverified_header,
+                    },
                     level=SentryLogLevel.ERROR,
                 )
                 capture_sentry_message(
                     message=error_msg,
                     level=SentryLogLevel.ERROR,
-                    data={'kid': kid},
+                    data={
+                        'kid': kid,
+                        'okta_domain': settings.OKTA_DOMAIN,
+                        'token_header': unverified_header,
+                    },
                 )
                 return None
 
@@ -639,27 +680,38 @@ class OktaLogoutService:
         )
         return True
 
-    def _get_jwks(self) -> Optional[Dict[str, Any]]:
+    def _get_jwks(
+            self,
+            force_refresh: bool = False,
+    ) -> Optional[Dict[str, Any]]:
         """
         Get JWKS (JSON Web Key Set) from Okta.
 
-        JWKS is cached for 1 hour to reduce API calls.
+        JWKS is cached for 1 hour to reduce API calls, but can be force
+        refreshed when key rotation occurs.
+
+        Args:
+            force_refresh: If True, bypass cache and fetch fresh JWKS
 
         Returns:
             Dict containing JWKS or None if failed
         """
-        # Try to get from cache first
-        cached_jwks = self.cache.get(self.JWKS_CACHE_KEY)
-        if cached_jwks:
-            log_okta_message(
-                message="Using cached JWKS",
-                level=SentryLogLevel.DEBUG,
-            )
-            return cached_jwks
+        # Try to get from cache first (unless force refresh)
+        if not force_refresh:
+            cached_jwks = self.cache.get(self.JWKS_CACHE_KEY)
+            if cached_jwks:
+                log_okta_message(
+                    message="Using cached JWKS",
+                    level=SentryLogLevel.DEBUG,
+                )
+                return cached_jwks
 
         log_okta_message(
             message="Fetching JWKS from Okta",
-            data={'okta_domain': settings.OKTA_DOMAIN},
+            data={
+                'okta_domain': settings.OKTA_DOMAIN,
+                'force_refresh': force_refresh,
+            },
             level=SentryLogLevel.DEBUG,
         )
 
@@ -678,9 +730,14 @@ class OktaLogoutService:
                 timeout=self.JWKS_CACHE_TIMEOUT,
             )
 
+            available_kids = [k.get('kid') for k in jwks.get('keys', [])]
             log_okta_message(
                 message="JWKS fetched and cached successfully",
-                data={'keys_count': len(jwks.get('keys', []))},
+                data={
+                    'keys_count': len(jwks.get('keys', [])),
+                    'available_kids': available_kids,
+                    'force_refresh': force_refresh,
+                },
                 level=SentryLogLevel.DEBUG,
             )
             return jwks
@@ -689,7 +746,10 @@ class OktaLogoutService:
             error_msg = f'Failed to fetch JWKS: {ex!s}'
             log_okta_message(
                 message=error_msg,
-                data={'okta_domain': settings.OKTA_DOMAIN},
+                data={
+                    'okta_domain': settings.OKTA_DOMAIN,
+                    'force_refresh': force_refresh,
+                },
                 level=SentryLogLevel.ERROR,
             )
             capture_sentry_message(
@@ -703,16 +763,95 @@ class OktaLogoutService:
         """
         Get public key from JWKS by kid (key ID).
 
+        Implements key rotation handling by attempting to refresh JWKS
+        if the required key is not found in the cached version.
+
         Args:
             kid: Key ID from JWT header
 
         Returns:
             Public key object (can be PEM string or key object) or None
         """
-        jwks = self._get_jwks()
+        # First attempt: try cached JWKS
+        jwks = self._get_jwks(force_refresh=False)
         if not jwks:
             return None
 
+        # Look for the key in current JWKS
+        public_key = self._extract_key_from_jwks(jwks, kid)
+        if public_key:
+            return public_key
+
+        # Key not found in cached JWKS - this might be due to key rotation
+        # Attempt to refresh JWKS and try again
+        log_okta_message(
+            message="Key not found in cached JWKS, attempting refresh",
+            data={
+                'kid': kid,
+                'cached_kids': [k.get('kid') for k in jwks.get('keys', [])],
+            },
+            level=SentryLogLevel.INFO,
+        )
+
+        # Second attempt: force refresh JWKS
+        fresh_jwks = self._get_jwks(force_refresh=True)
+        if not fresh_jwks:
+            error_msg = 'Failed to refresh JWKS from Okta'
+            log_okta_message(
+                message=error_msg,
+                data={'kid': kid},
+                level=SentryLogLevel.ERROR,
+            )
+            return None
+
+        # Look for the key in fresh JWKS
+        public_key = self._extract_key_from_jwks(fresh_jwks, kid)
+        if public_key:
+            log_okta_message(
+                message="Key found after JWKS refresh",
+                data={'kid': kid},
+                level=SentryLogLevel.INFO,
+            )
+            return public_key
+
+        # Key still not found even after refresh
+        error_msg = f'Key with kid={kid} not found even after JWKS refresh'
+        available_kids = [k.get('kid') for k in fresh_jwks.get('keys', [])]
+        log_okta_message(
+            message=error_msg,
+            data={
+                'kid': kid,
+                'available_kids': available_kids,
+                'keys_count': len(fresh_jwks.get('keys', [])),
+            },
+            level=SentryLogLevel.ERROR,
+        )
+        capture_sentry_message(
+            message=error_msg,
+            level=SentryLogLevel.ERROR,
+            data={
+                'kid': kid,
+                'available_kids': available_kids,
+                'okta_domain': settings.OKTA_DOMAIN,
+            },
+        )
+        return None
+
+    def _extract_key_from_jwks(
+        self,
+        jwks: Dict[str, Any],
+        kid: str,
+    ) -> Optional[Any]:
+        """
+        Extract and convert public key from JWKS for given kid.
+
+        Args:
+            jwks: JWKS dictionary
+            kid: Key ID to find
+
+        Returns:
+            Public key in PEM format or None if not found/conversion failed
+        """
         # Find key with matching kid
         for key in jwks.get('keys', []):
             if key.get('kid') == kid:
@@ -725,7 +864,6 @@ class OktaLogoutService:
                 # Try to use cryptography library for key conversion
                 # This is the most reliable method
                 try:
-
                     # Extract modulus and exponent from JWK
                     n_b64 = key['n']
                     e_b64 = key['e']
@@ -752,6 +890,12 @@ class OktaLogoutService:
                             serialization.PublicFormat.SubjectPublicKeyInfo
                         ),
                     )
+
+                    log_okta_message(
+                        message="Successfully converted JWK to PEM",
+                        data={'kid': kid},
+                        level=SentryLogLevel.DEBUG,
+                    )
                     return pem.decode('utf-8')
 
                 except ImportError:
@@ -759,6 +903,11 @@ class OktaLogoutService:
                     # This may work in newer versions of PyJWT
                     try:
                         if hasattr(RSAAlgorithm, 'from_jwk'):
+                            log_okta_message(
+                                message="Using PyJWT RSAAlgorithm fallback",
+                                data={'kid': kid},
+                                level=SentryLogLevel.DEBUG,
+                            )
                             return RSAAlgorithm.from_jwk(key)
                     except (ImportError, AttributeError):
                         pass
@@ -783,7 +932,7 @@ class OktaLogoutService:
                     error_msg = f'Failed to convert JWK to PEM: {ex!s}'
                     log_okta_message(
                         message=error_msg,
-                        data={'kid': kid, 'key': key},
+                        data={'kid': kid, 'key_fields': list(key.keys())},
                         level=SentryLogLevel.ERROR,
                     )
                     capture_sentry_message(
@@ -793,22 +942,7 @@ class OktaLogoutService:
                     )
                     return None
 
-        error_msg = f'Key with kid={kid} not found in JWKS'
-        log_okta_message(
-            message=error_msg,
-            data={
-                'kid': kid,
-                'available_kids': [
-                    k.get('kid') for k in jwks.get('keys', [])
-                ],
-            },
-            level=SentryLogLevel.ERROR,
-        )
-        capture_sentry_message(
-            message=error_msg,
-            level=SentryLogLevel.ERROR,
-            data={'kid': kid},
-        )
+        # Key not found in this JWKS
         return None
 
     def _get_user_by_sub(self, okta_sub: str) -> UserModel:
