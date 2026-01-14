@@ -39,9 +39,9 @@ class OktaLogoutService:
         format_type = request_data.get('format')
         sub_id_data = request_data.get('sub_id_data', {})
 
-        user = self._identify_user(token_sub, format_type, sub_id_data)
+        user = self._identify_user(format_type, sub_id_data)
         if user:
-            self._do_logout(user, token_sub)
+            self._logout_user(user, token_sub)
 
     def _validate_logout_token(self) -> Optional[Dict[str, Any]]:
         """Validate logout_token using JWT with Okta JWKS."""
@@ -155,23 +155,10 @@ class OktaLogoutService:
 
     def _identify_user(
         self,
-        token_sub: Optional[str],
         format_type: Optional[str],
         sub_id_data: Dict[str, Any],
     ) -> Optional[UserModel]:
         """Identify user by token sub or request data."""
-        if token_sub:
-            if self._is_client_id(token_sub):
-                if format_type == 'email':
-                    email = sub_id_data.get('email')
-                    if email:
-                        return self._get_user_by_email(email)
-
-                if format_type == 'iss_sub':
-                    sub = sub_id_data.get('sub')
-                    if sub:
-                        return self._get_user_by_cached_sub(sub)
-            return self._get_user_by_cached_sub(token_sub)
 
         if format_type == 'iss_sub':
             sub = sub_id_data.get('sub')
@@ -194,14 +181,7 @@ class OktaLogoutService:
                 message=f"Unsupported format: {format_type}",
                 level=SentryLogLevel.ERROR,
             )
-
         return None
-
-    def _is_client_id(self, sub: str) -> bool:
-        """Check if sub is a client_id."""
-
-        client_id = getattr(settings, 'OKTA_CLIENT_ID', None)
-        return sub.startswith('0o') or (client_id and sub == client_id)
 
     def _get_user_by_cached_sub(self, sub: str) -> Optional[UserModel]:
         """Get user by cached sub."""
@@ -236,7 +216,7 @@ class OktaLogoutService:
             )
         return user
 
-    def _do_logout(self, user: UserModel, okta_sub: Optional[str]) -> None:
+    def _logout_user(self, user: UserModel, okta_sub: Optional[str]) -> None:
         """Perform logout: delete tokens, clear cache."""
 
         tokens = AccessToken.objects.filter(user=user, source=self.SOURCE)

@@ -2,7 +2,6 @@ import contextlib
 
 from celery import shared_task
 from django.conf import settings
-from django.contrib.auth import get_user_model
 from slack import WebClient
 
 from src.accounts.models import Account, User
@@ -18,8 +17,6 @@ from src.authentication.services.microsoft import (
 from src.authentication.services.okta_logout import (
     OktaLogoutService,
 )
-
-UserModel = get_user_model()
 
 
 @shared_task(ignore_result=True)

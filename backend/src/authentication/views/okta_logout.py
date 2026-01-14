@@ -58,7 +58,7 @@ class OktaLogoutView(
         try:
             slz.is_valid(raise_exception=True)
         except ValidationError as ex:
-            # Log invalid requests but still return 200 OK
+            # Log invalid requests but still return 204 OK
             # We process only valid JSON structure requests to avoid
             # processing malformed or malicious data
             capture_sentry_message(
