@@ -75,14 +75,16 @@ axiosInstance.interceptors.response.use(
   },
 
   (error) => {
-    if (!isRequestCanceled(error)) {
-      if (error.response) {
-        logger.error('Response Error:', error.response.data);
-      } else if (error.request) {
-        logger.error('Request Error:', error.request);
-      } else {
-        logger.error('Error:', error.message);
-      }
+    if (isRequestCanceled(error)) {
+      return Promise.reject(error);
+    }
+
+    if (error.response) {
+      logger.error('Response Error:', error.response.data);
+    } else if (error.request) {
+      logger.error('Request Error:', error.request);
+    } else {
+      logger.error('Error:', error.message);
     }
 
     const data = error.response?.data;

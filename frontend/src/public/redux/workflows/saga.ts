@@ -163,7 +163,7 @@ import { ALL_SYSTEM_FIELD_NAMES } from '../../components/Workflows/WorkflowsTabl
 import { TUserListItem } from '../../types/user';
 import { isRequestCanceled } from '../../utils/isRequestCanceled';
 
-const templateRequestsAbortControllers = new Map<string, AbortController>();
+export const templateFilterRequestsAbortControllers = new Map<string, AbortController>();
 
 function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: number; showLoader?: boolean }) {
   const {
@@ -312,7 +312,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: PayloadAction<number>) {
   if (shouldGetPresets) {
     const abortController = new AbortController();
     const keyAbortController = `${currentTemplateId}__presets`;
-    templateRequestsAbortControllers.set(keyAbortController, abortController);
+    templateFilterRequestsAbortControllers.set(keyAbortController, abortController);
 
     try {
       shouldResetFields = true;
@@ -332,8 +332,8 @@ function* fetchWorkflowsList({ payload: offset = 0 }: PayloadAction<number>) {
       }
       console.error('fetchWorkflowsList: Failed to load fields for template', currentTemplateId, ':', error);
     } finally {
-      if (templateRequestsAbortControllers.get(keyAbortController) === abortController) {
-        templateRequestsAbortControllers.delete(keyAbortController);
+      if (templateFilterRequestsAbortControllers.get(keyAbortController) === abortController) {
+        templateFilterRequestsAbortControllers.delete(keyAbortController);
       }
     }
   } else if (shouldGetAllDefaultFields) {
@@ -655,7 +655,7 @@ export function* fetchFilterSteps({
 }: PayloadAction<TLoadWorkflowsFilterStepsPayload>) {
   const abortController = new AbortController();
   const keyAbortController = `${templateId}__tasks`;
-  templateRequestsAbortControllers.set(keyAbortController, abortController);
+  templateFilterRequestsAbortControllers.set(keyAbortController, abortController);
 
   try {
     const [steps]: [ITemplateStep[]] = yield all([
@@ -674,23 +674,18 @@ export function* fetchFilterSteps({
     logger.info('fetch tasks filter steps error : ', error);
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
-    if (templateRequestsAbortControllers.get(keyAbortController) === abortController) {
-      templateRequestsAbortControllers.delete(keyAbortController);
+    if (templateFilterRequestsAbortControllers.get(keyAbortController) === abortController) {
+      templateFilterRequestsAbortControllers.delete(keyAbortController);
     }
   }
 }
 
 function* cancelTemplateFilterRequestsSaga({ payload }: PayloadAction<number[]>) {
   if (payload.length === 0) {
-    templateRequestsAbortControllers.forEach((controller) => {
+    templateFilterRequestsAbortControllers.forEach((controller) => {
       controller.abort();
     });
-    templateRequestsAbortControllers.clear();
-
-    templateRequestsAbortControllers.forEach((controller) => {
-      controller.abort();
-    });
-    templateRequestsAbortControllers.clear();
+    templateFilterRequestsAbortControllers.clear();
   }
   yield;
 }

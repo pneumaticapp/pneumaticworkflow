@@ -11,5 +11,5 @@ export function getTemplatePresets(id: string, signal?: AbortSignal) {
 
   const url = urls.templatePresets.replace(':id', String(id));
 
-  return commonRequest<TGetTemplatePresetsResponse>(url, { signal });
+  return commonRequest<TGetTemplatePresetsResponse>(url, { signal }, { shouldThrow: true });
 }

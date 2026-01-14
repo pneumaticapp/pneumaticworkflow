@@ -38,8 +38,7 @@ import { LIMIT_LOAD_SYSTEMS_TEMPLATES, LIMIT_LOAD_TEMPLATES, varibleIdRegex } fr
 import { SYSTEM_FIELDS } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { isRequestCanceled } from '../../utils/isRequestCanceled';
-
-export const templateRequestsAbortControllers = new Map<string, AbortController>();
+import { templateFilterRequestsAbortControllers } from '../workflows/saga';
 
 function* fetchTemplatesSystem() {
   try {
@@ -125,7 +124,7 @@ function* fetchSortingTemplatesList() {
 export function* handleLoadTemplateVariables(templateId: number) {
   const abortController = new AbortController();
   const keyAbortController = `${templateId}__variables`;
-  templateRequestsAbortControllers.set(keyAbortController, abortController);
+  templateFilterRequestsAbortControllers.set(keyAbortController, abortController);
 
   try {
     yield put(loadTemplateVariablesSuccess({ templateId, variables: [] }));
@@ -160,8 +159,8 @@ export function* handleLoadTemplateVariables(templateId: number) {
     logger.info('fetch template fields error: ', error);
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
-    if (templateRequestsAbortControllers.get(keyAbortController) === abortController) {
-      templateRequestsAbortControllers.delete(keyAbortController);
+    if (templateFilterRequestsAbortControllers.get(keyAbortController) === abortController) {
+      templateFilterRequestsAbortControllers.delete(keyAbortController);
     }
   }
 }

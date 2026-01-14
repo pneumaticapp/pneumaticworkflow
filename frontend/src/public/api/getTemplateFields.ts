@@ -14,5 +14,5 @@ export function getTemplateFields(id: string, signal?: AbortSignal) {
 
   const url = urls.templateFields.replace(':id', String(id));
 
-  return commonRequest<TGetTemplateFieldsResponse>(url, { signal });
+  return commonRequest<TGetTemplateFieldsResponse>(url, { signal }, { shouldThrow: true });
 }
