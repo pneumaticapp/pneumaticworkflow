@@ -1,6 +1,7 @@
 import jwt
 import requests
 import time
+from urllib.parse import urlparse, urlunparse
 
 import base64
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -835,9 +836,28 @@ class OktaLogoutService:
         backend_url = getattr(settings, 'BACKEND_URL', None)
         if backend_url:
             backend_url = backend_url.rstrip('/')
+            parsed = urlparse(backend_url)
+
+            # Add version with original URL (may include port)
             constructed_url = f"{backend_url}/auth/okta/logout"
             if constructed_url not in audiences:
                 audiences.append(constructed_url)
+
+            # Also add version without port (common for production webhooks)
+            if parsed.port:
+                url_without_port = urlunparse((
+                    parsed.scheme,
+                    parsed.hostname,  # hostname without port
+                    parsed.path,
+                    parsed.params,
+                    parsed.query,
+                    parsed.fragment,
+                ))
+                constructed_url_no_port = (
+                    f"{url_without_port}/auth/okta/logout"
+                )
+                if constructed_url_no_port not in audiences:
+                    audiences.append(constructed_url_no_port)
 
         # Add client_id as fallback
         client_id = getattr(settings, 'OKTA_CLIENT_ID', None)
