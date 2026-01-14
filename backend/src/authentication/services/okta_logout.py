@@ -1,10 +1,15 @@
 import jwt
 import requests
 import time
+
+import base64
+from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives import serialization
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.core.cache import caches
-from typing import Optional
+from typing import Optional, Dict, Any
+from jwt.algorithms import RSAAlgorithm
 
 from src.accounts.enums import (
     UserStatus,
@@ -36,6 +41,8 @@ class OktaLogoutService:
     SOURCE = SourceType.OKTA
     CACHE_TIMEOUT = 2592000  # 30 days
     CACHE_KEY_PREFIX = 'okta_sub_to_user'
+    JWKS_CACHE_KEY = 'okta_jwks'
+    JWKS_CACHE_TIMEOUT = 3600  # 1 hour
 
     def __init__(self, logout_token: Optional[str] = None):
         """
@@ -73,13 +80,14 @@ class OktaLogoutService:
             level=SentryLogLevel.INFO,
         )
 
-        # Validate logout_token
+        # Validate logout_token and extract claims
         log_okta_message(
             message="Validating logout token",
             level=SentryLogLevel.DEBUG,
         )
 
-        if not self._validate_logout_token():
+        token_payload = self._validate_logout_token()
+        if not token_payload:
             log_okta_message(
                 message="Logout token validation failed, aborting process",
                 level=SentryLogLevel.ERROR,
@@ -91,78 +99,92 @@ class OktaLogoutService:
             level=SentryLogLevel.DEBUG,
         )
 
-        # Process based on format type
-        format_type = request_data.get('format')
-        sub_id_data = request_data.get('sub_id_data', {})
+        # Process logout using JWT token claims (preferred) or fallback
+        # to request data
+        token_sub = token_payload.get('sub')
+        token_sid = token_payload.get('sid')
 
-        log_okta_message(
-            message=f"Processing logout with format: {format_type}",
-            data={
-                'format_type': format_type,
-                'sub_id_data_keys': (
-                    list(sub_id_data.keys()) if sub_id_data else []
-                ),
-            },
-            level=SentryLogLevel.INFO,
-        )
-
-        if format_type == 'iss_sub':
-            sub = sub_id_data.get('sub')
-            if not sub:
-                error_msg = "Missing 'sub' field in iss_sub format"
-                log_okta_message(
-                    message=error_msg,
-                    data={'request_data': request_data},
-                    level=SentryLogLevel.ERROR,
-                )
-                capture_sentry_message(
-                    message=error_msg,
-                    level=SentryLogLevel.ERROR,
-                    data={'request_data': request_data},
-                )
-                return
-
+        # Determine logout method based on available claims
+        if token_sub:
             log_okta_message(
-                message=f"Processing logout by sub: {sub}",
+                message=f"Processing logout by JWT sub: {token_sub}",
+                data={'sid_present': bool(token_sid)},
                 level=SentryLogLevel.INFO,
             )
-            self._process_logout_by_sub(sub)
-
-        elif format_type == 'email':
-            email = sub_id_data.get('email')
-            if not email:
-                error_msg = "Missing 'email' field in email format"
-                log_okta_message(
-                    message=error_msg,
-                    data={'request_data': request_data},
-                    level=SentryLogLevel.ERROR,
-                )
-                capture_sentry_message(
-                    message=error_msg,
-                    level=SentryLogLevel.ERROR,
-                    data={'request_data': request_data},
-                )
-                return
-
-            log_okta_message(
-                message=f"Processing logout by email: {email}",
-                level=SentryLogLevel.INFO,
-            )
-            self._process_logout_by_email(email)
-
+            self._process_logout_by_sub(token_sub, token_sid)
         else:
-            error_msg = f"Unsupported format: {format_type}"
+            # Fallback to request data processing for backward compatibility
+            format_type = request_data.get('format')
+            sub_id_data = request_data.get('sub_id_data', {})
+
             log_okta_message(
-                message=error_msg,
-                data={'request_data': request_data},
-                level=SentryLogLevel.ERROR,
+                message=f"Fallback: Processing logout format: {format_type}",
+                data={
+                    'format_type': format_type,
+                    'sub_id_data_keys': (
+                        list(sub_id_data.keys()) if sub_id_data else []
+                    ),
+                },
+                level=SentryLogLevel.INFO,
             )
-            capture_sentry_message(
-                message=error_msg,
-                level=SentryLogLevel.ERROR,
-                data={'request_data': request_data},
-            )
-            return
+
+            if format_type == 'iss_sub':
+                sub = sub_id_data.get('sub')
+                if not sub:
+                    error_msg = "Missing 'sub' field in iss_sub format"
+                    log_okta_message(
+                        message=error_msg,
+                        data={'request_data': request_data},
+                        level=SentryLogLevel.ERROR,
+                    )
+                    capture_sentry_message(
+                        message=error_msg,
+                        level=SentryLogLevel.ERROR,
+                        data={'request_data': request_data},
+                    )
+                    return
+
+                log_okta_message(
+                    message=f"Processing logout by sub: {sub}",
+                    level=SentryLogLevel.INFO,
+                )
+                self._process_logout_by_sub(sub)
+
+            elif format_type == 'email':
+                email = sub_id_data.get('email')
+                if not email:
+                    error_msg = "Missing 'email' field in email format"
+                    log_okta_message(
+                        message=error_msg,
+                        data={'request_data': request_data},
+                        level=SentryLogLevel.ERROR,
+                    )
+                    capture_sentry_message(
+                        message=error_msg,
+                        level=SentryLogLevel.ERROR,
+                        data={'request_data': request_data},
+                    )
+                    return
+
+                log_okta_message(
+                    message=f"Processing logout by email: {email}",
+                    level=SentryLogLevel.INFO,
+                )
+                self._process_logout_by_email(email)
+
+            else:
+                error_msg = f"Unsupported format: {format_type}"
+                log_okta_message(
+                    message=error_msg,
+                    data={'request_data': request_data},
+                    level=SentryLogLevel.ERROR,
+                )
+                capture_sentry_message(
+                    message=error_msg,
+                    level=SentryLogLevel.ERROR,
+                    data={'request_data': request_data},
+                )
+                return
 
         execution_time = time.time() - start_time
         log_okta_message(
@@ -174,7 +196,7 @@ class OktaLogoutService:
             level=SentryLogLevel.INFO,
         )
 
-    def _process_logout_by_sub(self, sub: str):
+    def _process_logout_by_sub(self, sub: str, sid: Optional[str] = None):
         """
         Process logout using sub identifier.
 
@@ -182,9 +204,11 @@ class OktaLogoutService:
 
         Args:
             sub: Okta subject identifier
+            sid: Optional session identifier for session-specific logout
         """
         log_okta_message(
             message=f"Starting logout process by sub: {sub}",
+            data={'sid': sid, 'session_specific': bool(sid)},
             level=SentryLogLevel.DEBUG,
         )
 
@@ -227,10 +251,15 @@ class OktaLogoutService:
         # Perform logout
         log_okta_message(
             message=f"Performing logout for user {user.id}",
-            data={'user_id': user.id, 'okta_sub': sub},
+            data={
+                'user_id': user.id,
+                'okta_sub': sub,
+                'session_id': sid,
+                'session_specific': bool(sid),
+            },
             level=SentryLogLevel.INFO,
         )
-        self._logout_user(user, okta_sub=sub)
+        self._logout_user(user, okta_sub=sub, session_id=sid)
 
     def _process_logout_by_email(self, email: str):
         """
@@ -288,113 +317,197 @@ class OktaLogoutService:
             data={'user_id': user.id, 'email': email},
             level=SentryLogLevel.INFO,
         )
-        self._logout_user(user, okta_sub=None)
+        self._logout_user(user, okta_sub=None, session_id=None)
 
-    def _validate_logout_token(self) -> bool:
+    def _validate_logout_token(self) -> Optional[Dict[str, Any]]:
         """
-        Validate logout_token with Okta introspection endpoint.
+        Validate logout_token using JWT verification with Okta JWKS.
 
         The logout_token is a JWT that must be verified to ensure
         the request is authentic and not from an attacker.
 
+        According to OAuth 2.0 Back-Channel Logout spec, logout tokens
+        should be validated as JWTs, not through introspection endpoint.
+
         Returns:
-            bool: True if token is valid, False otherwise
+            Dict containing token payload if valid, None otherwise
         """
         if not self.logout_token:
             log_okta_message(
                 message="No logout token provided for validation",
                 level=SentryLogLevel.ERROR,
             )
-            return False
+            return None
 
         log_okta_message(
-            message="Starting logout token validation with Okta",
+            message="Starting logout token validation with JWT",
             data={'okta_domain': settings.OKTA_DOMAIN},
             level=SentryLogLevel.DEBUG,
         )
 
         try:
-            # Validate token with Okta introspection endpoint
-            introspect_url = (
-                f'https://{settings.OKTA_DOMAIN}/oauth2/default/v1/introspect'
+            # Decode header to get kid (key ID)
+            unverified_header = jwt.get_unverified_header(
+                self.logout_token,
             )
+            kid = unverified_header.get('kid')
+            if not kid:
+                error_msg = 'Missing kid in logout token header'
+                log_okta_message(
+                    message=error_msg,
+                    data={'header': unverified_header},
+                    level=SentryLogLevel.ERROR,
+                )
+                capture_sentry_message(
+                    message=error_msg,
+                    level=SentryLogLevel.ERROR,
+                    data={'header': unverified_header},
+                )
+                return None
 
             log_okta_message(
-                message=f"Sending token validation request {introspect_url}",
+                message="Extracted kid from token header",
+                data={'kid': kid},
                 level=SentryLogLevel.DEBUG,
             )
 
-            response = requests.post(
-                introspect_url,
+            # Get public key from JWKS
+            public_key = self._get_public_key_from_jwks(kid)
+            if not public_key:
+                error_msg = 'Failed to get public key from JWKS'
+                log_okta_message(
+                    message=error_msg,
+                    data={'kid': kid},
+                    level=SentryLogLevel.ERROR,
+                )
+                capture_sentry_message(
+                    message=error_msg,
+                    level=SentryLogLevel.ERROR,
+                    data={'kid': kid},
+                )
+                return None
+
+            # Build expected issuer and audience
+            expected_issuer = f'https://{settings.OKTA_DOMAIN}'
+            # Audience should be the client_id, not the logout endpoint URL
+            expected_audience = getattr(
+                settings,
+                'OKTA_CLIENT_ID',
+                None,
+            )
+            if not expected_audience:
+                error_msg = 'OKTA_CLIENT_ID not configured'
+                log_okta_message(
+                    message=error_msg,
+                    level=SentryLogLevel.ERROR,
+                )
+                capture_sentry_message(
+                    message=error_msg,
+                    level=SentryLogLevel.ERROR,
+                )
+                return None
+
+            log_okta_message(
+                message="Verifying JWT token",
                 data={
-                    'token': self.logout_token,
-                    'token_type_hint': 'logout_token',
-                    'client_id': settings.OKTA_CLIENT_ID,
-                    'client_secret': settings.OKTA_CLIENT_SECRET,
+                    'expected_issuer': expected_issuer,
+                    'expected_audience': expected_audience,
                 },
-                timeout=10,
-            )
-
-            log_okta_message(
-                message=f"Received response from Okta: {response.status_code}",
-                data={'status_code': response.status_code},
                 level=SentryLogLevel.DEBUG,
             )
 
-            if not response.ok:
-                error_msg = 'Okta token validation failed'
-                error_data = {
-                    'logout_token': self.logout_token,
-                    'status_code': response.status_code,
-                    'response': response.text,
-                }
-                log_okta_message(
-                    message=error_msg,
-                    data=error_data,
-                    level=SentryLogLevel.ERROR,
-                )
-                capture_sentry_message(
-                    message=error_msg,
-                    level=SentryLogLevel.ERROR,
-                    data=error_data,
-                )
-                return False
-
-            result = response.json()
-            log_okta_message(
-                message="Token validation response received",
-                data={'active': result.get('active', False)},
-                level=SentryLogLevel.DEBUG,
+            # Verify and decode token
+            payload = jwt.decode(
+                self.logout_token,
+                public_key,
+                algorithms=['RS256'],
+                issuer=expected_issuer,
+                audience=expected_audience,
+                options={
+                    'verify_signature': True,
+                    'verify_exp': True,
+                    'verify_iss': True,
+                    'verify_aud': True,
+                },
             )
 
-            if not result.get('active', False):
-                error_msg = 'Okta token is not active'
-                error_data = {
-                    'logout_token': self.logout_token,
-                    'result': result,
-                }
+            # Verify token type (should be logout token)
+            token_type = unverified_header.get('typ')
+            expected_types = ['logout+jwt', 'global-token-revocation-jwt']
+            if token_type not in expected_types:
                 log_okta_message(
-                    message=error_msg,
-                    data=error_data,
-                    level=SentryLogLevel.ERROR,
+                    message="Token type mismatch",
+                    data={
+                        'expected': expected_types,
+                        'actual': token_type,
+                    },
+                    level=SentryLogLevel.WARNING,
                 )
-                capture_sentry_message(
-                    message=error_msg,
-                    level=SentryLogLevel.ERROR,
-                    data=error_data,
-                )
-                return False
+                # Don't fail on type mismatch, as it may vary by provider
+
+            # Validate required claims according to OpenID Connect
+            # Back-Channel Logout specification
+            if not self._validate_logout_token_claims(payload):
+                return None
 
             log_okta_message(
                 message="Token validation successful",
+                data={
+                    'sub': payload.get('sub'),
+                    'sid': payload.get('sid'),
+                    'jti': payload.get('jti'),
+                    'iat': payload.get('iat'),
+                    'exp': payload.get('exp'),
+                    'events': payload.get('events'),
+                },
                 level=SentryLogLevel.DEBUG,
             )
-            return True
+            return payload
 
+        except jwt.ExpiredSignatureError as ex:
+            error_msg = f'Logout token expired: {ex!s}'
+            log_okta_message(
+                message=error_msg,
+                data={'logout_token': self.logout_token},
+                level=SentryLogLevel.ERROR,
+            )
+            capture_sentry_message(
+                message=error_msg,
+                level=SentryLogLevel.ERROR,
+                data={'error': str(ex)},
+            )
+            return None
+        except jwt.InvalidIssuerError as ex:
+            error_msg = f'Invalid token issuer: {ex!s}'
+            log_okta_message(
+                message=error_msg,
+                data={'logout_token': self.logout_token},
+                level=SentryLogLevel.ERROR,
+            )
+            capture_sentry_message(
+                message=error_msg,
+                level=SentryLogLevel.ERROR,
+                data={'error': str(ex)},
+            )
+            return None
+        except jwt.InvalidAudienceError as ex:
+            error_msg = f'Invalid token audience: {ex!s}'
+            log_okta_message(
+                message=error_msg,
+                data={'logout_token': self.logout_token},
+                level=SentryLogLevel.ERROR,
+            )
+            capture_sentry_message(
+                message=error_msg,
+                level=SentryLogLevel.ERROR,
+                data={'error': str(ex)},
+            )
+            return None
         except (
             jwt.DecodeError,
             jwt.InvalidTokenError,
             requests.RequestException,
+            KeyError,
         ) as ex:
             error_msg = f'Okta logout token validation failed: {ex!s}'
             error_data = {'logout_token': self.logout_token, 'error': str(ex)}
@@ -408,7 +521,295 @@ class OktaLogoutService:
                 level=SentryLogLevel.ERROR,
                 data=error_data,
             )
-            return False
+            return None
+
+    def _validate_logout_token_claims(self, payload: Dict[str, Any]) -> bool:
+        """
+        Validate logout token claims according to OpenID Connect
+        Back-Channel Logout specification.
+
+        Required claims:
+        - sub or sid (at least one must be present)
+        - events with logout event type
+        - jti (JWT ID)
+        - nonce must NOT be present
+
+        Args:
+            payload: Decoded JWT payload
+
+        Returns:
+            bool: True if all required claims are valid
+        """
+        # Check that either sub or sid is present
+        sub = payload.get('sub')
+        sid = payload.get('sid')
+        if not sub and not sid:
+            error_msg = (
+                'Logout token must contain either "sub" or "sid" claim'
+            )
+            log_okta_message(
+                message=error_msg,
+                data={'payload_keys': list(payload.keys())},
+                level=SentryLogLevel.ERROR,
+            )
+            capture_sentry_message(
+                message=error_msg,
+                level=SentryLogLevel.ERROR,
+                data={'payload': payload},
+            )
+            return None
+
+        # Check that jti is present
+        jti = payload.get('jti')
+        if not jti:
+            error_msg = 'Logout token must contain "jti" claim'
+            log_okta_message(
+                message=error_msg,
+                data={'payload_keys': list(payload.keys())},
+                level=SentryLogLevel.ERROR,
+            )
+            capture_sentry_message(
+                message=error_msg,
+                level=SentryLogLevel.ERROR,
+                data={'payload': payload},
+            )
+            return None
+
+        # Check that nonce is NOT present
+        if 'nonce' in payload:
+            error_msg = 'Logout token must NOT contain "nonce" claim'
+            log_okta_message(
+                message=error_msg,
+                data={'payload_keys': list(payload.keys())},
+                level=SentryLogLevel.ERROR,
+            )
+            capture_sentry_message(
+                message=error_msg,
+                level=SentryLogLevel.ERROR,
+                data={'payload': payload},
+            )
+            return None
+
+        # Check events claim
+        events = payload.get('events')
+        if not events:
+            error_msg = 'Logout token must contain "events" claim'
+            log_okta_message(
+                message=error_msg,
+                data={'payload_keys': list(payload.keys())},
+                level=SentryLogLevel.ERROR,
+            )
+            capture_sentry_message(
+                message=error_msg,
+                level=SentryLogLevel.ERROR,
+                data={'payload': payload},
+            )
+            return None
+
+        # Validate events claim structure
+        logout_event_type = (
+            'http://schemas.openid.net/secevent/risc/event-type/logout'
+        )
+        if not isinstance(events, dict) or logout_event_type not in events:
+            error_msg = (
+                f'Logout token events claim must contain '
+                f'"{logout_event_type}" event'
+            )
+            log_okta_message(
+                message=error_msg,
+                data={'events': events},
+                level=SentryLogLevel.ERROR,
+            )
+            capture_sentry_message(
+                message=error_msg,
+                level=SentryLogLevel.ERROR,
+                data={'events': events},
+            )
+            return None
+
+        log_okta_message(
+            message="All required logout token claims validated successfully",
+            data={
+                'sub': sub,
+                'sid': sid,
+                'jti': jti,
+                'has_logout_event': logout_event_type in events,
+            },
+            level=SentryLogLevel.DEBUG,
+        )
+        return True
+
+    def _get_jwks(self) -> Optional[Dict[str, Any]]:
+        """
+        Get JWKS (JSON Web Key Set) from Okta.
+
+        JWKS is cached for 1 hour to reduce API calls.
+
+        Returns:
+            Dict containing JWKS or None if failed
+        """
+        # Try to get from cache first
+        cached_jwks = self.cache.get(self.JWKS_CACHE_KEY)
+        if cached_jwks:
+            log_okta_message(
+                message="Using cached JWKS",
+                level=SentryLogLevel.DEBUG,
+            )
+            return cached_jwks
+
+        log_okta_message(
+            message="Fetching JWKS from Okta",
+            data={'okta_domain': settings.OKTA_DOMAIN},
+            level=SentryLogLevel.DEBUG,
+        )
+
+        try:
+            jwks_url = (
+                f'https://{settings.OKTA_DOMAIN}/oauth2/default/v1/keys'
+            )
+            response = requests.get(jwks_url, timeout=10)
+            response.raise_for_status()
+
+            jwks = response.json()
+            # Cache JWKS for 1 hour
+            self.cache.set(
+                self.JWKS_CACHE_KEY,
+                jwks,
+                timeout=self.JWKS_CACHE_TIMEOUT,
+            )
+
+            log_okta_message(
+                message="JWKS fetched and cached successfully",
+                data={'keys_count': len(jwks.get('keys', []))},
+                level=SentryLogLevel.DEBUG,
+            )
+            return jwks
+
+        except requests.RequestException as ex:
+            error_msg = f'Failed to fetch JWKS: {ex!s}'
+            log_okta_message(
+                message=error_msg,
+                data={'okta_domain': settings.OKTA_DOMAIN},
+                level=SentryLogLevel.ERROR,
+            )
+            capture_sentry_message(
+                message=error_msg,
+                level=SentryLogLevel.ERROR,
+                data={'error': str(ex)},
+            )
+            return None
+
+    def _get_public_key_from_jwks(self, kid: str) -> Optional[Any]:
+        """
+        Get public key from JWKS by kid (key ID).
+
+        Args:
+            kid: Key ID from JWT header
+
+        Returns:
+            Public key object (can be PEM string or key object) or None
+        """
+        jwks = self._get_jwks()
+        if not jwks:
+            return None
+
+        # Find key with matching kid
+        for key in jwks.get('keys', []):
+            if key.get('kid') == kid:
+                log_okta_message(
+                    message="Found matching key in JWKS",
+                    data={'kid': kid, 'kty': key.get('kty')},
+                    level=SentryLogLevel.DEBUG,
+                )
+
+                # Try to use cryptography library for key conversion
+                # This is the most reliable method
+                try:
+
+                    # Extract modulus and exponent from JWK
+                    n_b64 = key['n']
+                    e_b64 = key['e']
+
+                    # Add padding if needed
+                    n_padded = n_b64 + '=' * (4 - len(n_b64) % 4)
+                    e_padded = e_b64 + '=' * (4 - len(e_b64) % 4)
+
+                    n_bytes = base64.urlsafe_b64decode(n_padded)
+                    e_bytes = base64.urlsafe_b64decode(e_padded)
+
+                    # Convert to integers
+                    n_int = int.from_bytes(n_bytes, 'big')
+                    e_int = int.from_bytes(e_bytes, 'big')
+
+                    # Create RSA public key
+                    public_numbers = rsa.RSAPublicNumbers(e_int, n_int)
+                    public_key_obj = public_numbers.public_key()
+
+                    # Serialize to PEM format
+                    pem = public_key_obj.public_bytes(
+                        encoding=serialization.Encoding.PEM,
+                        format=(
+                            serialization.PublicFormat.SubjectPublicKeyInfo
+                        ),
+                    )
+                    return pem.decode('utf-8')
+
+                except ImportError:
+                    # Fallback: try to use PyJWT's RSAAlgorithm if available
+                    # This may work in newer versions of PyJWT
+                    try:
+                        if hasattr(RSAAlgorithm, 'from_jwk'):
+                            return RSAAlgorithm.from_jwk(key)
+                    except (ImportError, AttributeError):
+                        pass
+
+                    error_msg = (
+                        'cryptography library is required for JWT '
+                        'verification. Please install it: '
+                        'pip install cryptography'
+                    )
+                    log_okta_message(
+                        message=error_msg,
+                        data={'kid': kid},
+                        level=SentryLogLevel.ERROR,
+                    )
+                    capture_sentry_message(
+                        message=error_msg,
+                        level=SentryLogLevel.ERROR,
+                        data={'kid': kid},
+                    )
+                    return None
+                except (KeyError, ValueError, TypeError) as ex:
+                    error_msg = f'Failed to convert JWK to PEM: {ex!s}'
+                    log_okta_message(
+                        message=error_msg,
+                        data={'kid': kid, 'key': key},
+                        level=SentryLogLevel.ERROR,
+                    )
+                    capture_sentry_message(
+                        message=error_msg,
+                        level=SentryLogLevel.ERROR,
+                        data={'error': str(ex), 'kid': kid},
+                    )
+                    return None
+
+        error_msg = f'Key with kid={kid} not found in JWKS'
+        log_okta_message(
+            message=error_msg,
+            data={
+                'kid': kid,
+                'available_kids': [
+                    k.get('kid') for k in jwks.get('keys', [])
+                ],
+            },
+            level=SentryLogLevel.ERROR,
+        )
+        capture_sentry_message(
+            message=error_msg,
+            level=SentryLogLevel.ERROR,
+            data={'kid': kid},
+        )
+        return None
 
     def _get_user_by_sub(self, okta_sub: str) -> UserModel:
         """
@@ -466,16 +867,22 @@ class OktaLogoutService:
             self.cache.delete(cache_key)
             raise
 
-    def _logout_user(self, user: UserModel, okta_sub: Optional[str]):
+    def _logout_user(
+        self,
+        user: UserModel,
+        okta_sub: Optional[str],
+        session_id: Optional[str] = None,
+    ):
         """
         Perform user logout:
         - Delete AccessToken for OKTA source
         - Clear token and profile cache
-        - Terminate all user sessions
+        - Terminate user sessions (all or specific session)
 
         Args:
             user: User to logout
             okta_sub: Okta subject identifier to clear from cache
+            session_id: Optional session ID for session-specific logout
         """
         log_okta_message(
             message=f"Starting logout process for user {user.id}",
@@ -483,6 +890,8 @@ class OktaLogoutService:
                 'user_id': user.id,
                 'user_email': user.email,
                 'okta_sub': okta_sub,
+                'session_id': session_id,
+                'session_specific': bool(session_id),
             },
             level=SentryLogLevel.INFO,
         )
@@ -536,10 +945,27 @@ class OktaLogoutService:
                 level=SentryLogLevel.DEBUG,
             )
 
+        # Terminate sessions based on session_id presence
+        if session_id:
+            # TODO: Implement session-specific logout when session tracking
+            # is available. For now, log the session_id and terminate all.
+            log_okta_message(
+                message=(
+                    f"Session-specific logout requested for user {user.id}, "
+                    f"but session tracking not implemented. "
+                    f"Terminating all sessions."
+                ),
+                data={'user_id': user.id, 'session_id': session_id},
+                level=SentryLogLevel.WARNING,
+            )
+
         # Clear all tokens from cache (terminate all sessions)
         log_okta_message(
             message=f"Expiring all tokens for user {user.id}",
-            data={'user_id': user.id},
+            data={
+                'user_id': user.id,
+                'session_specific_requested': bool(session_id),
+            },
             level=SentryLogLevel.INFO,
         )
 
