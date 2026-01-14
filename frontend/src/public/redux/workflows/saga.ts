@@ -1,5 +1,17 @@
 import uniqBy from 'lodash.uniqby';
-import { all, fork, put, takeEvery, select, takeLatest, call, delay, take, takeLeading } from 'redux-saga/effects';
+import {
+  all,
+  fork,
+  put,
+  takeEvery,
+  select,
+  takeLatest,
+  call,
+  delay,
+  take,
+  takeLeading,
+  cancelled,
+} from 'redux-saga/effects';
 import { EventChannel } from 'redux-saga';
 
 import { PayloadAction } from '@reduxjs/toolkit';
@@ -62,6 +74,8 @@ import {
   editComment as editCommentAction,
   saveWorkflowsPreset,
   setFilterTemplate,
+  cancelCurrentPerformersCounters,
+  cancelTemplateTasksCounters,
 } from './slice';
 import {
   IChangeWorkflowLogViewSettingsPayload,
@@ -164,6 +178,8 @@ import { TUserListItem } from '../../types/user';
 import { isRequestCanceled } from '../../utils/isRequestCanceled';
 
 export const templateFilterRequestsAbortControllers = new Map<string, AbortController>();
+let currentPerformersCountersAbortController: AbortController | null = null;
+let templateTasksCountersAbortController: AbortController | null = null;
 
 function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: number; showLoader?: boolean }) {
   const {
@@ -697,11 +713,16 @@ export function* updateCurrentPerformersCountersSaga() {
     },
   }: IStoreWorkflows = yield select(getWorkflowsStore);
 
+  currentPerformersCountersAbortController?.abort();
+  const abortController = new AbortController();
+  currentPerformersCountersAbortController = abortController;
+
   try {
     const counters: TUserCounter[] | undefined = yield call(getWorkflowsCurrentPerformerCounters, {
       templatesIdsFilter,
       tasksApiNamesFilter,
       workflowStartersIdsFilter,
+      signal: abortController.signal,
     });
 
     if (!counters) {
@@ -710,8 +731,26 @@ export function* updateCurrentPerformersCountersSaga() {
 
     yield put(setCurrentPerformersCounters(counters));
   } catch (error) {
+    if (isRequestCanceled(error)) {
+      return;
+    }
     logger.error('failed to get workflows current performer counters ', error);
+  } finally {
+    if (currentPerformersCountersAbortController === abortController) {
+      const wasCancelled: boolean = yield cancelled();
+      if (wasCancelled) {
+        abortController.abort();
+      }
+
+      currentPerformersCountersAbortController = null;
+    }
   }
+}
+
+export function* cancelCurrentPerformersCountersSaga() {
+  currentPerformersCountersAbortController?.abort();
+  currentPerformersCountersAbortController = null;
+  yield;
 }
 
 export function* updateWorkflowStartersCountersSaga() {
@@ -747,6 +786,10 @@ export function* updateWorkflowsTemplateStepsCountersSaga() {
   }: IStoreWorkflows = yield select(getWorkflowsStore);
   const allTemplatesIds = templateList.items.map((template) => template.id);
 
+  templateTasksCountersAbortController?.abort();
+  const abortController = new AbortController();
+  templateTasksCountersAbortController = abortController;
+
   try {
     const counters: TTemplateStepCounter[] | undefined = yield call(getWorkflowsTemplateStepsCounters, {
       statusFilter,
@@ -754,6 +797,7 @@ export function* updateWorkflowsTemplateStepsCountersSaga() {
       performersIdsFilter,
       performersGroupIdsFilter,
       workflowStartersIdsFilter,
+      signal: abortController.signal,
     });
 
     if (!counters) {
@@ -762,8 +806,25 @@ export function* updateWorkflowsTemplateStepsCountersSaga() {
 
     yield put(setWorkflowsTemplateStepsCounters(counters));
   } catch (error) {
+    if (isRequestCanceled(error)) {
+      return;
+    }
     logger.error('failed to get workflows starters counters ', error);
+  } finally {
+    if (templateTasksCountersAbortController === abortController) {
+      const wasCancelled: boolean = yield cancelled();
+      if (wasCancelled) {
+        abortController.abort();
+      }
+      templateTasksCountersAbortController = null;
+    }
   }
+}
+
+export function* cancelTemplateTasksCountersSaga() {
+  templateTasksCountersAbortController?.abort();
+  templateTasksCountersAbortController = null;
+  yield;
 }
 
 export function* snoozeWorkflowSaga({
@@ -1006,6 +1067,14 @@ export function* watchCancelTemplateFilterRequests() {
   yield takeEvery(setFilterTemplate.type, cancelTemplateFilterRequestsSaga);
 }
 
+export function* watchCancelCurrentPerformersCounters() {
+  yield takeEvery(cancelCurrentPerformersCounters.type, cancelCurrentPerformersCountersSaga);
+}
+
+export function* watchCancelTemplateTasksCounters() {
+  yield takeEvery(cancelTemplateTasksCounters.type, cancelTemplateTasksCountersSaga);
+}
+
 export function* watchSendWorkflowLogComment() {
   yield takeEvery(sendWorkflowLogComments.type, saveWorkflowLogComment);
 }
@@ -1078,5 +1147,7 @@ export function* rootSaga() {
     fork(watchDeleteReactionComment),
     fork(watchSaveWorkflowsPreset),
     fork(watchCancelTemplateFilterRequests),
+    fork(watchCancelCurrentPerformersCounters),
+    fork(watchCancelTemplateTasksCounters),
   ]);
 }

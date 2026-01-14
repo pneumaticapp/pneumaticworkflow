@@ -1,19 +1,29 @@
 import React, { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
-import { setFilterTemplate as setWorkflowsFilterTemplate } from '../../redux/workflows/slice';
+import {
+  cancelCurrentPerformersCounters,
+  cancelTemplateTasksCounters,
+  setFilterTemplate as setWorkflowsFilterTemplate,
+} from '../../redux/workflows/slice';
 
 import { FilterSelect } from '../../components/UI';
 import { FilterIcon } from '../../components/icons';
 import { ERenderPlaceholderType, getRenderPlaceholder } from './utils';
 import styles from './WorkflowsLayout.css';
-import { getWorkflowTemplateListItems, getWorkflowTemplatesIdsFilter } from '../../redux/selectors/workflows';
+import {
+  getWorkflowsStatus,
+  getWorkflowTemplateListItems,
+  getWorkflowTemplatesIdsFilter,
+} from '../../redux/selectors/workflows';
+import { canFilterByTemplateStep } from '../../utils/workflows/filters';
 
 export function TemplateFilterSelect() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   const templatesIdsFilter = useSelector(getWorkflowTemplatesIdsFilter);
   const filterTemplates = useSelector(getWorkflowTemplateListItems);
+  const statusFilter = useSelector(getWorkflowsStatus);
 
   const templatesOptions = useMemo(() => {
     return filterTemplates.map(({ count, ...rest }) => ({
@@ -41,6 +51,10 @@ export function TemplateFilterSelect() {
         resetFilter={() => {
           sessionStorage.setItem('isInternalNavigation', 'true');
           dispatch(setWorkflowsFilterTemplate([]));
+          if (!canFilterByTemplateStep(statusFilter)) {
+            dispatch(cancelCurrentPerformersCounters());
+            dispatch(cancelTemplateTasksCounters());
+          }
         }}
         Icon={FilterIcon}
         renderPlaceholder={() =>

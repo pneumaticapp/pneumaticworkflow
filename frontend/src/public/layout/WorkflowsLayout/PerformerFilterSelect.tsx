@@ -3,6 +3,7 @@ import { useIntl } from 'react-intl';
 
 import { useDispatch, useSelector } from 'react-redux';
 import {
+  cancelTemplateTasksCounters,
   setFilterPerformers as setWorkflowsFilterPerfomers,
   setFilterPerformersGroup as setWorkflowsFilterPerfomersGroup,
 } from '../../redux/workflows/slice';
@@ -19,6 +20,7 @@ import { Avatar, FilterSelect } from '../../components/UI';
 import styles from './WorkflowsLayout.css';
 import { PerformerFilterIcon } from '../../components/icons';
 import { ERenderPlaceholderType, getRenderPlaceholder } from './utils';
+import { canFilterByTemplateStep } from '../../utils/workflows/filters';
 
 export function PerformerFilterSelect() {
   const { formatMessage } = useIntl();
@@ -108,6 +110,9 @@ export function PerformerFilterSelect() {
         resetFilter={() => {
           dispatch(setWorkflowsFilterPerfomers([]));
           dispatch(setWorkflowsFilterPerfomersGroup([]));
+          if (!canFilterByTemplateStep(statusFilter)) {
+            dispatch(cancelTemplateTasksCounters());
+          }
         }}
         Icon={PerformerFilterIcon}
         renderPlaceholder={() =>

@@ -3,7 +3,11 @@ import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
 import styles from './WorkflowsLayout.css';
-import { setFilterTemplateTasks as setWorkflowsFilterTasks } from '../../redux/workflows/slice';
+import {
+  cancelCurrentPerformersCounters,
+  cancelTemplateTasksCounters,
+  setFilterTemplateTasks as setWorkflowsFilterTasks,
+} from '../../redux/workflows/slice';
 import { FilterSelect, TOptionBase } from '../../components/UI';
 import { StepName } from '../../components/StepName';
 import { TaskFilterIcon } from '../../components/icons';
@@ -77,6 +81,10 @@ export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITe
       }}
       resetFilter={() => {
         dispatch(setWorkflowsFilterTasks([]));
+        if (!canFilterByTemplateStep(statusFilter)) {
+          dispatch(cancelCurrentPerformersCounters());
+          dispatch(cancelTemplateTasksCounters());
+        }
       }}
       Icon={TaskFilterIcon}
       renderPlaceholder={() =>
