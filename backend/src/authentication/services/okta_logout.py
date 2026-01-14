@@ -72,6 +72,7 @@ class OktaLogoutService:
                 jwt.PyJWTError,
                 ValueError,
                 KeyError,
+                TypeError,
                 requests.RequestException,
         ) as e:
             capture_sentry_message(

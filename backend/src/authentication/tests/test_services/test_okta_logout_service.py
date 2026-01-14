@@ -1,8 +1,8 @@
 import pytest
+import jwt
 import requests
 from unittest.mock import Mock
 from django.contrib.auth import get_user_model
-from jwt import DecodeError, InvalidTokenError
 
 from src.accounts.enums import (
     SourceType,
@@ -11,7 +11,6 @@ from src.accounts.enums import (
 from src.authentication.models import AccessToken
 from src.authentication.services.okta_logout import OktaLogoutService
 from src.processes.tests.fixtures import create_test_admin
-from src.utils.logging import SentryLogLevel
 
 pytestmark = pytest.mark.django_db
 user_model = get_user_model()
@@ -21,11 +20,6 @@ def test_process_logout__user_found__ok(mocker):
     # arrange
     user = create_test_admin()
     okta_sub = '00uid4BxXw6I6TV4m0g3'
-    get_user_mock = mocker.patch(
-        'src.authentication.services.okta_logout.'
-        'OktaLogoutService._get_user_by_sub',
-        return_value=user,
-    )
     logout_user_mock = mocker.patch(
         'src.authentication.services.okta_logout.'
         'OktaLogoutService._logout_user',
@@ -33,7 +27,12 @@ def test_process_logout__user_found__ok(mocker):
     validate_mock = mocker.patch(
         'src.authentication.services.okta_logout.'
         'OktaLogoutService._validate_logout_token',
-        return_value={'sub': okta_sub, 'sid': None},
+        return_value={'sub': okta_sub},
+    )
+    get_user_mock = mocker.patch(
+        'src.authentication.services.okta_logout.'
+        'OktaLogoutService._get_user_by_cached_sub',
+        return_value=user,
     )
     service = OktaLogoutService(logout_token='test_token')
 
@@ -52,35 +51,28 @@ def test_process_logout__user_found__ok(mocker):
 
     # assert
     validate_mock.assert_called_once()
-    get_user_mock.assert_called_once_with(okta_sub, fallback_sub=okta_sub)
-    logout_user_mock.assert_called_once_with(
-        user,
-        okta_sub=okta_sub,
-        session_id=None,
-    )
+    get_user_mock.assert_called_once_with(okta_sub)
+    logout_user_mock.assert_called_once_with(user, okta_sub)
 
 
-def test_process_logout__user_not_found__raise_exception(mocker):
+def test_process_logout__user_not_found__no_logout(mocker):
     # arrange
     okta_sub = '00uid4BxXw6I6TV4m0g3'
-    get_user_mock = mocker.patch(
-        'src.authentication.services.okta_logout.'
-        'OktaLogoutService._get_user_by_sub',
-        side_effect=user_model.DoesNotExist('User not found'),
-    )
     logout_user_mock = mocker.patch(
         'src.authentication.services.okta_logout.'
         'OktaLogoutService._logout_user',
     )
-    capture_sentry_mock = mocker.patch(
-        'src.authentication.services.okta_logout.capture_sentry_message',
-    )
-    mocker.patch(
+    validate_mock = mocker.patch(
         'src.authentication.services.okta_logout.'
         'OktaLogoutService._validate_logout_token',
-        return_value={'sub': okta_sub, 'sid': None},
+        return_value={'sub': okta_sub},
     )
-    service = OktaLogoutService()
+    get_user_mock = mocker.patch(
+        'src.authentication.services.okta_logout.'
+        'OktaLogoutService._get_user_by_cached_sub',
+        return_value=None,
+    )
+    service = OktaLogoutService(logout_token='test_token')
 
     sub_id_data = {
         'format': 'iss_sub',
@@ -96,12 +88,12 @@ def test_process_logout__user_not_found__raise_exception(mocker):
     service.process_logout(**request_data)
 
     # assert
-    get_user_mock.assert_called_once_with(okta_sub, fallback_sub=okta_sub)
+    validate_mock.assert_called_once()
+    get_user_mock.assert_called_once_with(okta_sub)
     logout_user_mock.assert_not_called()
-    capture_sentry_mock.assert_called_once()
 
 
-def test_get_user_by_sub__user_found__return_user(mocker):
+def test_get_user_by_cached_sub__user_found__return_user(mocker):
     # arrange
     user = create_test_admin()
     okta_sub = '00uid4BxXw6I6TV4m0g3'
@@ -114,64 +106,21 @@ def test_get_user_by_sub__user_found__return_user(mocker):
     service = OktaLogoutService()
 
     # act
-    result = service._get_user_by_sub(okta_sub)
+    result = service._get_user_by_cached_sub(okta_sub)
 
     # assert
     assert result == user
     cache_mock.get.assert_called_once_with(f'okta_sub_to_user_{okta_sub}')
 
 
-def test_get_user_by_sub__user_not_cached__raise_exception(mocker):
+def test_get_user_by_cached_sub__user_not_cached__return_none(mocker):
     # arrange
     okta_sub = '00uid4BxXw6I6TV4m0g3'
     cache_mock = Mock()
     cache_mock.get.return_value = None
-    mocker.patch(
-        'src.authentication.services.okta_logout.caches',
-        {'default': cache_mock},
+    capture_sentry_mock = mocker.patch(
+        'src.authentication.services.okta_logout.capture_sentry_message',
     )
-    service = OktaLogoutService()
-
-    # act & assert
-    with pytest.raises(user_model.DoesNotExist):
-        service._get_user_by_sub(okta_sub)
-
-    cache_mock.get.assert_called_once_with(f'okta_sub_to_user_{okta_sub}')
-
-
-def test_get_user_by_sub__user_not_exist__clear_cache_raise_exception(
-    mocker,
-):
-    # arrange
-    okta_sub = '00uid4BxXw6I6TV4m0g3'
-    non_existent_user_id = 99999
-    cache_mock = Mock()
-    cache_mock.get.return_value = non_existent_user_id
-    mocker.patch(
-        'src.authentication.services.okta_logout.caches',
-        {'default': cache_mock},
-    )
-    service = OktaLogoutService()
-
-    # act & assert
-    with pytest.raises(user_model.DoesNotExist):
-        service._get_user_by_sub(okta_sub)
-
-    cache_mock.get.assert_called_once_with(f'okta_sub_to_user_{okta_sub}')
-    cache_mock.delete.assert_called_once_with(
-        f'okta_sub_to_user_{okta_sub}',
-    )
-
-
-def test_get_user_by_sub__fallback_success__return_user(mocker):
-    # arrange
-    user = create_test_admin()
-    primary_sub = '0oaz5d6sikQdT7FMX697'  # client_id (GTR token)
-    fallback_sub = '00uz5dexshp1ALzYF697'  # user_id (request body)
-
-    cache_mock = Mock()
-    # Primary sub not found, fallback sub found
-    cache_mock.get.side_effect = [None, user.id]
     mocker.patch(
         'src.authentication.services.okta_logout.caches',
         {'default': cache_mock},
@@ -179,74 +128,58 @@ def test_get_user_by_sub__fallback_success__return_user(mocker):
     service = OktaLogoutService()
 
     # act
-    result = service._get_user_by_sub(primary_sub, fallback_sub=fallback_sub)
+    result = service._get_user_by_cached_sub(okta_sub)
 
     # assert
-    assert result == user
-    assert cache_mock.get.call_count == 2
-    cache_mock.get.assert_any_call(f'okta_sub_to_user_{primary_sub}')
-    cache_mock.get.assert_any_call(f'okta_sub_to_user_{fallback_sub}')
+    assert result is None
+    cache_mock.get.assert_called_once_with(f'okta_sub_to_user_{okta_sub}')
+    capture_sentry_mock.assert_called_once()
 
 
-def test_get_user_by_sub__both_fail__raise_exception(mocker):
+def test_get_user_by_cached_sub__user_not_exist__clear_cache_return_none(
+    mocker,
+):
     # arrange
-    primary_sub = '0oaz5d6sikQdT7FMX697'
-    fallback_sub = '00uz5dexshp1ALzYF697'
-
+    okta_sub = '00uid4BxXw6I6TV4m0g3'
+    non_existent_user_id = 99999
     cache_mock = Mock()
-    cache_mock.get.return_value = None  # Both subs not found in cache
+    cache_mock.get.return_value = non_existent_user_id
+    capture_sentry_mock = mocker.patch(
+        'src.authentication.services.okta_logout.capture_sentry_message',
+    )
     mocker.patch(
         'src.authentication.services.okta_logout.caches',
         {'default': cache_mock},
     )
     service = OktaLogoutService()
 
-    # act & assert
-    with pytest.raises(user_model.DoesNotExist) as exc_info:
-        service._get_user_by_sub(primary_sub, fallback_sub=fallback_sub)
+    # act
+    result = service._get_user_by_cached_sub(okta_sub)
 
-    # Check that error message includes both subs
-    assert primary_sub in str(exc_info.value)
-    assert fallback_sub in str(exc_info.value)
-    assert cache_mock.get.call_count == 2
-
-
-def test_get_user_by_sub__no_fallback__original_behavior(mocker):
-    # arrange
-    primary_sub = '00uid4BxXw6I6TV4m0g3'
-    cache_mock = Mock()
-    cache_mock.get.return_value = None
-    mocker.patch(
-        'src.authentication.services.okta_logout.caches',
-        {'default': cache_mock},
+    # assert
+    assert result is None
+    cache_mock.get.assert_called_once_with(f'okta_sub_to_user_{okta_sub}')
+    cache_mock.delete.assert_called_once_with(
+        f'okta_sub_to_user_{okta_sub}',
     )
-    service = OktaLogoutService()
-
-    # act & assert
-    with pytest.raises(user_model.DoesNotExist):
-        service._get_user_by_sub(primary_sub)
-
-    # Should only try primary sub
-    cache_mock.get.assert_called_once_with(f'okta_sub_to_user_{primary_sub}')
+    capture_sentry_mock.assert_called_once()
 
 
-def test_process_logout_with_jwt_token__fallback_sub_extracted__ok(mocker):
+def test_process_logout_with_jwt_token__ok(mocker):
     # arrange
     user = create_test_admin()
-    jwt_sub = '0oaz5d6sikQdT7FMX697'  # from JWT token
-    request_sub = '00uz5dexshp1ALzYF697'  # from request body
+    jwt_sub = '0oaz5d6sikQdT7FMX697'
+    request_sub = '00uz5dexshp1ALzYF697'
 
-    # Mock JWT token validation to return jwt_sub
     validate_mock = mocker.patch(
         'src.authentication.services.okta_logout.'
         'OktaLogoutService._validate_logout_token',
-        return_value={'sub': jwt_sub, 'sid': None},
+        return_value={'sub': jwt_sub},
     )
 
-    # Mock user lookup with fallback
     get_user_mock = mocker.patch(
         'src.authentication.services.okta_logout.'
-        'OktaLogoutService._get_user_by_sub',
+        'OktaLogoutService._get_user_by_cached_sub',
         return_value=user,
     )
 
@@ -272,12 +205,8 @@ def test_process_logout_with_jwt_token__fallback_sub_extracted__ok(mocker):
 
     # assert
     validate_mock.assert_called_once()
-    get_user_mock.assert_called_once_with(jwt_sub, fallback_sub=request_sub)
-    logout_user_mock.assert_called_once_with(
-        user,
-        okta_sub=jwt_sub,
-        session_id=None,
-    )
+    get_user_mock.assert_called_once_with(request_sub)
+    logout_user_mock.assert_called_once_with(user, jwt_sub)
 
 
 def test_logout_user__with_access_token__cleanup_all(mocker):
@@ -286,7 +215,6 @@ def test_logout_user__with_access_token__cleanup_all(mocker):
     okta_sub = '00uid4BxXw6I6TV4m0g3'
     access_token_1 = 'access_token_1'
 
-    # Create access token (only one per user-source combination allowed)
     AccessToken.objects.create(
         user=user,
         source=SourceType.OKTA,
@@ -307,14 +235,13 @@ def test_logout_user__with_access_token__cleanup_all(mocker):
     service = OktaLogoutService()
 
     # act
-    service._logout_user(user, okta_sub=okta_sub)
+    service._logout_user(user, okta_sub)
 
     # assert
     assert AccessToken.objects.filter(
         user=user,
         source=SourceType.OKTA,
     ).count() == 0
-    # Check profile cache deletion
     assert cache_mock.delete.call_count == 2
     cache_mock.delete.assert_any_call(f'user_profile_{access_token_1}')
     cache_mock.delete.assert_any_call(f'okta_sub_to_user_{okta_sub}')
@@ -338,10 +265,9 @@ def test_logout_user__no_access_tokens__cleanup_minimal(mocker):
     service = OktaLogoutService()
 
     # act
-    service._logout_user(user, okta_sub=okta_sub)
+    service._logout_user(user, okta_sub)
 
     # assert
-    # Only sub cache should be cleared, no profile cache
     cache_mock.delete.assert_called_once_with(
         f'okta_sub_to_user_{okta_sub}',
     )
@@ -364,10 +290,9 @@ def test_logout_user__no_okta_sub__skip_sub_cleanup(mocker):
     service = OktaLogoutService()
 
     # act
-    service._logout_user(user, okta_sub=None)
+    service._logout_user(user, None)
 
     # assert
-    # No sub cache should be cleared
     cache_mock.delete.assert_not_called()
     expire_tokens_mock.assert_called_once_with(user)
 
@@ -376,54 +301,73 @@ def test_validate_logout_token__valid_token__ok(mocker):
     # arrange
     logout_token = 'test_logout_token'
     domain = 'dev-123456.okta.com'
-    client_id = 'test_client_id'
-    client_secret = 'test_client_secret'
-    response_data = {'active': True}
-    response_mock = Mock()
-    response_mock.ok = True
-    response_mock.json.return_value = response_data
-    request_mock = mocker.patch(
-        'src.authentication.services.okta_logout.requests.post',
-        return_value=response_mock,
+    expected_payload = {'sub': 'test_sub', 'aud': 'test_client_id'}
+
+    mocker.patch(
+        'src.authentication.services.okta_logout.jwt.get_unverified_header',
+        return_value={'kid': 'test_kid'},
+    )
+    mocker.patch(
+        'src.authentication.services.okta_logout.'
+        'OktaLogoutService._get_public_key_pem',
+        return_value='test_pem_key',
+    )
+    mocker.patch(
+        'src.authentication.services.okta_logout.jwt.decode',
+        return_value=expected_payload,
     )
     settings_mock = mocker.patch(
         'src.authentication.services.okta_logout.settings',
     )
     settings_mock.OKTA_DOMAIN = domain
-    settings_mock.OKTA_CLIENT_ID = client_id
-    settings_mock.OKTA_CLIENT_SECRET = client_secret
     service = OktaLogoutService(logout_token=logout_token)
 
     # act
     result = service._validate_logout_token()
 
     # assert
-    assert result is True
-    request_mock.assert_called_once_with(
-        f'https://{domain}/oauth2/default/v1/introspect',
-        data={
-            'token': logout_token,
-            'token_type_hint': 'logout_token',
-            'client_id': client_id,
-            'client_secret': client_secret,
-        },
-        timeout=10,
-    )
+    assert result == expected_payload
 
 
-def test_validate_logout_token__response_not_ok__return_false(mocker):
+def test_validate_logout_token__no_kid__return_none(mocker):
     # arrange
     logout_token = 'test_logout_token'
     domain = 'dev-123456.okta.com'
-    client_id = 'test_client_id'
-    client_secret = 'test_client_secret'
-    response_mock = Mock()
-    response_mock.ok = False
-    response_mock.status_code = 400
-    response_mock.text = 'Bad Request'
+
     mocker.patch(
-        'src.authentication.services.okta_logout.requests.post',
-        return_value=response_mock,
+        'src.authentication.services.okta_logout.jwt.get_unverified_header',
+        return_value={},
+    )
+    settings_mock = mocker.patch(
+        'src.authentication.services.okta_logout.settings',
+    )
+    settings_mock.OKTA_DOMAIN = domain
+    service = OktaLogoutService(logout_token=logout_token)
+
+    # act
+    result = service._validate_logout_token()
+
+    # assert
+    assert result is None
+
+
+def test_validate_logout_token__jwt_decode_error__return_none(mocker):
+    # arrange
+    logout_token = 'test_logout_token'
+    domain = 'dev-123456.okta.com'
+
+    mocker.patch(
+        'src.authentication.services.okta_logout.jwt.get_unverified_header',
+        return_value={'kid': 'test_kid'},
+    )
+    mocker.patch(
+        'src.authentication.services.okta_logout.'
+        'OktaLogoutService._get_public_key_pem',
+        return_value='test_pem_key',
+    )
+    mocker.patch(
+        'src.authentication.services.okta_logout.jwt.decode',
+        side_effect=jwt.DecodeError('Invalid token'),
     )
     capture_sentry_mock = mocker.patch(
         'src.authentication.services.okta_logout.capture_sentry_message',
@@ -432,140 +376,26 @@ def test_validate_logout_token__response_not_ok__return_false(mocker):
         'src.authentication.services.okta_logout.settings',
     )
     settings_mock.OKTA_DOMAIN = domain
-    settings_mock.OKTA_CLIENT_ID = client_id
-    settings_mock.OKTA_CLIENT_SECRET = client_secret
     service = OktaLogoutService(logout_token=logout_token)
 
     # act
     result = service._validate_logout_token()
 
     # assert
-    assert result is False
-    capture_sentry_mock.assert_called_once_with(
-        message='Okta token validation failed',
-        level=SentryLogLevel.ERROR,
-        data={
-            'logout_token': logout_token,
-            'status_code': 400,
-            'response': 'Bad Request',
-        },
-    )
-
-
-def test_validate_logout_token__token_not_active__return_false(mocker):
-    # arrange
-    logout_token = 'test_logout_token'
-    domain = 'dev-123456.okta.com'
-    client_id = 'test_client_id'
-    client_secret = 'test_client_secret'
-    response_data = {'active': False}
-    response_mock = Mock()
-    response_mock.ok = True
-    response_mock.json.return_value = response_data
-    mocker.patch(
-        'src.authentication.services.okta_logout.requests.post',
-        return_value=response_mock,
-    )
-    capture_sentry_mock = mocker.patch(
-        'src.authentication.services.okta_logout.capture_sentry_message',
-    )
-    settings_mock = mocker.patch(
-        'src.authentication.services.okta_logout.settings',
-    )
-    settings_mock.OKTA_DOMAIN = domain
-    settings_mock.OKTA_CLIENT_ID = client_id
-    settings_mock.OKTA_CLIENT_SECRET = client_secret
-    service = OktaLogoutService(logout_token=logout_token)
-
-    # act
-    result = service._validate_logout_token()
-
-    # assert
-    assert result is False
-    capture_sentry_mock.assert_called_once_with(
-        message='Okta token is not active',
-        level=SentryLogLevel.ERROR,
-        data={
-            'logout_token': logout_token,
-            'result': response_data,
-        },
-    )
-
-
-def test_validate_logout_token__jwt_decode_error__return_false(mocker):
-    # arrange
-    logout_token = 'test_logout_token'
-    domain = 'dev-123456.okta.com'
-    client_id = 'test_client_id'
-    client_secret = 'test_client_secret'
-    mocker.patch(
-        'src.authentication.services.okta_logout.requests.post',
-        side_effect=DecodeError('Invalid token'),
-    )
-    capture_sentry_mock = mocker.patch(
-        'src.authentication.services.okta_logout.capture_sentry_message',
-    )
-    settings_mock = mocker.patch(
-        'src.authentication.services.okta_logout.settings',
-    )
-    settings_mock.OKTA_DOMAIN = domain
-    settings_mock.OKTA_CLIENT_ID = client_id
-    settings_mock.OKTA_CLIENT_SECRET = client_secret
-    service = OktaLogoutService(logout_token=logout_token)
-
-    # act
-    result = service._validate_logout_token()
-
-    # assert
-    assert result is False
+    assert result is None
     capture_sentry_mock.assert_called_once()
     assert 'Okta logout token validation failed' in (
         capture_sentry_mock.call_args[1]['message']
     )
 
 
-def test_validate_logout_token__jwt_invalid_token_error__return_false(
-    mocker,
-):
+def test_validate_logout_token__request_exception__return_none(mocker):
     # arrange
     logout_token = 'test_logout_token'
     domain = 'dev-123456.okta.com'
-    client_id = 'test_client_id'
-    client_secret = 'test_client_secret'
+
     mocker.patch(
-        'src.authentication.services.okta_logout.requests.post',
-        side_effect=InvalidTokenError('Invalid token'),
-    )
-    capture_sentry_mock = mocker.patch(
-        'src.authentication.services.okta_logout.capture_sentry_message',
-    )
-    settings_mock = mocker.patch(
-        'src.authentication.services.okta_logout.settings',
-    )
-    settings_mock.OKTA_DOMAIN = domain
-    settings_mock.OKTA_CLIENT_ID = client_id
-    settings_mock.OKTA_CLIENT_SECRET = client_secret
-    service = OktaLogoutService(logout_token=logout_token)
-
-    # act
-    result = service._validate_logout_token()
-
-    # assert
-    assert result is False
-    capture_sentry_mock.assert_called_once()
-    assert 'Okta logout token validation failed' in (
-        capture_sentry_mock.call_args[1]['message']
-    )
-
-
-def test_validate_logout_token__request_exception__return_false(mocker):
-    # arrange
-    logout_token = 'test_logout_token'
-    domain = 'dev-123456.okta.com'
-    client_id = 'test_client_id'
-    client_secret = 'test_client_secret'
-    mocker.patch(
-        'src.authentication.services.okta_logout.requests.post',
+        'src.authentication.services.okta_logout.jwt.get_unverified_header',
         side_effect=requests.RequestException('Connection error'),
     )
     capture_sentry_mock = mocker.patch(
@@ -575,135 +405,65 @@ def test_validate_logout_token__request_exception__return_false(mocker):
         'src.authentication.services.okta_logout.settings',
     )
     settings_mock.OKTA_DOMAIN = domain
-    settings_mock.OKTA_CLIENT_ID = client_id
-    settings_mock.OKTA_CLIENT_SECRET = client_secret
     service = OktaLogoutService(logout_token=logout_token)
 
     # act
     result = service._validate_logout_token()
 
     # assert
-    assert result is False
+    assert result is None
     capture_sentry_mock.assert_called_once()
-    assert 'Okta logout token validation failed' in (
-        capture_sentry_mock.call_args[1]['message']
-    )
 
 
-def test_validate_logout_token__no_token__return_false(mocker):
+def test_validate_logout_token__no_token__return_none(mocker):
     # arrange
     domain = 'dev-123456.okta.com'
-    client_id = 'test_client_id'
-    client_secret = 'test_client_secret'
-    response_data = {'active': False}
-    response_mock = Mock()
-    response_mock.ok = True
-    response_mock.json.return_value = response_data
-    request_mock = mocker.patch(
-        'src.authentication.services.okta_logout.requests.post',
-        return_value=response_mock,
-    )
     capture_sentry_mock = mocker.patch(
         'src.authentication.services.okta_logout.capture_sentry_message',
+    )
+    mocker.patch(
+        'src.authentication.services.okta_logout.jwt.get_unverified_header',
+        side_effect=TypeError('None type'),
     )
     settings_mock = mocker.patch(
         'src.authentication.services.okta_logout.settings',
     )
     settings_mock.OKTA_DOMAIN = domain
-    settings_mock.OKTA_CLIENT_ID = client_id
-    settings_mock.OKTA_CLIENT_SECRET = client_secret
     service = OktaLogoutService(logout_token=None)
 
     # act
     result = service._validate_logout_token()
 
     # assert
-    assert result is False
-    request_mock.assert_called_once()
-    assert request_mock.call_args[1]['data']['token'] is None
-    capture_sentry_mock.assert_called_once_with(
-        message='Okta token is not active',
-        level=SentryLogLevel.ERROR,
-        data={
-            'logout_token': None,
-            'result': response_data,
-        },
-    )
+    assert result is None
+    capture_sentry_mock.assert_called_once()
 
 
-def test_process_logout_by_email__user_found__ok(mocker):
+def test_validate_logout_token__no_public_key__return_none(mocker):
     # arrange
-    user = create_test_admin(email='test@example.com')
-    email = 'test@example.com'
-    logout_user_mock = mocker.patch(
-        'src.authentication.services.okta_logout.'
-        'OktaLogoutService._logout_user',
+    logout_token = 'test_logout_token'
+    domain = 'dev-123456.okta.com'
+
+    mocker.patch(
+        'src.authentication.services.okta_logout.jwt.get_unverified_header',
+        return_value={'kid': 'test_kid'},
     )
-    service = OktaLogoutService()
+    mocker.patch(
+        'src.authentication.services.okta_logout.'
+        'OktaLogoutService._get_public_key_pem',
+        return_value=None,
+    )
+    settings_mock = mocker.patch(
+        'src.authentication.services.okta_logout.settings',
+    )
+    settings_mock.OKTA_DOMAIN = domain
+    service = OktaLogoutService(logout_token=logout_token)
 
     # act
-    service._process_logout_by_email(email)
+    result = service._validate_logout_token()
 
     # assert
-    logout_user_mock.assert_called_once_with(user, okta_sub=None)
-
-
-def test_process_logout_by_email__user_not_found__log_sentry(mocker):
-    # arrange
-    email = 'nonexistent@example.com'
-    logout_user_mock = mocker.patch(
-        'src.authentication.services.okta_logout.'
-        'OktaLogoutService._logout_user',
-    )
-    capture_sentry_mock = mocker.patch(
-        'src.authentication.services.okta_logout.capture_sentry_message',
-    )
-    service = OktaLogoutService(logout_token='test_token')
-
-    # act
-    service._process_logout_by_email(email)
-
-    # assert
-    logout_user_mock.assert_not_called()
-    capture_sentry_mock.assert_called_once_with(
-        message='Okta logout: user not found by email',
-        level=SentryLogLevel.WARNING,
-        data={
-            'email': email,
-            'logout_token': 'test_token',
-        },
-    )
-
-
-def test_process_logout_by_email__inactive_user__log_sentry(mocker):
-    # arrange
-    create_test_admin(
-        email='inactive@example.com',
-        status=UserStatus.INACTIVE,
-    )
-    email = 'inactive@example.com'
-    logout_user_mock = mocker.patch(
-        'src.authentication.services.okta_logout.'
-        'OktaLogoutService._logout_user',
-    )
-    capture_sentry_mock = mocker.patch(
-        'src.authentication.services.okta_logout.capture_sentry_message',
-    )
-    service = OktaLogoutService(logout_token='test_token')
-
-    # act
-    service._process_logout_by_email(email)
-
-    # assert
-    logout_user_mock.assert_not_called()
-    capture_sentry_mock.assert_called_once_with(
-        message='Okta logout: user not found by email',
-        level=SentryLogLevel.WARNING,
-        data={
-            'email': email,
-            'logout_token': 'test_token',
-        },
-    )
+    assert result is None
 
 
 def test_process_logout_email_format__user_found__ok(mocker):
@@ -717,7 +477,7 @@ def test_process_logout_email_format__user_found__ok(mocker):
     validate_mock = mocker.patch(
         'src.authentication.services.okta_logout.'
         'OktaLogoutService._validate_logout_token',
-        return_value=True,
+        return_value={'sub': 'test_sub'},
     )
     service = OktaLogoutService(logout_token='test_token')
 
@@ -735,7 +495,7 @@ def test_process_logout_email_format__user_found__ok(mocker):
 
     # assert
     validate_mock.assert_called_once()
-    logout_user_mock.assert_called_once_with(user, okta_sub=None)
+    logout_user_mock.assert_called_once_with(user, 'test_sub')
 
 
 def test_process_logout_email_format__user_not_found__log_sentry(mocker):
@@ -745,13 +505,10 @@ def test_process_logout_email_format__user_not_found__log_sentry(mocker):
         'src.authentication.services.okta_logout.'
         'OktaLogoutService._logout_user',
     )
-    capture_sentry_mock = mocker.patch(
-        'src.authentication.services.okta_logout.capture_sentry_message',
-    )
     validate_mock = mocker.patch(
         'src.authentication.services.okta_logout.'
         'OktaLogoutService._validate_logout_token',
-        return_value=True,
+        return_value={'sub': 'test_sub'},
     )
     service = OktaLogoutService(logout_token='test_token')
 
@@ -770,7 +527,6 @@ def test_process_logout_email_format__user_not_found__log_sentry(mocker):
     # assert
     validate_mock.assert_called_once()
     logout_user_mock.assert_not_called()
-    capture_sentry_mock.assert_called_once()
 
 
 def test_process_logout_missing_sub_in_iss_sub_format__log_sentry(mocker):
@@ -781,7 +537,7 @@ def test_process_logout_missing_sub_in_iss_sub_format__log_sentry(mocker):
     validate_mock = mocker.patch(
         'src.authentication.services.okta_logout.'
         'OktaLogoutService._validate_logout_token',
-        return_value=True,
+        return_value={'sub': 'test_sub'},
     )
     service = OktaLogoutService(logout_token='test_token')
 
@@ -799,10 +555,9 @@ def test_process_logout_missing_sub_in_iss_sub_format__log_sentry(mocker):
 
     # assert
     validate_mock.assert_called_once()
-    capture_sentry_mock.assert_called_once_with(
-        message="Missing 'sub' field in iss_sub format",
-        level=SentryLogLevel.ERROR,
-        data={'request_data': request_data},
+    capture_sentry_mock.assert_called()
+    assert 'User identification failed' in (
+        capture_sentry_mock.call_args[1]['message']
     )
 
 
@@ -814,7 +569,7 @@ def test_process_logout_missing_email_in_email_format__log_sentry(mocker):
     validate_mock = mocker.patch(
         'src.authentication.services.okta_logout.'
         'OktaLogoutService._validate_logout_token',
-        return_value=True,
+        return_value={'sub': 'test_sub'},
     )
     service = OktaLogoutService(logout_token='test_token')
 
@@ -831,10 +586,9 @@ def test_process_logout_missing_email_in_email_format__log_sentry(mocker):
 
     # assert
     validate_mock.assert_called_once()
-    capture_sentry_mock.assert_called_once_with(
-        message="Missing 'email' field in email format",
-        level=SentryLogLevel.ERROR,
-        data={'request_data': request_data},
+    capture_sentry_mock.assert_called()
+    assert 'User identification failed' in (
+        capture_sentry_mock.call_args[1]['message']
     )
 
 
@@ -846,7 +600,7 @@ def test_process_logout__unsupported_format__log_sentry(mocker):
     validate_mock = mocker.patch(
         'src.authentication.services.okta_logout.'
         'OktaLogoutService._validate_logout_token',
-        return_value=True,
+        return_value={'sub': 'test_sub'},
     )
     service = OktaLogoutService(logout_token='test_token')
 
@@ -860,10 +614,9 @@ def test_process_logout__unsupported_format__log_sentry(mocker):
 
     # assert
     validate_mock.assert_called_once()
-    capture_sentry_mock.assert_called_once_with(
-        message='Unsupported format: unsupported_format',
-        level=SentryLogLevel.ERROR,
-        data={'request_data': request_data},
+    capture_sentry_mock.assert_called()
+    assert 'User identification failed' in (
+        capture_sentry_mock.call_args[1]['message']
     )
 
 
@@ -872,11 +625,11 @@ def test_process_logout__invalid_token__return_early(mocker):
     validate_mock = mocker.patch(
         'src.authentication.services.okta_logout.'
         'OktaLogoutService._validate_logout_token',
-        return_value=False,
+        return_value=None,
     )
-    process_by_sub_mock = mocker.patch(
+    identify_user_mock = mocker.patch(
         'src.authentication.services.okta_logout.'
-        'OktaLogoutService._process_logout_by_sub',
+        'OktaLogoutService._identify_user',
     )
     service = OktaLogoutService(logout_token='invalid_token')
 
@@ -895,4 +648,291 @@ def test_process_logout__invalid_token__return_early(mocker):
 
     # assert
     validate_mock.assert_called_once()
-    process_by_sub_mock.assert_not_called()
+    identify_user_mock.assert_not_called()
+
+
+def test_identify_user__iss_sub_format__user_found(mocker):
+    # arrange
+    user = create_test_admin()
+    okta_sub = '00uid4BxXw6I6TV4m0g3'
+    get_user_mock = mocker.patch(
+        'src.authentication.services.okta_logout.'
+        'OktaLogoutService._get_user_by_cached_sub',
+        return_value=user,
+    )
+    service = OktaLogoutService()
+
+    sub_id_data = {
+        'sub': okta_sub,
+    }
+
+    # act
+    result = service._identify_user('iss_sub', sub_id_data)
+
+    # assert
+    assert result == user
+    get_user_mock.assert_called_once_with(okta_sub)
+
+
+def test_identify_user__iss_sub_format__no_sub(mocker):
+    # arrange
+    capture_sentry_mock = mocker.patch(
+        'src.authentication.services.okta_logout.capture_sentry_message',
+    )
+    service = OktaLogoutService()
+
+    sub_id_data = {}
+
+    # act
+    result = service._identify_user('iss_sub', sub_id_data)
+
+    # assert
+    assert result is None
+    capture_sentry_mock.assert_called_once()
+
+
+def test_identify_user__iss_sub_format__user_not_found(mocker):
+    # arrange
+    okta_sub = '00uid4BxXw6I6TV4m0g3'
+    get_user_mock = mocker.patch(
+        'src.authentication.services.okta_logout.'
+        'OktaLogoutService._get_user_by_cached_sub',
+        return_value=None,
+    )
+    service = OktaLogoutService()
+
+    sub_id_data = {
+        'sub': okta_sub,
+    }
+
+    # act
+    result = service._identify_user('iss_sub', sub_id_data)
+
+    # assert
+    assert result is None
+    get_user_mock.assert_called_once_with(okta_sub)
+
+
+def test_identify_user__email_format__user_found(mocker):
+    # arrange
+    user = create_test_admin(email='test@example.com')
+    service = OktaLogoutService()
+
+    sub_id_data = {
+        'email': 'test@example.com',
+    }
+
+    # act
+    result = service._identify_user('email', sub_id_data)
+
+    # assert
+    assert result == user
+
+
+def test_identify_user__email_format__user_not_found(mocker):
+    # arrange
+    capture_sentry_mock = mocker.patch(
+        'src.authentication.services.okta_logout.capture_sentry_message',
+    )
+    service = OktaLogoutService()
+
+    sub_id_data = {
+        'email': 'nonexistent@example.com',
+    }
+
+    # act
+    result = service._identify_user('email', sub_id_data)
+
+    # assert
+    assert result is None
+    capture_sentry_mock.assert_not_called()
+
+
+def test_identify_user__email_format__inactive_user(mocker):
+    # arrange
+    create_test_admin(
+        email='inactive@example.com',
+        status=UserStatus.INACTIVE,
+    )
+    capture_sentry_mock = mocker.patch(
+        'src.authentication.services.okta_logout.capture_sentry_message',
+    )
+    service = OktaLogoutService()
+
+    sub_id_data = {
+        'email': 'inactive@example.com',
+    }
+
+    # act
+    result = service._identify_user('email', sub_id_data)
+
+    # assert
+    assert result is None
+    capture_sentry_mock.assert_not_called()
+
+
+def test_identify_user__unsupported_format(mocker):
+    # arrange
+    capture_sentry_mock = mocker.patch(
+        'src.authentication.services.okta_logout.capture_sentry_message',
+    )
+    service = OktaLogoutService()
+
+    # act
+    result = service._identify_user('unsupported', {})
+
+    # assert
+    assert result is None
+    capture_sentry_mock.assert_called_once()
+
+
+def test_get_public_key_pem__key_found__return_pem(mocker):
+    # arrange
+    kid = 'test_kid'
+    jwks = {
+        'keys': [
+            {
+                'kid': kid,
+                'n': 'test_n',
+                'e': 'AQAB',
+            },
+        ],
+    }
+    mocker.patch(
+        'src.authentication.services.okta_logout.'
+        'OktaLogoutService._get_jwks',
+        return_value=jwks,
+    )
+    mocker.patch(
+        'src.authentication.services.okta_logout.'
+        'OktaLogoutService._jwk_to_pem',
+        return_value='test_pem',
+    )
+    service = OktaLogoutService()
+
+    # act
+    result = service._get_public_key_pem(kid)
+
+    # assert
+    assert result == 'test_pem'
+
+
+def test_get_public_key_pem__key_not_found__return_none(mocker):
+    # arrange
+    kid = 'test_kid'
+    jwks = {
+        'keys': [
+            {
+                'kid': 'other_kid',
+                'n': 'test_n',
+                'e': 'AQAB',
+            },
+        ],
+    }
+    capture_sentry_mock = mocker.patch(
+        'src.authentication.services.okta_logout.capture_sentry_message',
+    )
+    mocker.patch(
+        'src.authentication.services.okta_logout.'
+        'OktaLogoutService._get_jwks',
+        return_value=jwks,
+    )
+    service = OktaLogoutService()
+
+    # act
+    result = service._get_public_key_pem(kid)
+
+    # assert
+    assert result is None
+    capture_sentry_mock.assert_called_once()
+
+
+def test_get_public_key_pem__no_jwks__return_none(mocker):
+    # arrange
+    kid = 'test_kid'
+    mocker.patch(
+        'src.authentication.services.okta_logout.'
+        'OktaLogoutService._get_jwks',
+        return_value=None,
+    )
+    service = OktaLogoutService()
+
+    # act
+    result = service._get_public_key_pem(kid)
+
+    # assert
+    assert result is None
+
+
+def test_get_jwks__success__return_jwks(mocker):
+    # arrange
+    jwks_data = {'keys': []}
+    response_mock = Mock()
+    response_mock.json.return_value = jwks_data
+    response_mock.raise_for_status = Mock()
+    request_mock = mocker.patch(
+        'src.authentication.services.okta_logout.requests.get',
+        return_value=response_mock,
+    )
+    settings_mock = mocker.patch(
+        'src.authentication.services.okta_logout.settings',
+    )
+    settings_mock.OKTA_DOMAIN = 'dev-123456.okta.com'
+    service = OktaLogoutService()
+
+    # act
+    result = service._get_jwks()
+
+    # assert
+    assert result == jwks_data
+    request_mock.assert_called_once()
+
+
+def test_get_jwks__request_exception__return_none(mocker):
+    # arrange
+    capture_sentry_mock = mocker.patch(
+        'src.authentication.services.okta_logout.capture_sentry_message',
+    )
+    mocker.patch(
+        'src.authentication.services.okta_logout.requests.get',
+        side_effect=requests.RequestException('Connection error'),
+    )
+    settings_mock = mocker.patch(
+        'src.authentication.services.okta_logout.settings',
+    )
+    settings_mock.OKTA_DOMAIN = 'dev-123456.okta.com'
+    service = OktaLogoutService()
+
+    # act
+    result = service._get_jwks()
+
+    # assert
+    assert result is None
+    capture_sentry_mock.assert_called_once()
+
+
+def test_get_jwks__http_error__return_none(mocker):
+    # arrange
+    capture_sentry_mock = mocker.patch(
+        'src.authentication.services.okta_logout.capture_sentry_message',
+    )
+    response_mock = Mock()
+    response_mock.raise_for_status.side_effect = (
+        requests.HTTPError('404 Not Found')
+    )
+    mocker.patch(
+        'src.authentication.services.okta_logout.requests.get',
+        return_value=response_mock,
+    )
+    settings_mock = mocker.patch(
+        'src.authentication.services.okta_logout.settings',
+    )
+    settings_mock.OKTA_DOMAIN = 'dev-123456.okta.com'
+    service = OktaLogoutService()
+
+    # act
+    result = service._get_jwks()
+
+    # assert
+    assert result is None
+    capture_sentry_mock.assert_called_once()
