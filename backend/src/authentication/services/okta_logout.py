@@ -543,7 +543,11 @@ class OktaLogoutService:
 
             # Verify token type (should be logout token)
             token_type = unverified_header.get('typ')
-            expected_types = ['logout+jwt', 'global-token-revocation-jwt']
+            expected_types = [
+                'logout+jwt',
+                'global-token-revocation-jwt',
+                'global-token-revocation+jwt',  # Okta uses this format
+            ]
             if token_type not in expected_types:
                 log_okta_message(
                     message="Token type mismatch",
@@ -701,20 +705,36 @@ class OktaLogoutService:
             return None
 
         # Check events claim
+        # For Global Token Revocation, events claim may be optional
         events = payload.get('events')
         if not events:
-            error_msg = 'Logout token must contain "events" claim'
-            log_okta_message(
-                message=error_msg,
-                data={'payload_keys': list(payload.keys())},
-                level=SentryLogLevel.ERROR,
-            )
-            capture_sentry_message(
-                message=error_msg,
-                level=SentryLogLevel.ERROR,
-                data={'payload': payload},
-            )
-            return None
+            # Check if this is a Global Token Revocation token
+            token_header = jwt.get_unverified_header(self.logout_token)
+            token_type = token_header.get('typ', '')
+            if 'global-token-revocation' in token_type:
+                log_okta_message(
+                    message='Global Token Revtion token without events claim',
+                    data={
+                        'token_type': token_type,
+                        'payload_keys': list(payload.keys()),
+                    },
+                    level=SentryLogLevel.DEBUG,
+                )
+                # For GTR tokens, events claim is optional
+                events = {}
+            else:
+                error_msg = 'Logout token must contain "events" claim'
+                log_okta_message(
+                    message=error_msg,
+                    data={'payload_keys': list(payload.keys())},
+                    level=SentryLogLevel.ERROR,
+                )
+                capture_sentry_message(
+                    message=error_msg,
+                    level=SentryLogLevel.ERROR,
+                    data={'payload': payload},
+                )
+                return None
 
         # Validate events claim structure
         logout_event_type = (
