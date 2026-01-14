@@ -101,25 +101,20 @@ class OktaLogoutService:
 
     def _get_jwks(self) -> Optional[Dict[str, Any]]:
         """Fetch JWKS from Okta without caching."""
-        endpoints = [
-            f'https://{settings.OKTA_DOMAIN}/oauth2/v1/keys',
-            f'https://{settings.OKTA_DOMAIN}/oauth2/default/v1/keys',
-        ]
 
-        for url in endpoints:
-            try:
-                response = requests.get(url, timeout=10)
-                response.raise_for_status()
-                return response.json()
-            except requests.RequestException:
-                continue
-
-        capture_sentry_message(
-            message='Failed to fetch JWKS',
-            level=SentryLogLevel.ERROR,
-            data={'endpoints': endpoints},
-        )
-        return None
+        try:
+            response = requests.get(
+                f'https://{settings.OKTA_DOMAIN}/oauth2/v1/keys',
+                timeout=10,
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.RequestException:
+            capture_sentry_message(
+                message='Failed to fetch JWKS',
+                level=SentryLogLevel.ERROR,
+            )
+            return None
 
     def _jwk_to_pem(self, key_data: Dict[str, str]) -> Optional[str]:
         """Convert JWK to PEM format."""
@@ -150,13 +145,10 @@ class OktaLogoutService:
         """Get list of possible audiences."""
         audiences = []
         client_id = getattr(settings, 'OKTA_CLIENT_ID', None)
-        backend_url = getattr(settings, 'BACKEND_URL', None)
         frontend_url = getattr(settings, 'FRONTEND_URL', None)
 
         if client_id:
             audiences.append(client_id)
-        if backend_url:
-            audiences.append(f"{backend_url}/auth/okta/logout")
         if frontend_url:
             audiences.append(f"{frontend_url}/auth/okta/logout")
         return audiences
