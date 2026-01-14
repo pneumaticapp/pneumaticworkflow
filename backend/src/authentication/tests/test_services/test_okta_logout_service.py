@@ -33,6 +33,7 @@ def test_process_logout__user_found__ok(mocker):
     validate_mock = mocker.patch(
         'src.authentication.services.okta_logout.'
         'OktaLogoutService._validate_logout_token',
+        return_value={'sub': okta_sub, 'sid': None},
     )
     service = OktaLogoutService(logout_token='test_token')
 
@@ -51,8 +52,12 @@ def test_process_logout__user_found__ok(mocker):
 
     # assert
     validate_mock.assert_called_once()
-    get_user_mock.assert_called_once_with(okta_sub)
-    logout_user_mock.assert_called_once_with(user, okta_sub=okta_sub)
+    get_user_mock.assert_called_once_with(okta_sub, fallback_sub=okta_sub)
+    logout_user_mock.assert_called_once_with(
+        user,
+        okta_sub=okta_sub,
+        session_id=None,
+    )
 
 
 def test_process_logout__user_not_found__raise_exception(mocker):
@@ -73,7 +78,7 @@ def test_process_logout__user_not_found__raise_exception(mocker):
     mocker.patch(
         'src.authentication.services.okta_logout.'
         'OktaLogoutService._validate_logout_token',
-        return_value=True,
+        return_value={'sub': okta_sub, 'sid': None},
     )
     service = OktaLogoutService()
 
@@ -91,7 +96,7 @@ def test_process_logout__user_not_found__raise_exception(mocker):
     service.process_logout(**request_data)
 
     # assert
-    get_user_mock.assert_called_once_with(okta_sub)
+    get_user_mock.assert_called_once_with(okta_sub, fallback_sub=okta_sub)
     logout_user_mock.assert_not_called()
     capture_sentry_mock.assert_called_once()
 
@@ -155,6 +160,123 @@ def test_get_user_by_sub__user_not_exist__clear_cache_raise_exception(
     cache_mock.get.assert_called_once_with(f'okta_sub_to_user_{okta_sub}')
     cache_mock.delete.assert_called_once_with(
         f'okta_sub_to_user_{okta_sub}',
+    )
+
+
+def test_get_user_by_sub__fallback_success__return_user(mocker):
+    # arrange
+    user = create_test_admin()
+    primary_sub = '0oaz5d6sikQdT7FMX697'  # client_id (GTR token)
+    fallback_sub = '00uz5dexshp1ALzYF697'  # user_id (request body)
+
+    cache_mock = Mock()
+    # Primary sub not found, fallback sub found
+    cache_mock.get.side_effect = [None, user.id]
+    mocker.patch(
+        'src.authentication.services.okta_logout.caches',
+        {'default': cache_mock},
+    )
+    service = OktaLogoutService()
+
+    # act
+    result = service._get_user_by_sub(primary_sub, fallback_sub=fallback_sub)
+
+    # assert
+    assert result == user
+    assert cache_mock.get.call_count == 2
+    cache_mock.get.assert_any_call(f'okta_sub_to_user_{primary_sub}')
+    cache_mock.get.assert_any_call(f'okta_sub_to_user_{fallback_sub}')
+
+
+def test_get_user_by_sub__both_fail__raise_exception(mocker):
+    # arrange
+    primary_sub = '0oaz5d6sikQdT7FMX697'
+    fallback_sub = '00uz5dexshp1ALzYF697'
+
+    cache_mock = Mock()
+    cache_mock.get.return_value = None  # Both subs not found in cache
+    mocker.patch(
+        'src.authentication.services.okta_logout.caches',
+        {'default': cache_mock},
+    )
+    service = OktaLogoutService()
+
+    # act & assert
+    with pytest.raises(user_model.DoesNotExist) as exc_info:
+        service._get_user_by_sub(primary_sub, fallback_sub=fallback_sub)
+
+    # Check that error message includes both subs
+    assert primary_sub in str(exc_info.value)
+    assert fallback_sub in str(exc_info.value)
+    assert cache_mock.get.call_count == 2
+
+
+def test_get_user_by_sub__no_fallback__original_behavior(mocker):
+    # arrange
+    primary_sub = '00uid4BxXw6I6TV4m0g3'
+    cache_mock = Mock()
+    cache_mock.get.return_value = None
+    mocker.patch(
+        'src.authentication.services.okta_logout.caches',
+        {'default': cache_mock},
+    )
+    service = OktaLogoutService()
+
+    # act & assert
+    with pytest.raises(user_model.DoesNotExist):
+        service._get_user_by_sub(primary_sub)
+
+    # Should only try primary sub
+    cache_mock.get.assert_called_once_with(f'okta_sub_to_user_{primary_sub}')
+
+
+def test_process_logout_with_jwt_token__fallback_sub_extracted__ok(mocker):
+    # arrange
+    user = create_test_admin()
+    jwt_sub = '0oaz5d6sikQdT7FMX697'  # from JWT token
+    request_sub = '00uz5dexshp1ALzYF697'  # from request body
+
+    # Mock JWT token validation to return jwt_sub
+    validate_mock = mocker.patch(
+        'src.authentication.services.okta_logout.'
+        'OktaLogoutService._validate_logout_token',
+        return_value={'sub': jwt_sub, 'sid': None},
+    )
+
+    # Mock user lookup with fallback
+    get_user_mock = mocker.patch(
+        'src.authentication.services.okta_logout.'
+        'OktaLogoutService._get_user_by_sub',
+        return_value=user,
+    )
+
+    logout_user_mock = mocker.patch(
+        'src.authentication.services.okta_logout.'
+        'OktaLogoutService._logout_user',
+    )
+
+    service = OktaLogoutService(logout_token='test_token')
+
+    sub_id_data = {
+        'format': 'iss_sub',
+        'iss': 'https://trial-4235207.okta.com',
+        'sub': request_sub,
+    }
+    request_data = {
+        'format': 'iss_sub',
+        'sub_id_data': sub_id_data,
+    }
+
+    # act
+    service.process_logout(**request_data)
+
+    # assert
+    validate_mock.assert_called_once()
+    get_user_mock.assert_called_once_with(jwt_sub, fallback_sub=request_sub)
+    logout_user_mock.assert_called_once_with(
+        user,
+        okta_sub=jwt_sub,
+        session_id=None,
     )
 
 

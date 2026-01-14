@@ -138,12 +138,26 @@ class OktaLogoutService:
 
         # Determine logout method based on available claims
         if token_sub:
+            # Extract fallback sub from request data for GTR scenarios
+            fallback_sub = None
+            format_type = request_data.get('format')
+            if format_type == 'iss_sub':
+                sub_id_data = request_data.get('sub_id_data', {})
+                fallback_sub = sub_id_data.get('sub')
+
             log_okta_message(
                 message=f"Processing logout by JWT sub: {token_sub}",
-                data={'sid_present': bool(token_sid)},
+                data={
+                    'sid_present': bool(token_sid),
+                    'fallback_sub': fallback_sub,
+                },
                 level=SentryLogLevel.INFO,
             )
-            self._process_logout_by_sub(token_sub, token_sid)
+            self._process_logout_by_sub(
+                token_sub,
+                token_sid,
+                fallback_sub=fallback_sub,
+            )
         else:
             # Fallback to request data processing for backward compatibility
             format_type = request_data.get('format')
@@ -228,29 +242,40 @@ class OktaLogoutService:
             level=SentryLogLevel.INFO,
         )
 
-    def _process_logout_by_sub(self, sub: str, sid: Optional[str] = None):
+    def _process_logout_by_sub(
+        self,
+        sub: str,
+        sid: Optional[str] = None,
+        fallback_sub: Optional[str] = None,
+    ):
         """
-        Process logout using sub identifier.
+        Process logout using sub identifier with fallback support.
 
         After logout_token verification, we trust the sub from Okta.
+        For Global Token Revocation, tries fallback_sub if primary fails.
 
         Args:
-            sub: Okta subject identifier
+            sub: Primary Okta subject identifier (from JWT token)
             sid: Optional session identifier for session-specific logout
+            fallback_sub: Alternative sub identifier (from request body)
         """
         log_okta_message(
             message=f"Starting logout process by sub: {sub}",
-            data={'sid': sid, 'session_specific': bool(sid)},
+            data={
+                'sid': sid,
+                'session_specific': bool(sid),
+                'has_fallback_sub': bool(fallback_sub),
+            },
             level=SentryLogLevel.DEBUG,
         )
 
-        # Get user by sub
+        # Get user by sub with fallback support
         try:
             log_okta_message(
                 message=f"Looking up user by sub: {sub}",
                 level=SentryLogLevel.DEBUG,
             )
-            user = self._get_user_by_sub(sub)
+            user = self._get_user_by_sub(sub, fallback_sub=fallback_sub)
             log_okta_message(
                 message=f"User found by sub: {user.id} ({user.email})",
                 data={
@@ -266,6 +291,7 @@ class OktaLogoutService:
                 message=error_msg,
                 data={
                     'sub': sub,
+                    'fallback_sub': fallback_sub,
                     'logout_token': self.logout_token,
                 },
                 level=SentryLogLevel.WARNING,
@@ -275,6 +301,7 @@ class OktaLogoutService:
                 level=SentryLogLevel.WARNING,
                 data={
                     'sub': sub,
+                    'fallback_sub': fallback_sub,
                     'logout_token': self.logout_token,
                 },
             )
@@ -1252,9 +1279,73 @@ class OktaLogoutService:
         # Key not found in this JWKS
         return None
 
-    def _get_user_by_sub(self, okta_sub: str) -> UserModel:
+    def _get_user_by_sub(
+        self,
+        okta_sub: str,
+        fallback_sub: Optional[str] = None,
+    ) -> UserModel:
         """
-        Get user by cached Okta sub identifier.
+        Get user by cached Okta sub identifier with fallback support.
+
+        For Global Token Revocation, Okta may use different sub identifiers:
+        - JWT token sub: client_id (e.g., "0oaz5d6sikQdT7FMX697")
+        - Request body sub: user_id (e.g., "00uz5dexshp1ALzYF697")
+
+        This method tries both to handle GTR scenarios.
+
+        Args:
+            okta_sub: Primary Okta subject identifier
+            fallback_sub: Alternative sub identifier to try if primary fails
+
+        Returns:
+            User instance
+
+        Raises:
+            UserModel.DoesNotExist: If user not found by either sub
+        """
+        # Try primary sub first
+        try:
+            return self._lookup_user_by_single_sub(okta_sub)
+        except UserModel.DoesNotExist as exc:
+            if (
+                    not fallback_sub
+                    or fallback_sub == okta_sub
+                    or not fallback_sub.strip()
+            ):
+                raise UserModel.DoesNotExist(
+                    f"User not found for okta_sub: {okta_sub}",
+                ) from exc
+
+            log_okta_message(
+                message=(
+                    f"Primary sub lookup failed, trying fallback sub: "
+                    f"{fallback_sub}"
+                ),
+                data={
+                    'primary_sub': okta_sub,
+                    'fallback_sub': fallback_sub,
+                },
+                level=SentryLogLevel.INFO,
+            )
+            try:
+                return self._lookup_user_by_single_sub(fallback_sub)
+            except UserModel.DoesNotExist as fallback_exc:
+                log_okta_message(
+                    message="Fallback sub lookup also failed",
+                    data={
+                        'primary_sub': okta_sub,
+                        'fallback_sub': fallback_sub,
+                    },
+                    level=SentryLogLevel.WARNING,
+                )
+                raise UserModel.DoesNotExist(
+                    f"User not found for okta_sub: {okta_sub} "
+                    f"or fallback_sub: {fallback_sub}",
+                ) from fallback_exc
+
+    def _lookup_user_by_single_sub(self, okta_sub: str) -> UserModel:
+        """
+        Lookup user by single sub identifier in cache.
 
         Args:
             okta_sub: Okta subject identifier
