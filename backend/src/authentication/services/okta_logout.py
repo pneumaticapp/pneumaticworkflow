@@ -135,29 +135,55 @@ class OktaLogoutService:
         # to request data
         token_sub = token_payload.get('sub')
         token_sid = token_payload.get('sid')
+        format_type = request_data.get('format')
 
         # Determine logout method based on available claims
         if token_sub:
-            # Extract fallback sub from request data for GTR scenarios
+            # Check if token_sub is client_id (common in GTR tokens)
+            is_client_id = self._is_client_id(token_sub)
+
+            # Extract fallback data from request for GTR scenarios
             fallback_sub = None
-            format_type = request_data.get('format')
+            fallback_email = None
+
             if format_type == 'iss_sub':
                 sub_id_data = request_data.get('sub_id_data', {})
                 fallback_sub = sub_id_data.get('sub')
+            elif format_type == 'email':
+                sub_id_data = request_data.get('sub_id_data', {})
+                fallback_email = sub_id_data.get('email')
 
-            log_okta_message(
-                message=f"Processing logout by JWT sub: {token_sub}",
-                data={
-                    'sid_present': bool(token_sid),
-                    'fallback_sub': fallback_sub,
-                },
-                level=SentryLogLevel.INFO,
-            )
-            self._process_logout_by_sub(
-                token_sub,
-                token_sid,
-                fallback_sub=fallback_sub,
-            )
+            # If token_sub is client_id and we have email format, use email
+            if is_client_id and fallback_email:
+                log_okta_message(
+                    message=(
+                        "Token sub is client_id (GTR), using email from "
+                        f"request: {fallback_email}"
+                    ),
+                    data={
+                        'token_sub': token_sub,
+                        'token_sub_type': 'client_id',
+                        'email': fallback_email,
+                        'sid_present': bool(token_sid),
+                    },
+                    level=SentryLogLevel.INFO,
+                )
+                self._process_logout_by_email(fallback_email)
+            else:
+                log_okta_message(
+                    message=f"Processing logout by JWT sub: {token_sub}",
+                    data={
+                        'sid_present': bool(token_sid),
+                        'fallback_sub': fallback_sub,
+                        'is_client_id': is_client_id,
+                    },
+                    level=SentryLogLevel.INFO,
+                )
+                self._process_logout_by_sub(
+                    token_sub,
+                    token_sid,
+                    fallback_sub=fallback_sub,
+                )
         else:
             # Fallback to request data processing for backward compatibility
             format_type = request_data.get('format')
@@ -1279,6 +1305,30 @@ class OktaLogoutService:
         # Key not found in this JWKS
         return None
 
+    def _is_client_id(self, okta_sub: str) -> bool:
+        """
+        Check if Okta sub identifier is a client_id.
+
+        Okta uses different prefixes for identifiers:
+        - '0o' prefix: client_id (application)
+        - '00u' prefix: user_id (user)
+
+        Also checks if sub matches OKTA_CLIENT_ID from settings.
+
+        Args:
+            okta_sub: Okta subject identifier
+
+        Returns:
+            bool: True if sub appears to be a client_id
+        """
+        # Check prefix pattern (client_id starts with '0o')
+        if okta_sub.startswith('0o'):
+            return True
+
+        # Check if it matches configured client_id
+        client_id = getattr(settings, 'OKTA_CLIENT_ID', None)
+        return client_id and okta_sub == client_id
+
     def _get_user_by_sub(
         self,
         okta_sub: str,
@@ -1291,7 +1341,8 @@ class OktaLogoutService:
         - JWT token sub: client_id (e.g., "0oaz5d6sikQdT7FMX697")
         - Request body sub: user_id (e.g., "00uz5dexshp1ALzYF697")
 
-        This method tries both to handle GTR scenarios.
+        This method optimizes lookup by detecting client_id and using
+        fallback immediately for GTR scenarios.
 
         Args:
             okta_sub: Primary Okta subject identifier
@@ -1303,7 +1354,44 @@ class OktaLogoutService:
         Raises:
             UserModel.DoesNotExist: If user not found by either sub
         """
-        # Try primary sub first
+        # Check if primary sub is client_id (common in GTR tokens)
+        is_primary_client_id = self._is_client_id(okta_sub)
+
+        # If primary sub is client_id and we have fallback, use it directly
+        if is_primary_client_id and fallback_sub:
+            if fallback_sub == okta_sub or not fallback_sub.strip():
+                # Fallback is same as primary or empty, try primary anyway
+                pass
+            else:
+                log_okta_message(
+                    message=(
+                        "Primary sub is client_id (GTR token), using "
+                        f"fallback sub: {fallback_sub}"
+                    ),
+                    data={
+                        'primary_sub': okta_sub,
+                        'primary_sub_type': 'client_id',
+                        'fallback_sub': fallback_sub,
+                        'fallback_sub_type': 'user_id',
+                    },
+                    level=SentryLogLevel.DEBUG,
+                )
+                try:
+                    return self._lookup_user_by_single_sub(fallback_sub)
+                except UserModel.DoesNotExist as fallback_exc:
+                    log_okta_message(
+                        message="Fallback sub lookup failed",
+                        data={
+                            'primary_sub': okta_sub,
+                            'fallback_sub': fallback_sub,
+                        },
+                        level=SentryLogLevel.WARNING,
+                    )
+                    raise UserModel.DoesNotExist(
+                        f"User not found for fallback_sub: {fallback_sub}",
+                    ) from fallback_exc
+
+        # Try primary sub first (normal case or when no fallback)
         try:
             return self._lookup_user_by_single_sub(okta_sub)
         except UserModel.DoesNotExist as exc:
