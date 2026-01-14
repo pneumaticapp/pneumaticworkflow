@@ -4,6 +4,10 @@ import base64
 import pytest
 import requests
 from django.contrib.auth import get_user_model
+from jwt import (
+    DecodeError,
+    InvalidTokenError,
+)
 
 from src.accounts.enums import (
     UserStatus,
@@ -311,6 +315,64 @@ def test_get_first_access_token__clear_cache__raise_exception(mocker):
     request_mock.assert_not_called()
 
 
+def test_get_first_access_token__response_not_ok__raise_exception(mocker):
+    # arrange
+    state = 'test_state'
+    code = 'test_code'
+    code_verifier = 'test_code_verifier'
+    domain = 'dev-123456.okta.com'
+    client_id = 'test_client_id'
+    client_secret = 'test_client_secret'
+    redirect_uri = 'https://some.redirect/uri'
+    response_mock = Mock()
+    response_mock.ok = False
+    response_mock.status_code = 400
+    response_mock.text = 'Invalid grant'
+    get_cache_mock = mocker.patch(
+        'src.authentication.services.okta.OktaService._get_cache',
+        return_value=code_verifier,
+    )
+    request_mock = mocker.patch(
+        'src.authentication.services.okta.requests.post',
+        return_value=response_mock,
+    )
+    sentry_mock = mocker.patch(
+        'src.authentication.services.okta.capture_sentry_message',
+    )
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.okta.settings',
+        new=settings_mock,
+    )
+    settings_mock.OKTA_DOMAIN = domain
+    settings_mock.OKTA_CLIENT_ID = client_id
+    settings_mock.OKTA_CLIENT_SECRET = client_secret
+    settings_mock.OKTA_REDIRECT_URI = redirect_uri
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'okta',
+    }
+    service = OktaService()
+
+    # act
+    with pytest.raises(exceptions.TokenInvalidOrExpired):
+        service._get_first_access_token(code, state)
+
+    # assert
+    get_cache_mock.assert_called_once_with(key=state)
+    request_mock.assert_called_once()
+    sentry_mock.assert_called_once_with(
+        message='Get Okta access token failed',
+        data={
+            'status_code': 400,
+            'response': 'Invalid grant',
+        },
+        level=SentryLogLevel.ERROR,
+    )
+
+
 def test_get_first_access_token__request_error__raise_exception(mocker):
     # arrange
     state = 'test_state'
@@ -415,6 +477,51 @@ def test_get_user_profile__ok(mocker):
         headers={'Authorization': f'Bearer {access_token}'},
         timeout=10,
     )
+
+
+def test_get_user_profile__cached_profile__return_cached(mocker):
+    # arrange
+    access_token = 'test_access_token'
+    cached_profile = {
+        'sub': '00uid4BxXw6I6TV4m0g3',
+        'email': 'cached@example.com',
+        'given_name': 'Cached',
+        'family_name': 'User',
+    }
+    get_cache_mock = mocker.patch(
+        'src.authentication.services.okta.OktaService._get_cache',
+        return_value=cached_profile,
+    )
+    request_mock = mocker.patch(
+        'src.authentication.services.okta.requests.get',
+    )
+    set_cache_mock = mocker.patch(
+        'src.authentication.services.okta.OktaService._set_cache',
+    )
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.okta.settings',
+        new=settings_mock,
+    )
+    settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'okta',
+    }
+    service = OktaService()
+
+    # act
+    result = service._get_user_profile(access_token)
+
+    # assert
+    assert result == cached_profile
+    get_cache_mock.assert_called_once_with(
+        key=f'user_profile_{access_token}',
+    )
+    request_mock.assert_not_called()
+    set_cache_mock.assert_not_called()
 
 
 def test_get_user_profile__request_error__raise_exception(mocker):
@@ -597,6 +704,327 @@ def test_save_tokens_for_user__update__ok(mocker):
     assert old_token.access_token == new_tokens_data['access_token']
     assert old_token.refresh_token == ''
     assert old_token.expires_in == new_tokens_data['expires_in']
+
+
+def test_save_tokens_for_user__with_id_token__cache_user_by_sub(mocker):
+    # arrange
+    user = create_test_admin()
+    access_token = 'test_access_token'
+    id_token = 'test_id_token'
+    okta_sub = '00uid4BxXw6I6TV4m0g3'
+    expires_in = 3600
+    tokens_data = {
+        'access_token': access_token,
+        'id_token': id_token,
+        'expires_in': expires_in,
+    }
+    id_payload = {
+        'sub': okta_sub,
+        'iss': 'https://dev-123456.okta.com/oauth2/default',
+        'aud': 'test_client_id',
+    }
+    jwt_decode_mock = mocker.patch(
+        'src.authentication.services.okta.jwt.decode',
+        return_value=id_payload,
+    )
+    cache_mock = Mock()
+    mocker.patch(
+        'src.authentication.services.okta.caches',
+        {'default': cache_mock},
+    )
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.okta.settings',
+        new=settings_mock,
+    )
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'okta',
+    }
+    settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
+    service = OktaService()
+    service.tokens = tokens_data
+
+    # act
+    service.save_tokens_for_user(user)
+
+    # assert
+    token = AccessToken.objects.get(
+        user=user,
+        source=SourceType.OKTA,
+    )
+    assert token.access_token == access_token
+    assert token.refresh_token == ''
+    assert token.expires_in == expires_in
+    jwt_decode_mock.assert_called_once_with(
+        id_token,
+        options={
+            "verify_signature": False,
+            "verify_exp": False,
+            "verify_aud": False,
+            "verify_iss": False,
+        },
+    )
+    cache_mock.set.assert_called_once_with(
+        f'okta_sub_to_user_{okta_sub}',
+        user.id,
+        timeout=2592000,
+    )
+
+
+def test_save_tokens_for_user__no_id_token__no_caching(mocker):
+    # arrange
+    user = create_test_admin()
+    access_token = 'test_access_token'
+    expires_in = 3600
+    tokens_data = {
+        'access_token': access_token,
+        'expires_in': expires_in,
+    }
+    jwt_decode_mock = mocker.patch(
+        'src.authentication.services.okta.jwt.decode',
+    )
+    cache_mock = Mock()
+    mocker.patch(
+        'src.authentication.services.okta.caches',
+        {'default': cache_mock},
+    )
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.okta.settings',
+        new=settings_mock,
+    )
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'okta',
+    }
+    settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
+    service = OktaService()
+    service.tokens = tokens_data
+
+    # act
+    service.save_tokens_for_user(user)
+
+    # assert
+    token = AccessToken.objects.get(
+        user=user,
+        source=SourceType.OKTA,
+    )
+    assert token.access_token == access_token
+    assert token.refresh_token == ''
+    assert token.expires_in == expires_in
+    jwt_decode_mock.assert_not_called()
+    cache_mock.set.assert_not_called()
+
+
+def test_save_tokens_for_user__invalid_id_token__no_caching(mocker):
+    # arrange
+    user = create_test_admin()
+    access_token = 'test_access_token'
+    id_token = 'invalid_id_token'
+    expires_in = 3600
+    tokens_data = {
+        'access_token': access_token,
+        'id_token': id_token,
+        'expires_in': expires_in,
+    }
+    jwt_decode_mock = mocker.patch(
+        'src.authentication.services.okta.jwt.decode',
+        side_effect=DecodeError('Invalid token'),
+    )
+    cache_mock = Mock()
+    mocker.patch(
+        'src.authentication.services.okta.caches',
+        {'default': cache_mock},
+    )
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.okta.settings',
+        new=settings_mock,
+    )
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'okta',
+    }
+    settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
+    service = OktaService()
+    service.tokens = tokens_data
+
+    # act
+    service.save_tokens_for_user(user)
+
+    # assert
+    token = AccessToken.objects.get(
+        user=user,
+        source=SourceType.OKTA,
+    )
+    assert token.access_token == access_token
+    assert token.refresh_token == ''
+    assert token.expires_in == expires_in
+    jwt_decode_mock.assert_called_once()
+    cache_mock.set.assert_not_called()
+
+
+def test_save_tokens_for_user__invalid_token_error__no_caching(mocker):
+    # arrange
+    user = create_test_admin()
+    access_token = 'test_access_token'
+    id_token = 'invalid_id_token'
+    expires_in = 3600
+    tokens_data = {
+        'access_token': access_token,
+        'id_token': id_token,
+        'expires_in': expires_in,
+    }
+    jwt_decode_mock = mocker.patch(
+        'src.authentication.services.okta.jwt.decode',
+        side_effect=InvalidTokenError('Invalid token'),
+    )
+    cache_mock = Mock()
+    mocker.patch(
+        'src.authentication.services.okta.caches',
+        {'default': cache_mock},
+    )
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.okta.settings',
+        new=settings_mock,
+    )
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'okta',
+    }
+    settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
+    service = OktaService()
+    service.tokens = tokens_data
+
+    # act
+    service.save_tokens_for_user(user)
+
+    # assert
+    token = AccessToken.objects.get(
+        user=user,
+        source=SourceType.OKTA,
+    )
+    assert token.access_token == access_token
+    assert token.refresh_token == ''
+    assert token.expires_in == expires_in
+    jwt_decode_mock.assert_called_once()
+    cache_mock.set.assert_not_called()
+
+
+def test_save_tokens_for_user__no_sub_in_id_token__no_caching(mocker):
+    # arrange
+    user = create_test_admin()
+    access_token = 'test_access_token'
+    id_token = 'test_id_token'
+    expires_in = 3600
+    tokens_data = {
+        'access_token': access_token,
+        'id_token': id_token,
+        'expires_in': expires_in,
+    }
+    id_payload = {
+        'iss': 'https://dev-123456.okta.com/oauth2/default',
+        'aud': 'test_client_id',
+    }
+    jwt_decode_mock = mocker.patch(
+        'src.authentication.services.okta.jwt.decode',
+        return_value=id_payload,
+    )
+    cache_mock = Mock()
+    mocker.patch(
+        'src.authentication.services.okta.caches',
+        {'default': cache_mock},
+    )
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.okta.settings',
+        new=settings_mock,
+    )
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'okta',
+    }
+    settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
+    service = OktaService()
+    service.tokens = tokens_data
+
+    # act
+    service.save_tokens_for_user(user)
+
+    # assert
+    token = AccessToken.objects.get(
+        user=user,
+        source=SourceType.OKTA,
+    )
+    assert token.access_token == access_token
+    assert token.refresh_token == ''
+    assert token.expires_in == expires_in
+    jwt_decode_mock.assert_called_once()
+    cache_mock.set.assert_not_called()
+
+
+def test_cache_user_by_sub__ok(mocker):
+    # arrange
+    user = create_test_admin()
+    okta_sub = '00uid4BxXw6I6TV4m0g3'
+    id_token = 'test_id_token'
+    expires_in = 3600
+    tokens_data = {
+        'access_token': 'test_access_token',
+        'id_token': id_token,
+        'expires_in': expires_in,
+    }
+    id_payload = {
+        'sub': okta_sub,
+        'iss': 'https://dev-123456.okta.com/oauth2/default',
+        'aud': 'test_client_id',
+    }
+    jwt_decode_mock = mocker.patch(
+        'src.authentication.services.okta.jwt.decode',
+        return_value=id_payload,
+    )
+    cache_mock = Mock()
+    mocker.patch(
+        'src.authentication.services.okta.caches',
+        {'default': cache_mock},
+    )
+    settings_mock = mocker.patch(
+        'src.authentication.services.base_sso.settings',
+    )
+    mocker.patch(
+        'src.authentication.services.okta.settings',
+        new=settings_mock,
+    )
+    settings_mock.PROJECT_CONF = {
+        'SSO_AUTH': True,
+        'SSO_PROVIDER': 'okta',
+    }
+    settings_mock.OKTA_CLIENT_SECRET = 'test_secret'
+    service = OktaService()
+    service.tokens = tokens_data
+
+    # act
+    service.save_tokens_for_user(user)
+
+    # assert
+    jwt_decode_mock.assert_called_once()
+    cache_mock.set.assert_called_once_with(
+        f'okta_sub_to_user_{okta_sub}',
+        user.id,
+        timeout=2592000,
+    )
 
 
 def test_authenticate_user__existing_user__ok(mocker):

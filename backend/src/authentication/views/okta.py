@@ -20,10 +20,6 @@ from src.generics.mixins.views import (
     AnonymousMixin,
     CustomViewSetMixin,
 )
-from src.utils.logging import (
-    SentryLogLevel,
-    capture_sentry_message,
-)
 from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
@@ -77,12 +73,3 @@ class OktaViewSet(
             return self.response_ok({
                 'auth_uri': auth_uri,
             })
-
-    @action(methods=('GET',), detail=False)
-    def logout(self, *args, **kwargs):
-        capture_sentry_message(
-            message='Okta logout request',
-            data=self.request.GET,
-            level=SentryLogLevel.INFO,
-        )
-        return self.response_ok()

@@ -1,15 +1,15 @@
 from typing import Optional, Tuple
 from uuid import uuid4
 
+import jwt
 import requests
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.core.cache import caches
 
 from src.accounts.enums import SourceType
 from src.authentication.entities import UserData, SSOConfigData
-from src.authentication.enums import (
-    SSOProvider,
-)
+from src.authentication.enums import SSOProvider
 from src.authentication.messages import MSG_AU_0018
 from src.authentication.models import (
     AccessToken,
@@ -34,10 +34,7 @@ class OktaService(BaseSSOService):
     sso_provider = SSOProvider.OKTA
     exception_class = exceptions.OktaServiceException
 
-    def __init__(
-        self,
-        domain: Optional[str] = None,
-    ):
+    def __init__(self, domain: Optional[str] = None):
         super().__init__(domain)
         self.scope = 'openid email profile'
 
@@ -201,10 +198,7 @@ class OktaService(BaseSSOService):
             raise exceptions.EmailNotExist(
                 details={'user_profile': user_profile},
             )
-        first_name = (
-            user_profile.get('given_name') or
-            email.split('@')[0]
-        )
+        first_name = user_profile.get('given_name') or email.split('@')[0]
         last_name = user_profile.get('family_name', '')
 
         capture_sentry_message(
@@ -225,6 +219,18 @@ class OktaService(BaseSSOService):
         )
 
     def save_tokens_for_user(self, user: UserModel):
+        """
+        Save tokens and cache sub -> user mapping for Back-Channel Logout.
+
+        The id_token contains the 'sub' (subject) identifier which Okta
+        uses to identify users in logout requests. We cache this mapping
+        to quickly find users during logout without querying the database.
+
+        Cache lifetime: 30 days (matches Okta session lifetime)
+        Reference: https://developer.okta.com/docs/guides/
+        session-cookie/main/#session-lifetime
+        """
+        # Save access token as usual
         AccessToken.objects.update_or_create(
             source=self.source,
             user=user,
@@ -234,6 +240,31 @@ class OktaService(BaseSSOService):
                 'access_token': self.tokens['access_token'],
             },
         )
+
+        # Extract okta_sub from ID token and cache sub -> user mapping
+        # We store id_token to extract 'sub' for logout request handling
+        id_token = self.tokens.get('id_token')
+        if id_token:
+            try:
+                # Decode ID token without verification to get sub
+                id_payload = jwt.decode(
+                    id_token,
+                    options={
+                        "verify_signature": False,
+                        "verify_exp": False,
+                        "verify_aud": False,
+                        "verify_iss": False,
+                    },
+                )
+                okta_sub = id_payload.get('sub')
+                if okta_sub:
+                    # Cache sub -> user_id mapping for logout requests
+                    cache = caches['default']
+                    cache_key = f'okta_sub_to_user_{okta_sub}'
+                    # 30 days timeout (Okta session lifetime)
+                    cache.set(cache_key, user.id, timeout=2592000)
+            except (jwt.DecodeError, jwt.InvalidTokenError):
+                pass
 
     def authenticate_user(
         self,

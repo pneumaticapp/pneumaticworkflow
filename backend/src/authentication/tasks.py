@@ -14,6 +14,9 @@ from src.authentication.services.google import (
 from src.authentication.services.microsoft import (
     MicrosoftAuthService,
 )
+from src.authentication.services.okta_logout import (
+    OktaLogoutService,
+)
 
 
 @shared_task(ignore_result=True)
@@ -74,3 +77,16 @@ def update_google_contacts(user_id: int):
     service = GoogleAuthService()
     with contextlib.suppress(AuthException):
         service.update_user_contacts(user)
+
+
+@shared_task(ignore_result=True)
+def process_okta_logout(logout_token: str, request_data: dict):
+    """
+    Process Okta Back-Channel Logout request.
+
+    This task:
+    1. Validates the logout_token (bearer token)
+    2. Processes logout based on token type (iss_sub or email)
+    """
+    service = OktaLogoutService(logout_token=logout_token)
+    service.process_logout(**request_data)
