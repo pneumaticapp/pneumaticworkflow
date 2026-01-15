@@ -3,6 +3,7 @@ import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   cancelCurrentPerformersCounters,
+  cancelTemplateFilterRequests,
   cancelTemplateTasksCounters,
   setFilterTemplate as setWorkflowsFilterTemplate,
 } from '../../redux/workflows/slice';
@@ -51,6 +52,7 @@ export function TemplateFilterSelect() {
         resetFilter={() => {
           sessionStorage.setItem('isInternalNavigation', 'true');
           dispatch(setWorkflowsFilterTemplate([]));
+          dispatch(cancelTemplateFilterRequests());
           if (!canFilterByTemplateStep(statusFilter)) {
             dispatch(cancelCurrentPerformersCounters());
             dispatch(cancelTemplateTasksCounters());

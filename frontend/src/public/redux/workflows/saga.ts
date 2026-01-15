@@ -73,9 +73,9 @@ import {
   deleteComment as deleteCommentAction,
   editComment as editCommentAction,
   saveWorkflowsPreset,
-  setFilterTemplate,
   cancelCurrentPerformersCounters,
   cancelTemplateTasksCounters,
+  cancelTemplateFilterRequests,
 } from './slice';
 import {
   IChangeWorkflowLogViewSettingsPayload,
@@ -696,13 +696,12 @@ export function* fetchFilterSteps({
   }
 }
 
-function* cancelTemplateFilterRequestsSaga({ payload }: PayloadAction<number[]>) {
-  if (payload.length === 0) {
-    templateFilterRequestsAbortControllers.forEach((controller) => {
-      controller.abort();
-    });
-    templateFilterRequestsAbortControllers.clear();
-  }
+function* cancelTemplateFilterRequestsSaga() {
+  templateFilterRequestsAbortControllers.forEach((controller) => {
+    controller.abort();
+  });
+  templateFilterRequestsAbortControllers.clear();
+
   yield;
 }
 
@@ -1064,7 +1063,7 @@ export function* watchLoadFilterSteps() {
 }
 
 export function* watchCancelTemplateFilterRequests() {
-  yield takeEvery(setFilterTemplate.type, cancelTemplateFilterRequestsSaga);
+  yield takeEvery(cancelTemplateFilterRequests.type, cancelTemplateFilterRequestsSaga);
 }
 
 export function* watchCancelCurrentPerformersCounters() {

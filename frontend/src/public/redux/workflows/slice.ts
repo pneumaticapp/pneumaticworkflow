@@ -375,6 +375,7 @@ export const snoozeWorkflow = createAction<TSnoozeWorkflowPayload>('workflows/sn
 export const deleteComment = createAction<IDeleteComment>('workflows/deleteComment');
 export const editComment = createAction<IEditComment>('workflows/editComment');
 export const saveWorkflowsPreset = createAction<ISaveWorkflowsPresetPayload>('workflows/saveWorkflowsPreset');
+export const cancelTemplateFilterRequests = createAction<void>('workflows/cancelTemplateFilterRequests');
 export const cancelCurrentPerformersCounters = createAction<void>('workflows/cancelCurrentPerformersCounters');
 export const cancelTemplateTasksCounters = createAction<void>('workflows/cancelTemplateTasksCounters');
 
