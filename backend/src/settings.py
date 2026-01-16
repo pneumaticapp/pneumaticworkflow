@@ -67,6 +67,9 @@ class Common(Configuration):
     # Auth
     AUTH_USER_MODEL = 'accounts.User'
     AUTH_TOKEN_ITERATIONS = int(env.get('AUTH_TOKEN_ITERATIONS', '1'))
+    AUTHENTICATION_BACKENDS = (
+        'django.contrib.auth.backends.ModelBackend',
+    )
 
     # Tokens lifetime
     DIGEST_UNSUB_TOKEN_IN_DAYS = 7
@@ -133,6 +136,8 @@ class Common(Configuration):
         'django_filters',
         'django_celery_beat',
         'drf_recaptcha',
+        'src.permissions',
+        'guardian',
         'src.accounts',
         'src.authentication',
         'src.applications',
@@ -151,7 +156,11 @@ class Common(Configuration):
         'src.ai',
         'src.payment',
         'src.logs',
+        'src.storage',
     ]
+    GUARDIAN_GROUP_OBJ_PERMS_MODEL = (
+        'src.permissions.models.GroupObjectPermission'
+    )
 
     MIDDLEWARE = [
         'django.middleware.security.SecurityMiddleware',
@@ -162,6 +171,7 @@ class Common(Configuration):
         'django.middleware.csrf.CsrfViewMiddleware',
         'src.authentication.middleware.UserAgentMiddleware',
         'src.authentication.middleware.AuthMiddleware',
+        'src.storage.middleware.FileServiceAuthMiddleware',
         'django.contrib.messages.middleware.MessageMiddleware',
         'django.middleware.clickjacking.XFrameOptionsMiddleware',
     ]
@@ -338,6 +348,12 @@ class Common(Configuration):
     # Attachments
     ATTACHMENT_SIGNED_URL_LIFETIME_MIN = 15
     ATTACHMENT_MAX_SIZE_BYTES = 104857600  # bites = 100 Mb
+
+    # File Service
+    FILE_SERVICE_URL = env.get(
+        'FILE_SERVICE_URL',
+        'http://localhost:8002',
+    )
 
     # Notifications
     # In seconds - default 10 min
@@ -543,6 +559,11 @@ class Development(Common):
         },
     }
 
+    # Django Guardian - using built-in models
+    # Disable anonymous user creation (not needed for this project)
+    ANONYMOUS_USER_NAME = None
+    ANONYMOUS_USER_ID = -1
+
 
 class Staging(Development):
 
@@ -564,8 +585,6 @@ class Staging(Development):
             'PORT': env.get('POSTGRES_REPLICA_PORT', '5432'),
         },
     }
-
-
 
     MAX_INVITES = 10
 

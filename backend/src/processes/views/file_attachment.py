@@ -26,9 +26,12 @@ from src.processes.services.attachments import (
 from src.processes.services.exceptions import (
     AttachmentServiceException,
 )
+from src.storage.models import Attachment
 from src.utils.validation import raise_validation_error
 
 
+# TODO remove legacy attachments endpoints after file service migration.
+# Kept to support old clients while duplicating in new file service.
 class BaseFileAttachmentViewSet(
     CustomViewSetMixin,
     DestroyModelMixin,
@@ -100,7 +103,16 @@ class BaseFileAttachmentViewSet(
             self.post_publish_actions()
             return self.response_ok(self.get_serializer(instance).data)
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        file_id = instance.file_id
+        response = super().destroy(request, *args, **kwargs)
+        if file_id:
+            Attachment.objects.filter(file_id=file_id).delete()
+        return response
 
+
+# TODO remove legacy attachments endpoints after file service migration.
 class FileAttachmentViewSet(
     BaseFileAttachmentViewSet,
 ):
