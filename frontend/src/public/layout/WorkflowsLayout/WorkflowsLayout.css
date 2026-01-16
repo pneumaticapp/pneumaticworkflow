@@ -40,9 +40,8 @@
   @media (--mobile) {
     flex-wrap: nowrap;
     overflow-x: auto;
-    overflow-y: hidden;
-    -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
     -ms-overflow-style: none;
 
     &::-webkit-scrollbar {

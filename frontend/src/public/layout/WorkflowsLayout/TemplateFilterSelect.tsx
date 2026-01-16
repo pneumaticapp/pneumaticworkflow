@@ -8,12 +8,14 @@ import { FilterIcon } from '../../components/icons';
 import { ERenderPlaceholderType, getRenderPlaceholder } from './utils';
 import styles from './WorkflowsLayout.css';
 import { getWorkflowTemplateListItems, getWorkflowTemplatesIdsFilter } from '../../redux/selectors/workflows';
+import { useCheckDevice } from '../../hooks/useCheckDevice';
 
 export function TemplateFilterSelect() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   const templatesIdsFilter = useSelector(getWorkflowTemplatesIdsFilter);
   const filterTemplates = useSelector(getWorkflowTemplateListItems);
+  const { isMobile } = useCheckDevice();
 
   const templatesOptions = useMemo(() => {
     return filterTemplates.map(({ count, ...rest }) => ({
@@ -53,6 +55,7 @@ export function TemplateFilterSelect() {
             defaultPlaceholder: 'sorting.all-templates',
           })
         }
+        positionFixed={isMobile}
       />
     </div>
   );

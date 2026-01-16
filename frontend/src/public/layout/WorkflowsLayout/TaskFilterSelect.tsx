@@ -16,6 +16,7 @@ import {
   getWorkflowStepsIdsFilter,
   getWorkflowTemplatesIdsFilter,
 } from '../../redux/selectors/workflows';
+import { useCheckDevice } from '../../hooks/useCheckDevice';
 
 export interface IGroupedStepsValue<TOption extends TOptionBase<'id', 'name'>> {
   title: string;
@@ -28,6 +29,7 @@ export type IGroupedStepsMap = Map<number, IGroupedStepsValue<TOptionBase<'id', 
 export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITemplateFilterItem[] }) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
+  const { isMobile } = useCheckDevice();
 
   const stepsIdsFilter = useSelector(getWorkflowStepsIdsFilter);
   const statusFilter = useSelector(getWorkflowsStatus);
@@ -93,6 +95,7 @@ export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITe
       }
       containerClassname={styles['filter-container']}
       arrowClassName={styles['header-filter__arrow']}
+      positionFixed={isMobile}
     />
   );
 }

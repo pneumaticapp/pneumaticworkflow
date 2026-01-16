@@ -6,7 +6,7 @@ import { DropdownItem, DropdownMenu, DropdownToggle, Dropdown } from 'reactstrap
 import OutsideClickHandler from 'react-outside-click-handler';
 import { ClearIcon, ExpandIcon } from '../../icons';
 import { isArrayWithItems } from '../../../utils/helpers';
-import { Skeleton } from "../Skeleton";
+import { Skeleton } from '../Skeleton';
 import { Checkbox, InputField } from '..';
 
 import styles from './Select.css';
@@ -52,6 +52,7 @@ interface IFilterSelectCommonProps<
   selectAll?(): void;
   Icon?(props: SVGAttributes<SVGElement>): JSX.Element;
   renderPlaceholder(options: TOption[]): string | JSX.Element;
+  positionFixed?: boolean;
 }
 
 interface IFilterSelectMultiOptionsProps {
@@ -104,6 +105,7 @@ export function FilterSelect<
     selectedOptions,
     selectedOption,
     renderPlaceholder,
+    positionFixed = false,
   } = props;
   const allOptions = flatGroupedOptions || options;
   const [searchText, setSearchText] = useState('');
@@ -406,8 +408,14 @@ export function FilterSelect<
           )}
         </DropdownToggle>
         <DropdownMenu
-          className={classnames(styles['dropdown-menu'], styles['dropdown-menu_search'], menuClassName)}
+          className={classnames(
+            styles['dropdown-menu'],
+            styles['dropdown-menu_search'],
+            menuClassName,
+            positionFixed && styles['dropdown-menu__position-fixed'],
+          )}
           modifiers={{ preventOverflow: { boundariesElement: 'window' } }}
+          positionFixed={positionFixed}
         >
           {renderSearchInput()}
           <ScrollBar

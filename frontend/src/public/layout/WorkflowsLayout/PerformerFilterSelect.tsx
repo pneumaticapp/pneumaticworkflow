@@ -19,10 +19,13 @@ import { Avatar, FilterSelect } from '../../components/UI';
 import styles from './WorkflowsLayout.css';
 import { PerformerFilterIcon } from '../../components/icons';
 import { ERenderPlaceholderType, getRenderPlaceholder } from './utils';
+import { useCheckDevice } from '../../hooks/useCheckDevice';
 
 export function PerformerFilterSelect() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
+  const { isMobile } = useCheckDevice();
+
   const { performersGroupIdsFilter, performersIdsFilter } = useSelector(
     (state: IApplicationState) => state.workflows.workflowsSettings.values,
   );
@@ -124,6 +127,7 @@ export function PerformerFilterSelect() {
         }
         containerClassname={styles['filter-container']}
         arrowClassName={styles['header-filter__arrow']}
+        positionFixed={isMobile}
       />
     </div>
   );
