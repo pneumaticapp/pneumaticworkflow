@@ -9,10 +9,12 @@ import styles from './WorkflowsLayout.css';
 import { ERenderPlaceholderType, getRenderPlaceholder } from './utils';
 import { getWorkflowStartersCounters, getWorkflowStartersIdsFilter } from '../../redux/selectors/workflows';
 import { getAccountsUsers } from '../../redux/selectors/accounts';
+import { useCheckDevice } from '../../hooks/useCheckDevice';
 
 export function StarterFilterSelect() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
+  const { isMobile } = useCheckDevice();
 
   const workflowStartersIdsFilter = useSelector(getWorkflowStartersIdsFilter);
   const workflowStartersCounters = useSelector(getWorkflowStartersCounters);
@@ -67,6 +69,7 @@ export function StarterFilterSelect() {
             defaultPlaceholder: 'sorting.all-starters',
           })
         }
+        positionFixed={isMobile}
       />
     </div>
   );
