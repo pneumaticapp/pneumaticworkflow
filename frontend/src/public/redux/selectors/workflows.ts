@@ -24,6 +24,9 @@ export const getWorkflowsView = (state: IApplicationState): EWorkflowsView => st
 export const getWorkflowStartersCounters = (state: IApplicationState): TUserCounter[] =>
   state.workflows.workflowsSettings.counters.workflowStartersCounters;
 
+export const getWorkflowPerformersCounters = (state: IApplicationState): TUserCounter[] =>
+  state.workflows.workflowsSettings.counters.performersCounters;
+
 export const getSavedFields = (state: IApplicationState): string[] => state.workflows.workflowsSettings.selectedFields;
 
 export const getLastLoadedTemplateIdForTable = (state: IApplicationState): string | null =>
@@ -46,3 +49,6 @@ export const getWorkflowStepsIdsFilter = (state: IApplicationState): number[] =>
 
 export const getWorkflowPerformersGroupsIdsFilter = (state: IApplicationState): number[] =>
   state.workflows.workflowsSettings.values.performersGroupIdsFilter;
+
+export const getWorkflowPerformersIdsFilter = (state: IApplicationState): number[] =>
+  state.workflows.workflowsSettings.values.performersIdsFilter;
