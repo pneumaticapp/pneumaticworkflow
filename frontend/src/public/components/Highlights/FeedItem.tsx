@@ -1,6 +1,4 @@
-/* eslint-disable */
-/* prettier-ignore */
-import * as React from 'react';
+import React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import { Link } from 'react-router-dom';
@@ -44,7 +42,7 @@ export function FeedItem({
     task,
     type,
     userId,
-    workflow: { template, name: workflowName, isExternal },
+    workflow: { template, name: workflowName, isExternal, id: workflowId },
   } = item;
 
   const isEventAllowed = ALLOWED_EVENT_TYPES.includes(type);
@@ -70,7 +68,7 @@ export function FeedItem({
                   Icon: EditIcon,
                   size: 'lg',
                 } as TDropdownOption,
-              ]
+            ]
             : []),
           ...(template
             ? [
@@ -79,7 +77,7 @@ export function FeedItem({
                   onClick: applyTemplatesFilter(template.id),
                   size: 'lg',
                 } as TDropdownOption,
-              ]
+            ]
             : []),
           {
             label: formatMessage({ id: 'process-highlights.review-workflows-of' }, { user: userName }),
@@ -94,12 +92,15 @@ export function FeedItem({
             <div className={styles['feed-item__header']}>
               <Avatar user={user} size="sm" containerClassName={styles['header__avatar']} />
               <span className={styles['performer__name']}>{userName}</span>
-              <div className={styles['feed-item__icon']}>{<FeedItemIcon type={type} task={task} />}</div>
-              {
-                <Link className={styles['performer__datetime']} to={`${ERoutes.Tasks}${task?.id}`}>
-                  <DateFormat date={created} />
-                </Link>
-              }
+              <div className={styles['feed-item__icon']}><FeedItemIcon type={type} task={task} /></div>
+
+              <Link
+                className={styles['performer__datetime']}
+                to={task ? `${ERoutes.Tasks}${task?.id}` : `${ERoutes.Workflows}${workflowId}`}
+              >
+                <DateFormat date={created} />
+              </Link>
+
               <div className={styles['card-more-container']}>
                 <Dropdown
                   renderToggle={(isOpen) => (
@@ -112,7 +113,18 @@ export function FeedItem({
             <div className={styles['feed-item__header-container']}>
               <FeedItemHeader {...item} />
             </div>
-            <div className={styles['feed-item__body']} onClick={openProcessLogPopup}>
+            <div
+              className={styles['feed-item__body']}
+              onClick={openProcessLogPopup}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  openProcessLogPopup();
+                }
+              }}
+              role="button"
+              tabIndex={0}
+            >
               <div className={styles['feed-item__content']}>
                 <span className={styles['body__process-name']}>{workflowName}</span>
                 <div className={styles['info__task']}>
