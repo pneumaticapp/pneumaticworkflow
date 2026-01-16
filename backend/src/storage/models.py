@@ -13,15 +13,12 @@ class Attachment(SoftDeleteModel, AccountBaseMixin):
 
     class Meta:
         permissions = (
-            ('view_file_attachment', 'Can view file attachment'),
+            ('view_attachment', 'Can view attachment'),
         )
         indexes = [
             models.Index(fields=['file_id']),
             models.Index(fields=['source_type', 'account']),
         ]
-
-    date_created = models.DateTimeField(auto_now_add=True)
-    date_updated = models.DateTimeField(auto_now=True)
 
     file_id = models.CharField(
         max_length=64,

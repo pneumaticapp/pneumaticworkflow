@@ -156,6 +156,7 @@ class TaskService(
         )
         self.update_fields.add('name')
         self.save()
+        refresh_attachments(self.instance, self.user)
         for checklist in self.instance.checklists.all():
             checklist_service = ChecklistService(
                 instance=checklist,

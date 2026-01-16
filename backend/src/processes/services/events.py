@@ -46,6 +46,13 @@ from src.services.markdown import (
     MarkdownPatterns,
     MarkdownService,
 )
+from src.storage.enums import AccessType, SourceType
+from src.storage.models import Attachment
+from src.storage.services.file_sync import FileSyncService
+from src.storage.utils import (
+    extract_file_ids_from_text,
+    sync_storage_attachments_for_scope,
+)
 
 UserModel = get_user_model()
 
@@ -601,7 +608,16 @@ class CommentService(BaseModelService):
         """ Attach new attachments to comment event and remove previous """
 
         if ids:
-            self.instance.attachments.exclude(id__in=ids).delete()
+            removed_qs = self.instance.attachments.exclude(id__in=ids)
+            removed_file_ids = list(
+                removed_qs.exclude(file_id__isnull=True).values_list(
+                    'file_id',
+                    flat=True,
+                ),
+            )
+            removed_qs.delete()
+            if removed_file_ids:
+                self._delete_storage_attachments(removed_file_ids)
             qst = FileAttachment.objects.on_account(
                 self.account.id,
             ).with_event_or_not_attached(self.instance.id).by_ids(ids)
@@ -612,8 +628,42 @@ class CommentService(BaseModelService):
                 event=self.instance,
                 workflow=self.instance.workflow,
             )
+            self._sync_storage_attachments(qst)
         else:
+            removed_file_ids = list(
+                self.instance.attachments.exclude(
+                    file_id__isnull=True,
+                ).values_list('file_id', flat=True),
+            )
             self.instance.attachments.all().delete()
+            if removed_file_ids:
+                self._delete_storage_attachments(removed_file_ids)
+
+    def _sync_storage_attachments(self, attachments_qs):
+        if not attachments_qs.exists():
+            return
+        source_type = (
+            SourceType.TASK
+            if self.instance.task_id
+            else SourceType.WORKFLOW
+        )
+        service = FileSyncService()
+        for attachment in attachments_qs.select_related(
+            'account',
+            'workflow',
+            'event',
+            'output',
+        ):
+            service.sync_single_attachment(
+                attachment=attachment,
+                source_type=source_type,
+                task=self.instance.task,
+                workflow=self.instance.workflow,
+                access_type=AccessType.RESTRICTED,
+            )
+
+    def _delete_storage_attachments(self, file_ids: List[str]):
+        Attachment.objects.filter(file_id__in=file_ids).delete()
 
     def _get_new_comment_recipients(
         self,
@@ -703,6 +753,10 @@ class CommentService(BaseModelService):
                 task.save(update_fields=['contains_comments'])
             if attachments:
                 self._update_attachments(attachments)
+            self._sync_text_attachments(
+                old_text=None,
+                new_text=self.instance.text,
+            )
             mentioned_users_ids, notify_users_ids = (
                 self._get_new_comment_recipients(task)
             )
@@ -751,6 +805,7 @@ class CommentService(BaseModelService):
     ) -> WorkflowEvent:
 
         self._validate_comment_action()
+        old_text = self.instance.text
         task = self.instance.task
         if task is not None and not (task.is_active or task.is_delayed):
             raise CommentedTaskNotActive
@@ -778,6 +833,10 @@ class CommentService(BaseModelService):
             )
             if attachments:
                 self._update_attachments(attachments)
+            self._sync_text_attachments(
+                old_text=old_text,
+                new_text=self.instance.text,
+            )
             new_mentioned_users_ids = self._get_updated_comment_recipients()
             if new_mentioned_users_ids:
                 self.instance.workflow.members.add(*new_mentioned_users_ids)
@@ -808,6 +867,10 @@ class CommentService(BaseModelService):
         task = self.instance.task
         if task is not None and not (task.is_active or task.is_delayed):
             raise CommentedTaskNotActive
+        self._sync_text_attachments(
+            old_text=self.instance.text,
+            new_text=None,
+        )
         self.instance.attachments.delete()
         super().partial_update(
             status=CommentStatus.DELETED,
@@ -824,6 +887,31 @@ class CommentService(BaseModelService):
             workflow=self.instance.workflow,
         )
         return self.instance
+
+    def _sync_text_attachments(
+        self,
+        old_text: Optional[str],
+        new_text: Optional[str],
+    ):
+        old_file_ids = extract_file_ids_from_text(old_text)
+        new_file_ids = extract_file_ids_from_text(new_text)
+        removed_file_ids = list(set(old_file_ids) - set(new_file_ids))
+        added_file_ids = list(set(new_file_ids) - set(old_file_ids))
+        source_type = (
+            SourceType.TASK
+            if self.instance.task_id
+            else SourceType.WORKFLOW
+        )
+        sync_storage_attachments_for_scope(
+            account=self.account,
+            user=self.user,
+            add_file_ids=added_file_ids,
+            remove_file_ids=removed_file_ids,
+            source_type=source_type,
+            task=self.instance.task,
+            workflow=self.instance.workflow,
+            access_type=AccessType.RESTRICTED,
+        )
 
     def watched(self):
 

@@ -35,8 +35,6 @@ def migrate_file_attachments(apps, schema_editor):
             workflow=old_attachment.workflow,
             template=None,
             is_deleted=old_attachment.is_deleted,
-            date_created=old_attachment.date_created,
-            date_updated=old_attachment.date_updated,
         )
         attachments_to_create.append(new_attachment)
 

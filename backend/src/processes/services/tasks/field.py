@@ -21,6 +21,13 @@ from src.processes.services.base import BaseWorkflowService
 from src.processes.services.tasks.exceptions import TaskFieldException
 from src.processes.services.tasks.selection import SelectionService
 from src.services.markdown import MarkdownService
+from src.storage.enums import AccessType, SourceType
+from src.storage.models import Attachment
+from src.storage.services.file_sync import FileSyncService
+from src.storage.utils import (
+    extract_file_ids_from_text,
+    sync_storage_attachments_for_scope,
+)
 from src.utils.dates import date_tsp_to_user_fmt
 
 UserModel = get_user_model()
@@ -364,6 +371,7 @@ class TaskFieldService(BaseWorkflowService):
                     workflow_id=self.instance.workflow.id,
                 )
             )
+            self._sync_storage_attachments(attachments_ids)
 
     def _create_selections(
         self,
@@ -461,9 +469,53 @@ class TaskFieldService(BaseWorkflowService):
         else:
             deleted_attach_ids = current_attach_ids
         if deleted_attach_ids:
-            FileAttachment.objects.filter(
+            removed_qs = FileAttachment.objects.filter(
                 id__in=deleted_attach_ids,
-            ).delete()
+            )
+            removed_file_ids = list(
+                removed_qs.exclude(file_id__isnull=True).values_list(
+                    'file_id',
+                    flat=True,
+                ),
+            )
+            removed_qs.delete()
+            if removed_file_ids:
+                Attachment.objects.filter(
+                    file_id__in=removed_file_ids,
+                ).delete()
+
+    def _sync_storage_attachments(
+        self,
+        attachments_ids: Optional[List[int]],
+    ):
+        if attachments_ids in self.NULL_VALUES:
+            return
+
+        qst = (
+            FileAttachment.objects
+            .on_account(self.account.id)
+            .by_ids(attachments_ids)
+        )
+        if not qst.exists():
+            return
+        if self.instance.task_id:
+            source_type = SourceType.TASK
+        else:
+            source_type = SourceType.WORKFLOW
+        service = FileSyncService()
+        for attachment in qst.select_related(
+            'account',
+            'workflow',
+            'event',
+            'output',
+        ):
+            service.sync_single_attachment(
+                attachment=attachment,
+                source_type=source_type,
+                task=self.instance.task,
+                workflow=self.instance.workflow,
+                access_type=AccessType.RESTRICTED,
+            )
 
     def partial_update(
         self,
@@ -473,6 +525,7 @@ class TaskFieldService(BaseWorkflowService):
 
         """ Set or update field value only """
 
+        old_markdown_value = self.instance.markdown_value
         raw_value = update_kwargs.pop('value', None)
         selections = (
             self.instance.selections.all()
@@ -500,4 +553,34 @@ class TaskFieldService(BaseWorkflowService):
             self._link_new_attachments(raw_value)
         elif self.instance.type in FieldType.TYPES_WITH_SELECTIONS:
             self._update_selections(raw_value)
+        elif self.instance.type in {
+            FieldType.STRING,
+            FieldType.TEXT,
+            FieldType.URL,
+        }:
+            old_file_ids = extract_file_ids_from_text(old_markdown_value)
+            new_file_ids = extract_file_ids_from_text(
+                self.instance.markdown_value,
+            )
+            removed_file_ids = list(
+                set(old_file_ids) - set(new_file_ids),
+            )
+            added_file_ids = list(
+                set(new_file_ids) - set(old_file_ids),
+            )
+            source_type = (
+                SourceType.TASK
+                if self.instance.task_id
+                else SourceType.WORKFLOW
+            )
+            sync_storage_attachments_for_scope(
+                account=self.account,
+                user=self.user,
+                add_file_ids=added_file_ids,
+                remove_file_ids=removed_file_ids,
+                source_type=source_type,
+                task=self.instance.task,
+                workflow=self.instance.workflow,
+                access_type=AccessType.RESTRICTED,
+            )
         return self.instance

@@ -91,7 +91,7 @@ class AttachmentService(BaseModelService):
         # Assign permissions to all collected users
         for user in users_set:
             assign_perm(
-                'storage.view_file_attachment',
+                'view_attachment',
                 user,
                 self.instance,
             )
@@ -100,7 +100,7 @@ class AttachmentService(BaseModelService):
         for performer in task_performers:
             if performer.group:
                 assign_perm(
-                    'storage.view_file_attachment',
+                    'view_attachment',
                     performer.group,
                     self.instance,
                 )
@@ -116,7 +116,7 @@ class AttachmentService(BaseModelService):
         for owner in template_owners:
             if owner.user:
                 assign_perm(
-                    'storage.view_file_attachment',
+                    'view_attachment',
                     owner.user,
                     self.instance,
                 )
@@ -168,7 +168,7 @@ class AttachmentService(BaseModelService):
 
         for user in users_set:
             assign_perm(
-                'storage.view_file_attachment',
+                'view_attachment',
                 user,
                 self.instance,
             )
@@ -196,7 +196,6 @@ class AttachmentService(BaseModelService):
             attachment_data = {
                 'file_id': file_id,
                 'account': source.account,
-                'access_type': AccessType.ACCOUNT,
             }
 
             # Determine source_type and relations
@@ -204,17 +203,22 @@ class AttachmentService(BaseModelService):
                 attachment_data.update({
                     'source_type': SourceType.TASK,
                     'task': source,
+                    'access_type': AccessType.RESTRICTED,
                 })
             elif isinstance(source, Template):
                 attachment_data.update({
                     'source_type': SourceType.TEMPLATE,
                     'template': source,
+                    'access_type': AccessType.RESTRICTED,
                 })
             elif isinstance(source, Workflow):
                 attachment_data.update({
                     'source_type': SourceType.WORKFLOW,
                     'workflow': source,
+                    'access_type': AccessType.RESTRICTED,
                 })
+            else:
+                attachment_data['access_type'] = AccessType.ACCOUNT
 
             attachments.append(Attachment(**attachment_data))
 
@@ -229,6 +233,36 @@ class AttachmentService(BaseModelService):
             self.instance = attachment
             self._create_related()
 
+        return created_attachments
+
+    def bulk_create_for_scope(
+        self,
+        file_ids: List[str],
+        account,
+        source_type: str,
+        access_type: str = AccessType.RESTRICTED,
+        task=None,
+        workflow=None,
+        template=None,
+    ) -> List[Attachment]:
+        attachments = []
+        for file_id in file_ids:
+            attachments.append(Attachment(
+                file_id=file_id,
+                account=account,
+                access_type=access_type,
+                source_type=source_type,
+                task=task,
+                workflow=workflow,
+                template=template,
+            ))
+        created_attachments = Attachment.objects.bulk_create(
+            attachments,
+            ignore_conflicts=True,
+        )
+        for attachment in created_attachments:
+            self.instance = attachment
+            self._create_related()
         return created_attachments
 
     def check_user_permission(
@@ -265,7 +299,7 @@ class AttachmentService(BaseModelService):
                 except user_model.DoesNotExist:
                     return False
             return user.has_perm(
-                'storage.view_file_attachment',
+                'view_attachment',
                 attachment,
             )
 
@@ -279,7 +313,8 @@ class AttachmentService(BaseModelService):
         # Get attachments with permissions via guardian
         restricted_attachments = get_objects_for_user(
             user,
-            'storage.view_file_attachment',
+            'view_attachment',
+            'view_attachment',
             klass=Attachment,
         ).filter(is_deleted=False)
 

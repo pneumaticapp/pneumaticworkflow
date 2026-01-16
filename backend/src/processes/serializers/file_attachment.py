@@ -13,6 +13,7 @@ from src.processes.models.workflows.attachment import FileAttachment
 ATTACHMENT_MAX_SIZE_BYTES = settings.ATTACHMENT_MAX_SIZE_BYTES
 
 
+# TODO remove legacy file attachment serializers after migration.
 class FileAttachmentCreateSerializer(
     CustomValidationErrorMixin,
     serializers.Serializer,
@@ -29,6 +30,7 @@ class FileAttachmentCreateSerializer(
         return value
 
 
+# TODO remove legacy file attachment serializers after migration.
 class FileAttachmentSerializer(serializers.ModelSerializer):
 
     class Meta:

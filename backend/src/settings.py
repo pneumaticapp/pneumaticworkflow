@@ -69,7 +69,6 @@ class Common(Configuration):
     AUTH_TOKEN_ITERATIONS = int(env.get('AUTH_TOKEN_ITERATIONS', '1'))
     AUTHENTICATION_BACKENDS = (
         'django.contrib.auth.backends.ModelBackend',
-        'guardian.backends.ObjectPermissionBackend',
     )
 
     # Tokens lifetime
@@ -159,6 +158,9 @@ class Common(Configuration):
         'src.logs',
         'src.storage',
     ]
+    GUARDIAN_GROUP_OBJ_PERMS_MODEL = (
+        'src.permissions.models.GroupObjectPermission'
+    )
 
     MIDDLEWARE = [
         'django.middleware.security.SecurityMiddleware',

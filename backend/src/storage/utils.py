@@ -1,17 +1,28 @@
 import re
-from typing import List
+from typing import List, Optional
 
 from django.contrib.auth import get_user_model
 from django.db import models
 
+from src.storage.enums import AccessType, SourceType
 from src.processes.models.templates.template import Template
 from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
-from src.storage.enums import SourceType
 from src.storage.models import Attachment
 from src.storage.services.attachments import AttachmentService
 
 UserModel = get_user_model()
+
+
+def check_attachments(
+    source: models.Model,
+    user: UserModel,
+) -> List[str]:
+    """
+    Finds and updates attachments for source.
+    Alias for refresh_attachments for backward compatibility.
+    """
+    return refresh_attachments(source=source, user=user)
 
 
 def extract_file_ids_from_text(text: str) -> List[str]:
@@ -41,6 +52,115 @@ def extract_file_ids_from_text(text: str) -> List[str]:
     return list(set(file_ids))
 
 
+def extract_file_ids_from_values(
+    values: List[Optional[str]],
+) -> List[str]:
+    file_ids = []
+    for value in values:
+        if value:
+            file_ids.extend(extract_file_ids_from_text(value))
+    return list(set(file_ids))
+
+
+def sync_storage_attachments_for_scope(
+    account,
+    user: Optional[UserModel],
+    add_file_ids: List[str],
+    remove_file_ids: List[str],
+    source_type: str,
+    task=None,
+    workflow=None,
+    template=None,
+    access_type: str = AccessType.RESTRICTED,
+):
+    filter_kwargs = {
+        'account_id': account.id,
+        'source_type': source_type,
+        'task': task,
+        'workflow': workflow,
+        'template': template,
+    }
+    if remove_file_ids:
+        Attachment.objects.filter(
+            file_id__in=remove_file_ids,
+            **filter_kwargs,
+        ).delete()
+    if add_file_ids:
+        service = AttachmentService(user=user)
+        service.bulk_create_for_scope(
+            file_ids=add_file_ids,
+            account=account,
+            source_type=source_type,
+            access_type=access_type,
+            task=task,
+            workflow=workflow,
+            template=template,
+        )
+
+
+def sync_account_file_fields(
+    account,
+    user: Optional[UserModel],
+    old_values: List[Optional[str]],
+    new_values: List[Optional[str]],
+):
+    old_file_ids = extract_file_ids_from_values(old_values)
+    new_file_ids = extract_file_ids_from_values(new_values)
+    removed_file_ids = list(set(old_file_ids) - set(new_file_ids))
+    added_file_ids = list(set(new_file_ids) - set(old_file_ids))
+    sync_storage_attachments_for_scope(
+        account=account,
+        user=user,
+        add_file_ids=added_file_ids,
+        remove_file_ids=removed_file_ids,
+        source_type=SourceType.ACCOUNT,
+        access_type=AccessType.ACCOUNT,
+    )
+
+
+def refresh_attachments_for_text(
+    account,
+    user: UserModel,
+    text: Optional[str],
+    source_type: str,
+    task=None,
+    workflow=None,
+    template=None,
+) -> List[str]:
+    file_ids = extract_file_ids_from_text(text)
+    filter_kwargs = {
+        'account_id': account.id,
+        'source_type': source_type,
+        'task': task,
+        'workflow': workflow,
+        'template': template,
+    }
+    if not file_ids:
+        Attachment.objects.filter(**filter_kwargs).delete()
+        return []
+    existent_file_ids = list(
+        Attachment.objects.filter(
+            file_id__in=file_ids,
+            **filter_kwargs,
+        ).values_list('file_id', flat=True),
+    )
+    Attachment.objects.filter(
+        **filter_kwargs,
+    ).exclude(file_id__in=file_ids).delete()
+    new_files_ids = list(set(file_ids) - set(existent_file_ids))
+    if new_files_ids:
+        service = AttachmentService(user=user)
+        service.bulk_create_for_scope(
+            file_ids=new_files_ids,
+            account=account,
+            source_type=source_type,
+            task=task,
+            workflow=workflow,
+            template=template,
+        )
+    return new_files_ids
+
+
 def refresh_attachments(
     source: models.Model,
     user: UserModel,
@@ -53,57 +173,30 @@ def refresh_attachments(
     """
     # Determine source type and extract file_ids
     if isinstance(source, Task):
-        file_ids = extract_file_ids_from_text(source.description)
-        source_type = SourceType.TASK
-        filter_kwargs = {'task': source}
-    elif isinstance(source, Workflow):
-        file_ids = extract_file_ids_from_text(source.description)
-        source_type = SourceType.WORKFLOW
-        filter_kwargs = {'workflow': source}
-    elif isinstance(source, Template):
-        file_ids = extract_file_ids_from_text(source.description)
-        source_type = SourceType.TEMPLATE
-        filter_kwargs = {'template': source}
-    else:
-        return []
-
-    if not file_ids:
-        # Delete all attachments if file_ids not found
-        Attachment.objects.filter(
-            account_id=source.account_id,
-            source_type=source_type,
-            **filter_kwargs,
-        ).delete()
-        return []
-
-    # Get existing attachments
-    existent_file_ids = list(
-        Attachment.objects
-        .filter(
-            account_id=source.account_id,
-            file_id__in=file_ids,
-            source_type=source_type,
-            **filter_kwargs,
+        return refresh_attachments_for_text(
+            account=source.account,
+            user=user,
+            text=source.description,
+            source_type=SourceType.TASK,
+            task=source,
         )
-        .values_list('file_id', flat=True),
-    )
-
-    # Delete unused attachments
-    Attachment.objects.filter(
-        account_id=source.account_id,
-        source_type=source_type,
-        **filter_kwargs,
-    ).exclude(file_id__in=file_ids).delete()
-
-    # Determine new file_ids
-    new_files_ids = list(set(file_ids) - set(existent_file_ids))
-
-    # Create new attachments
-    if new_files_ids:
-        service = AttachmentService(user=user)
-        service.bulk_create(file_ids=new_files_ids, source=source)
-
-    return new_files_ids
+    if isinstance(source, Workflow):
+        return refresh_attachments_for_text(
+            account=source.account,
+            user=user,
+            text=source.description,
+            source_type=SourceType.WORKFLOW,
+            workflow=source,
+        )
+    if isinstance(source, Template):
+        return refresh_attachments_for_text(
+            account=source.account,
+            user=user,
+            text=source.description,
+            source_type=SourceType.TEMPLATE,
+            template=source,
+        )
+    return []
 
 
 def get_attachment_description_fields(source: models.Model) -> List[str]:

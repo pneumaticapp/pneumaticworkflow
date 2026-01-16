@@ -264,7 +264,7 @@ class TestAttachmentServiceCheckPermission:
             task=task,
         )
 
-        assign_perm('storage.view_file_attachment', user, attachment)
+        assign_perm('view_attachment', user, attachment)
 
         service = AttachmentService(user=user)
 
@@ -397,7 +397,7 @@ class TestAttachmentServiceGetUserAttachments:
             task=task,
         )
 
-        assign_perm('storage.view_file_attachment', user, attachment)
+        assign_perm('view_attachment', user, attachment)
 
         service = AttachmentService(user=user)
 
@@ -423,7 +423,7 @@ class TestAttachmentServiceGetUserAttachments:
             task=task,
         )
 
-        assign_perm('storage.view_file_attachment', user1, attachment)
+        assign_perm('view_attachment', user1, attachment)
 
         service = AttachmentService(user=user2)
 
@@ -497,7 +497,7 @@ class TestAttachmentServiceAssignPermissions:
 
         # assert
         attachment = service.instance
-        assert user.has_perm('storage.view_file_attachment', attachment)
+        assert user.has_perm('view_attachment', attachment)
 
     def test_assign_workflow_permissions__ok(self):
         # arrange
@@ -517,7 +517,7 @@ class TestAttachmentServiceAssignPermissions:
 
         # assert
         attachment = service.instance
-        assert user.has_perm('storage.view_file_attachment', attachment)
+        assert user.has_perm('view_attachment', attachment)
 
     def test_assign_account_permissions__no_individual_perms(self):
         # arrange

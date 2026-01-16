@@ -46,6 +46,19 @@ class TemplateService(BaseModelService):
     ):
         pass
 
+    def partial_update(
+        self,
+        force_save=False,
+        **update_kwargs,
+    ):
+        super().partial_update(
+            force_save=force_save,
+            **update_kwargs,
+        )
+        if 'description' in update_kwargs and self.instance:
+            from src.storage.utils import refresh_attachments
+            refresh_attachments(self.instance, self.user)
+
     def fill_template_data(self, initial_data: dict) -> dict:
 
         """ initial_data - known template data,

@@ -1,20 +1,26 @@
 import pytest
+from guardian.shortcuts import assign_perm
 
 from src.processes.tests.fixtures import create_test_admin
+from src.storage.enums import AccessType, SourceType
+from src.storage.models import Attachment
 from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
 
-def test_check_permission__has_permission__ok(api_client, mocker):
+def test_check_permission__has_permission__ok(api_client):
     # arrange
     user = create_test_admin()
     api_client.token_authenticate(user)
 
-    check_user_permission_mock = mocker.patch(
-        'src.storage.views.AttachmentService.check_user_permission',
-        return_value=True,
+    attachment = Attachment.objects.create(
+        account=user.account,
+        file_id='test_file_123',
+        access_type=AccessType.RESTRICTED,
+        source_type=SourceType.ACCOUNT,
     )
+    assign_perm('view_attachment', user, attachment)
 
     # act
     response = api_client.post(
@@ -27,21 +33,18 @@ def test_check_permission__has_permission__ok(api_client, mocker):
     # assert
     assert response.status_code == 204
     assert response.data is None
-    check_user_permission_mock.assert_called_once_with(
-        user_id=user.id,
-        account_id=user.account_id,
-        file_id='test_file_123',
-    )
 
 
-def test_check_permission__no_permission__forbidden(api_client, mocker):
+def test_check_permission__no_permission__forbidden(api_client):
     # arrange
     user = create_test_admin()
     api_client.token_authenticate(user)
 
-    check_user_permission_mock = mocker.patch(
-        'src.storage.views.AttachmentService.check_user_permission',
-        return_value=False,
+    Attachment.objects.create(
+        account=user.account,
+        file_id='test_file_123',
+        access_type=AccessType.RESTRICTED,
+        source_type=SourceType.ACCOUNT,
     )
 
     # act
@@ -54,11 +57,6 @@ def test_check_permission__no_permission__forbidden(api_client, mocker):
 
     # assert
     assert response.status_code == 403
-    check_user_permission_mock.assert_called_once_with(
-        user_id=user.id,
-        account_id=user.account_id,
-        file_id='test_file_123',
-    )
 
 
 def test_check_permission__invalid_data__bad_request(api_client):
@@ -108,15 +106,18 @@ def test_check_permission__not_authenticated__unauthorized(api_client):
     assert response.status_code == 401
 
 
-def test_check_permission__file_id_with_spaces__ok(api_client, mocker):
+def test_check_permission__file_id_with_spaces__ok(api_client):
     # arrange
     user = create_test_admin()
     api_client.token_authenticate(user)
 
-    check_user_permission_mock = mocker.patch(
-        'src.storage.views.AttachmentService.check_user_permission',
-        return_value=True,
+    attachment = Attachment.objects.create(
+        account=user.account,
+        file_id='test_file_123',
+        access_type=AccessType.RESTRICTED,
+        source_type=SourceType.ACCOUNT,
     )
+    assign_perm('view_attachment', user, attachment)
 
     # act
     response = api_client.post(
@@ -128,8 +129,4 @@ def test_check_permission__file_id_with_spaces__ok(api_client, mocker):
 
     # assert
     assert response.status_code == 204
-    check_user_permission_mock.assert_called_once_with(
-        user_id=user.id,
-        account_id=user.account_id,
-        file_id='test_file_123',
-    )
+    assert response.data is None

@@ -18,13 +18,9 @@ class AttachmentSerializer(serializers.ModelSerializer):
             'task',
             'template',
             'workflow',
-            'date_created',
-            'date_updated',
         ]
         read_only_fields = [
             'id',
-            'date_created',
-            'date_updated',
         ]
 
 
@@ -59,5 +55,4 @@ class AttachmentListSerializer(serializers.ModelSerializer):
             'file_id',
             'access_type',
             'source_type',
-            'date_created',
         ]

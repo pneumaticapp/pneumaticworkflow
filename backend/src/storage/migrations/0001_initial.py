@@ -114,7 +114,7 @@ class Migration(migrations.Migration):
             ],
             options={
                 'permissions': (
-                    ('view_file_attachment', 'Can view file attachment'),
+                    ('view_attachment', 'Can view attachment'),
                 ),
             },
         ),

@@ -15,8 +15,8 @@ def create_attachment_permissions(db):
     """
     content_type = ContentType.objects.get_for_model(Attachment)
     Permission.objects.get_or_create(
-        codename='view_file_attachment',
-        name='Can view file attachment',
+        codename='view_attachment',
+        name='Can view attachment',
         content_type=content_type,
     )
 

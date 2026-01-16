@@ -10,6 +10,7 @@ from src.storage.serializers import (
     AttachmentSerializer,
 )
 from src.storage.services.attachments import AttachmentService
+from src.storage.services.file_sync import FileSyncService
 
 
 class AttachmentViewSet(CustomViewSetMixin, GenericViewSet):
@@ -53,11 +54,14 @@ class AttachmentViewSet(CustomViewSetMixin, GenericViewSet):
         file_id = slz.validated_data['file_id']
 
         # Check access permissions
-        service = AttachmentService(user=request.user)
-        has_permission = service.check_user_permission(
-            user_id=request.user.id,
-            account_id=request.user.account_id,
-            file_id=file_id,
+        try:
+            attachment = Attachment.objects.get(file_id=file_id)
+        except Attachment.DoesNotExist:
+            return self.response_forbidden()
+
+        has_permission = request.user.has_perm(
+            'view_attachment',
+            attachment,
         )
 
         if has_permission:
@@ -69,3 +73,21 @@ class AttachmentViewSet(CustomViewSetMixin, GenericViewSet):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
         return self.response_ok(serializer.data)
+
+
+class FileSyncViewSet(CustomViewSetMixin, GenericViewSet):
+    """
+    Admin-only endpoint for manual file service synchronization.
+    """
+    permission_classes = (IsAuthenticated,)
+
+    def create(self, request, *args, **kwargs):
+        if not request.user.is_superuser:
+            return self.response_forbidden()
+        service = FileSyncService()
+        file_service_stats = service.sync_all_files()
+        storage_stats = service.sync_all_attachments_to_storage()
+        return self.response_ok({
+            'file_service': file_service_stats,
+            'storage': storage_stats,
+        })

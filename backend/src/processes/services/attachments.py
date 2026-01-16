@@ -1,3 +1,4 @@
+import logging
 from typing import Optional, Tuple
 from urllib.parse import unquote
 
@@ -9,6 +10,7 @@ from src.authentication.enums import AuthTokenType
 from src.processes.enums import FileAttachmentAccessType
 from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.services import exceptions
+from src.storage.services.file_sync import FileSyncService
 from src.storage.google_cloud import GoogleCloudService
 from src.utils.logging import (
     SentryLogLevel,
@@ -17,9 +19,12 @@ from src.utils.logging import (
 from src.utils.salt import get_salt
 
 UserModel = get_user_model()
+logger = logging.getLogger(__name__)
 
 
 class AttachmentService:
+    # TODO remove legacy service after full file service migration.
+    # Legacy endpoint must keep working while storage duplicates data.
     def __init__(self, account: Account = None):
         self.account = account
 
@@ -82,6 +87,20 @@ class AttachmentService:
             account_id=self.account.id,
         )
 
+    def _sync_to_file_service(self, attachment: FileAttachment):
+        """
+        Best-effort sync to file service and storage.Attachment.
+        Must not break legacy flow if sync fails.
+        """
+        try:
+            FileSyncService().sync_single_attachment(attachment)
+        except Exception as ex:  # noqa: BLE001
+            logger.warning(
+                "File sync skipped for attachment %s: %s",
+                attachment.id,
+                ex,
+            )
+
     def _get_unique_filename(self, origin_filename: str) -> str:
         return f'{get_salt(30)}_{origin_filename}'
 
@@ -112,6 +131,7 @@ class AttachmentService:
             name=filename,
             size=size,
         )
+        self._sync_to_file_service(attachment)
         return attachment, upload_url, thumb_upload_url
 
     def publish(
@@ -151,6 +171,7 @@ class AttachmentService:
             clone.workflow = instance.workflow
             clone.output = instance.output
         clone.save()
+        self._sync_to_file_service(clone)
         return clone
 
     def check_user_permission(

@@ -32,6 +32,7 @@ from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tasks.update_workflow import (
     update_workflow_owners,
 )
+from src.storage.utils import sync_account_file_fields
 
 UserModel = get_user_model()
 
@@ -83,6 +84,12 @@ class UserGroupService(BaseModelService):
         users: Optional[List[int]] = None,
         **kwargs,
     ):
+        sync_account_file_fields(
+            account=self.instance.account,
+            user=self.user,
+            old_values=[None],
+            new_values=[self.instance.photo],
+        )
         track_group_analytics.delay(
             event=GroupsAnalyticsEvent.created,
             user_id=self.user.id,
@@ -159,6 +166,7 @@ class UserGroupService(BaseModelService):
         force_save: bool = False,
         **update_kwargs,
     ):
+        old_photo = self.instance.photo
         users = update_kwargs.pop('users', None)
         new_name = update_kwargs.get('name')
         new_photo = update_kwargs.get('photo')
@@ -215,6 +223,12 @@ class UserGroupService(BaseModelService):
                 ),
             )
         result = super().partial_update(**update_kwargs, force_save=force_save)
+        sync_account_file_fields(
+            account=self.instance.account,
+            user=self.user,
+            old_values=[old_photo],
+            new_values=[self.instance.photo],
+        )
 
         send_group_updated_notification.delay(
             logging=self.account.log_api_requests,

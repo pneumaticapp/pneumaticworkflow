@@ -17,6 +17,8 @@ from src.processes.querysets import FileAttachmentQuerySet
 UserModel = get_user_model()
 
 
+# TODO remove legacy model after migration to file service.
+# Legacy storage is kept to avoid breaking old uploads.
 class FileAttachment(
     SoftDeleteModel,
     AccountBaseMixin,

@@ -8,6 +8,7 @@ from src.processes.views.file_attachment import (
 )
 
 
+# TODO remove legacy public attachments endpoint after migration.
 class PublicFileAttachmentViewSet(
     BaseFileAttachmentViewSet,
 ):
