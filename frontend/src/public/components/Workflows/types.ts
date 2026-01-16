@@ -22,11 +22,11 @@ export interface IWorkflowsProps {
   workflowsLoadingStatus: EWorkflowsLoadingStatus;
   workflowsList: IWorkflowsList;
   templatesFilter: ITemplateTitle[];
-  stepsIdsFilter: number[];
+  tasksApiNamesFilter: string[];
   searchText: string;
   view: EWorkflowsView;
   onSearch(value: string): void;
-  setStepsFilter(value: number[]): void;
+  setTasksFilter(value: string[]): void;
   openRunWorkflowModal(payload: IRunWorkflow): void;
   loadWorkflowsList(id: number): void;
   openWorkflowLogPopup(payload: TOpenWorkflowLogPopupPayload): void;
@@ -42,7 +42,7 @@ export interface IWorkflowsFiltersProps {
   areFiltersChanged: boolean;
   statusFilter: EWorkflowsStatus;
   templatesIdsFilter: number[];
-  stepsIdsFilter: number[];
+  tasksApiNamesFilter: string[];
   performersIdsFilter: number[];
   performersGroupIdsFilter: number[];
   workflowStartersIdsFilter: number[];
@@ -58,7 +58,7 @@ export interface IWorkflowsFiltersProps {
   loadTemplatesTitles(): void;
   loadTemplateSteps(payload: TLoadWorkflowsFilterStepsPayload): void;
   setTemplatesFilter(value: number[]): void;
-  setStepsFilter(value: number[]): void;
+  setTasksFilter(value: string[]): void;
   setPerformersFilter(value: number[]): void;
   setPerformersGroupFilter(value: number[]): void;
   setWorkflowStartersFilter(value: number[]): void;

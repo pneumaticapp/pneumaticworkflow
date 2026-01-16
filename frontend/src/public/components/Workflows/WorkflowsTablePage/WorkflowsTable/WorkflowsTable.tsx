@@ -1,4 +1,13 @@
-import React, { forwardRef, useCallback, useEffect, useImperativeHandle, useMemo, useRef, useState } from 'react';
+import React, {
+  forwardRef,
+  ReactNode,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useTable, Column, TableOptions, HeaderGroup } from 'react-table';
 import InfiniteScroll from 'react-infinite-scroll-component';
 import { useIntl } from 'react-intl';
@@ -50,23 +59,21 @@ export interface TableViewContainerRef {
   element: HTMLDivElement | null;
 }
 
-export const TableViewContainer = forwardRef<TableViewContainerRef, { children: React.ReactNode }>(
-  ({ children }, ref) => {
-    const containerRef = useRef<HTMLDivElement>(null);
+export const TableViewContainer = forwardRef<TableViewContainerRef, { children: ReactNode }>(({ children }, ref) => {
+  const containerRef = useRef<HTMLDivElement>(null);
 
-    useImperativeHandle(ref, () => ({
-      get element() {
-        return containerRef.current;
-      },
-    }));
+  useImperativeHandle(ref, () => ({
+    get element() {
+      return containerRef.current;
+    },
+  }));
 
-    return (
-      <div className={styles['table-view-container']} ref={containerRef}>
-        {children}
-      </div>
-    );
-  },
-);
+  return (
+    <div className={styles['table-view-container']} ref={containerRef}>
+      {children}
+    </div>
+  );
+});
 
 export function WorkflowsTable({
   templatesIdsFilter,
@@ -76,12 +83,12 @@ export function WorkflowsTable({
   users,
   workflowStartersCounters,
   workflowStartersIdsFilter,
-  stepsIdsFilter,
+  tasksApiNamesFilter,
   filterTemplates,
   performersIdsFilter,
   performersCounters,
   statusFilter,
-  setStepsFilter,
+  setTasksFilter,
   onSearch,
   loadWorkflowsList,
   removeWorkflowFromList,
@@ -103,7 +110,7 @@ export function WorkflowsTable({
     localStorage.getItem(`workflow-column-widths-${currentUser?.id}-template-${templatesIdsFilter[0]}`) || '{}',
   );
 
-  const tableWrapperRef = React.useRef<HTMLDivElement | null>(null);
+  const tableWrapperRef = useRef<HTMLDivElement | null>(null);
   const tableRef = useRef<HTMLTableElement>(null);
   const cashTableStructureRef = useRef<Column<TableColumns>[]>([]);
 
@@ -136,8 +143,8 @@ export function WorkflowsTable({
   }, [searchQuery]);
 
   useEffect(() => {
-    if (workflowsLoadingStatus === EWorkflowsLoadingStatus.EmptyList && stepsIdsFilter.length) {
-      setStepsFilter([]);
+    if (workflowsLoadingStatus === EWorkflowsLoadingStatus.EmptyList && tasksApiNamesFilter.length) {
+      setTasksFilter([]);
     }
   }, [workflowsLoadingStatus]);
 
@@ -223,7 +230,7 @@ export function WorkflowsTable({
       workflowsList.items.length === 0 &&
       String(lastLoadedTemplateIdForTable) === String(currentTemplateId));
 
-  const columns: Column<TableColumns>[] = React.useMemo(() => {
+  const columns: Column<TableColumns>[] = useMemo(() => {
     if (shouldSkeletonOptionalTable) {
       return cashTableStructureRef.current;
     }
@@ -295,7 +302,7 @@ export function WorkflowsTable({
                 </div>
             ),
             accessor: 'system-column-step',
-            Cell: ColumnCells.StepColumn,
+            Cell: ColumnCells.TaskColumn,
             width: savedGlobalWidths['system-column-step'] || ETableViewFieldsWidth['system-column-step'],
             minWidth: EColumnWidthMinWidth['system-column-step'],
             columnType: 'system-column-step',
@@ -342,7 +349,7 @@ export function WorkflowsTable({
     workflowStartersIdsFilter.length,
     templatesIdsFilter.length,
     filterTemplates,
-    stepsIdsFilter.length,
+    tasksApiNamesFilter.length,
     performersIdsFilter.length,
     statusFilter,
     performersCounters,

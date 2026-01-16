@@ -10,7 +10,7 @@ export enum ERenderPlaceholderType {
 interface IGetRenderPlaceholder {
   isDisabled?: boolean;
   filterType?: 'userType' | 'groupType';
-  filterIds: number[];
+  filterIds: number[] | string[];
   options: any[];
   formatMessage: (id: { id: string }, values?: { count: number }) => string;
   type: ERenderPlaceholderType;
@@ -35,7 +35,9 @@ export const getRenderPlaceholder = ({
     return formatMessage({ id: severalOptionPlaceholder }, { count: filterIds.length });
   }
 
-  const selectedOption = options.find((option) => option.id === filterIds[0]);
+  const selectedOption = options.find((option) =>
+    type === ERenderPlaceholderType.Task ? option.apiName === filterIds[0] : option.id === filterIds[0],
+  );
 
   if (
     type === ERenderPlaceholderType.Task ||

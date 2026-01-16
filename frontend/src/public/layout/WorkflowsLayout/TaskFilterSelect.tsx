@@ -3,7 +3,7 @@ import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
 import styles from './WorkflowsLayout.css';
-import { setFilterTemplateSteps as setWorkflowsFilterSteps } from '../../redux/workflows/slice';
+import { setFilterTemplateTasks as setWorkflowsFilterTasks } from '../../redux/workflows/slice';
 import { FilterSelect, TOptionBase } from '../../components/UI';
 import { StepName } from '../../components/StepName';
 import { TaskFilterIcon } from '../../components/icons';
@@ -13,29 +13,30 @@ import { isArrayWithItems } from '../../utils/helpers';
 import { canFilterByTemplateStep } from '../../utils/workflows/filters';
 import {
   getWorkflowsStatus,
-  getWorkflowStepsIdsFilter,
+  getWorkflowTasksApiNamesFilter,
   getWorkflowTemplatesIdsFilter,
 } from '../../redux/selectors/workflows';
+import { useCheckDevice } from '../../hooks/useCheckDevice';
 
-export interface IGroupedStepsValue<TOption extends TOptionBase<'id', 'name'>> {
+interface IGroupedTasksValue<TOption extends TOptionBase<'apiName', 'name'>> {
   title: string;
   options: TOption[];
 }
 
-export type IGroupedStepsOption = TOptionBase<'id', 'name'> | string;
-export type IGroupedStepsMap = Map<number, IGroupedStepsValue<TOptionBase<'id', 'name'>>>;
+type IGroupedTasksMap = Map<number, IGroupedTasksValue<TOptionBase<'apiName', 'name'>>>;
 
 export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITemplateFilterItem[] }) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
+  const { isMobile } = useCheckDevice();
 
-  const stepsIdsFilter = useSelector(getWorkflowStepsIdsFilter);
+  const tasksApiNamesFilter = useSelector(getWorkflowTasksApiNamesFilter);
   const statusFilter = useSelector(getWorkflowsStatus);
   const templatesIdsFilter = useSelector(getWorkflowTemplatesIdsFilter);
 
   const mustDisableFilter = !isArrayWithItems(templatesIdsFilter) || !canFilterByTemplateStep(statusFilter);
 
-  const groupedSteps: IGroupedStepsMap | null = useMemo(() => {
+  const groupedSteps: IGroupedTasksMap | null = useMemo(() => {
     if (selectedTemplates.length === 0) {
       return new Map();
     }
@@ -67,23 +68,23 @@ export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITe
       isSearchShown
       placeholderText={formatMessage({ id: 'workflows.filter-no-step' })}
       searchPlaceholder={formatMessage({ id: 'sorting.search-placeholder' })}
-      selectedOptions={stepsIdsFilter}
-      optionIdKey="id"
+      selectedOptions={tasksApiNamesFilter}
+      optionIdKey="apiName"
       optionLabelKey="name"
       options={[]}
       groupedOptions={groupedSteps}
       flatGroupedOptions={flatGroupedOptions}
-      onChange={(taskIds: number[]) => {
-        dispatch(setWorkflowsFilterSteps(taskIds));
+      onChange={(taskApiNames: string[]) => {
+        dispatch(setWorkflowsFilterTasks(taskApiNames));
       }}
       resetFilter={() => {
-        dispatch(setWorkflowsFilterSteps([]));
+        dispatch(setWorkflowsFilterTasks([]));
       }}
       Icon={TaskFilterIcon}
       renderPlaceholder={() =>
         getRenderPlaceholder({
           isDisabled: mustDisableFilter,
-          filterIds: stepsIdsFilter,
+          filterIds: tasksApiNamesFilter,
           options: flatGroupedOptions,
           formatMessage,
           type: ERenderPlaceholderType.Task,
@@ -93,6 +94,7 @@ export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITe
       }
       containerClassname={styles['filter-container']}
       arrowClassName={styles['header-filter__arrow']}
+      positionFixed={isMobile}
     />
   );
 }

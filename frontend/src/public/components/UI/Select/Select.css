@@ -25,6 +25,18 @@
   }
 }
 
+.dropdown-menu__position-fixed {
+  @media (--mobile) {
+    max-width: 27.5rem;
+  }
+}
+
+.dropdown-menu__position-fixed--select-menu {
+  @media (--mobile) {
+    margin-top: 2.6rem !important;
+  }
+}
+
 .dropdown-menu_search {
   width: 30.4rem;
 

@@ -22,6 +22,7 @@ export interface ISelectMenuProps<T extends string> {
   onChange(value: T): void;
   Icon?(props: React.SVGAttributes<SVGElement>): JSX.Element;
   isFromCheckIfConditions?: boolean;
+  positionFixed?: boolean;
 }
 
 export const SelectMenu = <T extends string>({
@@ -38,6 +39,7 @@ export const SelectMenu = <T extends string>({
   Icon,
   isFromCheckIfConditions,
   withRadio = false,
+  positionFixed = false,
 }: ISelectMenuProps<T>) => {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const getIntlId = (value: T) => `sorting.${value}`;
@@ -75,7 +77,15 @@ export const SelectMenu = <T extends string>({
 
         <ExpandIcon className={classnames(styles['expand-icon'], arrowClassName)} />
       </DropdownToggle>
-      <DropdownMenu className={classnames(styles['dropdown-menu'], menuClassName)}>
+      <DropdownMenu
+        className={classnames(
+          styles['dropdown-menu'],
+          menuClassName,
+          positionFixed && styles['dropdown-menu__position-fixed'],
+          positionFixed && styles['dropdown-menu__position-fixed--select-menu'],
+        )}
+        positionFixed={positionFixed}
+      >
         {(values as T[]).map((value) => {
           if (hideSelectedOption && value === activeValue) {
             return null;

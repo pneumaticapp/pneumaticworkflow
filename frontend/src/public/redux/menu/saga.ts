@@ -1,7 +1,7 @@
-/* eslint-disable */
-/* prettier-ignore */
-import { all, fork, put, select, takeEvery  } from 'redux-saga/effects';
+/* eslint-disable no-restricted-syntax */
+import { all, fork, put, select, takeEvery } from 'redux-saga/effects';
 
+import { PayloadAction } from '@reduxjs/toolkit';
 import { EMenuActions, mergeMenuItems, setMenuItemCounter } from './actions';
 import { getAuthUser } from '../selectors/user';
 import { generateMenuItems, createMenuCounter } from '../../utils/menu';
@@ -9,13 +9,8 @@ import { IMenuItem } from '../../types/menu';
 import { getTotalTasksCount } from '../selectors/tasks';
 import { getAccountPlan } from '../selectors/accounts';
 import { TMenuCounter } from '../../constants/menu';
-import {
-  EAccountsActions,
-  ETaskListActions,
-  TActiveUsersCountFetchFinished,
-  TChangeTasksCount,
-  TSetCurrentPlan,
-} from '../actions';
+import { EAccountsActions, TActiveUsersCountFetchFinished, TSetCurrentPlan } from '../actions';
+import { changeTasksCount } from '../tasks/slice';
 import { getTenantsCountStore } from '../selectors/tenants';
 
 export function* generateMenuSaga() {
@@ -32,7 +27,7 @@ export function* generateMenuSaga() {
   }
 }
 
-type TUpdateCounterAction = TChangeTasksCount | TActiveUsersCountFetchFinished | TSetCurrentPlan;
+type TUpdateCounterAction = PayloadAction<number> | TActiveUsersCountFetchFinished | TSetCurrentPlan;
 
 export function* updateCounterSaga(action: TUpdateCounterAction) {
   const tasksCount: ReturnType<typeof getTotalTasksCount> = yield select(getTotalTasksCount);
@@ -41,7 +36,7 @@ export function* updateCounterSaga(action: TUpdateCounterAction) {
 
   const getCounterByActionMap: { check(): boolean; getCounters(): TMenuCounter[] }[] = [
     {
-      check: () => action.type === ETaskListActions.ChangeTasksCount,
+      check: () => action.type === changeTasksCount.type,
       getCounters: () => [createMenuCounter('tasks', tasksCount, 'alert')].filter(Boolean) as TMenuCounter[],
     },
     {
@@ -58,7 +53,7 @@ export function* updateCounterSaga(action: TUpdateCounterAction) {
 
   const counters = getCounterByActionMap.find(({ check }) => check())?.getCounters() || [];
 
-  for (let counter of counters) {
+  for (const counter of counters) {
     yield put(setMenuItemCounter(counter));
   }
 }
@@ -69,11 +64,7 @@ export function* watchLoadMenu() {
 
 export function* watchUpdateCounter() {
   yield takeEvery(
-    [
-      ETaskListActions.ChangeTasksCount,
-      EAccountsActions.ActiveUsersCountFetchFinished,
-      EAccountsActions.SetCurrentPlan,
-    ],
+    [changeTasksCount.type, EAccountsActions.ActiveUsersCountFetchFinished, EAccountsActions.SetCurrentPlan],
     updateCounterSaga,
   );
 }
