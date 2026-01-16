@@ -7,31 +7,42 @@ import {
   setFilterPerformers as setWorkflowsFilterPerfomers,
   setFilterPerformersGroup as setWorkflowsFilterPerfomersGroup,
 } from '../../redux/workflows/slice';
+
 import { IGroup } from '../../redux/team/types';
-import { IApplicationState } from '../../types/redux';
 import { TUserListItem } from '../../types/user';
 import { ETemplateOwnerType } from '../../types/template';
 import { EWorkflowsStatus } from '../../types/workflow';
 
+import {
+  getWorkflowPerformersCounters,
+  getWorkflowPerformersGroupsIdsFilter,
+  getWorkflowPerformersIdsFilter,
+  getWorkflowsStatus,
+} from '../../redux/selectors/workflows';
+import { getGroups } from '../../redux/selectors/groups';
+import { getAccountsUsers } from '../../redux/selectors/accounts';
+
 import { getActiveUsers, getUserFullName } from '../../utils/users';
-
 import { Avatar, FilterSelect } from '../../components/UI';
-
-import styles from './WorkflowsLayout.css';
 import { PerformerFilterIcon } from '../../components/icons';
 import { ERenderPlaceholderType, getRenderPlaceholder } from './utils';
 import { canFilterByTemplateStep } from '../../utils/workflows/filters';
+import { useCheckDevice } from '../../hooks/useCheckDevice';
+
+import styles from './WorkflowsLayout.css';
 
 export function PerformerFilterSelect() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const { performersGroupIdsFilter, performersIdsFilter } = useSelector(
-    (state: IApplicationState) => state.workflows.workflowsSettings.values,
-  );
-  const groups: IGroup[] = useSelector((state: IApplicationState) => state.groups.list);
-  const { users }: { users: TUserListItem[] } = useSelector((state: IApplicationState) => state.accounts);
-  const { performersCounters } = useSelector((state: IApplicationState) => state.workflows.workflowsSettings.counters);
-  const { statusFilter } = useSelector((state: IApplicationState) => state.workflows.workflowsSettings.values);
+  const { isMobile } = useCheckDevice();
+
+  const performersGroupIdsFilter = useSelector(getWorkflowPerformersGroupsIdsFilter);
+  const performersIdsFilter = useSelector(getWorkflowPerformersIdsFilter);
+  const performersCounters = useSelector(getWorkflowPerformersCounters);
+  const statusFilter = useSelector(getWorkflowsStatus);
+  const groups: IGroup[] = useSelector(getGroups);
+  const users: TUserListItem[] = useSelector(getAccountsUsers);
+
   const mustDisableFilter = statusFilter === EWorkflowsStatus.Snoozed || statusFilter === EWorkflowsStatus.Completed;
 
   const performersCountersMap = useMemo(
@@ -129,6 +140,7 @@ export function PerformerFilterSelect() {
         }
         containerClassname={styles['filter-container']}
         arrowClassName={styles['header-filter__arrow']}
+        positionFixed={isMobile}
       />
     </div>
   );

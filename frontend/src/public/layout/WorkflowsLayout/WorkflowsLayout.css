@@ -38,7 +38,15 @@
   gap: 0.8rem;
 
   @media (--mobile) {
-    flex-wrap: unset;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    -ms-overflow-style: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   > * {

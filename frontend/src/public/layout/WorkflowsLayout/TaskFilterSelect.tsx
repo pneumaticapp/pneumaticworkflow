@@ -20,6 +20,7 @@ import {
   getWorkflowTasksApiNamesFilter,
   getWorkflowTemplatesIdsFilter,
 } from '../../redux/selectors/workflows';
+import { useCheckDevice } from '../../hooks/useCheckDevice';
 
 interface IGroupedTasksValue<TOption extends TOptionBase<'apiName', 'name'>> {
   title: string;
@@ -31,6 +32,7 @@ type IGroupedTasksMap = Map<number, IGroupedTasksValue<TOptionBase<'apiName', 'n
 export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITemplateFilterItem[] }) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
+  const { isMobile } = useCheckDevice();
 
   const tasksApiNamesFilter = useSelector(getWorkflowTasksApiNamesFilter);
   const statusFilter = useSelector(getWorkflowsStatus);
@@ -100,6 +102,7 @@ export function TaskFilterSelect({ selectedTemplates }: { selectedTemplates: ITe
       }
       containerClassname={styles['filter-container']}
       arrowClassName={styles['header-filter__arrow']}
+      positionFixed={isMobile}
     />
   );
 }

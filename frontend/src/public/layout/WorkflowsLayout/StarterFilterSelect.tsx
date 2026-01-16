@@ -18,10 +18,12 @@ import {
 } from '../../redux/selectors/workflows';
 import { getAccountsUsers } from '../../redux/selectors/accounts';
 import { canFilterByTemplateStep } from '../../utils/workflows/filters';
+import { useCheckDevice } from '../../hooks/useCheckDevice';
 
 export function StarterFilterSelect() {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
+  const { isMobile } = useCheckDevice();
 
   const workflowStartersIdsFilter = useSelector(getWorkflowStartersIdsFilter);
   const workflowStartersCounters = useSelector(getWorkflowStartersCounters);
@@ -83,6 +85,7 @@ export function StarterFilterSelect() {
             defaultPlaceholder: 'sorting.all-starters',
           })
         }
+        positionFixed={isMobile}
       />
     </div>
   );

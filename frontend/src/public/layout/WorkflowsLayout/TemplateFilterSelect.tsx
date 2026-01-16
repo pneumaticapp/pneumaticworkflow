@@ -12,12 +12,14 @@ import { FilterSelect } from '../../components/UI';
 import { FilterIcon } from '../../components/icons';
 import { ERenderPlaceholderType, getRenderPlaceholder } from './utils';
 import styles from './WorkflowsLayout.css';
+
 import {
   getWorkflowsStatus,
   getWorkflowTemplateListItems,
   getWorkflowTemplatesIdsFilter,
 } from '../../redux/selectors/workflows';
 import { canFilterByTemplateStep } from '../../utils/workflows/filters';
+import { useCheckDevice } from '../../hooks/useCheckDevice';
 
 export function TemplateFilterSelect() {
   const { formatMessage } = useIntl();
@@ -25,6 +27,8 @@ export function TemplateFilterSelect() {
   const templatesIdsFilter = useSelector(getWorkflowTemplatesIdsFilter);
   const filterTemplates = useSelector(getWorkflowTemplateListItems);
   const statusFilter = useSelector(getWorkflowsStatus);
+
+  const { isMobile } = useCheckDevice();
 
   const templatesOptions = useMemo(() => {
     return filterTemplates.map(({ count, ...rest }) => ({
@@ -69,6 +73,7 @@ export function TemplateFilterSelect() {
             defaultPlaceholder: 'sorting.all-templates',
           })
         }
+        positionFixed={isMobile}
       />
     </div>
   );
