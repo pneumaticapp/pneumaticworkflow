@@ -3,7 +3,6 @@ export * from './auth/actions';
 export * from './menu/actions';
 export * from './settings/actions';
 export * from './accounts/actions';
-export * from './workflows/actions';
 export * from './task/actions';
 export * from './templates/actions';
 export * from './template/actions';

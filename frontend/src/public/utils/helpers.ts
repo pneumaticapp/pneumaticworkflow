@@ -1,12 +1,10 @@
-/* eslint-disable */
-/* prettier-ignore */
-/* tslint:disable:max-file-line-count */
 import { RefObject } from 'react';
 import { diff } from 'deep-object-diff';
 
 import { EPayPeriod } from '../types/pricing';
 import { TAX_RATES } from '../constants/taxRates';
 import { NAVBAR_HEIGHT, MOBILE_NAVBAR_HEIGHT } from '../constants/defaultValues';
+
 const { MOBILE_MAX_WIDTH_BREAKPOINT } = require('../constants/breakpoints');
 
 export const isClient = (): boolean => typeof window !== 'undefined';
@@ -64,7 +62,7 @@ export function addValueInArrayByKey<T>(value: T, arr: T[], key: keyof T) {
 export function toggleValueInArray<T>(value: T, arr?: T[], key?: keyof T) {
   if (!arr) {
     return [value];
-  } else if (key) {
+  } if (key) {
     return findByKey<T, keyof T>(value, arr, key) ? removeFromArrayByKey<T, keyof T>(value, arr, key) : [...arr, value];
   }
 
@@ -80,15 +78,15 @@ export const DEFAULT_MAP_PROGRESS_COLOR: IProgressColorMap = {
 };
 
 export const calculateProgressColor = (percentage: number | undefined, colorMap?: IProgressColorMap) => {
-  let cMap = colorMap ? colorMap : DEFAULT_MAP_PROGRESS_COLOR;
+  const cMap = colorMap || DEFAULT_MAP_PROGRESS_COLOR;
 
   return Object.keys(cMap).reduce((acc, key) => {
     const colorKey = Number(key);
     if (percentage && percentage > colorKey) {
       return cMap[colorKey];
-    } else {
-      return acc;
-    }
+    } 
+    return acc;
+    
   }, cMap[0]);
 };
 
@@ -108,7 +106,6 @@ export function isArrayItemsNonEmpty<T>(items?: T[] | null): items is T[] {
   return Boolean(items.filter((x) => x).length);
 }
 
-// tslint:disable-next-line: no-any
 export function isEmptyArray(items: any) {
   return Array.isArray(items) && items.length === 0;
 }
@@ -174,7 +171,7 @@ export function findAncestor(el: Element, className: string) {
   return parent === el ? null : parent;
 }
 
-export const isObjectEmpty = (o?: object | null) => !Boolean(Object.keys(o || {}).length);
+export const isObjectEmpty = (o?: object | null) => !Object.keys(o || {}).length;
 export const isObjectChanged = (initialObject: object, newObject: object) => {
   return !isObjectEmpty(diff(initialObject, newObject));
 };
@@ -202,7 +199,6 @@ export const zip = <T, G>(array1: T[], array2: G[]) => {
   return array1.map((array1Value, array1Index) => [array1Value, array2[array1Index]] as const);
 };
 
-// tslint:disable-next-line: no-any
 export function flatten(arr: any[]) {
   return [].concat(...arr);
 }
@@ -227,7 +223,6 @@ export const getTruncatedText = (source: string, size = 50) => {
   return source.length > size ? `${source.slice(0, size - 1)}…` : source;
 };
 
-// tslint:disable-next-line: no-any
 export const getPairedArrayItems = (arr: any[]) => arr.slice(1).map((item, index) => [arr[index], item]);
 
 export const scrollToElement = (
@@ -241,13 +236,13 @@ export const scrollToElement = (
     let offset = element.offsetTop - elementTopOffset;
 
     try {
-      let bodyRect = document.body.getBoundingClientRect();
-      let bodyStyle = window.getComputedStyle(document.body, null);
+      const bodyRect = document.body.getBoundingClientRect();
+      const bodyStyle = window.getComputedStyle(document.body, null);
 
       // need to handle the padding for the top of the body
-      let paddingTop = parseFloat(bodyStyle.getPropertyValue('padding-top'));
+      const paddingTop = parseFloat(bodyStyle.getPropertyValue('padding-top'));
 
-      let elementRect = element.getBoundingClientRect();
+      const elementRect = element.getBoundingClientRect();
       offset = elementRect.top - paddingTop - bodyRect.top - elementTopOffset;
     } catch (err) {
       element.scrollIntoView({ behavior });
@@ -277,3 +272,25 @@ export const areObjectsEqual = (originalObj: object, updatedObj: object): boolea
 
   return isObjectEmpty(diffProps);
 };
+
+export function checkFilterDependenciesChanged(
+  changedFiltersRef: React.MutableRefObject<Set<string>>,
+  dependenciesRefs: Map<string, React.MutableRefObject<string>>,
+  dependencies: Record<string, string | number[]>,
+): boolean {
+  let hasChanges = false;
+  Object.entries(dependencies).forEach(([key, value]) => {
+    const ref = dependenciesRefs.get(key);
+    if (!ref) {
+      return;
+    }
+    const filterKey = typeof value === 'string' ? value : JSON.stringify(value);
+    if (ref.current !== filterKey) {
+      if (!hasChanges) {
+        hasChanges = true;
+      }
+      changedFiltersRef.current.add(key);
+    }
+  });
+  return hasChanges;
+}

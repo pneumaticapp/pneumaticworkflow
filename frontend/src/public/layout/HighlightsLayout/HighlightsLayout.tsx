@@ -3,7 +3,8 @@ import { useDispatch } from 'react-redux';
 
 import { TopNavContainer } from '../../components/TopNav';
 import { WorkflowModalContainer } from '../../components/Workflows/WorkflowModal';
-import { closeWorkflowLogPopup, loadHighlights } from '../../redux/actions';
+import { loadHighlights } from '../../redux/actions';
+import { closeWorkflowLogPopup } from '../../redux/workflows/slice';
 
 interface IHighlightsLayoutProps {
   children: React.ReactNode;

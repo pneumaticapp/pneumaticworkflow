@@ -3,21 +3,21 @@ import { connect } from 'react-redux';
 
 import { IApplicationState } from '../../types/redux';
 import {
-  setWorkflowsFilterStatus,
-  loadWorkflowsFilterTemplates,
-  setWorkflowsFilterTemplate,
   changeWorkflowsSorting,
-  setWorkflowsFilterPerfomers,
-  setWorkflowsFilterWorkflowStarters,
-  applyWorkflowsFilters,
-  loadWorkflowsFilterSteps,
-  setWorkflowsFilterSteps,
+  loadFilterTemplates as loadWorkflowsFilterTemplates,
+  loadFilterSteps as loadWorkflowsFilterSteps,
+  setFilterStatus as setWorkflowsFilterStatus,
+  setFilterTemplate as setWorkflowsFilterTemplate,
+  setFilterTemplateSteps as setWorkflowsFilterSteps,
+  setFilterPerformers as setWorkflowsFilterPerfomers,
+  setFilterPerformersGroup as setWorkflowsFilterPerfomersGroup,
+  setFilterWorkflowStarters as setWorkflowsFilterWorkflowStarters,
+  clearFilters as clearWorkflowsFilters,
+  applyFilters as applyWorkflowsFilters,
   updateCurrentPerformersCounters,
   updateWorkflowStartersCounters,
-  clearWorkflowsFilters,
   updateWorkflowsTemplateStepsCounters,
-  setWorkflowsFilterPerfomersGroup,
-} from '../../redux/workflows/actions';
+} from '../../redux/workflows/slice';
 import { getActiveUsers } from '../../utils/users';
 import { getIsUserSubsribed } from '../../redux/selectors/user';
 import { IWorkflowsFiltersProps } from './types';
