@@ -27,7 +27,6 @@ from src.processes.enums import (
     WorkflowStatus,
 )
 from src.processes.messages import workflow as messages
-from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.paginations import WorkflowListPagination
@@ -429,8 +428,6 @@ class WorkflowListFilterSerializer(
     template_id = serializers.CharField(required=False)
     template_task_api_name = serializers.CharField(required=False)
     fields = serializers.CharField(required=False)
-    # TODO Remove in https://my.pneumatic.app/workflows/36988/
-    template_task_id = serializers.CharField(required=False)
     current_performer = serializers.CharField(required=False)
     current_performer_group_ids = serializers.CharField(required=False)
     workflow_starter = serializers.CharField(required=False)
@@ -464,10 +461,6 @@ class WorkflowListFilterSerializer(
     def validate_fields(self, value):
         return self.get_valid_list_strings(value)
 
-    # TODO Remove in https://my.pneumatic.app/workflows/36988/
-    def validate_template_task_id(self, value):
-        return self.get_valid_list_integers(value)
-
     def validate_current_performer(self, value):
         return self.get_valid_list_integers(value)
 
@@ -483,15 +476,6 @@ class WorkflowListFilterSerializer(
         return clear_text if clear_text else None
 
     def validate(self, data):
-        # TODO Remove in https://my.pneumatic.app/workflows/36988/
-        template_task_ids = data.get('template_task_id')
-        if template_task_ids:
-            data['template_task_api_name'] = (
-                TaskTemplate.objects
-                .filter(id__in=template_task_ids)
-                .values_list('api_name', flat=True)
-            )
-        data.pop('template_task_id', None)
         status = data.get('status')
         current_performer = data.get('current_performer')
         current_performer_group_ids = data.get('current_performer_group_ids')

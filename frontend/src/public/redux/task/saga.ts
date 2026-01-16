@@ -11,6 +11,7 @@ import {
   actionChannel,
   takeLatest,
 } from 'redux-saga/effects';
+import { PayloadAction } from '@reduxjs/toolkit';
 import {
   ETaskActions,
   TLoadCurrentTask,
@@ -44,21 +45,15 @@ import { NotificationManager } from '../../components/UI/Notifications';
 import { history } from '../../utils/history';
 import { completeTask } from '../../api/completeTask';
 import { revertTask } from '../../api/revertTask';
-import {
-  ETaskListActions,
-  patchTaskInList,
-  setGeneralLoaderVisibility,
-  shiftTaskList,
-  TSendWorkflowLogComment,
-  usersFetchFinished,
-} from '../actions';
+import { setGeneralLoaderVisibility, usersFetchFinished } from '../actions';
+import { patchTaskInList, shiftTaskList, ETaskListActions } from '../tasks/slice';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getAuthUser, getUsers, getUserTimezone } from '../selectors/user';
 import { removeOutputFromLocalStorage } from '../../components/TaskCard/utils/storageOutputs';
 import { ETaskCardViewMode } from '../../components/TaskCard';
 import { deleteRemovedFilesFromFields } from '../../api/deleteRemovedFilesFromFields';
 import { TChannelAction } from '../tasks/saga';
-import { getCurrentTask, getTaskPerformers } from '../selectors/task';
+import { getCurrentTask, getTaskPerformers, getTaskStore } from '../selectors/task';
 import { addTaskPerformer } from '../../api/addTaskPerformer';
 import { removeTaskPerformer } from '../../api/removeTaskPerformer';
 import { addTaskPerformerGroup } from '../../api/addTaskPerformerGroup';
@@ -66,7 +61,7 @@ import { removeTaskPerformerGroup } from '../../api/removeTaskPerformerGroup';
 import { addTaskGuest } from '../../api/addTaskGuest';
 import { removeTaskGuest } from '../../api/removeTaskGuest';
 import { TUserListItem } from '../../types/user';
-import { getTaskStore } from '../selectors/workflows';
+
 import { EResponseStatuses } from '../../constants/defaultValues';
 import { getNormalizedTask, getTaskChecklist, getTaskChecklistItem } from '../../utils/tasks';
 import { markChecklistItem } from '../../api/markChecklistItem';
@@ -96,6 +91,7 @@ import { ETemplateOwnerType, RawPerformer } from '../../types/template';
 import { getTaskWorkflowLog } from '../../api/getTaskWorkflowLog';
 import { sendTaskComment } from '../../api/sendTaskComment';
 import { getWorkflowAddComputedPropsToRedux } from '../../components/Workflows/utils/getWorfkflowClientProperties';
+import { ISendWorkflowLogComment } from '../workflows/types';
 
 function* fetchTask({ payload: { taskId, viewMode } }: TLoadCurrentTask) {
   const {
@@ -219,7 +215,7 @@ function* loadTaskWorkflowLog({
   }
 }
 
-function* saveWorkflowLogComment({ payload: { text, attachments, taskId } }: TSendWorkflowLogComment) {
+function* saveWorkflowLogComment({ payload: { text, attachments, taskId } }: PayloadAction<ISendWorkflowLogComment>) {
   const {
     workflowLog: { items, workflowId: processId, sorting },
   }: ReturnType<typeof getTaskStore> = yield select(getTaskStore);

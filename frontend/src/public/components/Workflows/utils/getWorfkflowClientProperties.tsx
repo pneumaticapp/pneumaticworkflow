@@ -51,7 +51,7 @@ const getStepColor = (task: IWorkflowTaskClient, status: EWorkflowStatus): EProg
 
 export const getWorkflowAddComputedPropsToRedux = (workflow: IWorkflow): IWorkflowClient | IWorkflowDetailsClient => {
   let multipleTasksCount = 0;
-  const namesMultipleTasks: Record<string, string> = {};
+  const multipleTasksNamesByApiNames: Record<string, string> = {};
   const currentPerformersMap = new Map();
   let overdueTasksCount = 0;
   let oldestDeadline: number | null = null;
@@ -67,7 +67,7 @@ export const getWorkflowAddComputedPropsToRedux = (workflow: IWorkflow): IWorkfl
 
     if (newTask.status === EWorkflowTaskStatus.Active) {
       multipleTasksCount += 1;
-      namesMultipleTasks[newTask.apiName] = newTask.name;
+      multipleTasksNamesByApiNames[newTask.apiName] = newTask.name;
       newTask.performers.forEach((performer) => {
         currentPerformersMap.set(performer.sourceId, performer);
       });
@@ -99,7 +99,7 @@ export const getWorkflowAddComputedPropsToRedux = (workflow: IWorkflow): IWorkfl
 
   const completedTasks = formattedTasks.filter((task) => task.status === EWorkflowTaskStatus.Completed);
   const areMultipleTasks = Boolean(multipleTasksCount > 1);
-  const oneActiveTaskName = multipleTasksCount === 1 ? Object.values(namesMultipleTasks)[0] : null;
+  const oneActiveTaskName = multipleTasksCount === 1 ? Object.values(multipleTasksNamesByApiNames)[0] : null;
   const selectedUsers = Array.from(currentPerformersMap.values());
 
   const tasksCountWithoutSkipped = workflow.tasks.length;
@@ -112,7 +112,7 @@ export const getWorkflowAddComputedPropsToRedux = (workflow: IWorkflow): IWorkfl
     completedTasks,
 
     areMultipleTasks,
-    namesMultipleTasks,
+    multipleTasksNamesByApiNames,
     oneActiveTaskName,
     selectedUsers,
 
