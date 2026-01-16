@@ -40,28 +40,36 @@ describe('fetchBreakdownTasks', () => {
     };
 
     const fetchBreakdownTasksAction = loadBreakdownTasks({ templateId: 1 });
-    const mockTasks: IDashboardTask[] = [{
-      id: 1,
-      number: 1,
-      name: 'Task 1',
-      started: 1,
-      inProgress: 1,
-      overdue: 1,
-      completed: 1,
-    }];
-    jest.spyOn(templatesSaga, 'handleLoadTemplateVariables').mockImplementation(function* () { });
+    const mockTasks: IDashboardTask[] = [
+      {
+        id: 1,
+        apiName: 'task-1',
+        number: 1,
+        name: 'Task 1',
+        started: 1,
+        inProgress: 1,
+        overdue: 1,
+        completed: 1,
+      },
+    ];
+    jest.spyOn(templatesSaga, 'handleLoadTemplateVariables').mockImplementation(function* () {});
 
     // tslint:disable-next-line: no-any
-    return expectSaga(fetchBreakdownTasks as any, fetchBreakdownTasksAction)
-      .provide([
-        [matchers.select.selector(getIsAdmin), true],
-        [matchers.select.selector(getDashboardStore), mockDashboardStore],
-        [matchers.call.fn(getDashboardWorkflowsTasks), mockTasks],
-      ])
-      .withReducer(reducer, mockDashboardStore)
+    return (
+      expectSaga(fetchBreakdownTasks as any, fetchBreakdownTasksAction)
+        .provide([
+          [matchers.select.selector(getIsAdmin), true],
+          [matchers.select.selector(getDashboardStore), mockDashboardStore],
+          [matchers.call.fn(getDashboardWorkflowsTasks), mockTasks],
+        ])
+        .withReducer(reducer, mockDashboardStore)
 
-      // assert dispatch the following action
-      .put({ type: 'PATCH_DASHBOARD_BREAKDOWN_ITEM', payload: { templateId: 1, changedFields: { tasks: mockTasks } } })
-      .run();
+        // assert dispatch the following action
+        .put({
+          type: 'PATCH_DASHBOARD_BREAKDOWN_ITEM',
+          payload: { templateId: 1, changedFields: { tasks: mockTasks } },
+        })
+        .run()
+    );
   });
 });
