@@ -6,6 +6,7 @@ from src.notifications.tasks import (
     send_removed_task_notification,
 )
 from src.processes.models.templates.template import Template
+from src.processes.models.workflows.task import Task
 from src.processes.services.base import (
     BaseUpdateVersionService,
 )
@@ -27,42 +28,56 @@ UserModel = get_user_model()
 
 class WorkflowUpdateVersionService(BaseUpdateVersionService):
 
+    def _before_delete_task_actions(
+        self,
+        task: Task,
+    ):
+        recipients = list(
+            task
+            .taskperformer_set
+            .not_completed()
+            .exclude_directly_deleted()
+            .get_user_emails_and_ids_set(),
+        )
+        if recipients:
+            send_removed_task_notification.delay(
+                task_id=task.id,
+                task_data=task.get_data_for_list(),
+                recipients=recipients,
+                account_id=task.account_id,
+            )
+
+    def _delete_tasks(self, tasks_api_names: List[str]):
+        deleted_tasks = (
+            self.instance.tasks
+            .apd_status()
+            .exclude(api_name__in=tasks_api_names)
+            .order_by('id')
+        )
+        for task in deleted_tasks:
+            self._before_delete_task_actions(task)
+        deleted_tasks.delete()
+
     def _update_tasks_from_version(
         self,
         version: int,
         tasks_data: List[Dict],
     ):
         tasks_api_names = []
+        task_service = TaskUpdateVersionService(
+            user=self.user,
+            sync=self.sync,
+            auth_type=self.auth_type,
+            is_superuser=self.is_superuser,
+        )
         for data in tasks_data:
-            task_service = TaskUpdateVersionService(
-                user=self.user,
-                sync=self.sync,
-                auth_type=self.auth_type,
-                is_superuser=self.is_superuser,
-            )
             task_service.update_from_version(
                 workflow=self.instance,
                 version=version,
                 data=data,
             )
             tasks_api_names.append(data['api_name'])
-        deleted_tasks = self.instance.tasks.exclude(
-            api_name__in=tasks_api_names,
-        )
-        for deleted_task in deleted_tasks:
-            recipients = list(
-                deleted_task
-                .taskperformer_set
-                .not_completed()
-                .exclude_directly_deleted()
-                .get_user_emails_and_ids_set(),
-            )
-            send_removed_task_notification.delay(
-                task_id=deleted_task.id,
-                task_data=deleted_task.get_data_for_list(),
-                recipients=recipients,
-                account_id=deleted_task.account_id,
-            )
+        self._delete_tasks(tasks_api_names=tasks_api_names)
 
     def update_from_version(
         self,
