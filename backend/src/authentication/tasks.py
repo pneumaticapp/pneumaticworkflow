@@ -1,10 +1,16 @@
 import contextlib
+from typing import Union
 
 from celery import shared_task
 from django.conf import settings
 from slack import WebClient
 
 from src.accounts.models import Account, User
+from src.authentication.enums import (
+    OktaLogoutFormat,
+    OktaIssSubData,
+    OktaEmailSubData,
+)
 from src.authentication.services.exceptions import (
     AuthException,
 )
@@ -80,7 +86,11 @@ def update_google_contacts(user_id: int):
 
 
 @shared_task(ignore_result=True)
-def process_okta_logout(logout_token: str, request_data: dict):
+def process_okta_logout(
+    logout_token: str,
+    logout_format: OktaLogoutFormat.LITERALS,
+    data: Union[OktaIssSubData, OktaEmailSubData],
+):
     """
     Process Okta Back-Channel Logout request.
 
@@ -88,5 +98,9 @@ def process_okta_logout(logout_token: str, request_data: dict):
     1. Validates the logout_token (bearer token)
     2. Processes logout based on token type (iss_sub or email)
     """
-    service = OktaLogoutService(logout_token=logout_token)
-    service.process_logout(**request_data)
+    service = OktaLogoutService()
+    service.process_logout(
+        token=logout_token,
+        logout_format=logout_format,
+        data=data,
+    )

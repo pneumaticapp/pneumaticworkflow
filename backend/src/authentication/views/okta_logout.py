@@ -81,6 +81,7 @@ class OktaLogoutView(
             return self.response_ok()
         process_okta_logout.delay(
             logout_token=auth_header[1],
-            request_data=slz.validated_data,
+            logout_format=slz.validated_data['format'],
+            data=slz.validated_data['data'],
         )
         return self.response_ok()

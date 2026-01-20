@@ -384,12 +384,12 @@ class OktaLogoutSerializer(
     sub_id = serializers.DictField(required=True)
 
     def validate(self, data):
-        sub_id = data['sub_id']
+        sub_id_data = data['sub_id']
 
-        if 'format' not in sub_id:
+        if 'format' not in sub_id_data:
             raise serializers.ValidationError(MSG_AU_0020)
 
         return {
-            'format': sub_id['format'],
-            'sub_id_data': sub_id,
+            'format': sub_id_data['format'],
+            'data': sub_id_data,
         }
