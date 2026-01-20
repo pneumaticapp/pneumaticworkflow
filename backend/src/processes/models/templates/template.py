@@ -4,7 +4,6 @@ from typing import Dict, Optional
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import JSONField
-from django.contrib.postgres.search import SearchVectorField
 from django.core.exceptions import (
     ObjectDoesNotExist,
 )
@@ -98,8 +97,6 @@ class Template(
     )
     system_template_id = models.IntegerField(null=True)
     objects = BaseSoftDeleteManager.from_queryset(TemplateQuerySet)()
-
-    search_content = SearchVectorField(null=True)
 
     date_updated = models.DateTimeField(auto_now=True, null=True)
     updated_by = models.ForeignKey(

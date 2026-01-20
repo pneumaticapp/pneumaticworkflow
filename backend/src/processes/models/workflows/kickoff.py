@@ -1,7 +1,6 @@
 # ruff: noqa: PLC0415
 from typing import Any, Dict
 
-from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 from django.db.models import Q, UniqueConstraint
 
@@ -35,7 +34,6 @@ class KickoffValue(
         blank=True,
         help_text='Does not contains markdown',
     )
-    search_content = SearchVectorField(null=True)
     objects = BaseSoftDeleteManager()
 
     def _update_field(self, template: Dict[str, Any]):

@@ -1192,7 +1192,6 @@ class TemplateListQuery(
             pt.is_public,
             pt.is_embedded,
             pt.type,
-            pt.search_content,
             {self.get_workflows_select()}
             COUNT(DISTINCT ptt.id) as tasks_count
 

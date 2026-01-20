@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 
 from src.generics.managers import BaseSoftDeleteManager
@@ -61,7 +60,6 @@ class TaskField(
         on_delete=models.CASCADE,
         related_name='fields',
     )
-    search_content = SearchVectorField(null=True)
     objects = BaseSoftDeleteManager.from_queryset(TaskFieldQuerySet)()
 
 
