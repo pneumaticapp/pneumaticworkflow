@@ -45,11 +45,16 @@ export const getRenderPlaceholder = ({
     return selectedOption?.name || `${formatMessage({ id: 'sorting.unknown-filter-value' })} ${type}`;
   }
 
+  if (type === ERenderPlaceholderType.Starter && !selectedOption) {
+    return `${formatMessage({ id: 'sorting.unknown-filter-value' })} ${type}`;
+  }
+
   if (
     type === ERenderPlaceholderType.Starter ||
     (type === ERenderPlaceholderType.Performer && filterType === 'userType')
   ) {
     return getUserFullName(selectedOption);
   }
+
   return formatMessage({ id: defaultPlaceholder });
 };
