@@ -184,24 +184,25 @@ class OktaLogoutService:
         cache_key = f'{self.CACHE_KEY_PREFIX}_{sub}'
         user_id = self.cache.get(cache_key)
 
-        if user_id:
-            try:
-                return UserModel.objects.get(
-                    id=user_id,
-                    status=UserStatus.ACTIVE,
-                )
-            except ObjectDoesNotExist:
-                capture_sentry_message(
-                    message=f'Cached user not found: {user_id}',
-                    level=SentryLogLevel.WARNING,
-                )
-                self.cache.delete(cache_key)
+        if not user_id:
+            capture_sentry_message(
+                message=f'User not found by sub: {sub}',
+                level=SentryLogLevel.WARNING,
+            )
+            raise ObjectDoesNotExist(f'User not found by sub: {sub}')
 
-        capture_sentry_message(
-            message=f'User not found by sub: {sub}',
-            level=SentryLogLevel.WARNING,
-        )
-        raise ObjectDoesNotExist(f'User not found by sub: {sub}')
+        try:
+            return UserModel.objects.get(
+                id=user_id,
+                status=UserStatus.ACTIVE,
+            )
+        except ObjectDoesNotExist as ex:
+            capture_sentry_message(
+                message=f'Cached user not found: {user_id}',
+                level=SentryLogLevel.WARNING,
+            )
+            self.cache.delete(cache_key)
+            raise ObjectDoesNotExist(f'User not found by sub: {sub}') from ex
 
     def _get_user_by_email(self, email: str) -> UserModel:
         """Get user by email."""

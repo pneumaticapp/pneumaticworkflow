@@ -38,10 +38,8 @@ def test_logout_okta__valid_data__ok(
     assert response.status_code == 204
     process_okta_logout_mock.assert_called_once_with(
         logout_token=logout_token,
-        request_data={
-            'format': sub_id_data['format'],
-            'sub_id_data': sub_id_data,
-        },
+        logout_format=sub_id_data['format'],
+        data=sub_id_data,
     )
 
 
@@ -262,8 +260,6 @@ def test_logout_okta__email_format__ok(
     assert response.status_code == 204
     process_okta_logout_mock.assert_called_once_with(
         logout_token=logout_token,
-        request_data={
-            'format': sub_id_data['format'],
-            'sub_id_data': sub_id_data,
-        },
+        logout_format=sub_id_data['format'],
+        data=sub_id_data,
     )
