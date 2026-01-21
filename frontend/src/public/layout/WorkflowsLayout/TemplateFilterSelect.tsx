@@ -42,7 +42,6 @@ export function TemplateFilterSelect() {
       <FilterSelect
         isMultiple
         isSearchShown
-        noValueLabel={formatMessage({ id: 'sorting.all-templates' })}
         placeholderText={formatMessage({ id: 'sorting.no-template-found' })}
         searchPlaceholder={formatMessage({ id: 'sorting.search-placeholder' })}
         selectedOptions={templatesIdsFilter}

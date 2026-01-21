@@ -59,7 +59,6 @@ export function StarterFilterSelect() {
       <FilterSelect
         isMultiple
         isSearchShown
-        noValueLabel={formatMessage({ id: 'sorting.all-starters' })}
         placeholderText={formatMessage({ id: 'workflows.filter-no-starter' })}
         searchPlaceholder={formatMessage({ id: 'sorting.search-placeholder' })}
         selectedOptions={workflowStartersIdsFilter}

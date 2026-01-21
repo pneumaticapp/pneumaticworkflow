@@ -80,14 +80,15 @@
   display: flex;
   align-items: center;
   width: 100%;
+  gap: 0.8rem;
 }
 
 .dropdown-item-content__text {
   overflow: hidden;
-  max-width: 100%;
+  min-width: 0;
   white-space: nowrap;
   text-overflow: ellipsis;
-
+  flex: 1 1 0;
   > * {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -106,9 +107,8 @@
 }
 
 .dropdown-item-content__count {
-  margin-left: auto;
-  padding: 0 0 0 1.2rem;
   display: flex;
+  flex-shrink: 0;
   min-width: 2rem;
   height: 2rem;
   font-size: 1.1rem;
@@ -118,7 +118,7 @@
   color: var(--pneumatic-color-black48);
   border-radius: 1.2rem;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 .dropdown-item__text_stub {
