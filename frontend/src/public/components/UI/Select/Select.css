@@ -118,7 +118,7 @@
   color: var(--pneumatic-color-black48);
   border-radius: 1.2rem;
   align-items: center;
-  justify-content: end;
+  justify-content: flex-end;
 }
 
 .dropdown-item__text_stub {
