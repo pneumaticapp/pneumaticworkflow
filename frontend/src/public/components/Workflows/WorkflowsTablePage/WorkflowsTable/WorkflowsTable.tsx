@@ -88,7 +88,6 @@ export function WorkflowsTable({
   performersIdsFilter,
   performersCounters,
   statusFilter,
-  setTasksFilter,
   onSearch,
   loadWorkflowsList,
   removeWorkflowFromList,
@@ -141,12 +140,6 @@ export function WorkflowsTable({
   useEffect(() => {
     debounceOnSearch(searchQuery);
   }, [searchQuery]);
-
-  useEffect(() => {
-    if (workflowsLoadingStatus === EWorkflowsLoadingStatus.EmptyList && tasksApiNamesFilter.length) {
-      setTasksFilter([]);
-    }
-  }, [workflowsLoadingStatus]);
 
   useEffect(() => {
     if (!tableRef.current) return undefined;

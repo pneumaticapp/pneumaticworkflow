@@ -18,7 +18,7 @@ import styles from './TuneViewModal.css';
 import { TooltipRichContent } from '../TemplateEdit/TooltipRichContent';
 import { TSystemField } from '../Workflows/WorkflowsTablePage/WorkflowsTable/types';
 import { getIsTuneViewModalOpen, getSavedFields, getWorkflowTemplatesIdsFilter } from '../../redux/selectors/workflows';
-import { getTemplateTasks, getVariables } from '../../redux/selectors/templates';
+import { getTemplatesTasks, getTemplatesVariables } from '../../redux/selectors/templates';
 
 export function TuneViewModal() {
   const dispatch = useDispatch();
@@ -32,9 +32,9 @@ export function TuneViewModal() {
 
   const templateId = templatesIdsFilter[0];
 
-  const templateTasks: TTransformedTask[] = useSelector(getTemplateTasks(templateId));
+  const templateTasks: TTransformedTask[] = useSelector(getTemplatesTasks(templateId));
   const savedFields = useSelector(getSavedFields);
-  const variables = useSelector(getVariables(templateId));
+  const variables = useSelector(getTemplatesVariables(templateId));
 
   useEffect(() => {
     if (isOpen && templateId) {
@@ -145,7 +145,9 @@ export function TuneViewModal() {
               <div className={STYLES.taskTitle}>
                 <Tooltip
                   interactive={false}
-                  content={<TooltipRichContent title={taskName} subtitle={taskName} variables={variables} hideTitle />}
+                  content={
+                    <TooltipRichContent title={taskName} subtitle={taskName} variables={variables || []} hideTitle />
+                  }
                 >
                   {needSteName ? (
                     <div>
