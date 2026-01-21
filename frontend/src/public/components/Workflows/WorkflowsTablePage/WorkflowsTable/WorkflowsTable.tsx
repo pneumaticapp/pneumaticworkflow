@@ -81,7 +81,6 @@ export function WorkflowsTable({
   performersIdsFilter,
   performersCounters,
   statusFilter,
-  setStepsFilter,
   onSearch,
   loadWorkflowsList,
   removeWorkflowFromList,
@@ -134,12 +133,6 @@ export function WorkflowsTable({
   useEffect(() => {
     debounceOnSearch(searchQuery);
   }, [searchQuery]);
-
-  useEffect(() => {
-    if (workflowsLoadingStatus === EWorkflowsLoadingStatus.EmptyList && stepsIdsFilter.length) {
-      setStepsFilter([]);
-    }
-  }, [workflowsLoadingStatus]);
 
   useEffect(() => {
     if (!tableRef.current) return undefined;

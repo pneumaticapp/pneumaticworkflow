@@ -54,9 +54,7 @@ export const WorkflowsGridPage = function Workflows({
   workflowsList: { count, items },
   templatesFilter,
   searchText,
-  stepsIdsFilter,
   onSearch,
-  setStepsFilter,
   loadWorkflowsList,
   openWorkflowLogPopup,
   openSelectTemplateModal,
@@ -66,12 +64,6 @@ export const WorkflowsGridPage = function Workflows({
   const { formatMessage } = useIntl();
   const { searchQuery, handleSearch } = useSearchWithDebounce(searchText, onSearch);
   const [isRunningNewWorkflow, setIsRunningNewWorkflow] = useState(false);
-
-  React.useEffect(() => {
-    if (workflowsLoadingStatus === EWorkflowsLoadingStatus.EmptyList && stepsIdsFilter.length) {
-      setStepsFilter([]);
-    }
-  }, [workflowsLoadingStatus]);
 
   const handleOpenPopup = (workflowId: number) => () => {
     openWorkflowLogPopup({ workflowId, shouldSetWorkflowDetailUrl: true, redirectTo404IfNotFound: true });
