@@ -14,7 +14,6 @@ export * from './Loader';
 export * from './SideModal';
 export * from './Typeography/Header';
 export * from './Typeography/SectionTitle';
-export * from './Filter';
 export * from './Placeholder';
 export * from './Tabs';
 export * from './Modal';
