@@ -1,4 +1,4 @@
-import { all, call, fork, put, select, takeEvery } from 'redux-saga/effects';
+import { all, call, fork, put, select, takeEvery, race, take } from 'redux-saga/effects';
 import uniqBy from 'lodash.uniqby';
 
 import {
@@ -38,7 +38,6 @@ import { LIMIT_LOAD_SYSTEMS_TEMPLATES, LIMIT_LOAD_TEMPLATES, varibleIdRegex } fr
 import { SYSTEM_FIELDS } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { isRequestCanceled } from '../../utils/isRequestCanceled';
-import { templateFilterRequestsAbortControllers } from '../workflows/saga';
 
 function* fetchTemplatesSystem() {
   try {
@@ -123,35 +122,42 @@ function* fetchSortingTemplatesList() {
 
 export function* handleLoadTemplateVariables(templateId: number) {
   const abortController = new AbortController();
-  const keyAbortController = `${templateId}__variables`;
-  templateFilterRequestsAbortControllers.set(keyAbortController, abortController);
 
   try {
     yield put(loadTemplateVariablesSuccess({ templateId, variables: [] }));
-    const { kickoff, tasks }: TGetTemplateFieldsResponse = yield call(
-      getTemplateFields,
-      String(templateId),
-      abortController.signal,
-    );
-    const variables = getVariables({ kickoff, tasks });
 
-    yield put(loadTemplateVariablesSuccess({ templateId, variables }));
-    const transformedTasks: TTransformedTask[] = [
-      ...[{ apiName: '-2', name: 'System', needSteName: null, fields: SYSTEM_FIELDS }],
-      ...(kickoff.fields.length > 0 ? [{ apiName: '-1', name: 'Kick-off', fields: kickoff.fields }] : []),
-      ...tasks
-        .filter((task) => task.fields.length > 0)
-        .map((task) => {
-          if (varibleIdRegex.test(task.name)) {
-            return {
-              ...task,
-              needSteName: true,
-            };
-          }
-          return task;
-        }),
-    ];
-    yield put(saveTemplateTasks({ templateId, transformedTasks }));
+    const { result, clear } = yield race({
+      result: call(getTemplateFields, String(templateId), abortController.signal),
+      clear: take('workflows/cancelTemplateFilterRequests'),
+    });
+
+    if (clear) {
+      abortController.abort();
+      return;
+    }
+
+    if (result) {
+      const { kickoff, tasks }: TGetTemplateFieldsResponse = result;
+      const variables = getVariables({ kickoff, tasks });
+
+      yield put(loadTemplateVariablesSuccess({ templateId, variables }));
+      const transformedTasks: TTransformedTask[] = [
+        ...[{ apiName: '-2', name: 'System', needSteName: null, fields: SYSTEM_FIELDS }],
+        ...(kickoff.fields.length > 0 ? [{ apiName: '-1', name: 'Kick-off', fields: kickoff.fields }] : []),
+        ...tasks
+          .filter((task) => task.fields.length > 0)
+          .map((task) => {
+            if (varibleIdRegex.test(task.name)) {
+              return {
+                ...task,
+                needSteName: true,
+              };
+            }
+            return task;
+          }),
+      ];
+      yield put(saveTemplateTasks({ templateId, transformedTasks }));
+    }
   } catch (error) {
     if (isRequestCanceled(error)) {
       return;
@@ -159,9 +165,7 @@ export function* handleLoadTemplateVariables(templateId: number) {
     logger.info('fetch template fields error: ', error);
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
-    if (templateFilterRequestsAbortControllers.get(keyAbortController) === abortController) {
-      templateFilterRequestsAbortControllers.delete(keyAbortController);
-    }
+    abortController.abort();
   }
 }
 

@@ -11,6 +11,7 @@ import {
   take,
   takeLeading,
   cancelled,
+  race,
 } from 'redux-saga/effects';
 import { EventChannel } from 'redux-saga';
 
@@ -177,7 +178,6 @@ import { ALL_SYSTEM_FIELD_NAMES } from '../../components/Workflows/WorkflowsTabl
 import { TUserListItem } from '../../types/user';
 import { isRequestCanceled } from '../../utils/isRequestCanceled';
 
-export const templateFilterRequestsAbortControllers = new Map<string, AbortController>();
 let currentPerformersCountersAbortController: AbortController | null = null;
 let templateTasksCountersAbortController: AbortController | null = null;
 
@@ -327,30 +327,30 @@ function* fetchWorkflowsList({ payload: offset = 0 }: PayloadAction<number>) {
 
   if (shouldGetPresets) {
     const abortController = new AbortController();
-    const keyAbortController = `${currentTemplateId}__presets`;
-    templateFilterRequestsAbortControllers.set(keyAbortController, abortController);
 
     try {
       shouldResetFields = true;
-      const presets: TGetTemplatePresetsResponse = yield call(
-        getTemplatePresets,
-        String(currentTemplateId),
-        abortController.signal,
-      );
-      yield put(setWorkflowsPresetsRedux(presets));
 
-      newSelectedFields = getCorrectPresetFields(presets);
-      yield put(setWorkflowsFilterSelectedFields(newSelectedFields));
-      yield put(setLastLoadedTemplateId(String(currentTemplateId)));
+      const { result, clear } = yield race({
+        result: call(getTemplatePresets, String(currentTemplateId), abortController.signal),
+        clear: take(cancelTemplateFilterRequests.type),
+      });
+
+      if (clear) {
+        abortController.abort();
+      } else if (result) {
+        const presets: TGetTemplatePresetsResponse = result;
+        yield put(setWorkflowsPresetsRedux(presets));
+        newSelectedFields = getCorrectPresetFields(presets);
+        yield put(setWorkflowsFilterSelectedFields(newSelectedFields));
+        yield put(setLastLoadedTemplateId(String(currentTemplateId)));
+      }
     } catch (error) {
-      if (isRequestCanceled(error)) {
-        return;
+      if (!isRequestCanceled(error)) {
+        console.error('fetchWorkflowsList: Failed to load fields for template', currentTemplateId, ':', error);
       }
-      console.error('fetchWorkflowsList: Failed to load fields for template', currentTemplateId, ':', error);
     } finally {
-      if (templateFilterRequestsAbortControllers.get(keyAbortController) === abortController) {
-        templateFilterRequestsAbortControllers.delete(keyAbortController);
-      }
+      abortController.abort();
     }
   } else if (shouldGetAllDefaultFields) {
     shouldResetFields = true;
@@ -670,18 +670,26 @@ export function* fetchFilterSteps({
   payload: { templateId, onAfterLoaded },
 }: PayloadAction<TLoadWorkflowsFilterStepsPayload>) {
   const abortController = new AbortController();
-  const keyAbortController = `${templateId}__tasks`;
-  templateFilterRequestsAbortControllers.set(keyAbortController, abortController);
 
   try {
-    const [steps]: [ITemplateStep[]] = yield all([
-      call(getTemplateSteps, { id: templateId, signal: abortController.signal }),
-      handleLoadTemplateVariables(templateId),
-    ]);
+    const { result, clear } = yield race({
+      result: all([
+        call(getTemplateSteps, { id: templateId, signal: abortController.signal }),
+        handleLoadTemplateVariables(templateId),
+      ]),
+      clear: take(cancelTemplateFilterRequests.type),
+    });
 
-    yield put(loadWorkflowsFilterStepsSuccess({ templateId, steps }));
+    if (clear) {
+      abortController.abort();
+      return;
+    }
 
-    onAfterLoaded?.(steps);
+    if (result) {
+      const [steps]: [ITemplateStep[]] = result;
+      yield put(loadWorkflowsFilterStepsSuccess({ templateId, steps }));
+      onAfterLoaded?.(steps);
+    }
   } catch (error) {
     if (isRequestCanceled(error)) {
       return;
@@ -690,19 +698,8 @@ export function* fetchFilterSteps({
     logger.info('fetch tasks filter steps error : ', error);
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
-    if (templateFilterRequestsAbortControllers.get(keyAbortController) === abortController) {
-      templateFilterRequestsAbortControllers.delete(keyAbortController);
-    }
+    abortController.abort();
   }
-}
-
-function* cancelTemplateFilterRequestsSaga() {
-  templateFilterRequestsAbortControllers.forEach((controller) => {
-    controller.abort();
-  });
-  templateFilterRequestsAbortControllers.clear();
-
-  yield;
 }
 
 export function* updateCurrentPerformersCountersSaga() {
@@ -1062,10 +1059,6 @@ export function* watchLoadFilterSteps() {
   yield takeEvery(loadFilterSteps.type, fetchFilterSteps);
 }
 
-export function* watchCancelTemplateFilterRequests() {
-  yield takeEvery(cancelTemplateFilterRequests.type, cancelTemplateFilterRequestsSaga);
-}
-
 export function* watchCancelCurrentPerformersCounters() {
   yield takeEvery(cancelCurrentPerformersCounters.type, cancelCurrentPerformersCountersSaga);
 }
@@ -1145,7 +1138,6 @@ export function* rootSaga() {
     fork(watchCreateReactionComment),
     fork(watchDeleteReactionComment),
     fork(watchSaveWorkflowsPreset),
-    fork(watchCancelTemplateFilterRequests),
     fork(watchCancelCurrentPerformersCounters),
     fork(watchCancelTemplateTasksCounters),
   ]);
