@@ -10,12 +10,29 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(sql="DROP TRIGGER IF EXISTS update_process_fileattachment_search_content ON processes_fileattachment"),
         migrations.RunSQL(sql="DROP TRIGGER IF EXISTS update_process_workflow_search_content ON processes_workflow"),
+        migrations.RunSQL(sql="DROP TRIGGER IF EXISTS workflow_ins ON processes_workflow"),
+        migrations.RunSQL(sql="DROP TRIGGER IF EXISTS workflow_insert ON processes_workflow"),
+
+        migrations.RunSQL(sql="DROP TRIGGER IF EXISTS update_process_fileattachment_search_content ON processes_fileattachment"),
+        migrations.RunSQL(sql="DROP TRIGGER IF EXISTS fileattachment_ins ON processes_fileattachment"),
+        migrations.RunSQL(sql="DROP TRIGGER IF EXISTS processes_fileattachment_ins ON processes_fileattachment"),
+
+        migrations.RunSQL(sql="DROP TRIGGER IF EXISTS processes_workflowevent_ins ON processes_workflowevent"),
         migrations.RunSQL(sql="DROP TRIGGER IF EXISTS update_process_workflowevent_search_content ON processes_workflowevent"),
+        migrations.RunSQL(sql="DROP TRIGGER IF EXISTS workflow_insert ON processes_workflowevent"),
+
+        migrations.RunSQL(sql="DROP TRIGGER IF EXISTS kickoffvalue_ins ON processes_kickoffvalue"),
         migrations.RunSQL(sql="DROP TRIGGER IF EXISTS update_processes_kickoffvalue_search_content ON processes_kickoffvalue"),
+
         migrations.RunSQL(sql="DROP TRIGGER IF EXISTS update_processes_task_search_content ON processes_task"),
+        migrations.RunSQL(sql="DROP TRIGGER IF EXISTS task_insert ON processes_task"),
+        migrations.RunSQL(sql="DROP TRIGGER IF EXISTS tasks_ins ON processes_task"),
+
         migrations.RunSQL(sql="DROP TRIGGER IF EXISTS update_processes_taskfield_search_content ON processes_taskfield"),
+        migrations.RunSQL(sql="DROP TRIGGER IF EXISTS taskfield_ins ON processes_taskfield"),
+        migrations.RunSQL(sql="DROP TRIGGER IF EXISTS workflow_ins ON processes_taskfield"),
+
         migrations.RemoveField(
             model_name='fileattachment',
             name='search_content',

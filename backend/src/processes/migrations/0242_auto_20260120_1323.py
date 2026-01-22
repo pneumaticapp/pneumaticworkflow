@@ -137,7 +137,7 @@ class Migration(migrations.Migration):
             $BODY$ LANGUAGE plpgsql;
         """),
         migrations.RunSQL(sql="""
-            CREATE TRIGGER workflow_insert AFTER INSERT OR UPDATE ON processes_workflowevent 
+            CREATE TRIGGER workflowevent_insert AFTER INSERT OR UPDATE ON processes_workflowevent 
             FOR EACH ROW 
             WHEN (new.type = 5)
             EXECUTE FUNCTION create_workflowevent_search_content()
