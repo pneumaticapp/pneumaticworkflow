@@ -8,7 +8,6 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.event import WorkflowEvent
-from src.processes.models.templates.system_template import SystemTemplate
 
 
 class SearchContent(
@@ -40,11 +39,6 @@ class SearchContent(
     )
     task = models.ForeignKey(
         Task,
-        on_delete=models.CASCADE,
-        null=True,
-    )
-    sys_template = models.ForeignKey(
-        SystemTemplate,
         on_delete=models.CASCADE,
         null=True,
     )

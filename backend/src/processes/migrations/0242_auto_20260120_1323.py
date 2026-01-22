@@ -19,13 +19,12 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('is_deleted', models.BooleanField(default=False)),
-                ('content', django.contrib.postgres.search.SearchVectorField(blank=True, null=True)),
                 ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='accounts.Account')),
                 ('event', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='processes.WorkflowEvent')),
-                ('sys_template', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='processes.SystemTemplate')),
                 ('task', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='processes.Task')),
                 ('task_field', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='processes.TaskField')),
                 ('workflow', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='processes.Workflow')),
+                ('content', django.contrib.postgres.search.SearchVectorField(blank=True, null=True)),
             ],
             options={
                 'ordering': ['id'],
@@ -34,6 +33,113 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='searchcontent',
-            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('workflow', 'task', 'sys_template', 'event', 'task_field'), name='processes_search_content_unique'),
+            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('workflow', 'task', 'event', 'task_field'), name='processes_search_content_unique'),
         ),
+
+        # processes_workflow search content (workflow name has weight "A" )
+        migrations.RunSQL(sql="""
+            CREATE OR REPLACE FUNCTION create_workflow_search_content()
+            RETURNS trigger AS 
+            $BODY$
+                BEGIN
+                INSERT INTO processes_search_content (
+                    is_deleted, account_id, event_id, task_id, task_field_id, workflow_id, content
+                )
+                VALUES (
+                    FALSE, new.account_id, NULL, NULL, NULL, new.id, setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'A')
+                )
+                ON CONFLICT (event_id, task_id, task_field_id, workflow_id)
+                DO UPDATE SET content = setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'A');
+                RETURN new;
+            END;
+            $BODY$ LANGUAGE plpgsql;
+        """),
+        migrations.RunSQL(sql="""
+             CREATE TRIGGER workflow_insert AFTER INSERT OR UPDATE ON processes_workflow 
+             FOR EACH ROW EXECUTE FUNCTION create_workflow_search_content()
+        """),
+
+        # processes_task search content (task name has weight "D", task description has weight "B")
+        migrations.RunSQL("""
+            CREATE OR REPLACE FUNCTION create_task_search_content()
+            RETURNS trigger AS 
+            $BODY$
+                BEGIN
+                INSERT INTO processes_search_content (
+                    is_deleted, account_id, event_id, task_id, task_field_id, workflow_id, content
+                )
+                VALUES (
+                    FALSE, new.account_id, NULL, new.id, NULL, new.workflow_id, (
+                        setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.description)), 'B') ||
+                        setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'D')
+                    )
+                )
+                ON CONFLICT (event_id, task_id, task_field_id, workflow_id)
+                DO UPDATE SET content = (
+                    setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.description)), 'B') ||
+                    setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'D')
+                );
+                RETURN new;
+            END;
+            $BODY$ LANGUAGE plpgsql;
+        """),
+            migrations.RunSQL(sql="""
+             CREATE TRIGGER task_insert AFTER INSERT OR UPDATE ON processes_task 
+             FOR EACH ROW EXECUTE FUNCTION create_task_search_content()
+        """),
+
+        # processes_taskfield search content (kickoff field value has weight "B", task field value has weight "C" )
+        migrations.RunSQL(sql="""
+            CREATE OR REPLACE FUNCTION create_taskfield_search_content()
+            RETURNS trigger AS 
+            $BODY$
+                BEGIN
+                INSERT INTO processes_search_content (
+                    is_deleted, account_id, event_id, task_id, task_field_id, workflow_id, content
+                )
+                VALUES (                
+                    FALSE, NULL, NULL, new.task_id, new.id, new.workflow_id, 
+                    CASE
+                        WHEN new.kickoff_id IS NOT NULL THEN setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.value)), 'B')
+                        ELSE setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.value)), 'C')
+                    END
+                )
+                ON CONFLICT (event_id, task_id, task_field_id, workflow_id)
+                DO UPDATE SET content = CASE
+                    WHEN new.kickoff_id IS NOT NULL THEN setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.value)), 'B')
+                    ELSE setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.value)), 'C')
+                END;
+                RETURN new;
+            END;
+            $BODY$ LANGUAGE plpgsql;
+        """),
+        migrations.RunSQL(sql="""
+             CREATE TRIGGER workflow_ins AFTER INSERT OR UPDATE ON processes_taskfield
+             FOR EACH ROW EXECUTE FUNCTION create_taskfield_search_content()
+        """),
+
+        # processes_workflowevent search content (event with type "comment" text has weight "D" )
+        migrations.RunSQL(sql="""
+            CREATE OR REPLACE FUNCTION create_workflowevent_search_content()
+            RETURNS trigger AS
+            $BODY$
+                BEGIN
+                INSERT INTO processes_search_content (
+                    is_deleted, account_id, event_id, task_id, task_field_id, workflow_id, content
+                )
+                VALUES (
+                    FALSE, new.account_id, new.id, new.task_id, NULL, new.workflow_id, setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.text)), 'D')
+                )
+                ON CONFLICT (event_id, task_id, task_field_id, workflow_id)
+                DO UPDATE SET content =  setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.text)), 'D');
+                RETURN new;
+            END;
+            $BODY$ LANGUAGE plpgsql;
+        """),
+        migrations.RunSQL(sql="""
+            CREATE TRIGGER workflow_insert AFTER INSERT OR UPDATE ON processes_workflowevent 
+            FOR EACH ROW 
+            WHEN (new.type = 5)
+            EXECUTE FUNCTION create_workflowevent_search_content()
+        """),
     ]
