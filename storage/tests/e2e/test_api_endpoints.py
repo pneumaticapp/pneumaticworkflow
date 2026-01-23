@@ -1,8 +1,9 @@
 from unittest.mock import MagicMock
-
+from datetime import datetime, timezone
 import pytest
 
 from src.shared_kernel.exceptions import DomainFileNotFoundError
+from src.domain.entities.file_record import FileRecord
 
 
 class TestAPIEndpoints:
@@ -176,6 +177,65 @@ class TestAPIEndpoints:
 
         # Assert
         assert response.status_code == 403
+
+    def test_download_endpoint__owner_access__return_file_content(
+        self,
+        e2e_client,
+        mock_auth_middleware,
+        mock_http_client,
+        mock_storage_service,
+        auth_headers,
+        mock_download_response,
+        mock_download_use_case_get_metadata,
+        mock_download_use_case_get_stream,
+    ):
+        """Owner has access even if permission check fails."""
+        # Arrange
+        file_record, _ = mock_download_response
+        mock_download_use_case_get_metadata.return_value = file_record
+        mock_download_use_case_get_stream.return_value = _
+        mock_http_client.check_file_permission.return_value = False
+
+        # Act
+        response = e2e_client.get('/test-file-id', headers=auth_headers)
+
+        # Assert
+        assert response.status_code == 200
+        mock_download_use_case_get_metadata.assert_called_once()
+        mock_download_use_case_get_stream.assert_called_once()
+        mock_http_client.check_file_permission.assert_not_called()
+
+    def test_download_endpoint__non_owner_no_permission__return_403(
+        self,
+        e2e_client,
+        mock_auth_middleware,
+        mock_http_client,
+        auth_headers,
+        mock_download_use_case_get_metadata,
+        mock_download_use_case_get_stream,
+    ):
+        """Test download endpoint - non-owner without permission gets 403."""
+        # Arrange
+        file_record = FileRecord(
+            file_id='test-file-id',
+            filename='test_file.txt',
+            content_type='text/plain',
+            size=12,
+            user_id=999,
+            account_id=1,
+            created_at=datetime.now(timezone.utc),
+        )
+        mock_download_use_case_get_metadata.return_value = file_record
+        mock_http_client.check_file_permission.return_value = False
+
+        # Act
+        response = e2e_client.get('/test-file-id', headers=auth_headers)
+
+        # Assert
+        assert response.status_code == 403
+        mock_download_use_case_get_metadata.assert_called_once()
+        mock_download_use_case_get_stream.assert_not_called()
+        mock_http_client.check_file_permission.assert_called_once()
 
     @pytest.mark.parametrize(
         ('filename', 'content', 'content_type'),

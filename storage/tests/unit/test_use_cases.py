@@ -128,12 +128,69 @@ class TestDownloadFileUseCase:
     """Test DownloadFileUseCase."""
 
     @pytest.mark.asyncio
-    async def test_download_file__valid_query__return_file_and_stream(
+    async def test_get_metadata__valid_query__return_file_record(
         self,
         mock_storage_service,
         mock_repository,
     ):
-        """Test successful file download."""
+        """Test get_metadata returns file record without loading stream."""
+        # Arrange
+        query = DownloadFileQuery(file_id='test-file-id', user_id=1)
+
+        file_record = FileRecord(
+            file_id='test-file-id',
+            filename='test.txt',
+            content_type='text/plain',
+            size=12,
+            user_id=1,
+            account_id=1,
+            created_at=datetime.now(timezone.utc),
+        )
+
+        mock_repository.get_by_id.return_value = file_record
+
+        use_case = DownloadFileUseCase(
+            file_repository=mock_repository,
+            storage_service=mock_storage_service,
+        )
+
+        # Act
+        result = await use_case.get_metadata(query)
+
+        # Assert
+        assert result == file_record
+        mock_repository.get_by_id.assert_called_once_with('test-file-id')
+        mock_storage_service.get_storage_path.assert_not_called()
+        mock_storage_service.download_file.assert_not_called()
+
+    @pytest.mark.asyncio
+    async def test_get_metadata__file_not_found__raise_file_not_found_error(
+        self,
+        mock_storage_service,
+        mock_repository,
+    ):
+        """Test get_metadata with file not found."""
+        # Arrange
+        query = DownloadFileQuery(file_id='missing-file-id', user_id=1)
+
+        mock_repository.get_by_id.return_value = None
+
+        use_case = DownloadFileUseCase(
+            file_repository=mock_repository,
+            storage_service=mock_storage_service,
+        )
+
+        # Act & Assert
+        with pytest.raises(DomainFileNotFoundError):
+            await use_case.get_metadata(query)
+
+    @pytest.mark.asyncio
+    async def test_get_stream__valid_query__return_stream(
+        self,
+        mock_storage_service,
+        mock_repository,
+    ):
+        """Test get_stream returns file stream."""
         # Arrange
         query = DownloadFileQuery(file_id='test-file-id', user_id=1)
 
@@ -166,12 +223,10 @@ class TestDownloadFileUseCase:
         )
 
         # Act
-        result_file_record, result_stream = await use_case.execute(query)
+        result_stream = await use_case.get_stream(query)
 
         # Assert
-        assert result_file_record == file_record
         assert result_stream is not None
-
         mock_repository.get_by_id.assert_called_once_with('test-file-id')
         mock_storage_service.download_file.assert_called_once_with(
             bucket_name='test-bucket',
@@ -179,12 +234,12 @@ class TestDownloadFileUseCase:
         )
 
     @pytest.mark.asyncio
-    async def test_download_file__file_not_found__raise_file_not_found_error(
+    async def test_get_stream__file_not_found__raise_file_not_found_error(
         self,
         mock_storage_service,
         mock_repository,
     ):
-        """Test download with file not found."""
+        """Test get_stream with file not found."""
         # Arrange
         query = DownloadFileQuery(file_id='missing-file-id', user_id=1)
 
@@ -197,4 +252,4 @@ class TestDownloadFileUseCase:
 
         # Act & Assert
         with pytest.raises(DomainFileNotFoundError):
-            await use_case.execute(query)
+            await use_case.get_stream(query)

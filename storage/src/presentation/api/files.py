@@ -1,6 +1,5 @@
 """File API endpoints."""
 
-from collections.abc import AsyncGenerator
 from typing import Annotated
 
 from fastapi import (
@@ -106,28 +105,34 @@ async def download_file(
     Returns:
         StreamingResponse: File stream with appropriate headers.
 
+    Raises:
+        FileAccessDeniedError: If access is denied.
     """
-    # Check file access permissions (fail fast)
-    has_access = await http_client.check_file_permission(
-        user=current_user,
-        file_id=file_id,
-    )
-    if not has_access:
-        user_id = current_user.user_id or 0  # Fallback for anonymous users
-        raise FileAccessDeniedError(file_id, user_id)
-
     query = DownloadFileQuery(
         file_id=file_id,
         user_id=current_user.user_id,
     )
-    file_record, file_stream = await use_case.execute(query)
 
-    async def file_streamer() -> AsyncGenerator[bytes, None]:
-        async for chunk in file_stream:
-            yield chunk
+    # Get file metadata first (fail fast, without loading the stream)
+    file_record = await use_case.get_metadata(query)
+
+    # Check file owner (optimization: owner always has access)
+    is_owner = file_record.user_id == current_user.user_id
+
+    if not is_owner:
+        # Check permissions only for non-owners (saves backend request)
+        has_access = await http_client.check_file_permission(
+            user=current_user,
+            file_id=file_id,
+        )
+        if not has_access:
+            raise FileAccessDeniedError(file_id, current_user.user_id)
+
+    # Load the file stream only if access is granted
+    file_stream = await use_case.get_stream(query)
 
     return StreamingResponse(
-        file_streamer(),
+        file_stream,
         media_type=file_record.content_type,
         headers={
             'Content-Disposition': (

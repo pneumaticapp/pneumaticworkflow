@@ -30,17 +30,35 @@ class DownloadFileUseCase:
         self._file_repository = file_repository
         self._storage_service = storage_service
 
-    async def execute(
-        self,
-        query: DownloadFileQuery,
-    ) -> tuple[FileRecord, AsyncIterator[bytes]]:
-        """Execute file download with file info.
+    async def get_metadata(self, query: DownloadFileQuery) -> FileRecord:
+        """Get file metadata without loading the stream (fail fast).
 
         Args:
             query: File download query.
 
         Returns:
-            Tuple[FileRecord, AsyncIterator[bytes]]: File info and byte stream.
+            FileRecord: File metadata.
+
+        Raises:
+            DomainFileNotFoundError: If file not found.
+
+        """
+        file_record = await self._file_repository.get_by_id(query.file_id)
+        if not file_record:
+            raise DomainFileNotFoundError(query.file_id)
+        return file_record
+
+    async def get_stream(
+            self,
+            query: DownloadFileQuery,
+    ) -> AsyncIterator[bytes]:
+        """Get file stream after permissions are verified.
+
+        Args:
+            query: File download query.
+
+        Returns:
+            AsyncIterator[bytes]: File byte stream.
 
         Raises:
             DomainFileNotFoundError: If file not found.
@@ -58,9 +76,7 @@ class DownloadFileUseCase:
         )
 
         # Stream file from S3
-        stream = self._storage_service.download_file(
+        return self._storage_service.download_file(
             bucket_name=bucket_name,
             file_path=file_path,
         )
-
-        return file_record, stream

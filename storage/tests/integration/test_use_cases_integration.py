@@ -180,7 +180,8 @@ class TestDownloadFileUseCaseIntegration:
         ).return_value = mock_s3_client
 
         # Act
-        result_file_record, result_stream = await use_case.execute(query)
+        result_file_record = await use_case.get_metadata(query)
+        result_stream = await use_case.get_stream(query)
 
         # Assert
         assert result_file_record is not None
@@ -214,4 +215,4 @@ class TestDownloadFileUseCaseIntegration:
 
         # Act & Assert
         with pytest.raises(DomainFileNotFoundError):
-            await use_case.execute(query)
+            await use_case.get_metadata(query)
