@@ -11,12 +11,12 @@ export const getTemplatesSystemList = (state: IApplicationState): ITemplatesSyst
 
 export const getTemplatesIntegrationsStats = (state: IApplicationState) => state.templates.templatesIntegrationsStats;
 
-export const getTemplateTasks =
+export const getTemplatesTasks =
   (templateId: number) =>
     (state: IApplicationState): TTransformedTask[] =>
-      state.templates.templatesTasksMap[templateId] || [];
+      state.templates.templatesTasksMap[templateId];
 
-export const getVariables =
+export const getTemplatesVariables =
   (templateId: number) =>
     (state: IApplicationState): TTaskVariable[] =>
-      state.templates.templatesVariablesMap[templateId] || [];
+      state.templates.templatesVariablesMap[templateId];

@@ -948,7 +948,7 @@ export const enMessages = {
   'sorting.profile': 'Profile',
   'sorting.settings': 'Settings',
   'sorting.show-all': 'Show all',
-  'sorting.unknown-filter-value': 'unknown',
+  'sorting.unknown-filter-value': 'Unknown',
   'sorting.all-templates': 'All templates',
   'sorting.all-starters': 'All starters',
   'sorting.all-performers': 'All performers',

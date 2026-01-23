@@ -80,6 +80,7 @@ export function WorkflowsLayoutComponent({
   const workflowsMainRef = useRef<HTMLDivElement>(null);
   const tableViewContainerRef = useRef<TableViewContainerRef>(null);
   const loadingTaskRef = useRef<Set<number>>(new Set());
+  const prevTemplatesIdsRef = useRef<number[]>(templatesIdsFilter);
 
   const prevStatusFilterRef = useRef<string>(EWorkflowsStatus.Running);
   const prevSortingRef = useRef<string>(EWorkflowsSorting.DateDesc);
@@ -114,13 +115,15 @@ export function WorkflowsLayoutComponent({
       ]),
     [],
   );
+
   const isFirstRenderRef = useRef(true);
 
-  const selectedTemplates: ITemplateFilterItem[] = useMemo(() => {
-    const filterTemplatesMap: Map<number, ITemplateFilterItem> = new Map(
-      filterTemplates.map((template) => [template.id, template]),
-    );
+  const filterTemplatesMap: Map<number, ITemplateFilterItem> = useMemo(
+    () => new Map(filterTemplates.map((template) => [template.id, template])),
+    [filterTemplates],
+  );
 
+  const selectedTemplates: ITemplateFilterItem[] = useMemo(() => {
     return templatesIdsFilter
       .map((templateId) => filterTemplatesMap.get(templateId))
       .filter(Boolean) as ITemplateFilterItem[];
@@ -174,18 +177,21 @@ export function WorkflowsLayoutComponent({
   }, [workflowsView]);
 
   useEffect(() => {
-    if (templatesIdsFilter.length === 0) {
-      setTasksFilter([]);
-      return;
-    }
+    const prevTemplatesIds = prevTemplatesIdsRef.current;
+    const currentTemplatesIdsSet = new Set(templatesIdsFilter);
+    const removedTemplateIds = prevTemplatesIds.filter((id) => !currentTemplatesIdsSet.has(id));
 
-    const currentTemplateTaskApiNamesSet = new Set(
-      selectedTemplates.flatMap((template) => template.steps.map((step) => step.apiName)),
+    const removedTemplatesTaskApiNames = new Set(
+      removedTemplateIds.flatMap((removedId) => {
+        const template = filterTemplatesMap.get(removedId);
+        return template?.steps.map((step) => step.apiName) || [];
+      }),
     );
-    const prevTemplatesActualTaskApiNames =
-      currentTemplateTaskApiNamesSet.size === 0
-        ? tasksApiNamesFilter
-        : tasksApiNamesFilter.filter((apiName) => currentTemplateTaskApiNamesSet.has(apiName));
+
+    const filteredTaskApiNames =
+      removedTemplateIds.length > 0
+        ? tasksApiNamesFilter.filter((apiName) => !removedTemplatesTaskApiNames.has(apiName))
+        : tasksApiNamesFilter;
 
     selectedTemplates.forEach((template) => {
       const hasTasks = template.steps.length > 0;
@@ -199,12 +205,13 @@ export function WorkflowsLayoutComponent({
       }
     });
 
-    const allNewTemplatesTasksLoaded = selectedTemplates.every((template) => template.steps.length > 0);
+    const allSelectedTemplatesTasksLoaded = selectedTemplates.every((template) => template.steps.length > 0);
 
-    if (allNewTemplatesTasksLoaded) {
-      setTasksFilter(prevTemplatesActualTaskApiNames);
+    if (allSelectedTemplatesTasksLoaded) {
+      setTasksFilter(filteredTaskApiNames);
     }
-  }, [templatesIdsFilter, selectedTemplates, statusFilter]);
+    prevTemplatesIdsRef.current = templatesIdsFilter;
+  }, [templatesIdsFilter, selectedTemplates, statusFilter, filterTemplatesMap]);
 
   useEffect(() => {
     loadTemplatesTitles();
