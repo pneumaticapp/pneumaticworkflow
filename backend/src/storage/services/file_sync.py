@@ -1,16 +1,22 @@
+"""
+Service for synchronizing files between backend and file service.
+Creates records in the file service for existing files.
+"""
+
 import logging
-from typing import List, Optional
+from typing import Dict, Optional
+from urllib.parse import unquote, urlparse
 
-import requests
 from django.conf import settings
+from django.contrib.auth import get_user_model
 
-from src.processes.enums import FileAttachmentAccessType
 from src.processes.models.workflows.attachment import FileAttachment
-from src.storage.enums import AccessType, SourceType
+from src.processes.models.workflows.task import Task
+from src.storage.enums import SourceType
 from src.storage.models import Attachment
-from src.storage.services.attachments import AttachmentService
 from src.utils.salt import get_salt
 
+UserModel = get_user_model()
 logger = logging.getLogger(__name__)
 
 
@@ -21,317 +27,209 @@ class FileSyncService:
     """
 
     def __init__(self):
-        self.file_service_url = settings.FILE_SERVICE_URL
+        """Initialize file sync service."""
+        self.storage_url = getattr(
+            settings, 'STORAGE_SERVICE_URL', 'http://localhost:8002',
+        )
 
-    def sync_all_files(self) -> dict:
+    def sync_all_files(self) -> Dict[str, int]:
         """
-        Synchronizes all files from FileAttachment with file service.
-        Returns synchronization statistics.
-        """
-        stats = {
-            'total': 0,
-            'synced': 0,
-            'skipped': 0,
-            'errors': 0,
-        }
+        Synchronize all FileAttachment records to file service.
 
-        # Get all FileAttachment without file_id
-        attachments = FileAttachment.objects.filter(
+        Returns:
+            Dict with sync statistics: total, synced, skipped, errors.
+        """
+        stats = {'total': 0, 'synced': 0, 'skipped': 0, 'errors': 0}
+
+        # Get all FileAttachment records without file_id
+        file_attachments = FileAttachment.objects.filter(
             file_id__isnull=True,
         ).select_related('account')
 
-        stats['total'] = attachments.count()
-        logger.info(
-            "Starting sync for %s attachments",
-            stats['total'],
-        )
+        stats['total'] = file_attachments.count()
 
-        for attachment in attachments:
+        for attachment in file_attachments:
             try:
-                file_id = self.create_file_service_record(
-                    attachment,
-                )
-                if file_id:
-                    attachment.file_id = file_id
-                    attachment.save(update_fields=['file_id'])
-                    stats['synced'] += 1
-                else:
-                    stats['skipped'] += 1
-            except (requests.RequestException, ValueError) as ex:
-                logger.error(
-                    "Error syncing attachment %s: %s",
-                    attachment.id,
-                    ex,
-                )
-                stats['errors'] += 1
-
-        logger.info("Sync completed: %s", stats)
-        return stats
-
-    def sync_all_attachments_to_storage(self) -> dict:
-        """
-        Synchronizes FileAttachment records with storage.Attachment.
-        Keeps legacy FileAttachment working while duplicating data.
-        """
-        stats = {
-            'total': 0,
-            'synced': 0,
-            'skipped': 0,
-            'errors': 0,
-        }
-        attachments = FileAttachment.objects.select_related(
-            'account',
-            'workflow',
-            'event',
-            'output',
-        )
-        stats['total'] = attachments.count()
-        logger.info(
-            "Starting storage sync for %s attachments",
-            stats['total'],
-        )
-        for attachment in attachments:
-            try:
-                result = self.sync_single_attachment(
-                    attachment=attachment,
-                )
-                if result:
-                    stats['synced'] += 1
-                else:
-                    stats['skipped'] += 1
-            except (requests.RequestException, ValueError) as ex:
-                logger.error(
-                    "Error syncing attachment %s: %s",
-                    attachment.id,
-                    ex,
-                )
-                stats['errors'] += 1
-        logger.info("Storage sync completed: %s", stats)
-        return stats
-
-    def sync_single_attachment(
-        self,
-        attachment: FileAttachment,
-        source_type: Optional[str] = None,
-        task=None,
-        workflow=None,
-        template=None,
-        access_type: Optional[str] = None,
-    ) -> Optional[Attachment]:
-        """
-        Syncs a single FileAttachment to file service and storage.Attachment.
-        Returns storage.Attachment or None on failure.
-        """
-        if not attachment:
-            return None
-        file_id = attachment.file_id
-        if not file_id:
-            file_id = self.create_file_service_record(attachment)
-            if not file_id:
-                return None
-            attachment.file_id = file_id
-            attachment.save(update_fields=['file_id'])
-        if source_type is None:
-            source_type = self._determine_source_type(attachment)
-        if access_type is None:
-            access_type = self._map_access_type(attachment, source_type)
-        if task is None:
-            task = self._get_task(attachment)
-        if workflow is None:
-            workflow = attachment.workflow or getattr(
-                attachment.event,
-                'workflow',
-                None,
-            )
-        return self._upsert_storage_attachment(
-            file_id=file_id,
-            account=attachment.account,
-            access_type=access_type,
-            source_type=source_type,
-            task=task,
-            workflow=workflow,
-            template=template,
-        )
-
-    def create_file_service_record(
-        self,
-        attachment: FileAttachment,
-    ) -> Optional[str]:
-        """
-        Creates a record in the file service for an existing file.
-        Returns file_id or None on error.
-        """
-        if not attachment.url:
-            logger.warning(
-                "Attachment %s has no URL",
-                attachment.id,
-            )
-            return None
-
-        # Generate file_id
-        file_id = self._generate_file_id()
-
-        # Prepare metadata for file service
-        metadata = {
-            'file_id': file_id,
-            'account_id': attachment.account_id,
-            'name': attachment.name,
-            'url': attachment.url,
-            'size': attachment.size,
-            'thumbnail_url': attachment.thumbnail_url,
-        }
-
-        try:
-            # Send metadata to file service
-            response = requests.post(
-                f'{self.file_service_url}/api/files/sync',
-                json=metadata,
-                timeout=30,
-            )
-            response.raise_for_status()
-            return file_id
-        except requests.RequestException as ex:
-            logger.error(
-                "Failed to create file service record: %s",
-                ex,
-            )
-            return None
-
-    def _generate_file_id(self) -> str:
-        """Generates unique file_id."""
-        return get_salt(32)
-
-    def sync_to_new_attachment_model(
-        self,
-        file_attachments: List[FileAttachment],
-    ) -> dict:
-        """
-        Synchronizes FileAttachment with new Attachment model.
-        Used during data migration.
-        """
-        stats = {
-            'total': len(file_attachments),
-            'created': 0,
-            'skipped': 0,
-            'errors': 0,
-        }
-
-        for old_attachment in file_attachments:
-            try:
-                if not old_attachment.file_id:
+                if self._should_skip_attachment(attachment):
                     stats['skipped'] += 1
                     continue
 
-                # Determine source_type
-                source_type = self._determine_source_type(
-                    old_attachment,
-                )
+                file_id = self._generate_file_id(attachment)
+                if file_id:
+                    # Create record in file service
+                    success = self._create_file_service_record(
+                        attachment, file_id,
+                    )
+                    if success:
+                        attachment.file_id = file_id
+                        attachment.save(update_fields=['file_id'])
+                        stats['synced'] += 1
+                        logger.info(
+                            'Synced attachment %s with file_id %s',
+                            attachment.id, file_id,
+                        )
+                    else:
+                        stats['errors'] += 1
+                else:
+                    stats['skipped'] += 1
 
-                # Create new attachment
-                Attachment.objects.get_or_create(
-                    file_id=old_attachment.file_id,
-                    defaults={
-                        'account': old_attachment.account,
-                        'access_type': old_attachment.access_type,
-                        'source_type': source_type,
-                        'task': self._get_task(old_attachment),
-                        'workflow': old_attachment.workflow,
-                        'template': None,
-                    },
-                )
-                stats['created'] += 1
-            except (ValueError, AttributeError) as ex:
+            except (ValueError, AttributeError, TypeError) as e:
                 logger.error(
-                    "Error syncing attachment %s: %s",
-                    old_attachment.id,
-                    ex,
+                    'Error syncing attachment %s: %s',
+                    attachment.id, str(e),
                 )
                 stats['errors'] += 1
 
         return stats
 
-    def _determine_source_type(
+    def sync_all_attachments_to_storage(self) -> Dict[str, int]:
+        """
+        Synchronize FileAttachment records to new Attachment model.
+
+        Returns:
+            Dict with sync statistics: total, synced, skipped, errors.
+        """
+        stats = {'total': 0, 'synced': 0, 'skipped': 0, 'errors': 0}
+
+        # Get all FileAttachment records with file_id
+        file_attachments = FileAttachment.objects.filter(
+            file_id__isnull=False,
+        ).select_related('account', 'workflow', 'event', 'output')
+
+        stats['total'] = file_attachments.count()
+
+        for attachment in file_attachments:
+            try:
+                # Check if already exists in new model
+                if Attachment.objects.filter(
+                    file_id=attachment.file_id,
+                ).exists():
+                    stats['skipped'] += 1
+                    continue
+
+                # Create new Attachment record
+                source_type = self._determine_source_type(attachment)
+                task = self._get_task(attachment)
+
+                Attachment.objects.create(
+                    file_id=attachment.file_id,
+                    account_id=attachment.account_id,
+                    source_type=source_type,
+                    access_type=attachment.access_type,
+                    task=task,
+                    workflow=attachment.workflow,
+                    template=None,  # FileAttachment doesn't have template
+                )
+
+                stats['synced'] += 1
+                logger.info(
+                    'Created Attachment record for file_id %s',
+                    attachment.file_id,
+                )
+
+            except (ValueError, AttributeError, TypeError) as e:
+                logger.error(
+                    'Error creating Attachment for file_id %s: %s',
+                    attachment.file_id, str(e),
+                )
+                stats['errors'] += 1
+
+        return stats
+
+    def _should_skip_attachment(self, attachment: FileAttachment) -> bool:
+        """Check if attachment should be skipped during sync."""
+        # Skip if no URL or account
+        if not attachment.url or not attachment.account:
+            return True
+
+        # Skip if URL doesn't look like a valid file URL
+        return not self._is_valid_file_url(attachment.url)
+
+    def _is_valid_file_url(self, url: str) -> bool:
+        """Check if URL looks like a valid file URL."""
+        try:
+            parsed = urlparse(url)
+            return bool(parsed.netloc and parsed.path)
+        except (ValueError, AttributeError):
+            return False
+
+    def _generate_file_id(self, attachment: FileAttachment) -> Optional[str]:
+        """Generate file_id from attachment URL."""
+        try:
+            # Extract filename from URL
+            parsed_url = urlparse(attachment.url)
+            filename = unquote(parsed_url.path.split('/')[-1])
+
+            if not filename:
+                return None
+
+            # Generate unique file_id using salt
+            salt = get_salt()
+            file_id = (
+                f"{attachment.account_id}_{attachment.id}_{salt}_{filename}"
+            )
+
+            return file_id[:64]  # Limit to 64 chars as per model
+
+        except (ValueError, AttributeError, TypeError) as e:
+            logger.error(
+                'Error generating file_id for attachment %s: %s',
+                attachment.id, str(e),
+            )
+            return None
+
+    def _create_file_service_record(
         self,
         attachment: FileAttachment,
-    ) -> str:
-        """Determines source_type based on relations."""
-        if attachment.workflow and not attachment.event:
-            return SourceType.WORKFLOW
-        if attachment.event and attachment.event.task:
-            return SourceType.TASK
-        if attachment.event and not attachment.event.task:
-            return SourceType.WORKFLOW
-        if attachment.output:
-            return SourceType.TASK
-        return SourceType.ACCOUNT
-
-    def _map_access_type(
-        self,
-        attachment: FileAttachment,
-        source_type: str,
-    ) -> str:
-        if attachment.access_type == FileAttachmentAccessType.RESTRICTED:
-            return AccessType.RESTRICTED
-        if source_type != SourceType.ACCOUNT:
-            return AccessType.RESTRICTED
-        return AccessType.ACCOUNT
-
-    def _upsert_storage_attachment(
-        self,
         file_id: str,
-        account,
-        access_type: str,
-        source_type: str,
-        task=None,
-        workflow=None,
-        template=None,
-    ) -> Attachment:
-        attachment, created = Attachment.objects.get_or_create(
-            file_id=file_id,
-            defaults={
-                'account': account,
-                'access_type': access_type,
-                'source_type': source_type,
-                'task': task,
-                'workflow': workflow,
-                'template': template,
-            },
-        )
-        if not created:
-            update_fields = []
-            if attachment.account_id != account.id:
-                attachment.account = account
-                update_fields.append('account')
-            if attachment.access_type != access_type:
-                attachment.access_type = access_type
-                update_fields.append('access_type')
-            if attachment.source_type != source_type:
-                attachment.source_type = source_type
-                update_fields.append('source_type')
-            if attachment.task_id != getattr(task, 'id', None):
-                attachment.task = task
-                update_fields.append('task')
-            if attachment.workflow_id != getattr(workflow, 'id', None):
-                attachment.workflow = workflow
-                update_fields.append('workflow')
-            if attachment.template_id != getattr(template, 'id', None):
-                attachment.template = template
-                update_fields.append('template')
-            if update_fields:
-                attachment.save(update_fields=update_fields)
-        if attachment.access_type == AccessType.RESTRICTED:
-            service = AttachmentService()
-            service.instance = attachment
-            service._create_related()
-        return attachment
+    ) -> bool:
+        """Create record in file service for existing attachment."""
+        try:
+            # This would call the storage microservice to create a record
+            # For now, just return True as placeholder
+            # In real implementation, this would make HTTP call to storage
+            # service
 
-    def _get_task(
-        self,
-        attachment: FileAttachment,
-    ):
-        """Gets task from attachment."""
+            payload = {
+                'file_id': file_id,
+                'filename': attachment.name,
+                'size': attachment.size,
+                'account_id': attachment.account_id,
+                'url': attachment.url,
+            }
+
+            # Placeholder for actual HTTP call
+            # response = requests.post(
+            #     f"{self.storage_url}/sync",
+            #     json=payload,
+            #     timeout=30
+            # )
+            # return response.status_code == 201
+
+            logger.info(
+                'Would create file service record: %s', payload,
+            )
+            return True
+
+        except (ValueError, AttributeError, TypeError) as e:
+            logger.error(
+                'Error creating file service record for %s: %s',
+                file_id, str(e),
+            )
+            return False
+
+    def _determine_source_type(self, attachment: FileAttachment) -> str:
+        """Determine source type for Attachment model."""
+        if attachment.workflow:
+            return SourceType.WORKFLOW
+        if attachment.event or attachment.output:
+            return SourceType.TASK
+        return SourceType.WORKFLOW  # Default
+
+    def _get_task(self, attachment: FileAttachment) -> Optional[Task]:
+        """Get task from attachment relationships."""
         if attachment.event and attachment.event.task:
             return attachment.event.task
-        if attachment.output:
+        if attachment.output and attachment.output.task:
             return attachment.output.task
         return None

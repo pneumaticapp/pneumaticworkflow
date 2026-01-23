@@ -1,6 +1,6 @@
 """Authentication services."""
 
-from typing import ClassVar
+from typing import Any, ClassVar
 
 from src.shared_kernel.auth.public_token import EmbedToken, PublicToken
 from src.shared_kernel.auth.redis_client import get_redis_client
@@ -9,8 +9,8 @@ from src.shared_kernel.auth.redis_client import get_redis_client
 class PublicAuthService:
     """Public authentication service."""
 
-    HEADER_PREFIX = 'Token'
-    HEADER_PARTS = 2
+    HEADER_PREFIX: str = 'Token'
+    HEADER_PARTS: int = 2
     TOKEN_TYPES: ClassVar[list[type[PublicToken | EmbedToken]]] = [
         PublicToken,
         EmbedToken,
@@ -44,7 +44,7 @@ class PublicAuthService:
     async def authenticate_public_token(
         cls,
         token: PublicToken | EmbedToken,
-    ) -> dict | None:
+    ) -> dict[str, Any] | None:
         """Authenticate public token."""
         if not token:
             return None

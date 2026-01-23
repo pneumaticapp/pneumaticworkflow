@@ -200,23 +200,29 @@ class AttachmentService(BaseModelService):
 
             # Determine source_type and relations
             if isinstance(source, Task):
-                attachment_data.update({
-                    'source_type': SourceType.TASK,
-                    'task': source,
-                    'access_type': AccessType.RESTRICTED,
-                })
+                attachment_data.update(
+                    {
+                        'source_type': SourceType.TASK,
+                        'task': source,
+                        'access_type': AccessType.RESTRICTED,
+                    },
+                )
             elif isinstance(source, Template):
-                attachment_data.update({
-                    'source_type': SourceType.TEMPLATE,
-                    'template': source,
-                    'access_type': AccessType.RESTRICTED,
-                })
+                attachment_data.update(
+                    {
+                        'source_type': SourceType.TEMPLATE,
+                        'template': source,
+                        'access_type': AccessType.RESTRICTED,
+                    },
+                )
             elif isinstance(source, Workflow):
-                attachment_data.update({
-                    'source_type': SourceType.WORKFLOW,
-                    'workflow': source,
-                    'access_type': AccessType.RESTRICTED,
-                })
+                attachment_data.update(
+                    {
+                        'source_type': SourceType.WORKFLOW,
+                        'workflow': source,
+                        'access_type': AccessType.RESTRICTED,
+                    },
+                )
             else:
                 attachment_data['access_type'] = AccessType.ACCOUNT
 
@@ -247,15 +253,17 @@ class AttachmentService(BaseModelService):
     ) -> List[Attachment]:
         attachments = []
         for file_id in file_ids:
-            attachments.append(Attachment(
-                file_id=file_id,
-                account=account,
-                access_type=access_type,
-                source_type=source_type,
-                task=task,
-                workflow=workflow,
-                template=template,
-            ))
+            attachments.append(
+                Attachment(
+                    file_id=file_id,
+                    account=account,
+                    access_type=access_type,
+                    source_type=source_type,
+                    task=task,
+                    workflow=workflow,
+                    template=template,
+                ),
+            )
         created_attachments = Attachment.objects.bulk_create(
             attachments,
             ignore_conflicts=True,
