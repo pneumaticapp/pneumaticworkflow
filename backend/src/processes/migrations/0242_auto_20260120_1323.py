@@ -42,13 +42,13 @@ class Migration(migrations.Migration):
             RETURNS trigger AS 
             $BODY$
                 BEGIN
-                INSERT INTO processes_search_content (
+                INSERT INTO processes_searchcontent (
                     is_deleted, account_id, event_id, task_id, task_field_id, workflow_id, content
                 )
                 VALUES (
                     FALSE, new.account_id, NULL, NULL, NULL, new.id, setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'A')
                 )
-                ON CONFLICT (event_id, task_id, task_field_id, workflow_id)
+                ON CONFLICT (workflow_id, task_id, event_id, task_field_id) WHERE is_deleted = FALSE
                 DO UPDATE SET content = setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'A');
                 RETURN new;
             END;
@@ -65,7 +65,7 @@ class Migration(migrations.Migration):
             RETURNS trigger AS 
             $BODY$
                 BEGIN
-                INSERT INTO processes_search_content (
+                INSERT INTO processes_searchcontent (
                     is_deleted, account_id, event_id, task_id, task_field_id, workflow_id, content
                 )
                 VALUES (
@@ -74,7 +74,7 @@ class Migration(migrations.Migration):
                         setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'D')
                     )
                 )
-                ON CONFLICT (event_id, task_id, task_field_id, workflow_id)
+                ON CONFLICT (workflow_id, task_id, event_id, task_field_id) WHERE is_deleted = FALSE
                 DO UPDATE SET content = (
                     setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.description)), 'B') ||
                     setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'D')
@@ -94,17 +94,17 @@ class Migration(migrations.Migration):
             RETURNS trigger AS 
             $BODY$
                 BEGIN
-                INSERT INTO processes_search_content (
+                INSERT INTO processes_searchcontent (
                     is_deleted, account_id, event_id, task_id, task_field_id, workflow_id, content
                 )
                 VALUES (                
-                    FALSE, NULL, NULL, new.task_id, new.id, new.workflow_id, 
+                    FALSE, new.account_id, NULL, new.task_id, new.id, new.workflow_id, 
                     CASE
                         WHEN new.kickoff_id IS NOT NULL THEN setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.value)), 'B')
                         ELSE setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.value)), 'C')
                     END
                 )
-                ON CONFLICT (event_id, task_id, task_field_id, workflow_id)
+                ON CONFLICT (workflow_id, task_id, event_id, task_field_id) WHERE is_deleted = FALSE
                 DO UPDATE SET content = CASE
                     WHEN new.kickoff_id IS NOT NULL THEN setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.value)), 'B')
                     ELSE setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.value)), 'C')
@@ -124,13 +124,13 @@ class Migration(migrations.Migration):
             RETURNS trigger AS
             $BODY$
                 BEGIN
-                INSERT INTO processes_search_content (
+                INSERT INTO processes_searchcontent (
                     is_deleted, account_id, event_id, task_id, task_field_id, workflow_id, content
                 )
                 VALUES (
                     FALSE, new.account_id, new.id, new.task_id, NULL, new.workflow_id, setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.text)), 'D')
                 )
-                ON CONFLICT (event_id, task_id, task_field_id, workflow_id)
+                ON CONFLICT (workflow_id, task_id, event_id, task_field_id) WHERE is_deleted = FALSE
                 DO UPDATE SET content =  setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.text)), 'D');
                 RETURN new;
             END;

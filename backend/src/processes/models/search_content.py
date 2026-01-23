@@ -22,7 +22,6 @@ class SearchContent(
                 fields=[
                     'workflow',
                     'task',
-                    'sys_template',
                     'event',
                     'task_field',
                 ],
