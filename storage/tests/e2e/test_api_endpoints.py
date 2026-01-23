@@ -116,11 +116,14 @@ class TestAPIEndpoints:
         mock_storage_service,
         auth_headers,
         mock_download_response,
-        mock_download_use_case_execute,
+        mock_download_use_case_get_metadata,
+        mock_download_use_case_get_stream,
     ):
         """Test successful file download endpoint."""
         # Arrange
-        mock_download_use_case_execute.return_value = mock_download_response
+        file_record, stream = mock_download_response
+        mock_download_use_case_get_metadata.return_value = file_record
+        mock_download_use_case_get_stream.return_value = stream
 
         # Act
         response = e2e_client.get('/test-file-id', headers=auth_headers)
@@ -146,12 +149,12 @@ class TestAPIEndpoints:
         mock_auth_middleware,
         mock_http_client,
         auth_headers,
-        mock_download_use_case_execute,
+        mock_download_use_case_get_metadata,
     ):
         """Test download nonexistent file endpoint."""
         # Arrange
-        mock_download_use_case_execute.side_effect = DomainFileNotFoundError(
-            'nonexistent-file-id',
+        mock_download_use_case_get_metadata.side_effect = (
+            DomainFileNotFoundError('nonexistent-file-id')
         )
 
         # Act
@@ -167,9 +170,18 @@ class TestAPIEndpoints:
         mock_auth_middleware,
         auth_headers,
         mock_http_client_check_permission,
+        mock_download_use_case_get_metadata,
     ):
         """Test download endpoint without permission."""
         # Arrange
+        file_record = MagicMock()
+        file_record.file_id = 'test-file-id'
+        file_record.filename = 'test_file.txt'
+        file_record.content_type = 'text/plain'
+        file_record.size = 12
+        file_record.user_id = 999  # Different user
+        file_record.account_id = 1
+        mock_download_use_case_get_metadata.return_value = file_record
         mock_http_client_check_permission.return_value = False
 
         # Act
@@ -209,7 +221,7 @@ class TestAPIEndpoints:
         self,
         e2e_client,
         mock_auth_middleware,
-        mock_http_client,
+        mock_http_client_check_permission,
         auth_headers,
         mock_download_use_case_get_metadata,
         mock_download_use_case_get_stream,
@@ -226,7 +238,7 @@ class TestAPIEndpoints:
             created_at=datetime.now(timezone.utc),
         )
         mock_download_use_case_get_metadata.return_value = file_record
-        mock_http_client.check_file_permission.return_value = False
+        mock_http_client_check_permission.return_value = False
 
         # Act
         response = e2e_client.get('/test-file-id', headers=auth_headers)
@@ -235,7 +247,7 @@ class TestAPIEndpoints:
         assert response.status_code == 403
         mock_download_use_case_get_metadata.assert_called_once()
         mock_download_use_case_get_stream.assert_not_called()
-        mock_http_client.check_file_permission.assert_called_once()
+        mock_http_client_check_permission.assert_called_once()
 
     @pytest.mark.parametrize(
         ('filename', 'content', 'content_type'),

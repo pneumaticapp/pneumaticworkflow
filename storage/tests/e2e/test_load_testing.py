@@ -85,7 +85,8 @@ class TestLoadTesting:
         mock_http_client,
         mock_storage_service,
         auth_headers,
-        mock_download_use_case_execute,
+        mock_download_use_case_get_metadata,
+        mock_download_use_case_get_stream,
     ):
         """Test 50 concurrent downloads."""
         # Arrange
@@ -101,9 +102,10 @@ class TestLoadTesting:
                 mock_record.filename = f'load_test_{i}.txt'
                 mock_record.content_type = 'text/plain'
                 mock_record.size = 20
-                mock_download_use_case_execute.return_value = (
-                    mock_record,
-                    AsyncIteratorMock(f'load test content {i}'.encode()),
+                mock_record.user_id = 1  # Owner
+                mock_download_use_case_get_metadata.return_value = mock_record
+                mock_download_use_case_get_stream.return_value = (
+                    AsyncIteratorMock(f'load test content {i}'.encode())
                 )
 
                 response = e2e_client.get(
@@ -152,7 +154,8 @@ class TestLoadTesting:
         mock_storage_service,
         auth_headers,
         mock_upload_use_case_execute,
-        mock_download_use_case_execute,
+        mock_download_use_case_get_metadata,
+        mock_download_use_case_get_stream,
     ):
         """Test mixed upload-download load."""
         # Arrange
@@ -197,9 +200,10 @@ class TestLoadTesting:
                 mock_record.filename = f'mixed_test_{i}.txt'
                 mock_record.content_type = 'text/plain'
                 mock_record.size = 25
-                mock_download_use_case_execute.return_value = (
-                    mock_record,
-                    AsyncIteratorMock(f'mixed workload content {i}'.encode()),
+                mock_record.user_id = 1  # Owner
+                mock_download_use_case_get_metadata.return_value = mock_record
+                mock_download_use_case_get_stream.return_value = (
+                    AsyncIteratorMock(f'mixed workload content {i}'.encode())
                 )
 
                 download_response = e2e_client.get(

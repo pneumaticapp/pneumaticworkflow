@@ -51,11 +51,78 @@ def mock_upload_use_case_execute(mocker):
 
 
 @pytest.fixture
-def mock_download_use_case_execute(mocker):
-    """Mock for DownloadFileUseCase.execute."""
+def mock_download_use_case_get_metadata(mocker):
+    """Mock for DownloadFileUseCase.get_metadata."""
     return mocker.patch(
-        'src.application.use_cases.file_download.DownloadFileUseCase.execute',
+        'src.application.use_cases.file_download.'
+        'DownloadFileUseCase.get_metadata',
+        new_callable=AsyncMock,
     )
+
+
+@pytest.fixture
+def mock_download_use_case_get_stream(mocker):
+    """Mock for DownloadFileUseCase.get_stream."""
+    return mocker.patch(
+        'src.application.use_cases.file_download.'
+        'DownloadFileUseCase.get_stream',
+        new_callable=AsyncMock,
+    )
+
+
+@pytest.fixture
+def mock_download_use_case_execute(mocker):
+    """Mock for DownloadFileUseCase.execute
+    (deprecated, use get_metadata/get_stream)."""
+    # This fixture is kept for backward compatibility with old tests
+    # It mocks both get_metadata and get_stream
+    # to simulate old execute behavior
+
+    mock_metadata = mocker.patch(
+        'src.application.use_cases.file_download.'
+        'DownloadFileUseCase.get_metadata',
+        new_callable=AsyncMock,
+    )
+    mock_stream = mocker.patch(
+        'src.application.use_cases.file_download.'
+        'DownloadFileUseCase.get_stream',
+        new_callable=AsyncMock,
+    )
+
+    # Create a mock object that behaves like the old execute method
+    class MockExecute:
+        def __init__(self, metadata_mock, stream_mock):
+            self._metadata = metadata_mock
+            self._stream = stream_mock
+            self._return_value = None
+            self._side_effect = None
+
+        @property
+        def return_value(self):
+            return self._return_value
+
+        @return_value.setter
+        def return_value(self, value):
+            self._return_value = value
+            if value is not None:
+                if isinstance(value, tuple) and len(value) == 2:
+                    file_record, stream = value
+                    self._metadata.return_value = file_record
+                    self._stream.return_value = stream
+                else:
+                    self._metadata.return_value = value
+
+        @property
+        def side_effect(self):
+            return self._side_effect
+
+        @side_effect.setter
+        def side_effect(self, value):
+            self._side_effect = value
+            if value is not None:
+                self._metadata.side_effect = value
+
+    return MockExecute(mock_metadata, mock_stream)
 
 
 @pytest.fixture
@@ -71,6 +138,7 @@ def mock_http_client_check_permission(mocker):
     """Mock for HttpClient.check_file_permission."""
     return mocker.patch(
         'src.infra.http_client.HttpClient.check_file_permission',
+        new_callable=AsyncMock,
     )
 
 
@@ -153,6 +221,8 @@ __all__ = [
     'mock_download_response',
     'mock_download_use_case',
     'mock_download_use_case_execute',
+    'mock_download_use_case_get_metadata',
+    'mock_download_use_case_get_stream',
     'mock_file_record',
     'mock_get_db_session',
     'mock_get_redis_client',

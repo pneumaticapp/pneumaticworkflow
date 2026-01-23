@@ -29,10 +29,11 @@ def mock_auth_middleware(mocker) -> Iterator[MagicMock]:
 
 
 @pytest.fixture
-def mock_http_client(mocker) -> Iterator[MagicMock]:
+def mock_http_client(mocker) -> Iterator[AsyncMock]:
     """Mock HTTP client."""
     mock = mocker.patch(
         'src.infra.http_client.HttpClient.check_file_permission',
+        new_callable=AsyncMock,
     )
     mock.return_value = True
     return mock
@@ -93,8 +94,15 @@ def mock_upload_use_case(mocker) -> Iterator[AsyncMock]:
 @pytest.fixture
 def mock_download_use_case(mocker) -> Iterator[AsyncMock]:
     """Mock download use case."""
-    mock = mocker.patch(
-        'src.application.use_cases.file_download.DownloadFileUseCase.execute',
+    mock_metadata = mocker.patch(
+        'src.application.use_cases.file_download.'
+        'DownloadFileUseCase.get_metadata',
+        new_callable=AsyncMock,
+    )
+    mock_stream = mocker.patch(
+        'src.application.use_cases.file_download.'
+        'DownloadFileUseCase.get_stream',
+        new_callable=AsyncMock,
     )
     mock_file_record = MagicMock()
     mock_file_record.file_id = 'test-file-id'
@@ -102,8 +110,9 @@ def mock_download_use_case(mocker) -> Iterator[AsyncMock]:
     mock_file_record.content_type = 'text/plain'
     mock_file_record.size = 12
 
-    mock.return_value = (mock_file_record, AsyncIteratorMock(b'test content'))
-    return mock
+    mock_metadata.return_value = mock_file_record
+    mock_stream.return_value = AsyncIteratorMock(b'test content')
+    return mock_metadata
 
 
 @pytest.fixture

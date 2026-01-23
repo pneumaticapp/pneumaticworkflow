@@ -19,7 +19,8 @@ class TestCompleteUploadDownloadWorkflow:
         mock_upload_response,
         mock_download_response,
         mock_upload_use_case_execute,
-        mock_download_use_case_execute,
+        mock_download_use_case_get_metadata,
+        mock_download_use_case_get_stream,
     ):
         """Test basic upload and download workflow."""
         # Arrange
@@ -30,7 +31,9 @@ class TestCompleteUploadDownloadWorkflow:
         mock_upload_use_case_execute.return_value = mock_upload_response
 
         # Mock download use case
-        mock_download_use_case_execute.return_value = mock_download_response
+        file_record, stream = mock_download_response
+        mock_download_use_case_get_metadata.return_value = file_record
+        mock_download_use_case_get_stream.return_value = stream
 
         # Act - Upload
         upload_response = e2e_client.post(
@@ -77,7 +80,8 @@ class TestCompleteUploadDownloadWorkflow:
         mock_storage_service,
         auth_headers,
         mock_upload_use_case_execute,
-        mock_download_use_case_execute,
+        mock_download_use_case_get_metadata,
+        mock_download_use_case_get_stream,
     ):
         """Test workflow with different file types."""
         # Mock upload
@@ -94,9 +98,9 @@ class TestCompleteUploadDownloadWorkflow:
         mock_record.filename = filename
         mock_record.content_type = content_type
         mock_record.size = len(content)
-        mock_download_use_case_execute.return_value = (
-            mock_record,
-            AsyncIteratorMock(content),
+        mock_download_use_case_get_metadata.return_value = mock_record
+        mock_download_use_case_get_stream.return_value = (
+            AsyncIteratorMock(content)
         )
 
         # Act - Upload
