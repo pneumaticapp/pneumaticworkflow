@@ -38,6 +38,8 @@ services:
       - ./redis/data:/data
     expose:
       - 6379
+    ports:
+      - "6379:6379"
     networks:
       - pneumatic
     restart: always
@@ -422,7 +424,10 @@ services:
       - AUTH_TOKEN_ITERATIONS=${FILE_AUTH_TOKEN_ITERATIONS:-1}
       - JWT_SECRET_KEY=${FILE_JWT_SECRET_KEY:-a7uq)(kz1kyf9m5kt_72x3+co-brb2x)^g#_(1r\=mwv\=fl11pd}
       - JWT_ALGORITHM=${FILE_JWT_ALGORITHM:-HS256}
-      - DJANGO_BACKEND_URL=${FILE_DJANGO_BACKEND_URL:-http://nginx:8001}
+      - DJANGO_BACKEND_URL=${FILE_DJANGO_BACKEND_URL:-http://backend:8000}
+      - BACKEND_PRIVATE_URL=${FILE_BACKEND_PRIVATE_URL:-http://backend:8000/}
+    ports:
+      - "8002:8000"
     volumes:
       - file_service_media:/app/media
     depends_on:

@@ -13,7 +13,7 @@ class Attachment(SoftDeleteModel, AccountBaseMixin):
 
     class Meta:
         permissions = (
-            ('view_attachment', 'Can view attachment'),
+            ('access_attachment', 'Can access attachment'),
         )
         indexes = [
             models.Index(fields=['file_id']),

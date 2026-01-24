@@ -60,7 +60,7 @@ class AttachmentViewSet(CustomViewSetMixin, GenericViewSet):
             return self.response_forbidden()
 
         has_permission = request.user.has_perm(
-            'view_attachment',
+            'access_attachment',
             attachment,
         )
 

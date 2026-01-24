@@ -91,7 +91,7 @@ class AttachmentService(BaseModelService):
         # Assign permissions to all collected users
         for user in users_set:
             assign_perm(
-                'view_attachment',
+                'access_attachment',
                 user,
                 self.instance,
             )
@@ -100,7 +100,7 @@ class AttachmentService(BaseModelService):
         for performer in task_performers:
             if performer.group:
                 assign_perm(
-                    'view_attachment',
+                    'access_attachment',
                     performer.group,
                     self.instance,
                 )
@@ -116,7 +116,7 @@ class AttachmentService(BaseModelService):
         for owner in template_owners:
             if owner.user:
                 assign_perm(
-                    'view_attachment',
+                    'access_attachment',
                     owner.user,
                     self.instance,
                 )
@@ -168,7 +168,7 @@ class AttachmentService(BaseModelService):
 
         for user in users_set:
             assign_perm(
-                'view_attachment',
+                'access_attachment',
                 user,
                 self.instance,
             )
@@ -307,7 +307,7 @@ class AttachmentService(BaseModelService):
                 except user_model.DoesNotExist:
                     return False
             return user.has_perm(
-                'view_attachment',
+                'access_attachment',
                 attachment,
             )
 
@@ -321,8 +321,8 @@ class AttachmentService(BaseModelService):
         # Get attachments with permissions via guardian
         restricted_attachments = get_objects_for_user(
             user,
-            'view_attachment',
-            'view_attachment',
+            'access_attachment',
+            'access_attachment',
             klass=Attachment,
         ).filter(is_deleted=False)
 

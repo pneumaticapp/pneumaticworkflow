@@ -33,6 +33,7 @@ class Migration(migrations.Migration):
                     'content_type',
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
+                        related_name='custom_group_permissions',
                         to='contenttypes.ContentType',
                     ),
                 ),
@@ -40,6 +41,7 @@ class Migration(migrations.Migration):
                     'permission',
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
+                        related_name='custom_group_permissions',
                         to='auth.Permission',
                     ),
                 ),
@@ -47,6 +49,7 @@ class Migration(migrations.Migration):
                     'group',
                     models.ForeignKey(
                         on_delete=django.db.models.deletion.CASCADE,
+                        related_name='custom_group_permissions',
                         to='accounts.UserGroup',
                     ),
                 ),
@@ -61,11 +64,11 @@ class Migration(migrations.Migration):
                             'content_type',
                             'object_pk',
                         ],
-                        name='permissions_group_perm_ct_obj_idx',
+                        name='perm_grp_perm_ct_obj_idx',
                     ),
                     models.Index(
                         fields=['group', 'content_type', 'object_pk'],
-                        name='permissions_group_ct_obj_idx',
+                        name='perm_grp_ct_obj_idx',
                     ),
                 ],
             },
