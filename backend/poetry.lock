@@ -999,6 +999,20 @@ files = [
 Django = ">=1.11"
 
 [[package]]
+name = "django-guardian"
+version = "2.4.0"
+description = "Implementation of per object permissions for Django."
+optional = false
+python-versions = ">=3.5"
+files = [
+    {file = "django-guardian-2.4.0.tar.gz", hash = "sha256:c58a68ae76922d33e6bdc0e69af1892097838de56e93e78a8361090bcd9f89a0"},
+    {file = "django_guardian-2.4.0-py3-none-any.whl", hash = "sha256:440ca61358427e575323648b25f8384739e54c38b3d655c81d75e0cd0d61b697"},
+]
+
+[package.dependencies]
+Django = ">=2.2"
+
+[[package]]
 name = "django-ipware"
 version = "3.0.7"
 description = "A Django application to retrieve user's IP address"
@@ -3386,4 +3400,4 @@ testing = ["coverage (>=5.0.3)", "zope.event", "zope.testing"]
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.7.5"
-content-hash = "6ce9ad8a361e3a95d05cf60fabe488bd918f30e68b2727735818287ffc9ab38e"
+content-hash = "5a50ae85387ecc0aa432d1e32e8b3b11ab6adbcb7207bb9b396352377685e289"

@@ -29,6 +29,7 @@ from src.analysis.services import AnalyticService
 from src.authentication.tokens import PneumaticToken
 from src.generics.base.service import BaseModelService
 from src.notifications.tasks import send_user_deleted_notification
+from src.storage.utils import sync_account_file_fields
 from src.processes.services.remove_user_from_draft import (
     remove_user_from_draft,
 )
@@ -125,6 +126,12 @@ class UserService(
 
     def _create_actions(self, **kwargs):
         self.identify(self.instance)
+        sync_account_file_fields(
+            account=self.instance.account,
+            user=self.user,
+            old_values=[None],
+            new_values=[self.instance.photo],
+        )
         if self.instance.is_account_owner:
             self.instance.incoming_invites.not_accepted().delete()
             account = self.instance.account
