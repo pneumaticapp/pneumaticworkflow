@@ -1,10 +1,4 @@
-import {
-  EGroupsListSorting,
-  EUserListSorting,
-  EUserStatus,
-  IUnsavedUser,
-  TUserListItem,
-} from './user';
+import { EGroupsListSorting, EUserListSorting, EUserStatus, IUnsavedUser, TUserListItem } from './user';
 import { TNotificationsListItem } from './notifications';
 import { IAccountGenericTemplate } from './genericTemplates';
 import {
@@ -28,10 +22,10 @@ import {
   ITemplate,
   ITemplateListItem,
   ISystemTemplate,
-  ITemplateTitle,
   TTemplateIntegrationStats,
   TAITemplateGenerationStatus,
   TTransformedTask,
+  ITemplateTitleBaseWithCount,
 } from './template';
 import { IRunWorkflow } from '../components/WorkflowEditPopup/types';
 import { TTaskVariable } from '../components/TemplateEdit/types';
@@ -381,6 +375,7 @@ export interface IDashboardCounters {
 
 export interface IDashboardTask {
   id: number;
+  apiName: string;
   number: number;
   name: string;
   started: number | null;
@@ -438,7 +433,7 @@ export interface IHighlightsStore {
   isUsersLoading: boolean;
   isTemplatesTitlesLoading: boolean;
   items: IHighlightsItem[];
-  templatesTitles: ITemplateTitle[];
+  templatesTitles: ITemplateTitleBaseWithCount[];
   filters: IHighlightsFilters;
 }
 

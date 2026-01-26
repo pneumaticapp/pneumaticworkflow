@@ -8,6 +8,7 @@ import { mergePaths } from '../utils/urls';
 import { identifyAppPartOnClient } from '../utils/identifyAppPart/identifyAppPartOnClient';
 import { getCurrentToken } from '../utils/auth';
 import { envBackendURL } from '../constants/enviroment';
+import { isRequestCanceled } from '../utils/isRequestCanceled';
 
 export type TRequestType = 'public' | 'local';
 export type TResponseType = 'json' | 'text' | 'empty';
@@ -72,7 +73,12 @@ axiosInstance.interceptors.response.use(
     }
     return response;
   },
+
   (error) => {
+    if (isRequestCanceled(error)) {
+      return Promise.reject(error);
+    }
+
     if (error.response) {
       logger.error('Response Error:', error.response.data);
     } else if (error.request) {

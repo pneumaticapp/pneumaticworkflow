@@ -6,8 +6,10 @@ import { ExpandIcon } from '../../icons';
 import { IntlMessages } from '../../IntlMessages';
 
 import styles from './Select.css';
+import radioStyles from '../Fields/RadioButton/RadioButton.css';
 
 export interface ISelectMenuProps<T extends string> {
+  withRadio?: boolean;
   activeValue: T;
   values: T[];
   toggleClassName?: string;
@@ -20,6 +22,7 @@ export interface ISelectMenuProps<T extends string> {
   onChange(value: T): void;
   Icon?(props: React.SVGAttributes<SVGElement>): JSX.Element;
   isFromCheckIfConditions?: boolean;
+  positionFixed?: boolean;
 }
 
 export const SelectMenu = <T extends string>({
@@ -35,6 +38,8 @@ export const SelectMenu = <T extends string>({
   onChange,
   Icon,
   isFromCheckIfConditions,
+  withRadio = false,
+  positionFixed = false,
 }: ISelectMenuProps<T>) => {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const getIntlId = (value: T) => `sorting.${value}`;
@@ -72,7 +77,15 @@ export const SelectMenu = <T extends string>({
 
         <ExpandIcon className={classnames(styles['expand-icon'], arrowClassName)} />
       </DropdownToggle>
-      <DropdownMenu className={classnames(styles['dropdown-menu'], menuClassName)}>
+      <DropdownMenu
+        className={classnames(
+          styles['dropdown-menu'],
+          menuClassName,
+          positionFixed && styles['dropdown-menu__position-fixed'],
+          positionFixed && styles['dropdown-menu__position-fixed--select-menu'],
+        )}
+        positionFixed={positionFixed}
+      >
         {(values as T[]).map((value) => {
           if (hideSelectedOption && value === activeValue) {
             return null;
@@ -87,7 +100,21 @@ export const SelectMenu = <T extends string>({
               })}
               onClick={handleClickItem(value)}
             >
-              <IntlMessages id={getIntlId(value)} />
+              {withRadio ? (
+                <span
+                  className={classnames(
+                    radioStyles['radio'],
+                    value === activeValue && radioStyles['select-menu__radio--checked'],
+                  )}
+                >
+                  <span className={radioStyles['radio__box']}></span>
+                  <span className={radioStyles['radio__title']}>
+                    <IntlMessages id={getIntlId(value)} />
+                  </span>
+                </span>
+              ) : (
+                <IntlMessages id={getIntlId(value)} />
+              )}
             </DropdownItem>
           );
         })}
