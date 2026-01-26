@@ -25,7 +25,6 @@ from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
 )
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.task import (
     Delay,
@@ -43,6 +42,8 @@ from src.processes.services.tasks.performers import (
 )
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_attachment,
+    create_test_attachment_for_event,
     create_test_group,
     create_test_guest,
     create_test_owner,
@@ -177,21 +178,18 @@ def test_events__only_attachments_true__ok(api_client):
     task = workflow.tasks.get(number=1)
     WorkflowEventService.task_started_event(task)
 
-    attachment = FileAttachment.objects.create(
-        name='filename.png',
-        url='https://path.to.file/filename.png',
-        size=141352,
-        account_id=user.account_id,
-    )
     event = WorkflowEventService.comment_created_event(
         text='No attachments',
         task=task,
         user=user,
-        attachments=[attachment.id],
+        attachments=['events_test_file.png'],
         after_create_actions=False,
     )
-    attachment.event = event
-    attachment.save()
+    create_test_attachment_for_event(
+        account=user.account,
+        event=event,
+        file_id='events_test_file.png',
+    )
     WorkflowEventService.comment_created_event(
         text='There is no attachments here',
         task=task,
@@ -1183,14 +1181,13 @@ def test_retrieve__complete_task__field_with_attachments__ok(
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
     field = task.output.first()
-    attachment = FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        size=1488,
-        account_id=user.account_id,
-        output=field,
+    attachment = create_test_attachment(
+        account=user.account,
+        file_id='john_cena_task_file.png',
+        task=task,
+        workflow=workflow,
     )
-    field.value = attachment.url
+    field.value = 'File: john_cena_task_file.png'
     field.save(update_fields=['value'])
 
     WorkflowEventService.task_complete_event(task=task, user=user)
@@ -1299,21 +1296,18 @@ def test_retrieve__comment__with_attachment__ok(api_client):
     task.save(update_fields=['due_date'])
 
     text = 'Some comment'
-    attachment = FileAttachment.objects.create(
-        name='filename.png',
-        url='https://path.to.file/filename.png',
-        size=141352,
-        account_id=user.account_id,
-    )
     event = WorkflowEventService.comment_created_event(
         task=task,
         user=user,
         text=text,
-        attachments=[attachment.id],
+        attachments=['comment_test_file.png'],
         after_create_actions=False,
     )
-    attachment.event = event
-    attachment.save()
+    attachment = create_test_attachment_for_event(
+        account=user.account,
+        event=event,
+        file_id='comment_test_file.png',
+    )
 
     # act
     response = api_client.get(f'/workflows/{workflow.id}/events')

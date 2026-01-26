@@ -159,7 +159,7 @@ class Common(Configuration):
         'src.logs',
         'src.storage',
     ]
-    
+
     GUARDIAN_GROUP_OBJ_PERMS_MODEL = 'permissions.GroupObjectPermission'
 
     MIDDLEWARE = [

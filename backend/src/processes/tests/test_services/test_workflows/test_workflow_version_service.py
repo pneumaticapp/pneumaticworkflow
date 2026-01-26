@@ -20,7 +20,6 @@ from src.processes.models.templates.fields import (
 )
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.task import TaskTemplate
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.checklist import (
     Checklist,
     ChecklistSelection,
@@ -48,6 +47,7 @@ from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
     create_test_admin,
+    create_test_attachment,
     create_test_owner,
     create_test_template,
     create_test_workflow,
@@ -508,7 +508,7 @@ class TestWorkflowUpdateVersionService:
             template=template,
         )
         workflow = create_test_workflow(user, template)
-        file_field = TaskField.objects.create(
+        TaskField.objects.create(
             type=FieldType.FILE,
             name='Old name',
             api_name=kickoff_field_template_1.api_name,
@@ -518,12 +518,11 @@ class TestWorkflowUpdateVersionService:
             clear_value='http://clear-file.png',
             markdown_value='[attachment](http://file.png)',
         )
-        attachment = FileAttachment.objects.create(
-            name='attachment',
-            url='http://file.png',
+        attachment = create_test_attachment(
+            account=user.account,
+            file_id='workflow_version_file.png',
+            task=workflow.tasks.first(),
             workflow=workflow,
-            output=file_field,
-            account_id=user.account_id,
         )
 
         task_1 = template.tasks.get(number=1)

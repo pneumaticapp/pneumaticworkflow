@@ -225,12 +225,13 @@ class WorkflowService(
         force_save=False,
         **update_kwargs,
     ):
-        super().partial_update(
+        result = super().partial_update(
             force_save=force_save,
             **update_kwargs,
         )
         if 'description' in update_kwargs:
             refresh_attachments(self.instance, self.user)
+        return result
 
     def update_owners(self):
         user_ids = Template.objects.filter(

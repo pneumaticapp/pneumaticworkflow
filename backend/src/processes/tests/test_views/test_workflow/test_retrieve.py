@@ -14,7 +14,6 @@ from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
 )
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.task import (
     Delay,
     TaskPerformer,
@@ -22,6 +21,7 @@ from src.processes.models.workflows.task import (
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
     create_test_admin,
+    create_test_attachment,
     create_test_group,
     create_test_template,
     create_test_user,
@@ -413,11 +413,9 @@ def test_retrieve__kickoff_field_with_attachments__ok(api_client):
         order=1,
         template=template,
     )
-    attachment = FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        account_id=user.account_id,
-        size=1488,
+    attachment = create_test_attachment(
+        account=user.account,
+        file_id='john_cena_kickoff_file.png',
     )
 
     response = api_client.post(
@@ -425,7 +423,7 @@ def test_retrieve__kickoff_field_with_attachments__ok(api_client):
         data={
             'name': 'Workflow',
             'kickoff': {
-                field_template.api_name: [attachment.id],
+                field_template.api_name: ['john_cena_kickoff_file.png'],
             },
         },
     )

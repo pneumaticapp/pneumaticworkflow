@@ -46,7 +46,6 @@ from src.processes.models.templates.fields import (
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.raw_due_date import RawDueDateTemplate
 from src.processes.models.templates.template import Template
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.kickoff import KickoffValue
 from src.processes.models.workflows.task import TaskPerformer
@@ -66,6 +65,7 @@ from src.processes.services.workflows.workflow import (
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
+    create_test_attachment,
     create_test_group,
     create_test_guest,
     create_test_owner,
@@ -154,17 +154,13 @@ def test_run__all__ok(api_client, mocker):
         field_template=kickoff_field_5,
         template=template,
     )
-    attach_1 = FileAttachment.objects.create(
-        name='first_file.png',
-        url='https://link.to/first_file.png',
-        size=15392,
-        account_id=user.account_id,
+    attach_1 = create_test_attachment(
+        account=user.account,
+        file_id='first_template_file.png',
     )
-    attach_2 = FileAttachment.objects.create(
-        name='sec_file.docx',
-        url='https://link.to/sec_file.docx',
-        size=15392,
-        account_id=user.account_id,
+    attach_2 = create_test_attachment(
+        account=user.account,
+        file_id='sec_template_file.docx',
     )
     task = template.tasks.order_by('number').first()
     task.name = 'Test name {{ %s }}' % kickoff_field.api_name
@@ -220,7 +216,10 @@ def test_run__all__ok(api_client, mocker):
                 kickoff_field.api_name: 'JOHN CENA',
                 kickoff_field_2.api_name: None,
                 kickoff_field_3.api_name: 6351521536,
-                kickoff_field_4.api_name: [str(attach_1.id), str(attach_2.id)],
+                kickoff_field_4.api_name: [
+                    'first_template_file.png',
+                    'sec_template_file.docx',
+                ],
                 kickoff_field_5.api_name: [
                     str(selection_1.api_name),
                     str(selection_2.api_name),
@@ -290,9 +289,8 @@ def test_run__all__ok(api_client, mocker):
     assert len(kickoff_field_4_data['attachments']) == 2
     attach_1_data = kickoff_field_4_data['attachments'][0]
     assert attach_1_data['id'] == attach_1.id
-    assert attach_1_data['name'] == attach_1.name
-    assert attach_1_data['url'] == attach_1.url
-    assert attach_1_data['size'] == attach_1.size
+    assert attach_1_data['file_id'] == 'first_template_file.png'
+    assert attach_1_data['account_id'] == user.account_id
 
     kickoff_field_5_data = data['kickoff']['output'][4]
     assert len(kickoff_field_5_data['selections']) == 2

@@ -52,16 +52,12 @@ from src.processes.models.templates.preset import (
 )
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.conditions import (
     Condition,
     Predicate,
     Rule,
 )
 from src.processes.models.workflows.event import WorkflowEvent
-from src.processes.models.workflows.fields import (
-    TaskField,
-)
 from src.processes.models.workflows.kickoff import KickoffValue
 from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
@@ -69,7 +65,8 @@ from src.processes.serializers.templates.template import (
     TemplateSerializer,
 )
 from src.processes.services.tasks.task import TaskService
-from src.utils.salt import get_salt
+from src.storage.models import Attachment
+from src.storage.enums import SourceType, AccessType
 from src.webhooks.enums import HookEvent
 from src.webhooks.models import WebHook
 
@@ -584,34 +581,6 @@ def get_workflow_create_data(user):
     }
 
 
-def create_test_attachment(
-    account: Account,
-    workflow: Optional[Workflow] = None,
-    event: Optional[WorkflowEvent] = None,
-    field: Optional[TaskField] = None,
-    name: str = 'file.jpg',
-    size: int = 215678,
-):
-    filename = f'{get_salt(30)}_{name}'
-    thumb_filename = f'thumb_{filename}'
-    attachment = FileAttachment(
-        account=account,
-        workflow=workflow,
-        name=filename,
-        url=f'https://link.to/{filename}',
-        thumbnail_url=f'https://link.to/{thumb_filename}',
-        size=size,
-    )
-    if event:
-        attachment.event = event
-        event.with_attachments = True
-        event.save()
-    if field:
-        attachment.field = field
-    attachment.save()
-    return attachment
-
-
 def create_test_event(
     workflow: Workflow,
     user: UserModel,
@@ -712,3 +681,75 @@ def create_test_template_preset(
             )
 
     return preset
+
+
+def create_test_attachment(
+    account,
+    file_id: str = 'test_file.png',
+    task=None,
+    workflow=None,
+    template=None,
+):
+    """
+    Create test attachment for new storage service.
+
+    Args:
+        account: Account instance
+        file_id: Unique file identifier
+        task: Optional Task instance
+        workflow: Optional Workflow instance
+        template: Optional Template instance
+
+    Returns:
+        Attachment instance
+    """
+    # Determine source type
+    if task:
+        source_type = SourceType.TASK
+    elif template:
+        source_type = SourceType.TEMPLATE
+    else:
+        source_type = SourceType.WORKFLOW
+
+    return Attachment.objects.create(
+        file_id=file_id,
+        account=account,
+        source_type=source_type,
+        access_type=AccessType.RESTRICTED,
+        task=task,
+        workflow=workflow,
+        template=template,
+    )
+
+
+def create_test_attachment_for_event(
+    account,
+    event,
+    file_id: str = 'event_file.png',
+):
+    """
+    Create test attachment linked to event.
+
+    Args:
+        account: Account instance
+        event: WorkflowEvent instance
+        file_id: Unique file identifier
+
+    Returns:
+        Attachment instance
+    """
+    source_type = SourceType.TASK if event.task else SourceType.WORKFLOW
+
+    attachment = Attachment.objects.create(
+        file_id=file_id,
+        account=account,
+        source_type=source_type,
+        access_type=AccessType.RESTRICTED,
+        task=event.task,
+        workflow=event.workflow,
+    )
+
+    # Link to event
+    event.storage_attachments.add(attachment)
+
+    return attachment

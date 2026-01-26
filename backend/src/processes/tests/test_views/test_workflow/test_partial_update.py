@@ -33,7 +33,6 @@ from src.processes.models.templates.fields import (
     FieldTemplateSelection,
 )
 from src.processes.models.templates.raw_due_date import RawDueDateTemplate
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.task import (
     TaskPerformer,
 )
@@ -44,6 +43,7 @@ from src.processes.services.events import (
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
+    create_test_attachment,
     create_test_owner,
     create_test_template,
     create_test_workflow,
@@ -588,18 +588,14 @@ class TestPartialUpdateWorkflow:
         )
         template_task_2.save()
 
-        first_attach = FileAttachment.objects.create(
-            name='ce.na',
-            size=133734,
-            url='https://jo.hn/ce.na',
-            account_id=user.account_id,
+        first_attach = create_test_attachment(
+            account=user.account,
+            file_id='first_file_cena.png',
         )
 
-        second_attach = FileAttachment.objects.create(
-            name='nh.oj',
-            size=133734,
-            url='https://an.ec/nh.oj',
-            account_id=user.account_id,
+        second_attach = create_test_attachment(
+            account=user.account,
+            file_id='second_file_nhoj.png',
         )
 
         api_client.token_authenticate(user)
@@ -608,7 +604,7 @@ class TestPartialUpdateWorkflow:
             data={
                 'name': 'Test name',
                 'kickoff': {
-                    file_field.api_name: [first_attach.id],
+                    file_field.api_name: ['first_file_cena.png'],
                 },
             },
         )
@@ -679,25 +675,21 @@ class TestPartialUpdateWorkflow:
         )
         template_task_2.save()
 
-        first_attach = FileAttachment.objects.create(
-            name='ce.na',
-            size=133734,
-            url='https://jo.hn/first.txt',
-            account_id=user.account_id,
+        first_attach = create_test_attachment(
+            account=user.account,
+            file_id='first_attach_cena.txt',
         )
 
-        second_attach = FileAttachment.objects.create(
-            name='nh.oj',
-            size=133734,
-            url='https://an.ec/second.txt',
-            account_id=user.account_id,
+        second_attach = create_test_attachment(
+            account=user.account,
+            file_id='second_attach_nhoj.txt',
         )
 
         response = api_client.post(
             f'/templates/{template.id}/run',
             data={
                 'kickoff': {
-                    file_field.api_name: [first_attach.id],
+                    file_field.api_name: ['first_attach_cena.txt'],
                 },
             },
         )

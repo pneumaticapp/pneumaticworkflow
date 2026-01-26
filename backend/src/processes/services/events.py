@@ -19,7 +19,6 @@ from src.processes.enums import (
     WorkflowEventActionType,
     WorkflowEventType,
 )
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.event import (
     WorkflowEvent,
     WorkflowEventAction,
@@ -35,7 +34,6 @@ from src.processes.serializers.workflows.events import (
     WorkflowEventSerializer,
 )
 from src.processes.services.exceptions import (
-    AttachmentNotFound,
     CommentedNotTask,
     CommentedTaskNotActive,
     CommentedWorkflowNotRunning,
@@ -48,7 +46,6 @@ from src.services.markdown import (
 )
 from src.storage.enums import AccessType, SourceType
 from src.storage.models import Attachment
-from src.storage.services.file_sync import FileSyncService
 from src.storage.utils import (
     extract_file_ids_from_text,
     sync_storage_attachments_for_scope,
@@ -603,64 +600,44 @@ class CommentService(BaseModelService):
             self.account.id,
         ).only_ids()
 
-    def _update_attachments(self, ids: Optional[List[int]] = None):
+    def _update_attachments(self, file_ids: Optional[List[str]] = None):
+        """
+        Attach new attachments to comment event and remove previous.
 
-        """ Attach new attachments to comment event and remove previous """
-
-        if ids:
-            removed_qs = self.instance.attachments.exclude(id__in=ids)
-            removed_file_ids = list(
-                removed_qs.exclude(file_id__isnull=True).values_list(
-                    'file_id',
-                    flat=True,
+        Args:
+            file_ids: List of file_ids from new storage service
+        """
+        if file_ids:
+            # Remove old attachments that are not in the new list
+            removed_attachments = self.instance.storage_attachments.exclude(
+                file_id__in=file_ids,
+            )
+            removed_attachments.delete()
+            # Get existing attachments to avoid duplicates
+            existing_file_ids = set(
+                self.instance.storage_attachments.values_list(
+                    'file_id', flat=True,
                 ),
             )
-            removed_qs.delete()
-            if removed_file_ids:
-                self._delete_storage_attachments(removed_file_ids)
-            qst = FileAttachment.objects.on_account(
-                self.account.id,
-            ).with_event_or_not_attached(self.instance.id).by_ids(ids)
-
-            if qst.count() < len(ids):
-                raise AttachmentNotFound
-            qst.update(
-                event=self.instance,
-                workflow=self.instance.workflow,
+            # Create new attachments for file_ids that don't exist yet
+            source_type = (
+                SourceType.TASK
+                if self.instance.task_id
+                else SourceType.WORKFLOW
             )
-            self._sync_storage_attachments(qst)
+            for file_id in file_ids:
+                if file_id not in existing_file_ids:
+                    Attachment.objects.create(
+                        file_id=file_id,
+                        account=self.account,
+                        source_type=source_type,
+                        access_type=AccessType.RESTRICTED,
+                        task=self.instance.task,
+                        workflow=self.instance.workflow,
+                    )
         else:
-            removed_file_ids = list(
-                self.instance.attachments.exclude(
-                    file_id__isnull=True,
-                ).values_list('file_id', flat=True),
-            )
-            self.instance.attachments.all().delete()
-            if removed_file_ids:
-                self._delete_storage_attachments(removed_file_ids)
-
-    def _sync_storage_attachments(self, attachments_qs):
-        if not attachments_qs.exists():
-            return
-        source_type = (
-            SourceType.TASK
-            if self.instance.task_id
-            else SourceType.WORKFLOW
-        )
-        service = FileSyncService()
-        for attachment in attachments_qs.select_related(
-            'account',
-            'workflow',
-            'event',
-            'output',
-        ):
-            service.sync_single_attachment(
-                attachment=attachment,
-                source_type=source_type,
-                task=self.instance.task,
-                workflow=self.instance.workflow,
-                access_type=AccessType.RESTRICTED,
-            )
+            # Remove all attachments if no file_ids provided
+            self.instance.storage_attachments.all().delete()
 
     def _delete_storage_attachments(self, file_ids: List[str]):
         Attachment.objects.filter(file_id__in=file_ids).delete()
@@ -871,7 +848,7 @@ class CommentService(BaseModelService):
             old_text=self.instance.text,
             new_text=None,
         )
-        self.instance.attachments.delete()
+        self.instance.storage_attachments.all().delete()
         super().partial_update(
             status=CommentStatus.DELETED,
             with_attachments=False,

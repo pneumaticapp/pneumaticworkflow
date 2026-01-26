@@ -24,7 +24,6 @@ from src.processes.models.templates.fields import (
     FieldTemplateSelection,
 )
 from src.processes.models.templates.template import Template
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.checklist import (
     Checklist,
     ChecklistSelection,
@@ -42,6 +41,7 @@ from src.processes.tasks.update_workflow import update_workflows
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
+    create_test_attachment,
     create_test_group,
     create_test_guest,
     create_test_owner,
@@ -892,14 +892,13 @@ def test_retrieve__field_with_attachments__ok(api_client):
     workflow = Workflow.objects.get(id=response.data['id'])
     task = workflow.tasks.get(number=1)
     field = task.output.first()
-    attachment = FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        size=1488,
-        account_id=user.account_id,
-        output=field,
+    attachment = create_test_attachment(
+        account=user.account,
+        file_id='task_retrieve_file.png',
+        task=task,
+        workflow=workflow,
     )
-    field.value = attachment.url
+    field.value = 'File: task_retrieve_file.png'
     field.save(update_fields=['value'])
 
     # act

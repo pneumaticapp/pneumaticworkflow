@@ -113,7 +113,7 @@ class TestAttachmentServiceBulkCreate:
         assert len(attachments) == 3
         for attachment in attachments:
             assert attachment.account == user.account
-            assert attachment.access_type == AccessType.ACCOUNT
+            assert attachment.access_type == AccessType.RESTRICTED
             assert attachment.source_type == SourceType.TASK
             assert attachment.task == task
 

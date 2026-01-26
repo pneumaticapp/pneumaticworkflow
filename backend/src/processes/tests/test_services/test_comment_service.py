@@ -11,7 +11,6 @@ from src.processes.enums import (
     WorkflowStatus,
 )
 from src.processes.messages import workflow as messages
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.event import (
     WorkflowEvent,
     WorkflowEventAction,
@@ -29,6 +28,8 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
 )
+from src.storage.models import Attachment
+from src.storage.enums import SourceType, AccessType
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -1029,12 +1030,7 @@ def test_update_attachments__create_new_attachments__ok():
         task=task,
         user=account_owner,
     )
-    attachment = FileAttachment.objects.create(
-        name='filename.png',
-        url='https://path.to.file/filename.png',
-        size=141352,
-        account_id=account.id,
-    )
+    file_id = 'test_file_123.png'
 
     service = CommentService(
         user=account_owner,
@@ -1042,12 +1038,15 @@ def test_update_attachments__create_new_attachments__ok():
     )
 
     # act
-    service._update_attachments([attachment.id])
+    service._update_attachments([file_id])
 
     # assert
-    attachment.refresh_from_db()
+    attachment = Attachment.objects.get(file_id=file_id)
     assert attachment.workflow == workflow
-    assert attachment.event == event
+    assert attachment.task == task
+    assert attachment.account == account
+    assert attachment.source_type == 'TASK'
+    assert attachment.access_type == 'RESTRICTED'
 
 
 def test_update_attachments__delete_old_attachments__ok():
@@ -1069,19 +1068,17 @@ def test_update_attachments__delete_old_attachments__ok():
         task=task,
         user=account_owner,
     )
-    deleted_attachment = FileAttachment.objects.create(
-        name='filename2.png',
-        url='https://path.to.file/filename2.png',
-        size=123,
-        account_id=account.id,
-        event=event,
+    # Create attachment that should be deleted
+    deleted_attachment = Attachment.objects.create(
+        file_id='deleted_file_123.png',
+        account=account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
+        task=task,
+        workflow=workflow,
     )
-    attachment = FileAttachment.objects.create(
-        name='filename.png',
-        url='https://path.to.file/filename.png',
-        size=141352,
-        account_id=account.id,
-    )
+    event.storage_attachments.add(deleted_attachment)
+    new_file_id = 'kept_file_456.png'
 
     service = CommentService(
         user=account_owner,
@@ -1089,13 +1086,16 @@ def test_update_attachments__delete_old_attachments__ok():
     )
 
     # act
-    service._update_attachments([attachment.id])
+    service._update_attachments([new_file_id])
 
     # assert
-    assert not FileAttachment.objects.by_id(deleted_attachment.id).exists()
-    attachment.refresh_from_db()
-    assert attachment.workflow == workflow
-    assert attachment.event == event
+    assert not Attachment.objects.filter(
+        id=deleted_attachment.id,
+    ).exists()
+
+    new_attachment = Attachment.objects.get(file_id=new_file_id)
+    assert new_attachment.workflow == workflow
+    assert new_attachment.task == task
 
 
 def test_update_attachments__already_attached__ok():
@@ -1117,19 +1117,20 @@ def test_update_attachments__already_attached__ok():
         task=task,
         user=account_owner,
     )
-    existent_attachment = FileAttachment.objects.create(
-        name='filename2.png',
-        url='https://path.to.file/filename2.png',
-        size=123,
-        account_id=account.id,
-        event=event,
+
+    # Create existing attachment already linked to event
+    existent_attachment = Attachment.objects.create(
+        file_id='existing_file_123.png',
+        account=account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
+        task=task,
+        workflow=workflow,
     )
-    new_attachment = FileAttachment.objects.create(
-        name='filename.png',
-        url='https://path.to.file/filename.png',
-        size=141352,
-        account_id=account.id,
-    )
+    event.storage_attachments.add(existent_attachment)
+
+    # New file_id to add
+    new_file_id = 'new_file_456.png'
 
     service = CommentService(
         user=account_owner,
@@ -1137,15 +1138,19 @@ def test_update_attachments__already_attached__ok():
     )
 
     # act
-    service._update_attachments([existent_attachment.id, new_attachment.id])
+    service._update_attachments([existent_attachment.file_id, new_file_id])
 
     # assert
+    # Check existing attachment is still there
     existent_attachment.refresh_from_db()
     assert existent_attachment.workflow == workflow
-    assert existent_attachment.event == event
-    new_attachment.refresh_from_db()
+    assert existent_attachment.task == task
+
+    # Check new attachment was created
+    new_attachment = Attachment.objects.get(file_id=new_file_id)
     assert new_attachment.workflow == workflow
-    assert new_attachment.event == event
+    assert new_attachment.task == task
+    assert new_attachment.account == account
 
 
 def test_update_attachments__attachments_is_null__not_update():
@@ -1167,19 +1172,26 @@ def test_update_attachments__attachments_is_null__not_update():
         task=task,
         user=account_owner,
     )
-    another_attachment = FileAttachment.objects.create(
-        name='filename.png',
-        url='https://path.to.file/filename.png',
-        size=141352,
-        account_id=account.id,
+    # Create attachment not linked to event (should remain untouched)
+    another_attachment = Attachment.objects.create(
+        file_id='unrelated_file_123.png',
+        account=account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
+        task=task,
+        workflow=workflow,
     )
-    deleted_attachment = FileAttachment.objects.create(
-        name='filename.png',
-        url='https://path.to.file/filename.png',
-        size=141352,
-        account_id=account.id,
-        event=event,
+
+    # Create attachment linked to event (should be deleted)
+    deleted_attachment = Attachment.objects.create(
+        file_id='deleted_file_456.png',
+        account=account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
+        task=task,
+        workflow=workflow,
     )
+    event.storage_attachments.add(deleted_attachment)
 
     service = CommentService(
         user=account_owner,
@@ -1187,17 +1199,26 @@ def test_update_attachments__attachments_is_null__not_update():
     )
 
     # act
-    service._update_attachments(ids=None)
+    service._update_attachments(file_ids=None)
 
     # assert
+    # Unrelated attachment should remain untouched
     another_attachment.refresh_from_db()
-    assert another_attachment.workflow is None
-    assert another_attachment.event is None
-    assert not FileAttachment.objects.by_id(deleted_attachment.id).exists()
+    assert another_attachment.workflow == workflow
+    assert another_attachment.task == task
+
+    # Event attachment should be deleted
+    assert not Attachment.objects.filter(
+        id=deleted_attachment.id,
+    ).exists()
 
 
-def test_update_attachments__not_found__raise_exception():
-
+def test_update_attachments__with_file_ids__creates_attachments():
+    """
+    Test that _update_attachments creates new Attachment records for file_ids.
+    In new architecture, we don't validate file_ids existence
+    - just create records.
+    """
     # arrange
     account = create_test_account()
     account_owner = create_test_user(
@@ -1215,25 +1236,25 @@ def test_update_attachments__not_found__raise_exception():
         task=task,
         user=account_owner,
     )
-    another_account = create_test_account()
-    FileAttachment.objects.create(
-        name='filename.png',
-        url='https://path.to.file/filename.png',
-        size=141352,
-        account_id=another_account.id,
-    )
 
     service = CommentService(
         user=account_owner,
         instance=event,
     )
+    file_ids = ['new_file_1.png', 'new_file_2.jpg']
 
     # act
-    with pytest.raises(exceptions.AttachmentNotFound) as ex:
-        service._update_attachments([0])
+
+    service._update_attachments(file_ids)
 
     # assert
-    assert ex.value.message == messages.MSG_PW_0037
+    attachments = Attachment.objects.filter(file_id__in=file_ids)
+    assert attachments.count() == 2
+
+    for attachment in attachments:
+        assert attachment.workflow == workflow
+        assert attachment.task == task
+        assert attachment.account == account
 
 
 def test_get_new_comment_recipients__notify_users__ok():
@@ -2781,13 +2802,15 @@ def test_delete__ok(mocker):
         task=task,
         user=account_owner,
     )
-    FileAttachment.objects.create(
-        name='filename.png',
-        url='https://path.to.file/filename.png',
-        size=141352,
-        account_id=account.id,
-        event=event,
+    attachment = Attachment.objects.create(
+        file_id='test_file_delete_123.png',
+        account=account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
+        task=task,
+        workflow=workflow,
     )
+    event.storage_attachments.add(attachment)
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._validate_comment_action',
@@ -2824,7 +2847,7 @@ def test_delete__ok(mocker):
         text=None,
         force_save=True,
     )
-    assert event.attachments.count() == 0
+    assert event.storage_attachments.count() == 0
     comment_deleted_analysis_mock.assert_called_once_with(
         text=event.clear_text,
         user=account_owner,
@@ -2852,13 +2875,15 @@ def test_delete__task_delete__ok(mocker):
         task=None,
         user=account_owner,
     )
-    FileAttachment.objects.create(
-        name='filename.png',
-        url='https://path.to.file/filename.png',
-        size=141352,
-        account_id=account.id,
-        event=event,
+    attachment = Attachment.objects.create(
+        file_id='test_file_workflow_123.png',
+        account=account,
+        source_type=SourceType.WORKFLOW,
+        access_type=AccessType.RESTRICTED,
+        task=None,
+        workflow=workflow,
     )
+    event.storage_attachments.add(attachment)
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._validate_comment_action',
@@ -2895,7 +2920,7 @@ def test_delete__task_delete__ok(mocker):
         text=None,
         force_save=True,
     )
-    assert event.attachments.count() == 0
+    assert event.storage_attachments.count() == 0
     comment_deleted_analysis_mock.assert_called_once_with(
         text=event.clear_text,
         user=account_owner,

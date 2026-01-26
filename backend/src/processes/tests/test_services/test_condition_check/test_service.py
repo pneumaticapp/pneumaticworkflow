@@ -8,7 +8,6 @@ from src.processes.enums import (
     PredicateType,
     TaskStatus,
 )
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.conditions import (
     Condition,
     Predicate,
@@ -26,6 +25,8 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
 )
+from src.storage.models import Attachment
+from src.storage.enums import SourceType, AccessType
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -200,13 +201,15 @@ class TestConditionCheckService:
             value=field_value,
             workflow=workflow,
         )
-        FileAttachment.objects.create(
-            name='john.cena',
-            url='https://john.cena/john.cena',
-            size=1488,
-            account_id=user.account_id,
-            output=first_field if field_value else None,
-        )
+        if field_value:
+            Attachment.objects.create(
+                file_id='john_cena_condition_file.jpg',
+                account=user.account,
+                source_type=SourceType.TASK,
+                access_type=AccessType.RESTRICTED,
+                task=first_task,
+                workflow=workflow,
+            )
 
         condition = Condition.objects.create(
             task=second_task,

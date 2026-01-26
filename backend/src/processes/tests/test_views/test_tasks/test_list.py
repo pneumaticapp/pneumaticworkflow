@@ -11,7 +11,6 @@ from src.processes.enums import (
     WorkflowStatus,
 )
 from src.processes.messages import workflow as messages
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.services.events import (
@@ -21,6 +20,8 @@ from src.processes.services.workflow_action import (
     WorkflowActionService,
 )
 from src.processes.tests.fixtures import (
+    create_test_attachment,
+    create_test_attachment_for_event,
     create_test_group,
     create_test_owner,
     create_test_template,
@@ -459,13 +460,10 @@ def test_list__search__comment_attachment__not_found(api_client, mocker):
         task=task,
         text='comment',
     )
-    FileAttachment.objects.create(
-        name='fred cena',
-        url='https://fred.cena.com',
-        size=1488,
-        account_id=user.account_id,
-        workflow=workflow,
+    create_test_attachment_for_event(
+        account=user.account,
         event=event,
+        file_id='fred_cena_task_list.png',
     )
 
     api_client.token_authenticate(user)
@@ -501,13 +499,10 @@ def test_list__search__another_task_comment_attachment__not_found(
         task=task,
         text='comment',
     )
-    FileAttachment.objects.create(
-        name='fred.cena',
-        url='https://fred.cena.com',
-        size=1488,
-        account_id=user.account_id,
-        workflow=workflow,
+    create_test_attachment_for_event(
+        account=user.account,
         event=event,
+        file_id='fred_cena_another_task.png',
     )
 
     api_client.token_authenticate(user)
@@ -538,19 +533,17 @@ def test_list__search__completed_prev_task_output_attachment__not_found(
         active_task_number=2,
     )
     task_1 = workflow.tasks.get(number=1)
-    field = TaskField.objects.create(
+    TaskField.objects.create(
         task=task_1,
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
     )
-    FileAttachment.objects.create(
-        name='fred.cena',
-        url='https://test.com/test.txt',
-        size=1488,
-        account_id=user.account_id,
+    create_test_attachment(
+        account=user.account,
+        file_id='fred_cena_prev_task.txt',
+        task=task_1,
         workflow=workflow,
-        output=field,
     )
 
     api_client.token_authenticate(user)
@@ -577,19 +570,17 @@ def test_list__search__active_task_field_attachment__not_found(
     user = create_test_user()
     workflow = create_test_workflow(user, tasks_count=2)
     task_1 = workflow.tasks.get(number=1)
-    field = TaskField.objects.create(
+    TaskField.objects.create(
         task=task_1,
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
     )
-    FileAttachment.objects.create(
-        name='fred.cena',
-        url='https://test.com/test.txt',
-        size=1488,
-        account_id=user.account_id,
+    create_test_attachment(
+        account=user.account,
+        file_id='fred_cena_active_task.txt',
+        task=task_1,
         workflow=workflow,
-        output=field,
     )
 
     api_client.token_authenticate(user)

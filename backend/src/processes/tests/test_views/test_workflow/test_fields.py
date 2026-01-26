@@ -6,7 +6,6 @@ from src.processes.enums import (
     WorkflowApiStatus,
     WorkflowStatus,
 )
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.fields import (
     FieldSelection,
     TaskField,
@@ -17,6 +16,7 @@ from src.processes.models.workflows.task import (
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
+    create_test_attachment,
     create_test_guest,
     create_test_not_admin,
     create_test_owner,
@@ -279,11 +279,10 @@ def test_fields__type_file__ok(api_client):
         is_required=True,
         description='Some description',
     )
-    FileAttachment.objects.create(
-        name='file',
-        url='https://john.cena/john.cena',
-        account_id=user.account_id,
-        output=field,
+    create_test_attachment(
+        account=user.account,
+        file_id='workflow_field_file.png',
+        task=task,
         workflow=workflow,
     )
     api_client.token_authenticate(user)

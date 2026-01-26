@@ -15,7 +15,6 @@ from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
 )
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.fields import TaskField
 from src.processes.services.base import BaseWorkflowService
 from src.processes.services.tasks.exceptions import TaskFieldException
@@ -23,7 +22,6 @@ from src.processes.services.tasks.selection import SelectionService
 from src.services.markdown import MarkdownService
 from src.storage.enums import AccessType, SourceType
 from src.storage.models import Attachment
-from src.storage.services.file_sync import FileSyncService
 from src.storage.utils import (
     extract_file_ids_from_text,
     sync_storage_attachments_for_scope,
@@ -207,47 +205,40 @@ class TaskFieldService(BaseWorkflowService):
         return self._get_valid_radio_value(raw_value, **kwargs)
 
     def _get_valid_file_value(self, raw_value: Any, **kwargs) -> FieldData:
+        """
+        Validate file field value using new storage service.
 
+        Args:
+            raw_value: List of file_ids from new storage service
+
+        Returns:
+            FieldData with file information
+        """
         if not isinstance(raw_value, list):
             raise TaskFieldException(
                 api_name=self.instance.api_name,
                 message=messages.MSG_PW_0036,
             )
-        try:
-            attachments_ids = [int(attach_id) for attach_id in raw_value]
-        except (ValueError, TypeError) as ex:
-            raise TaskFieldException(
-                api_name=self.instance.api_name,
-                message=messages.MSG_PW_0036,
-            ) from ex
-        else:
-            attachments = (
-                FileAttachment.objects
-                .on_account(self.account.id)
-                .by_ids(attachments_ids)
-                .only('name', 'url')
-            )
-            if hasattr(self.instance, 'id'):
-                attachments = (
-                    attachments.with_output_or_not_attached(self.instance.id)
-                )
-            else:
-                attachments = attachments.not_attached()
-            urls = [e.url for e in attachments]
-            if len(urls) < len(attachments_ids):
-                raise TaskFieldException(
-                    api_name=self.instance.api_name,
-                    message=messages.MSG_PW_0037,
-                )
-            value = ', '.join(urls)
+
+        # In new architecture, raw_value contains file_ids (strings)
+        file_ids = raw_value
+
+        # For now, return a simple representation
+        # In future, this could fetch file metadata from storage service
+        if file_ids:
+            value = ', '.join(file_ids)
             markdown_value = ', '.join(
-                [f'[{e.name}]({e.url})' for e in attachments],
+                [f'File: {file_id}' for file_id in file_ids],
             )
-            return FieldData(
-                value=value,
-                markdown_value=markdown_value,
-                clear_value=value,
-            )
+        else:
+            value = ''
+            markdown_value = ''
+
+        return FieldData(
+            value=value,
+            markdown_value=markdown_value,
+            clear_value=value,
+        )
 
     def _get_valid_user_value(self, raw_value: Any, **kwargs) -> FieldData:
 
@@ -354,24 +345,16 @@ class TaskFieldService(BaseWorkflowService):
 
     def _link_new_attachments(
         self,
-        attachments_ids: Optional[List[int]] = None,
+        file_ids: Optional[List[str]] = None,
     ):
+        """
+        Create new attachments for the task field in storage service.
 
-        """ Attach new account files to the task field
-            attachments_ids - validated list ids """
-
-        if attachments_ids not in self.NULL_VALUES:
-            (
-                FileAttachment.objects
-                .on_account(self.account.id)
-                .with_output_or_not_attached(self.instance.id)
-                .by_ids(attachments_ids)
-                .update(
-                    output_id=self.instance.id,
-                    workflow_id=self.instance.workflow.id,
-                )
-            )
-            self._sync_storage_attachments(attachments_ids)
+        Args:
+            file_ids: List of file_ids from new storage service
+        """
+        if file_ids not in self.NULL_VALUES:
+            self._sync_storage_attachments(file_ids)
 
     def _create_selections(
         self,
@@ -457,65 +440,60 @@ class TaskFieldService(BaseWorkflowService):
     def _remove_unused_attachments(
         self,
         value: Optional[str],
-        attachment_ids: Optional[List[str]],
+        file_ids: Optional[List[str]],
     ):
+        """
+        Remove unused attachments from new storage service.
 
-        # TODO remove unused attachments
-        #   instead of call DELETE /workflows/attachments/:id
-        current_attach_ids = self.instance.attachments.ids_set()
+        Args:
+            value: Field value
+            file_ids: List of file_ids to keep
+        """
+        if not file_ids:
+            file_ids = []
+
+        # Get current attachments for this field
+        current_attachments = Attachment.objects.filter(
+            task=self.instance.task,
+            workflow=self.instance.workflow,
+        )
+
+        # Remove attachments not in the new file_ids list
         if value:
-            new_attach_ids = {int(e) for e in attachment_ids}
-            deleted_attach_ids = current_attach_ids - new_attach_ids
+            current_attachments.exclude(file_id__in=file_ids).delete()
         else:
-            deleted_attach_ids = current_attach_ids
-        if deleted_attach_ids:
-            removed_qs = FileAttachment.objects.filter(
-                id__in=deleted_attach_ids,
-            )
-            removed_file_ids = list(
-                removed_qs.exclude(file_id__isnull=True).values_list(
-                    'file_id',
-                    flat=True,
-                ),
-            )
-            removed_qs.delete()
-            if removed_file_ids:
-                Attachment.objects.filter(
-                    file_id__in=removed_file_ids,
-                ).delete()
+            # If no value, remove all attachments
+            current_attachments.delete()
 
     def _sync_storage_attachments(
         self,
-        attachments_ids: Optional[List[int]],
+        file_ids: Optional[List[str]],
     ):
-        if attachments_ids in self.NULL_VALUES:
+        """
+        Create Attachment records for file_ids in new storage service.
+
+        Args:
+            file_ids: List of file_ids from new storage service
+        """
+        if file_ids in self.NULL_VALUES:
             return
 
-        qst = (
-            FileAttachment.objects
-            .on_account(self.account.id)
-            .by_ids(attachments_ids)
-        )
-        if not qst.exists():
-            return
         if self.instance.task_id:
             source_type = SourceType.TASK
         else:
             source_type = SourceType.WORKFLOW
-        service = FileSyncService()
-        for attachment in qst.select_related(
-            'account',
-            'workflow',
-            'event',
-            'output',
-        ):
-            service.sync_single_attachment(
-                attachment=attachment,
-                source_type=source_type,
-                task=self.instance.task,
-                workflow=self.instance.workflow,
-                access_type=AccessType.RESTRICTED,
-            )
+
+        for file_id in file_ids:
+            # Check if attachment already exists to avoid duplicates
+            if not Attachment.objects.filter(file_id=file_id).exists():
+                Attachment.objects.create(
+                    file_id=file_id,
+                    account=self.account,
+                    source_type=source_type,
+                    access_type=AccessType.RESTRICTED,
+                    task=self.instance.task,
+                    workflow=self.instance.workflow,
+                )
 
     def partial_update(
         self,
@@ -539,7 +517,7 @@ class TaskFieldService(BaseWorkflowService):
         if self.instance.type == FieldType.FILE:
             self._remove_unused_attachments(
                 value=raw_value,
-                attachment_ids=raw_value,
+                file_ids=raw_value if isinstance(raw_value, list) else [],
             )
         super().partial_update(
             force_save=True,
