@@ -85,12 +85,14 @@ class TestWorkflowUpdateVersionService:
             name='Number field',
             kickoff=kickoff_template,
             template=template,
+            account=user.account,
         )
         field_template = FieldTemplate.objects.create(
             type=FieldType.TEXT,
             name='Text field',
             task=template_task_1,
             template=template,
+            account=user.account,
         )
         condition_template = ConditionTemplate.objects.create(
             task=template_task_1,
@@ -224,6 +226,7 @@ class TestWorkflowUpdateVersionService:
             name='Text field',
             task=task_1,
             template=template,
+            account=user.account,
         )
         TaskField.objects.create(
             name='Some text field',
@@ -239,6 +242,7 @@ class TestWorkflowUpdateVersionService:
             name='Checkbox field',
             task=task_1,
             template=template,
+            account=user.account,
         )
         second_workflow_field = TaskField.objects.create(
             name='Some text',
@@ -272,6 +276,7 @@ class TestWorkflowUpdateVersionService:
             name='Text field',
             kickoff=kickoff,
             template=template,
+            account=user.account,
         )
         TaskField.objects.create(
             type=FieldType.TEXT,
@@ -287,6 +292,7 @@ class TestWorkflowUpdateVersionService:
             name='Checkbox field',
             kickoff=kickoff,
             template=template,
+            account=user.account,
         )
         FieldTemplateSelection.objects.create(
             value='first',
@@ -378,12 +384,14 @@ class TestWorkflowUpdateVersionService:
             name='Text field',
             task=new_task,
             template=template,
+            account=user.account,
         )
         field_template_2 = FieldTemplate.objects.create(
             type=FieldType.CHECKBOX,
             name='Checkbox field',
             task=new_task,
             template=template,
+            account=user.account,
         )
         first_selection = FieldTemplateSelection.objects.create(
             value='first',
@@ -509,6 +517,7 @@ class TestWorkflowUpdateVersionService:
             name='Screenshot',
             kickoff=kickoff,
             template=template,
+            account=user.account,
         )
         workflow = create_test_workflow(user, template)
         file_field = TaskField.objects.create(
@@ -666,12 +675,14 @@ class TestWorkflowUpdateVersionService:
             name='user',
             kickoff=template.kickoff_instance,
             template=template,
+            account=owner.account,
         )
         field_template_2 = FieldTemplate.objects.create(
             type=FieldType.STRING,
             name='text',
             kickoff=template.kickoff_instance,
             template=template,
+            account=owner.account,
         )
         TemplateOwner.objects.create(
             template=template,
@@ -812,12 +823,14 @@ class TestWorkflowUpdateVersionService:
             name='user',
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
         field_template_2 = FieldTemplate.objects.create(
             type=FieldType.STRING,
             name='text',
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
         TemplateOwner.objects.create(
             template=template,
@@ -938,12 +951,14 @@ class TestWorkflowUpdateVersionService:
             name='user',
             kickoff=template.kickoff_instance,
             template=template,
+            account=owner.account,
         )
         field_template_2 = FieldTemplate.objects.create(
             type=FieldType.STRING,
             name='text',
             kickoff=template.kickoff_instance,
             template=template,
+            account=owner.account,
         )
         TemplateOwner.objects.create(
             template=template,

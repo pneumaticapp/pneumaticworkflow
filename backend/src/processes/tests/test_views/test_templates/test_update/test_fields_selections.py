@@ -42,6 +42,7 @@ class TestUpdateFieldSelections:
             task=task,
             api_name='radio-field-1',
             template=template,
+            account=user.account,
         )
         selection = FieldTemplateSelection.objects.create(
             value='First selection',
@@ -135,6 +136,7 @@ class TestUpdateFieldSelections:
             task=task,
             api_name='radio-field-1',
             template=template,
+            account=user.account,
         )
         selection = FieldTemplateSelection.objects.create(
             value='First selection',
@@ -228,6 +230,7 @@ class TestUpdateFieldSelections:
             task=task,
             api_name='radio-field-1',
             template=template,
+            account=user.account,
         )
         selection = FieldTemplateSelection.objects.create(
             value='First selection',
@@ -320,6 +323,7 @@ class TestUpdateFieldSelections:
             task=task,
             api_name='radio-field-1',
             template=template,
+            account=user.account,
         )
         selection = FieldTemplateSelection.objects.create(
             value='First selection',
@@ -414,6 +418,7 @@ class TestUpdateFieldSelections:
             task=task,
             api_name='radio-field-1',
             template=template,
+            account=user.account,
         )
         selection = FieldTemplateSelection.objects.create(
             value='First selection',

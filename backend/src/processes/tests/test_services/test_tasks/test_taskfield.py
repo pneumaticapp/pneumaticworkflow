@@ -57,6 +57,7 @@ def test_create_instance__task_field__ok(mocker):
         task=template.tasks.get(number=1),
         template=template,
         is_required=True,
+        account=user.account,
     )
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
@@ -120,6 +121,7 @@ def test_create_instance__kickoff_field__ok(mocker):
         name='Some text',
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     workflow = create_test_workflow(user=user, template=template)
     value = 'https://john.cena/john.cena'
@@ -165,6 +167,7 @@ def test_create_instance__skip_value__ok(mocker):
         name='Some user',
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
@@ -222,6 +225,7 @@ def test_create_selections_with_value__radio_dropdown__not_value__ok(
         name='Checkbox field',
         template=template,
         api_name='api-name-1',
+        account=user.account,
     )
     selection_template = FieldTemplateSelection.objects.create(
         value='first',
@@ -275,6 +279,7 @@ def test_create_selections_with_value__checkbox__not_value__ok(
         name='Checkbox field',
         template=template,
         api_name='api-name-1',
+        account=user.account,
     )
     selection_template = FieldTemplateSelection.objects.create(
         value='first',
@@ -332,6 +337,7 @@ def test_create_selections_with_value__checkbox_api_name__ok(
         name='Checkbox field',
         template=template,
         api_name='api-name-1',
+        account=user.account,
     )
     selection_template_1 = FieldTemplateSelection.objects.create(
         value='first',
@@ -401,6 +407,7 @@ def test_create_selections_with_value__radio_dropdown_api_name__ok(
         name='Checkbox field',
         template=template,
         api_name='api-name-1',
+        account=user.account,
     )
     selection_template_1 = FieldTemplateSelection.objects.create(
         value='first',
@@ -654,6 +661,7 @@ def test_update_selections__radio_dropdown__not_value__ok(
         name='Checkbox field',
         template=template,
         api_name='api-name-1',
+        account=user.account,
     )
     selection_template = FieldTemplateSelection.objects.create(
         value='first',
@@ -718,6 +726,7 @@ def test_update_selections__checkbox__not_value__ok(
         name='Checkbox field',
         template=template,
         api_name='api-name-1',
+        account=user.account,
     )
     selection_template = FieldTemplateSelection.objects.create(
         value='first',
@@ -791,6 +800,7 @@ def test_update_selections__checkbox_api_name__ok(
         name='Checkbox field',
         template=template,
         api_name='api-name-1',
+        account=user.account,
     )
     selection_template_1 = FieldTemplateSelection.objects.create(
         value='first',
@@ -877,6 +887,7 @@ def test_update_selections__radio_dropdown_api_name__ok(
         name='field',
         template=template,
         api_name='api-name-1',
+        account=user.account,
     )
     selection_template_1 = FieldTemplateSelection.objects.create(
         value='first',
@@ -1364,6 +1375,7 @@ def test_get_valid_radio_value__api_name__ok(mocker):
         name='Radio field',
         template=template,
         api_name='api-name-1',
+        account=user.account,
     )
     value = 'first option'
     selection_template = FieldTemplateSelection.objects.create(
@@ -1421,6 +1433,7 @@ def test_get_valid_radio_value__first_create_selection__ok(mocker):
         name='Radio field',
         template=template,
         api_name='api-name-1',
+        account=user.account,
     )
     value = 'first option'
     selection_template = FieldTemplateSelection.objects.create(
@@ -1526,6 +1539,7 @@ def test_get_valid_checkbox_value__one_api_name__ok(mocker):
         name='Checkbox field',
         template=template,
         api_name='api-name-1',
+        account=user.account,
     )
     value = 'first option'
     FieldTemplateSelection.objects.create(
@@ -1588,6 +1602,7 @@ def test_get_valid_checkbox_value__many_api_names__ok(mocker):
         name='Checkbox field',
         template=template,
         api_name='api-name-1',
+        account=user.account,
     )
     value_1 = 'first option'
     selection_template_1 = FieldTemplateSelection.objects.create(
@@ -1901,6 +1916,7 @@ def test_get_valid_user_value__invalid_value__raise_exception(raw_value):
         api_name=field_api_name,
         type=FieldType.USER,
         workflow=workflow,
+        account=account_owner.account,
     )
     service = TaskFieldService(
         user=account_owner,
@@ -1945,6 +1961,7 @@ def test_get_valid_date_value__invalid_value__raise_exception(raw_value):
         name='Date field',
         template=template,
         api_name='api-name-1',
+        account=user.account,
     )
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
@@ -1980,6 +1997,7 @@ def test_get_valid_url_value__not_string__raise_exception(raw_value):
         name='URL field',
         template=template,
         api_name='api-name-1',
+        account=user.account,
     )
     service = TaskFieldService(user=user, instance=field_template)
 
@@ -2008,6 +2026,7 @@ def test_get_valid_url_value__invalid_url__raise_exception(raw_value):
         name='URL field',
         template=template,
         api_name='api-name-1',
+        account=user.account,
     )
     service = TaskFieldService(user=user, instance=field_template)
 
@@ -2036,6 +2055,7 @@ def test_get_valid_url_value__valid_value__ok(raw_value):
         name='URL field',
         template=template,
         api_name='api-name-1',
+        account=user.account,
     )
     service = TaskFieldService(user=user, instance=field_template)
 
@@ -2209,6 +2229,7 @@ def test_get_valid_user_value__invalid_string__raise_exception(raw_value):
         api_name=field_api_name,
         type=FieldType.USER,
         workflow=workflow,
+        account=account_owner.account,
     )
     service = TaskFieldService(
         user=account_owner,

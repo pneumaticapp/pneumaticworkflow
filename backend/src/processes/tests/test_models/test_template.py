@@ -64,6 +64,7 @@ class TestKickoff:
             type=FieldType.STRING,
             kickoff=kickoff,
             template=template,
+            account=user.account,
         )
 
         # act
@@ -133,6 +134,7 @@ class TestTemplate:
             type=FieldType.STRING,
             kickoff=kickoff,
             template=template,
+            account=user.account,
         )
 
         # act

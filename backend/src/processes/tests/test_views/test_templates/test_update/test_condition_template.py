@@ -54,6 +54,7 @@ class TestUpdateConditionTemplate:
             kickoff=kickoff,
             is_required=True,
             template=template,
+            account=user.account,
         )
         first_task = template.tasks.order_by('number').first()
         condition = ConditionTemplate.objects.create(
@@ -157,6 +158,7 @@ class TestUpdateConditionTemplate:
             kickoff=kickoff,
             is_required=True,
             template=template,
+            account=user.account,
         )
         first_task = template.tasks.order_by('number').first()
         condition = ConditionTemplate.objects.create(
@@ -276,6 +278,7 @@ class TestUpdateConditionTemplate:
             kickoff=template.kickoff_instance,
             is_required=True,
             template=template,
+            account=user.account,
         )
         first_task = template.tasks.order_by('number').first()
         condition = ConditionTemplate.objects.create(
@@ -605,6 +608,7 @@ class TestUpdateConditionTemplate:
             kickoff=template.kickoff_instance,
             is_required=True,
             template=template,
+            account=user.account,
         )
         first_task = template.tasks.order_by('number').first()
         condition = ConditionTemplate.objects.create(
@@ -743,6 +747,7 @@ class TestUpdateConditionTemplate:
             kickoff=template.kickoff_instance,
             is_required=True,
             template=template,
+            account=user.account,
         )
         first_task = template.tasks.order_by('number').first()
         condition = ConditionTemplate.objects.create(
@@ -856,6 +861,7 @@ class TestUpdateConditionTemplate:
             type=FieldType.STRING,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
         first_task = template.tasks.order_by('number').first()
         condition = ConditionTemplate.objects.create(
@@ -979,6 +985,7 @@ class TestUpdateConditionTemplate:
             type=FieldType.STRING,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
         first_task = template.tasks.order_by('number').first()
         condition = ConditionTemplate.objects.create(
@@ -1109,6 +1116,7 @@ class TestUpdateConditionTemplate:
             type=FieldType.STRING,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
         first_task = template.tasks.order_by('number').first()
         condition = ConditionTemplate.objects.create(
@@ -1229,6 +1237,7 @@ class TestUpdateConditionTemplate:
             kickoff=kickoff,
             is_required=True,
             template=template,
+            account=user.account,
         )
         task = template.tasks.first()
         condition = ConditionTemplate.objects.create(
@@ -1369,6 +1378,7 @@ class TestUpdateConditionTemplate:
             kickoff=kickoff,
             is_required=True,
             template=template,
+            account=user.account,
         )
         task = template.tasks.first()
         condition = ConditionTemplate.objects.create(
@@ -1507,6 +1517,7 @@ class TestUpdateConditionTemplate:
             kickoff=kickoff,
             is_required=True,
             template=template,
+            account=user.account,
         )
         task = template.tasks.first()
         condition = ConditionTemplate.objects.create(
@@ -1636,6 +1647,7 @@ class TestUpdateConditionTemplate:
             kickoff=kickoff,
             is_required=True,
             template=template,
+            account=user.account,
         )
         task = template.tasks.first()
         condition = ConditionTemplate.objects.create(
@@ -1762,6 +1774,7 @@ class TestUpdateConditionTemplate:
             kickoff=kickoff,
             is_required=True,
             template=template,
+            account=user.account,
         )
         task = template.tasks.first()
         condition = ConditionTemplate.objects.create(
@@ -1886,6 +1899,7 @@ class TestUpdateConditionTemplate:
             kickoff=kickoff,
             is_required=True,
             template=template,
+            account=user.account,
         )
         task = template.tasks.first()
         condition = ConditionTemplate.objects.create(
@@ -2143,6 +2157,7 @@ class TestUpdateConditionTemplate:
             kickoff=template.kickoff_instance,
             is_required=True,
             template=template,
+            account=user.account,
         )
         first_task = template.tasks.order_by('number').first()
         condition = ConditionTemplate.objects.create(
@@ -2289,6 +2304,7 @@ class TestUpdateConditionTemplate:
             kickoff=template.kickoff_instance,
             is_required=True,
             template=template,
+            account=user.account,
         )
         first_task = template.tasks.order_by('number').first()
         condition = ConditionTemplate.objects.create(
@@ -2435,6 +2451,7 @@ class TestUpdateConditionTemplate:
             kickoff=template.kickoff_instance,
             is_required=True,
             template=template,
+            account=user.account,
         )
         first_task = template.tasks.order_by('number').first()
         condition = ConditionTemplate.objects.create(
@@ -2572,6 +2589,7 @@ class TestUpdateConditionTemplate:
             type=FieldType.STRING,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
         condition = ConditionTemplate.objects.create(
             action=ConditionAction.SKIP_TASK,
@@ -2671,6 +2689,7 @@ class TestUpdateConditionTemplate:
             type=FieldType.STRING,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
         condition = ConditionTemplate.objects.create(
             action=ConditionAction.SKIP_TASK,
@@ -2771,6 +2790,7 @@ class TestUpdateConditionTemplate:
             type=FieldType.STRING,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
         condition = ConditionTemplate.objects.create(
             action=ConditionAction.SKIP_TASK,
