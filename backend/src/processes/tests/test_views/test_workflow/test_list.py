@@ -381,6 +381,7 @@ def test_list__search__email_login__ok(api_client):
         value=value,
         clear_value=MarkdownService.clear(value),
         account_id=user.account_id,
+        account=user.account,
     )
     search_text = 'fred'
     create_test_workflow(user, tasks_count=1)
@@ -408,6 +409,7 @@ def test_list__search__email_domain__ok(api_client):
         workflow=workflow,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
     search_text = 'boy'
     create_test_workflow(user, tasks_count=1)
@@ -434,6 +436,7 @@ def test_list__search__full_email__ok(api_client):
         workflow=workflow,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
     search_text = 'fred@boy'
     create_test_workflow(user, tasks_count=1)
@@ -700,6 +703,7 @@ def test_list__search__task_field_attachment__not_found(api_client):
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     FileAttachment.objects.create(
         name='fred.cena',
@@ -730,6 +734,7 @@ def test_list__search__kickoff_field_attachment__not_found(api_client):
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     FileAttachment.objects.create(
         name='fred.cena',
@@ -802,6 +807,7 @@ def test_list__search__in_kickoff_field_value__ok(
         workflow=workflow,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
     search_text = 'fred@boy'
     create_test_workflow(user, tasks_count=1)
@@ -845,6 +851,7 @@ def test_list__search__in_active_task_field_value__ok(
         workflow=workflow,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
     search_text = 'f boy'
     api_client.token_authenticate(user)
@@ -890,6 +897,7 @@ def test_list__search__in_prev_task_fields_value__ok(
         workflow=workflow,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
     search_text = 'a boy@noway.com'
     api_client.token_authenticate(user)
@@ -925,6 +933,7 @@ def test_list__search__in_excluded_field_value__ok(
         workflow=workflow,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
     search_text = 'f boy'
     api_client.token_authenticate(user)
@@ -954,6 +963,7 @@ def test_list__search__markdown_filename_in_text_field__ok(api_client):
         workflow=workflow,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
     search_text = 'somefile.txt'
     api_client.token_authenticate(user)
@@ -979,6 +989,7 @@ def test_list__search__full_uri_in_field__ok(api_client):
         workflow=workflow,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
 
     api_client.token_authenticate(user)
@@ -1008,6 +1019,7 @@ def test_list__search__url_in_field__ok(api_client):
         workflow=workflow,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
 
     api_client.token_authenticate(user)
@@ -2031,6 +2043,7 @@ def test_list__filter_fields_kickoff_field__ok(api_client):
         type=FieldType.STRING,
         workflow=workflow,
         value='value',
+        account=user.account,
     )
     field_api_name = 'api-name-2'
     field = TaskField.objects.create(
@@ -2044,6 +2057,7 @@ def test_list__filter_fields_kickoff_field__ok(api_client):
         order=2,
         description='desc',
         is_required=True,
+        account=user.account,
     )
     api_client.token_authenticate(user)
 
@@ -2084,6 +2098,7 @@ def test_list__filter_fields_task_field__ok(api_client):
         type=FieldType.STRING,
         workflow=workflow,
         value='value',
+        account=user.account,
     )
     field_api_name = 'api-name-2'
     field = TaskField.objects.create(
@@ -2097,6 +2112,7 @@ def test_list__filter_fields_task_field__ok(api_client):
         order=2,
         description='desc',
         is_required=True,
+        account=user.account,
     )
     api_client.token_authenticate(user)
 
@@ -2138,6 +2154,7 @@ def test_list__filter_fields__fields_ordering__ok(api_client):
         value='value',
         order=3,
         api_name='field-2',
+        account=user.account,
     )
     task_2 = workflow.tasks.get(number=2)
     field_3 = TaskField.objects.create(
@@ -2147,6 +2164,7 @@ def test_list__filter_fields__fields_ordering__ok(api_client):
         value='value',
         order=2,
         api_name='field-3',
+        account=user.account,
     )
     field_2 = TaskField.objects.create(
         task=task_2,
@@ -2155,6 +2173,7 @@ def test_list__filter_fields__fields_ordering__ok(api_client):
         value='value',
         order=1,
         api_name='field-1',
+        account=user.account,
     )
 
     kickoff = workflow.kickoff_instance
@@ -2165,6 +2184,7 @@ def test_list__filter_fields__fields_ordering__ok(api_client):
         value='value',
         order=5,
         api_name='field-4',
+        account=user.account,
     )
     task_1.number = 3
     task_1.save()
@@ -2205,6 +2225,7 @@ def test_list__filter_fields_multiple_values__ok(api_client):
         workflow=workflow,
         value='value',
         order=3,
+        account=user.account,
     )
     field_2 = TaskField.objects.create(
         task=task,
@@ -2213,6 +2234,7 @@ def test_list__filter_fields_multiple_values__ok(api_client):
         workflow=workflow,
         value='2.13',
         order=2,
+        account=user.account,
     )
     api_client.token_authenticate(user)
 
@@ -2244,6 +2266,7 @@ def test_list__filter_fields_blank__empty_list(api_client):
         type=FieldType.STRING,
         workflow=workflow,
         value='value',
+        account=user.account,
     )
     api_client.token_authenticate(user)
 
@@ -2269,6 +2292,7 @@ def test_list__filter_fields_not_existent_field__empty_list(api_client):
         type=FieldType.STRING,
         workflow=workflow,
         value='value',
+        account=user.account,
     )
     api_client.token_authenticate(user)
 
@@ -2295,6 +2319,7 @@ def test_list__filter_fields__another_account_field__empty_list(api_client):
         type=FieldType.STRING,
         workflow=workflow,
         value='value',
+        account=another_user.account,
     )
     user = create_test_owner()
     workflow_2 = create_test_workflow(user=user, tasks_count=1)
@@ -2324,6 +2349,7 @@ def test_list__filter_fields__another_workflow_field__empty_list(api_client):
         type=FieldType.STRING,
         workflow=workflow,
         value='value',
+        account=owner.account,
     )
     user = create_test_admin(account=account)
     workflow_2 = create_test_workflow(user, tasks_count=1)
@@ -2360,6 +2386,7 @@ def test_list__filter_fields_and_template__ok(api_client):
         type=FieldType.STRING,
         workflow=workflow,
         value='value',
+        account=user.account,
     )
     api_client.token_authenticate(user)
 
@@ -2398,6 +2425,7 @@ def test_list__filter_fields_and_another_template_id__empty_list(api_client):
         type=FieldType.STRING,
         workflow=workflow,
         value='value',
+        account=user.account,
     )
 
     another_template = create_test_template(user=user, tasks_count=1)

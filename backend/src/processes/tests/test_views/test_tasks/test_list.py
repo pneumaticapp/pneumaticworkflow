@@ -543,6 +543,7 @@ def test_list__search__completed_prev_task_output_attachment__not_found(
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     FileAttachment.objects.create(
         name='fred.cena',
@@ -582,6 +583,7 @@ def test_list__search__active_task_field_attachment__not_found(
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     FileAttachment.objects.create(
         name='fred.cena',
@@ -726,6 +728,7 @@ def test_list__search__in_active_task_field_value__ok(
         workflow=workflow,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
     api_client.token_authenticate(user)
     mocker.patch(
@@ -774,6 +777,7 @@ def test_list__search__in_kickoff_field_value__ok(
         workflow=workflow,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
     api_client.token_authenticate(user)
     mocker.patch(
@@ -815,6 +819,7 @@ def test_list__search__in_excluded_field_value__not_found(
         workflow=workflow,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
     api_client.token_authenticate(user)
     mocker.patch(
@@ -848,6 +853,7 @@ def test_list__search___full_uri_in_field___ok(
         workflow=workflow,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
     api_client.token_authenticate(user)
     mocker.patch(
@@ -884,6 +890,7 @@ def test_list__search___domain__ok(
         workflow=workflow,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
     api_client.token_authenticate(user)
     mocker.patch(
@@ -922,6 +929,7 @@ def test_list__search__markdown_filename_in_text_field__ok(
         type=FieldType.TEXT,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
 
     api_client.token_authenticate(user)
@@ -959,6 +967,7 @@ def test_list__search__url_in_text_field__ok(
         type=FieldType.TEXT,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
     api_client.token_authenticate(user)
     mocker.patch(
@@ -995,6 +1004,7 @@ def test_list__search__email_in_text_field__ok(
         type=FieldType.TEXT,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
 
     api_client.token_authenticate(user)
@@ -1038,6 +1048,7 @@ def test_list__search__prev_task_markdown_filename_in_text__not_found(
         type=FieldType.TEXT,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
 
     api_client.token_authenticate(user)

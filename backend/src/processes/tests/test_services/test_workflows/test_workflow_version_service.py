@@ -232,6 +232,7 @@ class TestWorkflowUpdateVersionService:
             is_required=True,
             task=workflow_task,
             workflow=workflow,
+            account=user.account,
         )
         field_template_2 = FieldTemplate.objects.create(
             type=FieldType.CHECKBOX,
@@ -246,6 +247,7 @@ class TestWorkflowUpdateVersionService:
             is_required=True,
             task=workflow_task,
             workflow=workflow,
+            account=user.account,
         )
         FieldTemplateSelection.objects.create(
             value='first',
@@ -278,6 +280,7 @@ class TestWorkflowUpdateVersionService:
             kickoff=workflow.kickoff_instance,
             is_required=True,
             workflow=workflow,
+            account=user.account,
         )
         kickoff_field_template_2 = FieldTemplate.objects.create(
             type=FieldType.CHECKBOX,
@@ -517,6 +520,7 @@ class TestWorkflowUpdateVersionService:
             value='http://file.png',
             clear_value='http://clear-file.png',
             markdown_value='[attachment](http://file.png)',
+            account=user.account,
         )
         attachment = FileAttachment.objects.create(
             name='attachment',

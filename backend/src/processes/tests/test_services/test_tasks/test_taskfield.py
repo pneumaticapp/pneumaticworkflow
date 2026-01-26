@@ -236,6 +236,7 @@ def test_create_selections_with_value__radio_dropdown__not_value__ok(
         is_required=True,
         type=field_type,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(
         instance=task_field,
@@ -288,6 +289,7 @@ def test_create_selections_with_value__checkbox__not_value__ok(
         is_required=True,
         type=FieldType.CHECKBOX,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(
         instance=task_field,
@@ -349,6 +351,7 @@ def test_create_selections_with_value__checkbox_api_name__ok(
         is_required=True,
         type=FieldType.CHECKBOX,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(
         instance=task_field,
@@ -417,6 +420,7 @@ def test_create_selections_with_value__radio_dropdown_api_name__ok(
         is_required=True,
         type=field_type,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(
         instance=task_field,
@@ -457,6 +461,7 @@ def test_link_new_attachments__not_attached__ok():
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     attachment = FileAttachment.objects.create(
         name='john.cena',
@@ -491,6 +496,7 @@ def test_link_new_attachments__update_attached__ok():
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     attachment = FileAttachment.objects.create(
         output_id=task_field.id,
@@ -526,6 +532,7 @@ def test_link_new_attachments__event_attachment__not_link():
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     attachment = FileAttachment.objects.create(
         name='john.cena',
@@ -572,6 +579,7 @@ def test_link_new_attachments__another_account_attachment__not_update():
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     attachment = FileAttachment.objects.create(
         name='john.cena',
@@ -606,6 +614,7 @@ def test_link_new_attachments__not_value__not_attached():
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     attachment = FileAttachment.objects.create(
         name='john.cena',
@@ -659,6 +668,7 @@ def test_update_selections__radio_dropdown__not_value__ok(
         is_required=True,
         type=field_type,
         workflow=workflow,
+        account=user.account,
     )
     selection = FieldSelection.objects.create(
         field=task_field,
@@ -722,6 +732,7 @@ def test_update_selections__checkbox__not_value__ok(
         is_required=True,
         type=FieldType.CHECKBOX,
         workflow=workflow,
+        account=user.account,
     )
     selection = FieldSelection.objects.create(
         field=task_field,
@@ -799,6 +810,7 @@ def test_update_selections__checkbox_api_name__ok(
         is_required=True,
         type=FieldType.CHECKBOX,
         workflow=workflow,
+        account=user.account,
     )
     selection_1 = FieldSelection.objects.create(
         field=task_field,
@@ -884,6 +896,7 @@ def test_update_selections__radio_dropdown_api_name__ok(
         is_required=True,
         type=field_type,
         workflow=workflow,
+        account=user.account,
     )
     selection_1 = FieldSelection.objects.create(
         field=task_field,
@@ -937,6 +950,7 @@ def test_partial_update__ok(mocker):
         is_required=True,
         type=FieldType.NUMBER,
         workflow=workflow,
+        account=user.account,
     )
     value = 'value'
     clear_value = 'clear value'
@@ -998,6 +1012,7 @@ def test_partial_update__type_file__ok(mocker):
         is_required=True,
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     deleted_attachment = FileAttachment.objects.create(
         name='test',
@@ -1073,6 +1088,7 @@ def test_partial_update__type_file_null_value__ok(mocker):
         is_required=True,
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     deleted_attachment = FileAttachment.objects.create(
         name='test',
@@ -1154,6 +1170,7 @@ def test_get_valid_number_value__invalid_value__raise_exception(raw_value):
         api_name=field_api_name,
         type=FieldType.NUMBER,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(instance=task_field)
     raw_value = None
@@ -1206,6 +1223,7 @@ def test_get_valid_string_value__invalid_value__raise_exception(
         api_name=field_api_name,
         type=FieldType.STRING,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(instance=task_field)
     clear_markdown_mock = mocker.patch(
@@ -1235,6 +1253,7 @@ def test_get_valid_string_value__over_limit__raise_exception():
         api_name=field_api_name,
         type=FieldType.STRING,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(instance=task_field)
     raw_value = 's' * (TaskFieldService.STRING_LENGTH + 1)
@@ -1289,6 +1308,7 @@ def test_get_valid_text_value__invalid_value__raise_exception(
         api_name=field_api_name,
         type=FieldType.TEXT,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(instance=task_field)
     clear_markdown_mock = mocker.patch(
@@ -1359,6 +1379,7 @@ def test_get_valid_radio_value__api_name__ok(mocker):
         is_required=field_template.is_required,
         type=field_template.type,
         workflow=workflow,
+        account=user.account,
     )
     selection = FieldSelection.objects.create(
         field=task_field,
@@ -1415,6 +1436,7 @@ def test_get_valid_radio_value__first_create_selection__ok(mocker):
         is_required=field_template.is_required,
         type=field_template.type,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(instance=task_field)
     raw_value = selection_template.api_name
@@ -1450,6 +1472,7 @@ def test_get_valid_radio_value__not_string__raise_exception(raw_value):
         api_name='api-name-1',
         type=FieldType.RADIO,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(instance=task_field)
 
@@ -1476,6 +1499,7 @@ def test_get_valid_radio_value__not_exists_selection__raise_exception():
         api_name='api-name-1',
         type=FieldType.RADIO,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(instance=task_field)
 
@@ -1522,6 +1546,7 @@ def test_get_valid_checkbox_value__one_api_name__ok(mocker):
         is_required=field_template.is_required,
         type=field_template.type,
         workflow=workflow,
+        account=user.account,
     )
     FieldSelection.objects.create(
         field=task_field,
@@ -1584,6 +1609,7 @@ def test_get_valid_checkbox_value__many_api_names__ok(mocker):
         is_required=field_template.is_required,
         type=field_template.type,
         workflow=workflow,
+        account=user.account,
     )
     FieldSelection.objects.create(
         field=task_field,
@@ -1629,6 +1655,7 @@ def test_get_valid_file_value__one_file__ok():
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     attachment = FileAttachment.objects.create(
         name='john.cena',
@@ -1661,6 +1688,7 @@ def test_get_valid_file_value__multiple_files__ok():
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     attachment_1 = FileAttachment.objects.create(
         name='john.cena',
@@ -1701,6 +1729,7 @@ def test_get_valid_file_value__new_field__ok():
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     event = WorkflowEvent.objects.create(
         account=user.account,
@@ -1755,6 +1784,7 @@ def test_get_valid_file_value__not_list__raise_exception():
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     attachment = FileAttachment.objects.create(
         name='john.cena',
@@ -1797,6 +1827,7 @@ def test_get_valid_file_value__invalid_attach_id__raise_exception(raw_value):
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(instance=task_field)
 
@@ -1820,6 +1851,7 @@ def test_get_valid_file_value__incorrect_attachments_count__raise_exception():
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(instance=task_field)
     raw_value = None
@@ -1922,6 +1954,7 @@ def test_get_valid_date_value__invalid_value__raise_exception(raw_value):
         is_required=field_template.is_required,
         type=field_template.type,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(instance=task_field)
 
@@ -2094,6 +2127,7 @@ def test_get_valid_user_value__by_group_name_case_insensitive__ok():
         api_name=field_api_name,
         type=FieldType.USER,
         workflow=workflow,
+        account=account_owner.account,
     )
 
     service = TaskFieldService(
@@ -2132,6 +2166,7 @@ def test_get_valid_user_value__email_vs_group_name__prefer_email():
         api_name=field_api_name,
         type=FieldType.USER,
         workflow=workflow,
+        account=account_owner.account,
     )
 
     service = TaskFieldService(
