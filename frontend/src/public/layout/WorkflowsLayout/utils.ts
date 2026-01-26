@@ -39,16 +39,16 @@ export const getRenderPlaceholder = ({
     type === ERenderPlaceholderType.Task ? option.apiName === filterIds[0] : option.id === filterIds[0],
   );
 
+  if ((type === ERenderPlaceholderType.Starter || type === ERenderPlaceholderType.Performer) && !selectedOption) {
+    return `${formatMessage({ id: 'sorting.unknown-filter-value' })} ${type}`;
+  }
+
   if (
     type === ERenderPlaceholderType.Task ||
     type === ERenderPlaceholderType.Template ||
     (type === ERenderPlaceholderType.Performer && filterType === 'groupType')
   ) {
     return selectedOption?.name || `${formatMessage({ id: 'sorting.unknown-filter-value' })} ${type}`;
-  }
-
-  if (type === ERenderPlaceholderType.Starter && !selectedOption) {
-    return `${formatMessage({ id: 'sorting.unknown-filter-value' })} ${type}`;
   }
 
   if (
