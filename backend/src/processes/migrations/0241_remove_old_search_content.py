@@ -1,5 +1,6 @@
 from django.db import migrations
-
+from django.db import migrations, models
+import django.db.models.deletion
 
 class Migration(migrations.Migration):
     """ Fills the user field in predicate and predicatetemplate
@@ -10,6 +11,42 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AddField(
+            model_name='fieldtemplate',
+            name='account',
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to='accounts.Account'
+            ),
+        ),
+        migrations.AddField(
+            model_name='taskfield',
+            name='account',
+            field=models.ForeignKey(
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                to='accounts.Account'
+            ),
+        ),
+        migrations.RunSQL(sql="""
+          UPDATE processes_fieldtemplate main SET account_id = result.account_id
+            FROM (
+              SELECT pft.id, t.account_id
+                FROM processes_fieldtemplate pft 
+                  INNER JOIN processes_template t ON t.id = pft.template_id
+            ) result
+          WHERE main.id = result.id
+        """),
+        migrations.RunSQL(sql="""
+          UPDATE processes_taskfield main SET account_id = result.account_id
+            FROM (
+              SELECT ptf.id, pw.account_id
+                FROM processes_taskfield ptf 
+                  INNER JOIN processes_workflow pw ON pw.id = ptf.workflow_id
+            ) result
+          WHERE main.id = result.id
+        """),
         migrations.RunSQL(sql="DROP TRIGGER IF EXISTS update_process_workflow_search_content ON processes_workflow"),
         migrations.RunSQL(sql="DROP TRIGGER IF EXISTS workflow_ins ON processes_workflow"),
         migrations.RunSQL(sql="DROP TRIGGER IF EXISTS workflow_insert ON processes_workflow"),
@@ -32,6 +69,9 @@ class Migration(migrations.Migration):
         migrations.RunSQL(sql="DROP TRIGGER IF EXISTS update_processes_taskfield_search_content ON processes_taskfield"),
         migrations.RunSQL(sql="DROP TRIGGER IF EXISTS taskfield_ins ON processes_taskfield"),
         migrations.RunSQL(sql="DROP TRIGGER IF EXISTS workflow_ins ON processes_taskfield"),
+
+        migrations.RunSQL(sql="DROP TRIGGER IF EXISTS tasktemplate_ins ON processes_tasktemplate"),
+        migrations.RunSQL(sql="DROP TRIGGER IF EXISTS templates_ins ON processes_template"),
 
         migrations.RemoveField(
             model_name='fileattachment',

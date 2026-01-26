@@ -14,6 +14,21 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.AlterField(
+            model_name='fieldtemplate',
+            name='account',
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to='accounts.Account'),
+        ),
+
+        migrations.AlterField(
+            model_name='taskfield',
+            name='account',
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                to='accounts.Account'),
+        ),
         migrations.CreateModel(
             name='SearchContent',
             fields=[
@@ -24,6 +39,8 @@ class Migration(migrations.Migration):
                 ('task', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='processes.Task')),
                 ('task_field', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='processes.TaskField')),
                 ('workflow', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='processes.Workflow')),
+                ('template', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='processes.Template')),
+                ('task_template', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='processes.TaskTemplate')),
                 ('content', django.contrib.postgres.search.SearchVectorField(blank=True, null=True)),
             ],
             options={
@@ -33,7 +50,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='searchcontent',
-            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('workflow', 'task', 'event', 'task_field'), name='processes_search_content_unique'),
+            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('workflow', 'task', 'event', 'task_field', 'template', 'task_template'), name='processes_search_content_unique'),
         ),
 
         # processes_workflow search content (workflow name has weight "A" )
@@ -43,12 +60,12 @@ class Migration(migrations.Migration):
             $BODY$
                 BEGIN
                 INSERT INTO processes_searchcontent (
-                    is_deleted, account_id, event_id, task_id, task_field_id, workflow_id, content
+                    is_deleted, account_id, event_id, task_id, task_field_id, workflow_id, template_id, task_template_id, content
                 )
                 VALUES (
-                    FALSE, new.account_id, NULL, NULL, NULL, new.id, setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'A')
+                    FALSE, new.account_id, NULL, NULL, NULL, new.id, NULL, NULL, setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'A')
                 )
-                ON CONFLICT (workflow_id, task_id, event_id, task_field_id) WHERE is_deleted = FALSE
+                ON CONFLICT (workflow_id, task_id, event_id, task_field_id, template_id, task_template_id) WHERE is_deleted = FALSE
                 DO UPDATE SET content = setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'A');
                 RETURN new;
             END;
@@ -66,15 +83,15 @@ class Migration(migrations.Migration):
             $BODY$
                 BEGIN
                 INSERT INTO processes_searchcontent (
-                    is_deleted, account_id, event_id, task_id, task_field_id, workflow_id, content
+                    is_deleted, account_id, event_id, task_id, task_field_id, workflow_id, template_id, task_template_id, content
                 )
                 VALUES (
-                    FALSE, new.account_id, NULL, new.id, NULL, new.workflow_id, (
+                    FALSE, new.account_id, NULL, new.id, NULL, new.workflow_id, NULL, NULL, (
                         setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.description)), 'B') ||
                         setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'D')
                     )
                 )
-                ON CONFLICT (workflow_id, task_id, event_id, task_field_id) WHERE is_deleted = FALSE
+                ON CONFLICT (workflow_id, task_id, event_id, task_field_id, template_id, task_template_id) WHERE is_deleted = FALSE
                 DO UPDATE SET content = (
                     setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.description)), 'B') ||
                     setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'D')
@@ -95,16 +112,16 @@ class Migration(migrations.Migration):
             $BODY$
                 BEGIN
                 INSERT INTO processes_searchcontent (
-                    is_deleted, account_id, event_id, task_id, task_field_id, workflow_id, content
+                    is_deleted, account_id, event_id, task_id, task_field_id, workflow_id, template_id, task_template_id, content
                 )
                 VALUES (                
-                    FALSE, new.account_id, NULL, new.task_id, new.id, new.workflow_id, 
+                    FALSE, new.account_id, NULL, new.task_id, new.id, new.workflow_id, NULL, NULL,
                     CASE
                         WHEN new.kickoff_id IS NOT NULL THEN setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.value)), 'B')
                         ELSE setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.value)), 'C')
                     END
                 )
-                ON CONFLICT (workflow_id, task_id, event_id, task_field_id) WHERE is_deleted = FALSE
+                ON CONFLICT (workflow_id, task_id, event_id, task_field_id, template_id, task_template_id) WHERE is_deleted = FALSE
                 DO UPDATE SET content = CASE
                     WHEN new.kickoff_id IS NOT NULL THEN setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.value)), 'B')
                     ELSE setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.value)), 'C')
@@ -125,12 +142,12 @@ class Migration(migrations.Migration):
             $BODY$
                 BEGIN
                 INSERT INTO processes_searchcontent (
-                    is_deleted, account_id, event_id, task_id, task_field_id, workflow_id, content
+                    is_deleted, account_id, event_id, task_id, task_field_id, workflow_id, template_id, task_template_id, content
                 )
                 VALUES (
-                    FALSE, new.account_id, new.id, new.task_id, NULL, new.workflow_id, setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.text)), 'D')
+                    FALSE, new.account_id, new.id, new.task_id, NULL, new.workflow_id, NULL, NULL, setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.text)), 'D')
                 )
-                ON CONFLICT (workflow_id, task_id, event_id, task_field_id) WHERE is_deleted = FALSE
+                ON CONFLICT (workflow_id, task_id, event_id, task_field_id, template_id, task_template_id) WHERE is_deleted = FALSE
                 DO UPDATE SET content =  setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.text)), 'D');
                 RETURN new;
             END;
@@ -142,4 +159,63 @@ class Migration(migrations.Migration):
             WHEN (new.type = 5)
             EXECUTE FUNCTION create_workflowevent_search_content()
         """),
+
+        # processes_template search content
+        migrations.RunSQL(sql="""
+            CREATE OR REPLACE FUNCTION create_template_search_content()
+            RETURNS trigger AS
+            $BODY$
+                BEGIN
+                INSERT INTO processes_searchcontent (
+                    is_deleted, account_id, event_id, task_id, task_field_id, workflow_id, template_id, task_template_id, content
+                )
+                VALUES (
+                    FALSE, new.account_id, NULL, NULL, NULL, NULL, new.id, NULL, (
+                        setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'C') ||
+                        setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.description)), 'D')   
+                    )
+                )
+                ON CONFLICT (workflow_id, task_id, event_id, task_field_id, template_id, task_template_id) WHERE is_deleted = FALSE
+                DO UPDATE SET content = (
+                        setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'C') ||
+                        setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.description)), 'D')   
+                    );
+                RETURN new;
+            END;
+            $BODY$ LANGUAGE plpgsql;
+        """),
+        migrations.RunSQL(sql="""
+             CREATE TRIGGER template_ins AFTER INSERT OR UPDATE ON processes_template
+             FOR EACH ROW EXECUTE FUNCTION create_template_search_content()
+        """),
+
+        # processes_task_template search content
+        migrations.RunSQL(sql="""
+            CREATE OR REPLACE FUNCTION create_task_template_search_content()
+            RETURNS trigger AS
+            $BODY$
+                BEGIN
+                INSERT INTO processes_searchcontent (
+                    is_deleted, account_id, event_id, task_id, task_field_id, workflow_id, template_id, task_template_id, content
+                )
+                VALUES (
+                    FALSE, new.account_id, NULL, NULL, NULL, NULL, new.template_id, new.id,
+                    setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'D')
+                )
+                ON CONFLICT (workflow_id, task_id, event_id, task_field_id, template_id, task_template_id) WHERE is_deleted = FALSE
+                DO UPDATE SET content =  setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'D');
+                RETURN new;
+            END;
+            $BODY$ LANGUAGE plpgsql;
+        """),
+        migrations.RunSQL(sql="""
+             CREATE TRIGGER task_template_ins AFTER INSERT OR UPDATE ON processes_tasktemplate
+             FOR EACH ROW EXECUTE FUNCTION create_task_template_search_content()
+        """),
+        migrations.RunSQL(sql="UPDATE processes_workflow SET name=name"),
+        migrations.RunSQL(sql="UPDATE processes_task SET name=name"""),
+        migrations.RunSQL(sql="UPDATE processes_taskfield SET type=type"),
+        migrations.RunSQL(sql="UPDATE processes_workflowevent SET type=type"),
+        migrations.RunSQL(sql="UPDATE processes_template SET name=name"),
+        migrations.RunSQL(sql="UPDATE processes_tasktemplate SET name=name"),
     ]

@@ -4,6 +4,8 @@ from django.db.models import Q, UniqueConstraint
 
 from src.accounts.models import AccountBaseMixin
 from src.generics.models import SoftDeleteModel
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.template import Template
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import Task
@@ -24,6 +26,8 @@ class SearchContent(
                     'task',
                     'event',
                     'task_field',
+                    'template',
+                    'task_template',
                 ],
                 condition=Q(is_deleted=False),
                 name='processes_search_content_unique',
@@ -48,6 +52,16 @@ class SearchContent(
     )
     task_field = models.ForeignKey(
         TaskField,
+        on_delete=models.CASCADE,
+        null=True,
+    )
+    template = models.ForeignKey(
+        Template,
+        on_delete=models.CASCADE,
+        null=True,
+    )
+    task_template = models.ForeignKey(
+        TaskTemplate,
         on_delete=models.CASCADE,
         null=True,
     )
