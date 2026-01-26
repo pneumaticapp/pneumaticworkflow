@@ -3,13 +3,10 @@ import { ITaskCardWrapperProps, TaskCardWrapper } from './TaskCard';
 import {
   setTaskCompleted,
   setTaskReverted,
-  setWorkflowFinished,
   ETaskStatus,
   setCurrentTask,
-  clearWorkflow,
   addTaskPerformer,
   removeTaskPerformer,
-  openWorkflowLogPopup,
   setCurrentTaskDueDate,
   deleteCurrentTaskDueDate,
   openSelectTemplateModal,
@@ -17,6 +14,7 @@ import {
   changeTaskWorkflowLog,
   sendTaskWorkflowLogComments,
 } from '../../redux/actions';
+import { openWorkflowLogPopup, clearWorkflow, setWorkflowFinished } from '../../redux/workflows/slice';
 import { IApplicationState } from '../../types/redux';
 import { getNotDeletedUsers } from '../../utils/users';
 

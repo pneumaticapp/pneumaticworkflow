@@ -62,8 +62,6 @@ import { mergePaths } from '../../utils/urls';
 import { createWebSocketChannel } from '../utils/createWebSocketChannel';
 import { getTaskListWithNewTask } from './utils/getTaskListWithNewTask';
 import { checkShouldInsertNewTask } from './utils/checkShouldInsertNewTask';
-import { ITemplateTitle } from '../../types/template';
-import { getTemplatesTitles } from '../../api/getTemplatesTitles';
 import { handleLoadTemplateVariables } from '../templates/saga';
 import { ETaskListStatus } from '../../components/Tasks/types';
 import { setCurrentTask } from '../actions';
@@ -71,6 +69,7 @@ import { getCurrentTask } from '../selectors/task';
 import { envWssURL } from '../../constants/enviroment';
 import { mapTasksToISOStringToRedux } from '../../utils/mappers';
 import { NotificationManager } from '../../components/UI/Notifications';
+import { getTemplatesTitlesByTasks, TGetTemplatesTitlesByTasksResponse } from '../../api/getTemplatesTitlesByTasks';
 
 export function* setDetailedTask(taskId: number) {
   yield put(setTaskListDetailedTaskId(taskId));
@@ -210,9 +209,7 @@ export function* fetchTasksFilterTemplates() {
     const {
       tasksSettings: { completionStatus },
     }: IStoreTasks = yield select(getTasksStore);
-    const templates: ITemplateTitle[] = yield getTemplatesTitles({
-      withTasksInProgress: completionStatus === ETaskListCompletionStatus.Active,
-    });
+    const templates: TGetTemplatesTitlesByTasksResponse = yield getTemplatesTitlesByTasks(completionStatus);
     yield put(loadTasksFilterTemplatesSuccess(templates));
   } catch (error) {
     yield put(loadTasksFilterTemplatesFailed());

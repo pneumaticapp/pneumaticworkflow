@@ -32,8 +32,9 @@ from src.processes.models.templates.template import Template
 from src.processes.permissions import TemplateOwnerPermission
 from src.processes.queries import (
     TemplateStepsQuery,
-    TemplateTitlesEventsQuery,
-    TemplateTitlesQuery,
+    TemplateTitlesByWorkflowsQuery,
+    TemplateTitlesByEventsQuery,
+    TemplateTitlesByTasksQuery,
 )
 from src.processes.serializers.templates.integrations import (
     TemplateIntegrationsFilterSerializer,
@@ -54,8 +55,9 @@ from src.processes.serializers.templates.template import (
     TemplateListSerializer,
     TemplateOnlyFieldsSerializer,
     TemplateSerializer,
-    TemplateTitlesEventsRequestSerializer,
-    TemplateTitlesRequestSerializer,
+    TemplateTitlesByEventsSerializer,
+    TemplateTitlesByTasksSerializer,
+    TemplateTitlesByWorkflowsSerializer,
     TemplateTitlesSerializer,
 )
 from src.processes.serializers.workflows.workflow import (
@@ -113,8 +115,9 @@ class TemplateViewSet(
         'ai': TemplateAiSerializer,
         'by_steps': TemplateByStepsSerializer,
         'by_name': TemplateByNameSerializer,
-        'titles': TemplateTitlesSerializer,
+        'titles_by_workflows': TemplateTitlesSerializer,
         'titles_by_events': TemplateTitlesSerializer,
+        'titles_by_tasks': TemplateTitlesSerializer,
         'fields': TemplateOnlyFieldsSerializer,
         'presets': TemplatePresetSerializer,
         'preset': TemplatePresetSerializer,
@@ -150,6 +153,7 @@ class TemplateViewSet(
             'list',
             'titles',
             'titles_by_events',
+            'titles_by_tasks',
             'steps',
             'fields',
         ):
@@ -481,11 +485,11 @@ class TemplateViewSet(
             )
         return self.response_ok()
 
-    @action(methods=['GET'], detail=False, url_path='titles')
-    def titles(self, request, *args, **kwargs):
-        request_slz = TemplateTitlesRequestSerializer(data=request.GET)
+    @action(methods=['GET'], detail=False, url_path='titles-by-workflows')
+    def titles_by_workflows(self, request, *args, **kwargs):
+        request_slz = TemplateTitlesByWorkflowsSerializer(data=request.GET)
         request_slz.is_valid(raise_exception=True)
-        query = TemplateTitlesQuery(
+        query = TemplateTitlesByWorkflowsQuery(
             user=request.user,
             **request_slz.validated_data,
         )
@@ -495,9 +499,21 @@ class TemplateViewSet(
 
     @action(methods=['GET'], detail=False, url_path='titles-by-events')
     def titles_by_events(self, request, *args, **kwargs):
-        request_slz = TemplateTitlesEventsRequestSerializer(data=request.GET)
+        request_slz = TemplateTitlesByEventsSerializer(data=request.GET)
         request_slz.is_valid(raise_exception=True)
-        query = TemplateTitlesEventsQuery(
+        query = TemplateTitlesByEventsQuery(
+            user=request.user,
+            **request_slz.validated_data,
+        )
+        data = RawSqlExecutor.fetch(*query.get_sql())
+        response_slz = self.get_serializer(data, many=True)
+        return self.response_ok(response_slz.data)
+
+    @action(methods=['GET'], detail=False, url_path='titles-by-tasks')
+    def titles_by_tasks(self, request, *args, **kwargs):
+        request_slz = TemplateTitlesByTasksSerializer(data=request.GET)
+        request_slz.is_valid(raise_exception=True)
+        query = TemplateTitlesByTasksQuery(
             user=request.user,
             **request_slz.validated_data,
         )

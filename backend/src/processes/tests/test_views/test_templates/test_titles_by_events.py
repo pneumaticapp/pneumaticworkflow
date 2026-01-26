@@ -36,7 +36,7 @@ def test_titles_by_events__response_data_templates__ok(api_client):
     assert len(response.data) == 1
     assert response.data[0]['id'] == template.id
     assert response.data[0]['name'] == template.name
-    assert response.data[0]['workflows_count'] == 1
+    assert response.data[0]['count'] == 1
 
 
 def test_titles_by_events__completed_workflow__ok(
