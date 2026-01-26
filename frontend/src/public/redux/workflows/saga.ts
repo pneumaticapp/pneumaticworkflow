@@ -681,11 +681,9 @@ export function* fetchFilterSteps({
       return;
     }
 
-    if (result) {
-      const [steps]: [ITemplateStep[]] = result;
-      yield put(loadWorkflowsFilterStepsSuccess({ templateId, steps }));
-      onAfterLoaded?.(steps);
-    }
+    const [steps]: [ITemplateStep[]] = result;
+    yield put(loadWorkflowsFilterStepsSuccess({ templateId, steps }));
+    onAfterLoaded?.(steps);
   } catch (error) {
     if (isRequestCanceled(error)) {
       return;
@@ -720,7 +718,6 @@ export function* updateCurrentPerformersCountersSaga() {
 
     if (clear) {
       abortController.abort();
-      
     } else {
       const counters: TUserCounter[] | undefined = result;
       if (!counters) {
@@ -788,7 +785,6 @@ export function* updateWorkflowsTemplateStepsCountersSaga() {
 
     if (clear) {
       abortController.abort();
-      
     } else {
       const counters: TTemplateStepCounter[] | undefined = result;
       if (!counters) {

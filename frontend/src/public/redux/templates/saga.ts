@@ -136,28 +136,26 @@ export function* handleLoadTemplateVariables(templateId: number) {
       return;
     }
 
-    if (result) {
-      const { kickoff, tasks }: TGetTemplateFieldsResponse = result;
-      const variables = getVariables({ kickoff, tasks });
+    const { kickoff, tasks }: TGetTemplateFieldsResponse = result;
+    const variables = getVariables({ kickoff, tasks });
 
-      yield put(loadTemplateVariablesSuccess({ templateId, variables }));
-      const transformedTasks: TTransformedTask[] = [
-        ...[{ apiName: '-2', name: 'System', needSteName: null, fields: SYSTEM_FIELDS }],
-        ...(kickoff.fields.length > 0 ? [{ apiName: '-1', name: 'Kick-off', fields: kickoff.fields }] : []),
-        ...tasks
-          .filter((task) => task.fields.length > 0)
-          .map((task) => {
-            if (varibleIdRegex.test(task.name)) {
-              return {
-                ...task,
-                needSteName: true,
-              };
-            }
-            return task;
-          }),
-      ];
-      yield put(saveTemplateTasks({ templateId, transformedTasks }));
-    }
+    yield put(loadTemplateVariablesSuccess({ templateId, variables }));
+    const transformedTasks: TTransformedTask[] = [
+      ...[{ apiName: '-2', name: 'System', needSteName: null, fields: SYSTEM_FIELDS }],
+      ...(kickoff.fields.length > 0 ? [{ apiName: '-1', name: 'Kick-off', fields: kickoff.fields }] : []),
+      ...tasks
+        .filter((task) => task.fields.length > 0)
+        .map((task) => {
+          if (varibleIdRegex.test(task.name)) {
+            return {
+              ...task,
+              needSteName: true,
+            };
+          }
+          return task;
+        }),
+    ];
+    yield put(saveTemplateTasks({ templateId, transformedTasks }));
   } catch (error) {
     if (isRequestCanceled(error)) {
       return;
