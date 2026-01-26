@@ -91,7 +91,7 @@ class WorkflowListQuery(
         tsquery, params = self._get_tsquery()
         self.params.update(params)
         return f"""
-            {self._search_in(table='ps', tsquery=tsquery)}
+            {self._search_in(table='ps', field='content', tsquery=tsquery)}
         """
 
     def _get_template(self):
@@ -917,7 +917,7 @@ class TaskListQuery(
         tsquery, params = self._get_tsquery()
         self.params.update(params)
         return f"""
-            {self._search_in(table='ps', tsquery=tsquery)}
+            {self._search_in(table='ps', field='content', tsquery=tsquery)}
         """
 
     def get_is_completed_where(self):
@@ -1068,7 +1068,7 @@ class TemplateListQuery(
         self.params.update(params)
         return f"""
             (
-                {self._search_in(table='ps', tsquery=tsquery)}
+                {self._search_in(table='ps', field='content', tsquery=tsquery)}
                 OR {self._search_in(table='accounts_user', tsquery=tsquery)}
             )
         """
@@ -1101,6 +1101,38 @@ class TemplateListQuery(
             return 'COUNT(DISTINCT workflows.id) AS workflows_count,'
         return ''
 
+    def _get_from(self):
+        result = """
+        FROM processes_template pt
+        LEFT JOIN processes_tasktemplate ptt ON (
+          ptt.template_id = pt.id AND
+          ptt.is_deleted = false
+        )
+        LEFT JOIN owners ON pt.id = owners.template_id
+        LEFT JOIN accounts_user ON (
+          owners.user_id = accounts_user.id AND
+          accounts_user.is_deleted = false
+        )
+        """
+        if self.search_text:
+            result += """
+                LEFT JOIN processes_searchcontent ps ON (
+                    pt.id = ps.template_id AND
+                    ps.is_deleted IS FALSE
+                )
+            """
+        if self.ordering in {
+            TemplateOrdering.USAGE,
+            TemplateOrdering.REVERSE_USAGE,
+        }:
+            result += """
+                LEFT JOIN processes_workflow workflows ON (
+                  pt.id = workflows.template_id AND
+                  workflows.is_deleted = FALSE
+                )
+            """
+        return result
+
     def _get_inner_where(self):
         where = """
         WHERE pt.is_deleted = false AND
@@ -1123,31 +1155,6 @@ class TemplateListQuery(
             where = f'{where} AND {self._get_public()}'
 
         return where
-
-    def _get_from(self):
-        result = """
-        FROM processes_template pt
-        LEFT JOIN processes_tasktemplate ptt ON (
-          ptt.template_id = pt.id AND
-          ptt.is_deleted = false
-        )
-        LEFT JOIN owners ON pt.id = owners.template_id
-        LEFT JOIN accounts_user ON (
-          owners.user_id = accounts_user.id AND
-          accounts_user.is_deleted = false
-        )
-        """
-        if self.ordering in {
-            TemplateOrdering.USAGE,
-            TemplateOrdering.REVERSE_USAGE,
-        }:
-            result += """
-                LEFT JOIN processes_workflow workflows ON (
-                  pt.id = workflows.template_id AND
-                  workflows.is_deleted = FALSE
-                )
-            """
-        return result
 
     def _get_inner_sql(self):
         return f"""

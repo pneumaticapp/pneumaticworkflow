@@ -380,6 +380,7 @@ def test_list__search__email_login__ok(api_client):
         workflow=workflow,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account_id=user.account_id,
     )
     search_text = 'fred'
     create_test_workflow(user, tasks_count=1)
