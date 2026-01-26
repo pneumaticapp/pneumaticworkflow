@@ -1,5 +1,4 @@
 import { EditorState } from 'draft-js';
-// tslint:disable-next-line: match-default-export-name
 import createAttachmentPlugin from './AttachmentsPlugin';
 
 import { uploadFiles } from '../../../utils/uploadFiles';
@@ -18,11 +17,12 @@ export const handlePasteAttachments = async (
 ) => {
   onStartUpload();
   const text = e.clipboardData?.getData('text/plain') || '';
+
   const textImageUrls: TEditorAttachment[] = (text
     .match(urlRegex)
     ?.map((url) => {
       const fileType = getAttachmentTypeByUrl(url);
-      if (!fileType) {
+      if (fileType !== 'image' && fileType !== 'video') {
         return null;
       }
 
@@ -35,6 +35,7 @@ export const handlePasteAttachments = async (
 
     return fileTypesRegExps.some((regEx) => regEx.test(i.type));
   });
+
   const uploadedImages: TEditorAttachment[] = await uploadFiles(
     pastedImages.map((image) => image.getAsFile()).filter(Boolean) as File[],
     accountId,
