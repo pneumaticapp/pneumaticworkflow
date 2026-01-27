@@ -25,15 +25,24 @@ export function TeamLayout({ children }: ITeamLayoutProps) {
   const page = useSelector((state: IApplicationState) => state.team.page);
 
   useEffect(() => {
-    dispatch(
-      updateTeamActiveTab(
-        checkSomeRouteIsActive(ERoutes.Groups) || checkSomeRouteIsActive(ERoutes.GroupDetails)
-          ? TeamPages.Groups
-          : TeamPages.Users,
-      ),
-    );
+    const updateTab = () => {
+      dispatch(
+        updateTeamActiveTab(
+          checkSomeRouteIsActive(ERoutes.Groups) || checkSomeRouteIsActive(ERoutes.GroupDetails)
+            ? TeamPages.Groups
+            : TeamPages.Users,
+        ),
+      );
+    };
+
+    updateTab();
+
+    const unregisterHistoryListener = history.listen(() => {
+      updateTab();
+    });
 
     return () => {
+      unregisterHistoryListener();
       dispatch(resetUsers());
     };
   }, []);
