@@ -759,7 +759,7 @@ def test_list__search__in_active_task_field_value__ok(
         FieldType.URL,
     ),
 )
-def test_list__search__in_kickoff_field_value__ok(
+def test_list__search__in_kickoff_field_value__not_found(
     api_client,
     mocker,
     field_type,
@@ -768,7 +768,7 @@ def test_list__search__in_kickoff_field_value__ok(
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(user, tasks_count=2)
-    task_1 = workflow.tasks.get(number=1)
+    workflow.tasks.get(number=1)
     value = 'text <fred@boy.com> some'
     TaskField.objects.create(
         kickoff=workflow.kickoff_instance,
@@ -791,8 +791,7 @@ def test_list__search__in_kickoff_field_value__ok(
 
     # assert
     assert response.status_code == 200
-    assert len(response.data) == 1
-    assert response.data[0]['id'] == task_1.id
+    assert len(response.data) == 0
 
 
 @pytest.mark.parametrize(
@@ -836,7 +835,7 @@ def test_list__search__in_excluded_field_value__not_found(
     assert len(response.data) == 0
 
 
-def test_list__search___full_uri_in_field___ok(
+def test_list__search__full_uri_in_field__ok(
     api_client,
     mocker,
 ):
@@ -847,7 +846,7 @@ def test_list__search___full_uri_in_field___ok(
     task_1 = workflow.tasks.get(number=1)
     value = 'https://translate.com/some-page?sl=ru&tl=ru&op=taranslate'
     TaskField.objects.create(
-        kickoff=workflow.kickoff_instance,
+        task=task_1,
         api_name='api-name-1',
         type=FieldType.URL,
         workflow=workflow,
@@ -884,7 +883,7 @@ def test_list__search___domain__ok(
     task_1 = workflow.tasks.get(number=1)
     value = 'https://translate.com/some-page?sl=ru&tl=ru&op=taranslate'
     TaskField.objects.create(
-        kickoff=workflow.kickoff_instance,
+        task=task_1,
         api_name='api-name-1',
         type=FieldType.URL,
         workflow=workflow,
@@ -1057,6 +1056,39 @@ def test_list__search__prev_task_markdown_filename_in_text__not_found(
         'search_search',
     )
     search_text = 'somefile.txt'
+
+    # act
+    response = api_client.get(f'/v3/tasks?search={search_text}')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
+
+
+def test_list__search__kickoff_field__not_found(
+    api_client,
+    mocker,
+):
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user, tasks_count=1)
+    value = 'https://translate.com/some-page?sl=ru&tl=ru&op=taranslate'
+    TaskField.objects.create(
+        kickoff=workflow.kickoff_instance,
+        api_name='api-name-1',
+        type=FieldType.URL,
+        workflow=workflow,
+        value=value,
+        clear_value=MarkdownService.clear(value),
+        account=user.account,
+    )
+    api_client.token_authenticate(user)
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'search_search',
+    )
+    search_text = 'translate.com'
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')

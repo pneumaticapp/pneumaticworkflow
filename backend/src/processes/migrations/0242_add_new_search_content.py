@@ -52,7 +52,16 @@ class Migration(migrations.Migration):
             model_name='searchcontent',
             constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('workflow', 'task', 'event', 'task_field', 'template', 'task_template'), name='processes_search_content_unique'),
         ),
-
+        # create prepare search text func
+        migrations.RunSQL("""
+         -- Union text parts and excluding unwanted lexemes (www, <, >, **) from the text
+             CREATE OR REPLACE FUNCTION prepare_search_content(TEXT default '', TEXT default '', TEXT default '', TEXT default '')
+             RETURNS TEXT AS $$ 
+             BEGIN
+               RETURN REGEXP_REPLACE(CONCAT($1, ' ', $2, ' ', $3, ' ', $4), 'http(s)?:\\\\(www\.)?|www\.|\<|\>|\*\*', '', 'g');
+             END;
+             $$ LANGUAGE plpgsql;
+        """),
         # processes_workflow search content (workflow name has weight "A" )
         migrations.RunSQL(sql="""
             CREATE OR REPLACE FUNCTION create_workflow_search_content()

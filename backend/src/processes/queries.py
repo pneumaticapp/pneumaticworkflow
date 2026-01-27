@@ -236,7 +236,7 @@ class WorkflowListQuery(
 
         if self.search_text:
             result += """
-                LEFT JOIN processes_searchcontent ps (
+                LEFT JOIN processes_searchcontent ps ON (
                     pw.id = ps.workflow_id AND
                     ps.is_deleted IS FALSE
                 )
@@ -977,7 +977,7 @@ class TaskListQuery(
         """
         if self.search_text:
             result += """
-                LEFT JOIN processes_searchcontent ps (
+                LEFT JOIN processes_searchcontent ps ON (
                     pt.id = ps.task_id AND
                     ps.is_deleted IS FALSE
                 )

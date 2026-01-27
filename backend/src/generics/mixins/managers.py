@@ -47,7 +47,11 @@ class SearchSqlQueryMixin:
               word in single quotes
         """
 
-        words = self.search_text.replace("'", "''").split(' ')
+        prepared_search_text = re.sub(
+            r'https?:\/\/',
+            '', self.search_text,
+        )
+        words = prepared_search_text.replace("'", "''").split(' ')
         escaped_words = [self._escape_tsquery_text(word) for word in words]
 
         result = (" || ' | ' || ".join(

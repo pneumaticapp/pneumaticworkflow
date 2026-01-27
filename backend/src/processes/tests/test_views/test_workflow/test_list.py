@@ -875,6 +875,7 @@ def test_list__search__in_active_task_field_value__ok(
         FieldType.DATE,
         FieldType.USER,
         FieldType.URL,
+        FieldType.FILE,
     ),
 )
 def test_list__search__in_prev_task_fields_value__ok(
@@ -900,72 +901,6 @@ def test_list__search__in_prev_task_fields_value__ok(
         account=user.account,
     )
     search_text = 'a boy@noway.com'
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.get(f'/workflows?search={search_text}')
-
-    # assert
-    assert response.status_code == 200
-    assert len(response.data['results']) == 1
-
-
-@pytest.mark.parametrize(
-    'field_type',
-    (
-        FieldType.FILE,
-    ),
-)
-def test_list__search__in_excluded_field_value__ok(
-    api_client,
-    field_type,
-):
-
-    # arrange
-    user = create_test_user()
-    workflow = create_test_workflow(user, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    value = 'text fred boy some'
-    TaskField.objects.create(
-        task=task,
-        api_name='api-name-1',
-        type=field_type,
-        workflow=workflow,
-        value=value,
-        clear_value=MarkdownService.clear(value),
-        account=user.account,
-    )
-    search_text = 'f boy'
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.get(f'/workflows?search={search_text}')
-
-    # assert
-    assert response.status_code == 200
-    assert len(response.data['results']) == 0
-
-
-def test_list__search__markdown_filename_in_text_field__ok(api_client):
-
-    # arrange
-    user = create_test_user()
-    workflow = create_test_workflow(user, tasks_count=1)
-    value = (
-        'Final version \n [somefile.txt]'
-        '(https://storage.googleapis.com/file.txt '
-        '"attachment_id:13152 entityType:file")'
-    )
-    TaskField.objects.create(
-        kickoff=workflow.kickoff_instance,
-        api_name='api-name-1',
-        type=FieldType.TEXT,
-        workflow=workflow,
-        value=value,
-        clear_value=MarkdownService.clear(value),
-        account=user.account,
-    )
-    search_text = 'somefile.txt'
     api_client.token_authenticate(user)
 
     # act
