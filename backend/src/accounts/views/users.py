@@ -2,7 +2,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import Http404
 from rest_framework.decorators import action
-from rest_framework.generics import get_object_or_404
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny
@@ -122,36 +121,65 @@ class UsersViewSet(
         )
 
     def get_queryset(self):
+        account_id = self.request.user.account_id
+        user = self.request.user
         if self.action == 'transfer':
             queryset = UserModel.objects.all()
         elif self.action in {'list', 'privileges'}:
-            account_id = self.request.user.account_id
-            queryset = UserModel.include_inactive.all_account_users(
-                account_id,
+            queryset = (
+                UserModel.include_inactive
+                .all_account_users(account_id)
             )
         elif self.action == 'toggle_admin':
-            account = self.request.user.account
-            queryset = UserModel.objects.on_account(account.id).exclude(
-                is_account_owner=True,
-            ).exclude(id=self.request.user.id)
+            queryset = (
+                UserModel.objects
+                .on_account(account_id)
+                .exclude(is_account_owner=True)
+                .exclude(id=user.id)
+            )
+        elif self.action == 'destroy':
+            queryset = (
+                UserModel.objects
+                .on_account(account_id)
+                .exclude(id=user.id)
+            )
         else:
-            queryset = self.request.user.account.users
+            queryset = UserModel.objects.on_account(account_id)
         return self.prefetch_queryset(queryset)
 
-    @action(detail=False, methods=('get',))
-    def privileges(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        return self.paginated_response(queryset)
+    # def update(self, request, *args, **kwargs):
+    #     user = self.get_object()
+    #     service = UserService(
+    #         user=request.user,
+    #         instance=user,
+    #         is_superuser=request.is_superuser,
+    #         auth_type=request.token_type,
+    #     )
+    #     try:
+    #         service.partial_update(user)
+    #     except UserIsPerformerException as ex:
+    #         raise_validation_error(message=ex.message)
+    #     return self.response_ok()
 
-    @action(detail=True, methods=('post',))
-    def delete(self, request, pk=None):
-        queryset = self.get_queryset().exclude(id=request.user.id)
-        user = get_object_or_404(queryset, pk=pk)
+    def destroy(self, request, *args, **kwargs):
+        request_user = request.user
+        user = self.get_object()
+        service = UserService(
+            user=request_user,
+            instance=user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
         try:
-            UserService.deactivate(user)
+            service.deactivate()
         except UserIsPerformerException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok()
+
+    @action(detail=False, methods=('get',))
+    def privileges(self, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        return self.paginated_response(queryset)
 
     @action(
         detail=True,

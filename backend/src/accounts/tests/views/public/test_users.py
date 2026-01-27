@@ -1,7 +1,6 @@
 import pytest
 
 from src.accounts.enums import UserStatus
-from src.accounts.services.user import UserService
 from src.authentication.tokens import (
     EmbedToken,
     PublicToken,
@@ -25,11 +24,11 @@ class TestPublicUsersVewSet:
         account = create_test_account()
         user = create_test_user(account=account, last_name='z')
         invited_user = create_invited_user(user, last_name='y')
-        inactive_user = create_test_user(
+        create_test_user(
             account=account,
             email='inactive@test.test',
+            status=UserStatus.INACTIVE,
         )
-        UserService.deactivate(inactive_user)
         create_test_guest(account=account)
         template = create_test_template(user=user, is_public=True)
         auth_header_value = f'Token {template.public_id}'
@@ -105,11 +104,11 @@ class TestEmbedUsersVewSet:
         account = create_test_account()
         user = create_test_user(account=account)
         invited_user = create_invited_user(user)
-        inactive_user = create_test_user(
+        create_test_user(
             account=account,
             email='inactive@test.test',
+            status=UserStatus.INACTIVE,
         )
-        UserService.deactivate(inactive_user)
         create_test_guest(account=account)
         template = create_test_template(user=user, is_embedded=True)
         auth_header_value = f'Token {template.embed_id}'

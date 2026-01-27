@@ -200,25 +200,20 @@ class UserService(
         self.user.set_password(password)
         self.user.save()
 
-    @classmethod
-    def _deactivate_actions(cls, user: UserModel):
+    def _deactivate_actions(self):
         send_user_deactivated_notification.delay(
-            user_id=user.id,
-            user_email=user.email,
-            account_id=user.account_id,
-            logo_lg=user.account.logo_lg,
+            user_id=self.instance.id,
+            user_email=self.instance.email,
+            account_id=self.account.id,
+            logo_lg=self.account.logo_lg,
         )
 
-    @classmethod
-    def _validate_deactivate(cls, user):
-        if user_is_last_performer(user):
+    def _validate_deactivate(self):
+        if user_is_last_performer(self.instance):
             raise UserIsPerformerException
 
-    @classmethod
-    def _deactivate(
-        cls,
-        user: UserModel,
-    ):
+    def _deactivate(self):
+        user = self.instance
         with transaction.atomic():
             remove_user_from_draft(
                 account_id=user.account_id,
@@ -229,7 +224,7 @@ class UserService(
             user.is_active = False  # need for django admin
             user.save(update_fields=('status', 'is_active'))
             Contact.objects.filter(
-                account=user.account,
+                account=self.account,
                 email=user.email,
                 status=UserStatus.ACTIVE,
             ).update(
@@ -237,26 +232,27 @@ class UserService(
             )
             from src.accounts.services.account import AccountService
             service = AccountService(
-                instance=user.account,
+                instance=self.account,
                 user=user,
             )
             service.update_users_counts()
-            cls.identify(user)
+            self.identify(user)
 
-    @classmethod
-    def deactivate(cls, user: UserModel, skip_validation=False):
+    def deactivate(self, skip_validation=False):
 
         """ Deactivate user and call delete actions
             If user is invited not send identify and deactivation email """
 
         if not skip_validation:
-            cls._validate_deactivate(user)
-        run_deactivate_actions = user.status == UserStatus.ACTIVE
-        cls._deactivate(user)
+            self._validate_deactivate()
+        run_deactivate_actions = self.instance.status == UserStatus.ACTIVE
+        self._deactivate()
         send_user_deleted_notification.delay(
-            logging=user.account.log_api_requests,
-            account_id=user.account_id,
-            user_data=UserWebsocketSerializer(user).data,
+            logging=self.account.log_api_requests,
+            account_id=self.account.id,
+            user_data=UserWebsocketSerializer(
+                self.instance,
+            ).data,
         )
         if run_deactivate_actions:
-            cls._deactivate_actions(user)
+            self._deactivate_actions()
