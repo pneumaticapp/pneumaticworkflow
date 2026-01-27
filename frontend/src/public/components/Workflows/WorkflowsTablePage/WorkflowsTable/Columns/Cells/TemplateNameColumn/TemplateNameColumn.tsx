@@ -5,6 +5,7 @@ import styles from './TemplateNameColumn.css';
 
 type TProps = React.PropsWithChildren<CellProps<TableColumns, TableColumns['system-column-templateName']>>;
 
-export function TemplateNameColumn({ value }: TProps) {
-  return <div className={styles['template-name']}>{value.template?.name}</div>;
+export function TemplateNameColumn({ value: { isLegacyTemplate, legacyTemplateName, template } }: TProps) {
+  const templateName = isLegacyTemplate ? legacyTemplateName : template?.name;
+  return <div className={styles['template-name']}>{templateName}</div>;
 }
