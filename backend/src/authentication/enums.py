@@ -1,4 +1,4 @@
-from typing_extensions import Literal
+from typing_extensions import Literal, TypedDict
 
 
 class SSOProvider:
@@ -49,3 +49,25 @@ class AuthTokenType:
         USER,
         WEBHOOK,
     ]
+
+
+class OktaLogoutFormat:
+
+    EMAIL = 'email'
+    ISS_SUB = 'iss_sub'
+
+    LITERALS = Literal[
+        EMAIL,
+        ISS_SUB,
+    ]
+
+
+class OktaIssSubData(TypedDict):
+    format: OktaLogoutFormat.LITERALS
+    iss: str
+    sub: str
+
+
+class OktaEmailSubData(TypedDict):
+    format: OktaLogoutFormat.LITERALS
+    email: str

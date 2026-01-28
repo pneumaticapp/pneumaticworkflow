@@ -10,6 +10,7 @@ from src.authentication.messages import (
     MSG_AU_0006,
     MSG_AU_0012,
     MSG_AU_0013,
+    MSG_AU_0020,
 )
 from src.generics.fields import DateFormatField, TimeStampField
 from src.generics.mixins.services import EncryptionMixin
@@ -362,3 +363,33 @@ class ChangePasswordSerializer(
         if not user:
             raise serializers.ValidationError(MSG_AU_0012)
         return value
+
+
+class OktaLogoutSerializer(
+    CustomValidationErrorMixin,
+    serializers.Serializer,
+):
+    """
+    Simple JSON serializer for Okta logout requests.
+
+    Only validates basic JSON structure, not specific field values.
+    After bearer token validation, we trust Okta's data format.
+
+    Supports two formats:
+    1. iss_sub: {"sub_id": {"format": "iss_sub", "iss": "...", "sub": "..."}}
+    2. email: {"sub_id": {"format": "email", "email": "user@domain.com"}}
+    """
+
+    # DictField automatically validates that sub_id is a dict
+    sub_id = serializers.DictField(required=True)
+
+    def validate(self, data):
+        sub_id_data = data['sub_id']
+
+        if 'format' not in sub_id_data:
+            raise serializers.ValidationError(MSG_AU_0020)
+
+        return {
+            'format': sub_id_data['format'],
+            'data': sub_id_data,
+        }

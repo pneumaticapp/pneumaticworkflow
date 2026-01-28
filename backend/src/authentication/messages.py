@@ -51,3 +51,4 @@ MSG_AU_0019 = _(
     'This account does not use SSO authentication. '
     'Please contact support.',
 )
+MSG_AU_0020 = _('Format field is required')
