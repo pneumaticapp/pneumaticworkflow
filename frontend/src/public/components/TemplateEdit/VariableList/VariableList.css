@@ -49,6 +49,10 @@
   }
 }
 
+.variable-list__popper {
+  z-index: 1029 !important;
+}
+
 .variable-list__inner {
   padding: 4px !important;
   width: 304px !important;
