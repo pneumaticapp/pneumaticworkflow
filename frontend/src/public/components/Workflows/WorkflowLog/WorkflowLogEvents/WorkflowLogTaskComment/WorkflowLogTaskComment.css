@@ -32,6 +32,13 @@
     line-height: 20px;
   }
 
+  &__task-name {
+    margin: 0 0 0.8rem;
+    color: var(--pneumatic-color-black72);
+
+    @mixin text-base 700;
+  }
+
   &__icon {
     margin-right: 8px;
     line-height: 20px;

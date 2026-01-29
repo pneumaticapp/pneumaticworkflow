@@ -46,6 +46,7 @@ export function WorkflowLogTaskComment({
   userId,
   created,
   attachments,
+  task,
   isOnlyAttachmentsShown = false,
   workflowModal,
   editComment,
@@ -352,6 +353,7 @@ export function WorkflowLogTaskComment({
             </div>
             <div className={styles['comment__body']}>
               {renderHeader(status, user)}
+              {task?.name && <div className={styles['comment__task-name']}>{task.name}</div>}
               {renderComment(status)}
               {renderFooter()}
             </div>
@@ -370,7 +372,7 @@ export enum ECommentStatus {
 
 export type TWorkflowLogTaskCommentProps = Pick<
   IWorkflowLogItem,
-  'id' | 'text' | 'userId' | 'status' | 'created' | 'attachments' | 'watched' | 'reactions'
+  'id' | 'text' | 'userId' | 'status' | 'created' | 'attachments' | 'watched' | 'reactions' | 'task'
 > & {
   currentUserId: number;
   workflowModal: boolean;
