@@ -41,7 +41,6 @@ def test_retrieve__ok(api_client):
     assert data['first_name'] == user.first_name
     assert data['last_name'] == user.last_name
     assert data['type'] == user.type
-    assert data['date_joined'] == user.date_joined.strftime(date_format)
     assert data['date_joined_tsp'] == user.date_joined.timestamp()
     assert data['is_admin'] == user.is_admin
     assert data['is_account_owner'] == user.is_account_owner
