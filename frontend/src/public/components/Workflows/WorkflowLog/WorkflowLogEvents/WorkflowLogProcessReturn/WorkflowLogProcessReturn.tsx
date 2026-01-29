@@ -11,9 +11,10 @@ import { UserData } from '../../../../UserData';
 import styles from './WorkflowLogProcessReturn.css';
 import { RichText } from '../../../../RichText';
 
-export interface IWorkflowLogProcessReturnProps extends Pick<IWorkflowLogItem, 'created' | 'userId' | 'text'> {}
+export interface IWorkflowLogProcessReturnProps
+  extends Pick<IWorkflowLogItem, 'created' | 'userId' | 'text' | 'task'> {}
 
-export function WorkflowLogProcessReturn({ userId, created, text }: IWorkflowLogProcessReturnProps) {
+export function WorkflowLogProcessReturn({ userId, created, text, task }: IWorkflowLogProcessReturnProps) {
   const { formatMessage } = useIntl();
 
   return (
@@ -39,7 +40,9 @@ export function WorkflowLogProcessReturn({ userId, created, text }: IWorkflowLog
                 </span>
               </p>
 
-              <div className={styles['workflow-log-return__status']}>{formatMessage({ id: 'task.log-returned' })}</div>
+              <div className={styles['workflow-log-return__status']}>
+                {formatMessage({ id: 'task.log-returned' }, { taskName: task?.name })}
+              </div>
               <div className={styles['workflow-log-return__message']}>
                 <RichText text={text} />
               </div>

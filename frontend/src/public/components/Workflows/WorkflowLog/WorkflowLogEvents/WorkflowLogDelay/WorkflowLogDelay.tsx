@@ -2,9 +2,9 @@
 /* prettier-ignore */
 import * as React from 'react';
 import { useIntl } from 'react-intl';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 
-import { IWorkflowLogItem } from '../../../../../types/workflow';
+import { IWorkflowLogItem, IWorkflowLogTask, EWorkflowLogEvent } from '../../../../../types/workflow';
 import { getSnoozedUntilDate } from '../../../../../utils/dateTime';
 import { Header } from '../../../../UI/Typeography/Header';
 import { TWorkflowLogTheme } from '../../WorkflowLog';
@@ -13,9 +13,11 @@ import styles from './WorkflowLogDelay.css';
 
 export interface IWorkflowLogDelayProps extends Pick<IWorkflowLogItem, 'delay'> {
   theme: TWorkflowLogTheme;
+  task?: IWorkflowLogTask | null;
+  type?: EWorkflowLogEvent;
 }
 
-export function WorkflowLogDelay({ delay, theme }: IWorkflowLogDelayProps) {
+export function WorkflowLogDelay({ delay, task, theme, type }: IWorkflowLogDelayProps) {
   if (!delay) {
     return null;
   }
@@ -34,7 +36,9 @@ export function WorkflowLogDelay({ delay, theme }: IWorkflowLogDelayProps) {
   return (
     <div className={classnames(styles['container'], getThemeClassName())}>
       <Header size="6" tag="p" className={styles['text']}>
-        {formatMessage({ id: 'task.log-delay' }, { date: getSnoozedUntilDate(delay) })}
+        {type === EWorkflowLogEvent.TaskSnoozed
+          ? formatMessage({ id: 'task.log-delay' }, { taskName: task?.name, date: getSnoozedUntilDate(delay) })
+          : formatMessage({ id: 'task.log-delay-workflow' }, { date: getSnoozedUntilDate(delay) })}
       </Header>
     </div>
   );

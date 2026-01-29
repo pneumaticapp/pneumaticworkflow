@@ -995,8 +995,9 @@ export const enMessages = {
 
   'task.minimize-log': 'Hide all activity',
   'task.expand-log': 'Show all activity',
-  'task.log-returned': 'Returned the task',
-  'task.log-delay': 'Snoozed until {date}',
+  'task.log-returned': 'Workflow returned to {taskName}',
+  'task.log-delay': '{taskName} snoozed until {date}',
+  'task.log-delay-workflow': 'Snoozed until {date}',
   'task.log-added-performer-group': 'Add group\u00A0',
   'task.log-removed-performer-group': 'Delete group\u00A0',
   'task.log-added-performer': 'Add user\u00A0',

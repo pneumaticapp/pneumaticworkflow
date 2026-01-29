@@ -92,7 +92,9 @@ export function FeedItem({
             <div className={styles['feed-item__header']}>
               <Avatar user={user} size="sm" containerClassName={styles['header__avatar']} />
               <span className={styles['performer__name']}>{userName}</span>
-              <div className={styles['feed-item__icon']}><FeedItemIcon type={type} task={task} /></div>
+              <div className={styles['feed-item__icon']}>
+                <FeedItemIcon type={type} task={task} />
+              </div>
 
               <Link
                 className={styles['performer__datetime']}
@@ -128,7 +130,11 @@ export function FeedItem({
               <div className={styles['feed-item__content']}>
                 <span className={styles['body__process-name']}>{workflowName}</span>
                 <div className={styles['info__task']}>
-                  <span className={styles['task__name']}>{task?.name}</span>
+                  <span className={styles['task__name']}>
+                    {type === EWorkflowLogEvent.WorkflowsReturned
+                      ? formatMessage({ id: 'task.log-returned' }, { taskName: task?.name })
+                      : task?.name}
+                  </span>
                 </div>
               </div>
             </div>
