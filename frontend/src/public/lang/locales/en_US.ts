@@ -1042,7 +1042,7 @@ export const enMessages = {
   'workflow-highlights.icon-task-completed': 'Task was completed',
   'workflow-highlights.icon-process-started': 'Workflow was started',
   'workflow-highlights.icon-workflow-returned': 'Workflow was returned',
-  'workflow-highlights.return-to.returned-task': 'Task returned',
+  'workflow-highlights.return-to.returned-task': '{taskName} returned',
   'checkout.choose-the-plan': 'Choose a payment plan',
   'checkout.coupon': 'I have coupon',
   'checkout.coupon-code': 'Coupon code',

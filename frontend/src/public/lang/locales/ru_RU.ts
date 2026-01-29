@@ -967,7 +967,7 @@ export const ruMessages = {
   'workflow-highlights.icon-task-completed': 'Задача была завершена',
   'workflow-highlights.icon-process-started': 'Процесс был начат',
   'workflow-highlights.icon-workflow-returned': 'Процесс был возвращен',
-  'workflow-highlights.return-to.returned-task': 'Задача возвращена',
+  'workflow-highlights.return-to.returned-task': '{taskName} возвращена',
   'checkout.choose-the-plan': 'Выберите план оплаты',
   'checkout.coupon': 'У меня есть купон',
   'checkout.coupon-code': 'Промокод',
