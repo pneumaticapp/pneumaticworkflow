@@ -33,7 +33,7 @@ from src.accounts.services.exceptions import (
     AlreadyAcceptedInviteException,
     InvalidTransferTokenException,
     ReassignServiceException,
-    UserIsPerformerException,
+    UserIsPerformerException, UserServiceException,
 )
 from src.accounts.services.reassign import (
     ReassignService,
@@ -147,19 +147,35 @@ class UsersViewSet(
             queryset = UserModel.objects.on_account(account_id)
         return self.prefetch_queryset(queryset)
 
-    # def update(self, request, *args, **kwargs):
-    #     user = self.get_object()
-    #     service = UserService(
-    #         user=request.user,
-    #         instance=user,
-    #         is_superuser=request.is_superuser,
-    #         auth_type=request.token_type,
-    #     )
-    #     try:
-    #         service.partial_update(user)
-    #     except UserIsPerformerException as ex:
-    #         raise_validation_error(message=ex.message)
-    #     return self.response_ok()
+    def create(self, request, *args, **kwargs):
+        slz = self.get_serializer(data=request.data)
+        slz.is_valid(raise_exception=True)
+        service = UserService(
+            user=request.user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        try:
+            user = service.create(**slz.validated_data)
+        except UserServiceException as ex:
+            raise_validation_error(message=ex.message)
+        return self.response_ok(UserSerializer(instance=user).data)
+
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+        slz = self.get_serializer(data=request.data)
+        slz.is_valid(raise_exception=True)
+        service = UserService(
+            user=request.user,
+            instance=user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        try:
+            user = service.partial_update(**slz.validated_data)
+        except UserServiceException as ex:
+            raise_validation_error(message=ex.message)
+        return self.response_ok(UserSerializer(instance=user).data)
 
     def destroy(self, request, *args, **kwargs):
         request_user = request.user

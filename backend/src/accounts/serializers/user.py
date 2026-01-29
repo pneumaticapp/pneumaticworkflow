@@ -56,7 +56,6 @@ class UserSerializer(
             'photo',
             'status',
             'is_admin',
-            'date_joined',
             'date_joined_tsp',
             'is_account_owner',
             'is_tasks_digest_subscriber',
@@ -79,9 +78,9 @@ class UserSerializer(
             'email',
             'invite',
             'status',
-            'is_admin',
             'is_account_owner',
             'groups',
+            'date_joined_tsp',
         )
 
     groups = RelatedListField(

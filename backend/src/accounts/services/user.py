@@ -21,14 +21,19 @@ from src.accounts.models import (
 from src.accounts.serializers.user import UserWebsocketSerializer
 from src.accounts.services.exceptions import (
     AlreadyRegisteredException,
-    UserIsPerformerException,
+    UserIsPerformerException, UserServiceException,
 )
 from src.accounts.validators import user_is_last_performer
 from src.analysis.mixins import BaseIdentifyMixin
 from src.analysis.services import AnalyticService
 from src.authentication.tokens import PneumaticToken
 from src.generics.base.service import BaseModelService
-from src.notifications.tasks import send_user_deleted_notification
+from src.notifications.tasks import send_user_deleted_notification, \
+    send_user_updated_notification
+from src.payment.stripe.exceptions import StripeServiceException
+from src.payment.stripe.service import StripeService
+from src.processes.enums import FieldType
+from src.processes.models.workflows.fields import TaskField
 from src.processes.services.remove_user_from_draft import (
     remove_user_from_draft,
 )
@@ -61,6 +66,13 @@ class UserService(
         date_fdw: UserFirstDayWeek = None,
         is_superuser: bool = False,
         is_staff: bool = False,
+        is_tasks_digest_subscriber: bool = True,
+        is_digest_subscriber: bool = True,
+        is_newsletters_subscriber: bool = True,
+        is_special_offers_subscriber: bool = True,
+        is_new_tasks_subscriber: bool = True,
+        is_complete_tasks_subscriber: bool = True,
+        is_comments_mentions_subscriber: bool = True,
         **kwargs,
     ) -> UserModel:
 
@@ -109,6 +121,15 @@ class UserService(
                 date_fdw=date_fdw,
                 is_superuser=is_superuser,
                 is_staff=is_staff,
+                is_tasks_digest_subscriber=is_tasks_digest_subscriber,
+                is_digest_subscriber=is_digest_subscriber,
+                is_newsletters_subscriber=is_newsletters_subscriber,
+                is_special_offers_subscriber=is_special_offers_subscriber,
+                is_new_tasks_subscriber=is_new_tasks_subscriber,
+                is_complete_tasks_subscriber=is_complete_tasks_subscriber,
+                is_comments_mentions_subscriber=(
+                    is_comments_mentions_subscriber
+                ),
             )
         except IntegrityError as ex:
             raise AlreadyRegisteredException from ex
@@ -200,6 +221,56 @@ class UserService(
         self.user.set_password(password)
         self.user.save()
 
+    def _update_related_user_fields(self, **update_kwargs):
+
+        """ Call after update instance """
+
+        first_name_changed = (
+            'first_name' in update_kwargs
+            and update_kwargs['first_name'] != self.instance.first_name
+        )
+        last_name_changed = (
+            'last_name' in update_kwargs
+            and update_kwargs['last_name'] != self.instance.last_name
+        )
+        if first_name_changed or last_name_changed:
+            TaskField.objects.filter(
+                type=FieldType.USER,
+                user_id=self.instance.id,
+                account_id=self.account.id,
+            ).update(value=self.instance.name)
+
+    def _update_related_stripe_account(self):
+
+        """ Call after update instance """
+
+        if (
+            not self.account.is_tenant
+            and self.instance.is_account_owner
+            and self.account.billing_sync
+        ):
+            try:
+                service = StripeService(
+                    user=self.user,
+                    auth_type=self.auth_type,
+                    is_superuser=self.is_superuser,
+                )
+                service.update_customer()
+            except StripeServiceException as ex:
+                raise UserServiceException(message=ex.message) from ex
+
+    def _update_analytics(self, **update_kwargs):
+
+        """ Call after update instance """
+
+        if update_kwargs.get('is_digest_subscriber') is False:
+            AnalyticService.users_digest(
+                user=self.instance,
+                auth_type=self.auth_type,
+                is_superuser=self.is_superuser,
+            )
+        self.identify(self.instance)
+
     def _deactivate_actions(self):
         send_user_deactivated_notification.delay(
             user_id=self.instance.id,
@@ -256,3 +327,21 @@ class UserService(
         )
         if run_deactivate_actions:
             self._deactivate_actions()
+
+    def partial_update(
+        self,
+        force_save=False,
+        **update_kwargs,
+    ) -> UserModel:
+
+        with transaction.atomic():
+            super().partial_update(**update_kwargs, force_save=force_save)
+            self._update_related_user_fields(**update_kwargs)
+        self._update_related_stripe_account()
+        self._update_analytics(**update_kwargs)
+        send_user_updated_notification.delay(
+            logging=self.account.log_api_requests,
+            account_id=self.account.id,
+            user_data=UserWebsocketSerializer(self.instance).data,
+        )
+        return self.instance
