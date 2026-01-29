@@ -24,6 +24,7 @@ from src.processes.services.events import (
 )
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_attachment,
     create_test_owner,
     create_test_user,
     create_test_workflow,
@@ -74,9 +75,8 @@ def test_create__not_another_performers__ok(mocker):
         'MarkdownService.clear',
         return_value=clear_text,
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     get_new_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
@@ -119,10 +119,12 @@ def test_create__not_another_performers__ok(mocker):
         task=task,
         text=text,
         clear_text=clear_text,
-        attachments=[],
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
-    update_attachments_mock.assert_not_called()
+    refresh_attachments_mock.assert_called_once_with(
+        source=event,
+        user=account_owner,
+    )
     comment_added_analysis_mock.assert_not_called()
     send_comment_notification_mock.assert_not_called()
     mention_created_analysis_mock.assert_not_called()
@@ -183,9 +185,8 @@ def test_create__notified_users__ok(mocker, status):
         'MarkdownService.clear',
         return_value=clear_text,
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     get_new_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
@@ -228,10 +229,12 @@ def test_create__notified_users__ok(mocker, status):
         task=task,
         text=text,
         clear_text=clear_text,
-        attachments=[],
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
-    update_attachments_mock.assert_not_called()
+    refresh_attachments_mock.assert_called_once_with(
+        source=event,
+        user=account_owner,
+    )
     comment_added_analysis_mock.assert_called_once_with(
         text=clear_text,
         user=account_owner,
@@ -297,9 +300,8 @@ def test_create_mentioned_users__ok(mocker):
         'MarkdownService.clear',
         return_value=clear_text,
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     get_new_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
@@ -342,10 +344,12 @@ def test_create_mentioned_users__ok(mocker):
         task=task,
         text=text,
         clear_text=clear_text,
-        attachments=[],
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
-    update_attachments_mock.assert_not_called()
+    refresh_attachments_mock.assert_called_once_with(
+        source=event,
+        user=account_owner,
+    )
     mention_created_analysis_mock.assert_called_once_with(
         text=clear_text,
         user=account_owner,
@@ -401,7 +405,6 @@ def test_create__with_attachments__ok(mocker):
         task=task,
         user=account_owner,
     )
-    attachments = [1, 2, 3]
     comment_created_event_mock = mocker.patch(
         'src.processes.services.events.'
         'WorkflowEventService.comment_created_event',
@@ -412,9 +415,8 @@ def test_create__with_attachments__ok(mocker):
         'MarkdownService.clear',
         return_value=clear_text,
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     get_new_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
@@ -447,7 +449,6 @@ def test_create__with_attachments__ok(mocker):
     result = service.create(
         task=task,
         text=text,
-        attachments=attachments,
     )
 
     # assert
@@ -458,10 +459,12 @@ def test_create__with_attachments__ok(mocker):
         task=task,
         text=text,
         clear_text=clear_text,
-        attachments=attachments,
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
-    update_attachments_mock.assert_called_once_with(attachments)
+    refresh_attachments_mock.assert_called_once_with(
+        source=event,
+        user=account_owner,
+    )
     comment_added_analysis_mock.assert_not_called()
     send_comment_notification_mock.assert_not_called()
     mention_created_analysis_mock.assert_not_called()
@@ -476,31 +479,25 @@ def test_create__with_attachments__ok(mocker):
         (
             '(![avatar.jpg](https://storage.com/dev/avatar.jpg '
             '"attachment_id:3349 entityType:image")',
-            [3349],
         ),
         (
             '[file.txt](http://file.txt "attachment_id:4187 entityType:file")',
-            [4187],
         ),
         (
             '[video.mp4](https://video.mp4 "attachment_id:4188 '
             'entityType:video")',
-            [4188],
         ),
         (
             'some [video.mp4](https://video.mp4 "attachment_id:4188 '
             'entityType:video") text \n(![avatar.jpg]'
             '(https://storage.com/dev/avatar.jpg '
             '"attachment_id:3349 entityType:image")',
-            [4188, 3349],
         ),
         (
             '[ZIP-folder.zip](https://storage.zip "attachment_id:2482")',
-            [2482],
         ),
         (
             '[ZIP-folder.zip](https://storage.zip "attachment_id:2482")',
-            [2482],
         ),
 
     ),
@@ -508,7 +505,6 @@ def test_create__with_attachments__ok(mocker):
 def test_create__find_attachments_in_text__ok(data, mocker):
 
     # arrange
-    media, attachment_ids = data
     account = create_test_account()
     account_owner = create_test_user(is_account_owner=True, account=account)
     user = create_test_user(
@@ -521,7 +517,7 @@ def test_create__find_attachments_in_text__ok(data, mocker):
     task = workflow.tasks.get(number=1)
     task.performers.add(user)
 
-    text = f"text {media}\n some text"
+    text = f"text {data}\n some text"
     clear_text = 'clear text'
     is_superuser = True
     auth_type = AuthTokenType.API
@@ -545,9 +541,8 @@ def test_create__find_attachments_in_text__ok(data, mocker):
         'MarkdownService.clear',
         return_value=clear_text,
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     get_new_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
@@ -590,10 +585,12 @@ def test_create__find_attachments_in_text__ok(data, mocker):
         task=task,
         text=text,
         clear_text=clear_text,
-        attachments=attachment_ids,
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
-    update_attachments_mock.assert_called_once_with(attachment_ids)
+    refresh_attachments_mock.assert_called_once_with(
+        source=event,
+        user=account_owner,
+    )
     comment_added_analysis_mock.assert_not_called()
     send_comment_notification_mock.assert_not_called()
     mention_created_analysis_mock.assert_not_called()
@@ -650,9 +647,8 @@ def test_create__not_found_attachments_in_text__ok(text, mocker):
         'MarkdownService.clear',
         return_value=clear_text,
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     get_new_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
@@ -695,10 +691,12 @@ def test_create__not_found_attachments_in_text__ok(text, mocker):
         task=task,
         text=text,
         clear_text=clear_text,
-        attachments=[],
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
-    update_attachments_mock.assert_not_called()
+    refresh_attachments_mock.assert_called_once_with(
+        source=event,
+        user=account_owner,
+    )
     comment_added_analysis_mock.assert_not_called()
     send_comment_notification_mock.assert_not_called()
     mention_created_analysis_mock.assert_not_called()
@@ -736,9 +734,8 @@ def test_create__task_delete__raise_exception(mocker):
         'MarkdownService.clear',
         return_value=clear_text,
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     send_notifications_mock = mocker.patch(
         'src.processes.services.events.'
@@ -774,7 +771,7 @@ def test_create__task_delete__raise_exception(mocker):
     assert ex.value.message == messages.MSG_PW_0077
     clear_text_mock.assert_not_called()
     comment_created_event_mock.assert_not_called()
-    update_attachments_mock.assert_not_called()
+    refresh_attachments_mock.assert_not_called()
     send_notifications_mock.assert_not_called()
     send_comment_notification_mock.assert_not_called()
     send_mention_notification_mock.assert_not_called()
@@ -814,9 +811,8 @@ def test_create__workflow_ended__raise_exception(mocker):
         'MarkdownService.clear',
         return_value=clear_text,
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     get_new_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
@@ -852,7 +848,7 @@ def test_create__workflow_ended__raise_exception(mocker):
     assert ex.value.message == messages.MSG_PW_0048
     clear_text_mock.assert_not_called()
     comment_created_event_mock.assert_not_called()
-    update_attachments_mock.assert_not_called()
+    refresh_attachments_mock.assert_not_called()
     get_new_comment_recipients_mock.assert_not_called()
     send_comment_notification_mock.assert_not_called()
     send_mention_notification_mock.assert_not_called()
@@ -885,9 +881,8 @@ def test_create__not_text_and_attachment__raise_exception(mocker):
         'src.processes.services.events.'
         'MarkdownService.clear',
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     get_new_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
@@ -916,14 +911,13 @@ def test_create__not_text_and_attachment__raise_exception(mocker):
         service.create(
             task=task,
             text=None,
-            attachments=None,
         )
 
     # assert
     assert ex.value.message == messages.MSG_PW_0047
     clear_text_mock.assert_not_called()
     comment_created_event_mock.assert_not_called()
-    update_attachments_mock.assert_not_called()
+    refresh_attachments_mock.assert_not_called()
     get_new_comment_recipients_mock.assert_not_called()
     comment_added_analysis_mock.assert_not_called()
     send_comment_notification_mock.assert_not_called()
@@ -963,9 +957,8 @@ def test_create__inactive_task__raise_exception(mocker, status):
         'MarkdownService.clear',
         return_value=clear_text,
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     get_new_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
@@ -1001,7 +994,7 @@ def test_create__inactive_task__raise_exception(mocker, status):
     assert ex.value.message == messages.MSG_PW_0089
     clear_text_mock.assert_not_called()
     comment_created_event_mock.assert_not_called()
-    update_attachments_mock.assert_not_called()
+    refresh_attachments_mock.assert_not_called()
     get_new_comment_recipients_mock.assert_not_called()
     send_comment_notification_mock.assert_not_called()
     send_mention_notification_mock.assert_not_called()
@@ -1009,252 +1002,6 @@ def test_create__inactive_task__raise_exception(mocker, status):
     mention_created_analysis_mock.assert_not_called()
     task.refresh_from_db()
     assert task.contains_comments is False
-
-
-def test_update_attachments__create_new_attachments__ok():
-
-    # arrange
-    account = create_test_account()
-    account_owner = create_test_user(
-        is_account_owner=True,
-        account=account,
-    )
-    workflow = create_test_workflow(account_owner, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    event = WorkflowEvent.objects.create(
-        account=account,
-        type=WorkflowEventType.COMMENT,
-        text='text',
-        with_attachments=False,
-        workflow=workflow,
-        task=task,
-        user=account_owner,
-    )
-    file_id = 'test_file_123.png'
-
-    service = CommentService(
-        user=account_owner,
-        instance=event,
-    )
-
-    # act
-    service._update_attachments([file_id])
-
-    # assert
-    attachment = Attachment.objects.get(file_id=file_id)
-    assert attachment.workflow == workflow
-    assert attachment.task == task
-    assert attachment.account == account
-    assert attachment.source_type == 'TASK'
-    assert attachment.access_type == 'RESTRICTED'
-
-
-def test_update_attachments__delete_old_attachments__ok():
-
-    # arrange
-    account = create_test_account()
-    account_owner = create_test_user(
-        is_account_owner=True,
-        account=account,
-    )
-    workflow = create_test_workflow(account_owner, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    event = WorkflowEvent.objects.create(
-        account=account,
-        type=WorkflowEventType.COMMENT,
-        text='text',
-        with_attachments=False,
-        workflow=workflow,
-        task=task,
-        user=account_owner,
-    )
-    # Create attachment that should be deleted
-    deleted_attachment = Attachment.objects.create(
-        file_id='deleted_file_123.png',
-        account=account,
-        source_type=SourceType.TASK,
-        access_type=AccessType.RESTRICTED,
-        task=task,
-        workflow=workflow,
-    )
-    event.storage_attachments.add(deleted_attachment)
-    new_file_id = 'kept_file_456.png'
-
-    service = CommentService(
-        user=account_owner,
-        instance=event,
-    )
-
-    # act
-    service._update_attachments([new_file_id])
-
-    # assert
-    assert not Attachment.objects.filter(
-        id=deleted_attachment.id,
-    ).exists()
-
-    new_attachment = Attachment.objects.get(file_id=new_file_id)
-    assert new_attachment.workflow == workflow
-    assert new_attachment.task == task
-
-
-def test_update_attachments__already_attached__ok():
-
-    # arrange
-    account = create_test_account()
-    account_owner = create_test_user(
-        is_account_owner=True,
-        account=account,
-    )
-    workflow = create_test_workflow(account_owner, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    event = WorkflowEvent.objects.create(
-        account=account,
-        type=WorkflowEventType.COMMENT,
-        text='text',
-        with_attachments=False,
-        workflow=workflow,
-        task=task,
-        user=account_owner,
-    )
-
-    # Create existing attachment already linked to event
-    existent_attachment = Attachment.objects.create(
-        file_id='existing_file_123.png',
-        account=account,
-        source_type=SourceType.TASK,
-        access_type=AccessType.RESTRICTED,
-        task=task,
-        workflow=workflow,
-    )
-    event.storage_attachments.add(existent_attachment)
-
-    # New file_id to add
-    new_file_id = 'new_file_456.png'
-
-    service = CommentService(
-        user=account_owner,
-        instance=event,
-    )
-
-    # act
-    service._update_attachments([existent_attachment.file_id, new_file_id])
-
-    # assert
-    # Check existing attachment is still there
-    existent_attachment.refresh_from_db()
-    assert existent_attachment.workflow == workflow
-    assert existent_attachment.task == task
-
-    # Check new attachment was created
-    new_attachment = Attachment.objects.get(file_id=new_file_id)
-    assert new_attachment.workflow == workflow
-    assert new_attachment.task == task
-    assert new_attachment.account == account
-
-
-def test_update_attachments__attachments_is_null__not_update():
-
-    # arrange
-    account = create_test_account()
-    account_owner = create_test_user(
-        is_account_owner=True,
-        account=account,
-    )
-    workflow = create_test_workflow(account_owner, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    event = WorkflowEvent.objects.create(
-        account=account,
-        type=WorkflowEventType.COMMENT,
-        text='text',
-        with_attachments=True,
-        workflow=workflow,
-        task=task,
-        user=account_owner,
-    )
-    # Create attachment not linked to event (should remain untouched)
-    another_attachment = Attachment.objects.create(
-        file_id='unrelated_file_123.png',
-        account=account,
-        source_type=SourceType.TASK,
-        access_type=AccessType.RESTRICTED,
-        task=task,
-        workflow=workflow,
-    )
-
-    # Create attachment linked to event (should be deleted)
-    deleted_attachment = Attachment.objects.create(
-        file_id='deleted_file_456.png',
-        account=account,
-        source_type=SourceType.TASK,
-        access_type=AccessType.RESTRICTED,
-        task=task,
-        workflow=workflow,
-    )
-    event.storage_attachments.add(deleted_attachment)
-
-    service = CommentService(
-        user=account_owner,
-        instance=event,
-    )
-
-    # act
-    service._update_attachments(file_ids=None)
-
-    # assert
-    # Unrelated attachment should remain untouched
-    another_attachment.refresh_from_db()
-    assert another_attachment.workflow == workflow
-    assert another_attachment.task == task
-
-    # Event attachment should be deleted
-    assert not Attachment.objects.filter(
-        id=deleted_attachment.id,
-    ).exists()
-
-
-def test_update_attachments__with_file_ids__creates_attachments():
-    """
-    Test that _update_attachments creates new Attachment records for file_ids.
-    In new architecture, we don't validate file_ids existence
-    - just create records.
-    """
-    # arrange
-    account = create_test_account()
-    account_owner = create_test_user(
-        is_account_owner=True,
-        account=account,
-    )
-    workflow = create_test_workflow(account_owner, tasks_count=1)
-    task = workflow.tasks.get(number=1)
-    event = WorkflowEvent.objects.create(
-        account=account,
-        type=WorkflowEventType.COMMENT,
-        text='text',
-        with_attachments=False,
-        workflow=workflow,
-        task=task,
-        user=account_owner,
-    )
-
-    service = CommentService(
-        user=account_owner,
-        instance=event,
-    )
-    file_ids = ['new_file_1.png', 'new_file_2.jpg']
-
-    # act
-
-    service._update_attachments(file_ids)
-
-    # assert
-    attachments = Attachment.objects.filter(file_id__in=file_ids)
-    assert attachments.count() == 2
-
-    for attachment in attachments:
-        assert attachment.workflow == workflow
-        assert attachment.task == task
-        assert attachment.account == account
 
 
 def test_get_new_comment_recipients__notify_users__ok():
@@ -1628,9 +1375,8 @@ def test_update__text__ok(mocker):
         'src.processes.services.events.'
         'CommentService._validate_comment_action',
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
@@ -1686,7 +1432,10 @@ def test_update__text__ok(mocker):
     validate_comment_action_mock.assert_called_once()
     get_updated_comment_recipients_mock.assert_called_once()
     send_workflow_event_mock.assert_called_once()
-    update_attachments_mock.assert_not_called()
+    refresh_attachments_mock.assert_called_once_with(
+        source=event,
+        user=account_owner,
+    )
     clear_text_mock.assert_called_once_with(text)
     partial_update_mock.assert_called_once_with(
         text=text,
@@ -1733,9 +1482,8 @@ def test_update__task_delete__ok(mocker):
         'src.processes.services.events.'
         'CommentService._validate_comment_action',
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
@@ -1791,7 +1539,10 @@ def test_update__task_delete__ok(mocker):
     validate_comment_action_mock.assert_called_once()
     get_updated_comment_recipients_mock.assert_called_once()
     send_workflow_event_mock.assert_called_once()
-    update_attachments_mock.assert_not_called()
+    refresh_attachments_mock.assert_called_once_with(
+        source=event,
+        user=account_owner,
+    )
     clear_text_mock.assert_called_once_with(text)
     partial_update_mock.assert_called_once_with(
         text=text,
@@ -1835,9 +1586,8 @@ def test_update__attachments__ok(mocker):
         'src.processes.services.events.'
         'CommentService._validate_comment_action',
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
@@ -1891,7 +1641,10 @@ def test_update__attachments__ok(mocker):
     validate_comment_action_mock.assert_called_once()
     get_updated_comment_recipients_mock.assert_called_once()
     send_workflow_event_mock.assert_called_once()
-    update_attachments_mock.assert_called_once_with(attachments)
+    refresh_attachments_mock.assert_called_once_with(
+        source=event,
+        user=account_owner,
+    )
     partial_update_mock.assert_called_once_with(
         with_attachments=True,
         status=CommentStatus.UPDATED,
@@ -1917,38 +1670,31 @@ def test_update__attachments__ok(mocker):
         (
             '(![avatar.jpg](https://storage.com/dev/avatar.jpg '
             '"attachment_id:3349 entityType:image")',
-            [3349],
         ),
         (
             '[file.txt](http://file.txt "attachment_id:4187 entityType:file")',
-            [4187],
         ),
         (
             '[video.mp4](https://video.mp4 "attachment_id:4188 '
             'entityType:video")',
-            [4188],
         ),
         (
             'some [video.mp4](https://video.mp4 "attachment_id:4188 '
             'entityType:video") text \n(![avatar.jpg]'
             '(https://storage.com/dev/avatar.jpg '
             '"attachment_id:3349 entityType:image")',
-            [4188, 3349],
         ),
         (
             '[ZIP-folder.zip](https://storage.zip "attachment_id:2482")',
-            [2482],
         ),
         (
             '[ZIP-folder.zip](https://storage.zip "attachment_id:2482")',
-            [2482],
         ),
     ),
 )
 def test_update__find_attachments_in_text__ok(data, mocker):
 
     # arrange
-    media, attachment_ids = data
     account = create_test_account()
     account_owner = create_test_user(is_account_owner=True, account=account)
     workflow = create_test_workflow(account_owner, tasks_count=1)
@@ -1969,9 +1715,8 @@ def test_update__find_attachments_in_text__ok(data, mocker):
         'src.processes.services.events.'
         'CommentService._validate_comment_action',
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
@@ -2008,7 +1753,7 @@ def test_update__find_attachments_in_text__ok(data, mocker):
         'send_mention_notification.delay',
     )
 
-    text = f'*text* \n -(123) {media}text'
+    text = f'*text* \n -(123) {data}text'
     service = CommentService(
         instance=event,
         user=account_owner,
@@ -2027,7 +1772,10 @@ def test_update__find_attachments_in_text__ok(data, mocker):
     validate_comment_action_mock.assert_called_once()
     get_updated_comment_recipients_mock.assert_called_once()
     send_workflow_event_mock.assert_called_once()
-    update_attachments_mock.assert_called_once_with(attachment_ids)
+    refresh_attachments_mock.assert_called_once_with(
+        source=event,
+        user=account_owner,
+    )
     partial_update_mock.assert_called_once_with(
         with_attachments=True,
         status=CommentStatus.UPDATED,
@@ -2079,9 +1827,8 @@ def test_update__not_found_attachments_in_text__ok(text, mocker):
         'src.processes.services.events.'
         'CommentService._validate_comment_action',
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
@@ -2137,7 +1884,10 @@ def test_update__not_found_attachments_in_text__ok(text, mocker):
     validate_comment_action_mock.assert_called_once()
     get_updated_comment_recipients_mock.assert_called_once()
     send_workflow_event_mock.assert_called_once()
-    update_attachments_mock.assert_not_called()
+    refresh_attachments_mock.assert_called_once_with(
+        source=event,
+        user=account_owner,
+    )
     partial_update_mock.assert_called_once_with(
         with_attachments=False,
         status=CommentStatus.UPDATED,
@@ -2193,9 +1943,8 @@ def test_update__notified_users__ok(mocker):
         'src.processes.services.events.'
         'CommentService._validate_comment_action',
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
@@ -2253,7 +2002,10 @@ def test_update__notified_users__ok(mocker):
     validate_comment_action_mock.assert_called_once()
     get_updated_comment_recipients_mock.assert_called_once()
     send_workflow_event_mock.assert_called_once()
-    update_attachments_mock.assert_called_once_with(attachments)
+    refresh_attachments_mock.assert_called_once_with(
+        source=event,
+        user=account_owner,
+    )
     clear_text_mock.assert_called_once_with(new_text)
     partial_update_mock.assert_called_once_with(
         text=new_text,
@@ -2315,9 +2067,8 @@ def test_update__mentioned_users__ok(mocker):
         'src.processes.services.events.'
         'CommentService._validate_comment_action',
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
@@ -2369,7 +2120,10 @@ def test_update__mentioned_users__ok(mocker):
     validate_comment_action_mock.assert_called_once()
     get_updated_comment_recipients_mock.assert_called_once()
     send_workflow_event_mock.assert_called_once()
-    update_attachments_mock.assert_not_called()
+    refresh_attachments_mock.assert_called_once_with(
+        source=event,
+        user=account_owner,
+    )
     clear_text_mock.assert_called_once_with(text)
     partial_update_mock.assert_called_once_with(
         text=text,
@@ -2411,9 +2165,8 @@ def test_update__remove_text__ok(mocker):
         'src.processes.services.events.'
         'CommentService._validate_comment_action',
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
@@ -2462,7 +2215,10 @@ def test_update__remove_text__ok(mocker):
     validate_comment_action_mock.assert_called_once()
     get_updated_comment_recipients_mock.assert_called_once()
     send_workflow_event_mock.assert_called_once()
-    update_attachments_mock.assert_called_once_with(attachments)
+    refresh_attachments_mock.assert_called_once_with(
+        source=event,
+        user=account_owner,
+    )
     partial_update_mock.assert_called_once_with(
         text=None,
         clear_text=None,
@@ -2501,9 +2257,8 @@ def test_update__remove_attachments__ok(mocker):
         'src.processes.services.events.'
         'CommentService._validate_comment_action',
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
@@ -2553,7 +2308,10 @@ def test_update__remove_attachments__ok(mocker):
     validate_comment_action_mock.assert_called_once()
     get_updated_comment_recipients_mock.assert_called_once_with()
     send_workflow_event_mock.assert_called_once()
-    update_attachments_mock.assert_not_called()
+    refresh_attachments_mock.assert_called_once_with(
+        source=event,
+        user=account_owner,
+    )
     clear_text_mock.assert_called_once_with(text)
     partial_update_mock.assert_called_once_with(
         text=text,
@@ -2592,9 +2350,8 @@ def test_update__remove_text__raise_exception(mocker):
         'src.processes.services.events.'
         'CommentService._validate_comment_action',
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     get_new_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
@@ -2635,7 +2392,7 @@ def test_update__remove_text__raise_exception(mocker):
     validate_comment_action_mock.assert_called_once()
     get_new_comment_recipients_mock.assert_not_called()
     send_workflow_event_mock.assert_not_called()
-    update_attachments_mock.assert_not_called()
+    refresh_attachments_mock.assert_not_called()
     clear_text_mock.assert_not_called()
     partial_update_mock.assert_not_called()
     comment_edited_analysis_mock.assert_not_called()
@@ -2661,9 +2418,8 @@ def test_update__remove_attachment__raise_exception(mocker):
         'src.processes.services.events.'
         'CommentService._validate_comment_action',
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
@@ -2700,7 +2456,7 @@ def test_update__remove_attachment__raise_exception(mocker):
     validate_comment_action_mock.assert_called_once()
     get_updated_comment_recipients_mock.assert_not_called()
     send_workflow_event_mock.assert_not_called()
-    update_attachments_mock.assert_not_called()
+    refresh_attachments_mock.assert_not_called()
     partial_update_mock.assert_not_called()
     comment_edited_analysis_mock.assert_not_called()
 
@@ -2736,9 +2492,8 @@ def test_update_inactive_task__raise_exception(status, mocker):
         'src.processes.services.events.'
         'CommentService._validate_comment_action',
     )
-    update_attachments_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService._update_attachments',
+    refresh_attachments_mock = mocker.patch(
+        'src.processes.services.events.refresh_attachments',
     )
     get_updated_comment_recipients_mock = mocker.patch(
         'src.processes.services.events.'
@@ -2779,7 +2534,7 @@ def test_update_inactive_task__raise_exception(status, mocker):
     validate_comment_action_mock.assert_called_once()
     get_updated_comment_recipients_mock.assert_not_called()
     send_workflow_event_mock.assert_not_called()
-    update_attachments_mock.assert_not_called()
+    refresh_attachments_mock.assert_not_called()
     clear_text_mock.assert_not_called()
     partial_update_mock.assert_not_called()
     comment_edited_analysis_mock.assert_not_called()
@@ -2802,15 +2557,11 @@ def test_delete__ok(mocker):
         task=task,
         user=account_owner,
     )
-    attachment = Attachment.objects.create(
-        file_id='test_file_delete_123.png',
+    create_test_attachment(
         account=account,
-        source_type=SourceType.TASK,
-        access_type=AccessType.RESTRICTED,
-        task=task,
+        file_id='first_template_file.png',
         workflow=workflow,
     )
-    event.storage_attachments.add(attachment)
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._validate_comment_action',
@@ -2847,7 +2598,7 @@ def test_delete__ok(mocker):
         text=None,
         force_save=True,
     )
-    assert event.storage_attachments.count() == 0
+    assert event.workflow.storage_attachments.count() == 0
     comment_deleted_analysis_mock.assert_called_once_with(
         text=event.clear_text,
         user=account_owner,
@@ -2883,7 +2634,7 @@ def test_delete__task_delete__ok(mocker):
         task=None,
         workflow=workflow,
     )
-    event.storage_attachments.add(attachment)
+    event.workflow.storage_attachments.add(attachment)
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._validate_comment_action',
@@ -2920,7 +2671,7 @@ def test_delete__task_delete__ok(mocker):
         text=None,
         force_save=True,
     )
-    assert event.storage_attachments.count() == 0
+    assert event.workflow.storage_attachments.count() == 0
     comment_deleted_analysis_mock.assert_called_once_with(
         text=event.clear_text,
         user=account_owner,

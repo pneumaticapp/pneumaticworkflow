@@ -1,7 +1,9 @@
 from django.db import models
 
 from src.accounts.models import AccountBaseMixin
+from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
+from src.processes.querysets import AttachmentQuerySet
 from src.storage.enums import AccessType, SourceType
 
 
@@ -59,6 +61,8 @@ class Attachment(SoftDeleteModel, AccountBaseMixin):
         blank=True,
         related_name='storage_attachments',
     )
+
+    objects = BaseSoftDeleteManager.from_queryset(AttachmentQuerySet)()
 
     def __str__(self):
         return f"Attachment {self.file_id} ({self.source_type})"

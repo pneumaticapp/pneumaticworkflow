@@ -21,6 +21,7 @@ from src.processes.utils.common import (
     create_api_name,
     insert_fields_values_to_text,
 )
+from src.storage.utils import refresh_attachments
 from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
@@ -37,7 +38,6 @@ class TemplateService(BaseModelService):
     ):
         # Update attachments for template
         if self.instance:
-            from src.storage.utils import refresh_attachments
             refresh_attachments(self.instance, self.user)
 
     def _create_instance(
@@ -56,7 +56,6 @@ class TemplateService(BaseModelService):
             **update_kwargs,
         )
         if 'description' in update_kwargs and self.instance:
-            from src.storage.utils import refresh_attachments
             refresh_attachments(self.instance, self.user)
         return result
 

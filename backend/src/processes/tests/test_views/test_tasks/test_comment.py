@@ -16,11 +16,12 @@ from src.processes.services.exceptions import (
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
-    create_test_attachment_for_event,
+    create_test_attachment,
     create_test_guest,
     create_test_owner,
     create_test_workflow,
 )
+from src.storage.enums import SourceType, AccessType
 from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
@@ -177,29 +178,33 @@ def test_create__text__ok(api_client, mocker):
 
 def test_create_text_and_attachment__ok(mocker, api_client):
 
-    # assert
+    # arrange
     user = create_test_owner()
     workflow = create_test_workflow(user)
     task = workflow.tasks.get(number=1)
+    comment_text = (
+        'Some comment with files: '
+        'https://example.com/files/task_file_1 and '
+        'https://example.com/api/files/task_file_2'
+    )
     event = WorkflowEventService.comment_created_event(
         user=user,
-        text='Some comment',
+        text=comment_text,
         task=task,
-        attachments=['task_file_1.png', 'task_file_2.docx'],
         after_create_actions=False,
     )
 
-    # Create attachments using new storage service
-    attach_1 = create_test_attachment_for_event(
+    attachment_1 = create_test_attachment(
         account=user.account,
-        event=event,
-        file_id='task_file_1.png',
+        file_id='task_file_1',
+        task=task,
     )
-    attach_2 = create_test_attachment_for_event(
+    create_test_attachment(
         account=user.account,
-        event=event,
-        file_id='task_file_2.docx',
+        file_id='task_file_2',
+        task=task,
     )
+
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
@@ -216,25 +221,17 @@ def test_create_text_and_attachment__ok(mocker, api_client):
     response = api_client.post(
         f'/v2/tasks/{task.id}/comment',
         data={
-            'text': event.text,
-            'attachments': [
-                attach_1.id,
-                attach_2.id,
-            ],
+            'text': comment_text,
         },
     )
 
-    # arrange
+    # assert
     assert response.status_code == 200
     assert len(response.data['attachments']) == 2
-    attach_data = response.data['attachments'][0]
-    assert attach_data['id'] == attach_1.id
-    assert attach_data['name'] == attach_1.name
-    assert attach_data['url'] == attach_1.url
-    assert attach_data['thumbnail_url'] == attach_1.thumbnail_url
-    assert attach_data['thumbnail_url'] == attach_1.thumbnail_url
-    assert attach_data['size'] == attach_1.size
-
+    attachment = response.data['attachments'][0]
+    assert attachment['file_id'] == attachment_1.file_id
+    assert attachment['access_type'] == AccessType.RESTRICTED
+    assert attachment['source_type'] == SourceType.TASK
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
@@ -243,7 +240,6 @@ def test_create_text_and_attachment__ok(mocker, api_client):
     comment_create_mock.assert_called_once_with(
         task=task,
         text=event.text,
-        attachments=[attach_1.id, attach_2.id],
     )
 
 

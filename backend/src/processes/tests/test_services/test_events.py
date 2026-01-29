@@ -72,7 +72,7 @@ def test_comment_created_event__ok(mocker):
         '(![avatar.jpg](https://storage.com/dev/avatar.jpg '
         '"file_id:avatar_file.jpg entityType:image")'
     )
-    attach = create_test_attachment(
+    create_test_attachment(
         account=user.account,
         file_id='avatar_file.jpg',
         task=task,
@@ -88,7 +88,6 @@ def test_comment_created_event__ok(mocker):
         user=user,
         task=task,
         text=text,
-        attachments=[attach.id],
     )
 
     # assert
@@ -98,7 +97,7 @@ def test_comment_created_event__ok(mocker):
     assert event.text == text
     assert event.workflow == workflow
     assert event.user == user
-    assert event.with_attachments is True
+    assert event.with_attachments is False
     assert event.status == CommentStatus.CREATED
     assert event.workflow_id == workflow.id
     assert event.task_id == task.id

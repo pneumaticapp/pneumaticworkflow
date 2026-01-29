@@ -660,6 +660,9 @@ class TaskFieldQuerySet(BaseFieldQuerySet):
         return self.values_list('value', flat=True)
 
 
+# TODO remove legacy model after migration to file service.
+# DEPRECATED: This queryset will be removed after full migration.
+# Use AttachmentQuerySet instead.
 class FileAttachmentQuerySet(AccountBaseQuerySet):
 
     def by_ids(self, ids: List[int]):
@@ -691,6 +694,48 @@ class FileAttachmentQuerySet(AccountBaseQuerySet):
 
     def ids_set(self):
         qst = self.values_list('id', flat=True)
+        return set(qst)
+
+
+class AttachmentQuerySet(AccountBaseQuerySet):
+    """QuerySet for Attachment model."""
+
+    def by_ids(self, ids: List[int]):
+        """Filter by attachment IDs."""
+        return self.filter(id__in=ids)
+
+    def by_file_ids(self, file_ids: List[str]):
+        """Filter by file_id values."""
+        return self.filter(file_id__in=file_ids)
+
+    def by_source_type(self, source_type: str):
+        """Filter by source_type."""
+        return self.filter(source_type=source_type)
+
+    def by_workflow(self, workflow_id: int):
+        """Filter by workflow ID."""
+        return self.filter(workflow_id=workflow_id)
+
+    def by_task(self, task_id: int):
+        """Filter by task ID."""
+        return self.filter(task_id=task_id)
+
+    def by_template(self, template_id: int):
+        """Filter by template ID."""
+        return self.filter(template_id=template_id)
+
+    def on_workflow(self, workflow_id: int):
+        """Filter attachments on workflow. Alias for by_workflow."""
+        return self.by_workflow(workflow_id)
+
+    def ids_set(self):
+        """Return set of attachment IDs."""
+        qst = self.values_list('id', flat=True)
+        return set(qst)
+
+    def file_ids_set(self):
+        """Return set of file_id values."""
+        qst = self.values_list('file_id', flat=True)
         return set(qst)
 
 

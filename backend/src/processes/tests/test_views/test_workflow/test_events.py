@@ -182,7 +182,6 @@ def test_events__only_attachments_true__ok(api_client):
         text='No attachments',
         task=task,
         user=user,
-        attachments=['events_test_file.png'],
         after_create_actions=False,
     )
     create_test_attachment_for_event(
@@ -1300,7 +1299,6 @@ def test_retrieve__comment__with_attachment__ok(api_client):
         task=task,
         user=user,
         text=text,
-        attachments=['comment_test_file.png'],
         after_create_actions=False,
     )
     attachment = create_test_attachment_for_event(

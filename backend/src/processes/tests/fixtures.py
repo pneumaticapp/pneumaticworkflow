@@ -749,7 +749,7 @@ def create_test_attachment_for_event(
         workflow=event.workflow,
     )
 
-    # Link to event
-    event.storage_attachments.add(attachment)
+    # Link to workflow (not directly to event)
+    event.workflow.storage_attachments.add(attachment)
 
     return attachment

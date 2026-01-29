@@ -47,7 +47,6 @@ from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
     create_test_admin,
-    create_test_attachment,
     create_test_owner,
     create_test_template,
     create_test_workflow,
@@ -494,12 +493,12 @@ class TestWorkflowUpdateVersionService:
 
     def test_update_from_version__add_attachment_to_task_description(self):
         # arrange
-        account = create_test_account()
-        user = create_test_owner(account=account)
+        user = create_test_owner()
         template = create_test_template(
             user=user,
             is_active=True,
         )
+        markdown_value = '[attachment](http://file.png)'
         kickoff = template.kickoff_instance
         kickoff_field_template_1 = FieldTemplate.objects.create(
             type=FieldType.FILE,
@@ -516,13 +515,7 @@ class TestWorkflowUpdateVersionService:
             workflow=workflow,
             value='http://file.png',
             clear_value='http://clear-file.png',
-            markdown_value='[attachment](http://file.png)',
-        )
-        attachment = create_test_attachment(
-            account=user.account,
-            file_id='workflow_version_file.png',
-            task=workflow.tasks.first(),
-            workflow=workflow,
+            markdown_value=markdown_value,
         )
 
         task_1 = template.tasks.get(number=1)
@@ -552,14 +545,10 @@ class TestWorkflowUpdateVersionService:
         assert task_1.description_template == (
             'Screenshot: {{ %s }}' % kickoff_field_template_1.api_name
         )
-        expected = (
-            f'Screenshot: [{attachment.name}]({attachment.url})'
-        )
-        assert task_1.description == expected
+        assert task_1.description == f'Screenshot: {markdown_value}'
 
     def test_update_from_version__add_user_to_current_task__ok(
         self,
-        mocker,
         api_client,
     ):
 
@@ -603,7 +592,6 @@ class TestWorkflowUpdateVersionService:
 
     def test_update_from_version__remove_user_from_current_task__ok(
         self,
-        mocker,
         api_client,
     ):
 

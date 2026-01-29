@@ -6,6 +6,7 @@ from django.db import models
 
 from src.storage.enums import AccessType, SourceType
 from src.processes.models.templates.template import Template
+from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
 from src.storage.models import Attachment
@@ -170,6 +171,12 @@ def refresh_attachments(
     Creates new attachments for found file_id.
     Deletes unused attachments.
     Returns list of new file_id.
+
+    Supports:
+    - Task: extracts from description field
+    - Workflow: extracts from description field
+    - Template: extracts from description field
+    - WorkflowEvent (comment): extracts from text field
     """
     # Determine source type and extract file_ids
     if isinstance(source, Task):
@@ -196,6 +203,28 @@ def refresh_attachments(
             source_type=SourceType.TEMPLATE,
             template=source,
         )
+    if isinstance(source, WorkflowEvent):
+        # For comments, use task if available, otherwise workflow
+        # SourceType is TASK if task exists, WORKFLOW otherwise
+        source_type = (
+            SourceType.TASK
+            if source.task_id
+            else SourceType.WORKFLOW
+        )
+        new_file_ids = refresh_attachments_for_text(
+            account=source.account,
+            user=user,
+            text=source.text,
+            source_type=source_type,
+            task=source.task,
+            workflow=source.workflow,
+        )
+        # Update with_attachments field for WorkflowEvent
+        has_attachments = bool(extract_file_ids_from_text(source.text))
+        if source.with_attachments != has_attachments:
+            source.with_attachments = has_attachments
+            source.save(update_fields=['with_attachments'])
+        return new_file_ids
     return []
 
 
@@ -206,6 +235,8 @@ def get_attachment_description_fields(source: models.Model) -> List[str]:
     """
     if isinstance(source, (Task, Workflow, Template)):
         return ['description']
+    if isinstance(source, WorkflowEvent):
+        return ['text']
 
     return []
 

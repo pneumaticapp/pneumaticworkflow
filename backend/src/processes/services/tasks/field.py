@@ -220,15 +220,21 @@ class TaskFieldService(BaseWorkflowService):
                 message=messages.MSG_PW_0036,
             )
 
-        # In new architecture, raw_value contains file_ids (strings)
-        file_ids = raw_value
+        # Validate each item is a valid file_id (non-empty string, 6-64 chars)
+        file_id_pattern = re.compile(r'^[a-zA-Z0-9_.-]{6,64}$')
+        for item in raw_value:
+            if not isinstance(item, str) or not file_id_pattern.match(item):
+                raise TaskFieldException(
+                    api_name=self.instance.api_name,
+                    message=messages.MSG_PW_0036,
+                )
 
         # For now, return a simple representation
         # In future, this could fetch file metadata from storage service
-        if file_ids:
-            value = ', '.join(file_ids)
+        if raw_value:
+            value = ', '.join(raw_value)
             markdown_value = ', '.join(
-                [f'File: {file_id}' for file_id in file_ids],
+                [f'File: {file_id}' for file_id in raw_value],
             )
         else:
             value = ''

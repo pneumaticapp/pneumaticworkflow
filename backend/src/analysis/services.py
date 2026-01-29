@@ -698,16 +698,14 @@ class AnalyticService:
             'event': AttachmentAnalyticsEvent.uploaded,
             'is_superuser': is_superuser,
             'properties': {
-                'text': f'{attachment.name} {attachment.url}',
+                'text': f'{attachment.file_id}',
                 'email': None,
                 'first_name': None,
                 'last_name': None,
                 'account_id': attachment.account_id,
                 'auth_type': auth_type,
                 'id': attachment.id,
-                'size': attachment.humanize_size,
                 'category': EventCategory.attachments,
-                'type': attachment.extension,
             },
         }
         if user.is_authenticated:

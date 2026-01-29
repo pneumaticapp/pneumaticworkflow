@@ -95,7 +95,6 @@ def test_create_text_and_attachment__ok(mocker, api_client):
         user=user,
         text='Some comment',
         task=task,
-        attachments=['file_1.png', 'file_2.docx'],
         after_create_actions=False,
     )
     attach_1 = create_test_attachment_for_event(
@@ -125,10 +124,6 @@ def test_create_text_and_attachment__ok(mocker, api_client):
         f'/workflows/{workflow.id}/comment',
         data={
             'text': event.text,
-            'attachments': [
-                attach_1.id,
-                attach_2.id,
-            ],
         },
     )
 

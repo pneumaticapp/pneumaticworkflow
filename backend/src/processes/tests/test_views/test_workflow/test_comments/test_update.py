@@ -18,11 +18,12 @@ from src.processes.services.exceptions import (
 )
 from src.processes.tests.fixtures import (
     create_test_account,
-    create_test_attachment_for_event,
+    create_test_attachment,
     create_test_guest,
     create_test_user,
     create_test_workflow,
 )
+from src.storage.enums import SourceType, AccessType
 from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
@@ -78,22 +79,26 @@ def test_update_text_and_attachment__ok(mocker, api_client):
     user = create_test_user()
     workflow = create_test_workflow(user)
     task = workflow.tasks.get(number=1)
+    comment_text = (
+        'Some comment with files: '
+        'https://example.com/files/task_file_1 and '
+        'https://example.com/api/files/task_file_2'
+    )
     event = WorkflowEventService.comment_created_event(
         user=user,
-        text='Some comment',
+        text=comment_text,
         task=task,
-        attachments=['file_1.png', 'file_2.docx'],
         after_create_actions=False,
     )
-    attach_1 = create_test_attachment_for_event(
+    attachment_1 = create_test_attachment(
         account=user.account,
-        event=event,
-        file_id='file_1.png',
+        file_id='task_file_1',
+        workflow=workflow,
     )
-    attach_2 = create_test_attachment_for_event(
+    create_test_attachment(
         account=user.account,
-        event=event,
-        file_id='file_2.docx',
+        file_id='task_file_2',
+        workflow=workflow,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
@@ -113,24 +118,16 @@ def test_update_text_and_attachment__ok(mocker, api_client):
         f'/workflows/comments/{event.id}',
         data={
             'text': new_text,
-            'attachments': [
-                attach_1.id,
-                attach_2.id,
-            ],
         },
     )
 
     # arrange
     assert response.status_code == 200
     assert len(response.data['attachments']) == 2
-    attach_data = response.data['attachments'][0]
-    assert attach_data['id'] == attach_1.id
-    assert attach_data['name'] == attach_1.name
-    assert attach_data['url'] == attach_1.url
-    assert attach_data['thumbnail_url'] == attach_1.thumbnail_url
-    assert attach_data['thumbnail_url'] == attach_1.thumbnail_url
-    assert attach_data['size'] == attach_1.size
-
+    attachment = response.data['attachments'][0]
+    assert attachment['file_id'] == attachment_1.file_id
+    assert attachment['access_type'] == AccessType.RESTRICTED
+    assert attachment['source_type'] == SourceType.WORKFLOW
     service_init_mock.assert_called_once_with(
         instance=event,
         user=user,
@@ -139,247 +136,6 @@ def test_update_text_and_attachment__ok(mocker, api_client):
     )
     comment_update_mock.assert_called_once_with(
         text=new_text,
-        attachments=[attach_1.id, attach_2.id],
-        force_save=True,
-    )
-
-
-def test_update__remove_attachment__null__ok(mocker, api_client):
-
-    # assert
-    user = create_test_user()
-    workflow = create_test_workflow(user)
-    task = workflow.tasks.get(number=1)
-    event = WorkflowEventService.comment_created_event(
-        user=user,
-        text='Some comment',
-        task=task,
-        attachments=['remove_file.png'],
-        after_create_actions=False,
-    )
-    create_test_attachment_for_event(
-        account=user.account,
-        event=event,
-        file_id='remove_file.png',
-    )
-    service_init_mock = mocker.patch.object(
-        CommentService,
-        attribute='__init__',
-        return_value=None,
-    )
-    comment_update_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService.update',
-        return_value=event,
-    )
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.patch(
-        f'/workflows/comments/{event.id}',
-        data={
-            'attachments': None,
-        },
-    )
-
-    # arrange
-    assert response.status_code == 200
-    service_init_mock.assert_called_once_with(
-        instance=event,
-        user=user,
-        auth_type=AuthTokenType.USER,
-        is_superuser=False,
-    )
-    comment_update_mock.assert_called_once_with(
-        attachments=None,
-        force_save=True,
-    )
-
-
-def test_update__remove_attachment__empty_list__ok(mocker, api_client):
-
-    # assert
-    user = create_test_user()
-    workflow = create_test_workflow(user)
-    task = workflow.tasks.get(number=1)
-    event = WorkflowEventService.comment_created_event(
-        user=user,
-        text='Some comment',
-        task=task,
-        attachments=['remove_empty_file.png'],
-        after_create_actions=False,
-    )
-    create_test_attachment_for_event(
-        account=user.account,
-        event=event,
-        file_id='remove_empty_file.png',
-    )
-    service_init_mock = mocker.patch.object(
-        CommentService,
-        attribute='__init__',
-        return_value=None,
-    )
-    comment_update_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService.update',
-        return_value=event,
-    )
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.patch(
-        f'/workflows/comments/{event.id}',
-        data={
-            'attachments': [],
-        },
-    )
-
-    # arrange
-    assert response.status_code == 200
-    service_init_mock.assert_called_once_with(
-        instance=event,
-        user=user,
-        auth_type=AuthTokenType.USER,
-        is_superuser=False,
-    )
-    comment_update_mock.assert_called_once_with(
-        attachments=None,
-        force_save=True,
-    )
-
-
-def test_update_remove_text__null__ok(mocker, api_client):
-
-    # assert
-    user = create_test_user()
-    workflow = create_test_workflow(user)
-    task = workflow.tasks.get(number=1)
-    event = WorkflowEventService.comment_created_event(
-        user=user,
-        text='Some comment',
-        task=task,
-        attachments=['remove_text_file1.png', 'remove_text_file2.docx'],
-        after_create_actions=False,
-    )
-    attach_1 = create_test_attachment_for_event(
-        account=user.account,
-        event=event,
-        file_id='remove_text_file1.png',
-    )
-    attach_2 = create_test_attachment_for_event(
-        account=user.account,
-        event=event,
-        file_id='remove_text_file2.docx',
-    )
-    service_init_mock = mocker.patch.object(
-        CommentService,
-        attribute='__init__',
-        return_value=None,
-    )
-    comment_update_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService.update',
-        return_value=event,
-    )
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.patch(
-        f'/workflows/comments/{event.id}',
-        data={
-            'text': None,
-            'attachments': [
-                attach_1.id,
-                attach_2.id,
-            ],
-        },
-    )
-
-    # arrange
-    assert response.status_code == 200
-    assert len(response.data['attachments']) == 2
-    attach_data = response.data['attachments'][0]
-    assert attach_data['id'] == attach_1.id
-    assert attach_data['name'] == attach_1.name
-    assert attach_data['url'] == attach_1.url
-    assert attach_data['thumbnail_url'] == attach_1.thumbnail_url
-    assert attach_data['thumbnail_url'] == attach_1.thumbnail_url
-    assert attach_data['size'] == attach_1.size
-
-    service_init_mock.assert_called_once_with(
-        instance=event,
-        user=user,
-        auth_type=AuthTokenType.USER,
-        is_superuser=False,
-    )
-    comment_update_mock.assert_called_once_with(
-        text=None,
-        attachments=[attach_1.id, attach_2.id],
-        force_save=True,
-    )
-
-
-def test_update_remove_text__blank__ok(mocker, api_client):
-
-    # assert
-    user = create_test_user()
-    workflow = create_test_workflow(user)
-    task = workflow.tasks.get(number=1)
-    event = WorkflowEventService.comment_created_event(
-        user=user,
-        text='Some comment',
-        task=task,
-        attachments=['remove_blank_file.png'],
-        after_create_actions=False,
-    )
-    attach_1 = create_test_attachment_for_event(
-        account=user.account,
-        event=event,
-        file_id='remove_blank_file.png',
-    )
-    service_init_mock = mocker.patch.object(
-        CommentService,
-        attribute='__init__',
-        return_value=None,
-    )
-    comment_update_mock = mocker.patch(
-        'src.processes.services.events.'
-        'CommentService.update',
-        return_value=event,
-    )
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.patch(
-        f'/workflows/comments/{event.id}',
-        data={
-            'text': ' ',
-            'attachments': [
-                attach_1.id,
-            ],
-        },
-    )
-
-    # arrange
-    assert response.status_code == 200
-    assert len(response.data['attachments']) == 1
-    attach_data = response.data['attachments'][0]
-    assert attach_data['id'] == attach_1.id
-    assert attach_data['name'] == attach_1.name
-    assert attach_data['url'] == attach_1.url
-    assert attach_data['thumbnail_url'] == attach_1.thumbnail_url
-    assert attach_data['thumbnail_url'] == attach_1.thumbnail_url
-    assert attach_data['size'] == attach_1.size
-
-    service_init_mock.assert_called_once_with(
-        instance=event,
-        user=user,
-        auth_type=AuthTokenType.USER,
-        is_superuser=False,
-    )
-    comment_update_mock.assert_called_once_with(
-        text=None,
-        attachments=[attach_1.id],
         force_save=True,
     )
 
