@@ -41,6 +41,24 @@ class NotificationFilter(FilterSet):
     )
 
 
+class PublicUsersListFilterSet(FilterSet):
+
+    class Meta:
+        model = User
+        fields = (
+            'ordering',
+        )
+
+    ordering = DefaultOrderingFilter(
+        fields=(
+            ('first_name', 'first_name'),
+            ('last_name', 'last_name'),
+            ('status', 'status'),
+        ),
+        default=('last_name',),
+    )
+
+
 class UsersListFilterSet(FilterSet):
 
     class Meta:
