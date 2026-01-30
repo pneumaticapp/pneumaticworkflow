@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 import { IWorkflowLogItem } from '../../../../../types/workflow';
 
@@ -7,9 +7,9 @@ import { getUserFullName } from '../../../../../utils/users';
 import { Avatar } from '../../../../UI/Avatar';
 import { ReturnTaskInfoIcon } from '../../../../icons';
 import { UserData } from '../../../../UserData';
+import { RichText } from '../../../../RichText';
 
 import styles from './WorkflowLogProcessReturn.css';
-import { RichText } from '../../../../RichText';
 
 export interface IWorkflowLogProcessReturnProps
   extends Pick<IWorkflowLogItem, 'created' | 'userId' | 'text' | 'task'> {}

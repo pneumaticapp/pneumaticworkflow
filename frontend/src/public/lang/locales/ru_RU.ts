@@ -829,6 +829,8 @@ export const ruMessages = {
   'workflows.comment-delete-yes': 'Да',
   'workflows.comment-delete-no': 'Нет',
   'workflows.comment-edited': 'Отредактировано',
+  'workflows.comment-add-reaction': 'Добавить реакцию',
+  'workflows.comment-reaction-button': 'Переключить реакцию',
   'workflow.tune-view-modal-save-for-all': 'Сохранить для всех',
   'snooze.day': 'На день',
   'snooze.week': 'На неделю',

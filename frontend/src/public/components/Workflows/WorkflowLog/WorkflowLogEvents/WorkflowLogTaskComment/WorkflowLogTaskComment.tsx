@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/control-has-associated-label */
 import React, { useEffect, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
@@ -280,7 +279,12 @@ export function WorkflowLogTaskComment({
           content={renderListUsers(users)}
           containerClassName={classnames(styles['comment__footer-item'], workflowModal && styles['is-modal'])}
         >
-          <button type="button" onClick={() => handleReactionComment(value)} className={styles['comment__footer-item']}>
+          <button
+            type="button"
+            aria-label={formatMessage({ id: 'workflows.comment-reaction-button' })}
+            onClick={() => handleReactionComment(value)}
+            className={styles['comment__footer-item']}
+          >
             <div className={styles['comment__footer-item-emoji']}>{value}</div>
             <span>{users.length}</span>
           </button>
@@ -330,7 +334,11 @@ export function WorkflowLogTaskComment({
               )
             }
           >
-            <button type="button" onClick={() => setIsShowTooltipEmoji(!isShowTooltipEmoji)}>
+            <button
+              type="button"
+              aria-label={formatMessage({ id: 'workflows.comment-add-reaction' })}
+              onClick={() => setIsShowTooltipEmoji(!isShowTooltipEmoji)}
+            >
               <AddEmojiIcon />
             </button>
           </Tooltip>

@@ -1,6 +1,4 @@
-/* eslint-disable */
-/* prettier-ignore */
-import * as React from 'react';
+import React, { useCallback } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
@@ -22,7 +20,7 @@ export function WorkflowLogDelay({ delay, task, theme, type }: IWorkflowLogDelay
     return null;
   }
 
-  const getThemeClassName = React.useCallback(() => {
+  const getThemeClassName = useCallback(() => {
     const themeClassNameMap: { [key in TWorkflowLogTheme]: string } = {
       beige: styles['container-beige'],
       white: styles['container-white'],

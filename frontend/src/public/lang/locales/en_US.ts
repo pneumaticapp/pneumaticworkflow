@@ -885,6 +885,8 @@ export const enMessages = {
   'workflows.comment-delete-yes': 'Yes',
   'workflows.comment-delete-no': 'No',
   'workflows.comment-edited': 'Edited',
+  'workflows.comment-add-reaction': 'Add reaction',
+  'workflows.comment-reaction-button': 'Toggle reaction',
   'workflow.tune-view-button': 'Tune View',
   'workflow.tune-view-tooltip': 'To fine-tune the table view — select a Template',
   'workflow.tune-view-modal-title': 'tune view',
