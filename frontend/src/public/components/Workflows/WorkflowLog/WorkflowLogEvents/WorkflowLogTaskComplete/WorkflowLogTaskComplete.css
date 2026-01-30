@@ -55,13 +55,12 @@
 
 .text {
   overflow: hidden;
-  font-family: Nunito, sans-serif;
-  font-size: 15px;
-  line-height: 20px;
   white-space: pre-wrap;
   text-overflow: ellipsis;
   word-break: break-word;
-  color: #62625f;
+  color: var(--pneumatic-color-black72);
+
+  @mixin text-base bold;
 }
 
 .outputs-container {

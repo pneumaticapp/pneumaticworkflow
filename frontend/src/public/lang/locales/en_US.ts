@@ -816,7 +816,7 @@ export const enMessages = {
   'workflows.edit-success': 'Edited successfully',
   'workflows.log-comments': 'Comments',
   'workflows.log-no-events': 'Nothing to show',
-  'workflows.log-complete': 'Completed the task',
+  'workflows.log-complete': '{taskName} completed',
   'workflows.log-workflow-ended-on-condition': 'Workflow ended by condition',
   'workflows.log-workflow-ended': 'Workflow ended',
   'workflows.log-comment-field-placeholder': 'Your comment...',

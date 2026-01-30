@@ -67,7 +67,9 @@ export function WorkflowLogTaskComplete({
                 </span>
               </p>
               {!isOnlyAttachmentsShown && (
-                <div className={styles['text']}>{formatMessage({ id: 'workflows.log-complete' })}</div>
+                <div className={styles['text']}>
+                  {formatMessage({ id: 'workflows.log-complete' }, { taskName: currentTask?.name })}
+                </div>
               )}
               {renderOutputValues()}
             </div>

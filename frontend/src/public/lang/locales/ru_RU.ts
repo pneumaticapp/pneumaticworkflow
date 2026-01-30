@@ -762,7 +762,7 @@ export const ruMessages = {
   'workflows.edit-success': 'Успешно отредактировано',
   'workflows.log-comments': 'Комментарии',
   'workflows.log-no-events': 'Нет данных',
-  'workflows.log-complete': 'Задача завершена',
+  'workflows.log-complete': '{taskName} завершена',
   'workflows.log-workflow-ended-on-condition': 'Процесс завершен по состоянию',
   'workflows.log-workflow-ended': 'Процесс завершен',
   'workflows.log-comment-field-placeholder': 'Ваш комментарий...',
