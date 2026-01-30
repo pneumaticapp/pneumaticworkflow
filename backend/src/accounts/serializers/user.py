@@ -109,6 +109,20 @@ class UserSerializer(
             self.fields['language'].choices = Language.EURO_CHOICES
 
 
+class UserCreateSerializer(UserSerializer):
+
+    class Meta(UserSerializer.Meta):
+        read_only_fields = (
+            'id',
+            'type',
+            'invite',
+            'status',
+            'is_account_owner',
+            'groups',
+            'date_joined_tsp',
+        )
+
+
 class UserPrivilegesSerializer(UserSerializer):
     class Meta(UserSerializer.Meta):
         model = UserModel

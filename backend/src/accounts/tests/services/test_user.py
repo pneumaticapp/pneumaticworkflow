@@ -1461,7 +1461,7 @@ def test_update_related_user_fields__another_account_field__not_changed():
     user = create_test_admin(account=account)
     old_name = 'Old name'
 
-    another_user = create_test_owner()
+    another_user = create_test_owner(email='another@test.test')
     workflow = create_test_workflow(user=another_user, tasks_count=1)
     task = workflow.tasks.get(number=1)
     user_field = TaskField.objects.create(

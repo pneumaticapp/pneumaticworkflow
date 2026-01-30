@@ -22,7 +22,7 @@ from src.accounts.permissions import (
 from src.accounts.queries import CountTemplatesByUserQuery
 from src.accounts.serializers.user import (
     UserPrivilegesSerializer,
-    UserSerializer,
+    UserSerializer, UserCreateSerializer,
 )
 from src.accounts.serializers.users import (
     AcceptTransferSerializer,
@@ -68,6 +68,7 @@ class UsersViewSet(
     pagination_class = LimitOffsetPagination
     filter_backends = [PneumaticFilterBackend]
     action_serializer_classes = {
+        'create': UserCreateSerializer,
         'reassign': ReassignSerializer,
         'privileges': UserPrivilegesSerializer,
     }
@@ -156,7 +157,10 @@ class UsersViewSet(
             auth_type=request.token_type,
         )
         try:
-            user = service.create(**slz.validated_data)
+            user = service.create(
+                account=request.user.account,
+                **slz.validated_data,
+            )
         except UserServiceException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok(UserSerializer(instance=user).data)
