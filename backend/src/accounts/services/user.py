@@ -221,23 +221,14 @@ class UserService(
         self.user.set_password(password)
         self.user.save()
 
-    def _update_related_user_fields(self, **update_kwargs):
+    def _update_related_user_fields(self, old_name):
 
         """ Call after update instance """
 
-        first_name_changed = (
-            'first_name' in update_kwargs
-            and update_kwargs['first_name'] != self.instance.first_name
-        )
-        last_name_changed = (
-            'last_name' in update_kwargs
-            and update_kwargs['last_name'] != self.instance.last_name
-        )
-        if first_name_changed or last_name_changed:
+        if old_name != self.instance.name:
             TaskField.objects.filter(
                 type=FieldType.USER,
                 user_id=self.instance.id,
-                account_id=self.account.id,
             ).update(value=self.instance.name)
 
     def _update_related_stripe_account(self):
@@ -334,9 +325,10 @@ class UserService(
         **update_kwargs,
     ) -> UserModel:
 
+        old_name = self.instance.name
         with transaction.atomic():
             super().partial_update(**update_kwargs, force_save=force_save)
-            self._update_related_user_fields(**update_kwargs)
+            self._update_related_user_fields(old_name=old_name)
         self._update_related_stripe_account()
         self._update_analytics(**update_kwargs)
         send_user_updated_notification.delay(
