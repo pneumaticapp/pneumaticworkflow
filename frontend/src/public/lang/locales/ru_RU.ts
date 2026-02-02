@@ -924,7 +924,7 @@ export const ruMessages = {
   'processes.task-workflow-activity': 'События',
   'task.minimize-log': 'Скрыть все события',
   'task.expand-log': 'Показать все события',
-  'task.log-returned': 'Задача возвращена',
+  'task.log-returned': 'Процесс возвращён к {taskName}',
   'task.log-delay': '{taskName} отложена до {date}',
   'task.log-delay-workflow': 'Отложено до {date}',
   'task.log-added-performer': 'Добавлен пользователь\u00A0',
