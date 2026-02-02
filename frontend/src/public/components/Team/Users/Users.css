@@ -1,29 +1,29 @@
 /* stylelint-disable declaration-no-important */
 .container {
   margin: 0 auto;
-  max-width: 864px;
+  max-width: 86.4rem;
 }
 
 .search {
   position: relative;
-  margin-bottom: 32px;
+  margin-bottom: 3.2rem;
   width: 100%;
 }
 
 .search__icon {
   position: absolute;
   top: 50%;
-  margin-left: 16px;
+  margin-left: 1.6rem;
   color: var(--pneumatic-color-black72);
   transform: translateY(-50%);
 }
 
 .search-field {
-  margin-bottom: 32px;
+  margin-bottom: 3.2rem;
 }
 
 .search-field__input {
-  padding-left: 48px !important;
+  padding-left: 4.8rem !important;
   background-color: var(----background-color);
 }
 
@@ -32,22 +32,22 @@
 }
 
 .card-wrapper:not(:last-child) {
-  margin-bottom: 8px;
+  margin-bottom: 0.8rem;
 }
 
 .card {
   position: relative;
-  padding: 32px 160px 32px 32px;
+  padding: 3.2rem 16rem 3.2rem 3.2rem;
   display: flex;
-  min-height: 104px;
+  min-height: 10.4rem;
   color: var(--pneumatic-color-black100);
   background-color: white;
-  border-radius: 24px;
+  border-radius: 2.4rem;
   align-items: center;
   transition: box-shadow 0.2s ease-in-out;
 
   &:hover {
-    box-shadow: 0 8px 24px rgba(98, 98, 95, 0.08);
+    box-shadow: 0 0.8rem 2.4rem var(--pneumatic-color-black95);
   }
 
   @media (--mobile) {
@@ -58,35 +58,35 @@
 
 .card-aside {
   position: absolute;
-  top: 32px;
-  right: 32px;
+  top: 3.2rem;
+  right: 3.2rem;
   display: flex;
-  height: 40px;
+  height: 4rem;
   align-items: center;
 }
 
 .card-admin {
   display: flex;
   align-items: center;
-  font-size: 11px;
+  font-size: 1.1rem;
   font-weight: bold;
-  line-height: 16px;
+  line-height: 1.6rem;
   text-align: right;
   letter-spacing: 0.05em;
   text-transform: uppercase;
 
   @media (--mobile) {
-    top: calc(100% - 48px);
-    right: 16px;
+    top: calc(100% - 4.8rem);
+    right: 1.6rem;
   }
 }
 
 .card-admin__switch {
-  margin-left: 8px;
+  margin-left: 0.8rem;
 }
 
 .card-more-container {
-  margin-left: 16px;
+  margin-left: 1.6rem;
 }
 
 .card-more {
@@ -107,26 +107,26 @@
 
 .card-subheader {
   margin: 0;
-  font-size: 13px;
-  line-height: 16px;
+  font-size: 1.3rem;
+  line-height: 1.6rem;
   color: var(--pneumatic-color-black48);
 }
 
 .card-avatar {
-  margin-right: 16px;
+  margin-right: 1.6rem;
 
   @media (--mobile) {
     margin-right: 0;
-    margin-bottom: 16px;
+    margin-bottom: 1.6rem;
   }
 }
 
 .card-badge {
   margin: 0;
-  margin-right: 40px;
-  font-size: 11px;
+  margin-right: 4rem;
+  font-size: 1.1rem;
   font-weight: bold;
-  line-height: 16px;
+  line-height: 1.6rem;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--pneumatic-color-black32);
@@ -138,20 +138,20 @@
 
 .invite-button {
   all: unset;
-  margin-bottom: 8px;
+  margin-bottom: 0.8rem;
   display: flex;
   width: 100%;
-  height: 104px;
+  height: 10.4rem;
   color: var(--pneumatic-color-link-dark);
   background: white;
-  border-radius: 24px;
+  border-radius: 2.4rem;
   justify-content: center;
   align-items: center;
   transition: all 0.2s ease-in-out;
 
   &:hover {
     color: var(--pneumatic-color-link-hover);
-    box-shadow: 0 8px 24px rgba(98, 98, 95, 0.08);
+    box-shadow: 0 0.8rem 2.4rem var(--pneumatic-color-black95);
   }
 
   @media (--mobile) {
@@ -160,7 +160,7 @@
 }
 
 .invite-button__icon {
-  margin-right: 8px;
+  margin-right: 0.8rem;
 }
 
 .buttons-row {
