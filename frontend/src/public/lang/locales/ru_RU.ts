@@ -305,6 +305,8 @@ export const ruMessages = {
     'Добавьте гостей к своим задачам, чтобы получать от них информацию и взаимодействовать с людьми без аккаунта Pneumatic.',
   'team.add-guests-banner-button': 'Подробнее',
   'team.search': 'Поиск пользователя',
+  'team.create-user-button': 'Создать пользователя',
+  'team.create-user-button-caption': 'Создание новых членов команды',
   'users.error-already-accepted': 'Эти пользователи уже приняли приглашения на этот аккаунт',
   'users.faied-fetch': 'Не удалось загрузить пользователей',
   'user-account.edit-profile-success': 'Информация вашего профиля была успешно обновлена',

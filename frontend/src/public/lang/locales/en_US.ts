@@ -264,7 +264,7 @@ export const enMessages = {
   'team.user-email': '({email})',
   'team.invite-team-btn': 'Invite Team',
   'team.invite-team-large-btn': 'Invite Team',
-  'team.invite-team-large-btn-caption': 'Invite new team members and organize them into groups',
+  'team.invite-team-large-btn-caption': 'Invite new team members',
   'team.card-admin-toggle': 'Admin',
   'team.card-account-owner-badge': 'Owner',
   'team.card-current-user-badge': "It's you",
@@ -319,6 +319,8 @@ export const enMessages = {
   'team.add-groups-banner-button': 'Learn more',
 
   'team.search': 'Search user',
+  'team.create-user-button': 'Create User',
+  'team.create-user-button-caption': 'Create new team members',
 
   'team.users': 'Users',
 

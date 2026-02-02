@@ -148,11 +148,18 @@ export function Users({
       <PageTitle titleId={EPageTitle.Team} withUnderline={false} />
       {renderSearch()}
 
-      <AddButton
-        title={formatMessage({ id: 'team.invite-team-large-btn' })}
-        caption={formatMessage({ id: 'team.invite-team-large-btn-caption' })}
-        onClick={handleClickInviteButton}
-      />
+      <div className={styles['buttons-row']}>
+        <AddButton
+          title={formatMessage({ id: 'team.invite-team-large-btn' })}
+          caption={formatMessage({ id: 'team.invite-team-large-btn-caption' })}
+          onClick={handleClickInviteButton}
+        />
+        <AddButton
+          title={formatMessage({ id: 'team.create-user-button' })}
+          caption={formatMessage({ id: 'team.create-user-button-caption' })}
+          onClick={() => console.log('Create User clicked')}
+        />
+      </div>
 
       <div className={styles['cards']}>{renderUsers()}</div>
     </div>

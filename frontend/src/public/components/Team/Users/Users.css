@@ -162,3 +162,8 @@
 .invite-button__icon {
   margin-right: 8px;
 }
+
+.buttons-row {
+  display: flex;
+  gap: 0.8rem;
+}
