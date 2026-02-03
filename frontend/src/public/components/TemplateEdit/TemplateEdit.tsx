@@ -127,8 +127,9 @@ export function TemplateEdit({
     const isCurrentPathIsEdit = checkSomeRouteIsActive(ERoutes.TemplatesEdit);
     const isCreateScenario = isPreviousPathIsCreate && isCurrentPathIsEdit;
     const isLocationChanged = pathName !== prevPathName;
+    const isFirstRender = !prevLocation && !prevTemplate && !prevUsers;
 
-    if (!isCreateScenario && isLocationChanged) {
+    if (!isCreateScenario && isLocationChanged && !isFirstRender) {
       initPage();
       return;
     }
