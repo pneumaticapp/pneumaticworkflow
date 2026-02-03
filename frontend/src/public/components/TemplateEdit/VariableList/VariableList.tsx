@@ -81,9 +81,15 @@ export const VariableList = ({
           hideArrow
           innerClassName={styles['variable-list__inner']}
           className={styles['variable-list']}
+          popperClassName={styles['variable-list__popper']}
           isOpen={isOpen}
           target={buttonRef.current!}
           {...(isDesktop && { placement: 'bottom-end' })}
+          modifiers={{
+            preventOverflow: {
+              enabled: false,
+            },
+          }}
         >
           <OutsideClickHandler onOutsideClick={handleOutsideClick}>
             <ScrollBar
