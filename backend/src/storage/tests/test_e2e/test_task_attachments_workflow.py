@@ -3,6 +3,7 @@ E2E tests for task attachments workflow.
 Tests full workflow without mocks - real database operations.
 """
 import pytest
+from django.test import override_settings, TestCase
 
 from src.processes.tests.fixtures import (
     create_test_admin,
@@ -17,7 +18,8 @@ from src.storage.utils import refresh_attachments
 pytestmark = pytest.mark.django_db
 
 
-class TestTaskAttachmentsE2E:
+@override_settings(FILE_DOMAIN='files.example.com')
+class TestTaskAttachmentsE2E(TestCase):
     """
     End-to-end tests for task attachments.
     No mocks - testing real integration.
@@ -49,8 +51,18 @@ class TestTaskAttachmentsE2E:
         assert attachment.task == task
         assert attachment.source_type == SourceType.TASK
         assert attachment.access_type == AccessType.RESTRICTED
-        assert performer.has_perm('access_attachment', attachment)
-        assert owner.has_perm('access_attachment', attachment)
+        svc_p = AttachmentService(user=performer)
+        svc_o = AttachmentService(user=owner)
+        assert svc_p.check_user_permission(
+            user_id=performer.id,
+            account_id=performer.account_id,
+            file_id=attachment.file_id,
+        )
+        assert svc_o.check_user_permission(
+            user_id=owner.id,
+            account_id=owner.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_update_task_description__add_file__ok(self):
         """
@@ -128,8 +140,18 @@ class TestTaskAttachmentsE2E:
         attachment = Attachment.objects.get(
             file_id='performer_file_e2e',
         )
-        assert performer1.has_perm('access_attachment', attachment)
-        assert not performer2.has_perm('access_attachment', attachment)
+        svc1 = AttachmentService(user=performer1)
+        svc2 = AttachmentService(user=performer2)
+        assert svc1.check_user_permission(
+            user_id=performer1.id,
+            account_id=performer1.account_id,
+            file_id=attachment.file_id,
+        )
+        assert not svc2.check_user_permission(
+            user_id=performer2.id,
+            account_id=performer2.account_id,
+            file_id=attachment.file_id,
+        )
 
         # act
         task.taskperformer_set.create(user=performer2)
@@ -138,7 +160,12 @@ class TestTaskAttachmentsE2E:
         service._create_related()
 
         # assert
-        assert performer2.has_perm('access_attachment', attachment)
+        svc2 = AttachmentService(user=performer2)
+        assert svc2.check_user_permission(
+            user_id=performer2.id,
+            account_id=performer2.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_multiple_files_in_description__all_created__ok(self):
         """
@@ -167,9 +194,14 @@ class TestTaskAttachmentsE2E:
         assert 'multi_file_1_e2e' in new_file_ids
         assert 'multi_file_2_e2e' in new_file_ids
         assert 'multi_file_3_e2e' in new_file_ids
+        svc = AttachmentService(user=performer)
         for file_id in new_file_ids:
             attachment = Attachment.objects.get(file_id=file_id)
-            assert performer.has_perm('access_attachment', attachment)
+            assert svc.check_user_permission(
+                user_id=performer.id,
+                account_id=performer.account_id,
+                file_id=attachment.file_id,
+            )
 
     def test_check_permission_via_service__ok(self):
         """
@@ -228,9 +260,24 @@ class TestTaskAttachmentsE2E:
 
         # assert
         attachment = Attachment.objects.get(file_id='members_file_e2e')
-        assert owner.has_perm('access_attachment', attachment)
-        assert member1.has_perm('access_attachment', attachment)
-        assert member2.has_perm('access_attachment', attachment)
+        svc_o = AttachmentService(user=owner)
+        svc1 = AttachmentService(user=member1)
+        svc2 = AttachmentService(user=member2)
+        assert svc_o.check_user_permission(
+            user_id=owner.id,
+            account_id=owner.account_id,
+            file_id=attachment.file_id,
+        )
+        assert svc1.check_user_permission(
+            user_id=member1.id,
+            account_id=member1.account_id,
+            file_id=attachment.file_id,
+        )
+        assert svc2.check_user_permission(
+            user_id=member2.id,
+            account_id=member2.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_replace_file_in_description__old_deleted_new_created__ok(
         self,
@@ -293,10 +340,20 @@ class TestTaskAttachmentsE2E:
 
         # assert
         assert len(attachments) == 3
+        svc_p = AttachmentService(user=performer)
+        svc_o = AttachmentService(user=owner)
         for attachment in attachments:
             assert attachment.task == task
-            assert performer.has_perm('access_attachment', attachment)
-            assert owner.has_perm('access_attachment', attachment)
+            assert svc_p.check_user_permission(
+                user_id=performer.id,
+                account_id=performer.account_id,
+                file_id=attachment.file_id,
+            )
+            assert svc_o.check_user_permission(
+                user_id=owner.id,
+                account_id=owner.account_id,
+                file_id=attachment.file_id,
+            )
 
     def test_get_user_attachments__returns_accessible__ok(self):
         """

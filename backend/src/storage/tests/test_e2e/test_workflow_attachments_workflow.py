@@ -3,6 +3,7 @@ E2E tests for workflow attachments.
 Tests full workflow without mocks - real database operations.
 """
 import pytest
+from django.test import override_settings, TestCase
 
 from src.processes.tests.fixtures import (
     create_test_admin,
@@ -11,12 +12,14 @@ from src.processes.tests.fixtures import (
 )
 from src.storage.enums import AccessType, SourceType
 from src.storage.models import Attachment
+from src.storage.services.attachments import AttachmentService
 from src.storage.utils import refresh_attachments
 
 pytestmark = pytest.mark.django_db
 
 
-class TestWorkflowAttachmentsE2E:
+@override_settings(FILE_DOMAIN='files.example.com')
+class TestWorkflowAttachmentsE2E(TestCase):
     """
     End-to-end tests for workflow attachments.
     No mocks - testing real integration.
@@ -49,8 +52,18 @@ class TestWorkflowAttachmentsE2E:
         assert attachment.workflow == workflow
         assert attachment.source_type == SourceType.WORKFLOW
         assert attachment.access_type == AccessType.RESTRICTED
-        assert owner.has_perm('access_attachment', attachment)
-        assert member.has_perm('access_attachment', attachment)
+        svc_o = AttachmentService(user=owner)
+        svc_m = AttachmentService(user=member)
+        assert svc_o.check_user_permission(
+            user_id=owner.id,
+            account_id=owner.account_id,
+            file_id=attachment.file_id,
+        )
+        assert svc_m.check_user_permission(
+            user_id=member.id,
+            account_id=member.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_workflow_with_task_performers__all_have_access__ok(
         self,
@@ -80,8 +93,18 @@ class TestWorkflowAttachmentsE2E:
         attachment = Attachment.objects.get(
             file_id='wf_performers_e2e',
         )
-        assert performer1.has_perm('access_attachment', attachment)
-        assert performer2.has_perm('access_attachment', attachment)
+        svc1 = AttachmentService(user=performer1)
+        svc2 = AttachmentService(user=performer2)
+        assert svc1.check_user_permission(
+            user_id=performer1.id,
+            account_id=performer1.account_id,
+            file_id=attachment.file_id,
+        )
+        assert svc2.check_user_permission(
+            user_id=performer2.id,
+            account_id=performer2.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_update_workflow_description__add_file__ok(self):
         """
@@ -155,8 +178,18 @@ class TestWorkflowAttachmentsE2E:
         workflow.save()
         refresh_attachments(source=workflow, user=owner)
         attachment = Attachment.objects.get(file_id='wf_member_e2e')
-        assert member1.has_perm('access_attachment', attachment)
-        assert not member2.has_perm('access_attachment', attachment)
+        svc1 = AttachmentService(user=member1)
+        svc2 = AttachmentService(user=member2)
+        assert svc1.check_user_permission(
+            user_id=member1.id,
+            account_id=member1.account_id,
+            file_id=attachment.file_id,
+        )
+        assert not svc2.check_user_permission(
+            user_id=member2.id,
+            account_id=member2.account_id,
+            file_id=attachment.file_id,
+        )
 
         # act
         workflow.members.add(member2)
@@ -164,7 +197,11 @@ class TestWorkflowAttachmentsE2E:
 
         # assert
         attachment.refresh_from_db()
-        assert member2.has_perm('access_attachment', attachment)
+        assert svc2.check_user_permission(
+            user_id=member2.id,
+            account_id=member2.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_workflow_multiple_files__all_created__ok(self):
         """
@@ -188,9 +225,14 @@ class TestWorkflowAttachmentsE2E:
 
         # assert
         assert len(new_file_ids) == 2
+        svc = AttachmentService(user=member)
         for file_id in new_file_ids:
             attachment = Attachment.objects.get(file_id=file_id)
-            assert member.has_perm('access_attachment', attachment)
+            assert svc.check_user_permission(
+                user_id=member.id,
+                account_id=member.account_id,
+                file_id=attachment.file_id,
+            )
 
     def test_workflow_owner_always_has_access__ok(self):
         """
@@ -210,7 +252,12 @@ class TestWorkflowAttachmentsE2E:
 
         # assert
         attachment = Attachment.objects.get(file_id='wf_owner_e2e')
-        assert owner.has_perm('access_attachment', attachment)
+        svc = AttachmentService(user=owner)
+        assert svc.check_user_permission(
+            user_id=owner.id,
+            account_id=owner.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_non_participant_no_access__ok(self):
         """
@@ -233,7 +280,12 @@ class TestWorkflowAttachmentsE2E:
         attachment = Attachment.objects.get(
             file_id='wf_no_access_e2e',
         )
-        assert not other_user.has_perm('access_attachment', attachment)
+        svc = AttachmentService(user=other_user)
+        assert not svc.check_user_permission(
+            user_id=other_user.id,
+            account_id=other_user.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_workflow_with_owners__all_have_access__ok(self):
         """
@@ -255,8 +307,18 @@ class TestWorkflowAttachmentsE2E:
 
         # assert
         attachment = Attachment.objects.get(file_id='wf_owners_e2e')
-        assert owner1.has_perm('access_attachment', attachment)
-        assert owner2.has_perm('access_attachment', attachment)
+        svc1 = AttachmentService(user=owner1)
+        svc2 = AttachmentService(user=owner2)
+        assert svc1.check_user_permission(
+            user_id=owner1.id,
+            account_id=owner1.account_id,
+            file_id=attachment.file_id,
+        )
+        assert svc2.check_user_permission(
+            user_id=owner2.id,
+            account_id=owner2.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_replace_file_in_workflow__old_deleted_new_created__ok(
         self,

@@ -64,6 +64,10 @@ class Common(Configuration):
     # Forms
     FORMS_URL = env.get('FORMS_URL')
 
+    # File Service
+    FILES_BASE_URL = env.get('FILES_BASE_URL')
+    FILE_DOMAIN = env.get('FILE_DOMAIN')
+
     # Auth
     AUTH_USER_MODEL = 'accounts.User'
     AUTH_TOKEN_ITERATIONS = int(env.get('AUTH_TOKEN_ITERATIONS', '1'))
@@ -348,12 +352,6 @@ class Common(Configuration):
     # Attachments
     ATTACHMENT_SIGNED_URL_LIFETIME_MIN = 15
     ATTACHMENT_MAX_SIZE_BYTES = 104857600  # bites = 100 Mb
-
-    # File Service
-    FILE_SERVICE_URL = env.get(
-        'FILE_SERVICE_URL',
-        'http://localhost:8002',
-    )
 
     # Notifications
     # In seconds - default 10 min

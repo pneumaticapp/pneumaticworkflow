@@ -1008,7 +1008,6 @@ def test_retrieve__complete_task__field_user__ok(api_client):
     # TODO Replace in https://my.pneumatic.app/workflows/18137/
     assert field_data['value'] == user.get_full_name()
     assert field_data['selections'] == []
-    assert field_data['attachments'] == []
     assert field_data['order'] == field.order
     assert field_data['user_id'] == user.id
 
@@ -1070,7 +1069,6 @@ def test_retrieve__complete_task__field_with_selections__ok(
     assert field_data['description'] == field.description
     assert field_data['api_name'] == field.api_name
     assert field_data['value'] == selection.value
-    assert field_data['attachments'] == []
     assert field_data['order'] == field.order
     assert field_data['user_id'] is None
     selection_data = field_data['selections'][0]
@@ -1145,7 +1143,6 @@ def test_retrieve__complete_task__field_date__ok(api_client):
     assert field_data['api_name'] == field.api_name
     assert field_data['value'] == str(6516313)
     assert field_data['selections'] == []
-    assert field_data['attachments'] == []
     assert field_data['order'] == field.order
 
 
@@ -1180,11 +1177,12 @@ def test_retrieve__complete_task__field_with_attachments__ok(
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
     field = task.output.first()
-    attachment = create_test_attachment(
+    create_test_attachment(
         account=user.account,
         file_id='john_cena_task_file.png',
         task=task,
         workflow=workflow,
+        output=field,
     )
     field.value = 'File: john_cena_task_file.png'
     field.save(update_fields=['value'])
@@ -1205,14 +1203,10 @@ def test_retrieve__complete_task__field_with_attachments__ok(
     assert field_data['name'] == field.name
     assert field_data['description'] == field.description
     assert field_data['api_name'] == field.api_name
-    assert field_data['value'] == attachment.url
+    assert field_data['value'] == field.value
     assert field_data['selections'] == []
     assert field_data['order'] == field.order
     assert field_data['user_id'] is None
-    attachment_data = field_data['attachments'][0]
-    assert attachment_data['id'] == attachment.id
-    assert attachment_data['name'] == attachment.name
-    assert attachment_data['url'] == attachment.url
 
 
 def test_retrieve__task__due_date_changed__ok(api_client):
@@ -1301,7 +1295,7 @@ def test_retrieve__comment__with_attachment__ok(api_client):
         text=text,
         after_create_actions=False,
     )
-    attachment = create_test_attachment_for_event(
+    create_test_attachment_for_event(
         account=user.account,
         event=event,
         file_id='comment_test_file.png',
@@ -1338,12 +1332,6 @@ def test_retrieve__comment__with_attachment__ok(api_client):
         },
     ]
     assert data['task']['output'] is None
-    assert len(data['attachments']) == 1
-    assert data['attachments'][0]['id'] == attachment.id
-    assert data['attachments'][0]['name'] == attachment.name
-    assert data['attachments'][0]['url'] == attachment.url
-    assert data['attachments'][0]['thumbnail_url'] == attachment.thumbnail_url
-    assert data['attachments'][0]['size'] == attachment.size
     assert data['watched'] == []
     assert data['reactions'] == {}
 

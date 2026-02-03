@@ -61,6 +61,20 @@ class Attachment(SoftDeleteModel, AccountBaseMixin):
         blank=True,
         related_name='storage_attachments',
     )
+    output = models.ForeignKey(
+        'processes.TaskField',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='storage_attachments',
+    )
+    event = models.ForeignKey(
+        'processes.WorkflowEvent',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='storage_attachments',
+    )
 
     objects = BaseSoftDeleteManager.from_queryset(AttachmentQuerySet)()
 

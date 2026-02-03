@@ -206,44 +206,59 @@ class TaskFieldService(BaseWorkflowService):
 
     def _get_valid_file_value(self, raw_value: Any, **kwargs) -> FieldData:
         """
-        Validate file field value using new storage service.
+        Validate file field value: list of Markdown links or plain file_ids.
 
         Args:
-            raw_value: List of file_ids from new storage service
+            raw_value: List of "[filename](url)" or plain file_id strings
 
         Returns:
             FieldData with file information
         """
+        api_name = getattr(self.instance, 'api_name', None) or 'field'
         if not isinstance(raw_value, list):
             raise TaskFieldException(
-                api_name=self.instance.api_name,
+                api_name=api_name,
                 message=messages.MSG_PW_0036,
             )
 
-        # Validate each item is a valid file_id (non-empty string, 6-64 chars)
-        file_id_pattern = re.compile(r'^[a-zA-Z0-9_.-]{6,64}$')
+        markdown_pattern = re.compile(r'^\[([^\]]+)\]\(([^)]+)\)$')
+        file_id_pattern = re.compile(r'^[a-zA-Z0-9_.-]{8,64}$')
+        values = []
+        markdown_values = []
+        clear_values = []
+
         for item in raw_value:
-            if not isinstance(item, str) or not file_id_pattern.match(item):
+            if not isinstance(item, str):
                 raise TaskFieldException(
-                    api_name=self.instance.api_name,
+                    api_name=api_name,
+                    message=messages.MSG_PW_0036,
+                )
+            stripped = item.strip()
+            if not stripped:
+                continue
+            match = markdown_pattern.match(stripped)
+            if match:
+                values.append(stripped)
+                markdown_values.append(stripped)
+                clear_values.append(match.group(1))
+            elif file_id_pattern.match(stripped):
+                values.append(stripped)
+                markdown_values.append(f'File: {stripped}')
+                clear_values.append(stripped)
+            else:
+                raise TaskFieldException(
+                    api_name=api_name,
                     message=messages.MSG_PW_0036,
                 )
 
-        # For now, return a simple representation
-        # In future, this could fetch file metadata from storage service
-        if raw_value:
-            value = ', '.join(raw_value)
-            markdown_value = ', '.join(
-                [f'File: {file_id}' for file_id in raw_value],
-            )
-        else:
-            value = ''
-            markdown_value = ''
+        value = ', '.join(values)
+        markdown_value = ', '.join(markdown_values)
+        clear_value = ', '.join(clear_values)
 
         return FieldData(
             value=value,
             markdown_value=markdown_value,
-            clear_value=value,
+            clear_value=clear_value,
         )
 
     def _get_valid_user_value(self, raw_value: Any, **kwargs) -> FieldData:
@@ -351,16 +366,24 @@ class TaskFieldService(BaseWorkflowService):
 
     def _link_new_attachments(
         self,
+        markdown_values: Optional[List[str]] = None,
         file_ids: Optional[List[str]] = None,
     ):
         """
         Create new attachments for the task field in storage service.
 
         Args:
-            file_ids: List of file_ids from new storage service
+            markdown_values: List of Markdown strings like "[filename](url)"
+            file_ids: List of file_id strings (for backward compatibility)
         """
-        if file_ids not in self.NULL_VALUES:
-            self._sync_storage_attachments(file_ids)
+        if file_ids is not None:
+            ids_to_sync = file_ids
+        elif markdown_values not in self.NULL_VALUES:
+            ids_to_sync = self._extract_file_ids_from_markdown(markdown_values)
+        else:
+            ids_to_sync = None
+        if ids_to_sync is not None:
+            self._sync_storage_attachments(ids_to_sync)
 
     def _create_selections(
         self,
@@ -445,31 +468,58 @@ class TaskFieldService(BaseWorkflowService):
 
     def _remove_unused_attachments(
         self,
-        value: Optional[str],
-        file_ids: Optional[List[str]],
+        markdown_values: Optional[List[str]],
     ):
         """
         Remove unused attachments from new storage service.
 
         Args:
-            value: Field value
-            file_ids: List of file_ids to keep
+            markdown_values: List of Markdown strings like "[filename](url)"
         """
-        if not file_ids:
+        if markdown_values:
+            file_ids = self._extract_file_ids_from_markdown(markdown_values)
+        else:
             file_ids = []
 
         # Get current attachments for this field
-        current_attachments = Attachment.objects.filter(
-            task=self.instance.task,
-            workflow=self.instance.workflow,
-        )
+        filter_kwargs = {
+            'workflow': self.instance.workflow,
+            'output': self.instance,
+        }
+        current_attachments = Attachment.objects.filter(**filter_kwargs)
 
         # Remove attachments not in the new file_ids list
-        if value:
+        if file_ids:
             current_attachments.exclude(file_id__in=file_ids).delete()
         else:
             # If no value, remove all attachments
             current_attachments.delete()
+
+    def _extract_file_ids_from_markdown(
+        self,
+        markdown_values: List[str],
+    ) -> List[str]:
+        """
+        Extract file_ids from Markdown links or plain file_id strings.
+
+        Args:
+            markdown_values: List of Markdown strings or plain file_id strings
+
+        Returns:
+            List of file_ids extracted from URLs or used as-is
+        """
+        file_ids = []
+        markdown_pattern = re.compile(r'^\[([^\]]+)\]\(([^)]+)\)$')
+        for value in markdown_values:
+            extracted = extract_file_ids_from_text(value)
+            if extracted:
+                file_ids.extend(extracted)
+            elif (
+                value and isinstance(value, str) and value.strip()
+                and not markdown_pattern.match(value)
+            ):
+                file_ids.append(value.strip())
+        return file_ids
 
     def _sync_storage_attachments(
         self,
@@ -490,8 +540,11 @@ class TaskFieldService(BaseWorkflowService):
             source_type = SourceType.WORKFLOW
 
         for file_id in file_ids:
-            # Check if attachment already exists to avoid duplicates
-            if not Attachment.objects.filter(file_id=file_id).exists():
+            attachment = Attachment.objects.filter(
+                file_id=file_id,
+                account_id=self.account.id,
+            ).first()
+            if attachment is None:
                 Attachment.objects.create(
                     file_id=file_id,
                     account=self.account,
@@ -499,6 +552,20 @@ class TaskFieldService(BaseWorkflowService):
                     access_type=AccessType.RESTRICTED,
                     task=self.instance.task,
                     workflow=self.instance.workflow,
+                    output=self.instance,
+                )
+            else:
+                attachment.workflow = self.instance.workflow
+                attachment.task = self.instance.task
+                attachment.output = self.instance
+                attachment.source_type = source_type
+                attachment.save(
+                    update_fields=[
+                        'workflow',
+                        'task',
+                        'output',
+                        'source_type',
+                    ],
                 )
 
     def partial_update(
@@ -521,10 +588,10 @@ class TaskFieldService(BaseWorkflowService):
             selections=selections,
         )
         if self.instance.type == FieldType.FILE:
-            self._remove_unused_attachments(
-                value=raw_value,
-                file_ids=raw_value if isinstance(raw_value, list) else [],
+            markdown_vals = (
+                raw_value if isinstance(raw_value, list) else []
             )
+            self._remove_unused_attachments(markdown_values=markdown_vals)
         super().partial_update(
             force_save=True,
             value=field_data.value,

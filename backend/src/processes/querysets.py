@@ -335,7 +335,6 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
                         .filter(api_name__in=fields)
                         .prefetch_related(
                             'selections',
-                            'attachments',
                         )
                     ),
                 ),
@@ -344,7 +343,6 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             qst = qst.prefetch_related(
                 'fields',
                 'fields__selections',
-                'fields__attachments',
             )
         return qst
 

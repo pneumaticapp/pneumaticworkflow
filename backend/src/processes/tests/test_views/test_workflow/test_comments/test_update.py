@@ -23,7 +23,6 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
 )
-from src.storage.enums import SourceType, AccessType
 from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
@@ -81,8 +80,10 @@ def test_update_text_and_attachment__ok(mocker, api_client):
     task = workflow.tasks.get(number=1)
     comment_text = (
         'Some comment with files: '
-        'https://example.com/files/task_file_1 and '
-        'https://example.com/api/files/task_file_2'
+        '[first_file.txt]'
+        '(https://files.example.com/files/first_template_file) and '
+        '[first_file2.txt]'
+        '(https://files.example.com/files/first_template_file2)'
     )
     event = WorkflowEventService.comment_created_event(
         user=user,
@@ -90,15 +91,17 @@ def test_update_text_and_attachment__ok(mocker, api_client):
         task=task,
         after_create_actions=False,
     )
-    attachment_1 = create_test_attachment(
+    create_test_attachment(
         account=user.account,
         file_id='task_file_1',
         workflow=workflow,
+        event=event,
     )
     create_test_attachment(
         account=user.account,
         file_id='task_file_2',
         workflow=workflow,
+        event=event,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
@@ -123,11 +126,6 @@ def test_update_text_and_attachment__ok(mocker, api_client):
 
     # arrange
     assert response.status_code == 200
-    assert len(response.data['attachments']) == 2
-    attachment = response.data['attachments'][0]
-    assert attachment['file_id'] == attachment_1.file_id
-    assert attachment['access_type'] == AccessType.RESTRICTED
-    assert attachment['source_type'] == SourceType.WORKFLOW
     service_init_mock.assert_called_once_with(
         instance=event,
         user=user,

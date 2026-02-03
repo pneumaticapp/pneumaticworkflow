@@ -259,7 +259,7 @@ class TaskViewSet(
             queryset = queryset.prefetch_related(
                 'checklists__selections',
                 'output__selections',
-                'output__attachments',
+                'output__storage_attachments',
             ).select_related(
                 'workflow',
             )

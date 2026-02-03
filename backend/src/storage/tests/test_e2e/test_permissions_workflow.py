@@ -2,6 +2,7 @@
 E2E tests for permissions workflow across different scenarios.
 Tests full workflow without mocks - real database operations.
 """
+
 import pytest
 from guardian.shortcuts import assign_perm
 
@@ -32,9 +33,12 @@ class TestPermissionsWorkflowE2E:
         """
         # arrange
         account1 = create_test_account()
-        create_test_admin(account=account1)
+        create_test_admin(account=account1, email='admin1@pneumatic.app')
         account2 = create_test_account()
-        user2 = create_test_admin(account=account2)
+        user2 = create_test_admin(
+            account=account2,
+            email='admin2@pneumatic.app',
+        )
         attachment = Attachment.objects.create(
             file_id='public_e2e',
             account=account1,
@@ -89,7 +93,7 @@ class TestPermissionsWorkflowE2E:
         account1 = create_test_account()
         account2 = create_test_account()
         create_test_admin(account=account1)
-        user2 = create_test_admin(account=account2)
+        user2 = create_test_admin(email='user2@gmail.com', account=account2)
         attachment = Attachment.objects.create(
             file_id='account_diff_e2e',
             account=account1,
@@ -121,7 +125,7 @@ class TestPermissionsWorkflowE2E:
             access_type=AccessType.RESTRICTED,
             source_type=SourceType.ACCOUNT,
         )
-        assign_perm('access_attachment', user, attachment)
+        assign_perm('storage.access_attachment', user, attachment)
         service = AttachmentService(user=user)
 
         # act
@@ -186,9 +190,11 @@ class TestPermissionsWorkflowE2E:
         attachment = service.instance
 
         # act
-        has_access = user_in_group.has_perm(
-            'access_attachment',
-            attachment,
+        svc = AttachmentService(user=user_in_group)
+        has_access = svc.check_user_permission(
+            user_id=user_in_group.id,
+            account_id=user_in_group.account_id,
+            file_id=attachment.file_id,
         )
 
         # assert
@@ -220,9 +226,11 @@ class TestPermissionsWorkflowE2E:
         attachment = service.instance
 
         # act
-        has_access = user_not_in_group.has_perm(
-            'access_attachment',
-            attachment,
+        svc = AttachmentService(user=user_not_in_group)
+        has_access = svc.check_user_permission(
+            user_id=user_not_in_group.id,
+            account_id=user_not_in_group.account_id,
+            file_id=attachment.file_id,
         )
 
         # assert
@@ -250,7 +258,12 @@ class TestPermissionsWorkflowE2E:
         attachment = service.instance
 
         # act
-        has_access = guest.has_perm('access_attachment', attachment)
+        svc = AttachmentService(user=guest)
+        has_access = svc.check_user_permission(
+            user_id=guest.id,
+            account_id=guest.account_id,
+            file_id=attachment.file_id,
+        )
 
         # assert
         assert has_access is True
@@ -332,7 +345,7 @@ class TestPermissionsWorkflowE2E:
             access_type=AccessType.RESTRICTED,
             source_type=SourceType.ACCOUNT,
         )
-        assign_perm('access_attachment', user, restricted_att)
+        assign_perm('storage.access_attachment', user, restricted_att)
 
         # Restricted attachment without permission
         Attachment.objects.create(
@@ -397,6 +410,19 @@ class TestPermissionsWorkflowE2E:
         task2_attachment = service.instance
 
         # act & assert
-        assert member.has_perm('access_attachment', wf_attachment)
-        assert member.has_perm('access_attachment', task1_attachment)
-        assert member.has_perm('access_attachment', task2_attachment)
+        svc = AttachmentService(user=member)
+        assert svc.check_user_permission(
+            user_id=member.id,
+            account_id=member.account_id,
+            file_id=wf_attachment.file_id,
+        )
+        assert svc.check_user_permission(
+            user_id=member.id,
+            account_id=member.account_id,
+            file_id=task1_attachment.file_id,
+        )
+        assert svc.check_user_permission(
+            user_id=member.id,
+            account_id=member.account_id,
+            file_id=task2_attachment.file_id,
+        )

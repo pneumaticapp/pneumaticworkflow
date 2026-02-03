@@ -974,6 +974,7 @@ def test_partial_update__type_file__ok(mocker):
         access_type=AccessType.RESTRICTED,
         task=task,
         workflow=workflow,
+        output=task_field,
     )
     value = 'new_file_456.jpg'
     clear_value = 'new_file_456.jpg'
@@ -1043,6 +1044,7 @@ def test_partial_update__type_file_null_value__ok(mocker):
         access_type=AccessType.RESTRICTED,
         task=task,
         workflow=workflow,
+        output=task_field,
     )
     service = TaskFieldService(
         instance=task_field,

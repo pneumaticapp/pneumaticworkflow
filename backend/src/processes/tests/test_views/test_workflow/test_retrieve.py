@@ -21,7 +21,6 @@ from src.processes.models.workflows.task import (
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
     create_test_admin,
-    create_test_attachment,
     create_test_group,
     create_test_template,
     create_test_user,
@@ -278,7 +277,6 @@ def test_retrieve__kickoff_field_user__ok(api_client):
     assert field_data['name'] == field.name
     assert field_data['description'] == field.description
     assert field_data['api_name'] == field.api_name
-    assert field_data['attachments'] == []
     assert field_data['selections'] == []
     assert field_data['order'] == field.order
     assert field_data['user_id'] == user.id
@@ -329,7 +327,6 @@ def test_retrieve__kickoff_field_date__ok(api_client):
     assert field_data['name'] == field.name
     assert field_data['description'] == field.description
     assert field_data['api_name'] == field.api_name
-    assert field_data['attachments'] == []
     assert field_data['selections'] == []
     assert field_data['order'] == field.order
     assert field_data['value'] == str(321651)
@@ -384,7 +381,6 @@ def test_retrieve__kickoff_field_with_selections__ok(api_client):
     assert field_data['name'] == field.name
     assert field_data['description'] == field.description
     assert field_data['api_name'] == field.api_name
-    assert field_data['attachments'] == []
     assert field_data['order'] == field.order
     assert field_data['user_id'] is None
     assert field_data['value'] == 'some value'
@@ -413,17 +409,18 @@ def test_retrieve__kickoff_field_with_attachments__ok(api_client):
         order=1,
         template=template,
     )
-    attachment = create_test_attachment(
-        account=user.account,
-        file_id='john_cena_kickoff_file.png',
-    )
 
     response = api_client.post(
         path=f'/templates/{template.id}/run',
         data={
             'name': 'Workflow',
             'kickoff': {
-                field_template.api_name: ['john_cena_kickoff_file.png'],
+                field_template.api_name: [
+                    '[first_file.txt]'
+                    '(https://files.example.com/files/firstfile123)',
+                    '[second_file.txt]'
+                    '(https://files.example.com/files/secfile456)',
+                ],
             },
         },
     )
@@ -445,11 +442,6 @@ def test_retrieve__kickoff_field_with_attachments__ok(api_client):
     assert field_data['selections'] == []
     assert field_data['order'] == field.order
     assert field_data['user_id'] is None
-    assert field_data['value'] == attachment.url
-    attachment_data = field_data['attachments'][0]
-    assert attachment_data['id'] == attachment.id
-    assert attachment_data['name'] == attachment.name
-    assert attachment_data['url'] == attachment.url
 
 
 def test_retrieve__not_admin_user_workflow_member__ok(api_client):

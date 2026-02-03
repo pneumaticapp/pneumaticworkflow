@@ -1,10 +1,13 @@
 from typing import List
 
 from django.contrib.auth import get_user_model
-from django.db import models
-from guardian.shortcuts import assign_perm, get_objects_for_user
+from django.contrib.contenttypes.models import ContentType
+from django.db import IntegrityError, models, transaction
+from guardian.models import UserObjectPermission
+from guardian.shortcuts import assign_perm
 
 from src.generics.base.service import BaseModelService
+from src.permissions.models import GroupObjectPermission
 from src.processes.enums import OwnerType
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.template import Template
@@ -91,7 +94,7 @@ class AttachmentService(BaseModelService):
         # Assign permissions to all collected users
         for user in users_set:
             assign_perm(
-                'access_attachment',
+                'storage.access_attachment',
                 user,
                 self.instance,
             )
@@ -100,7 +103,7 @@ class AttachmentService(BaseModelService):
         for performer in task_performers:
             if performer.group:
                 assign_perm(
-                    'access_attachment',
+                    'storage.access_attachment',
                     performer.group,
                     self.instance,
                 )
@@ -116,7 +119,7 @@ class AttachmentService(BaseModelService):
         for owner in template_owners:
             if owner.user:
                 assign_perm(
-                    'access_attachment',
+                    'storage.access_attachment',
                     owner.user,
                     self.instance,
                 )
@@ -168,7 +171,7 @@ class AttachmentService(BaseModelService):
 
         for user in users_set:
             assign_perm(
-                'access_attachment',
+                'storage.access_attachment',
                 user,
                 self.instance,
             )
@@ -188,17 +191,17 @@ class AttachmentService(BaseModelService):
         source: models.Model,
     ) -> List[Attachment]:
         """
-        Creates attachments in bulk.
+        Creates attachments one-by-one so each is persisted before
+        assign_perm (django-guardian requires object with pk).
         Returns list of created attachments.
         """
-        attachments = []
+        created_attachments = []
         for file_id in file_ids:
             attachment_data = {
                 'file_id': file_id,
                 'account': source.account,
             }
 
-            # Determine source_type and relations
             if isinstance(source, Task):
                 attachment_data.update(
                     {
@@ -224,20 +227,21 @@ class AttachmentService(BaseModelService):
                     },
                 )
             else:
-                attachment_data['access_type'] = AccessType.ACCOUNT
+                attachment_data.update(
+                    {
+                        'access_type': AccessType.ACCOUNT,
+                        'source_type': SourceType.ACCOUNT,
+                    },
+                )
 
-            attachments.append(Attachment(**attachment_data))
-
-        # Bulk create
-        created_attachments = Attachment.objects.bulk_create(
-            attachments,
-            ignore_conflicts=True,
-        )
-
-        # Assign permissions for each created attachment
-        for attachment in created_attachments:
+            try:
+                with transaction.atomic():
+                    attachment = Attachment.objects.create(**attachment_data)
+            except IntegrityError:
+                continue
             self.instance = attachment
             self._create_related()
+            created_attachments.append(attachment)
 
         return created_attachments
 
@@ -251,26 +255,60 @@ class AttachmentService(BaseModelService):
         workflow=None,
         template=None,
     ) -> List[Attachment]:
-        attachments = []
+        """
+        Create attachments one-by-one so each is persisted before
+        assign_perm (django-guardian requires object with pk).
+        """
+        created_attachments = []
         for file_id in file_ids:
-            attachments.append(
-                Attachment(
-                    file_id=file_id,
-                    account=account,
-                    access_type=access_type,
-                    source_type=source_type,
-                    task=task,
-                    workflow=workflow,
-                    template=template,
-                ),
-            )
-        created_attachments = Attachment.objects.bulk_create(
-            attachments,
-            ignore_conflicts=True,
-        )
-        for attachment in created_attachments:
+            try:
+                with transaction.atomic():
+                    attachment = Attachment.objects.create(
+                        file_id=file_id,
+                        account=account,
+                        access_type=access_type,
+                        source_type=source_type,
+                        task=task,
+                        workflow=workflow,
+                        template=template,
+                    )
+            except IntegrityError:
+                continue
             self.instance = attachment
             self._create_related()
+            created_attachments.append(attachment)
+        return created_attachments
+
+    def bulk_create_for_event(
+        self,
+        file_ids: List[str],
+        account,
+        source_type: str,
+        event,
+        access_type: str = AccessType.RESTRICTED,
+    ) -> List[Attachment]:
+        """
+        Create attachments for WorkflowEvent one-by-one so each is persisted
+        before assign_perm (django-guardian requires object with pk).
+        """
+        created_attachments = []
+        for file_id in file_ids:
+            try:
+                with transaction.atomic():
+                    attachment = Attachment.objects.create(
+                        file_id=file_id,
+                        account=account,
+                        access_type=access_type,
+                        source_type=source_type,
+                        event=event,
+                        task=event.task if event.task_id else None,
+                        workflow=event.workflow,
+                    )
+            except IntegrityError:
+                continue
+            self.instance = attachment
+            self._create_related()
+            created_attachments.append(attachment)
         return created_attachments
 
     def check_user_permission(
@@ -306,25 +344,58 @@ class AttachmentService(BaseModelService):
                     user = user_model.objects.get(id=user_id)
                 except user_model.DoesNotExist:
                     return False
-            return user.has_perm(
-                'access_attachment',
-                attachment,
-            )
+
+            ctype = ContentType.objects.get_for_model(Attachment)
+            perm_codename = 'access_attachment'
+            obj_pk = str(attachment.pk)
+
+            has_user_perm = UserObjectPermission.objects.filter(
+                user=user,
+                object_pk=obj_pk,
+                permission__content_type=ctype,
+                permission__codename=perm_codename,
+            ).exists()
+
+            if has_user_perm:
+                return True
+
+            user_group_ids = user.user_groups.values_list('id', flat=True)
+            return GroupObjectPermission.objects.filter(
+                group_id__in=user_group_ids,
+                object_pk=obj_pk,
+                permission__content_type=ctype,
+                permission__codename=perm_codename,
+            ).exists()
 
         return False
 
     def get_user_attachments(self, user):
         """
         Gets all attachments accessible to user.
-        Uses django-guardian for filtering.
+        Manual implementation for custom UserGroup (guardian's
+        get_objects_for_user uses auth.Group relation).
         """
-        # Get attachments with permissions via guardian
-        restricted_attachments = get_objects_for_user(
-            user,
-            'access_attachment',
-            'access_attachment',
-            klass=Attachment,
-        ).filter(is_deleted=False)
+        ctype = ContentType.objects.get_for_model(Attachment)
+        perm_codename = 'access_attachment'
+
+        user_perm_pks = UserObjectPermission.objects.filter(
+            user=user,
+            permission__content_type=ctype,
+            permission__codename=perm_codename,
+        ).values_list('object_pk', flat=True)
+
+        user_group_ids = user.user_groups.values_list('id', flat=True)
+        group_perm_pks = GroupObjectPermission.objects.filter(
+            group_id__in=user_group_ids,
+            permission__content_type=ctype,
+            permission__codename=perm_codename,
+        ).values_list('object_pk', flat=True)
+
+        restricted_pks = set(user_perm_pks) | set(group_perm_pks)
+        restricted_attachments = Attachment.objects.filter(
+            pk__in=restricted_pks,
+            is_deleted=False,
+        )
 
         # Get account-level attachments
         account_attachments = Attachment.objects.filter(

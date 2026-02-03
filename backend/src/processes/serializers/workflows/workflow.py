@@ -399,7 +399,13 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
     def get_kickoff(self, instance: Workflow):
         kickoff = instance.kickoff_instance
         if kickoff:
-            return KickoffValueInfoSerializer(kickoff).data
+            ctx = dict(self.context)
+            ctx['workflow'] = instance
+            ctx['kickoff'] = kickoff
+            return KickoffValueInfoSerializer(
+                kickoff,
+                context=ctx,
+            ).data
         return None
 
     def get_tasks(self, instance: Workflow):

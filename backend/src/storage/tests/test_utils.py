@@ -1,4 +1,5 @@
 import pytest
+from django.test import override_settings, TestCase
 
 from src.processes.tests.fixtures import (
     create_test_admin,
@@ -16,7 +17,8 @@ from src.storage.utils import (
 pytestmark = pytest.mark.django_db
 
 
-class TestExtractFileIdsFromText:
+@override_settings(FILE_DOMAIN='example.com')
+class TestExtractFileIdsFromText(TestCase):
 
     def test_extract_file_ids__empty_text__empty_list(self):
         # act
@@ -45,11 +47,11 @@ class TestExtractFileIdsFromText:
         # assert
         assert 'abc123def456ghi789' in result
 
-    def test_extract_file_ids__api_files_pattern__ok(self):
+    def test_extract_file_ids__files_pattern_only__ok(self):
         # arrange
         text = (
             'Download from: '
-            'https://example.com/api/files/xyz987uvw654rst321'
+            'https://example.com/files/xyz987uvw654rst321'
         )
 
         # act
@@ -58,39 +60,42 @@ class TestExtractFileIdsFromText:
         # assert
         assert 'xyz987uvw654rst321' in result
 
-    def test_extract_file_ids__file_id_param__ok(self):
-        # arrange
-        text = 'file_id=qwerty123456asdfgh'
-
-        # act
-        result = extract_file_ids_from_text(text)
-
-        # assert
-        assert 'qwerty123456asdfgh' in result
-
-    def test_extract_file_ids__file_id_colon__ok(self):
-        # arrange
-        text = 'file_id:mnbvcx098765lkjhgf'
-
-        # act
-        result = extract_file_ids_from_text(text)
-
-        # assert
-        assert 'mnbvcx098765lkjhgf' in result
-
-    def test_extract_file_ids__multiple__ok(self):
+    def test_extract_file_ids__api_files_not_supported__empty(self):
         # arrange
         text = (
-            'Files: '
-            'https://example.com/files/file1_id_123456 and '
-            'https://example.com/api/files/file2_id_789012'
+            'Old API format: '
+            'https://example.com/api/files/xyz987uvw654rst321'
         )
 
         # act
         result = extract_file_ids_from_text(text)
 
         # assert
-        assert len(result) >= 2
+        assert result == []
+
+    def test_extract_file_ids__plain_file_id_not_supported__empty(self):
+        # arrange
+        text = 'file_id=qwerty123456asdfgh or file_id:mnbvcx098765lkjhgf'
+
+        # act
+        result = extract_file_ids_from_text(text)
+
+        # assert
+        assert result == []
+
+    def test_extract_file_ids__multiple__ok(self):
+        # arrange
+        text = (
+            'Files: '
+            'https://example.com/files/file1_id_123456 and '
+            'https://example.com/files/file2_id_789012'
+        )
+
+        # act
+        result = extract_file_ids_from_text(text)
+
+        # assert
+        assert len(result) == 2
         assert 'file1_id_123456' in result
         assert 'file2_id_789012' in result
 
@@ -140,7 +145,8 @@ class TestExtractFileIdsFromText:
         assert 'file-id_with-special_123456' in result
 
 
-class TestRefreshAttachments:
+@override_settings(FILE_DOMAIN='example.com')
+class TestRefreshAttachments(TestCase):
 
     def test_refresh_attachments__task__create_new__ok(self):
         # arrange
@@ -337,7 +343,8 @@ class TestGetAttachmentDescriptionFields:
         assert result == []
 
 
-class TestExtractAllFileIdsFromSource:
+@override_settings(FILE_DOMAIN='example.com')
+class TestExtractAllFileIdsFromSource(TestCase):
 
     def test_extract_all_file_ids__task__ok(self):
         # arrange

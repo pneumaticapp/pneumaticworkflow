@@ -47,21 +47,24 @@ class AttachmentViewSet(CustomViewSetMixin, GenericViewSet):
         """
         Checks user permission to access file.
         Used by file service for authorization.
+
+        Returns:
+        - 204: Access granted
+        - 400: Validation error
+        - 401: Not authenticated
+        - 403: Access denied or file not found
         """
         slz = self.get_serializer(data=request.data)
         slz.is_valid(raise_exception=True)
 
         file_id = slz.validated_data['file_id']
 
-        # Check access permissions
-        try:
-            attachment = Attachment.objects.get(file_id=file_id)
-        except Attachment.DoesNotExist:
-            return self.response_forbidden()
-
-        has_permission = request.user.has_perm(
-            'access_attachment',
-            attachment,
+        # Use service to check permissions
+        service = AttachmentService(user=request.user)
+        has_permission = service.check_user_permission(
+            user_id=request.user.id,
+            account_id=request.user.account_id,
+            file_id=file_id,
         )
 
         if has_permission:

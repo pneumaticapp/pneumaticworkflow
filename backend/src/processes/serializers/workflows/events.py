@@ -5,8 +5,6 @@ from src.processes.enums import WorkflowEventType
 from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.task import Delay, Task
 from src.processes.models.workflows.workflow import Workflow
-from src.storage.models import Attachment
-from src.storage.utils import extract_file_ids_from_text
 from src.processes.serializers.workflows.field import (
     TaskFieldSerializer,
 )
@@ -94,19 +92,6 @@ class TaskEventJsonSerializer(serializers.ModelSerializer):
         return None
 
 
-class EventAttachmentSerializer(serializers.ModelSerializer):
-    """Serializer for attachments in workflow events."""
-
-    class Meta:
-        model = Attachment
-        fields = [
-            'id',
-            'file_id',
-            'access_type',
-            'source_type',
-        ]
-
-
 class WorkflowEventSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -125,32 +110,11 @@ class WorkflowEventSerializer(serializers.ModelSerializer):
             'target_group_id',
             'delay',
             'task',
-            'attachments',
             'workflow_id',
             'watched',
             'reactions',
         )
     task = serializers.JSONField(source='task_json')
     delay = serializers.JSONField(source='delay_json')
-    attachments = serializers.SerializerMethodField()
     created_tsp = TimeStampField(source='created')
     updated_tsp = TimeStampField(source='updated')
-
-    def get_attachments(self, instance):
-        """Get attachments mentioned in the event text."""
-
-        if not instance.text:
-            return []
-
-        # Extract file IDs from event text
-        file_ids = extract_file_ids_from_text(instance.text)
-        if not file_ids:
-            return []
-
-        # Get attachments by file_ids
-        attachments = Attachment.objects.filter(
-            file_id__in=file_ids,
-            account=instance.account,
-        )
-
-        return EventAttachmentSerializer(attachments, many=True).data

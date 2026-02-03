@@ -3,6 +3,7 @@ E2E tests for template attachments.
 Tests full workflow without mocks - real database operations.
 """
 import pytest
+from django.test import override_settings, TestCase
 
 from src.processes.enums import OwnerType
 from src.processes.models.templates.owner import TemplateOwner
@@ -13,12 +14,14 @@ from src.processes.tests.fixtures import (
 )
 from src.storage.enums import AccessType, SourceType
 from src.storage.models import Attachment
+from src.storage.services.attachments import AttachmentService
 from src.storage.utils import refresh_attachments
 
 pytestmark = pytest.mark.django_db
 
 
-class TestTemplateAttachmentsE2E:
+@override_settings(FILE_DOMAIN='files.example.com')
+class TestTemplateAttachmentsE2E(TestCase):
     """
     End-to-end tests for template attachments.
     No mocks - testing real integration.
@@ -54,7 +57,12 @@ class TestTemplateAttachmentsE2E:
         assert attachment.template == template
         assert attachment.source_type == SourceType.TEMPLATE
         assert attachment.access_type == AccessType.RESTRICTED
-        assert owner.has_perm('access_attachment', attachment)
+        svc = AttachmentService(user=owner)
+        assert svc.check_user_permission(
+            user_id=owner.id,
+            account_id=owner.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_template_multiple_owners__all_have_access__ok(self):
         """
@@ -85,8 +93,18 @@ class TestTemplateAttachmentsE2E:
 
         # assert
         attachment = Attachment.objects.get(file_id='tmpl_owners_e2e')
-        assert owner1.has_perm('access_attachment', attachment)
-        assert owner2.has_perm('access_attachment', attachment)
+        svc1 = AttachmentService(user=owner1)
+        svc2 = AttachmentService(user=owner2)
+        assert svc1.check_user_permission(
+            user_id=owner1.id,
+            account_id=owner1.account_id,
+            file_id=attachment.file_id,
+        )
+        assert svc2.check_user_permission(
+            user_id=owner2.id,
+            account_id=owner2.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_update_template_description__add_file__ok(self):
         """
@@ -173,8 +191,18 @@ class TestTemplateAttachmentsE2E:
         template.save()
         refresh_attachments(source=template, user=owner1)
         attachment = Attachment.objects.get(file_id='tmpl_owner_e2e')
-        assert owner1.has_perm('access_attachment', attachment)
-        assert not owner2.has_perm('access_attachment', attachment)
+        svc1 = AttachmentService(user=owner1)
+        svc2 = AttachmentService(user=owner2)
+        assert svc1.check_user_permission(
+            user_id=owner1.id,
+            account_id=owner1.account_id,
+            file_id=attachment.file_id,
+        )
+        assert not svc2.check_user_permission(
+            user_id=owner2.id,
+            account_id=owner2.account_id,
+            file_id=attachment.file_id,
+        )
 
         # act
         TemplateOwner.objects.create(
@@ -186,7 +214,12 @@ class TestTemplateAttachmentsE2E:
 
         # assert
         attachment.refresh_from_db()
-        assert owner2.has_perm('access_attachment', attachment)
+        svc2 = AttachmentService(user=owner2)
+        assert svc2.check_user_permission(
+            user_id=owner2.id,
+            account_id=owner2.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_template_multiple_files__all_created__ok(self):
         """
@@ -213,9 +246,14 @@ class TestTemplateAttachmentsE2E:
 
         # assert
         assert len(new_file_ids) == 2
+        svc = AttachmentService(user=owner)
         for file_id in new_file_ids:
             attachment = Attachment.objects.get(file_id=file_id)
-            assert owner.has_perm('access_attachment', attachment)
+            assert svc.check_user_permission(
+                user_id=owner.id,
+                account_id=owner.account_id,
+                file_id=attachment.file_id,
+            )
 
     def test_non_owner_no_access__ok(self):
         """
@@ -243,7 +281,12 @@ class TestTemplateAttachmentsE2E:
         attachment = Attachment.objects.get(
             file_id='tmpl_no_access_e2e',
         )
-        assert not other_user.has_perm('access_attachment', attachment)
+        svc = AttachmentService(user=other_user)
+        assert not svc.check_user_permission(
+            user_id=other_user.id,
+            account_id=other_user.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_replace_file_in_template__old_deleted_new_created__ok(
         self,
@@ -311,7 +354,13 @@ class TestTemplateAttachmentsE2E:
         attachment = Attachment.objects.get(
             file_id='tmpl_remove_owner_e2e',
         )
-        assert owner2.has_perm('access_attachment', attachment)
+        svc2 = AttachmentService(user=owner2)
+        svc1 = AttachmentService(user=owner1)
+        assert svc2.check_user_permission(
+            user_id=owner2.id,
+            account_id=owner2.account_id,
+            file_id=attachment.file_id,
+        )
 
         # act
         owner2_obj.delete()
@@ -319,5 +368,13 @@ class TestTemplateAttachmentsE2E:
 
         # assert
         attachment.refresh_from_db()
-        assert not owner2.has_perm('access_attachment', attachment)
-        assert owner1.has_perm('access_attachment', attachment)
+        assert not svc2.check_user_permission(
+            user_id=owner2.id,
+            account_id=owner2.account_id,
+            file_id=attachment.file_id,
+        )
+        assert svc1.check_user_permission(
+            user_id=owner1.id,
+            account_id=owner1.account_id,
+            file_id=attachment.file_id,
+        )

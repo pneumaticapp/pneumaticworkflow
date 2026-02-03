@@ -97,12 +97,12 @@ def test_create_text_and_attachment__ok(mocker, api_client):
         task=task,
         after_create_actions=False,
     )
-    attach_1 = create_test_attachment_for_event(
+    create_test_attachment_for_event(
         account=user.account,
         event=event,
         file_id='file_1.png',
     )
-    attach_2 = create_test_attachment_for_event(
+    create_test_attachment_for_event(
         account=user.account,
         event=event,
         file_id='file_2.docx',
@@ -129,15 +129,6 @@ def test_create_text_and_attachment__ok(mocker, api_client):
 
     # arrange
     assert response.status_code == 200
-    assert len(response.data['attachments']) == 2
-    attach_data = response.data['attachments'][0]
-    assert attach_data['id'] == attach_1.id
-    assert attach_data['name'] == attach_1.name
-    assert attach_data['url'] == attach_1.url
-    assert attach_data['thumbnail_url'] == attach_1.thumbnail_url
-    assert attach_data['thumbnail_url'] == attach_1.thumbnail_url
-    assert attach_data['size'] == attach_1.size
-
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
@@ -146,7 +137,6 @@ def test_create_text_and_attachment__ok(mocker, api_client):
     comment_create_mock.assert_called_once_with(
         task=task,
         text=event.text,
-        attachments=[attach_1.id, attach_2.id],
     )
 
 

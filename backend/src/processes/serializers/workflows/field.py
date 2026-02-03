@@ -5,7 +5,6 @@ from src.processes.models.workflows.fields import (
     FieldSelection,
     TaskField,
 )
-from src.storage.serializers import AttachmentSerializer
 
 UserModel = get_user_model()
 
@@ -39,11 +38,9 @@ class TaskFieldSerializer(serializers.ModelSerializer):
             'user_id',
             'group_id',
             'selections',
-            'attachments',
         )
 
     selections = FieldSelectionListSerializer(many=True, required=False)
-    attachments = AttachmentSerializer(many=True)
 
 
 class TaskFieldListSerializer(serializers.ModelSerializer):

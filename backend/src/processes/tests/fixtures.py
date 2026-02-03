@@ -685,10 +685,12 @@ def create_test_template_preset(
 
 def create_test_attachment(
     account,
-    file_id: str = 'test_file.png',
+    file_id: str = 'test_file',
     task=None,
     workflow=None,
     template=None,
+    output=None,
+    event=None,
 ):
     """
     Create test attachment for new storage service.
@@ -699,6 +701,8 @@ def create_test_attachment(
         task: Optional Task instance
         workflow: Optional Workflow instance
         template: Optional Template instance
+        output: Optional TaskField instance (for field-level attachments)
+        event: Optional WorkflowEvent instance
 
     Returns:
         Attachment instance
@@ -719,6 +723,8 @@ def create_test_attachment(
         task=task,
         workflow=workflow,
         template=template,
+        output=output,
+        event=event,
     )
 
 
@@ -747,9 +753,10 @@ def create_test_attachment_for_event(
         access_type=AccessType.RESTRICTED,
         task=event.task,
         workflow=event.workflow,
+        event=event,
     )
 
-    # Link to workflow (not directly to event)
-    event.workflow.storage_attachments.add(attachment)
+    event.with_attachments = True
+    event.save(update_fields=['with_attachments'])
 
     return attachment

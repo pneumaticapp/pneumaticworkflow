@@ -20,7 +20,7 @@ def test_check_permission__has_permission__ok(api_client):
         access_type=AccessType.RESTRICTED,
         source_type=SourceType.ACCOUNT,
     )
-    assign_perm('view_attachment', user, attachment)
+    assign_perm('storage.access_attachment', user, attachment)
 
     # act
     response = api_client.post(
@@ -117,7 +117,7 @@ def test_check_permission__file_id_with_spaces__ok(api_client):
         access_type=AccessType.RESTRICTED,
         source_type=SourceType.ACCOUNT,
     )
-    assign_perm('view_attachment', user, attachment)
+    assign_perm('storage.access_attachment', user, attachment)
 
     # act
     response = api_client.post(

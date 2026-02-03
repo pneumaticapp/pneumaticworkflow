@@ -39,7 +39,12 @@ class TestAttachmentServiceTaskPermissions:
 
         # assert
         attachment = service.instance
-        assert user.has_perm('access_attachment', attachment)
+        svc = AttachmentService(user=user)
+        assert svc.check_user_permission(
+            user_id=user.id,
+            account_id=user.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_assign_task_permissions__workflow_owner__ok(self):
         # arrange
@@ -59,7 +64,12 @@ class TestAttachmentServiceTaskPermissions:
 
         # assert
         attachment = service.instance
-        assert owner.has_perm('access_attachment', attachment)
+        svc = AttachmentService(user=owner)
+        assert svc.check_user_permission(
+            user_id=owner.id,
+            account_id=owner.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_assign_task_permissions__workflow_member__ok(self):
         # arrange
@@ -81,7 +91,12 @@ class TestAttachmentServiceTaskPermissions:
 
         # assert
         attachment = service.instance
-        assert member.has_perm('access_attachment', attachment)
+        svc = AttachmentService(user=member)
+        assert svc.check_user_permission(
+            user_id=member.id,
+            account_id=member.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_assign_task_permissions__template_owner__ok(self):
         # arrange
@@ -112,7 +127,12 @@ class TestAttachmentServiceTaskPermissions:
 
         # assert
         attachment = service.instance
-        assert owner.has_perm('access_attachment', attachment)
+        svc = AttachmentService(user=owner)
+        assert svc.check_user_permission(
+            user_id=owner.id,
+            account_id=owner.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_assign_task_permissions__group_performer__ok(self):
         # arrange
@@ -139,7 +159,12 @@ class TestAttachmentServiceTaskPermissions:
 
         # assert
         attachment = service.instance
-        assert user_in_group.has_perm('access_attachment', attachment)
+        svc = AttachmentService(user=user_in_group)
+        assert svc.check_user_permission(
+            user_id=user_in_group.id,
+            account_id=user_in_group.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_assign_task_permissions__guest_performer__ok(self):
         # arrange
@@ -161,7 +186,12 @@ class TestAttachmentServiceTaskPermissions:
 
         # assert
         attachment = service.instance
-        assert guest.has_perm('access_attachment', attachment)
+        svc = AttachmentService(user=guest)
+        assert svc.check_user_permission(
+            user_id=guest.id,
+            account_id=guest.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_assign_task_permissions__non_performer__no_access(self):
         # arrange
@@ -182,7 +212,12 @@ class TestAttachmentServiceTaskPermissions:
 
         # assert
         attachment = service.instance
-        assert not other_user.has_perm('access_attachment', attachment)
+        svc = AttachmentService(user=other_user)
+        assert not svc.check_user_permission(
+            user_id=other_user.id,
+            account_id=other_user.account_id,
+            file_id=attachment.file_id,
+        )
 
 
 class TestAttachmentServiceWorkflowPermissions:
@@ -205,7 +240,12 @@ class TestAttachmentServiceWorkflowPermissions:
 
         # assert
         attachment = service.instance
-        assert owner.has_perm('access_attachment', attachment)
+        svc = AttachmentService(user=owner)
+        assert svc.check_user_permission(
+            user_id=owner.id,
+            account_id=owner.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_assign_workflow_permissions__member__ok(self):
         # arrange
@@ -226,7 +266,12 @@ class TestAttachmentServiceWorkflowPermissions:
 
         # assert
         attachment = service.instance
-        assert member.has_perm('access_attachment', attachment)
+        svc = AttachmentService(user=member)
+        assert svc.check_user_permission(
+            user_id=member.id,
+            account_id=member.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_assign_workflow_permissions__task_performer__ok(self):
         # arrange
@@ -248,7 +293,12 @@ class TestAttachmentServiceWorkflowPermissions:
 
         # assert
         attachment = service.instance
-        assert performer.has_perm('access_attachment', attachment)
+        svc = AttachmentService(user=performer)
+        assert svc.check_user_permission(
+            user_id=performer.id,
+            account_id=performer.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_assign_workflow_permissions__template_owner__ok(self):
         # arrange
@@ -275,7 +325,12 @@ class TestAttachmentServiceWorkflowPermissions:
 
         # assert
         attachment = service.instance
-        assert owner.has_perm('access_attachment', attachment)
+        svc = AttachmentService(user=owner)
+        assert svc.check_user_permission(
+            user_id=owner.id,
+            account_id=owner.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_assign_workflow_permissions__non_participant__no_access(
         self,
@@ -297,7 +352,12 @@ class TestAttachmentServiceWorkflowPermissions:
 
         # assert
         attachment = service.instance
-        assert not other_user.has_perm('access_attachment', attachment)
+        svc = AttachmentService(user=other_user)
+        assert not svc.check_user_permission(
+            user_id=other_user.id,
+            account_id=other_user.account_id,
+            file_id=attachment.file_id,
+        )
 
 
 class TestAttachmentServiceTemplatePermissions:
@@ -325,7 +385,12 @@ class TestAttachmentServiceTemplatePermissions:
 
         # assert
         attachment = service.instance
-        assert owner.has_perm('access_attachment', attachment)
+        svc = AttachmentService(user=owner)
+        assert svc.check_user_permission(
+            user_id=owner.id,
+            account_id=owner.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_assign_template_permissions__multiple_owners__ok(self):
         # arrange
@@ -355,8 +420,18 @@ class TestAttachmentServiceTemplatePermissions:
 
         # assert
         attachment = service.instance
-        assert owner1.has_perm('access_attachment', attachment)
-        assert owner2.has_perm('access_attachment', attachment)
+        svc1 = AttachmentService(user=owner1)
+        svc2 = AttachmentService(user=owner2)
+        assert svc1.check_user_permission(
+            user_id=owner1.id,
+            account_id=owner1.account_id,
+            file_id=attachment.file_id,
+        )
+        assert svc2.check_user_permission(
+            user_id=owner2.id,
+            account_id=owner2.account_id,
+            file_id=attachment.file_id,
+        )
 
     def test_assign_template_permissions__non_owner__no_access(self):
         # arrange
@@ -381,7 +456,12 @@ class TestAttachmentServiceTemplatePermissions:
 
         # assert
         attachment = service.instance
-        assert not other_user.has_perm('access_attachment', attachment)
+        svc = AttachmentService(user=other_user)
+        assert not svc.check_user_permission(
+            user_id=other_user.id,
+            account_id=other_user.account_id,
+            file_id=attachment.file_id,
+        )
 
 
 class TestAttachmentServiceAccountPermissions:
@@ -479,8 +559,13 @@ class TestAttachmentServiceBulkCreatePermissions:
         )
 
         # assert
+        svc = AttachmentService(user=performer)
         for attachment in attachments:
-            assert performer.has_perm('access_attachment', attachment)
+            assert svc.check_user_permission(
+                user_id=performer.id,
+                account_id=performer.account_id,
+                file_id=attachment.file_id,
+            )
 
     def test_bulk_create__workflow__assigns_permissions__ok(self):
         # arrange
@@ -498,8 +583,13 @@ class TestAttachmentServiceBulkCreatePermissions:
         )
 
         # assert
+        svc = AttachmentService(user=member)
         for attachment in attachments:
-            assert member.has_perm('access_attachment', attachment)
+            assert svc.check_user_permission(
+                user_id=member.id,
+                account_id=member.account_id,
+                file_id=attachment.file_id,
+            )
 
     def test_bulk_create_for_scope__assigns_permissions__ok(self):
         # arrange
@@ -520,5 +610,10 @@ class TestAttachmentServiceBulkCreatePermissions:
 
         # assert
         assert len(attachments) == 2
+        svc = AttachmentService(user=owner)
         for attachment in attachments:
-            assert owner.has_perm('access_attachment', attachment)
+            assert svc.check_user_permission(
+                user_id=owner.id,
+                account_id=owner.account_id,
+                file_id=attachment.file_id,
+            )

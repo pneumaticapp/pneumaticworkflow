@@ -437,9 +437,7 @@ class WorkflowViewSet(
     @action(methods=['get'], detail=True)
     def events(self, request, *args, **kwargs):
         workflow = self.get_object()
-        qst = WorkflowEvent.objects.prefetch_related(
-            'attachments',
-        ).on_workflow(
+        qst = WorkflowEvent.objects.on_workflow(
             workflow.id,
         ).exclude_type(WorkflowEventType.RUN)
         if self.request.user.type == UserType.GUEST:

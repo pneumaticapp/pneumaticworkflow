@@ -4,7 +4,7 @@ Creates records in the file service for existing files.
 """
 
 import logging
-from typing import Dict, Optional
+from typing import Dict, List, Optional
 from urllib.parse import unquote, urlparse
 
 from django.conf import settings
@@ -84,30 +84,41 @@ class FileSyncService:
 
     def sync_all_attachments_to_storage(self) -> Dict[str, int]:
         """
-        Synchronize FileAttachment records to new Attachment model.
+        Synchronize all FileAttachment records to new Attachment model.
 
         Returns:
             Dict with sync statistics: total, synced, skipped, errors.
         """
-        stats = {'total': 0, 'synced': 0, 'skipped': 0, 'errors': 0}
-
-        # Get all FileAttachment records with file_id
         file_attachments = FileAttachment.objects.filter(
             file_id__isnull=False,
         ).select_related('account', 'workflow', 'event', 'output')
+        return self.sync_to_new_attachment_model(list(file_attachments))
 
-        stats['total'] = file_attachments.count()
+    def sync_to_new_attachment_model(
+        self,
+        attachments: List[FileAttachment],
+    ) -> Dict[str, int]:
+        """
+        Synchronize given FileAttachment records to new Attachment model.
 
-        for attachment in file_attachments:
+        Returns:
+            Dict with sync statistics: total, created, skipped, errors.
+        """
+        stats = {'total': 0, 'created': 0, 'skipped': 0, 'errors': 0}
+        stats['total'] = len(attachments)
+
+        for attachment in attachments:
             try:
-                # Check if already exists in new model
+                if not attachment.file_id:
+                    stats['skipped'] += 1
+                    continue
+
                 if Attachment.objects.filter(
                     file_id=attachment.file_id,
                 ).exists():
                     stats['skipped'] += 1
                     continue
 
-                # Create new Attachment record
                 source_type = self._determine_source_type(attachment)
                 task = self._get_task(attachment)
 
@@ -118,10 +129,10 @@ class FileSyncService:
                     access_type=attachment.access_type,
                     task=task,
                     workflow=attachment.workflow,
-                    template=None,  # FileAttachment doesn't have template
+                    template=None,
                 )
 
-                stats['synced'] += 1
+                stats['created'] += 1
                 logger.info(
                     'Created Attachment record for file_id %s',
                     attachment.file_id,
@@ -224,7 +235,7 @@ class FileSyncService:
             return SourceType.WORKFLOW
         if attachment.event or attachment.output:
             return SourceType.TASK
-        return SourceType.WORKFLOW  # Default
+        return SourceType.ACCOUNT
 
     def _get_task(self, attachment: FileAttachment) -> Optional[Task]:
         """Get task from attachment relationships."""

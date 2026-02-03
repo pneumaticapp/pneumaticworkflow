@@ -84,7 +84,7 @@ def test_list__restricted_with_permission__ok(api_client):
         source_type=SourceType.TASK,
         task=task,
     )
-    assign_perm('view_attachment', user, attachment)
+    assign_perm('storage.access_attachment', user, attachment)
 
     # act
     response = api_client.get('/storage/attachments')

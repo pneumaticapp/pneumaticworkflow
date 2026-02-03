@@ -614,8 +614,7 @@ class TestPartialUpdateWorkflow:
         task_1 = workflow.tasks.get(number=1)
         task_2 = workflow.tasks.get(number=2)
         assert task_1.description == (
-            f'His name is... [{first_attach.name}]'
-            f'({first_attach.url})!!!'
+            f'His name is... File: {first_attach.file_id}!!!'
         )
         assert task_2.description == (
             '{{%s}} His name is...!!!' % file_field.api_name
@@ -627,7 +626,7 @@ class TestPartialUpdateWorkflow:
             f'/workflows/{workflow_id}',
             data={
                 'kickoff': {
-                    file_field.api_name: [second_attach.id],
+                    file_field.api_name: [second_attach.file_id],
                 },
             },
         )
@@ -638,7 +637,7 @@ class TestPartialUpdateWorkflow:
         # assert
         assert response.status_code == 200
         assert task_1.description == (
-            f'His name is... [{second_attach.name}]({second_attach.url})!!!'
+            f'His name is... File: {second_attach.file_id}!!!'
         )
         assert task_2.description == (
             '{{%s}} His name is...!!!' % file_field.api_name
@@ -699,8 +698,7 @@ class TestPartialUpdateWorkflow:
         task_1 = workflow.tasks.get(number=1)
         task_2 = workflow.tasks.get(number=2)
         assert task_1.description == (
-            f'His name is... [{first_attach.name}]'
-            f'({first_attach.url})!!!'
+            f'His name is... File: {first_attach.file_id}!!!'
         )
         assert task_2.description == (
             '{{%s}} His name is...!!!' % file_field.api_name
@@ -711,7 +709,10 @@ class TestPartialUpdateWorkflow:
             f'/workflows/{workflow_id}',
             data={
                 'kickoff': {
-                    file_field.api_name: [first_attach.id, second_attach.id],
+                    file_field.api_name: [
+                        first_attach.file_id,
+                        second_attach.file_id,
+                    ],
                 },
             },
         )
@@ -722,9 +723,8 @@ class TestPartialUpdateWorkflow:
         # assert
         assert response.status_code == 200
         assert task_1.description == (
-            'His name is... '
-            f'[{first_attach.name}]({first_attach.url}), '
-            f'[{second_attach.name}]({second_attach.url})!!!'
+            f'His name is... File: {first_attach.file_id}, '
+            f'File: {second_attach.file_id}!!!'
         )
         assert task_2.description == (
             '{{%s}} His name is...!!!' % file_field.api_name

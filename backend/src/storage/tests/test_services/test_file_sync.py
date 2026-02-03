@@ -1,5 +1,4 @@
 import pytest
-import requests
 
 from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.tests.fixtures import (
@@ -20,7 +19,7 @@ class TestFileSyncServiceSyncAllFiles:
         service = FileSyncService()
         mocker.patch.object(
             service,
-            'create_file_service_record',
+            '_generate_file_id',
             return_value='generated_file_id',
         )
 
@@ -47,10 +46,15 @@ class TestFileSyncServiceSyncAllFiles:
         )
 
         service = FileSyncService()
-        create_file_service_record_mock = mocker.patch.object(
+        generate_mock = mocker.patch.object(
             service,
-            'create_file_service_record',
+            '_generate_file_id',
             return_value='generated_file_id_123',
+        )
+        create_mock = mocker.patch.object(
+            service,
+            '_create_file_service_record',
+            return_value=True,
         )
 
         # act
@@ -64,8 +68,10 @@ class TestFileSyncServiceSyncAllFiles:
 
         attachment.refresh_from_db()
         assert attachment.file_id == 'generated_file_id_123'
-        create_file_service_record_mock.assert_called_once_with(
+        generate_mock.assert_called_once_with(attachment)
+        create_mock.assert_called_once_with(
             attachment,
+            'generated_file_id_123',
         )
 
     def test_sync_all_files__skipped__ok(self, mocker):
@@ -84,7 +90,7 @@ class TestFileSyncServiceSyncAllFiles:
         service = FileSyncService()
         mocker.patch.object(
             service,
-            'create_file_service_record',
+            '_generate_file_id',
             return_value=None,
         )
 
@@ -113,8 +119,13 @@ class TestFileSyncServiceSyncAllFiles:
         service = FileSyncService()
         mocker.patch.object(
             service,
-            'create_file_service_record',
-            side_effect=requests.RequestException('Connection error'),
+            '_generate_file_id',
+            return_value='file_id_123',
+        )
+        mocker.patch.object(
+            service,
+            '_create_file_service_record',
+            return_value=False,
         )
 
         # act
@@ -141,9 +152,9 @@ class TestFileSyncServiceSyncAllFiles:
         )
 
         service = FileSyncService()
-        create_file_service_record_mock = mocker.patch.object(
+        generate_mock = mocker.patch.object(
             service,
-            'create_file_service_record',
+            '_generate_file_id',
         )
 
         # act
@@ -151,83 +162,12 @@ class TestFileSyncServiceSyncAllFiles:
 
         # assert
         assert stats['total'] == 0
-        create_file_service_record_mock.assert_not_called()
+        generate_mock.assert_not_called()
 
 
 class TestFileSyncServiceCreateFileServiceRecord:
 
-    def test_create_file_service_record__success__ok(self, mocker):
-        # arrange
-        user = create_test_user()
-        workflow = create_test_workflow(user=user, tasks_count=1)
-
-        attachment = FileAttachment.objects.create(
-            name='test.pdf',
-            url='https://storage.com/test.pdf',
-            size=1024,
-            thumbnail_url='https://storage.com/thumb.jpg',
-            account=user.account,
-            workflow=workflow,
-        )
-
-        service = FileSyncService()
-        mocker.patch(
-            'src.storage.services.file_sync.get_salt',
-            return_value='generated_salt',
-        )
-        response_mock = mocker.Mock()
-        response_mock.raise_for_status = mocker.Mock()
-        requests_post_mock = mocker.patch(
-            'src.storage.services.file_sync.requests.post',
-            return_value=response_mock,
-        )
-
-        # act
-        result = service.create_file_service_record(attachment)
-
-        # assert
-        assert result == 'generated_salt'
-        requests_post_mock.assert_called_once()
-        call_args = requests_post_mock.call_args
-        assert call_args[1]['json']['file_id'] == 'generated_salt'
-        assert call_args[1]['json']['name'] == 'test.pdf'
-        assert call_args[1]['json']['url'] == (
-            'https://storage.com/test.pdf'
-        )
-        assert call_args[1]['json']['size'] == 1024
-        assert call_args[1]['json']['thumbnail_url'] == (
-            'https://storage.com/thumb.jpg'
-        )
-
-    def test_create_file_service_record__no_url__none(self, mocker):
-        # arrange
-        user = create_test_user()
-        workflow = create_test_workflow(user=user, tasks_count=1)
-
-        attachment = FileAttachment.objects.create(
-            name='test.pdf',
-            url='',
-            size=1024,
-            account=user.account,
-            workflow=workflow,
-        )
-
-        service = FileSyncService()
-        requests_post_mock = mocker.patch(
-            'src.storage.services.file_sync.requests.post',
-        )
-
-        # act
-        result = service.create_file_service_record(attachment)
-
-        # assert
-        assert result is None
-        requests_post_mock.assert_not_called()
-
-    def test_create_file_service_record__request_error__none(
-        self,
-        mocker,
-    ):
+    def test_create_file_service_record__success__ok(self):
         # arrange
         user = create_test_user()
         workflow = create_test_workflow(user=user, tasks_count=1)
@@ -241,20 +181,15 @@ class TestFileSyncServiceCreateFileServiceRecord:
         )
 
         service = FileSyncService()
-        mocker.patch(
-            'src.storage.services.file_sync.get_salt',
-            return_value='generated_salt',
-        )
-        mocker.patch(
-            'src.storage.services.file_sync.requests.post',
-            side_effect=requests.RequestException('Network error'),
-        )
 
         # act
-        result = service.create_file_service_record(attachment)
+        result = service._create_file_service_record(
+            attachment,
+            'generated_file_id_123',
+        )
 
         # assert
-        assert result is None
+        assert result is True
 
 
 class TestFileSyncServiceSyncToNewAttachmentModel:
@@ -327,7 +262,7 @@ class TestFileSyncServiceSyncToNewAttachmentModel:
         assert stats['skipped'] == 0
         assert stats['errors'] == 0
 
-    def test_sync_to_new_attachment_model__already_exists__ok(self):
+    def test_sync_to_new_attachment_model__already_exists__skipped(self):
         # arrange
         user = create_test_user()
         workflow = create_test_workflow(user=user, tasks_count=1)
@@ -355,7 +290,8 @@ class TestFileSyncServiceSyncToNewAttachmentModel:
 
         # assert
         assert stats['total'] == 1
-        assert stats['created'] == 1
+        assert stats['created'] == 0
+        assert stats['skipped'] == 1
         assert Attachment.objects.filter(
             file_id='existing_file_id',
         ).count() == 1
@@ -582,14 +518,24 @@ class TestFileSyncServiceGenerateFileId:
 
     def test_generate_file_id__ok(self, mocker):
         # arrange
-        service = FileSyncService()
+        user = create_test_user()
+        attachment = FileAttachment.objects.create(
+            name='test.pdf',
+            url='https://storage.com/files/test.pdf',
+            size=1024,
+            account=user.account,
+        )
         mocker.patch(
             'src.storage.services.file_sync.get_salt',
             return_value='random_salt_32_chars',
         )
 
+        service = FileSyncService()
+
         # act
-        result = service._generate_file_id()
+        result = service._generate_file_id(attachment)
 
         # assert
-        assert result == 'random_salt_32_chars'
+        assert result is not None
+        assert 'random_salt_32_chars' in result
+        assert 'test.pdf' in result

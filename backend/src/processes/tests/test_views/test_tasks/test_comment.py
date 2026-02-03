@@ -21,7 +21,6 @@ from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_workflow,
 )
-from src.storage.enums import SourceType, AccessType
 from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
@@ -184,8 +183,10 @@ def test_create_text_and_attachment__ok(mocker, api_client):
     task = workflow.tasks.get(number=1)
     comment_text = (
         'Some comment with files: '
-        'https://example.com/files/task_file_1 and '
-        'https://example.com/api/files/task_file_2'
+        '[first_file.txt]'
+        '(https://files.example.com/files/first_template_file) and '
+        '[first_file2.txt]'
+        '(https://files.example.com/files/first_template_file2)'
     )
     event = WorkflowEventService.comment_created_event(
         user=user,
@@ -194,15 +195,18 @@ def test_create_text_and_attachment__ok(mocker, api_client):
         after_create_actions=False,
     )
 
-    attachment_1 = create_test_attachment(
+    # Create attachments linked to the event
+    create_test_attachment(
         account=user.account,
-        file_id='task_file_1',
+        file_id='first_template_file',
         task=task,
+        event=event,
     )
     create_test_attachment(
         account=user.account,
-        file_id='task_file_2',
+        file_id='first_template_file2',
         task=task,
+        event=event,
     )
 
     service_init_mock = mocker.patch.object(
@@ -227,11 +231,7 @@ def test_create_text_and_attachment__ok(mocker, api_client):
 
     # assert
     assert response.status_code == 200
-    assert len(response.data['attachments']) == 2
-    attachment = response.data['attachments'][0]
-    assert attachment['file_id'] == attachment_1.file_id
-    assert attachment['access_type'] == AccessType.RESTRICTED
-    assert attachment['source_type'] == SourceType.TASK
+    assert response.data['text'] == event.text
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
@@ -239,7 +239,7 @@ def test_create_text_and_attachment__ok(mocker, api_client):
     )
     comment_create_mock.assert_called_once_with(
         task=task,
-        text=event.text,
+        text=comment_text,
     )
 
 

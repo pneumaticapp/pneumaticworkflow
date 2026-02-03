@@ -65,7 +65,6 @@ from src.processes.services.workflows.workflow import (
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
-    create_test_attachment,
     create_test_group,
     create_test_guest,
     create_test_owner,
@@ -154,14 +153,6 @@ def test_run__all__ok(api_client, mocker):
         field_template=kickoff_field_5,
         template=template,
     )
-    attach_1 = create_test_attachment(
-        account=user.account,
-        file_id='first_template_file.png',
-    )
-    attach_2 = create_test_attachment(
-        account=user.account,
-        file_id='sec_template_file.docx',
-    )
     task = template.tasks.order_by('number').first()
     task.name = 'Test name {{ %s }}' % kickoff_field.api_name
     task.description = (
@@ -217,8 +208,10 @@ def test_run__all__ok(api_client, mocker):
                 kickoff_field_2.api_name: None,
                 kickoff_field_3.api_name: 6351521536,
                 kickoff_field_4.api_name: [
-                    'first_template_file.png',
-                    'sec_template_file.docx',
+                    '[first_file.txt]'
+                    '(https://files.example.com/files/first_template_file)',
+                    '[second_file.txt]'
+                    '(https://files.example.com/files/sec_template_file)',
                 ],
                 kickoff_field_5.api_name: [
                     str(selection_1.api_name),
@@ -282,15 +275,19 @@ def test_run__all__ok(api_client, mocker):
     assert kickoff_field_data['name'] == kickoff_field.name
     assert kickoff_field_data['value'] == 'JOHN CENA'
     assert kickoff_field_data['user_id'] is None
-    assert kickoff_field_data['attachments'] == []
     assert kickoff_field_data['selections'] == []
 
     kickoff_field_4_data = data['kickoff']['output'][3]
-    assert len(kickoff_field_4_data['attachments']) == 2
-    attach_1_data = kickoff_field_4_data['attachments'][0]
-    assert attach_1_data['id'] == attach_1.id
-    assert attach_1_data['file_id'] == 'first_template_file.png'
-    assert attach_1_data['account_id'] == user.account_id
+    # Check that file field contains Markdown formatted value
+    expected_markdown = (
+        '[first_file.txt](https://files.example.com/files/'
+        'first_template_file), '
+        '[second_file.txt](https://files.example.com/files/sec_template_file)'
+    )
+    assert kickoff_field_4_data['markdown_value'] == expected_markdown
+    assert kickoff_field_4_data['clear_value'] == (
+        'first_file.txt, second_file.txt'
+    )
 
     kickoff_field_5_data = data['kickoff']['output'][4]
     assert len(kickoff_field_5_data['selections']) == 2
@@ -314,11 +311,16 @@ def test_run__all__ok(api_client, mocker):
     assert workflow.due_date == due_date
     task_1 = workflow.tasks.get(number=1)
     assert task_1.name == 'Test name JOHN CENA'
+    expected_file_markdown = (
+        '[first_file.txt]'
+        '(https://files.example.com/files/first_template_file), '
+        '[second_file.txt]'
+        '(https://files.example.com/files/sec_template_file)'
+    )
     assert task_1.description == (
         'His name is... JOHN CENA '
         'Apr 09, 2171, 11:32PM link '
-        f'[{attach_1.name}]({attach_1.url}), '
-        f'[{attach_2.name}]({attach_2.url}).'
+        f'{expected_file_markdown}.'
         'selection 1, selection 2'
     )
     assert task_1.description_template == (
