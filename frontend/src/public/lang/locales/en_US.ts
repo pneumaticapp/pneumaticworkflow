@@ -321,6 +321,15 @@ export const enMessages = {
   'team.search': 'Search user',
   'team.create-user-button': 'Create User',
   'team.create-user-button-caption': 'Create new team members',
+  'team.create-user-modal.title': 'Create User',
+  'team.create-user-modal.first-name': 'First name',
+  'team.create-user-modal.last-name': 'Last name',
+  'team.create-user-modal.email': 'Email',
+  'team.create-user-modal.status': 'Status',
+  'team.create-user-modal.status-admin': 'Admin',
+  'team.create-user-modal.status-user': 'User',
+  'team.create-user-modal.password': 'Password',
+  'team.create-user-modal.submit': 'Create user',
 
   'team.users': 'Users',
 

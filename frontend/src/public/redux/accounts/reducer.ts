@@ -35,6 +35,7 @@ const INIT_STATE: IAccounts = {
   },
   userListSorting: EUserListSorting.NameAsc,
   deleteUserModal: INIT_DELETE_MODAL,
+  isCreateUserModalOpen: false,
 };
 
 export const reducer = (state = INIT_STATE, action: TAccountsActions): IAccounts => {
@@ -96,6 +97,14 @@ export const reducer = (state = INIT_STATE, action: TAccountsActions): IAccounts
     case EAccountsActions.SetIsLoading:
       return produce(state, draftState => {
         draftState.isLoading = true;
+      });
+    case EAccountsActions.OpenCreateUserModal:
+      return produce(state, draftState => {
+        draftState.isCreateUserModalOpen = true;
+      });
+    case EAccountsActions.CloseCreateUserModal:
+      return produce(state, draftState => {
+        draftState.isCreateUserModalOpen = false;
       });
     default: return { ...state };
   }

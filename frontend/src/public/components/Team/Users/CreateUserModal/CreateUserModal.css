@@ -1,0 +1,14 @@
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.dropdown-required p::after {
+  content: '*';
+  color: var(--pneumatic-color-warning);
+}
+
+.option-selected {
+  color: var(--pneumatic-color-black32);
+}

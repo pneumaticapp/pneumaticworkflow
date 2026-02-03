@@ -27,6 +27,8 @@ export const enum EAccountsActions {
   FetchPlan = 'FETCH_PLAN',
   StartTrialSubscription = 'START_TRIAL_SUBSCRIPTION',
   StartFreeSubscription = 'START_FREE_SUBSCRIPTION',
+  OpenCreateUserModal = 'OPEN_CREATE_USER_MODAL',
+  CloseCreateUserModal = 'CLOSE_CREATE_USER_MODAL',
 }
 
 export type TSetIsLoading = ITypedReduxAction<EAccountsActions.SetIsLoading, void>;
@@ -164,6 +166,14 @@ export type TStartFreeSubscription = ITypedReduxAction<EAccountsActions.StartFre
 export const startFreeSubscriptionAction: (payload?: void) => TStartFreeSubscription =
   actionGenerator<EAccountsActions.StartFreeSubscription, void>(EAccountsActions.StartFreeSubscription);
 
+export type TOpenCreateUserModal = ITypedReduxAction<EAccountsActions.OpenCreateUserModal, void>;
+export const openCreateUserModal: () => TOpenCreateUserModal =
+  actionGenerator<EAccountsActions.OpenCreateUserModal>(EAccountsActions.OpenCreateUserModal);
+
+export type TCloseCreateUserModal = ITypedReduxAction<EAccountsActions.CloseCreateUserModal, void>;
+export const closeCreateUserModal: () => TCloseCreateUserModal =
+  actionGenerator<EAccountsActions.CloseCreateUserModal>(EAccountsActions.CloseCreateUserModal);
+
 export type TAccountsActions =
   TUsersFetchStarted
   | TUsersFetchFailed
@@ -187,4 +197,6 @@ export type TAccountsActions =
   | TSetIsLoading
   | TFetchPlan
   | TStartTrialSubscription
-  | TStartFreeSubscription;
+  | TStartFreeSubscription
+  | TOpenCreateUserModal
+  | TCloseCreateUserModal;
