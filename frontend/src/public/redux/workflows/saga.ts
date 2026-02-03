@@ -1,5 +1,17 @@
 import uniqBy from 'lodash.uniqby';
-import { all, fork, put, takeEvery, select, takeLatest, call, delay, take, takeLeading } from 'redux-saga/effects';
+import {
+  all,
+  fork,
+  put,
+  takeEvery,
+  select,
+  takeLatest,
+  call,
+  delay,
+  take,
+  takeLeading,
+  race,
+} from 'redux-saga/effects';
 import { EventChannel } from 'redux-saga';
 
 import { PayloadAction } from '@reduxjs/toolkit';
@@ -61,6 +73,9 @@ import {
   deleteComment as deleteCommentAction,
   editComment as editCommentAction,
   saveWorkflowsPreset,
+  cancelCurrentPerformersCounters,
+  cancelTemplateTasksCounters,
+  cancelTemplateFilterRequests,
 } from './slice';
 import {
   IChangeWorkflowLogViewSettingsPayload,
@@ -160,6 +175,7 @@ import { updateTemplatePresets } from '../../api/updateTemplatePresets';
 import { addTemplatePreset } from '../../api/addTemplatePreset';
 import { ALL_SYSTEM_FIELD_NAMES } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
 import { TUserListItem } from '../../types/user';
+import { isRequestCanceled } from '../../utils/isRequestCanceled';
 
 function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: number; showLoader?: boolean }) {
   const {
@@ -306,16 +322,31 @@ function* fetchWorkflowsList({ payload: offset = 0 }: PayloadAction<number>) {
   }
 
   if (shouldGetPresets) {
+    const abortController = new AbortController();
+
     try {
       shouldResetFields = true;
-      const presets: TGetTemplatePresetsResponse = yield call(getTemplatePresets, String(currentTemplateId));
-      yield put(setWorkflowsPresetsRedux(presets));
 
-      newSelectedFields = getCorrectPresetFields(presets);
-      yield put(setWorkflowsFilterSelectedFields(newSelectedFields));
-      yield put(setLastLoadedTemplateId(String(currentTemplateId)));
+      const { result, clear } = yield race({
+        result: call(getTemplatePresets, String(currentTemplateId), abortController.signal),
+        clear: take(cancelTemplateFilterRequests.type),
+      });
+
+      if (clear) {
+        abortController.abort();
+      } else if (result) {
+        const presets: TGetTemplatePresetsResponse = result;
+        yield put(setWorkflowsPresetsRedux(presets));
+        newSelectedFields = getCorrectPresetFields(presets);
+        yield put(setWorkflowsFilterSelectedFields(newSelectedFields));
+        yield put(setLastLoadedTemplateId(String(currentTemplateId)));
+      }
     } catch (error) {
-      console.error('fetchWorkflowsList: Failed to load fields for template', currentTemplateId, ':', error);
+      if (!isRequestCanceled(error)) {
+        console.error('fetchWorkflowsList: Failed to load fields for template', currentTemplateId, ':', error);
+      }
+    } finally {
+      abortController.abort();
     }
   } else if (shouldGetAllDefaultFields) {
     shouldResetFields = true;
@@ -634,19 +665,34 @@ export function* cloneWorkflowSaga({
 export function* fetchFilterSteps({
   payload: { templateId, onAfterLoaded },
 }: PayloadAction<TLoadWorkflowsFilterStepsPayload>) {
+  const abortController = new AbortController();
+
   try {
-    const [steps]: [ITemplateStep[]] = yield all([
-      call(getTemplateSteps, { id: templateId }),
-      handleLoadTemplateVariables(templateId),
-    ]);
+    const { result, clear } = yield race({
+      result: all([
+        call(getTemplateSteps, { id: templateId, signal: abortController.signal }),
+        handleLoadTemplateVariables(templateId),
+      ]),
+      clear: take(cancelTemplateFilterRequests.type),
+    });
 
+    if (clear) {
+      abortController.abort();
+      return;
+    }
+
+    const [steps]: [ITemplateStep[]] = result;
     yield put(loadWorkflowsFilterStepsSuccess({ templateId, steps }));
-
     onAfterLoaded?.(steps);
   } catch (error) {
+    if (isRequestCanceled(error)) {
+      return;
+    }
     yield put(loadWorkflowsFilterStepsFailed({ templateId }));
     logger.info('fetch tasks filter steps error : ', error);
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+  } finally {
+    abortController.abort();
   }
 }
 
@@ -657,20 +703,35 @@ export function* updateCurrentPerformersCountersSaga() {
     },
   }: IStoreWorkflows = yield select(getWorkflowsStore);
 
+  const abortController = new AbortController();
+
   try {
-    const counters: TUserCounter[] | undefined = yield call(getWorkflowsCurrentPerformerCounters, {
-      templatesIdsFilter,
-      tasksApiNamesFilter,
-      workflowStartersIdsFilter,
+    const { result, clear } = yield race({
+      result: call(getWorkflowsCurrentPerformerCounters, {
+        templatesIdsFilter,
+        tasksApiNamesFilter,
+        workflowStartersIdsFilter,
+        signal: abortController.signal,
+      }),
+      clear: take(cancelCurrentPerformersCounters.type),
     });
 
-    if (!counters) {
+    if (clear) {
+      abortController.abort();
+    } else {
+      const counters: TUserCounter[] | undefined = result;
+      if (!counters) {
+        return;
+      }
+      yield put(setCurrentPerformersCounters(counters));
+    }
+  } catch (error) {
+    if (isRequestCanceled(error)) {
       return;
     }
-
-    yield put(setCurrentPerformersCounters(counters));
-  } catch (error) {
     logger.error('failed to get workflows current performer counters ', error);
+  } finally {
+    abortController.abort();
   }
 }
 
@@ -707,22 +768,37 @@ export function* updateWorkflowsTemplateStepsCountersSaga() {
   }: IStoreWorkflows = yield select(getWorkflowsStore);
   const allTemplatesIds = templateList.items.map((template) => template.id);
 
+  const abortController = new AbortController();
+
   try {
-    const counters: TTemplateStepCounter[] | undefined = yield call(getWorkflowsTemplateStepsCounters, {
-      statusFilter,
-      templatesIdsFilter: allTemplatesIds,
-      performersIdsFilter,
-      performersGroupIdsFilter,
-      workflowStartersIdsFilter,
+    const { result, clear } = yield race({
+      result: call(getWorkflowsTemplateStepsCounters, {
+        statusFilter,
+        templatesIdsFilter: allTemplatesIds,
+        performersIdsFilter,
+        performersGroupIdsFilter,
+        workflowStartersIdsFilter,
+        signal: abortController.signal,
+      }),
+      clear: take(cancelTemplateTasksCounters.type),
     });
 
-    if (!counters) {
+    if (clear) {
+      abortController.abort();
+    } else {
+      const counters: TTemplateStepCounter[] | undefined = result;
+      if (!counters) {
+        return;
+      }
+      yield put(setWorkflowsTemplateStepsCounters(counters));
+    }
+  } catch (error) {
+    if (isRequestCanceled(error)) {
       return;
     }
-
-    yield put(setWorkflowsTemplateStepsCounters(counters));
-  } catch (error) {
-    logger.error('failed to get workflows starters counters ', error);
+    logger.error('failed to get workflows template tasks counters ', error);
+  } finally {
+    abortController.abort();
   }
 }
 
@@ -955,7 +1031,7 @@ export function* watchEditComment() {
 }
 
 export function* watchLoadFilterTemplates() {
-  yield takeEvery(loadFilterTemplates.type, fetchFilterTemplates);
+  yield takeLatest(loadFilterTemplates.type, fetchFilterTemplates);
 }
 
 export function* watchLoadFilterSteps() {
@@ -979,11 +1055,11 @@ export function* watchCloneWorkflow() {
 }
 
 export function* watchUpdateCurrentPerformersCounters() {
-  yield takeEvery(updateCurrentPerformersCounters.type, updateCurrentPerformersCountersSaga);
+  yield takeLatest(updateCurrentPerformersCounters.type, updateCurrentPerformersCountersSaga);
 }
 
 export function* watchUpdateWorkflowStartersCounters() {
-  yield takeEvery(updateWorkflowStartersCounters.type, updateWorkflowStartersCountersSaga);
+  yield takeLatest(updateWorkflowStartersCounters.type, updateWorkflowStartersCountersSaga);
 }
 
 export function* watchSearchTextChanged() {

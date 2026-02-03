@@ -7,12 +7,12 @@ export type TGetTemplateFieldsResponse = {
   kickoff: Pick<IKickoff, 'fields'>;
 };
 
-export function getTemplateFields(id: string) {
+export function getTemplateFields(id: string, signal?: AbortSignal) {
   const {
     api: { urls },
   } = getBrowserConfigEnv();
 
   const url = urls.templateFields.replace(':id', String(id));
 
-  return commonRequest<TGetTemplateFieldsResponse>(url);
+  return commonRequest<TGetTemplateFieldsResponse>(url, { signal }, { shouldThrow: true });
 }
