@@ -777,7 +777,7 @@ class CommentService(BaseModelService):
         task = self.instance.task
         if task is not None and not (task.is_active or task.is_delayed):
             raise CommentedTaskNotActive
-        self.instance.workflow.storage_attachments.delete()
+        self.instance.storage_attachments.delete()
         super().partial_update(
             status=CommentStatus.DELETED,
             with_attachments=False,

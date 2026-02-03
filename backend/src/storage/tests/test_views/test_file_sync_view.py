@@ -13,7 +13,9 @@ class TestFileSyncViewSet:
 
     def test_sync__superuser__ok(self, api_client, mocker):
         # arrange
-        superuser = create_test_admin(is_superuser=True)
+        superuser = create_test_admin()
+        superuser.is_superuser = True
+        superuser.save()
         api_client.token_authenticate(superuser)
 
         mock_service = mocker.patch(
@@ -53,7 +55,9 @@ class TestFileSyncViewSet:
 
     def test_sync__admin_not_superuser__forbidden(self, api_client):
         # arrange
-        admin = create_test_admin(is_superuser=False)
+        admin = create_test_admin()
+        admin.is_superuser = False
+        admin.save()
         api_client.token_authenticate(admin)
 
         # act
@@ -63,6 +67,7 @@ class TestFileSyncViewSet:
         assert response.status_code == 403
 
     def test_sync__not_authenticated__unauthorized(self, api_client):
+        # arrange
         # act
         response = api_client.post('/storage/file-sync')
 

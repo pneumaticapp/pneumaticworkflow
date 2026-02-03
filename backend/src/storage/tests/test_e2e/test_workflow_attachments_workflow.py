@@ -3,7 +3,6 @@ E2E tests for workflow attachments.
 Tests full workflow without mocks - real database operations.
 """
 import pytest
-from django.test import override_settings, TestCase
 
 from src.processes.tests.fixtures import (
     create_test_admin,
@@ -18,8 +17,12 @@ from src.storage.utils import refresh_attachments
 pytestmark = pytest.mark.django_db
 
 
-@override_settings(FILE_DOMAIN='files.example.com')
-class TestWorkflowAttachmentsE2E(TestCase):
+@pytest.fixture(autouse=True)
+def file_domain_workflow_e2e(settings):
+    settings.FILE_DOMAIN = 'files.example.com'
+
+
+class TestWorkflowAttachmentsE2E:
     """
     End-to-end tests for workflow attachments.
     No mocks - testing real integration.
@@ -74,8 +77,14 @@ class TestWorkflowAttachmentsE2E(TestCase):
         """
         # arrange
         owner = create_test_admin()
-        performer1 = create_test_user(account=owner.account)
-        performer2 = create_test_user(account=owner.account)
+        performer1 = create_test_user(
+            account=owner.account,
+            email='wf_performer1@test.pneumatic.app',
+        )
+        performer2 = create_test_user(
+            account=owner.account,
+            email='wf_performer2@test.pneumatic.app',
+        )
         workflow = create_test_workflow(user=owner, tasks_count=2)
         task1 = workflow.tasks.first()
         task2 = workflow.tasks.last()
@@ -168,8 +177,14 @@ class TestWorkflowAttachmentsE2E(TestCase):
         """
         # arrange
         owner = create_test_admin()
-        member1 = create_test_user(account=owner.account)
-        member2 = create_test_user(account=owner.account)
+        member1 = create_test_user(
+            account=owner.account,
+            email='wf_member1@test.pneumatic.app',
+        )
+        member2 = create_test_user(
+            account=owner.account,
+            email='wf_member2@test.pneumatic.app',
+        )
         workflow = create_test_workflow(user=owner, tasks_count=1)
         workflow.members.add(member1)
         workflow.description = (

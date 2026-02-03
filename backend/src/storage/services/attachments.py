@@ -1,10 +1,11 @@
 from typing import List
 
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import IntegrityError, models, transaction
 from guardian.models import UserObjectPermission
-from guardian.shortcuts import assign_perm
+from guardian.shortcuts import assign_perm, remove_perm
 
 from src.generics.base.service import BaseModelService
 from src.permissions.models import GroupObjectPermission
@@ -36,6 +37,15 @@ class AttachmentService(BaseModelService):
             self._assign_restricted_permissions()
         elif self.instance.access_type == AccessType.ACCOUNT:
             self._assign_account_permissions()
+
+    def reassign_restricted_permissions(self, attachment: Attachment) -> None:
+        """
+        Re-assigns restricted permissions for existing attachment.
+        Use when template/workflow participants change.
+        """
+        self.instance = attachment
+        if attachment.access_type == AccessType.RESTRICTED:
+            self._assign_restricted_permissions()
 
     def _assign_restricted_permissions(self):
         """Assigns permissions for restricted access."""
@@ -99,14 +109,37 @@ class AttachmentService(BaseModelService):
                 self.instance,
             )
 
-        # Assign permissions to groups
+        # Assign permissions to groups (UserGroup; guardian.assign_perm
+        # expects auth.Group, so we use GroupObjectPermission directly)
+        ctype = ContentType.objects.get_for_model(Attachment)
+        perm = Permission.objects.get(
+            content_type=ctype,
+            codename='access_attachment',
+        )
         for performer in task_performers:
             if performer.group:
-                assign_perm(
-                    'storage.access_attachment',
-                    performer.group,
-                    self.instance,
+                GroupObjectPermission.objects.get_or_create(
+                    group=performer.group,
+                    permission=perm,
+                    content_type=ctype,
+                    object_pk=str(self.instance.pk),
                 )
+
+        # Assign permissions to template owner groups
+        if workflow and workflow.template:
+            template_group_owners = TemplateOwner.objects.filter(
+                template_id=workflow.template_id,
+                type=OwnerType.GROUP,
+                group__isnull=False,
+            ).select_related('group')
+            for template_owner in template_group_owners:
+                if template_owner.group:
+                    GroupObjectPermission.objects.get_or_create(
+                        group=template_owner.group,
+                        permission=perm,
+                        content_type=ctype,
+                        object_pk=str(self.instance.pk),
+                    )
 
     def _assign_template_permissions(self):
         """Assigns permissions for template."""
@@ -114,14 +147,49 @@ class AttachmentService(BaseModelService):
         if not template:
             return
 
-        # Assign permissions to template owners
-        template_owners = template.template_owners.all()
+        # Reload template to get current owners (after add/remove)
+        template = Template.objects.prefetch_related('owners').get(
+            pk=template.pk,
+        )
+
+        # Clear existing so removed owners lose access when we reassign
+        for uop in UserObjectPermission.objects.filter(
+                object_pk=str(self.instance.pk),
+        ).select_related('user'):
+            remove_perm(
+                'storage.access_attachment',
+                uop.user,
+                self.instance,
+            )
+
+        # Assign permissions to template owners (exclude soft-deleted)
+        template_owners = template.owners.filter(is_deleted=False)
         for owner in template_owners:
             if owner.user:
                 assign_perm(
                     'storage.access_attachment',
                     owner.user,
                     self.instance,
+                )
+
+        # Assign permissions to template owner groups
+        ctype = ContentType.objects.get_for_model(Attachment)
+        perm = Permission.objects.get(
+            content_type=ctype,
+            codename='access_attachment',
+        )
+        template_group_owners = template.owners.filter(
+            is_deleted=False,
+            type=OwnerType.GROUP,
+            group__isnull=False,
+        ).select_related('group')
+        for owner in template_group_owners:
+            if owner.group:
+                GroupObjectPermission.objects.get_or_create(
+                    group=owner.group,
+                    permission=perm,
+                    content_type=ctype,
+                    object_pk=str(self.instance.pk),
                 )
 
     def _assign_workflow_permissions(self):
@@ -175,6 +243,40 @@ class AttachmentService(BaseModelService):
                 user,
                 self.instance,
             )
+
+        # Assign permissions to groups from task performers and template owners
+        ctype = ContentType.objects.get_for_model(Attachment)
+        perm = Permission.objects.get(
+            content_type=ctype,
+            codename='access_attachment',
+        )
+        # Get all task performer groups
+        for task in tasks:
+            task_performers = task.taskperformer_set.all()
+            for performer in task_performers:
+                if performer.group:
+                    GroupObjectPermission.objects.get_or_create(
+                        group=performer.group,
+                        permission=perm,
+                        content_type=ctype,
+                        object_pk=str(self.instance.pk),
+                    )
+
+        # Get template owner groups
+        if workflow.template:
+            template_group_owners = TemplateOwner.objects.filter(
+                template_id=workflow.template_id,
+                type=OwnerType.GROUP,
+                group__isnull=False,
+            ).select_related('group')
+            for template_owner in template_group_owners:
+                if template_owner.group:
+                    GroupObjectPermission.objects.get_or_create(
+                        group=template_owner.group,
+                        permission=perm,
+                        content_type=ctype,
+                        object_pk=str(self.instance.pk),
+                    )
 
     def _assign_account_permissions(self):
         """

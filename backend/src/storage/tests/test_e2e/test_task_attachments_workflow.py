@@ -3,7 +3,6 @@ E2E tests for task attachments workflow.
 Tests full workflow without mocks - real database operations.
 """
 import pytest
-from django.test import override_settings, TestCase
 
 from src.processes.tests.fixtures import (
     create_test_admin,
@@ -18,8 +17,12 @@ from src.storage.utils import refresh_attachments
 pytestmark = pytest.mark.django_db
 
 
-@override_settings(FILE_DOMAIN='files.example.com')
-class TestTaskAttachmentsE2E(TestCase):
+@pytest.fixture(autouse=True)
+def file_domain_task_e2e(settings):
+    settings.FILE_DOMAIN = 'files.example.com'
+
+
+class TestTaskAttachmentsE2E:
     """
     End-to-end tests for task attachments.
     No mocks - testing real integration.
@@ -127,8 +130,14 @@ class TestTaskAttachmentsE2E(TestCase):
         """
         # arrange
         owner = create_test_admin()
-        performer1 = create_test_user(account=owner.account)
-        performer2 = create_test_user(account=owner.account)
+        performer1 = create_test_user(
+            account=owner.account,
+            email='performer1@test.pneumatic.app',
+        )
+        performer2 = create_test_user(
+            account=owner.account,
+            email='performer2@test.pneumatic.app',
+        )
         workflow = create_test_workflow(user=owner, tasks_count=1)
         task = workflow.tasks.first()
         task.taskperformer_set.create(user=performer1)
@@ -174,7 +183,10 @@ class TestTaskAttachmentsE2E(TestCase):
         """
         # arrange
         owner = create_test_admin()
-        performer = create_test_user(account=owner.account)
+        performer = create_test_user(
+            account=owner.account,
+            email='performer_multi@test.pneumatic.app',
+        )
         workflow = create_test_workflow(user=owner, tasks_count=1)
         task = workflow.tasks.first()
         task.taskperformer_set.create(user=performer)
@@ -182,14 +194,14 @@ class TestTaskAttachmentsE2E(TestCase):
             'Files: '
             'https://files.example.com/files/multi_file_1_e2e and '
             'https://files.example.com/files/multi_file_2_e2e and '
-            'https://files.example.com/api/files/multi_file_3_e2e'
+            'https://files.example.com/files/multi_file_3_e2e'
         )
         task.save()
 
         # act
         new_file_ids = refresh_attachments(source=task, user=owner)
 
-        # assert
+        # assert (only /files/ URLs are supported, not /api/files/)
         assert len(new_file_ids) == 3
         assert 'multi_file_1_e2e' in new_file_ids
         assert 'multi_file_2_e2e' in new_file_ids
@@ -210,8 +222,14 @@ class TestTaskAttachmentsE2E(TestCase):
         """
         # arrange
         owner = create_test_admin()
-        performer = create_test_user(account=owner.account)
-        other_user = create_test_user(account=owner.account)
+        performer = create_test_user(
+            account=owner.account,
+            email='performer_check@test.pneumatic.app',
+        )
+        other_user = create_test_user(
+            account=owner.account,
+            email='other_check@test.pneumatic.app',
+        )
         workflow = create_test_workflow(user=owner, tasks_count=1)
         task = workflow.tasks.first()
         task.taskperformer_set.create(user=performer)
@@ -245,8 +263,14 @@ class TestTaskAttachmentsE2E(TestCase):
         """
         # arrange
         owner = create_test_admin()
-        member1 = create_test_user(account=owner.account)
-        member2 = create_test_user(account=owner.account)
+        member1 = create_test_user(
+            account=owner.account,
+            email='member1@test.pneumatic.app',
+        )
+        member2 = create_test_user(
+            account=owner.account,
+            email='member2@test.pneumatic.app',
+        )
         workflow = create_test_workflow(user=owner, tasks_count=1)
         workflow.members.add(member1, member2)
         task = workflow.tasks.first()
@@ -362,8 +386,14 @@ class TestTaskAttachmentsE2E(TestCase):
         """
         # arrange
         owner = create_test_admin()
-        user1 = create_test_user(account=owner.account)
-        user2 = create_test_user(account=owner.account)
+        user1 = create_test_user(
+            account=owner.account,
+            email='user1_attachments@test.pneumatic.app',
+        )
+        user2 = create_test_user(
+            account=owner.account,
+            email='user2_attachments@test.pneumatic.app',
+        )
         workflow1 = create_test_workflow(user=owner, tasks_count=1)
         task1 = workflow1.tasks.first()
         task1.taskperformer_set.create(user=user1)

@@ -367,5 +367,8 @@ class TemplatePresetPermission(BasePermission):
             if preset.author_id == user.id or user.is_account_owner:
                 return True
             if preset.type == PresetType.ACCOUNT:
-                return preset.template.owners.filter(user_id=user.id).exists()
+                return preset.template.owners.filter(
+                    user_id=user.id,
+                    is_deleted=False,
+                ).exists()
             return False

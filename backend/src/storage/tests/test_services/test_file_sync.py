@@ -2,6 +2,7 @@ import pytest
 
 from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.tests.fixtures import (
+    create_test_attachment,
     create_test_user,
     create_test_workflow,
 )
@@ -276,10 +277,9 @@ class TestFileSyncServiceSyncToNewAttachmentModel:
             workflow=workflow,
         )
 
-        Attachment.objects.create(
+        create_test_attachment(
+            user.account,
             file_id='existing_file_id',
-            account=user.account,
-            source_type=SourceType.WORKFLOW,
             workflow=workflow,
         )
 

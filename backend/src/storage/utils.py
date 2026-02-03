@@ -429,6 +429,14 @@ def _refresh_workflow_attachments(
     # IMPORTANT: Do not remove attachments linked to fields (output != None)
     # They are managed separately via TaskFieldService
 
+    # Re-assign permissions so new workflow members get access
+    service = AttachmentService(user=user)
+    for att in Attachment.objects.filter(
+            workflow=workflow,
+            access_type=AccessType.RESTRICTED,
+    ):
+        service.reassign_restricted_permissions(att)
+
     return list(set(all_new_file_ids))  # Deduplicate
 
 
@@ -461,6 +469,14 @@ def _refresh_template_attachments(
             template=template,
         )
         all_new_file_ids.extend(new_file_ids)
+
+    # Re-assign permissions so new template owners get access
+    service = AttachmentService(user=user)
+    for att in Attachment.objects.filter(
+            template=template,
+            access_type=AccessType.RESTRICTED,
+    ):
+        service.reassign_restricted_permissions(att)
 
     return list(set(all_new_file_ids))  # Deduplicate
 

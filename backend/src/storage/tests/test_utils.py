@@ -1,11 +1,11 @@
 import pytest
-from django.test import override_settings, TestCase
+from django.test import override_settings
 
 from src.processes.tests.fixtures import (
     create_test_admin,
+    create_test_attachment,
     create_test_workflow,
 )
-from src.storage.enums import SourceType
 from src.storage.models import Attachment
 from src.storage.utils import (
     extract_all_file_ids_from_source,
@@ -16,20 +16,23 @@ from src.storage.utils import (
 
 pytestmark = pytest.mark.django_db
 
+_FILE_DOMAIN = 'example.com'
 
-@override_settings(FILE_DOMAIN='example.com')
-class TestExtractFileIdsFromText(TestCase):
+
+class TestExtractFileIdsFromText:
 
     def test_extract_file_ids__empty_text__empty_list(self):
         # act
-        result = extract_file_ids_from_text('')
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            result = extract_file_ids_from_text('')
 
         # assert
         assert result == []
 
     def test_extract_file_ids__none__empty_list(self):
         # act
-        result = extract_file_ids_from_text(None)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            result = extract_file_ids_from_text(None)
 
         # assert
         assert result == []
@@ -42,7 +45,8 @@ class TestExtractFileIdsFromText(TestCase):
         )
 
         # act
-        result = extract_file_ids_from_text(text)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            result = extract_file_ids_from_text(text)
 
         # assert
         assert 'abc123def456ghi789' in result
@@ -55,7 +59,8 @@ class TestExtractFileIdsFromText(TestCase):
         )
 
         # act
-        result = extract_file_ids_from_text(text)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            result = extract_file_ids_from_text(text)
 
         # assert
         assert 'xyz987uvw654rst321' in result
@@ -68,7 +73,8 @@ class TestExtractFileIdsFromText(TestCase):
         )
 
         # act
-        result = extract_file_ids_from_text(text)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            result = extract_file_ids_from_text(text)
 
         # assert
         assert result == []
@@ -78,7 +84,8 @@ class TestExtractFileIdsFromText(TestCase):
         text = 'file_id=qwerty123456asdfgh or file_id:mnbvcx098765lkjhgf'
 
         # act
-        result = extract_file_ids_from_text(text)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            result = extract_file_ids_from_text(text)
 
         # assert
         assert result == []
@@ -92,7 +99,8 @@ class TestExtractFileIdsFromText(TestCase):
         )
 
         # act
-        result = extract_file_ids_from_text(text)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            result = extract_file_ids_from_text(text)
 
         # assert
         assert len(result) == 2
@@ -107,7 +115,8 @@ class TestExtractFileIdsFromText(TestCase):
         )
 
         # act
-        result = extract_file_ids_from_text(text)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            result = extract_file_ids_from_text(text)
 
         # assert
         assert result.count('duplicate_id_123') == 1
@@ -117,7 +126,8 @@ class TestExtractFileIdsFromText(TestCase):
         text = 'This text has no file IDs'
 
         # act
-        result = extract_file_ids_from_text(text)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            result = extract_file_ids_from_text(text)
 
         # assert
         assert result == []
@@ -127,7 +137,8 @@ class TestExtractFileIdsFromText(TestCase):
         text = 'https://example.com/files/short'
 
         # act
-        result = extract_file_ids_from_text(text)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            result = extract_file_ids_from_text(text)
 
         # assert
         assert result == []
@@ -139,14 +150,14 @@ class TestExtractFileIdsFromText(TestCase):
         )
 
         # act
-        result = extract_file_ids_from_text(text)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            result = extract_file_ids_from_text(text)
 
         # assert
         assert 'file-id_with-special_123456' in result
 
 
-@override_settings(FILE_DOMAIN='example.com')
-class TestRefreshAttachments(TestCase):
+class TestRefreshAttachments:
 
     def test_refresh_attachments__task__create_new__ok(self):
         # arrange
@@ -159,7 +170,8 @@ class TestRefreshAttachments(TestCase):
         task.save()
 
         # act
-        new_file_ids = refresh_attachments(source=task, user=user)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            new_file_ids = refresh_attachments(source=task, user=user)
 
         # assert
         assert 'new_file_id_123456' in new_file_ids
@@ -178,7 +190,8 @@ class TestRefreshAttachments(TestCase):
         workflow.save()
 
         # act
-        new_file_ids = refresh_attachments(source=workflow, user=user)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            new_file_ids = refresh_attachments(source=workflow, user=user)
 
         # assert
         assert 'workflow_file_123' in new_file_ids
@@ -193,10 +206,9 @@ class TestRefreshAttachments(TestCase):
         workflow = create_test_workflow(user=user, tasks_count=1)
         task = workflow.tasks.first()
 
-        Attachment.objects.create(
+        create_test_attachment(
+            user.account,
             file_id='old_file_to_delete',
-            account=user.account,
-            source_type=SourceType.TASK,
             task=task,
         )
 
@@ -204,7 +216,8 @@ class TestRefreshAttachments(TestCase):
         task.save()
 
         # act
-        new_file_ids = refresh_attachments(source=task, user=user)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            new_file_ids = refresh_attachments(source=task, user=user)
 
         # assert
         assert new_file_ids == []
@@ -218,10 +231,9 @@ class TestRefreshAttachments(TestCase):
         workflow = create_test_workflow(user=user, tasks_count=1)
         task = workflow.tasks.first()
 
-        Attachment.objects.create(
+        create_test_attachment(
+            user.account,
             file_id='existing_file_123',
-            account=user.account,
-            source_type=SourceType.TASK,
             task=task,
         )
 
@@ -231,7 +243,8 @@ class TestRefreshAttachments(TestCase):
         task.save()
 
         # act
-        new_file_ids = refresh_attachments(source=task, user=user)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            new_file_ids = refresh_attachments(source=task, user=user)
 
         # assert
         assert new_file_ids == []
@@ -246,10 +259,9 @@ class TestRefreshAttachments(TestCase):
         workflow = create_test_workflow(user=user, tasks_count=1)
         task = workflow.tasks.first()
 
-        Attachment.objects.create(
+        create_test_attachment(
+            user.account,
             file_id='old_file_remove',
-            account=user.account,
-            source_type=SourceType.TASK,
             task=task,
         )
 
@@ -259,7 +271,8 @@ class TestRefreshAttachments(TestCase):
         task.save()
 
         # act
-        new_file_ids = refresh_attachments(source=task, user=user)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            new_file_ids = refresh_attachments(source=task, user=user)
 
         # assert
         assert 'new_file_add_123' in new_file_ids
@@ -299,7 +312,8 @@ class TestRefreshAttachments(TestCase):
         task.save()
 
         # act
-        new_file_ids = refresh_attachments(source=task, user=user)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            new_file_ids = refresh_attachments(source=task, user=user)
 
         # assert
         assert len(new_file_ids) == 2
@@ -343,8 +357,7 @@ class TestGetAttachmentDescriptionFields:
         assert result == []
 
 
-@override_settings(FILE_DOMAIN='example.com')
-class TestExtractAllFileIdsFromSource(TestCase):
+class TestExtractAllFileIdsFromSource:
 
     def test_extract_all_file_ids__task__ok(self):
         # arrange
@@ -357,7 +370,8 @@ class TestExtractAllFileIdsFromSource(TestCase):
         task.save()
 
         # act
-        result = extract_all_file_ids_from_source(task)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            result = extract_all_file_ids_from_source(task)
 
         # assert
         assert 'extract_all_123' in result
@@ -372,7 +386,8 @@ class TestExtractAllFileIdsFromSource(TestCase):
         workflow.save()
 
         # act
-        result = extract_all_file_ids_from_source(workflow)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            result = extract_all_file_ids_from_source(workflow)
 
         # assert
         assert 'workflow_extract_456' in result
@@ -386,7 +401,8 @@ class TestExtractAllFileIdsFromSource(TestCase):
         task.save()
 
         # act
-        result = extract_all_file_ids_from_source(task)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            result = extract_all_file_ids_from_source(task)
 
         # assert
         assert result == []
@@ -396,7 +412,8 @@ class TestExtractAllFileIdsFromSource(TestCase):
         user = create_test_admin()
 
         # act
-        result = extract_all_file_ids_from_source(user.account)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            result = extract_all_file_ids_from_source(user.account)
 
         # assert
         assert result == []
@@ -413,7 +430,8 @@ class TestExtractAllFileIdsFromSource(TestCase):
         task.save()
 
         # act
-        result = extract_all_file_ids_from_source(task)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            result = extract_all_file_ids_from_source(task)
 
         # assert
         assert result.count('duplicate_789') == 1
@@ -427,7 +445,8 @@ class TestExtractAllFileIdsFromSource(TestCase):
         task.save()
 
         # act
-        result = extract_all_file_ids_from_source(task)
+        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+            result = extract_all_file_ids_from_source(task)
 
         # assert
         assert result == []

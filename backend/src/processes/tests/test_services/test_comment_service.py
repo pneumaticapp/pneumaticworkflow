@@ -2561,6 +2561,7 @@ def test_delete__ok(mocker):
         account=account,
         file_id='first_template_file.png',
         workflow=workflow,
+        event=event,
     )
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
@@ -2598,7 +2599,7 @@ def test_delete__ok(mocker):
         text=None,
         force_save=True,
     )
-    assert event.workflow.storage_attachments.count() == 0
+    assert event.storage_attachments.count() == 0
     comment_deleted_analysis_mock.assert_called_once_with(
         text=event.clear_text,
         user=account_owner,
@@ -2626,15 +2627,15 @@ def test_delete__task_delete__ok(mocker):
         task=None,
         user=account_owner,
     )
-    attachment = Attachment.objects.create(
+    Attachment.objects.create(
         file_id='test_file_workflow_123.png',
         account=account,
         source_type=SourceType.WORKFLOW,
         access_type=AccessType.RESTRICTED,
         task=None,
         workflow=workflow,
+        event=event,
     )
-    event.workflow.storage_attachments.add(attachment)
     validate_comment_action_mock = mocker.patch(
         'src.processes.services.events.'
         'CommentService._validate_comment_action',
@@ -2671,7 +2672,7 @@ def test_delete__task_delete__ok(mocker):
         text=None,
         force_save=True,
     )
-    assert event.workflow.storage_attachments.count() == 0
+    assert event.storage_attachments.count() == 0
     comment_deleted_analysis_mock.assert_called_once_with(
         text=event.clear_text,
         user=account_owner,

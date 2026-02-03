@@ -3,12 +3,12 @@ E2E tests for template attachments.
 Tests full workflow without mocks - real database operations.
 """
 import pytest
-from django.test import override_settings, TestCase
 
 from src.processes.enums import OwnerType
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
     create_test_admin,
+    create_test_group,
     create_test_template,
     create_test_user,
 )
@@ -20,8 +20,12 @@ from src.storage.utils import refresh_attachments
 pytestmark = pytest.mark.django_db
 
 
-@override_settings(FILE_DOMAIN='files.example.com')
-class TestTemplateAttachmentsE2E(TestCase):
+@pytest.fixture(autouse=True)
+def file_domain_template_e2e(settings):
+    settings.FILE_DOMAIN = 'files.example.com'
+
+
+class TestTemplateAttachmentsE2E:
     """
     End-to-end tests for template attachments.
     No mocks - testing real integration.
@@ -39,6 +43,7 @@ class TestTemplateAttachmentsE2E(TestCase):
         template = create_test_template(owner, is_active=True)
         TemplateOwner.objects.create(
             template=template,
+            account=template.account,
             user=owner,
             type=OwnerType.USER,
         )
@@ -75,11 +80,13 @@ class TestTemplateAttachmentsE2E(TestCase):
         template = create_test_template(owner1, is_active=True)
         TemplateOwner.objects.create(
             template=template,
+            account=template.account,
             user=owner1,
             type=OwnerType.USER,
         )
         TemplateOwner.objects.create(
             template=template,
+            account=template.account,
             user=owner2,
             type=OwnerType.USER,
         )
@@ -116,6 +123,7 @@ class TestTemplateAttachmentsE2E(TestCase):
         template = create_test_template(owner, is_active=True)
         TemplateOwner.objects.create(
             template=template,
+            account=template.account,
             user=owner,
             type=OwnerType.USER,
         )
@@ -149,6 +157,7 @@ class TestTemplateAttachmentsE2E(TestCase):
         template = create_test_template(owner, is_active=True)
         TemplateOwner.objects.create(
             template=template,
+            account=template.account,
             user=owner,
             type=OwnerType.USER,
         )
@@ -178,10 +187,15 @@ class TestTemplateAttachmentsE2E(TestCase):
         """
         # arrange
         owner1 = create_test_admin()
-        owner2 = create_test_user(account=owner1.account, is_admin=True)
+        owner2 = create_test_user(
+            account=owner1.account,
+            is_admin=True,
+            email='owner2_tmpl@test.pneumatic.app',
+        )
         template = create_test_template(owner1, is_active=True)
         TemplateOwner.objects.create(
             template=template,
+            account=template.account,
             user=owner1,
             type=OwnerType.USER,
         )
@@ -207,6 +221,7 @@ class TestTemplateAttachmentsE2E(TestCase):
         # act
         TemplateOwner.objects.create(
             template=template,
+            account=template.account,
             user=owner2,
             type=OwnerType.USER,
         )
@@ -231,6 +246,7 @@ class TestTemplateAttachmentsE2E(TestCase):
         template = create_test_template(owner, is_active=True)
         TemplateOwner.objects.create(
             template=template,
+            account=template.account,
             user=owner,
             type=OwnerType.USER,
         )
@@ -266,6 +282,7 @@ class TestTemplateAttachmentsE2E(TestCase):
         template = create_test_template(owner, is_active=True)
         TemplateOwner.objects.create(
             template=template,
+            account=template.account,
             user=owner,
             type=OwnerType.USER,
         )
@@ -300,6 +317,7 @@ class TestTemplateAttachmentsE2E(TestCase):
         template = create_test_template(owner, is_active=True)
         TemplateOwner.objects.create(
             template=template,
+            account=template.account,
             user=owner,
             type=OwnerType.USER,
         )
@@ -334,15 +352,16 @@ class TestTemplateAttachmentsE2E(TestCase):
         """
         # arrange
         owner1 = create_test_admin()
-        owner2 = create_test_user(account=owner1.account, is_admin=True)
-        template = create_test_template(owner1, is_active=True)
-        TemplateOwner.objects.create(
-            template=template,
-            user=owner1,
-            type=OwnerType.USER,
+        owner2 = create_test_user(
+            account=owner1.account,
+            is_admin=True,
+            email='owner2_remove@test.pneumatic.app',
         )
+        template = create_test_template(owner1, is_active=True)
+        # owner1 is already created as template owner by create_test_template
         owner2_obj = TemplateOwner.objects.create(
             template=template,
+            account=template.account,
             user=owner2,
             type=OwnerType.USER,
         )
@@ -368,13 +387,134 @@ class TestTemplateAttachmentsE2E(TestCase):
 
         # assert
         attachment.refresh_from_db()
+        assert svc1.check_user_permission(
+            user_id=owner1.id,
+            account_id=owner1.account_id,
+            file_id=attachment.file_id,
+        )
         assert not svc2.check_user_permission(
             user_id=owner2.id,
             account_id=owner2.account_id,
             file_id=attachment.file_id,
         )
+
+    def test_template_group_owner__all_group_users_access__ok(self):
+        """
+        Scenario: Template with group owner
+        Expected: All users in owner group have access to attachments
+        """
+        # arrange
+        owner = create_test_admin()
+        group_user1 = create_test_user(
+            account=owner.account,
+            email='group_owner1@test.pneumatic.app',
+        )
+        group_user2 = create_test_user(
+            account=owner.account,
+            email='group_owner2@test.pneumatic.app',
+        )
+        group = create_test_group(
+            owner.account,
+            name='Template Owner Group E2E',
+            users=[group_user1, group_user2],
+        )
+        template = create_test_template(owner, is_active=True)
+        TemplateOwner.objects.create(
+            template=template,
+            account=template.account,
+            group=group,
+            type=OwnerType.GROUP,
+        )
+        template.description = (
+            'File: https://files.example.com/files/tmpl_group_owner_e2e'
+        )
+        template.save()
+
+        # act
+        refresh_attachments(source=template, user=owner)
+
+        # assert
+        attachment = Attachment.objects.get(
+            file_id='tmpl_group_owner_e2e',
+        )
+        svc1 = AttachmentService(user=group_user1)
+        svc2 = AttachmentService(user=group_user2)
         assert svc1.check_user_permission(
-            user_id=owner1.id,
-            account_id=owner1.account_id,
+            user_id=group_user1.id,
+            account_id=group_user1.account_id,
+            file_id=attachment.file_id,
+        )
+        assert svc2.check_user_permission(
+            user_id=group_user2.id,
+            account_id=group_user2.account_id,
+            file_id=attachment.file_id,
+        )
+
+    def test_template_mixed_owners__all_have_access__ok(self):
+        """
+        Scenario: Template with both individual and group owners
+        Expected: Both individual and group users have access
+        """
+        # arrange
+        owner = create_test_admin()
+        individual_owner = create_test_user(
+            account=owner.account,
+            is_admin=True,
+            email='individual_owner@test.pneumatic.app',
+        )
+        group_user1 = create_test_user(
+            account=owner.account,
+            email='mixed_group1@test.pneumatic.app',
+        )
+        group_user2 = create_test_user(
+            account=owner.account,
+            email='mixed_group2@test.pneumatic.app',
+        )
+        group = create_test_group(
+            owner.account,
+            name='Mixed Owner Group E2E',
+            users=[group_user1, group_user2],
+        )
+        template = create_test_template(owner, is_active=True)
+        TemplateOwner.objects.create(
+            template=template,
+            account=template.account,
+            user=individual_owner,
+            type=OwnerType.USER,
+        )
+        TemplateOwner.objects.create(
+            template=template,
+            account=template.account,
+            group=group,
+            type=OwnerType.GROUP,
+        )
+        template.description = (
+            'File: https://files.example.com/files/tmpl_mixed_owners_e2e'
+        )
+        template.save()
+
+        # act
+        refresh_attachments(source=template, user=owner)
+
+        # assert
+        attachment = Attachment.objects.get(
+            file_id='tmpl_mixed_owners_e2e',
+        )
+        svc_individual = AttachmentService(user=individual_owner)
+        svc_group1 = AttachmentService(user=group_user1)
+        svc_group2 = AttachmentService(user=group_user2)
+        assert svc_individual.check_user_permission(
+            user_id=individual_owner.id,
+            account_id=individual_owner.account_id,
+            file_id=attachment.file_id,
+        )
+        assert svc_group1.check_user_permission(
+            user_id=group_user1.id,
+            account_id=group_user1.account_id,
+            file_id=attachment.file_id,
+        )
+        assert svc_group2.check_user_permission(
+            user_id=group_user2.id,
+            account_id=group_user2.account_id,
             file_id=attachment.file_id,
         )

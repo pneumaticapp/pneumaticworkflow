@@ -4,6 +4,7 @@ from guardian.shortcuts import assign_perm
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
+    create_test_attachment,
     create_test_user,
     create_test_workflow,
 )
@@ -157,11 +158,10 @@ class TestAttachmentServiceBulkCreate:
         workflow = create_test_workflow(user=user, tasks_count=1)
         task = workflow.tasks.first()
 
-        Attachment.objects.create(
+        create_test_attachment(
+            user.account,
             file_id='existing_file',
-            account=user.account,
             access_type=AccessType.ACCOUNT,
-            source_type=SourceType.TASK,
             task=task,
         )
 
@@ -185,9 +185,9 @@ class TestAttachmentServiceCheckPermission:
     def test_check_user_permission__public__ok(self):
         # arrange
         user = create_test_admin()
-        attachment = Attachment.objects.create(
+        attachment = create_test_attachment(
+            user.account,
             file_id='public_file',
-            account=user.account,
             access_type=AccessType.PUBLIC,
             source_type=SourceType.ACCOUNT,
         )
@@ -206,9 +206,9 @@ class TestAttachmentServiceCheckPermission:
     def test_check_user_permission__account_same__ok(self):
         # arrange
         user = create_test_admin()
-        attachment = Attachment.objects.create(
+        attachment = create_test_attachment(
+            user.account,
             file_id='account_file',
-            account=user.account,
             access_type=AccessType.ACCOUNT,
             source_type=SourceType.ACCOUNT,
         )
@@ -231,9 +231,9 @@ class TestAttachmentServiceCheckPermission:
 
         account2 = create_test_account()
 
-        attachment = Attachment.objects.create(
+        attachment = create_test_attachment(
+            account2,
             file_id='other_account_file',
-            account=account2,
             access_type=AccessType.ACCOUNT,
             source_type=SourceType.ACCOUNT,
         )
@@ -256,11 +256,10 @@ class TestAttachmentServiceCheckPermission:
         workflow = create_test_workflow(user=user, tasks_count=1)
         task = workflow.tasks.first()
 
-        attachment = Attachment.objects.create(
+        attachment = create_test_attachment(
+            user.account,
             file_id='restricted_file',
-            account=user.account,
             access_type=AccessType.RESTRICTED,
-            source_type=SourceType.TASK,
             task=task,
         )
 
@@ -284,11 +283,10 @@ class TestAttachmentServiceCheckPermission:
         workflow = create_test_workflow(user=user, tasks_count=1)
         task = workflow.tasks.first()
 
-        attachment = Attachment.objects.create(
+        attachment = create_test_attachment(
+            user.account,
             file_id='restricted_file_no_perm',
-            account=user.account,
             access_type=AccessType.RESTRICTED,
-            source_type=SourceType.TASK,
             task=task,
         )
 
@@ -322,9 +320,9 @@ class TestAttachmentServiceCheckPermission:
     def test_check_user_permission__user_not_exists__false(self):
         # arrange
         user = create_test_admin()
-        attachment = Attachment.objects.create(
+        attachment = create_test_attachment(
+            user.account,
             file_id='file_test',
-            account=user.account,
             access_type=AccessType.RESTRICTED,
             source_type=SourceType.ACCOUNT,
         )
@@ -348,9 +346,9 @@ class TestAttachmentServiceGetUserAttachments:
         # arrange
         user = create_test_admin()
 
-        attachment = Attachment.objects.create(
+        attachment = create_test_attachment(
+            user.account,
             file_id='account_attachment',
-            account=user.account,
             access_type=AccessType.ACCOUNT,
             source_type=SourceType.ACCOUNT,
         )
@@ -368,9 +366,9 @@ class TestAttachmentServiceGetUserAttachments:
         user = create_test_admin()
         other_account = create_test_account()
 
-        attachment = Attachment.objects.create(
+        attachment = create_test_attachment(
+            other_account,
             file_id='public_attachment',
-            account=other_account,
             access_type=AccessType.PUBLIC,
             source_type=SourceType.ACCOUNT,
         )
@@ -389,11 +387,10 @@ class TestAttachmentServiceGetUserAttachments:
         workflow = create_test_workflow(user=user, tasks_count=1)
         task = workflow.tasks.first()
 
-        attachment = Attachment.objects.create(
+        attachment = create_test_attachment(
+            user.account,
             file_id='restricted_attachment',
-            account=user.account,
             access_type=AccessType.RESTRICTED,
-            source_type=SourceType.TASK,
             task=task,
         )
 
@@ -415,11 +412,10 @@ class TestAttachmentServiceGetUserAttachments:
         workflow = create_test_workflow(user=user1, tasks_count=1)
         task = workflow.tasks.first()
 
-        attachment = Attachment.objects.create(
+        attachment = create_test_attachment(
+            user1.account,
             file_id='restricted_no_perm',
-            account=user1.account,
             access_type=AccessType.RESTRICTED,
-            source_type=SourceType.TASK,
             task=task,
         )
 
@@ -440,9 +436,9 @@ class TestAttachmentServiceGetUserAttachments:
 
         account2 = create_test_account()
 
-        attachment = Attachment.objects.create(
+        attachment = create_test_attachment(
+            account2,
             file_id='other_account',
-            account=account2,
             access_type=AccessType.ACCOUNT,
             source_type=SourceType.ACCOUNT,
         )
@@ -459,9 +455,9 @@ class TestAttachmentServiceGetUserAttachments:
         # arrange
         user = create_test_admin()
 
-        attachment = Attachment.objects.create(
+        attachment = create_test_attachment(
+            user.account,
             file_id='duplicate_test',
-            account=user.account,
             access_type=AccessType.ACCOUNT,
             source_type=SourceType.ACCOUNT,
         )

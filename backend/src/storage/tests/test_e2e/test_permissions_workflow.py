@@ -6,16 +6,17 @@ Tests full workflow without mocks - real database operations.
 import pytest
 from guardian.shortcuts import assign_perm
 
-from src.accounts.models import UserGroup
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
+    create_test_attachment,
     create_test_guest,
+    create_test_group,
+    create_test_owner,
     create_test_user,
     create_test_workflow,
 )
 from src.storage.enums import AccessType, SourceType
-from src.storage.models import Attachment
 from src.storage.services.attachments import AttachmentService
 
 pytestmark = pytest.mark.django_db
@@ -39,9 +40,9 @@ class TestPermissionsWorkflowE2E:
             account=account2,
             email='admin2@pneumatic.app',
         )
-        attachment = Attachment.objects.create(
+        attachment = create_test_attachment(
+            account1,
             file_id='public_e2e',
-            account=account1,
             access_type=AccessType.PUBLIC,
             source_type=SourceType.ACCOUNT,
         )
@@ -66,9 +67,9 @@ class TestPermissionsWorkflowE2E:
         account = create_test_account()
         create_test_admin(account=account)
         user2 = create_test_user(account=account)
-        attachment = Attachment.objects.create(
+        attachment = create_test_attachment(
+            account,
             file_id='account_e2e',
-            account=account,
             access_type=AccessType.ACCOUNT,
             source_type=SourceType.ACCOUNT,
         )
@@ -94,9 +95,9 @@ class TestPermissionsWorkflowE2E:
         account2 = create_test_account()
         create_test_admin(account=account1)
         user2 = create_test_admin(email='user2@gmail.com', account=account2)
-        attachment = Attachment.objects.create(
+        attachment = create_test_attachment(
+            account1,
             file_id='account_diff_e2e',
-            account=account1,
             access_type=AccessType.ACCOUNT,
             source_type=SourceType.ACCOUNT,
         )
@@ -119,9 +120,9 @@ class TestPermissionsWorkflowE2E:
         """
         # arrange
         user = create_test_admin()
-        attachment = Attachment.objects.create(
+        attachment = create_test_attachment(
+            user.account,
             file_id='restricted_e2e',
-            account=user.account,
             access_type=AccessType.RESTRICTED,
             source_type=SourceType.ACCOUNT,
         )
@@ -145,9 +146,9 @@ class TestPermissionsWorkflowE2E:
         """
         # arrange
         user = create_test_admin()
-        attachment = Attachment.objects.create(
+        attachment = create_test_attachment(
+            user.account,
             file_id='restricted_no_perm_e2e',
-            account=user.account,
             access_type=AccessType.RESTRICTED,
             source_type=SourceType.ACCOUNT,
         )
@@ -171,11 +172,11 @@ class TestPermissionsWorkflowE2E:
         # arrange
         owner = create_test_admin()
         user_in_group = create_test_user(account=owner.account)
-        group = UserGroup.objects.create(
+        group = create_test_group(
+            owner.account,
             name='Test Group E2E',
-            account=owner.account,
+            users=[user_in_group],
         )
-        group.users.add(user_in_group)
         workflow = create_test_workflow(user=owner, tasks_count=1)
         task = workflow.tasks.first()
         task.taskperformer_set.create(group=group)
@@ -208,10 +209,7 @@ class TestPermissionsWorkflowE2E:
         # arrange
         owner = create_test_admin()
         user_not_in_group = create_test_user(account=owner.account)
-        group = UserGroup.objects.create(
-            name='Test Group E2E 2',
-            account=owner.account,
-        )
+        group = create_test_group(owner.account, name='Test Group E2E 2')
         workflow = create_test_workflow(user=owner, tasks_count=1)
         task = workflow.tasks.first()
         task.taskperformer_set.create(group=group)
@@ -241,8 +239,8 @@ class TestPermissionsWorkflowE2E:
         Scenario: Guest user with permission
         Expected: Guest can access
         """
-        # arrange
-        owner = create_test_admin()
+        # arrange (owner must be account_owner for GuestService.create)
+        owner = create_test_owner()
         guest = create_test_guest(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
         task = workflow.tasks.first()
@@ -294,9 +292,9 @@ class TestPermissionsWorkflowE2E:
         """
         # arrange
         user = create_test_admin()
-        attachment = Attachment.objects.create(
+        attachment = create_test_attachment(
+            user.account,
             file_id='user_not_exists_e2e',
-            account=user.account,
             access_type=AccessType.RESTRICTED,
             source_type=SourceType.ACCOUNT,
         )
@@ -323,34 +321,34 @@ class TestPermissionsWorkflowE2E:
         other_account = create_test_account()
 
         # Public attachment from other account
-        Attachment.objects.create(
+        create_test_attachment(
+            other_account,
             file_id='mixed_public_e2e',
-            account=other_account,
             access_type=AccessType.PUBLIC,
             source_type=SourceType.ACCOUNT,
         )
 
         # Account attachment from same account
-        Attachment.objects.create(
+        create_test_attachment(
+            account,
             file_id='mixed_account_e2e',
-            account=account,
             access_type=AccessType.ACCOUNT,
             source_type=SourceType.ACCOUNT,
         )
 
         # Restricted attachment with permission
-        restricted_att = Attachment.objects.create(
+        restricted_att = create_test_attachment(
+            account,
             file_id='mixed_restricted_e2e',
-            account=account,
             access_type=AccessType.RESTRICTED,
             source_type=SourceType.ACCOUNT,
         )
         assign_perm('storage.access_attachment', user, restricted_att)
 
         # Restricted attachment without permission
-        Attachment.objects.create(
+        create_test_attachment(
+            account,
             file_id='mixed_no_access_e2e',
-            account=account,
             access_type=AccessType.RESTRICTED,
             source_type=SourceType.ACCOUNT,
         )
@@ -409,8 +407,10 @@ class TestPermissionsWorkflowE2E:
         )
         task2_attachment = service.instance
 
-        # act & assert
+        # act
         svc = AttachmentService(user=member)
+
+        # assert
         assert svc.check_user_permission(
             user_id=member.id,
             account_id=member.account_id,

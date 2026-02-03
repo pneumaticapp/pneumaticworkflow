@@ -691,6 +691,8 @@ def create_test_attachment(
     template=None,
     output=None,
     event=None,
+    access_type=AccessType.RESTRICTED,
+    source_type=None,
 ):
     """
     Create test attachment for new storage service.
@@ -703,23 +705,25 @@ def create_test_attachment(
         template: Optional Template instance
         output: Optional TaskField instance (for field-level attachments)
         event: Optional WorkflowEvent instance
+        access_type: AccessType (default RESTRICTED)
+        source_type: SourceType (default from task/workflow/template)
 
     Returns:
         Attachment instance
     """
-    # Determine source type
-    if task:
-        source_type = SourceType.TASK
-    elif template:
-        source_type = SourceType.TEMPLATE
-    else:
-        source_type = SourceType.WORKFLOW
+    if source_type is None:
+        if task:
+            source_type = SourceType.TASK
+        elif template:
+            source_type = SourceType.TEMPLATE
+        else:
+            source_type = SourceType.WORKFLOW
 
     return Attachment.objects.create(
         file_id=file_id,
         account=account,
         source_type=source_type,
-        access_type=AccessType.RESTRICTED,
+        access_type=access_type,
         task=task,
         workflow=workflow,
         template=template,
