@@ -12,3 +12,8 @@ export interface ICreateUserFormData {
   status: TUserStatus;
   password: string;
 }
+
+export interface IStatusOption {
+  label: string;
+  value: TUserStatus;
+}

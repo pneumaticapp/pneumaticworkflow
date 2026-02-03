@@ -8,22 +8,21 @@ import { DropdownList } from '../../../UI/DropdownList';
 import { Button } from '../../../UI/Buttons/Button';
 import { validateEmail, validateRegistrationPassword } from '../../../../utils/validators';
 import { getErrorsObject } from '../../../../utils/formik/getErrorsObject';
+import { copyToClipboard } from '../../../../utils/helpers';
+import { createPassword } from '../../../../utils/createPassword';
+import { NotificationManager } from '../../../UI/Notifications';
 
-import { ICreateUserModalProps, ICreateUserFormData, TUserStatus } from './types';
+import { ICreateUserModalProps, ICreateUserFormData, IStatusOption } from './types';
 
 import styles from './CreateUserModal.css';
 
-const generatePassword = (): string => {
-  return Math.random().toString(36).slice(2, 10);
-};
-
 const formatStatusOption = (
-  { label, value }: { label: string; value: string },
+  { label, value } : IStatusOption,
   { context }: { context: string },
-  selectedValue: string,
+  selectedValue: IStatusOption['value'],
 ) => {
   if (context === 'menu' && value === selectedValue) {
-    return <span className={styles['option-selected']}>{label}</span>;
+    return <span className={styles['modal__option--selected']}>{label}</span>;
   }
   return label;
 };
@@ -31,7 +30,7 @@ const formatStatusOption = (
 export function CreateUserModal({ isOpen, onClose }: ICreateUserModalProps) {
   const { formatMessage } = useIntl();
 
-  const statusOptions = [
+  const statusOptions: IStatusOption[] = [
     { label: formatMessage({ id: 'team.create-user-modal.status-admin' }), value: 'Admin' },
     { label: formatMessage({ id: 'team.create-user-modal.status-user' }), value: 'User' },
   ];
@@ -41,8 +40,8 @@ export function CreateUserModal({ isOpen, onClose }: ICreateUserModalProps) {
       firstName: '',
       lastName: '',
       email: '',
-      status: 'User' as TUserStatus,
-      password: generatePassword(),
+      status: 'User',
+      password: createPassword(),
     }),
     [isOpen],
   );
@@ -70,71 +69,88 @@ export function CreateUserModal({ isOpen, onClose }: ICreateUserModalProps) {
           return errors;
         }}
       >
-        {({ values, errors, handleChange, handleSubmit: formikSubmit, setFieldValue, isValid, dirty }) => (
-          <form onSubmit={formikSubmit}>
-            <ModalBody>
-              <div className={styles['form']}>
-                <InputField
-                  name="firstName"
-                  value={values.firstName}
-                  onChange={handleChange}
-                  title={formatMessage({ id: 'team.create-user-modal.first-name' })}
-                  fieldSize="lg"
-                />
-                <InputField
-                  name="lastName"
-                  value={values.lastName}
-                  onChange={handleChange}
-                  title={formatMessage({ id: 'team.create-user-modal.last-name' })}
-                  fieldSize="lg"
-                />
-                <InputField
-                  name="email"
-                  value={values.email}
-                  onChange={handleChange}
-                  title={formatMessage({ id: 'team.create-user-modal.email' })}
-                  fieldSize="lg"
-                  isRequired
-                  type="email"
-                  errorMessage={errors.email}
-                  showErrorIfTouched
-                />
+        {({ values, errors, handleChange, handleSubmit: formikSubmit, setFieldValue, isValid, dirty }) => {
+          const handleStatusChange = (option: IStatusOption) => setFieldValue('status', option.value);
+          
+          const renderStatusOption = (option: IStatusOption, { context }: { context: string }) =>
+            formatStatusOption(option, { context }, values.status);
 
-                <DropdownList
-                  label={formatMessage({ id: 'team.create-user-modal.status' })}
-                  options={statusOptions}
-                  value={statusOptions.find((opt) => opt.value === values.status)}
-                  onChange={(option: { value: string }) => setFieldValue('status', option.value)}
-                  className={styles['dropdown-required']}
-                  formatOptionLabel={(option: { label: string; value: string }, meta) =>
-                    formatStatusOption(option, meta, values.status)
-                  }
-                />
+          return (
+            <form onSubmit={formikSubmit}>
+              <ModalBody>
+                <div className={styles['modal__form']}>
+                  <InputField
+                    name="firstName"
+                    value={values.firstName}
+                    onChange={handleChange}
+                    title={formatMessage({ id: 'team.create-user-modal.first-name' })}
+                    fieldSize="lg"
+                  />
+                  <InputField
+                    name="lastName"
+                    value={values.lastName}
+                    onChange={handleChange}
+                    title={formatMessage({ id: 'team.create-user-modal.last-name' })}
+                    fieldSize="lg"
+                  />
+                  <InputField
+                    name="email"
+                    value={values.email}
+                    onChange={handleChange}
+                    title={formatMessage({ id: 'team.create-user-modal.email' })}
+                    fieldSize="lg"
+                    isRequired
+                    type="email"
+                    errorMessage={errors.email}
+                    showErrorIfTouched
+                  />
 
-                <InputField
-                  name="password"
-                  value={values.password}
-                  onChange={handleChange}
-                  title={formatMessage({ id: 'team.create-user-modal.password' })}
-                  fieldSize="lg"
-                  type="text"
-                  isRequired
-                  errorMessage={errors.password}
-                  showErrorIfTouched
-                />
-              </div>
-            </ModalBody>
+                  <DropdownList
+                    label={formatMessage({ id: 'team.create-user-modal.status' })}
+                    options={statusOptions}
+                    value={statusOptions.find((opt) => opt.value === values.status)}
+                    onChange={handleStatusChange}
+                    className={styles['modal__dropdown--required']}
+                    formatOptionLabel={renderStatusOption}
+                  />
 
-            <ModalFooter>
-              <Button
-                type="submit"
-                label={formatMessage({ id: 'team.create-user-modal.submit' })}
-                buttonStyle="yellow"
-                disabled={!isValid || !dirty}
-              />
-            </ModalFooter>
-          </form>
-        )}
+                  <div className={styles['modal__password-field']}>
+                    <InputField
+                      name="password"
+                      value={values.password}
+                      onChange={handleChange}
+                      title={formatMessage({ id: 'team.create-user-modal.password' })}
+                      fieldSize="lg"
+                      type="text"
+                      isRequired
+                      errorMessage={errors.password}
+                      showErrorIfTouched
+                    />
+                    <button
+                      type="button"
+                      className={styles['modal__copy-btn']}
+                      onClick={() => {
+                        copyToClipboard(values.password);
+                        NotificationManager.success({ message: 'team.create-user-modal.password-copied' });
+                      }}
+                    >
+                      {formatMessage({ id: 'team.create-user-modal.copy' })}
+                    </button>
+                  </div>
+                </div>
+              </ModalBody>
+
+              <ModalFooter>
+                <Button
+                  type="submit"
+                  label={formatMessage({ id: 'team.create-user-modal.submit' })}
+                  buttonStyle="yellow"
+                  disabled={!isValid || !dirty}
+                />
+              </ModalFooter>
+            </form>
+          );
+        }}
       </Formik>
     </BaseModal>
   );

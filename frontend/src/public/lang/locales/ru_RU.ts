@@ -315,6 +315,8 @@ export const ruMessages = {
   'team.create-user-modal.status-admin': 'Администратор',
   'team.create-user-modal.status-user': 'Пользователь',
   'team.create-user-modal.password': 'Пароль',
+  'team.create-user-modal.copy': 'COPY',
+  'team.create-user-modal.password-copied': 'Пароль скопирован',
   'team.create-user-modal.submit': 'Создать пользователя',
   'users.error-already-accepted': 'Эти пользователи уже приняли приглашения на этот аккаунт',
   'users.faied-fetch': 'Не удалось загрузить пользователей',

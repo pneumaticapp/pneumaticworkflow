@@ -329,6 +329,8 @@ export const enMessages = {
   'team.create-user-modal.status-admin': 'Admin',
   'team.create-user-modal.status-user': 'User',
   'team.create-user-modal.password': 'Password',
+  'team.create-user-modal.copy': 'COPY',
+  'team.create-user-modal.password-copied': 'Password copied',
   'team.create-user-modal.submit': 'Create user',
 
   'team.users': 'Users',
