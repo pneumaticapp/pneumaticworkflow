@@ -100,6 +100,7 @@ def test_create_instance__all_fields__ok(mocker):
     assert user.is_account_owner == is_account_owner
     assert user.date_fmt == UserDateFormat.PY_EUROPE_24
     assert user.date_fdw == UserFirstDayWeek.FRIDAY
+    assert user.password == safe_password
     make_password_mock.assert_called_once_with(raw_password)
 
 
@@ -1837,10 +1838,17 @@ def test_partial_update__all_fields_end_to_end__ok(
         'date_fdw': UserFirstDayWeek.THURSDAY,
         'is_admin': False,
     }
+    raw_password = 'new password 123'
     update_kwargs = {
         'groups': [new_group.id],
+        'raw_password': raw_password,
         **user_data,
     }
+    safe_password = 'some safe password'
+    make_password_mock = mocker.patch(
+        'src.accounts.services.user.make_password',
+        return_value=safe_password,
+    )
     update_related_user_fields_mock = mocker.patch(
         'src.accounts.services.user.UserService.'
         '_update_related_user_fields',
@@ -1909,6 +1917,8 @@ def test_partial_update__all_fields_end_to_end__ok(
     )
     assert user.user_groups.count() == 1
     assert user.user_groups.first().id == update_kwargs['groups'][0]
+    assert user.password == safe_password
+    make_password_mock.assert_called_once_with(raw_password)
 
 
 def test_partial_update__default_force_save__ok(
@@ -1922,6 +1932,9 @@ def test_partial_update__default_force_save__ok(
     update_kwargs = {
         'some_property': 'value',
     }
+    make_password_mock = mocker.patch(
+        'src.accounts.services.user.make_password',
+    )
     partial_update_mock = mocker.patch(
         'src.generics.base.service.BaseModelService.partial_update',
     )
@@ -1963,6 +1976,7 @@ def test_partial_update__default_force_save__ok(
         account_id=account.id,
         user_data=UserWebsocketSerializer(user).data,
     )
+    make_password_mock.assert_not_called()
 
 
 def test_partial_update__force_save_true__ok(

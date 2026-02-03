@@ -57,7 +57,7 @@ class UserService(
         last_name: Optional[str] = None,
         photo: Optional[str] = None,
         raw_password: Optional[str] = None,
-        password: Optional[str] = None,
+        password: Optional[str] = None,  # hash for database storage
         is_admin: bool = True,
         is_account_owner: bool = False,
         language: Language.LITERALS = None,
@@ -75,6 +75,8 @@ class UserService(
         is_comments_mentions_subscriber: bool = True,
         **kwargs,
     ) -> UserModel:
+
+        """ password parameter need for create tenant account owner """
 
         if not password:
             if not raw_password:
@@ -325,12 +327,20 @@ class UserService(
         self,
         force_save=False,
         groups: Optional[list] = None,
+        raw_password: Optional[str] = None,
         **update_kwargs,
     ) -> UserModel:
 
         old_name = self.instance.name
         with transaction.atomic():
-            super().partial_update(**update_kwargs, force_save=force_save)
+            if raw_password:
+                super().partial_update(
+                    password=make_password(raw_password),
+                    **update_kwargs,
+                    force_save=force_save,
+                )
+            else:
+                super().partial_update(**update_kwargs, force_save=force_save)
             if groups:
                 self.instance.user_groups.set(groups)
             self._update_related_user_fields(old_name=old_name)
