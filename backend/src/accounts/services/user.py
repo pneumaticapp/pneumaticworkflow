@@ -52,7 +52,7 @@ class UserService(
         account: Account,
         email: str,
         phone: Optional[str] = None,
-        status: UserStatus = UserStatus.ACTIVE,
+        status: UserStatus.LITERALS = UserStatus.ACTIVE,
         first_name: Optional[str] = None,
         last_name: Optional[str] = None,
         photo: Optional[str] = None,
@@ -62,8 +62,8 @@ class UserService(
         is_account_owner: bool = False,
         language: Language.LITERALS = None,
         timezone: Optional[str] = None,
-        date_fmt: UserDateFormat = None,
-        date_fdw: UserFirstDayWeek = None,
+        date_fmt: UserDateFormat.LITERALS = None,
+        date_fdw: UserFirstDayWeek.LITERALS = None,
         is_superuser: bool = False,
         is_staff: bool = False,
         is_tasks_digest_subscriber: bool = True,
@@ -105,6 +105,7 @@ class UserService(
 
         try:
             self.instance = UserModel.objects.create(
+                account=account,
                 email=email,
                 first_name=first_name or '',
                 last_name=last_name or '',
@@ -113,7 +114,6 @@ class UserService(
                 phone=phone,
                 is_admin=is_admin,
                 is_account_owner=is_account_owner,
-                account=account,
                 status=status,
                 language=language,
                 timezone=timezone,
@@ -135,7 +135,7 @@ class UserService(
             raise AlreadyRegisteredException from ex
         return self.instance
 
-    def _create_related(self, **kwargs):
+    def _create_related(self, groups: Optional[list] = None, **kwargs):
         key = PneumaticToken.create(user=self.instance, for_api_key=True)
         APIKey.objects.create(
             user=self.instance,
@@ -143,6 +143,8 @@ class UserService(
             account=self.instance.account,
             key=key,
         )
+        if groups:
+            self.instance.user_groups.set(groups)
 
     def _create_actions(self, **kwargs):
         self.identify(self.instance)
@@ -322,12 +324,15 @@ class UserService(
     def partial_update(
         self,
         force_save=False,
+        groups: Optional[list] = None,
         **update_kwargs,
     ) -> UserModel:
 
         old_name = self.instance.name
         with transaction.atomic():
             super().partial_update(**update_kwargs, force_save=force_save)
+            if groups:
+                self.instance.user_groups.set(groups)
             self._update_related_user_fields(old_name=old_name)
         self._update_related_stripe_account()
         self._update_analytics(**update_kwargs)

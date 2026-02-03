@@ -79,7 +79,6 @@ class UserSerializer(
             'invite',
             'status',
             'is_account_owner',
-            'groups',
             'date_joined_tsp',
         )
 
