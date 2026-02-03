@@ -437,9 +437,7 @@ def test__terminated_workflow__not_show(api_client):
         after_create_actions=False,
     )
     api_client.token_authenticate(user)
-    api_client.post(
-        f'/workflows/{workflow_3.id}/close',
-    )
+    api_client.delete(f'/workflows/{workflow_3.id}')
     endpoint = (
         f'/reports/highlights?'
         f'templates={workflow_2.template.id},'

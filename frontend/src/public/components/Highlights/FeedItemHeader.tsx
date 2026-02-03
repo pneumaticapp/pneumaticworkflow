@@ -27,7 +27,7 @@ export function FeedItemHeader({
   workflow: { kickoff },
   task,
   delay,
-  userId,
+  targetUserId,
 }: IFeedItemHeaderProps) {
   const { messages, formatMessage } = useIntl();
   const commentTextRef = useRef<HTMLSpanElement>(null);
@@ -147,14 +147,14 @@ export function FeedItemHeader({
   };
 
   const renderAddedPerformer = () => {
-    if (!userId) {
+    if (!targetUserId) {
       return null;
     }
 
     return (
       <div className={styles['changed-performer']}>
         {formatMessage({ id: 'task.log-added-performer' })}
-        <UserData userId={userId}>
+        <UserData userId={targetUserId}>
           {(user) => {
             if (!user) {
               return null;
@@ -168,14 +168,14 @@ export function FeedItemHeader({
   };
 
   const renderRemovedPerformer = () => {
-    if (!userId) {
+    if (!targetUserId) {
       return null;
     }
 
     return (
       <div className={styles['changed-performer']}>
         {formatMessage({ id: 'task.log-removed-performer' })}
-        <UserData userId={userId}>
+        <UserData userId={targetUserId}>
           {(user) => {
             if (!user) {
               return null;
