@@ -1,4 +1,4 @@
-.step {
+.task {
   overflow: hidden;
   text-overflow: ellipsis;
 
@@ -13,4 +13,12 @@
   display: flex;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.single-task:hover {
+  color: var(--pneumatic-color-link-hover);
+}
+
+.single-task_button {
+  text-align: left;
 }

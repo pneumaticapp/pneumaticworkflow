@@ -8,7 +8,7 @@ import {
   loadFilterSteps as loadWorkflowsFilterSteps,
   setFilterStatus as setWorkflowsFilterStatus,
   setFilterTemplate as setWorkflowsFilterTemplate,
-  setFilterTemplateSteps as setWorkflowsFilterSteps,
+  setFilterTemplateTasks as setWorkflowsFilterTasks,
   setFilterPerformers as setWorkflowsFilterPerfomers,
   setFilterPerformersGroup as setWorkflowsFilterPerfomersGroup,
   setFilterWorkflowStarters as setWorkflowsFilterWorkflowStarters,
@@ -28,7 +28,7 @@ export type TWorkflowsFiltersStoreProps = Pick<
   | 'areFiltersChanged'
   | 'statusFilter'
   | 'templatesIdsFilter'
-  | 'stepsIdsFilter'
+  | 'tasksApiNamesFilter'
   | 'performersIdsFilter'
   | 'performersGroupIdsFilter'
   | 'filterTemplates'
@@ -55,7 +55,7 @@ type TDispatchProps = Pick<
   | 'applyFilters'
   | 'setWorkflowStartersFilter'
   | 'loadTemplateSteps'
-  | 'setStepsFilter'
+  | 'setTasksFilter'
   | 'updateCurrentPerformersCounters'
   | 'updateWorkflowStartersCounters'
   | 'updateWorkflowsTemplateStepsCounters'
@@ -74,7 +74,7 @@ export function mapStateToProps(state: IApplicationState): TWorkflowsFiltersStor
         values: {
           statusFilter,
           templatesIdsFilter,
-          stepsIdsFilter,
+          tasksApiNamesFilter,
           performersIdsFilter,
           performersGroupIdsFilter,
           workflowStartersIdsFilter,
@@ -92,7 +92,7 @@ export function mapStateToProps(state: IApplicationState): TWorkflowsFiltersStor
     areFiltersChanged,
     statusFilter,
     templatesIdsFilter,
-    stepsIdsFilter,
+    tasksApiNamesFilter,
     filterTemplates: templateList.items,
     performersIdsFilter,
     performersGroupIdsFilter,
@@ -119,7 +119,7 @@ export const mapDispatchToProps: TDispatchProps = {
   applyFilters: applyWorkflowsFilters,
   setWorkflowStartersFilter: setWorkflowsFilterWorkflowStarters,
   loadTemplateSteps: loadWorkflowsFilterSteps,
-  setStepsFilter: setWorkflowsFilterSteps,
+  setTasksFilter: setWorkflowsFilterTasks,
   updateCurrentPerformersCounters,
   updateWorkflowStartersCounters,
   updateWorkflowsTemplateStepsCounters,

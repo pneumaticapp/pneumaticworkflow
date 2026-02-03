@@ -44,8 +44,8 @@ export const getWorkflowStartersIdsFilter = (state: IApplicationState): number[]
 export const getWorkflowTemplatesIdsFilter = (state: IApplicationState): number[] =>
   state.workflows.workflowsSettings.values.templatesIdsFilter;
 
-export const getWorkflowStepsIdsFilter = (state: IApplicationState): number[] =>
-  state.workflows.workflowsSettings.values.stepsIdsFilter;
+export const getWorkflowTasksApiNamesFilter = (state: IApplicationState): string[] =>
+  state.workflows.workflowsSettings.values.tasksApiNamesFilter;
 
 export const getWorkflowPerformersGroupsIdsFilter = (state: IApplicationState): number[] =>
   state.workflows.workflowsSettings.values.performersGroupIdsFilter;

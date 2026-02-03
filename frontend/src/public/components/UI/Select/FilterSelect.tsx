@@ -59,14 +59,14 @@ interface IFilterSelectMultiOptionsProps {
   isMultiple: true;
   selectedOption?: never;
   selectedOptions: TOptionId[];
-  onChange(optionIds: TOptionId[], option: any): void;
+  onChange(optionIds: TOptionId[] | string[], option: any): void;
 }
 
 interface IFilterSelectSingleOptionsProps {
   isMultiple?: false;
   selectedOption: TOptionId;
   selectedOptions?: never;
-  onChange(optionId: TOptionId | null): void;
+  onChange(optionId: TOptionId | string | null): void;
 }
 
 type TFilterSelectProps<

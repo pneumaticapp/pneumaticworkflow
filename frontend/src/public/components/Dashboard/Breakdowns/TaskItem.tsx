@@ -1,5 +1,4 @@
-/* eslint-disable indent */
-import * as React from 'react';
+import React, { useCallback } from 'react';
 import classnames from 'classnames';
 import { Link } from 'react-router-dom';
 
@@ -24,21 +23,19 @@ export interface ITaskItemProps {
 }
 
 export function TaskItem({ task, index, mode, templateId }: ITaskItemProps) {
-  const { useCallback } = React;
-
   const getRoute = useCallback(
     (counterType: EDashboardCounterType) => {
       const tasksRouteMap = {
-        [EDashboardCounterType.Started]: getLinkToTasks({ templateId, stepId: task.id }),
-        [EDashboardCounterType.InProgress]: getLinkToTasks({ templateId, stepId: task.id }),
+        [EDashboardCounterType.Started]: getLinkToTasks({ templateId, taskApiNAme: task.apiName }),
+        [EDashboardCounterType.InProgress]: getLinkToTasks({ templateId, taskApiNAme: task.apiName }),
         [EDashboardCounterType.Overdue]: getLinkToTasks({
           templateId,
-          stepId: task.id,
+          taskApiNAme: task.apiName,
           sorting: ETaskListSorting.Overdue,
         }),
         [EDashboardCounterType.Completed]: getLinkToTasks({
           templateId,
-          stepId: task.id,
+          taskApiNAme: task.apiName,
           status: ETaskListCompletionStatus.Completed,
         }),
       };
@@ -106,11 +103,11 @@ export function TaskItem({ task, index, mode, templateId }: ITaskItemProps) {
 
   const taskLink =
     mode === EDashboardModes.Tasks
-      ? getLinkToTasks({ templateId, stepId: task.id })
+      ? getLinkToTasks({ templateId, taskApiNAme: task.apiName })
       : getLinkToWorkflows({
-          templateId,
-          stepId: task.id,
-        });
+        templateId,
+        stepId: task.id,
+      });
 
   return (
     <div className={styles.task__container}>
