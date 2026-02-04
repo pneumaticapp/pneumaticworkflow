@@ -8,7 +8,7 @@ import { NumericFormat } from 'react-number-format';
 import { IntlMessages } from '../IntlMessages';
 import { onEnterPressed, removeTrailingDotZeros } from '../../utils/handlers';
 
-import { RichEditorContainer } from '../RichEditor';
+import { RichEditor } from '../RichEditor';
 import { trackVideoEmbedding } from '../../utils/analytics';
 
 import { youtubeVideoRegexp, loomVideoRegexp, wistiaVideoRegexp } from '../../constants/defaultValues';
@@ -226,7 +226,7 @@ export class Field extends React.PureComponent<IFieldProps, IFieldState> {
     );
 
     const renderRichEditor = () => (
-      <RichEditorContainer
+      <RichEditor
         placeholder={placeholder}
         defaultValue={value as string}
         handleChange={(value) => {

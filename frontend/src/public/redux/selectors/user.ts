@@ -63,3 +63,6 @@ export const getUserApiKey = (state: IApplicationState) => state.integrations.ap
 export const getUserTimezone = (state: IApplicationState): string => state.authUser.timezone;
 
 export const getLanguage = ({ authUser }: IApplicationState) => authUser.language;
+
+export const getAccountId = (state: IApplicationState): number =>
+  state.authUser.account?.id ?? -1;

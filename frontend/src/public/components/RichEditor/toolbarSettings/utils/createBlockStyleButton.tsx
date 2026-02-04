@@ -1,6 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
-/* eslint-disable */
 import React, { MouseEvent, ReactNode } from 'react';
 import classnames from 'classnames';
 import { RichUtils } from 'draft-js';
@@ -16,11 +13,13 @@ interface ICreateBlockStyleButtonProps {
 
 export function createBlockStyleButton({ blockType, tooltipText, children }: ICreateBlockStyleButtonProps) {
   return function BlockStyleButton(props: React.PropsWithChildren<IExtendedToolbarChildrenProps>) {
+    const { theme, getEditorState, setEditorState } = props;
     const buttonRef = React.useRef<HTMLButtonElement>(null);
 
     const toggleStyle = (event: MouseEvent): void => {
       event.preventDefault();
-      props.setEditorState(RichUtils.toggleBlockType(props.getEditorState(), blockType));
+      event.stopPropagation();
+      setEditorState(RichUtils.toggleBlockType(getEditorState(), blockType));
     };
 
     const preventBubblingUp = (event: MouseEvent): void => {
@@ -29,23 +28,30 @@ export function createBlockStyleButton({ blockType, tooltipText, children }: ICr
 
     const blockTypeIsActive = (): boolean => {
       // if the button is rendered before the editor
-      if (!props.getEditorState) {
+      if (!getEditorState) {
         return false;
       }
 
-      const editorState = props.getEditorState();
+      const editorState = getEditorState();
       const type = editorState.getCurrentContent().getBlockForKey(editorState.getSelection().getStartKey()).getType();
 
       return type === blockType;
     };
 
-    const { theme } = props;
     const className = blockTypeIsActive() ? classnames(theme.button, theme.active) : theme.button;
 
     return (
-      <div className={theme.buttonWrapper} onMouseDown={preventBubblingUp}>
+      <div className={theme.buttonWrapper} onMouseDownCapture={preventBubblingUp}>
         <CustomTooltip target={buttonRef} tooltipText={tooltipText} isModal={theme.isModal} />
-        <button ref={buttonRef} children={children} className={className} onClick={toggleStyle} type="button" />
+        <button
+          ref={buttonRef}
+          className={className}
+          type="button"
+          aria-label={tooltipText}
+          onMouseDown={toggleStyle}
+        >
+          {children}
+        </button>
       </div>
     );
   };

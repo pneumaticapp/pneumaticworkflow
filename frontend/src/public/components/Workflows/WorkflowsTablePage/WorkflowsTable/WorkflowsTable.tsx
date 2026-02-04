@@ -94,7 +94,7 @@ export function WorkflowsTable({
   openWorkflowLogPopup,
 }: IWorkflowsTableProps) {
   const { formatMessage } = useIntl();
-  const { isDesktop } = useCheckDevice();
+  const { isDesktop, isMobile } = useCheckDevice();
 
   const currentUser = useSelector(getCurrentUser);
   const selectedFields = useSelector(getSavedFields);
@@ -121,8 +121,7 @@ export function WorkflowsTable({
   const [searchQuery, setSearchQuery] = useState(searchText);
   const [tableHeight, setTableHeight] = useState<number>(0);
   const [colWidths, setColWidths] = useState<Record<string, number>>({});
-  const [isСhangeTemplateId, setIsСhangeTemplateId] = useState(false);
-  const { isMobile } = useCheckDevice();
+  const [isChangeTemplateId, setIsChangeTemplateId] = useState(false);
   useEffect(() => {
     const appContainer = document.getElementById('app-container');
     if (appContainer) {
@@ -156,9 +155,9 @@ export function WorkflowsTable({
 
   useEffect(() => {
     if (String(lastLoadedTemplateIdForTable) !== String(currentTemplateId)) {
-      setIsСhangeTemplateId(true);
+      setIsChangeTemplateId(true);
     } else {
-      setIsСhangeTemplateId(false);
+      setIsChangeTemplateId(false);
     }
   }, [currentTemplateId]);
 
@@ -211,7 +210,7 @@ export function WorkflowsTable({
     cashTableStructureRef.current.length === 0;
 
   const shouldSkeletonOptionalTable =
-    workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList && isСhangeTemplateId;
+    workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList && isChangeTemplateId;
 
   const shouldSkeletonBody =
     workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList &&
@@ -331,7 +330,7 @@ export function WorkflowsTable({
       workflowsLoadingStatus === EWorkflowsLoadingStatus.EmptyList
     ) {
       cashTableStructureRef.current = newColumns;
-      setIsСhangeTemplateId(false);
+      setIsChangeTemplateId(false);
     }
 
     return newColumns;

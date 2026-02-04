@@ -436,6 +436,7 @@ export const ruMessages = {
   'task.return-to.title': 'Вернуть',
   'task.return-to.subtitle':
     'Объясните, почему задача возвращается и что необходимо для её завершения, чтобы получатель мог принять соответствующие меры',
+  'task.return-to.placeholder': 'Напишите сообщение...',
   'task.return-to.confirm': 'Подтвердить',
   'task.return-to.cancel': 'ОТМЕНИТЬ',
   'tasks.task-success-complete': 'Задача успешно завершена',

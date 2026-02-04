@@ -10,3 +10,4 @@ logs
 config/how
 *storybook.log
 .env
+.cursor

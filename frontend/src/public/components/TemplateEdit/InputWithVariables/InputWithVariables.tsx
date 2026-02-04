@@ -8,7 +8,7 @@ import { addVariableEntityToEditor } from '../utils/addVariableEntityToEditor';
 import { escapeMarkdown } from '../../../utils/escapeMarkdown';
 import { VariableList } from '../VariableList';
 import { getInitialEditorState } from '../../RichEditor/utils/converters';
-import { RichEditor, RichEditorContainer } from '../../RichEditor';
+import { RichEditor, IRichEditorHandle } from '../../RichEditor';
 
 import styles from './InputWithVariables.css';
 
@@ -36,7 +36,7 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
   size = 'lg',
   onChange,
 }) => {
-  const editor = React.useRef<RichEditor>(null);
+  const editor = React.useRef<IRichEditorHandle>(null);
   const formattedValue = escapeMarkdown(value);
 
   const handleInsertVariable = (apiName?: string) => (e: React.MouseEvent) => {
@@ -48,7 +48,7 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
 
     const newVariable = listVariables?.find((variable) => variable.apiName === apiName);
     editor.current.onChange(
-      addVariableEntityToEditor(editor.current.state.editorState, {
+      addVariableEntityToEditor(editor.current.getEditorState(), {
         title: newVariable?.title,
         subtitle: newVariable?.subtitle,
         apiName,
@@ -57,7 +57,7 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
   };
 
   return (
-    <RichEditorContainer
+    <RichEditor
       ref={editor}
       title={title}
       placeholder={placeholder}
@@ -69,6 +69,7 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
       className={classnames(size === 'xl' ? styles['editor_xl'] : styles['editor_lg'], className)}
       foregroundColor={foregroundColor}
       stripPastedFormatting
+      templateVariables={templateVariables}
     >
       <VariableList
         variables={listVariables}
@@ -77,6 +78,6 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
         tooltipText={toolipText}
         focusEditor={() => editor.current?.focus()}
       />
-    </RichEditorContainer>
+    </RichEditor>
   );
 };
