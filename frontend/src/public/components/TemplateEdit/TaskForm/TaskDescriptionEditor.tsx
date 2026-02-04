@@ -3,7 +3,7 @@ import { useIntl } from 'react-intl';
 
 import { TTaskVariable } from '../types';
 import { getInitialEditorState } from '../../RichEditor/utils/converters';
-import { RichEditor, RichEditorContainer, IRichEditorHandle } from '../../RichEditor';
+import { RichEditor, IRichEditorHandle } from '../../RichEditor';
 
 import { variablesDecorator } from '../utils/variablesDecorator';
 import { VariableList } from '../VariableList';
@@ -49,7 +49,7 @@ export function TaskDescriptionEditor({
   };
 
   return (
-    <RichEditorContainer
+    <RichEditor
       ref={editor}
       title={formatMessage({ id: 'tasks.task-description-field' })}
       placeholder={formatMessage({ id: 'template.task-description-placeholder' })}
@@ -69,6 +69,6 @@ export function TaskDescriptionEditor({
         tooltipText="tasks.task-description-button-tooltip"
         focusEditor={() => editor.current?.focus()}
       />
-    </RichEditorContainer>
+    </RichEditor>
   );
 }

@@ -8,7 +8,7 @@ import { addVariableEntityToEditor } from '../utils/addVariableEntityToEditor';
 import { escapeMarkdown } from '../../../utils/escapeMarkdown';
 import { VariableList } from '../VariableList';
 import { getInitialEditorState } from '../../RichEditor/utils/converters';
-import { RichEditor, RichEditorContainer, IRichEditorHandle } from '../../RichEditor';
+import { RichEditor, IRichEditorHandle } from '../../RichEditor';
 
 import styles from './InputWithVariables.css';
 
@@ -57,7 +57,7 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
   };
 
   return (
-    <RichEditorContainer
+    <RichEditor
       ref={editor}
       title={title}
       placeholder={placeholder}
@@ -78,6 +78,6 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
         tooltipText={toolipText}
         focusEditor={() => editor.current?.focus()}
       />
-    </RichEditorContainer>
+    </RichEditor>
   );
 };

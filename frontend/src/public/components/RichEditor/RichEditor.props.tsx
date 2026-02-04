@@ -42,8 +42,8 @@ export interface IPositionSuggestionsParams {
 
 export interface IRichEditorProps {
   isModal?: boolean;
-  accountId: number;
-  mentions: TMentionData[];
+  accountId?: number;
+  mentions?: TMentionData[];
   placeholder: EditorProps['placeholder'];
   className?: string;
   defaultValue?: string;

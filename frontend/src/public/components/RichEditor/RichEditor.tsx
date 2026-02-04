@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { forwardRef, useCallback, useImperativeHandle, useMemo, useRef, useState, useEffect } from 'react';
+import { useSelector } from 'react-redux';
 import classnames from 'classnames';
 import {
   EditorState,
@@ -39,8 +40,11 @@ import {
 } from './utils/editorCopyUtils';
 
 import { ENTER_KEY_CODE } from '../../constants/defaultValues';
+import { getAccountId, getUsers } from '../../redux/selectors/user';
+import { getNotDeletedUsers } from '../../utils/users';
 import { Loader } from '../UI';
 import { IRichEditorProps, EEditorKeyCommand, IRichEditorHandle } from './RichEditor.props';
+import { getMentionData } from './utils/getMentionData';
 import { useRichEditorPlugins } from './hooks/useRichEditorPlugins';
 import { EditorToolbar, IEditorToolbarProps } from './EditorToolbar';
 import { EditorControls } from './EditorControls';
@@ -67,8 +71,8 @@ export const RichEditor = forwardRef<IRichEditorHandle, IRichEditorProps>(functi
     onCancel,
     handleChange: handleChangeProp,
     handleChangeChecklists,
-    accountId,
-    mentions,
+    accountId: accountIdProp,
+    mentions: mentionsProp,
     defaultValue,
     initialState: initialStateProp,
     isModal,
@@ -76,6 +80,14 @@ export const RichEditor = forwardRef<IRichEditorHandle, IRichEditorProps>(functi
     stripPastedFormatting,
     templateVariables = [],
   } = props;
+
+  const users = useSelector(getUsers);
+  const accountIdFromStore = useSelector(getAccountId);
+  const mentions = useMemo(
+    () => mentionsProp ?? getMentionData(getNotDeletedUsers(users)),
+    [mentionsProp, users],
+  );
+  const accountId = accountIdProp ?? accountIdFromStore ?? -1;
 
   const [isLoading, setIsLoading] = useState(false);
   const [shouldSubmitAfterFileLoaded, setShouldSubmitAfterFileLoaded] = useState(false);
