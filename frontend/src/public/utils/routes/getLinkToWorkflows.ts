@@ -4,15 +4,15 @@ import { isArrayWithItems } from '../helpers';
 
 type TGetLinkToWorkflows = {
   templateId?: number;
-  stepId?: number;
+  taskApiName?: string;
   status?: EWorkflowsStatus;
   sorting?: EWorkflowsSorting;
 };
 
-export function getLinkToWorkflows({ templateId, stepId, status, sorting }: TGetLinkToWorkflows) {
+export function getLinkToWorkflows({ templateId, taskApiName, status, sorting }: TGetLinkToWorkflows) {
   const queryParams = [
     templateId && `templates=${templateId}`,
-    stepId && `steps=${stepId}`,
+    taskApiName && `tasks=${taskApiName}`,
     status && `type=${status}`,
     sorting && `sorting=${sorting}`,
   ].filter(Boolean);
