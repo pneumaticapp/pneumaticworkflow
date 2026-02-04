@@ -35,6 +35,7 @@ from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_admin,
     create_test_workflow,
+    create_test_group,
 )
 
 pytestmark = pytest.mark.django_db
@@ -44,6 +45,7 @@ def test_create_instance__all_fields__ok(mocker):
 
     # arrange
     account = create_test_account()
+    owner = create_test_owner(account=account)
     status = UserStatus.INVITED
     email = 'test@test.test'
     first_name = 'some first'
@@ -63,20 +65,20 @@ def test_create_instance__all_fields__ok(mocker):
         'src.accounts.services.user.make_password',
         return_value=safe_password,
     )
-    service = UserService()
+    service = UserService(user=owner)
 
     # act
     user = service._create_instance(
         account=account,
         email=email,
-        phone=phone,
-        status=status,
         first_name=first_name,
         last_name=last_name,
-        photo=photo,
         raw_password=raw_password,
+        photo=photo,
+        phone=phone,
         is_admin=is_admin,
         is_account_owner=is_account_owner,
+        status=status,
         language=language,
         timezone=tz,
         date_fmt=date_fmt,
@@ -98,6 +100,7 @@ def test_create_instance__all_fields__ok(mocker):
     assert user.is_account_owner == is_account_owner
     assert user.date_fmt == UserDateFormat.PY_EUROPE_24
     assert user.date_fdw == UserFirstDayWeek.FRIDAY
+    assert user.password == safe_password
     make_password_mock.assert_called_once_with(raw_password)
 
 
@@ -623,7 +626,7 @@ def test_create_instance__not_owner__inherit_owner_timezone():
     assert user.timezone == tz
 
 
-def test_create_related__ok(mocker):
+def test_create_related__no_groups__ok(mocker):
 
     # arrange
     user = create_test_user()
@@ -633,11 +636,11 @@ def test_create_related__ok(mocker):
         'src.accounts.services.user.PneumaticToken.create',
         return_value=key,
     )
-
+    user_data = {'key': 'value'}
     service = UserService(instance=user)
 
     # act
-    service._create_related()
+    service._create_related(**user_data)
 
     # arrange
     assert APIKey.objects.get(
@@ -650,6 +653,42 @@ def test_create_related__ok(mocker):
         user=user,
         for_api_key=True,
     )
+
+
+def test_create_related__groups__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    group = create_test_group(account=account, users=[owner])
+
+    account.accountsignupdata_set.get().delete()
+    key = '!@#q2qwe'
+    create_token_mock = mocker.patch(
+        'src.accounts.services.user.PneumaticToken.create',
+        return_value=key,
+    )
+
+    user_data = {'key': 'value', 'groups': [group]}
+    service = UserService(instance=user)
+
+    # act
+    service._create_related(**user_data)
+
+    # arrange
+    assert APIKey.objects.get(
+        user=user,
+        name=user.get_full_name(),
+        account=user.account,
+        key=key,
+    )
+    create_token_mock.assert_called_once_with(
+        user=user,
+        for_api_key=True,
+    )
+    assert user.user_groups.count() == 1
+    assert user.user_groups.first().id == group.id
 
 
 def test_create_actions__account_owner__ok(
@@ -1765,6 +1804,123 @@ def test_update_analytics__digest_subscriber_not_changed__not_sent_analytics(
     identify_mock.assert_called_once_with(user)
 
 
+def test_partial_update__all_fields_end_to_end__ok(
+    mocker,
+    identify_mock,
+):
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    old_name = user.name
+    create_test_group(
+        account=account,
+        users=[user],
+        name='old group',
+    )
+    new_group = create_test_group(account=account, users=[owner])
+    user_data = {
+        'email': 'some@email.com',
+        'first_name': 'First',
+        'last_name': 'Last',
+        'photo': 'https://my.lovely.photo.jpg',
+        'phone': '79999999990',
+        'is_tasks_digest_subscriber': False,
+        'is_digest_subscriber': False,
+        'is_comments_mentions_subscriber': False,
+        'is_new_tasks_subscriber': False,
+        'is_complete_tasks_subscriber': False,
+        'is_newsletters_subscriber': False,
+        'is_special_offers_subscriber': False,
+        'language': 'en',
+        'timezone': 'America/Anchorage',
+        'date_fmt': UserDateFormat.API_USA_24,
+        'date_fdw': UserFirstDayWeek.THURSDAY,
+        'is_admin': False,
+    }
+    raw_password = 'new password 123'
+    update_kwargs = {
+        'groups': [new_group.id],
+        'raw_password': raw_password,
+        **user_data,
+    }
+    safe_password = 'some safe password'
+    make_password_mock = mocker.patch(
+        'src.accounts.services.user.make_password',
+        return_value=safe_password,
+    )
+    update_related_user_fields_mock = mocker.patch(
+        'src.accounts.services.user.UserService.'
+        '_update_related_user_fields',
+    )
+    update_related_stripe_account_mock = mocker.patch(
+        'src.accounts.services.user.UserService.'
+        '_update_related_stripe_account',
+    )
+    update_analytics_mock = mocker.patch(
+        'src.accounts.services.user.UserService.'
+        '_update_analytics',
+    )
+    send_user_updated_notification_mock = mocker.patch(
+        'src.notifications.tasks.send_user_updated_notification.delay',
+    )
+    service = UserService(
+        instance=user,
+        user=owner,
+    )
+    # act
+    result = service.partial_update(**update_kwargs, force_save=True)
+
+    # assert
+    assert result is user
+    update_related_user_fields_mock.assert_called_once_with(
+        old_name=old_name,
+    )
+    update_related_stripe_account_mock.assert_called_once_with()
+    update_analytics_mock.assert_called_once_with(**user_data)
+    send_user_updated_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        user_data=UserWebsocketSerializer(user).data,
+    )
+    user.refresh_from_db()
+    assert user_data['email'] == user.email
+    assert user_data['phone'] == user.phone
+    assert user_data['photo'] == user.photo
+    assert user_data['first_name'] == user.first_name
+    assert user_data['last_name'] == user.last_name
+    assert user_data['is_admin'] == user.is_admin
+    assert user_data['language'] == user.language
+    assert user_data['timezone'] == user.timezone
+    assert user_data['date_fmt'] == UserDateFormat.API_USA_24
+    assert user_data['date_fdw'] == user.date_fdw
+    assert user_data['is_tasks_digest_subscriber'] == (
+        user.is_tasks_digest_subscriber
+    )
+    assert user_data['is_digest_subscriber'] == (
+        user.is_digest_subscriber
+    )
+    assert user_data['is_newsletters_subscriber'] == (
+        user.is_newsletters_subscriber
+    )
+    assert user_data['is_special_offers_subscriber'] == (
+        user.is_special_offers_subscriber
+    )
+    assert user_data['is_new_tasks_subscriber'] == (
+        user.is_new_tasks_subscriber
+    )
+    assert user_data['is_complete_tasks_subscriber'] == (
+        user.is_complete_tasks_subscriber
+    )
+    assert user_data['is_comments_mentions_subscriber'] == (
+        user.is_comments_mentions_subscriber
+    )
+    assert user.user_groups.count() == 1
+    assert user.user_groups.first().id == update_kwargs['groups'][0]
+    assert user.password == safe_password
+    make_password_mock.assert_called_once_with(raw_password)
+
+
 def test_partial_update__default_force_save__ok(
     mocker,
     identify_mock,
@@ -1776,6 +1932,9 @@ def test_partial_update__default_force_save__ok(
     update_kwargs = {
         'some_property': 'value',
     }
+    make_password_mock = mocker.patch(
+        'src.accounts.services.user.make_password',
+    )
     partial_update_mock = mocker.patch(
         'src.generics.base.service.BaseModelService.partial_update',
     )
@@ -1817,6 +1976,7 @@ def test_partial_update__default_force_save__ok(
         account_id=account.id,
         user_data=UserWebsocketSerializer(user).data,
     )
+    make_password_mock.assert_not_called()
 
 
 def test_partial_update__force_save_true__ok(
