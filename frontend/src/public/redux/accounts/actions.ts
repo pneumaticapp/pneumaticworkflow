@@ -1,4 +1,4 @@
-import { EUserListSorting, TUserListItem } from '../../types/user';
+import { EUserListSorting, ICreateUserRequest, TUserListItem } from '../../types/user';
 import { actionGenerator } from '../../utils/redux';
 import { EDeleteUserModalState, IAccountPlan, ITypedReduxAction } from '../../types/redux';
 
@@ -29,6 +29,7 @@ export const enum EAccountsActions {
   StartFreeSubscription = 'START_FREE_SUBSCRIPTION',
   OpenCreateUserModal = 'OPEN_CREATE_USER_MODAL',
   CloseCreateUserModal = 'CLOSE_CREATE_USER_MODAL',
+  CreateUser = 'CREATE_USER',
 }
 
 export type TSetIsLoading = ITypedReduxAction<EAccountsActions.SetIsLoading, void>;
@@ -174,6 +175,10 @@ export type TCloseCreateUserModal = ITypedReduxAction<EAccountsActions.CloseCrea
 export const closeCreateUserModal: () => TCloseCreateUserModal =
   actionGenerator<EAccountsActions.CloseCreateUserModal>(EAccountsActions.CloseCreateUserModal);
 
+export type TCreateUser = ITypedReduxAction<EAccountsActions.CreateUser, ICreateUserRequest>;
+export const createUser: (payload: ICreateUserRequest) => TCreateUser =
+  actionGenerator<EAccountsActions.CreateUser, ICreateUserRequest>(EAccountsActions.CreateUser);
+
 export type TAccountsActions =
   TUsersFetchStarted
   | TUsersFetchFailed
@@ -199,4 +204,5 @@ export type TAccountsActions =
   | TStartTrialSubscription
   | TStartFreeSubscription
   | TOpenCreateUserModal
-  | TCloseCreateUserModal;
+  | TCloseCreateUserModal
+  | TCreateUser;

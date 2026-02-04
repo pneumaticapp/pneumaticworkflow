@@ -292,6 +292,7 @@ export const enMessages = {
   'team.delete-cancel': 'Cancel',
   'team.delete-error-msg-responsible': 'The user cannot be deleted until other users are assigned to their tasks',
   'team.delete-success-msg': 'The user has been successfully deleted',
+  'team.create-user-success-msg': 'The user has been successfully created',
   'team.decline-invite-success-msg': 'User invite has been successfully revoked',
   'team.resend-invite-success-msg': 'User invite has been successfully resent',
   'team.title-group-active': 'Active users',

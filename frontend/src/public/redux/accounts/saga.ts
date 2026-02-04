@@ -23,6 +23,8 @@ import {
   activeUsersCountFetchFinished,
   TUsersFetchStarted,
   loadActiveUsersCount,
+  TCreateUser,
+  closeCreateUserModal,
 } from '../actions';
 
 import { getAccountsStore } from '../selectors/user';
@@ -50,6 +52,7 @@ import { sortUsersByStatus, sortUsersByNameAsc, sortUsersByNameDesc } from '../.
 import { getAccountPlan } from '../selectors/accounts';
 import { getAbsolutePath } from '../../utils/getAbsolutePath';
 import { getTenantsCountStore } from '../selectors/tenants';
+import { createUser as createUserApi } from '../../api/createUser';
 
 export function* fetchUsers(
   action: TUsersFetchStarted = {
@@ -274,6 +277,21 @@ function* startFreeSubscriptionSaga() {
   }
 }
 
+function* createUserSaga({ payload }: TCreateUser) {
+  try {
+    yield call(createUserApi, payload);
+    NotificationManager.success({ message: 'team.create-user-success-msg' });
+    yield put(closeCreateUserModal());
+
+    yield put(teamFetchStarted({}));
+    yield put(usersFetchStarted());
+    yield put(loadActiveUsersCount());
+  } catch (error) {
+    NotificationManager.notifyApiError( error, { message: getErrorMessage(error) });
+    logger.error('failed to create user', error);
+  }
+}
+
 export function* watchFetchUser() {
   yield takeEvery(EAccountsActions.UsersFetchStarted, fetchUsers);
 }
@@ -321,6 +339,10 @@ export function* watchStartFreeSubscription() {
   yield takeEvery(EAccountsActions.StartFreeSubscription, startFreeSubscriptionSaga);
 }
 
+export function* watchCreateUser() {
+  yield takeEvery(EAccountsActions.CreateUser, createUserSaga);
+}
+
 export function* rootSaga() {
   yield all([
     fork(watchFetchUser),
@@ -334,5 +356,6 @@ export function* rootSaga() {
     fork(watchFetchPlan),
     fork(watchStartTrialSubscription),
     fork(watchStartFreeSubscription),
+    fork(watchCreateUser),
   ]);
 }

@@ -282,6 +282,7 @@ export const ruMessages = {
   'team.delete-error-msg-responsible':
     'Пользователь не может быть удален, пока другим пользователям не будут назначены его задачи.',
   'team.delete-success-msg': 'Пользователь успешно удален',
+  'team.create-user-success-msg': 'Пользователь успешно создан',
   'team.decline-invite-success-msg': 'Приглашение пользователю было успешно отменено',
   'team.resend-invite-success-msg': 'Приглашение пользователю было успешно отправлено повторно',
   'team.title-group-active': 'Активные пользователи',

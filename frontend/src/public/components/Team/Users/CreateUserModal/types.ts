@@ -3,17 +3,12 @@ export interface ICreateUserModalProps {
   onClose: () => void;
 }
 
-export type TUserStatus = 'Admin' | 'User';
-
-export interface ICreateUserFormData {
-  firstName: string;
-  lastName: string;
-  email: string;
-  status: TUserStatus;
-  password: string;
+export const enum EUserRole {
+  Admin = 'Admin',
+  User = 'User',
 }
 
 export interface IStatusOption {
   label: string;
-  value: TUserStatus;
+  value: EUserRole;
 }

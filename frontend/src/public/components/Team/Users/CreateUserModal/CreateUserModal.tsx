@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import { Formik } from 'formik';
 import { useIntl } from 'react-intl';
+import { useDispatch } from 'react-redux';
 
 import { BaseModal, ModalHeader, ModalBody, ModalFooter } from '../../../UI/BaseModal';
 import { InputField } from '../../../UI/Fields/InputField';
@@ -11,8 +12,10 @@ import { getErrorsObject } from '../../../../utils/formik/getErrorsObject';
 import { copyToClipboard } from '../../../../utils/helpers';
 import { createPassword } from '../../../../utils/createPassword';
 import { NotificationManager } from '../../../UI/Notifications';
+import { createUser } from '../../../../redux/accounts/actions';
 
-import { ICreateUserModalProps, ICreateUserFormData, IStatusOption } from './types';
+import { ICreateUserModalProps, IStatusOption, EUserRole } from './types';
+import { ICreateUserRequest } from '../../../../types/user';
 
 import styles from './CreateUserModal.css';
 
@@ -29,25 +32,26 @@ const formatStatusOption = (
 
 export function CreateUserModal({ isOpen, onClose }: ICreateUserModalProps) {
   const { formatMessage } = useIntl();
+  const dispatch = useDispatch();
 
   const statusOptions: IStatusOption[] = [
-    { label: formatMessage({ id: 'team.create-user-modal.status-admin' }), value: 'Admin' },
-    { label: formatMessage({ id: 'team.create-user-modal.status-user' }), value: 'User' },
+    { label: formatMessage({ id: 'team.create-user-modal.status-admin' }), value: EUserRole.Admin },
+    { label: formatMessage({ id: 'team.create-user-modal.status-user' }), value: EUserRole.User },
   ];
 
-  const initialValues: ICreateUserFormData = useMemo(
+  const initialValues: ICreateUserRequest = useMemo(
     () => ({
       firstName: '',
       lastName: '',
       email: '',
-      status: 'User',
+      isAdmin: false,
       password: createPassword(),
     }),
     [isOpen],
   );
 
-  const handleSubmit = (values: ICreateUserFormData) => {
-    console.log('Create User:', values);
+  const handleSubmit = (values: ICreateUserRequest) => {
+    dispatch(createUser(values));
   };
 
   return (
@@ -70,10 +74,13 @@ export function CreateUserModal({ isOpen, onClose }: ICreateUserModalProps) {
         }}
       >
         {({ values, errors, handleChange, handleSubmit: formikSubmit, setFieldValue, isValid, dirty }) => {
-          const handleStatusChange = (option: IStatusOption) => setFieldValue('status', option.value);
+          const handleStatusChange = (option: IStatusOption) => {
+            setFieldValue('isAdmin', option.value === EUserRole.Admin);
+          };
           
+          const currentStatusValue = values.isAdmin ? EUserRole.Admin : EUserRole.User;
           const renderStatusOption = (option: IStatusOption, { context }: { context: string }) =>
-            formatStatusOption(option, { context }, values.status);
+            formatStatusOption(option, { context }, currentStatusValue);
 
           return (
             <form onSubmit={formikSubmit}>
@@ -108,7 +115,7 @@ export function CreateUserModal({ isOpen, onClose }: ICreateUserModalProps) {
                   <DropdownList
                     label={formatMessage({ id: 'team.create-user-modal.status' })}
                     options={statusOptions}
-                    value={statusOptions.find((opt) => opt.value === values.status)}
+                    value={statusOptions.find((opt) => opt.value === currentStatusValue)}
                     onChange={handleStatusChange}
                     className={styles['modal__dropdown--required']}
                     formatOptionLabel={renderStatusOption}
@@ -130,7 +137,7 @@ export function CreateUserModal({ isOpen, onClose }: ICreateUserModalProps) {
                       type="button"
                       className={styles['modal__copy-btn']}
                       onClick={() => {
-                        copyToClipboard(values.password);
+                        copyToClipboard(values.password || '');
                         NotificationManager.success({ message: 'team.create-user-modal.password-copied' });
                       }}
                     >
