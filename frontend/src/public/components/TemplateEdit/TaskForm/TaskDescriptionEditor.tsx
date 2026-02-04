@@ -3,7 +3,7 @@ import { useIntl } from 'react-intl';
 
 import { TTaskVariable } from '../types';
 import { getInitialEditorState } from '../../RichEditor/utils/converters';
-import { RichEditor, RichEditorContainer } from '../../RichEditor';
+import { RichEditor, RichEditorContainer, IRichEditorHandle } from '../../RichEditor';
 
 import { variablesDecorator } from '../utils/variablesDecorator';
 import { VariableList } from '../VariableList';
@@ -28,7 +28,7 @@ export function TaskDescriptionEditor({
   handleChange,
   handleChangeChecklists,
 }: ITaskDescriptionEditorProps) {
-  const editor = useRef<RichEditor>(null);
+  const editor = useRef<IRichEditorHandle>(null);
   const { formatMessage } = useIntl();
 
   const handleInsertVariable = (apiName?: string) => (e: React.MouseEvent) => {
@@ -40,7 +40,7 @@ export function TaskDescriptionEditor({
 
     const newVariable = listVariables?.find((variable) => variable.apiName === apiName);
     editor.current.onChange(
-      addVariableEntityToEditor(editor.current.state.editorState, {
+      addVariableEntityToEditor(editor.current.getEditorState(), {
         title: newVariable?.title,
         subtitle: newVariable?.subtitle,
         apiName,
@@ -60,6 +60,7 @@ export function TaskDescriptionEditor({
       withChecklists
       accountId={accountId}
       isInTaskDescriptionEditor
+      templateVariables={templateVariables}
     >
       <VariableList
         variables={listVariables}

@@ -32,6 +32,7 @@ export function ReturnModal({ isOpen, onClose, onConfirm }: IReturnModalProps) {
 
         <div className={styles['return-modal__editor']}>
           <RichEditorContainer
+            placeholder={formatMessage({ id: 'task.return-to.placeholder' })}
             handleChange={async (message) => {
               setReturnMessage(message);
               return message;

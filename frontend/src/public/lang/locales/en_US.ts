@@ -534,6 +534,7 @@ export const enMessages = {
   'task.return-to.title': 'Return',
   'task.return-to.subtitle':
     'Explain why the task’s being returned and what’s needed to complete it so whoever it’s returned to can take appropriate action',
+  'task.return-to.placeholder': 'Write your message...',
   'task.return-to.confirm': 'Confirm',
   'task.return-to.cancel': 'CANCEL',
   'templates.title': 'My Workflow Templates',

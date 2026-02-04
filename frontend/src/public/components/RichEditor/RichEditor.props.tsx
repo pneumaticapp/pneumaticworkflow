@@ -1,12 +1,20 @@
 import { ComponentProps, ReactNode } from 'react';
-import { EditorProps } from 'draft-js';
+import { EditorProps, EditorState } from 'draft-js';
 import Editor from '@draft-js-plugins/editor';
 import { TOutputChecklist } from '../../types/template';
 import { TForegroundColor } from '../UI/Fields/common/types';
 
 export enum EEditorKeyCommand {
   Enter = 'enter',
+  Tab = 'tab',
 }
+
+export interface IRichEditorHandle {
+  focus(): void;
+  getEditorState(): EditorState;
+  onChange(state: EditorState): Promise<void>;
+}
+
 export interface IRichEditorState {
   isLoading: boolean;
   shouldSubmitAfterFileLoaded: boolean;
@@ -49,6 +57,8 @@ export interface IRichEditorProps {
   decorators?: ComponentProps<typeof Editor>['decorators'];
   foregroundColor?: TForegroundColor;
   stripPastedFormatting?: boolean;
+  /** Used when pasting text/plain that contains variable syntax (e.g. Safari doesn't expose application/json on paste). */
+  templateVariables?: import('../TemplateEdit/types').TTaskVariable[];
   submitIcon?: ReactNode;
   cancelIcon?: ReactNode;
   isInTaskDescriptionEditor?: boolean;

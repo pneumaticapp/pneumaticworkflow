@@ -224,6 +224,7 @@ export function WorkflowLogTaskComment({
             </div>
           ) : (
             <RichEditorContainer
+              placeholder={formatMessage({ id: 'workflows.log-comment-field-placeholder' })}
               defaultValue={text || ''}
               handleChange={setCommentText}
               cancelIcon={<CommentEditCancelIcon />}
