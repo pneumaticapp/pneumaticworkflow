@@ -62,7 +62,8 @@ export function addValueInArrayByKey<T>(value: T, arr: T[], key: keyof T) {
 export function toggleValueInArray<T>(value: T, arr?: T[], key?: keyof T) {
   if (!arr) {
     return [value];
-  } if (key) {
+  }
+  if (key) {
     return findByKey<T, keyof T>(value, arr, key) ? removeFromArrayByKey<T, keyof T>(value, arr, key) : [...arr, value];
   }
 
@@ -84,9 +85,8 @@ export const calculateProgressColor = (percentage: number | undefined, colorMap?
     const colorKey = Number(key);
     if (percentage && percentage > colorKey) {
       return cMap[colorKey];
-    } 
+    }
     return acc;
-    
   }, cMap[0]);
 };
 
@@ -276,7 +276,7 @@ export const areObjectsEqual = (originalObj: object, updatedObj: object): boolea
 export function checkFilterDependenciesChanged(
   changedFiltersRef: React.MutableRefObject<Set<string>>,
   dependenciesRefs: Map<string, React.MutableRefObject<string>>,
-  dependencies: Record<string, string | number[]>,
+  dependencies: Record<string, string | number[] | string[]>,
 ): boolean {
   let hasChanges = false;
   Object.entries(dependencies).forEach(([key, value]) => {

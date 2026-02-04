@@ -5,12 +5,11 @@ import { EventChannel } from 'redux-saga';
 import { PayloadAction } from '@reduxjs/toolkit';
 import {
   openRunWorkflowModal,
-  ETaskListActions,
   setGeneralLoaderVisibility,
   setCurrentTask,
-  patchTaskInList,
   updateTaskWorkflowLogItem,
 } from '../actions';
+import { patchTaskInList, ETaskListActions } from '../tasks/slice';
 import {
   changeWorkflow,
   changeWorkflowsList,
@@ -99,7 +98,7 @@ import {
   getWorkflowsStatus,
   getLastLoadedTemplateIdForTable,
 } from '../selectors/workflows';
-import { getTaskStore , getCurrentTask } from '../selectors/task';
+import { getTaskStore, getCurrentTask } from '../selectors/task';
 import { getEditKickoff, mapFilesToRequest } from '../../utils/workflows';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getWorkflows } from '../../api/getWorkflows';
@@ -266,7 +265,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: PayloadAction<number>) {
       values: {
         statusFilter,
         templatesIdsFilter,
-        stepsIdsFilter,
+        tasksApiNamesFilter,
         performersIdsFilter,
         performersGroupIdsFilter,
         workflowStartersIdsFilter,
@@ -331,7 +330,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: PayloadAction<number>) {
       statusFilter,
       templatesIdsFilter,
       performersGroupIdsFilter,
-      stepsIdsFilter,
+      tasksApiNamesFilter,
       performersIdsFilter,
       workflowStartersIdsFilter,
       searchText,
@@ -654,14 +653,14 @@ export function* fetchFilterSteps({
 export function* updateCurrentPerformersCountersSaga() {
   const {
     workflowsSettings: {
-      values: { templatesIdsFilter, stepsIdsFilter, workflowStartersIdsFilter },
+      values: { templatesIdsFilter, tasksApiNamesFilter, workflowStartersIdsFilter },
     },
   }: IStoreWorkflows = yield select(getWorkflowsStore);
 
   try {
     const counters: TUserCounter[] | undefined = yield call(getWorkflowsCurrentPerformerCounters, {
       templatesIdsFilter,
-      stepsIdsFilter,
+      tasksApiNamesFilter,
       workflowStartersIdsFilter,
     });
 

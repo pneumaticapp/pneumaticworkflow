@@ -13,7 +13,7 @@ import {
   changeWorkflowsSorting,
   setFilterStatus as setWorkflowsFilterStatus,
   setFilterTemplate as setWorkflowsFilterTemplate,
-  setFilterTemplateSteps as setWorkflowsFilterSteps,
+  setFilterTemplateTasks as setWorkflowsFilterTasks,
   setFilterPerformers as setWorkflowsFilterPerfomers,
   setFilterPerformersGroup as setWorkflowsFilterPerfomersGroup,
   setFilterWorkflowStarters as setWorkflowsFilterWorkflowStarters,
@@ -81,16 +81,12 @@ const SyncedWorkflowsFilters = withSyncedQueryString<TWorkflowsFiltersStoreProps
       getQueryParamByProp: (value: number[]) => value.join(','),
     },
     {
-      propName: 'stepsIdsFilter',
-      queryParamName: 'steps',
-      defaultAction: setWorkflowsFilterSteps([]),
+      propName: 'tasksApiNamesFilter',
+      queryParamName: 'tasks',
+      defaultAction: setWorkflowsFilterTasks([]),
       createAction: (queryParam) => {
-        const steps = queryParam.split(',').map(Number);
-        if (steps.every(Number.isInteger)) {
-          return setWorkflowsFilterSteps(steps);
-        }
-
-        return setWorkflowsFilterSteps([]);
+        const tasks = queryParam.split(',');
+        return setWorkflowsFilterTasks(tasks);
       },
       getQueryParamByProp: (value: number[]) => value.join(','),
     },
