@@ -22,7 +22,7 @@ from src.accounts.permissions import (
 from src.accounts.queries import CountTemplatesByUserQuery
 from src.accounts.serializers.user import (
     UserPrivilegesSerializer,
-    UserSerializer, UserCreateSerializer,
+    UserSerializer,
 )
 from src.accounts.serializers.users import (
     AcceptTransferSerializer,
@@ -68,7 +68,6 @@ class UsersViewSet(
     pagination_class = LimitOffsetPagination
     filter_backends = [PneumaticFilterBackend]
     action_serializer_classes = {
-        'create': UserCreateSerializer,
         'reassign': ReassignSerializer,
         'privileges': UserPrivilegesSerializer,
     }

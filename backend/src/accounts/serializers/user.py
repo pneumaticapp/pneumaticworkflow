@@ -71,11 +71,11 @@ class UserSerializer(
             'date_fdw',
             'invite',
             'groups',
+            'password',
         )
         read_only_fields = (
             'id',
             'type',
-            'email',
             'invite',
             'status',
             'is_account_owner',
@@ -85,7 +85,6 @@ class UserSerializer(
     groups = RelatedListField(
         source='user_groups',
         child=serializers.IntegerField(),
-        read_only=True,
     )
     date_joined_tsp = TimeStampField(source='date_joined', read_only=True)
     timezone = serializers.ChoiceField(
@@ -94,6 +93,7 @@ class UserSerializer(
     )
     date_fmt = DateFormatField(required=False)
     invite = serializers.SerializerMethodField(allow_null=True, read_only=True)
+    password = serializers.CharField(write_only=True, required=False)
 
     def get_invite(self, instance: UserModel):
         if instance.status_invited and instance.invite:
@@ -107,19 +107,10 @@ class UserSerializer(
         else:
             self.fields['language'].choices = Language.EURO_CHOICES
 
-
-class UserCreateSerializer(UserSerializer):
-
-    class Meta(UserSerializer.Meta):
-        read_only_fields = (
-            'id',
-            'type',
-            'invite',
-            'status',
-            'is_account_owner',
-            'groups',
-            'date_joined_tsp',
-        )
+    def validate(self, attrs):
+        if 'password' in attrs:
+            attrs['raw_password'] = attrs.pop('password')
+        return attrs
 
 
 class UserPrivilegesSerializer(UserSerializer):

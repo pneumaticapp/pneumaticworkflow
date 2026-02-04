@@ -670,7 +670,7 @@ def test_create_related__groups__ok(mocker):
         return_value=key,
     )
 
-    user_data = {'key': 'value', 'groups': [group]}
+    user_data = {'key': 'value', 'user_groups': [group]}
     service = UserService(instance=user)
 
     # act
@@ -1840,7 +1840,7 @@ def test_partial_update__all_fields_end_to_end__ok(
     }
     raw_password = 'new password 123'
     update_kwargs = {
-        'groups': [new_group.id],
+        'user_groups': [new_group.id],
         'raw_password': raw_password,
         **user_data,
     }
@@ -1916,7 +1916,7 @@ def test_partial_update__all_fields_end_to_end__ok(
         user.is_comments_mentions_subscriber
     )
     assert user.user_groups.count() == 1
-    assert user.user_groups.first().id == update_kwargs['groups'][0]
+    assert user.user_groups.first().id == update_kwargs['user_groups'][0]
     assert user.password == safe_password
     make_password_mock.assert_called_once_with(raw_password)
 
