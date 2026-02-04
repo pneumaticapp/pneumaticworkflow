@@ -44,22 +44,22 @@ export function TaskItem({ task, index, mode, templateId }: ITaskItemProps) {
         [EDashboardCounterType.Started]: getLinkToWorkflows({
           status: EWorkflowsStatus.Running,
           templateId,
-          stepId: task.id,
+          taskApiName: task.apiName,
         }),
         [EDashboardCounterType.InProgress]: getLinkToWorkflows({
           status: EWorkflowsStatus.Running,
           templateId,
-          stepId: task.id,
+          taskApiName: task.apiName,
         }),
         [EDashboardCounterType.Overdue]: getLinkToWorkflows({
           status: EWorkflowsStatus.Running,
           templateId,
-          stepId: task.id,
+          taskApiName: task.apiName,
           sorting: EWorkflowsSorting.Overdue,
         }),
         [EDashboardCounterType.Completed]: getLinkToWorkflows({
           templateId,
-          stepId: task.id,
+          taskApiName: task.apiName,
           status: EWorkflowsStatus.Completed,
         }),
       };
@@ -106,7 +106,7 @@ export function TaskItem({ task, index, mode, templateId }: ITaskItemProps) {
       ? getLinkToTasks({ templateId, taskApiNAme: task.apiName })
       : getLinkToWorkflows({
         templateId,
-        stepId: task.id,
+        taskApiName: task.apiName,
       });
 
   return (
