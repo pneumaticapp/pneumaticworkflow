@@ -135,6 +135,10 @@ module.exports = {
   ],
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
+    // Lexical (.mjs) импортирует 'react/jsx-runtime' без расширения; webpack 5 требует fullySpecified
+    alias: {
+      'react/jsx-runtime': path.resolve(__dirname, 'node_modules/react/jsx-runtime.js'),
+    },
   },
   mode: NODE_ENV,
 };

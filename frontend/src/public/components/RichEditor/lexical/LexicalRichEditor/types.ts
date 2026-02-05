@@ -6,7 +6,7 @@ import type { TTaskVariable } from '../../../TemplateEdit/types';
 export interface ILexicalRichEditorHandle {
   focus(): void;
   insertVariable(apiName?: string, title?: string, subtitle?: string | ReactNode): void;
-  getEditor?(): LexicalEditor;
+  getEditor?(): LexicalEditor | undefined;
 }
 
 export type TMentionData = {

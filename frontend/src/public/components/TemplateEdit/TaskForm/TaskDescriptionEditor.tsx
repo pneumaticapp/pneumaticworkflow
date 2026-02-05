@@ -4,12 +4,15 @@ import { useIntl } from 'react-intl';
 import { TTaskVariable } from '../types';
 import { getInitialEditorState } from '../../RichEditor/utils/converters';
 import { RichEditor, IRichEditorHandle } from '../../RichEditor';
+import { LexicalRichEditor, ILexicalRichEditorHandle } from '../../RichEditor/lexical';
 
 import { variablesDecorator } from '../utils/variablesDecorator';
 import { VariableList } from '../VariableList';
 import { addVariableEntityToEditor } from '../utils/addVariableEntityToEditor';
 
 import styles from '../TemplateEdit.css';
+
+const USE_LEXICAL_IN_TASK_DESCRIPTION = true;
 
 export interface ITaskDescriptionEditorProps {
   accountId: number;
@@ -28,19 +31,31 @@ export function TaskDescriptionEditor({
   handleChange,
   handleChangeChecklists,
 }: ITaskDescriptionEditorProps) {
-  const editor = useRef<IRichEditorHandle>(null);
+  const draftEditorRef = useRef<IRichEditorHandle>(null);
+  const lexicalEditorRef = useRef<ILexicalRichEditorHandle>(null);
+  const editorRef = USE_LEXICAL_IN_TASK_DESCRIPTION ? lexicalEditorRef : draftEditorRef;
   const { formatMessage } = useIntl();
 
   const handleInsertVariable = (apiName?: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    if (!editor.current) {
+    if (!editorRef.current) {
+      return;
+    }
+
+    if (USE_LEXICAL_IN_TASK_DESCRIPTION) {
+      const newVariable = listVariables?.find((variable) => variable.apiName === apiName);
+      (editorRef.current as ILexicalRichEditorHandle).insertVariable(
+        apiName,
+        newVariable?.title,
+        newVariable?.subtitle,
+      );
       return;
     }
 
     const newVariable = listVariables?.find((variable) => variable.apiName === apiName);
-    editor.current.onChange(
-      addVariableEntityToEditor(editor.current.getEditorState(), {
+    (editorRef.current as IRichEditorHandle).onChange(
+      addVariableEntityToEditor((editorRef.current as IRichEditorHandle).getEditorState(), {
         title: newVariable?.title,
         subtitle: newVariable?.subtitle,
         apiName,
@@ -48,11 +63,38 @@ export function TaskDescriptionEditor({
     );
   };
 
+  const titleMsg = formatMessage({ id: 'tasks.task-description-field' });
+  const placeholderMsg = formatMessage({ id: 'template.task-description-placeholder' });
+
+  if (USE_LEXICAL_IN_TASK_DESCRIPTION) {
+    return (
+      <LexicalRichEditor
+        ref={lexicalEditorRef}
+        title={titleMsg}
+        placeholder={placeholderMsg}
+        defaultValue={value}
+        handleChange={handleChange}
+        handleChangeChecklists={handleChangeChecklists}
+        withChecklists
+        isInTaskDescriptionEditor
+        templateVariables={templateVariables}
+      >
+        <VariableList
+          variables={listVariables}
+          onVariableClick={handleInsertVariable}
+          className={styles['task-description__variables']}
+          tooltipText="tasks.task-description-button-tooltip"
+          focusEditor={() => lexicalEditorRef.current?.focus()}
+        />
+      </LexicalRichEditor>
+    );
+  }
+
   return (
     <RichEditor
-      ref={editor}
-      title={formatMessage({ id: 'tasks.task-description-field' })}
-      placeholder={formatMessage({ id: 'template.task-description-placeholder' })}
+      ref={draftEditorRef}
+      title={titleMsg}
+      placeholder={placeholderMsg}
       initialState={getInitialEditorState(value, templateVariables)}
       handleChange={handleChange}
       handleChangeChecklists={handleChangeChecklists}
@@ -67,7 +109,7 @@ export function TaskDescriptionEditor({
         onVariableClick={handleInsertVariable}
         className={styles['task-description__variables']}
         tooltipText="tasks.task-description-button-tooltip"
-        focusEditor={() => editor.current?.focus()}
+        focusEditor={() => draftEditorRef.current?.focus()}
       />
     </RichEditor>
   );

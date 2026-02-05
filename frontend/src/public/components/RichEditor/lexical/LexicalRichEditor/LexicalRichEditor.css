@@ -1,0 +1,96 @@
+.wrapper {
+  position: relative;
+}
+
+.wrapper_with-title {
+  padding-top: 0.8rem;
+}
+
+.title {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: auto;
+  left: 1.2rem;
+  padding: 0 0.4rem;
+  font-size: 1.3rem;
+  line-height: 1.6rem;
+  color: var(--pneumatic-color-black72);
+}
+
+.editor {
+  position: relative;
+  padding: 1rem 1.6rem;
+  box-sizing: border-box;
+  width: 100%;
+  cursor: text;
+  background: transparent;
+  border: 0.1rem solid var(--pneumatic-color-black16);
+  border-radius: 0.8rem;
+  transition: 0.1s ease-in-out border-color;
+}
+
+.editor:focus-within {
+  border-color: var(--pneumatic-color-black48);
+}
+
+.content-editable {
+  min-height: 2rem;
+  overflow-wrap: anywhere;
+  outline: none;
+}
+
+.editor-multiline .content-editable {
+  min-height: 7.4rem;
+}
+
+.placeholder {
+  position: absolute;
+  top: 1rem;
+  right: 1.6rem;
+  left: 1.6rem;
+  pointer-events: none;
+  color: var(--default-placeholder-color);
+}
+
+:global(.lexical-rich-editor-paragraph) {
+  margin: 0 0 0.8rem;
+}
+
+:global(.lexical-rich-editor-quote) {
+  margin: 0 0 0.8rem;
+  padding-left: 1.6rem;
+  color: var(--pneumatic-color-black72);
+  border-left: 0.4rem solid var(--pneumatic-color-black24);
+}
+
+:global(.lexical-rich-editor-list-ul),
+:global(.lexical-rich-editor-list-ol) {
+  margin: 0 0 0.8rem;
+  padding-left: 3.2rem;
+}
+
+:global(.lexical-rich-editor-list-item) {
+  margin: 0 0 0.8rem;
+}
+
+:global(.lexical-rich-editor-link) {
+  color: var(--pneumatic-color-link-dark);
+  transition: color 0.1s ease-in-out;
+}
+
+:global(.lexical-rich-editor-link:hover) {
+  color: var(--pneumatic-color-link-hover);
+}
+
+:global(.lexical-rich-editor-text-bold) {
+  font-weight: bold;
+}
+
+:global(.lexical-rich-editor-text-italic) {
+  font-style: italic;
+}
+
+:global(.lexical-rich-editor-text-underline) {
+  text-decoration: underline;
+}
