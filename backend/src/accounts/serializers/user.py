@@ -85,6 +85,7 @@ class UserSerializer(
     groups = RelatedListField(
         source='user_groups',
         child=serializers.IntegerField(),
+        required=False,
     )
     date_joined_tsp = TimeStampField(source='date_joined', read_only=True)
     timezone = serializers.ChoiceField(
