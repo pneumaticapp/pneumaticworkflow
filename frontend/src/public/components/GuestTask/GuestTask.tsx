@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React, { useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
@@ -19,7 +19,7 @@ export function GuestTask() {
   const { formatMessage } = useIntl();
   useWhiteBackground();
 
-  React.useEffect(() => {
+  useEffect(() => {
     dispatch(usersFetchStarted());
     dispatch(loadGroups());
   }, []);

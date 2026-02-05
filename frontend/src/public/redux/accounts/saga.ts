@@ -1,6 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
-// tslint:disable: max-file-line-count
 import { all, call, fork, put, select, takeEvery, takeLatest } from 'redux-saga/effects';
 import { PayloadAction } from '@reduxjs/toolkit';
 import {
@@ -117,8 +114,8 @@ export function* fetchActiveUsersCount() {
 export function* fetchPlan() {
   const currentPlan: ReturnType<typeof getAccountPlan> = yield select(getAccountPlan);
   try {
-    const currentPlan: TGetPlanResponse = yield call(getPlan);
-    yield put(setCurrentPlan(currentPlan));
+    const planResponse: TGetPlanResponse = yield call(getPlan);
+    yield put(setCurrentPlan(planResponse));
   } catch (error) {
     NotificationManager.notifyApiError(error, { title: 'plan.fetch-error', message: getErrorMessage(error) });
     console.info('fetch plan error : ', error);
@@ -137,7 +134,7 @@ function getSortedUsers(users: TUserListItem[], sorting: EUserListSorting) {
   const sortingMethodMap = {
     [EUserListSorting.NameAsc]: sortUsersByNameAsc,
     [EUserListSorting.NameDesc]: sortUsersByNameDesc,
-    [EUserListSorting.Status]: (users: TUserListItem[]) => sortUsersByStatus(sortUsersByNameAsc(users)),
+    [EUserListSorting.Status]: (usersList: TUserListItem[]) => sortUsersByStatus(sortUsersByNameAsc(usersList)),
   };
 
   return sortingMethodMap[sorting](users);
@@ -178,11 +175,7 @@ async function fetchReassignWorkflows(oldUserId: number, newUserId: number | nul
     return;
   }
 
-  try {
-    await reassignWorkflows(oldUserId, newUserId);
-  } catch (error) {
-    throw error;
-  }
+  await reassignWorkflows(oldUserId, newUserId);
 }
 
 function* fetchDeleteUser({ payload: { userId, reassignedUserId } }: PayloadAction<TDeleteUserPayload>) {

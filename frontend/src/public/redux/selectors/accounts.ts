@@ -6,3 +6,5 @@ export const getAccountPlan = (state: IApplicationState): IAccountPlan => state.
 export const getAccountsUsers = (state: IApplicationState): TUserListItem[] => state.accounts.users;
 
 export const getIsCreateUserModalOpen = (state: IApplicationState): boolean => state.accounts.isCreateUserModalOpen;
+
+export const getAccountsTeamList = (state: IApplicationState): TUserListItem[] => state.accounts.team.list;

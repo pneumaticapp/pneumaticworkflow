@@ -17,7 +17,7 @@ import { EditGroupModal } from './EditGroupModal';
 import { Group } from './Group';
 import { createModalOpen } from '../../../redux/actions';
 import { teamFetchStarted } from '../../../redux/accounts/slice';
-import { IApplicationState } from '../../../types/redux';
+import { getGroupsList, getGroupsIsLoading } from '../../../redux/selectors/groups';
 import { TasksPlaceholderIcon } from '../../Tasks/TasksPlaceholderIcon';
 
 import styles from './Groups.css';
@@ -36,7 +36,8 @@ export interface IGroupsProps {
 export function Groups() {
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
-  const { list: groups, isLoading } = useSelector((state: IApplicationState) => state.groups);
+  const groups = useSelector(getGroupsList);
+  const isLoading = useSelector(getGroupsIsLoading);
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {

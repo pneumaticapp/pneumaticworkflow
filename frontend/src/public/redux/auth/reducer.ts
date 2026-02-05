@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 import produce from 'immer';
 import * as moment from 'moment-timezone';
 

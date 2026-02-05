@@ -3,7 +3,6 @@ import { useIntl } from 'react-intl';
 import { matchPath } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { IApplicationState } from '../../types/redux';
 import { TopNavContainer } from '../../components/TopNav';
 import { ERoutes } from '../../constants/routes';
 import { checkSomeRouteIsActive, history } from '../../utils/history';
@@ -13,6 +12,8 @@ import { ReturnLink, Tabs } from '../../components/UI';
 import { resetUsers } from '../../redux/accounts/slice';
 import { TeamPages } from '../../redux/team/types';
 import { updateTeamActiveTab, setTeamActivePage } from '../../redux/team/slice';
+import { getTeamPage } from '../../redux/selectors/team';
+
 import styles from './TeamLayout.css';
 
 export interface ITeamLayoutProps {
@@ -22,7 +23,7 @@ export interface ITeamLayoutProps {
 export function TeamLayout({ children }: ITeamLayoutProps) {
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
-  const page = useSelector((state: IApplicationState) => state.team.page);
+  const page = useSelector(getTeamPage);
 
   useEffect(() => {
     dispatch(
