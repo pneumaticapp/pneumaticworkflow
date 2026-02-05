@@ -12,7 +12,7 @@ import { getErrorsObject } from '../../../../utils/formik/getErrorsObject';
 import { copyToClipboard } from '../../../../utils/helpers';
 import { createPassword } from '../../../../utils/createPassword';
 import { NotificationManager } from '../../../UI/Notifications';
-import { createUser } from '../../../../redux/accounts/actions';
+import { createUser } from '../../../../redux/accounts/slice';
 
 import { ICreateUserModalProps, IStatusOption, EUserRole } from './types';
 import { ICreateUserRequest } from '../../../../types/user';

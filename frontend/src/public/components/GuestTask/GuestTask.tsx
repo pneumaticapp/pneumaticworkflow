@@ -2,7 +2,8 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
-import { loadGroups, usersFetchStarted } from '../../redux/actions';
+import { loadGroups } from '../../redux/actions';
+import { usersFetchStarted } from '../../redux/accounts/slice';
 import { getBrowserConfig } from '../../utils/getConfig';
 import TaskDetailContainer from '../TaskDetail';
 import { ETaskCardViewMode } from '../TaskCard';

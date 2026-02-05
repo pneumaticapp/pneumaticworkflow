@@ -9,11 +9,11 @@ import {
   editModalOpen,
   createGroup,
   deleteGroup,
-  teamFetchStarted,
   resetGroup,
   updateUsersGroup,
   userListSortingChanged,
 } from '../../../redux/actions';
+import { teamFetchStarted } from '../../../redux/accounts/slice';
 import { IApplicationState } from '../../../types/redux';
 import { IGroup } from '../../../redux/team/types';
 import { EUserListSorting, TUserListItem } from '../../../types/user';

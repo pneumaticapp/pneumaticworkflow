@@ -10,7 +10,7 @@ import { checkSomeRouteIsActive, history } from '../../utils/history';
 import { GroupListSortingContainer } from './GroupListSortingContainer';
 import { UserListSortingContainer } from './UserListSortingContainer';
 import { ReturnLink, Tabs } from '../../components/UI';
-import { resetUsers } from '../../redux/actions';
+import { resetUsers } from '../../redux/accounts/slice';
 import { TeamPages } from '../../redux/team/types';
 import { updateTeamActiveTab, setTeamActivePage } from '../../redux/team/slice';
 import styles from './TeamLayout.css';

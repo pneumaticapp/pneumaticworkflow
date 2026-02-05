@@ -8,8 +8,8 @@ import { parseCookies } from '../../utils/cookie';
 import { EUserStatus } from '../../types/user';
 
 import { EAuthActions, EAuthUserFailType, TAuthActions } from './actions';
+import { setCurrentPlan } from '../accounts/slice';
 import { ESubscriptionPlan } from '../../types/account';
-import { EAccountsActions, TAccountsActions } from '../actions';
 
 const { invitedUser } = getBrowserConfig();
 
@@ -62,7 +62,7 @@ export const INIT_STATE: IAuthUser = {
 };
 
 // eslint-disable-next-line @typescript-eslint/default-param-last
-export const reducer = (state = INIT_STATE, action: TAuthActions | TAccountsActions): IAuthUser => {
+export const reducer = (state = INIT_STATE, action: TAuthActions | ReturnType<typeof setCurrentPlan>): IAuthUser => {
   switch (action.type) {
     case EAuthActions.AuthUser:
       return { ...state, loading: true };
@@ -104,7 +104,7 @@ export const reducer = (state = INIT_STATE, action: TAuthActions | TAccountsActi
     case EAuthActions.LogoutUserSuccess: {
       return { ...state, loggedState: ELoggedState.LoggedOut };
     }
-    case EAccountsActions.SetCurrentPlan: {
+    case setCurrentPlan.type: {
       const { billingPlan, planExpiration } = action.payload;
 
       return produce(state, (draftState) => {

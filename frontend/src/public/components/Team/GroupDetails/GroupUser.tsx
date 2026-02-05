@@ -4,7 +4,8 @@ import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 import Switch from 'rc-switch';
 
-import { loadChangeUserAdmin, updateUsersGroup } from '../../../redux/actions';
+import { updateUsersGroup } from '../../../redux/actions';
+import { loadChangeUserAdmin } from '../../../redux/accounts/slice';
 import { IApplicationState } from '../../../types/redux';
 import { TUserListItem, EUserStatus } from '../../../types/user';
 import { getUserFullName } from '../../../utils/users';

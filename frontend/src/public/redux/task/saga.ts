@@ -50,8 +50,8 @@ import {
   patchTaskInList,
   setGeneralLoaderVisibility,
   shiftTaskList,
-  usersFetchFinished,
 } from '../actions';
+import { usersFetchFinished } from '../accounts/slice';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getAuthUser, getUsers, getUserTimezone } from '../selectors/user';
 import { removeOutputFromLocalStorage } from '../../components/TaskCard/utils/storageOutputs';

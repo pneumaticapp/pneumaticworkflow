@@ -1,4 +1,4 @@
-import { IChangeUserAdminProps, ITeamFetchStartedProps, TOpenDeleteUserModalPayload } from "../../../redux/actions";
+import { IChangeUserAdminProps, ITeamFetchStartedProps, TOpenDeleteUserModalPayload } from "../../../redux/accounts/types";
 import { EUserListSorting, TUserListItem } from "../../../types/user";
 
 export interface IUsersProps {

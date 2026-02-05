@@ -15,7 +15,8 @@ import { IGroup } from '../../../redux/team/types';
 import { CreateGroupModal } from './CreateGroupModal';
 import { EditGroupModal } from './EditGroupModal';
 import { Group } from './Group';
-import { createModalOpen, teamFetchStarted } from '../../../redux/actions';
+import { createModalOpen } from '../../../redux/actions';
+import { teamFetchStarted } from '../../../redux/accounts/slice';
 import { IApplicationState } from '../../../types/redux';
 import { TasksPlaceholderIcon } from '../../Tasks/TasksPlaceholderIcon';
 

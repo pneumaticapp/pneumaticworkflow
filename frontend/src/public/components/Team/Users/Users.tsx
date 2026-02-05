@@ -23,7 +23,7 @@ import { getSubscriptionPlan } from '../../../redux/selectors/user';
 import { getIsCreateUserModalOpen } from '../../../redux/selectors/accounts';
 import { ESubscriptionPlan } from '../../../types/account';
 import { IUsersProps } from './types';
-import { openCreateUserModal, closeCreateUserModal } from '../../../redux/accounts/actions';
+import { openCreateUserModal, closeCreateUserModal } from '../../../redux/accounts/slice';
 
 import styles from './Users.css';
 

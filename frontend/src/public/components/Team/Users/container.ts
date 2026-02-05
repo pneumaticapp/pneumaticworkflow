@@ -3,13 +3,13 @@ import { Users } from './Users';
 import { IUsersProps } from './types';
 import { IApplicationState } from '../../../types/redux';
 import { getIsUserSubsribed } from '../../../redux/selectors/user';
-import {
+import {setGeneralLoaderVisibility} from '../../../redux/actions';
+import {  
   teamFetchStarted,
   loadChangeUserAdmin,
   openDeleteUserModal,
-  setGeneralLoaderVisibility,
-  changeUserListSorting,
-} from '../../../redux/actions';
+  userListSortingChanged as changeUserListSorting
+} from '../../../redux/accounts/slice';
 import { openTeamInvitesPopup, loadInvitesUsers } from '../../../redux/team/slice';
 import { EUserListSorting } from '../../../types/user';
 import { withSyncedQueryString } from '../../../HOCs/withSyncedQueryString';

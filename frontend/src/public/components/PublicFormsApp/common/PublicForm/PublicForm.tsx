@@ -24,7 +24,7 @@ import { Header } from '../../../UI/Typeography/Header';
 import { getPublicFormConfig } from '../../../../utils/getConfig';
 import { deleteRemovedFilesFromFields } from '../../../../api/deleteRemovedFilesFromFields';
 import { RichText } from '../../../RichText';
-import { usersFetchStarted } from '../../../../redux/actions';
+import { usersFetchStarted } from '../../../../redux/accounts/slice';
 import { TPublicFormType } from '../../../../types/publicForms';
 import { Copyright } from '../Copyright';
 import { FormSkeleton } from '../FormSkeleton';
