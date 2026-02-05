@@ -235,7 +235,7 @@
     "build-client:prod": "NODE_ENV=production webpack",
     "start": "nodemon ./src/index.ts",
     "start:prod": "ts-node ./src/index.ts",
-    "local": "npx kill-port 8000 && concurrently \"npm run start\" \"npm run build-client\"",
+    "local": "npx kill-port 8000 && npm run start",
     "test": "jest",
     "test:prod": "jest --ci",
     "test:updateSnapshot": "jest --updateSnapshot",
