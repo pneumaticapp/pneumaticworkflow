@@ -9,14 +9,14 @@ import {
   changeWorkflowsSearchText,
   loadWorkflowsList as loadWorkflowsListAction,
   loadFilterTemplates as loadWorkflowsFilterTemplates,
-  setFilterTemplateSteps as setWorkflowsFilterSteps,
+  setFilterTemplateTasks as setWorkflowsFilterTasks,
   resetWorkflows,
   removeWorkflowFromList,
 } from '../../redux/workflows/slice';
 
 type TStoreProps = Pick<
   IWorkflowsProps,
-  'workflowsLoadingStatus' | 'workflowsList' | 'templatesFilter' | 'searchText' | 'stepsIdsFilter' | 'view'
+  'workflowsLoadingStatus' | 'workflowsList' | 'templatesFilter' | 'searchText' | 'tasksApiNamesFilter' | 'view'
 >;
 
 type TDispatchProps = Pick<
@@ -28,7 +28,7 @@ type TDispatchProps = Pick<
   | 'openSelectTemplateModal'
   | 'openRunWorkflowModal'
   | 'onSearch'
-  | 'setStepsFilter'
+  | 'setTasksFilter'
   | 'removeWorkflowFromList'
 >;
 
@@ -39,7 +39,7 @@ export function mapStateToProps({
     workflowsList,
     workflowsSettings: {
       view,
-      values: { templatesIdsFilter, stepsIdsFilter },
+      values: { templatesIdsFilter, tasksApiNamesFilter },
       templateList,
     },
   },
@@ -52,7 +52,7 @@ export function mapStateToProps({
     workflowsLoadingStatus,
     workflowsList,
     templatesFilter,
-    stepsIdsFilter,
+    tasksApiNamesFilter,
     searchText: workflowsSearchText,
     view,
   };
@@ -63,7 +63,7 @@ export const mapDispatchToProps: TDispatchProps = {
   openWorkflowLogPopup,
   loadTemplatesTitles: loadWorkflowsFilterTemplates,
   resetWorkflows,
-  setStepsFilter: setWorkflowsFilterSteps,
+  setTasksFilter: setWorkflowsFilterTasks,
   openSelectTemplateModal,
   openRunWorkflowModal,
   onSearch: changeWorkflowsSearchText,

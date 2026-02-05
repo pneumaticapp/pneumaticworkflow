@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import React, { ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -38,7 +38,7 @@ import { getWorkflowPerformersGroupsIdsFilter, getWorkflowsLoadingStatus } from 
 export interface IWorkflowsLayoutComponentProps extends IWorkflowsFiltersProps {
   workflowId: number | null;
   workflowsView: EWorkflowsView;
-  children: React.ReactNode;
+  children: ReactNode;
   closeWorkflowLogPopup(): void;
   removeWorkflowFromList(payload: TRemoveWorkflowFromListPayload): void;
   setWorkflowsView(view: EWorkflowsView): void;
@@ -51,7 +51,7 @@ export function WorkflowsLayoutComponent({
   templatesIdsFilter,
   statusFilter,
   sorting,
-  stepsIdsFilter,
+  tasksApiNamesFilter,
   performersIdsFilter,
   workflowStartersIdsFilter,
   workflowsView,
@@ -62,7 +62,7 @@ export function WorkflowsLayoutComponent({
   setStatusFilter,
   applyFilters,
   loadTemplatesTitles,
-  setStepsFilter,
+  setTasksFilter,
   removeWorkflowFromList,
   loadTemplateSteps,
   updateCurrentPerformersCounters,
@@ -79,13 +79,13 @@ export function WorkflowsLayoutComponent({
 
   const workflowsMainRef = useRef<HTMLDivElement>(null);
   const tableViewContainerRef = useRef<TableViewContainerRef>(null);
-  const loadingTaskRef = React.useRef<Set<number>>(new Set());
+  const loadingTaskRef = useRef<Set<number>>(new Set());
   const prevTemplatesIdsRef = useRef<number[]>(templatesIdsFilter);
 
   const prevStatusFilterRef = useRef<string>(EWorkflowsStatus.Running);
   const prevSortingRef = useRef<string>(EWorkflowsSorting.DateDesc);
   const prevTemplatesIdsFilterRef = useRef<string>('[]');
-  const prevStepsIdsFilterRef = useRef<string>('[]');
+  const prevTasksApiNamesFilterRef = useRef<string>('[]');
   const prevWorkflowStartersIdsFilterRef = useRef<string>('[]');
   const prevPerformersIdsFilterRef = useRef<string>('[]');
   const prevPerformersGroupsIdsFilterRef = useRef<string>('[]');
@@ -93,7 +93,7 @@ export function WorkflowsLayoutComponent({
   const currentFiltersValuesRef = useRef({
     statusFilter,
     templatesIdsFilter,
-    stepsIdsFilter,
+    tasksApiNamesFilter,
     workflowStartersIdsFilter,
     performersIdsFilter,
     performersGroupsIdsFilter,
@@ -108,7 +108,7 @@ export function WorkflowsLayoutComponent({
         ['statusFilter', prevStatusFilterRef],
         ['sorting', prevSortingRef],
         ['templatesIdsFilter', prevTemplatesIdsFilterRef],
-        ['stepsIdsFilter', prevStepsIdsFilterRef],
+        ['tasksApiNamesFilter', prevTasksApiNamesFilterRef],
         ['workflowStartersIdsFilter', prevWorkflowStartersIdsFilterRef],
         ['performersIdsFilter', prevPerformersIdsFilterRef],
         ['performersGroupsIdsFilter', prevPerformersGroupsIdsFilterRef],
@@ -181,15 +181,17 @@ export function WorkflowsLayoutComponent({
     const currentTemplatesIdsSet = new Set(templatesIdsFilter);
     const removedTemplateIds = prevTemplatesIds.filter((id) => !currentTemplatesIdsSet.has(id));
 
-    const removedTemplatesStepIds = new Set(
+    const removedTemplatesTaskApiNames = new Set(
       removedTemplateIds.flatMap((removedId) => {
         const template = filterTemplatesMap.get(removedId);
-        return template?.steps.map((step) => step.id) || [];
+        return template?.steps.map((step) => step.apiName) || [];
       }),
     );
 
-    const filteredTaskIds =
-      removedTemplateIds.length > 0 ? stepsIdsFilter.filter((id) => !removedTemplatesStepIds.has(id)) : stepsIdsFilter;
+    const filteredTaskApiNames =
+      removedTemplateIds.length > 0
+        ? tasksApiNamesFilter.filter((apiName) => !removedTemplatesTaskApiNames.has(apiName))
+        : tasksApiNamesFilter;
 
     selectedTemplates.forEach((template) => {
       const hasTasks = template.steps.length > 0;
@@ -206,7 +208,7 @@ export function WorkflowsLayoutComponent({
     const allSelectedTemplatesTasksLoaded = selectedTemplates.every((template) => template.steps.length > 0);
 
     if (allSelectedTemplatesTasksLoaded) {
-      setStepsFilter(filteredTaskIds);
+      setTasksFilter(filteredTaskApiNames);
     }
     prevTemplatesIdsRef.current = templatesIdsFilter;
   }, [templatesIdsFilter, selectedTemplates, statusFilter, filterTemplatesMap]);
@@ -219,7 +221,7 @@ export function WorkflowsLayoutComponent({
     const hasChanges = checkFilterDependenciesChanged(changedFiltersRef, dependenciesRefs, {
       statusFilter,
       templatesIdsFilter,
-      stepsIdsFilter,
+      tasksApiNamesFilter,
       workflowStartersIdsFilter,
     });
 
@@ -230,13 +232,13 @@ export function WorkflowsLayoutComponent({
     if (canFilterByCurrentPerformer(statusFilter)) {
       updateCurrentPerformersCounters();
     }
-  }, [statusFilter, templatesIdsFilter, stepsIdsFilter, workflowStartersIdsFilter]);
+  }, [statusFilter, templatesIdsFilter, tasksApiNamesFilter, workflowStartersIdsFilter]);
 
   useEffect(() => {
     if (canFilterByTemplateStep(statusFilter)) {
       updateWorkflowsTemplateStepsCounters();
     }
-  }, [statusFilter, performersIdsFilter, workflowStartersIdsFilter, stepsIdsFilter]);
+  }, [selectedTemplates, statusFilter, performersIdsFilter, workflowStartersIdsFilter, tasksApiNamesFilter]);
 
   useEffect(() => {
     updateWorkflowStartersCounters();
@@ -246,7 +248,7 @@ export function WorkflowsLayoutComponent({
     const hasChanges = checkFilterDependenciesChanged(changedFiltersRef, dependenciesRefs, {
       statusFilter,
       templatesIdsFilter,
-      stepsIdsFilter,
+      tasksApiNamesFilter,
       performersIdsFilter,
       performersGroupsIdsFilter,
       workflowStartersIdsFilter,
@@ -260,7 +262,7 @@ export function WorkflowsLayoutComponent({
   }, [
     statusFilter,
     templatesIdsFilter,
-    stepsIdsFilter,
+    tasksApiNamesFilter,
     performersIdsFilter,
     performersGroupsIdsFilter,
     workflowStartersIdsFilter,
@@ -277,7 +279,7 @@ export function WorkflowsLayoutComponent({
     currentFiltersValuesRef.current = {
       statusFilter,
       templatesIdsFilter,
-      stepsIdsFilter,
+      tasksApiNamesFilter,
       workflowStartersIdsFilter,
       performersIdsFilter,
       performersGroupsIdsFilter,
@@ -286,7 +288,7 @@ export function WorkflowsLayoutComponent({
   }, [
     statusFilter,
     templatesIdsFilter,
-    stepsIdsFilter,
+    tasksApiNamesFilter,
     workflowStartersIdsFilter,
     performersIdsFilter,
     performersGroupsIdsFilter,
@@ -315,8 +317,8 @@ export function WorkflowsLayoutComponent({
     }
   }, [changedFiltersRef.current.size]);
 
-  const statusTitles = React.useMemo(() => Object.values(EWorkflowsStatus), []);
-  const sortingTitles = React.useMemo(() => getSortingsByStatus(statusFilter), [statusFilter]);
+  const statusTitles = useMemo(() => Object.values(EWorkflowsStatus), []);
+  const sortingTitles = useMemo(() => getSortingsByStatus(statusFilter), [statusFilter]);
 
   const renderLeftContent = () => {
     return (

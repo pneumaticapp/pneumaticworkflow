@@ -376,6 +376,7 @@ export interface IDashboardCounters {
 
 export interface IDashboardTask {
   id: number;
+  apiName: string;
   number: number;
   name: string;
   started: number | null;

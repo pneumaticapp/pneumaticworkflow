@@ -2,14 +2,14 @@ import { connect } from 'react-redux';
 
 import { IApplicationState } from '../../types/redux';
 import {
-  setTasksFilterTemplate,
-  setTasksFilterStep,
-  loadTasksFilterTemplates,
-  loadTasksFilterSteps,
-  clearTasksFilters,
-  changeTasksSorting,
-  changeTasksCompleteStatus,
-} from '../../redux/actions';
+  changeTaskListSorting,
+  changeTaskListCompletionStatus,
+  loadFilterTemplates,
+  setFilterTemplate,
+  loadFilterSteps,
+  setFilterStep,
+  clearFilters,
+} from '../../redux/tasks/slice';
 import { closeWorkflowLogPopup } from '../../redux/workflows/slice';
 
 import { ITasksLayoutDispatchProps, ITasksLayoutStoreProps, TasksLayoutComponent } from './TasksLayout';
@@ -20,7 +20,7 @@ const mapStateToProps = ({
       sorting,
       isHasFilter,
       completionStatus,
-      filterValues: { templateIdFilter, stepIdFilter },
+      filterValues: { templateIdFilter, taskApiNameFilter },
       templateList,
       templateStepList,
     },
@@ -32,20 +32,20 @@ const mapStateToProps = ({
     filterTemplates: templateList.items,
     filterSteps: templateStepList.items,
     templateIdFilter,
-    stepIdFilter,
+    taskApiNameFilter,
     completionStatus,
   };
 };
 
 const mapDispatchToProps: ITasksLayoutDispatchProps = {
-  loadTasksFilterTemplates,
-  loadTasksFilterSteps,
-  setTasksFilterTemplate,
-  setTasksFilterStep,
-  clearFilters: clearTasksFilters,
+  loadFilterTemplates,
+  loadFilterSteps,
+  setFilterTemplate,
+  setFilterStep,
+  clearFilters,
   closeWorkflowLogPopup,
-  changeTasksCompleteStatus,
-  changeTasksSorting,
+  changeTaskListCompletionStatus,
+  changeTaskListSorting,
 };
 
 export const TasksLayoutContainer = connect<ITasksLayoutStoreProps, ITasksLayoutDispatchProps>(

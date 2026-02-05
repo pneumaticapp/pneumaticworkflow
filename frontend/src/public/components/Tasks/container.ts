@@ -1,21 +1,20 @@
 import { connect } from 'react-redux';
 import { IApplicationState } from '../../types/redux';
 import { ITasksProps, Tasks } from './Tasks';
+import { loadCurrentTask, openSelectTemplateModal } from '../../redux/actions';
 import {
-  loadTaskList,
-  changeTasksSorting,
-  resetTasks,
+  changeTaskListSorting,
+  changeTaskListCompletionStatus,
   setTaskListDetailedTaskId,
   changeTasksSearchText,
-  loadCurrentTask,
-  setTasksFilterTemplate,
-  setTasksFilterStep,
-  showNewTasksNotification,
-  searchTasks,
-  openSelectTemplateModal,
+  resetTasks,
   resetTasksFilters,
-  changeTasksCompleteStatus,
-} from '../../redux/actions';
+  setFilterTemplate,
+  setFilterStep,
+  showNewTasksNotification,
+  loadTaskList,
+  searchTasks,
+} from '../../redux/tasks/slice';
 import { withSyncedQueryString } from '../../HOCs/withSyncedQueryString';
 import { ETaskListCompletionStatus, ETaskListSorting } from '../../types/tasks';
 import { checkHasTopBar } from '../TopNav/utils/checkHasTopBar';
@@ -28,7 +27,7 @@ type TTasksStoreProps = Pick<
   | 'taskSorting'
   | 'completionStatus'
   | 'templateIdFilter'
-  | 'stepIdFilter'
+  | 'taskApiNameFilter'
   | 'taskListStatus'
   | 'withPaywall'
   | 'hasNewTasks'
@@ -57,7 +56,7 @@ export function mapStateToProps({
     tasksSettings: {
       sorting,
       completionStatus,
-      filterValues: { templateIdFilter, stepIdFilter },
+      filterValues: { templateIdFilter, taskApiNameFilter },
     },
   },
   task: { data: detailedTask },
@@ -78,7 +77,7 @@ export function mapStateToProps({
     taskSorting: sorting,
     completionStatus,
     templateIdFilter,
-    stepIdFilter,
+    taskApiNameFilter,
     hasNewTasks,
     searchText: tasksSearchText,
     isAdmin: Boolean(isAdmin),
@@ -101,42 +100,42 @@ const SyncedTasks = withSyncedQueryString<TTasksStoreProps>(
     {
       propName: 'completionStatus',
       queryParamName: 'status',
-      defaultAction: changeTasksCompleteStatus(ETaskListCompletionStatus.Active),
-      createAction: changeTasksCompleteStatus,
+      defaultAction: changeTaskListCompletionStatus(ETaskListCompletionStatus.Active),
+      createAction: changeTaskListCompletionStatus,
       getQueryParamByProp: (value) => value,
     },
     {
       propName: 'taskSorting',
       queryParamName: 'sorting',
-      defaultAction: changeTasksSorting(ETaskListSorting.DateAsc),
-      createAction: changeTasksSorting,
+      defaultAction: changeTaskListSorting(ETaskListSorting.DateAsc),
+      createAction: changeTaskListSorting,
       getQueryParamByProp: (value) => value,
     },
     {
       propName: 'templateIdFilter',
       queryParamName: 'template',
-      defaultAction: setTasksFilterTemplate(null),
+      defaultAction: setFilterTemplate(null),
       createAction: (queryParam) => {
         const stepId = Number(queryParam);
         if (Number.isInteger(stepId)) {
-          return setTasksFilterTemplate(stepId);
+          return setFilterTemplate(stepId);
         }
 
-        return setTasksFilterTemplate(null);
+        return setFilterTemplate(null);
       },
       getQueryParamByProp: String,
     },
     {
-      propName: 'stepIdFilter',
-      queryParamName: 'template-step',
-      defaultAction: setTasksFilterStep(null),
+      propName: 'taskApiNameFilter',
+      queryParamName: 'template-task',
+      defaultAction: setFilterStep(null),
       createAction: (queryParam) => {
-        const stepId = Number(queryParam);
-        if (Number.isInteger(stepId)) {
-          return setTasksFilterStep(stepId);
+        const taskApiNAme = queryParam;
+        if (taskApiNAme) {
+          return setFilterStep(taskApiNAme);
         }
 
-        return setTasksFilterStep(null);
+        return setFilterStep(null);
       },
       getQueryParamByProp: String,
     },
