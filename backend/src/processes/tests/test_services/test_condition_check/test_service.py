@@ -209,6 +209,7 @@ class TestConditionCheckService:
                 access_type=AccessType.RESTRICTED,
                 task=first_task,
                 workflow=workflow,
+                output=first_field,
             )
 
         condition = Condition.objects.create(

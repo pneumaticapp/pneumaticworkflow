@@ -1,9 +1,15 @@
+import guardian.management
 import pytest
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from src.storage.models import Attachment
+from unittest.mock import Mock
 
 from src.generics.tests.clients import PneumaticApiClient
+
+
+def pytest_configure(config):
+    guardian.management.create_anonymous_user = Mock()
 
 
 @pytest.fixture(autouse=True)

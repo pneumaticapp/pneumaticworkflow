@@ -652,7 +652,7 @@ class SystemTemplateQuerySet(BaseQuerySet):
 class TaskFieldQuerySet(BaseFieldQuerySet):
 
     def with_attachments(self):
-        return self.filter(attachments__isnull=False)
+        return self.filter(storage_attachments__isnull=False)
 
     def only_values(self):
         return self.values_list('value', flat=True)
