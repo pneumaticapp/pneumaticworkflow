@@ -12,6 +12,7 @@ from src.accounts.models import Contact
 from src.accounts.serializers.group import (
     GroupNameSerializer,
 )
+from src.accounts.messages import MSG_A_0036
 from src.accounts.serializers.user_invites import (
     UserListInviteSerializer,
 )
@@ -111,6 +112,12 @@ class UserSerializer(
     def validate(self, attrs):
         if 'password' in attrs:
             attrs['raw_password'] = attrs.pop('password')
+        if (
+            self.instance
+            and self.instance.is_account_owner
+            and self.instance != self.context['request_user']
+        ):
+            raise serializers.ValidationError(MSG_A_0036)
         return attrs
 
 

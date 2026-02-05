@@ -166,7 +166,11 @@ class UsersViewSet(
 
     def update(self, request, *args, **kwargs):
         user = self.get_object()
-        slz = self.get_serializer(data=request.data)
+        slz = self.get_serializer(
+            instance=user,
+            data=request.data,
+            extra_fields={'request_user': request.user},
+        )
         slz.is_valid(raise_exception=True)
         service = UserService(
             user=request.user,
