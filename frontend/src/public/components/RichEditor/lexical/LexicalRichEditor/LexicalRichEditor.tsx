@@ -3,7 +3,6 @@ import React, {
   useImperativeHandle,
   useRef,
   useMemo,
-  useEffect,
   useCallback,
 } from 'react';
 import classnames from 'classnames';
@@ -15,9 +14,10 @@ import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
 import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import type { EditorState, LexicalEditor } from 'lexical';
-import { $getRoot, $createParagraphNode, $createTextNode } from 'lexical';
 import { LEXICAL_NODES } from '../nodes';
 import { lexicalTheme } from '../theme';
+import { convertLexicalToMarkdown, applyMarkdownToEditor } from '../converters';
+import { prepareChecklistsForAPI } from '../../../../utils/checklists/prepareChecklistsForAPI';
 import type { ILexicalRichEditorHandle, ILexicalRichEditorProps } from './types';
 import styles from './LexicalRichEditor.css';
 
@@ -32,24 +32,6 @@ function SetEditorRefPlugin({
 }): null {
   const [editor] = useLexicalComposerContext();
   editorRef.current = editor;
-  return null;
-}
-
-function InitialContentPlugin({ defaultValue }: { defaultValue?: string }): null {
-  const [editor] = useLexicalComposerContext();
-  useEffect(() => {
-    if (!defaultValue?.trim()) return;
-    editor.update(
-      () => {
-        const root = $getRoot();
-        if (root.getChildrenSize() > 0) return;
-        const paragraph = $createParagraphNode();
-        paragraph.append($createTextNode(defaultValue.trim()));
-        root.append(paragraph);
-      },
-      { tag: 'history-merge' },
-    );
-  }, [editor, defaultValue]);
   return null;
 }
 
@@ -73,12 +55,11 @@ export const LexicalRichEditor = forwardRef<
 
   const onChange = useCallback(
     (editorState: EditorState) => {
-      editorState.read(() => {
-        const root = $getRoot();
-        const text = root.getTextContent();
-        handleChange(text);
-        handleChangeChecklists?.([]);
-      });
+      const markdown = convertLexicalToMarkdown(editorState);
+      if (handleChangeChecklists) {
+        handleChangeChecklists(prepareChecklistsForAPI(markdown));
+      }
+      handleChange(markdown);
     },
     [handleChange, handleChangeChecklists],
   );
@@ -105,8 +86,14 @@ export const LexicalRichEditor = forwardRef<
       theme: lexicalTheme,
       nodes: LEXICAL_NODES,
       onError,
+      editorState:
+        defaultValue != null && defaultValue.trim() !== ''
+          ? (editor: LexicalEditor) => {
+            applyMarkdownToEditor(editor, defaultValue, { tag: 'history-merge' });
+          }
+          : undefined,
     }),
-    [],
+    [defaultValue],
   );
 
   return (
@@ -118,7 +105,6 @@ export const LexicalRichEditor = forwardRef<
       ) : null}
       <LexicalComposer initialConfig={initialConfig}>
         <SetEditorRefPlugin editorRef={editorRef} />
-        <InitialContentPlugin defaultValue={defaultValue} />
         <OnChangePlugin onChange={onChange} />
         <div
           className={classnames(styles.editor, multiline && styles['editor-multiline'])}
