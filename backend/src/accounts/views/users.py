@@ -184,6 +184,9 @@ class UsersViewSet(
             raise_validation_error(message=ex.message)
         return self.response_ok(UserSerializer(instance=user).data)
 
+    def partial_update(self, *args, **kwargs):
+        return self.update(*args, **kwargs)
+
     def destroy(self, request, *args, **kwargs):
         request_user = request.user
         user = self.get_object()

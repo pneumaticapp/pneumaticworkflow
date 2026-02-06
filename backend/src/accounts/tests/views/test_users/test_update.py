@@ -28,6 +28,7 @@ from src.processes.tests.fixtures import (
 )
 from src.utils.validation import ErrorCode
 
+
 pytestmark = pytest.mark.django_db
 
 
@@ -1175,3 +1176,73 @@ def test_update__sql_like_input_in_field__no_execution(api_client, mocker):
     partial_update_mock.assert_called_once_with(
         first_name=sql_like,
     )
+
+
+def test_update__another_account_user__not_found(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+
+    another_account = create_test_account()
+    another_user = create_test_admin(account=another_account)
+    new_password = 'new_password'
+    user_service_init_mock = mocker.patch.object(
+        UserService,
+        attribute='__init__',
+        return_value=None,
+    )
+    partial_update_mock = mocker.patch(
+        'src.accounts.services.user.UserService.partial_update',
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.put(
+        f'/accounts/users/{another_user.id}',
+        data={'password': new_password},
+    )
+
+    # assert
+    assert response.status_code == 404
+    user_service_init_mock.assert_not_called()
+    partial_update_mock.assert_not_called()
+
+
+def test_partial_update__only_required_fields__ok(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    target_user = create_test_not_admin(account=account)
+    email = 'new@email.com'
+    user_service_init_mock = mocker.patch.object(
+        UserService,
+        attribute='__init__',
+        return_value=None,
+    )
+    partial_update_mock = mocker.patch(
+        'src.accounts.services.user.UserService.partial_update',
+        return_value=target_user,
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.patch(
+        f'/accounts/users/{target_user.id}',
+        data={'email': email},
+    )
+
+    # assert
+    assert response.status_code == 200
+    user_service_init_mock.assert_called_once_with(
+        user=owner,
+        instance=target_user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    partial_update_mock.assert_called_once_with(
+        email=email,
+    )
+    assert response.data['id'] == target_user.id
+    assert response.data['email'] == target_user.email
