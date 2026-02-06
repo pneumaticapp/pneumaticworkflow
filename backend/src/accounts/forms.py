@@ -8,9 +8,6 @@ from src.accounts.messages import MSG_A_0001
 from src.accounts.models import (
     Contact,
 )
-from src.storage.google_cloud import (
-    GoogleCloudService,
-)
 
 
 class ContactAdminForm(ModelForm):
@@ -48,13 +45,6 @@ class ContactAdminForm(ModelForm):
         if not photo_file:
             return super().save(commit=commit)
 
-        file_path = photo_file.name.replace(' ', '_')
-        storage = GoogleCloudService(
-            account=self.instance.account,
-        )
-        self.instance.photo = storage.upload_from_binary(
-            filepath=file_path,
-            binary=photo_file.file.getvalue(),
-            content_type=photo_file.content_type,
-        )
+        # TODO: Integrate with file service microservice
+        self.instance.photo = None
         return super().save(commit=commit)

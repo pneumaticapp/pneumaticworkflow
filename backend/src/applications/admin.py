@@ -9,7 +9,6 @@ from tinymce.widgets import TinyMCE
 
 from src.applications.models import Integration
 from src.processes.messages.workflow import MSG_PW_0001
-from src.storage.google_cloud import GoogleCloudService
 
 
 class IntegrationCreateForm(ModelForm):
@@ -58,13 +57,8 @@ class IntegrationCreateForm(ModelForm):
         if not image:
             return super().save(commit=commit)
 
-        file_path = image.name.replace(' ', '_')
-        storage = GoogleCloudService()
-        file_url = storage.upload_from_binary(
-            filepath=file_path,
-            binary=image.file.getvalue(),
-            content_type='image/svg+xml',
-        )
+        # TODO: Integrate with file service microservice
+        file_url = None
         integration = super().save(commit=commit)
         integration.logo = file_url
         integration.save()

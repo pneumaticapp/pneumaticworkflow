@@ -42,7 +42,6 @@ from src.reports.tasks import (
     send_digest,
     send_tasks_digest,
 )
-from src.storage.tasks import switch_access_to_files
 
 UserModel = get_user_model()
 
@@ -712,12 +711,6 @@ class AccountAdmin(ModelAdmin):
                 prev=self.prev_lease_level,
                 new=obj.lease_level,
             )
-            if self.prev_bucket_is_public != obj.bucket_is_public:
-                switch_access_to_files.delay(
-                    user_id=request.user.id,
-                    account_id=obj.id,
-                    public_access=obj.bucket_is_public,
-                )
 
     def delete_model(self, request, obj):
 

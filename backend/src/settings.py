@@ -333,9 +333,6 @@ class Common(Configuration):
     if PRIVATE_API_IP_WHITELIST:
         PRIVATE_API_IP_WHITELIST = PRIVATE_API_IP_WHITELIST.split(' ')
 
-    # Google Cloud
-    GCLOUD_DEFAULT_BUCKET_NAME = env.get('GCLOUD_BUCKET_NAME')
-
     # Slack
     SLACK = env.get('SLACK') == 'yes'
     SLACK_CONFIG = {

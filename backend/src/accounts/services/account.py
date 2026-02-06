@@ -155,12 +155,6 @@ class AccountService(
             force_save=True,
         )
 
-    def update_bucket_name(self, bucket_name):
-        self.partial_update(
-            bucket_name=bucket_name,
-            force_save=True,
-        )
-
     def update_users_counts(self):
 
         """ - If account is "tenant" then triggers the update of active users

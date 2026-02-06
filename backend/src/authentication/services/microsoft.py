@@ -13,7 +13,6 @@ from src.authentication.models import AccessToken
 from src.authentication.services import exceptions
 from src.generics.mixins.services import CacheMixin
 from src.logs.service import AccountLogService
-from src.storage.google_cloud import GoogleCloudService
 from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
@@ -147,19 +146,15 @@ class MicrosoftGraphApiMixin:
             raise_exception=False,
         )
         if response.ok:
-            binary_photo: bytes = response.content
+            binary_photo: bytes = response.content  # noqa: F841
             content_type = response.headers['content-type']
             ext = self.ext_map.get(content_type, '')
             if ext:
                 filepath = f'{get_salt(30)}_photo_96x96.{ext}'
             else:
-                filepath = f'{get_salt(30)}_photo_96x96'
-            storage = GoogleCloudService(account=account)
-            file_url = storage.upload_from_binary(
-                binary=binary_photo,
-                filepath=filepath,
-                content_type=content_type,
-            )
+                filepath = f'{get_salt(30)}_photo_96x96'  # noqa: F841
+            # TODO: Integrate with file service microservice
+            file_url = None
         return file_url
 
 
