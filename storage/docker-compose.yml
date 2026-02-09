@@ -15,7 +15,7 @@ services:
     build: .
     container_name: pneumatic-files-web
     ports:
-      - "8001:8000"
+      - "8001:8001"
     depends_on:
       - postgres
     env_file:
@@ -84,6 +84,4 @@ volumes:
   seaweedfs_filer_data:
 
 networks:
-  pneumatic-network:
-    external: true
-    name: pneumatic_pneumatic
+  pneumatic:

@@ -13,6 +13,8 @@ from src.authentication.models import AccessToken
 from src.authentication.services import exceptions
 from src.generics.mixins.services import CacheMixin
 from src.logs.service import AccountLogService
+from src.storage.services.exceptions import FileServiceException
+from src.storage.services.file_service import FileServiceClient
 from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
@@ -146,15 +148,34 @@ class MicrosoftGraphApiMixin:
             raise_exception=False,
         )
         if response.ok:
-            binary_photo: bytes = response.content  # noqa: F841
+            binary_photo: bytes = response.content
             content_type = response.headers['content-type']
             ext = self.ext_map.get(content_type, '')
             if ext:
                 filepath = f'{get_salt(30)}_photo_96x96.{ext}'
             else:
-                filepath = f'{get_salt(30)}_photo_96x96'  # noqa: F841
-            # TODO: Integrate with file service microservice
-            file_url = None
+                filepath = f'{get_salt(30)}_photo_96x96'
+
+            file_service = FileServiceClient(user=account.get_owner())
+            try:
+                file_url = file_service.upload_file_with_attachment(
+                    file_content=binary_photo,
+                    filename=filepath,
+                    content_type=content_type,
+                    account=account,
+                )
+            except FileServiceException as ex:
+                capture_sentry_message(
+                    message='Microsoft user photo upload failed',
+                    data={
+                        'user_id': user_id,
+                        'account_id': account.id if account else None,
+                        'content_type': content_type,
+                        'error': str(ex),
+                    },
+                    level=SentryLogLevel.WARNING,
+                )
+                file_url = None
         return file_url
 
 

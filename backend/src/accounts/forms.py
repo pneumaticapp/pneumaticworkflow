@@ -8,6 +8,12 @@ from src.accounts.messages import MSG_A_0001
 from src.accounts.models import (
     Contact,
 )
+from src.storage.services.exceptions import FileServiceException
+from src.storage.services.file_service import FileServiceClient
+from src.utils.logging import (
+    SentryLogLevel,
+    capture_sentry_message,
+)
 
 
 class ContactAdminForm(ModelForm):
@@ -29,7 +35,7 @@ class ContactAdminForm(ModelForm):
 
     photo_file = FileField(
         required=False,
-        label='Upload photo to Google drive',
+        label='Upload photo',
     )
 
     def clean_photo_file(self):
@@ -45,6 +51,27 @@ class ContactAdminForm(ModelForm):
         if not photo_file:
             return super().save(commit=commit)
 
-        # TODO: Integrate with file service microservice
-        self.instance.photo = None
+        user = self.cleaned_data['user']
+        file_service = FileServiceClient(user=user)
+
+        try:
+            file_url = file_service.upload_file_with_attachment(
+                file_content=photo_file.file.getvalue(),
+                filename=photo_file.name.replace(' ', '_'),
+                content_type=photo_file.content_type,
+                account=self.instance.account,
+            )
+            self.instance.photo = file_url
+        except FileServiceException as ex:
+            capture_sentry_message(
+                message='Contact photo upload failed',
+                data={
+                    'filename': photo_file.name,
+                    'user_id': user.id,
+                    'account_id': self.instance.account.id,
+                    'error': str(ex),
+                },
+                level=SentryLogLevel.ERROR,
+            )
+            self.instance.photo = None
         return super().save(commit=commit)

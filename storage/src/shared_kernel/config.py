@@ -53,8 +53,7 @@ class Settings(BaseSettings):
     DJANGO_SECRET_KEY: str = 'DJANGO_SECRET_KEY'
     AUTH_TOKEN_ITERATIONS: int = 1
 
-    # JWT settings
-    JWT_SECRET_KEY: str = 'JWT_SECRET_KEY'
+    # JWT settings (uses DJANGO_SECRET_KEY for signing/verification)
     JWT_ALGORITHM: str = 'HS256'
 
     # Django backend base URL

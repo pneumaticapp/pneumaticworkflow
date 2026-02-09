@@ -420,7 +420,6 @@ services:
       - KEY_PREFIX_REDIS=${FILE_KEY_PREFIX_REDIS:-:1:}
       - DJANGO_SECRET_KEY=${FILE_DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
       - AUTH_TOKEN_ITERATIONS=${FILE_AUTH_TOKEN_ITERATIONS:-1}
-      - JWT_SECRET_KEY=${FILE_JWT_SECRET_KEY:-django_secret_django_secret_django_secret}
       - JWT_ALGORITHM=${FILE_JWT_ALGORITHM:-HS256}
     volumes:
       - file_service_media:/app/media

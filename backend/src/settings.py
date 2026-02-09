@@ -65,7 +65,7 @@ class Common(Configuration):
     FORMS_URL = env.get('FORMS_URL')
 
     # File Service
-    FILES_BASE_URL = env.get('FILES_BASE_URL')
+    FILES_BASE_URL = env.get('FILE_SERVICE_URL')
     FILE_DOMAIN = env.get('FILE_DOMAIN')
 
     # Auth
@@ -367,7 +367,6 @@ class Common(Configuration):
         'src.processes.tasks.webhooks',
         'src.reports.tasks',
         'src.analysis.tasks',
-        'src.storage.tasks',
     ]
 
     # reCaptcha

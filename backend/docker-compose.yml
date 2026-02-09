@@ -269,6 +269,7 @@ services:
       CORS_ALLOW_CREDENTIALS: yes
       CORS_ORIGIN_WHITELIST: "http://localhost:8000 http://localhost:8002 ${FRONTEND_URL:-http://localhost}"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-yes}
+      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-yes}
     volumes:
       - ./:/pneumatic_backend
     ports:
@@ -297,7 +298,7 @@ services:
       - POSTGRES_HOST=${FILE_POSTGRES_HOST:-file-postgres}
       - POSTGRES_PORT=${FILE_POSTGRES_PORT:-5432}
       - STORAGE_TYPE=${FILE_STORAGE_TYPE:-local}
-      - SEAWEEDFS_S3_ENDPOINT=${FILE_SEAWEEDFS_S3_ENDPOINT:-http://pneumatic-seaweedfs-filer:8333}
+      - SEAWEEDFS_S3_ENDPOINT=${FILE_SEAWEEDFS_S3_ENDPOINT:-http://seaweedfs-filer:8333}
       - SEAWEEDFS_S3_ACCESS_KEY=${FILE_SEAWEEDFS_S3_ACCESS_KEY:-any-secret-key-will-work}
       - SEAWEEDFS_S3_SECRET_KEY=${FILE_SEAWEEDFS_S3_SECRET_KEY:-any-secret-key-will-work}
       - SEAWEEDFS_S3_REGION=${FILE_SEAWEEDFS_S3_REGION:-us-central1}
@@ -312,13 +313,14 @@ services:
       - CHUNK_SIZE=${FILE_CHUNK_SIZE:-1048576}
       - AUTH_REDIS_URL=${FILE_AUTH_REDIS_URL:-redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/1}
       - KEY_PREFIX_REDIS=${FILE_KEY_PREFIX_REDIS:-:1:}
-      - DJANGO_SECRET_KEY=${FILE_DJANGO_SECRET_KEY:-a7uq)(kz1kyf9m5kt_72x3+co-brb2x)^g#_(1r\=mwv\=fl11pd}
+      - DJANGO_SECRET_KEY=${FILE_DJANGO_SECRET_KEY:-${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}}
       - AUTH_TOKEN_ITERATIONS=${FILE_AUTH_TOKEN_ITERATIONS:-1}
-      - JWT_SECRET_KEY=${FILE_JWT_SECRET_KEY:-a7uq)(kz1kyf9m5kt_72x3+co-brb2x)^g#_(1r\=mwv\=fl11pd}
       - JWT_ALGORITHM=${FILE_JWT_ALGORITHM:-HS256}
       - DJANGO_BACKEND_URL=${FILE_DJANGO_BACKEND_URL:-http://backend:8000}
     volumes:
       - file_service_media:/app/media
+    ports:
+      - "8002:8002"
     depends_on:
       - file-postgres
       - redis

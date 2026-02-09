@@ -42,6 +42,14 @@ from src.reports.tasks import (
     send_digest,
     send_tasks_digest,
 )
+from src.storage.enums import AccessType as StorageAccessType
+from src.storage.enums import SourceType as StorageSourceType
+from src.storage.services.exceptions import FileServiceException
+from src.storage.services.file_service import FileServiceClient
+from src.utils.logging import (
+    SentryLogLevel,
+    capture_sentry_message,
+)
 
 UserModel = get_user_model()
 
@@ -104,6 +112,47 @@ class UserAdminChangeForm(UserChangeForm):
         choices=Timezone.CHOICES,
         initial=settings.TIME_ZONE,
     )
+    photo_file = forms.FileField(
+        required=False,
+        label='Upload photo',
+    )
+
+    def clean_photo_file(self):
+        photo_file = self.cleaned_data.get('photo_file')
+        if photo_file and not settings.PROJECT_CONF.get('STORAGE'):
+            self.add_error(
+                field='photo_file',
+                error=messages.MSG_A_0001,
+            )
+        return photo_file
+
+    def save(self, commit=True):
+        photo_file = self.cleaned_data.get('photo_file')
+        if photo_file:
+            file_service = FileServiceClient(user=self.instance)
+            try:
+                file_url = file_service.upload_file_with_attachment(
+                    file_content=photo_file.file.getvalue(),
+                    filename=photo_file.name.replace(' ', '_'),
+                    content_type=photo_file.content_type,
+                    account=self.instance.account,
+                    source_type=StorageSourceType.ACCOUNT,
+                    access_type=StorageAccessType.ACCOUNT,
+                )
+                self.instance.photo = file_url
+            except FileServiceException as ex:
+                capture_sentry_message(
+                    message='User photo upload failed',
+                    data={
+                        'filename': photo_file.name,
+                        'user_id': self.instance.id,
+                        'account_id': self.instance.account_id,
+                        'error': str(ex),
+                    },
+                    level=SentryLogLevel.ERROR,
+                )
+                self.instance.photo = None
+        return super().save(commit=commit)
 
 
 class GroupAdmin(ModelAdmin):
@@ -198,6 +247,7 @@ class UsersAdmin(UserAdmin, SignUpMixin):
                 'email',
                 'phone',
                 'photo',
+                'photo_file',
                 'password',
                 'is_account_owner',
                 'type',
