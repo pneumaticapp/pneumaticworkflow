@@ -25,7 +25,7 @@ from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_template,
     create_test_user,
-    create_test_workflow,
+    create_test_workflow, create_test_account,
 )
 from src.services.markdown import MarkdownService
 from src.utils.validation import ErrorCode
@@ -695,6 +695,98 @@ def test_list__search__kickoff_description__not_found(api_client, mocker):
     # assert
     assert response.status_code == 200
     assert len(response.data) == 0
+
+
+def test_list__search_priority_1__ok(api_client, mocker):
+
+    """ Search priority:
+        1. Task description (weight B);
+        3. Task TaskField value (weight C);
+        4. WorkflowEvent comment text (weight D);
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    search_text = 'search'
+
+    workflow_2 = create_test_workflow(owner, tasks_count=1)
+    task_2 = workflow_2.tasks.get(number=1)
+    TaskField.objects.create(
+        task=task_2,
+        type=FieldType.STRING,
+        workflow=workflow_2,
+        account=account,
+        value=search_text,
+    )
+
+    workflow_1 = create_test_workflow(owner, tasks_count=1)
+    task_1 = workflow_1.tasks.get(number=1)
+    task_1.description = search_text
+    task_1.save()
+
+    workflow_3 = create_test_workflow(owner, tasks_count=1)
+    task_3 = workflow_3.tasks.get(number=1)
+    WorkflowEventService.comment_created_event(
+        user=owner,
+        task=task_3,
+        text=search_text,
+        after_create_actions=False,
+    )
+    create_test_workflow(owner, tasks_count=1)
+
+    api_client.token_authenticate(owner)
+    mocker.patch('src.analysis.services.AnalyticService.search_search')
+
+    # act
+    response = api_client.get(f'/v3/tasks?search={search_text}')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 3
+    assert response.data[0]['id'] == task_1.id
+    assert response.data[1]['id'] == task_2.id
+    assert response.data[2]['id'] == task_3.id
+
+
+def test_list__search_priority_2__ok(api_client, mocker):
+
+    """ Search priority:
+        1. Task TaskField value (weight C);
+        2. Task name (weight D);
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    search_text = 'search'
+
+    workflow_1 = create_test_workflow(owner, tasks_count=1)
+    task_1 = workflow_1.tasks.get(number=1)
+    TaskField.objects.create(
+        task=task_1,
+        type=FieldType.URL,
+        workflow=workflow_1,
+        account=account,
+        value=search_text,
+    )
+
+    workflow_2 = create_test_workflow(owner, tasks_count=1)
+    task_2 = workflow_2.tasks.get(number=1)
+    task_2.name = search_text
+    task_2.save()
+
+    api_client.token_authenticate(owner)
+    mocker.patch('src.analysis.services.AnalyticService.search_search')
+
+    # act
+    response = api_client.get(f'/v3/tasks?search={search_text}')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 2
+    assert response.data[0]['id'] == task_1.id
+    assert response.data[1]['id'] == task_2.id
 
 
 @pytest.mark.parametrize(

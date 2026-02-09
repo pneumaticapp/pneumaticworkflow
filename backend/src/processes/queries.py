@@ -917,23 +917,30 @@ class TaskListQuery(
 
         """ Search string should be validated """
 
-        self.template_id = template_id
-        self.template_task_api_name = template_task_api_name
-        self.ordering = ordering
-        self.is_completed = bool(is_completed)
         self.assigned_to = user.id if assigned_to is None else assigned_to
-        self.search_text = search
         self.params = {
             'account_id': user.account_id,
             'assigned_to': self.assigned_to,
         }
+        self.search_text = search
+        if self.search_text:
+            self.search_tsquery, search_params = self._get_tsquery()
+            self.params.update(search_params)
+        else:
+            self.search_tsquery = None
+        self.template_id = template_id
+        self.template_task_api_name = template_task_api_name
+        self.ordering = ordering
+        self.is_completed = bool(is_completed)
 
     def _get_search(self):
-        tsquery, params = self._get_tsquery()
-        self.params.update(params)
-        return f"""
-            {self._search_in(table='ps', field='content', tsquery=tsquery)}
-        """
+        return str(
+            self._search_in(
+                table='ps',
+                field='content',
+                tsquery=self.search_tsquery,
+            ),
+        )
 
     def get_is_completed_where(self):
         if self.is_completed:
@@ -990,9 +997,9 @@ class TaskListQuery(
               ag.is_deleted IS FALSE
             )
         """
-        if self.search_text:
+        if self.search_tsquery:
             result += """
-                LEFT JOIN processes_searchcontent ps ON (
+                INNER JOIN processes_searchcontent ps ON (
                     pt.id = ps.task_id AND
                     ps.is_deleted IS FALSE
                 )
@@ -1006,36 +1013,53 @@ class TaskListQuery(
             """
         return result
 
+    def _get_select(self):
+
+        result = f"""
+         SELECT DISTINCT ON (pt.id) pt.id,
+            pt.name,
+            pw.name as workflow_name,
+            pt.due_date,
+            EXTRACT(
+              EPOCH FROM pt.due_date AT TIME ZONE 'UTC'
+            ) AS due_date_tsp,
+            pt.date_started,
+            EXTRACT(
+              EPOCH FROM pt.date_started AT TIME ZONE 'UTC'
+            ) AS date_started_tsp,
+            ptp.date_completed,
+            EXTRACT(
+              EPOCH FROM pt.date_completed AT TIME ZONE 'UTC'
+            ) AS date_completed_tsp,
+            pw.template_id as template_id,
+            pt.api_name as template_task_api_name,
+            pt.api_name,
+            pt.is_urgent,
+            pt.status{',' if self.search_tsquery else ''}
+        """
+        if self.search_tsquery:
+            result += f"""
+                ts_rank(ps.content, {self.search_tsquery}) AS search_rank
+            """
+        return result
+
     def _get_inner_sql(self):
         return f"""
-            SELECT DISTINCT ON (pt.id) pt.id,
-                pt.name,
-                pw.name as workflow_name,
-                pt.due_date,
-                EXTRACT(
-                  EPOCH FROM pt.due_date AT TIME ZONE 'UTC'
-                ) AS due_date_tsp,
-                pt.date_started,
-                EXTRACT(
-                  EPOCH FROM pt.date_started AT TIME ZONE 'UTC'
-                ) AS date_started_tsp,
-                ptp.date_completed,
-                EXTRACT(
-                  EPOCH FROM pt.date_completed AT TIME ZONE 'UTC'
-                ) AS date_completed_tsp,
-                pw.template_id as template_id,
-                pt.api_name as template_task_api_name,
-                pt.api_name,
-                pt.is_urgent,
-                pt.status
+            {self._get_select()}
             {self._get_from()}
             {self._get_inner_where()}
             ORDER BY pt.id
         """
 
     def get_sql(self):
+        pre_columns = []
+        if self.search_tsquery:
+            pre_columns.append('tasks.search_rank DESC')
+        if not self.is_completed:
+            pre_columns.append('tasks.is_urgent DESC')
+        pre_columns = ', '.join(pre_columns) if pre_columns else None
         order_by = self.get_order_by(
-            pre_columns=None if self.is_completed else 'tasks.is_urgent DESC',
+            pre_columns=pre_columns,
             default_column='tasks.date_started DESC',
         )
         s = f"""
