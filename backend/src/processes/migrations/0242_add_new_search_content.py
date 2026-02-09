@@ -232,10 +232,13 @@ class Migration(migrations.Migration):
                 )
                 VALUES (
                     'task_template', FALSE, new.account_id, NULL, NULL, NULL, NULL, new.template_id, new.id,
-                    setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'D')
+                    (
+                      setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'D') ||
+                      setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.description)), 'D')
+                    )
                 )
                 ON CONFLICT (workflow_id, task_id, event_id, task_field_id, template_id, task_template_id) WHERE is_deleted = FALSE
-                DO UPDATE SET content =  setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'D');
+                DO UPDATE SET content = setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'D');
                 RETURN new;
             END;
             $BODY$ LANGUAGE plpgsql;

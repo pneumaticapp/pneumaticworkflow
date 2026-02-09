@@ -1104,20 +1104,33 @@ class TemplateListQuery(
             'account_id': self.account_id,
             'user_id': user_id,
         }
+        self.search_text = search_text
+        if self.search_text:
+            self.search_tsquery, search_params = self._get_tsquery()
+            self.params.update(search_params)
+        else:
+            self.search_tsquery = None
         self.order = None
         self.is_active = is_active
         self.is_public = is_public
         self.ordering = ordering
-        self.search_text = search_text
 
     def _get_search(self):
-        tsquery, params = self._get_tsquery()
-        self.params.update(params)
         return f"""
-            (
-                {self._search_in(table='ps', field='content', tsquery=tsquery)}
-                OR {self._search_in(table='accounts_user', tsquery=tsquery)}
-            )
+          (
+            {
+                self._search_in(
+                    table='ps',
+                    field='content',
+                    tsquery=self.search_tsquery
+                )
+            } OR {
+                self._search_in(
+                    table='accounts_user',
+                    tsquery=self.search_tsquery
+                )
+            }
+          )
         """
 
     def _get_allowed(self):
@@ -1163,7 +1176,7 @@ class TemplateListQuery(
         """
         if self.search_text:
             result += """
-                LEFT JOIN processes_searchcontent ps ON (
+                INNER JOIN processes_searchcontent ps ON (
                     pt.id = ps.template_id AND
                     ps.is_deleted IS FALSE
                 )
@@ -1203,9 +1216,9 @@ class TemplateListQuery(
 
         return where
 
-    def _get_inner_sql(self):
-        return f"""
-        WITH owners AS ({self.dereferenced_owners()})
+    def _get_select(self):
+
+        result = f"""
         SELECT DISTINCT
             pt.id,
             pt.is_deleted,
@@ -1218,17 +1231,33 @@ class TemplateListQuery(
             pt.is_active,
             pt.is_public,
             pt.is_embedded,
-            pt.type,
             {self.get_workflows_select()}
-            COUNT(DISTINCT ptt.id) as tasks_count
+            COUNT(DISTINCT ptt.id) as tasks_count,
+            pt.type{',' if self.search_tsquery else ''}
+        """
+        if self.search_tsquery:
+            result += f"""
+                ts_rank(ps.content, {self.search_tsquery}) AS search_rank
+            """
+        return result
+
+    def _get_inner_sql(self):
+        return f"""
+        WITH owners AS ({self.dereferenced_owners()})
+        {self._get_select()}
         {self._get_from()}
         {self._get_inner_where()}
-        GROUP BY pt.id
+        GROUP BY pt.id{', search_rank' if self.search_tsquery else ''}
         """
 
     def get_sql(self):
+        pre_columns = []
+        if self.search_tsquery:
+            pre_columns.append('templates.search_rank DESC')
+        pre_columns.append('templates.is_active DESC')
+        pre_columns = ', '.join(pre_columns) if pre_columns else None
         order_by = self.get_order_by(
-            pre_columns='templates.is_active DESC',
+            pre_columns=pre_columns,
             default_column='templates.id',
         )
         return f"""
