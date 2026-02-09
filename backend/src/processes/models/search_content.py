@@ -1,3 +1,4 @@
+from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from django.contrib.postgres.search import SearchVectorField
 from django.db.models import Q, UniqueConstraint
@@ -20,6 +21,13 @@ class SearchContent(
 
     class Meta:
         ordering = ['id']
+        indexes = [
+            GinIndex(
+                name='processes_searchcontent_gin',
+                fields=['content'],
+                condition=Q(is_deleted=False),
+            ),
+        ]
         constraints = [
             UniqueConstraint(
                 fields=[

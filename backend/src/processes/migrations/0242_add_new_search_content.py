@@ -42,23 +42,18 @@ class Migration(migrations.Migration):
                 ('template', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='processes.Template')),
                 ('task_template', models.ForeignKey(null=True, on_delete=django.db.models.deletion.CASCADE, to='processes.TaskTemplate')),
                 ('content', django.contrib.postgres.search.SearchVectorField(blank=True, null=True)),
-                ('type', models.CharField(
-                    max_length=50,
-                    choices=(
-                        ('workflow', 'workflow'),
-                        ('kickoff_field', 'kickoff_field'),
-                        ('task_field', 'task_field'),
-                        ('task', 'task'),
-                        ('template', 'template'),
-                        ('event', 'event'),
-                        ('template_task', 'template_task'),
-                    )
-                )),
+                ('type', models.CharField(choices=[('workflow', 'workflow'), ('kickoff_field', 'kickoff_field'), ('task_field', 'task_field'), ('task', 'task'), ('template', 'template'), ('event', 'event'), ('task_template', 'task_template')], max_length=50)),
             ],
             options={
                 'ordering': ['id'],
             },
             bases=(src.generics.mixins.models.SoftDeleteMixin, models.Model),
+        ),
+        migrations.AddIndex(
+            model_name='searchcontent',
+            index=django.contrib.postgres.indexes.GinIndex(
+                condition=models.Q(is_deleted=False), fields=['content'],
+                name='processes_searchcontent_gin'),
         ),
         migrations.AddConstraint(
             model_name='searchcontent',
