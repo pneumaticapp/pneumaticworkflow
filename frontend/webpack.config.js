@@ -53,7 +53,7 @@ module.exports = {
             loader: 'css-loader',
             options: {
               modules: {
-                localIdentName: devMode ? '[path][name]__[local]--[hash:base64:5]' : '[local]--[hash:base64:5]',
+                localIdentName: '[local]--[hash:base64:5]',
                 getLocalIdent: (loaderContext, _, localName) => {
                   const { resourcePath } = loaderContext;
                   if (resourcePath.includes(fontsDir) || resourcePath.includes('node_modules')) {
@@ -135,7 +135,6 @@ module.exports = {
   ],
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
-    // Lexical (.mjs) импортирует 'react/jsx-runtime' без расширения; webpack 5 требует fullySpecified
     alias: {
       'react/jsx-runtime': path.resolve(__dirname, 'node_modules/react/jsx-runtime.js'),
     },
