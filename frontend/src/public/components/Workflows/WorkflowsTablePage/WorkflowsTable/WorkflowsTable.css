@@ -141,7 +141,7 @@
   font-size: 1.1rem;
   font-weight: bold;
   line-height: 1.6rem;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06rem;
   text-transform: uppercase;
 }
 
@@ -157,10 +157,6 @@
 .user {
   display: flex;
   align-items: center;
-}
-
-.user-avatar {
-  flex-shrink: 0;
 }
 
 .user-name {
@@ -235,6 +231,10 @@
 
 .title {
   margin-bottom: 1.6rem;
+
+  @media (--mobile) {
+    margin-bottom: 3.2rem;
+  }
 }
 
 .tune-view-button {
@@ -251,6 +251,9 @@
   text-align: center;
 }
 
-.column-header__template-name {
+.column-header__template-name,
+.column-header__starter-name,
+.column-header__performer-name,
+.column-header__task-name {
   @mixin text-truncate;
 }

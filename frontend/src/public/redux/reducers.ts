@@ -11,7 +11,6 @@ import { genericTemplates } from './genericTemplates';
 import { initialState } from './store';
 import { menu } from './menu';
 import { notifications } from './notifications';
-import { workflows } from './workflows';
 import { profile } from './profile';
 import { settings } from './settings';
 import { task } from './task';
@@ -21,13 +20,15 @@ import { selectTemplateModal } from './selectTemplateModal';
 import { template } from './template';
 import { integrations } from './integrations';
 import { runWorkflowModal } from './runWorkflowModal';
-import { tasks } from './tasks';
 import { webhooks } from './webhooks';
 import { tenants } from './tenants';
 import { EAuthActions } from './actions';
 import { groups } from './groups';
+
 import pages from './pages/slice';
 import team from './team/slice';
+import workflows from './workflows/slice';
+import tasks from './tasks/slice';
 
 export const reducers = combineReducers({
   general,

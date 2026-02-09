@@ -240,6 +240,13 @@ export interface ISystemTemplate {
 export interface ITemplateTitle {
   id: number;
   name: string;
+  count: number;
+}
+
+export interface ITemplateTitleBaseWithCount {
+  id: number;
+  name: string;
+  count: number;
 }
 
 export enum ETemplateTitleWorkflowStatuses {

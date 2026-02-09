@@ -36,7 +36,7 @@ export function TeamLayout({ children }: ITeamLayoutProps) {
     return () => {
       dispatch(resetUsers());
     };
-  }, []);
+  }, [history.location.pathname]);
 
   const renderTeamLeftContent = () => {
     return (

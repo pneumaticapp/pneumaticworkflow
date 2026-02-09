@@ -25,7 +25,6 @@ import { EPlanActions } from '../../utils/getPlanPendingActions';
 import { Paywall } from '../../components/UI/Paywall';
 import { isEnvAnalytics, isEnvPush } from '../../constants/enviroment';
 import { IUnsavedUser, TUserListItem } from '../../types/user';
-import { getAccountPlan } from '../../redux/selectors/accounts';
 import { checkIsTemplateOwner, loadGroups } from '../../redux/actions';
 import { getIsAdmin } from '../../redux/selectors/user';
 import { closeAllConnections, hasActiveConnections } from '../../redux/utils/webSocketConnections';
@@ -91,18 +90,17 @@ export function MainLayout({
 }: IMainLayoutComponentProps) {
   const dispatch = useDispatch();
   const unregisterHistoryListener = React.useRef<UnregisterCallback | null>(null);
-  const [prevLocation, setPrevLocation] = React.useState<string | null>(null);
+  const prevLocationRef = React.useRef<string | null>(null);
 
   const accountOwner = users.filter((localUser) => localUser.isAccountOwner)[0] as IUnsavedUser;
   const isPlanExpired =
     pendingActions.includes(EPlanActions.ChoosePlan) && !checkSomeRouteIsActive(...EXPIRED_TRIAL_PERMITTED_ROUTES);
   const { isSubscribed, billingPlan } = user.account;
 
-  const plan = useSelector(getAccountPlan);
   const isAdmin = useSelector(getIsAdmin);
 
   React.useEffect(() => {
-    if (user.account.billingPlan) {
+    if (billingPlan) {
       if (hasActiveConnections()) {
         closeAllConnections()
           .then(() => promiseDelay(500))
@@ -129,7 +127,7 @@ export function MainLayout({
         loadTenantsCount();
       }
     }
-  }, [user.id, plan.billingPlan]);
+  }, [user.id, billingPlan]);
 
   React.useLayoutEffect(() => {
     if (!user.isSupermode) {
@@ -147,18 +145,18 @@ export function MainLayout({
     }
     unregisterHistoryListener.current = history.listen((listener) => {
       const newLocation = listener.pathname;
-      if (newLocation !== prevLocation) {
+      if (newLocation !== prevLocationRef.current) {
         loadTasksCount();
         loadActiveUsersCount();
       }
 
-      setPrevLocation(newLocation);
+      prevLocationRef.current = newLocation;
     });
 
     return () => {
       unregisterHistoryListener.current?.();
     };
-  }, [isSubscribed, billingPlan, ESubscriptionPlan.Free]);
+  }, [isSubscribed, billingPlan, loadTasksCount, loadActiveUsersCount]);
 
   React.useEffect(() => {
     if (!isAdmin) {

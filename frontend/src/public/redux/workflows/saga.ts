@@ -2,37 +2,80 @@ import uniqBy from 'lodash.uniqby';
 import { all, fork, put, takeEvery, select, takeLatest, call, delay, take, takeLeading } from 'redux-saga/effects';
 import { EventChannel } from 'redux-saga';
 
+import { PayloadAction } from '@reduxjs/toolkit';
 import {
-  changeWorkflowsList,
-  changeWorkflow,
-  changeWorkflowLog,
-  loadWorkflowsListFailed,
-  setWorkflowIsLoading,
-  TChangeWorkflowLogViewSettings,
-  TLoadWorkflowsList,
-  TLoadWorkflow,
-  loadWorkflowsList,
-  TWorkflowFinished,
-  TEditWorkflow,
-  TSendWorkflowLogComment,
-  setIsEditKickoff,
-  setIsEditWorkflowName,
-  setIsSavingWorkflowName,
-  setIsSavingKickoff,
-  editWorkflowSuccess,
-  setWorkflowEdit,
-  loadWorkflowsFilterTemplatesSuccess,
-  loadWorkflowsFilterTemplatesFailed,
-  TDeleteWorkflow,
   openRunWorkflowModal,
-  loadWorkflowsFilterStepsSuccess,
-  ETaskListActions,
   setGeneralLoaderVisibility,
   setCurrentTask,
-  patchTaskInList,
   updateTaskWorkflowLogItem,
 } from '../actions';
-
+import { patchTaskInList, ETaskListActions } from '../tasks/slice';
+import {
+  changeWorkflow,
+  changeWorkflowsList,
+  changeWorkflowLog,
+  changeWorkflowLogViewSettings,
+  changeWorkflowsSearchText,
+  setWorkflowIsLoading,
+  loadWorkflowsList,
+  openWorkflowLogPopup,
+  closeWorkflowLogPopup,
+  updateWorkflowLogItem,
+  loadWorkflow,
+  loadWorkflowsListFailed,
+  loadFilterTemplates,
+  loadFilterTemplatesSuccess as loadWorkflowsFilterTemplatesSuccess,
+  loadFilterTemplatesFailed as loadWorkflowsFilterTemplatesFailed,
+  loadFilterSteps,
+  loadFilterStepsSuccess as loadWorkflowsFilterStepsSuccess,
+  loadFilterStepsFailed as loadWorkflowsFilterStepsFailed,
+  setIsEditWorkflowName,
+  setIsEditKickoff,
+  setIsSavingWorkflowName,
+  setIsSavingKickoff,
+  setWorkflowEdit,
+  applyFilters,
+  setCurrentPerformersCounters,
+  setWorkflowStartersCounters,
+  setWorkflowsTemplateStepsCounters,
+  patchWorkflowInList,
+  patchWorkflowDetailed,
+  setFilterSelectedFields as setWorkflowsFilterSelectedFields,
+  setLastLoadedTemplateId,
+  setWorkflowsPresetsRedux,
+  createReactionComment as createReactionCommentAction,
+  watchedComment as watchedCommentAction,
+  editWorkflowSuccess,
+  setWorkflowResumed,
+  setWorkflowFinished,
+  deleteReactionComment as deleteReactionCommentAction,
+  sendWorkflowLogComments,
+  editWorkflow as editWorkflowAction,
+  deleteWorkflowAction,
+  returnWorkflowToTaskAction,
+  cloneWorkflowAction,
+  updateCurrentPerformersCounters,
+  updateWorkflowStartersCounters,
+  updateWorkflowsTemplateStepsCounters,
+  snoozeWorkflow as snoozeWorkflowAction,
+  deleteComment as deleteCommentAction,
+  editComment as editCommentAction,
+  saveWorkflowsPreset,
+} from './slice';
+import {
+  IChangeWorkflowLogViewSettingsPayload,
+  ISaveWorkflowsPresetPayload,
+  ISendWorkflowLogComment,
+  TCloneWorkflowPayload,
+  TDeleteWorkflowPayload,
+  TEditWorkflowPayload,
+  TLoadWorkflowsFilterStepsPayload,
+  TOpenWorkflowLogPopupPayload,
+  TReturnWorkflowToTaskPayload,
+  TSetWorkflowFinishedPayload,
+  TSetWorkflowResumedPayload,
+  TSnoozeWorkflowPayload,
+} from './types';
 import {
   IWorkflowLogItem,
   EWorkflowsLogSorting,
@@ -49,7 +92,13 @@ import {
   EWorkflowsView,
 } from '../../types/workflow';
 import { ERoutes } from '../../constants/routes';
-import { getWorkflowsStore, getWorkflowsSearchText, getWorkflowsStatus, getTaskStore } from '../selectors/workflows';
+import {
+  getWorkflowsStore,
+  getWorkflowsSearchText,
+  getWorkflowsStatus,
+  getLastLoadedTemplateIdForTable,
+} from '../selectors/workflows';
+import { getTaskStore, getCurrentTask } from '../selectors/task';
 import { getEditKickoff, mapFilesToRequest } from '../../utils/workflows';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getWorkflows } from '../../api/getWorkflows';
@@ -57,45 +106,20 @@ import { getWorkflow } from '../../api/getWorkflow';
 import { getWorkflowLog } from '../../api/getWorkflowLog';
 import { returnWorkflowToTask } from '../../api/returnWorkflowToTask';
 import { history } from '../../utils/history';
-import { IApplicationState, IStoreTask, IStoreWorkflows } from '../../types/redux';
+import { IStoreTask, IStoreWorkflows } from '../../types/redux';
 import { logger } from '../../utils/logger';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { sendWorkflowComment } from '../../api/sendWorkflowComment';
 import { finishWorkflow } from '../../api/finishWorkflow';
 import { editWorkflow, IEditWorkflowResponse } from '../../api/editWorkflow';
-import { getTemplatesTitles } from '../../api/getTemplatesTitles';
-import { IKickoff, ITemplateResponse, ITemplateTitle, TTemplatePreset } from '../../types/template';
+import { getTemplatesTitles, TGetTemplatesTitlesResponse } from '../../api/getTemplatesTitles';
+import { IKickoff, ITemplateResponse, TTemplatePreset } from '../../types/template';
 import { getWorkflowLogStore } from '../selectors/workflowLog';
 import { deleteRemovedFilesFromFields } from '../../api/deleteRemovedFilesFromFields';
 import { TChannelAction } from '../tasks/saga';
 import { ITemplateStep } from '../../types/tasks';
 import { getTemplateSteps } from '../../api/getTemplateSteps';
-import {
-  loadWorkflowsFilterStepsFailed,
-  TCloneWorkflow,
-  TReturnWorkflowToTask,
-  closeWorkflowLogPopup,
-  TOpenWorkflowLogPopup,
-  setCurrentPerformersCounters,
-  setWorkflowStartersCounters,
-  TWorkflowResumed,
-  TLoadWorkflowsFilterSteps,
-  setWorkflowsTemplateStepsCounters,
-  TSnoozeWorkflow,
-  patchWorkflowInList,
-  patchWorkflowDetailed,
-  EWorkflowsActions,
-  TDeleteComment,
-  updateWorkflowLogItem,
-  TEditComment,
-  TWatchedComment,
-  TDeleteReactionComment,
-  TCreateReactionComment,
-  setWorkflowsFilterSelectedFields,
-  setLastLoadedTemplateId,
-  setWorkflowsPresetsRedux,
-  TSaveWorkflowsPreset,
-} from './actions';
+
 import { handleLoadTemplateVariables } from '../templates/saga';
 
 import { deleteWorkflow } from '../../api/deleteWorkflow';
@@ -107,15 +131,15 @@ import { getWorkflowsStartersCounters } from '../../api/getWorkflowsStartersCoun
 import { continueWorkflow } from '../../api/continueWorkflow';
 import { getWorkflowsTemplateStepsCounters } from '../../api/getWorkflowsTemplateStepsCounters';
 import { snoozeWorkflow } from '../../api/snoozeWorkflow';
-import { deleteComment } from '../../api/workflows/deleteComment';
-import { editComment } from '../../api/workflows/editComment';
+import { deleteComment, IDeleteComment } from '../../api/workflows/deleteComment';
+import { editComment, IEditComment } from '../../api/workflows/editComment';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { mergePaths } from '../../utils/urls';
 import { parseCookies } from '../../utils/cookie';
 import { createWebSocketChannel } from '../utils/createWebSocketChannel';
-import { deleteReactionComment } from '../../api/workflows/deleteReactionComment';
-import { createReactionComment } from '../../api/workflows/createReactionComment';
-import { watchedComment } from '../../api/workflows/watchedComment';
+import { deleteReactionComment, IDeleteReaction } from '../../api/workflows/deleteReactionComment';
+import { createReactionComment, ICreateReaction } from '../../api/workflows/createReactionComment';
+import { IWatchedComment, watchedComment } from '../../api/workflows/watchedComment';
 import { envWssURL } from '../../constants/enviroment';
 import {
   mapBackandworkflowLogToRedux,
@@ -127,7 +151,7 @@ import {
   getNormalizeOutputUsersToEmails,
 } from '../../utils/mappers';
 import { getUserTimezone, getAuthUser, getUsers } from '../selectors/user';
-import { getCurrentTask } from '../selectors/task';
+
 import { formatDateToISOInWorkflow, toTspDate } from '../../utils/dateTime';
 import { getWorkflowAddComputedPropsToRedux } from '../../components/Workflows/utils/getWorfkflowClientProperties';
 import { getTemplatePresets, TGetTemplatePresetsResponse } from '../../api/getTemplatePresets';
@@ -175,7 +199,7 @@ function* handleLoadWorkflow({ workflowId, showLoader = true }: { workflowId: nu
   }
 }
 
-function* fetchWorkflow({ payload: id }: TLoadWorkflow) {
+function* fetchWorkflow({ payload: id }: PayloadAction<number>) {
   try {
     yield fork(handleLoadWorkflow, { workflowId: id });
   } catch (error) {
@@ -185,7 +209,7 @@ function* fetchWorkflow({ payload: id }: TLoadWorkflow) {
 
 function* handleOpenWorkflowLogPopup({
   payload: { workflowId, shouldSetWorkflowDetailUrl, redirectTo404IfNotFound },
-}: TOpenWorkflowLogPopup) {
+}: PayloadAction<TOpenWorkflowLogPopupPayload>) {
   try {
     if (shouldSetWorkflowDetailUrl) {
       const newUrl = ERoutes.WorkflowDetail.replace(':id', String(workflowId)) + history.location.search;
@@ -210,7 +234,7 @@ function* handleOpenWorkflowLogPopup({
 
 function* fetchWorkflowLog({
   payload: { id, sorting, comments, isOnlyAttachmentsShown },
-}: TChangeWorkflowLogViewSettings) {
+}: PayloadAction<IChangeWorkflowLogViewSettingsPayload>) {
   yield put(changeWorkflowLog({ isLoading: true }));
 
   try {
@@ -232,7 +256,7 @@ function* fetchWorkflowLog({
   }
 }
 
-function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
+function* fetchWorkflowsList({ payload: offset = 0 }: PayloadAction<number>) {
   const {
     workflowsList,
     workflowsSettings: {
@@ -241,7 +265,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
       values: {
         statusFilter,
         templatesIdsFilter,
-        stepsIdsFilter,
+        tasksApiNamesFilter,
         performersIdsFilter,
         performersGroupIdsFilter,
         workflowStartersIdsFilter,
@@ -254,9 +278,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
   const currentTemplateId = templatesIdsFilter.length === 1 ? templatesIdsFilter[0] : null;
   const severalTemplateIds = templatesIdsFilter.length > 1 || templatesIdsFilter.length === 0;
 
-  const lastLoadedTemplateIdForTable: number | null = yield select(
-    (state: IApplicationState) => state.workflows.workflowsSettings.lastLoadedTemplateIdForTable,
-  );
+  const lastLoadedTemplateIdForTable: number | null = yield select(getLastLoadedTemplateIdForTable);
 
   const shouldGetAllDefaultFields = Boolean(view === EWorkflowsView.Table && offset === 0 && severalTemplateIds);
 
@@ -308,7 +330,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
       statusFilter,
       templatesIdsFilter,
       performersGroupIdsFilter,
-      stepsIdsFilter,
+      tasksApiNamesFilter,
       performersIdsFilter,
       workflowStartersIdsFilter,
       searchText,
@@ -325,7 +347,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: TLoadWorkflowsList) {
   }
 }
 
-function* saveWorkflowLogComment({ payload: { text, attachments } }: TSendWorkflowLogComment) {
+function* saveWorkflowLogComment({ payload: { text, attachments } }: PayloadAction<ISendWorkflowLogComment>) {
   const {
     items,
     workflowId: processId,
@@ -363,7 +385,7 @@ function* saveWorkflowLogComment({ payload: { text, attachments } }: TSendWorkfl
   }
 }
 
-function* editWorkflowInWork({ payload }: TEditWorkflow) {
+function* editWorkflowInWork({ payload }: PayloadAction<TEditWorkflowPayload>) {
   const {
     workflowsList: { items, count, offset },
   }: ReturnType<typeof getWorkflowsStore> = yield select(getWorkflowsStore);
@@ -471,7 +493,9 @@ function* editWorkflowInWork({ payload }: TEditWorkflow) {
   }
 }
 
-export function* setWorkflowResumedSaga({ payload: { workflowId, onSuccess } }: TWorkflowResumed) {
+export function* setWorkflowResumedSaga({
+  payload: { workflowId, onSuccess },
+}: PayloadAction<TSetWorkflowResumedPayload>) {
   try {
     yield put(setGeneralLoaderVisibility(true));
     const workflow: IEditWorkflowResponse = yield continueWorkflow(workflowId);
@@ -498,7 +522,9 @@ export function* setWorkflowResumedSaga({ payload: { workflowId, onSuccess } }: 
   }
 }
 
-export function* setWorkflowFinishedSaga({ payload: { workflowId, onWorkflowEnded } }: TWorkflowFinished) {
+export function* setWorkflowFinishedSaga({
+  payload: { workflowId, onWorkflowEnded },
+}: PayloadAction<TSetWorkflowFinishedPayload>) {
   try {
     yield put(setGeneralLoaderVisibility(true));
     yield finishWorkflow({ id: workflowId });
@@ -519,9 +545,7 @@ export function* setWorkflowFinishedSaga({ payload: { workflowId, onWorkflowEnde
 export function* fetchFilterTemplates() {
   try {
     const workflowStatus: EWorkflowsStatus = yield select(getWorkflowsStatus);
-    const templatesTitles: ITemplateTitle[] = yield getTemplatesTitles({
-      workflowStatus,
-    });
+    const templatesTitles: TGetTemplatesTitlesResponse = yield getTemplatesTitles(workflowStatus);
     yield put(loadWorkflowsFilterTemplatesSuccess(templatesTitles));
   } catch (err) {
     yield put(loadWorkflowsFilterTemplatesFailed());
@@ -530,7 +554,7 @@ export function* fetchFilterTemplates() {
   }
 }
 
-export function* deleteWorkflowSaga({ payload: { workflowId, onSuccess } }: TDeleteWorkflow) {
+export function* deleteWorkflowSaga({ payload: { workflowId, onSuccess } }: PayloadAction<TDeleteWorkflowPayload>) {
   try {
     yield put(setGeneralLoaderVisibility(true));
     yield deleteWorkflow(workflowId);
@@ -547,7 +571,9 @@ export function* deleteWorkflowSaga({ payload: { workflowId, onSuccess } }: TDel
   }
 }
 
-export function* returnWorkflowToTaskSaga({ payload: { workflowId, taskId, onSuccess } }: TReturnWorkflowToTask) {
+export function* returnWorkflowToTaskSaga({
+  payload: { workflowId, taskId, onSuccess },
+}: PayloadAction<TReturnWorkflowToTaskPayload>) {
   try {
     yield put(setGeneralLoaderVisibility(true));
     yield returnWorkflowToTask({ id: workflowId, taskId });
@@ -564,7 +590,9 @@ export function* returnWorkflowToTaskSaga({ payload: { workflowId, taskId, onSuc
   }
 }
 
-export function* cloneWorkflowSaga({ payload: { workflowId, workflowName, templateId } }: TCloneWorkflow) {
+export function* cloneWorkflowSaga({
+  payload: { workflowId, workflowName, templateId },
+}: PayloadAction<TCloneWorkflowPayload>) {
   try {
     yield put(setGeneralLoaderVisibility(true));
 
@@ -603,7 +631,9 @@ export function* cloneWorkflowSaga({ payload: { workflowId, workflowName, templa
   }
 }
 
-export function* fetchFilterSteps({ payload: { templateId, onAfterLoaded } }: TLoadWorkflowsFilterSteps) {
+export function* fetchFilterSteps({
+  payload: { templateId, onAfterLoaded },
+}: PayloadAction<TLoadWorkflowsFilterStepsPayload>) {
   try {
     const [steps]: [ITemplateStep[]] = yield all([
       call(getTemplateSteps, { id: templateId }),
@@ -623,14 +653,14 @@ export function* fetchFilterSteps({ payload: { templateId, onAfterLoaded } }: TL
 export function* updateCurrentPerformersCountersSaga() {
   const {
     workflowsSettings: {
-      values: { templatesIdsFilter, stepsIdsFilter, workflowStartersIdsFilter },
+      values: { templatesIdsFilter, tasksApiNamesFilter, workflowStartersIdsFilter },
     },
   }: IStoreWorkflows = yield select(getWorkflowsStore);
 
   try {
     const counters: TUserCounter[] | undefined = yield call(getWorkflowsCurrentPerformerCounters, {
       templatesIdsFilter,
-      stepsIdsFilter,
+      tasksApiNamesFilter,
       workflowStartersIdsFilter,
     });
 
@@ -696,7 +726,9 @@ export function* updateWorkflowsTemplateStepsCountersSaga() {
   }
 }
 
-export function* snoozeWorkflowSaga({ payload: { workflowId, date, onSuccess } }: TSnoozeWorkflow) {
+export function* snoozeWorkflowSaga({
+  payload: { workflowId, date, onSuccess },
+}: PayloadAction<TSnoozeWorkflowPayload>) {
   const dateTsp = toTspDate(date);
   if (dateTsp === null) {
     throw new Error(`snoozeWorkflowSaga: Invalid date format: ${date}`);
@@ -743,27 +775,27 @@ export function* handleApplyFilters() {
 }
 
 export function* watchFetchWorkflowsList() {
-  yield takeLeading(EWorkflowsActions.LoadWorkflowsList, fetchWorkflowsList);
+  yield takeLeading(loadWorkflowsList.type, fetchWorkflowsList);
 }
 
 export function* watchChangeWorkflowLogViewSettings() {
-  yield takeLatest(EWorkflowsActions.ChangeWorkflowLogViewSettings, fetchWorkflowLog);
+  yield takeLatest(changeWorkflowLogViewSettings.type, fetchWorkflowLog);
 }
 
 export function* watchOpenWorkflowLogPopup() {
-  yield takeEvery(EWorkflowsActions.OpenWorkflowLogPopup, handleOpenWorkflowLogPopup);
+  yield takeEvery(openWorkflowLogPopup.type, handleOpenWorkflowLogPopup);
 }
 
 export function* watchFetchWorkflow() {
-  yield takeLatest(EWorkflowsActions.LoadWorkflow, fetchWorkflow);
+  yield takeLatest(loadWorkflow.type, fetchWorkflow);
 }
 
 export function* watchEidtWorkflow() {
-  yield takeEvery(EWorkflowsActions.EditWorkflow, editWorkflowInWork);
+  yield takeEvery(editWorkflowAction.type, editWorkflowInWork);
 }
 
 export function* watchSetWorkflowResumed() {
-  yield takeEvery(EWorkflowsActions.SetWorkflowResumed, setWorkflowResumedSaga);
+  yield takeEvery(setWorkflowResumed.type, setWorkflowResumedSaga);
 }
 
 export function* handleSearchTextChanged() {
@@ -772,16 +804,19 @@ export function* handleSearchTextChanged() {
 }
 
 export function* watchSetWorkflowFinished() {
-  yield takeEvery(EWorkflowsActions.SetWorkflowFinished, function* finishedWorkflow(action: TWorkflowFinished) {
-    const handlerAction: TChannelAction = {
-      type: ETaskListActions.ChannelAction,
-      handler: () => setWorkflowFinishedSaga(action),
-    };
-    yield put(handlerAction);
-  });
+  yield takeEvery(
+    setWorkflowFinished.type,
+    function* finishedWorkflow(action: PayloadAction<TSetWorkflowFinishedPayload>) {
+      const handlerAction: TChannelAction = {
+        type: ETaskListActions.ChannelAction,
+        handler: () => setWorkflowFinishedSaga(action),
+      };
+      yield put(handlerAction);
+    },
+  );
 }
 
-export function* deleteCommentSaga({ payload: { id } }: TDeleteComment) {
+export function* deleteCommentSaga({ payload: { id } }: PayloadAction<IDeleteComment>) {
   try {
     yield put(setGeneralLoaderVisibility(true));
     const updateComment: IWorkflowLogItem = yield deleteComment({ id });
@@ -794,7 +829,7 @@ export function* deleteCommentSaga({ payload: { id } }: TDeleteComment) {
   }
 }
 
-export function* editCommentSaga({ payload: { id, text, attachments } }: TEditComment) {
+export function* editCommentSaga({ payload: { id, text, attachments } }: PayloadAction<IEditComment>) {
   try {
     yield put(setGeneralLoaderVisibility(true));
     const updateComment: IWorkflowLogItem = yield editComment({ id, text, attachments });
@@ -832,7 +867,7 @@ export function* watchNewWorkflowsEvent() {
   }
 }
 
-export function* watchedCommentSaga({ payload: { id } }: TWatchedComment) {
+export function* watchedCommentSaga({ payload: { id } }: PayloadAction<IWatchedComment>) {
   try {
     yield watchedComment({ id });
   } catch (error) {
@@ -840,7 +875,7 @@ export function* watchedCommentSaga({ payload: { id } }: TWatchedComment) {
   }
 }
 
-export function* deleteReactionCommentSaga({ payload: { id, value } }: TDeleteReactionComment) {
+export function* deleteReactionCommentSaga({ payload: { id, value } }: PayloadAction<IDeleteReaction>) {
   try {
     yield put(setGeneralLoaderVisibility(true));
     yield deleteReactionComment({ id, value });
@@ -851,7 +886,7 @@ export function* deleteReactionCommentSaga({ payload: { id, value } }: TDeleteRe
   }
 }
 
-export function* createReactionCommentSaga({ payload: { id, value } }: TCreateReactionComment) {
+export function* createReactionCommentSaga({ payload: { id, value } }: PayloadAction<ICreateReaction>) {
   try {
     yield put(setGeneralLoaderVisibility(true));
     yield createReactionComment({ id, value });
@@ -862,7 +897,9 @@ export function* createReactionCommentSaga({ payload: { id, value } }: TCreateRe
   }
 }
 
-function* saveWorkflowsPresetSaga({ payload: { orderedFields, type, templateId } }: TSaveWorkflowsPreset) {
+function* saveWorkflowsPresetSaga({
+  payload: { orderedFields, type, templateId },
+}: PayloadAction<ISaveWorkflowsPresetPayload>) {
   const {
     workflowsSettings: { presets },
   }: IStoreWorkflows = yield select(getWorkflowsStore);
@@ -898,75 +935,75 @@ function* saveWorkflowsPresetSaga({ payload: { orderedFields, type, templateId }
 }
 
 export function* watchDeleteReactionComment() {
-  yield takeEvery(EWorkflowsActions.DeleteReactionComment, deleteReactionCommentSaga);
+  yield takeEvery(deleteReactionCommentAction.type, deleteReactionCommentSaga);
 }
 
 export function* watchCreateReactionComment() {
-  yield takeEvery(EWorkflowsActions.CreateReactionComment, createReactionCommentSaga);
+  yield takeEvery(createReactionCommentAction.type, createReactionCommentSaga);
 }
 
 export function* watchWatchedComment() {
-  yield takeEvery(EWorkflowsActions.WatchedComment, watchedCommentSaga);
+  yield takeEvery(watchedCommentAction.type, watchedCommentSaga);
 }
 
 export function* watchDeleteComment() {
-  yield takeEvery(EWorkflowsActions.DeleteComment, deleteCommentSaga);
+  yield takeEvery(deleteCommentAction.type, deleteCommentSaga);
 }
 
 export function* watchEditComment() {
-  yield takeEvery(EWorkflowsActions.EditComment, editCommentSaga);
+  yield takeEvery(editCommentAction.type, editCommentSaga);
 }
 
 export function* watchLoadFilterTemplates() {
-  yield takeEvery(EWorkflowsActions.LoadFilterTemplates, fetchFilterTemplates);
+  yield takeEvery(loadFilterTemplates.type, fetchFilterTemplates);
 }
 
 export function* watchLoadFilterSteps() {
-  yield takeEvery(EWorkflowsActions.LoadFilterSteps, fetchFilterSteps);
+  yield takeEvery(loadFilterSteps.type, fetchFilterSteps);
 }
 
 export function* watchSendWorkflowLogComment() {
-  yield takeEvery(EWorkflowsActions.SendWorkflowLogComment, saveWorkflowLogComment);
+  yield takeEvery(sendWorkflowLogComments.type, saveWorkflowLogComment);
 }
 
 export function* watchDeleteWorfklow() {
-  yield takeEvery(EWorkflowsActions.DeleteWorkflow, deleteWorkflowSaga);
+  yield takeEvery(deleteWorkflowAction.type, deleteWorkflowSaga);
 }
 
 export function* watchReturnWorkflowToTask() {
-  yield takeEvery(EWorkflowsActions.ReturnWorkflowToTask, returnWorkflowToTaskSaga);
+  yield takeEvery(returnWorkflowToTaskAction.type, returnWorkflowToTaskSaga);
 }
 
 export function* watchCloneWorkflow() {
-  yield takeEvery(EWorkflowsActions.CloneWorkflow, cloneWorkflowSaga);
+  yield takeEvery(cloneWorkflowAction.type, cloneWorkflowSaga);
 }
 
 export function* watchUpdateCurrentPerformersCounters() {
-  yield takeEvery(EWorkflowsActions.UpdateCurrentPerformersCounters, updateCurrentPerformersCountersSaga);
+  yield takeEvery(updateCurrentPerformersCounters.type, updateCurrentPerformersCountersSaga);
 }
 
 export function* watchUpdateWorkflowStartersCounters() {
-  yield takeEvery(EWorkflowsActions.UpdateWorkflowStartersCounters, updateWorkflowStartersCountersSaga);
+  yield takeEvery(updateWorkflowStartersCounters.type, updateWorkflowStartersCountersSaga);
 }
 
 export function* watchSearchTextChanged() {
-  yield takeLatest(EWorkflowsActions.ChangeWorkflowsSearchText, handleSearchTextChanged);
+  yield takeLatest(changeWorkflowsSearchText.type, handleSearchTextChanged);
 }
 
 export function* watchUpdateWorkflowsTemplateStepsCounters() {
-  yield takeLatest(EWorkflowsActions.UpdateWorkflowsTemplateStepsCounters, updateWorkflowsTemplateStepsCountersSaga);
+  yield takeLatest(updateWorkflowsTemplateStepsCounters.type, updateWorkflowsTemplateStepsCountersSaga);
 }
 
 export function* watchChangeWorkflowsSettings() {
-  yield takeLatest(EWorkflowsActions.ApplyFilters, handleApplyFilters);
+  yield takeLatest(applyFilters.type, handleApplyFilters);
 }
 
 export function* watchSnoozeWorkflow() {
-  yield takeEvery(EWorkflowsActions.SnoozeWorkflow, snoozeWorkflowSaga);
+  yield takeEvery(snoozeWorkflowAction.type, snoozeWorkflowSaga);
 }
 
 export function* watchSaveWorkflowsPreset() {
-  yield takeEvery(EWorkflowsActions.SaveWorkflowsPreset, saveWorkflowsPresetSaga);
+  yield takeEvery(saveWorkflowsPreset.type, saveWorkflowsPresetSaga);
 }
 
 export function* rootSaga() {

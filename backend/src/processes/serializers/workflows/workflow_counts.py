@@ -18,7 +18,6 @@ from src.processes.enums import (
 from src.processes.messages.workflow import (
     MSG_PW_0067,
 )
-from src.processes.models.templates.task import TaskTemplate
 
 
 class WorkflowCountsResponseSerializer(Serializer):
@@ -30,7 +29,6 @@ class WorkflowCountsResponseSerializer(Serializer):
 
 class WorkflowCountsByTemplateTaskResponseSerializer(Serializer):
 
-    template_task_id = IntegerField()
     template_task_api_name = CharField()
     workflows_count = IntegerField()
 
@@ -83,20 +81,9 @@ class WorkflowCountsByCurrentPerformerSerializer(
     )
     template_ids = CharField(required=False)
     template_task_api_names = CharField(required=False)
-    # TODO Remove in https://my.pneumatic.app/workflows/36988/
-    template_task_ids = CharField(required=False)
     workflow_starter_ids = CharField(required=False)
 
     def validate(self, attrs):
-        # TODO Remove in https://my.pneumatic.app/workflows/36988/
-        template_task_ids = attrs.get('template_task_ids')
-        if template_task_ids:
-            attrs['template_task_api_names'] = (
-                TaskTemplate.objects
-                .filter(id__in=template_task_ids)
-                .values_list('api_name', flat=True)
-            )
-        attrs.pop('template_task_ids', None)
         return attrs
 
     def validate_template_ids(self, value):
@@ -104,10 +91,6 @@ class WorkflowCountsByCurrentPerformerSerializer(
 
     def validate_template_task_api_names(self, value):
         return self.get_valid_list_strings(value)
-
-    # TODO Remove in https://my.pneumatic.app/workflows/36988/
-    def validate_template_task_ids(self, value):
-        return self.get_valid_list_integers(value)
 
     def validate_workflow_starter_ids(self, value):
         return self.get_valid_list_integers(value)
