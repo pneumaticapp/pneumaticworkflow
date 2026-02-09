@@ -1,0 +1,2 @@
+# Create a new backup of the postgresql pneumatic database in the "postgres/backups" directory
+docker exec -it pneumatic-postgres sh -c "pg_dump -U postgres_user postgres_db > /backups/pneumatic-backup-$(date +%Y-%m-%d[%Hh:%Mm]%ZTZ).sql"

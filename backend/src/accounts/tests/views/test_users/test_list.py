@@ -10,7 +10,6 @@ from src.accounts.enums import (
 from src.accounts.models import (
     UserInvite,
 )
-from src.accounts.services.user import UserService
 from src.accounts.services.user_invite import UserInviteService
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.generics.messages import MSG_GE_0001
@@ -23,7 +22,6 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
 )
-from src.utils.dates import date_format
 
 pytestmark = pytest.mark.django_db
 
@@ -57,7 +55,6 @@ def test_list__ok(api_client):
     assert data['first_name'] == user.first_name
     assert data['last_name'] == user.last_name
     assert data['type'] == user.type
-    assert data['date_joined'] == user.date_joined.strftime(date_format)
     assert data['date_joined_tsp'] == user.date_joined.timestamp()
     assert data['is_admin'] == user.is_admin
     assert data['is_account_owner'] == user.is_account_owner
@@ -112,8 +109,8 @@ def test_list__different_types__ok(api_client):
         is_account_owner=False,
         email='test@test.test',
         last_name='p',
+        status=UserStatus.INACTIVE,
     )
-    UserService.deactivate(inactive_user)
     guest = create_test_guest(account=account)
 
     # act
@@ -205,9 +202,9 @@ def test_list__status_inactive__ok(api_client):
     inactive_user = create_test_user(
         account=account,
         email='test@test.test',
+        status=UserStatus.INACTIVE,
     )
 
-    UserService.deactivate(inactive_user)
     create_invited_user(user)
     api_client.token_authenticate(user)
 
@@ -228,11 +225,11 @@ def test_list__status_active__ok(api_client):
     # arrange
     account = create_test_account()
     user = create_test_user(account=account)
-    inactive_user = create_test_user(
+    create_test_user(
         account=account,
         email='test@test.test',
+        status=UserStatus.INACTIVE,
     )
-    UserService.deactivate(inactive_user)
     create_invited_user(user)
     api_client.token_authenticate(user)
 
@@ -253,11 +250,11 @@ def test_list__status_invited__ok(api_client):
     # arrange
     account = create_test_account()
     user = create_test_user(account=account)
-    inactive_user = create_test_user(
+    create_test_user(
         account=account,
         email='test@test.test',
+        status=UserStatus.INACTIVE,
     )
-    UserService.deactivate(inactive_user)
     invited_user = create_invited_user(user)
     api_client.token_authenticate(user)
 
@@ -278,11 +275,11 @@ def test_list__status_multiple_values__ok(api_client):
     # arrange
     account = create_test_account()
     user = create_test_user(account=account, last_name='z')
-    inactive_user = create_test_user(
+    create_test_user(
         account=account,
         email='test@test.test',
+        status=UserStatus.INACTIVE,
     )
-    UserService.deactivate(inactive_user)
     invited_user = create_invited_user(user, last_name='x')
     api_client.token_authenticate(user)
 
@@ -585,7 +582,8 @@ def test_list__inactive_users_from_another_acc_with_invite__ok(
         email='invited@pneumatic.app',
         last_name='x',
     )
-    UserService.deactivate(inactive_invited_user)
+    inactive_invited_user.status = UserStatus.INACTIVE
+    inactive_invited_user.save()
     another_account_owner = create_test_user(
         email='anotheracc@pneumatic.app',
     )
@@ -594,7 +592,8 @@ def test_list__inactive_users_from_another_acc_with_invite__ok(
         email='inactive@pneumatic.app',
         last_name='y',
     )
-    UserService.deactivate(another_account_inactive_user)
+    another_account_inactive_user.status = UserStatus.INACTIVE
+    another_account_inactive_user.save()
     UserInvite.objects.create(
         email=another_account_inactive_user.email,
         account=account_owner.account,
@@ -682,12 +681,12 @@ def test_list__another_acc_users__not_found(api_client):
     )
 
     create_invited_user(another_user)
-    another_inactive_user = create_test_user(
+    create_test_user(
         account=another_account,
         is_account_owner=False,
         email='test@test.test',
+        status=UserStatus.INACTIVE,
     )
-    UserService.deactivate(another_inactive_user)
     create_test_guest(account=another_account)
 
     # act
@@ -728,7 +727,8 @@ def test_list__remove_transferred__new_account_ok(
         invited_from=SourceType.EMAIL,
     )
     account_2_new_user = account_2.users.get(email=user_to_transfer.email)
-    UserService.deactivate(user_to_transfer)
+    user_to_transfer.status = UserStatus.INACTIVE
+    user_to_transfer.save()
     api_client.token_authenticate(account_2_owner)
 
     # act
@@ -779,7 +779,8 @@ def test_list__remove_transferred__prev_account_ok(
         email=user_to_transfer.email,
         invited_from=SourceType.EMAIL,
     )
-    UserService.deactivate(user_to_transfer)
+    user_to_transfer.status = UserStatus.INACTIVE
+    user_to_transfer.save()
     api_client.token_authenticate(account_1_owner)
 
     # act
