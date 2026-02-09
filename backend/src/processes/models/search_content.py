@@ -4,6 +4,7 @@ from django.db.models import Q, UniqueConstraint
 
 from src.accounts.models import AccountBaseMixin
 from src.generics.models import SoftDeleteModel
+from src.processes.enums import SearchContentType
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
 from src.processes.models.workflows.workflow import Workflow
@@ -64,6 +65,10 @@ class SearchContent(
         TaskTemplate,
         on_delete=models.CASCADE,
         null=True,
+    )
+    type = models.CharField(
+        choices=SearchContentType.CHOICES,
+        max_length=50,
     )
 
     def __str__(self):
