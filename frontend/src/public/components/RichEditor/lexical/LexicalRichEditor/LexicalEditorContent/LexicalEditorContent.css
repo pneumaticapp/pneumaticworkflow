@@ -96,8 +96,7 @@
 }
 
 :global(.lexical-rich-editor-mention) {
-  font-weight: 500;
-  color: var(--pneumatic-color-link-dark);
+  font-weight: bold;
 }
 
 :global(.lexical-rich-editor-checklist-ul) {
