@@ -20,7 +20,7 @@ from src.processes.enums import (
     WorkflowApiStatus,
     WorkflowEventType,
     WorkflowOrdering,
-    WorkflowStatus,
+    WorkflowStatus, SearchContentType,
 )
 from src.processes.messages.workflow import (
     MSG_PW_0024,
@@ -244,7 +244,10 @@ class WorkflowListQuery(
         if self.search_tsquery:
             result += """
                 INNER JOIN processes_searchcontent ps ON (
-                  (pw.id = ps.workflow_id OR pw.template_id = ps.template_id)
+                  (
+                    pw.id = ps.workflow_id
+                    OR pw.template_id = ps.template_id
+                  )
                   AND ps.is_deleted IS FALSE
                 )
             """
@@ -998,10 +1001,17 @@ class TaskListQuery(
             )
         """
         if self.search_tsquery:
-            result += """
+            # Join task and workflow name search content only
+            result += f"""
                 INNER JOIN processes_searchcontent ps ON (
-                    pt.id = ps.task_id AND
-                    ps.is_deleted IS FALSE
+                  (
+                    pt.id = ps.task_id
+                    OR (
+                        pt.workflow_id = ps.workflow_id
+                        AND ps.type = '{SearchContentType.WORKFLOW}'
+                    )
+                  )
+                  AND ps.is_deleted IS FALSE
                 )
             """
         if self.template_id:
