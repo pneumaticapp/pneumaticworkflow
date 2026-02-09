@@ -297,6 +297,56 @@ def test_list__search__workflow_name__ok(api_client):
     assert response.data['results'][0]['id'] == workflow.id
 
 
+def test_list__search__template_name__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    search_text = 'search'
+    template = create_test_template(user=owner, name=search_text)
+    workflow = create_test_workflow(
+        user=owner,
+        name='not',
+        template=template,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(f'/workflows?search={search_text}')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id
+
+
+def test_list__search__template_name_deleted_template__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    search_text = 'search'
+    template = create_test_template(user=owner, name=search_text)
+    workflow = create_test_workflow(
+        user=owner,
+        name='not',
+        template=template,
+        tasks_count=1,
+    )
+    template.delete()
+    api_client.token_authenticate(owner)
+    workflow.refresh_from_db()
+
+    # act
+    response = api_client.get(f'/workflows?search={search_text}')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id
+
+
 def test_list__search__kickoff_description__not_found(api_client):
 
     # arrange

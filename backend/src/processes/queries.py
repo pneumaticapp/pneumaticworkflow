@@ -244,8 +244,8 @@ class WorkflowListQuery(
         if self.search_tsquery:
             result += """
                 INNER JOIN processes_searchcontent ps ON (
-                    pw.id = ps.workflow_id AND
-                    ps.is_deleted IS FALSE
+                  (pw.id = ps.workflow_id OR pw.template_id = ps.template_id)
+                  AND ps.is_deleted IS FALSE
                 )
             """
         return result

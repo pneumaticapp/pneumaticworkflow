@@ -62,7 +62,7 @@ class Migration(migrations.Migration):
              END;
              $$ LANGUAGE plpgsql;
         """),
-        # processes_workflow search content (workflow name has weight "A" )
+        # processes_workflow search content (workflow name has weight "A", template name has weight "C" )
         migrations.RunSQL(sql="""
             CREATE OR REPLACE FUNCTION create_workflow_search_content()
             RETURNS trigger AS 
@@ -72,7 +72,11 @@ class Migration(migrations.Migration):
                     is_deleted, account_id, event_id, task_id, task_field_id, workflow_id, template_id, task_template_id, content
                 )
                 VALUES (
-                    FALSE, new.account_id, NULL, NULL, NULL, new.id, NULL, NULL, setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'A')
+                    FALSE, new.account_id, NULL, NULL, NULL, new.id, NULL, NULL, 
+                    (
+                        setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'A') ||
+                        setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.legacy_template_name)), 'C')
+                    )
                 )
                 ON CONFLICT (workflow_id, task_id, event_id, task_field_id, template_id, task_template_id) WHERE is_deleted = FALSE
                 DO UPDATE SET content = (

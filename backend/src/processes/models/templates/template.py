@@ -125,6 +125,13 @@ class Template(
     def get_owners(self):
         return self.owners.all()
 
+    def delete(self, **kwargs):
+        self.workflows.update(
+            is_legacy_template=True,
+            legacy_template_name=self.name,
+        )
+        super().delete(**kwargs)
+
     def get_draft(self):
         try:
             return self.draft.draft
