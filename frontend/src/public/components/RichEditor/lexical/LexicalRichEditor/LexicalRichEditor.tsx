@@ -2,37 +2,34 @@ import React, {
   forwardRef,
   useImperativeHandle,
   useRef,
-  useMemo,
-  useCallback,
 } from 'react';
 import classnames from 'classnames';
-import { LexicalComposer } from '@lexical/react/LexicalComposer';
-import { RichTextPlugin } from '@lexical/react/LexicalRichTextPlugin';
-import { ContentEditable } from '@lexical/react/LexicalContentEditable';
-import { HistoryPlugin } from '@lexical/react/LexicalHistoryPlugin';
-import { OnChangePlugin } from '@lexical/react/LexicalOnChangePlugin';
-import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
-import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import type { EditorState, LexicalEditor } from 'lexical';
-import { LEXICAL_NODES } from '../nodes';
-import { lexicalTheme } from '../theme';
-import { convertLexicalToMarkdown, applyMarkdownToEditor } from '../converters';
+import { $getSelection, $insertNodes, $isRangeSelection } from 'lexical';
+import { LexicalComposer } from '@lexical/react/LexicalComposer';
+
+import { LinkPluginProvider } from '../plugins';
+import { $createVariableNode } from '../nodes/VariableNode';
+import { applyMarkdownToEditor, convertLexicalToMarkdown } from '../converters';
 import { prepareChecklistsForAPI } from '../../../../utils/checklists/prepareChecklistsForAPI';
+import { EditorHeader } from './EditorHeader';
+import { LexicalEditorContent } from './LexicalEditorContent/LexicalEditorContent';
+import { useAttachmentUpload } from './hooks';
 import type { ILexicalRichEditorHandle, ILexicalRichEditorProps } from './types';
+import { lexicalTheme } from '../theme';
+import { LEXICAL_NODES } from '../nodes';
+
 import styles from './LexicalRichEditor.css';
 
-function onError(error: Error): void {
-  console.error('[LexicalRichEditor]', error);
-}
 
-function SetEditorRefPlugin({
-  editorRef,
-}: {
-  editorRef: React.MutableRefObject<LexicalEditor | null>;
-}): null {
-  const [editor] = useLexicalComposerContext();
-  editorRef.current = editor;
-  return null;
+
+export const EDITOR_NAMESPACE = 'LexicalRichEditor';
+
+function resolveUploadHandler(
+  propHandler: ILexicalRichEditorProps['onUploadAttachments'],
+  builtInHandler?: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>,
+): ILexicalRichEditorProps['onUploadAttachments'] {
+  return propHandler ?? builtInHandler ?? undefined;
 }
 
 export const LexicalRichEditor = forwardRef<
@@ -40,6 +37,7 @@ export const LexicalRichEditor = forwardRef<
   ILexicalRichEditorProps
 >(function LexicalRichEditor(
   {
+    foregroundColor = 'white',
     placeholder,
     className,
     title,
@@ -47,22 +45,77 @@ export const LexicalRichEditor = forwardRef<
     defaultValue,
     handleChange,
     handleChangeChecklists,
+    withToolbar = false,
+    withMentions = false,
+    mentions,
+    templateVariables,
+    isModal,
+    accountId,
+    onUploadAttachments: onUploadAttachmentsProp,
     children,
   },
   ref,
 ) {
   const editorRef = useRef<LexicalEditor | null>(null);
+  const editorContainerRef = useRef<HTMLDivElement | null>(null);
 
-  const onChange = useCallback(
-    (editorState: EditorState) => {
-      const markdown = convertLexicalToMarkdown(editorState);
-      if (handleChangeChecklists) {
-        handleChangeChecklists(prepareChecklistsForAPI(markdown));
-      }
-      handleChange(markdown);
+  const initialConfig = {
+    namespace: EDITOR_NAMESPACE,
+    theme: lexicalTheme,
+    nodes: LEXICAL_NODES,
+    onError: (error: Error) => {
+      console.error('❌ Error loading markdown into editor:', error);
     },
-    [handleChange, handleChangeChecklists],
+    editorState:
+      defaultValue != null && defaultValue.trim() !== ''
+        ? (editor: LexicalEditor) => {
+          applyMarkdownToEditor(editor, defaultValue, {
+            tag: 'history-merge',
+            templateVariables,
+          });
+        }
+        : undefined,
+  };
+
+  const builtInUpload = useAttachmentUpload(editorRef, accountId);
+  const onUploadAttachments = resolveUploadHandler(
+    onUploadAttachmentsProp,
+    accountId != null ? builtInUpload : undefined,
   );
+
+  const onChange = (editorState: EditorState): void => {
+    const markdown = convertLexicalToMarkdown(editorState);
+
+    if (handleChangeChecklists) {
+      const checklistsData = prepareChecklistsForAPI(markdown);
+      handleChangeChecklists(checklistsData);
+    }
+
+    handleChange(markdown);
+  };
+
+  const insertVariableToEditor = (
+    apiName: string,
+    variableTitle: string,
+    subtitle: string,
+  ): void => {
+    const editor = editorRef.current;
+    if (!editor) return;
+
+    editor.update(() => {
+      const selection = $getSelection();
+      if (!$isRangeSelection(selection)) return;
+
+      const variableNode = $createVariableNode({
+        apiName,
+        title: variableTitle,
+        subtitle,
+      });
+
+      $insertNodes([variableNode]);
+      variableNode.selectNext();
+    });
+  };
 
   useImperativeHandle(
     ref,
@@ -70,60 +123,42 @@ export const LexicalRichEditor = forwardRef<
       focus(): void {
         editorRef.current?.focus();
       },
-      insertVariable(): void {
-        // Stub until stage 4
+      insertVariable(apiName, variableTitle, subtitle): void {
+        if (!apiName?.trim() || !variableTitle?.trim() || !subtitle?.trim()) return;
+        insertVariableToEditor(apiName, variableTitle, subtitle);
       },
       getEditor(): LexicalEditor | undefined {
         return editorRef.current ?? undefined;
       },
     }),
-    [],
+    [insertVariableToEditor],
   );
 
-  const initialConfig = useMemo(
-    () => ({
-      namespace: 'LexicalRichEditor',
-      theme: lexicalTheme,
-      nodes: LEXICAL_NODES,
-      onError,
-      editorState:
-        defaultValue != null && defaultValue.trim() !== ''
-          ? (editor: LexicalEditor) => {
-            applyMarkdownToEditor(editor, defaultValue, { tag: 'history-merge' });
-          }
-          : undefined,
-    }),
-    [defaultValue],
-  );
+
 
   return (
-    <div className={classnames(styles.wrapper, className)}>
-      {title ? (
-        <div className={styles.title} aria-hidden>
-          {title}
-        </div>
-      ) : null}
+    <div className={classnames(
+      styles['lexical-wrapper'],
+      title && styles['lexical-wrapper_with-title'],
+      multiline && styles['lexical-wrapper_multiline'],
+      className,
+    )}>
+      <EditorHeader title={title} foregroundColor={foregroundColor} />
       <LexicalComposer initialConfig={initialConfig}>
-        <SetEditorRefPlugin editorRef={editorRef} />
-        <OnChangePlugin onChange={onChange} />
-        <div
-          className={classnames(styles.editor, multiline && styles['editor-multiline'])}
-        >
-          <RichTextPlugin
-            contentEditable={
-              <ContentEditable
-                className={styles['content-editable']}
-                aria-placeholder={placeholder}
-                placeholder={<div className={styles.placeholder}>{placeholder}</div>}
-              />
-            }
-            placeholder={
-              <div className={styles.placeholder}>{placeholder}</div>
-            }
-            ErrorBoundary={LexicalErrorBoundary}
+        <LinkPluginProvider editorContainerRef={editorContainerRef}>
+          <LexicalEditorContent
+            placeholder={placeholder}
+            multiline={multiline}
+            withToolbar={withToolbar}
+            withMentions={withMentions}
+            mentions={mentions}
+            isModal={isModal}
+            onUploadAttachments={onUploadAttachments}
+            editorRef={editorRef}
+            editorContainerRef={editorContainerRef}
+            onChange={onChange}
           />
-          <HistoryPlugin />
-        </div>
+        </LinkPluginProvider>
       </LexicalComposer>
       {children}
     </div>

@@ -1,26 +1,10 @@
 import type { LexicalEditor } from 'lexical';
-import { $getRoot } from 'lexical';
-import {
-  $convertFromMarkdownString,
-  HEADING,
-  QUOTE,
-  UNORDERED_LIST,
-  ORDERED_LIST,
-  BOLD_STAR,
-  ITALIC_STAR,
-  LINK,
-} from '@lexical/markdown';
+import { $convertFromMarkdownString } from '@lexical/markdown';
 import { prepareChecklistsForRendering } from '../../../../utils/checklists/prepareChecklistsForRendering';
+import { createMarkdownTransformers } from './transformers';
+import type { TTaskVariable } from '../../../TemplateEdit/types';
 
-const LEXICAL_MARKDOWN_TRANSFORMERS = [
-  HEADING,
-  QUOTE,
-  UNORDERED_LIST,
-  ORDERED_LIST,
-  BOLD_STAR,
-  ITALIC_STAR,
-  LINK,
-];
+
 
 export function getInitialLexicalState(markdown: string): string {
   return prepareChecklistsForRendering(markdown);
@@ -29,20 +13,20 @@ export function getInitialLexicalState(markdown: string): string {
 export function applyMarkdownToEditor(
   editor: LexicalEditor,
   markdown: string,
-  options: { tag?: string } = {},
+  options: { tag?: string; templateVariables?: TTaskVariable[] } = {},
 ): void {
-  const prepared = getInitialLexicalState(markdown);
-  editor.update(
-    () => {
-      const root = $getRoot();
-      root.clear();
-      $convertFromMarkdownString(
-        prepared,
-        LEXICAL_MARKDOWN_TRANSFORMERS,
-        root,
-        true,
-      );
-    },
-    { tag: options.tag ?? 'history-merge' },
-  );
+  try {
+    const prepared = getInitialLexicalState(markdown);
+    const transformers = createMarkdownTransformers(options.templateVariables)
+
+    editor.update(
+      () => {
+        $convertFromMarkdownString(prepared, transformers);
+      },
+      { tag: options.tag ?? 'history-merge' },
+    );
+  } catch (error) {
+    console.error('❌ Error loading markdown into editor:', error);
+    // Could optionally clear editor or show error state
+  }
 }

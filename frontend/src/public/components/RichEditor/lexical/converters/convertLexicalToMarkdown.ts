@@ -1,38 +1,24 @@
 import type { EditorState } from 'lexical';
-import {
-  $convertToMarkdownString,
-  HEADING,
-  QUOTE,
-  UNORDERED_LIST,
-  ORDERED_LIST,
-  BOLD_STAR,
-  ITALIC_STAR,
-  LINK,
-} from '@lexical/markdown';
-import type { TConvertLexicalToMarkdownOptions } from './types';
+import { $convertToMarkdownString } from '@lexical/markdown';
 
-const LEXICAL_MARKDOWN_TRANSFORMERS = [
-  HEADING,
-  QUOTE,
-  UNORDERED_LIST,
-  ORDERED_LIST,
-  BOLD_STAR,
-  ITALIC_STAR,
-  LINK,
-];
+import { createLexicalToMarkdownTransformers } from './transformers';
+
+
+
+const LEXICAL_MARKDOWN_TRANSFORMERS = createLexicalToMarkdownTransformers();
 
 export function convertLexicalToMarkdown(
   editorState: EditorState,
-  options: TConvertLexicalToMarkdownOptions = {},
 ): string {
-  const preserveNewlines = options.preserveNewlines ?? true;
-  let result = '';
-  editorState.read(() => {
-    result = $convertToMarkdownString(
-      LEXICAL_MARKDOWN_TRANSFORMERS,
-      undefined,
-      preserveNewlines,
-    );
-  });
-  return result;
+  try {
+
+    let result = '';
+    editorState.read(() => {
+      result = $convertToMarkdownString(LEXICAL_MARKDOWN_TRANSFORMERS);
+    });
+    return result;
+  } catch (error) {
+    console.error('❌ Error converting lexical to markdown:', error);
+    return '';
+  }
 }

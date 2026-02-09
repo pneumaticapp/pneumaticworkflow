@@ -1,9 +1,9 @@
 import type { ReactNode, MutableRefObject } from 'react';
 import type { EditorState, LexicalEditor } from 'lexical';
 
-import type { TOutputChecklist } from '../../../../types/template';
-import type { TTaskVariable } from '../../../TemplateEdit/types';
-import type { TForegroundColor } from '../../../UI/Fields/common/types';
+import type { TOutputChecklist } from '../../../../../types/template';
+import type { TTaskVariable } from '../../../../TemplateEdit/types';
+import type { TForegroundColor } from '../../../../UI/Fields/common/types';
 
 
 

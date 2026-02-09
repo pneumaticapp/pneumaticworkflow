@@ -1,0 +1,121 @@
+.editor {
+  position: relative;
+  padding: 1rem 1.6rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  cursor: text;
+  background: transparent;
+  border: 0.1rem solid var(--pneumatic-color-black16);
+  border-radius: 0.8rem;
+  transition: 0.1s ease-in-out border-color;
+
+  &:focus-within {
+    border-color: var(--pneumatic-color-black48);
+  }
+}
+
+.content-editable {
+  flex: 1;
+  outline: none;
+
+  > * + * {
+    margin-top: 2rem;
+  }
+}
+
+.placeholder {
+  position: absolute;
+  top: 1rem;
+  right: 1.6rem;
+  left: 1.6rem;
+  pointer-events: none;
+  color: var(--default-placeholder-color);
+}
+
+:global(.lexical-rich-editor-list-ul),
+:global(.lexical-rich-editor-list-ol) {
+  padding-left: 3.2rem;
+  list-style: none;
+}
+
+:global(.lexical-rich-editor-list-ol) {
+  counter-reset: list-counter;
+}
+
+:global(.lexical-rich-editor-list-ul .lexical-rich-editor-list-item),
+:global(.lexical-rich-editor-list-ol .lexical-rich-editor-list-item) {
+  padding-left: 0;
+}
+
+:global(.lexical-rich-editor-list-ul .lexical-rich-editor-list-item)::before {
+  margin-right: 0.6rem;
+  font-weight: bold;
+  content: '•';
+}
+
+:global(.lexical-rich-editor-list-ol .lexical-rich-editor-list-item) {
+  counter-increment: list-counter;
+}
+
+:global(.lexical-rich-editor-list-ol .lexical-rich-editor-list-item)::before {
+  margin-right: 0.8rem;
+  font-weight: bold;
+  content: counter(list-counter) '.';
+}
+
+:global(.lexical-rich-editor-list-item + .lexical-rich-editor-list-item) {
+  margin-top: 0.8rem;
+}
+
+:global(.lexical-rich-editor-paragraph) {
+  margin: 0;
+  padding: 0;
+}
+
+:global(.lexical-rich-editor-link) {
+  color: var(--pneumatic-color-link-dark);
+  transition: color 0.1s ease-in-out;
+}
+
+:global(.lexical-rich-editor-link:hover) {
+  color: var(--pneumatic-color-link-hover);
+}
+
+:global(.lexical-rich-editor-text-bold) {
+  font-weight: bold;
+}
+
+:global(.lexical-rich-editor-text-italic) {
+  font-style: italic;
+}
+
+:global(.lexical-rich-editor-text-underline) {
+  text-decoration: underline;
+}
+
+:global(.lexical-rich-editor-mention) {
+  font-weight: 500;
+  color: var(--pneumatic-color-link-dark);
+}
+
+:global(.lexical-rich-editor-checklist-ul) {
+  margin: 0.4rem 0;
+  padding-left: 0;
+  list-style: none;
+}
+
+:global(.lexical-rich-editor-checklist-item) {
+  margin: 0.4rem 0;
+  display: flex;
+  list-style: none;
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+
+:global(.lexical-rich-editor-checklist-checkbox) {
+  margin-top: 0.3rem;
+  cursor: pointer;
+  flex-shrink: 0;
+}
