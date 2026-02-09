@@ -62,6 +62,12 @@ class WorkflowListQuery(
             'account_id': account_id,
             'limit': limit,
         }
+        self.search_text = search
+        if self.search_text:
+            self.search_tsquery, search_params = self._get_tsquery()
+            self.params.update(search_params)
+        else:
+            self.search_tsquery = None
         self.status = WorkflowApiStatus.MAP[status] if status else None
         if self.status == WorkflowStatus.RUNNING:
             self.tasks_status = (TaskStatus.ACTIVE,)
@@ -83,16 +89,17 @@ class WorkflowListQuery(
         self.current_performer_group_ids = current_performer_group_ids
         self.workflow_starter = workflow_starter
         self.is_external = is_external
-        self.search_text = search
         self.ancestor_task_id = ancestor_task_id
         self.user_id = user_id
 
     def _get_search(self):
-        tsquery, params = self._get_tsquery()
-        self.params.update(params)
-        return f"""
-            {self._search_in(table='ps', field='content', tsquery=tsquery)}
-        """
+        return str(
+            self._search_in(
+                table='ps',
+                field='content',
+                tsquery=self.search_tsquery,
+            ),
+        )
 
     def _get_template(self):
         result, params = self._to_sql_list(
@@ -234,9 +241,9 @@ class WorkflowListQuery(
                 )
             """
 
-        if self.search_text:
+        if self.search_tsquery:
             result += """
-                LEFT JOIN processes_searchcontent ps ON (
+                INNER JOIN processes_searchcontent ps ON (
                     pw.id = ps.workflow_id AND
                     ps.is_deleted IS FALSE
                 )
@@ -244,7 +251,7 @@ class WorkflowListQuery(
         return result
 
     def _get_select(self):
-        return f"""
+        result = f"""
         SELECT
             pw.id,
             pw.name,
@@ -263,15 +270,24 @@ class WorkflowListQuery(
             pw.finalizable,
             MIN(pt.due_date) FILTER(
                 WHERE pt.status = '{TaskStatus.ACTIVE}'
-            ) AS nearest_due_date
+            ) AS nearest_due_date{',' if self.search_tsquery else ''}
         """
+        if self.search_tsquery:
+            result += f"""
+                ts_rank(ps.content, {self.search_tsquery}) AS search_rank
+            """
+        return result
 
     def get_sql(self) -> str:
+        pre_columns = None
         post_columns = None
         default_column = 'workflows.date_created DESC'
         if self.ordering == WorkflowOrdering.URGENT_FIRST:
             post_columns = default_column
+        if self.search_tsquery:
+            pre_columns = 'workflows.search_rank DESC'
         order_by = self.get_order_by(
+            pre_columns=pre_columns,
             default_column=default_column,
             post_columns=post_columns,
         )
@@ -281,7 +297,7 @@ class WorkflowListQuery(
                 {self._get_select()}
                 {self._get_from()}
                 {self._get_where()}
-                GROUP BY pw.id
+                GROUP BY pw.id{', search_rank' if self.search_tsquery else ''}
                 ORDER BY pw.id
             ) AS workflows
             {order_by}

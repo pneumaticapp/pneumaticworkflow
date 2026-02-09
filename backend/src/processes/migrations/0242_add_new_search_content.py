@@ -75,7 +75,10 @@ class Migration(migrations.Migration):
                     FALSE, new.account_id, NULL, NULL, NULL, new.id, NULL, NULL, setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'A')
                 )
                 ON CONFLICT (workflow_id, task_id, event_id, task_field_id, template_id, task_template_id) WHERE is_deleted = FALSE
-                DO UPDATE SET content = setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'A');
+                DO UPDATE SET content = (
+                    setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'A') ||
+                    setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.legacy_template_name)), 'C')
+                );
                 RETURN new;
             END;
             $BODY$ LANGUAGE plpgsql;
@@ -169,7 +172,7 @@ class Migration(migrations.Migration):
             EXECUTE FUNCTION create_workflowevent_search_content()
         """),
 
-        # processes_template search content
+        # processes_template search content (name has weight "C", description has weight "D")
         migrations.RunSQL(sql="""
             CREATE OR REPLACE FUNCTION create_template_search_content()
             RETURNS trigger AS
@@ -186,9 +189,9 @@ class Migration(migrations.Migration):
                 )
                 ON CONFLICT (workflow_id, task_id, event_id, task_field_id, template_id, task_template_id) WHERE is_deleted = FALSE
                 DO UPDATE SET content = (
-                        setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'C') ||
-                        setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.description)), 'D')   
-                    );
+                    setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.name)), 'C') ||
+                    setweight(to_tsvector('pg_catalog.english', prepare_search_content(new.description)), 'D')   
+                );
                 RETURN new;
             END;
             $BODY$ LANGUAGE plpgsql;
@@ -198,7 +201,7 @@ class Migration(migrations.Migration):
              FOR EACH ROW EXECUTE FUNCTION create_template_search_content()
         """),
 
-        # processes_task_template search content
+        # processes_task_template search content (name has weight "D")
         migrations.RunSQL(sql="""
             CREATE OR REPLACE FUNCTION create_task_template_search_content()
             RETURNS trigger AS

@@ -1058,7 +1058,6 @@ def test_list__search__by_search_find_union_by_prefix__not_found(
 
 def test_list__search__by_search_by_prefix__not_found(
     api_client,
-    mocker,
 ):
 
     # arrange
@@ -1089,7 +1088,6 @@ def test_list__search__by_search_by_prefix__not_found(
 
 def test_list__search__by_part__ok(
     api_client,
-    mocker,
 ):
 
     # arrange
@@ -1119,6 +1117,95 @@ def test_list__search__by_part__ok(
     assert response.status_code == 200
     assert len(response.data['results']) == 1
     assert response.data['results'][0]['id'] == workflow_1.id
+
+
+def test_list__search__right_priority__ok(api_client):
+
+    """ Search priority:
+        - 1 Workflow name (weight A)
+        - 2 Task description (weight B)
+        - 3 WorkflowEvent text (only comments) (weight D)
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    search_text = 'search'
+
+    create_test_workflow(user=owner)
+
+    workflow_3 = create_test_workflow(owner, tasks_count=1)
+    WorkflowEventService.comment_created_event(
+        user=owner,
+        task=workflow_3.tasks.get(number=1),
+        text=search_text,
+        after_create_actions=False,
+    )
+    workflow_1 = create_test_workflow(owner, tasks_count=1, name=search_text)
+
+    workflow_2 = create_test_workflow(owner, tasks_count=1)
+    workflow_2.tasks.filter(number=1).update(description=search_text)
+
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(f'/workflows?search={search_text}')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 3
+    assert response.data['results'][0]['id'] == workflow_1.id
+    assert response.data['results'][1]['id'] == workflow_2.id
+    assert response.data['results'][2]['id'] == workflow_3.id
+
+
+def test_list__search__right_priority_2__ok(api_client):
+
+    """ Search priority:
+        - 1 Kickoff TaskField value (weight B)
+        - 2 Task TaskField value (weight C)
+        - 4 Task name (weight D)
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    search_text = 'search'
+
+    create_test_workflow(user=owner)
+
+    workflow_3 = create_test_workflow(owner, tasks_count=1)
+    workflow_3.tasks.update(name=search_text)
+
+    workflow_1 = create_test_workflow(owner, tasks_count=1)
+    TaskField.objects.create(
+        kickoff=workflow_1.kickoff_instance,
+        type=FieldType.STRING,
+        workflow=workflow_1,
+        account=account,
+        value=search_text,
+    )
+
+    workflow_2 = create_test_workflow(owner, tasks_count=1)
+    TaskField.objects.create(
+        task=workflow_2.tasks.get(number=1),
+        type=FieldType.STRING,
+        workflow=workflow_2,
+        account=account,
+        value=search_text,
+    )
+
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(f'/workflows?search={search_text}')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 3
+    assert response.data['results'][0]['id'] == workflow_1.id
+    assert response.data['results'][1]['id'] == workflow_2.id
+    assert response.data['results'][2]['id'] == workflow_3.id
 
 
 def test_list__task_due_date__ok(api_client):
