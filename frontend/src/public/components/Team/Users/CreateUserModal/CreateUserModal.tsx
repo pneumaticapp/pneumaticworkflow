@@ -4,8 +4,8 @@ import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
 
 import { BaseModal, ModalHeader, ModalBody, ModalFooter } from '../../../UI/BaseModal';
-import { InputField } from '../../../UI/Fields/InputField';
-import { DropdownList } from '../../../UI/DropdownList';
+import { FormikInputField } from '../../../UI/Fields/InputField';
+import { FormikDropdownList } from '../../../UI/DropdownList';
 import { Button } from '../../../UI/Buttons/Button';
 import { validateEmail, validateRegistrationPassword } from '../../../../utils/validators';
 import { getErrorsObject } from '../../../../utils/formik/getErrorsObject';
@@ -14,8 +14,7 @@ import { createPassword } from '../../../../utils/createPassword';
 import { NotificationManager } from '../../../UI/Notifications';
 import { createUser } from '../../../../redux/accounts/slice';
 
-import { ICreateUserModalProps, IStatusOption, EUserRole } from './types';
-import { ICreateUserRequest } from '../../../../types/user';
+import { ICreateUserModalProps, IStatusOption, EUserRole, ICreateUserFormValues } from './types';
 
 import styles from './CreateUserModal.css';
 
@@ -39,19 +38,20 @@ export function CreateUserModal({ isOpen, onClose }: ICreateUserModalProps) {
     { label: formatMessage({ id: 'team.create-user-modal.status-user' }), value: EUserRole.User },
   ];
 
-  const initialValues: ICreateUserRequest = useMemo(
+  const initialValues: ICreateUserFormValues = useMemo(
     () => ({
       firstName: '',
       lastName: '',
       email: '',
-      isAdmin: false,
+      role: EUserRole.User,
       password: createPassword(),
     }),
     [isOpen],
   );
 
-  const handleSubmit = (values: ICreateUserRequest) => {
-    dispatch(createUser(values));
+  const handleSubmit = (values: ICreateUserFormValues) => {
+    const { role, ...userData } = values;
+    dispatch(createUser({ ...userData, isAdmin: role === EUserRole.Admin }));
   };
 
   return (
@@ -73,12 +73,8 @@ export function CreateUserModal({ isOpen, onClose }: ICreateUserModalProps) {
           return errors;
         }}
       >
-        {({ values, errors, handleChange, handleSubmit: formikSubmit, setFieldValue, isValid, dirty }) => {
-          const handleStatusChange = (option: IStatusOption) => {
-            setFieldValue('isAdmin', option.value === EUserRole.Admin);
-          };
-          
-          const currentStatusValue = values.isAdmin ? EUserRole.Admin : EUserRole.User;
+        {({ values, handleSubmit: formikSubmit, isValid, dirty }) => {
+          const currentStatusValue = values.role;
           const renderStatusOption = (option: IStatusOption, { context }: { context: string }) =>
             formatStatusOption(option, { context }, currentStatusValue);
 
@@ -86,52 +82,39 @@ export function CreateUserModal({ isOpen, onClose }: ICreateUserModalProps) {
             <form onSubmit={formikSubmit}>
               <ModalBody>
                 <div className={styles['modal__form']}>
-                  <InputField
+                  <FormikInputField
                     name="firstName"
-                    value={values.firstName}
-                    onChange={handleChange}
                     title={formatMessage({ id: 'team.create-user-modal.first-name' })}
                     fieldSize="lg"
                   />
-                  <InputField
+                  <FormikInputField
                     name="lastName"
-                    value={values.lastName}
-                    onChange={handleChange}
                     title={formatMessage({ id: 'team.create-user-modal.last-name' })}
                     fieldSize="lg"
                   />
-                  <InputField
+                  <FormikInputField
                     name="email"
-                    value={values.email}
-                    onChange={handleChange}
                     title={formatMessage({ id: 'team.create-user-modal.email' })}
                     fieldSize="lg"
                     isRequired
                     type="email"
-                    errorMessage={errors.email}
-                    showErrorIfTouched
                   />
 
-                  <DropdownList
+                  <FormikDropdownList
+                    name="role"
                     label={formatMessage({ id: 'team.create-user-modal.status' })}
                     options={statusOptions}
-                    value={statusOptions.find((opt) => opt.value === currentStatusValue)}
-                    onChange={handleStatusChange}
                     className={styles['modal__dropdown--required']}
                     formatOptionLabel={renderStatusOption}
                   />
 
                   <div className={styles['modal__password-field']}>
-                    <InputField
+                    <FormikInputField
                       name="password"
-                      value={values.password}
-                      onChange={handleChange}
                       title={formatMessage({ id: 'team.create-user-modal.password' })}
                       fieldSize="lg"
                       type="text"
                       isRequired
-                      errorMessage={errors.password}
-                      showErrorIfTouched
                     />
                     <button
                       type="button"
