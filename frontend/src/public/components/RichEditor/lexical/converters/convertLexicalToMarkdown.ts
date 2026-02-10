@@ -1,11 +1,9 @@
 import type { EditorState } from 'lexical';
 import { $convertToMarkdownString } from '@lexical/markdown';
 
-import { createLexicalToMarkdownTransformers } from './transformers';
+import { createMarkdownTransformers } from './transformers';
 
-
-
-const LEXICAL_MARKDOWN_TRANSFORMERS = createLexicalToMarkdownTransformers();
+const LEXICAL_MARKDOWN_TRANSFORMERS = createMarkdownTransformers();
 
 export function convertLexicalToMarkdown(
   editorState: EditorState,

@@ -6,18 +6,14 @@ import type { TTaskVariable } from '../../../TemplateEdit/types';
 
 
 
-export function getInitialLexicalState(markdown: string): string {
-  return prepareChecklistsForRendering(markdown);
-}
-
 export function applyMarkdownToEditor(
   editor: LexicalEditor,
   markdown: string,
   options: { tag?: string; templateVariables?: TTaskVariable[] } = {},
 ): void {
   try {
-    const prepared = getInitialLexicalState(markdown);
-    const transformers = createMarkdownTransformers(options.templateVariables)
+    const prepared = prepareChecklistsForRendering(markdown);
+    const transformers = createMarkdownTransformers(options.templateVariables);
 
     editor.update(
       () => {
