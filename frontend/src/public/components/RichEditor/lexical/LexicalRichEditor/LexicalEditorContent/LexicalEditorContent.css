@@ -72,6 +72,8 @@
 :global(.lexical-rich-editor-paragraph) {
   margin: 0;
   padding: 0;
+  min-width: 0.1rem;
+  min-height: 2rem;
 }
 
 :global(.lexical-rich-editor-link) {
@@ -100,21 +102,22 @@
 }
 
 :global(.lexical-rich-editor-checklist-ul) {
-  margin: 0.4rem 0;
-  padding-left: 0;
-  list-style: none;
+  padding-left: 3.2rem;
 }
 
 :global(.lexical-rich-editor-checklist-item) {
-  margin: 0.4rem 0;
   display: flex;
   list-style: none;
   align-items: flex-start;
   gap: 0.8rem;
 }
 
+:global(.lexical-rich-editor-checklist-item + .lexical-rich-editor-checklist-item) {
+  margin-top: 0.8rem;
+}
+
 :global(.lexical-rich-editor-checklist-checkbox) {
-  margin-top: 0.3rem;
   cursor: pointer;
   flex-shrink: 0;
+  pointer-events: none;
 }

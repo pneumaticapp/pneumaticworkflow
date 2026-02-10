@@ -5,7 +5,13 @@ import React, {
 } from 'react';
 import classnames from 'classnames';
 import type { EditorState, LexicalEditor } from 'lexical';
-import { $getSelection, $insertNodes, $isRangeSelection } from 'lexical';
+import {
+  $createTextNode,
+  $getSelection,
+  $insertNodes,
+  $isRangeSelection,
+  $isTextNode,
+} from 'lexical';
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 
 import { LinkPluginProvider } from '../plugins';
@@ -58,6 +64,8 @@ export const LexicalRichEditor = forwardRef<
 ) {
   const editorRef = useRef<LexicalEditor | null>(null);
   const editorContainerRef = useRef<HTMLDivElement | null>(null);
+  const templateVariablesRef = useRef(templateVariables);
+  templateVariablesRef.current = templateVariables;
 
   const initialConfig = {
     namespace: EDITOR_NAMESPACE,
@@ -71,7 +79,7 @@ export const LexicalRichEditor = forwardRef<
         ? (editor: LexicalEditor) => {
           applyMarkdownToEditor(editor, defaultValue, {
             tag: 'history-merge',
-            templateVariables,
+            templateVariables: templateVariablesRef.current,
           });
         }
         : undefined,
@@ -111,9 +119,15 @@ export const LexicalRichEditor = forwardRef<
         title: variableTitle,
         subtitle,
       });
+      const spaceNode = $createTextNode(' ');
 
-      $insertNodes([variableNode]);
-      variableNode.selectNext();
+      $insertNodes([variableNode, spaceNode]);
+      const nodeAfterVariable = variableNode.getNextSibling();
+      if (nodeAfterVariable && $isTextNode(nodeAfterVariable)) {
+        nodeAfterVariable.selectEnd();
+      } else {
+        variableNode.selectNext();
+      }
     });
   };
 

@@ -15,11 +15,10 @@ import {
   SetEditorRefPlugin,
   LinkTooltipPlugin,
   VariableTooltipPlugin,
-  BackspaceWithDecoratorPlugin,
   ChecklistPlugin,
   MentionsPlugin,
 } from '../../plugins';
-import { EditorToolbar } from '../EditorToolbar';
+import { EditorToolbar } from '../EditorToolbar/EditorToolbar';
 import type { ILexicalEditorContentProps } from '../types';
 
 import styles from './LexicalEditorContent.css';
@@ -63,7 +62,6 @@ export function LexicalEditorContent({
       <OnChangePlugin onChange={onChange} />
       <MarkdownShortcutPlugin transformers={ELEMENT_TRANSFORMERS} />
 
-      <BackspaceWithDecoratorPlugin />
       <LinkPlugin />
       <LinkTooltipPlugin />
       <VariableTooltipPlugin />
