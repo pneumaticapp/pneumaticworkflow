@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import classnames from 'classnames';
 import Select, { components } from 'react-select';
 import { FieldHookConfig, useField } from 'formik';

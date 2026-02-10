@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import * as React from 'react';
+import { useMemo } from 'react';
 import { Formik } from 'formik';
 import { useIntl } from 'react-intl';
 import { useDispatch } from 'react-redux';
@@ -19,7 +20,7 @@ import { ICreateUserModalProps, IStatusOption, EUserRole, ICreateUserFormValues 
 import styles from './CreateUserModal.css';
 
 const formatStatusOption = (
-  { label, value } : IStatusOption,
+  { label, value }: IStatusOption,
   { context }: { context: string },
   selectedValue: IStatusOption['value'],
 ) => {
@@ -57,7 +58,9 @@ export function CreateUserModal({ isOpen, onClose }: ICreateUserModalProps) {
   return (
     <BaseModal isOpen={isOpen} toggle={onClose}>
       <ModalHeader toggle={onClose}>
-        {formatMessage({ id: 'team.create-user-modal.title' })}
+        <span data-testid="create-user-modal-header">
+          {formatMessage({ id: 'team.create-user-modal.title' })}
+        </span>
       </ModalHeader>
 
       <Formik
