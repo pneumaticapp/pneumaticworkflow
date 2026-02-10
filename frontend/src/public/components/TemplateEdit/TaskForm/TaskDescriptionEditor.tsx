@@ -1,10 +1,14 @@
-import React, { ComponentProps, useRef } from 'react';
+import React, { ComponentProps, useMemo, useRef } from 'react';
 import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
 
 import { TTaskVariable } from '../types';
 import { getInitialEditorState } from '../../RichEditor/utils/converters';
 import { RichEditor, IRichEditorHandle } from '../../RichEditor';
 import { LexicalRichEditor, ILexicalRichEditorHandle } from '../../RichEditor/lexical';
+import { getMentionData } from '../../RichEditor/utils/getMentionData';
+import { getUsers } from '../../../redux/selectors/user';
+import { getNotDeletedUsers } from '../../../utils/users';
 
 import { variablesDecorator } from '../utils/variablesDecorator';
 import { VariableList } from '../VariableList';
@@ -31,10 +35,17 @@ export function TaskDescriptionEditor({
   handleChange,
   handleChangeChecklists,
 }: ITaskDescriptionEditorProps) {
+  const users = useSelector(getUsers);
+  const mentions = useMemo(
+    () => getMentionData(getNotDeletedUsers(users)),
+    [users],
+  );
+
   const draftEditorRef = useRef<IRichEditorHandle>(null);
   const lexicalEditorRef = useRef<ILexicalRichEditorHandle>(null);
   const editorRef = USE_LEXICAL_IN_TASK_DESCRIPTION ? lexicalEditorRef : draftEditorRef;
   const { formatMessage } = useIntl();
+
 
   const handleInsertVariable = (apiName?: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -44,11 +55,12 @@ export function TaskDescriptionEditor({
     }
 
     if (USE_LEXICAL_IN_TASK_DESCRIPTION) {
+      if (apiName == null) return;
       const newVariable = listVariables?.find((variable) => variable.apiName === apiName);
       (editorRef.current as ILexicalRichEditorHandle).insertVariable(
         apiName,
-        newVariable?.title,
-        newVariable?.subtitle,
+        newVariable?.title ?? '',
+        newVariable?.subtitle ?? '',
       );
       return;
     }
@@ -76,8 +88,12 @@ export function TaskDescriptionEditor({
         handleChange={handleChange}
         handleChangeChecklists={handleChangeChecklists}
         withChecklists
+        withToolbar
+        withMentions
+        mentions={mentions}
         isInTaskDescriptionEditor
         templateVariables={templateVariables}
+        accountId={accountId}
       >
         <VariableList
           variables={listVariables}
