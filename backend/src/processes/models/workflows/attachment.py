@@ -1,7 +1,6 @@
 from typing import Optional
 from urllib.parse import unquote
 
-from django.contrib.auth import get_user_model
 from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 
@@ -13,8 +12,6 @@ from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.querysets import FileAttachmentQuerySet
-
-UserModel = get_user_model()
 
 
 # TODO remove legacy model after migration to file service.
@@ -91,22 +88,3 @@ class FileAttachment(
                 return '%3.1f%s' % (size, unit)  # noqa: UP031
             size /= 1024.0
         return "%.1f%s" % (size, 'MiB')  # noqa: UP031
-
-
-class FileAttachmentPermission(
-    SoftDeleteModel,
-    AccountBaseMixin,
-):
-    class Meta:
-        unique_together = ('user', 'attachment')
-
-    user = models.ForeignKey(
-        UserModel,
-        on_delete=models.CASCADE,
-        related_name='file_permissions',
-    )
-    attachment = models.ForeignKey(
-        FileAttachment,
-        on_delete=models.CASCADE,
-        related_name='permissions',
-    )
