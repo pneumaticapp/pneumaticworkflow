@@ -1,6 +1,7 @@
 /// <reference types="jest" />
 import * as React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { useDispatch } from 'react-redux';
 
 import { CreateUserModal } from '../CreateUserModal';
@@ -138,9 +139,10 @@ describe('CreateUserModal', () => {
 
       const { firstNameInput, lastNameInput, emailInput } = getFormFields();
 
-      fireEvent.change(firstNameInput, { target: { value: 'John' } });
+      await userEvent.clear(firstNameInput);
+      await userEvent.type(firstNameInput, 'John');
       const submitButton = getSubmitButton();
-      
+
       await waitFor(() => {
         expect(firstNameInput.value).toBe('John');
         expect(lastNameInput.value).toBe('');
@@ -154,8 +156,9 @@ describe('CreateUserModal', () => {
 
       const { emailInput } = getFormFields();
       const submitButton = getSubmitButton();
-      
-      fireEvent.change(emailInput, { target: { value: 'invalid-email' } });
+
+      await userEvent.clear(emailInput);
+      await userEvent.type(emailInput, 'invalid-email');
       fireEvent.blur(emailInput);
 
       await waitFor(() => {
@@ -169,8 +172,9 @@ describe('CreateUserModal', () => {
 
       const { passwordInput } = getFormFields();
       const submitButton = getSubmitButton();
-      
-      fireEvent.change(passwordInput, { target: { value: '12345' } });
+
+      await userEvent.clear(passwordInput);
+      await userEvent.type(passwordInput, '12345');
       fireEvent.blur(passwordInput);
 
       await waitFor(() => {
@@ -184,10 +188,14 @@ describe('CreateUserModal', () => {
       const { firstNameInput, lastNameInput, emailInput, passwordInput } = getFormFields();
       const submitButton = getSubmitButton();
 
-      fireEvent.change(firstNameInput, { target: { value: 'John' } });
-      fireEvent.change(lastNameInput, { target: { value: 'Doe' } });
-      fireEvent.change(emailInput, { target: { value: 'john.doe@example.com' } });
-      fireEvent.change(passwordInput, { target: { value: 'valid-password-123' } });
+      await userEvent.clear(firstNameInput);
+      await userEvent.type(firstNameInput, 'John');
+      await userEvent.clear(lastNameInput);
+      await userEvent.type(lastNameInput, 'Doe');
+      await userEvent.clear(emailInput);
+      await userEvent.type(emailInput, 'john.doe@example.com');
+      await userEvent.clear(passwordInput);
+      await userEvent.type(passwordInput, 'valid-password-123');
       fireEvent.blur(passwordInput);
 
       await waitFor(() => {
@@ -201,13 +209,13 @@ describe('CreateUserModal', () => {
  });
 
   describe('Password copying', () => {
-    it('copies password to clipboard on button click', () => {
+    it('copies password to clipboard on button click', async () => {
       render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
 
       const { passwordInput } = getFormFields();
       const copyButton = getCopyButton();
 
-      fireEvent.click(copyButton);
+      await userEvent.click(copyButton);
 
       expect(copyToClipboard).toHaveBeenCalledWith(passwordInput.value);
       expect(NotificationManager.success).toHaveBeenCalledWith({
@@ -221,13 +229,14 @@ describe('CreateUserModal', () => {
       const { passwordInput } = getFormFields();
       const newPassword = 'my-custom-password-123';
 
-      fireEvent.change(passwordInput, { target: { value: newPassword } });
+      await userEvent.clear(passwordInput);
+      await userEvent.type(passwordInput, newPassword);
       await waitFor(() => {
         expect(passwordInput.value).toBe(newPassword);
       });
 
       const copyButton = getCopyButton();
-      fireEvent.click(copyButton);
+      await userEvent.click(copyButton);
 
       expect(copyToClipboard).toHaveBeenCalledWith(newPassword);
       expect(NotificationManager.success).toHaveBeenCalledWith({
@@ -240,18 +249,20 @@ describe('CreateUserModal', () => {
     it('calls createUser with correct data on submit', async () => {
       render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
 
-
       const { firstNameInput, lastNameInput, emailInput, passwordInput } = getFormFields();
       const submitButton = getSubmitButton();
 
-      fireEvent.change(firstNameInput, { target: { value: 'John' } });
-      fireEvent.change(lastNameInput, { target: { value: 'Doe' } });
-      fireEvent.change(emailInput, { target: { value: 'john.doe@example.com' } });
-      
+      await userEvent.clear(firstNameInput);
+      await userEvent.type(firstNameInput, 'John');
+      await userEvent.clear(lastNameInput);
+      await userEvent.type(lastNameInput, 'Doe');
+      await userEvent.clear(emailInput);
+      await userEvent.type(emailInput, 'john.doe@example.com');
+
       await waitFor(() => {
         expect(submitButton).not.toBeDisabled();
       });
-      fireEvent.click(submitButton);
+      await userEvent.click(submitButton);
 
       await waitFor(() => {
         expect(mockDispatch).toHaveBeenCalledWith(
@@ -271,16 +282,19 @@ describe('CreateUserModal', () => {
 
       const { firstNameInput, lastNameInput, emailInput, passwordInput } = getFormFields();
 
-      fireEvent.change(firstNameInput, { target: { value: 'Admin' } });
-      fireEvent.change(lastNameInput, { target: { value: 'User' } });
-      fireEvent.change(emailInput, { target: { value: 'admin@example.com' } });
+      await userEvent.clear(firstNameInput);
+      await userEvent.type(firstNameInput, 'Admin');
+      await userEvent.clear(lastNameInput);
+      await userEvent.type(lastNameInput, 'User');
+      await userEvent.clear(emailInput);
+      await userEvent.type(emailInput, 'admin@example.com');
 
       const roleDropdown = getRoleDropdown();
-      fireEvent.mouseDown(roleDropdown);
-      
-      await waitFor(() => {
+      await userEvent.click(roleDropdown);
+
+      await waitFor(async () => {
         const adminOption = screen.getByText(ADMIN_OPTION_TEXT);
-        fireEvent.click(adminOption);
+        await userEvent.click(adminOption);
       });
 
       const submitButton = getSubmitButton();
@@ -288,7 +302,7 @@ describe('CreateUserModal', () => {
         expect(submitButton).not.toBeDisabled();
       });
 
-      fireEvent.click(submitButton);
+      await userEvent.click(submitButton);
 
       await waitFor(() => {
         expect(mockDispatch).toHaveBeenCalledWith(
@@ -309,14 +323,17 @@ describe('CreateUserModal', () => {
       const { firstNameInput, lastNameInput, emailInput } = getFormFields();
       const submitButton = getSubmitButton();
 
-      fireEvent.change(firstNameInput, { target: { value: 'John' } });
-      fireEvent.change(lastNameInput, { target: { value: 'Doe' } });
-      fireEvent.change(emailInput, { target: { value: 'john.doe@example.com' } });
+      await userEvent.clear(firstNameInput);
+      await userEvent.type(firstNameInput, 'John');
+      await userEvent.clear(lastNameInput);
+      await userEvent.type(lastNameInput, 'Doe');
+      await userEvent.clear(emailInput);
+      await userEvent.type(emailInput, 'john.doe@example.com');
       await waitFor(() => {
         expect(submitButton).not.toBeDisabled();
       });
 
-      fireEvent.click(submitButton);
+      await userEvent.click(submitButton);
       await waitFor(() => {
         expect(mockDispatch).toHaveBeenCalledTimes(1);
       });
@@ -328,15 +345,18 @@ describe('CreateUserModal', () => {
       const { unmount } = render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
 
       const { firstNameInput, lastNameInput, emailInput } = getFormFields();
-      fireEvent.change(firstNameInput, { target: { value: 'John' } });
-      fireEvent.change(lastNameInput, { target: { value: 'Doe' } });
-      fireEvent.change(emailInput, { target: { value: 'john.doe@example.com' } });
+      await userEvent.clear(firstNameInput);
+      await userEvent.type(firstNameInput, 'John');
+      await userEvent.clear(lastNameInput);
+      await userEvent.type(lastNameInput, 'Doe');
+      await userEvent.clear(emailInput);
+      await userEvent.type(emailInput, 'john.doe@example.com');
 
       const roleDropdown = getRoleDropdown();
-      fireEvent.mouseDown(roleDropdown);
-      await waitFor(() => {
+      await userEvent.click(roleDropdown);
+      await waitFor(async () => {
         const adminOption = screen.getByText(ADMIN_OPTION_TEXT);
-        fireEvent.click(adminOption);
+        await userEvent.click(adminOption);
       });
 
       await waitFor(() => {
@@ -346,10 +366,8 @@ describe('CreateUserModal', () => {
 
       unmount();
       jest.clearAllMocks();
-      
 
       render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
-
 
       await waitFor(() => {
         expect(createPassword).toHaveBeenCalled();
@@ -370,12 +388,12 @@ describe('CreateUserModal', () => {
   });
 
   describe('Modal closing', () => {
-    it('calls onClose on close', () => {
+    it('calls onClose on close', async () => {
       render(<CreateUserModal isOpen={true} onClose={mockOnClose} />);
       const closeButtons = screen.getAllByRole('button', { name: 'Close modal' });
       const headerCloseButton = closeButtons.find((button) => button.classList.contains('close-button'));
       expect(headerCloseButton).toBeInTheDocument();
-      fireEvent.click(headerCloseButton!);
+      await userEvent.click(headerCloseButton!);
 
       expect(mockOnClose).toHaveBeenCalled();
     });
