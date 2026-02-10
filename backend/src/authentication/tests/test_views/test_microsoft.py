@@ -57,6 +57,10 @@ def test_token__existent_user__authenticate(
         'src.authentication.services.microsoft.'
         'MicrosoftAuthService.save_tokens_for_user',
     )
+    apply_photo_to_user_mock = mocker.patch(
+        'src.authentication.services.microsoft.'
+        'MicrosoftAuthService.apply_photo_to_user',
+    )
     update_microsoft_contacts = mocker.patch(
         'src.authentication.views.microsoft.'
         'update_microsoft_contacts.delay',
@@ -88,6 +92,7 @@ def test_token__existent_user__authenticate(
         user_agent=user_agent,
         user_ip=user_ip,
     )
+    apply_photo_to_user_mock.assert_called_once_with(user, user_data)
     save_tokens_for_user_mock.assert_called_once_with(user)
     update_microsoft_contacts.assert_called_once_with(user.id)
 
@@ -130,6 +135,10 @@ def test_token__disable_ms_auth__permission_denied(
         'AuthService.get_auth_token',
         return_value=token,
     )
+    apply_photo_to_user_mock = mocker.patch(
+        'src.authentication.services.microsoft.'
+        'MicrosoftAuthService.apply_photo_to_user',
+    )
     save_tokens_for_user_mock = mocker.patch(
         'src.authentication.services.microsoft.'
         'MicrosoftAuthService.save_tokens_for_user',
@@ -158,6 +167,7 @@ def test_token__disable_ms_auth__permission_denied(
     ms_service_init_mock.assert_not_called()
     ms_get_user_data_mock.assert_not_called()
     authenticate_mock.assert_not_called()
+    apply_photo_to_user_mock.assert_not_called()
     save_tokens_for_user_mock.assert_not_called()
     update_microsoft_contacts.assert_not_called()
 
@@ -191,6 +201,10 @@ def test_token__service_exception__validation_error(
         'src.authentication.views.microsoft.'
         'MSAuthViewSet.signup',
     )
+    apply_photo_to_user_mock = mocker.patch(
+        'src.authentication.services.microsoft.'
+        'MicrosoftAuthService.apply_photo_to_user',
+    )
     save_tokens_for_user_mock = mocker.patch(
         'src.authentication.services.microsoft.'
         'MicrosoftAuthService.save_tokens_for_user',
@@ -222,6 +236,7 @@ def test_token__service_exception__validation_error(
     )
     authenticate_mock.assert_not_called()
     signup_mock.assert_not_called()
+    apply_photo_to_user_mock.assert_not_called()
     save_tokens_for_user_mock.assert_not_called()
     update_microsoft_contacts.assert_not_called()
 
@@ -272,6 +287,10 @@ def test_token__user_not_found__signup(
         'MSAuthViewSet.signup',
         return_value=(user_mock, token),
     )
+    apply_photo_to_user_mock = mocker.patch(
+        'src.authentication.services.microsoft.'
+        'MicrosoftAuthService.apply_photo_to_user',
+    )
     save_tokens_for_user_mock = mocker.patch(
         'src.authentication.services.microsoft.'
         'MicrosoftAuthService.save_tokens_for_user',
@@ -312,6 +331,7 @@ def test_token__user_not_found__signup(
     # assert
     assert response.status_code == 200
     assert response.data['token'] == token
+    apply_photo_to_user_mock.assert_called_once_with(user_mock, user_data)
     ms_service_init_mock.assert_called_once()
     ms_get_user_data_mock.assert_called_once_with(
         auth_response=auth_response,
@@ -326,6 +346,7 @@ def test_token__user_not_found__signup(
         utm_content=utm_content,
         gclid=gclid,
     )
+    apply_photo_to_user_mock.assert_called_once_with(user_mock, user_data)
     save_tokens_for_user_mock.assert_called_once_with(user_mock)
     update_microsoft_contacts.assert_called_once_with(user_mock.id)
 
@@ -376,6 +397,10 @@ def test_token__user_not_found_and_signup_disabled__authentication_error(
         'MSAuthViewSet.signup',
         return_value=(user_mock, token),
     )
+    apply_photo_to_user_mock = mocker.patch(
+        'src.authentication.services.microsoft.'
+        'MicrosoftAuthService.apply_photo_to_user',
+    )
     save_tokens_for_user_mock = mocker.patch(
         'src.authentication.services.microsoft.'
         'MicrosoftAuthService.save_tokens_for_user',
@@ -421,6 +446,7 @@ def test_token__user_not_found_and_signup_disabled__authentication_error(
     )
     authenticate_mock.assert_not_called()
     signup_mock.assert_not_called()
+    apply_photo_to_user_mock.assert_not_called()
     save_tokens_for_user_mock.assert_not_called()
     update_microsoft_contacts.assert_not_called()
 
@@ -443,6 +469,10 @@ def test_token__skip__code__validation_error(
     ms_get_user_data_mock = mocker.patch(
         'src.authentication.services.microsoft.'
         'MicrosoftAuthService.get_user_data',
+    )
+    apply_photo_to_user_mock = mocker.patch(
+        'src.authentication.services.microsoft.'
+        'MicrosoftAuthService.apply_photo_to_user',
     )
     authenticate_mock = mocker.patch(
         'src.authentication.views.microsoft.'
@@ -471,6 +501,7 @@ def test_token__skip__code__validation_error(
     assert response.data['message'] == message
     ms_service_init_mock.assert_not_called()
     ms_get_user_data_mock.assert_not_called()
+    apply_photo_to_user_mock.assert_not_called()
     authenticate_mock.assert_not_called()
     signup_mock.assert_not_called()
 
@@ -493,6 +524,10 @@ def test_token__code_blank__validation_error(
     ms_get_user_data_mock = mocker.patch(
         'src.authentication.services.microsoft.'
         'MicrosoftAuthService.get_user_data',
+    )
+    apply_photo_to_user_mock = mocker.patch(
+        'src.authentication.services.microsoft.'
+        'MicrosoftAuthService.apply_photo_to_user',
     )
     authenticate_mock = mocker.patch(
         'src.authentication.views.microsoft.'
@@ -522,6 +557,7 @@ def test_token__code_blank__validation_error(
     assert response.data['message'] == message
     ms_service_init_mock.assert_not_called()
     ms_get_user_data_mock.assert_not_called()
+    apply_photo_to_user_mock.assert_not_called()
     authenticate_mock.assert_not_called()
     signup_mock.assert_not_called()
 
@@ -651,6 +687,10 @@ def test_token__sso_enabled_not_owner__raise_exception(
         'MicrosoftAuthService.get_user_data',
         return_value=user_data,
     )
+    apply_photo_to_user_mock = mocker.patch(
+        'src.authentication.services.microsoft.'
+        'MicrosoftAuthService.apply_photo_to_user',
+    )
     settings_mock = mocker.patch(
         'src.authentication.views.mixins.settings',
     )
@@ -673,6 +713,7 @@ def test_token__sso_enabled_not_owner__raise_exception(
     assert response.status_code == 400
     ms_service_init_mock.assert_called_once()
     ms_get_user_data_mock.assert_called_once()
+    apply_photo_to_user_mock.assert_not_called()
 
 
 def test_token__sso_enabled_owner__ok(
@@ -703,6 +744,10 @@ def test_token__sso_enabled_owner__ok(
         'src.authentication.services.microsoft.'
         'MicrosoftAuthService.get_user_data',
         return_value=user_data,
+    )
+    apply_photo_to_user_mock = mocker.patch(
+        'src.authentication.services.microsoft.'
+        'MicrosoftAuthService.apply_photo_to_user',
     )
     save_tokens_mock = mocker.patch(
         'src.authentication.services.microsoft.'
@@ -735,5 +780,6 @@ def test_token__sso_enabled_owner__ok(
     assert 'token' in response.data
     ms_service_init_mock.assert_called_once()
     ms_get_user_data_mock.assert_called_once()
+    apply_photo_to_user_mock.assert_called_once_with(user, user_data)
     save_tokens_mock.assert_called_once()
     update_contacts_mock.assert_called_once_with(user.id)

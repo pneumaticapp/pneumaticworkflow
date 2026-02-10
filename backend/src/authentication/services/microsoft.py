@@ -140,7 +140,7 @@ class MicrosoftGraphApiMixin:
         """ Save photo in the storage and return public URL """
 
         file_url = None
-        if not settings.PROJECT_CONF['STORAGE']:
+        if not settings.PROJECT_CONF['STORAGE'] or account is None:
             return file_url
         response = self._graph_api_request(
             path=self.photo_path.format(user_id=user_id),
@@ -461,7 +461,45 @@ class MicrosoftAuthService(
             job_title=user_profile['jobTitle'],
             photo=photo,
             company_name=None,
+            ms_graph_user_id=user_profile['id'],
         )
+
+    def upload_photo_for_user(
+        self,
+        user: UserModel,
+        ms_graph_user_id: str,
+    ) -> Optional[str]:
+        """Upload user photo from Graph and return public URL.
+        Uses tokens from current auth flow (call right after get_user_data)."""
+        if not self.tokens or not settings.PROJECT_CONF['STORAGE']:
+            return None
+        access_token = (
+            f'{self.tokens["token_type"]} {self.tokens["access_token"]}'
+        )
+        return self._get_user_photo(
+            account=user.account,
+            access_token=access_token,
+            user_id=ms_graph_user_id,
+        )
+
+    def apply_photo_to_user(
+        self,
+        user: UserModel,
+        user_data: UserData,
+    ) -> None:
+        """Set user.photo from user_data or upload for new user (signup)."""
+        photo = user_data.get('photo')
+        if photo:
+            user.photo = photo
+            user.save(update_fields=['photo'])
+            return
+        uploaded = self.upload_photo_for_user(
+            user,
+            user_data.get('ms_graph_user_id'),
+        )
+        if uploaded:
+            user.photo = uploaded
+            user.save(update_fields=['photo'])
 
     def update_user_contacts(self, user: UserModel):
 
@@ -478,11 +516,20 @@ class MicrosoftAuthService(
             for user_profile in users_data['value']:
                 email = self._get_user_profile_email(user_profile)
                 if email and email != user.email:
-                    photo = self._get_user_photo(
-                        access_token=access_token,
-                        user_id=user_profile['id'],
+                    contact = Contact.objects.filter(
                         account=user.account,
-                    )
+                        user=user,
+                        source=SourceType.MICROSOFT,
+                        email=email,
+                    ).first()
+                    if contact and contact.photo:
+                        photo = contact.photo
+                    else:
+                        photo = self._get_user_photo(
+                            access_token=access_token,
+                            user_id=user_profile['id'],
+                            account=user.account,
+                        )
                     first_name = (
                         user_profile['givenName'] or email.split('@')[0]
                     )
