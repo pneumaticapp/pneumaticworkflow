@@ -1,6 +1,6 @@
 import type { TextMatchTransformer } from '@lexical/markdown';
 import type { LexicalNode } from 'lexical';
-import { $createTextNode } from 'lexical';
+import { $createTextNode, $isTextNode } from 'lexical';
 
 import { mentionsRegex, variableRegex } from '../../../../constants/defaultValues';
 import { $createMentionNode } from '../nodes/MentionNode';
@@ -103,7 +103,12 @@ export function createVariableTransformer(
     replace: (textNode, match) => {
       const node = createVariableNodeFromApiName(match[1] ?? '', templateVariables);
       textNode.replace(node);
-      node.insertAfter($createTextNode(' '));
+      const next = node.getNextSibling();
+      const hasSpaceAfter =
+        next && $isTextNode(next) && next.getTextContent().startsWith(' ');
+      if (!hasSpaceAfter) {
+        node.insertAfter($createTextNode(' '));
+      }
     },
     type: 'text-match',
   };

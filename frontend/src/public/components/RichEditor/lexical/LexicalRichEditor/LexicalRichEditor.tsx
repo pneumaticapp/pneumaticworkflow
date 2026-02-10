@@ -119,13 +119,29 @@ export const LexicalRichEditor = forwardRef<
         title: variableTitle,
         subtitle,
       });
-      const spaceNode = $createTextNode(' ');
 
-      $insertNodes([variableNode, spaceNode]);
-      const nodeAfterVariable = variableNode.getNextSibling();
-      if (nodeAfterVariable && $isTextNode(nodeAfterVariable)) {
-        nodeAfterVariable.selectEnd();
+      const needSpace = ((): boolean => {
+        if (!selection.isCollapsed()) return true;
+        const {anchor} = selection;
+        const node = anchor.getNode();
+        if ($isTextNode(node)) {
+          const text = node.getTextContent();
+          if (anchor.offset < text.length && text[anchor.offset] === ' ') return false;
+        }
+        const nextNode = node.getNextSibling();
+        if (nextNode && $isTextNode(nextNode) && nextNode.getTextContent().startsWith(' ')) {
+          return false;
+        }
+        return true;
+      })();
+
+      if (needSpace) {
+        $insertNodes([variableNode, $createTextNode(' ')]);
+        const after = variableNode.getNextSibling();
+        if (after && $isTextNode(after)) after.selectEnd();
+        else variableNode.selectNext();
       } else {
+        $insertNodes([variableNode]);
         variableNode.selectNext();
       }
     });

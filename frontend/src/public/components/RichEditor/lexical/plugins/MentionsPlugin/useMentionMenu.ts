@@ -74,12 +74,16 @@ export function useMentionMenu(mentions: { id?: number; name: string; link?: str
           $setSelection(selection);
 
           const mentionNode = $createMentionNode({ id, name, link });
-          const spaceNode = $createTextNode(' ');
-          $getSelection()?.insertNodes([mentionNode, spaceNode]);
-          const nodeAfterMention = mentionNode.getNextSibling();
-          if (nodeAfterMention && $isTextNode(nodeAfterMention)) {
-            nodeAfterMention.selectEnd();
+          const hasSpaceAfter = endIdx < text.length && text[endIdx] === ' ';
+          const needSpace = !hasSpaceAfter;
+
+          if (needSpace) {
+            $getSelection()?.insertNodes([mentionNode, $createTextNode(' ')]);
+            const after = mentionNode.getNextSibling();
+            if (after && $isTextNode(after)) after.selectEnd();
+            else mentionNode.selectNext();
           } else {
+            $getSelection()?.insertNodes([mentionNode]);
             mentionNode.selectNext();
           }
         },
