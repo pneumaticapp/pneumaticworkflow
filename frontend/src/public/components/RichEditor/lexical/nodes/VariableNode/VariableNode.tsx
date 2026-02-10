@@ -22,7 +22,6 @@ const VARIABLE_API_ATTRIBUTE = 'data-lexical-variable-api';
 const VARIABLE_TITLE_ATTRIBUTE = 'data-lexical-variable-title';
 const VARIABLE_SUBTITLE_ATTRIBUTE = 'data-lexical-variable-subtitle';
 const LEXICAL_DECORATOR_ATTRIBUTE = 'data-lexical-decorator';
-const CONTENT_EDITABLE_ATTRIBUTE = 'contenteditable';
 
 
 
@@ -139,14 +138,6 @@ export class VariableNode extends DecoratorNode<React.ReactElement> {
   }
 
   /**
-   * Indicates that this node should be isolated from surrounding content.
-   */
-  // eslint-disable-next-line class-methods-use-this
-  isIsolated(): boolean {
-    return true;
-  }
-
-  /**
    * Returns the text content representation of the variable for serialization.
    */
   getTextContent(): string {
@@ -192,7 +183,6 @@ export class VariableNode extends DecoratorNode<React.ReactElement> {
   private createVariableSpanElement(includeVariableData: boolean): HTMLSpanElement {
     const span = document.createElement('span');
     span.setAttribute(LEXICAL_DECORATOR_ATTRIBUTE, this.getType());
-    span.setAttribute(CONTENT_EDITABLE_ATTRIBUTE, 'false');
 
     if (includeVariableData) {
       span.setAttribute(VARIABLE_DATA_ATTRIBUTE, 'true');

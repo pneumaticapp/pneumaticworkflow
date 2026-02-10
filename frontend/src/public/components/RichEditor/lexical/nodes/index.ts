@@ -25,3 +25,19 @@ export const LEXICAL_NODES = [
   ChecklistNode,
   ChecklistItemNode,
 ];
+
+export {
+  CHECKBOX_CLASS,
+  CHECKLIST_ITEM_CLASS,
+  ChecklistItemNode,
+  $createChecklistItemNode,
+  $isChecklistItemNode,
+} from './ChecklistItemNode';
+export type { SerializedChecklistItemNode, TChecklistItemNodePayload } from './ChecklistItemNode';
+
+export {
+  ChecklistNode,
+  $createChecklistNode,
+  $isChecklistNode,
+} from './ChecklistNode';
+export type { SerializedChecklistNode, TChecklistNodePayload } from './ChecklistNode';

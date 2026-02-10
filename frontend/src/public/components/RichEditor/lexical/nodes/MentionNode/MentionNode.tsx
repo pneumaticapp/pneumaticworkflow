@@ -88,11 +88,6 @@ export class MentionNode extends DecoratorNode<React.ReactElement> {
     return true;
   }
 
-  // eslint-disable-next-line class-methods-use-this -- Lexical DecoratorNode override
-  isIsolated(): boolean {
-    return true;
-  }
-
   getTextContent(): string {
     return `@${this.mentionName}`;
   }
