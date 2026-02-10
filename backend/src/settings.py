@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 import datetime
 import os
 from os import environ as env
+from urllib.parse import urlparse
 
 from configurations import Configuration, values
 from corsheaders.defaults import default_headers
@@ -65,8 +66,11 @@ class Common(Configuration):
     FORMS_URL = env.get('FORMS_URL')
 
     # File Service
-    FILES_BASE_URL = env.get('FILE_SERVICE_URL')
-    FILE_DOMAIN = env.get('FILE_DOMAIN')
+    FILE_SERVICE_URL = env.get('FILE_SERVICE_URL')
+    FILE_DOMAIN = None
+    if FILE_SERVICE_URL:
+        parsed = urlparse(FILE_SERVICE_URL)
+        FILE_DOMAIN = parsed.netloc
 
     # Auth
     AUTH_USER_MODEL = 'accounts.User'

@@ -20,7 +20,10 @@ pytestmark = pytest.mark.django_db
 
 class TestExtractFileIdsFromText:
 
-    @override_settings(FILE_DOMAIN='files.pneumatic.app')
+    @override_settings(
+        FILE_SERVICE_URL='https://files.pneumatic.app',
+        FILE_DOMAIN='files.pneumatic.app',
+    )
     def test_extract_file_ids_from_text__single_link__list_with_one_id(self):
         # arrange
         text = "[document.pdf](https://files.pneumatic.app/abc123def456)"
@@ -31,7 +34,10 @@ class TestExtractFileIdsFromText:
         # assert
         assert file_ids == ['abc123def456']
 
-    @override_settings(FILE_DOMAIN='files.pneumatic.app')
+    @override_settings(
+        FILE_SERVICE_URL='https://files.pneumatic.app',
+        FILE_DOMAIN='files.pneumatic.app',
+    )
     def test_extract_file_ids_from_text__multiple_links__set_of_internal_ids(
         self,
     ):
@@ -59,7 +65,10 @@ class TestExtractFileIdsFromText:
         # assert
         assert file_ids == []
 
-    @override_settings(FILE_DOMAIN='files.pneumatic.app')
+    @override_settings(
+        FILE_SERVICE_URL='https://files.pneumatic.app',
+        FILE_DOMAIN='files.pneumatic.app',
+    )
     def test_extract_file_ids_from_text__external_links__ignored(self):
         # arrange
         text = """
@@ -77,7 +86,10 @@ class TestExtractFileIdsFromText:
 
 class TestRefreshAttachmentsForText:
 
-    @override_settings(FILE_DOMAIN='files.pneumatic.app')
+    @override_settings(
+        FILE_SERVICE_URL='https://files.pneumatic.app',
+        FILE_DOMAIN='files.pneumatic.app',
+    )
     @patch('src.storage.utils.AttachmentService')
     @patch('src.storage.utils.Attachment.objects')
     def test_refresh_attachments_for_text__new_file_ids__creates_and_returns(

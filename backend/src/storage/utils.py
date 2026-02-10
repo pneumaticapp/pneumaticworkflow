@@ -16,34 +16,11 @@ from src.storage.services.attachments import AttachmentService
 UserModel = get_user_model()
 
 
-def check_attachments(
-    source: models.Model,
-    user: UserModel,
-) -> List[str]:
-    """
-    Finds and updates attachments for source.
-    Alias for refresh_attachments for backward compatibility.
-    """
-    return refresh_attachments(source=source, user=user)
-
-
-def _get_file_service_url_pattern() -> str:
-    """
-    Returns file service URL pattern based on settings.
-
-    Returns:
-        URL pattern for file service
-    """
-    # Single file service endpoint pattern
-    return r'/([a-zA-Z0-9_-]{8,64})'
-
-
 def extract_file_ids_from_text(text: str) -> List[str]:
     """
     Extracts file_id from text for Pneumatic file service links.
 
-    Searches for file service links in formats:
-    - http(s)://files.pneumatic.app/{file_id}
+    Searches for file service links in format:
     - Markdown links: [filename](url_with_file_id)
 
     Only extracts file_ids from file service domain (settings.FILE_DOMAIN).
@@ -55,86 +32,29 @@ def extract_file_ids_from_text(text: str) -> List[str]:
     Returns:
         List of unique file_ids from file service
     """
-    if not text:
-        return []
-
     file_domain = settings.FILE_DOMAIN
-    if not file_domain:
+    if not text or not file_domain:
         return []
 
-    url_pattern = _get_file_service_url_pattern()
+    markdown_file_link_pattern = re.compile(
+        rf'\[([^\]]+)\]\('
+        rf'https?://[^/\s]*{re.escape(file_domain)}'
+        rf'/([a-zA-Z0-9_-]{{8,64}})(?:[^\s)]*)?\)',
+    )
 
-    file_ids = []
+    matches = markdown_file_link_pattern.findall(text)
 
-    # Extract from Markdown links: [filename](url)
-    markdown_pattern = r'\[([^\]]+)\]\(([^)]+)\)'
-    markdown_matches = re.findall(markdown_pattern, text)
+    # matches = [(filename, file_id), ...]
+    file_ids = [file_id for _, file_id in matches]
 
-    for _filename, url in markdown_matches:
-        if file_domain in url:
-            matches = re.findall(url_pattern, url)
-            file_ids.extend(matches)
+    # Direct URLs http(s)://files.pneumatic.app/{file_id} are not supported;
+    # only Markdown links are parsed.
+    # url_pattern = r'/([a-zA-Z0-9_-]{8,64})'
+    # full_pattern = rf'https?://[^/]*{re.escape(file_domain)}{url_pattern}'
+    # matches = re.findall(full_pattern, text)
+    # file_ids.extend(matches)
 
-    # Also check for direct URLs in text (no markdown)
-    full_pattern = rf'https?://[^/]*{re.escape(file_domain)}{url_pattern}'
-    matches = re.findall(full_pattern, text)
-    file_ids.extend(matches)
-
-    # Remove duplicates and return
-    return list(set(file_ids))
-
-
-def extract_all_links_from_text(text: str) -> List[dict]:
-    """
-    Extracts all file links from text (both file service and external).
-
-    Returns list of dictionaries with link information:
-    {
-        'filename': 'document.pdf',
-        'url': 'https://files.example.com/abc123',
-        'file_id': 'abc123',  # Only for file service links
-        'is_file_service': True/False
-    }
-
-    Args:
-        text: Text content to search in
-
-    Returns:
-        List of link dictionaries
-    """
-    if not text:
-        return []
-
-    file_domain = settings.FILE_DOMAIN
-    if not file_domain:
-        return []
-
-    url_pattern = _get_file_service_url_pattern()
-
-    links = []
-
-    # Extract from Markdown links: [filename](url)
-    markdown_pattern = r'\[([^\]]+)\]\(([^)]+)\)'
-    markdown_matches = re.findall(markdown_pattern, text)
-
-    for filename, url in markdown_matches:
-        link_info = {
-            'filename': filename,
-            'url': url,
-            'file_id': None,
-            'is_file_service': False,
-        }
-
-        if file_domain in url:
-            link_info['is_file_service'] = True
-            # Extract file_id using single pattern
-            matches = re.findall(url_pattern, url)
-            if matches:
-                link_info['file_id'] = matches[0]
-
-        links.append(link_info)
-
-    return links
+    return list(dict.fromkeys(file_ids))
 
 
 def extract_file_ids_from_values(

@@ -39,7 +39,7 @@ class FileServiceClient:
     def __init__(self, user: Optional[UserModel] = None, request=None):
         self.user = user
         self.request = request
-        self.base_url = settings.FILES_BASE_URL
+        self.base_url = settings.FILE_SERVICE_URL
         if not self.base_url:
             raise FileServiceConnectionException
 

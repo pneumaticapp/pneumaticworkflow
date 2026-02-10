@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext_lazy as _
 
-MSG_FS_0001 = _('FILES_BASE_URL not configured.')
+MSG_FS_0001 = _('FILE_SERVICE_URL not configured.')
 MSG_FS_0002 = _('Connection to file service failed.')
 MSG_FS_0003 = _('User required for authentication.')
 MSG_FS_0004 = _('Authentication failed with file service.')

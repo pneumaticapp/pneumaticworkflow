@@ -16,6 +16,7 @@ from src.storage.utils import (
 
 pytestmark = pytest.mark.django_db
 
+_FILE_SERVICE_URL = 'https://example.com'
 _FILE_DOMAIN = 'example.com'
 
 
@@ -23,7 +24,10 @@ class TestExtractFileIdsFromText:
 
     def test_extract_file_ids__empty_text__empty_list(self):
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             result = extract_file_ids_from_text('')
 
         # assert
@@ -31,7 +35,10 @@ class TestExtractFileIdsFromText:
 
     def test_extract_file_ids__none__empty_list(self):
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             result = extract_file_ids_from_text(None)
 
         # assert
@@ -41,11 +48,14 @@ class TestExtractFileIdsFromText:
         # arrange
         text = (
             'Check this file: '
-            'https://example.com/abc123def456ghi789'
+            '[doc](https://example.com/abc123def456ghi789)'
         )
 
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             result = extract_file_ids_from_text(text)
 
         # assert
@@ -55,36 +65,28 @@ class TestExtractFileIdsFromText:
         # arrange
         text = (
             'Download from: '
-            'https://example.com/xyz987uvw654rst321'
+            '[file](https://example.com/xyz987uvw654rst321)'
         )
 
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             result = extract_file_ids_from_text(text)
 
         # assert
         assert 'xyz987uvw654rst321' in result
-
-    def test_extract_file_ids__api_files_not_supported__empty(self):
-        # arrange
-        text = (
-            'Old API format: '
-            'https://example.com/api/xyz987uvw654rst321'
-        )
-
-        # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
-            result = extract_file_ids_from_text(text)
-
-        # assert
-        assert result == []
 
     def test_extract_file_ids__plain_file_id_not_supported__empty(self):
         # arrange
         text = 'file_id=qwerty123456asdfgh or file_id:mnbvcx098765lkjhgf'
 
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             result = extract_file_ids_from_text(text)
 
         # assert
@@ -93,13 +95,15 @@ class TestExtractFileIdsFromText:
     def test_extract_file_ids__multiple__ok(self):
         # arrange
         text = (
-            'Files: '
-            'https://example.com/file1_id_123456 and '
-            'https://example.com/file2_id_789012'
+            'Files: [a](https://example.com/file1_id_123456) and '
+            '[b](https://example.com/file2_id_789012)'
         )
 
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             result = extract_file_ids_from_text(text)
 
         # assert
@@ -110,12 +114,15 @@ class TestExtractFileIdsFromText:
     def test_extract_file_ids__duplicates_removed__ok(self):
         # arrange
         text = (
-            'https://example.com/duplicate_id_123 and '
-            'https://example.com/duplicate_id_123'
+            '[x](https://example.com/duplicate_id_123) and '
+            '[y](https://example.com/duplicate_id_123)'
         )
 
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             result = extract_file_ids_from_text(text)
 
         # assert
@@ -126,7 +133,10 @@ class TestExtractFileIdsFromText:
         text = 'This text has no file IDs'
 
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             result = extract_file_ids_from_text(text)
 
         # assert
@@ -134,10 +144,13 @@ class TestExtractFileIdsFromText:
 
     def test_extract_file_ids__short_id__not_matched(self):
         # arrange
-        text = 'https://example.com/short'
+        text = '[f](https://example.com/short)'
 
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             result = extract_file_ids_from_text(text)
 
         # assert
@@ -145,12 +158,13 @@ class TestExtractFileIdsFromText:
 
     def test_extract_file_ids__special_chars__ok(self):
         # arrange
-        text = (
-            'https://example.com/file-id_with-special_123456'
-        )
+        text = '[f](https://example.com/file-id_with-special_123456)'
 
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             result = extract_file_ids_from_text(text)
 
         # assert
@@ -165,12 +179,15 @@ class TestRefreshAttachments:
         workflow = create_test_workflow(user=user, tasks_count=1)
         task = workflow.tasks.first()
         task.description = (
-            'File: https://example.com/new_file_id_123456'
+            'File: [f](https://example.com/new_file_id_123456)'
         )
         task.save()
 
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             new_file_ids = refresh_attachments(source=task, user=user)
 
         # assert
@@ -185,12 +202,15 @@ class TestRefreshAttachments:
         user = create_test_admin()
         workflow = create_test_workflow(user=user, tasks_count=1)
         workflow.description = (
-            'File: https://example.com/workflow_file_123'
+            'File: [f](https://example.com/workflow_file_123)'
         )
         workflow.save()
 
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             new_file_ids = refresh_attachments(source=workflow, user=user)
 
         # assert
@@ -216,7 +236,10 @@ class TestRefreshAttachments:
         task.save()
 
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             new_file_ids = refresh_attachments(source=task, user=user)
 
         # assert
@@ -238,12 +261,15 @@ class TestRefreshAttachments:
         )
 
         task.description = (
-            'File: https://example.com/existing_file_123'
+            'File: [f](https://example.com/existing_file_123)'
         )
         task.save()
 
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             new_file_ids = refresh_attachments(source=task, user=user)
 
         # assert
@@ -266,12 +292,15 @@ class TestRefreshAttachments:
         )
 
         task.description = (
-            'New file: https://example.com/new_file_add_123'
+            'New file: [f](https://example.com/new_file_add_123)'
         )
         task.save()
 
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             new_file_ids = refresh_attachments(source=task, user=user)
 
         # assert
@@ -305,14 +334,16 @@ class TestRefreshAttachments:
         task = workflow.tasks.first()
 
         task.description = (
-            'Files: '
-            'https://example.com/file1_multi_123 and '
-            'https://example.com/file2_multi_456'
+            'Files: [a](https://example.com/file1_multi_123) '
+            '[b](https://example.com/file2_multi_456)'
         )
         task.save()
 
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             new_file_ids = refresh_attachments(source=task, user=user)
 
         # assert
@@ -365,12 +396,15 @@ class TestExtractAllFileIdsFromSource:
         workflow = create_test_workflow(user=user, tasks_count=1)
         task = workflow.tasks.first()
         task.description = (
-            'File: https://example.com/extract_all_123'
+            'File: [f](https://example.com/extract_all_123)'
         )
         task.save()
 
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             result = extract_all_file_ids_from_source(task)
 
         # assert
@@ -381,12 +415,15 @@ class TestExtractAllFileIdsFromSource:
         user = create_test_admin()
         workflow = create_test_workflow(user=user, tasks_count=1)
         workflow.description = (
-            'File: https://example.com/workflow_extract_456'
+            'File: [f](https://example.com/workflow_extract_456)'
         )
         workflow.save()
 
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             result = extract_all_file_ids_from_source(workflow)
 
         # assert
@@ -401,7 +438,10 @@ class TestExtractAllFileIdsFromSource:
         task.save()
 
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             result = extract_all_file_ids_from_source(task)
 
         # assert
@@ -412,7 +452,10 @@ class TestExtractAllFileIdsFromSource:
         user = create_test_admin()
 
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             result = extract_all_file_ids_from_source(user.account)
 
         # assert
@@ -424,13 +467,16 @@ class TestExtractAllFileIdsFromSource:
         workflow = create_test_workflow(user=user, tasks_count=1)
         task = workflow.tasks.first()
         task.description = (
-            'https://example.com/duplicate_789 and '
-            'https://example.com/duplicate_789'
+            '[a](https://example.com/duplicate_789) '
+            '[b](https://example.com/duplicate_789)'
         )
         task.save()
 
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             result = extract_all_file_ids_from_source(task)
 
         # assert
@@ -445,7 +491,10 @@ class TestExtractAllFileIdsFromSource:
         task.save()
 
         # act
-        with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
             result = extract_all_file_ids_from_source(task)
 
         # assert

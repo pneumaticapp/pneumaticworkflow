@@ -28,7 +28,7 @@ class TestFileServiceClient:
         mock_settings = mocker.patch(
             'src.storage.services.file_service.settings',
         )
-        mock_settings.FILES_BASE_URL = 'https://files.test.com'
+        mock_settings.FILE_SERVICE_URL = 'https://files.test.com'
         client = FileServiceClient()
 
         # act
@@ -43,7 +43,7 @@ class TestFileServiceClient:
         mock_settings = mocker.patch(
             'src.storage.services.file_service.settings',
         )
-        mock_settings.FILES_BASE_URL = 'https://files.test.com'
+        mock_settings.FILE_SERVICE_URL = 'https://files.test.com'
 
         mock_token = mocker.patch(
             'src.storage.services.file_service.PneumaticToken',
@@ -69,7 +69,7 @@ class TestFileServiceClient:
         mock_settings = mocker.patch(
             'src.storage.services.file_service.settings',
         )
-        mock_settings.FILES_BASE_URL = 'https://files.test.com'
+        mock_settings.FILE_SERVICE_URL = 'https://files.test.com'
 
         mock_token = mocker.patch(
             'src.storage.services.file_service.PneumaticToken',
@@ -101,7 +101,7 @@ class TestFileServiceClient:
         mock_settings = mocker.patch(
             'src.storage.services.file_service.settings',
         )
-        mock_settings.FILES_BASE_URL = 'https://files.test.com'
+        mock_settings.FILE_SERVICE_URL = 'https://files.test.com'
         mock_get_auth = mocker.patch(
             'src.storage.services.file_service.get_authorization_header',
         )
@@ -133,7 +133,7 @@ class TestFileServiceClient:
         mock_settings = mocker.patch(
             'src.storage.services.file_service.settings',
         )
-        mock_settings.FILES_BASE_URL = 'https://files.test.com'
+        mock_settings.FILE_SERVICE_URL = 'https://files.test.com'
         mock_get_auth = mocker.patch(
             'src.storage.services.file_service.get_authorization_header',
         )
@@ -164,7 +164,7 @@ class TestFileServiceClient:
         mock_settings = mocker.patch(
             'src.storage.services.file_service.settings',
         )
-        mock_settings.FILES_BASE_URL = 'https://files.test.com'
+        mock_settings.FILE_SERVICE_URL = 'https://files.test.com'
         mock_requests = mocker.patch(
             'src.storage.services.file_service.requests',
         )
@@ -192,7 +192,7 @@ class TestFileServiceClient:
         mock_settings = mocker.patch(
             'src.storage.services.file_service.settings',
         )
-        mock_settings.FILES_BASE_URL = 'https://files.test.com'
+        mock_settings.FILE_SERVICE_URL = 'https://files.test.com'
         mock_requests = mocker.patch(
             'src.storage.services.file_service.requests',
         )
@@ -217,7 +217,7 @@ class TestFileServiceClient:
         mock_settings = mocker.patch(
             'src.storage.services.file_service.settings',
         )
-        mock_settings.FILES_BASE_URL = 'https://files.test.com'
+        mock_settings.FILE_SERVICE_URL = 'https://files.test.com'
         mock_requests = mocker.patch(
             'src.storage.services.file_service.requests',
         )
@@ -245,7 +245,7 @@ class TestFileServiceClient:
         mock_settings = mocker.patch(
             'src.storage.services.file_service.settings',
         )
-        mock_settings.FILES_BASE_URL = 'https://files.test.com'
+        mock_settings.FILE_SERVICE_URL = 'https://files.test.com'
         mock_requests = mocker.patch(
             'src.storage.services.file_service.requests',
         )
@@ -273,7 +273,7 @@ class TestFileServiceClient:
         mock_settings = mocker.patch(
             'src.storage.services.file_service.settings',
         )
-        mock_settings.FILES_BASE_URL = 'https://files.test.com'
+        mock_settings.FILE_SERVICE_URL = 'https://files.test.com'
         mock_requests = mocker.patch(
             'src.storage.services.file_service.requests',
         )
@@ -330,7 +330,7 @@ class TestFileServiceClient:
         mock_settings = mocker.patch(
             'src.storage.services.file_service.settings',
         )
-        mock_settings.FILES_BASE_URL = 'https://files.test.com'
+        mock_settings.FILE_SERVICE_URL = 'https://files.test.com'
 
         mock_requests = mocker.patch(
             'src.storage.services.file_service.requests',
@@ -389,7 +389,7 @@ class TestFileServiceClient:
         mock_settings = mocker.patch(
             'src.storage.services.file_service.settings',
         )
-        mock_settings.FILES_BASE_URL = 'https://files.test.com'
+        mock_settings.FILE_SERVICE_URL = 'https://files.test.com'
         mock_requests = mocker.patch(
             'src.storage.services.file_service.requests',
         )
@@ -423,7 +423,7 @@ class TestFileServiceClient:
         mock_settings = mocker.patch(
             'src.storage.services.file_service.settings',
         )
-        mock_settings.FILES_BASE_URL = 'https://files.test.com'
+        mock_settings.FILE_SERVICE_URL = 'https://files.test.com'
         mock_requests = mocker.patch(
             'src.storage.services.file_service.requests',
         )
@@ -459,7 +459,7 @@ class TestFileServiceClient:
         mock_settings = mocker.patch(
             'src.storage.services.file_service.settings',
         )
-        mock_settings.FILES_BASE_URL = 'https://files.test.com'
+        mock_settings.FILE_SERVICE_URL = 'https://files.test.com'
         mock_requests = mocker.patch(
             'src.storage.services.file_service.requests',
         )
