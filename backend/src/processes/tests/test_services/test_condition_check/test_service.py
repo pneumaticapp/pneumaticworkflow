@@ -79,6 +79,7 @@ class TestConditionCheckService:
             type=FieldType.NUMBER,
             value=field_value,
             workflow=workflow,
+            account=user.account,
         )
         condition = Condition.objects.create(
             task=second_task,
@@ -148,6 +149,7 @@ class TestConditionCheckService:
             type=FieldType.STRING,
             value=field_value,
             workflow=workflow,
+            account=user.account,
         )
         condition = Condition.objects.create(
             task=second_task,
@@ -199,6 +201,7 @@ class TestConditionCheckService:
             type=FieldType.FILE,
             value=field_value,
             workflow=workflow,
+            account=user.account,
         )
         FileAttachment.objects.create(
             name='john.cena',
@@ -268,6 +271,7 @@ class TestConditionCheckService:
             type=FieldType.DROPDOWN,
             value='',
             workflow=workflow,
+            account=user.account,
         )
         FieldSelection.objects.create(
             field=first_field,
@@ -349,6 +353,7 @@ class TestConditionCheckService:
             type=FieldType.CHECKBOX,
             value='',
             workflow=workflow,
+            account=user.account,
         )
         FieldSelection.objects.create(
             field=first_field,
@@ -423,6 +428,7 @@ class TestConditionCheckService:
             type=FieldType.DATE,
             value=field_value,
             workflow=workflow,
+            account=user.account,
         )
         condition = Condition.objects.create(
             task=second_task,
@@ -496,6 +502,7 @@ class TestConditionCheckService:
             value=selected_user.get_full_name() if selected_user else '',
             workflow=workflow,
             user_id=selected_user.id if selected_user else None,
+            account=user.account,
         )
         condition = Condition.objects.create(
             task=second_task,
@@ -553,6 +560,7 @@ class TestConditionCheckService:
             value=str(field_value) if field_value else '',
             workflow=workflow,
             group_id=field_value,
+            account=user.account,
         )
         condition = Condition.objects.create(
             task=second_task,

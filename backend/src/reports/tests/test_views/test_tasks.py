@@ -1785,6 +1785,7 @@ class TestDashboardMyTasksBreakdownBySteps:
             name='Skip first task marker',
             template=template,
             api_name=field_api_name,
+            account=user.account,
         )
         template_task_1 = template.tasks.get(number=1)
         template_task_2 = template.tasks.get(number=2)
