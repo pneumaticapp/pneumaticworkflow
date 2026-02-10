@@ -28,7 +28,7 @@ class TestCheckPermissionView:
 
         # act
         response = api_client.post(
-            '/storage/attachments/check-permission',
+            '/attachments/check-permission',
             data={
                 'file_id': 'test_file_123',
             },
@@ -52,7 +52,7 @@ class TestCheckPermissionView:
 
         # act
         response = api_client.post(
-            '/storage/attachments/check-permission',
+            '/attachments/check-permission',
             data={
                 'file_id': 'test_file_123',
             },
@@ -68,7 +68,7 @@ class TestCheckPermissionView:
 
         # act
         response = api_client.post(
-            '/storage/attachments/check-permission',
+            '/attachments/check-permission',
             data={
                 'file_id': '',
             },
@@ -85,7 +85,7 @@ class TestCheckPermissionView:
 
         # act
         response = api_client.post(
-            '/storage/attachments/check-permission',
+            '/attachments/check-permission',
             data={},
         )
 
@@ -99,7 +99,7 @@ class TestCheckPermissionView:
     ):
         # act
         response = api_client.post(
-            '/storage/attachments/check-permission',
+            '/attachments/check-permission',
             data={
                 'file_id': 'test_file_123',
             },
@@ -123,7 +123,7 @@ class TestCheckPermissionView:
 
         # act
         response = api_client.post(
-            '/storage/attachments/check-permission',
+            '/attachments/check-permission',
             data={
                 'file_id': '  test_file_123  ',
             },

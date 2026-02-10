@@ -20,7 +20,7 @@ class TestListView:
         api_client.token_authenticate(user)
 
         # act
-        response = api_client.get('/storage/attachments')
+        response = api_client.get('/attachments')
 
         # assert
         assert response.status_code == 200
@@ -39,7 +39,7 @@ class TestListView:
         )
 
         # act
-        response = api_client.get('/storage/attachments')
+        response = api_client.get('/attachments')
 
         # assert
         assert response.status_code == 200
@@ -61,7 +61,7 @@ class TestListView:
         )
 
         # act
-        response = api_client.get('/storage/attachments')
+        response = api_client.get('/attachments')
 
         # assert
         assert response.status_code == 200
@@ -85,7 +85,7 @@ class TestListView:
         assign_perm('storage.access_attachment', user, attachment)
 
         # act
-        response = api_client.get('/storage/attachments')
+        response = api_client.get('/attachments')
 
         # assert
         assert response.status_code == 200
@@ -111,7 +111,7 @@ class TestListView:
         api_client.token_authenticate(user1)
 
         # act
-        response = api_client.get('/storage/attachments')
+        response = api_client.get('/attachments')
 
         # assert
         assert response.status_code == 200
@@ -121,7 +121,7 @@ class TestListView:
     def test_list__not_authenticated__unauthorized(self, api_client):
         # arrange
         # act
-        response = api_client.get('/storage/attachments')
+        response = api_client.get('/attachments')
 
         # assert
         assert response.status_code == 401
@@ -145,7 +145,7 @@ class TestListView:
         )
 
         # act
-        response = api_client.get('/storage/attachments')
+        response = api_client.get('/attachments')
 
         # assert
         assert response.status_code == 200
@@ -169,7 +169,7 @@ class TestListView:
         attachment.save()
 
         # act
-        response = api_client.get('/storage/attachments')
+        response = api_client.get('/attachments')
 
         # assert
         assert response.status_code == 200

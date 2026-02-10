@@ -31,6 +31,7 @@ from src.processes.views.template import (
 )
 from src.processes.views.workflow import WorkflowViewSet
 from src.services.views import ServicesViewSet
+from src.storage.views import AttachmentViewSet
 from src.webhooks.views.buffer import WebHookBufferViewSet
 from src.webhooks.views.events import WebHookEventViewSet
 from src.webhooks.views.webhooks import WebHookViewSet
@@ -55,6 +56,7 @@ router.register('payment', PaymentViewSet, basename='payment')
 router.register('payment/stripe', StripeViewSet, basename='stripe')
 router.register('payment/subscription', SubscriptionViewSet, basename='subs')
 router.register('faq', FaqViewSet, basename='faq')
+router.register('attachments', AttachmentViewSet, basename='attachments')
 
 
 urlpatterns = [
@@ -76,7 +78,6 @@ urlpatterns = [
 
     path('templates/', include('src.processes.urls.templates')),
     path('workflows/', include('src.processes.urls.workflows')),
-    path('storage/', include('src.storage.urls')),
     path('notifications/', include('src.notifications.urls')),
     path('navigation/', include('src.navigation.urls')),
     path('pages/', include('src.pages.urls')),
