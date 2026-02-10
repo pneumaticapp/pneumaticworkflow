@@ -7,6 +7,5 @@ export {
 export { LinkPluginProvider, useLinkPlugin } from './LinkPlugin/index';
 export { LinkTooltipPlugin } from './LinkTooltipPlugin';
 export { VariableTooltipPlugin } from './VariableTooltipPlugin';
-export { BackspaceWithDecoratorPlugin } from './BackspaceWithDecoratorPlugin';
 export { ChecklistPlugin, INSERT_CHECKLIST_COMMAND } from './ChecklistPlugin';
 export { MentionsPlugin } from './MentionsPlugin';

@@ -2,6 +2,7 @@ import { useMemo, useState, useCallback, useRef, useEffect } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { mergeRegister } from '@lexical/utils';
 import {
+  $createTextNode,
   $getSelection,
   $getNodeByKey,
   $isRangeSelection,
@@ -73,8 +74,14 @@ export function useMentionMenu(mentions: { id?: number; name: string; link?: str
           $setSelection(selection);
 
           const mentionNode = $createMentionNode({ id, name, link });
-          $getSelection()?.insertNodes([mentionNode]);
-          mentionNode.selectNext();
+          const spaceNode = $createTextNode(' ');
+          $getSelection()?.insertNodes([mentionNode, spaceNode]);
+          const nodeAfterMention = mentionNode.getNextSibling();
+          if (nodeAfterMention && $isTextNode(nodeAfterMention)) {
+            nodeAfterMention.selectEnd();
+          } else {
+            mentionNode.selectNext();
+          }
         },
         { tag: 'mention-insert' },
       );
