@@ -17,6 +17,8 @@ from src.processes.models.workflows.workflow import Workflow
 from src.storage.enums import AccessType, SourceType
 from src.storage.models import Attachment
 
+UserModel = get_user_model()
+
 
 class AttachmentService(BaseModelService):
     """
@@ -441,10 +443,9 @@ class AttachmentService(BaseModelService):
             if hasattr(self, 'user') and self.user and self.user.id == user_id:
                 user = self.user
             else:
-                user_model = get_user_model()
                 try:
-                    user = user_model.objects.get(id=user_id)
-                except user_model.DoesNotExist:
+                    user = UserModel.objects.get(id=user_id)
+                except UserModel.DoesNotExist:
                     return False
 
             ctype = ContentType.objects.get_for_model(Attachment)
