@@ -27,7 +27,7 @@ class TestRefreshWorkflowEventAttachments:
         mock_event.workflow = Mock()
         mock_event.account = Mock()
         mock_event.text = (
-            "[file.pdf](https://files.pneumatic.app/files/abc123)"
+            "[file.pdf](https://files.pneumatic.app/abc123)"
         )
         mock_event.with_attachments = False
         mock_user = Mock()
@@ -65,7 +65,7 @@ class TestRefreshWorkflowEventAttachments:
         mock_event.account = Mock()
         mock_event.text = (
             "[workflow_file.pdf]"
-            "(https://files.pneumatic.app/files/def456)"
+            "(https://files.pneumatic.app/def456)"
         )
         mock_event.with_attachments = False
         mock_user = Mock()
@@ -131,7 +131,7 @@ class TestRefreshWorkflowEventAttachments:
         mock_event.workflow = Mock()
         mock_event.account = Mock()
         mock_event.text = (
-            "[file.pdf](https://files.pneumatic.app/files/abc123)"
+            "[file.pdf](https://files.pneumatic.app/abc123)"
         )
         mock_event.with_attachments = True
         mock_user = Mock()

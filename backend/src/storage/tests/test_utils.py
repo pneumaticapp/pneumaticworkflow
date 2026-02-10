@@ -41,7 +41,7 @@ class TestExtractFileIdsFromText:
         # arrange
         text = (
             'Check this file: '
-            'https://example.com/files/abc123def456ghi789'
+            'https://example.com/abc123def456ghi789'
         )
 
         # act
@@ -55,7 +55,7 @@ class TestExtractFileIdsFromText:
         # arrange
         text = (
             'Download from: '
-            'https://example.com/files/xyz987uvw654rst321'
+            'https://example.com/xyz987uvw654rst321'
         )
 
         # act
@@ -69,7 +69,7 @@ class TestExtractFileIdsFromText:
         # arrange
         text = (
             'Old API format: '
-            'https://example.com/api/files/xyz987uvw654rst321'
+            'https://example.com/api/xyz987uvw654rst321'
         )
 
         # act
@@ -94,8 +94,8 @@ class TestExtractFileIdsFromText:
         # arrange
         text = (
             'Files: '
-            'https://example.com/files/file1_id_123456 and '
-            'https://example.com/files/file2_id_789012'
+            'https://example.com/file1_id_123456 and '
+            'https://example.com/file2_id_789012'
         )
 
         # act
@@ -110,8 +110,8 @@ class TestExtractFileIdsFromText:
     def test_extract_file_ids__duplicates_removed__ok(self):
         # arrange
         text = (
-            'https://example.com/files/duplicate_id_123 and '
-            'https://example.com/api/files/duplicate_id_123'
+            'https://example.com/duplicate_id_123 and '
+            'https://example.com/duplicate_id_123'
         )
 
         # act
@@ -134,7 +134,7 @@ class TestExtractFileIdsFromText:
 
     def test_extract_file_ids__short_id__not_matched(self):
         # arrange
-        text = 'https://example.com/files/short'
+        text = 'https://example.com/short'
 
         # act
         with override_settings(FILE_DOMAIN=_FILE_DOMAIN):
@@ -146,7 +146,7 @@ class TestExtractFileIdsFromText:
     def test_extract_file_ids__special_chars__ok(self):
         # arrange
         text = (
-            'https://example.com/files/file-id_with-special_123456'
+            'https://example.com/file-id_with-special_123456'
         )
 
         # act
@@ -165,7 +165,7 @@ class TestRefreshAttachments:
         workflow = create_test_workflow(user=user, tasks_count=1)
         task = workflow.tasks.first()
         task.description = (
-            'File: https://example.com/files/new_file_id_123456'
+            'File: https://example.com/new_file_id_123456'
         )
         task.save()
 
@@ -185,7 +185,7 @@ class TestRefreshAttachments:
         user = create_test_admin()
         workflow = create_test_workflow(user=user, tasks_count=1)
         workflow.description = (
-            'File: https://example.com/files/workflow_file_123'
+            'File: https://example.com/workflow_file_123'
         )
         workflow.save()
 
@@ -238,7 +238,7 @@ class TestRefreshAttachments:
         )
 
         task.description = (
-            'File: https://example.com/files/existing_file_123'
+            'File: https://example.com/existing_file_123'
         )
         task.save()
 
@@ -266,7 +266,7 @@ class TestRefreshAttachments:
         )
 
         task.description = (
-            'New file: https://example.com/files/new_file_add_123'
+            'New file: https://example.com/new_file_add_123'
         )
         task.save()
 
@@ -306,8 +306,8 @@ class TestRefreshAttachments:
 
         task.description = (
             'Files: '
-            'https://example.com/files/file1_multi_123 and '
-            'https://example.com/files/file2_multi_456'
+            'https://example.com/file1_multi_123 and '
+            'https://example.com/file2_multi_456'
         )
         task.save()
 
@@ -365,7 +365,7 @@ class TestExtractAllFileIdsFromSource:
         workflow = create_test_workflow(user=user, tasks_count=1)
         task = workflow.tasks.first()
         task.description = (
-            'File: https://example.com/files/extract_all_123'
+            'File: https://example.com/extract_all_123'
         )
         task.save()
 
@@ -381,7 +381,7 @@ class TestExtractAllFileIdsFromSource:
         user = create_test_admin()
         workflow = create_test_workflow(user=user, tasks_count=1)
         workflow.description = (
-            'File: https://example.com/files/workflow_extract_456'
+            'File: https://example.com/workflow_extract_456'
         )
         workflow.save()
 
@@ -424,8 +424,8 @@ class TestExtractAllFileIdsFromSource:
         workflow = create_test_workflow(user=user, tasks_count=1)
         task = workflow.tasks.first()
         task.description = (
-            'https://example.com/files/duplicate_789 and '
-            'https://example.com/api/files/duplicate_789'
+            'https://example.com/duplicate_789 and '
+            'https://example.com/duplicate_789'
         )
         task.save()
 

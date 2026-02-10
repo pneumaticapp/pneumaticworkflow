@@ -60,7 +60,7 @@ class TestCommentAttachmentsE2E:
             type=WorkflowEventType.COMMENT,
             text=(
                 'Please review this file: '
-                'https://files.example.com/files/task_comment_e2e_123'
+                'https://files.example.com/task_comment_e2e_123'
             ),
         )
 
@@ -124,7 +124,7 @@ class TestCommentAttachmentsE2E:
             type=WorkflowEventType.COMMENT,
             text=(
                 'Workflow file: '
-                'https://files.example.com/files/workflow_comment_e2e_456'
+                'https://files.example.com/workflow_comment_e2e_456'
             ),
         )
 
@@ -199,7 +199,7 @@ class TestCommentAttachmentsE2E:
             type=WorkflowEventType.COMMENT,
             text=(
                 'Group file: '
-                'https://files.example.com/files/group_comment_e2e_789'
+                'https://files.example.com/group_comment_e2e_789'
             ),
         )
 
@@ -254,8 +254,8 @@ class TestCommentAttachmentsE2E:
             type=WorkflowEventType.COMMENT,
             text=(
                 'Multiple files: '
-                'https://files.example.com/files/multi_comment_1_e2e and '
-                'https://files.example.com/files/multi_comment_2_e2e'
+                'https://files.example.com/multi_comment_1_e2e and '
+                'https://files.example.com/multi_comment_2_e2e'
             ),
         )
 
@@ -306,7 +306,7 @@ class TestCommentAttachmentsE2E:
             type=WorkflowEventType.COMMENT,
             text=(
                 'Private file: '
-                'https://files.example.com/files/private_comment_e2e'
+                'https://files.example.com/private_comment_e2e'
             ),
         )
 
@@ -345,7 +345,7 @@ class TestCommentAttachmentsE2E:
             type=WorkflowEventType.COMMENT,
             text=(
                 'Inherited file: '
-                'https://files.example.com/files/inherited_comment_e2e'
+                'https://files.example.com/inherited_comment_e2e'
             ),
         )
 
@@ -402,7 +402,7 @@ class TestCommentAttachmentsE2E:
         # act
         comment_event.text = (
             'Updated comment: '
-            'https://files.example.com/files/updated_comment_e2e'
+            'https://files.example.com/updated_comment_e2e'
         )
         comment_event.save()
         new_file_ids = _refresh_workflow_event_attachments(

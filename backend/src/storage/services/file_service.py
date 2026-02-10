@@ -137,44 +137,6 @@ class FileServiceClient:
 
         return response
 
-    def check_file_permission(
-        self,
-        file_id: str,
-        user_id: int,
-    ) -> bool:
-        """
-        Check file access permission.
-
-        Args:
-            file_id: File identifier
-            user_id: User ID
-
-        Returns:
-            bool: True if access is allowed
-        """
-        try:
-            response = self._make_request(
-                method='GET',
-                endpoint=f'/check-permission/{file_id}',
-                params={'user_id': user_id},
-            )
-
-            response_data = response.json()
-            return response_data.get('has_access', False)
-
-        except requests.RequestException as ex:
-            capture_sentry_message(
-                message='File permission check failed',
-                data={
-                    'file_id': file_id,
-                    'user_id': user_id,
-                    'error': str(ex),
-                },
-                level=SentryLogLevel.WARNING,
-            )
-            # Deny access on error for security
-            return False
-
     def upload_file_with_attachment(
         self,
         file_content: bytes,

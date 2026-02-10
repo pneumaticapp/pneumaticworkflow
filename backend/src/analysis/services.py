@@ -37,7 +37,7 @@ from src.processes.models.templates.conditions import ConditionTemplate
 from src.processes.models.templates.system_template import SystemTemplate
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
-from src.processes.models.workflows.attachment import FileAttachment
+from src.storage.models import Attachment
 from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
 
@@ -684,7 +684,7 @@ class AnalyticService:
     @classmethod
     def attachments_uploaded(
         cls,
-        attachment: FileAttachment,
+        attachment: Attachment,
         is_superuser: bool,
         auth_type: AuthTokenType,
         user: Optional[UserModel] = None,

@@ -123,7 +123,7 @@ class TaskService(
             update_kwargs['clear_description'] = MarkdownService.clear(
                 update_kwargs['description'],
             )
-        result = super().partial_update(**update_kwargs)
+        super().partial_update(**update_kwargs)
         if 'date_started' in update_kwargs:  # noqa: SIM102
             if self.instance.date_first_started is None:
                 self.instance.date_first_started = (
@@ -136,8 +136,6 @@ class TaskService(
         # Update attachments when description changes
         if 'description' in update_kwargs:
             refresh_attachments(self.instance, self.user)
-
-        return result
 
     def insert_fields_values(
         self,

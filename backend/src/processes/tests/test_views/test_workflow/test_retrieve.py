@@ -417,9 +417,9 @@ def test_retrieve__kickoff_field_with_attachments__ok(api_client):
             'kickoff': {
                 field_template.api_name: [
                     '[first_file.txt]'
-                    '(https://files.example.com/files/firstfile123)',
+                    '(https://files.example.com/firstfile123)',
                     '[second_file.txt]'
-                    '(https://files.example.com/files/secfile456)',
+                    '(https://files.example.com/secfile456)',
                 ],
             },
         },

@@ -209,9 +209,9 @@ def test_run__all__ok(api_client, mocker):
                 kickoff_field_3.api_name: 6351521536,
                 kickoff_field_4.api_name: [
                     '[first_file.txt]'
-                    '(https://files.example.com/files/first_template_file)',
+                    '(https://files.example.com/first_template_file)',
                     '[second_file.txt]'
-                    '(https://files.example.com/files/sec_template_file)',
+                    '(https://files.example.com/sec_template_file)',
                 ],
                 kickoff_field_5.api_name: [
                     str(selection_1.api_name),
@@ -280,9 +280,8 @@ def test_run__all__ok(api_client, mocker):
     kickoff_field_4_data = data['kickoff']['output'][3]
     # Check that file field contains Markdown formatted value
     expected_markdown = (
-        '[first_file.txt](https://files.example.com/files/'
-        'first_template_file), '
-        '[second_file.txt](https://files.example.com/files/sec_template_file)'
+        '[first_file.txt](https://files.example.com/first_template_file), '
+        '[second_file.txt](https://files.example.com/sec_template_file)'
     )
     assert kickoff_field_4_data['markdown_value'] == expected_markdown
     assert kickoff_field_4_data['clear_value'] == (
@@ -313,9 +312,9 @@ def test_run__all__ok(api_client, mocker):
     assert task_1.name == 'Test name JOHN CENA'
     expected_file_markdown = (
         '[first_file.txt]'
-        '(https://files.example.com/files/first_template_file), '
+        '(https://files.example.com/first_template_file), '
         '[second_file.txt]'
-        '(https://files.example.com/files/sec_template_file)'
+        '(https://files.example.com/sec_template_file)'
     )
     assert task_1.description == (
         'His name is... JOHN CENA '

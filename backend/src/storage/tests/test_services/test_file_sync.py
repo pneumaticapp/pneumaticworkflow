@@ -521,7 +521,7 @@ class TestFileSyncServiceGenerateFileId:
         user = create_test_user()
         attachment = FileAttachment.objects.create(
             name='test.pdf',
-            url='https://storage.com/files/test.pdf',
+            url='https://storage.com/test.pdf',
             size=1024,
             account=user.account,
         )

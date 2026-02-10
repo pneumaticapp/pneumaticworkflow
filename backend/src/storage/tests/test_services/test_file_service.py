@@ -10,7 +10,6 @@ from src.storage import messages as fs_messages
 from src.storage.services.exceptions import (
     FileServiceAuthException,
     FileServiceAuthFailedException,
-    FileServiceConnectionFailedException,
     FileSizeExceededException,
     FileUploadException,
     FileUploadInvalidResponseException,
@@ -487,87 +486,3 @@ class TestFileServiceClient:
 
         # assert
         assert ex.value.message == fs_messages.MSG_FS_0009
-
-    def test_check_file_permission__has_access_true__returns_true(
-            self,
-            mocker,
-    ):
-        # arrange
-        mock_settings = mocker.patch(
-            'src.storage.services.file_service.settings',
-        )
-        mock_settings.FILES_BASE_URL = 'https://files.test.com'
-        user = create_test_user()
-        client = FileServiceClient(user=user)
-        mock_response = Mock()
-        mock_response.json.return_value = {'has_access': True}
-        mocker.patch.object(
-            client,
-            '_make_request',
-            return_value=mock_response,
-        )
-
-        # act
-        result = client.check_file_permission(
-            file_id='f123',
-            user_id=user.id,
-        )
-
-        # assert
-        assert result is True
-        client._make_request.assert_called_once_with(
-            method='GET',
-            endpoint='/check-permission/f123',
-            params={'user_id': user.id},
-        )
-
-    def test_check_file_permission__has_access_false__returns_false(
-            self,
-            mocker,
-    ):
-        # arrange
-        mock_settings = mocker.patch(
-            'src.storage.services.file_service.settings',
-        )
-        mock_settings.FILES_BASE_URL = 'https://files.test.com'
-        user = create_test_user()
-        client = FileServiceClient(user=user)
-        mock_response = Mock()
-        mock_response.json.return_value = {'has_access': False}
-        mocker.patch.object(
-            client,
-            '_make_request',
-            return_value=mock_response,
-        )
-
-        # act
-        result = client.check_file_permission(
-            file_id='f456',
-            user_id=user.id,
-        )
-
-        # assert
-        assert result is False
-
-    def test_check_file_permission__request_fails__returns_false(self, mocker):
-        # arrange
-        mock_settings = mocker.patch(
-            'src.storage.services.file_service.settings',
-        )
-        mock_settings.FILES_BASE_URL = 'https://files.test.com'
-        user = create_test_user()
-        client = FileServiceClient(user=user)
-        mocker.patch.object(
-            client,
-            '_make_request',
-            side_effect=FileServiceConnectionFailedException(),
-        )
-
-        # act
-        result = client.check_file_permission(
-            file_id='f789',
-            user_id=user.id,
-        )
-
-        # assert
-        assert result is False

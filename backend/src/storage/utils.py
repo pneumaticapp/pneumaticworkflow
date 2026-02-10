@@ -35,7 +35,7 @@ def _get_file_service_url_pattern() -> str:
         URL pattern for file service
     """
     # Single file service endpoint pattern
-    return r'/files/([a-zA-Z0-9_-]{8,64})'
+    return r'/([a-zA-Z0-9_-]{8,64})'
 
 
 def extract_file_ids_from_text(text: str) -> List[str]:
@@ -43,7 +43,7 @@ def extract_file_ids_from_text(text: str) -> List[str]:
     Extracts file_id from text for Pneumatic file service links.
 
     Searches for file service links in formats:
-    - http(s)://files.pneumatic.app/files/{file_id}
+    - http(s)://files.pneumatic.app/{file_id}
     - Markdown links: [filename](url_with_file_id)
 
     Only extracts file_ids from file service domain (settings.FILE_DOMAIN).
@@ -91,7 +91,7 @@ def extract_all_links_from_text(text: str) -> List[dict]:
     Returns list of dictionaries with link information:
     {
         'filename': 'document.pdf',
-        'url': 'https://files.example.com/files/abc123',
+        'url': 'https://files.example.com/abc123',
         'file_id': 'abc123',  # Only for file service links
         'is_file_service': True/False
     }

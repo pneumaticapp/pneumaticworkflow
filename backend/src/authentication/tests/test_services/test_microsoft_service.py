@@ -18,7 +18,7 @@ from src.authentication.services.microsoft import (
 )
 from src.processes.tests.fixtures import (
     create_test_account,
-    create_test_user,
+    create_test_user, create_test_owner,
 )
 from src.utils.logging import SentryLogLevel
 
@@ -227,11 +227,11 @@ class TestMicrosoftGraphApiMixin:
             access_token=access_token,
         )
 
-    @pytest.mark.skip
     def test_get_user_photo__ok(self, mocker):
 
         # arrange
         account = create_test_account()
+        create_test_owner(account=account)
         access_token = '!@#!@#@!wqww23'
         binary_photo = b'123'
         headers = {'content-type': 'image/svg+xml'}
@@ -239,6 +239,7 @@ class TestMicrosoftGraphApiMixin:
         headers_mock.__getitem__.side_effect = headers.__getitem__
         response_mock = mocker.Mock(headers=headers_mock, ok=True)
         response_mock.content = binary_photo
+        expected_url = 'https://storage.example/photo.svg'
         settings_mock = mocker.patch(
             'src.authentication.services.microsoft.settings',
         )
@@ -252,6 +253,14 @@ class TestMicrosoftGraphApiMixin:
         get_salt_mock = mocker.patch(
             'src.authentication.services.microsoft.get_salt',
             return_value=salt,
+        )
+        file_service_mock = mocker.MagicMock()
+        file_service_mock.upload_file_with_attachment.return_value = (
+            expected_url
+        )
+        mocker.patch(
+            'src.authentication.services.microsoft.FileServiceClient',
+            return_value=file_service_mock,
         )
         user_id = 'UQ@SDW@31221'
         service = MicrosoftGraphApiMixin()
@@ -270,10 +279,14 @@ class TestMicrosoftGraphApiMixin:
             raise_exception=False,
         )
         get_salt_mock.assert_called_once()
-        # TODO: Update test when file service microservice is integrated
-        assert result is None
+        file_service_mock.upload_file_with_attachment.assert_called_once_with(
+            file_content=binary_photo,
+            filename=f'{salt}_photo_96x96.svg',
+            content_type='image/svg+xml',
+            account=account,
+        )
+        assert result == expected_url
 
-    @pytest.mark.skip
     def test_get_user_photo__undefined_content_type__blank_image_ext(
         self,
         mocker,
@@ -281,6 +294,7 @@ class TestMicrosoftGraphApiMixin:
 
         # arrange
         account = create_test_account()
+        create_test_owner(account=account)
         access_token = '!@#!@#@!wqww23'
         binary_photo = b'123'
         headers = {'content-type': 'video|bla*-!file'}
@@ -288,6 +302,7 @@ class TestMicrosoftGraphApiMixin:
         headers_mock.__getitem__.side_effect = headers.__getitem__
         response_mock = mocker.Mock(headers=headers_mock, ok=True)
         response_mock.content = binary_photo
+        expected_url = 'https://storage.example/photo'
         settings_mock = mocker.patch(
             'src.authentication.services.microsoft.settings',
         )
@@ -301,6 +316,14 @@ class TestMicrosoftGraphApiMixin:
         get_salt_mock = mocker.patch(
             'src.authentication.services.microsoft.get_salt',
             return_value=salt,
+        )
+        file_service_mock = mocker.MagicMock()
+        file_service_mock.upload_file_with_attachment.return_value = (
+            expected_url
+        )
+        mocker.patch(
+            'src.authentication.services.microsoft.FileServiceClient',
+            return_value=file_service_mock,
         )
         user_id = '!@#$#$#12ase'
         service = MicrosoftGraphApiMixin()
@@ -319,10 +342,14 @@ class TestMicrosoftGraphApiMixin:
             raise_exception=False,
         )
         get_salt_mock.assert_called_once()
-        # TODO: Update test when file service microservice is integrated
-        assert result is None
+        file_service_mock.upload_file_with_attachment.assert_called_once_with(
+            file_content=binary_photo,
+            filename=f'{salt}_photo_96x96',
+            content_type='video|bla*-!file',
+            account=account,
+        )
+        assert result == expected_url
 
-    @pytest.mark.skip
     def test_get_user_photo__not_found__return_none(self, mocker):
 
         # arrange
@@ -338,7 +365,6 @@ class TestMicrosoftGraphApiMixin:
             'MicrosoftGraphApiMixin._graph_api_request',
             return_value=response_mock,
         )
-        # TODO: Mock file service microservice integration
         user_id = '!@W@##$%%$21'
         service = MicrosoftGraphApiMixin()
 
@@ -355,10 +381,8 @@ class TestMicrosoftGraphApiMixin:
             access_token=access_token,
             raise_exception=False,
         )
-        # TODO: Update test when file service microservice is integrated
         assert result is None
 
-    @pytest.mark.skip
     def test_get_user_photo__disabled_storage__return_none(self, mocker):
 
         # arrange
@@ -391,7 +415,6 @@ class TestMicrosoftGraphApiMixin:
 
         # assert
         graph_api_request_mock.assert_not_called()
-        # TODO: Update test when file service microservice is integrated
         assert result is None
 
 

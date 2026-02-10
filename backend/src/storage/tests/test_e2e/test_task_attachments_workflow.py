@@ -41,7 +41,7 @@ class TestTaskAttachmentsE2E:
         task.taskperformer_set.create(user=performer)
         task.description = (
             'Please check file: '
-            'https://files.example.com/files/task_file_e2e_123'
+            'https://files.example.com/task_file_e2e_123'
         )
         task.save()
 
@@ -83,7 +83,7 @@ class TestTaskAttachmentsE2E:
         # act
         task.description = (
             'Updated with file: '
-            'https://files.example.com/files/new_file_e2e_456'
+            'https://files.example.com/new_file_e2e_456'
         )
         task.save()
         new_file_ids = refresh_attachments(source=task, user=owner)
@@ -105,7 +105,7 @@ class TestTaskAttachmentsE2E:
         workflow = create_test_workflow(user=owner, tasks_count=1)
         task = workflow.tasks.first()
         task.description = (
-            'File: https://files.example.com/files/remove_file_e2e_789'
+            'File: https://files.example.com/remove_file_e2e_789'
         )
         task.save()
         refresh_attachments(source=task, user=owner)
@@ -142,7 +142,7 @@ class TestTaskAttachmentsE2E:
         task = workflow.tasks.first()
         task.taskperformer_set.create(user=performer1)
         task.description = (
-            'File: https://files.example.com/files/performer_file_e2e'
+            'File: https://files.example.com/performer_file_e2e'
         )
         task.save()
         refresh_attachments(source=task, user=owner)
@@ -192,16 +192,16 @@ class TestTaskAttachmentsE2E:
         task.taskperformer_set.create(user=performer)
         task.description = (
             'Files: '
-            'https://files.example.com/files/multi_file_1_e2e and '
-            'https://files.example.com/files/multi_file_2_e2e and '
-            'https://files.example.com/files/multi_file_3_e2e'
+            'https://files.example.com/multi_file_1_e2e and '
+            'https://files.example.com/multi_file_2_e2e and '
+            'https://files.example.com/multi_file_3_e2e'
         )
         task.save()
 
         # act
         new_file_ids = refresh_attachments(source=task, user=owner)
 
-        # assert (only /files/ URLs are supported, not /api/files/)
+        # assert
         assert len(new_file_ids) == 3
         assert 'multi_file_1_e2e' in new_file_ids
         assert 'multi_file_2_e2e' in new_file_ids
@@ -234,7 +234,7 @@ class TestTaskAttachmentsE2E:
         task = workflow.tasks.first()
         task.taskperformer_set.create(user=performer)
         task.description = (
-            'File: https://files.example.com/files/check_perm_e2e'
+            'File: https://files.example.com/check_perm_e2e'
         )
         task.save()
         refresh_attachments(source=task, user=owner)
@@ -275,7 +275,7 @@ class TestTaskAttachmentsE2E:
         workflow.members.add(member1, member2)
         task = workflow.tasks.first()
         task.description = (
-            'File: https://files.example.com/files/members_file_e2e'
+            'File: https://files.example.com/members_file_e2e'
         )
         task.save()
 
@@ -315,7 +315,7 @@ class TestTaskAttachmentsE2E:
         workflow = create_test_workflow(user=owner, tasks_count=1)
         task = workflow.tasks.first()
         task.description = (
-            'File: https://files.example.com/files/old_file_e2e'
+            'File: https://files.example.com/old_file_e2e'
         )
         task.save()
         refresh_attachments(source=task, user=owner)
@@ -325,7 +325,7 @@ class TestTaskAttachmentsE2E:
 
         # act
         task.description = (
-            'File: https://files.example.com/files/new_file_e2e'
+            'File: https://files.example.com/new_file_e2e'
         )
         task.save()
         refresh_attachments(source=task, user=owner)
@@ -398,7 +398,7 @@ class TestTaskAttachmentsE2E:
         task1 = workflow1.tasks.first()
         task1.taskperformer_set.create(user=user1)
         task1.description = (
-            'File: https://files.example.com/files/user1_file_e2e'
+            'File: https://files.example.com/user1_file_e2e'
         )
         task1.save()
         refresh_attachments(source=task1, user=owner)
@@ -406,7 +406,7 @@ class TestTaskAttachmentsE2E:
         task2 = workflow2.tasks.first()
         task2.taskperformer_set.create(user=user2)
         task2.description = (
-            'File: https://files.example.com/files/user2_file_e2e'
+            'File: https://files.example.com/user2_file_e2e'
         )
         task2.save()
         refresh_attachments(source=task2, user=owner)

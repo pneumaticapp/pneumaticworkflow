@@ -51,13 +51,12 @@ class TemplateService(BaseModelService):
         force_save=False,
         **update_kwargs,
     ):
-        result = super().partial_update(
+        super().partial_update(
             force_save=force_save,
             **update_kwargs,
         )
         if 'description' in update_kwargs and self.instance:
             refresh_attachments(self.instance, self.user)
-        return result
 
     def fill_template_data(self, initial_data: dict) -> dict:
 

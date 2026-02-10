@@ -184,9 +184,9 @@ def test_create_text_and_attachment__ok(mocker, api_client):
     comment_text = (
         'Some comment with files: '
         '[first_file.txt]'
-        '(https://files.example.com/files/first_template_file) and '
+        '(https://files.example.com/first_template_file) and '
         '[first_file2.txt]'
-        '(https://files.example.com/files/first_template_file2)'
+        '(https://files.example.com/first_template_file2)'
     )
     event = WorkflowEventService.comment_created_event(
         user=user,

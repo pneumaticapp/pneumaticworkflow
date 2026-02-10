@@ -49,8 +49,10 @@ class FileServiceAuthMiddleware(MiddlewareMixin):
         # Get token from Authorization header
         auth_header = request.META.get('HTTP_AUTHORIZATION', '')
 
-        if (auth_header.startswith('Bearer ') or
-                auth_header.startswith('Token ')):
+        if (
+                auth_header.startswith('Bearer ') or
+                auth_header.startswith('Token ')
+        ):
             return auth_header.split(' ')[1]
 
         # Get token from cookie (for JWT)

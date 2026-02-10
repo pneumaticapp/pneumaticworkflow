@@ -49,7 +49,7 @@ class TestTemplateAttachmentsE2E:
         )
         template.description = (
             'Template file: '
-            'https://files.example.com/files/template_e2e_123'
+            'https://files.example.com/template_e2e_123'
         )
         template.save()
 
@@ -91,7 +91,7 @@ class TestTemplateAttachmentsE2E:
             type=OwnerType.USER,
         )
         template.description = (
-            'File: https://files.example.com/files/tmpl_owners_e2e'
+            'File: https://files.example.com/tmpl_owners_e2e'
         )
         template.save()
 
@@ -133,7 +133,7 @@ class TestTemplateAttachmentsE2E:
 
         # act
         template.description = (
-            'Updated: https://files.example.com/files/tmpl_new_e2e'
+            'Updated: https://files.example.com/tmpl_new_e2e'
         )
         template.save()
         new_file_ids = refresh_attachments(source=template, user=owner)
@@ -162,7 +162,7 @@ class TestTemplateAttachmentsE2E:
             type=OwnerType.USER,
         )
         template.description = (
-            'File: https://files.example.com/files/tmpl_remove_e2e'
+            'File: https://files.example.com/tmpl_remove_e2e'
         )
         template.save()
         refresh_attachments(source=template, user=owner)
@@ -200,7 +200,7 @@ class TestTemplateAttachmentsE2E:
             type=OwnerType.USER,
         )
         template.description = (
-            'File: https://files.example.com/files/tmpl_owner_e2e'
+            'File: https://files.example.com/tmpl_owner_e2e'
         )
         template.save()
         refresh_attachments(source=template, user=owner1)
@@ -252,8 +252,8 @@ class TestTemplateAttachmentsE2E:
         )
         template.description = (
             'Files: '
-            'https://files.example.com/files/tmpl_multi_1_e2e and '
-            'https://files.example.com/files/tmpl_multi_2_e2e'
+            'https://files.example.com/tmpl_multi_1_e2e and '
+            'https://files.example.com/tmpl_multi_2_e2e'
         )
         template.save()
 
@@ -287,7 +287,7 @@ class TestTemplateAttachmentsE2E:
             type=OwnerType.USER,
         )
         template.description = (
-            'File: https://files.example.com/files/tmpl_no_access_e2e'
+            'File: https://files.example.com/tmpl_no_access_e2e'
         )
         template.save()
 
@@ -322,7 +322,7 @@ class TestTemplateAttachmentsE2E:
             type=OwnerType.USER,
         )
         template.description = (
-            'File: https://files.example.com/files/tmpl_old_e2e'
+            'File: https://files.example.com/tmpl_old_e2e'
         )
         template.save()
         refresh_attachments(source=template, user=owner)
@@ -332,7 +332,7 @@ class TestTemplateAttachmentsE2E:
 
         # act
         template.description = (
-            'File: https://files.example.com/files/tmpl_new_replace_e2e'
+            'File: https://files.example.com/tmpl_new_replace_e2e'
         )
         template.save()
         refresh_attachments(source=template, user=owner)
@@ -366,7 +366,7 @@ class TestTemplateAttachmentsE2E:
             type=OwnerType.USER,
         )
         template.description = (
-            'File: https://files.example.com/files/tmpl_remove_owner_e2e'
+            'File: https://files.example.com/tmpl_remove_owner_e2e'
         )
         template.save()
         refresh_attachments(source=template, user=owner1)
@@ -426,7 +426,7 @@ class TestTemplateAttachmentsE2E:
             type=OwnerType.GROUP,
         )
         template.description = (
-            'File: https://files.example.com/files/tmpl_group_owner_e2e'
+            'File: https://files.example.com/tmpl_group_owner_e2e'
         )
         template.save()
 
@@ -489,7 +489,7 @@ class TestTemplateAttachmentsE2E:
             type=OwnerType.GROUP,
         )
         template.description = (
-            'File: https://files.example.com/files/tmpl_mixed_owners_e2e'
+            'File: https://files.example.com/tmpl_mixed_owners_e2e'
         )
         template.save()
 

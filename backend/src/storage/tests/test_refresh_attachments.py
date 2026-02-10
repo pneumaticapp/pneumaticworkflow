@@ -23,7 +23,7 @@ class TestExtractFileIdsFromText:
     @override_settings(FILE_DOMAIN='files.pneumatic.app')
     def test_extract_file_ids_from_text__single_link__list_with_one_id(self):
         # arrange
-        text = "[document.pdf](https://files.pneumatic.app/files/abc123def456)"
+        text = "[document.pdf](https://files.pneumatic.app/abc123def456)"
 
         # act
         file_ids = extract_file_ids_from_text(text)
@@ -38,9 +38,9 @@ class TestExtractFileIdsFromText:
         # arrange
         text = """
         Documents:
-        [contract.pdf](https://files.pneumatic.app/files/abc12345)
-        [specification.docx](https://files.pneumatic.app/files/def45678)
-        [external.pdf](https://drive.google.com/file/d/xyz789)
+        [contract.pdf](https://files.pneumatic.app/abc12345)
+        [specification.docx](https://files.pneumatic.app/def45678)
+        [external.pdf](https://drive.google.com/d/xyz789)
         """
 
         # act
@@ -63,8 +63,8 @@ class TestExtractFileIdsFromText:
     def test_extract_file_ids_from_text__external_links__ignored(self):
         # arrange
         text = """
-        [internal.pdf](https://files.pneumatic.app/files/internal123)
-        [external.pdf](https://drive.google.com/file/d/external456)
+        [internal.pdf](https://files.pneumatic.app/internal123)
+        [external.pdf](https://drive.google.com/d/external456)
         [sharepoint.docx](https://company.sharepoint.com/doc.docx)
         """
 
@@ -94,7 +94,7 @@ class TestRefreshAttachmentsForText:
         mock_filter.exclude.return_value.delete.return_value = (0, {})
         mock_service = Mock()
         mock_service_class.return_value = mock_service
-        text = "[test.pdf](https://files.pneumatic.app/files/test12345)"
+        text = "[test.pdf](https://files.pneumatic.app/test12345)"
         mock_task = Mock()
 
         # act

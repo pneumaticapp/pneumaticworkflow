@@ -895,7 +895,7 @@ def test_retrieve__field_with_attachments__ok(api_client):
         workflow=workflow,
         output=field,
     )
-    field.value = 'https://files.example.com/files/task_file_1'
+    field.value = 'https://files.example.com/task_file_1'
     field.save(update_fields=['value'])
 
     # act

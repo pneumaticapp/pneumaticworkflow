@@ -169,7 +169,7 @@ class MicrosoftGraphApiMixin:
                     message='Microsoft user photo upload failed',
                     data={
                         'user_id': user_id,
-                        'account_id': account.id if account else None,
+                        'account_id': account.id,
                         'content_type': content_type,
                         'error': str(ex),
                     },
