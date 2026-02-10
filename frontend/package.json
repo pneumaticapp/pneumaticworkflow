@@ -13,6 +13,7 @@
     "@emoji-mart/data": "^1.1.2",
     "@emoji-mart/react": "^1.1.1",
     "@lexical/history": "^0.21.0",
+    "@lexical/clipboard": "^0.21.0",
     "@lexical/html": "^0.21.0",
     "@lexical/link": "^0.21.0",
     "@lexical/list": "^0.21.0",
