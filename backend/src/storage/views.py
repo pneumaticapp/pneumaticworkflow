@@ -10,7 +10,6 @@ from src.storage.serializers import (
     AttachmentSerializer,
 )
 from src.storage.services.attachments import AttachmentService
-from src.storage.services.file_sync import FileSyncService
 
 
 class AttachmentViewSet(CustomViewSetMixin, GenericViewSet):
@@ -76,21 +75,3 @@ class AttachmentViewSet(CustomViewSetMixin, GenericViewSet):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
         return self.response_ok(serializer.data)
-
-
-class FileSyncViewSet(CustomViewSetMixin, GenericViewSet):
-    """
-    Admin-only endpoint for manual file service synchronization.
-    """
-    permission_classes = (IsAuthenticated,)
-
-    def create(self, request, *args, **kwargs):
-        if not request.user.is_superuser:
-            return self.response_forbidden()
-        service = FileSyncService()
-        file_service_stats = service.sync_all_files()
-        storage_stats = service.sync_all_attachments_to_storage()
-        return self.response_ok({
-            'file_service': file_service_stats,
-            'storage': storage_stats,
-        })
