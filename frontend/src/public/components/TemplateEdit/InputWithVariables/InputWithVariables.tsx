@@ -1,16 +1,14 @@
 import React from 'react';
-import classnames from 'classnames';
 
 import { TTaskVariable } from '../types';
-
-import { variablesDecorator } from '../utils/variablesDecorator';
-import { addVariableEntityToEditor } from '../utils/addVariableEntityToEditor';
 import { escapeMarkdown } from '../../../utils/escapeMarkdown';
 import { VariableList } from '../VariableList';
-import { getInitialEditorState } from '../../RichEditor/utils/converters';
-import { RichEditor, IRichEditorHandle } from '../../RichEditor';
+import { LexicalRichEditor, ILexicalRichEditorHandle } from '../../RichEditor/lexical';
+import type { ILexicalRichEditorProps } from '../../RichEditor/lexical';
 
 import styles from './InputWithVariables.css';
+
+
 
 export interface IEditorWithVariablesProps {
   placeholder?: string;
@@ -20,10 +18,10 @@ export interface IEditorWithVariablesProps {
   title?: string;
   className?: string;
   toolipText: string;
-  foregroundColor?: React.ComponentProps<typeof RichEditor>['foregroundColor'];
-  size?: 'xl' | 'lg';
-  onChange: React.ComponentProps<typeof RichEditor>['handleChange'];
+  foregroundColor?: ILexicalRichEditorProps['foregroundColor'];
+  onChange: ILexicalRichEditorProps['handleChange'];
 }
+
 export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
   placeholder,
   listVariables,
@@ -33,40 +31,32 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
   title,
   toolipText,
   foregroundColor,
-  size = 'lg',
   onChange,
 }) => {
-  const editor = React.useRef<IRichEditorHandle>(null);
+  const editorRef = React.useRef<ILexicalRichEditorHandle>(null);
   const formattedValue = escapeMarkdown(value);
 
   const handleInsertVariable = (apiName?: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
-
-    if (!editor.current) {
-      return;
-    }
-
+    if (!editorRef.current || apiName == null) return;
     const newVariable = listVariables?.find((variable) => variable.apiName === apiName);
-    editor.current.onChange(
-      addVariableEntityToEditor(editor.current.getEditorState(), {
-        title: newVariable?.title,
-        subtitle: newVariable?.subtitle,
-        apiName,
-      }),
+    editorRef.current.insertVariable(
+      apiName,
+      newVariable?.title ?? '',
+      newVariable?.subtitle ?? '',
     );
   };
 
   return (
-    <RichEditor
-      ref={editor}
+    <LexicalRichEditor
+      ref={editorRef}
       title={title}
-      placeholder={placeholder}
-      initialState={getInitialEditorState(formattedValue, templateVariables)}
+      placeholder={placeholder ?? ''}
+      defaultValue={formattedValue}
       handleChange={onChange}
-      decorators={[variablesDecorator]}
       withToolbar={false}
       multiline={false}
-      className={classnames(size === 'xl' ? styles['editor_xl'] : styles['editor_lg'], className)}
+      className={className}
       foregroundColor={foregroundColor}
       stripPastedFormatting
       templateVariables={templateVariables}
@@ -76,8 +66,8 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
         onVariableClick={handleInsertVariable}
         className={styles['variables']}
         tooltipText={toolipText}
-        focusEditor={() => editor.current?.focus()}
+        focusEditor={() => editorRef.current?.focus()}
       />
-    </RichEditor>
+    </LexicalRichEditor>
   );
 };
