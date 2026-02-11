@@ -56,7 +56,7 @@ class ContactAdminForm(ModelForm):
 
         try:
             file_url = file_service.upload_file_with_attachment(
-                file_content=photo_file.file.getvalue(),
+                file_content=photo_file.read(),
                 filename=photo_file.name.replace(' ', '_'),
                 content_type=photo_file.content_type,
                 account=self.instance.account,
@@ -73,5 +73,4 @@ class ContactAdminForm(ModelForm):
                 },
                 level=SentryLogLevel.ERROR,
             )
-            self.instance.photo = None
         return super().save(commit=commit)

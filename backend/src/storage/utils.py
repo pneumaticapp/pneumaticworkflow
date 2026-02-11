@@ -1,5 +1,5 @@
 import re
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -14,6 +14,42 @@ from src.storage.models import Attachment
 from src.storage.services.attachments import AttachmentService
 
 UserModel = get_user_model()
+
+
+def _get_file_service_link_pattern(
+        anchored: bool = False,
+) -> Optional[re.Pattern]:
+    """
+    Build regex for file service markdown links;
+    optional ^...$ for full match.
+    """
+    file_domain = settings.FILE_DOMAIN
+    if not file_domain:
+        return None
+    core = (
+        rf'\[([^\]]+)\]\('
+        rf'https?://[^/\s]*{re.escape(file_domain)}'
+        rf'/([a-zA-Z0-9_-]{{8,64}})(?:[^\s)]*)?\)'
+    )
+    if anchored:
+        core = '^' + core + '$'
+    return re.compile(core)
+
+
+def parse_single_file_service_link(text: str) -> Optional[Tuple[str, str]]:
+    """
+    Parse one markdown link to file service.
+
+    Returns (link_text, file_id) if text is exactly one file service link,
+    else None.
+    """
+    pattern = _get_file_service_link_pattern(anchored=True)
+    if pattern is None:
+        return None
+    match = pattern.match(text.strip())
+    if match:
+        return (match.group(1), match.group(2))
+    return None
 
 
 def extract_file_ids_from_text(text: str) -> List[str]:
@@ -32,28 +68,11 @@ def extract_file_ids_from_text(text: str) -> List[str]:
     Returns:
         List of unique file_ids from file service
     """
-    file_domain = settings.FILE_DOMAIN
-    if not text or not file_domain:
+    pattern = _get_file_service_link_pattern(anchored=False)
+    if not text or pattern is None:
         return []
-
-    markdown_file_link_pattern = re.compile(
-        rf'\[([^\]]+)\]\('
-        rf'https?://[^/\s]*{re.escape(file_domain)}'
-        rf'/([a-zA-Z0-9_-]{{8,64}})(?:[^\s)]*)?\)',
-    )
-
-    matches = markdown_file_link_pattern.findall(text)
-
-    # matches = [(filename, file_id), ...]
+    matches = pattern.findall(text)
     file_ids = [file_id for _, file_id in matches]
-
-    # Direct URLs http(s)://files.pneumatic.app/{file_id} are not supported;
-    # only Markdown links are parsed.
-    # url_pattern = r'/([a-zA-Z0-9_-]{8,64})'
-    # full_pattern = rf'https?://[^/]*{re.escape(file_domain)}{url_pattern}'
-    # matches = re.findall(full_pattern, text)
-    # file_ids.extend(matches)
-
     return list(dict.fromkeys(file_ids))
 
 

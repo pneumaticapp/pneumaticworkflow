@@ -3,6 +3,7 @@ from datetime import timedelta
 
 import pytest
 from django.utils import timezone
+from django.test import override_settings
 
 from src.processes.enums import (
     FieldType,
@@ -391,6 +392,7 @@ def test_retrieve__kickoff_field_with_selections__ok(api_client):
     assert selection_data['value'] == selection.value
 
 
+@override_settings(FILE_DOMAIN='files.example.com')
 def test_retrieve__kickoff_field_with_attachments__ok(api_client):
 
     # arrange

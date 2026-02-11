@@ -1,5 +1,6 @@
 import pytest
 from django.contrib.auth import get_user_model
+from django.test import override_settings
 
 from src.processes.enums import (
     FieldType,
@@ -460,10 +461,8 @@ def test_link_new_attachments__not_attached__ok():
     )
 
     # act
-    file_ids = ['john_cena_file.jpg']
-    service._link_new_attachments(
-        file_ids=file_ids,
-    )
+    file_ids = ['john_cena_file']
+    service._link_new_attachments(markdown_values=file_ids)
 
     # assert
     attachment = Attachment.objects.get(file_id=file_ids[0])
@@ -490,10 +489,8 @@ def test_link_new_attachments__create_multiple__ok():
     )
 
     # act
-    file_ids = ['file1.jpg', 'file2.png']
-    service._link_new_attachments(
-        file_ids=file_ids,
-    )
+    file_ids = ['file1', 'file2']
+    service._link_new_attachments(markdown_values=file_ids)
 
     # assert
     attachments = Attachment.objects.filter(file_id__in=file_ids)
@@ -525,9 +522,7 @@ def test_link_new_attachments__creates_new_attachments():
 
     # act
     file_ids = ['event_file_123.jpg']
-    service._link_new_attachments(
-        file_ids=file_ids,
-    )
+    service._link_new_attachments(markdown_values=file_ids)
 
     # assert
     attachment = Attachment.objects.get(file_id=file_ids[0])
@@ -556,9 +551,7 @@ def test_link_new_attachments__creates_for_current_account():
 
     # act
     file_ids = ['account_file_123.jpg']
-    service._link_new_attachments(
-        file_ids=file_ids,
-    )
+    service._link_new_attachments(markdown_values=file_ids)
 
     # assert
     attachment = Attachment.objects.get(file_id=file_ids[0])
@@ -585,9 +578,7 @@ def test_link_new_attachments__empty_list__no_attachments_created():
     )
 
     # act
-    service._link_new_attachments(
-        file_ids=[],
-    )
+    service._link_new_attachments(markdown_values=[])
 
     # assert
     attachments_count = Attachment.objects.filter(
@@ -1583,31 +1574,34 @@ def test_get_valid_checkbox_value__many_api_names__ok(mocker):
     clear_markdown_mock.assert_called_once_with(value)
 
 
+@override_settings(FILE_DOMAIN='example.com')
 def test_get_valid_file_value__one_file__ok():
 
     # arrange
     user = create_test_owner()
     workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.tasks.get(number=1)
-    TaskField.objects.create(
+    field = TaskField.objects.create(
         task=task,
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
     )
-    service = TaskFieldService(user=user)
-    file_id = 'john_cena_file.jpg'
+    value = 'abc123def456ghi789'
+    service = TaskFieldService(user=user, instance=field)
+    file_id = f'[doc](https://example.com/{value})'
     raw_value = [file_id]
 
     # act
     field_data = service._get_valid_file_value(raw_value=raw_value)
 
     # assert
-    assert field_data.value == file_id
-    assert field_data.markdown_value == f'File: {file_id}'
-    assert field_data.clear_value == file_id
+    assert field_data.value == value
+    assert field_data.markdown_value == file_id
+    assert field_data.clear_value == value
 
 
+@override_settings(FILE_DOMAIN='example.com')
 def test_get_valid_file_value__multiple_files__ok():
 
     # arrange
@@ -1621,19 +1615,21 @@ def test_get_valid_file_value__multiple_files__ok():
         workflow=workflow,
     )
     service = TaskFieldService(user=user, instance=field)
-    file_ids = ['john_cena_file.jpg', 'rock_file.png']
+    value = 'abc123def456ghi789'
+    value_2 = 'abc123def456ghi7890'
+    file_ids = [
+        f'[doc](https://example.com/{value})',
+        f'[doc2](https://example.com/{value_2})',
+    ]
     raw_value = file_ids
 
     # act
     field_data = service._get_valid_file_value(raw_value=raw_value)
 
     # assert
-    expected_value = ', '.join(file_ids)
-    expected_markdown = ', '.join([f'File: {fid}' for fid in file_ids])
-
-    assert field_data.value == expected_value
-    assert field_data.markdown_value == expected_markdown
-    assert field_data.clear_value == expected_value
+    assert field_data.value == f'{value}, {value_2}'
+    assert field_data.markdown_value == ', '.join(file_ids)
+    assert field_data.clear_value == f'{value}, {value_2}'
 
 
 def test_get_valid_file_value__empty_list__empty_result():
@@ -1642,14 +1638,13 @@ def test_get_valid_file_value__empty_list__empty_result():
     user = create_test_owner()
     workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.tasks.get(number=1)
-    TaskField.objects.create(
+    field = TaskField.objects.create(
         task=task,
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
     )
-
-    service = TaskFieldService(user=user)
+    service = TaskFieldService(user=user, instance=field)
     raw_value = []
 
     # act
@@ -1690,8 +1685,33 @@ def test_get_valid_file_value__not_list__raise_exception():
     assert ex.value.api_name == task_field.api_name
 
 
-@pytest.mark.parametrize('raw_value', ('abc', None, []))
-def test_get_valid_file_value__invalid_attach_id__raise_exception(raw_value):
+@override_settings(FILE_DOMAIN='example.com')
+def test_get_valid_file_value__external_domain_link__raise_exception():
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.FILE,
+        workflow=workflow,
+    )
+    service = TaskFieldService(user=user, instance=field)
+    raw_value = ['[x](https://other.com/id12345678)']
+
+    # act
+    with pytest.raises(TaskFieldException) as ex:
+        service._get_valid_file_value(raw_value=raw_value)
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0036
+    assert ex.value.api_name == field.api_name
+
+
+@override_settings(FILE_DOMAIN='example.com')
+def test_get_valid_file_value__invalid_attach_id__raise_exception():
 
     # arrange
     user = create_test_owner()
@@ -1707,7 +1727,7 @@ def test_get_valid_file_value__invalid_attach_id__raise_exception(raw_value):
 
     # act
     with pytest.raises(TaskFieldException) as ex:
-        service._get_valid_file_value(raw_value=[raw_value])
+        service._get_valid_file_value(raw_value=['abc'])
 
     # assert
     assert ex.value.message == messages.MSG_PW_0036

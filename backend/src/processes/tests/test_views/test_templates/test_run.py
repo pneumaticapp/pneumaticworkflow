@@ -4,6 +4,7 @@ from datetime import timedelta
 import pytest
 import pytz
 from django.utils import timezone
+from django.test import override_settings
 
 from src.accounts.enums import (
     BillingPlanType,
@@ -80,6 +81,7 @@ from src.utils.validation import ErrorCode
 pytestmark = pytest.mark.django_db
 
 
+@override_settings(FILE_DOMAIN='files.example.com')
 def test_run__all__ok(api_client, mocker):
     # arrange
     webhook_payload = mocker.Mock()
@@ -285,7 +287,7 @@ def test_run__all__ok(api_client, mocker):
     )
     assert kickoff_field_4_data['markdown_value'] == expected_markdown
     assert kickoff_field_4_data['clear_value'] == (
-        'first_file.txt, second_file.txt'
+        'first_template_file, sec_template_file'
     )
 
     kickoff_field_5_data = data['kickoff']['output'][4]

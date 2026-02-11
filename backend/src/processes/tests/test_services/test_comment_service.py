@@ -119,6 +119,7 @@ def test_create__not_another_performers__ok(mocker):
         task=task,
         text=text,
         clear_text=clear_text,
+        after_create_actions=False,
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
     refresh_attachments_mock.assert_called_once_with(
@@ -229,6 +230,7 @@ def test_create__notified_users__ok(mocker, status):
         task=task,
         text=text,
         clear_text=clear_text,
+        after_create_actions=False,
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
     refresh_attachments_mock.assert_called_once_with(
@@ -344,6 +346,7 @@ def test_create_mentioned_users__ok(mocker):
         task=task,
         text=text,
         clear_text=clear_text,
+        after_create_actions=False,
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
     refresh_attachments_mock.assert_called_once_with(
@@ -459,6 +462,7 @@ def test_create__with_attachments__ok(mocker):
         task=task,
         text=text,
         clear_text=clear_text,
+        after_create_actions=False,
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
     refresh_attachments_mock.assert_called_once_with(
@@ -585,6 +589,7 @@ def test_create__find_attachments_in_text__ok(data, mocker):
         task=task,
         text=text,
         clear_text=clear_text,
+        after_create_actions=False,
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
     refresh_attachments_mock.assert_called_once_with(
@@ -691,6 +696,7 @@ def test_create__not_found_attachments_in_text__ok(text, mocker):
         task=task,
         text=text,
         clear_text=clear_text,
+        after_create_actions=False,
     )
     get_new_comment_recipients_mock.assert_called_once_with(task)
     refresh_attachments_mock.assert_called_once_with(

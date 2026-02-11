@@ -24,6 +24,7 @@ from src.storage.enums import AccessType, SourceType
 from src.storage.models import Attachment
 from src.storage.utils import (
     extract_file_ids_from_text,
+    parse_single_file_service_link,
     sync_storage_attachments_for_scope,
 )
 from src.utils.dates import date_tsp_to_user_fmt
@@ -206,59 +207,57 @@ class TaskFieldService(BaseWorkflowService):
 
     def _get_valid_file_value(self, raw_value: Any, **kwargs) -> FieldData:
         """
-        Validate file field value: list of Markdown links or plain file_ids.
+        Validate file field value: list of Markdown links to file service.
 
         Args:
-            raw_value: List of "[filename](url)" or plain file_id strings
+            raw_value: List of "[filename](url)" where url must be from
+                FILE_DOMAIN; parsed via parse_single_file_service_link.
+                Required field with empty
+                list or only whitespace items raises.
 
         Returns:
-            FieldData with file information
+            FieldData with value=file_ids, markdown_value=links,
+            clear_value=link labels.
         """
-        api_name = getattr(self.instance, 'api_name', None) or 'field'
         if not isinstance(raw_value, list):
             raise TaskFieldException(
-                api_name=api_name,
+                api_name=self.instance.api_name,
                 message=messages.MSG_PW_0036,
             )
 
-        markdown_pattern = re.compile(r'^\[([^\]]+)\]\(([^)]+)\)$')
-        file_id_pattern = re.compile(r'^[a-zA-Z0-9_.-]{8,64}$')
+        stripped_items = [
+            item.strip()
+            for item in raw_value
+            if isinstance(item, str) and item.strip()
+        ]
+
         values = []
         markdown_values = []
-        clear_values = []
 
-        for item in raw_value:
-            if not isinstance(item, str):
+        for stripped in stripped_items:
+            parsed = parse_single_file_service_link(stripped)
+            if parsed is None:
                 raise TaskFieldException(
-                    api_name=api_name,
+                    api_name=self.instance.api_name,
                     message=messages.MSG_PW_0036,
                 )
-            stripped = item.strip()
-            if not stripped:
-                continue
-            match = markdown_pattern.match(stripped)
-            if match:
-                values.append(stripped)
-                markdown_values.append(stripped)
-                clear_values.append(match.group(1))
-            elif file_id_pattern.match(stripped):
-                values.append(stripped)
-                markdown_values.append(f'File: {stripped}')
-                clear_values.append(stripped)
-            else:
-                raise TaskFieldException(
-                    api_name=api_name,
-                    message=messages.MSG_PW_0036,
-                )
+            _, file_id = parsed
+            values.append(file_id)
+            markdown_values.append(stripped)
+
+        if self.instance.is_required and not values:
+            raise TaskFieldException(
+                api_name=self.instance.api_name,
+                message=messages.MSG_PW_0036,
+            )
 
         value = ', '.join(values)
         markdown_value = ', '.join(markdown_values)
-        clear_value = ', '.join(clear_values)
 
         return FieldData(
             value=value,
             markdown_value=markdown_value,
-            clear_value=clear_value,
+            clear_value=value,
         )
 
     def _get_valid_user_value(self, raw_value: Any, **kwargs) -> FieldData:
@@ -367,22 +366,16 @@ class TaskFieldService(BaseWorkflowService):
     def _link_new_attachments(
         self,
         markdown_values: Optional[List[str]] = None,
-        file_ids: Optional[List[str]] = None,
     ):
         """
         Create new attachments for the task field in storage service.
 
         Args:
             markdown_values: List of Markdown strings like "[filename](url)"
-            file_ids: List of file_id strings (for backward compatibility)
+            or plain file_id strings
         """
-        if file_ids is not None:
-            ids_to_sync = file_ids
-        elif markdown_values not in self.NULL_VALUES:
+        if markdown_values not in self.NULL_VALUES:
             ids_to_sync = self._extract_file_ids_from_markdown(markdown_values)
-        else:
-            ids_to_sync = None
-        if ids_to_sync is not None:
             self._sync_storage_attachments(ids_to_sync)
 
     def _create_selections(
@@ -514,11 +507,10 @@ class TaskFieldService(BaseWorkflowService):
             extracted = extract_file_ids_from_text(value)
             if extracted:
                 file_ids.extend(extracted)
-            elif (
-                value and isinstance(value, str) and value.strip()
-                and not markdown_pattern.match(value)
-            ):
-                file_ids.append(value.strip())
+            else:
+                stripped = value.strip() if isinstance(value, str) else ''
+                if stripped and not markdown_pattern.match(stripped):
+                    file_ids.append(stripped)
         return file_ids
 
     def _sync_storage_attachments(
@@ -540,21 +532,18 @@ class TaskFieldService(BaseWorkflowService):
             source_type = SourceType.WORKFLOW
 
         for file_id in file_ids:
-            attachment = Attachment.objects.filter(
+            attachment, created = Attachment.objects.get_or_create(
                 file_id=file_id,
-                account_id=self.account.id,
-            ).first()
-            if attachment is None:
-                Attachment.objects.create(
-                    file_id=file_id,
-                    account=self.account,
-                    source_type=source_type,
-                    access_type=AccessType.RESTRICTED,
-                    task=self.instance.task,
-                    workflow=self.instance.workflow,
-                    output=self.instance,
-                )
-            else:
+                defaults={
+                    'account': self.account,
+                    'source_type': source_type,
+                    'access_type': AccessType.RESTRICTED,
+                    'task': self.instance.task,
+                    'workflow': self.instance.workflow,
+                    'output': self.instance,
+                },
+            )
+            if not created:
                 attachment.workflow = self.instance.workflow
                 attachment.task = self.instance.task
                 attachment.output = self.instance

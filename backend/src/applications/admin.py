@@ -68,9 +68,10 @@ class IntegrationCreateForm(ModelForm):
             return super().save(commit=commit)
 
         file_service = FileServiceClient(user=self.user)
+        file_url = None
         try:
             file_url = file_service.upload_file_with_attachment(
-                file_content=image.file.getvalue(),
+                file_content=image.read(),
                 filename=image.name.replace(' ', '_'),
                 content_type='image/svg+xml',
                 account=self.user.account,
@@ -85,11 +86,11 @@ class IntegrationCreateForm(ModelForm):
                 },
                 level=SentryLogLevel.ERROR,
             )
-            file_url = None
 
         integration = super().save(commit=commit)
-        integration.logo = file_url
-        integration.save()
+        if file_url is not None:
+            integration.logo = file_url
+            integration.save(update_fields=['logo'])
         return integration
 
 

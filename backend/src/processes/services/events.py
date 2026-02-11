@@ -668,11 +668,17 @@ class CommentService(BaseModelService):
                 task=task,
                 text=text,
                 clear_text=clear_text,
+                after_create_actions=False,
             )
             if not task.contains_comments:
                 task.contains_comments = True
                 task.save(update_fields=['contains_comments'])
             refresh_attachments(source=self.instance, user=self.user)
+            self.instance.with_attachments = (
+                self.instance.storage_attachments.exists()
+            )
+            self.instance.save(update_fields=['with_attachments'])
+            WorkflowEventService._after_create_actions(self.instance)
             mentioned_users_ids, notify_users_ids = (
                 self._get_new_comment_recipients(task)
             )

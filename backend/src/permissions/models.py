@@ -22,7 +22,7 @@ class GroupObjectPermission(models.Model):
                 name='perm_grp_ct_obj_idx',
             ),
         ]
-        unique_together = ['group', 'permission', 'object_pk']
+        unique_together = ['group', 'permission', 'content_type', 'object_pk']
 
     group = models.ForeignKey(
         UserGroup,

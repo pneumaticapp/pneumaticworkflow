@@ -74,19 +74,8 @@ class FileServiceAuthMiddleware(MiddlewareMixin):
             return None
 
         # Extract domain from URL
-        # Example: http://localhost -> localhost
-        # https://app.pneumatic.app -> .pneumatic.app
         try:
             parsed = urlparse(frontend_url)
-            hostname = parsed.hostname
-
-            # For production use wildcard domain
-            if hostname and not hostname.startswith('localhost'):
-                # Get main domain (e.g., pneumatic.app)
-                parts = hostname.split('.')
-                if len(parts) >= 2:
-                    return f'.{parts[-2]}.{parts[-1]}'
-
-            return hostname
+            return parsed.hostname
         except (ValueError, AttributeError):
             return None
