@@ -47,7 +47,7 @@ export interface ILexicalRichEditorProps {
 
 export interface ILexicalEditorContentProps {
   placeholder?: string;
-  withChecklists: boolean;
+  withChecklists?: boolean;
   multiline: boolean;
   withToolbar: boolean;
   withMentions: boolean;

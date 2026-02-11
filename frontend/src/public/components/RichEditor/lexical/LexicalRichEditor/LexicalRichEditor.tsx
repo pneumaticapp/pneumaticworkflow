@@ -44,7 +44,7 @@ export const LexicalRichEditor = forwardRef<
 >(function LexicalRichEditor(
   {
     className,
-    withChecklists = true,
+    withChecklists,
     withToolbar = true,
     withMentions = true,
     title,

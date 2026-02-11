@@ -100,7 +100,6 @@ export function Field({
         return (
           <LexicalRichEditor
             placeholder={placeholder}
-            withChecklists={false}
             defaultValue={value as string}
             handleChange={(val) => {
               onChange({ target: { value: val } } as React.ChangeEvent<HTMLInputElement>);
