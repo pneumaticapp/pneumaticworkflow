@@ -49,12 +49,6 @@ class Migration(migrations.Migration):
             },
             bases=(src.generics.mixins.models.SoftDeleteMixin, models.Model),
         ),
-        migrations.AddIndex(
-            model_name='searchcontent',
-            index=django.contrib.postgres.indexes.GinIndex(
-                condition=models.Q(is_deleted=False), fields=['content'],
-                name='processes_searchcontent_gin'),
-        ),
         migrations.AddConstraint(
             model_name='searchcontent',
             constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('workflow', 'task', 'event', 'task_field', 'template', 'task_template'), name='processes_search_content_unique'),
