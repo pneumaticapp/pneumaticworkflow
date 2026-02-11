@@ -43,22 +43,23 @@ export const LexicalRichEditor = forwardRef<
   ILexicalRichEditorProps
 >(function LexicalRichEditor(
   {
-    foregroundColor = 'white',
-    placeholder,
     className,
+    withChecklists = true,
+    withToolbar = true,
+    withMentions = true,
     title,
+    children,
     multiline = true,
-    defaultValue,
+    foregroundColor = 'white',
     handleChange,
     handleChangeChecklists,
-    withToolbar = false,
-    withMentions = false,
-    mentions,
-    templateVariables,
-    isModal,
     accountId,
+    mentions,
+    defaultValue,
+    isModal,
+    templateVariables,
     onUploadAttachments: onUploadAttachmentsProp,
-    children,
+    placeholder = '',
   },
   ref,
 ) {
@@ -187,6 +188,7 @@ export const LexicalRichEditor = forwardRef<
             editorRef={editorRef}
             editorContainerRef={editorContainerRef}
             onChange={onChange}
+            withChecklists={withChecklists}
           />
         </LinkPluginProvider>
       </LexicalComposer>

@@ -2,6 +2,7 @@ import type { ChangeEvent, MouseEvent, ReactNode } from 'react';
 
 export interface IEditorToolbarProps {
   isModal?: boolean;
+  withChecklists?: boolean;
   onUploadAttachments?: (e: ChangeEvent<HTMLInputElement>) => Promise<void>;
 }
 

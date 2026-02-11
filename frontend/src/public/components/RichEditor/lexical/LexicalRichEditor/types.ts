@@ -23,7 +23,7 @@ export interface ILexicalRichEditorProps {
   isModal?: boolean;
   accountId?: number;
   mentions?: TMentionData[];
-  placeholder: string;
+  placeholder?: string;
   className?: string;
   defaultValue?: string;
   withMentions?: boolean;
@@ -46,7 +46,8 @@ export interface ILexicalRichEditorProps {
 }
 
 export interface ILexicalEditorContentProps {
-  placeholder: string;
+  placeholder?: string;
+  withChecklists: boolean;
   multiline: boolean;
   withToolbar: boolean;
   withMentions: boolean;

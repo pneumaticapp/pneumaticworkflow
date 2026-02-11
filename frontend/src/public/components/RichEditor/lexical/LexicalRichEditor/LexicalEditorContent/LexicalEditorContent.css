@@ -21,7 +21,8 @@
   outline: none;
 
   > * + * {
-    margin-top: 2rem;
+    /* stylelint-disable-next-line declaration-no-important */
+    margin-top: 2rem !important;
   }
 }
 

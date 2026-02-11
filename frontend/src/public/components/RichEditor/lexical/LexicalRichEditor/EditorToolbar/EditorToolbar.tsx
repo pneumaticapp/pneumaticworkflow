@@ -31,6 +31,7 @@ import styles from './EditorToolbar.css';
 
 
 export function EditorToolbar({
+  withChecklists,
   isModal,
   onUploadAttachments,
 }: IEditorToolbarProps): React.ReactElement {
@@ -80,7 +81,9 @@ export function EditorToolbar({
       ref: undefined,
     },
     { Icon: LinkButtonIcon, labels: TOOLBAR_LABELS.link, isActive: isLink, onMouseDown: toggleLink, ref: linkButtonRef },
-    { Icon: ChecklistIcon, labels: TOOLBAR_LABELS.checklist, isActive: false, onMouseDown: applyChecklist, ref: undefined },
+    ...(withChecklists
+      ? [{ Icon: ChecklistIcon, labels: TOOLBAR_LABELS.checklist, isActive: false, onMouseDown: applyChecklist, ref: undefined }]
+      : [])
   ];
 
   const attachmentButtons = [

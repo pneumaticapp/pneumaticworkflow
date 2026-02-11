@@ -26,7 +26,8 @@ import styles from './LexicalEditorContent.css';
 
 
 export function LexicalEditorContent({
-  placeholder,
+  placeholder = '',
+  withChecklists,
   multiline,
   withToolbar,
   withMentions,
@@ -54,7 +55,7 @@ export function LexicalEditorContent({
         }
         ErrorBoundary={LexicalErrorBoundary}
       />
-      {withToolbar && <EditorToolbar isModal={isModal} onUploadAttachments={onUploadAttachments} />}
+      {withToolbar && <EditorToolbar withChecklists={withChecklists} isModal={isModal} onUploadAttachments={onUploadAttachments} />}
 
       <HistoryPlugin />
       <ListPlugin />
@@ -65,7 +66,7 @@ export function LexicalEditorContent({
       <LinkPlugin />
       <LinkTooltipPlugin />
       <VariableTooltipPlugin />
-      <ChecklistPlugin />
+      {withChecklists && <ChecklistPlugin />}
       <InsertAttachmentPlugin />
       {showMentions && mentions ? <MentionsPlugin mentions={mentions} /> : null}
     </div>
