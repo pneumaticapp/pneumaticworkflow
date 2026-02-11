@@ -516,20 +516,11 @@ class MicrosoftAuthService(
             for user_profile in users_data['value']:
                 email = self._get_user_profile_email(user_profile)
                 if email and email != user.email:
-                    contact = Contact.objects.filter(
+                    photo = self._get_user_photo(
+                        access_token=access_token,
+                        user_id=user_profile['id'],
                         account=user.account,
-                        user=user,
-                        source=SourceType.MICROSOFT,
-                        email=email,
-                    ).first()
-                    if contact and contact.photo:
-                        photo = contact.photo
-                    else:
-                        photo = self._get_user_photo(
-                            access_token=access_token,
-                            user_id=user_profile['id'],
-                            account=user.account,
-                        )
+                    )
                     first_name = (
                         user_profile['givenName'] or email.split('@')[0]
                     )
