@@ -8,7 +8,10 @@ from src.accounts.messages import MSG_A_0001
 from src.accounts.models import (
     Contact,
 )
-from src.storage.services.exceptions import FileServiceException
+from src.storage.services.exceptions import (
+    FileServiceConnectionException,
+    FileServiceException,
+)
 from src.storage.services.file_service import FileServiceClient
 from src.utils.logging import (
     SentryLogLevel,
@@ -52,9 +55,8 @@ class ContactAdminForm(ModelForm):
             return super().save(commit=commit)
 
         user = self.cleaned_data['user']
-        file_service = FileServiceClient(user=user)
-
         try:
+            file_service = FileServiceClient(user=user)
             file_url = file_service.upload_file_with_attachment(
                 file_content=photo_file.read(),
                 filename=photo_file.name.replace(' ', '_'),
@@ -62,7 +64,10 @@ class ContactAdminForm(ModelForm):
                 account=self.instance.account,
             )
             self.instance.photo = file_url
-        except FileServiceException as ex:
+        except (
+            FileServiceConnectionException,
+            FileServiceException,
+        ) as ex:
             capture_sentry_message(
                 message='Contact photo upload failed',
                 data={

@@ -9,7 +9,10 @@ from tinymce.widgets import TinyMCE
 
 from src.applications.models import Integration
 from src.processes.messages.workflow import MSG_PW_0001
-from src.storage.services.exceptions import FileServiceException
+from src.storage.services.exceptions import (
+    FileServiceConnectionException,
+    FileServiceException,
+)
 from src.storage.services.file_service import FileServiceClient
 from src.utils.logging import (
     SentryLogLevel,
@@ -67,16 +70,19 @@ class IntegrationCreateForm(ModelForm):
         if not image:
             return super().save(commit=commit)
 
-        file_service = FileServiceClient(user=self.user)
         file_url = None
         try:
+            file_service = FileServiceClient(user=self.user)
             file_url = file_service.upload_file_with_attachment(
                 file_content=image.read(),
                 filename=image.name.replace(' ', '_'),
                 content_type='image/svg+xml',
                 account=self.user.account,
             )
-        except FileServiceException as ex:
+        except (
+            FileServiceConnectionException,
+            FileServiceException,
+        ) as ex:
             capture_sentry_message(
                 message='Integration logo upload failed',
                 data={

@@ -504,11 +504,13 @@ class TaskFieldService(BaseWorkflowService):
         file_ids = []
         markdown_pattern = re.compile(r'^\[([^\]]+)\]\(([^)]+)\)$')
         for value in markdown_values:
+            if not isinstance(value, str):
+                continue
             extracted = extract_file_ids_from_text(value)
             if extracted:
                 file_ids.extend(extracted)
             else:
-                stripped = value.strip() if isinstance(value, str) else ''
+                stripped = value.strip()
                 if stripped and not markdown_pattern.match(stripped):
                     file_ids.append(stripped)
         return file_ids
@@ -534,8 +536,8 @@ class TaskFieldService(BaseWorkflowService):
         for file_id in file_ids:
             attachment, created = Attachment.objects.get_or_create(
                 file_id=file_id,
+                account=self.account,
                 defaults={
-                    'account': self.account,
                     'source_type': source_type,
                     'access_type': AccessType.RESTRICTED,
                     'task': self.instance.task,
