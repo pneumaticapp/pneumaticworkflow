@@ -1,2 +1,2 @@
-export * from './RichEditor.props';
-export * from './RichEditor';
+export { RichEditor } from './lexical';
+export type { IRichEditorHandle, IRichEditorProps, TMentionData } from './lexical';

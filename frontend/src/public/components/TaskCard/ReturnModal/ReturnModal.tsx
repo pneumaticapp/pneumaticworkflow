@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useIntl } from 'react-intl';
 
 import { Modal } from '../../UI/Modal';
-import { LexicalRichEditor } from '../../RichEditor/lexical';
+import { RichEditor } from '../../RichEditor/lexical';
 import { Button } from '../../UI';
 
 import styles from './ReturnModal.css';
@@ -29,9 +29,9 @@ export function ReturnModal({ isOpen, onClose, onConfirm }: IReturnModalProps) {
         <p className={styles['return-modal__title']}>{formatMessage({ id: 'task.return-to.title' })}</p>
         <p className={styles['return-modal__subtitle']}>{formatMessage({ id: 'task.return-to.subtitle' })}</p>
         <div className={styles['return-modal__editor']}>
-          <LexicalRichEditor
+          <RichEditor
             placeholder={formatMessage({ id: 'task.return-to.placeholder' })}
-            handleChange={async (message) => {
+            handleChange={async (message: string) => {
               setReturnMessage(message);
               return message;
             }}

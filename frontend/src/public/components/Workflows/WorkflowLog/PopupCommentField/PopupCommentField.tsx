@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 
-import { LexicalRichEditor } from '../../../RichEditor/lexical';
+import { RichEditor } from '../../../RichEditor/lexical';
 import { Avatar } from '../../../UI/Avatar';
 import { IAuthUser } from '../../../../types/redux';
 import { TUploadedFile } from '../../../../utils/uploadFiles';
@@ -47,7 +47,7 @@ export function PopupCommentField({ user, sendComment, taskId }: TPopupCommentFi
         containerClassName={styles['comment-field__avatar-container']}
       />
       <div className={styles['comment-field__workarea']}>
-        <LexicalRichEditor
+        <RichEditor
           placeholder={placeholder}
           handleChange={setCommentText}
           onSubmit={handleSendComment}

@@ -22,7 +22,7 @@ import {
   CommentInfoIcon,
   CommentWatchedIcon,
 } from '../../../../icons';
-import { LexicalRichEditor } from '../../../../RichEditor/lexical';
+import { RichEditor } from '../../../../RichEditor/lexical';
 import { IAccount, TUserListItem } from '../../../../../types/user';
 import { useStatePromise } from '../../../../../hooks/useStatePromise';
 import { TUploadedFile } from '../../../../../utils/uploadFiles';
@@ -223,7 +223,7 @@ export function WorkflowLogTaskComment({
               <RichText text={text} />
             </div>
           ) : (
-            <LexicalRichEditor
+            <RichEditor
               placeholder={formatMessage({ id: 'workflows.log-comment-field-placeholder' })}
               defaultValue={text || ''}
               handleChange={setCommentText}

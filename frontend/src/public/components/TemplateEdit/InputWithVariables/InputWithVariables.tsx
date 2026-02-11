@@ -3,8 +3,8 @@ import React from 'react';
 import { TTaskVariable } from '../types';
 import { escapeMarkdown } from '../../../utils/escapeMarkdown';
 import { VariableList } from '../VariableList';
-import { LexicalRichEditor, ILexicalRichEditorHandle } from '../../RichEditor/lexical';
-import type { ILexicalRichEditorProps } from '../../RichEditor/lexical';
+import { RichEditor, IRichEditorHandle } from '../../RichEditor/lexical';
+import type { IRichEditorProps } from '../../RichEditor/lexical';
 
 import styles from './InputWithVariables.css';
 
@@ -18,8 +18,8 @@ export interface IEditorWithVariablesProps {
   title?: string;
   className?: string;
   toolipText: string;
-  foregroundColor?: ILexicalRichEditorProps['foregroundColor'];
-  onChange: ILexicalRichEditorProps['handleChange'];
+  foregroundColor?: IRichEditorProps['foregroundColor'];
+  onChange: IRichEditorProps['handleChange'];
 }
 
 export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
@@ -33,7 +33,7 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
   foregroundColor,
   onChange,
 }) => {
-  const editorRef = React.useRef<ILexicalRichEditorHandle>(null);
+  const editorRef = React.useRef<IRichEditorHandle>(null);
   const formattedValue = escapeMarkdown(value);
 
   const handleInsertVariable = (apiName?: string) => (e: React.MouseEvent) => {
@@ -48,7 +48,7 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
   };
 
   return (
-    <LexicalRichEditor
+    <RichEditor
       ref={editorRef}
       title={title}
       placeholder={placeholder ?? ''}
@@ -68,6 +68,6 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
         tooltipText={toolipText}
         focusEditor={() => editorRef.current?.focus()}
       />
-    </LexicalRichEditor>
+    </RichEditor>
   );
 };

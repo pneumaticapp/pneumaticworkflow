@@ -1,5 +1,5 @@
-export { LexicalRichEditor } from './LexicalRichEditor';
-export type { ILexicalRichEditorHandle, ILexicalRichEditorProps } from './LexicalRichEditor/types';
+export { RichEditor } from './LexicalRichEditor';
+export type { IRichEditorHandle, IRichEditorProps, TMentionData } from './LexicalRichEditor/types';
 export { convertLexicalToMarkdown } from './converters';
 
 export { CHECKBOX_CLASS, CHECKLIST_ITEM_CLASS } from './nodes/ChecklistItemNode';

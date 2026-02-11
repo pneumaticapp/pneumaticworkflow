@@ -1,7 +1,7 @@
 import * as React from 'react';
 import classnames from 'classnames';
 import { IntlMessages } from '../IntlMessages';
-import styles from './RichEditor.css';
+import styles from './EditorControls.css';
 
 export interface IEditorControlsProps {
   onSubmit?: () => void;

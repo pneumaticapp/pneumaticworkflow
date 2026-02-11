@@ -21,7 +21,7 @@ import { prepareChecklistsForAPI } from '../../../../utils/checklists/prepareChe
 import { EditorHeader } from './EditorHeader';
 import { LexicalEditorContent } from './LexicalEditorContent/LexicalEditorContent';
 import { useAttachmentUpload } from './hooks';
-import type { ILexicalRichEditorHandle, ILexicalRichEditorProps } from './types';
+import type { IRichEditorHandle, IRichEditorProps } from './types';
 import { lexicalTheme } from '../theme';
 import { LEXICAL_NODES } from '../nodes';
 
@@ -29,19 +29,19 @@ import styles from './LexicalRichEditor.css';
 
 
 
-export const EDITOR_NAMESPACE = 'LexicalRichEditor';
+export const EDITOR_NAMESPACE = 'RichEditor';
 
 function resolveUploadHandler(
-  propHandler: ILexicalRichEditorProps['onUploadAttachments'],
+  propHandler: IRichEditorProps['onUploadAttachments'],
   builtInHandler?: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>,
-): ILexicalRichEditorProps['onUploadAttachments'] {
+): IRichEditorProps['onUploadAttachments'] {
   return propHandler ?? builtInHandler ?? undefined;
 }
 
-export const LexicalRichEditor = forwardRef<
-  ILexicalRichEditorHandle,
-  ILexicalRichEditorProps
->(function LexicalRichEditor(
+export const RichEditor = forwardRef<
+  IRichEditorHandle,
+  IRichEditorProps
+>(function RichEditor(
   {
     className,
     withChecklists,
@@ -159,7 +159,7 @@ export const LexicalRichEditor = forwardRef<
       focus(): void {
         editorRef.current?.focus();
       },
-      insertVariable(apiName, variableTitle, subtitle): void {
+      insertVariable(apiName: string, variableTitle: string, subtitle: string): void {
         if (!apiName?.trim() || !variableTitle?.trim() || !subtitle?.trim()) return;
         insertVariableToEditor(apiName, variableTitle, subtitle);
       },

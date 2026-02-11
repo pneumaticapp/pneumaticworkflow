@@ -7,7 +7,7 @@ import type { TForegroundColor } from '../../../UI/Fields/common/types';
 
 
 
-export interface ILexicalRichEditorHandle {
+export interface IRichEditorHandle {
   focus(): void;
   insertVariable(apiName: string, variableTitle: string, subtitle: string): void;
   getEditor?(): LexicalEditor | undefined;
@@ -19,7 +19,7 @@ export type TMentionData = {
   link?: string;
 };
 
-export interface ILexicalRichEditorProps {
+export interface IRichEditorProps {
   isModal?: boolean;
   accountId?: number;
   mentions?: TMentionData[];

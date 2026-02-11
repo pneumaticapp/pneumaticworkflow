@@ -4,7 +4,7 @@ import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import OutsideClickHandler from 'react-outside-click-handler';
 
-import URLUtils from '../../../../utils/linksPlugin/utils/URLUtils';
+import urlUtils from '../../../../utils/urlUtils';
 import { InputField } from '../../../../../UI';
 import { SquaredCheckButtonIcon, SquaredCrossButtonIcon } from '../../../../../icons';
 import { useFloatingFormPosition } from '../../../LexicalRichEditor/hooks';
@@ -75,9 +75,9 @@ export function LinkUrlForm({
   }, [isVisible, formMode]);
 
   const handleSubmit = useCallback(() => {
-    const normalized = URLUtils.normalizeUrl(url);
+    const normalized = urlUtils.normalizeUrl(url);
 
-    if (!URLUtils.isUrl(normalized)) {
+    if (!urlUtils.isUrl(normalized)) {
       setUrlError(formatMessage({ id: 'editor.link-url-invalid' }));
       return;
     }

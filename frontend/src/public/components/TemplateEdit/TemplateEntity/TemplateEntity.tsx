@@ -69,7 +69,7 @@ export function TemplateEntity({
   const renderWorkflowEntity = () => {
     const entities = [
       {
-        check: true,
+        check: isTaskOpen,
         component: <WorkflowTaskFormContainer task={task} users={users} scrollTarget={scrollTarget} />,
       },
       {

@@ -3,7 +3,7 @@ import classnames from 'classnames';
 
 import { IntlMessages } from '../IntlMessages';
 import { onEnterPressed, removeTrailingDotZeros } from '../../utils/handlers';
-import { LexicalRichEditor } from '../RichEditor/lexical';
+import { RichEditor } from '../RichEditor/lexical';
 import { handleNumericPaste } from './utils/handleNumericPaste';
 import { trackVideoEmbeddingOnPaste } from './utils/trackVideoEmbeddingOnPaste';
 import { normalizeFieldValue } from './utils/normalizeFieldValue';
@@ -98,10 +98,10 @@ export function Field({
         );
       case EFieldTagName.RichText:
         return (
-          <LexicalRichEditor
+          <RichEditor
             placeholder={placeholder}
             defaultValue={value as string}
-            handleChange={(val) => {
+            handleChange={(val: string) => {
               onChange({ target: { value: val } } as React.ChangeEvent<HTMLInputElement>);
               return Promise.resolve(val);
             }}

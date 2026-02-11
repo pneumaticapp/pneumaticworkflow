@@ -1,4 +1,4 @@
-import { TMentionData } from '..';
+import type { TMentionData } from '../lexical';
 import { EUserStatus, TUserListItem } from '../../../types/user';
 import { getUserFullName } from '../../../utils/users';
 

@@ -3,7 +3,7 @@ import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
 import { TTaskVariable } from '../types';
-import { LexicalRichEditor, ILexicalRichEditorHandle } from '../../RichEditor/lexical';
+import { RichEditor, IRichEditorHandle } from '../../RichEditor/lexical';
 import { getMentionData } from '../../RichEditor/utils/getMentionData';
 import { getUsers } from '../../../redux/selectors/user';
 import { getNotDeletedUsers } from '../../../utils/users';
@@ -35,7 +35,7 @@ export function TaskDescriptionEditor({
     [users],
   );
 
-  const editorRef = useRef<ILexicalRichEditorHandle>(null);
+  const editorRef = useRef<IRichEditorHandle>(null);
   const { formatMessage } = useIntl();
 
   const handleInsertVariable = (apiName?: string) => (e: React.MouseEvent) => {
@@ -53,7 +53,7 @@ export function TaskDescriptionEditor({
   const placeholderMsg = formatMessage({ id: 'template.task-description-placeholder' });
 
   return (
-    <LexicalRichEditor
+    <RichEditor
       ref={editorRef}
       title={titleMsg}
       placeholder={placeholderMsg}
@@ -75,6 +75,6 @@ export function TaskDescriptionEditor({
         tooltipText="tasks.task-description-button-tooltip"
         focusEditor={() => editorRef.current?.focus()}
       />
-    </LexicalRichEditor>
+    </RichEditor>
   );
 }
