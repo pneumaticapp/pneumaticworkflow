@@ -1372,7 +1372,7 @@ def test_list__filter_template_task__and__all_statuses__ok(
     response = api_client.get(
         path='/workflows',
         data={
-            'template_task_id': template_task_2.id,
+            'template_task_api_name': template_task_2.api_name,
         },
     )
 

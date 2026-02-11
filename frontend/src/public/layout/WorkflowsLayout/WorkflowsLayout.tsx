@@ -1,16 +1,16 @@
-/* eslint-disable consistent-return */
-import React, { useEffect, useRef, useState } from 'react';
+import React, { ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { loadWorkflowsList, TRemoveWorkflowFromListPayload } from '../../redux/actions';
+import { loadWorkflowsList } from '../../redux/workflows/slice';
+import { TRemoveWorkflowFromListPayload } from '../../redux/workflows/types';
 import { TopNavContainer } from '../../components/TopNav';
 import { ERoutes } from '../../constants/routes';
 import { history } from '../../utils/history';
 import { WorkflowModalContainer } from '../../components/Workflows/WorkflowModal';
-import { FilterSelect, SelectMenu, Tabs } from '../../components/UI';
-import { EWorkflowsSorting, EWorkflowsStatus, EWorkflowsView } from '../../types/workflow';
-import { FilterIcon } from '../../components/icons';
+import { SelectMenu, Tabs } from '../../components/UI';
+import { EWorkflowsSorting, EWorkflowsStatus, EWorkflowsView, ITemplateFilterItem } from '../../types/workflow';
+import { BoxesIcon, StatusTitlesIcon, TableViewIcon } from '../../components/icons';
 import { IWorkflowsFiltersProps } from '../../components/Workflows/types';
 import {
   canFilterByCurrentPerformer,
@@ -18,22 +18,27 @@ import {
   checkSortingIsIncorrect,
   getSortingsByStatus,
 } from '../../utils/workflows/filters';
-import { isArrayWithItems } from '../../utils/helpers';
+
 import {
   TableViewContainerRef,
   WorkflowsTableActions,
 } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable';
 import { WorkflowsTableProvider } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/WorkflowsTableContext';
 
-import { IApplicationState } from '../../types/redux';
 import { useCheckDevice } from '../../hooks/useCheckDevice';
+import { StarterFilterSelect } from './StarterFilterSelect';
+import { TemplateFilterSelect } from './TemplateFilterSelect';
+import { PerformerFilterSelect } from './PerformerFilterSelect';
+import { TaskFilterSelect } from './TaskFilterSelect';
+import { checkFilterDependenciesChanged } from '../../utils/helpers';
+
 import styles from './WorkflowsLayout.css';
-// import { updateQueryFields } from './utils';
+import { getWorkflowPerformersGroupsIdsFilter, getWorkflowsLoadingStatus } from '../../redux/selectors/workflows';
 
 export interface IWorkflowsLayoutComponentProps extends IWorkflowsFiltersProps {
   workflowId: number | null;
   workflowsView: EWorkflowsView;
-  children: React.ReactNode;
+  children: ReactNode;
   closeWorkflowLogPopup(): void;
   removeWorkflowFromList(payload: TRemoveWorkflowFromListPayload): void;
   setWorkflowsView(view: EWorkflowsView): void;
@@ -46,7 +51,7 @@ export function WorkflowsLayoutComponent({
   templatesIdsFilter,
   statusFilter,
   sorting,
-  stepsIdsFilter,
+  tasksApiNamesFilter,
   performersIdsFilter,
   workflowStartersIdsFilter,
   workflowsView,
@@ -57,26 +62,76 @@ export function WorkflowsLayoutComponent({
   setStatusFilter,
   applyFilters,
   loadTemplatesTitles,
-  setTemplatesFilter,
-  setStepsFilter,
+  setTasksFilter,
   removeWorkflowFromList,
   loadTemplateSteps,
   updateCurrentPerformersCounters,
   updateWorkflowsTemplateStepsCounters,
   updateWorkflowStartersCounters,
 }: IWorkflowsLayoutComponentProps) {
+  const performersGroupsIdsFilter = useSelector(getWorkflowPerformersGroupsIdsFilter);
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
   const { isMobile } = useCheckDevice();
-  const workflowsLoadingStatus = useSelector((state: IApplicationState) => state.workflows.workflowsLoadingStatus);
-  const [isLoadSteps, setIsLoadSteps] = useState(false);
+  const workflowsLoadingStatus = useSelector(getWorkflowsLoadingStatus);
+
   const [isTableWiderThanScreen, setIsTableWiderThanScreen] = useState(false);
+
   const workflowsMainRef = useRef<HTMLDivElement>(null);
   const tableViewContainerRef = useRef<TableViewContainerRef>(null);
+  const loadingTaskRef = useRef<Set<number>>(new Set());
+  const prevTemplatesIdsRef = useRef<number[]>(templatesIdsFilter);
+
+  const prevStatusFilterRef = useRef<string>(EWorkflowsStatus.Running);
+  const prevSortingRef = useRef<string>(EWorkflowsSorting.DateDesc);
+  const prevTemplatesIdsFilterRef = useRef<string>('[]');
+  const prevTasksApiNamesFilterRef = useRef<string>('[]');
+  const prevWorkflowStartersIdsFilterRef = useRef<string>('[]');
+  const prevPerformersIdsFilterRef = useRef<string>('[]');
+  const prevPerformersGroupsIdsFilterRef = useRef<string>('[]');
+
+  const currentFiltersValuesRef = useRef({
+    statusFilter,
+    templatesIdsFilter,
+    tasksApiNamesFilter,
+    workflowStartersIdsFilter,
+    performersIdsFilter,
+    performersGroupsIdsFilter,
+    sorting,
+  });
+
+  const changedFiltersRef = useRef<Set<string>>(new Set());
+
+  const dependenciesRefs = useMemo(
+    () =>
+      new Map([
+        ['statusFilter', prevStatusFilterRef],
+        ['sorting', prevSortingRef],
+        ['templatesIdsFilter', prevTemplatesIdsFilterRef],
+        ['tasksApiNamesFilter', prevTasksApiNamesFilterRef],
+        ['workflowStartersIdsFilter', prevWorkflowStartersIdsFilterRef],
+        ['performersIdsFilter', prevPerformersIdsFilterRef],
+        ['performersGroupsIdsFilter', prevPerformersGroupsIdsFilterRef],
+      ]),
+    [],
+  );
+
+  const isFirstRenderRef = useRef(true);
+
+  const filterTemplatesMap: Map<number, ITemplateFilterItem> = useMemo(
+    () => new Map(filterTemplates.map((template) => [template.id, template])),
+    [filterTemplates],
+  );
+
+  const selectedTemplates: ITemplateFilterItem[] = useMemo(() => {
+    return templatesIdsFilter
+      .map((templateId) => filterTemplatesMap.get(templateId))
+      .filter(Boolean) as ITemplateFilterItem[];
+  }, [templatesIdsFilter, filterTemplates]);
 
   useEffect(() => {
     if (workflowsView !== EWorkflowsView.Table) {
-      return;
+      return undefined;
     }
 
     const checkWidth = () => {
@@ -86,95 +141,133 @@ export function WorkflowsLayoutComponent({
       }
     };
 
+    let observer: ResizeObserver | null = null;
+    let timeoutId: number | null = null;
+    let cancelled = false;
+
     const setupObserver = () => {
+      if (cancelled) return;
+
       if (!tableViewContainerRef.current?.element) {
-        setTimeout(setupObserver, 100);
+        timeoutId = window.setTimeout(setupObserver, 100);
         return;
       }
 
-      const observer = new ResizeObserver(checkWidth);
+      observer = new ResizeObserver(checkWidth);
       observer.observe(tableViewContainerRef.current.element);
 
       window.addEventListener('resize', checkWidth);
       checkWidth();
-
-      return () => {
-        window.removeEventListener('resize', checkWidth);
-        observer.disconnect();
-      };
     };
 
-    return setupObserver();
+    setupObserver();
+
+    return () => {
+      cancelled = true;
+      if (timeoutId !== null) {
+        clearTimeout(timeoutId);
+      }
+
+      if (observer) {
+        observer.disconnect();
+      }
+
+      window.removeEventListener('resize', checkWidth);
+    };
   }, [workflowsView]);
 
   useEffect(() => {
-    setIsLoadSteps(false);
-  }, [templatesIdsFilter]);
+    const prevTemplatesIds = prevTemplatesIdsRef.current;
+    const currentTemplatesIdsSet = new Set(templatesIdsFilter);
+    const removedTemplateIds = prevTemplatesIds.filter((id) => !currentTemplatesIdsSet.has(id));
 
-  useEffect(() => {
-    if (workflowsView !== EWorkflowsView.Table) {
-      return;
-    }
+    const removedTemplatesTaskApiNames = new Set(
+      removedTemplateIds.flatMap((removedId) => {
+        const template = filterTemplatesMap.get(removedId);
+        return template?.steps.map((step) => step.apiName) || [];
+      }),
+    );
 
-    const currentTemplateId = templatesIdsFilter[0];
-    if (!currentTemplateId) {
-      return;
-    }
+    const filteredTaskApiNames =
+      removedTemplateIds.length > 0
+        ? tasksApiNamesFilter.filter((apiName) => !removedTemplatesTaskApiNames.has(apiName))
+        : tasksApiNamesFilter;
 
-    const currentTemplate = filterTemplates.find((t) => t.id === currentTemplateId);
-    if (!currentTemplate) {
-      return;
-    }
-
-    if (isArrayWithItems(currentTemplate.steps)) {
-      if (!isArrayWithItems(stepsIdsFilter)) {
-        setStepsFilter(currentTemplate.steps.map((s) => s.id));
+    selectedTemplates.forEach((template) => {
+      const hasTasks = template.steps.length > 0;
+      const isAlreadyLoading = loadingTaskRef.current.has(template.id);
+      if (!hasTasks && !template.areStepsLoading && !isAlreadyLoading) {
+        loadingTaskRef.current.add(template.id);
+        loadTemplateSteps({ templateId: template.id });
       }
+      if (hasTasks) {
+        loadingTaskRef.current.delete(template.id);
+      }
+    });
 
-      return;
+    const allSelectedTemplatesTasksLoaded = selectedTemplates.every((template) => template.steps.length > 0);
+
+    if (allSelectedTemplatesTasksLoaded) {
+      setTasksFilter(filteredTaskApiNames);
     }
-
-    if (!isLoadSteps) {
-      loadTemplateSteps({
-        templateId: currentTemplateId,
-        onAfterLoaded: (steps) => {
-          if (!isArrayWithItems(stepsIdsFilter)) {
-            setStepsFilter(steps.map((s) => s.id));
-          }
-
-          if (canFilterByTemplateStep(statusFilter)) {
-            updateWorkflowsTemplateStepsCounters();
-          }
-
-          setIsLoadSteps(true);
-        },
-      });
-    }
-  }, [workflowsView, templatesIdsFilter[0], filterTemplates, statusFilter, isLoadSteps]);
+    prevTemplatesIdsRef.current = templatesIdsFilter;
+  }, [templatesIdsFilter, selectedTemplates, statusFilter, filterTemplatesMap]);
 
   useEffect(() => {
     loadTemplatesTitles();
   }, [statusFilter]);
 
   useEffect(() => {
+    const hasChanges = checkFilterDependenciesChanged(changedFiltersRef, dependenciesRefs, {
+      statusFilter,
+      templatesIdsFilter,
+      tasksApiNamesFilter,
+      workflowStartersIdsFilter,
+    });
+
+    if (!isFirstRenderRef.current && !hasChanges) {
+      return;
+    }
+
     if (canFilterByCurrentPerformer(statusFilter)) {
       updateCurrentPerformersCounters();
     }
-  }, [statusFilter, templatesIdsFilter, stepsIdsFilter, workflowStartersIdsFilter]);
+  }, [statusFilter, templatesIdsFilter, tasksApiNamesFilter, workflowStartersIdsFilter]);
 
   useEffect(() => {
     if (canFilterByTemplateStep(statusFilter)) {
       updateWorkflowsTemplateStepsCounters();
     }
-  }, [statusFilter, templatesIdsFilter, performersIdsFilter, workflowStartersIdsFilter]);
+  }, [selectedTemplates, statusFilter, performersIdsFilter, workflowStartersIdsFilter, tasksApiNamesFilter]);
 
   useEffect(() => {
     updateWorkflowStartersCounters();
   }, [statusFilter, templatesIdsFilter, performersIdsFilter]);
 
   useEffect(() => {
+    const hasChanges = checkFilterDependenciesChanged(changedFiltersRef, dependenciesRefs, {
+      statusFilter,
+      templatesIdsFilter,
+      tasksApiNamesFilter,
+      performersIdsFilter,
+      performersGroupsIdsFilter,
+      workflowStartersIdsFilter,
+      sorting,
+    });
+
+    if (!hasChanges) {
+      return;
+    }
     applyFilters();
-  }, [statusFilter, templatesIdsFilter, stepsIdsFilter, performersIdsFilter, workflowStartersIdsFilter, sorting]);
+  }, [
+    statusFilter,
+    templatesIdsFilter,
+    tasksApiNamesFilter,
+    performersIdsFilter,
+    performersGroupsIdsFilter,
+    workflowStartersIdsFilter,
+    sorting,
+  ]);
 
   useEffect(() => {
     if (checkSortingIsIncorrect(statusFilter, sorting)) {
@@ -182,14 +275,50 @@ export function WorkflowsLayoutComponent({
     }
   }, [sorting, statusFilter]);
 
-  const templateIdFilter = React.useMemo(() => {
-    const [firstTemplate] = templatesIdsFilter;
+  useEffect(() => {
+    currentFiltersValuesRef.current = {
+      statusFilter,
+      templatesIdsFilter,
+      tasksApiNamesFilter,
+      workflowStartersIdsFilter,
+      performersIdsFilter,
+      performersGroupsIdsFilter,
+      sorting,
+    };
+  }, [
+    statusFilter,
+    templatesIdsFilter,
+    tasksApiNamesFilter,
+    workflowStartersIdsFilter,
+    performersIdsFilter,
+    performersGroupsIdsFilter,
+    sorting,
+  ]);
 
-    return firstTemplate || null;
-  }, [templatesIdsFilter[0]]);
+  useEffect(() => {
+    if (isFirstRenderRef.current) {
+      isFirstRenderRef.current = false;
+    }
+  }, []);
 
-  const statusTitles = React.useMemo(() => Object.values(EWorkflowsStatus), []);
-  const sortingTitles = React.useMemo(() => getSortingsByStatus(statusFilter), [statusFilter]);
+  useLayoutEffect(() => {
+    if (changedFiltersRef.current.size === 0) return;
+
+    changedFiltersRef.current.forEach((filter) => {
+      const ref = dependenciesRefs.get(filter);
+      if (ref) {
+        const filterValue = currentFiltersValuesRef.current[filter as keyof typeof currentFiltersValuesRef.current];
+        ref.current = typeof filterValue === 'string' ? filterValue : JSON.stringify(filterValue);
+      }
+    });
+
+    if (changedFiltersRef.current.size > 0) {
+      changedFiltersRef.current = new Set();
+    }
+  }, [changedFiltersRef.current.size]);
+
+  const statusTitles = useMemo(() => Object.values(EWorkflowsStatus), []);
+  const sortingTitles = useMemo(() => getSortingsByStatus(statusFilter), [statusFilter]);
 
   const renderLeftContent = () => {
     return (
@@ -197,14 +326,15 @@ export function WorkflowsLayoutComponent({
         <div className={styles['filters']}>
           <Tabs
             activeValueId={workflowsView}
+            tabClassName={styles['view-switch-tab']}
             values={[
               {
                 id: EWorkflowsView.Table,
-                label: formatMessage({ id: 'workflows.table-view' }),
+                label: <TableViewIcon />,
               },
               {
                 id: EWorkflowsView.Grid,
-                label: formatMessage({ id: 'workflows.grid-view' }),
+                label: <BoxesIcon />,
               },
             ]}
             onChange={(view) => {
@@ -215,7 +345,7 @@ export function WorkflowsLayoutComponent({
             }}
           />
 
-          {workflowsView === EWorkflowsView.Table && renderFilters()}
+          {renderFilters()}
         </div>
       </div>
     );
@@ -224,34 +354,25 @@ export function WorkflowsLayoutComponent({
   const renderFilters = () => {
     return (
       <>
-        <div className={styles['template-filter']}>
-          <FilterSelect
-            isSearchShown
-            noValueLabel={formatMessage({ id: 'sorting.all-templates' })}
-            placeholderText={formatMessage({ id: 'sorting.no-template-found' })}
-            selectedOption={templateIdFilter}
-            options={filterTemplates}
-            optionIdKey="id"
-            optionLabelKey="name"
-            onChange={(templateId: number) => {
-              sessionStorage.setItem('isInternalNavigation', 'true');
-              setStepsFilter([]);
-              setTemplatesFilter([templateId]);
-            }}
-            resetFilter={() => {
-              sessionStorage.setItem('isInternalNavigation', 'true');
-              setStepsFilter([]);
-              setTemplatesFilter([]);
-            }}
-            Icon={FilterIcon}
-            renderPlaceholder={() => {
-              const selectedTemplate = filterTemplates.find((t) => t.id === templateIdFilter);
-              return selectedTemplate?.name || formatMessage({ id: 'sorting.all-templates' });
-            }}
-          />
-        </div>
-        <SelectMenu values={statusTitles} activeValue={statusFilter} onChange={setStatusFilter} Icon={FilterIcon} />
-        <SelectMenu values={sortingTitles} activeValue={sorting} onChange={changeWorkflowsSorting} />
+        <TemplateFilterSelect />
+        <StarterFilterSelect />
+        <SelectMenu
+          values={statusTitles}
+          activeValue={statusFilter}
+          onChange={setStatusFilter}
+          Icon={StatusTitlesIcon}
+          withRadio
+          positionFixed={isMobile}
+        />
+        <TaskFilterSelect selectedTemplates={selectedTemplates} />
+        <PerformerFilterSelect />
+        <SelectMenu
+          values={sortingTitles}
+          activeValue={sorting}
+          onChange={changeWorkflowsSorting}
+          withRadio
+          positionFixed={isMobile}
+        />
         {areFiltersChanged && (
           <button type="button" onClick={clearFilters} className="cancel-button">
             {formatMessage({ id: 'workflows.clear-table-filters' })}
@@ -270,7 +391,9 @@ export function WorkflowsLayoutComponent({
     <main
       ref={workflowsMainRef}
       id="workflows-main"
-      className={workflowsView === EWorkflowsView.Table ? styles['workflows-main'] : ''}
+      className={
+        workflowsView === EWorkflowsView.Table ? styles['workflows-main-table'] : styles['workflows-main-grid']
+      }
     >
       <TopNavContainer leftContent={renderLeftContent()} isFromWorkflowsLayout workflowsView={workflowsView} />
       <WorkflowsTableProvider value={{ ref: tableViewContainerRef, isTableWiderThanScreen }}>

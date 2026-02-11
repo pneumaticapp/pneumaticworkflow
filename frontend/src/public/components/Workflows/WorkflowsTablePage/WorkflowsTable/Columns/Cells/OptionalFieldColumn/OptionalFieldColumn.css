@@ -22,11 +22,17 @@
 }
 
 .field-column__image-icon {
+  fill: var(--pneumatic-color-link-dark);
   top: -0.1rem;
 }
 
 .field-column__document-icon {
+  fill: var(--pneumatic-color-link-dark);
   top: -0.15rem;
+}
+
+.field-column__file-item:hover svg {
+  fill: var(--pneumatic-color-link);
 }
 
 .field-column__url {

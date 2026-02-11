@@ -1,14 +1,15 @@
 import { connect } from 'react-redux';
 
 import {
+  closeWorkflowLogPopup,
   changeWorkflowLogViewSettings,
   setIsEditWorkflowName,
   setIsEditKickoff,
-  editWorkflow,
   setWorkflowEdit,
   sendWorkflowLogComments,
-  closeWorkflowLogPopup,
-} from '../../../redux/workflows/actions';
+  editWorkflow,
+} from '../../../redux/workflows/slice';
+
 import { IApplicationState } from '../../../types/redux';
 
 import { WorkflowModal, IWorkflowModalProps } from './WorkflowModal';
@@ -48,7 +49,15 @@ export type TDispatchProps = Pick<
 export function mapStateToProps({
   authUser: { id: currentUserId, isAccountOwner, timezone, dateFmt, language },
   workflows: {
-    workflowLog: { workflowId, isCommentsShown, isOnlyAttachmentsShown, isOpen, items, sorting, isLoading: isLogLoading },
+    workflowLog: {
+      workflowId,
+      isCommentsShown,
+      isOnlyAttachmentsShown,
+      isOpen,
+      items,
+      sorting,
+      isLoading: isLogLoading,
+    },
     isWorkflowLoading,
     workflow,
     workflowEdit,

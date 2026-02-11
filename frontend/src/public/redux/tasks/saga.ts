@@ -17,25 +17,25 @@ import {
   delay,
 } from 'redux-saga/effects';
 
-import {
-  changeTaskList,
-  changeTasksCount,
-  TLoadTaskList,
-  setTaskListDetailedTaskId,
-  ETaskListActions,
-  TLoadTasksFilterSteps,
-  loadTasksFilterStepsFailed,
-  loadTasksFilterStepsSuccess,
-  showNewTasksNotification,
-  insertNewTask,
-  TInsertNewTask,
-  loadTasksFilterTemplatesSuccess,
-  loadTasksFilterTemplatesFailed,
-  loadTasksFilterTemplates,
-  loadTasksFilterSteps,
+import { PayloadAction } from '@reduxjs/toolkit';
+import { ETaskListActions ,
   setTaskListStatus,
-  TShiftTaskList,
-} from './actions';
+  changeTaskList,
+  setTaskListDetailedTaskId,
+  changeTasksCount,
+  loadFilterTemplates,
+  loadFilterTemplatesSuccess,
+  loadFilterTemplatesFailed,
+  loadFilterSteps,
+  loadFilterStepsSuccess,
+  loadFilterStepsFailed,
+  showNewTasksNotification,
+  loadTasksCount,
+  loadTaskList,
+  insertNewTask,
+  searchTasks,
+  shiftTaskList,
+} from './slice';
 
 import { ERoutes } from '../../constants/routes';
 import { getAuthUser } from '../selectors/user';
@@ -62,8 +62,6 @@ import { mergePaths } from '../../utils/urls';
 import { createWebSocketChannel } from '../utils/createWebSocketChannel';
 import { getTaskListWithNewTask } from './utils/getTaskListWithNewTask';
 import { checkShouldInsertNewTask } from './utils/checkShouldInsertNewTask';
-import { ITemplateTitle } from '../../types/template';
-import { getTemplatesTitles } from '../../api/getTemplatesTitles';
 import { handleLoadTemplateVariables } from '../templates/saga';
 import { ETaskListStatus } from '../../components/Tasks/types';
 import { setCurrentTask } from '../actions';
@@ -71,6 +69,8 @@ import { getCurrentTask } from '../selectors/task';
 import { envWssURL } from '../../constants/enviroment';
 import { mapTasksToISOStringToRedux } from '../../utils/mappers';
 import { NotificationManager } from '../../components/UI/Notifications';
+import { getTemplatesTitlesByTasks, TGetTemplatesTitlesByTasksResponse } from '../../api/getTemplatesTitlesByTasks';
+import { TLoadFilterStepsPayload, TShiftTaskListPayload } from './types';
 
 export function* setDetailedTask(taskId: number) {
   yield put(setTaskListDetailedTaskId(taskId));
@@ -81,7 +81,7 @@ export function* removeTaskFromList(taskId: number) {
   const {
     taskList: initialTaskList,
     tasksSettings: {
-      filterValues: { templateIdFilter, stepIdFilter },
+      filterValues: { templateIdFilter, taskApiNameFilter },
     },
     tasksSearchText,
   }: IStoreTasks = yield select(getTasksStore);
@@ -100,7 +100,7 @@ export function* removeTaskFromList(taskId: number) {
     count: tasksCount - 1,
     offset: tasksOffset - 1,
   };
-  const withSettings = templateIdFilter || stepIdFilter || tasksSearchText;
+  const withSettings = templateIdFilter || taskApiNameFilter || tasksSearchText;
   const emptyListStatus = withSettings ? ETaskListStatus.LastFilteredTaskFinished : ETaskListStatus.LastTaskFinished;
   yield put(changeTaskList({ taskList: newTaskList, emptyListStatus }));
 }
@@ -127,7 +127,7 @@ function* fetchTaskList(offset: number, nextStatus: ETaskListStatus) {
     tasksSettings: {
       sorting,
       completionStatus,
-      filterValues: { templateIdFilter, stepIdFilter },
+      filterValues: { templateIdFilter, taskApiNameFilter },
     },
   }: IStoreTasks = yield select(getTasksStore);
   const isEmptyList = offset === 0;
@@ -144,7 +144,7 @@ function* fetchTaskList(offset: number, nextStatus: ETaskListStatus) {
       sorting,
       searchText,
       templateId: templateIdFilter,
-      templateStepId: stepIdFilter,
+      templateTaskApiName: taskApiNameFilter,
       status: completionStatus,
     });
     const formattedResults = mapTasksToISOStringToRedux(results);
@@ -153,7 +153,7 @@ function* fetchTaskList(offset: number, nextStatus: ETaskListStatus) {
       ? uniqBy([...taskList.items, ...formattedResults], 'id')
       : formattedResults;
 
-    const withSettings = templateIdFilter || stepIdFilter || searchText;
+    const withSettings = templateIdFilter || taskApiNameFilter || searchText;
     const emptyListStatus = withSettings ? ETaskListStatus.EmptySearchResult : ETaskListStatus.NoTasks;
     yield put(changeTaskList({ taskList: { count, offset, items }, emptyListStatus }));
 
@@ -187,7 +187,7 @@ export function* handleSearchTasks() {
   yield fetchTaskList(0, ETaskListStatus.Searching);
 }
 
-export function* handleInsertNewTask({ payload: newTask }: TInsertNewTask) {
+export function* handleInsertNewTask({ payload: newTask }: PayloadAction<ITaskListItem>) {
   const tasksSettings: ReturnType<typeof getTasksSettings> = yield select(getTasksSettings);
   const searchText: ReturnType<typeof getTasksSearchText> = yield select(getTasksSearchText);
   if (!checkShouldInsertNewTask(newTask, tasksSettings, searchText)) {
@@ -210,18 +210,16 @@ export function* fetchTasksFilterTemplates() {
     const {
       tasksSettings: { completionStatus },
     }: IStoreTasks = yield select(getTasksStore);
-    const templates: ITemplateTitle[] = yield getTemplatesTitles({
-      withTasksInProgress: completionStatus === ETaskListCompletionStatus.Active,
-    });
-    yield put(loadTasksFilterTemplatesSuccess(templates));
+    const templates: TGetTemplatesTitlesByTasksResponse = yield getTemplatesTitlesByTasks(completionStatus);
+    yield put(loadFilterTemplatesSuccess(templates));
   } catch (error) {
-    yield put(loadTasksFilterTemplatesFailed());
+    yield put(loadFilterTemplatesFailed());
     logger.info('fetch tasks filter templates error : ', error);
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
-function* fetchTasksFilterSteps({ payload: { templateId } }: TLoadTasksFilterSteps) {
+function* fetchTasksFilterSteps({ payload: { templateId } }: PayloadAction<TLoadFilterStepsPayload>) {
   try {
     const {
       tasksSettings: { completionStatus },
@@ -233,47 +231,47 @@ function* fetchTasksFilterSteps({ payload: { templateId } }: TLoadTasksFilterSte
       }),
       handleLoadTemplateVariables(templateId),
     ]);
-    yield put(loadTasksFilterStepsSuccess(steps));
+    yield put(loadFilterStepsSuccess(steps));
   } catch (error) {
-    put(loadTasksFilterStepsFailed());
+    put(loadFilterStepsFailed());
     logger.info('fetch tasks filter steps error : ', error);
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   }
 }
 
-function* handleShiftTaskList({ payload: { currentTaskId } }: TShiftTaskList) {
+function* handleShiftTaskList({ payload: { currentTaskId } }: PayloadAction<TShiftTaskListPayload>) {
   yield openNextTask(currentTaskId);
   yield removeTaskFromList(currentTaskId);
 }
 
 export function* watchFetchTaskList() {
-  yield takeEvery(ETaskListActions.LoadTaskList, function* loadTask({ payload: offset }: TLoadTaskList) {
+  yield takeEvery(loadTaskList.type, function* loadTask({ payload: offset }: PayloadAction<number>) {
     yield fetchTaskList(offset, ETaskListStatus.Loading);
   });
 }
 
 export function* watchFetchTasksCount() {
-  yield takeEvery(ETaskListActions.LoadTasksCount, fetchTasksCount);
+  yield takeEvery(loadTasksCount.type, fetchTasksCount);
 }
 
 export function* watchSearchTasks() {
-  yield takeLatest(ETaskListActions.SearchTasks, handleSearchTasks);
+  yield takeLatest(searchTasks.type, handleSearchTasks);
 }
 
 export function* watchLoadTasksFilterTemplates() {
-  yield takeEvery(ETaskListActions.LoadFilterTemplates, fetchTasksFilterTemplates);
+  yield takeEvery(loadFilterTemplates.type, fetchTasksFilterTemplates);
 }
 
 export function* watchLoadTasksFilterSteps() {
-  yield throttle(500, ETaskListActions.LoadFilterSteps, fetchTasksFilterSteps);
+  yield throttle(500, loadFilterSteps.type, fetchTasksFilterSteps);
 }
 
 export function* watchInsertNewTask() {
-  yield takeEvery(ETaskListActions.InsertNewTask, handleInsertNewTask);
+  yield takeEvery(insertNewTask.type, handleInsertNewTask);
 }
 
 export function* watchShiftTaskList() {
-  yield takeLatest(ETaskListActions.ShiftTaskList, handleShiftTaskList);
+  yield takeLatest(shiftTaskList.type, handleShiftTaskList);
 }
 
 export function* watchNewTask() {
@@ -317,9 +315,9 @@ function* handleAddTask(newTask: ITaskListItem) {
   }
 
   yield put(insertNewTask(newTask));
-  yield put(loadTasksFilterTemplates());
+  yield put(loadFilterTemplates());
   if (templateIdFilter) {
-    yield put(loadTasksFilterSteps({ templateId: templateIdFilter }));
+    yield put(loadFilterSteps({ templateId: templateIdFilter }));
   }
 }
 
