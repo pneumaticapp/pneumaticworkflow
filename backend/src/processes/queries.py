@@ -242,13 +242,16 @@ class WorkflowListQuery(
             """
 
         if self.search_tsquery:
+            # ! Does not change
+            # "ps.is_deleted = FALSE" to a "ps.is_deleted IS FALSE"
+            # it breaks using gin index
             result += """
                 INNER JOIN processes_searchcontent ps ON (
                   (
                     pw.id = ps.workflow_id
                     OR pw.template_id = ps.template_id
                   )
-                  AND ps.is_deleted IS FALSE
+                  AND ps.is_deleted = FALSE
                 )
             """
         return result
@@ -1002,6 +1005,9 @@ class TaskListQuery(
         """
         if self.search_tsquery:
             # Join task and workflow name search content only
+            # ! Does not change
+            # "ps.is_deleted = FALSE" to a "ps.is_deleted IS FALSE"
+            # it breaks using gin index
             result += f"""
                 INNER JOIN processes_searchcontent ps ON (
                   (
@@ -1011,7 +1017,7 @@ class TaskListQuery(
                         AND ps.type = '{SearchContentType.WORKFLOW}'
                     )
                   )
-                  AND ps.is_deleted IS FALSE
+                  AND ps.is_deleted = FALSE
                 )
             """
         if self.template_id:
@@ -1175,10 +1181,13 @@ class TemplateListQuery(
         )
         """
         if self.search_text:
+            # ! Does not change
+            # "ps.is_deleted = FALSE" to a "ps.is_deleted IS FALSE"
+            # it breaks using gin index
             result += """
                 INNER JOIN processes_searchcontent ps ON (
-                    pt.id = ps.template_id AND
-                    ps.is_deleted IS FALSE
+                    pt.id = ps.template_id
+                    AND ps.is_deleted = FALSE
                 )
             """
         if self.ordering in {
