@@ -586,6 +586,7 @@ def test_retrieve__get_performers_type_field__ok(api_client):
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
 
     template_first_task = template.tasks.order_by(
@@ -664,6 +665,7 @@ def test_retrieve__field_user__ok(api_client):
         is_required=True,
         task=template_task,
         template=template,
+        account=user.account,
     )
     response = api_client.post(
         path=f'/templates/{template.id}/run',
@@ -717,6 +719,7 @@ def test_retrieve__field_date__ok(api_client):
         is_required=True,
         task=template_task,
         template=template,
+        account=user.account,
     )
     response = api_client.post(
         path=f'/templates/{template.id}/run',
@@ -767,6 +770,7 @@ def test_retrieve__field_url__ok(api_client):
         is_required=True,
         task=template_task,
         template=template,
+        account=user.account,
     )
     response = api_client.post(
         path=f'/templates/{template.id}/run',
@@ -817,6 +821,7 @@ def test_retrieve__field_with_selections__ok(api_client):
         is_required=True,
         task=template_task,
         template=template,
+        account=user.account,
     )
     FieldTemplateSelection.objects.create(
         field_template=field_template,
@@ -880,6 +885,7 @@ def test_retrieve__field_with_attachments__ok(api_client):
         is_required=True,
         task=template_task,
         template=template,
+        account=user.account,
     )
 
     response = api_client.post(
@@ -943,6 +949,7 @@ def test_retrieve__fields_ordering__ok(api_client):
         is_required=True,
         task=template_task,
         template=template,
+        account=user.account,
     )
     field_template_0 = FieldTemplate.objects.create(
         name='Field 0',
@@ -951,6 +958,7 @@ def test_retrieve__fields_ordering__ok(api_client):
         is_required=False,
         task=template_task,
         template=template,
+        account=user.account,
     )
     field_template_2 = FieldTemplate.objects.create(
         name='Field 2',
@@ -959,6 +967,7 @@ def test_retrieve__fields_ordering__ok(api_client):
         is_required=False,
         task=template_task,
         template=template,
+        account=user.account,
     )
     FieldTemplateSelection.objects.create(
         field_template=field_template_2,

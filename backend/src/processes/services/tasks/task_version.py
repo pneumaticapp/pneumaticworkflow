@@ -167,6 +167,7 @@ class TaskUpdateVersionService(
                 'is_required': template['is_required'],
                 'order': template['order'],
                 'workflow': self.instance.workflow,
+                'account': self.instance.account,
             },
         )
 
