@@ -464,7 +464,7 @@ class WorkflowActionService:
         if not task_start_event_already_exist:
             WorkflowEventService.task_started_event(task)
 
-        if not self.workflow.template.is_onboarding:
+        if not self.workflow.template or not self.workflow.template.is_onboarding:
             recipients_qst = (
                 TaskPerformer.objects
                 .by_task(task.id)
