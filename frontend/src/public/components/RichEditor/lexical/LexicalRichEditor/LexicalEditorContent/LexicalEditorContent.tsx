@@ -18,6 +18,7 @@ import {
   ChecklistPlugin,
   MentionsPlugin,
 } from '../../plugins';
+import { EditorControls } from '../../../EditorControls';
 import { EditorToolbar } from '../EditorToolbar/EditorToolbar';
 import type { ILexicalEditorContentProps } from '../types';
 
@@ -37,6 +38,11 @@ export function LexicalEditorContent({
   editorRef,
   editorContainerRef,
   onChange,
+  onSubmit,
+  onCancel,
+  submitIcon,
+  cancelIcon,
+  withControls = false,
 }: ILexicalEditorContentProps): React.ReactElement {
   const showMentions = withMentions && Boolean(mentions?.length);
 
@@ -55,7 +61,28 @@ export function LexicalEditorContent({
         }
         ErrorBoundary={LexicalErrorBoundary}
       />
-      {withToolbar && <EditorToolbar withChecklists={withChecklists} isModal={isModal} onUploadAttachments={onUploadAttachments} />}
+      {(withToolbar || withControls) && (
+        <div className={styles['controls-wrapper']}>
+          {withToolbar && (
+            <EditorToolbar
+              withChecklists={withChecklists}
+              isModal={isModal}
+              onUploadAttachments={onUploadAttachments}
+            />
+          )}
+          {withControls && onSubmit && (
+            <EditorControls
+              onSubmit={onSubmit}
+              onCancel={onCancel}
+              handleSubmit={onSubmit}
+              handleCancel={onCancel ?? (() => {})}
+              shouldSubmitAfterFileLoaded={false}
+              submitIcon={submitIcon}
+              cancelIcon={cancelIcon}
+            />
+          )}
+        </div>
+      )}
 
       <HistoryPlugin />
       <ListPlugin />

@@ -16,6 +16,15 @@
   }
 }
 
+.controls-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
 .content-editable {
   flex: 1;
   outline: none;

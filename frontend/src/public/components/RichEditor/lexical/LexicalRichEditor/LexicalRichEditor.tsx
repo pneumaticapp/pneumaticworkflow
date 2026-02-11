@@ -60,9 +60,14 @@ export const LexicalRichEditor = forwardRef<
     templateVariables,
     onUploadAttachments: onUploadAttachmentsProp,
     placeholder = '',
+    onSubmit,
+    onCancel,
+    submitIcon,
+    cancelIcon,
   },
   ref,
 ) {
+  const withControls = Boolean(onSubmit);
   const editorRef = useRef<LexicalEditor | null>(null);
   const editorContainerRef = useRef<HTMLDivElement | null>(null);
   const templateVariablesRef = useRef(templateVariables);
@@ -189,6 +194,11 @@ export const LexicalRichEditor = forwardRef<
             editorContainerRef={editorContainerRef}
             onChange={onChange}
             withChecklists={withChecklists}
+            onSubmit={onSubmit}
+            onCancel={onCancel}
+            submitIcon={submitIcon}
+            cancelIcon={cancelIcon}
+            withControls={withControls}
           />
         </LinkPluginProvider>
       </LexicalComposer>

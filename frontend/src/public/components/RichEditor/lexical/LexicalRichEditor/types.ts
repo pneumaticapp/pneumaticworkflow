@@ -57,4 +57,9 @@ export interface ILexicalEditorContentProps {
   editorRef: MutableRefObject<LexicalEditor | null>;
   editorContainerRef?: React.RefObject<HTMLDivElement | null>;
   onChange: (editorState: EditorState) => void;
+  onSubmit?: () => void;
+  onCancel?: () => void;
+  submitIcon?: ReactNode;
+  cancelIcon?: ReactNode;
+  withControls?: boolean;
 }
