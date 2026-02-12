@@ -1,9 +1,11 @@
 from rest_framework.decorators import action
+from rest_framework.mixins import ListModelMixin
 from rest_framework.viewsets import GenericViewSet
 
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import IsAuthenticated
 from src.storage.models import Attachment
+from src.storage.queries import AttachmentListQuery
 from src.storage.serializers import (
     AttachmentCheckPermissionSerializer,
     AttachmentListSerializer,
@@ -12,7 +14,11 @@ from src.storage.serializers import (
 from src.storage.services.attachments import AttachmentService
 
 
-class AttachmentViewSet(CustomViewSetMixin, GenericViewSet):
+class AttachmentViewSet(
+    ListModelMixin,
+    CustomViewSetMixin,
+    GenericViewSet,
+):
     """
     ViewSet for working with attachments.
     Provides endpoint for checking file access permissions.
@@ -29,13 +35,6 @@ class AttachmentViewSet(CustomViewSetMixin, GenericViewSet):
         if self.action == 'list':
             return AttachmentListSerializer
         return AttachmentSerializer
-
-    def get_queryset(self):
-        """Returns queryset considering user permissions."""
-        if self.action == 'list':
-            service = AttachmentService(user=self.request.user)
-            return service.get_user_attachments(self.request.user)
-        return self.queryset
 
     @action(
         methods=['POST'],
@@ -72,6 +71,6 @@ class AttachmentViewSet(CustomViewSetMixin, GenericViewSet):
 
     def list(self, request, *args, **kwargs):
         """Returns list of attachments accessible to user."""
-        queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return self.response_ok(serializer.data)
+        query = AttachmentListQuery(user=request.user)
+        self.queryset = Attachment.objects.execute_raw(query)
+        return super().list(request, *args, **kwargs)

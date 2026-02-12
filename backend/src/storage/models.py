@@ -20,6 +20,14 @@ class Attachment(SoftDeleteModel, AccountBaseMixin):
         indexes = [
             models.Index(fields=['file_id']),
             models.Index(fields=['source_type', 'account']),
+            models.Index(
+                fields=['is_deleted', 'access_type', 'account'],
+                name='storage_att_del_acc_type_idx',
+            ),
+            models.Index(
+                fields=['is_deleted', 'access_type'],
+                name='storage_att_del_acc_idx',
+            ),
         ]
 
     file_id = models.CharField(

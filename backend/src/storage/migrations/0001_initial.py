@@ -42,4 +42,12 @@ class Migration(migrations.Migration):
             model_name='attachment',
             index=models.Index(fields=['source_type', 'account'], name='storage_att_source__a020ca_idx'),
         ),
+        migrations.AddIndex(
+            model_name='attachment',
+            index=models.Index(fields=['is_deleted', 'access_type', 'account'], name='storage_att_del_acc_type_idx'),
+        ),
+        migrations.AddIndex(
+            model_name='attachment',
+            index=models.Index(fields=['is_deleted', 'access_type'], name='storage_att_del_acc_idx'),
+        ),
     ]

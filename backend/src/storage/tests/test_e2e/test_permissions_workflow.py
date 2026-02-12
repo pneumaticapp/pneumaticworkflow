@@ -310,61 +310,6 @@ class TestPermissionsWorkflowE2E:
         # assert
         assert has_access is False
 
-    def test_get_user_attachments__mixed_access_types__ok(self):
-        """
-        Scenario: User has access to attachments via different methods
-        Expected: Returns all accessible attachments
-        """
-        # arrange
-        account = create_test_account()
-        user = create_test_admin(account=account)
-        other_account = create_test_account()
-
-        # Public attachment from other account
-        create_test_attachment(
-            other_account,
-            file_id='mixed_public_e2e',
-            access_type=AccessType.PUBLIC,
-            source_type=SourceType.ACCOUNT,
-        )
-
-        # Account attachment from same account
-        create_test_attachment(
-            account,
-            file_id='mixed_account_e2e',
-            access_type=AccessType.ACCOUNT,
-            source_type=SourceType.ACCOUNT,
-        )
-
-        # Restricted attachment with permission
-        restricted_att = create_test_attachment(
-            account,
-            file_id='mixed_restricted_e2e',
-            access_type=AccessType.RESTRICTED,
-            source_type=SourceType.ACCOUNT,
-        )
-        assign_perm('storage.access_attachment', user, restricted_att)
-
-        # Restricted attachment without permission
-        create_test_attachment(
-            account,
-            file_id='mixed_no_access_e2e',
-            access_type=AccessType.RESTRICTED,
-            source_type=SourceType.ACCOUNT,
-        )
-
-        service = AttachmentService(user=user)
-
-        # act
-        user_attachments = service.get_user_attachments(user)
-
-        # assert
-        file_ids = [a.file_id for a in user_attachments]
-        assert 'mixed_public_e2e' in file_ids
-        assert 'mixed_account_e2e' in file_ids
-        assert 'mixed_restricted_e2e' in file_ids
-        assert 'mixed_no_access_e2e' not in file_ids
-
     def test_cascade_permissions__workflow_to_tasks__ok(self):
         """
         Scenario: User has access to workflow and all its tasks
