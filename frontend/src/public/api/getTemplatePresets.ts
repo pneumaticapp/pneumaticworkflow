@@ -4,12 +4,12 @@ import { TTemplatePreset } from '../types/template';
 
 export type TGetTemplatePresetsResponse = TTemplatePreset[];
 
-export function getTemplatePresets(id: string) {
+export function getTemplatePresets(id: string, signal?: AbortSignal) {
   const {
     api: { urls },
   } = getBrowserConfigEnv();
 
   const url = urls.templatePresets.replace(':id', String(id));
 
-  return commonRequest<TGetTemplatePresetsResponse>(url);
+  return commonRequest<TGetTemplatePresetsResponse>(url, { signal }, { shouldThrow: true });
 }
