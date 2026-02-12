@@ -56,6 +56,7 @@ export function LexicalEditorContent({
           <ContentEditable
             className={styles['content-editable']}
             aria-placeholder={placeholder}
+            data-testid="rich-editor-contenteditable"
             placeholder={<div className={styles['placeholder']}>{placeholder}</div>}
           />
         }

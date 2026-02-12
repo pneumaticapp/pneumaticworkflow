@@ -11,16 +11,27 @@ type InlineMatch =
   | { type: 'variable'; index: number; end: number; match: RegExpMatchArray }
   | { type: 'mention'; index: number; end: number; match: RegExpMatchArray };
 
+/**
+ * Resolves variable payload by apiName. When not found in templateVariables, uses apiName as title.
+ * Exported for tests (variable-not-found / variable-found behaviour).
+ */
+export function getVariablePayload(
+  apiName: string,
+  templateVariables?: TTaskVariable[],
+): { apiName: string; title: string; subtitle?: string } {
+  const variable = templateVariables?.find((v) => v.apiName === apiName);
+  return {
+    apiName: variable?.apiName ?? apiName,
+    title: variable?.title ?? apiName,
+    subtitle: variable?.subtitle,
+  };
+}
+
 function createVariableNodeFromApiName(
   apiName: string,
   templateVariables?: TTaskVariable[],
 ): ReturnType<typeof $createVariableNode> {
-  const variable = templateVariables?.find((v) => v.apiName === apiName);
-  return $createVariableNode({
-    apiName: variable?.apiName ?? apiName,
-    title: variable?.title ?? apiName,
-    subtitle: variable?.subtitle,
-  });
+  return $createVariableNode(getVariablePayload(apiName, templateVariables));
 }
 
 function findAllInlineMatches(text: string): InlineMatch[] {

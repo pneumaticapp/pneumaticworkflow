@@ -173,12 +173,15 @@ export const RichEditor = forwardRef<
 
 
   return (
-    <div className={classnames(
-      styles['lexical-wrapper'],
-      title && styles['lexical-wrapper_with-title'],
-      multiline && styles['lexical-wrapper_multiline'],
-      className,
-    )}>
+    <div
+      data-testid="rich-editor-root"
+      className={classnames(
+        styles['lexical-wrapper'],
+        title && styles['lexical-wrapper_with-title'],
+        multiline && styles['lexical-wrapper_multiline'],
+        className,
+      )}
+    >
       <EditorHeader title={title} foregroundColor={foregroundColor} />
       <LexicalComposer initialConfig={initialConfig}>
         <LinkPluginProvider editorContainerRef={editorContainerRef}>

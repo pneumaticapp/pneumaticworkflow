@@ -80,36 +80,41 @@ exports[`RichText RichText and youtube in text flag return text with youtube ifr
 </div>
 `;
 
-exports[`RichText renderes correct html for mentions and links 1`] = `
-<RichText
-  isMarkdownMode={true}
-  text="Hello, [Jyoti Puri|3], look here: link: http://pneumatic.app/"
+exports[`RichText renders correct html for mentions and links 1`] = `
+<div
+  class="container"
 >
-  <div
-    className="container"
-    dangerouslySetInnerHTML={
-      {
-        "__html": "<p>Hello, <span class='mention'>@Jyoti Puri</span>, look here: link: <a href="http://pneumatic.app/" target="_blank">http://pneumatic.app/<a/></p>
-",
-      }
-    }
-  />
-</RichText>
+  <p>
+    Hello, 
+    <span
+      class="mention"
+    >
+      @Jyoti Puri
+    </span>
+    , look here: link: 
+    <a
+      href="http://pneumatic.app/"
+      target="_blank"
+    >
+      http://pneumatic.app/
+    </a>
+    <a />
+  </p>
+  <a>
+    
+
+  </a>
+</div>
 `;
 
-exports[`RichText renderes correct html for plain text 1`] = `
-<RichText
-  isMarkdownMode={true}
-  text="Some plain text"
+exports[`RichText renders correct html for plain text 1`] = `
+<div
+  class="container"
 >
-  <div
-    className="container"
-    dangerouslySetInnerHTML={
-      {
-        "__html": "<p>Some plain text</p>
-",
-      }
-    }
-  />
-</RichText>
+  <p>
+    Some plain text
+  </p>
+  
+
+</div>
 `;
