@@ -223,4 +223,41 @@ http {
         gzip_disable "msie6";
         gzip_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
     }
+
+    ##
+    # File service server
+    ##
+
+    upstream file-service {
+      server pneumatic_file_service:8000;
+    }
+
+    server {
+        listen 443 ssl;
+        ssl_certificate     /etc/keys/${FILE_DOMAIN}.crt;
+        ssl_certificate_key /etc/keys/${FILE_DOMAIN}.key;
+
+        root /var/www/html;
+        index index.html index.nginx-debian.html;
+
+        server_name ${FILE_DOMAIN};
+
+        location / {
+            proxy_pass http://file-service;
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_set_header X-Real-IP $remote_addr;
+            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+            proxy_cache_bypass $http_upgrade;
+        }
+
+        location /robots.txt {
+            alias /var/www/robots.txt;
+        }
+        location = /502.html {
+            alias /var/www/html/502.html;
+        }
+    }
 }

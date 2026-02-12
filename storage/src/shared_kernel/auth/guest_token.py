@@ -46,7 +46,7 @@ class GuestToken(BaseModel):
             self.payload = jwt.decode(
                 self.token,
                 settings.DJANGO_SECRET_KEY,
-                algorithms=[settings.JWT_ALGORITHM],
+                algorithms=['HS256'],
             )
         except jwt.InvalidTokenError as e:
             error_msg = 'Invalid token'

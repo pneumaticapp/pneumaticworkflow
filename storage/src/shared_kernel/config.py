@@ -53,11 +53,8 @@ class Settings(BaseSettings):
     DJANGO_SECRET_KEY: str = 'DJANGO_SECRET_KEY'
     AUTH_TOKEN_ITERATIONS: int = 1
 
-    # JWT settings (uses DJANGO_SECRET_KEY for signing/verification)
-    JWT_ALGORITHM: str = 'HS256'
-
     # Django backend base URL
-    BACKEND_PRIVATE_URL: str = 'http://pneumatic-nginx/'
+    BACKEND_PRIVATE_URL: str = 'http://localhost:8001/'
 
     @property
     def check_permission_url(self) -> str:

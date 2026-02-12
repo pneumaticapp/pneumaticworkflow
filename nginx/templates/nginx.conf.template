@@ -218,7 +218,7 @@ http {
     }
 
     server {
-        listen 8002;
+        listen 80;
         root /var/www/html;
         index index.html index.nginx-debian.html;
 
