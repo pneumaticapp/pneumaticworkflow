@@ -19,6 +19,7 @@ from .error_messages import (
     MSG_STORAGE_005,
     MSG_STORAGE_007,
     MSG_VAL_001,
+    MSG_VAL_007,
 )
 
 # Domain error codes
@@ -148,6 +149,12 @@ VALIDATION_ERROR_CODES = {
     'INVALID_FILE_SIZE': ErrorCode(
         code='VAL_001',
         message=MSG_VAL_001,
+        error_type=ErrorType.VALIDATION,
+        http_status=400,
+    ),
+    'MISSING_REQUIRED_FIELD': ErrorCode(
+        code='VAL_002',
+        message=MSG_VAL_007,
         error_type=ErrorType.VALIDATION,
         http_status=400,
     ),

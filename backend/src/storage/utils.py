@@ -90,6 +90,17 @@ def extract_file_ids_from_values(
     return list(set(file_ids))
 
 
+def get_file_service_file_url(file_id: str) -> Optional[str]:
+    """
+    Returns full URL to file in file service for download/display.
+    Format: {FILE_SERVICE_URL}/{file_id}.
+    """
+    base = getattr(settings, 'FILE_SERVICE_URL', None)
+    if not base or not file_id:
+        return None
+    return f"{base.rstrip('/')}/{file_id}"
+
+
 def sync_storage_attachments_for_scope(
     account,
     user: Optional[UserModel],
