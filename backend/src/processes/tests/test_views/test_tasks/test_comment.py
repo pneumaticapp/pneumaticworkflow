@@ -5,7 +5,6 @@ from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
     CommentStatus,
 )
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.services.events import (
     CommentService,
@@ -17,6 +16,7 @@ from src.processes.services.exceptions import (
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
+    create_test_attachment,
     create_test_guest,
     create_test_owner,
     create_test_workflow,
@@ -177,32 +177,38 @@ def test_create__text__ok(api_client, mocker):
 
 def test_create_text_and_attachment__ok(mocker, api_client):
 
-    # assert
+    # arrange
     user = create_test_owner()
     workflow = create_test_workflow(user)
     task = workflow.tasks.get(number=1)
+    comment_text = (
+        'Some comment with files: '
+        '[first_file.txt]'
+        '(https://files.example.com/first_template_file) and '
+        '[first_file2.txt]'
+        '(https://files.example.com/first_template_file2)'
+    )
     event = WorkflowEventService.comment_created_event(
         user=user,
-        text='Some comment',
+        text=comment_text,
         task=task,
-        attachments=[1, 2],
         after_create_actions=False,
     )
-    attach_1 = FileAttachment.objects.create(
-        account_id=user.account_id,
-        name='filename.png',
-        size=384812,
-        url='https://cloud.google.com/bucket/filename_salt.png',
-        thumbnail_url='https://cloud.google.com/bucket/filename_thumb.png',
+
+    # Create attachments linked to the event
+    create_test_attachment(
+        account=user.account,
+        file_id='first_template_file',
+        task=task,
         event=event,
     )
-    attach_2 = FileAttachment.objects.create(
-        account_id=user.account_id,
-        name='doc.docx',
-        size=2412413,
-        url='https://cloud.google.com/bucket/doc_salt.docx',
+    create_test_attachment(
+        account=user.account,
+        file_id='first_template_file2',
+        task=task,
         event=event,
     )
+
     service_init_mock = mocker.patch.object(
         CommentService,
         attribute='__init__',
@@ -219,25 +225,13 @@ def test_create_text_and_attachment__ok(mocker, api_client):
     response = api_client.post(
         f'/v2/tasks/{task.id}/comment',
         data={
-            'text': event.text,
-            'attachments': [
-                attach_1.id,
-                attach_2.id,
-            ],
+            'text': comment_text,
         },
     )
 
-    # arrange
+    # assert
     assert response.status_code == 200
-    assert len(response.data['attachments']) == 2
-    attach_data = response.data['attachments'][0]
-    assert attach_data['id'] == attach_1.id
-    assert attach_data['name'] == attach_1.name
-    assert attach_data['url'] == attach_1.url
-    assert attach_data['thumbnail_url'] == attach_1.thumbnail_url
-    assert attach_data['thumbnail_url'] == attach_1.thumbnail_url
-    assert attach_data['size'] == attach_1.size
-
+    assert response.data['text'] == event.text
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
@@ -245,8 +239,7 @@ def test_create_text_and_attachment__ok(mocker, api_client):
     )
     comment_create_mock.assert_called_once_with(
         task=task,
-        text=event.text,
-        attachments=[attach_1.id, attach_2.id],
+        text=comment_text,
     )
 
 

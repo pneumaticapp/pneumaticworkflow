@@ -8,8 +8,14 @@ from src.accounts.messages import MSG_A_0001
 from src.accounts.models import (
     Contact,
 )
-from src.storage.google_cloud import (
-    GoogleCloudService,
+from src.storage.services.exceptions import (
+    FileServiceConnectionException,
+    FileServiceException,
+)
+from src.storage.services.file_service import FileServiceClient
+from src.utils.logging import (
+    SentryLogLevel,
+    capture_sentry_message,
 )
 
 
@@ -32,7 +38,7 @@ class ContactAdminForm(ModelForm):
 
     photo_file = FileField(
         required=False,
-        label='Upload photo to Google drive',
+        label='Upload photo',
     )
 
     def clean_photo_file(self):
@@ -48,13 +54,28 @@ class ContactAdminForm(ModelForm):
         if not photo_file:
             return super().save(commit=commit)
 
-        file_path = photo_file.name.replace(' ', '_')
-        storage = GoogleCloudService(
-            account=self.instance.account,
-        )
-        self.instance.photo = storage.upload_from_binary(
-            filepath=file_path,
-            binary=photo_file.file.getvalue(),
-            content_type=photo_file.content_type,
-        )
+        user = self.cleaned_data['user']
+        try:
+            file_service = FileServiceClient(user=user)
+            file_url = file_service.upload_file_with_attachment(
+                file_content=photo_file.read(),
+                filename=photo_file.name.replace(' ', '_'),
+                content_type=photo_file.content_type,
+                account=self.instance.account,
+            )
+            self.instance.photo = file_url
+        except (
+            FileServiceConnectionException,
+            FileServiceException,
+        ) as ex:
+            capture_sentry_message(
+                message='Contact photo upload failed',
+                data={
+                    'filename': photo_file.name,
+                    'user_id': user.id,
+                    'account_id': self.instance.account.id,
+                    'error': str(ex),
+                },
+                level=SentryLogLevel.ERROR,
+            )
         return super().save(commit=commit)

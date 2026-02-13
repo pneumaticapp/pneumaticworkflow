@@ -113,6 +113,11 @@ class Template(
     def __str__(self):
         return self.name
 
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        from src.authentication.services.public_auth import PublicAuthService
+        PublicAuthService.invalidate_template_public_tokens(self)
+
     @property
     def public_url(self) -> Optional[str]:
         return f'{settings.FORMS_URL}/{self.public_id}'

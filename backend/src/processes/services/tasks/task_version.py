@@ -43,6 +43,7 @@ from src.processes.services.tasks.task import (
 from src.processes.utils.common import (
     insert_fields_values_to_text,
 )
+from src.storage.utils import reassign_restricted_permissions_for_task
 
 UserModel = get_user_model()
 
@@ -288,6 +289,10 @@ class TaskUpdateVersionService(
             deleted_user_ids,
             deleted_group_ids,
         ) = self.instance.update_performers()
+        reassign_restricted_permissions_for_task(
+            task=self.instance,
+            user=self.user,
+        )
 
         performer_after = (
             TaskPerformer.objects

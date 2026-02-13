@@ -322,3 +322,87 @@ def test_create_related__ok(mocker):
         redefined_performer=None,
     )
     update_owners_mock.assert_called_once()
+
+
+def test_partial_update__ok(mocker):
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner)
+    service = WorkflowService(
+        user=owner,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=workflow,
+    )
+    new_name = 'Updated workflow name'
+    refresh_mock = mocker.patch(
+        'src.processes.services.workflows.workflow.refresh_attachments',
+    )
+
+    # act
+    result = service.partial_update(name=new_name, force_save=True)
+
+    # assert
+    assert result is workflow
+    workflow.refresh_from_db()
+    assert workflow.name == new_name
+    refresh_mock.assert_not_called()
+
+
+def test_partial_update__description__refresh_attachments_called(mocker):
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner)
+    service = WorkflowService(
+        user=owner,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=workflow,
+    )
+    new_description = 'Updated description with file_123.png'
+    refresh_mock = mocker.patch(
+        'src.processes.services.workflows.workflow.refresh_attachments',
+    )
+
+    # act
+    service.partial_update(
+        description=new_description,
+        force_save=True,
+    )
+
+    # assert
+    workflow.refresh_from_db()
+    assert workflow.description == new_description
+    refresh_mock.assert_called_once_with(
+        workflow,
+        owner,
+    )
+
+
+def test_partial_update__without_description__refresh_attachments_not_called(
+    mocker,
+):
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner)
+    service = WorkflowService(
+        user=owner,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=workflow,
+    )
+    refresh_mock = mocker.patch(
+        'src.processes.services.workflows.workflow.refresh_attachments',
+    )
+
+    # act
+    service.partial_update(
+        name='Other name',
+        force_save=True,
+    )
+
+    # assert
+    refresh_mock.assert_not_called()

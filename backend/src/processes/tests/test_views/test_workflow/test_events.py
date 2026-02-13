@@ -25,7 +25,6 @@ from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
 )
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.task import (
     Delay,
@@ -43,6 +42,8 @@ from src.processes.services.tasks.performers import (
 )
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_attachment,
+    create_test_attachment_for_event,
     create_test_group,
     create_test_guest,
     create_test_owner,
@@ -177,21 +178,17 @@ def test_events__only_attachments_true__ok(api_client):
     task = workflow.tasks.get(number=1)
     WorkflowEventService.task_started_event(task)
 
-    attachment = FileAttachment.objects.create(
-        name='filename.png',
-        url='https://path.to.file/filename.png',
-        size=141352,
-        account_id=user.account_id,
-    )
     event = WorkflowEventService.comment_created_event(
         text='No attachments',
         task=task,
         user=user,
-        attachments=[attachment.id],
         after_create_actions=False,
     )
-    attachment.event = event
-    attachment.save()
+    create_test_attachment_for_event(
+        account=user.account,
+        event=event,
+        file_id='events_test_file.png',
+    )
     WorkflowEventService.comment_created_event(
         text='There is no attachments here',
         task=task,
@@ -1011,7 +1008,6 @@ def test_retrieve__complete_task__field_user__ok(api_client):
     # TODO Replace in https://my.pneumatic.app/workflows/18137/
     assert field_data['value'] == user.get_full_name()
     assert field_data['selections'] == []
-    assert field_data['attachments'] == []
     assert field_data['order'] == field.order
     assert field_data['user_id'] == user.id
 
@@ -1073,7 +1069,6 @@ def test_retrieve__complete_task__field_with_selections__ok(
     assert field_data['description'] == field.description
     assert field_data['api_name'] == field.api_name
     assert field_data['value'] == selection.value
-    assert field_data['attachments'] == []
     assert field_data['order'] == field.order
     assert field_data['user_id'] is None
     selection_data = field_data['selections'][0]
@@ -1148,7 +1143,6 @@ def test_retrieve__complete_task__field_date__ok(api_client):
     assert field_data['api_name'] == field.api_name
     assert field_data['value'] == str(6516313)
     assert field_data['selections'] == []
-    assert field_data['attachments'] == []
     assert field_data['order'] == field.order
 
 
@@ -1183,14 +1177,14 @@ def test_retrieve__complete_task__field_with_attachments__ok(
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
     field = task.output.first()
-    attachment = FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        size=1488,
-        account_id=user.account_id,
+    create_test_attachment(
+        account=user.account,
+        file_id='john_cena_task_file.png',
+        task=task,
+        workflow=workflow,
         output=field,
     )
-    field.value = attachment.url
+    field.value = 'File: john_cena_task_file.png'
     field.save(update_fields=['value'])
 
     WorkflowEventService.task_complete_event(task=task, user=user)
@@ -1209,14 +1203,10 @@ def test_retrieve__complete_task__field_with_attachments__ok(
     assert field_data['name'] == field.name
     assert field_data['description'] == field.description
     assert field_data['api_name'] == field.api_name
-    assert field_data['value'] == attachment.url
+    assert field_data['value'] == field.value
     assert field_data['selections'] == []
     assert field_data['order'] == field.order
     assert field_data['user_id'] is None
-    attachment_data = field_data['attachments'][0]
-    assert attachment_data['id'] == attachment.id
-    assert attachment_data['name'] == attachment.name
-    assert attachment_data['url'] == attachment.url
 
 
 def test_retrieve__task__due_date_changed__ok(api_client):
@@ -1299,21 +1289,17 @@ def test_retrieve__comment__with_attachment__ok(api_client):
     task.save(update_fields=['due_date'])
 
     text = 'Some comment'
-    attachment = FileAttachment.objects.create(
-        name='filename.png',
-        url='https://path.to.file/filename.png',
-        size=141352,
-        account_id=user.account_id,
-    )
     event = WorkflowEventService.comment_created_event(
         task=task,
         user=user,
         text=text,
-        attachments=[attachment.id],
         after_create_actions=False,
     )
-    attachment.event = event
-    attachment.save()
+    create_test_attachment_for_event(
+        account=user.account,
+        event=event,
+        file_id='comment_test_file.png',
+    )
 
     # act
     response = api_client.get(f'/workflows/{workflow.id}/events')
@@ -1346,12 +1332,6 @@ def test_retrieve__comment__with_attachment__ok(api_client):
         },
     ]
     assert data['task']['output'] is None
-    assert len(data['attachments']) == 1
-    assert data['attachments'][0]['id'] == attachment.id
-    assert data['attachments'][0]['name'] == attachment.name
-    assert data['attachments'][0]['url'] == attachment.url
-    assert data['attachments'][0]['thumbnail_url'] == attachment.thumbnail_url
-    assert data['attachments'][0]['size'] == attachment.size
     assert data['watched'] == []
     assert data['reactions'] == {}
 

@@ -15,22 +15,11 @@ class CommentCreateSerializer(
         allow_null=True,
         allow_blank=True,
     )
-    attachments = serializers.ListField(
-        child=serializers.IntegerField(allow_null=False, min_value=1),
-        required=False,
-        allow_null=True,
-        allow_empty=True,
-    )
 
     def validate_text(self, value):
         if not value:
             return None
         if isinstance(value, str) and not value.strip():
-            return None
-        return value
-
-    def validate_attachments(self, value):
-        if not value:
             return None
         return value
 

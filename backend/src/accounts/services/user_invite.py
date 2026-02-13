@@ -50,6 +50,7 @@ from src.processes.services.system_workflows import (
     SystemWorkflowService,
 )
 from src.notifications.tasks import send_user_transfer_notification
+from src.storage.utils import sync_account_file_fields
 
 UserModel = get_user_model()
 
@@ -120,6 +121,12 @@ class UserInviteService(
         if password:
             user.password = password
         user.save()
+        sync_account_file_fields(
+            account=user.account,
+            user=self.request_user,
+            old_values=[None],
+            new_values=[user.photo],
+        )
         return user
 
     def _get_another_account_user(self, email: str) -> Optional[UserModel]:

@@ -15,12 +15,19 @@ from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
 )
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.fields import TaskField
 from src.processes.services.base import BaseWorkflowService
 from src.processes.services.tasks.exceptions import TaskFieldException
 from src.processes.services.tasks.selection import SelectionService
 from src.services.markdown import MarkdownService
+from src.storage.enums import AccessType, SourceType
+from src.storage.models import Attachment
+from src.storage.services.attachments import AttachmentService
+from src.storage.utils import (
+    extract_file_ids_from_text,
+    parse_single_file_service_link,
+    sync_storage_attachments_for_scope,
+)
 from src.utils.dates import date_tsp_to_user_fmt
 
 UserModel = get_user_model()
@@ -200,47 +207,64 @@ class TaskFieldService(BaseWorkflowService):
         return self._get_valid_radio_value(raw_value, **kwargs)
 
     def _get_valid_file_value(self, raw_value: Any, **kwargs) -> FieldData:
+        """
+        Validate file field value: list of Markdown links to file service.
 
+        Args:
+            raw_value: List of "[filename](url)" where url must be from
+                FILE_DOMAIN; parsed via parse_single_file_service_link.
+                Required field with empty
+                list or only whitespace items raises.
+
+        Returns:
+            FieldData with value=file_ids, markdown_value=links,
+            clear_value=link labels.
+        """
         if not isinstance(raw_value, list):
             raise TaskFieldException(
                 api_name=self.instance.api_name,
                 message=messages.MSG_PW_0036,
             )
-        try:
-            attachments_ids = [int(attach_id) for attach_id in raw_value]
-        except (ValueError, TypeError) as ex:
+        if not all(isinstance(item, str) for item in raw_value):
             raise TaskFieldException(
                 api_name=self.instance.api_name,
                 message=messages.MSG_PW_0036,
-            ) from ex
-        else:
-            attachments = (
-                FileAttachment.objects
-                .on_account(self.account.id)
-                .by_ids(attachments_ids)
-                .only('name', 'url')
             )
-            if hasattr(self.instance, 'id'):
-                attachments = (
-                    attachments.with_output_or_not_attached(self.instance.id)
-                )
-            else:
-                attachments = attachments.not_attached()
-            urls = [e.url for e in attachments]
-            if len(urls) < len(attachments_ids):
+
+        stripped_items = [
+            item.strip()
+            for item in raw_value
+            if item.strip()
+        ]
+
+        values = []
+        markdown_values = []
+
+        for stripped in stripped_items:
+            parsed = parse_single_file_service_link(stripped)
+            if parsed is None:
                 raise TaskFieldException(
                     api_name=self.instance.api_name,
-                    message=messages.MSG_PW_0037,
+                    message=messages.MSG_PW_0036,
                 )
-            value = ', '.join(urls)
-            markdown_value = ', '.join(
-                [f'[{e.name}]({e.url})' for e in attachments],
+            _, file_id = parsed
+            values.append(file_id)
+            markdown_values.append(stripped)
+
+        if self.instance.is_required and not values:
+            raise TaskFieldException(
+                api_name=self.instance.api_name,
+                message=messages.MSG_PW_0036,
             )
-            return FieldData(
-                value=value,
-                markdown_value=markdown_value,
-                clear_value=value,
-            )
+
+        value = ', '.join(values)
+        markdown_value = ', '.join(markdown_values)
+
+        return FieldData(
+            value=value,
+            markdown_value=markdown_value,
+            clear_value=value,
+        )
 
     def _get_valid_user_value(self, raw_value: Any, **kwargs) -> FieldData:
 
@@ -347,23 +371,18 @@ class TaskFieldService(BaseWorkflowService):
 
     def _link_new_attachments(
         self,
-        attachments_ids: Optional[List[int]] = None,
+        markdown_values: Optional[List[str]] = None,
     ):
+        """
+        Create new attachments for the task field in storage service.
 
-        """ Attach new account files to the task field
-            attachments_ids - validated list ids """
-
-        if attachments_ids not in self.NULL_VALUES:
-            (
-                FileAttachment.objects
-                .on_account(self.account.id)
-                .with_output_or_not_attached(self.instance.id)
-                .by_ids(attachments_ids)
-                .update(
-                    output_id=self.instance.id,
-                    workflow_id=self.instance.workflow.id,
-                )
-            )
+        Args:
+            markdown_values: List of Markdown strings like "[filename](url)"
+            or plain file_id strings
+        """
+        if markdown_values not in self.NULL_VALUES:
+            ids_to_sync = self._extract_file_ids_from_markdown(markdown_values)
+            self._sync_storage_attachments(ids_to_sync)
 
     def _create_selections(
         self,
@@ -448,22 +467,95 @@ class TaskFieldService(BaseWorkflowService):
 
     def _remove_unused_attachments(
         self,
-        value: Optional[str],
-        attachment_ids: Optional[List[str]],
+        markdown_values: Optional[List[str]],
     ):
+        """
+        Remove unused attachments from new storage service.
 
-        # TODO remove unused attachments
-        #   instead of call DELETE /workflows/attachments/:id
-        current_attach_ids = self.instance.attachments.ids_set()
-        if value:
-            new_attach_ids = {int(e) for e in attachment_ids}
-            deleted_attach_ids = current_attach_ids - new_attach_ids
+        Args:
+            markdown_values: List of Markdown strings like "[filename](url)"
+        """
+        if markdown_values:
+            file_ids = self._extract_file_ids_from_markdown(markdown_values)
         else:
-            deleted_attach_ids = current_attach_ids
-        if deleted_attach_ids:
-            FileAttachment.objects.filter(
-                id__in=deleted_attach_ids,
-            ).delete()
+            file_ids = []
+
+        # Get current attachments for this field
+        filter_kwargs = {
+            'workflow': self.instance.workflow,
+            'output': self.instance,
+        }
+        current_attachments = Attachment.objects.filter(**filter_kwargs)
+
+        # Remove attachments not in the new file_ids list
+        if file_ids:
+            current_attachments.exclude(file_id__in=file_ids).delete()
+        else:
+            # If no value, remove all attachments
+            current_attachments.delete()
+
+    def _extract_file_ids_from_markdown(
+        self,
+        markdown_values: List[str],
+    ) -> List[str]:
+        """
+        Extract file_ids from Markdown links or plain file_id strings.
+
+        Args:
+            markdown_values: List of Markdown strings or plain file_id strings
+
+        Returns:
+            List of file_ids extracted from URLs or used as-is
+        """
+        file_ids = []
+        markdown_pattern = re.compile(r'^\[([^\]]+)\]\(([^)]+)\)$')
+        for value in markdown_values:
+            if not isinstance(value, str):
+                continue
+            extracted = extract_file_ids_from_text(value)
+            if extracted:
+                file_ids.extend(extracted)
+            else:
+                stripped = value.strip()
+                if stripped and not markdown_pattern.match(stripped):
+                    file_ids.append(stripped)
+        return file_ids
+
+    def _sync_storage_attachments(
+        self,
+        file_ids: Optional[List[str]],
+    ):
+        """
+        Create Attachment records for file_ids in new storage service.
+
+        Only creates new records. Does not overwrite existing Attachment:
+        reusing the same file_id elsewhere (e.g. markdown link in comment)
+        must not change original binding and permission context.
+        """
+        if file_ids in self.NULL_VALUES:
+            return
+
+        if self.instance.task_id:
+            source_type = SourceType.TASK
+        else:
+            source_type = SourceType.WORKFLOW
+
+        for file_id in file_ids:
+            attachment, created = Attachment.objects.get_or_create(
+                file_id=file_id,
+                defaults={
+                    'account': self.account,
+                    'source_type': source_type,
+                    'access_type': AccessType.RESTRICTED,
+                    'task': self.instance.task,
+                    'workflow': self.instance.workflow,
+                    'output': self.instance,
+                },
+            )
+            if created:
+                service = AttachmentService(user=self.user)
+                service.instance = attachment
+                service._create_related()
 
     def partial_update(
         self,
@@ -473,6 +565,7 @@ class TaskFieldService(BaseWorkflowService):
 
         """ Set or update field value only """
 
+        old_markdown_value = self.instance.markdown_value
         raw_value = update_kwargs.pop('value', None)
         selections = (
             self.instance.selections.all()
@@ -484,10 +577,10 @@ class TaskFieldService(BaseWorkflowService):
             selections=selections,
         )
         if self.instance.type == FieldType.FILE:
-            self._remove_unused_attachments(
-                value=raw_value,
-                attachment_ids=raw_value,
+            markdown_vals = (
+                raw_value if isinstance(raw_value, list) else []
             )
+            self._remove_unused_attachments(markdown_values=markdown_vals)
         super().partial_update(
             force_save=True,
             value=field_data.value,
@@ -500,4 +593,34 @@ class TaskFieldService(BaseWorkflowService):
             self._link_new_attachments(raw_value)
         elif self.instance.type in FieldType.TYPES_WITH_SELECTIONS:
             self._update_selections(raw_value)
+        elif self.instance.type in {
+            FieldType.STRING,
+            FieldType.TEXT,
+            FieldType.URL,
+        }:
+            old_file_ids = extract_file_ids_from_text(old_markdown_value)
+            new_file_ids = extract_file_ids_from_text(
+                self.instance.markdown_value,
+            )
+            removed_file_ids = list(
+                set(old_file_ids) - set(new_file_ids),
+            )
+            added_file_ids = list(
+                set(new_file_ids) - set(old_file_ids),
+            )
+            source_type = (
+                SourceType.TASK
+                if self.instance.task_id
+                else SourceType.WORKFLOW
+            )
+            sync_storage_attachments_for_scope(
+                account=self.account,
+                user=self.user,
+                add_file_ids=added_file_ids,
+                remove_file_ids=removed_file_ids,
+                source_type=source_type,
+                task=self.instance.task,
+                workflow=self.instance.workflow,
+                access_type=AccessType.RESTRICTED,
+            )
         return self.instance

@@ -28,6 +28,7 @@ from src.processes.utils.common import (
     insert_fields_values_to_text,
     string_abbreviation,
 )
+from src.storage.utils import refresh_attachments
 from src.utils.dates import date_to_user_fmt
 
 UserModel = get_user_model()
@@ -181,6 +182,9 @@ class WorkflowService(
             )
         self.update_owners()
 
+        # Update attachments for workflow
+        refresh_attachments(self.instance, self.user)
+
     def _create_actions(self, **kwargs):
         if kwargs.get('anonymous_id'):
             AnalyticService.workflows_started(
@@ -215,6 +219,19 @@ class WorkflowService(
                 template=self.instance.template,
                 user_agent=kwargs.get('user_agent'),
             )
+
+    def partial_update(
+        self,
+        force_save=False,
+        **update_kwargs,
+    ):
+        result = super().partial_update(
+            force_save=force_save,
+            **update_kwargs,
+        )
+        if 'description' in update_kwargs:
+            refresh_attachments(self.instance, self.user)
+        return result
 
     def update_owners(self):
         user_ids = Template.objects.filter(

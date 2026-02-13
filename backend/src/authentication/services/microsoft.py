@@ -13,7 +13,8 @@ from src.authentication.models import AccessToken
 from src.authentication.services import exceptions
 from src.generics.mixins.services import CacheMixin
 from src.logs.service import AccountLogService
-from src.storage.google_cloud import GoogleCloudService
+from src.storage.services.exceptions import FileServiceException
+from src.storage.services.file_service import FileServiceClient
 from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
@@ -139,7 +140,7 @@ class MicrosoftGraphApiMixin:
         """ Save photo in the storage and return public URL """
 
         file_url = None
-        if not settings.PROJECT_CONF['STORAGE']:
+        if not settings.PROJECT_CONF['STORAGE'] or account is None:
             return file_url
         response = self._graph_api_request(
             path=self.photo_path.format(user_id=user_id),
@@ -154,12 +155,26 @@ class MicrosoftGraphApiMixin:
                 filepath = f'{get_salt(30)}_photo_96x96.{ext}'
             else:
                 filepath = f'{get_salt(30)}_photo_96x96'
-            storage = GoogleCloudService(account=account)
-            file_url = storage.upload_from_binary(
-                binary=binary_photo,
-                filepath=filepath,
-                content_type=content_type,
-            )
+            try:
+                file_service = FileServiceClient(user=account.get_owner())
+                file_url = file_service.upload_file_with_attachment(
+                    file_content=binary_photo,
+                    filename=filepath,
+                    content_type=content_type,
+                    account=account,
+                )
+            except FileServiceException as ex:
+                capture_sentry_message(
+                    message='Microsoft user photo upload failed',
+                    data={
+                        'user_id': user_id,
+                        'account_id': account.id,
+                        'content_type': content_type,
+                        'error': str(ex),
+                    },
+                    level=SentryLogLevel.WARNING,
+                )
+                file_url = None
         return file_url
 
 
@@ -445,7 +460,45 @@ class MicrosoftAuthService(
             job_title=user_profile['jobTitle'],
             photo=photo,
             company_name=None,
+            ms_graph_user_id=user_profile['id'],
         )
+
+    def upload_photo_for_user(
+        self,
+        user: UserModel,
+        ms_graph_user_id: str,
+    ) -> Optional[str]:
+        """Upload user photo from Graph and return public URL.
+        Uses tokens from current auth flow (call right after get_user_data)."""
+        if not self.tokens or not settings.PROJECT_CONF['STORAGE']:
+            return None
+        access_token = (
+            f'{self.tokens["token_type"]} {self.tokens["access_token"]}'
+        )
+        return self._get_user_photo(
+            account=user.account,
+            access_token=access_token,
+            user_id=ms_graph_user_id,
+        )
+
+    def apply_photo_to_user(
+        self,
+        user: UserModel,
+        user_data: UserData,
+    ) -> None:
+        """Set user.photo from user_data or upload for new user (signup)."""
+        photo = user_data.get('photo')
+        if photo:
+            user.photo = photo
+            user.save(update_fields=['photo'])
+            return
+        uploaded = self.upload_photo_for_user(
+            user,
+            user_data.get('ms_graph_user_id'),
+        )
+        if uploaded:
+            user.photo = uploaded
+            user.save(update_fields=['photo'])
 
     def update_user_contacts(self, user: UserModel):
 

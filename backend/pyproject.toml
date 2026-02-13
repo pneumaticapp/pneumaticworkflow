@@ -26,7 +26,6 @@ django-json-widget = "0.2.0"
 xmltodict = "0.12.0"
 django-filter = "2.2.0"
 python-slugify = "4.0.0"
-google-cloud-storage = "1.28.1"
 slackclient = "2.6.2"
 analytics-python = "1.2.9"
 django-celery-beat = "2.0.0"
@@ -56,6 +55,7 @@ stripe = "7.0.0"
 msal = "^1.24.1"
 pygments = "2.17.2"
 markdown = "3.4.4"
+django-guardian = "2.4"
 
 
 [tool.poetry.group.dev.dependencies]

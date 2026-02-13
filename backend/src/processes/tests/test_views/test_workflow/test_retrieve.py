@@ -3,6 +3,7 @@ from datetime import timedelta
 
 import pytest
 from django.utils import timezone
+from django.test import override_settings
 
 from src.processes.enums import (
     FieldType,
@@ -14,7 +15,6 @@ from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
 )
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.task import (
     Delay,
     TaskPerformer,
@@ -278,7 +278,6 @@ def test_retrieve__kickoff_field_user__ok(api_client):
     assert field_data['name'] == field.name
     assert field_data['description'] == field.description
     assert field_data['api_name'] == field.api_name
-    assert field_data['attachments'] == []
     assert field_data['selections'] == []
     assert field_data['order'] == field.order
     assert field_data['user_id'] == user.id
@@ -329,7 +328,6 @@ def test_retrieve__kickoff_field_date__ok(api_client):
     assert field_data['name'] == field.name
     assert field_data['description'] == field.description
     assert field_data['api_name'] == field.api_name
-    assert field_data['attachments'] == []
     assert field_data['selections'] == []
     assert field_data['order'] == field.order
     assert field_data['value'] == str(321651)
@@ -384,7 +382,6 @@ def test_retrieve__kickoff_field_with_selections__ok(api_client):
     assert field_data['name'] == field.name
     assert field_data['description'] == field.description
     assert field_data['api_name'] == field.api_name
-    assert field_data['attachments'] == []
     assert field_data['order'] == field.order
     assert field_data['user_id'] is None
     assert field_data['value'] == 'some value'
@@ -395,6 +392,7 @@ def test_retrieve__kickoff_field_with_selections__ok(api_client):
     assert selection_data['value'] == selection.value
 
 
+@override_settings(FILE_DOMAIN='files.example.com')
 def test_retrieve__kickoff_field_with_attachments__ok(api_client):
 
     # arrange
@@ -413,19 +411,18 @@ def test_retrieve__kickoff_field_with_attachments__ok(api_client):
         order=1,
         template=template,
     )
-    attachment = FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        account_id=user.account_id,
-        size=1488,
-    )
 
     response = api_client.post(
         path=f'/templates/{template.id}/run',
         data={
             'name': 'Workflow',
             'kickoff': {
-                field_template.api_name: [attachment.id],
+                field_template.api_name: [
+                    '[first_file.txt]'
+                    '(https://files.example.com/firstfile123)',
+                    '[second_file.txt]'
+                    '(https://files.example.com/secfile456)',
+                ],
             },
         },
     )
@@ -447,11 +444,6 @@ def test_retrieve__kickoff_field_with_attachments__ok(api_client):
     assert field_data['selections'] == []
     assert field_data['order'] == field.order
     assert field_data['user_id'] is None
-    assert field_data['value'] == attachment.url
-    attachment_data = field_data['attachments'][0]
-    assert attachment_data['id'] == attachment.id
-    assert attachment_data['name'] == attachment.name
-    assert attachment_data['url'] == attachment.url
 
 
 def test_retrieve__not_admin_user_workflow_member__ok(api_client):

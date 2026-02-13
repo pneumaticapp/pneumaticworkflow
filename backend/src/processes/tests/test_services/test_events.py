@@ -8,7 +8,6 @@ from src.processes.enums import (
     CommentStatus,
     WorkflowEventType,
 )
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.serializers.workflows.events import (
     TaskEventJsonSerializer,
@@ -17,6 +16,7 @@ from src.processes.serializers.workflows.events import (
 from src.processes.services.events import WorkflowEventService
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_attachment,
     create_test_group,
     create_test_user,
     create_test_workflow,
@@ -70,13 +70,13 @@ def test_comment_created_event__ok(mocker):
     task = workflow.tasks.get(number=1)
     text = (
         '(![avatar.jpg](https://storage.com/dev/avatar.jpg '
-        '"attachment_id:3349 entityType:image")'
+        '"file_id:avatar_file.jpg entityType:image")'
     )
-    attach = FileAttachment.objects.create(
-        account_id=user.account_id,
-        name='filename.png',
-        size=384812,
-        url='https://storage.com/dev/avatar.jpg',
+    create_test_attachment(
+        account=user.account,
+        file_id='avatar_file.jpg',
+        task=task,
+        workflow=workflow,
     )
     after_create_actions_mock = mocker.patch(
         'src.processes.services.events.'
@@ -88,7 +88,6 @@ def test_comment_created_event__ok(mocker):
         user=user,
         task=task,
         text=text,
-        attachments=[attach.id],
     )
 
     # assert
@@ -98,7 +97,7 @@ def test_comment_created_event__ok(mocker):
     assert event.text == text
     assert event.workflow == workflow
     assert event.user == user
-    assert event.with_attachments is True
+    assert event.with_attachments is False
     assert event.status == CommentStatus.CREATED
     assert event.workflow_id == workflow.id
     assert event.task_id == task.id

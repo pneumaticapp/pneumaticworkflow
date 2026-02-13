@@ -28,6 +28,7 @@ from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
 )
+from src.storage.utils import sync_account_file_fields
 
 UserModel = get_user_model()
 configuration = settings.CONFIGURATION_CURRENT
@@ -138,17 +139,19 @@ class AccountService(
             gclid=gclid,
         )
 
+    def _create_actions(self, **kwargs):
+        sync_account_file_fields(
+            account=self.instance,
+            user=self.user,
+            old_values=[None, None],
+            new_values=[self.instance.logo_lg, self.instance.logo_sm],
+        )
+
     def inc_template_generations_count(self):
         self.partial_update(
             ai_templates_generations=(
                 self.instance.ai_templates_generations + 1
             ),
-            force_save=True,
-        )
-
-    def update_bucket_name(self, bucket_name):
-        self.partial_update(
-            bucket_name=bucket_name,
             force_save=True,
         )
 
@@ -269,11 +272,19 @@ class AccountService(
         force_save=False,
         **update_kwargs,
     ) -> Account:
+        old_logo_lg = self.instance.logo_lg
+        old_logo_sm = self.instance.logo_sm
 
         with transaction.atomic():
             super().partial_update(
                 **update_kwargs,
                 force_save=force_save,
+            )
+            sync_account_file_fields(
+                account=self.instance,
+                user=self.user,
+                old_values=[old_logo_lg, old_logo_sm],
+                new_values=[self.instance.logo_lg, self.instance.logo_sm],
             )
             self._update_tenants()
             if settings.PROJECT_CONF['BILLING'] and self.instance.billing_sync:

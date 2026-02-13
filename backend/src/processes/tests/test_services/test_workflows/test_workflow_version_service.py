@@ -20,7 +20,6 @@ from src.processes.models.templates.fields import (
 )
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.task import TaskTemplate
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.checklist import (
     Checklist,
     ChecklistSelection,
@@ -493,12 +492,12 @@ def test_update_from_version__new_task_in_urgent_workflow__urgent_too(
 
 def test_update_from_version__add_attachment_to_task_description():
     # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
+    user = create_test_owner()
     template = create_test_template(
         user=user,
         is_active=True,
     )
+    markdown_value = '[attachment](http://file.png)'
     kickoff = template.kickoff_instance
     kickoff_field_template_1 = FieldTemplate.objects.create(
         type=FieldType.FILE,
@@ -507,7 +506,7 @@ def test_update_from_version__add_attachment_to_task_description():
         template=template,
     )
     workflow = create_test_workflow(user, template)
-    file_field = TaskField.objects.create(
+    TaskField.objects.create(
         type=FieldType.FILE,
         name='Old name',
         api_name=kickoff_field_template_1.api_name,
@@ -515,14 +514,7 @@ def test_update_from_version__add_attachment_to_task_description():
         workflow=workflow,
         value='http://file.png',
         clear_value='http://clear-file.png',
-        markdown_value='[attachment](http://file.png)',
-    )
-    attachment = FileAttachment.objects.create(
-        name='attachment',
-        url='http://file.png',
-        workflow=workflow,
-        output=file_field,
-        account_id=user.account_id,
+        markdown_value=markdown_value,
     )
 
     task_1 = template.tasks.get(number=1)
@@ -552,10 +544,7 @@ def test_update_from_version__add_attachment_to_task_description():
     assert task_1.description_template == (
         'Screenshot: {{ %s }}' % kickoff_field_template_1.api_name
     )
-    expected = (
-        f'Screenshot: [{attachment.name}]({attachment.url})'
-    )
-    assert task_1.description == expected
+    assert task_1.description == f'Screenshot: {markdown_value}'
 
 
 def test_update_from_version__add_user_to_current_task__ok(api_client):

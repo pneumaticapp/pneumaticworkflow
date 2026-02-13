@@ -68,7 +68,7 @@ MSG_PW_0034 = _('URL field value should be a string.')
 # Translators: URL field validation
 MSG_PW_0035 = _('The URL is invalid.')
 # Translators: File field validation
-MSG_PW_0036 = _('File value should be a list of integers.')
+MSG_PW_0036 = _('File value should be a list of Markdown links.')
 # Translators: File field validation
 MSG_PW_0037 = _('Attachment not found.')
 # Translators: User field validation

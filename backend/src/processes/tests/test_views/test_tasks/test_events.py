@@ -10,7 +10,7 @@ from src.processes.services.events import (
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
-    create_test_attachment,
+    create_test_attachment_for_event,
     create_test_event,
     create_test_guest,
     create_test_owner,
@@ -418,20 +418,23 @@ def test_events__filter_only_attachments__ok(api_client):
     api_client.token_authenticate(user)
     workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.tasks.get(number=1)
-    event_1 = create_test_event(
-        workflow=workflow,
+    event_1 = WorkflowEventService.comment_created_event(
+        text='Comment with attachment',
+        task=task,
         user=user,
-        type_event=WorkflowEventType.COMMENT,
+        after_create_actions=False,
     )
+    create_test_attachment_for_event(
+        account=user.account,
+        event=event_1,
+        file_id='test_file.png',
+    )
+    event_1.with_attachments = True
+    event_1.save()
     create_test_event(
         workflow=workflow,
         user=user,
         type_event=WorkflowEventType.COMMENT,
-    )
-    create_test_attachment(
-        workflow=workflow,
-        account=user.account,
-        event=event_1,
     )
 
     # act

@@ -1,0 +1,68 @@
+from typing import Optional
+
+from rest_framework import serializers
+
+from src.generics.mixins.serializers import CustomValidationErrorMixin
+from src.storage.models import Attachment
+from src.storage.utils import get_file_service_file_url
+
+
+class AttachmentSerializer(serializers.ModelSerializer):
+    """Serializer for Attachment model."""
+
+    class Meta:
+        model = Attachment
+        fields = [
+            'id',
+            'file_id',
+            'access_type',
+            'source_type',
+            'account',
+            'task',
+            'template',
+            'workflow',
+        ]
+        read_only_fields = [
+            'id',
+        ]
+
+
+class AttachmentCheckPermissionSerializer(
+    CustomValidationErrorMixin,
+    serializers.Serializer,
+):
+    """Serializer for checking file access permissions."""
+
+    file_id = serializers.CharField(
+        max_length=64,
+        required=True,
+        help_text='Unique file identifier',
+    )
+
+    def validate_file_id(self, value):
+        """Validate file_id."""
+        if not value or not value.strip():
+            raise serializers.ValidationError(
+                'file_id cannot be empty',
+            )
+        return value.strip()
+
+
+class AttachmentListSerializer(serializers.ModelSerializer):
+    """Serializer for attachment list."""
+
+    url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Attachment
+        fields = [
+            'id',
+            'file_id',
+            'url',
+            'access_type',
+            'source_type',
+        ]
+
+    def get_url(self, obj: Attachment) -> Optional[str]:
+        """Return ready-made link to file in file service."""
+        return get_file_service_file_url(obj.file_id)
