@@ -36,6 +36,35 @@ def _get_file_service_link_pattern(
     return re.compile(core)
 
 
+def _get_file_service_plain_url_pattern() -> Optional[re.Pattern]:
+    """
+    Build regex for a single plain file service URL (URLField value).
+    Full string match: optional query/fragment after file_id.
+    """
+    file_domain = settings.FILE_DOMAIN
+    if not file_domain:
+        return None
+    core = (
+        rf'^https?://[^/\s]*{re.escape(file_domain)}'
+        rf'/([a-zA-Z0-9_-]{{8,64}})(?:[^\s]*)?$'
+    )
+    return re.compile(core)
+
+
+def _extract_file_id_from_plain_url(value: str) -> Optional[str]:
+    """
+    If value is a single file service URL (plain URLField-style),
+    return its file_id; else None.
+    """
+    pattern = _get_file_service_plain_url_pattern()
+    if pattern is None:
+        return None
+    match = pattern.match(value.strip())
+    if match:
+        return match.group(1)
+    return None
+
+
 def parse_single_file_service_link(text: str) -> Optional[Tuple[str, str]]:
     """
     Parse one markdown link to file service.
@@ -81,13 +110,21 @@ def extract_file_ids_from_values(
 ) -> List[str]:
     """
     Extracts file_ids from list of text values.
-    Only returns file_ids from file service links.
+
+    Handles both:
+    - Plain file service URLs (URLField: logo, photo, etc.)
+    - Text with Markdown file service links.
     """
     file_ids = []
     for value in values:
-        if value:
+        if not value:
+            continue
+        plain_id = _extract_file_id_from_plain_url(value)
+        if plain_id is not None:
+            file_ids.append(plain_id)
+        else:
             file_ids.extend(extract_file_ids_from_text(value))
-    return list(set(file_ids))
+    return list(dict.fromkeys(file_ids))
 
 
 def get_file_service_file_url(file_id: str) -> Optional[str]:

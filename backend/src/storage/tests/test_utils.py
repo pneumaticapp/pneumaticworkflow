@@ -10,6 +10,7 @@ from src.storage.models import Attachment
 from src.storage.utils import (
     extract_all_file_ids_from_source,
     extract_file_ids_from_text,
+    extract_file_ids_from_values,
     get_attachment_description_fields,
     refresh_attachments,
 )
@@ -169,6 +170,101 @@ class TestExtractFileIdsFromText:
 
         # assert
         assert 'file-id_with-special_123456' in result
+
+
+class TestExtractFileIdsFromValues:
+
+    def test_plain_url__single__extracts_file_id(self):
+        # arrange
+        values = ['https://example.com/abc123def456ghi789']
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
+            result = extract_file_ids_from_values(values)
+
+        # assert
+        assert result == ['abc123def456ghi789']
+
+    def test_plain_url__with_query__extracts_file_id(self):
+        # arrange
+        values = ['https://example.com/xyz987uvw654?token=abc']
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
+            result = extract_file_ids_from_values(values)
+
+        # assert
+        assert result == ['xyz987uvw654']
+
+    def test_plain_url__multiple_values__deduplicated(self):
+        # arrange
+        values = [
+            'https://example.com/file1_id_123456',
+            'https://example.com/file1_id_123456',
+        ]
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
+            result = extract_file_ids_from_values(values)
+
+        # assert
+        assert result == ['file1_id_123456']
+
+    def test_plain_url__non_file_service__empty(self):
+        # arrange
+        values = ['https://other.com/abc123def456ghi789']
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
+            result = extract_file_ids_from_values(values)
+
+        # assert
+        assert result == []
+
+    def test_markdown_and_plain_url__both_extracted(self):
+        # arrange
+        values = [
+            'https://example.com/plain_id_123456',
+            'See [doc](https://example.com/markdown_id_789012)',
+        ]
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
+            result = extract_file_ids_from_values(values)
+
+        # assert
+        assert len(result) == 2
+        assert 'plain_id_123456' in result
+        assert 'markdown_id_789012' in result
+
+    def test_none_and_empty__ignored(self):
+        # arrange
+        values = [None, '', 'https://example.com/single_file_id_12']
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
+            result = extract_file_ids_from_values(values)
+
+        # assert
+        assert result == ['single_file_id_12']
 
 
 class TestRefreshAttachments:
