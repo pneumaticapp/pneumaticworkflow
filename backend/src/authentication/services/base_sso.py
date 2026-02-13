@@ -304,6 +304,7 @@ class BaseSSOService(SignUpMixin, CacheMixin, EncryptionMixin, ABC):
     ) -> UserModel:
         invite = UserInvite.objects.get(invited_user=invited_user)
         invite_service = UserInviteService(
+            request_user=invited_user,
             current_url='',
             auth_type=AuthTokenType.USER,
             send_email=False,

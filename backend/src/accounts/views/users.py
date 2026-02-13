@@ -2,7 +2,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import Http404
 from rest_framework.decorators import action
-from rest_framework.generics import get_object_or_404
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny
@@ -34,7 +33,7 @@ from src.accounts.services.exceptions import (
     AlreadyAcceptedInviteException,
     InvalidTransferTokenException,
     ReassignServiceException,
-    UserIsPerformerException,
+    UserIsPerformerException, UserServiceException,
 )
 from src.accounts.services.reassign import (
     ReassignService,
@@ -122,36 +121,91 @@ class UsersViewSet(
         )
 
     def get_queryset(self):
+        account_id = self.request.user.account_id
+        user = self.request.user
         if self.action == 'transfer':
             queryset = UserModel.objects.all()
         elif self.action in {'list', 'privileges'}:
-            account_id = self.request.user.account_id
-            queryset = UserModel.include_inactive.all_account_users(
-                account_id,
+            queryset = (
+                UserModel.include_inactive
+                .all_account_users(account_id)
             )
         elif self.action == 'toggle_admin':
-            account = self.request.user.account
-            queryset = UserModel.objects.on_account(account.id).exclude(
-                is_account_owner=True,
-            ).exclude(id=self.request.user.id)
+            queryset = (
+                UserModel.objects
+                .on_account(account_id)
+                .exclude(is_account_owner=True)
+                .exclude(id=user.id)
+            )
+        elif self.action == 'destroy':
+            queryset = (
+                UserModel.objects
+                .on_account(account_id)
+                .exclude(id=user.id)
+            )
         else:
-            queryset = self.request.user.account.users
+            queryset = UserModel.objects.on_account(account_id)
         return self.prefetch_queryset(queryset)
 
-    @action(detail=False, methods=('get',))
-    def privileges(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        return self.paginated_response(queryset)
-
-    @action(detail=True, methods=('post',))
-    def delete(self, request, pk=None):
-        queryset = self.get_queryset().exclude(id=request.user.id)
-        user = get_object_or_404(queryset, pk=pk)
+    def create(self, request, *args, **kwargs):
+        slz = self.get_serializer(data=request.data)
+        slz.is_valid(raise_exception=True)
+        service = UserService(
+            user=request.user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
         try:
-            UserService.deactivate(user)
+            user = service.create(
+                account=request.user.account,
+                **slz.validated_data,
+            )
+        except UserServiceException as ex:
+            raise_validation_error(message=ex.message)
+        return self.response_ok(UserSerializer(instance=user).data)
+
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+        slz = self.get_serializer(
+            instance=user,
+            data=request.data,
+            extra_fields={'request_user': request.user},
+        )
+        slz.is_valid(raise_exception=True)
+        service = UserService(
+            user=request.user,
+            instance=user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        try:
+            user = service.partial_update(**slz.validated_data)
+        except UserServiceException as ex:
+            raise_validation_error(message=ex.message)
+        return self.response_ok(UserSerializer(instance=user).data)
+
+    def partial_update(self, *args, **kwargs):
+        return self.update(*args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        request_user = request.user
+        user = self.get_object()
+        service = UserService(
+            user=request_user,
+            instance=user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        try:
+            service.deactivate()
         except UserIsPerformerException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok()
+
+    @action(detail=False, methods=('get',))
+    def privileges(self, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        return self.paginated_response(queryset)
 
     @action(
         detail=True,
