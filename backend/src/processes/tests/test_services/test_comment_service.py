@@ -1448,7 +1448,6 @@ def test_update__text__ok(mocker):
         clear_text=clear_text,
         status=CommentStatus.UPDATED,
         updated=date_updated,
-        with_attachments=False,
         force_save=True,
     )
     send_mention_notification_mock.assert_not_called()
@@ -1555,7 +1554,6 @@ def test_update__task_delete__ok(mocker):
         clear_text=clear_text,
         status=CommentStatus.UPDATED,
         updated=date_updated,
-        with_attachments=False,
         force_save=True,
     )
     send_mention_notification_mock.assert_not_called()
@@ -1615,9 +1613,11 @@ def test_update__attachments__ok(mocker):
         'BaseModelService.partial_update',
         return_value=event,
     )
+    clear_text_value = 'cleaned'
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
+        return_value=clear_text_value,
     )
     comment_edited_analysis_mock = mocker.patch(
         'src.processes.services.events.'
@@ -1634,11 +1634,11 @@ def test_update__attachments__ok(mocker):
         is_superuser=is_superuser,
         auth_type=auth_type,
     )
-    attachments = [1, 2]
+    text = 'Updated comment'
 
     # act
     result = service.update(
-        attachments=attachments,
+        text=text,
         force_save=True,
     )
 
@@ -1652,16 +1652,15 @@ def test_update__attachments__ok(mocker):
         user=account_owner,
     )
     partial_update_mock.assert_called_once_with(
-        with_attachments=True,
         status=CommentStatus.UPDATED,
         updated=date_updated,
-        text=None,
-        clear_text=None,
+        text=text,
+        clear_text=clear_text_value,
         force_save=True,
     )
-    clear_text_mock.assert_not_called()
+    clear_text_mock.assert_called_once_with(text)
     comment_edited_analysis_mock.assert_called_once_with(
-        text=None,
+        text=clear_text_value,
         user=account_owner,
         is_superuser=is_superuser,
         auth_type=auth_type,
@@ -1783,7 +1782,6 @@ def test_update__find_attachments_in_text__ok(data, mocker):
         user=account_owner,
     )
     partial_update_mock.assert_called_once_with(
-        with_attachments=True,
         status=CommentStatus.UPDATED,
         updated=date_updated,
         text=text,
@@ -1895,7 +1893,6 @@ def test_update__not_found_attachments_in_text__ok(text, mocker):
         user=account_owner,
     )
     partial_update_mock.assert_called_once_with(
-        with_attachments=False,
         status=CommentStatus.UPDATED,
         updated=date_updated,
         text=text,
@@ -1994,12 +1991,10 @@ def test_update__notified_users__ok(mocker):
         auth_type=auth_type,
     )
     new_text = 'New text'
-    attachments = [1, 2]
 
     # act
     result = service.update(
         text=new_text,
-        attachments=attachments,
         force_save=True,
     )
 
@@ -2016,7 +2011,6 @@ def test_update__notified_users__ok(mocker):
     partial_update_mock.assert_called_once_with(
         text=new_text,
         clear_text=clear_text,
-        with_attachments=True,
         status=CommentStatus.UPDATED,
         updated=date_updated,
         force_save=True,
@@ -2136,7 +2130,6 @@ def test_update__mentioned_users__ok(mocker):
         clear_text=clear_text,
         status=CommentStatus.UPDATED,
         updated=date_updated,
-        with_attachments=False,
         force_save=True,
     )
     assert workflow.members.filter(id=user.id).exists()
@@ -2194,9 +2187,11 @@ def test_update__remove_text__ok(mocker):
         'BaseModelService.partial_update',
         return_value=event,
     )
+    clear_text_value = 'cleaned'
     clear_text_mock = mocker.patch(
         'src.processes.services.events.'
         'MarkdownService.clear',
+        return_value=clear_text_value,
     )
     comment_edited_analysis_mock = mocker.patch(
         'src.processes.services.events.'
@@ -2207,12 +2202,11 @@ def test_update__remove_text__ok(mocker):
         instance=event,
         user=account_owner,
     )
-    attachments = [1, 2]
+    text = 'Updated'
 
     # act
     result = service.update(
-        text=None,
-        attachments=attachments,
+        text=text,
         force_save=True,
     )
 
@@ -2226,16 +2220,15 @@ def test_update__remove_text__ok(mocker):
         user=account_owner,
     )
     partial_update_mock.assert_called_once_with(
-        text=None,
-        clear_text=None,
+        text=text,
+        clear_text=clear_text_value,
         status=CommentStatus.UPDATED,
         updated=date_updated,
-        with_attachments=True,
         force_save=True,
     )
-    clear_text_mock.assert_not_called()
+    clear_text_mock.assert_called_once_with(text)
     comment_edited_analysis_mock.assert_called_once_with(
-        text=None,
+        text=clear_text_value,
         user=account_owner,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
@@ -2324,7 +2317,6 @@ def test_update__remove_attachments__ok(mocker):
         clear_text=clear_text,
         status=CommentStatus.UPDATED,
         updated=date_updated,
-        with_attachments=False,
         force_save=True,
     )
     comment_edited_analysis_mock.assert_called_once_with(
@@ -2453,7 +2445,6 @@ def test_update__remove_attachment__raise_exception(mocker):
     # act
     with pytest.raises(exceptions.CommentTextRequired) as ex:
         service.update(
-            attachments=None,
             force_save=True,
         )
 

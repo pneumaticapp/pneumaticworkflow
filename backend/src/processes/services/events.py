@@ -40,10 +40,7 @@ from src.processes.services.exceptions import (
     CommentIsDeleted,
     CommentTextRequired,
 )
-from src.services.markdown import (
-    MarkdownPatterns,
-    MarkdownService,
-)
+from src.services.markdown import MarkdownService
 from src.storage.utils import refresh_attachments
 
 UserModel = get_user_model()
@@ -674,10 +671,6 @@ class CommentService(BaseModelService):
                 task.contains_comments = True
                 task.save(update_fields=['contains_comments'])
             refresh_attachments(source=self.instance, user=self.user)
-            self.instance.with_attachments = (
-                self.instance.storage_attachments.exists()
-            )
-            self.instance.save(update_fields=['with_attachments'])
             WorkflowEventService._after_create_actions(self.instance)
             mentioned_users_ids, notify_users_ids = (
                 self._get_new_comment_recipients(task)
@@ -723,26 +716,18 @@ class CommentService(BaseModelService):
         self,
         force_save=False,
         text: Optional[str] = None,
-        attachments: Optional[List[int]] = None,
     ) -> WorkflowEvent:
 
         self._validate_comment_action()
         task = self.instance.task
         if task is not None and not (task.is_active or task.is_delayed):
             raise CommentedTaskNotActive
-        if not text and not attachments:
+        if not text:
             raise CommentTextRequired
         clear_text = MarkdownService.clear(text) if text else None
-        if not attachments:
-            # find attachment ids in the text
-            pattern = MarkdownPatterns.MEDIA_PATTERN
-            attachments = pattern.findall(text)
-            if attachments:
-                attachments = [int(e) for e in attachments]
         kwargs = {
             'status': CommentStatus.UPDATED,
             'updated': timezone.now(),
-            'with_attachments': bool(attachments),
             'text': text,
             'clear_text': clear_text,
         }
@@ -753,10 +738,6 @@ class CommentService(BaseModelService):
                 **kwargs,
             )
             refresh_attachments(source=self.instance, user=self.user)
-            self.instance.with_attachments = (
-                self.instance.storage_attachments.exists()
-            )
-            self.instance.save(update_fields=['with_attachments'])
             new_mentioned_users_ids = self._get_updated_comment_recipients()
             if new_mentioned_users_ids:
                 self.instance.workflow.members.add(*new_mentioned_users_ids)
