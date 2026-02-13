@@ -120,6 +120,8 @@ class TemplateSerializer(
             'updated_by',
             'date_updated',
             'date_updated_tsp',
+            'remainder_notification',
+            'completion_notification',
         )
         create_or_update_fields = {
             'name',
@@ -136,6 +138,8 @@ class TemplateSerializer(
             'type',
             'generic_name',
             'account',
+            'remainder_notification',
+            'completion_notification',
         }
 
     name = CharField(required=True, max_length=TEMPLATE_NAME_LENGTH)

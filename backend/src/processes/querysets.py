@@ -758,6 +758,9 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
     def completed(self):
         return self.filter(is_completed=True)
 
+    def completed_task(self):
+        return self.filter(task__status=TaskStatus.COMPLETED)
+
     def not_completed(self):
         return self.filter(is_completed=False)
 

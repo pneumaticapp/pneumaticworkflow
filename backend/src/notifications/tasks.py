@@ -619,6 +619,73 @@ def send_delayed_workflow_notification(**kwargs):
     _send_delayed_workflow_notification(**kwargs)
 
 
+def _send_completed_workflow_notification(
+    logging: bool,
+    workflow_id: int,
+    author_id: int,
+    logo_lg: Optional[str] = None,
+):
+    users = (
+        TaskPerformer.objects
+        .by_workflow(workflow_id)
+        .completed_task()
+        .exclude_directly_deleted()
+        .order_by('id')
+        .get_user_emails_and_ids_set()
+    )
+    # last completed task
+    task = (
+        Task.objects
+            .select_related('workflow')
+            .by_workflow(workflow_id)
+            .completed()
+            .order_by('-date_completed')
+    )
+    if task is None:
+        # If no task is completed - use the last started task
+        task = (
+            Task.objects
+            .select_related('workflow')
+            .by_workflow(workflow_id)
+            .active()
+            .order_by('-date_completed')
+        )
+    # The task may be empty if the workflow completed
+    # immediately after starting (by condition).
+    workflow = (
+        task.workflow if task else
+        Workflow.objects.get(workflow_id)
+    )
+    workflow_json = NotificationWorkflowSerializer(instance=workflow).data
+    for (user_id, user_email) in users:
+        notification = Notification.objects.create(
+            task=task,
+            workflow_json=workflow_json,
+            user_id=user_id,
+            author_id=author_id,
+            account_id=workflow.account_id,
+            type=NotificationType.COMPLETE_WORKFLOW,
+        )
+        _send_notification(
+            logging=logging,
+            logo_lg=logo_lg,
+            user_id=user_id,
+            user_email=user_email,
+            account_id=workflow.account_id,
+            notification=notification,
+            method_name=NotificationMethod.complete_workflow,
+            workflow_name=task.workflow.name,
+            task_id=task.id,
+            task_name=task.name,
+            sync=True,
+        )
+
+
+@shared_task(base=NotificationTask)
+def send_workflow_completed_notification(**kwargs):
+    _send_completed_workflow_notification(**kwargs)
+
+
 def _send_guest_new_task(
     logging: bool,
     user_id: int,

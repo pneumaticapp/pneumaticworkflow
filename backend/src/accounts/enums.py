@@ -3,6 +3,8 @@ from typing_extensions import Literal
 
 class NotificationType:
 
+    # TODO Union with the NotificationMethod
+
     SYSTEM = 'system'
     COMMENT = 'comment'
     MENTION = 'mention'
@@ -14,6 +16,7 @@ class NotificationType:
     DUE_DATE_CHANGED = 'due_date_changed'
     REACTION = 'reaction'
     COMPLETE_TASK = 'complete_task'
+    COMPLETE_WORKFLOW = 'complete_workflow'
 
     URGENT_TYPES = (
         URGENT,
@@ -32,6 +35,7 @@ class NotificationType:
         (DUE_DATE_CHANGED, 'due date changed'),
         (REACTION, 'reaction'),
         (COMPLETE_TASK, 'complete task'),
+        (COMPLETE_WORKFLOW, 'complete workflow'),
     )
 
 

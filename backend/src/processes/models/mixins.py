@@ -49,6 +49,8 @@ class WorkflowMixin(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     finalizable = models.BooleanField(default=False)
     version = models.IntegerField(default=0)
+    remainder_notification = models.BooleanField(default=False)
+    completion_notification = models.BooleanField(default=False)
 
     @abstractmethod
     def get_kickoff_output_fields(

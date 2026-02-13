@@ -16,6 +16,7 @@ class NotificationMethod:
     delay_workflow = 'delay_workflow'
     guest_new_task = 'guest_new_task'
     resume_workflow = 'resume_workflow'
+    complete_workflow = 'complete_workflow'
     unread_notifications = 'unread_notifications'
     due_date_changed = 'due_date_changed'
     system = 'system'
@@ -49,6 +50,7 @@ class NotificationMethod:
         delay_workflow,
         guest_new_task,
         resume_workflow,
+        complete_workflow,
         unread_notifications,
         due_date_changed,
         system,
