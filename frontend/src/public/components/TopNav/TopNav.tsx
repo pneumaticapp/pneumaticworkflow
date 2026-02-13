@@ -28,6 +28,8 @@ export interface ITopNavProps {
   leaseLevel: TAccountLeaseLevel;
   isAccountOwner: boolean;
   accountOwnerPlan: IAccount;
+  firstName: string;
+  lastName: string;
   isFromWorkflowsLayout?: boolean;
   workflowsView?: EWorkflowsView;
 }
@@ -62,6 +64,8 @@ export function TopNav({
   redirectToCustomerPortal,
   isFromWorkflowsLayout,
   workflowsView,
+  firstName,
+  lastName,
 }: TTopNavProps) {
   const { formatMessage } = useIntl();
 
@@ -132,6 +136,10 @@ export function TopNav({
   };
 
   const profileDropdownOptions = [
+    {
+      label: `${firstName} ${lastName}`,
+      className: styles['user-name-item'],
+    },
     {
       label: formatMessage({ id: 'nav.profile' }),
       onClick: handleOptionClick(() => history.push(ERoutes.Profile)),

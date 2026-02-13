@@ -352,6 +352,9 @@ services:
       sh -c "
         npm run build-client:prod && 
         pm2-runtime start pm2.json"
+    volumes:
+      - ./frontend:/pneumatic_frontend
+      - /pneumatic_frontend/node_modules
     expose:
       - 8000
     networks:

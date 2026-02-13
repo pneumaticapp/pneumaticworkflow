@@ -280,3 +280,10 @@
     outline: 0.1rem solid var(--pneumatic-color-link-hover) !important;
   }
 }
+
+.user-name-item {
+  color: var(--pneumatic-color-blacktext);
+  font-weight: 600;
+  cursor: default;
+  border-bottom: 1px solid var(--pneumatic-color-black10);
+}

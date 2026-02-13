@@ -23,6 +23,8 @@ type TStoreProps = Pick<
   | 'leaseLevel'
   | 'isAccountOwner'
   | 'accountOwnerPlan'
+  | 'firstName'
+  | 'lastName'
 >;
 
 const mapStateToProps = (state: IApplicationState): TStoreProps => {
@@ -46,6 +48,8 @@ const mapStateToProps = (state: IApplicationState): TStoreProps => {
     leaseLevel: authUser.account.leaseLevel,
     isAccountOwner: authUser.isAccountOwner,
     accountOwnerPlan: user.account || authUser.account,
+    firstName: authUser.firstName,
+    lastName: authUser.lastName,
   };
 };
 
