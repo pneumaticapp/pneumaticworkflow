@@ -68,6 +68,7 @@ export function TopNav({
   lastName,
 }: TTopNavProps) {
   const { formatMessage } = useIntl();
+  const userFullName = `${firstName} ${lastName}`.trim();
 
   const isPaywallVisible = Boolean(paywallType);
   const rightNavbarClassname = classnames('navbar-right', styles['navbar-right']);
@@ -136,10 +137,11 @@ export function TopNav({
   };
 
   const profileDropdownOptions = [
-    {
-      label: `${firstName} ${lastName}`,
+    ...(userFullName ? [{
+      label: userFullName,
       className: styles['user-name-item'],
-    },
+      mapKey: 'user-name',
+    }] : []),
     {
       label: formatMessage({ id: 'nav.profile' }),
       onClick: handleOptionClick(() => history.push(ERoutes.Profile)),
