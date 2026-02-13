@@ -159,17 +159,21 @@ export const KICKOFF_FIELD_DESCRIPTION_RULES: IRule[] = [
   },
 ];
 
+export const REGISTRATION_PASSWORD_MSG_EMPTY = 'validation.registration-password-field-empty';
+export const REGISTRATION_PASSWORD_MSG_SPACES = 'validation.registration-password-field-contain-spaces';
+export const REGISTRATION_PASSWORD_MSG_TOO_SHORT = 'validation.registration-password-field-too-short';
+
 export const REGISTRATION_PASSWORD_RULES: IRule[] = [
   {
-    message: 'validation.registration-password-field-empty',
+    message: REGISTRATION_PASSWORD_MSG_EMPTY,
     isInvalid: (value) => !hasWhitespaces(value) && isEmpty(value),
   },
   {
-    message: 'validation.registration-password-field-contain-spaces',
+    message: REGISTRATION_PASSWORD_MSG_SPACES,
     isInvalid: hasWhitespaces,
   },
   {
-    message: 'validation.registration-password-field-too-short',
+    message: REGISTRATION_PASSWORD_MSG_TOO_SHORT,
     isInvalid: (value) => value.length < 6,
   },
 ];

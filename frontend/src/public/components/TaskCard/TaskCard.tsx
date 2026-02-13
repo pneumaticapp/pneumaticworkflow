@@ -61,7 +61,7 @@ import UserDataWithGroup from '../UserDataWithGroup';
 
 import styles from './TaskCard.css';
 import { ReturnModal } from './ReturnModal';
-import { getGroups } from '../../redux/selectors/groups';
+import { getGroupsList } from '../../redux/selectors/groups';
 
 export enum ETaskCardViewMode {
   Single = 'single',
@@ -124,7 +124,7 @@ export function TaskCard({
   const { formatMessage } = useIntl();
   const { isMobile } = useCheckDevice();
 
-  const groups = useSelector(getGroups);
+  const groups = useSelector(getGroupsList);
   const saveOutputsToStorageDebounced = debounce(300, addOrUpdateStorageOutput);
 
   const guestsControllerRef = useRef<React.ElementRef<typeof GuestController> | null>(null);

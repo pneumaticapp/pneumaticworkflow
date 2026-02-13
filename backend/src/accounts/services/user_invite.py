@@ -27,6 +27,7 @@ from src.accounts.services.exceptions import (
     UserNotFoundException,
     UsersLimitInvitesException,
 )
+from src.accounts.services.user import UserService
 from src.accounts.tokens import (
     InviteToken,
     TransferToken,
@@ -60,18 +61,14 @@ class UserInviteService(
 
     def __init__(
         self,
-        current_url: str,
+        request_user: UserModel,
+        current_url: str = '',
         is_superuser: bool = False,
-        request_user: Optional[UserModel] = None,
         auth_type: AuthTokenType.LITERALS = AuthTokenType.USER,
         send_email: bool = True,
     ):
-        if request_user:
-            self.account = request_user.account
-            self.request_user = request_user
-        else:
-            self.account = None
-            self.request_user = None
+        self.account = request_user.account
+        self.request_user = request_user
         self.current_url = current_url
         self.is_superuser = is_superuser
         self.auth_type = auth_type
@@ -460,3 +457,16 @@ class UserInviteService(
         self.identify(user)
         self.group(user)
         return user
+
+    def decline(
+        self,
+        invite: UserInvite,
+    ):
+        invite.delete()
+        service = UserService(
+            user=self.request_user,
+            instance=self.request_user,
+            is_superuser=self.is_superuser,
+            auth_type=self.auth_type,
+        )
+        service.deactivate(skip_validation=True)

@@ -56,7 +56,6 @@ class UserSerializer(
             'photo',
             'status',
             'is_admin',
-            'date_joined',
             'date_joined_tsp',
             'is_account_owner',
             'is_tasks_digest_subscriber',
@@ -79,9 +78,8 @@ class UserSerializer(
             'email',
             'invite',
             'status',
-            'is_admin',
             'is_account_owner',
-            'groups',
+            'date_joined_tsp',
         )
 
     groups = RelatedListField(
@@ -108,6 +106,20 @@ class UserSerializer(
             self.fields['language'].choices = Language.CHOICES
         else:
             self.fields['language'].choices = Language.EURO_CHOICES
+
+
+class UserCreateSerializer(UserSerializer):
+
+    class Meta(UserSerializer.Meta):
+        read_only_fields = (
+            'id',
+            'type',
+            'invite',
+            'status',
+            'is_account_owner',
+            'groups',
+            'date_joined_tsp',
+        )
 
 
 class UserPrivilegesSerializer(UserSerializer):

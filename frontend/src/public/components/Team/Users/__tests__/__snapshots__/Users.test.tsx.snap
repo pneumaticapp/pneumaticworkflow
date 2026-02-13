@@ -6,6 +6,10 @@ exports[`Team rendered correctly 1`] = `
 >
   <[object Object] />
   <AddGuestsBanner />
+  <CreateUserModal
+    isOpen={[MockFunction]}
+    onClose={[Function]}
+  />
   <PageTitle
     titleId="team.title"
     withUnderline={false}
@@ -26,11 +30,20 @@ exports[`Team rendered correctly 1`] = `
       value=""
     />
   </div>
-  <AddButton
-    caption="Invite new team members and organize them into groups"
-    onClick={[Function]}
-    title="Invite Team"
-  />
+  <div
+    className="buttons-row"
+  >
+    <AddButton
+      caption="Invite new team members"
+      onClick={[Function]}
+      title="Invite Team"
+    />
+    <AddButton
+      caption="Create new team members"
+      onClick={[Function]}
+      title="Create User"
+    />
+  </div>
   <div
     className="cards"
   >
@@ -275,6 +288,10 @@ exports[`Team rendered correctly with descending sorting 1`] = `
 >
   <[object Object] />
   <AddGuestsBanner />
+  <CreateUserModal
+    isOpen={[MockFunction]}
+    onClose={[Function]}
+  />
   <PageTitle
     titleId="team.title"
     withUnderline={false}
@@ -295,11 +312,20 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       value=""
     />
   </div>
-  <AddButton
-    caption="Invite new team members and organize them into groups"
-    onClick={[Function]}
-    title="Invite Team"
-  />
+  <div
+    className="buttons-row"
+  >
+    <AddButton
+      caption="Invite new team members"
+      onClick={[Function]}
+      title="Invite Team"
+    />
+    <AddButton
+      caption="Create new team members"
+      onClick={[Function]}
+      title="Create User"
+    />
+  </div>
   <div
     className="cards"
   >
