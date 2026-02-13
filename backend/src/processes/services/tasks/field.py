@@ -22,6 +22,7 @@ from src.processes.services.tasks.selection import SelectionService
 from src.services.markdown import MarkdownService
 from src.storage.enums import AccessType, SourceType
 from src.storage.models import Attachment
+from src.storage.services.attachments import AttachmentService
 from src.storage.utils import (
     extract_file_ids_from_text,
     parse_single_file_service_link,
@@ -527,8 +528,9 @@ class TaskFieldService(BaseWorkflowService):
         """
         Create Attachment records for file_ids in new storage service.
 
-        Args:
-            file_ids: List of file_ids from new storage service
+        Only creates new records. Does not overwrite existing Attachment:
+        reusing the same file_id elsewhere (e.g. markdown link in comment)
+        must not change original binding and permission context.
         """
         if file_ids in self.NULL_VALUES:
             return
@@ -550,19 +552,10 @@ class TaskFieldService(BaseWorkflowService):
                     'output': self.instance,
                 },
             )
-            if not created:
-                attachment.workflow = self.instance.workflow
-                attachment.task = self.instance.task
-                attachment.output = self.instance
-                attachment.source_type = source_type
-                attachment.save(
-                    update_fields=[
-                        'workflow',
-                        'task',
-                        'output',
-                        'source_type',
-                    ],
-                )
+            if created:
+                service = AttachmentService(user=self.user)
+                service.instance = attachment
+                service._create_related()
 
     def partial_update(
         self,

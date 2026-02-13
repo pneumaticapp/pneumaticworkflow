@@ -203,7 +203,7 @@ class FileServiceClient:
                 )
                 raise FileUploadNoFileIdException
 
-        except (ValueError, KeyError) as ex:
+        except (ValueError, KeyError, AttributeError) as ex:
             capture_sentry_message(
                 message='File service response parsing error',
                 data={

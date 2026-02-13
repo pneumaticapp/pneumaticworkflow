@@ -588,6 +588,42 @@ def test_link_new_attachments__empty_list__no_attachments_created():
     assert attachments_count == 0
 
 
+def test_link_new_attachments__existing_file_id__does_not_overwrite():
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    field_a = TaskField.objects.create(
+        task=task,
+        api_name='file-field-a',
+        type=FieldType.FILE,
+        workflow=workflow,
+    )
+    field_b = TaskField.objects.create(
+        task=task,
+        api_name='file-field-b',
+        type=FieldType.FILE,
+        workflow=workflow,
+    )
+    service_a = TaskFieldService(instance=field_a, user=user)
+    service_a._link_new_attachments(markdown_values=['shared_file_id'])
+    attachment = Attachment.objects.get(file_id='shared_file_id')
+    original_output_id = attachment.output_id
+    original_task_id = attachment.task_id
+
+    # act
+    service_b = TaskFieldService(instance=field_b, user=user)
+    service_b._link_new_attachments(markdown_values=['shared_file_id'])
+
+    # assert
+    attachment.refresh_from_db()
+    assert attachment.output_id == original_output_id
+    assert attachment.output == field_a
+    assert attachment.task_id == original_task_id
+    assert attachment.workflow == workflow
+
+
 @pytest.mark.parametrize('field_type', FieldType.TYPES_WITH_SELECTION)
 def test_update_selections__radio_dropdown__not_value__ok(
     field_type,

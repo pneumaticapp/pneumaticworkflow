@@ -461,6 +461,22 @@ def _refresh_workflow_event_attachments(
     return new_file_ids
 
 
+def reassign_restricted_permissions_for_task(
+    task: Task,
+    user: UserModel,
+) -> None:
+    """
+    Reassign restricted permissions for all attachments linked to task.
+    Call after task performers change so new performers get access.
+    """
+    service = AttachmentService(user=user)
+    for att in Attachment.objects.filter(
+            task=task,
+            access_type=AccessType.RESTRICTED,
+    ):
+        service.reassign_restricted_permissions(att)
+
+
 def get_attachment_description_fields(source: models.Model) -> List[str]:
     """
     Returns list of description fields for source.

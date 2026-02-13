@@ -15,6 +15,7 @@ from src.processes.tests.fixtures import (
 )
 from src.storage.enums import AccessType, SourceType
 from src.storage.services.attachments import AttachmentService
+from src.storage.utils import reassign_restricted_permissions_for_task
 
 pytestmark = pytest.mark.django_db
 
@@ -271,6 +272,44 @@ class TestAttachmentServiceTaskPermissions:
         assert not svc.check_user_permission(
             user_id=other_user.id,
             account_id=other_user.account_id,
+            file_id=attachment.file_id,
+        )
+
+    def test_reassign_restricted_permissions_for_task__new_performer__access(
+        self,
+    ):
+        # arrange
+        owner = create_test_admin()
+        new_performer = create_test_user(
+            account=owner.account,
+            email='new_performer@test.pneumatic.app',
+        )
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        task = workflow.tasks.first()
+        service = AttachmentService(user=owner)
+        service.create(
+            file_id='task_reassign_file',
+            account=owner.account,
+            access_type=AccessType.RESTRICTED,
+            source_type=SourceType.TASK,
+            task=task,
+        )
+        attachment = service.instance
+        svc_new = AttachmentService(user=new_performer)
+        assert not svc_new.check_user_permission(
+            user_id=new_performer.id,
+            account_id=new_performer.account_id,
+            file_id=attachment.file_id,
+        )
+        task.taskperformer_set.create(user=new_performer)
+
+        # act
+        reassign_restricted_permissions_for_task(task=task, user=owner)
+
+        # assert
+        assert svc_new.check_user_permission(
+            user_id=new_performer.id,
+            account_id=new_performer.account_id,
             file_id=attachment.file_id,
         )
 

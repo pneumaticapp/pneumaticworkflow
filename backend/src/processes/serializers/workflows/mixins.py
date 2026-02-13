@@ -11,6 +11,7 @@ from src.processes.services.tasks.task import TaskService
 from src.processes.utils.common import (
     string_abbreviation,
 )
+from src.storage.utils import reassign_restricted_permissions_for_task
 
 UserModel = get_user_model()
 
@@ -39,6 +40,10 @@ class WorkflowSerializerMixin:
                 if task.is_active:
                     task_service.set_due_date_from_template()
                     task.update_performers()
+                    reassign_restricted_permissions_for_task(
+                        task=task,
+                        user=self.context['user'],
+                    )
 
     def _update_kickoff_value(
         self,

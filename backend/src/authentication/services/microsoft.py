@@ -155,9 +155,8 @@ class MicrosoftGraphApiMixin:
                 filepath = f'{get_salt(30)}_photo_96x96.{ext}'
             else:
                 filepath = f'{get_salt(30)}_photo_96x96'
-
-            file_service = FileServiceClient(user=account.get_owner())
             try:
+                file_service = FileServiceClient(user=account.get_owner())
                 file_url = file_service.upload_file_with_attachment(
                     file_content=binary_photo,
                     filename=filepath,
