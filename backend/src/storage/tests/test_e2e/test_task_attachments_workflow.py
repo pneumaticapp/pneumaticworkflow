@@ -4,12 +4,15 @@ Tests full workflow without mocks - real database operations.
 """
 import pytest
 
+from src.processes.enums import WorkflowEventType
+from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.tests.fixtures import (
     create_test_admin,
     create_test_user,
     create_test_workflow,
 )
 from src.storage.enums import AccessType, SourceType
+from src.storage.utils import _refresh_workflow_event_attachments
 from src.storage.models import Attachment
 from src.storage.services.attachments import AttachmentService
 from src.storage.utils import refresh_attachments
@@ -122,6 +125,60 @@ class TestTaskAttachmentsE2E:
         # assert
         assert not Attachment.objects.filter(
             file_id='remove_file_e2e_789',
+        ).exists()
+
+    def test_refresh_task_description__comment_attachments_preserved__ok(
+        self,
+    ):
+        """
+        Scenario: Task has description file + comment with file.
+        User changes task description (refresh_attachments runs).
+        Expected: Only description (scope) attachments updated;
+        comment (event) attachments must not be deleted.
+        """
+        # arrange
+        owner = create_test_admin()
+        performer = create_test_user(account=owner.account)
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        task = workflow.tasks.first()
+        task.taskperformer_set.create(user=performer)
+        task.description = (
+            'Description file: '
+            '[f](https://files.example.com/task_desc_scope_e2e)'
+        )
+        task.save()
+        refresh_attachments(source=task, user=owner)
+        comment_event = WorkflowEvent.objects.create(
+            workflow=workflow,
+            task=task,
+            account=owner.account,
+            user=performer,
+            type=WorkflowEventType.COMMENT,
+            text=(
+                'Comment file: '
+                '[f](https://files.example.com/task_comment_event_e2e)'
+            ),
+        )
+        _refresh_workflow_event_attachments(comment_event, performer)
+        assert Attachment.objects.filter(
+            file_id='task_desc_scope_e2e', event__isnull=True,
+        ).exists()
+        assert Attachment.objects.filter(
+            file_id='task_comment_event_e2e', event=comment_event,
+        ).exists()
+
+        # act: change task description (remove scope file), refresh task
+        task.description = 'No files in description'
+        task.save()
+        refresh_attachments(source=task, user=owner)
+
+        # assert: scope attachment removed, comment attachment preserved
+        assert not Attachment.objects.filter(
+            file_id='task_desc_scope_e2e',
+        ).exists()
+        assert Attachment.objects.filter(
+            file_id='task_comment_event_e2e',
+            event=comment_event,
         ).exists()
 
     def test_add_performer__gets_access__ok(self):

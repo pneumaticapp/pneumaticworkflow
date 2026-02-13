@@ -302,6 +302,8 @@ def refresh_attachments_for_text(
         filter_kwargs['workflow'] = workflow
     if template is not None:
         filter_kwargs['template'] = template
+    # Only scope (description) attachments; exclude event (comment) ones
+    filter_kwargs['event__isnull'] = True
 
     # If no files in text - delete only attachments not linked to fields
     if not file_ids:
