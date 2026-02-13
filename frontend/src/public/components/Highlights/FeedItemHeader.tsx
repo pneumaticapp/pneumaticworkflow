@@ -111,7 +111,7 @@ export function FeedItemHeader({
           <div className={styles['header__comment']}>
             <span className={styles['comment__title']}>
               {type === EWorkflowLogEvent.TaskRevert
-                ? messages['workflow-highlights.return-to.returned-task']
+                ? formatMessage({ id: 'task.log-returned' }, { taskName: task?.name })
                 : messages['general.comment']}
             </span>
             <span

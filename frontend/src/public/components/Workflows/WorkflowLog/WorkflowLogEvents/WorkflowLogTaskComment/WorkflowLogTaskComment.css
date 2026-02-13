@@ -1,12 +1,11 @@
-/* stylelint-disable declaration-no-important */
 .comment {
   display: flex;
 
   &__avatar {
-    margin-right: 16px;
+    margin-right: 1.6rem;
 
     @media (--mobile) {
-      margin-right: 10px;
+      margin-right: 1rem;
     }
   }
 
@@ -26,15 +25,22 @@
 
   &__user {
     margin: 0;
-    margin-right: 8px;
+    margin-right: 0.8rem;
     font-family: Nunito, sans-serif;
-    font-size: 15px;
-    line-height: 20px;
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  &__task-name {
+    margin: 0 0 0.8rem;
+    color: var(--pneumatic-color-black72);
+
+    @mixin text-base 700;
   }
 
   &__icon {
-    margin-right: 8px;
-    line-height: 20px;
+    margin-right: 0.8rem;
+    line-height: 2rem;
     color: var(--pneumatic-color-black32);
 
     &.is-delete {
@@ -43,10 +49,10 @@
   }
 
   &__date {
-    margin-right: 8px;
-    font-size: 13px;
+    margin-right: 0.8rem;
+    font-size: 1.3rem;
     font-weight: bold;
-    line-height: 16px;
+    line-height: 1.6rem;
     color: var(--pneumatic-color-black48);
   }
 
@@ -68,9 +74,9 @@
   }
 
   &__delete {
-    margin-right: 8px;
-    font-size: 13px;
-    line-height: 16px;
+    margin-right: 0.8rem;
+    font-size: 1.3rem;
+    line-height: 1.6rem;
     color: var(--pneumatic-notification-1);
   }
 
@@ -78,13 +84,13 @@
     margin: 0;
     display: flex;
     align-items: baseline;
-    font-size: 13px;
-    line-height: 16px;
+    font-size: 1.3rem;
+    line-height: 1.6rem;
     color: var(--pneumatic-color-black32);
 
     button {
-      font-size: 13px;
-      line-height: 16px;
+      font-size: 1.3rem;
+      line-height: 1.6rem;
       color: var(--pneumatic-notification-1);
       transition: all 0.2s;
 
@@ -95,8 +101,8 @@
   }
 
   &__edit {
-    font-size: 13px;
-    line-height: 16px;
+    font-size: 1.3rem;
+    line-height: 1.6rem;
     color: var(--pneumatic-color-link-dark);
   }
 
@@ -105,7 +111,7 @@
   }
 
   &__footer {
-    margin: 8px -2px -2px;
+    margin: 0.8rem -0.2rem -0.2rem;
     display: flex;
     flex-wrap: wrap;
 
@@ -118,19 +124,19 @@
   }
 
   &__footer-item {
-    margin: 2px;
-    padding: 6px 8px;
+    margin: 0.2rem;
+    padding: 0.6rem 0.8rem;
     display: flex;
     justify-content: center;
     flex-wrap: nowrap;
-    font-size: 13px;
+    font-size: 1.3rem;
     cursor: pointer;
-    color: #62625f;
-    background-color: #fdf7ee;
-    border-radius: 16px;
+    color: var(--pneumatic-color-black72);
+    background-color: var(--pneumatic-color-beige);
+    border-radius: 1.6rem;
 
     &.is-modal {
-      background-color: white;
+      background-color: var(--pneumatic-color-white);
     }
 
     > div {
@@ -141,13 +147,13 @@
 
     svg,
     &-emoji {
-      margin-right: 4px;
-      font-size: 20px;
-      line-height: 20px;
+      margin-right: 0.4rem;
+      font-size: 2rem;
+      line-height: 2rem;
     }
 
     span {
-      line-height: 19px;
+      line-height: 1.9rem;
     }
 
     &.is-add-emoji {
@@ -156,22 +162,22 @@
       background-color: transparent;
 
       button {
-        margin-left: 6px;
-        color: #c6720f;
+        margin-left: 0.6rem;
+        color: var(--pneumatic-color-link-dark);
       }
     }
   }
 
   &__footer-item + &__footer-item {
-    margin-left: 4px;
+    margin-left: 0.4rem;
   }
 
   &__watch-list {
     margin: 0;
     padding: 0;
     list-style: none;
-    font-size: 13px;
-    line-height: 16px;
+    font-size: 1.3rem;
+    line-height: 1.6rem;
     text-align: center;
   }
 }
