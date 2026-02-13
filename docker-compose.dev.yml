@@ -1,0 +1,5 @@
+services:
+  frontend:
+    volumes:
+      - ./frontend:/pneumatic_frontend
+      - /pneumatic_frontend/node_modules
