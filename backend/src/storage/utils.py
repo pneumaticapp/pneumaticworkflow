@@ -347,34 +347,18 @@ def _refresh_workflow_attachments(
         workflow: Workflow,
         user: UserModel,
 ) -> List[str]:
-    """Refreshes attachments for workflow."""
-    all_new_file_ids = []
+    """Refreshes attachments for workflow (description + kickoff)."""
+    description = workflow.description or ''
+    kickoff = getattr(workflow, 'kickoff_description', None) or ''
+    combined_text = f'{description}\n{kickoff}'
 
-    # Process workflow description only if present
-    # Do not remove existing attachments when description is empty
-    if workflow.description:
-        new_file_ids = refresh_attachments_for_text(
-            account=workflow.account,
-            user=user,
-            text=workflow.description,
-            source_type=SourceType.WORKFLOW,
-            workflow=workflow,
-        )
-        all_new_file_ids.extend(new_file_ids)
-
-    # Process kickoff_description if present
-    if hasattr(
-            workflow,
-            'kickoff_description',
-    ) and workflow.kickoff_description:
-        new_file_ids = refresh_attachments_for_text(
-            account=workflow.account,
-            user=user,
-            text=workflow.kickoff_description,
-            source_type=SourceType.WORKFLOW,
-            workflow=workflow,
-        )
-        all_new_file_ids.extend(new_file_ids)
+    all_new_file_ids = refresh_attachments_for_text(
+        account=workflow.account,
+        user=user,
+        text=combined_text,
+        source_type=SourceType.WORKFLOW,
+        workflow=workflow,
+    )
 
     # IMPORTANT: Do not remove attachments linked to fields (output != None)
     # They are managed separately via TaskFieldService
@@ -387,38 +371,25 @@ def _refresh_workflow_attachments(
     ):
         service.reassign_restricted_permissions(att)
 
-    return list(set(all_new_file_ids))  # Deduplicate
+    return list(set(all_new_file_ids))
 
 
 def _refresh_template_attachments(
         template: Template,
         user: UserModel,
 ) -> List[str]:
-    """Refreshes attachments for template."""
-    all_new_file_ids = []
+    """Refreshes attachments for template (description + kickoff)."""
+    description = template.description or ''
+    kickoff = getattr(template, 'kickoff_description', None) or ''
+    combined_text = f'{description}\n{kickoff}'
 
-    # Process template description
-    if template.description:
-        new_file_ids = refresh_attachments_for_text(
-            account=template.account,
-            user=user,
-            text=template.description,
-            source_type=SourceType.TEMPLATE,
-            template=template,
-        )
-        all_new_file_ids.extend(new_file_ids)
-
-    # Process kickoff_description if present
-    has_kickoff = hasattr(template, 'kickoff_description')
-    if has_kickoff and template.kickoff_description:
-        new_file_ids = refresh_attachments_for_text(
-            account=template.account,
-            user=user,
-            text=template.kickoff_description,
-            source_type=SourceType.TEMPLATE,
-            template=template,
-        )
-        all_new_file_ids.extend(new_file_ids)
+    all_new_file_ids = refresh_attachments_for_text(
+        account=template.account,
+        user=user,
+        text=combined_text,
+        source_type=SourceType.TEMPLATE,
+        template=template,
+    )
 
     # Re-assign permissions so new template owners get access
     service = AttachmentService(user=user)

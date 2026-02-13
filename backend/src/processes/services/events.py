@@ -753,6 +753,10 @@ class CommentService(BaseModelService):
                 **kwargs,
             )
             refresh_attachments(source=self.instance, user=self.user)
+            self.instance.with_attachments = (
+                self.instance.storage_attachments.exists()
+            )
+            self.instance.save(update_fields=['with_attachments'])
             new_mentioned_users_ids = self._get_updated_comment_recipients()
             if new_mentioned_users_ids:
                 self.instance.workflow.members.add(*new_mentioned_users_ids)

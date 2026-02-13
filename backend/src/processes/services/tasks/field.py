@@ -224,11 +224,16 @@ class TaskFieldService(BaseWorkflowService):
                 api_name=self.instance.api_name,
                 message=messages.MSG_PW_0036,
             )
+        if not all(isinstance(item, str) for item in raw_value):
+            raise TaskFieldException(
+                api_name=self.instance.api_name,
+                message=messages.MSG_PW_0036,
+            )
 
         stripped_items = [
             item.strip()
             for item in raw_value
-            if isinstance(item, str) and item.strip()
+            if item.strip()
         ]
 
         values = []

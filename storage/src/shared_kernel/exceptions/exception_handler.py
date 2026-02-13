@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from fastapi import FastAPI, Request
+from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
@@ -51,6 +52,39 @@ def register_exception_handlers(app: FastAPI) -> None:
 
         return JSONResponse(
             status_code=exc.http_status,
+            content=error_response.to_dict(),
+        )
+
+    @app.exception_handler(RequestValidationError)
+    async def request_validation_exception_handler(
+        request: Request,
+        exc: RequestValidationError,
+    ) -> JSONResponse:
+        """Handle FastAPI request body/query/path validation errors."""
+        error_code = VALIDATION_ERROR_CODES['MISSING_REQUIRED_FIELD']
+        details = str(exc.errors())
+
+        logger.warning(
+            'Request validation error: %s',
+            details,
+            extra={
+                'error_code': error_code.code,
+                'request_path': request.url.path,
+                'request_method': request.method,
+            },
+        )
+
+        error_response = ErrorResponse(
+            error_code=error_code.code,
+            message=error_code.message,
+            error_type=error_code.error_type.value,
+            details=details,
+            timestamp=datetime.now(tz=UTC).isoformat(),
+            request_id=getattr(request.state, 'request_id', None),
+        )
+
+        return JSONResponse(
+            status_code=error_code.http_status,
             content=error_response.to_dict(),
         )
 

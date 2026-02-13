@@ -130,6 +130,8 @@ class FileSyncService:
                     task=task,
                     workflow=attachment.workflow,
                     template=None,
+                    event=attachment.event,
+                    output=attachment.output,
                 )
 
                 stats['created'] += 1

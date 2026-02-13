@@ -98,6 +98,7 @@ class AttachmentService(BaseModelService):
                     template_id=workflow.template_id,
                     type=OwnerType.USER,
                     user__isnull=False,
+                    is_deleted=False,
                 ).select_related('user')
                 for template_owner in template_user_owners:
                     if template_owner.user:
@@ -133,6 +134,7 @@ class AttachmentService(BaseModelService):
                 template_id=workflow.template_id,
                 type=OwnerType.GROUP,
                 group__isnull=False,
+                is_deleted=False,
             ).select_related('group')
             for template_owner in template_group_owners:
                 if template_owner.group:
@@ -341,10 +343,10 @@ class AttachmentService(BaseModelService):
             try:
                 with transaction.atomic():
                     attachment = Attachment.objects.create(**attachment_data)
+                    self.instance = attachment
+                    self._create_related()
             except IntegrityError:
                 continue
-            self.instance = attachment
-            self._create_related()
             created_attachments.append(attachment)
 
         return created_attachments

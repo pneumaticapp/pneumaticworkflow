@@ -117,7 +117,10 @@ async def download_file(
     file_record = await use_case.get_metadata(query)
 
     # Check file owner (optimization: owner always has access)
-    is_owner = file_record.user_id == current_user.user_id
+    is_owner = (
+        current_user.user_id is not None
+        and file_record.user_id == current_user.user_id
+    )
 
     if not is_owner:
         # Check permissions only for non-owners (saves backend request)
