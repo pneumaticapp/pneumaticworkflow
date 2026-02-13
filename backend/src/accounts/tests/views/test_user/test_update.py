@@ -41,6 +41,7 @@ def test_update__all_fields__ok(mocker, api_client):
         '.UserViewSet.identify',
     )
     user = create_test_owner()
+    old_photo = user.photo
     request_data = {
         'first_name': 'First',
         'last_name': 'Last',
@@ -75,6 +76,9 @@ def test_update__all_fields__ok(mocker, api_client):
         'src.notifications.tasks.'
         'send_user_updated_notification.delay',
     )
+    sync_account_file_fields_mock = mocker.patch(
+        'src.accounts.views.user.sync_account_file_fields',
+    )
     api_client.token_authenticate(user)
 
     # act
@@ -85,6 +89,12 @@ def test_update__all_fields__ok(mocker, api_client):
 
     # assert
     assert response.status_code == 200
+    sync_account_file_fields_mock.assert_called_once_with(
+        account=user.account,
+        user=user,
+        old_values=[old_photo],
+        new_values=[request_data['photo']],
+    )
     data = response.data
     assert data['id'] == user.id
     assert data['email'] == user.email

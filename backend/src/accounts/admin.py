@@ -129,8 +129,8 @@ class UserAdminChangeForm(UserChangeForm):
     def save(self, commit=True):
         photo_file = self.cleaned_data.get('photo_file')
         if photo_file:
-            file_service = FileServiceClient(user=self.instance)
             try:
+                file_service = FileServiceClient(user=self.instance)
                 file_url = file_service.upload_file_with_attachment(
                     file_content=photo_file.read(),
                     filename=photo_file.name.replace(' ', '_'),

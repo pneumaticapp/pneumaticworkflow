@@ -105,7 +105,7 @@ services:
       AI_PROVIDER: ${AI_PROVIDER}
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER}
-      STORAGE: ${STORAGE:-yes}
+      STORAGE: ${STORAGE:-no}
       STORAGE_PROVIDER: ${STORAGE_PROVIDER}
       GOOGLE_APPLICATION_CREDENTIALS: /pneumatic_backend/google_api_credentials.json
       SENTRY_DSN: ${SENTRY_DSN}
@@ -194,7 +194,7 @@ services:
       AI_PROVIDER: ${AI_PROVIDER}
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER}
-      STORAGE: ${STORAGE:-yes}
+      STORAGE: ${STORAGE:-no}
       STORAGE_PROVIDER: ${STORAGE_PROVIDER}
       GOOGLE_APPLICATION_CREDENTIALS: /pneumatic_backend/google_api_credentials.json
       SENTRY_DSN: ${SENTRY_DSN}
@@ -275,7 +275,7 @@ services:
       AI_PROVIDER: ${AI_PROVIDER}
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER}
-      STORAGE: ${STORAGE:-yes}
+      STORAGE: ${STORAGE:-no}
       STORAGE_PROVIDER: ${STORAGE_PROVIDER}
       GOOGLE_APPLICATION_CREDENTIALS: /pneumatic_backend/google_api_credentials.json
       SENTRY_DSN: ${SENTRY_DSN}

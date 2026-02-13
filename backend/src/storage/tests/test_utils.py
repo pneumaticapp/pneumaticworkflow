@@ -4,8 +4,10 @@ from django.test import override_settings
 from src.processes.tests.fixtures import (
     create_test_admin,
     create_test_attachment,
+    create_test_account,
     create_test_workflow,
 )
+from src.storage.enums import AccessType, SourceType
 from src.storage.models import Attachment
 from src.storage.utils import (
     extract_all_file_ids_from_source,
@@ -13,6 +15,7 @@ from src.storage.utils import (
     extract_file_ids_from_values,
     get_attachment_description_fields,
     refresh_attachments,
+    sync_account_file_fields,
 )
 
 pytestmark = pytest.mark.django_db
@@ -265,6 +268,182 @@ class TestExtractFileIdsFromValues:
 
         # assert
         assert result == ['single_file_id_12']
+
+
+class TestSyncAccountFileFields:
+
+    def test_sync_account_file_fields__empty_to_single_url__calls_with_add(
+            self,
+            mocker,
+    ):
+        # arrange
+        account = create_test_account()
+        user = create_test_admin(account=account)
+        sync_mock = mocker.patch(
+            'src.storage.utils.sync_storage_attachments_for_scope',
+        )
+        old_values = [None]
+        new_values = ['https://example.com/file_id_abc123']
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
+            sync_account_file_fields(
+                account=account,
+                user=user,
+                old_values=old_values,
+                new_values=new_values,
+            )
+
+        # assert
+        sync_mock.assert_called_once_with(
+            account=account,
+            user=user,
+            add_file_ids=['file_id_abc123'],
+            remove_file_ids=[],
+            source_type=SourceType.ACCOUNT,
+            access_type=AccessType.ACCOUNT,
+        )
+
+    def test_sync_account_file_fields__single_url_to_empty__calls_with_remove(
+            self,
+            mocker,
+    ):
+        # arrange
+        account = create_test_account()
+        user = create_test_admin(account=account)
+        sync_mock = mocker.patch(
+            'src.storage.utils.sync_storage_attachments_for_scope',
+        )
+        old_values = ['https://example.com/old_file_xyz']
+        new_values = [None]
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
+            sync_account_file_fields(
+                account=account,
+                user=user,
+                old_values=old_values,
+                new_values=new_values,
+            )
+
+        # assert
+        sync_mock.assert_called_once_with(
+            account=account,
+            user=user,
+            add_file_ids=[],
+            remove_file_ids=['old_file_xyz'],
+            source_type=SourceType.ACCOUNT,
+            access_type=AccessType.ACCOUNT,
+        )
+
+    def test_sync_account_file_fields__change_url__calls_with_add_and_remove(
+            self,
+            mocker,
+    ):
+        # arrange
+        account = create_test_account()
+        user = create_test_admin(account=account)
+        sync_mock = mocker.patch(
+            'src.storage.utils.sync_storage_attachments_for_scope',
+        )
+        old_values = ['https://example.com/old_id_111']
+        new_values = ['https://example.com/new_id_222']
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
+            sync_account_file_fields(
+                account=account,
+                user=user,
+                old_values=old_values,
+                new_values=new_values,
+            )
+
+        # assert
+        sync_mock.assert_called_once_with(
+            account=account,
+            user=user,
+            add_file_ids=['new_id_222'],
+            remove_file_ids=['old_id_111'],
+            source_type=SourceType.ACCOUNT,
+            access_type=AccessType.ACCOUNT,
+        )
+
+    def test_sync_account_file_fields__same_url__calls_with_empty_lists(
+            self,
+            mocker,
+    ):
+        # arrange
+        account = create_test_account()
+        user = create_test_admin(account=account)
+        sync_mock = mocker.patch(
+            'src.storage.utils.sync_storage_attachments_for_scope',
+        )
+        url = 'https://example.com/same_file_id'
+        old_values = [url]
+        new_values = [url]
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
+            sync_account_file_fields(
+                account=account,
+                user=user,
+                old_values=old_values,
+                new_values=new_values,
+            )
+
+        # assert
+        sync_mock.assert_called_once_with(
+            account=account,
+            user=user,
+            add_file_ids=[],
+            remove_file_ids=[],
+            source_type=SourceType.ACCOUNT,
+            access_type=AccessType.ACCOUNT,
+        )
+
+    def test_sync_account_file_fields__no_file_domain__calls_sync_with_empty(
+            self,
+            mocker,
+    ):
+        # arrange
+        account = create_test_account()
+        user = create_test_admin(account=account)
+        sync_mock = mocker.patch(
+            'src.storage.utils.sync_storage_attachments_for_scope',
+        )
+        old_values = [None]
+        new_values = ['https://other.com/not_file_service']
+
+        # act
+        with override_settings(FILE_DOMAIN=None):
+            sync_account_file_fields(
+                account=account,
+                user=user,
+                old_values=old_values,
+                new_values=new_values,
+            )
+
+        # assert
+        sync_mock.assert_called_once_with(
+            account=account,
+            user=user,
+            add_file_ids=[],
+            remove_file_ids=[],
+            source_type=SourceType.ACCOUNT,
+            access_type=AccessType.ACCOUNT,
+        )
 
 
 class TestRefreshAttachments:

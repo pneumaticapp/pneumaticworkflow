@@ -794,6 +794,8 @@ def test_partial_update__ok(mocker):
         billing_sync=True,
     )
     user = create_test_user(account=account)
+    old_logo_lg = account.logo_lg
+    old_logo_sm = account.logo_sm
     logo_lg = 'http://site.com/logo_lg.img'
     logo_sm = 'http://site.com/logo_sm.img'
     name = 'New account name'
@@ -820,6 +822,9 @@ def test_partial_update__ok(mocker):
         'src.accounts.services.account.'
         'AccountService._identify_users',
     )
+    sync_account_file_fields_mock = mocker.patch(
+        'src.accounts.services.account.sync_account_file_fields',
+    )
 
     # act
     result = service.partial_update(
@@ -843,6 +848,12 @@ def test_partial_update__ok(mocker):
     )
     identify_users_mock.assert_called_once()
     group_mock.assert_called_once_with(user=user, account=account)
+    sync_account_file_fields_mock.assert_called_once_with(
+        account=account,
+        user=user,
+        old_values=[old_logo_lg, old_logo_sm],
+        new_values=[logo_lg, logo_sm],
+    )
 
 
 def test_partial_update__disabled_billing_sync__ok(mocker):

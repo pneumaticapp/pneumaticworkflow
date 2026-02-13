@@ -249,7 +249,7 @@ services:
       EMAIL: ${EMAIL:-no}
       AI: ${AI:-no}
       PUSH: ${PUSH:-no}
-      STORAGE: ${STORAGE:-yes}
+      STORAGE: ${STORAGE:-no}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_password}

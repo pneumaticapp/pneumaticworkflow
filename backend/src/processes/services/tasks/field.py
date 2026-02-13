@@ -543,8 +543,8 @@ class TaskFieldService(BaseWorkflowService):
         for file_id in file_ids:
             attachment, created = Attachment.objects.get_or_create(
                 file_id=file_id,
-                account=self.account,
                 defaults={
+                    'account': self.account,
                     'source_type': source_type,
                     'access_type': AccessType.RESTRICTED,
                     'task': self.instance.task,

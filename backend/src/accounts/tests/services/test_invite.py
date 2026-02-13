@@ -117,7 +117,7 @@ def test_get_transfer_token():
     assert token['prev_user_id'] == user_to_transfer.id
 
 
-def test_create_invited_user__ok():
+def test_create_invited_user__ok(mocker):
 
     # arrange
     account = create_test_account()
@@ -149,6 +149,9 @@ def test_create_invited_user__ok():
         is_superuser=is_superuser,
         request_user=request_user,
     )
+    sync_account_file_fields_mock = mocker.patch(
+        'src.accounts.services.user_invite.sync_account_file_fields',
+    )
 
     # act
     user = service._create_invited_user(
@@ -159,6 +162,12 @@ def test_create_invited_user__ok():
     )
 
     # assert
+    sync_account_file_fields_mock.assert_called_once_with(
+        account=account,
+        user=request_user,
+        old_values=[None],
+        new_values=[photo],
+    )
     assert user.email == email
     assert user.password == ''
     assert user.first_name == first_name.title()

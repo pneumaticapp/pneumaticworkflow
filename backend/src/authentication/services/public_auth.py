@@ -23,6 +23,20 @@ class PublicAuthService(BaseAuthentication):
     CACHE_TIMEOUT = 86400  # day
 
     @classmethod
+    def invalidate_template_public_tokens(cls, template: Template) -> None:
+        """Remove cached token data when public/embed access is revoked or
+        template is deactivated. Storage service relies on this cache for
+        public token auth; without invalidation tokens remain valid.
+        """
+        revoked = (
+            getattr(template, 'is_deleted', False) or not template.is_active
+        )
+        if template.public_id and (revoked or not template.is_public):
+            cls.cache.delete(template.public_id)
+        if template.embed_id and (revoked or not template.is_embedded):
+            cls.cache.delete(template.embed_id)
+
+    @classmethod
     def _get_header(cls, request) -> Optional[str]:
         """
         Extracts the header containing template public_id from the given

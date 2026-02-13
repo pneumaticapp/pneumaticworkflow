@@ -165,6 +165,11 @@ class AttachmentService(BaseModelService):
                 uop.user,
                 self.instance,
             )
+        ctype = ContentType.objects.get_for_model(Attachment)
+        GroupObjectPermission.objects.filter(
+            content_type=ctype,
+            object_pk=str(self.instance.pk),
+        ).delete()
 
         # Assign permissions to template owners (exclude soft-deleted)
         template_owners = template.owners.filter(is_deleted=False)
@@ -177,7 +182,6 @@ class AttachmentService(BaseModelService):
                 )
 
         # Assign permissions to template owner groups
-        ctype = ContentType.objects.get_for_model(Attachment)
         perm = Permission.objects.get(
             content_type=ctype,
             codename='access_attachment',
@@ -208,6 +212,21 @@ class AttachmentService(BaseModelService):
             'members',
             'template',
         ).get(id=workflow.id)
+
+        # Clear existing so removed participants lose access when we reassign
+        for uop in UserObjectPermission.objects.filter(
+                object_pk=str(self.instance.pk),
+        ).select_related('user'):
+            remove_perm(
+                'storage.access_attachment',
+                uop.user,
+                self.instance,
+            )
+        ctype = ContentType.objects.get_for_model(Attachment)
+        GroupObjectPermission.objects.filter(
+            content_type=ctype,
+            object_pk=str(self.instance.pk),
+        ).delete()
 
         # Assign permissions to workflow participants
         users_set = set()
@@ -250,7 +269,6 @@ class AttachmentService(BaseModelService):
             )
 
         # Assign permissions to groups from task performers and template owners
-        ctype = ContentType.objects.get_for_model(Attachment)
         perm = Permission.objects.get(
             content_type=ctype,
             codename='access_attachment',
