@@ -132,7 +132,7 @@ services:
       CORS_ALLOW_CREDENTIALS: yes
       CORS_ORIGIN_WHITELIST: "http://localhost:8000 ${FRONTEND_URL:-http://localhost}"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
-      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://file.localhost}
+      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://file-service:8000}
     expose:
       - 8000
     volumes:
@@ -384,7 +384,6 @@ services:
     depends_on:
       - backend
       - frontend
-      - file-service
     restart: always
 
   file-service:

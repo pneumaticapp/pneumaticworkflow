@@ -131,7 +131,7 @@ services:
       VERIFICATION_CHECK: no
       CORS_ORIGIN_ALLOW_ALL: no
       CORS_ALLOW_CREDENTIALS: yes
-      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://localhost:8002}
+      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://file-service:8000}
       CORS_ORIGIN_WHITELIST: "http://localhost:8000 http://localhost:8002 ${FRONTEND_URL:-http://localhost}"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
     volumes:
@@ -215,7 +215,7 @@ services:
       VERIFICATION_CHECK: no
       CORS_ORIGIN_ALLOW_ALL: no
       CORS_ALLOW_CREDENTIALS: yes
-      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://localhost:8002}
+      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://file-service:8000}
       CORS_ORIGIN_WHITELIST: "http://localhost:8000 http://localhost:8002 ${FRONTEND_URL:-http://localhost}"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
     volumes:
@@ -296,7 +296,7 @@ services:
       VERIFICATION_CHECK: no
       CORS_ORIGIN_ALLOW_ALL: no
       CORS_ALLOW_CREDENTIALS: yes
-      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://localhost:8002}
+      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://file-service:8000}
       CORS_ORIGIN_WHITELIST: "http://localhost:8000 http://localhost:8002 ${FRONTEND_URL:-http://localhost}"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
     volumes:
