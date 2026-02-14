@@ -19,6 +19,7 @@ import {
   ChecklistIcon,
 } from '../../../../icons';
 import { INSERT_CHECKLIST_COMMAND } from '../../plugins/ChecklistPlugin';
+import { useCheckDevice } from '../../../../../hooks/useCheckDevice';
 import { useLinkPlugin } from '../../plugins/LinkPlugin';
 import { useToolbarState } from './useToolbarState';
 import { ToolbarButton } from './ToolbarButton';
@@ -36,6 +37,7 @@ export function EditorToolbar({
   onUploadAttachments,
 }: IEditorToolbarProps): React.ReactElement {
   const [editor] = useLexicalComposerContext();
+  const { isMobile } = useCheckDevice();
   const { openLinkForm } = useLinkPlugin();
   const { isBold, isItalic, listType, isLink } = useToolbarState(editor);
   const linkButtonRef = useRef<HTMLButtonElement>(null);
@@ -86,11 +88,30 @@ export function EditorToolbar({
       : [])
   ];
 
-  const attachmentButtons = [
-    { Icon: ImageAttachmentButtonIcon, labels: TOOLBAR_LABELS.attachImage, accept: ATTACHMENT_ACCEPT.image },
-    { Icon: VideoAttachmentButtonIcon, labels: TOOLBAR_LABELS.attachVideo, accept: ATTACHMENT_ACCEPT.video },
-    { Icon: FileAttachmentButtonIcon, labels: TOOLBAR_LABELS.attachFile, accept: undefined },
+  const allAttachmentButtons = [
+    {
+      Icon: ImageAttachmentButtonIcon,
+      labels: TOOLBAR_LABELS.attachImage,
+      accept: ATTACHMENT_ACCEPT.image,
+      attachmentType: 'image' as const,
+    },
+    {
+      Icon: VideoAttachmentButtonIcon,
+      labels: TOOLBAR_LABELS.attachVideo,
+      accept: ATTACHMENT_ACCEPT.video,
+      attachmentType: 'video' as const,
+    },
+    {
+      Icon: FileAttachmentButtonIcon,
+      labels: TOOLBAR_LABELS.attachFile,
+      accept: undefined,
+      attachmentType: 'file' as const,
+    },
   ];
+
+  const attachmentButtons = isMobile
+    ? allAttachmentButtons.filter((btn) => btn.attachmentType === 'file')
+    : allAttachmentButtons;
 
   return (
     <div className={styles['toolbar-wrapper']}>
@@ -101,20 +122,26 @@ export function EditorToolbar({
         onMouseDown={(e: React.MouseEvent<HTMLDivElement>) => e.preventDefault()}
         onKeyDown={(e: React.KeyboardEvent<HTMLDivElement>) => e.preventDefault()}
       >
-        {formatButtons.map(({ Icon, labels, isActive, onMouseDown, ref: btnRef }) => (
-          <ToolbarButton
-            key={labels.aria}
-            ref={btnRef}
-            isActive={isActive}
-            tooltipText={labels.tooltip}
-            ariaLabel={labels.aria}
-            isModal={isModal}
-            onMouseDown={onMouseDown}
-          >
-            <Icon />
-          </ToolbarButton>
-        ))}
-        <div className={styles['separator']} aria-hidden />
+        {!isMobile && (
+          <>
+            <div className={styles['toolbar-format']}>
+              {formatButtons.map(({ Icon, labels, isActive, onMouseDown, ref: btnRef }) => (
+                <ToolbarButton
+                  key={labels.aria}
+                  ref={btnRef}
+                  isActive={isActive}
+                  tooltipText={labels.tooltip}
+                  ariaLabel={labels.aria}
+                  isModal={isModal}
+                  onMouseDown={onMouseDown}
+                >
+                  <Icon />
+                </ToolbarButton>
+              ))}
+            </div>
+            <div className={styles['separator']} aria-hidden />
+          </>
+        )}
         {attachmentButtons.map(({ Icon, labels, accept }) => (
           <AttachmentToolbarButton
             key={labels.aria}

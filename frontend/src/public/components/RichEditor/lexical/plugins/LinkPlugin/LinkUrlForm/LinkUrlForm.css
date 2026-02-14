@@ -18,7 +18,8 @@
   &__input {
     width: 100%;
     color: var(--pneumatic-color-white);
-    border: none;
+    /* stylelint-disable-next-line declaration-no-important */
+    border: none !important;
 
     &::placeholder {
       color: var(--pneumatic-color-black72);
