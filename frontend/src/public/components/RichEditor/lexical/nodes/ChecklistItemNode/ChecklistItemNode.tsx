@@ -8,9 +8,13 @@ import {
   ElementNode,
 } from 'lexical';
 
-import { createCheckboxElement } from './checklistItemDOM';
-import { CHECKLIST_ITEM_CLASS } from './constants';
+import {
+  CHECKLIST_ITEM_CLASS,
+  CHECKBOX_CLASS,
+} from './constants';
 import type { SerializedChecklistItemNode, TChecklistItemNodePayload } from './types';
+
+import styles from './ChecklistItemNode.css';
 
 export class ChecklistItemNode extends ElementNode {
   __listApiName: string;
@@ -48,11 +52,17 @@ export class ChecklistItemNode extends ElementNode {
 
   createDOM(config: EditorConfig): HTMLElement {
     const li = document.createElement('li');
-    li.className = CHECKLIST_ITEM_CLASS;
+    li.className = `${styles['checklist-item']} ${CHECKLIST_ITEM_CLASS}`;
     li.setAttribute('data-lexical-checklist-list', this.__listApiName);
     li.setAttribute('data-lexical-checklist-item', this.__itemApiName);
     li.setAttribute('data-lexical-namespace', config.namespace);
-    li.appendChild(createCheckboxElement());
+
+    const checkbox = document.createElement('div');
+    checkbox.className = `${CHECKBOX_CLASS} ${styles['checkbox']}`;
+    checkbox.setAttribute('contenteditable', 'false');
+    checkbox.setAttribute('tabindex', '-1');
+
+    li.append(checkbox);
     return li;
   }
 
