@@ -1,4 +1,5 @@
 export { SetEditorRefPlugin } from './SetEditorRefPlugin';
+export { SubmitOnKeyPlugin } from './SubmitOnKeyPlugin';
 export {
   InsertAttachmentPlugin,
   INSERT_ATTACHMENT_COMMAND,

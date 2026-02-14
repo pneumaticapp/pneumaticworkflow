@@ -13,6 +13,7 @@ import { ELEMENT_TRANSFORMERS } from '@lexical/markdown';
 import {
   InsertAttachmentPlugin,
   SetEditorRefPlugin,
+  SubmitOnKeyPlugin,
   LinkTooltipPlugin,
   VariableTooltipPlugin,
   ChecklistPlugin,
@@ -88,6 +89,9 @@ export function LexicalEditorContent({
       <HistoryPlugin />
       <ListPlugin />
       <SetEditorRefPlugin editorRef={editorRef} />
+      {withControls && onSubmit ? (
+        <SubmitOnKeyPlugin onSubmit={onSubmit} />
+      ) : null}
       <OnChangePlugin onChange={onChange} />
       <MarkdownShortcutPlugin transformers={ELEMENT_TRANSFORMERS} />
 

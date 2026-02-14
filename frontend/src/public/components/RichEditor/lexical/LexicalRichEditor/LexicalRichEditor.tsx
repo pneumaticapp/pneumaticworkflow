@@ -1,12 +1,15 @@
 import React, {
   forwardRef,
+  useCallback,
   useImperativeHandle,
   useRef,
 } from 'react';
 import classnames from 'classnames';
 import type { EditorState, LexicalEditor } from 'lexical';
 import {
+  $createParagraphNode,
   $createTextNode,
+  $getRoot,
   $getSelection,
   $insertNodes,
   $isRangeSelection,
@@ -153,6 +156,18 @@ export const RichEditor = forwardRef<
     });
   };
 
+  const clearContent = useCallback((): void => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    editor.update(() => {
+      const root = $getRoot();
+      root.clear();
+      const paragraph = $createParagraphNode();
+      root.append(paragraph);
+      paragraph.selectStart();
+    });
+  }, []);
+
   useImperativeHandle(
     ref,
     () => ({
@@ -166,8 +181,9 @@ export const RichEditor = forwardRef<
       getEditor(): LexicalEditor | undefined {
         return editorRef.current ?? undefined;
       },
+      clearContent,
     }),
-    [insertVariableToEditor],
+    [insertVariableToEditor, clearContent],
   );
 
 
