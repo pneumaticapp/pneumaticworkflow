@@ -1,6 +1,8 @@
 /* eslint-disable class-methods-use-this */
 /* eslint-disable no-underscore-dangle */
 import {
+  type DOMConversionMap,
+  type DOMConversionOutput,
   type EditorConfig,
   type LexicalNode,
   type NodeKey,
@@ -15,6 +17,9 @@ import {
 import type { SerializedChecklistItemNode, TChecklistItemNodePayload } from './types';
 
 import styles from './ChecklistItemNode.css';
+
+const CHECKLIST_LIST_ATTR = 'data-lexical-checklist-list';
+const CHECKLIST_ITEM_ATTR = 'data-lexical-checklist-item';
 
 export class ChecklistItemNode extends ElementNode {
   __listApiName: string;
@@ -69,9 +74,26 @@ export class ChecklistItemNode extends ElementNode {
   exportDOM() {
     const li = document.createElement('li');
     li.className = CHECKLIST_ITEM_CLASS;
-    li.setAttribute('data-lexical-checklist-list', this.__listApiName);
-    li.setAttribute('data-lexical-checklist-item', this.__itemApiName);
+    li.setAttribute(CHECKLIST_LIST_ATTR, this.__listApiName);
+    li.setAttribute(CHECKLIST_ITEM_ATTR, this.__itemApiName);
     return { element: li };
+  }
+
+  static importDOM(): DOMConversionMap<HTMLLIElement> | null {
+    return {
+      li: (domNode: HTMLLIElement) => {
+        if (!domNode.hasAttribute(CHECKLIST_ITEM_ATTR)) return null;
+        return {
+          conversion: (element: HTMLLIElement): DOMConversionOutput => ({
+            node: $createChecklistItemNode({
+              listApiName: element.getAttribute(CHECKLIST_LIST_ATTR) ?? '',
+              itemApiName: element.getAttribute(CHECKLIST_ITEM_ATTR) ?? '',
+            }),
+          }),
+          priority: 1,
+        };
+      },
+    };
   }
 
   updateDOM() {

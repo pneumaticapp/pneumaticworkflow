@@ -39,7 +39,7 @@ export function EditorToolbar({
   const [editor] = useLexicalComposerContext();
   const { isMobile } = useCheckDevice();
   const { openLinkForm } = useLinkPlugin();
-  const { isBold, isItalic, listType, isLink } = useToolbarState(editor);
+  const { isBold, isItalic, listType, isLink, isChecklist } = useToolbarState(editor);
   const linkButtonRef = useRef<HTMLButtonElement>(null);
 
   const applyBold = () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
@@ -84,7 +84,7 @@ export function EditorToolbar({
     },
     { Icon: LinkButtonIcon, labels: TOOLBAR_LABELS.link, isActive: isLink, onMouseDown: toggleLink, ref: linkButtonRef },
     ...(withChecklists
-      ? [{ Icon: ChecklistIcon, labels: TOOLBAR_LABELS.checklist, isActive: false, onMouseDown: applyChecklist, ref: undefined }]
+      ? [{ Icon: ChecklistIcon, labels: TOOLBAR_LABELS.checklist, isActive: isChecklist, onMouseDown: applyChecklist, ref: undefined }]
       : [])
   ];
 

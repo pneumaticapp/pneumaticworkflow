@@ -1,5 +1,7 @@
 /* eslint-disable no-underscore-dangle -- Lexical node internal field by convention */
 import {
+  type DOMConversionMap,
+  type DOMConversionOutput,
   type EditorConfig,
   type LexicalNode,
   type NodeKey,
@@ -9,6 +11,7 @@ import {
 import type { SerializedChecklistNode, TChecklistNodePayload } from './types';
 
 const CHECKLIST_UL_CLASS = 'lexical-rich-editor-checklist-ul';
+const CHECKLIST_LIST_ATTR = 'data-lexical-checklist-list';
 
 export class ChecklistNode extends ElementNode {
   __listApiName: string;
@@ -57,6 +60,32 @@ export class ChecklistNode extends ElementNode {
   // eslint-disable-next-line class-methods-use-this -- Lexical ElementNode.updateDOM() override
   updateDOM(): boolean {
     return false;
+  }
+
+  exportDOM(): { element: HTMLUListElement } {
+    const ul = document.createElement('ul');
+    ul.className = CHECKLIST_UL_CLASS;
+    ul.setAttribute(CHECKLIST_LIST_ATTR, this.__listApiName);
+    return { element: ul };
+  }
+
+  static importDOM(): DOMConversionMap<HTMLUListElement> | null {
+    return {
+      ul: (domNode: HTMLUListElement) => {
+        const isChecklist =
+          domNode.hasAttribute(CHECKLIST_LIST_ATTR) ||
+          domNode.classList.contains(CHECKLIST_UL_CLASS);
+        if (!isChecklist) return null;
+        return {
+          conversion: (element: HTMLUListElement): DOMConversionOutput => ({
+            node: $createChecklistNode({
+              listApiName: element.getAttribute(CHECKLIST_LIST_ATTR) ?? '',
+            }),
+          }),
+          priority: 1,
+        };
+      },
+    };
   }
 
   exportJSON(): SerializedChecklistNode {

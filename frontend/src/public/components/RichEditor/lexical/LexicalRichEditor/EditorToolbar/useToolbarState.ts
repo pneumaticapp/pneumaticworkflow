@@ -4,6 +4,7 @@ import { $getNearestNodeOfType } from '@lexical/utils';
 import { ListNode } from '@lexical/list';
 import { LinkNode } from '@lexical/link';
 import type { LexicalEditor } from 'lexical';
+import { ChecklistItemNode } from '../../nodes';
 import type { IToolbarState, TListType } from './types';
 
 const EMPTY_STATE: IToolbarState = {
@@ -11,6 +12,7 @@ const EMPTY_STATE: IToolbarState = {
   isItalic: false,
   listType: null,
   isLink: false,
+  isChecklist: false,
 };
 
 function listTypeFromNode(listNode: ListNode): TListType {
@@ -35,12 +37,14 @@ function useToolbarState(editor: LexicalEditor): IToolbarState {
       const anchorNode = selection.anchor.getNode();
       const listNode = $getNearestNodeOfType(anchorNode, ListNode);
       const linkNode = $getNearestNodeOfType(anchorNode, LinkNode);
+      const checklistItemNode = $getNearestNodeOfType(anchorNode, ChecklistItemNode);
 
       setState({
         isBold: selection.hasFormat('bold'),
         isItalic: selection.hasFormat('italic'),
         listType: listNode ? listTypeFromNode(listNode) : null,
         isLink: linkNode !== null,
+        isChecklist: checklistItemNode !== null,
       });
     });
   }, [editor]);

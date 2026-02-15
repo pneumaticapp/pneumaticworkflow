@@ -13,6 +13,7 @@ export interface IToolbarState {
   isItalic: boolean;
   listType: TListType;
   isLink: boolean;
+  isChecklist: boolean;
 }
 
 export interface IToolbarButtonProps {
