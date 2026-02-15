@@ -250,7 +250,6 @@ function WorkflowEditPopupComponent({
               className={styles['workflow-name-field']}
               toolipText={formatMessage({ id: 'kickoff.workflow-name-tooltip' })}
               foregroundColor="beige"
-              size="xl"
             />
             {kickoffState && isArrayWithItems(kickoffState.fields) && (
               <div className={styles['popup__kickoff']}>

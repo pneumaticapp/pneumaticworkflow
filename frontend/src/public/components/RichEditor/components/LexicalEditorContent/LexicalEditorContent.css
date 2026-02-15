@@ -1,0 +1,128 @@
+.editor {
+  position: relative;
+  padding: 1rem 1.6rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  cursor: text;
+  background: transparent;
+  border: 0.1rem solid var(--pneumatic-color-black16);
+  border-radius: 0.8rem;
+  transition: 0.1s ease-in-out border-color;
+
+  &:focus-within {
+    border-color: var(--pneumatic-color-black48);
+  }
+}
+
+.controls-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.content-editable {
+  flex: 1;
+  outline: none;
+
+  > * + * {
+    /* stylelint-disable-next-line declaration-no-important */
+    margin-top: 2rem !important;
+  }
+}
+
+.placeholder {
+  position: absolute;
+  top: 1rem;
+  right: 1.6rem;
+  left: 1.6rem;
+  pointer-events: none;
+  color: var(--default-placeholder-color);
+}
+
+:global(.lexical-rich-editor-list-ul),
+:global(.lexical-rich-editor-list-ol) {
+  padding-left: 3.2rem;
+  list-style-position: outside;
+}
+
+:global(.lexical-rich-editor-list-ul) {
+  list-style-type: disc;
+}
+
+:global(.lexical-rich-editor-list-ol) {
+  list-style-type: decimal;
+}
+
+:global(.lexical-rich-editor-list-ol .lexical-rich-editor-list-item)::marker {
+  font-weight: bold;
+}
+
+:global(.lexical-rich-editor-list-ul .lexical-rich-editor-list-item) {
+  padding-left: 0.6rem;
+}
+
+:global(.lexical-rich-editor-list-ol .lexical-rich-editor-list-item) {
+  padding-left: 0.8rem;
+}
+
+:global(.lexical-rich-editor-list-item + .lexical-rich-editor-list-item) {
+  margin-top: 0.8rem;
+}
+
+:global(.lexical-rich-editor-paragraph) {
+  margin: 0;
+  padding: 0;
+  min-width: 0.1rem;
+  min-height: 2rem;
+}
+
+:global(.lexical-rich-editor-link) {
+  color: var(--pneumatic-color-link-dark);
+  transition: color 0.1s ease-in-out;
+}
+
+:global(.lexical-rich-editor-link:hover) {
+  color: var(--pneumatic-color-link-hover);
+}
+
+:global(.lexical-rich-editor-text-bold) {
+  font-weight: bold;
+}
+
+:global(.lexical-rich-editor-text-italic) {
+  font-style: italic;
+}
+
+:global(.lexical-rich-editor-text-underline) {
+  text-decoration: underline;
+}
+
+:global(.lexical-rich-editor-mention) {
+  font-weight: bold;
+}
+
+:global(.lexical-rich-editor-checklist-ul) {
+  padding-left: 3.2rem;
+}
+
+:global(.lexical-rich-editor-checklist-item) {
+  display: flex;
+  list-style: none;
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+
+:global(.lexical-rich-editor-checklist-item + .lexical-rich-editor-checklist-item) {
+  margin-top: 0.8rem;
+}
+
+:global(.lexical-rich-editor-checklist-checkbox) {
+  cursor: pointer;
+  flex-shrink: 0;
+  pointer-events: none;
+}

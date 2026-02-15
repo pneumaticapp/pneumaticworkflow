@@ -122,6 +122,7 @@ export function WorkflowsTable({
   const [tableHeight, setTableHeight] = useState<number>(0);
   const [colWidths, setColWidths] = useState<Record<string, number>>({});
   const [isChangeTemplateId, setIsChangeTemplateId] = useState(false);
+  
   useEffect(() => {
     const appContainer = document.getElementById('app-container');
     if (appContainer) {

@@ -12,6 +12,7 @@ type TProps = PropsWithChildren<CellProps<TableColumns, TableColumns['system-col
 export function TemplateNameColumn({ value: { isLegacyTemplate, legacyTemplateName, template } }: TProps) {
   const dispatch = useDispatch();
   const templateName = isLegacyTemplate ? legacyTemplateName : template?.name;
+
   return (
     <button
       onClick={() => dispatch(setWorkflowsFilterTemplate([template?.id]))}

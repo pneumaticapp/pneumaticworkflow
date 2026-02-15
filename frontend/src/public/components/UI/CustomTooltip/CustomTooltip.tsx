@@ -1,12 +1,11 @@
-/* eslint-disable */
-/* prettier-ignore */
-import * as React from 'react';
-import * as classnames from 'classnames';
+import React, { useEffect, useState } from 'react';
+import classNames from 'classnames';
 import { useIntl } from 'react-intl';
 import { Tooltip, TooltipProps } from 'reactstrap';
 
-import styles from './CustomTooltip.css';
 import { ELearnMoreLinks } from '../../../constants/defaultValues';
+
+import styles from './CustomTooltip.css';
 
 export const enum ETooltipPlacement {
   Bottom = 'bottom',
@@ -42,16 +41,15 @@ export const CustomTooltip = ({
   isModal = false,
 }: ICustomTooltip) => {
   const { formatMessage } = useIntl();
-
-  const { useEffect, useState } = React;
-  const [isTooltipOpenState, setIsTooltipOpenState] = useState(false);
-  const openTooltip = () => setIsTooltipOpenState(true);
-  const hideTooltip = () => setIsTooltipOpenState(false);
+  const [isTooltipOpenState, setIsTooltipOpenState] = useState<boolean>(false);
 
   const sizeClassNameMap = {
     md: styles['tooltip_md'],
     lg: styles['tooltip_lg'],
   };
+
+  const openTooltip = () => setIsTooltipOpenState(true);
+  const hideTooltip = () => setIsTooltipOpenState(false);
 
   useEffect(() => {
     if (target && target.current) {
@@ -67,7 +65,7 @@ export const CustomTooltip = ({
     };
   }, [target.current]);
 
-  const arrowClassName = classnames(
+  const arrowClassName = classNames(
     styles['custom-arrow'],
     placement === 'top' ? styles['custom-arrow_bottom'] : styles['custom-arrow_top'],
   );
@@ -88,7 +86,7 @@ export const CustomTooltip = ({
       arrowClassName={arrowClassName}
       modifiers={{ preventOverflow: { boundariesElement: 'window' } }}
       autohide={false}
-      className={classnames(tooltipClassName, styles['tooltip'], sizeClassNameMap[size], {
+      className={classNames(tooltipClassName, styles['tooltip'], sizeClassNameMap[size], {
         [styles['tooltip__high-z-index']]: isModal,
       })}
       delay={0}
@@ -104,7 +102,7 @@ export const CustomTooltip = ({
       </p>
       {learnMoreLink && (
         <p>
-          <a href={learnMoreLink} target={'_blank'}>
+          <a href={learnMoreLink} target="_blank" rel="noreferrer">
             {formatMessage({ id: 'general.learn-more' })}
           </a>
         </p>
