@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { SyntheticEvent } from 'react';
 import classnames from 'classnames';
 import { IntlShape } from 'react-intl';
 
@@ -20,7 +20,7 @@ import { TaskNamesTooltipContent } from '../../utils/TaskNamesTooltipContent';
 export interface IWorkflowCardProps {
   intl: IntlShape;
   workflow: IWorkflowClient;
-  onCardClick(e: React.SyntheticEvent): void;
+  onCardClick(e: SyntheticEvent): void;
   onWorkflowEnded?(): void;
   onWorkflowSnoozed?(): void;
   onWorkflowDeleted?(): void;
@@ -51,10 +51,10 @@ export const WorkflowCard = ({
     areOverdueTasks,
     areMultipleTasks,
     selectedUsers,
-    namesMultipleTasks,
+    multipleTasksNamesByApiNames,
   } = workflow;
 
-  const namesTooltip = areMultipleTasks && TaskNamesTooltipContent(namesMultipleTasks);
+  const namesTooltip = areMultipleTasks && TaskNamesTooltipContent(multipleTasksNamesByApiNames);
 
   const getSnoozedText = () => {
     if (!minDelay) return '';
@@ -89,7 +89,9 @@ export const WorkflowCard = ({
       [EWorkflowStatus.Aborted]: '',
     };
 
-    return <div className={classnames(styles['card-task'], 'truncate')}>{subtitlesMap[status]}</div>;
+    const extraTextStyle =
+      status === EWorkflowStatus.Snoozed || status === EWorkflowStatus.Finished ? styles['card-extra-text'] : '';
+    return <div className={classnames(styles['card-task'], 'truncate', extraTextStyle)}>{subtitlesMap[status]}</div>;
   };
 
   return (

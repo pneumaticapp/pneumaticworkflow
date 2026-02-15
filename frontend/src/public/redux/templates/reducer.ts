@@ -1,9 +1,6 @@
-/* eslint-disable @typescript-eslint/default-param-last */
-/* eslint-disable no-param-reassign */
 import produce from 'immer';
 import { ITemplatesList, ITemplatesStore, ITemplatesSystem, ITemplatesSystemList } from '../../types/redux';
 import { ETemplatesActions, ETemplatesSystemStatus, TTemplatesActions } from './actions';
-import { TWorkflowsActions } from '../actions';
 import { ETemplatesSorting } from '../../types/workflow';
 import { omit } from '../../utils/helpers';
 
@@ -41,7 +38,7 @@ export const INIT_STATE: ITemplatesStore = {
   isTemplateOwner: undefined,
 };
 
-export const reducer = (state = INIT_STATE, action: TTemplatesActions | TWorkflowsActions): ITemplatesStore => {
+export const reducer = (state = INIT_STATE, action: TTemplatesActions): ITemplatesStore => {
   switch (action.type) {
     case ETemplatesActions.SetCurrentTemplatesSystemStatus:
       return produce(state, (draftState) => {
