@@ -36,7 +36,7 @@ describe('RichEditor integration (E2E specs)', () => {
 
   describe('text insertion (run in E2E)', () => {
     it.skip('inserts text into empty document and updates both DOM and handleChange', async () => {
-      const { RichEditor } = await import('../lexical');
+      const { RichEditor } = await import('../RichEditor');
       const handleChange = jest.fn();
 
       render(<RichEditor {...defaultProps} handleChange={handleChange} />);
@@ -52,7 +52,7 @@ describe('RichEditor integration (E2E specs)', () => {
     });
 
     it.skip('inserts text in the middle of existing text and keeps cursor correct', async () => {
-      const { RichEditor } = await import('../lexical');
+      const { RichEditor } = await import('../RichEditor');
       const handleChange = jest.fn();
 
       render(
@@ -78,7 +78,7 @@ describe('RichEditor integration (E2E specs)', () => {
 
   describe('deletion (run in E2E)', () => {
     it.skip('Backspace removes character before cursor and updates DOM and data', async () => {
-      const { RichEditor } = await import('../lexical');
+      const { RichEditor } = await import('../RichEditor');
       const handleChange = jest.fn();
 
       render(<RichEditor {...defaultProps} handleChange={handleChange} />);
@@ -97,7 +97,7 @@ describe('RichEditor integration (E2E specs)', () => {
     });
 
     it.skip('Delete removes character after cursor (selected forward) and updates DOM and data', async () => {
-      const { RichEditor } = await import('../lexical');
+      const { RichEditor } = await import('../RichEditor');
       const handleChange = jest.fn();
 
       render(<RichEditor {...defaultProps} handleChange={handleChange} />);
@@ -117,7 +117,7 @@ describe('RichEditor integration (E2E specs)', () => {
 
   describe('Undo / Redo (run in E2E)', () => {
     it.skip('Undo reverts at least 3 steps; Redo restores them; cursor stays in editor', async () => {
-      const { RichEditor } = await import('../lexical');
+      const { RichEditor } = await import('../RichEditor');
       const handleChange = jest.fn();
 
       render(<RichEditor {...defaultProps} handleChange={handleChange} />);
@@ -151,7 +151,7 @@ describe('RichEditor integration (E2E specs)', () => {
 
   describe('cursor (caret) after operations (run in E2E)', () => {
     it.skip('editable keeps focus and correct visible content after insert', async () => {
-      const { RichEditor } = await import('../lexical');
+      const { RichEditor } = await import('../RichEditor');
       render(<RichEditor {...defaultProps} handleChange={jest.fn()} />);
       const editable = getEditable();
       editable.focus();
@@ -162,7 +162,7 @@ describe('RichEditor integration (E2E specs)', () => {
     });
 
     it.skip('editable keeps focus after Backspace', async () => {
-      const { RichEditor } = await import('../lexical');
+      const { RichEditor } = await import('../RichEditor');
       render(<RichEditor {...defaultProps} handleChange={jest.fn()} />);
       const editable = getEditable();
       editable.focus();
@@ -174,7 +174,7 @@ describe('RichEditor integration (E2E specs)', () => {
     });
 
     it.skip('editable keeps focus after Delete', async () => {
-      const { RichEditor } = await import('../lexical');
+      const { RichEditor } = await import('../RichEditor');
       render(<RichEditor {...defaultProps} handleChange={jest.fn()} />);
       const editable = getEditable();
       editable.focus();
@@ -187,7 +187,7 @@ describe('RichEditor integration (E2E specs)', () => {
     });
 
     it.skip('editable keeps focus after Undo and Redo', async () => {
-      const { RichEditor } = await import('../lexical');
+      const { RichEditor } = await import('../RichEditor');
       render(<RichEditor {...defaultProps} handleChange={jest.fn()} />);
       const editable = getEditable();
       editable.focus();

@@ -7,6 +7,13 @@
     min-height: 15.4rem;
   }
 
+  &_in-task-description-editor {
+    @media (--mobile) {
+      margin-right: -4rem;
+      min-height: 20.2rem;
+    }
+  }
+
   &_with-title {
     padding-top: 0.8rem;
   }

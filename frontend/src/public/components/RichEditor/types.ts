@@ -9,7 +9,7 @@ import type { TForegroundColor } from '../UI/Fields/common/types';
 
 export interface IRichEditorHandle {
   focus(): void;
-  insertVariable(apiName: string, variableTitle: string, subtitle: string): void;
+  insertVariable(apiName: string, variableTitle: string, subtitle?: string): void;
   getEditor?(): LexicalEditor | undefined;
   clearContent(): void;
 }

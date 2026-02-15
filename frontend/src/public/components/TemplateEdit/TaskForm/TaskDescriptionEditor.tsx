@@ -29,40 +29,40 @@ export function TaskDescriptionEditor({
   handleChange,
   handleChangeChecklists,
 }: ITaskDescriptionEditorProps) {
+  const { formatMessage } = useIntl();
+  const editorRef = useRef<IRichEditorHandle>(null);
+
   const users = useSelector(getUsers);
   const mentions = useMemo(
     () => getMentionData(getNotDeletedUsers(users)),
     [users],
   );
 
-  const editorRef = useRef<IRichEditorHandle>(null);
-  const { formatMessage } = useIntl();
-
   const handleInsertVariable = (apiName?: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
+
     if (!editorRef.current || apiName == null) return;
+    
     const newVariable = listVariables?.find((variable) => variable.apiName === apiName);
+
+    if (!newVariable) return;
+
     editorRef.current.insertVariable(
       apiName,
-      newVariable?.title ?? '',
-      newVariable?.subtitle ?? '',
+      newVariable.title,
+      newVariable.subtitle,
     );
   };
-
-  const titleMsg = formatMessage({ id: 'tasks.task-description-field' });
-  const placeholderMsg = formatMessage({ id: 'template.task-description-placeholder' });
 
   return (
     <RichEditor
       ref={editorRef}
-      title={titleMsg}
-      placeholder={placeholderMsg}
+      title={formatMessage({ id: 'tasks.task-description-field' })}
+      placeholder={formatMessage({ id: 'template.task-description-placeholder' })}
       defaultValue={value}
       handleChange={handleChange}
       handleChangeChecklists={handleChangeChecklists}
       withChecklists
-      withToolbar
-      withMentions
       mentions={mentions}
       isInTaskDescriptionEditor
       templateVariables={templateVariables}

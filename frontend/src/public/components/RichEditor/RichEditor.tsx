@@ -27,19 +27,11 @@ import { prepareChecklistsForAPI } from '../../utils/checklists/prepareChecklist
 import { LinkPluginProvider } from './plugins';
 import { LexicalEditorContent } from './components/LexicalEditorContent/LexicalEditorContent';
 import { $createVariableNode } from './nodes/VariableNode';
+import { resolveUploadHandler } from './utils/resolveUploadHandler';
 
 import styles from './RichEditor.css';
 
 
-
-export const EDITOR_NAMESPACE = 'RichEditor';
-
-function resolveUploadHandler(
-  propHandler: IRichEditorProps['onUploadAttachments'],
-  builtInHandler?: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>,
-): IRichEditorProps['onUploadAttachments'] {
-  return propHandler ?? builtInHandler ?? undefined;
-}
 
 export const RichEditor = forwardRef<
   IRichEditorHandle,
@@ -47,7 +39,7 @@ export const RichEditor = forwardRef<
 >(function RichEditor(
   {
     className,
-    withChecklists,
+    withChecklists = false,
     withToolbar = true,
     withMentions = true,
     title,
@@ -60,6 +52,7 @@ export const RichEditor = forwardRef<
     mentions,
     defaultValue,
     isModal,
+    isInTaskDescriptionEditor,
     templateVariables,
     onUploadAttachments: onUploadAttachmentsProp,
     placeholder = '',
@@ -70,14 +63,13 @@ export const RichEditor = forwardRef<
   },
   ref,
 ) {
-  const withControls = Boolean(onSubmit);
   const editorRef = useRef<LexicalEditor | null>(null);
   const editorContainerRef = useRef<HTMLDivElement | null>(null);
   const templateVariablesRef = useRef(templateVariables);
   templateVariablesRef.current = templateVariables;
 
   const initialConfig = {
-    namespace: EDITOR_NAMESPACE,
+    namespace: 'RichEditor',
     theme: lexicalTheme,
     nodes: LEXICAL_NODES,
     onError: (error: Error) => {
@@ -193,6 +185,7 @@ export const RichEditor = forwardRef<
       data-testid="rich-editor-root"
       className={classnames(
         styles['lexical-wrapper'],
+        isInTaskDescriptionEditor && styles['lexical-wrapper_in-task-description-editor'],
         title && styles['lexical-wrapper_with-title'],
         multiline && styles['lexical-wrapper_multiline'],
         className,
@@ -217,7 +210,7 @@ export const RichEditor = forwardRef<
             onCancel={onCancel}
             submitIcon={submitIcon}
             cancelIcon={cancelIcon}
-            withControls={withControls}
+            withControls={Boolean(onSubmit)}
           />
         </LinkPluginProvider>
       </LexicalComposer>
