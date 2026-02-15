@@ -3,7 +3,7 @@ import classnames from 'classnames';
 
 import { IntlMessages } from '../IntlMessages';
 import { onEnterPressed, removeTrailingDotZeros } from '../../utils/handlers';
-import { RichEditor } from '../RichEditor/lexical';
+import { RichEditor } from '../RichEditor';
 import { handleNumericPaste } from './utils/handleNumericPaste';
 import { trackVideoEmbeddingOnPaste } from './utils/trackVideoEmbeddingOnPaste';
 import { normalizeFieldValue } from './utils/normalizeFieldValue';

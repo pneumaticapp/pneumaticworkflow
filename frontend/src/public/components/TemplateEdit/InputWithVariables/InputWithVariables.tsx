@@ -3,8 +3,7 @@ import React from 'react';
 import { TTaskVariable } from '../types';
 import { escapeMarkdown } from '../../../utils/escapeMarkdown';
 import { VariableList } from '../VariableList';
-import { RichEditor, IRichEditorHandle } from '../../RichEditor/lexical';
-import type { IRichEditorProps } from '../../RichEditor/lexical';
+import { RichEditor, type IRichEditorHandle, type IRichEditorProps } from '../../RichEditor';
 
 import styles from './InputWithVariables.css';
 

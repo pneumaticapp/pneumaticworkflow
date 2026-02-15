@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useIntl } from 'react-intl';
 
 import { Modal } from '../../UI/Modal';
-import { RichEditor } from '../../RichEditor/lexical';
+import { RichEditor } from '../../RichEditor';
 import { Button } from '../../UI';
 
 import styles from './ReturnModal.css';

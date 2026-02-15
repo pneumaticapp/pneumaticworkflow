@@ -22,7 +22,7 @@ import {
   CommentInfoIcon,
   CommentWatchedIcon,
 } from '../../../../icons';
-import { RichEditor } from '../../../../RichEditor/lexical';
+import { RichEditor } from '../../../../RichEditor';
 import { IAccount, TUserListItem } from '../../../../../types/user';
 import { useStatePromise } from '../../../../../hooks/useStatePromise';
 import { TUploadedFile } from '../../../../../utils/uploadFiles';

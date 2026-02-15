@@ -4,7 +4,7 @@ import { Remarkable } from 'remarkable';
 
 import { mentionsRegex, variableRegex } from '../../../../constants/defaultValues';
 import { TTaskVariable } from '../../../TemplateEdit/types';
-import { TMentionData } from '../../lexical';
+import { TMentionData } from '../../types';
 import { ECustomEditorEntities } from '../types';
 import { getAttachmentEntityType } from '../getAttachmentEntityType';
 import { ContentToken } from 'remarkable/lib';

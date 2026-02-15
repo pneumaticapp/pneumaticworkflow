@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 
-import { RichEditor, type IRichEditorHandle } from '../../../RichEditor/lexical';
+import { RichEditor, type IRichEditorHandle } from '../../../RichEditor';
 import { Avatar } from '../../../UI/Avatar';
 import { IAuthUser } from '../../../../types/redux';
 import { TUploadedFile } from '../../../../utils/uploadFiles';
