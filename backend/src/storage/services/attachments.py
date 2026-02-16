@@ -73,6 +73,21 @@ class AttachmentService(BaseModelService):
             'workflow__template',
         ).get(id=task.id)
 
+        # Clear existing so removed performers lose access when we reassign
+        for uop in UserObjectPermission.objects.filter(
+                object_pk=str(self.instance.pk),
+        ).select_related('user'):
+            remove_perm(
+                'storage.access_attachment',
+                uop.user,
+                self.instance,
+            )
+        ctype = ContentType.objects.get_for_model(Attachment)
+        GroupObjectPermission.objects.filter(
+            content_type=ctype,
+            object_pk=str(self.instance.pk),
+        ).delete()
+
         users_set = set()
 
         # Get task performers via intermediate model
@@ -114,7 +129,6 @@ class AttachmentService(BaseModelService):
 
         # Assign permissions to groups (UserGroup; guardian.assign_perm
         # expects auth.Group, so we use GroupObjectPermission directly)
-        ctype = ContentType.objects.get_for_model(Attachment)
         perm = Permission.objects.get(
             content_type=ctype,
             codename='access_attachment',

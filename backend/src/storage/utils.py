@@ -3,7 +3,7 @@ from typing import List, Optional, Tuple
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
-from django.db import models, IntegrityError
+from django.db import models, transaction, IntegrityError
 
 from src.storage.enums import AccessType, SourceType
 from src.processes.models.templates.template import Template
@@ -241,25 +241,23 @@ def refresh_attachments_for_event(
         ).values_list('file_id', flat=True),
     )
 
-    # Remove attachments no longer present in text
-    Attachment.objects.filter(
-        **filter_kwargs,
-    ).exclude(file_id__in=file_ids).delete()
-
-    # Create new attachments
+    # Delete then create in one transaction; rollback on create failure
     new_files_ids = list(set(file_ids) - set(existent_file_ids))
-    if new_files_ids:
-        try:
-            service = AttachmentService(user=user)
-            service.bulk_create_for_event(
-                file_ids=new_files_ids,
-                account=account,
-                source_type=source_type,
-                event=event,
-            )
-        except (ValueError, TypeError, IntegrityError):
-            return []
-
+    try:
+        with transaction.atomic():
+            Attachment.objects.filter(
+                **filter_kwargs,
+            ).exclude(file_id__in=file_ids).delete()
+            if new_files_ids:
+                service = AttachmentService(user=user)
+                service.bulk_create_for_event(
+                    file_ids=new_files_ids,
+                    account=account,
+                    source_type=source_type,
+                    event=event,
+                )
+    except (ValueError, TypeError, IntegrityError):
+        return []
     return new_files_ids
 
 
@@ -322,24 +320,26 @@ def refresh_attachments_for_text(
         ).values_list('file_id', flat=True),
     )
 
-    # Remove attachments no longer in text (but not those linked to fields)
-    Attachment.objects.filter(
-        **filter_kwargs,
-        output__isnull=True,  # Delete only those not linked to fields
-    ).exclude(file_id__in=file_ids).delete()
-
-    # Create new attachments
+    # Delete then create in one transaction; rollback on create failure
     new_files_ids = list(set(file_ids) - set(existent_file_ids))
-    if new_files_ids:
-        service = AttachmentService(user=user)
-        service.bulk_create_for_scope(
-            file_ids=new_files_ids,
-            account=account,
-            source_type=source_type,
-            task=task,
-            workflow=workflow,
-            template=template,
-        )
+    try:
+        with transaction.atomic():
+            Attachment.objects.filter(
+                **filter_kwargs,
+                output__isnull=True,  # Delete only those not linked to fields
+            ).exclude(file_id__in=file_ids).delete()
+            if new_files_ids:
+                service = AttachmentService(user=user)
+                service.bulk_create_for_scope(
+                    file_ids=new_files_ids,
+                    account=account,
+                    source_type=source_type,
+                    task=task,
+                    workflow=workflow,
+                    template=template,
+                )
+    except (ValueError, TypeError, IntegrityError):
+        return []
     return new_files_ids
 
 

@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import (
     ValidationError as ValidationCoreError,
 )
+from django.db import transaction
 from django.db.models import ObjectDoesNotExist
 
 from src.generics.validators import NoSchemaURLValidator
@@ -576,51 +577,52 @@ class TaskFieldService(BaseWorkflowService):
             raw_value=raw_value,
             selections=selections,
         )
-        if self.instance.type == FieldType.FILE:
-            markdown_vals = (
-                raw_value if isinstance(raw_value, list) else []
+        with transaction.atomic():
+            if self.instance.type == FieldType.FILE:
+                markdown_vals = (
+                    raw_value if isinstance(raw_value, list) else []
+                )
+                self._remove_unused_attachments(markdown_values=markdown_vals)
+            super().partial_update(
+                force_save=True,
+                value=field_data.value,
+                markdown_value=field_data.markdown_value,
+                clear_value=field_data.clear_value,
+                user_id=field_data.user_id,
+                group_id=field_data.group_id,
             )
-            self._remove_unused_attachments(markdown_values=markdown_vals)
-        super().partial_update(
-            force_save=True,
-            value=field_data.value,
-            markdown_value=field_data.markdown_value,
-            clear_value=field_data.clear_value,
-            user_id=field_data.user_id,
-            group_id=field_data.group_id,
-        )
-        if self.instance.type == FieldType.FILE:
-            self._link_new_attachments(raw_value)
-        elif self.instance.type in FieldType.TYPES_WITH_SELECTIONS:
-            self._update_selections(raw_value)
-        elif self.instance.type in {
-            FieldType.STRING,
-            FieldType.TEXT,
-            FieldType.URL,
-        }:
-            old_file_ids = extract_file_ids_from_text(old_markdown_value)
-            new_file_ids = extract_file_ids_from_text(
-                self.instance.markdown_value,
-            )
-            removed_file_ids = list(
-                set(old_file_ids) - set(new_file_ids),
-            )
-            added_file_ids = list(
-                set(new_file_ids) - set(old_file_ids),
-            )
-            source_type = (
-                SourceType.TASK
-                if self.instance.task_id
-                else SourceType.WORKFLOW
-            )
-            sync_storage_attachments_for_scope(
-                account=self.account,
-                user=self.user,
-                add_file_ids=added_file_ids,
-                remove_file_ids=removed_file_ids,
-                source_type=source_type,
-                task=self.instance.task,
-                workflow=self.instance.workflow,
-                access_type=AccessType.RESTRICTED,
-            )
+            if self.instance.type == FieldType.FILE:
+                self._link_new_attachments(raw_value)
+            elif self.instance.type in FieldType.TYPES_WITH_SELECTIONS:
+                self._update_selections(raw_value)
+            elif self.instance.type in {
+                FieldType.STRING,
+                FieldType.TEXT,
+                FieldType.URL,
+            }:
+                old_file_ids = extract_file_ids_from_text(old_markdown_value)
+                new_file_ids = extract_file_ids_from_text(
+                    self.instance.markdown_value,
+                )
+                removed_file_ids = list(
+                    set(old_file_ids) - set(new_file_ids),
+                )
+                added_file_ids = list(
+                    set(new_file_ids) - set(old_file_ids),
+                )
+                source_type = (
+                    SourceType.TASK
+                    if self.instance.task_id
+                    else SourceType.WORKFLOW
+                )
+                sync_storage_attachments_for_scope(
+                    account=self.account,
+                    user=self.user,
+                    add_file_ids=added_file_ids,
+                    remove_file_ids=removed_file_ids,
+                    source_type=source_type,
+                    task=self.instance.task,
+                    workflow=self.instance.workflow,
+                    access_type=AccessType.RESTRICTED,
+                )
         return self.instance

@@ -313,6 +313,45 @@ class TestAttachmentServiceTaskPermissions:
             file_id=attachment.file_id,
         )
 
+    def test_reassign_restricted_permissions_for_task__removed__no_access(
+        self,
+    ):
+        # arrange
+        owner = create_test_admin()
+        removed_performer = create_test_user(
+            account=owner.account,
+            email='removed_performer@test.pneumatic.app',
+        )
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        task = workflow.tasks.first()
+        task.taskperformer_set.create(user=removed_performer)
+        service = AttachmentService(user=owner)
+        service.create(
+            file_id='task_removed_reassign_file',
+            account=owner.account,
+            access_type=AccessType.RESTRICTED,
+            source_type=SourceType.TASK,
+            task=task,
+        )
+        attachment = service.instance
+        svc_removed = AttachmentService(user=removed_performer)
+        assert svc_removed.check_user_permission(
+            user_id=removed_performer.id,
+            account_id=removed_performer.account_id,
+            file_id=attachment.file_id,
+        )
+        task.taskperformer_set.filter(user=removed_performer).delete()
+
+        # act
+        reassign_restricted_permissions_for_task(task=task, user=owner)
+
+        # assert
+        assert not svc_removed.check_user_permission(
+            user_id=removed_performer.id,
+            account_id=removed_performer.account_id,
+            file_id=attachment.file_id,
+        )
+
 
 class TestAttachmentServiceWorkflowPermissions:
     """Tests for workflow attachment permissions."""
