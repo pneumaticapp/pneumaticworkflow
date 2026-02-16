@@ -39,7 +39,6 @@ from src.processes.queries import (
     TemplateListQuery,
     WorkflowListQuery,
 )
-from src.storage.queries import AttachmentListQuery
 
 UserModel = get_user_model()
 
@@ -745,6 +744,7 @@ class AttachmentQuerySet(AccountBaseQuerySet):
         using: Optional[str] = None,
     ):
         """Execute raw query for attachment list with pagination."""
+        from src.storage.queries import AttachmentListQuery
 
         query = AttachmentListQuery(
             user=user,

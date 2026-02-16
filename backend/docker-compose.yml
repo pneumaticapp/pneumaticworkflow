@@ -285,9 +285,7 @@ services:
   file-service:
     build:
       context: ../storage
-    container_name: pneumatic_file_service
-    profiles:
-      - local-storage
+    container_name: pneumatic-file-service
     environment:
       - DEBUG=${FILE_DEBUG:-true}
       - CONFIG=${FILE_CONFIG:-Development}
@@ -316,7 +314,7 @@ services:
       - CHUNK_SIZE=${FILE_CHUNK_SIZE:-1048576}
       - AUTH_REDIS_URL=${FILE_AUTH_REDIS_URL:-redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/1}
       - KEY_PREFIX_REDIS=${FILE_KEY_PREFIX_REDIS:-:1:}
-      - DJANGO_SECRET_KEY=${FILE_DJANGO_SECRET_KEY:-${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
       - AUTH_TOKEN_ITERATIONS=${FILE_AUTH_TOKEN_ITERATIONS:-1}
     volumes:
       - file_service_media:/app/media
@@ -331,10 +329,8 @@ services:
     restart: unless-stopped
 
   file-postgres:
-    image: postgres:13
-    container_name: pneumatic_file_postgres
-    profiles:
-      - local-storage
+    image: postgres:15-bookworm
+    container_name: pneumatic-file-postgres
     environment:
       - POSTGRES_DB=${FILE_POSTGRES_DB:-pneumatic}
       - POSTGRES_USER=${FILE_POSTGRES_USER:-pneumatic}

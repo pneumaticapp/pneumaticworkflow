@@ -229,7 +229,7 @@ http {
     ##
 
     upstream file-service {
-      server pneumatic_file_service:8000;
+      server pneumatic-file-service:8000;
     }
 
     server {

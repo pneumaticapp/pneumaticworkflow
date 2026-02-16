@@ -45,9 +45,8 @@ app.include_router(files_router)
 
 
 if __name__ == '__main__':
-    app_ref = 'src.main:app' if settings.CONFIG != 'Production' else app
     uvicorn.run(
-        app_ref,
+        'src.main:app',
         host='0.0.0.0',
         port=settings.PORT,
         reload=settings.CONFIG != 'Production',
