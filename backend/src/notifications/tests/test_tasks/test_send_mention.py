@@ -114,6 +114,7 @@ def test_send_mention_notification__call_services__ok(mocker):
         account_id=account.id,
         logo_lg=account.logo_lg,
     )
+    link = f'http://localhost/tasks/{task.id}'
     push_notification_mock.assert_called_once_with(
         task_id=task.id,
         user_id=account_owner.id,
@@ -121,6 +122,7 @@ def test_send_mention_notification__call_services__ok(mocker):
         user_first_name=account_owner.first_name,
         notification=notification,
         sync=True,
+        link=link,
     )
     websocket_service_init_mock.assert_called_once_with(
         logging=account.log_api_requests,
@@ -134,6 +136,7 @@ def test_send_mention_notification__call_services__ok(mocker):
         user_first_name=account_owner.first_name,
         notification=notification,
         sync=True,
+        link=link,
     )
     email_service_init_mock.assert_called_once_with(
         logging=account.log_api_requests,
@@ -147,4 +150,5 @@ def test_send_mention_notification__call_services__ok(mocker):
         user_first_name=account_owner.first_name,
         notification=notification,
         sync=True,
+        link=link,
     )

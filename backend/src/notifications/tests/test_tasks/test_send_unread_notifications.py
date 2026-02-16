@@ -95,10 +95,15 @@ def test_send_unread_notifications__call_all_services__ok(mocker):
         account_id=account.id,
         logging=account.log_api_requests,
     )
+    link = (
+        'http://localhost'
+        '?utm_source=notifications&utm_campaign=unread_notifications'
+    )
     send_email_mock.assert_called_once_with(
         user_id=user.id,
         user_first_name=user.first_name,
         user_email=user.email,
+        link=link,
     )
 
 
@@ -371,6 +376,10 @@ def test_send_unread_notifications__owner_invited_in_another_acc__ok(mocker):
     # assert
     notification.refresh_from_db()
     assert notification.is_notified_about_not_read is True
+    link = (
+        'http://localhost'
+        '?utm_source=notifications&utm_campaign=unread_notifications'
+    )
     send_notification_mock.assert_called_once_with(
         logging=account.log_api_requests,
         method_name=NotificationMethod.unread_notifications,
@@ -379,4 +388,5 @@ def test_send_unread_notifications__owner_invited_in_another_acc__ok(mocker):
         user_email=account_owner.email,
         logo_lg=account.logo_lg,
         account_id=account.id,
+        link=link,
     )
