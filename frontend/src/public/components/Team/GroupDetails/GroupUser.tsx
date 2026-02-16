@@ -4,8 +4,10 @@ import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 import Switch from 'rc-switch';
 
-import { loadChangeUserAdmin, updateUsersGroup } from '../../../redux/actions';
-import { IApplicationState } from '../../../types/redux';
+import { updateUsersGroup } from '../../../redux/actions';
+import { loadChangeUserAdmin } from '../../../redux/accounts/slice';
+import { getCurrentGroupData } from '../../../redux/selectors/groups';
+import { getAuthUserId } from '../../../redux/selectors/authUser';
 import { TUserListItem, EUserStatus } from '../../../types/user';
 import { getUserFullName } from '../../../utils/users';
 import { TrashIcon } from '../../icons';
@@ -24,8 +26,8 @@ export function GroupUser({ user }: IGroupUserProps) {
   const { isDesktop } = useCheckDevice();
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const group: IGroup | null = useSelector((state: IApplicationState) => state.groups.currentGroup.data);
-  const id: number = useSelector((state: IApplicationState) => state.authUser.id);
+  const group: IGroup | null = useSelector(getCurrentGroupData);
+  const id: number = useSelector(getAuthUserId);
 
   if (!group) return null;
 

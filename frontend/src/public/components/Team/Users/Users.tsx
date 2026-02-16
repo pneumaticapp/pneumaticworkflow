@@ -1,10 +1,12 @@
 import * as React from 'react';
+import  { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { TeamUser } from './TeamUser';
 import { DeleteTeamUserPopupContainer } from './DeleteTeamUserPopup';
 import { AddGuestsBanner } from './AddGuestsBanner';
+import { CreateUserModal } from './CreateUserModal';
 
 import { resendInvite } from '../../../api/resendInvite';
 import { TUserListItem } from '../../../types/user';
@@ -19,8 +21,10 @@ import { TITLES } from '../../../constants/titles';
 import { PageTitle } from '../../PageTitle';
 import { EPageTitle } from '../../../constants/defaultValues';
 import { getSubscriptionPlan } from '../../../redux/selectors/user';
+import { getIsCreateUserModalOpen } from '../../../redux/selectors/accounts';
 import { ESubscriptionPlan } from '../../../types/account';
 import { IUsersProps } from './types';
+import { openCreateUserModal, closeCreateUserModal } from '../../../redux/accounts/slice';
 
 import styles from './Users.css';
 
@@ -44,14 +48,16 @@ export function Users({
   loadInvitesUsers,
 }: IUsersProps) {
   const { formatMessage } = useIntl();
+  const dispatch = useDispatch();
 
   const billingPlan = useSelector(getSubscriptionPlan);
+  const isCreateUserModalOpen = useSelector(getIsCreateUserModalOpen);
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
   const accessConditions = isSubscribed || isFreePlan;
 
-  const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchUsers({});
     loadInvitesUsers();
     document.title = TITLES.Team;
@@ -60,6 +66,14 @@ export function Users({
   const handleClickInviteButton = () => {
     openTeamInvitesPopup();
     trackInviteTeamInPage('Team Page');
+  };
+
+  const handleOpenCreateUserModal = () => {
+    dispatch(openCreateUserModal());
+  };
+
+  const handleCloseCreateUserModal = () => {
+    dispatch(closeCreateUserModal());
   };
 
   const renderSearch = () => {
@@ -144,15 +158,23 @@ export function Users({
     <div className={styles['container']}>
       <DeleteTeamUserPopupContainer />
       <AddGuestsBanner />
+      <CreateUserModal isOpen={isCreateUserModalOpen} onClose={handleCloseCreateUserModal} />
 
       <PageTitle titleId={EPageTitle.Team} withUnderline={false} />
       {renderSearch()}
 
-      <AddButton
-        title={formatMessage({ id: 'team.invite-team-large-btn' })}
-        caption={formatMessage({ id: 'team.invite-team-large-btn-caption' })}
-        onClick={handleClickInviteButton}
-      />
+      <div className={styles['buttons-row']}>
+        <AddButton
+          title={formatMessage({ id: 'team.invite-team-large-btn' })}
+          caption={formatMessage({ id: 'team.invite-team-large-btn-caption' })}
+          onClick={handleClickInviteButton}
+        />
+        <AddButton
+          title={formatMessage({ id: 'team.create-user-button' })}
+          caption={formatMessage({ id: 'team.create-user-button-caption' })}
+          onClick={handleOpenCreateUserModal}
+        />
+      </div>
 
       <div className={styles['cards']}>{renderUsers()}</div>
     </div>

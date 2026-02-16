@@ -24,6 +24,7 @@
       "countUserWorkflows": "/accounts/users/:id/count-workflows",
       "reassignWorkflows": "/accounts/users/reassign",
       "getUsers": "/accounts/users",
+      "createUser": "/accounts/users",
       "getUsersPublic": "/accounts/public/users",
       "getActiveUsersCount": "/accounts/users/active-count",
       "getWorkflowsDuration": "/workflows/duration",
