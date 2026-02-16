@@ -1034,18 +1034,20 @@ class TestPushNotificationService:
         task_name = 'Task'
         workflow_name = 'Workflow'
         text_description = 'text description'
+        send_mock = mocker.patch(
+            'src.notifications.services.push.'
+            'PushNotificationService._send',
+        )
+        link = 'http://localhost/tasks/1'
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
             logging=account.log_api_requests,
         )
-        send_mock = mocker.patch(
-            'src.notifications.services.push.'
-            'PushNotificationService._send',
-        )
 
         # act
         service.send_new_task(
+            link=link,
             task_id=1,
             task_name=task_name,
             workflow_name=workflow_name,
@@ -1060,7 +1062,7 @@ class TestPushNotificationService:
             method_name=NotificationMethod.new_task,
             title='You have a new task',
             body=f'Workflow: {workflow_name}\nTask: {task_name}',
-            extra_data={'task_id': '1'},
+            extra_data={'task_id': '1', 'link': link},
             user_id=user.id,
             user_email=user.email,
         )
@@ -1080,6 +1082,7 @@ class TestPushNotificationService:
             'src.notifications.services.push.'
             'PushNotificationService._send',
         )
+        link = 'http://localhost/tasks/1'
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
@@ -1088,6 +1091,7 @@ class TestPushNotificationService:
 
         # act
         service.send_returned_task(
+            link=link,
             task_id=1,
             task_name=task_name,
             workflow_name=workflow_name,
@@ -1102,7 +1106,7 @@ class TestPushNotificationService:
             method_name=NotificationMethod.returned_task,
             title='Task was returned',
             body=f'Workflow: {workflow_name}\nTask: {task_name}',
-            extra_data={'task_id': '1'},
+            extra_data={'task_id': '1', 'link': link},
             user_id=user.id,
             user_email=user.email,
         )
@@ -1127,9 +1131,11 @@ class TestPushNotificationService:
         )
         task_name = 'Task'
         workflow_name = 'Workflow'
+        link = 'http://localhost/tasks/1'
 
         # act
         service.send_overdue_task(
+            link=link,
             task_id=1,
             task_name=task_name,
             workflow_name=workflow_name,
@@ -1143,7 +1149,7 @@ class TestPushNotificationService:
             title='Your task is overdue',
             body=f'Workflow: {workflow_name}\nTask: {task_name}',
             method_name=NotificationMethod.overdue_task,
-            extra_data={'task_id': '1'},
+            extra_data={'task_id': '1', 'link': link},
             user_id=user.id,
             user_email=user.email,
         )
@@ -1167,9 +1173,11 @@ class TestPushNotificationService:
             'src.notifications.services.push.'
             'PushNotificationService._send',
         )
+        link = 'http://localhost/tasks/1'
 
         # act
         service.send_overdue_task(
+            link=link,
             task_id=1,
             task_name='Task',
             workflow_name='Workflow',
@@ -1203,9 +1211,11 @@ class TestPushNotificationService:
         )
         task_name = 'Task'
         workflow_name = 'Workflow'
+        link = 'http://localhost/tasks/1'
 
         # act
         service.send_complete_task(
+            link=link,
             task_id=1,
             task_name=task_name,
             workflow_name=workflow_name,
@@ -1219,7 +1229,7 @@ class TestPushNotificationService:
             method_name=NotificationMethod.complete_task,
             title='Task was completed',
             body=f'Workflow: {workflow_name}\nTask: {task_name}',
-            extra_data={'task_id': '1'},
+            extra_data={'task_id': '1', 'link': link},
             user_id=user.id,
             user_email=user.email,
         )
@@ -1241,9 +1251,11 @@ class TestPushNotificationService:
             'src.notifications.services.push.'
             'PushNotificationService._send',
         )
+        link = 'http://localhost/tasks/1'
 
         # act
         service.send_mention(
+            link=link,
             task_id=1,
             user_id=user.id,
             user_email=user.email,
@@ -1254,7 +1266,7 @@ class TestPushNotificationService:
             title='You have been mentioned',
             body='',
             method_name=NotificationMethod.mention,
-            extra_data={'task_id': '1'},
+            extra_data={'task_id': '1', 'link': link},
             user_id=user.id,
             user_email=user.email,
         )
@@ -1276,9 +1288,11 @@ class TestPushNotificationService:
             'src.notifications.services.push.'
             'PushNotificationService._send',
         )
+        link = 'http://localhost/tasks/1'
 
         # act
         service.send_comment(
+            link=link,
             task_id=1,
             user_id=user.id,
             user_email=user.email,
@@ -1289,7 +1303,7 @@ class TestPushNotificationService:
             title='You have a new comment',
             body='',
             method_name=NotificationMethod.comment,
-            extra_data={'task_id': '1'},
+            extra_data={'task_id': '1', 'link': link},
             user_id=user.id,
             user_email=user.email,
         )
@@ -1303,11 +1317,6 @@ class TestPushNotificationService:
             log_api_requests=False,
         )
         user = create_test_user(account=account)
-        author = create_test_user(
-            account=user.account,
-            is_account_owner=False,
-            email='t@t.t',
-        )
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
@@ -1317,14 +1326,16 @@ class TestPushNotificationService:
             'src.notifications.services.push.'
             'PushNotificationService._send',
         )
+        link = 'http://localhost/workflows/1'
 
         # act
         service.send_delay_workflow(
             user_id=user.id,
             user_email=user.email,
             task_id=1,
+            workflow_id=3,
             workflow_name=workflow_name,
-            author_id=author.id,
+            link=link,
         )
 
         # assert
@@ -1333,8 +1344,9 @@ class TestPushNotificationService:
             title='Workflow was snoozed',
             body=workflow_name,
             extra_data={
+                'workflow_id': '3',
                 'task_id': '1',
-                'author_id': str(author.id),
+                'link': link,
             },
             user_id=user.id,
             user_email=user.email,
@@ -1348,11 +1360,6 @@ class TestPushNotificationService:
             log_api_requests=False,
         )
         user = create_test_user(account=account)
-        author = create_test_user(
-            account=user.account,
-            is_account_owner=False,
-            email='t@t.t',
-        )
         workflow_name = 'Workflow'
         service = PushNotificationService(
             account_id=account.id,
@@ -1363,14 +1370,16 @@ class TestPushNotificationService:
             'src.notifications.services.push.'
             'PushNotificationService._send',
         )
+        link = 'http://localhost/workflows/1'
 
         # act
         service.send_resume_workflow(
+            link=link,
             user_id=user.id,
             user_email=user.email,
             task_id=1,
+            workflow_id=3,
             workflow_name=workflow_name,
-            author_id=author.id,
         )
 
         # assert
@@ -1379,8 +1388,9 @@ class TestPushNotificationService:
             title='Workflow was resumed',
             body=workflow_name,
             extra_data={
+                'workflow_id': '3',
                 'task_id': '1',
-                'author_id': str(author.id),
+                'link': link,
             },
             user_id=user.id,
             user_email=user.email,
@@ -1405,9 +1415,11 @@ class TestPushNotificationService:
         )
         task_name = 'Task'
         workflow_name = 'Workflow'
+        link = 'http://localhost/tasks/1'
 
         # act
         service.send_due_date_changed(
+            link=link,
             task_id=1,
             task_name=task_name,
             workflow_name=workflow_name,
@@ -1420,7 +1432,7 @@ class TestPushNotificationService:
             method_name=NotificationMethod.due_date_changed,
             title='Task due date was changed',
             body=f'Workflow: {workflow_name}\nTask: {task_name}',
-            extra_data={'task_id': '1'},
+            extra_data={'task_id': '1', 'link': link},
             user_id=user.id,
             user_email=user.email,
         )
@@ -1451,6 +1463,7 @@ class TestPushNotificationService:
         )
         text = ':dumb face:'
         workflow_name = 'some name'
+        link = 'http://localhost/tasks/1'
 
         # act
         service.send_reaction(
@@ -1460,6 +1473,7 @@ class TestPushNotificationService:
             author_name=reaction_user.name,
             workflow_name=workflow_name,
             text=text,
+            link=link,
         )
 
         # assert
@@ -1468,6 +1482,7 @@ class TestPushNotificationService:
             body=f'{workflow_name}\n{text}',
             method_name=NotificationMethod.reaction,
             extra_data={
+                'link': link,
                 'task_id': '1',
                 'text': text,
                 'user_id': str(user.id),

@@ -339,7 +339,7 @@ class PushNotificationService(NotificationService):
         link: str,
         user_id: int,
         user_email: str,
-        user_type: UserType,
+        user_type: UserType.LITERALS,
         task_id: int,
         task_name: str,
         workflow_name: str,

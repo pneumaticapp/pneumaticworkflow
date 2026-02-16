@@ -3,24 +3,7 @@ from django.db import migrations
 
 def set_public_id(*args, **options):
 
-    from src.processes.models.templates.template import (
-        Template,
-        get_new_embed_id,
-        get_new_public_id
-    )
-
-    for template in Template.objects.filter(public_id=None, embed_id=None):
-        template.public_id = get_new_public_id()
-        template.embed_id = get_new_embed_id()
-        template.save(update_fields=['public_id', 'embed_id'])
-
-    for template in Template.objects.filter(public_id=None):
-        template.public_id = get_new_public_id()
-        template.save(update_fields=['public_id'])
-
-    for template in Template.objects.filter(embed_id=None):
-        template.embed_id = get_new_embed_id()
-        template.save(update_fields=['embed_id'])
+    pass
 
 
 class Migration(migrations.Migration):
