@@ -1,5 +1,6 @@
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 
+from src.generics.paginations import DefaultPagination
 from src.storage.models import Attachment
 from src.queries import SqlQueryObject
 
@@ -11,15 +12,23 @@ class AttachmentListQuery(SqlQueryObject):
     Single SQL with joins: no extra Python queries for permission or groups.
     """
 
-    def __init__(self, user):
+    def __init__(
+        self,
+        user,
+        limit: Optional[int] = DefaultPagination.default_limit,
+        offset: Optional[int] = None,
+    ):
         """
         Initialization with the user.
         Only user_id and account_id are needed; permission and groups in SQL.
         """
         self.user = user
+        self.limit = limit
+        self.offset = offset
         self.params: Dict[str, Any] = {
             'user_id': user.id,
             'account_id': user.account_id,
+            'limit': limit,
         }
 
     def _get_where(self) -> str:
@@ -63,6 +72,13 @@ class AttachmentListQuery(SqlQueryObject):
             )
         """
 
+    def _get_offset(self) -> str:
+        """Returns OFFSET clause if offset is provided."""
+        if self.offset:
+            self.params['offset'] = self.offset
+            return "OFFSET %(offset)s"
+        return ""
+
     def get_sql(self) -> tuple:
         """
         Returns (sql, params) for listing attachments.
@@ -79,5 +95,19 @@ class AttachmentListQuery(SqlQueryObject):
             SELECT {fields}
             FROM storage_attachment a
             {self._get_where()}
+            ORDER BY a.id DESC
+            LIMIT %(limit)s {self._get_offset()}
         """
         return sql, self.params
+
+    def get_count_sql(self) -> str:
+        """
+        Returns SQL query for counting total attachments.
+        """
+        return f"""
+            SELECT
+                1 AS id,
+                COUNT(a.id) AS count
+            FROM storage_attachment a
+            {self._get_where()}
+        """

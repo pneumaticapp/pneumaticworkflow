@@ -5,9 +5,10 @@ from rest_framework.viewsets import GenericViewSet
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import IsAuthenticated
 from src.storage.models import Attachment
-from src.storage.queries import AttachmentListQuery
+from src.storage.paginations import AttachmentListPagination
 from src.storage.serializers import (
     AttachmentCheckPermissionSerializer,
+    AttachmentListFilterSerializer,
     AttachmentListSerializer,
     AttachmentSerializer,
 )
@@ -27,6 +28,10 @@ class AttachmentViewSet(
     serializer_class = AttachmentSerializer
     permission_classes = (IsAuthenticated,)
     queryset = Attachment.objects.all()
+
+    action_paginator_classes = {
+        'list': AttachmentListPagination,
+    }
 
     def get_serializer_class(self):
         """Returns serializer class depending on action."""
@@ -71,6 +76,10 @@ class AttachmentViewSet(
 
     def list(self, request, *args, **kwargs):
         """Returns list of attachments accessible to user."""
-        query = AttachmentListQuery(user=request.user)
-        self.queryset = Attachment.objects.execute_raw(query)
-        return super().list(request, *args, **kwargs)
+        filter_slz = AttachmentListFilterSerializer(data=request.GET)
+        filter_slz.is_valid(raise_exception=True)
+        qst = Attachment.objects.raw_list_query(
+            user=request.user,
+            **filter_slz.validated_data,
+        )
+        return self.paginated_response(qst)

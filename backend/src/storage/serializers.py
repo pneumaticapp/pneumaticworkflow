@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from src.generics.mixins.serializers import CustomValidationErrorMixin
 from src.storage.models import Attachment
+from src.storage.paginations import AttachmentListPagination
 from src.storage.utils import get_file_service_file_url
 
 
@@ -66,3 +67,21 @@ class AttachmentListSerializer(serializers.ModelSerializer):
     def get_url(self, obj: Attachment) -> Optional[str]:
         """Return ready-made link to file in file service."""
         return get_file_service_file_url(obj.file_id)
+
+
+class AttachmentListFilterSerializer(
+    CustomValidationErrorMixin,
+    serializers.Serializer,
+):
+    """Serializer for filtering attachment list."""
+
+    limit = serializers.IntegerField(
+        required=False,
+        min_value=0,
+        max_value=AttachmentListPagination.max_limit,
+        default=AttachmentListPagination.default_limit,
+    )
+    offset = serializers.IntegerField(
+        required=False,
+        min_value=0,
+    )

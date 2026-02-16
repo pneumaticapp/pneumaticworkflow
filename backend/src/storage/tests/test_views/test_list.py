@@ -33,11 +33,12 @@ class TestListView:
 
         # assert
         assert response.status_code == 200
-        assert len(response.data) == 1
-        assert response.data[0]['file_id'] == attachment.file_id
-        assert response.data[0]['access_type'] == AccessType.ACCOUNT
-        assert response.data[0]['source_type'] == SourceType.ACCOUNT
-        assert response.data[0]['url'] == expected_url
+        assert response.data['count'] == 1
+        assert len(response.data['results']) == 1
+        assert response.data['results'][0]['file_id'] == attachment.file_id
+        assert response.data['results'][0]['access_type'] == AccessType.ACCOUNT
+        assert response.data['results'][0]['source_type'] == SourceType.ACCOUNT
+        assert response.data['results'][0]['url'] == expected_url
 
     def test_list__public_attachments__ok(self, api_client):
         # arrange
@@ -56,9 +57,10 @@ class TestListView:
 
         # assert
         assert response.status_code == 200
-        assert len(response.data) == 1
-        assert response.data[0]['file_id'] == attachment.file_id
-        assert response.data[0]['access_type'] == AccessType.PUBLIC
+        assert response.data['count'] == 1
+        assert len(response.data['results']) == 1
+        assert response.data['results'][0]['file_id'] == attachment.file_id
+        assert response.data['results'][0]['access_type'] == AccessType.PUBLIC
 
     def test_list__restricted_with_permission__ok(self, api_client):
         # arrange
@@ -80,8 +82,9 @@ class TestListView:
 
         # assert
         assert response.status_code == 200
-        assert len(response.data) >= 1
-        file_ids = [item['file_id'] for item in response.data]
+        assert response.data['count'] >= 1
+        assert len(response.data['results']) >= 1
+        file_ids = [item['file_id'] for item in response.data['results']]
         assert attachment.file_id in file_ids
 
     def test_list__different_account__not_visible(self, api_client):
@@ -106,7 +109,7 @@ class TestListView:
 
         # assert
         assert response.status_code == 200
-        file_ids = [item['file_id'] for item in response.data]
+        file_ids = [item['file_id'] for item in response.data['results']]
         assert attachment.file_id not in file_ids
 
     def test_list__not_authenticated__unauthorized(self, api_client):
@@ -140,8 +143,9 @@ class TestListView:
 
         # assert
         assert response.status_code == 200
-        assert len(response.data) >= 2
-        file_ids = [item['file_id'] for item in response.data]
+        assert response.data['count'] >= 2
+        assert len(response.data['results']) >= 2
+        file_ids = [item['file_id'] for item in response.data['results']]
         assert attachment1.file_id in file_ids
         assert attachment2.file_id in file_ids
 
@@ -164,5 +168,79 @@ class TestListView:
 
         # assert
         assert response.status_code == 200
-        file_ids = [item['file_id'] for item in response.data]
+        file_ids = [item['file_id'] for item in response.data['results']]
         assert 'file_deleted' not in file_ids
+
+    def test_list__pagination__ok(self, api_client):
+        # arrange
+        user = create_test_admin()
+        api_client.token_authenticate(user)
+
+        # Create 25 attachments
+        attachments = []
+        for i in range(25):
+            attachment = create_test_attachment(
+                user.account,
+                file_id=f'file_{i}',
+                access_type=AccessType.ACCOUNT,
+                source_type=SourceType.ACCOUNT,
+            )
+            attachments.append(attachment)
+
+        # act
+        response = api_client.get('/attachments?limit=10&offset=0')
+
+        # assert
+        assert response.status_code == 200
+        assert response.data['count'] == 25
+        assert len(response.data['results']) == 10
+        assert response.data['next'] is not None
+        assert response.data['previous'] is None
+
+    def test_list__pagination_second_page__ok(self, api_client):
+        # arrange
+        user = create_test_admin()
+        api_client.token_authenticate(user)
+
+        # Create 25 attachments
+        for i in range(25):
+            create_test_attachment(
+                user.account,
+                file_id=f'file_{i}',
+                access_type=AccessType.ACCOUNT,
+                source_type=SourceType.ACCOUNT,
+            )
+
+        # act
+        response = api_client.get('/attachments?limit=10&offset=10')
+
+        # assert
+        assert response.status_code == 200
+        assert response.data['count'] == 25
+        assert len(response.data['results']) == 10
+        assert response.data['next'] is not None
+        assert response.data['previous'] is not None
+
+    def test_list__pagination_last_page__ok(self, api_client):
+        # arrange
+        user = create_test_admin()
+        api_client.token_authenticate(user)
+
+        # Create 25 attachments
+        for i in range(25):
+            create_test_attachment(
+                user.account,
+                file_id=f'file_{i}',
+                access_type=AccessType.ACCOUNT,
+                source_type=SourceType.ACCOUNT,
+            )
+
+        # act
+        response = api_client.get('/attachments?limit=10&offset=20')
+
+        # assert
+        assert response.status_code == 200
+        assert response.data['count'] == 25
+        assert len(response.data['results']) == 5
+        assert response.data['next'] is None
+        assert response.data['previous'] is not None

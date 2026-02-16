@@ -39,6 +39,7 @@ from src.processes.queries import (
     TemplateListQuery,
     WorkflowListQuery,
 )
+from src.storage.queries import AttachmentListQuery
 
 UserModel = get_user_model()
 
@@ -735,6 +736,28 @@ class AttachmentQuerySet(AccountBaseQuerySet):
         """Return set of file_id values."""
         qst = self.values_list('file_id', flat=True)
         return set(qst)
+
+    def raw_list_query(
+        self,
+        user,
+        limit: Optional[int] = None,
+        offset: Optional[int] = None,
+        using: Optional[str] = None,
+    ):
+        """Execute raw query for attachment list with pagination."""
+
+        query = AttachmentListQuery(
+            user=user,
+            limit=limit,
+            offset=offset,
+        )
+        raw_qst = self.execute_raw(query, using=using)
+        raw_qst.count = self.raw(
+            raw_query=query.get_count_sql(),
+            params=query.params,
+            using=using,
+        )[0].count
+        return raw_qst
 
 
 class TemplateDraftQuerySet(BaseQuerySet):
