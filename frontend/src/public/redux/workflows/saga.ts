@@ -1,17 +1,5 @@
 import uniqBy from 'lodash.uniqby';
-import {
-  all,
-  fork,
-  put,
-  takeEvery,
-  select,
-  takeLatest,
-  call,
-  delay,
-  take,
-  takeLeading,
-  race,
-} from 'redux-saga/effects';
+import { all, fork, put, takeEvery, select, takeLatest, call, delay, take, race } from 'redux-saga/effects';
 import { EventChannel } from 'redux-saga';
 
 import { PayloadAction } from '@reduxjs/toolkit';
@@ -851,7 +839,7 @@ export function* handleApplyFilters() {
 }
 
 export function* watchFetchWorkflowsList() {
-  yield takeLeading(loadWorkflowsList.type, fetchWorkflowsList);
+  yield takeLatest(loadWorkflowsList.type, fetchWorkflowsList);
 }
 
 export function* watchChangeWorkflowLogViewSettings() {
