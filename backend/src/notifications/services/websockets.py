@@ -50,6 +50,7 @@ class WebSocketService(NotificationService):
         NotificationMethod.user_created,
         NotificationMethod.user_updated,
         NotificationMethod.user_deleted,
+        NotificationMethod.complete_workflow,
     }
 
     def _get_serialized_notification(
@@ -102,7 +103,7 @@ class WebSocketService(NotificationService):
 
     def _send(
         self,
-        method_name: NotificationMethod,
+        method_name: NotificationMethod.LITERALS,
         group_name: str,
         data: Dict[str, str],
         sync: bool = False,
@@ -148,6 +149,20 @@ class WebSocketService(NotificationService):
     ):
         self._send(
             method_name=NotificationMethod.complete_task,
+            group_name=f'{NotificationsConsumer.classname}_{user_id}',
+            data=self._get_serialized_notification(notification),
+            sync=sync,
+        )
+
+    def send_complete_workflow(
+        self,
+        user_id: int,
+        sync: bool,
+        notification: Optional[Notification] = None,
+        **kwargs,
+    ):
+        self._send(
+            method_name=NotificationMethod.complete_workflow,
             group_name=f'{NotificationsConsumer.classname}_{user_id}',
             data=self._get_serialized_notification(notification),
             sync=sync,

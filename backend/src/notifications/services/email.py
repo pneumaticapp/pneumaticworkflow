@@ -8,7 +8,6 @@ from django.utils.dateparse import parse_datetime
 
 from src.accounts.enums import UserType
 from src.accounts.tokens import (
-    ResetPasswordToken,
     UnsubscribeEmailToken,
 )
 from src.analysis.enums import MailoutType
@@ -67,6 +66,7 @@ class EmailService(NotificationService):
         NotificationMethod.user_transfer,
         NotificationMethod.verification,
         NotificationMethod.invite,
+        NotificationMethod.complete_workflow,
     }
 
     def _send_email_to_console(
@@ -119,7 +119,7 @@ class EmailService(NotificationService):
         user_id: int,
         user_email: str,
         template_code: EmailType.LITERALS,
-        method_name: NotificationMethod,
+        method_name: NotificationMethod.LITERALS,
         data: Dict[str, str],
     ):
 
@@ -151,6 +151,7 @@ class EmailService(NotificationService):
 
     def send_new_task(
         self,
+        link: str,
         user_id: int,
         user_email: str,
         template_name: str,
@@ -169,7 +170,6 @@ class EmailService(NotificationService):
             user_id=user_id,
             email_type=MailoutType.NEW_TASK,
         ).__str__()
-        task_link = f'{settings.FRONTEND_URL}/tasks/{task_id}'
         unsubscribe_link = (
             f'{settings.BACKEND_URL}/accounts/emails/unsubscribe?token='
             f'{unsubscribe_token}'
@@ -184,7 +184,7 @@ class EmailService(NotificationService):
             'overdue': overdue,
             'task_description': html_description,
             'task_id': task_id,
-            'link': task_link,
+            'link': link,
             'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'logo_lg': self.logo_lg,
@@ -202,8 +202,32 @@ class EmailService(NotificationService):
             data=data,
         )
 
+    def send_complete_workflow(
+        self,
+        link: str,
+        user_id: int,
+        user_email: str,
+        workflow_name: str,
+        **kwargs,
+    ):
+        data = {
+            'title': email_titles[NotificationMethod.complete_workflow],
+            'workflow_name': workflow_name,
+            'link': link,
+            'logo_lg': self.logo_lg,
+        }
+        self._send(
+            title=email_titles[NotificationMethod.complete_workflow],
+            user_id=user_id,
+            user_email=user_email,
+            template_code=EmailType.COMPLETE_WORKFLOW,
+            method_name=NotificationMethod.complete_workflow,
+            data=data,
+        )
+
     def send_returned_task(
         self,
+        link: str,
         user_id: int,
         user_email: str,
         template_name: str,
@@ -221,7 +245,6 @@ class EmailService(NotificationService):
             user_id=user_id,
             email_type=MailoutType.NEW_TASK,
         ).__str__()
-        task_link = f'{settings.FRONTEND_URL}/tasks/{task_id}'
         unsubscribe_link = (
             f'{settings.BACKEND_URL}/accounts/emails/unsubscribe?token='
             f'{unsubscribe_token}'
@@ -236,7 +259,7 @@ class EmailService(NotificationService):
             'overdue': overdue,
             'task_description': html_description,
             'task_id': task_id,
-            'link': task_link,
+            'link': link,
             'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'logo_lg': self.logo_lg,
@@ -256,6 +279,7 @@ class EmailService(NotificationService):
 
     def send_overdue_task(
         self,
+        link: str,
         user_id: int,
         user_email: str,
         user_type: UserType.LITERALS,
@@ -270,13 +294,6 @@ class EmailService(NotificationService):
         token: Optional[str] = None,
         **kwargs,
     ):
-        if token:
-            task_link = (
-                f'{settings.FRONTEND_URL}/guest-task/{task_id}'
-                f'?token={token}&utm_campaign=guestUser&utm_term={user_id}'
-            )
-        else:
-            task_link = f'{settings.FRONTEND_URL}/tasks/{task_id}'
 
         started_by = {
             'name': (
@@ -299,7 +316,7 @@ class EmailService(NotificationService):
                 'workflow_name': workflow_name,
                 'task_id': str(task_id),
                 'task_name': task_name,
-                'link': task_link,
+                'link': link,
                 'template_name': template_name,
                 'workflow_starter_id': workflow_starter_id,
                 'workflow_starter_first_name': workflow_starter_first_name,
@@ -313,6 +330,7 @@ class EmailService(NotificationService):
 
     def send_guest_new_task(
         self,
+        link: str,
         user_id: int,
         user_email: str,
         token: str,
@@ -327,10 +345,6 @@ class EmailService(NotificationService):
             convert_text_to_html(task_description)
             if task_description else None
         )
-        task_link = (
-            f'{settings.FRONTEND_URL}/guest-task/{task_id}'
-            f'?token={token}&utm_campaign=guestUser&utm_term={user_id}'
-        )
         title = (
             f'{sender_name} {email_titles[NotificationMethod.guest_new_task]} '
             f'{task_name} Task'
@@ -340,7 +354,7 @@ class EmailService(NotificationService):
             'title': title,
             'token': token,
             'user_id': user_id,
-            'link': task_link,
+            'link': link,
             'task_id': task_id,
             'task_name': task_name,
             'task_description': description,
@@ -369,6 +383,7 @@ class EmailService(NotificationService):
 
     def send_unread_notifications(
         self,
+        link: str,
         user_id: int,
         user_email: str,
         user_first_name: str,
@@ -381,10 +396,6 @@ class EmailService(NotificationService):
         unsubscribe_link = (
             f'{settings.BACKEND_URL}/accounts/emails/unsubscribe?token='
             f'{unsubscribe_token}'
-        )
-        notifications_link = (
-            f'{settings.FRONTEND_URL}'
-            '?utm_source=notifications&utm_campaign=unread_notifications'
         )
         content = (
             f'{user_first_name}, work in your company is in full swing. '
@@ -404,21 +415,19 @@ class EmailService(NotificationService):
                 'button_text': 'View Notifications',
                 'unsubscribe_token': unsubscribe_token,
                 'unsubscribe_link': unsubscribe_link,
-                'link': notifications_link,
+                'link': link,
                 'logo_lg': self.logo_lg,
             },
         )
 
     def send_reset_password(
         self,
+        link: str,
+        token: str,
         user_id: int,
         user_email: str,
         **kwargs,
     ):
-        token = ResetPasswordToken.for_user_id(user_id).__str__()
-        reset_link = (
-            f'{settings.FRONTEND_URL}/auth/reset-password/?token={token}'
-        )
         content = 'We got a request to reset your Pneumatic account password.'
         additional_content = (
             'A strong password includes eight or more characters '
@@ -438,20 +447,20 @@ class EmailService(NotificationService):
                 'additional_content': additional_content,
                 'button_text': 'Reset my password',
                 'token': token,
-                'link': reset_link,
+                'link': link,
                 'logo_lg': self.logo_lg,
             },
         )
 
     def send_mention(
         self,
+        link: str,
         task_id: int,
         user_id: int,
         user_email: str,
         user_first_name: str,
         **kwargs,
     ):
-        task_link = f'{settings.FRONTEND_URL}/tasks/{task_id}'
         content = (
             f"{user_first_name}, there's some activity happening. "
             f"Check your mentions to stay updated on your tasks right away."
@@ -470,12 +479,13 @@ class EmailService(NotificationService):
                 'button_text': 'View Mentions',
                 'user_first_name': user_first_name,
                 'task_id': task_id,
-                'link': task_link,
+                'link': link,
             },
         )
 
     def send_user_deactivated(
         self,
+        link: str,
         user_id: int,
         user_email: str,
         **kwargs,
@@ -491,11 +501,13 @@ class EmailService(NotificationService):
                 'title': email_titles[NotificationMethod.user_deactivated],
                 'logo_lg': self.logo_lg,
                 'image_url': True,
+                'link': link,
             },
         )
 
     def send_user_transfer(
         self,
+        link: str,
         user_id: int,
         user_email: str,
         invited_by_name: str,
@@ -504,10 +516,7 @@ class EmailService(NotificationService):
         **kwargs,
     ):
         """Send user transfer notification."""
-        transfer_link = (
-            f'{settings.BACKEND_URL}/accounts/users/{user_id}/transfer'
-            f'?token={token}&utm_source=invite&utm_campaign=transfer'
-        )
+
         content = (
             "Your User Profile is associated with another Pneumatic account. "
             "By agreeing to this invitation, you permit us to transfer your "
@@ -529,7 +538,7 @@ class EmailService(NotificationService):
                 'content': content,
                 'button_text': 'Transfer My Profile',
                 'token': token,
-                'link': transfer_link,
+                'link': link,
                 'sender_name': invited_by_name,
                 'company_name': company_name,
                 'user_id': user_id,
@@ -539,6 +548,7 @@ class EmailService(NotificationService):
 
     def send_verification(
         self,
+        link: str,
         user_id: int,
         user_email: str,
         user_first_name: str,
@@ -546,9 +556,7 @@ class EmailService(NotificationService):
         **kwargs,
     ):
         """Send verification notification."""
-        verification_link = (
-            f'{settings.FRONTEND_URL}/auth/verification?token={token}'
-        )
+
         content = (
             'Thank you for signing up for Pneumatic. '
             'Please verify your email address to get started.'
@@ -565,7 +573,7 @@ class EmailService(NotificationService):
                 'content': content,
                 'button_text': 'Get Started',
                 'token': token,
-                'link': verification_link,
+                'link': link,
                 'first_name': user_first_name,
                 'logo_lg': self.logo_lg,
             },
@@ -573,14 +581,11 @@ class EmailService(NotificationService):
 
     def send_invite(
         self,
+        link: str,
         user_id: int,
         user_email: str,
-        token: str,
         **kwargs,
     ):
-        invite_link = (
-            f'{settings.FRONTEND_URL}/auth/signup/invite/?token={token}'
-        )
 
         self._send(
             title=str(messages.MSG_NF_0020),
@@ -591,7 +596,7 @@ class EmailService(NotificationService):
             data={
                 'title': email_titles[NotificationMethod.invite],
                 'button_text': 'Join Your Team',
-                'link': invite_link,
+                'link': link,
                 'logo_lg': self.logo_lg,
                 'is_invite': True,
             },
@@ -599,6 +604,7 @@ class EmailService(NotificationService):
 
     def send_workflows_digest(
         self,
+        link: str,
         user_id: int,
         user_email: str,
         date_from: str,
@@ -617,10 +623,6 @@ class EmailService(NotificationService):
             f'{settings.BACKEND_URL}/accounts/emails/unsubscribe?token='
             f'{unsubscribe_token}'
         )
-        workflows_link = (
-            f'{settings.FRONTEND_URL}'
-            f'/workflows?utm_source=email&utm_campaign=digest'
-        )
 
         data = {
             'title': email_titles[NotificationMethod.workflows_digest],
@@ -628,7 +630,7 @@ class EmailService(NotificationService):
             'date_to': date_to,
             'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
-            'workflows_link': workflows_link,
+            'workflows_link': link,
             'logo_lg': self.logo_lg,
             'is_tasks_digest': False,
             'status_labels': {
@@ -658,6 +660,7 @@ class EmailService(NotificationService):
 
     def send_tasks_digest(
         self,
+        link: str,
         user_id: int,
         user_email: str,
         date_from: str,
@@ -676,10 +679,6 @@ class EmailService(NotificationService):
             f'{settings.BACKEND_URL}/accounts/unsubscribe/'
             f'{unsubscribe_token}'
         )
-        tasks_link = (
-            f'{settings.FRONTEND_URL}'
-            f'/tasks?utm_source=email&utm_campaign=tasks_digest'
-        )
 
         data = {
             'title': email_titles[NotificationMethod.tasks_digest],
@@ -687,7 +686,7 @@ class EmailService(NotificationService):
             'date_to': date_to,
             'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
-            'tasks_link': tasks_link,
+            'tasks_link': link,
             'logo_lg': self.logo_lg,
             'is_tasks_digest': True,
             'status_labels': {

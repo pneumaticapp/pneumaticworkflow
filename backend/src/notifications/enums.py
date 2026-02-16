@@ -100,6 +100,7 @@ class EmailType:
     OVERDUE_TASK = 'overdue_task'
     MENTION = 'mention'
     INVITE = 'invite'
+    COMPLETE_WORKFLOW = 'complete_workflow'
 
     LITERALS = Literal[
         RESET_PASSWORD,
@@ -115,6 +116,7 @@ class EmailType:
         OVERDUE_TASK,
         MENTION,
         INVITE,
+        COMPLETE_WORKFLOW,
     ]
 
     CHOICES = [
@@ -131,6 +133,7 @@ class EmailType:
         (OVERDUE_TASK, 'Overdue Task'),
         (MENTION, 'Mention'),
         (INVITE, 'Invite'),
+        (COMPLETE_WORKFLOW, 'Complete Workflow'),
     ]
 
 
@@ -151,6 +154,7 @@ cio_template_ids = {
     EmailType.GUEST_NEW_TASK: env.get('CIO_TEMPLATE__GUEST_NEW_TASK'),
     EmailType.OVERDUE_TASK: env.get('CIO_TEMPLATE__OVERDUE_TASK'),
     EmailType.MENTION: env.get('CIO_TEMPLATE__MENTION'),
+    EmailType.COMPLETE_WORKFLOW: env.get('CIO_TEMPLATE__COMPLETE_WORKFLOW'),
 }
 
 email_titles = {
@@ -171,4 +175,5 @@ email_titles = {
     NotificationMethod.invite: (
         "✅ You've been invited to join your team in Pneumatic"
     ),
+    NotificationMethod.complete_workflow: 'Workflow completed',
 }
