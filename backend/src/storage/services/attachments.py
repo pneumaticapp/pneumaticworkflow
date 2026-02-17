@@ -1,4 +1,4 @@
-from typing import List
+from typing import Iterable, List
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
@@ -18,6 +18,28 @@ from src.storage.enums import AccessType, SourceType
 from src.storage.models import Attachment
 
 UserModel = get_user_model()
+
+
+def clear_guardian_permissions_for_attachment_ids(
+    attachment_ids: Iterable[int],
+) -> None:
+    """
+    Remove guardian UserObjectPermission and GroupObjectPermission rows
+    for the given Attachment ids. Generic object_pk links are not
+    CASCADE-cleaned by Django; call before deleting attachments.
+    """
+    if not attachment_ids:
+        return
+    ctype = ContentType.objects.get_for_model(Attachment)
+    obj_pks = [str(pk) for pk in attachment_ids]
+    UserObjectPermission.objects.filter(
+        content_type=ctype,
+        object_pk__in=obj_pks,
+    ).delete()
+    GroupObjectPermission.objects.filter(
+        content_type=ctype,
+        object_pk__in=obj_pks,
+    ).delete()
 
 
 class AttachmentService(BaseModelService):

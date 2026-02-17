@@ -11,7 +11,10 @@ from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
 from src.storage.models import Attachment
-from src.storage.services.attachments import AttachmentService
+from src.storage.services.attachments import (
+    AttachmentService,
+    clear_guardian_permissions_for_attachment_ids,
+)
 
 UserModel = get_user_model()
 
@@ -158,10 +161,13 @@ def sync_storage_attachments_for_scope(
         'template': template,
     }
     if remove_file_ids:
-        Attachment.objects.filter(
+        to_delete = Attachment.objects.filter(
             file_id__in=remove_file_ids,
             **filter_kwargs,
-        ).delete()
+        )
+        ids_to_delete = list(to_delete.values_list('id', flat=True))
+        clear_guardian_permissions_for_attachment_ids(ids_to_delete)
+        to_delete.delete()
     if add_file_ids:
         service = AttachmentService(user=user)
         service.bulk_create_for_scope(
@@ -231,7 +237,10 @@ def refresh_attachments_for_event(
 
     # If no files in text - delete all event attachments
     if not file_ids:
-        Attachment.objects.filter(**filter_kwargs).delete()
+        to_delete = Attachment.objects.filter(**filter_kwargs)
+        ids_to_delete = list(to_delete.values_list('id', flat=True))
+        clear_guardian_permissions_for_attachment_ids(ids_to_delete)
+        to_delete.delete()
         return []
 
     # Get existing file_ids
@@ -246,9 +255,12 @@ def refresh_attachments_for_event(
     new_files_ids = list(set(file_ids) - set(existent_file_ids))
     try:
         with transaction.atomic():
-            Attachment.objects.filter(
+            to_delete = Attachment.objects.filter(
                 **filter_kwargs,
-            ).exclude(file_id__in=file_ids).delete()
+            ).exclude(file_id__in=file_ids)
+            ids_to_delete = list(to_delete.values_list('id', flat=True))
+            clear_guardian_permissions_for_attachment_ids(ids_to_delete)
+            to_delete.delete()
             if new_files_ids:
                 service = AttachmentService(user=user)
                 service.bulk_create_for_event(
@@ -307,10 +319,13 @@ def refresh_attachments_for_text(
     # If no files in text - delete only attachments not linked to fields
     if not file_ids:
         # Do not delete attachments linked to fields (output != None)
-        Attachment.objects.filter(
+        to_delete = Attachment.objects.filter(
             **filter_kwargs,
             output__isnull=True,  # Delete only those not linked to fields
-        ).delete()
+        )
+        ids_to_delete = list(to_delete.values_list('id', flat=True))
+        clear_guardian_permissions_for_attachment_ids(ids_to_delete)
+        to_delete.delete()
         return []
 
     # Get existing file_ids
@@ -325,10 +340,13 @@ def refresh_attachments_for_text(
     new_files_ids = list(set(file_ids) - set(existent_file_ids))
     try:
         with transaction.atomic():
-            Attachment.objects.filter(
+            to_delete = Attachment.objects.filter(
                 **filter_kwargs,
                 output__isnull=True,  # Delete only those not linked to fields
-            ).exclude(file_id__in=file_ids).delete()
+            ).exclude(file_id__in=file_ids)
+            ids_to_delete = list(to_delete.values_list('id', flat=True))
+            clear_guardian_permissions_for_attachment_ids(ids_to_delete)
+            to_delete.delete()
             if new_files_ids:
                 service = AttachmentService(user=user)
                 service.bulk_create_for_scope(

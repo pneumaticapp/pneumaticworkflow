@@ -419,3 +419,40 @@ class TestAttachmentServiceAssignPermissions:
             object_pk=obj_pk,
             content_type=ctype,
         ).exists()
+
+
+class TestAttachmentDeleteGuardianCleanup:
+
+    def test_delete__removes_guardian_permissions__ok(self):
+        # arrange
+        user = create_test_admin()
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+        service = AttachmentService(user=user)
+        service.create(
+            file_id='to_delete_restricted',
+            account=user.account,
+            access_type=AccessType.RESTRICTED,
+            source_type=SourceType.TASK,
+            task=task,
+        )
+        attachment = service.instance
+        ctype = ContentType.objects.get_for_model(Attachment)
+        obj_pk = str(attachment.pk)
+        assert UserObjectPermission.objects.filter(
+            object_pk=obj_pk,
+            permission__content_type=ctype,
+        ).exists()
+
+        # act
+        attachment.delete()
+
+        # assert
+        assert not UserObjectPermission.objects.filter(
+            object_pk=obj_pk,
+            permission__content_type=ctype,
+        ).exists()
+        assert not GroupObjectPermission.objects.filter(
+            object_pk=obj_pk,
+            content_type=ctype,
+        ).exists()
