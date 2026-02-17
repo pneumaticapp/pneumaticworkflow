@@ -218,8 +218,8 @@ class TaskFieldService(BaseWorkflowService):
                 list or only whitespace items raises.
 
         Returns:
-            FieldData with value=file_ids, markdown_value=links,
-            clear_value=link labels.
+            FieldData with value=full URLs, markdown_value=links,
+            clear_value=full URLs.
         """
         if not isinstance(raw_value, list):
             raise TaskFieldException(
@@ -248,8 +248,8 @@ class TaskFieldService(BaseWorkflowService):
                     api_name=self.instance.api_name,
                     message=messages.MSG_PW_0036,
                 )
-            _, file_id = parsed
-            values.append(file_id)
+            full_url, _ = parsed
+            values.append(full_url)
             markdown_values.append(stripped)
 
         if self.instance.is_required and not values:
@@ -544,8 +544,8 @@ class TaskFieldService(BaseWorkflowService):
         for file_id in file_ids:
             attachment, created = Attachment.objects.get_or_create(
                 file_id=file_id,
+                account=self.account,
                 defaults={
-                    'account': self.account,
                     'source_type': source_type,
                     'access_type': AccessType.RESTRICTED,
                     'task': self.instance.task,

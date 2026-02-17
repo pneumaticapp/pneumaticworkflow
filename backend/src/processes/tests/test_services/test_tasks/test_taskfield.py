@@ -1624,17 +1624,18 @@ def test_get_valid_file_value__one_file__ok():
         workflow=workflow,
     )
     value = 'abc123def456ghi789'
+    full_url = f'https://example.com/{value}'
     service = TaskFieldService(user=user, instance=field)
-    file_id = f'[doc](https://example.com/{value})'
+    file_id = f'[doc]({full_url})'
     raw_value = [file_id]
 
     # act
     field_data = service._get_valid_file_value(raw_value=raw_value)
 
     # assert
-    assert field_data.value == value
+    assert field_data.value == full_url
     assert field_data.markdown_value == file_id
-    assert field_data.clear_value == value
+    assert field_data.clear_value == full_url
 
 
 @override_settings(FILE_DOMAIN='example.com')
@@ -1653,9 +1654,11 @@ def test_get_valid_file_value__multiple_files__ok():
     service = TaskFieldService(user=user, instance=field)
     value = 'abc123def456ghi789'
     value_2 = 'abc123def456ghi7890'
+    url_1 = f'https://example.com/{value}'
+    url_2 = f'https://example.com/{value_2}'
     file_ids = [
-        f'[doc](https://example.com/{value})',
-        f'[doc2](https://example.com/{value_2})',
+        f'[doc]({url_1})',
+        f'[doc2]({url_2})',
     ]
     raw_value = file_ids
 
@@ -1663,9 +1666,9 @@ def test_get_valid_file_value__multiple_files__ok():
     field_data = service._get_valid_file_value(raw_value=raw_value)
 
     # assert
-    assert field_data.value == f'{value}, {value_2}'
+    assert field_data.value == f'{url_1}, {url_2}'
     assert field_data.markdown_value == ', '.join(file_ids)
-    assert field_data.clear_value == f'{value}, {value_2}'
+    assert field_data.clear_value == f'{url_1}, {url_2}'
 
 
 def test_get_valid_file_value__empty_list__empty_result():

@@ -22,14 +22,15 @@ def _get_file_service_link_pattern(
     """
     Build regex for file service markdown links;
     optional ^...$ for full match.
+    Groups: (1) link label, (2) full URL, (3) file_id.
     """
     file_domain = settings.FILE_DOMAIN
     if not file_domain:
         return None
     core = (
         rf'\[([^\]]+)\]\('
-        rf'https?://[^/\s]*{re.escape(file_domain)}'
-        rf'/([a-zA-Z0-9_-]{{8,64}})(?:[^\s)]*)?\)'
+        rf'(https?://[^/\s]*{re.escape(file_domain)}'
+        rf'/([a-zA-Z0-9_-]{{8,64}})(?:[^\s)]*)?)\)'
     )
     if anchored:
         core = '^' + core + '$'
@@ -69,7 +70,7 @@ def parse_single_file_service_link(text: str) -> Optional[Tuple[str, str]]:
     """
     Parse one markdown link to file service.
 
-    Returns (link_text, file_id) if text is exactly one file service link,
+    Returns (full_url, file_id) if text is exactly one file service link,
     else None.
     """
     pattern = _get_file_service_link_pattern(anchored=True)
@@ -77,7 +78,7 @@ def parse_single_file_service_link(text: str) -> Optional[Tuple[str, str]]:
         return None
     match = pattern.match(text.strip())
     if match:
-        return (match.group(1), match.group(2))
+        return (match.group(2), match.group(3))
     return None
 
 
@@ -101,7 +102,7 @@ def extract_file_ids_from_text(text: str) -> List[str]:
     if not text or pattern is None:
         return []
     matches = pattern.findall(text)
-    file_ids = [file_id for _, file_id in matches]
+    file_ids = [m[2] for m in matches]
     return list(dict.fromkeys(file_ids))
 
 
