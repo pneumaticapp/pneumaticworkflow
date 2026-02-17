@@ -1,8 +1,10 @@
 from rest_framework import serializers
+from rest_framework.serializers import ValidationError
 
 from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
 )
+from src.processes.messages.workflow import MSG_PW_0047
 
 
 class CommentCreateSerializer(
@@ -11,17 +13,15 @@ class CommentCreateSerializer(
 ):
 
     text = serializers.CharField(
-        required=False,
-        allow_null=True,
+        required=True,
+        allow_null=False,
         allow_blank=True,
     )
 
     def validate_text(self, value):
-        if not value:
-            return None
-        if isinstance(value, str) and not value.strip():
-            return None
-        return value
+        if not value.strip():
+            raise ValidationError(MSG_PW_0047)
+        return value.strip()
 
 
 class CommentReactionSerializer(
