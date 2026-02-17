@@ -305,8 +305,8 @@ class PushNotificationService(NotificationService):
             body=workflow_name,
             extra_data={
                 'link': link,
-                'task_id': task_id,  # TODO Deprecated
-                'workflow_id': workflow_id,
+                'task_id': str(task_id),  # TODO Deprecated
+                'workflow_id': str(workflow_id),
             },
             user_id=user_id,
             user_email=user_email,

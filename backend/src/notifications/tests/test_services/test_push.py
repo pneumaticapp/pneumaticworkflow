@@ -26,8 +26,11 @@ from src.processes.tests.fixtures import (
     create_test_account,
     create_test_guest,
     create_test_user,
+    create_test_owner,
 )
 from src.utils.logging import SentryLogLevel
+from src.notifications import messages
+
 
 pytestmark = pytest.mark.django_db
 
@@ -1486,6 +1489,52 @@ class TestPushNotificationService:
                 'task_id': '1',
                 'text': text,
                 'user_id': str(user.id),
+            },
+            user_id=user.id,
+            user_email=user.email,
+        )
+
+    def test_send_complete_workflow(self, mocker):
+
+        # arrange
+        account = create_test_account(
+            logo_lg='https://logo.com',
+            log_api_requests=False,
+        )
+        user = create_test_owner(account=account)
+        service = PushNotificationService(
+            account_id=account.id,
+            logo_lg=account.logo_lg,
+            logging=account.log_api_requests,
+        )
+        send_mock = mocker.patch(
+            'src.notifications.services.push.'
+            'PushNotificationService._send',
+        )
+        task_id = 2
+        workflow_id = 3
+        workflow_name = 'some name'
+        link = f'http://localhost/workflows/{workflow_id}'
+
+        # act
+        service.send_complete_workflow(
+            link=link,
+            workflow_id=workflow_id,
+            workflow_name=workflow_name,
+            user_id=user.id,
+            user_email=user.email,
+            task_id=task_id,
+        )
+
+        # assert
+        send_mock.assert_called_once_with(
+            method_name=NotificationMethod.complete_workflow,
+            title=str(messages.MSG_NF_0021),
+            body=workflow_name,
+            extra_data={
+                'link': link,
+                'task_id': str(task_id),
+                'workflow_id': str(workflow_id),
             },
             user_id=user.id,
             user_email=user.email,

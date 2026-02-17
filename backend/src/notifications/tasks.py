@@ -62,6 +62,7 @@ UserModel = get_user_model()
 __all__ = [
     'send_comment_notification',
     'send_complete_task_notification',
+    'send_completed_workflow_notification',
     'send_delayed_workflow_notification',
     'send_due_date_changed',
     'send_group_created_notification',
@@ -737,7 +738,7 @@ def _send_completed_workflow_notification(
 
 
 @shared_task(base=NotificationTask)
-def send_workflow_completed_notification(**kwargs):
+def send_completed_workflow_notification(**kwargs):
     _send_completed_workflow_notification(**kwargs)
 
 
