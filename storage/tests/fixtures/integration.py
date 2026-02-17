@@ -47,4 +47,3 @@ async def async_session(
         # Clean all tables after each test
         async with session.begin():
             await session.execute(text('DELETE FROM files'))
-            await session.commit()

@@ -37,8 +37,6 @@ class AttachmentService(BaseModelService):
         """
         if self.instance.access_type == AccessType.RESTRICTED:
             self._assign_restricted_permissions()
-        elif self.instance.access_type == AccessType.ACCOUNT:
-            self._assign_account_permissions()
 
     def reassign_restricted_permissions(self, attachment: Attachment) -> None:
         """
@@ -47,7 +45,8 @@ class AttachmentService(BaseModelService):
         """
         self.instance = attachment
         if attachment.access_type == AccessType.RESTRICTED:
-            self._assign_restricted_permissions()
+            with transaction.atomic():
+                self._assign_restricted_permissions()
 
     def _assign_restricted_permissions(self):
         """Assigns permissions for restricted access."""
@@ -74,7 +73,9 @@ class AttachmentService(BaseModelService):
         ).get(id=task.id)
 
         # Clear existing so removed performers lose access when we reassign
+        ctype = ContentType.objects.get_for_model(Attachment)
         for uop in UserObjectPermission.objects.filter(
+                content_type=ctype,
                 object_pk=str(self.instance.pk),
         ).select_related('user'):
             remove_perm(
@@ -82,7 +83,6 @@ class AttachmentService(BaseModelService):
                 uop.user,
                 self.instance,
             )
-        ctype = ContentType.objects.get_for_model(Attachment)
         GroupObjectPermission.objects.filter(
             content_type=ctype,
             object_pk=str(self.instance.pk),
@@ -171,7 +171,9 @@ class AttachmentService(BaseModelService):
         )
 
         # Clear existing so removed owners lose access when we reassign
+        ctype = ContentType.objects.get_for_model(Attachment)
         for uop in UserObjectPermission.objects.filter(
+                content_type=ctype,
                 object_pk=str(self.instance.pk),
         ).select_related('user'):
             remove_perm(
@@ -179,7 +181,6 @@ class AttachmentService(BaseModelService):
                 uop.user,
                 self.instance,
             )
-        ctype = ContentType.objects.get_for_model(Attachment)
         GroupObjectPermission.objects.filter(
             content_type=ctype,
             object_pk=str(self.instance.pk),
@@ -228,7 +229,9 @@ class AttachmentService(BaseModelService):
         ).get(id=workflow.id)
 
         # Clear existing so removed participants lose access when we reassign
+        ctype = ContentType.objects.get_for_model(Attachment)
         for uop in UserObjectPermission.objects.filter(
+                content_type=ctype,
                 object_pk=str(self.instance.pk),
         ).select_related('user'):
             remove_perm(
@@ -236,7 +239,6 @@ class AttachmentService(BaseModelService):
                 uop.user,
                 self.instance,
             )
-        ctype = ContentType.objects.get_for_model(Attachment)
         GroupObjectPermission.objects.filter(
             content_type=ctype,
             object_pk=str(self.instance.pk),
@@ -315,15 +317,6 @@ class AttachmentService(BaseModelService):
                         content_type=ctype,
                         object_pk=str(self.instance.pk),
                     )
-
-    def _assign_account_permissions(self):
-        """
-        Assigns permissions for account access.
-        All account users have access.
-        """
-        # For account access permissions are not assigned individually
-        # Check will be done via account_id
-        pass
 
     def bulk_create(
         self,

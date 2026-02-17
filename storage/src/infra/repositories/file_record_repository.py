@@ -38,6 +38,7 @@ class FileRecordRepository:
         try:
             orm_record = self.mapper.entity_to_orm(file_record)
             self.session.add(orm_record)
+            await self.session.flush()
         except IntegrityError as e:
             raise DatabaseConstraintError(
                 constraint='file_record_unique_constraint',
