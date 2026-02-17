@@ -419,7 +419,7 @@ services:
       BUCKET_PREFIX: ${FILE_BUCKET_PREFIX:-pneumatic-dev-test}
       MAX_FILE_SIZE: ${FILE_MAX_FILE_SIZE:-104857600}
       CHUNK_SIZE: ${FILE_CHUNK_SIZE:-1048576}
-      AUTH_REDIS_URL: ${FILE_AUTH_REDIS_URL:-redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/1}
+      AUTH_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/1"
       KEY_PREFIX_REDIS: ${FILE_KEY_PREFIX_REDIS:-:1:}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
       AUTH_TOKEN_ITERATIONS: ${FILE_AUTH_TOKEN_ITERATIONS:-1}

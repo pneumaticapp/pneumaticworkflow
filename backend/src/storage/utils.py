@@ -206,7 +206,7 @@ def refresh_attachments_for_event(
     user: UserModel,
     text: Optional[str],
     event,
-) -> List[str]:
+) -> Tuple[List[str], bool]:
     """
     Refreshes attachments for workflow event (comment).
 
@@ -217,7 +217,8 @@ def refresh_attachments_for_event(
         event: Workflow event
 
     Returns:
-        List of new file_ids
+        (new_file_ids, has_attachments). has_attachments reflects DB state
+        after refresh (or after rollback on exception).
     """
     file_ids = extract_file_ids_from_text(text)
 
@@ -241,7 +242,7 @@ def refresh_attachments_for_event(
         ids_to_delete = list(to_delete.values_list('id', flat=True))
         clear_guardian_permissions_for_attachment_ids(ids_to_delete)
         to_delete.delete()
-        return []
+        return [], False
 
     # Get existing file_ids
     existent_file_ids = list(
@@ -270,8 +271,8 @@ def refresh_attachments_for_event(
                     event=event,
                 )
     except (ValueError, TypeError, IntegrityError):
-        return []
-    return new_files_ids
+        return [], bool(existent_file_ids)
+    return new_files_ids, True
 
 
 def refresh_attachments_for_text(
@@ -466,19 +467,15 @@ def _refresh_workflow_event_attachments(
 ) -> List[str]:
     """Refreshes attachments for workflow event (comment)."""
     # For workflow events attachments are always linked to event
-    new_file_ids = refresh_attachments_for_event(
+    new_file_ids, has_attachments = refresh_attachments_for_event(
         account=event.account,
         user=user,
         text=event.text,
         event=event,
     )
-
-    # Update with_attachments field for WorkflowEvent
-    has_attachments = bool(extract_file_ids_from_text(event.text))
     if event.with_attachments != has_attachments:
         event.with_attachments = has_attachments
         event.save(update_fields=['with_attachments'])
-
     return new_file_ids
 
 
