@@ -118,13 +118,7 @@ class UserAdminChangeForm(UserChangeForm):
     )
 
     def clean_photo_file(self):
-        photo_file = self.cleaned_data.get('photo_file')
-        if photo_file and not settings.PROJECT_CONF.get('STORAGE'):
-            self.add_error(
-                field='photo_file',
-                error=messages.MSG_A_0001,
-            )
-        return photo_file
+        return self.cleaned_data.get('photo_file')
 
     def save(self, commit=True):
         photo_file = self.cleaned_data.get('photo_file')

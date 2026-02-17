@@ -107,8 +107,6 @@ services:
       AI_PROVIDER: ${AI_PROVIDER}
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER}
-      STORAGE: ${STORAGE:-no}
-      STORAGE_PROVIDER: ${STORAGE_PROVIDER}
       SENTRY_DSN: ${SENTRY_DSN}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
@@ -191,8 +189,6 @@ services:
       AI_PROVIDER: ${AI_PROVIDER}
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER}
-      STORAGE: ${STORAGE:-no}
-      STORAGE_PROVIDER: ${STORAGE_PROVIDER}
       SENTRY_DSN: ${SENTRY_DSN}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
@@ -272,8 +268,6 @@ services:
       AI_PROVIDER: ${AI_PROVIDER}
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER}
-      STORAGE: ${STORAGE:-no}
-      STORAGE_PROVIDER: ${STORAGE_PROVIDER}
       SENTRY_DSN: ${SENTRY_DSN}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}

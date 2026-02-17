@@ -1,10 +1,8 @@
-from django.conf import settings
 from django.forms import (
     FileField,
     ModelForm,
 )
 
-from src.accounts.messages import MSG_A_0001
 from src.accounts.models import (
     Contact,
 )
@@ -42,10 +40,7 @@ class ContactAdminForm(ModelForm):
     )
 
     def clean_photo_file(self):
-        photo_file = self.cleaned_data.get('photo_file')
-        if photo_file and not settings.PROJECT_CONF['STORAGE']:
-            self.add_error(field='photo_file', error=MSG_A_0001)
-        return photo_file
+        return self.cleaned_data.get('photo_file')
 
     def save(self, commit=True):
 
