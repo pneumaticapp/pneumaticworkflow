@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -296,7 +296,6 @@ class PushNotificationService(NotificationService):
         workflow_name: str,
         user_id: int,
         user_email: str,
-        task_id: Optional[int] = None,
         **kwargs,
     ):
         self._send(
@@ -305,7 +304,6 @@ class PushNotificationService(NotificationService):
             body=workflow_name,
             extra_data={
                 'link': link,
-                'task_id': str(task_id),  # TODO Deprecated
                 'workflow_id': str(workflow_id),
             },
             user_id=user_id,

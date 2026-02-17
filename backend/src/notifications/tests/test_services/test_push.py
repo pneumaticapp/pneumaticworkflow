@@ -1511,7 +1511,6 @@ class TestPushNotificationService:
             'src.notifications.services.push.'
             'PushNotificationService._send',
         )
-        task_id = 2
         workflow_id = 3
         workflow_name = 'some name'
         link = f'http://localhost/workflows/{workflow_id}'
@@ -1523,7 +1522,6 @@ class TestPushNotificationService:
             workflow_name=workflow_name,
             user_id=user.id,
             user_email=user.email,
-            task_id=task_id,
         )
 
         # assert
@@ -1533,7 +1531,6 @@ class TestPushNotificationService:
             body=workflow_name,
             extra_data={
                 'link': link,
-                'task_id': str(task_id),
                 'workflow_id': str(workflow_id),
             },
             user_id=user.id,
