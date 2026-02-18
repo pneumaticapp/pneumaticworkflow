@@ -9,7 +9,7 @@ import { identifyAppPartOnClient } from '../utils/identifyAppPart/identifyAppPar
 import { getCurrentToken } from '../utils/auth';
 import { envBackendURL } from '../constants/enviroment';
 
-export type TRequestType = 'public' | 'local';
+export type TRequestType = 'public' | 'local' | 'fileService';
 export type TResponseType = 'json' | 'text' | 'empty';
 
 interface ICommonRequestOptions {
@@ -57,6 +57,10 @@ axiosInstance.interceptors.request.use(
       });
     }
 
+    if (config.data instanceof FormData) {
+      headers.delete('Content-Type');
+    }
+
     config.headers = headers;
     return config;
   },
@@ -93,12 +97,13 @@ export async function commonRequest<T>(
   options: Partial<ICommonRequestOptions> = {},
 ): Promise<T> {
   const {
-    api: { publicUrl, urls },
+    api: { publicUrl, urls, fileServiceUrl },
   } = getBrowserConfigEnv();
   const { type, shouldThrow, successStatusCodes, timeOut } = { ...DEFAULT_OPTIONS, ...options };
   const requestBaseUrlsMap: { [key in TRequestType]: string } = {
     public: envBackendURL || publicUrl,
     local: '',
+    fileService: fileServiceUrl,
   };
 
   try {
