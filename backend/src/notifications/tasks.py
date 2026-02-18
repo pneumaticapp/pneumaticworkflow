@@ -675,14 +675,13 @@ def send_delayed_workflow_notification(**kwargs):
 def _send_completed_workflow_notification(
     logging: bool,
     workflow_id: int,
-    author_id: int,
     logo_lg: Optional[str] = None,
 ):
-    workflow = Workflow.objects.get(workflow_id)
+    workflow = Workflow.objects.get(id=workflow_id)
     workflow_json = NotificationWorkflowSerializer(instance=workflow).data
     users = (
         TaskPerformer.objects
-        .completed_task()
+        .acd_task_status()
         .by_workflow(workflow_id)
         .exclude_directly_deleted()
         .order_by('id')
@@ -693,7 +692,6 @@ def _send_completed_workflow_notification(
         notification = Notification.objects.create(
             workflow_json=workflow_json,
             user_id=user_id,
-            author_id=author_id,
             account_id=workflow.account_id,
             type=NotificationType.COMPLETE_WORKFLOW,
         )

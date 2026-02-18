@@ -761,6 +761,15 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
     def completed_task(self):
         return self.filter(task__status=TaskStatus.COMPLETED)
 
+    def acd_task_status(self):
+        return self.filter(
+            task__status__in=(
+                TaskStatus.ACTIVE,
+                TaskStatus.COMPLETED,
+                TaskStatus.DELAYED,
+            ),
+        )
+
     def not_completed(self):
         return self.filter(is_completed=False)
 
