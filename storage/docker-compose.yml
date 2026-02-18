@@ -26,7 +26,7 @@ services:
       CONFIG: ${FILE_CONFIG:-Development}
       WORKERS: ${FILE_WORKERS:-1}
       PORT: ${FILE_PORT:-8000}
-      ALLOWED_ORIGINS: ${FILE_ALLOWED_ORIGINS:-["*"]}
+      ALLOWED_ORIGINS: "[\"http://localhost:8000\",\"http://localhost:8002\",\"http://localhost}\",\"http://localhost:8001}\"]"
       BACKEND_PRIVATE_URL: http://backend:8000/
       POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
       POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}

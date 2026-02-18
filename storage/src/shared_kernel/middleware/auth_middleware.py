@@ -179,6 +179,8 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         call_next: Callable[[Request], Awaitable[Response]],
     ) -> Response:
         """Process request with token or session authentication."""
+        if request.method == 'OPTIONS':
+            return await call_next(request)
         try:
             request.state.user = AuthUser(auth_type=UserType.ANONYMOUS)
 
@@ -188,7 +190,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
 
             # If authentication is required and user is anonymous
             if self.require_auth and request.state.user.is_anonymous:
-                raise AuthenticationError  # noqa: TRY301
+                raise AuthenticationError
 
             return await call_next(request)
         except AuthenticationError as exc:
