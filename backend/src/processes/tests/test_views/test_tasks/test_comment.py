@@ -5,6 +5,7 @@ from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
     CommentStatus,
 )
+from src.processes.messages import workflow as messages
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.services.events import (
     CommentService,
@@ -430,6 +431,61 @@ def test_create__not_authenticated__permission_denied(
     assert response.status_code == 401
     service_init_mock.assert_not_called()
     comment_create_mock.assert_not_called()
+
+
+def test_create__no_text__validation_error(api_client, mocker):
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user)
+    task = workflow.tasks.get(number=1)
+    mocker.patch.object(
+        CommentService,
+        attribute='__init__',
+        return_value=None,
+    )
+    mocker.patch(
+        'src.processes.services.events.CommentService.create',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        f'/v2/tasks/{task.id}/comment',
+        data={},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+
+
+def test_create__blank_text__validation_error(api_client, mocker):
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user)
+    task = workflow.tasks.get(number=1)
+    mocker.patch.object(
+        CommentService,
+        attribute='__init__',
+        return_value=None,
+    )
+    mocker.patch(
+        'src.processes.services.events.CommentService.create',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        f'/v2/tasks/{task.id}/comment',
+        data={'text': '   '},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_PW_0047
 
 
 def test_create__non_existent_task__not_found(api_client):

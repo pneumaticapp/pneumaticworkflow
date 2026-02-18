@@ -6,7 +6,7 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import (
     ValidationError as ValidationCoreError,
 )
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.db.models import ObjectDoesNotExist
 
 from src.generics.validators import NoSchemaURLValidator
@@ -23,7 +23,10 @@ from src.processes.services.tasks.selection import SelectionService
 from src.services.markdown import MarkdownService
 from src.storage.enums import AccessType, SourceType
 from src.storage.models import Attachment
-from src.storage.services.attachments import AttachmentService
+from src.storage.services.attachments import (
+    AttachmentService,
+    clear_guardian_permissions_for_attachment_ids,
+)
 from src.storage.utils import (
     extract_file_ids_from_text,
     parse_single_file_service_link,
@@ -218,8 +221,8 @@ class TaskFieldService(BaseWorkflowService):
                 list or only whitespace items raises.
 
         Returns:
-            FieldData with value=file_ids, markdown_value=links,
-            clear_value=link labels.
+            FieldData with value=full URLs, markdown_value=links,
+            clear_value=full URLs.
         """
         if not isinstance(raw_value, list):
             raise TaskFieldException(
@@ -248,8 +251,8 @@ class TaskFieldService(BaseWorkflowService):
                     api_name=self.instance.api_name,
                     message=messages.MSG_PW_0036,
                 )
-            _, file_id = parsed
-            values.append(file_id)
+            full_url, _ = parsed
+            values.append(full_url)
             markdown_values.append(stripped)
 
         if self.instance.is_required and not values:
@@ -490,10 +493,12 @@ class TaskFieldService(BaseWorkflowService):
 
         # Remove attachments not in the new file_ids list
         if file_ids:
-            current_attachments.exclude(file_id__in=file_ids).delete()
+            to_delete = current_attachments.exclude(file_id__in=file_ids)
         else:
-            # If no value, remove all attachments
-            current_attachments.delete()
+            to_delete = current_attachments
+        ids_to_delete = list(to_delete.values_list('id', flat=True))
+        clear_guardian_permissions_for_attachment_ids(ids_to_delete)
+        to_delete.delete()
 
     def _extract_file_ids_from_markdown(
         self,
@@ -532,6 +537,8 @@ class TaskFieldService(BaseWorkflowService):
         Only creates new records. Does not overwrite existing Attachment:
         reusing the same file_id elsewhere (e.g. markdown link in comment)
         must not change original binding and permission context.
+        Skips file_id on IntegrityError (file_id already exists in another
+        account) to avoid server error and to never grant cross-account access.
         """
         if file_ids in self.NULL_VALUES:
             return
@@ -542,17 +549,20 @@ class TaskFieldService(BaseWorkflowService):
             source_type = SourceType.WORKFLOW
 
         for file_id in file_ids:
-            attachment, created = Attachment.objects.get_or_create(
-                file_id=file_id,
-                defaults={
-                    'account': self.account,
-                    'source_type': source_type,
-                    'access_type': AccessType.RESTRICTED,
-                    'task': self.instance.task,
-                    'workflow': self.instance.workflow,
-                    'output': self.instance,
-                },
-            )
+            try:
+                attachment, created = Attachment.objects.get_or_create(
+                    file_id=file_id,
+                    account=self.account,
+                    defaults={
+                        'source_type': source_type,
+                        'access_type': AccessType.RESTRICTED,
+                        'task': self.instance.task,
+                        'workflow': self.instance.workflow,
+                        'output': self.instance,
+                    },
+                )
+            except IntegrityError:
+                continue
             if created:
                 service = AttachmentService(user=self.user)
                 service.instance = attachment

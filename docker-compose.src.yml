@@ -105,9 +105,6 @@ services:
       AI_PROVIDER: ${AI_PROVIDER}
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER}
-      STORAGE: ${STORAGE:-no}
-      STORAGE_PROVIDER: ${STORAGE_PROVIDER}
-      GOOGLE_APPLICATION_CREDENTIALS: /pneumatic_backend/google_api_credentials.json
       SENTRY_DSN: ${SENTRY_DSN}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
@@ -194,9 +191,6 @@ services:
       AI_PROVIDER: ${AI_PROVIDER}
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER}
-      STORAGE: ${STORAGE:-no}
-      STORAGE_PROVIDER: ${STORAGE_PROVIDER}
-      GOOGLE_APPLICATION_CREDENTIALS: /pneumatic_backend/google_api_credentials.json
       SENTRY_DSN: ${SENTRY_DSN}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
@@ -275,9 +269,6 @@ services:
       AI_PROVIDER: ${AI_PROVIDER}
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER}
-      STORAGE: ${STORAGE:-no}
-      STORAGE_PROVIDER: ${STORAGE_PROVIDER}
-      GOOGLE_APPLICATION_CREDENTIALS: /pneumatic_backend/google_api_credentials.json
       SENTRY_DSN: ${SENTRY_DSN}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
@@ -336,7 +327,6 @@ services:
       SSO_PROVIDER: ${SSO_PROVIDER} # Allowed values: okta, auth0
       AI: ${AI:-no}
       PUSH: ${PUSH:-no}
-      STORAGE: ${STORAGE:-no}
       SENTRY_DSN: ${SENTRY_DSN}
       FIREBASE_VAPID_KEY: ${FIREBASE_VAPID_KEY}
       FIREBASE_API_KEY: ${FIREBASE_API_KEY}
@@ -392,35 +382,35 @@ services:
       context: ./storage
     container_name: pneumatic-file-service
     environment:
-      - BACKEND_PRIVATE_URL=${BACKEND_PRIVATE_URL:-http://pneumatic-nginx/}
-      - DEBUG=${FILE_DEBUG:-false}
-      - CONFIG=${FILE_CONFIG:-Production}
-      - WORKERS=${FILE_WORKERS:-1}
-      - PORT=${FILE_PORT:-8000}
-      - ALLOWED_ORIGINS=${FILE_ALLOWED_ORIGINS:-["*"]}
-      - POSTGRES_USER=${FILE_POSTGRES_USER:-pneumatic}
-      - POSTGRES_PASSWORD=${FILE_POSTGRES_PASSWORD:-pneumatic}
-      - POSTGRES_DB=${FILE_POSTGRES_DB:-pneumatic}
-      - POSTGRES_HOST=${FILE_POSTGRES_HOST:-file-postgres}
-      - POSTGRES_PORT=${FILE_POSTGRES_PORT:-5432}
-      - STORAGE_TYPE=${FILE_STORAGE_TYPE:-local}
-      - SEAWEEDFS_S3_ENDPOINT=${FILE_SEAWEEDFS_S3_ENDPOINT:-http://seaweedfs-filer:8333}
-      - SEAWEEDFS_S3_ACCESS_KEY=${FILE_SEAWEEDFS_S3_ACCESS_KEY:-any-secret-key-will-work}
-      - SEAWEEDFS_S3_SECRET_KEY=${FILE_SEAWEEDFS_S3_SECRET_KEY:-any-secret-key-will-work}
-      - SEAWEEDFS_S3_REGION=${FILE_SEAWEEDFS_S3_REGION:-us-central1}
-      - SEAWEEDFS_S3_USE_SSL=${FILE_SEAWEEDFS_S3_USE_SSL:-false}
-      - GCS_S3_ENDPOINT=${FILE_GCS_S3_ENDPOINT}
-      - GCS_S3_ACCESS_KEY=${FILE_GCS_S3_ACCESS_KEY}
-      - GCS_S3_SECRET_KEY=${FILE_GCS_S3_SECRET_KEY}
-      - GCS_S3_REGION=${FILE_GCS_S3_REGION}
-      - FASTAPI_BASE_URL=${FILE_FASTAPI_BASE_URL:-http://file.localhost}
-      - BUCKET_PREFIX=${FILE_BUCKET_PREFIX:-pneumatic-dev-test}
-      - MAX_FILE_SIZE=${FILE_MAX_FILE_SIZE:-104857600}
-      - CHUNK_SIZE=${FILE_CHUNK_SIZE:-1048576}
-      - AUTH_REDIS_URL=${FILE_AUTH_REDIS_URL:-redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/1}
-      - KEY_PREFIX_REDIS=${FILE_KEY_PREFIX_REDIS:-:1:}
-      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
-      - AUTH_TOKEN_ITERATIONS=${FILE_AUTH_TOKEN_ITERATIONS:-1}
+      BACKEND_PRIVATE_URL: ${BACKEND_PRIVATE_URL:-http://pneumatic-nginx/}
+      DEBUG: ${FILE_DEBUG:-false}
+      CONFIG: ${FILE_CONFIG:-Production}
+      WORKERS: ${FILE_WORKERS:-1}
+      PORT: ${FILE_PORT:-8000}
+      ALLOWED_ORIGINS: ${FILE_ALLOWED_ORIGINS:-["*"]}
+      POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
+      POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
+      POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
+      POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
+      POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
+      STORAGE_TYPE: ${FILE_STORAGE_TYPE:-local}
+      SEAWEEDFS_S3_ENDPOINT: ${FILE_SEAWEEDFS_S3_ENDPOINT:-http://seaweedfs-filer:8333}
+      SEAWEEDFS_S3_ACCESS_KEY: ${FILE_SEAWEEDFS_S3_ACCESS_KEY:-any-secret-key-will-work}
+      SEAWEEDFS_S3_SECRET_KEY: ${FILE_SEAWEEDFS_S3_SECRET_KEY:-any-secret-key-will-work}
+      SEAWEEDFS_S3_REGION: ${FILE_SEAWEEDFS_S3_REGION:-us-central1}
+      SEAWEEDFS_S3_USE_SSL: ${FILE_SEAWEEDFS_S3_USE_SSL:-false}
+      GCS_S3_ENDPOINT: ${FILE_GCS_S3_ENDPOINT}
+      GCS_S3_ACCESS_KEY: ${FILE_GCS_S3_ACCESS_KEY}
+      GCS_S3_SECRET_KEY: ${FILE_GCS_S3_SECRET_KEY}
+      GCS_S3_REGION: ${FILE_GCS_S3_REGION}
+      FASTAPI_BASE_URL: ${FILE_FASTAPI_BASE_URL:-http://file.localhost}
+      BUCKET_PREFIX: ${FILE_BUCKET_PREFIX:-pneumatic-dev-test}
+      MAX_FILE_SIZE: ${FILE_MAX_FILE_SIZE:-104857600}
+      CHUNK_SIZE: ${FILE_CHUNK_SIZE:-1048576}
+      AUTH_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/1"
+      KEY_PREFIX_REDIS: ${FILE_KEY_PREFIX_REDIS:-:1:}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
+      AUTH_TOKEN_ITERATIONS: ${FILE_AUTH_TOKEN_ITERATIONS:-1}
     volumes:
       - file_service_media:/app/media
     depends_on:
@@ -434,9 +424,9 @@ services:
     image: postgres:15-bookworm
     container_name: pneumatic-file-postgres
     environment:
-      - POSTGRES_DB=${FILE_POSTGRES_DB:-pneumatic}
-      - POSTGRES_USER=${FILE_POSTGRES_USER:-pneumatic}
-      - POSTGRES_PASSWORD=${FILE_POSTGRES_PASSWORD:-pneumatic}
+      POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
+      POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
+      POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
     volumes:
       - file_postgres_data:/var/lib/postgresql/data
     networks:
@@ -446,8 +436,6 @@ services:
   seaweedfs-master:
     image: chrislusf/seaweedfs:3.95
     container_name: pneumatic-seaweedfs-master
-    profiles:
-      - local-storage
     command: master -ip=seaweedfs-master -port=9333
     ports:
       - "9333:9333"
@@ -460,8 +448,6 @@ services:
   seaweedfs-volume:
     image: chrislusf/seaweedfs:3.95
     container_name: pneumatic-seaweedfs-volume
-    profiles:
-      - local-storage
     command:
       - volume
       - -mserver=seaweedfs-master:9333
@@ -481,8 +467,6 @@ services:
   seaweedfs-filer:
     image: chrislusf/seaweedfs:3.95
     container_name: pneumatic-seaweedfs-filer
-    profiles:
-      - local-storage
     command: filer -master="seaweedfs-master:9333" -s3 -s3.port=8333
     ports:
       - "8888:8888"

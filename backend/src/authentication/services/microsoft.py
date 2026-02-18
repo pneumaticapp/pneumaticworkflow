@@ -140,7 +140,7 @@ class MicrosoftGraphApiMixin:
         """ Save photo in the storage and return public URL """
 
         file_url = None
-        if not settings.PROJECT_CONF['STORAGE'] or account is None:
+        if account is None:
             return file_url
         response = self._graph_api_request(
             path=self.photo_path.format(user_id=user_id),
@@ -470,7 +470,7 @@ class MicrosoftAuthService(
     ) -> Optional[str]:
         """Upload user photo from Graph and return public URL.
         Uses tokens from current auth flow (call right after get_user_data)."""
-        if not self.tokens or not settings.PROJECT_CONF['STORAGE']:
+        if not self.tokens:
             return None
         access_token = (
             f'{self.tokens["token_type"]} {self.tokens["access_token"]}'
@@ -488,16 +488,13 @@ class MicrosoftAuthService(
     ) -> None:
         """Set user.photo from user_data or upload for new user (signup)."""
         photo = user_data.get('photo')
+        if not photo:
+            photo = self.upload_photo_for_user(
+                user,
+                user_data.get('ms_graph_user_id'),
+            )
         if photo:
             user.photo = photo
-            user.save(update_fields=['photo'])
-            return
-        uploaded = self.upload_photo_for_user(
-            user,
-            user_data.get('ms_graph_user_id'),
-        )
-        if uploaded:
-            user.photo = uploaded
             user.save(update_fields=['photo'])
 
     def update_user_contacts(self, user: UserModel):

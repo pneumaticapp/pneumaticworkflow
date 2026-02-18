@@ -41,6 +41,9 @@ from src.processes.services.exceptions import (
     CommentTextRequired,
 )
 from src.services.markdown import MarkdownService
+from src.storage.services.attachments import (
+    clear_guardian_permissions_for_attachment_ids,
+)
 from src.storage.utils import refresh_attachments
 
 UserModel = get_user_model()
@@ -768,7 +771,10 @@ class CommentService(BaseModelService):
         task = self.instance.task
         if task is not None and not (task.is_active or task.is_delayed):
             raise CommentedTaskNotActive
-        self.instance.storage_attachments.delete()
+        storage_attachments = self.instance.storage_attachments
+        ids_to_delete = list(storage_attachments.values_list('id', flat=True))
+        clear_guardian_permissions_for_attachment_ids(ids_to_delete)
+        storage_attachments.delete()
         super().partial_update(
             status=CommentStatus.DELETED,
             with_attachments=False,

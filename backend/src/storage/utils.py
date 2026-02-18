@@ -11,7 +11,10 @@ from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
 from src.storage.models import Attachment
-from src.storage.services.attachments import AttachmentService
+from src.storage.services.attachments import (
+    AttachmentService,
+    clear_guardian_permissions_for_attachment_ids,
+)
 
 UserModel = get_user_model()
 
@@ -22,14 +25,15 @@ def _get_file_service_link_pattern(
     """
     Build regex for file service markdown links;
     optional ^...$ for full match.
+    Groups: (1) link label, (2) full URL, (3) file_id.
     """
     file_domain = settings.FILE_DOMAIN
     if not file_domain:
         return None
     core = (
         rf'\[([^\]]+)\]\('
-        rf'https?://[^/\s]*{re.escape(file_domain)}'
-        rf'/([a-zA-Z0-9_-]{{8,64}})(?:[^\s)]*)?\)'
+        rf'(https?://[^/\s]*{re.escape(file_domain)}'
+        rf'/([a-zA-Z0-9_-]{{8,64}})(?:[^\s)]*)?)\)'
     )
     if anchored:
         core = '^' + core + '$'
@@ -69,7 +73,7 @@ def parse_single_file_service_link(text: str) -> Optional[Tuple[str, str]]:
     """
     Parse one markdown link to file service.
 
-    Returns (link_text, file_id) if text is exactly one file service link,
+    Returns (full_url, file_id) if text is exactly one file service link,
     else None.
     """
     pattern = _get_file_service_link_pattern(anchored=True)
@@ -77,7 +81,7 @@ def parse_single_file_service_link(text: str) -> Optional[Tuple[str, str]]:
         return None
     match = pattern.match(text.strip())
     if match:
-        return (match.group(1), match.group(2))
+        return (match.group(2), match.group(3))
     return None
 
 
@@ -101,7 +105,7 @@ def extract_file_ids_from_text(text: str) -> List[str]:
     if not text or pattern is None:
         return []
     matches = pattern.findall(text)
-    file_ids = [file_id for _, file_id in matches]
+    file_ids = [m[2] for m in matches]
     return list(dict.fromkeys(file_ids))
 
 
@@ -157,10 +161,13 @@ def sync_storage_attachments_for_scope(
         'template': template,
     }
     if remove_file_ids:
-        Attachment.objects.filter(
+        to_delete = Attachment.objects.filter(
             file_id__in=remove_file_ids,
             **filter_kwargs,
-        ).delete()
+        )
+        ids_to_delete = list(to_delete.values_list('id', flat=True))
+        clear_guardian_permissions_for_attachment_ids(ids_to_delete)
+        to_delete.delete()
     if add_file_ids:
         service = AttachmentService(user=user)
         service.bulk_create_for_scope(
@@ -199,7 +206,7 @@ def refresh_attachments_for_event(
     user: UserModel,
     text: Optional[str],
     event,
-) -> List[str]:
+) -> Tuple[List[str], bool]:
     """
     Refreshes attachments for workflow event (comment).
 
@@ -210,7 +217,8 @@ def refresh_attachments_for_event(
         event: Workflow event
 
     Returns:
-        List of new file_ids
+        (new_file_ids, has_attachments). has_attachments reflects DB state
+        after refresh (or after rollback on exception).
     """
     file_ids = extract_file_ids_from_text(text)
 
@@ -230,8 +238,11 @@ def refresh_attachments_for_event(
 
     # If no files in text - delete all event attachments
     if not file_ids:
-        Attachment.objects.filter(**filter_kwargs).delete()
-        return []
+        to_delete = Attachment.objects.filter(**filter_kwargs)
+        ids_to_delete = list(to_delete.values_list('id', flat=True))
+        clear_guardian_permissions_for_attachment_ids(ids_to_delete)
+        to_delete.delete()
+        return [], False
 
     # Get existing file_ids
     existent_file_ids = list(
@@ -245,9 +256,12 @@ def refresh_attachments_for_event(
     new_files_ids = list(set(file_ids) - set(existent_file_ids))
     try:
         with transaction.atomic():
-            Attachment.objects.filter(
+            to_delete = Attachment.objects.filter(
                 **filter_kwargs,
-            ).exclude(file_id__in=file_ids).delete()
+            ).exclude(file_id__in=file_ids)
+            ids_to_delete = list(to_delete.values_list('id', flat=True))
+            clear_guardian_permissions_for_attachment_ids(ids_to_delete)
+            to_delete.delete()
             if new_files_ids:
                 service = AttachmentService(user=user)
                 service.bulk_create_for_event(
@@ -257,8 +271,8 @@ def refresh_attachments_for_event(
                     event=event,
                 )
     except (ValueError, TypeError, IntegrityError):
-        return []
-    return new_files_ids
+        return [], bool(existent_file_ids)
+    return new_files_ids, True
 
 
 def refresh_attachments_for_text(
@@ -306,10 +320,13 @@ def refresh_attachments_for_text(
     # If no files in text - delete only attachments not linked to fields
     if not file_ids:
         # Do not delete attachments linked to fields (output != None)
-        Attachment.objects.filter(
+        to_delete = Attachment.objects.filter(
             **filter_kwargs,
             output__isnull=True,  # Delete only those not linked to fields
-        ).delete()
+        )
+        ids_to_delete = list(to_delete.values_list('id', flat=True))
+        clear_guardian_permissions_for_attachment_ids(ids_to_delete)
+        to_delete.delete()
         return []
 
     # Get existing file_ids
@@ -324,10 +341,13 @@ def refresh_attachments_for_text(
     new_files_ids = list(set(file_ids) - set(existent_file_ids))
     try:
         with transaction.atomic():
-            Attachment.objects.filter(
+            to_delete = Attachment.objects.filter(
                 **filter_kwargs,
                 output__isnull=True,  # Delete only those not linked to fields
-            ).exclude(file_id__in=file_ids).delete()
+            ).exclude(file_id__in=file_ids)
+            ids_to_delete = list(to_delete.values_list('id', flat=True))
+            clear_guardian_permissions_for_attachment_ids(ids_to_delete)
+            to_delete.delete()
             if new_files_ids:
                 service = AttachmentService(user=user)
                 service.bulk_create_for_scope(
@@ -447,19 +467,15 @@ def _refresh_workflow_event_attachments(
 ) -> List[str]:
     """Refreshes attachments for workflow event (comment)."""
     # For workflow events attachments are always linked to event
-    new_file_ids = refresh_attachments_for_event(
+    new_file_ids, has_attachments = refresh_attachments_for_event(
         account=event.account,
         user=user,
         text=event.text,
         event=event,
     )
-
-    # Update with_attachments field for WorkflowEvent
-    has_attachments = bool(extract_file_ids_from_text(event.text))
     if event.with_attachments != has_attachments:
         event.with_attachments = has_attachments
         event.save(update_fields=['with_attachments'])
-
     return new_file_ids
 
 

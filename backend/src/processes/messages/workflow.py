@@ -94,7 +94,7 @@ MSG_PW_0046 = _(
     'Contact administrator.',
 )
 # Translators: Comment create validation
-MSG_PW_0047 = _('You need to specify the comment text or attachments.')
+MSG_PW_0047 = _('You need to specify the comment text.')
 MSG_PW_0048 = _('You cannot write a comment on a completed workflow.')
 MSG_PW_0049 = _('You cannot change a deleted comment.')
 MSG_PW_0050 = lambda bytes_limit: format_lazy(

@@ -1,6 +1,5 @@
 import os
 
-from django.conf import settings
 from django.contrib import admin
 from django.contrib.admin import ModelAdmin
 from django.forms import CharField, ModelForm, forms
@@ -8,7 +7,6 @@ from django.utils.safestring import mark_safe
 from tinymce.widgets import TinyMCE
 
 from src.applications.models import Integration
-from src.processes.messages.workflow import MSG_PW_0001
 from src.storage.services.exceptions import (
     FileServiceConnectionException,
     FileServiceException,
@@ -59,10 +57,7 @@ class IntegrationCreateForm(ModelForm):
         return cleaned_data
 
     def clean_image_file(self):
-        image_file = self.cleaned_data.get('image_file')
-        if image_file and not settings.PROJECT_CONF['STORAGE']:
-            self.add_error(field='image_file', error=MSG_PW_0001)
-        return image_file
+        return self.cleaned_data.get('image_file')
 
     def save(self, commit=True):
 

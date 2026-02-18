@@ -436,8 +436,6 @@ class Common(Configuration):
         'AI_PROVIDER': env.get('AI_PROVIDER'),
         'PUSH': env.get('PUSH') == 'yes',
         'PUSH_PROVIDER': env.get('PUSH_PROVIDER'),
-        'STORAGE': env.get('STORAGE') == 'yes',
-        'STORAGE_PROVIDER': env.get('STORAGE_PROVIDER'),
         'SENTRY_DSN': env.get('SENTRY_DSN'),
     }
 

@@ -86,5 +86,12 @@ class Attachment(SoftDeleteModel, AccountBaseMixin):
 
     objects = BaseSoftDeleteManager.from_queryset(AttachmentQuerySet)()
 
+    def delete(self, **kwargs):
+        from src.storage.services.attachments import (  # noqa: PLC0415
+            clear_guardian_permissions_for_attachment_ids,
+        )
+        clear_guardian_permissions_for_attachment_ids([self.pk])
+        return super().delete(**kwargs)
+
     def __str__(self):
         return f"Attachment {self.file_id} ({self.source_type})"

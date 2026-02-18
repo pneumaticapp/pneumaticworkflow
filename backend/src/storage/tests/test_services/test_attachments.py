@@ -1,6 +1,9 @@
 import pytest
+from django.contrib.contenttypes.models import ContentType
+from guardian.models import UserObjectPermission
 from guardian.shortcuts import assign_perm
 
+from src.permissions.models import GroupObjectPermission
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
@@ -390,7 +393,7 @@ class TestAttachmentServiceAssignPermissions:
             file_id=attachment.file_id,
         )
 
-    def test_assign_account_permissions__no_individual_perms(self):
+    def test_create__access_type_account__no_object_permissions(self):
         # arrange
         user = create_test_admin()
         service = AttachmentService(user=user)
@@ -404,6 +407,52 @@ class TestAttachmentServiceAssignPermissions:
         )
 
         # assert
-        # For account access, no individual permissions are assigned
         attachment = service.instance
         assert attachment.access_type == AccessType.ACCOUNT
+        ctype = ContentType.objects.get_for_model(Attachment)
+        obj_pk = str(attachment.pk)
+        assert not UserObjectPermission.objects.filter(
+            object_pk=obj_pk,
+            permission__content_type=ctype,
+        ).exists()
+        assert not GroupObjectPermission.objects.filter(
+            object_pk=obj_pk,
+            content_type=ctype,
+        ).exists()
+
+
+class TestAttachmentDeleteGuardianCleanup:
+
+    def test_delete__removes_guardian_permissions__ok(self):
+        # arrange
+        user = create_test_admin()
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+        service = AttachmentService(user=user)
+        service.create(
+            file_id='to_delete_restricted',
+            account=user.account,
+            access_type=AccessType.RESTRICTED,
+            source_type=SourceType.TASK,
+            task=task,
+        )
+        attachment = service.instance
+        ctype = ContentType.objects.get_for_model(Attachment)
+        obj_pk = str(attachment.pk)
+        assert UserObjectPermission.objects.filter(
+            object_pk=obj_pk,
+            permission__content_type=ctype,
+        ).exists()
+
+        # act
+        attachment.delete()
+
+        # assert
+        assert not UserObjectPermission.objects.filter(
+            object_pk=obj_pk,
+            permission__content_type=ctype,
+        ).exists()
+        assert not GroupObjectPermission.objects.filter(
+            object_pk=obj_pk,
+            content_type=ctype,
+        ).exists()

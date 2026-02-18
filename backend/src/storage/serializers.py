@@ -1,8 +1,10 @@
 from typing import Optional
 
 from rest_framework import serializers
+from rest_framework.serializers import ValidationError
 
 from src.generics.mixins.serializers import CustomValidationErrorMixin
+from src.storage.messages import MSG_FS_0011
 from src.storage.models import Attachment
 from src.storage.paginations import AttachmentListPagination
 from src.storage.utils import get_file_service_file_url
@@ -41,11 +43,8 @@ class AttachmentCheckPermissionSerializer(
     )
 
     def validate_file_id(self, value):
-        """Validate file_id."""
-        if not value or not value.strip():
-            raise serializers.ValidationError(
-                'file_id cannot be empty',
-            )
+        if not value.strip():
+            raise ValidationError(MSG_FS_0011)
         return value.strip()
 
 

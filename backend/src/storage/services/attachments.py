@@ -1,4 +1,4 @@
-from typing import List
+from typing import Iterable, List
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
@@ -20,6 +20,28 @@ from src.storage.models import Attachment
 UserModel = get_user_model()
 
 
+def clear_guardian_permissions_for_attachment_ids(
+    attachment_ids: Iterable[int],
+) -> None:
+    """
+    Remove guardian UserObjectPermission and GroupObjectPermission rows
+    for the given Attachment ids. Generic object_pk links are not
+    CASCADE-cleaned by Django; call before deleting attachments.
+    """
+    if not attachment_ids:
+        return
+    ctype = ContentType.objects.get_for_model(Attachment)
+    obj_pks = [str(pk) for pk in attachment_ids]
+    UserObjectPermission.objects.filter(
+        content_type=ctype,
+        object_pk__in=obj_pks,
+    ).delete()
+    GroupObjectPermission.objects.filter(
+        content_type=ctype,
+        object_pk__in=obj_pks,
+    ).delete()
+
+
 class AttachmentService(BaseModelService):
     """
     Service for working with attachments.
@@ -37,8 +59,6 @@ class AttachmentService(BaseModelService):
         """
         if self.instance.access_type == AccessType.RESTRICTED:
             self._assign_restricted_permissions()
-        elif self.instance.access_type == AccessType.ACCOUNT:
-            self._assign_account_permissions()
 
     def reassign_restricted_permissions(self, attachment: Attachment) -> None:
         """
@@ -47,7 +67,8 @@ class AttachmentService(BaseModelService):
         """
         self.instance = attachment
         if attachment.access_type == AccessType.RESTRICTED:
-            self._assign_restricted_permissions()
+            with transaction.atomic():
+                self._assign_restricted_permissions()
 
     def _assign_restricted_permissions(self):
         """Assigns permissions for restricted access."""
@@ -74,7 +95,9 @@ class AttachmentService(BaseModelService):
         ).get(id=task.id)
 
         # Clear existing so removed performers lose access when we reassign
+        ctype = ContentType.objects.get_for_model(Attachment)
         for uop in UserObjectPermission.objects.filter(
+                content_type=ctype,
                 object_pk=str(self.instance.pk),
         ).select_related('user'):
             remove_perm(
@@ -82,7 +105,6 @@ class AttachmentService(BaseModelService):
                 uop.user,
                 self.instance,
             )
-        ctype = ContentType.objects.get_for_model(Attachment)
         GroupObjectPermission.objects.filter(
             content_type=ctype,
             object_pk=str(self.instance.pk),
@@ -171,7 +193,9 @@ class AttachmentService(BaseModelService):
         )
 
         # Clear existing so removed owners lose access when we reassign
+        ctype = ContentType.objects.get_for_model(Attachment)
         for uop in UserObjectPermission.objects.filter(
+                content_type=ctype,
                 object_pk=str(self.instance.pk),
         ).select_related('user'):
             remove_perm(
@@ -179,7 +203,6 @@ class AttachmentService(BaseModelService):
                 uop.user,
                 self.instance,
             )
-        ctype = ContentType.objects.get_for_model(Attachment)
         GroupObjectPermission.objects.filter(
             content_type=ctype,
             object_pk=str(self.instance.pk),
@@ -228,7 +251,9 @@ class AttachmentService(BaseModelService):
         ).get(id=workflow.id)
 
         # Clear existing so removed participants lose access when we reassign
+        ctype = ContentType.objects.get_for_model(Attachment)
         for uop in UserObjectPermission.objects.filter(
+                content_type=ctype,
                 object_pk=str(self.instance.pk),
         ).select_related('user'):
             remove_perm(
@@ -236,7 +261,6 @@ class AttachmentService(BaseModelService):
                 uop.user,
                 self.instance,
             )
-        ctype = ContentType.objects.get_for_model(Attachment)
         GroupObjectPermission.objects.filter(
             content_type=ctype,
             object_pk=str(self.instance.pk),
@@ -315,15 +339,6 @@ class AttachmentService(BaseModelService):
                         content_type=ctype,
                         object_pk=str(self.instance.pk),
                     )
-
-    def _assign_account_permissions(self):
-        """
-        Assigns permissions for account access.
-        All account users have access.
-        """
-        # For account access permissions are not assigned individually
-        # Check will be done via account_id
-        pass
 
     def bulk_create(
         self,

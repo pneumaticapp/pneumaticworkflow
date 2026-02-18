@@ -14,10 +14,8 @@ pytestmark = pytest.mark.django_db
 class TestRefreshWorkflowEventAttachments:
 
     @patch('src.storage.utils.refresh_attachments_for_event')
-    @patch('src.storage.utils.extract_file_ids_from_text')
     def test_refresh_workflow_event_attachments__task_comment__updates(
         self,
-        mock_extract,
         mock_refresh_event,
     ):
         # arrange
@@ -31,8 +29,7 @@ class TestRefreshWorkflowEventAttachments:
         )
         mock_event.with_attachments = False
         mock_user = Mock()
-        mock_extract.return_value = ['abc123']
-        mock_refresh_event.return_value = ['abc123']
+        mock_refresh_event.return_value = (['abc123'], True)
 
         # act
         result = _refresh_workflow_event_attachments(mock_event, mock_user)
@@ -51,10 +48,8 @@ class TestRefreshWorkflowEventAttachments:
         )
 
     @patch('src.storage.utils.refresh_attachments_for_event')
-    @patch('src.storage.utils.extract_file_ids_from_text')
     def test_refresh_workflow_event_attachments__workflow_comment__updates(
         self,
-        mock_extract,
         mock_refresh_event,
     ):
         # arrange
@@ -69,8 +64,7 @@ class TestRefreshWorkflowEventAttachments:
         )
         mock_event.with_attachments = False
         mock_user = Mock()
-        mock_extract.return_value = ['def456']
-        mock_refresh_event.return_value = ['def456']
+        mock_refresh_event.return_value = (['def456'], True)
 
         # act
         result = _refresh_workflow_event_attachments(mock_event, mock_user)
@@ -89,10 +83,8 @@ class TestRefreshWorkflowEventAttachments:
         )
 
     @patch('src.storage.utils.refresh_attachments_for_event')
-    @patch('src.storage.utils.extract_file_ids_from_text')
     def test_refresh_workflow_event_attachments__no_files__clears_flag(
         self,
-        mock_extract,
         mock_refresh_event,
     ):
         # arrange
@@ -104,8 +96,7 @@ class TestRefreshWorkflowEventAttachments:
         mock_event.text = "Plain text without files"
         mock_event.with_attachments = True
         mock_user = Mock()
-        mock_extract.return_value = []
-        mock_refresh_event.return_value = []
+        mock_refresh_event.return_value = ([], False)
 
         # act
         result = _refresh_workflow_event_attachments(mock_event, mock_user)
@@ -118,10 +109,8 @@ class TestRefreshWorkflowEventAttachments:
         )
 
     @patch('src.storage.utils.refresh_attachments_for_event')
-    @patch('src.storage.utils.extract_file_ids_from_text')
     def test_refresh_workflow_event_attachments__flag_unchanged__no_save(
         self,
-        mock_extract,
         mock_refresh_event,
     ):
         # arrange
@@ -135,8 +124,7 @@ class TestRefreshWorkflowEventAttachments:
         )
         mock_event.with_attachments = True
         mock_user = Mock()
-        mock_extract.return_value = ['abc123']
-        mock_refresh_event.return_value = ['abc123']
+        mock_refresh_event.return_value = (['abc123'], True)
 
         # act
         result = _refresh_workflow_event_attachments(mock_event, mock_user)
