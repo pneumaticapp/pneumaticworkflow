@@ -4,7 +4,7 @@ import { EExtraFieldType } from '../../../types/template';
 import { RichEditor } from '..';
 import type { IRichEditorHandle, IRichEditorProps } from '..';
 
-jest.mock('../lexical', () => {
+jest.mock('../RichEditor', () => {
   const React = require('react');
   const ForwardRef = React.forwardRef((props: Record<string, unknown>, ref: React.Ref<unknown>) => {
     React.useImperativeHandle(ref, () => ({

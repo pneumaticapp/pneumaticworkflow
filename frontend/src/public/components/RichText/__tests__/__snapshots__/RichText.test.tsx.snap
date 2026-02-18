@@ -4,27 +4,22 @@ exports[`RichText RichText and loom link in text flag return text with loom ifra
 <div
   class="container"
 >
-  <div
-    aria-autocomplete="none"
-    aria-readonly="true"
-    class="content"
-    contenteditable="false"
-    data-lexical-editor="true"
-    data-testid="rich-text-contenteditable"
-    spellcheck="true"
-    style="user-select: text; white-space: pre-wrap; word-break: break-word;"
-  >
-    <p
-      class="lexical-rich-editor-paragraph"
-      dir="ltr"
-    >
-      <span
-        data-lexical-text="true"
-      >
-        test1 https://www.loom.com/share/7f68fa7f01e349cab91b0c36168f68c3?t=1
-      </span>
-    </p>
+  <p>
+    test1 
+  </p>
+  <div>
+    <iframe
+      allowfullscreen=""
+      class="video"
+      frameborder="0"
+      mozallowfullscreen=""
+      src="https://www.useloom.com/embed/7f68fa7f01e349cab91b0c36168f68c3"
+      webkitallowfullscreen=""
+    />
   </div>
+  <p />
+  
+
 </div>
 `;
 
@@ -32,27 +27,33 @@ exports[`RichText RichText and youtube and loom link in text flag return text wi
 <div
   class="container"
 >
-  <div
-    aria-autocomplete="none"
-    aria-readonly="true"
-    class="content"
-    contenteditable="false"
-    data-lexical-editor="true"
-    data-testid="rich-text-contenteditable"
-    spellcheck="true"
-    style="user-select: text; white-space: pre-wrap; word-break: break-word;"
-  >
-    <p
-      class="lexical-rich-editor-paragraph"
-      dir="ltr"
-    >
-      <span
-        data-lexical-text="true"
-      >
-        test1 https://www.loom.com/share/7f68fa7f01e349cab91b0c36168f68c3?t=1 https://www.youtube.com/watch?v=jNQXAC9IVRw
-      </span>
-    </p>
+  <p>
+    test1 
+  </p>
+  <div>
+    <iframe
+      allowfullscreen=""
+      class="video"
+      frameborder="0"
+      mozallowfullscreen=""
+      src="https://www.useloom.com/embed/7f68fa7f01e349cab91b0c36168f68c3"
+      webkitallowfullscreen=""
+    />
   </div>
+   
+  <div>
+    <iframe
+      allowfullscreen=""
+      class="video"
+      frameborder="0"
+      mozallowfullscreen=""
+      src="//www.youtube.com/embed/jNQXAC9IVRw"
+      webkitallowfullscreen=""
+    />
+  </div>
+  <p />
+  
+
 </div>
 `;
 
@@ -60,27 +61,22 @@ exports[`RichText RichText and youtube in text flag return text with youtube ifr
 <div
   class="container"
 >
-  <div
-    aria-autocomplete="none"
-    aria-readonly="true"
-    class="content"
-    contenteditable="false"
-    data-lexical-editor="true"
-    data-testid="rich-text-contenteditable"
-    spellcheck="true"
-    style="user-select: text; white-space: pre-wrap; word-break: break-word;"
-  >
-    <p
-      class="lexical-rich-editor-paragraph"
-      dir="ltr"
-    >
-      <span
-        data-lexical-text="true"
-      >
-        test1 https://www.youtube.com/watch?v=jNQXAC9IVRw
-      </span>
-    </p>
+  <p>
+    test1 
+  </p>
+  <div>
+    <iframe
+      allowfullscreen=""
+      class="video"
+      frameborder="0"
+      mozallowfullscreen=""
+      src="//www.youtube.com/embed/jNQXAC9IVRw"
+      webkitallowfullscreen=""
+    />
   </div>
+  <p />
+  
+
 </div>
 `;
 
@@ -88,42 +84,26 @@ exports[`RichText renders correct html for mentions and links 1`] = `
 <div
   class="container"
 >
-  <div
-    aria-autocomplete="none"
-    aria-readonly="true"
-    class="content"
-    contenteditable="false"
-    data-lexical-editor="true"
-    data-testid="rich-text-contenteditable"
-    spellcheck="true"
-    style="user-select: text; white-space: pre-wrap; word-break: break-word;"
-  >
-    <p
-      class="lexical-rich-editor-paragraph"
-      dir="ltr"
+  <p>
+    Hello, 
+    <span
+      class="mention"
     >
-      <span
-        data-lexical-text="true"
-      >
-        Hello, 
-      </span>
-      <span
-        contenteditable="false"
-        data-lexical-decorator="true"
-      >
-        <span
-          class="lexical-rich-editor-mention"
-        >
-          @Jyoti Puri
-        </span>
-      </span>
-      <span
-        data-lexical-text="true"
-      >
-         , look here: link: http://pneumatic.app/
-      </span>
-    </p>
-  </div>
+      @Jyoti Puri
+    </span>
+    , look here: link: 
+    <a
+      href="http://pneumatic.app/"
+      target="_blank"
+    >
+      http://pneumatic.app/
+    </a>
+    <a />
+  </p>
+  <a>
+    
+
+  </a>
 </div>
 `;
 
@@ -131,26 +111,10 @@ exports[`RichText renders correct html for plain text 1`] = `
 <div
   class="container"
 >
-  <div
-    aria-autocomplete="none"
-    aria-readonly="true"
-    class="content"
-    contenteditable="false"
-    data-lexical-editor="true"
-    data-testid="rich-text-contenteditable"
-    spellcheck="true"
-    style="user-select: text; white-space: pre-wrap; word-break: break-word;"
-  >
-    <p
-      class="lexical-rich-editor-paragraph"
-      dir="ltr"
-    >
-      <span
-        data-lexical-text="true"
-      >
-        Some plain text
-      </span>
-    </p>
-  </div>
+  <p>
+    Some plain text
+  </p>
+  
+
 </div>
 `;

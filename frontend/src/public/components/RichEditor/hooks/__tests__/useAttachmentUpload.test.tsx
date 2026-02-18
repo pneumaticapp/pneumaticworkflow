@@ -4,22 +4,22 @@ import userEvent from '@testing-library/user-event';
 import type { MutableRefObject } from 'react';
 import type { LexicalEditor } from 'lexical';
 import { useAttachmentUpload } from '../useAttachmentUpload';
-import { INSERT_ATTACHMENT_COMMAND } from '../../../plugins';
+import { INSERT_ATTACHMENT_COMMAND } from '../../plugins';
 
-jest.mock('../../../../../../utils/uploadFiles', () => ({
+jest.mock('../../../../utils/uploadFiles', () => ({
   uploadFiles: jest.fn(),
 }));
-jest.mock('../../../../../Attachments/utils/getAttachmentType', () => ({
+jest.mock('../../../Attachments/utils/getAttachmentType', () => ({
   getAttachmentTypeByUrl: jest.fn(),
 }));
-jest.mock('../../../../../UI/Notifications', () => ({
+jest.mock('../../../UI/Notifications', () => ({
   NotificationManager: { warning: jest.fn() },
 }));
 
-const uploadFiles = require('../../../../../../utils/uploadFiles').uploadFiles as jest.Mock;
+const uploadFiles = require('../../../../utils/uploadFiles').uploadFiles as jest.Mock;
 const getAttachmentTypeByUrl =
-  require('../../../../../Attachments/utils/getAttachmentType').getAttachmentTypeByUrl as jest.Mock;
-const NotificationManager = require('../../../../../UI/Notifications').NotificationManager;
+  require('../../../Attachments/utils/getAttachmentType').getAttachmentTypeByUrl as jest.Mock;
+const NotificationManager = require('../../../UI/Notifications').NotificationManager;
 
 function TestWrapper({
   editorRef,

@@ -8,7 +8,7 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import type { IRichEditorHandle, IRichEditorProps } from '../types';
 
-jest.mock('../LexicalRichEditor', () => {
+jest.mock('../RichEditor', () => {
   const React = require('react');
   return {
     RichEditor: React.forwardRef(
@@ -35,7 +35,7 @@ jest.mock('../LexicalRichEditor', () => {
   };
 });
 
-const { RichEditor } = require('../LexicalRichEditor');
+const { RichEditor } = require('../RichEditor');
 
 const defaultProps: IRichEditorProps = {
   handleChange: jest.fn().mockResolvedValue(''),
