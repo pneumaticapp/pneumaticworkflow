@@ -1097,19 +1097,8 @@ class WorkflowActionService:
         with transaction.atomic():
             # Need run after update revert_to_task task (and performers)
             # and before start prev task
-            if self.workflow.is_completed:
-                # TODO Remove "task" parameter from
-                #  WorkflowEventService.workflow_revert_event
-                event_task = (
-                    self.workflow.tasks
-                    .completed()
-                    .order_by('-date_completed')
-                    .first()
-                )
-            else:
-                event_task = revert_from_tasks[0]
             WorkflowEventService.workflow_revert_event(
-                task=event_task,
+                task=revert_to_task,
                 user=self.user,
             )
             AnalyticService.workflow_returned(
