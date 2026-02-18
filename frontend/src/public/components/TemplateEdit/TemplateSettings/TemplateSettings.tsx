@@ -1,10 +1,8 @@
 import React, { useState } from 'react';
 import { useIntl } from 'react-intl';
-import TextareaAutosize from 'react-textarea-autosize';
 import { debounce } from 'throttle-debounce';
 import { useDispatch, useSelector } from 'react-redux';
 import StickyBox from 'react-sticky-box';
-import classnames from 'classnames';
 
 import { EditableText } from '../../UI';
 import { NAVBAR_HEIGHT } from '../../../constants/defaultValues';
@@ -16,6 +14,7 @@ import { TemplateControllsContainer } from '../TemplateControlls';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { IInfoWarningProps, InfoWarningsModal } from '../InfoWarningsModal';
 import { TemplateLastUpdateInfo } from '../TemplateLastUpdateInfo';
+import { RichEditor } from '../../RichEditor';
 
 import styles from './TemplateSettings.css';
 
@@ -77,11 +76,15 @@ export function TemplateSettings() {
           editButtonHint={formatMessage({ id: 'template.edit-name' })}
         />
         <div className={styles['description']}>
-          <TextareaAutosize
+          <RichEditor
+            withToolbar={false}
             placeholder={formatMessage({ id: 'template.placeholder' })}
-            className={classnames('form-control', styles['textarea'], styles['form-control-locall'])}
-            onChange={(e) => handleChangeTextField('description')(e.target.value)}
-            value={template.description}
+            className={styles['description-editor']}
+            defaultValue={template.description}
+            handleChange={(value) => {
+              handleChangeTextField('description')(value);
+              return Promise.resolve(value);
+            }}
           />
         </div>
 

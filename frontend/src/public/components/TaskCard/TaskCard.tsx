@@ -43,7 +43,7 @@ import { IntlMessages } from '../IntlMessages';
 import { Button } from '../UI/Buttons/Button';
 import { IAuthUser, IWorkflowLog } from '../../types/redux';
 import { WorkflowLog } from '../Workflows/WorkflowLog';
-import { DoneInfoIcon, PlayLogoIcon, ReturnTaskInfoIcon, ReturnToIcon } from '../icons';
+import { DoneInfoIcon, InfoIcon, PlayLogoIcon, ReturnTaskInfoIcon, ReturnToIcon } from '../icons';
 import { WorkflowLogSkeleton } from '../Workflows/WorkflowLog/WorkflowLogSkeleton';
 import { EOptionTypes, TUsersDropdownOption, UsersDropdown } from '../UI/form/UsersDropdown';
 import { TUserListItem } from '../../types/user';
@@ -58,10 +58,13 @@ import { SubWorkflowsContainer } from './SubWorkflows';
 import { EBgColorTypes, UserPerformer } from '../UI/UserPerformer';
 import { DateFormat } from '../UI/DateFormat';
 import UserDataWithGroup from '../UserDataWithGroup';
-
-import styles from './TaskCard.css';
+import { HelpModal } from './HelpModal/HelpModal';
 import { ReturnModal } from './ReturnModal';
 import { getGroupsList } from '../../redux/selectors/groups';
+
+import styles from './TaskCard.css';
+
+
 
 export enum ETaskCardViewMode {
   Single = 'single',
@@ -81,6 +84,7 @@ export interface ITaskCardProps {
   accountId: number;
   users: TUserListItem[];
   authUser: IAuthUser;
+  helpText?: string;
   addTaskPerformer(payload: TAddTaskPerformerPayload): void;
   removeTaskPerformer(payload: TRemoveTaskPerformerPayload): void;
   changeTaskWorkflowLog(value: Partial<IWorkflowLog>): void;
@@ -132,6 +136,9 @@ export function TaskCard({
   const workflowLinkRef = useRef(null);
   const [outputValues, setOutputValues] = useState([] as IExtraField[]);
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+
+  const helpText = workflow?.description ?? workflow?.description ?? null;
 
   useEffect(() => {
     autoFocusFirstField(wrapperRef.current);
@@ -558,6 +565,11 @@ export function TaskCard({
         onClose={() => setIsReturnModalOpen(false)}
         onConfirm={handleReturnTask}
       />
+      {helpText && <HelpModal
+        isOpen={isHelpModalOpen}
+        onClose={() => setIsHelpModalOpen(false)}
+        helpText={helpText}
+      />}
       <div
         ref={wrapperRef}
         className={classnames(styles['container'], viewMode === ETaskCardViewMode.Guest && styles['container_guest'])}
@@ -592,6 +604,18 @@ export function TaskCard({
         </div>
 
         <div className={styles['complete-form']}>
+          {helpText && (
+            <button
+              type="button"
+              className={styles['help-trigger']}
+              onClick={() => setIsHelpModalOpen(true)}
+            >
+              <span className={styles['help-trigger__label']}>
+                {formatMessage({ id: 'task.help', defaultMessage: 'Help' })}
+              </span>
+              <InfoIcon className={styles['help-trigger__icon']} />
+            </button>
+          )}
           {renderOutputFields()}
           {renderTaskButtons()}
           {viewMode !== ETaskCardViewMode.Guest && !isEmptyArray(task.subWorkflows) && (

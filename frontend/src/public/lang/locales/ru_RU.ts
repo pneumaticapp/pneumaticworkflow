@@ -448,6 +448,8 @@ export const ruMessages = {
   'task.completed-with-date': 'Завершено\u00A0',
   'task.not-found': 'Задача не найдена',
   'task.delegate': 'Делегировать',
+  'task.help-modal.title': 'Help',
+  'task.help-modal.cancel': 'Закрыть',
   'task.return-to.title': 'Вернуть',
   'task.return-to.subtitle':
     'Объясните, почему задача возвращается и что необходимо для её завершения, чтобы получатель мог принять соответствующие меры',
