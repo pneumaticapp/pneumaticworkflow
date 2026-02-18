@@ -531,6 +531,8 @@ export const enMessages = {
   'task.completed-with-date': 'Completed\u00A0',
   'task.not-found': 'Task not found',
   'task.delegate': 'Run Embedded Workflow',
+  'task.help-modal.title': 'Help',
+  'task.help-modal.cancel': 'Cancel',
   'task.return-to.title': 'Return',
   'task.return-to.subtitle':
     'Explain why the task’s being returned and what’s needed to complete it so whoever it’s returned to can take appropriate action',
