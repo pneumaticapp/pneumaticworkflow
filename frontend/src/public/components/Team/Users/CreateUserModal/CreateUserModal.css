@@ -17,10 +17,18 @@
   position: relative;
 }
 
+.modal__input-ellipsis input {
+  @mixin text-truncate;
+}
+
+.modal__password-field .modal__password-input-wrap input {
+  padding-right: 5.8rem;
+}
+
 .modal__copy-btn {
   position: absolute;
+  top: 2.4rem;
   right: 1.6rem;
-  bottom: 1.6rem;
   color: var(--pneumatic-color-link);
 
   @mixin text-small bold;

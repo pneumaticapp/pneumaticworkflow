@@ -89,11 +89,13 @@ export function CreateUserModal({ isOpen, onClose }: ICreateUserModalProps) {
                     name="firstName"
                     title={formatMessage({ id: 'team.create-user-modal.first-name' })}
                     fieldSize="lg"
+                    containerClassName={styles['modal__input-ellipsis']}
                   />
                   <FormikInputField
                     name="lastName"
                     title={formatMessage({ id: 'team.create-user-modal.last-name' })}
                     fieldSize="lg"
+                    containerClassName={styles['modal__input-ellipsis']}
                   />
                   <FormikInputField
                     name="email"
@@ -101,6 +103,7 @@ export function CreateUserModal({ isOpen, onClose }: ICreateUserModalProps) {
                     fieldSize="lg"
                     isRequired
                     type="email"
+                    containerClassName={styles['modal__input-ellipsis']}
                   />
 
                   <FormikDropdownList
@@ -118,6 +121,7 @@ export function CreateUserModal({ isOpen, onClose }: ICreateUserModalProps) {
                       fieldSize="lg"
                       type="text"
                       isRequired
+                      containerClassName={`${styles['modal__input-ellipsis']} ${styles['modal__password-input-wrap']}`}
                     />
                     <button
                       type="button"
