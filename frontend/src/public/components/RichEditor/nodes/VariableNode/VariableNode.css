@@ -1,0 +1,7 @@
+.variable {
+  @mixin text-small;
+
+  padding: 0 0.8rem;
+  background-color: var(--pneumatic-color-selection);
+  border-radius: 0.4rem;
+}

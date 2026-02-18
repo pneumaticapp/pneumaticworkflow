@@ -115,8 +115,21 @@ export class Analytics {
   public reset = this.throttle('reset');
 }
 
-const isSupermode = store?.getState?.().authUser.isSupermode || false;
-export const analytics = new Analytics(isSupermode);
+let analyticsInstance: Analytics | null = null;
+
+function getAnalyticsInstance(): Analytics {
+  if (!analyticsInstance) {
+    const isSupermode = store?.getState?.().authUser?.isSupermode ?? false;
+    analyticsInstance = new Analytics(isSupermode);
+  }
+  return analyticsInstance;
+}
+
+export const analytics = new Proxy({} as Analytics, {
+  get(_, prop: keyof Analytics) {
+    return getAnalyticsInstance()[prop];
+  },
+});
 
 export const trackPage = (...args: any[]) => {
   analytics.page(...args);

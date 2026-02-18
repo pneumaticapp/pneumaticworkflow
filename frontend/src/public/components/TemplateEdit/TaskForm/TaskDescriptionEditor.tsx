@@ -1,13 +1,14 @@
-import React, { ComponentProps, useRef } from 'react';
+import React, { useMemo, useRef } from 'react';
 import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
 
 import { TTaskVariable } from '../types';
-import { getInitialEditorState } from '../../RichEditor/utils/converters';
-import { RichEditor, RichEditorContainer } from '../../RichEditor';
+import { RichEditor, type IRichEditorHandle } from '../../RichEditor';
+import { getMentionData } from '../../RichEditor/utils/getMentionData';
+import { getUsers } from '../../../redux/selectors/user';
+import { getNotDeletedUsers } from '../../../utils/users';
 
-import { variablesDecorator } from '../utils/variablesDecorator';
 import { VariableList } from '../VariableList';
-import { addVariableEntityToEditor } from '../utils/addVariableEntityToEditor';
 
 import styles from '../TemplateEdit.css';
 
@@ -16,8 +17,8 @@ export interface ITaskDescriptionEditorProps {
   listVariables: TTaskVariable[];
   templateVariables: TTaskVariable[];
   value?: string;
-  handleChange: ComponentProps<typeof RichEditor>['handleChange'];
-  handleChangeChecklists: ComponentProps<typeof RichEditor>['handleChangeChecklists'];
+  handleChange(value: string): Promise<string>;
+  handleChangeChecklists?(checklists: import('../../../types/template').TOutputChecklist[]): void;
 }
 
 export function TaskDescriptionEditor({
@@ -28,46 +29,52 @@ export function TaskDescriptionEditor({
   handleChange,
   handleChangeChecklists,
 }: ITaskDescriptionEditorProps) {
-  const editor = useRef<RichEditor>(null);
   const { formatMessage } = useIntl();
+  const editorRef = useRef<IRichEditorHandle>(null);
+
+  const users = useSelector(getUsers);
+  const mentions = useMemo(
+    () => getMentionData(getNotDeletedUsers(users)),
+    [users],
+  );
 
   const handleInsertVariable = (apiName?: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
 
-    if (!editor.current) {
-      return;
-    }
-
+    if (!editorRef.current || apiName == null) return;
+    
     const newVariable = listVariables?.find((variable) => variable.apiName === apiName);
-    editor.current.onChange(
-      addVariableEntityToEditor(editor.current.state.editorState, {
-        title: newVariable?.title,
-        subtitle: newVariable?.subtitle,
-        apiName,
-      }),
+
+    if (!newVariable) return;
+
+    editorRef.current.insertVariable(
+      apiName,
+      newVariable.title,
+      newVariable.subtitle,
     );
   };
 
   return (
-    <RichEditorContainer
-      ref={editor}
+    <RichEditor
+      ref={editorRef}
       title={formatMessage({ id: 'tasks.task-description-field' })}
       placeholder={formatMessage({ id: 'template.task-description-placeholder' })}
-      initialState={getInitialEditorState(value, templateVariables)}
+      defaultValue={value}
       handleChange={handleChange}
       handleChangeChecklists={handleChangeChecklists}
-      decorators={[variablesDecorator]}
       withChecklists
-      accountId={accountId}
+      mentions={mentions}
       isInTaskDescriptionEditor
+      templateVariables={templateVariables}
+      accountId={accountId}
     >
       <VariableList
         variables={listVariables}
         onVariableClick={handleInsertVariable}
         className={styles['task-description__variables']}
         tooltipText="tasks.task-description-button-tooltip"
-        focusEditor={() => editor.current?.focus()}
+        focusEditor={() => editorRef.current?.focus()}
       />
-    </RichEditorContainer>
+    </RichEditor>
   );
 }

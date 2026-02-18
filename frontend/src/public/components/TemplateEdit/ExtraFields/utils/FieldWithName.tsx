@@ -1,6 +1,7 @@
 /* eslint-disable */
 import classnames from 'classnames';
 import React, { useState, useRef, ChangeEvent, forwardRef, ReactNode, Ref } from 'react';
+import AutosizeInput from 'react-input-autosize';
 
 import { Field, EFieldTagName } from '../../../Field';
 import { validateKickoffFieldName } from '../../../../utils/validators';
@@ -9,7 +10,6 @@ import { getInputNameBackground } from './getInputNameBackground';
 import { EExtraFieldMode, IExtraField } from '../../../../types/template';
 import { PencilSmallIcon } from '../../../icons';
 
-import AutosizeInput from 'react-input-autosize';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
 
