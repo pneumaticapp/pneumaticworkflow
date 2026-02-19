@@ -114,6 +114,8 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
         self.instance = workflow_service.partial_update(
             description=data['description'],
             finalizable=data['finalizable'],
+            remainder_notification=data['remainder_notification'],
+            completion_notification=data['completion_notification'],
             version=version,
             force_save=True,
         )
