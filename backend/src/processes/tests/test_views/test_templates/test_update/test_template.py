@@ -59,6 +59,9 @@ class TestUpdateTemplate:
             is_public=False,
             tasks_count=1,
             wf_name_template='old wf template',
+            finalizable=False,
+            remainder_notification=False,
+            completion_notification=False,
         )
         task = template.tasks.first()
         FieldTemplate.objects.create(
@@ -88,6 +91,9 @@ class TestUpdateTemplate:
             'is_active': True,
             'is_public': template.is_public,
             'description': '',
+            'finalizable': True,
+            'remainder_notification': True,
+            'completion_notification': True,
             'name': 'Name changed',
             'wf_name_template': 'New wf name',
             'owners': [
@@ -100,7 +106,6 @@ class TestUpdateTemplate:
                     'source_id': user2.id,
                 },
             ],
-            'finalizable': True,
             'kickoff': {
                 'id': template.kickoff_instance.id,
                 'fields': [],
@@ -148,7 +153,9 @@ class TestUpdateTemplate:
         assert response_data['is_active'] == request_data['is_active']
         assert response_data['is_public'] == request_data['is_public']
         assert response_data['public_url'] is not None
-        assert response_data['finalizable'] == request_data['finalizable']
+        assert response_data['finalizable'] is True
+        assert response_data['remainder_notification'] is True
+        assert response_data['completion_notification'] is True
         assert response_data['updated_by'] == user.id
         assert response_data.get('date_updated')
 
@@ -166,7 +173,9 @@ class TestUpdateTemplate:
         assert template.is_active == request_data['is_active']
         assert template.is_public == request_data['is_public']
         assert template.public_url is not None
-        assert template.finalizable == request_data['finalizable']
+        assert template.finalizable is True
+        assert template.remainder_notification is True
+        assert template.completion_notification is True
         assert template.updated_by is not None
         assert template.date_updated.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
         template_update_mock.assert_called_once_with(

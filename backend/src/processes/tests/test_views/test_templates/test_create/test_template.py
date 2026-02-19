@@ -217,6 +217,8 @@ def test_create__only_required_fields_with_group__defaults_ok(
     assert response_data['is_public'] is False
     assert response_data['public_url'] is not None
     assert response_data['finalizable'] is False
+    assert response_data['remainder_notification'] is False
+    assert response_data['completion_notification'] is False
     assert response_data['wf_name_template'] is None
     template = Template.objects.get(id=response_data['id'])
     assert template.tasks.first().account_id == user.account_id
@@ -312,6 +314,8 @@ def test_create__all_fields__ok(
         'is_active': True,
         'is_public': False,
         'finalizable': True,
+        'remainder_notification': True,
+        'completion_notification': True,
         'kickoff': {
             'fields': kickoff_fields,
         },
@@ -420,7 +424,9 @@ def test_create__all_fields__ok(
     assert response_data['is_public'] == request_data['is_public']
     assert response_data['public_url'] is not None
     assert response_data['embed_url'] is not None
-    assert response_data['finalizable'] == request_data['finalizable']
+    assert response_data['finalizable'] is True
+    assert response_data['remainder_notification'] is True
+    assert response_data['completion_notification'] is True
     assert response_data['updated_by'] == user.id
     assert response_data.get('date_updated')
 
