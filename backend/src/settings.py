@@ -79,6 +79,10 @@ class Common(Configuration):
     EXTRA_ALLOWED_HOSTS = env.get("ALLOWED_HOSTS")
     if EXTRA_ALLOWED_HOSTS:
         ALLOWED_HOSTS.extend(EXTRA_ALLOWED_HOSTS.split(' '))
+    # Optional: allow all subdomains of a domain (e.g. ".pneumatic.app")
+    SUBDOMAIN_WILDCARD = env.get("ALLOWED_HOSTS_SUBDOMAIN_WILDCARD")
+    if SUBDOMAIN_WILDCARD:
+        ALLOWED_HOSTS.append(SUBDOMAIN_WILDCARD.strip())
 
     # CORS
     # Sets header:
