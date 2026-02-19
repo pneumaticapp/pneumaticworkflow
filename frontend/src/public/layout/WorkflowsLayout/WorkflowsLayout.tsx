@@ -2,7 +2,7 @@ import React, { ReactNode, useEffect, useLayoutEffect, useMemo, useRef, useState
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { loadWorkflowsList } from '../../redux/workflows/slice';
+import { cancelTemplateFilterRequests, loadWorkflowsList } from '../../redux/workflows/slice';
 import { TRemoveWorkflowFromListPayload } from '../../redux/workflows/types';
 import { TopNavContainer } from '../../components/TopNav';
 import { ERoutes } from '../../constants/routes';
@@ -374,7 +374,14 @@ export function WorkflowsLayoutComponent({
           positionFixed={isMobile}
         />
         {areFiltersChanged && (
-          <button type="button" onClick={clearFilters} className="cancel-button">
+          <button
+            type="button"
+            onClick={() => {
+              clearFilters();
+              dispatch(cancelTemplateFilterRequests());
+            }}
+            className="cancel-button"
+          >
             {formatMessage({ id: 'workflows.clear-table-filters' })}
           </button>
         )}

@@ -128,8 +128,11 @@ export function TemplateEdit({
     const isCreateScenario = isPreviousPathIsCreate && isCurrentPathIsEdit;
     const isLocationChanged = pathName !== prevPathName;
 
+    const isFirstRender = !prevLocation && !prevTemplate && !prevUsers;
     if (!isCreateScenario && isLocationChanged) {
-      initPage();
+      if (!isFirstRender) {
+        initPage();
+      }
       return;
     }
 

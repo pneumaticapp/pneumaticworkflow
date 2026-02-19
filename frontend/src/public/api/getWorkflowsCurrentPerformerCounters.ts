@@ -7,12 +7,14 @@ export interface IGetWorkflowsCurrentPerformerCountersConfig {
   templatesIdsFilter: number[];
   tasksApiNamesFilter: string[];
   workflowStartersIdsFilter: number[];
+  signal?: AbortSignal;
 }
 
 export function getWorkflowsCurrentPerformerCounters({
   templatesIdsFilter,
   tasksApiNamesFilter,
   workflowStartersIdsFilter,
+  signal,
 }: IGetWorkflowsCurrentPerformerCountersConfig) {
   const {
     api: { urls },
@@ -24,6 +26,12 @@ export function getWorkflowsCurrentPerformerCounters({
       tasksApiNamesFilter,
       workflowStartersIdsFilter,
     })}`,
+    {
+      signal,
+    },
+    {
+      shouldThrow: true,
+    },
   );
 }
 
