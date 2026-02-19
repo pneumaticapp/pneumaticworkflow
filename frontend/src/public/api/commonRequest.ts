@@ -1,4 +1,5 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosHeaders } from 'axios';
+import * as Sentry from '@sentry/react';
 import { logger } from '../utils/logger';
 import { ETimeouts } from '../constants/defaultValues';
 import { getAuthHeader } from '../../server/utils/getAuthHeader';
@@ -9,6 +10,24 @@ import { identifyAppPartOnClient } from '../utils/identifyAppPart/identifyAppPar
 import { getCurrentToken } from '../utils/auth';
 import { envBackendURL } from '../constants/enviroment';
 import { isRequestCanceled } from '../utils/isRequestCanceled';
+
+const HTTP_STATUS_UNAUTHORIZED = 401;
+const EXPECTED_AUTH_FAILURE_DETAIL = 'Invalid login or password.';
+
+export function isExpectedAuthFailure(
+  response: { status?: number; data?: { detail?: string } } | undefined,
+): boolean {
+  if (!response || response.status !== HTTP_STATUS_UNAUTHORIZED) {
+    return false;
+  }
+  const detail = response.data?.detail;
+  const expectedPrefix = EXPECTED_AUTH_FAILURE_DETAIL.replace(/\.$/, '');
+  return (
+    typeof detail === 'string' &&
+    (detail === EXPECTED_AUTH_FAILURE_DETAIL ||
+      detail.startsWith(expectedPrefix))
+  );
+}
 
 export type TRequestType = 'public' | 'local';
 export type TResponseType = 'json' | 'text' | 'empty';
@@ -80,7 +99,19 @@ axiosInstance.interceptors.response.use(
     }
 
     if (error.response) {
-      logger.error('Response Error:', error.response.data);
+      if (isExpectedAuthFailure(error.response)) {
+        console.error('Response Error:', error.response.data);
+        Sentry.withScope((scope) => {
+          scope.setLevel('info');
+          Sentry.captureException(
+            new Error(
+              `Response Error: ${JSON.stringify(error.response!.data)}`,
+            ),
+          );
+        });
+      } else {
+        logger.error('Response Error:', error.response.data);
+      }
     } else if (error.request) {
       logger.error('Request Error:', error.request);
     } else {
