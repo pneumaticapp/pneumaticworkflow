@@ -2,7 +2,9 @@ from typing import Tuple
 
 from django.contrib.auth import get_user_model
 
-from src.accounts.enums import NotificationType
+from src.accounts.enums import NotificationType, UserStatus
+from src.generics.mixins.queries import DereferencedPerformersMixin
+from src.notifications.enums import NotificationMethod
 from src.processes.enums import (
     DirectlyStatus,
     TaskStatus,
@@ -16,13 +18,6 @@ UserModel = get_user_model()
 
 
 class UsersWithOverdueTaskQuery(SqlQueryObject):
-
-    def __init__(self):
-        self.params = {
-            'workflow_status': WorkflowStatus.RUNNING,
-            'directly_status': DirectlyStatus.DELETED,
-            'notification_type': NotificationType.OVERDUE_TASK,
-        }
 
     def get_sql(self) -> Tuple[str, dict]:
         return f"""
@@ -78,17 +73,58 @@ class UsersWithOverdueTaskQuery(SqlQueryObject):
             LEFT JOIN accounts_notification an
               ON an.task_id = pt.id
               AND an.user_id = ptp.user_id
-              AND an.type = %(notification_type)s
+              AND an.type = '{NotificationType.OVERDUE_TASK}'
             WHERE pt.is_deleted is FALSE
-              AND pw.status = %(workflow_status)s
+              AND pw.status = '{WorkflowStatus.RUNNING}'
               AND pt.due_date IS NOT NULL
               AND pt.due_date <= NOW()
               AND ptp.is_completed IS FALSE
-              AND ptp.directly_status != %(directly_status)s
+              AND ptp.directly_status != '{DirectlyStatus.DELETED}'
+              AND au.status = '{UserStatus.ACTIVE}'
         ) result INNER JOIN accounts_user au
           ON au.id = result.workflow_starter_id
         INNER JOIN accounts_account aa
           ON aa.id = au.account_id
         WHERE notification is NULL
         ORDER BY user_id, task_id, account_id
-        """, self.params
+        """, {}
+
+
+class UsersWithRemainderTaskQuery(SqlQueryObject, DereferencedPerformersMixin):
+
+    def get_sql(self) -> Tuple[str, dict]:
+        result = f"""
+        SELECT
+          au.id AS user_id,
+          au.email AS user_email,
+          au.type AS user_type,
+          pt.id AS task_id,
+          aa.id AS account_id,
+          aa.logo_lg,
+          aa.log_api_requests AS logging,
+          '{NotificationMethod.task_remainder}' AS method_name,
+          TRUE as sync,
+          COUNT(pt.id) AS count
+        FROM processes_workflow pw
+          INNER JOIN processes_task pt
+            ON pt.workflow_id = pw.id
+        INNER JOIN (
+          {self.all_dereferenced_performers()}
+        ) dereferenced_performers
+            ON pt.id = dereferenced_performers.task_id
+          INNER JOIN accounts_user au
+            ON au.id = dereferenced_performers.user_id
+          INNER JOIN accounts_account aa
+            ON au.account_id = aa.id
+        WHERE
+          pw.is_deleted = FALSE
+          AND pw.status = '{WorkflowStatus.RUNNING}'
+          AND pw.remainder_notification = TRUE
+          AND pw.is_deleted = FALSE
+          AND pt.status = '{TaskStatus.ACTIVE}'
+          AND dereferenced_performers.is_completed IS FALSE
+          AND au.status = '{UserStatus.ACTIVE}'
+        GROUP BY au.id, pt.id, aa.id
+        ORDER BY au.id
+        """
+        return result, {}

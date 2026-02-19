@@ -67,6 +67,7 @@ class EmailService(NotificationService):
         NotificationMethod.verification,
         NotificationMethod.invite,
         NotificationMethod.complete_workflow,
+        NotificationMethod.task_remainder,
     }
 
     def _send_email_to_console(
@@ -210,10 +211,20 @@ class EmailService(NotificationService):
         workflow_name: str,
         **kwargs,
     ):
+        unsubscribe_token = UnsubscribeEmailToken.create_token(
+            user_id=user_id,
+            email_type=MailoutType.NEW_TASK,
+        ).__str__()
+        unsubscribe_link = (
+            f'{settings.BACKEND_URL}/accounts/emails/unsubscribe?token='
+            f'{unsubscribe_token}'
+        )
         data = {
             'title': email_titles[NotificationMethod.complete_workflow],
             'workflow_name': workflow_name,
             'link': link,
+            'unsubscribe_token': unsubscribe_token,
+            'unsubscribe_link': unsubscribe_link,
             'logo_lg': self.logo_lg,
         }
         self._send(
@@ -711,5 +722,28 @@ class EmailService(NotificationService):
             user_email=user_email,
             template_code=EmailType.TASKS_DIGEST,
             method_name=NotificationMethod.tasks_digest,
+            data=data,
+        )
+
+    def send_task_remainder(
+        self,
+        link: str,
+        user_id: int,
+        user_email: str,
+        count: int,
+        **kwargs,
+    ):
+        data = {
+            'title': email_titles[NotificationMethod.task_remainder],
+            'count': count,
+            'link': link,
+            'logo_lg': self.logo_lg,
+        }
+        self._send(
+            title=email_titles[NotificationMethod.task_remainder],
+            user_id=user_id,
+            user_email=user_email,
+            template_code=EmailType.TASK_REMAINDER,
+            method_name=NotificationMethod.task_remainder,
             data=data,
         )

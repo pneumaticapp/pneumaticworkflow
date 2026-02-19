@@ -30,6 +30,8 @@ class SMTPEmailClient(EmailClient):
         EmailType.WORKFLOWS_DIGEST: DEFAULT_TEMPLATE_DIGESTS,
         EmailType.TASKS_DIGEST: DEFAULT_TEMPLATE_DIGESTS,
         EmailType.INVITE: DEFAULT_TEMPLATE_AUTH,
+        EmailType.COMPLETE_WORKFLOW: DEFAULT_TEMPLATE_TASKS,
+        EmailType.TASK_REMAINDER: DEFAULT_TEMPLATE_TASKS,
     }
 
     def __init__(self, account_id: int):

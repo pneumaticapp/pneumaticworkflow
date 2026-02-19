@@ -1964,3 +1964,109 @@ def test_send_email_to_console__ok(mocker):
     assert 'EMAIL-MESSAGE' in call_args
     assert user_email in call_args
     assert template_code in call_args
+
+
+def test_send_complete_workflow(mocker):
+
+    # arrange
+    user_id = 55
+    user_email = 'guest@guest.guest'
+    workflow_name = 'Workflow name'
+    unsubscribe_token = '123123'
+    create_unsubscribe_token_mock = mocker.patch(
+        'src.notifications.services.email.'
+        'UnsubscribeEmailToken.create_token',
+        return_value=unsubscribe_token,
+    )
+    send_mock = mocker.patch(
+        'src.notifications.services.email.'
+        'EmailService._send',
+    )
+    logo_lg = 'https://logo.jpg'
+    logging = False
+    account_id = 123
+    link = f'{settings.FRONTEND_URL}/workflows/123'
+    service = EmailService(
+        logo_lg=logo_lg,
+        logging=logging,
+        account_id=account_id,
+    )
+
+    # act
+    service.send_complete_workflow(
+        link=link,
+        user_id=user_id,
+        user_email=user_email,
+        workflow_name=workflow_name,
+        sync=True,
+    )
+
+    # assert
+    unsubscribe_link = (
+        f'{settings.BACKEND_URL}/accounts/emails/unsubscribe?token='
+        f'{unsubscribe_token}'
+    )
+    send_mock.assert_called_once_with(
+        title=email_titles[NotificationMethod.complete_workflow],
+        user_id=user_id,
+        user_email=user_email,
+        template_code=EmailType.COMPLETE_WORKFLOW,
+        method_name=NotificationMethod.complete_workflow,
+        data={
+            'title': email_titles[NotificationMethod.complete_workflow],
+            'workflow_name': workflow_name,
+            'link': link,
+            'unsubscribe_token': unsubscribe_token,
+            'unsubscribe_link': unsubscribe_link,
+            'logo_lg': logo_lg,
+        },
+    )
+    create_unsubscribe_token_mock.assert_called_once_with(
+        user_id=user_id,
+        email_type=MailoutType.NEW_TASK,
+    )
+
+
+def test_send_remainder_task(mocker):
+
+    # arrange
+    user_id = 55
+    user_email = 'guest@guest.guest'
+    account_id = 12332
+    send_mock = mocker.patch(
+        'src.notifications.services.email.'
+        'EmailService._send',
+    )
+    logo_lg = 'https://logo.jpg'
+    logging = False
+    count = 1
+    link = f'{settings.FRONTEND_URL}/tasks'
+    service = EmailService(
+        logo_lg=logo_lg,
+        logging=logging,
+        account_id=account_id,
+    )
+
+    # act
+    service.send_remainder_task(
+        link=link,
+        user_id=user_id,
+        user_email=user_email,
+        count=count,
+        sync=True,
+    )
+
+    # assert
+    send_mock.assert_called_once_with(
+        title=email_titles[NotificationMethod.task_remainder],
+        user_id=user_id,
+        user_email=user_email,
+        template_code=EmailType.TASK_REMAINDER,
+        method_name=NotificationMethod.task_remainder,
+        data={
+            'title': email_titles[NotificationMethod.task_remainder],
+            'count': count,
+            'link': link,
+            'logo_lg': logo_lg,
+        },
+    )

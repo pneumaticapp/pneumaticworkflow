@@ -413,6 +413,8 @@ def create_test_workflow(
         finalizable=template.finalizable,
         due_date=due_date,
         ancestor_task=ancestor_task,
+        remainder_notification=template.remainder_notification,
+        completion_notification=template.completion_notification,
     )
     if custom_template:
         template_owners_ids = Template.objects.filter(

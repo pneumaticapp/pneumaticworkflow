@@ -11,6 +11,7 @@ class NotificationType:
     URGENT = 'urgent'
     NOT_URGENT = 'not_urgent'
     OVERDUE_TASK = 'overdue_task'
+    REMAINDER_TASK = 'remainder_task'
     DELAY_WORKFLOW = 'snooze_workflow'
     RESUME_WORKFLOW = 'resume_workflow'
     DUE_DATE_CHANGED = 'due_date_changed'
@@ -30,6 +31,7 @@ class NotificationType:
         (URGENT, 'urgent'),
         (NOT_URGENT, 'not urgent'),
         (OVERDUE_TASK, 'overdue task'),
+        (REMAINDER_TASK, 'remainder task'),
         (DELAY_WORKFLOW, 'snooze workflow'),
         (RESUME_WORKFLOW, 'resume workflow'),
         (DUE_DATE_CHANGED, 'due date changed'),

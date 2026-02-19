@@ -29,7 +29,7 @@ from src.notifications.enums import (
 )
 from src.notifications.messages import MSG_NF_0001
 from src.notifications.queries import (
-    UsersWithOverdueTaskQuery,
+    UsersWithOverdueTaskQuery, UsersWithRemainderTaskQuery,
 )
 from src.notifications.services.email import (
     EmailService,
@@ -76,6 +76,7 @@ __all__ = [
     'send_not_urgent_notification',
     'send_overdue_task_notification',
     'send_reaction_notification',
+    'send_remainder_task_notification',
     'send_removed_task_notification',
     'send_reset_password_notification',
     'send_resumed_workflow_notification',
@@ -372,6 +373,40 @@ def send_overdue_task_notification():
         if not acquired:
             return
     _send_overdue_task_notification()
+
+
+def _send_remainder_task_notification():
+    query = UsersWithRemainderTaskQuery()
+    users = RawSqlExecutor.fetch(
+        *query.get_sql(),
+        stream=True,
+        fetch_size=50,
+    )
+    for elem in users:
+        if elem['user_type'] == UserType.GUEST:
+            token = GuestJWTAuthService.get_str_token(
+                task_id=elem['task_id'],
+                user_id=elem['user_id'],
+                account_id=elem['account_id'],
+            )
+            elem['token'] = token
+            elem['link'] = (
+                f'{settings.FRONTEND_URL}/guest-task/{elem["task_id"]}'
+                f'?token={token}&utm_campaign=guestUser'
+                f'&utm_term={elem["user_id"]}'
+            )
+        else:
+            elem['token'] = None
+            elem['link'] = f'{settings.FRONTEND_URL}/tasks'
+        _send_notification(**elem)
+
+
+@shared_task(base=NotificationTask)
+def send_remainder_task_notification():
+    with periodic_lock('send_remainder_task_notification') as acquired:
+        if not acquired:
+            return
+    _send_remainder_task_notification()
 
 
 def _send_workflows_digest_notification(
