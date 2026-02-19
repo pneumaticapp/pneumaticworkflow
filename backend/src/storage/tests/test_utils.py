@@ -1,10 +1,13 @@
 import pytest
 from django.test import override_settings
 
+from src.processes.enums import FieldType
+from src.processes.models.templates.fields import FieldTemplate
 from src.processes.tests.fixtures import (
     create_test_admin,
     create_test_attachment,
     create_test_account,
+    create_test_template,
     create_test_workflow,
 )
 from src.storage.enums import AccessType, SourceType
@@ -626,6 +629,69 @@ class TestRefreshAttachments:
         assert 'file1_multi_123' in new_file_ids
         assert 'file2_multi_456' in new_file_ids
 
+    def test_refresh_attachments__workflow_kickoff_description__creates_ok(
+            self,
+    ):
+        # arrange
+        user = create_test_admin()
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        workflow.description = ''
+        workflow.save()
+        kickoff = workflow.kickoff_instance
+        kickoff.clear_description = (
+            'Kickoff: [doc](https://example.com/kickoff_refresh_111)'
+        )
+        kickoff.save()
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
+            new_file_ids = refresh_attachments(source=workflow, user=user)
+
+        # assert
+        assert 'kickoff_refresh_111' in new_file_ids
+        assert Attachment.objects.filter(
+            file_id='kickoff_refresh_111',
+            workflow=workflow,
+        ).exists()
+
+    def test_refresh_attachments__template_kickoff_field_description__ok(
+            self,
+    ):
+        # arrange
+        user = create_test_admin()
+        template = create_test_template(user, is_active=True, tasks_count=1)
+        template.description = ''
+        template.save()
+        kickoff = template.kickoff_instance
+        FieldTemplate.objects.create(
+            name='Kickoff field',
+            description=(
+                'File in field: [x](https://example.com/kickoff_tpl_222)'
+            ),
+            type=FieldType.STRING,
+            kickoff=kickoff,
+            template=template,
+            order=0,
+            api_name='kickoff-field-1',
+        )
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
+            new_file_ids = refresh_attachments(source=template, user=user)
+
+        # assert
+        assert 'kickoff_tpl_222' in new_file_ids
+        assert Attachment.objects.filter(
+            file_id='kickoff_tpl_222',
+            template=template,
+        ).exists()
+
 
 class TestGetAttachmentDescriptionFields:
 
@@ -774,3 +840,54 @@ class TestExtractAllFileIdsFromSource:
 
         # assert
         assert result == []
+
+    def test_extract_all_file_ids__workflow_kickoff_description__ok(self):
+        # arrange
+        user = create_test_admin()
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        workflow.description = ''
+        workflow.save()
+        kickoff = workflow.kickoff_instance
+        kickoff.clear_description = (
+            'Kickoff file: [f](https://example.com/kickoff_wf_999)'
+        )
+        kickoff.save()
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
+            result = extract_all_file_ids_from_source(workflow)
+
+        # assert
+        assert 'kickoff_wf_999' in result
+
+    def test_extract_all_file_ids__template_kickoff_field_description__ok(
+            self,
+    ):
+        # arrange
+        user = create_test_admin()
+        template = create_test_template(user, is_active=True, tasks_count=1)
+        kickoff = template.kickoff_instance
+        FieldTemplate.objects.create(
+            name='Kickoff field',
+            description=(
+                'Field file: [x](https://example.com/kickoff_tpl_777)'
+            ),
+            type=FieldType.STRING,
+            kickoff=kickoff,
+            template=template,
+            order=0,
+            api_name='kickoff-field-1',
+        )
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_DOMAIN=_FILE_DOMAIN,
+        ):
+            result = extract_all_file_ids_from_source(template)
+
+        # assert
+        assert 'kickoff_tpl_777' in result

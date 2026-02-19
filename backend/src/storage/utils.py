@@ -402,13 +402,39 @@ def _refresh_task_attachments(task: Task, user: UserModel) -> List[str]:
     )
 
 
+def _get_kickoff_description_text(source) -> str:
+    """
+    Returns kickoff description text for workflow or template.
+    Workflow: KickoffValue.clear_description.
+    Template: concatenation of kickoff field descriptions.
+    """
+    if isinstance(source, Workflow):
+        kickoff_inst = getattr(source, 'kickoff_instance', None)
+        if kickoff_inst is None:
+            return ''
+        return getattr(kickoff_inst, 'clear_description', None) or ''
+    if isinstance(source, Template):
+        kickoff_inst = getattr(source, 'kickoff_instance', None)
+        if kickoff_inst is None:
+            return ''
+        fields = getattr(kickoff_inst, 'fields', None)
+        if fields is None:
+            return ''
+        parts = [
+            getattr(f, 'description', None) or ''
+            for f in fields.all()
+        ]
+        return '\n'.join(parts)
+    return ''
+
+
 def _refresh_workflow_attachments(
         workflow: Workflow,
         user: UserModel,
 ) -> List[str]:
     """Refreshes attachments for workflow (description + kickoff)."""
     description = workflow.description or ''
-    kickoff = getattr(workflow, 'kickoff_description', None) or ''
+    kickoff = _get_kickoff_description_text(workflow)
     combined_text = f'{description}\n{kickoff}'
 
     all_new_file_ids = refresh_attachments_for_text(
@@ -439,7 +465,7 @@ def _refresh_template_attachments(
 ) -> List[str]:
     """Refreshes attachments for template (description + kickoff)."""
     description = template.description or ''
-    kickoff = getattr(template, 'kickoff_description', None) or ''
+    kickoff = _get_kickoff_description_text(template)
     combined_text = f'{description}\n{kickoff}'
 
     all_new_file_ids = refresh_attachments_for_text(
@@ -503,10 +529,7 @@ def get_attachment_description_fields(source: models.Model) -> List[str]:
     if isinstance(source, Task):
         return ['description']
     if isinstance(source, (Workflow, Template)):
-        fields = ['description']
-        if hasattr(source, 'kickoff_description'):
-            fields.append('kickoff_description')
-        return fields
+        return ['description']
     if isinstance(source, WorkflowEvent):
         return ['text']
 
@@ -527,5 +550,10 @@ def extract_all_file_ids_from_source(
         if text:
             file_ids = extract_file_ids_from_text(text)
             all_file_ids.extend(file_ids)
+
+    if isinstance(source, (Workflow, Template)):
+        kickoff_text = _get_kickoff_description_text(source)
+        if kickoff_text:
+            all_file_ids.extend(extract_file_ids_from_text(kickoff_text))
 
     return list(set(all_file_ids))

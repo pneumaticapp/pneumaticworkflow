@@ -4,7 +4,8 @@ Tests full workflow without mocks - real database operations.
 """
 import pytest
 
-from src.processes.enums import OwnerType
+from src.processes.enums import FieldType, OwnerType
+from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
     create_test_admin,
@@ -60,6 +61,50 @@ class TestTemplateAttachmentsE2E:
         # assert
         assert 'template_e2e_123' in new_file_ids
         attachment = Attachment.objects.get(file_id='template_e2e_123')
+        assert attachment.template == template
+        assert attachment.source_type == SourceType.TEMPLATE
+        assert attachment.access_type == AccessType.RESTRICTED
+        svc = AttachmentService(user=owner)
+        assert svc.check_user_permission(
+            user_id=owner.id,
+            account_id=owner.account_id,
+            file_id=attachment.file_id,
+        )
+
+    def test_template_kickoff_field_description_with_attachment__e2e__ok(
+            self,
+    ):
+        """
+        Scenario: File link only in kickoff field description
+        Expected: Attachment created and linked to template
+        """
+        # arrange
+        owner = create_test_admin()
+        template = create_test_template(owner, is_active=True)
+        template.description = ''
+        template.save()
+        kickoff = template.kickoff_instance
+        FieldTemplate.objects.create(
+            name='Kickoff field',
+            description=(
+                'Field file: '
+                '[x](https://files.example.com/kickoff_tpl_e2e_789)'
+            ),
+            type=FieldType.STRING,
+            kickoff=kickoff,
+            template=template,
+            order=0,
+            api_name='kickoff-field-1',
+        )
+
+        # act
+        new_file_ids = refresh_attachments(source=template, user=owner)
+
+        # assert
+        assert 'kickoff_tpl_e2e_789' in new_file_ids
+        attachment = Attachment.objects.get(
+            file_id='kickoff_tpl_e2e_789',
+        )
         assert attachment.template == template
         assert attachment.source_type == SourceType.TEMPLATE
         assert attachment.access_type == AccessType.RESTRICTED

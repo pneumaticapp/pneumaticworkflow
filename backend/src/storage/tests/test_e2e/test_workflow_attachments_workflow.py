@@ -69,6 +69,49 @@ class TestWorkflowAttachmentsE2E:
             file_id=attachment.file_id,
         )
 
+    def test_workflow_kickoff_description_with_attachment__full_workflow__ok(
+            self,
+    ):
+        """
+        Scenario: File link only in kickoff description (not workflow desc)
+        Expected: Attachment created and tracked for workflow
+        """
+        # arrange
+        owner = create_test_admin()
+        member = create_test_user(account=owner.account)
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        workflow.members.add(member)
+        workflow.description = ''
+        workflow.save()
+        kickoff = workflow.kickoff_instance
+        kickoff.clear_description = (
+            'Kickoff file: '
+            '[doc](https://files.example.com/kickoff_e2e_456)'
+        )
+        kickoff.save()
+
+        # act
+        new_file_ids = refresh_attachments(source=workflow, user=owner)
+
+        # assert
+        assert 'kickoff_e2e_456' in new_file_ids
+        attachment = Attachment.objects.get(file_id='kickoff_e2e_456')
+        assert attachment.workflow == workflow
+        assert attachment.source_type == SourceType.WORKFLOW
+        assert attachment.access_type == AccessType.RESTRICTED
+        svc_o = AttachmentService(user=owner)
+        svc_m = AttachmentService(user=member)
+        assert svc_o.check_user_permission(
+            user_id=owner.id,
+            account_id=owner.account_id,
+            file_id=attachment.file_id,
+        )
+        assert svc_m.check_user_permission(
+            user_id=member.id,
+            account_id=member.account_id,
+            file_id=attachment.file_id,
+        )
+
     def test_workflow_with_task_performers__all_have_access__ok(
         self,
     ):
