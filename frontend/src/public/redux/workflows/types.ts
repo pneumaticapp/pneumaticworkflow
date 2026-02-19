@@ -1,4 +1,4 @@
-import { TUploadedFile } from '../../utils/uploadFiles';
+import { TUploadedFile } from '../../utils/uploadFilesNew';
 
 import { ITemplateStep } from '../../types/tasks';
 import { IKickoff, TOrderedFields } from '../../types/template';

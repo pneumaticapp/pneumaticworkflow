@@ -24,7 +24,7 @@ import {
 import { RichEditorContainer } from '../../../../RichEditor';
 import { IAccount, TUserListItem } from '../../../../../types/user';
 import { useStatePromise } from '../../../../../hooks/useStatePromise';
-import { TUploadedFile } from '../../../../../utils/uploadFiles';
+import { TUploadedFile } from '../../../../../utils/uploadFilesNew';
 import { IEditComment } from '../../../../../api/workflows/editComment';
 import { IWatchedComment } from '../../../../../api/workflows/watchedComment';
 import { Tooltip } from '../../../../UI';

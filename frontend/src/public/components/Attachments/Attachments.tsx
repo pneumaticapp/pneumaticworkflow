@@ -1,10 +1,10 @@
 /* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 
 import { isArrayWithItems } from '../../utils/helpers';
-import { TUploadedFile } from '../../utils/uploadFiles';
+import { TUploadedFile } from '../../utils/uploadFilesNew';
 
 import { DocumentAttachment } from './DocumentAttachment';
 import { ImageAttachment } from './ImageAttachment';
@@ -14,9 +14,9 @@ export interface ICommentAttachments {
   attachments: TUploadedFile[];
   isEdit?: boolean;
   isUploading?: boolean;
-  deletingFilesIds?: number[];
+  deletingFilesIds?: string[];
   isTruncated?: boolean;
-  deleteFile?(id: number): () => void;
+  deleteFile?(id: string): () => void;
 }
 
 export function Attachments({
@@ -33,9 +33,9 @@ export function Attachments({
     return null;
   }
 
-  const images = attachments.filter(file => file.thumbnailUrl);
+  const images = attachments.filter((file) => file.thumbnailUrl);
   const hasImages = Boolean(images.length);
-  const documents = attachments.filter(file => !file.thumbnailUrl);
+  const documents = attachments.filter((file) => !file.thumbnailUrl);
   const hasDocuments = Boolean(documents.length);
   const onlyOneDocumentAndImage = images.length === 1 && documents.length === 1;
 
@@ -43,59 +43,60 @@ export function Attachments({
     const firstAttachment = attachments[0];
     const isImage = Boolean(firstAttachment.thumbnailUrl);
 
-    return isImage
-      ? <ImageAttachment
+    return isImage ? (
+      <ImageAttachment
         url={firstAttachment.url}
         thumbnailUrl={firstAttachment.thumbnailUrl!}
         deleteFile={deleteFile && deleteFile(firstAttachment.id)}
         isEdit={isEdit}
         key={firstAttachment.id}
-        isDeleting={deletingFilesIds.some(id => id === firstAttachment.id)}
+        isDeleting={deletingFilesIds.some((id) => id === firstAttachment.id)}
       />
-      : <DocumentAttachment
+    ) : (
+      <DocumentAttachment
         {...firstAttachment}
         deleteFile={deleteFile && deleteFile(firstAttachment.id)}
         isEdit={isEdit}
         key={firstAttachment.id}
-        isDeleting={deletingFilesIds.some(id => id === firstAttachment.id)}
-      />;
+        isDeleting={deletingFilesIds.some((id) => id === firstAttachment.id)}
+      />
+    );
   }
 
   return (
-    <div className={classnames(
-      styles['comment-attachments'],
-      isUploading && styles['comment-attachments_loading'],
-    )}>
-      {hasImages &&
-        <div className={classnames(
-          styles['comment-attachments__images-list'],
-          onlyOneDocumentAndImage && styles['comment-attachments__images-list_padded'],
-        )}>
-          {images.map(image => (
+    <div className={classnames(styles['comment-attachments'], isUploading && styles['comment-attachments_loading'])}>
+      {hasImages && (
+        <div
+          className={classnames(
+            styles['comment-attachments__images-list'],
+            onlyOneDocumentAndImage && styles['comment-attachments__images-list_padded'],
+          )}
+        >
+          {images.map((image) => (
             <ImageAttachment
               url={image.url}
               thumbnailUrl={image.thumbnailUrl!}
               deleteFile={deleteFile && deleteFile(image.id)}
               isEdit={isEdit}
               key={image.id}
-              isDeleting={deletingFilesIds.some(id => id === image.id)}
+              isDeleting={deletingFilesIds.some((id) => id === image.id)}
             />
           ))}
         </div>
-      }
-      {hasDocuments &&
+      )}
+      {hasDocuments && (
         <div className={styles['comment-attachments__documents-list']}>
-          {documents.map(document => (
+          {documents.map((document) => (
             <DocumentAttachment
               {...document}
               deleteFile={deleteFile && deleteFile(document.id)}
               isEdit={isEdit}
               key={document.id}
-              isDeleting={deletingFilesIds.some(id => id === document.id)}
+              isDeleting={deletingFilesIds.some((id) => id === document.id)}
             />
           ))}
         </div>
-      }
+      )}
     </div>
   );
 }

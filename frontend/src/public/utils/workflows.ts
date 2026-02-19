@@ -12,7 +12,7 @@ import {
 } from '../types/template';
 import { isArrayWithItems, deepCopy } from './helpers';
 import { ExtraFieldsHelper } from '../components/TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
-import { TUploadedFile } from './uploadFiles';
+import { TUploadedFile } from './uploadFilesNew';
 
 export const MAP_COMMENT_LOG: {[key: number]: EWorkflowLogEvent} = {
   [EDashboardActivityAction.Reverted]: EWorkflowLogEvent.TaskRevert,

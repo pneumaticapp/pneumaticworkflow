@@ -2,7 +2,7 @@ import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { mapRequestBody } from '../utils/mappers';
 import { ITaskCommentAttachmentRequest } from '../types/workflow';
-import { TUploadedFile } from '../utils/uploadFiles';
+import { TUploadedFile } from '../utils/uploadFilesNew';
 
 export interface ISendWorkflowCommentResponse {
   text: string;

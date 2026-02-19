@@ -5,7 +5,7 @@ import {
   ICondition,
   TConditionPredicateValue,
 } from '../components/TemplateEdit/TaskForm/Conditions';
-import { TUploadedFile } from '../utils/uploadFiles';
+import { TUploadedFile } from '../utils/uploadFilesNew';
 import { TSystemField } from '../components/Workflows/WorkflowsTablePage/WorkflowsTable/types';
 
 export interface ITemplate {

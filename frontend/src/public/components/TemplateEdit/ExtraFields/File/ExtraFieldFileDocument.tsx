@@ -1,10 +1,10 @@
 /* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
-import * as classnames from 'classnames';
+import classnames from 'classnames';
 
 import { DeleteIcon } from '../../../icons';
-import { TUploadedFile } from '../../../../utils/uploadFiles';
+import { TUploadedFile } from '../../../../utils/uploadFilesNew';
 
 import styles from './ExtraFieldFile.css';
 

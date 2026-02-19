@@ -1,5 +1,5 @@
 import { IAccount, TUserId } from './user';
-import { TUploadedFile } from '../utils/uploadFiles';
+import { TUploadedFile } from '../utils/uploadFilesNew';
 import { ITask, ITemplateStep, TaskWithTsp } from './tasks';
 import {
   IKickoff,
@@ -228,7 +228,7 @@ export interface ITaskCommentItem {
 }
 
 export interface ITaskCommentAttachmentRequest {
-  id: number;
+  id: string;
 }
 
 export enum EWorkflowsLogSorting {

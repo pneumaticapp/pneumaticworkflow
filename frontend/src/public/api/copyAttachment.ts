@@ -5,13 +5,11 @@ interface ICopyAttachmentResponse {
   id: number;
 }
 
-export function copyAttachment(id: number) {
-  const { api: { urls }} = getBrowserConfigEnv();
+export function copyAttachment(id: number | string) {
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
   const url = urls.copyAttachment.replace(':id', String(id));
 
-  return commonRequest<ICopyAttachmentResponse>(
-    url,
-    { method: 'POST' },
-    { shouldThrow: true },
-  );
+  return commonRequest<ICopyAttachmentResponse>(url, { method: 'POST' }, { shouldThrow: true });
 }

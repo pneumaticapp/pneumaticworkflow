@@ -17,7 +17,7 @@ import { BrowseIcon, DeleteBoldIcon } from '../../icons';
 import { useDidUpdateEffect } from '../../../hooks/useDidUpdateEffect';
 import { createUUID } from '../../../utils/createId';
 import { deleteUserPhoto, uploadUserPhoto } from '../../../redux/actions';
-import { MAX_FILE_SIZE } from '../../../utils/uploadFiles';
+import { MAX_FILE_SIZE } from '../../../utils/uploadFilesNew';
 import { NotificationManager } from '../../UI/Notifications';
 
 import styles from './AvatarController.css';

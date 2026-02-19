@@ -14,7 +14,7 @@ const getRequestParams = (): [string, TRequestType] => {
   return [baseUrl, type];
 };
 
-export function deleteAttachment(id: number) {
+export function deleteAttachment(id: number | string) {
   const [baseUrl, type] = getRequestParams();
   const url = baseUrl.replace(':id', String(id));
 

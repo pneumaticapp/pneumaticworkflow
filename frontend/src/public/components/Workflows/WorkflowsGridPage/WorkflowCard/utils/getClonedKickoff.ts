@@ -3,7 +3,7 @@
 import { copyAttachment } from '../../../../../api/copyAttachment';
 import { IExtraField, IKickoff, TExtraFieldValue } from '../../../../../types/template';
 import { IWorkflowDetailsKickoff } from '../../../../../types/workflow';
-import { TUploadedFile } from '../../../../../utils/uploadFiles';
+import { TUploadedFile } from '../../../../../utils/uploadFilesNew';
 import { getEditKickoff } from '../../../../../utils/workflows';
 
 export async function getClonedKickoff(
@@ -74,8 +74,7 @@ async function cloneAttachments(field: IExtraField): Promise<IExtraField> {
   const normalizedValue = Array.isArray(field.value)
     ? (field.value
         .map((fileId) => {
-          const newValue = attachmentsMap.get(Number(fileId));
-
+          const newValue = attachmentsMap.get(fileId);
           return newValue ? String(newValue) : null;
         })
         .filter(Boolean) as TExtraFieldValue)

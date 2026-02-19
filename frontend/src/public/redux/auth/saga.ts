@@ -65,7 +65,7 @@ import { clearAppFilters, setGeneralLoaderVisibility } from '../general/actions'
 import { getQueryStringParams, history } from '../../utils/history';
 import { watchNewTask, watchRemoveTask } from '../tasks/saga';
 import { watchNewNotifications } from '../notifications/saga';
-import { TUploadedFile, uploadUserAvatar } from '../../utils/uploadFiles';
+import { TUploadedFile, uploadUserAvatar } from '../../utils/uploadFilesNew';
 import { changePhotoProfile } from '../../api/changePhotoProfile';
 import { ELoggedState, IAuthUser } from '../../types/redux';
 import { resetFirebaseDeviceToken } from '../../firebase';
@@ -414,14 +414,8 @@ export function* fetchResendVerification() {
 
 export function* handleUploadUserPhoto({ payload: { photo, onComplete } }: TUploadUserPhoto) {
   try {
-    const {
-      authUser: {
-        account: { id },
-      },
-    }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
     yield put(setGeneralLoaderVisibility(true));
-    const [value]: TUploadedFile[] = yield uploadUserAvatar(photo, id!);
-
+    const [value]: TUploadedFile[] = yield uploadUserAvatar(photo);
     if (value?.url) {
       yield call(changePhotoProfile, { photo: value.url });
       yield put(setUserPhoto(value.url));
