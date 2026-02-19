@@ -682,32 +682,35 @@ def _send_completed_workflow_notification(
     users = (
         TaskPerformer.objects
         .acd_task_status()
+        .users()
         .by_workflow(workflow_id)
         .exclude_directly_deleted()
         .order_by('id')
-        .get_user_emails_and_ids_set()
+        .get_user_ids_emails_subscriber_set()
     )
     link = f'{settings.FRONTEND_URL}/workflows/{workflow_id}'
-    for (user_id, user_email) in users:
-        notification = Notification.objects.create(
-            workflow_json=workflow_json,
-            user_id=user_id,
-            account_id=workflow.account_id,
-            type=NotificationType.COMPLETE_WORKFLOW,
-        )
-        _send_notification(
-            logging=logging,
-            logo_lg=logo_lg,
-            user_id=user_id,
-            user_email=user_email,
-            account_id=workflow.account_id,
-            notification=notification,
-            method_name=NotificationMethod.complete_workflow,
-            workflow_id=workflow.id,
-            workflow_name=workflow.name,
-            link=link,
-            sync=True,
-        )
+
+    for (user_id, user_email, is_subscriber) in users:
+        if is_subscriber:
+            notification = Notification.objects.create(
+                workflow_json=workflow_json,
+                user_id=user_id,
+                account_id=workflow.account_id,
+                type=NotificationType.COMPLETE_WORKFLOW,
+            )
+            _send_notification(
+                logging=logging,
+                logo_lg=logo_lg,
+                user_id=user_id,
+                user_email=user_email,
+                account_id=workflow.account_id,
+                notification=notification,
+                method_name=NotificationMethod.complete_workflow,
+                workflow_id=workflow.id,
+                workflow_name=workflow.name,
+                link=link,
+                sync=True,
+            )
 
 
 @shared_task(base=NotificationTask)

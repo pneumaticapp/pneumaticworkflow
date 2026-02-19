@@ -612,3 +612,78 @@ def test_send_completed_workflow__performer_group__ok(
         ],
         any_order=True,
     )
+
+
+def test_send_completed_workflow__group_user__is_not_subscribed__skip(
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    user = create_test_admin(account=account, is_new_tasks_subscriber=False)
+    group = create_test_group(account, users=[user])
+    workflow = create_test_workflow(
+        account_owner,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.performers.clear()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+    )
+    logging = False
+    send_notification_mock = mocker.patch(
+        'src.notifications.tasks._send_notification',
+    )
+
+    # act
+    _send_completed_workflow_notification(
+        logging=logging,
+        workflow_id=workflow.id,
+    )
+
+    # assert
+    assert not Notification.objects.filter(
+        type=NotificationType.COMPLETE_WORKFLOW,
+    ).exists()
+    send_notification_mock.assert_not_called()
+
+
+def test_send_completed_workflow__user__is_not_subscribed__skip(
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    user = create_test_admin(account=account, is_new_tasks_subscriber=False)
+    workflow = create_test_workflow(
+        account_owner,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    task.performers.clear()
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.USER,
+        user_id=user.id,
+    )
+    logging = False
+    send_notification_mock = mocker.patch(
+        'src.notifications.tasks._send_notification',
+    )
+
+    # act
+    _send_completed_workflow_notification(
+        logging=logging,
+        workflow_id=workflow.id,
+    )
+
+    # assert
+    assert not Notification.objects.filter(
+        type=NotificationType.COMPLETE_WORKFLOW,
+    ).exists()
+    send_notification_mock.assert_not_called()
