@@ -113,7 +113,19 @@ class WorkflowViewSet(
             queryset = queryset.filter(
                 owners=user.id,
             ).order_by('-date_created')
-        return self.prefetch_queryset(queryset)
+        extra_prefetch = None
+        if self.action in (
+            'retrieve',
+            'snooze',
+            'resume',
+            'finish',
+            'partial_update',
+        ):
+            extra_prefetch = [
+                'kickoff__output__selections',
+                'kickoff__output__attachments',
+            ]
+        return self.prefetch_queryset(queryset, extra_fields=extra_prefetch)
 
     def get_object(self):
 
