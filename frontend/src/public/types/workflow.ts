@@ -1,5 +1,5 @@
 import { IAccount, TUserId } from './user';
-import { TUploadedFile } from '../utils/uploadFilesNew';
+import { TUploadedFile } from '../utils/uploadFiles';
 import { ITask, ITemplateStep, TaskWithTsp } from './tasks';
 import {
   IKickoff,

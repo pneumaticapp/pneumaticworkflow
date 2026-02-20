@@ -9,7 +9,7 @@ import { Button } from '../UI/Buttons/Button';
 import { Header } from '../UI/Typeography/Header';
 import { ESettingsTabs } from '../../types/profile';
 import { AttachmentField, SectionTitle } from '../UI';
-import { TUploadedFile } from '../../utils/uploadFilesNew';
+import { TUploadedFile } from '../../utils/uploadFiles';
 import { TAccountLeaseLevel } from '../../types/user';
 import { ESubscriptionPlan } from '../../types/account';
 

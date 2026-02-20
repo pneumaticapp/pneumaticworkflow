@@ -2,7 +2,7 @@ import { EditorState } from 'draft-js';
 // tslint:disable-next-line: match-default-export-name
 import createAttachmentPlugin from './AttachmentsPlugin';
 
-import { uploadFiles } from '../../../utils/uploadFilesNew';
+import { uploadFiles } from '../../../utils/uploadFiles';
 import { TEditorAttachment } from './types';
 import { getAttachmentTypeByUrl } from '../../Attachments/utils/getAttachmentType';
 

@@ -17,7 +17,7 @@ import { BrowseIcon, DeleteBoldIcon } from '../../icons';
 import { useDidUpdateEffect } from '../../../hooks/useDidUpdateEffect';
 import { createUUID } from '../../../utils/createId';
 import { deleteUserPhoto, uploadUserPhoto } from '../../../redux/actions';
-import { MAX_FILE_SIZE } from '../../../utils/uploadFilesNew';
+import { MAX_FILE_SIZE } from '../../../utils/uploadFiles';
 import { NotificationManager } from '../../UI/Notifications';
 
 import styles from './AvatarController.css';
@@ -204,13 +204,13 @@ export function AvatarController({ user, containerClassname }: IAvatarController
   const renderAvatarControl = () => {
     return (
       <div className={styles['control-buttons']}>
-        <button type='button' className={styles['control-button']} onClick={() => setIsUploadModalOpen(true)}>
+        <button type="button" className={styles['control-button']} onClick={() => setIsUploadModalOpen(true)}>
           {formatMessage({ id: 'user.avatar.add' })}
         </button>
         {user.photo && (
           <>
             <div className={styles['control-button-separator']} />
-            <button type='button' className={styles['control-button']} onClick={() => setIsDeleteModalOpen(true)}>
+            <button type="button" className={styles['control-button']} onClick={() => setIsDeleteModalOpen(true)}>
               {formatMessage({ id: 'user.avatar.delete' })}
             </button>
           </>

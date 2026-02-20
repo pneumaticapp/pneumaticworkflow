@@ -4,7 +4,7 @@ import { logger } from '../../../utils/logger';
 import { NotificationManager } from '../../UI/Notifications';
 // tslint:disable-next-line: match-default-export-name
 import createAttachmentPlugin from './AttachmentsPlugin';
-import { uploadFiles } from '../../../utils/uploadFilesNew';
+import { uploadFiles } from '../../../utils/uploadFiles';
 
 export async function handleUploadAttachments(
   e: React.ChangeEvent<HTMLInputElement>,
