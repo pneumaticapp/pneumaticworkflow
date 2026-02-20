@@ -186,7 +186,6 @@ class EmailService(NotificationService):
             'task_description': html_description,
             'task_id': task_id,
             'link': link,
-            'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'logo_lg': self.logo_lg,
             'started_by': {
@@ -208,7 +207,11 @@ class EmailService(NotificationService):
         link: str,
         user_id: int,
         user_email: str,
+        user_first_name: str,
         workflow_name: str,
+        template_name: str,
+        workflow_starter_name: str,
+        workflow_starter_photo: Optional[str] = None,
         **kwargs,
     ):
         unsubscribe_token = UnsubscribeEmailToken.create_token(
@@ -219,11 +222,22 @@ class EmailService(NotificationService):
             f'{settings.BACKEND_URL}/accounts/emails/unsubscribe?token='
             f'{unsubscribe_token}'
         )
+        content = (
+            f'Hello {user_first_name}, \n'
+            f'The workflow has been successfully completed.\n'
+            f'All tasks in this workflow are now finished.\n'
+            f'Thank you for your contribution.'
+        )
         data = {
             'title': email_titles[NotificationMethod.complete_workflow],
+            'template': template_name,
             'workflow_name': workflow_name,
+            'content': content,
+            'started_by': {
+                'name': workflow_starter_name,
+                'avatar': workflow_starter_photo,
+            },
             'link': link,
-            'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'logo_lg': self.logo_lg,
         }
@@ -271,7 +285,6 @@ class EmailService(NotificationService):
             'task_description': html_description,
             'task_id': task_id,
             'link': link,
-            'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'logo_lg': self.logo_lg,
             'started_by': {
@@ -299,7 +312,6 @@ class EmailService(NotificationService):
         task_id: int,
         task_name: str,
         template_name: str,
-        workflow_starter_id: int,
         workflow_starter_first_name: str,
         workflow_starter_last_name: str,
         token: Optional[str] = None,
@@ -329,9 +341,6 @@ class EmailService(NotificationService):
                 'task_name': task_name,
                 'link': link,
                 'template_name': template_name,
-                'workflow_starter_id': workflow_starter_id,
-                'workflow_starter_first_name': workflow_starter_first_name,
-                'workflow_starter_last_name': workflow_starter_last_name,
                 'started_by': started_by,
                 'user_type': user_type,
                 'token': token,
@@ -424,7 +433,6 @@ class EmailService(NotificationService):
                 'content': content,
                 'user_name': user_first_name,
                 'button_text': 'View Notifications',
-                'unsubscribe_token': unsubscribe_token,
                 'unsubscribe_link': unsubscribe_link,
                 'link': link,
                 'logo_lg': self.logo_lg,
@@ -639,7 +647,6 @@ class EmailService(NotificationService):
             'title': email_titles[NotificationMethod.workflows_digest],
             'date_from': date_from,
             'date_to': date_to,
-            'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'workflows_link': link,
             'logo_lg': self.logo_lg,
@@ -695,7 +702,6 @@ class EmailService(NotificationService):
             'title': email_titles[NotificationMethod.tasks_digest],
             'date_from': date_from,
             'date_to': date_to,
-            'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'tasks_link': link,
             'logo_lg': self.logo_lg,
@@ -730,14 +736,20 @@ class EmailService(NotificationService):
         link: str,
         user_id: int,
         user_email: str,
+        user_first_name: str,
         count: int,
         **kwargs,
     ):
+        content = (
+            f'Hi {user_first_name}, '
+            f'This is a friendly reminder that you still have unfinished '
+            f'tasks waiting for you in Pneumatic. Tasks count: ({count}).'
+        )
         data = {
             'title': email_titles[NotificationMethod.task_reminder],
-            'count': count,
             'link': link,
             'logo_lg': self.logo_lg,
+            'content': content,
         }
         self._send(
             title=email_titles[NotificationMethod.task_reminder],

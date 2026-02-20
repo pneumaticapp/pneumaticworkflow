@@ -26,8 +26,11 @@ pytestmark = pytest.mark.django_db
 def test_send_completed_workflow__call_all_services__ok(mocker):
 
     # arrange
-    account = create_test_account()
-    account_owner = create_test_owner(account=account)
+    account = create_test_account(logo_lg='https://some.jpg')
+    account_owner = create_test_owner(
+        account=account,
+        photo='http://some.com/photo.jpg',
+    )
     workflow = create_test_workflow(
         account_owner,
         tasks_count=1,
@@ -51,6 +54,7 @@ def test_send_completed_workflow__call_all_services__ok(mocker):
     _send_completed_workflow_notification(
         logging=logging,
         workflow_id=workflow.id,
+        logo_lg=account.logo_lg,
     )
 
     # assert
@@ -63,6 +67,9 @@ def test_send_completed_workflow__call_all_services__ok(mocker):
         link=link,
         user_id=account_owner.id,
         user_email=account_owner.email,
+        user_first_name=account_owner.first_name,
+        workflow_starter_name=account_owner.name,
+        workflow_starter_photo=account_owner.photo,
         workflow_name=workflow.name,
         workflow_id=workflow.id,
         notification=notification,
@@ -75,10 +82,13 @@ def test_send_completed_workflow__call_all_services__ok(mocker):
     )
     send_push_mock.assert_called_once_with(
         link=link,
-        workflow_id=workflow.id,
-        workflow_name=workflow.name,
         user_id=account_owner.id,
         user_email=account_owner.email,
+        user_first_name=account_owner.first_name,
+        workflow_starter_name=account_owner.name,
+        workflow_starter_photo=account_owner.photo,
+        workflow_id=workflow.id,
+        workflow_name=workflow.name,
         notification=notification,
         sync=True,
     )
@@ -125,10 +135,7 @@ def test_send_completed_workflow__not_active_task__skip(
         TaskStatus.DELAYED,
     ),
 )
-def test_send_completed_workflow__active_task__ok(
-    mocker,
-    status,
-):
+def test_send_completed_workflow__active_task__ok(mocker, status):
 
     # arrange
     account = create_test_account()
@@ -161,6 +168,55 @@ def test_send_completed_workflow__active_task__ok(
         logo_lg=None,
         user_id=account_owner.id,
         user_email=account_owner.email,
+        user_first_name=account_owner.first_name,
+        workflow_starter_name=account_owner.name,
+        workflow_starter_photo=account_owner.photo,
+        account_id=account.id,
+        notification=notification,
+        method_name=NotificationMethod.complete_workflow,
+        workflow_id=workflow.id,
+        workflow_name=workflow.name,
+        link=link,
+        sync=True,
+    )
+
+
+def test_send_completed_workflow__external_workflow__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        account_owner,
+        tasks_count=1,
+        is_external=True,
+    )
+    logging = False
+    link = f'{settings.FRONTEND_URL}/workflows/{workflow.id}'
+    send_notification_mock = mocker.patch(
+        'src.notifications.tasks._send_notification',
+    )
+
+    # act
+    _send_completed_workflow_notification(
+        logging=logging,
+        workflow_id=workflow.id,
+    )
+
+    # assert
+    notification = Notification.objects.get(
+        user_id=account_owner.id,
+        account_id=account.id,
+        type=NotificationType.COMPLETE_WORKFLOW,
+    )
+    send_notification_mock.assert_called_once_with(
+        logging=logging,
+        logo_lg=None,
+        user_id=account_owner.id,
+        user_email=account_owner.email,
+        user_first_name=account_owner.first_name,
+        workflow_starter_name='External User',
+        workflow_starter_photo=None,
         account_id=account.id,
         notification=notification,
         method_name=NotificationMethod.complete_workflow,
@@ -219,6 +275,9 @@ def test_send_completed_another_workflow__skip(mocker):
         logo_lg=None,
         user_id=account_owner.id,
         user_email=account_owner.email,
+        user_first_name=account_owner.first_name,
+        workflow_starter_name=account_owner.name,
+        workflow_starter_photo=account_owner.photo,
         account_id=account.id,
         notification=notification,
         method_name=NotificationMethod.complete_workflow,
@@ -263,6 +322,9 @@ def test_send_completed_workflow__one_user_on_multiple_tasks__ok(mocker):
         logo_lg=None,
         user_id=account_owner.id,
         user_email=account_owner.email,
+        user_first_name=account_owner.first_name,
+        workflow_starter_name=account_owner.name,
+        workflow_starter_photo=account_owner.photo,
         account_id=account.id,
         notification=notification,
         method_name=NotificationMethod.complete_workflow,
@@ -403,6 +465,9 @@ def test_send_completed_workflow__two_performers_on_same_task__ok(
                 logo_lg=None,
                 user_id=user_1.id,
                 user_email=user_1.email,
+                user_first_name=user_1.first_name,
+                workflow_starter_name=account_owner.name,
+                workflow_starter_photo=account_owner.photo,
                 account_id=account.id,
                 notification=notification_1,
                 method_name=NotificationMethod.complete_workflow,
@@ -416,6 +481,9 @@ def test_send_completed_workflow__two_performers_on_same_task__ok(
                 logo_lg=None,
                 user_id=user_2.id,
                 user_email=user_2.email,
+                user_first_name=user_2.first_name,
+                workflow_starter_name=account_owner.name,
+                workflow_starter_photo=account_owner.photo,
                 account_id=account.id,
                 notification=notification_2,
                 method_name=NotificationMethod.complete_workflow,
@@ -478,6 +546,9 @@ def test_send_completed_workflow__two_performers_on_different_tasks__ok(
                 logo_lg=None,
                 user_id=user_1.id,
                 user_email=user_1.email,
+                user_first_name=user_1.first_name,
+                workflow_starter_name=account_owner.name,
+                workflow_starter_photo=account_owner.photo,
                 account_id=account.id,
                 notification=notification_1,
                 method_name=NotificationMethod.complete_workflow,
@@ -491,6 +562,9 @@ def test_send_completed_workflow__two_performers_on_different_tasks__ok(
                 logo_lg=None,
                 user_id=user_2.id,
                 user_email=user_2.email,
+                user_first_name=user_2.first_name,
+                workflow_starter_name=account_owner.name,
+                workflow_starter_photo=account_owner.photo,
                 account_id=account.id,
                 notification=notification_2,
                 method_name=NotificationMethod.complete_workflow,
@@ -588,6 +662,9 @@ def test_send_completed_workflow__performer_group__ok(
                 logo_lg=None,
                 user_id=user_1.id,
                 user_email=user_1.email,
+                user_first_name=user_1.first_name,
+                workflow_starter_name=account_owner.name,
+                workflow_starter_photo=account_owner.photo,
                 account_id=account.id,
                 notification=notification_1,
                 method_name=NotificationMethod.complete_workflow,
@@ -601,6 +678,9 @@ def test_send_completed_workflow__performer_group__ok(
                 logo_lg=None,
                 user_id=user_2.id,
                 user_email=user_2.email,
+                user_first_name=user_2.first_name,
+                workflow_starter_name=account_owner.name,
+                workflow_starter_photo=account_owner.photo,
                 account_id=account.id,
                 notification=notification_2,
                 method_name=NotificationMethod.complete_workflow,

@@ -1536,3 +1536,77 @@ class TestPushNotificationService:
             user_id=user.id,
             user_email=user.email,
         )
+
+    def test_send_task_reminder__one_task__ok(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        service = PushNotificationService(
+            account_id=account.id,
+            logo_lg=account.logo_lg,
+            logging=account.log_api_requests,
+        )
+        send_mock = mocker.patch(
+            'src.notifications.services.push.'
+            'PushNotificationService._send',
+        )
+        link = 'http://localhost/tasks/1'
+        count = 1
+
+        # act
+        service.send_task_reminder(
+            link=link,
+            user_id=user.id,
+            user_email=user.email,
+            count=count,
+        )
+
+        # assert
+        send_mock.assert_called_once_with(
+            method_name=NotificationMethod.task_reminder,
+            title=str(messages.MSG_NF_0022),
+            body=messages.MSG_NF_0023,
+            extra_data={
+                'link': link,
+            },
+            user_id=user.id,
+            user_email=user.email,
+        )
+
+    def test_send_task_reminder__many_tasks__ok(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        service = PushNotificationService(
+            account_id=account.id,
+            logo_lg=account.logo_lg,
+            logging=account.log_api_requests,
+        )
+        send_mock = mocker.patch(
+            'src.notifications.services.push.'
+            'PushNotificationService._send',
+        )
+        link = 'http://localhost/tasks/1'
+        count = 2
+
+        # act
+        service.send_task_reminder(
+            link=link,
+            user_id=user.id,
+            user_email=user.email,
+            count=count,
+        )
+
+        # assert
+        send_mock.assert_called_once_with(
+            method_name=NotificationMethod.task_reminder,
+            title=str(messages.MSG_NF_0022),
+            body=messages.MSG_NF_0024(count),
+            extra_data={
+                'link': link,
+            },
+            user_id=user.id,
+            user_email=user.email,
+        )

@@ -96,6 +96,7 @@ class UsersWithRemainderTaskQuery(SqlQueryObject, DereferencedPerformersMixin):
         result = f"""
         SELECT
           au.id AS user_id,
+          au.first_name AS user_first_name,
           au.email AS user_email,
           au.type AS user_type,
           pt.id AS task_id,

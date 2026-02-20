@@ -409,7 +409,6 @@ def test_send_overdue_task__type_user__ok(mocker):
     task_name = 'task name'
     workflow_id = 1
     workflow_name = 'workflow name'
-    workflow_starter_id = 11
     workflow_starter_first_name = 'first name'
     workflow_starter_last_name = 'last name'
     template_name = 'template'
@@ -435,7 +434,6 @@ def test_send_overdue_task__type_user__ok(mocker):
         task_name=task_name,
         workflow_id=workflow_id,
         workflow_name=workflow_name,
-        workflow_starter_id=workflow_starter_id,
         workflow_starter_first_name=workflow_starter_first_name,
         workflow_starter_last_name=workflow_starter_last_name,
         template_name=template_name,
@@ -457,9 +455,6 @@ def test_send_overdue_task__type_user__ok(mocker):
             'task_name': task_name,
             'link': f'{settings.FRONTEND_URL}/tasks/{task_id}',
             'template_name': template_name,
-            'workflow_starter_id': workflow_starter_id,
-            'workflow_starter_first_name': workflow_starter_first_name,
-            'workflow_starter_last_name': workflow_starter_last_name,
             'started_by': {
                 'name': (
                     f'{workflow_starter_first_name} '
@@ -491,7 +486,6 @@ def test_send_overdue_task__type_guest__ok(mocker):
     task_name = 'task name'
     workflow_id = 1
     workflow_name = 'workflow name'
-    workflow_starter_id = 11
     workflow_starter_first_name = 'first name'
     workflow_starter_last_name = 'last name'
     template_name = 'template'
@@ -521,7 +515,6 @@ def test_send_overdue_task__type_guest__ok(mocker):
         task_name=task_name,
         workflow_id=workflow_id,
         workflow_name=workflow_name,
-        workflow_starter_id=workflow_starter_id,
         workflow_starter_first_name=workflow_starter_first_name,
         workflow_starter_last_name=workflow_starter_last_name,
         template_name=template_name,
@@ -544,9 +537,6 @@ def test_send_overdue_task__type_guest__ok(mocker):
             'task_name': task_name,
             'link': guest_link,
             'template_name': template_name,
-            'workflow_starter_id': workflow_starter_id,
-            'workflow_starter_first_name': workflow_starter_first_name,
-            'workflow_starter_last_name': workflow_starter_last_name,
             'started_by': {
                 'name': (
                     f'{workflow_starter_first_name} '
@@ -894,7 +884,6 @@ def test_send_unread_notifications__ok(mocker):
             'content': content,
             'user_name': recipient_first_name,
             'button_text': 'View Notifications',
-            'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'link': notifications_link,
             'logo_lg': None,
@@ -981,7 +970,6 @@ def test_send_new_task__ok(mocker):
             'task_description': html_description,
             'task_id': task_id,
             'link': task_link,
-            'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'started_by': {
                 'name': wf_starter_name,
@@ -1075,7 +1063,6 @@ def test_send_returned_task__ok(mocker):
             'task_description': html_description,
             'task_id': task_id,
             'link': task_link,
-            'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'started_by': {
                 'name': wf_starter_name,
@@ -1458,7 +1445,6 @@ def test_send_workflows_digest_email__ok(mocker):
             'title': email_titles[NotificationMethod.workflows_digest],
             'date_from': date_from,
             'date_to': date_to,
-            'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'workflows_link': workflows_link,
             'logo_lg': logo_lg,
@@ -1557,7 +1543,6 @@ def test_send_tasks_digest_email__ok(mocker):
             'title': email_titles[NotificationMethod.tasks_digest],
             'date_from': date_from,
             'date_to': date_to,
-            'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'tasks_link': tasks_link,
             'logo_lg': logo_lg,
@@ -1775,7 +1760,6 @@ def test_send_workflows_digest_email__empty_digest__ok(mocker):
             'title': email_titles[NotificationMethod.workflows_digest],
             'date_from': date_from,
             'date_to': date_to,
-            'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'workflows_link': workflows_link,
             'logo_lg': logo_lg,
@@ -1863,7 +1847,6 @@ def test_send_tasks_digest_email__empty_digest__ok(mocker):
             'title': email_titles[NotificationMethod.tasks_digest],
             'date_from': date_from,
             'date_to': date_to,
-            'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'tasks_link': tasks_link,
             'logo_lg': None,
@@ -1971,7 +1954,11 @@ def test_send_complete_workflow(mocker):
     # arrange
     user_id = 55
     user_email = 'guest@guest.guest'
+    user_first_name = 'Joe'
+    template_name = 'Some template'
     workflow_name = 'Workflow name'
+    workflow_starter_name = 'Joe'
+    workflow_starter_photo = 'https://some.com/photo.jpg'
     unsubscribe_token = '123123'
     create_unsubscribe_token_mock = mocker.patch(
         'src.notifications.services.email.'
@@ -1997,7 +1984,11 @@ def test_send_complete_workflow(mocker):
         link=link,
         user_id=user_id,
         user_email=user_email,
+        user_first_name=user_first_name,
         workflow_name=workflow_name,
+        template_name=template_name,
+        workflow_starter_name=workflow_starter_name,
+        workflow_starter_photo=workflow_starter_photo,
         sync=True,
     )
 
@@ -2015,8 +2006,18 @@ def test_send_complete_workflow(mocker):
         data={
             'title': email_titles[NotificationMethod.complete_workflow],
             'workflow_name': workflow_name,
+            'template': template_name,
+            'content': (
+                f'Hello {user_first_name}, \n'
+                f'The workflow has been successfully completed.\n'
+                f'All tasks in this workflow are now finished.\n'
+                f'Thank you for your contribution.'
+            ),
+            'started_by': {
+                'name': workflow_starter_name,
+                'avatar': workflow_starter_photo,
+            },
             'link': link,
-            'unsubscribe_token': unsubscribe_token,
             'unsubscribe_link': unsubscribe_link,
             'logo_lg': logo_lg,
         },
@@ -2032,6 +2033,7 @@ def test_send_reminder_task(mocker):
     # arrange
     user_id = 55
     user_email = 'guest@guest.guest'
+    user_first_name = 'Joe'
     account_id = 12332
     send_mock = mocker.patch(
         'src.notifications.services.email.'
@@ -2052,6 +2054,7 @@ def test_send_reminder_task(mocker):
         link=link,
         user_id=user_id,
         user_email=user_email,
+        user_first_name=user_first_name,
         count=count,
         sync=True,
     )
@@ -2065,7 +2068,11 @@ def test_send_reminder_task(mocker):
         method_name=NotificationMethod.task_reminder,
         data={
             'title': email_titles[NotificationMethod.task_reminder],
-            'count': count,
+            'content': (
+                f'Hi {user_first_name}, '
+                f'This is a friendly reminder that you still have unfinished '
+                f'tasks waiting for you in Pneumatic. Tasks count: ({count}).'
+            ),
             'link': link,
             'logo_lg': logo_lg,
         },
