@@ -59,6 +59,7 @@ import { shouldHidePlaceholder } from './utils/shouldHidePlaceholder';
 import { getForegroundClass } from '../UI/Fields/common/utils/getForegroundClass';
 import { getSelectedContent } from './utils/getSelectedContent';
 import { insertSelectedContent } from './utils/insertSelectedContent';
+import { parsePasteJson } from './utils/parsePasteJson';
 import { removeAllExcept } from './utils/removeAllExcept';
 
 import styles from './RichEditor.css';
@@ -342,8 +343,10 @@ export class RichEditor extends React.Component<IRichEditorProps, IRichEditorSta
     const jsonContent = e.clipboardData.getData('application/json');
     const htmlContent = e.clipboardData.getData('text/html');
 
-    if (stripPastedFormatting) {
-      const contentState = convertFromRaw(JSON.parse(jsonContent));
+    const parsedJson = parsePasteJson(jsonContent);
+
+    if (stripPastedFormatting && parsedJson) {
+      const contentState = convertFromRaw(parsedJson);
       let newEditorState = insertSelectedContent(this.state.editorState, contentState);
 
       const allowedStyles = new Set([]);
@@ -355,8 +358,8 @@ export class RichEditor extends React.Component<IRichEditorProps, IRichEditorSta
       return;
     }
 
-    if (jsonContent) {
-      const contentState = convertFromRaw(JSON.parse(jsonContent));
+    if (parsedJson) {
+      const contentState = convertFromRaw(parsedJson);
       const newEditorState = insertSelectedContent(this.state.editorState, contentState);
       this.setState({ editorState: newEditorState });
 
