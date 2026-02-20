@@ -2069,8 +2069,8 @@ def test_send_reminder_task(mocker):
         data={
             'title': email_titles[NotificationMethod.task_reminder],
             'content': (
-                f'Hi {user_first_name}, '
-                f'This is a friendly reminder that you still have unfinished '
+                f'Hi {user_first_name}, This is a friendly reminder that '
+                f'you still have unfinished '
                 f'tasks waiting for you in Pneumatic. Tasks count: ({count}).'
             ),
             'link': link,

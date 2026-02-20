@@ -183,6 +183,6 @@ email_titles = {
     ),
     NotificationMethod.complete_workflow: 'Workflow completed',
     NotificationMethod.task_reminder: (
-        'Reminder: you have unfinished tasks in Pneumatic',
+        'Reminder: you have unfinished tasks in Pneumatic'
     ),
 }

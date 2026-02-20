@@ -143,7 +143,10 @@ class SMTPEmailClient(EmailClient):
             EmailType.UNREAD_NOTIFICATIONS: (
                 'You have unread notifications on Pneumatic'
             ),
-            EmailType.INVITE: 'Join your team 👥',
+            EmailType.COMPLETE_WORKFLOW: 'Workflow completed',
+            EmailType.TASK_REMINDER: (
+                'Reminder: you have unfinished tasks in Pneumatic'
+            ),
         }
 
         return subjects.get(template_code, f'Pneumatic - {template_code}')

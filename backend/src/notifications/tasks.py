@@ -714,7 +714,7 @@ def _send_completed_workflow_notification(
 ):
     workflow = (
         Workflow.objects
-        .select_related('workflow_starter')
+        .select_related('workflow_starter', 'template')
         .get(id=workflow_id)
     )
     if workflow.is_external:
@@ -757,6 +757,7 @@ def _send_completed_workflow_notification(
                 method_name=NotificationMethod.complete_workflow,
                 workflow_id=workflow.id,
                 workflow_name=workflow.name,
+                template_name=workflow.get_template_name(),
                 link=link,
                 sync=True,
             )

@@ -109,6 +109,8 @@ class WorkflowService(
             finalizable=instance_template.finalizable,
             status_updated=timezone.now(),
             version=instance_template.version,
+            reminder_notification=instance_template.reminder_notification,
+            completion_notification=instance_template.completion_notification,
             workflow_starter=kwargs.get('workflow_starter'),
             is_external=kwargs.get('is_external') or False,
             is_urgent=kwargs.get('is_urgent') or False,

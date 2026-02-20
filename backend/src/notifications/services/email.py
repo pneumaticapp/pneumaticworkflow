@@ -741,18 +741,18 @@ class EmailService(NotificationService):
         **kwargs,
     ):
         content = (
-            f'Hi {user_first_name}, '
-            f'This is a friendly reminder that you still have unfinished '
+            f'Hi {user_first_name}, This is a friendly reminder that you '
+            f'still have unfinished '
             f'tasks waiting for you in Pneumatic. Tasks count: ({count}).'
         )
         data = {
-            'title': email_titles[NotificationMethod.task_reminder],
+            'title': str(email_titles[NotificationMethod.task_reminder]),
             'link': link,
             'logo_lg': self.logo_lg,
             'content': content,
         }
         self._send(
-            title=email_titles[NotificationMethod.task_reminder],
+            title=str(email_titles[NotificationMethod.task_reminder]),
             user_id=user_id,
             user_email=user_email,
             template_code=EmailType.TASK_REMINDER,
