@@ -288,7 +288,7 @@ def test_send__bad_request_content_type_json__ok(mocker):
         },
         user_id=user.id,
     )
-    capture_sentry_mock.assert_called_once()
+    capture_sentry_mock.assert_not_called()
 
 
 def test_send__permission_denied_type_text__ok(mocker):
@@ -366,7 +366,7 @@ def test_send__permission_denied_type_text__ok(mocker):
         },
         user_id=user.id,
     )
-    capture_sentry_mock.assert_called_once()
+    capture_sentry_mock.assert_not_called()
 
 
 def test_send__not_found__ok(mocker):
@@ -443,7 +443,7 @@ def test_send__not_found__ok(mocker):
         },
         user_id=user.id,
     )
-    capture_sentry_mock.assert_called_once()
+    capture_sentry_mock.assert_not_called()
 
 
 def test_send__internal_server_error__raise_exception(mocker):

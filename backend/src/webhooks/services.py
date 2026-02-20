@@ -181,11 +181,12 @@ class WebhookDeliverer:
                             data['response_text'] = response.text
                         elif 'application/json' in content_type:
                             data['response_json'] = response.json()
-                    capture_sentry_message(
-                        message='Error sending webhook',
-                        data=data,
-                        level=SentryLogLevel.INFO,
-                    )
+                    if response.status_code >= 500:
+                        capture_sentry_message(
+                            message='Error sending webhook',
+                            data=data,
+                            level=SentryLogLevel.INFO,
+                        )
                     status = AccountEventStatus.FAILED
                     http_status = response.status_code
                     error['response'] = data
