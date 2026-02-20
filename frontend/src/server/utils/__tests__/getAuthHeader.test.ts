@@ -1,3 +1,4 @@
+import { EAppPart } from '../../../public/utils/identifyAppPart/types';
 import { getAuthHeader } from '../getAuthHeader';
 
 describe('getAuthHeader', () => {
@@ -10,6 +11,15 @@ describe('getAuthHeader', () => {
   });
   it('returns an empty object if no token is provided.', () => {
     const result = getAuthHeader();
+
+    expect(result).toEqual({});
+  });
+
+  it('returns an empty object when token is the string "undefined".', () => {
+    const result = getAuthHeader({
+      token: 'undefined',
+      appPart: EAppPart.PublicFormApp,
+    });
 
     expect(result).toEqual({});
   });

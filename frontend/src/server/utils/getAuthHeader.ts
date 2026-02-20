@@ -18,10 +18,14 @@ const defaultParams = {
   appPart: EAppPart.MainApp,
 };
 
+function isInvalidToken(token: string | undefined): boolean {
+  return !token || token === 'undefined';
+}
+
 export function getAuthHeader(params: IGetAuthHeaderParams = defaultParams) {
   const { token, appPart, userAgent } = { ...defaultParams, ...params };
 
-  if (!token) {
+  if (isInvalidToken(token)) {
     return {};
   }
 
