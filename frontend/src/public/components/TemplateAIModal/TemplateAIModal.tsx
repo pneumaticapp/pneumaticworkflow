@@ -197,6 +197,15 @@ export function TemplateAIModal({
   );
 }
 
+/** Null-safe height for animation task (Sentry S6: avoid reading offsetHeight of null). */
+export function getAnimationTaskHeight(
+  rawHeight: number | undefined | null,
+  order: number,
+): number | null {
+  if (rawHeight == null) return null;
+  return rawHeight + (order === 0 ? 0 : 8);
+}
+
 interface IAnimationTaskProps {
   order: number;
   task: ITemplateTask;
@@ -220,8 +229,9 @@ function AnimationTask({
   }, []);
 
   useEffect(() => {
-    if (myRef.current) {
-      const height = myRef.current.offsetHeight + (order === 0 ? 0 : 8);
+    const rawHeight = myRef.current?.offsetHeight;
+    const height = getAnimationTaskHeight(rawHeight, order);
+    if (height != null) {
       onChangeHeightContainer(height);
       onActiveTask(order);
     }

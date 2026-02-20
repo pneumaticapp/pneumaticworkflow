@@ -158,11 +158,12 @@ export const AddLinkForm = (props: IAddLinkFormParams) => {
           ancestorNode = ancestorNode.parentNode as HTMLElement;
         }
 
+        const formHeight = formRef.current?.offsetHeight ?? 0;
         const position = {
           top:
             editorRoot.offsetTop -
             scrollOffset -
-            formRef.current!.offsetHeight +
+            formHeight +
             (selectionRect.top - editorRootRect.top) +
             extraTopOffset,
           left:
