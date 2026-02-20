@@ -15,7 +15,7 @@ import { getEditedFields } from '../../../TemplateEdit/ExtraFields/utils/getEdit
 import { EInputNameBackgroundColor } from '../../../../types/workflow';
 import { getPublicForm } from '../../../../api/getPublicForm';
 import { EPublicFormState, IPublicForm } from '../types';
-import { logger } from '../../../../utils/logger';
+import { logger, MSG_FAILED_FETCH_PUBLIC_FORM } from '../../../../utils/logger';
 import { runPublicForm } from '../../../../api/runPublicForm';
 import { checkExtraFieldsAreValid } from '../../../WorkflowEditPopup/utils/areKickoffFieldsValid';
 import { ExtraFieldsHelper } from '../../../TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
@@ -82,7 +82,7 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
       setFormState(EPublicFormState.WaitingForAction);
     } catch (error) {
       setFormState(EPublicFormState.FormNotFound);
-      logger.error('Failed to fetch public form.');
+      logger.error(MSG_FAILED_FETCH_PUBLIC_FORM);
     }
   };
 
