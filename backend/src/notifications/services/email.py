@@ -67,7 +67,7 @@ class EmailService(NotificationService):
         NotificationMethod.verification,
         NotificationMethod.invite,
         NotificationMethod.complete_workflow,
-        NotificationMethod.task_remainder,
+        NotificationMethod.task_reminder,
     }
 
     def _send_email_to_console(
@@ -725,7 +725,7 @@ class EmailService(NotificationService):
             data=data,
         )
 
-    def send_task_remainder(
+    def send_task_reminder(
         self,
         link: str,
         user_id: int,
@@ -734,16 +734,16 @@ class EmailService(NotificationService):
         **kwargs,
     ):
         data = {
-            'title': email_titles[NotificationMethod.task_remainder],
+            'title': email_titles[NotificationMethod.task_reminder],
             'count': count,
             'link': link,
             'logo_lg': self.logo_lg,
         }
         self._send(
-            title=email_titles[NotificationMethod.task_remainder],
+            title=email_titles[NotificationMethod.task_reminder],
             user_id=user_id,
             user_email=user_email,
-            template_code=EmailType.TASK_REMAINDER,
-            method_name=NotificationMethod.task_remainder,
+            template_code=EmailType.TASK_REMINDER,
+            method_name=NotificationMethod.task_reminder,
             data=data,
         )

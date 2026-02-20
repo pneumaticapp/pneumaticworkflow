@@ -76,7 +76,7 @@ __all__ = [
     'send_not_urgent_notification',
     'send_overdue_task_notification',
     'send_reaction_notification',
-    'send_remainder_task_notification',
+    'send_reminder_task_notification',
     'send_removed_task_notification',
     'send_reset_password_notification',
     'send_resumed_workflow_notification',
@@ -375,7 +375,7 @@ def send_overdue_task_notification():
     _send_overdue_task_notification()
 
 
-def _send_remainder_task_notification():
+def _send_reminder_task_notification():
     query = UsersWithRemainderTaskQuery()
     users = RawSqlExecutor.fetch(
         *query.get_sql(),
@@ -402,11 +402,11 @@ def _send_remainder_task_notification():
 
 
 @shared_task(base=NotificationTask)
-def send_remainder_task_notification():
-    with periodic_lock('send_remainder_task_notification') as acquired:
+def send_reminder_task_notification():
+    with periodic_lock('send_reminder_task_notification') as acquired:
         if not acquired:
             return
-    _send_remainder_task_notification()
+    _send_reminder_task_notification()
 
 
 def _send_workflows_digest_notification(

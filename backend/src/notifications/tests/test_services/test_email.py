@@ -2027,7 +2027,7 @@ def test_send_complete_workflow(mocker):
     )
 
 
-def test_send_remainder_task(mocker):
+def test_send_reminder_task(mocker):
 
     # arrange
     user_id = 55
@@ -2048,7 +2048,7 @@ def test_send_remainder_task(mocker):
     )
 
     # act
-    service.send_remainder_task(
+    service.send_task_reminder(
         link=link,
         user_id=user_id,
         user_email=user_email,
@@ -2058,13 +2058,13 @@ def test_send_remainder_task(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        title=email_titles[NotificationMethod.task_remainder],
+        title=email_titles[NotificationMethod.task_reminder],
         user_id=user_id,
         user_email=user_email,
-        template_code=EmailType.TASK_REMAINDER,
-        method_name=NotificationMethod.task_remainder,
+        template_code=EmailType.TASK_REMINDER,
+        method_name=NotificationMethod.task_reminder,
         data={
-            'title': email_titles[NotificationMethod.task_remainder],
+            'title': email_titles[NotificationMethod.task_reminder],
             'count': count,
             'link': link,
             'logo_lg': logo_lg,

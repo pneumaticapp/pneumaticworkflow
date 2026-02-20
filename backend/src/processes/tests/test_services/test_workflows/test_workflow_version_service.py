@@ -76,7 +76,7 @@ class TestWorkflowUpdateVersionService:
             tasks_count=1,
             finalizable=False,
             description='Old desc',
-            remainder_notification=False,
+            reminder_notification=False,
             completion_notification=False,
         )
         workflow = create_test_workflow(
@@ -86,7 +86,7 @@ class TestWorkflowUpdateVersionService:
         # Change template data
         template.finalizable = True
         template.description = 'New desc'
-        template.remainder_notification = True
+        template.reminder_notification = True
         template.completion_notification = True
         template.save()
         user = create_test_admin(account=account)
@@ -171,7 +171,7 @@ class TestWorkflowUpdateVersionService:
         workflow_service_update_mock.assert_called_once_with(
             description=template.description,
             finalizable=template.finalizable,
-            remainder_notification=template.remainder_notification,
+            reminder_notification=template.reminder_notification,
             completion_notification=template.completion_notification,
             version=template_version.version,
             force_save=True,

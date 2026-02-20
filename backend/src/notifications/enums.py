@@ -9,7 +9,7 @@ class NotificationMethod:
     new_task_websocket = 'new_task_websocket'
     returned_task = 'returned_task'
     removed_task = 'removed_task'
-    task_remainder = 'task_remainder'
+    task_reminder = 'task_reminder'
     overdue_task = 'overdue_task'
     complete_task = 'complete_task'
     mention = 'mention'
@@ -44,7 +44,7 @@ class NotificationMethod:
         new_task_websocket,
         returned_task,
         removed_task,
-        task_remainder,
+        task_reminder,
         overdue_task,
         complete_task,
         mention,
@@ -93,7 +93,7 @@ class EmailType:
     USER_DEACTIVATED = 'user_deactivated'
     NEW_TASK = 'new_task'
     TASK_RETURNED = 'task_returned'
-    TASK_REMAINDER = 'task_remainder'
+    TASK_REMINDER = 'task_reminder'
     ACCOUNT_VERIFICATION = 'account_verification'
     WORKFLOWS_DIGEST = 'digest'
     TASKS_DIGEST = 'tasks_digest'
@@ -110,7 +110,7 @@ class EmailType:
         USER_DEACTIVATED,
         NEW_TASK,
         TASK_RETURNED,
-        TASK_REMAINDER,
+        TASK_REMINDER,
         ACCOUNT_VERIFICATION,
         WORKFLOWS_DIGEST,
         TASKS_DIGEST,
@@ -128,7 +128,7 @@ class EmailType:
         (USER_DEACTIVATED, 'User Deactivated'),
         (NEW_TASK, 'New Task'),
         (TASK_RETURNED, 'Task Returned'),
-        (TASK_REMAINDER, 'Task Remainder'),
+        (TASK_REMINDER, 'Task Remainder'),
         (ACCOUNT_VERIFICATION, 'Account Verification'),
         (WORKFLOWS_DIGEST, 'Workflows Digest'),
         (TASKS_DIGEST, 'Tasks Digest'),
@@ -147,7 +147,7 @@ cio_template_ids = {
     EmailType.USER_DEACTIVATED: env.get('CIO_TEMPLATE__USER_DEACTIVATED'),
     EmailType.NEW_TASK: env.get('CIO_TEMPLATE__NEW_TASK'),
     EmailType.TASK_RETURNED: env.get('CIO_TEMPLATE__TASK_RETURNED'),
-    EmailType.TASK_REMAINDER: env.get('CIO_TEMPLATE__TASK_REMAINDER'),
+    EmailType.TASK_REMINDER: env.get('CIO_TEMPLATE__TASK_REMINDER'),
     EmailType.ACCOUNT_VERIFICATION: env.get(
         'CIO_TEMPLATE__ACCOUNT_VERIFICATION',
     ),
@@ -182,7 +182,7 @@ email_titles = {
         "✅ You've been invited to join your team in Pneumatic"
     ),
     NotificationMethod.complete_workflow: 'Workflow completed',
-    NotificationMethod.task_remainder: (
+    NotificationMethod.task_reminder: (
         'Reminder: you have unfinished tasks in Pneumatic',
     ),
 }

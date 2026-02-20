@@ -102,7 +102,7 @@ class UsersWithRemainderTaskQuery(SqlQueryObject, DereferencedPerformersMixin):
           aa.id AS account_id,
           aa.logo_lg,
           aa.log_api_requests AS logging,
-          '{NotificationMethod.task_remainder}' AS method_name,
+          '{NotificationMethod.task_reminder}' AS method_name,
           TRUE as sync,
           COUNT(pt.id) AS count
         FROM processes_workflow pw
@@ -119,7 +119,7 @@ class UsersWithRemainderTaskQuery(SqlQueryObject, DereferencedPerformersMixin):
         WHERE
           pw.is_deleted = FALSE
           AND pw.status = '{WorkflowStatus.RUNNING}'
-          AND pw.remainder_notification = TRUE
+          AND pw.reminder_notification = TRUE
           AND pw.is_deleted = FALSE
           AND pt.status = '{TaskStatus.ACTIVE}'
           AND dereferenced_performers.is_completed IS FALSE

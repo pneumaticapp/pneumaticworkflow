@@ -18,7 +18,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='template',
-            name='remainder_notification',
+            name='reminder_notification',
             field=models.BooleanField(default=False),
         ),
         migrations.AddField(
@@ -28,7 +28,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddField(
             model_name='workflow',
-            name='remainder_notification',
+            name='reminder_notification',
             field=models.BooleanField(default=False),
         ),
     ]

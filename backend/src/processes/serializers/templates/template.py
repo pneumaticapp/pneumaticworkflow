@@ -120,7 +120,7 @@ class TemplateSerializer(
             'updated_by',
             'date_updated',
             'date_updated_tsp',
-            'remainder_notification',
+            'reminder_notification',
             'completion_notification',
         )
         create_or_update_fields = {
@@ -138,14 +138,14 @@ class TemplateSerializer(
             'type',
             'generic_name',
             'account',
-            'remainder_notification',
+            'reminder_notification',
             'completion_notification',
         }
 
     name = CharField(required=True, max_length=TEMPLATE_NAME_LENGTH)
     description = CharField(allow_blank=True, default='')
     updated_by = IntegerField(read_only=True, source='updated_by_id')
-    date_updated = DateTimeField(read_only=True)
+    date_updated = DateTimeField(read_only=True)  # TODO Deprecated
     owners = TemplateOwnerSerializer(many=True, required=False)
     kickoff = KickoffSerializer(required=False)
     tasks = TaskTemplateSerializer(many=True, required=False)

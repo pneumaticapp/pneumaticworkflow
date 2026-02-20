@@ -239,6 +239,6 @@ class TemplateSchemaV1(serializers.ModelSerializer):
             'owners',
             'updated_by',
             'wf_name_template',
-            'remainder_notification',
+            'reminder_notification',
             'completion_notification',
         )

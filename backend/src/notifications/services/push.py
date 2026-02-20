@@ -48,7 +48,7 @@ class PushNotificationService(NotificationService):
         NotificationMethod.complete_task,
         NotificationMethod.returned_task,
         NotificationMethod.overdue_task,
-        NotificationMethod.task_remainder,
+        NotificationMethod.task_reminder,
         NotificationMethod.mention,
         NotificationMethod.comment,
         NotificationMethod.delay_workflow,
@@ -491,7 +491,7 @@ class PushNotificationService(NotificationService):
             user_email=user_email,
         )
 
-    def send_task_remainder(
+    def send_task_reminder(
         self,
         link: str,
         user_id: int,
@@ -507,7 +507,7 @@ class PushNotificationService(NotificationService):
         self._send(
             title=str(messages.MSG_NF_0022),
             body=str(body),
-            method_name=NotificationMethod.task_remainder,
+            method_name=NotificationMethod.task_reminder,
             extra_data={
                 'link': link,
             },
