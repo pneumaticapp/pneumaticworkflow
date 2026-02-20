@@ -3,6 +3,8 @@ import { Modifier, EditorState } from 'draft-js';
 import { ECustomEditorEntities } from '../../RichEditor/utils/types';
 import { getSearchText } from './getSearchText';
 
+const DEFAULT_TITLE = '';
+
 export function addVariableEntityToEditor(
   editorState: EditorState,
   variable: {
@@ -11,9 +13,17 @@ export function addVariableEntityToEditor(
     apiName?: string;
   },
 ) {
+  const safeTitle =
+    variable.title != null && String(variable.title).trim() !== ''
+      ? String(variable.title)
+      : DEFAULT_TITLE;
+
   const contentStateWithEntity = editorState
     .getCurrentContent()
-    .createEntity(ECustomEditorEntities.Variable, 'IMMUTABLE', variable);
+    .createEntity(ECustomEditorEntities.Variable, 'IMMUTABLE', {
+      ...variable,
+      title: safeTitle,
+    });
   const entityKey = contentStateWithEntity.getLastCreatedEntityKey();
 
   const currentSelectionState = editorState.getSelection();
@@ -27,7 +37,7 @@ export function addVariableEntityToEditor(
   const variableReplacedContent = Modifier.insertText(
     editorState.getCurrentContent(),
     variableTextSelection,
-    `${variable.title}`,
+    safeTitle,
     undefined,
     entityKey,
   );

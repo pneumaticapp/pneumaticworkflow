@@ -1,5 +1,6 @@
 import React from 'react';
 import classnames from 'classnames';
+import * as Sentry from '@sentry/react';
 
 import { TTaskVariable } from '../types';
 
@@ -46,14 +47,25 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
       return;
     }
 
-    const newVariable = listVariables?.find((variable) => variable.apiName === apiName);
-    editor.current.onChange(
-      addVariableEntityToEditor(editor.current.state.editorState, {
-        title: newVariable?.title,
-        subtitle: newVariable?.subtitle,
-        apiName,
-      }),
-    );
+    const newVariable = listVariables?.find((v) => v.apiName === apiName);
+    if (!newVariable) {
+      return;
+    }
+
+    try {
+      editor.current.onChange(
+        addVariableEntityToEditor(editor.current.state.editorState, {
+          title: newVariable.title,
+          subtitle: newVariable.subtitle,
+          apiName: newVariable.apiName,
+        }),
+      );
+    } catch (err) {
+      Sentry.captureException(err, {
+        tags: { feature: 'InputWithVariables.insertVariable' },
+        extra: { apiName },
+      });
+    }
   };
 
   return (
