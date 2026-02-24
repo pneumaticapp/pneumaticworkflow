@@ -262,17 +262,21 @@ def refresh_attachments_for_event(
             ids_to_delete = list(to_delete.values_list('id', flat=True))
             clear_guardian_permissions_for_attachment_ids(ids_to_delete)
             to_delete.delete()
+            created_attachments = []
             if new_files_ids:
                 service = AttachmentService(user=user)
-                service.bulk_create_for_event(
+                created_attachments = service.bulk_create_for_event(
                     file_ids=new_files_ids,
                     account=account,
                     source_type=source_type,
                     event=event,
                 )
+            has_attachments = (
+                    bool(existent_file_ids) or bool(created_attachments)
+            )
+        return [a.file_id for a in created_attachments], has_attachments
     except (ValueError, TypeError, IntegrityError):
         return [], bool(existent_file_ids)
-    return new_files_ids, True
 
 
 def refresh_attachments_for_text(
@@ -375,8 +379,8 @@ def refresh_attachments(
 
     Supported types:
     - Task: extracts from description field
-    - Workflow: extracts from description, kickoff_description
-    - Template: extracts from description, kickoff_description
+    - Workflow: extracts from description + kickoff (via kickoff_instance)
+    - Template: extracts from description + kickoff (via kickoff_instance)
     - WorkflowEvent (comment): extracts from text field
     """
     # Determine source type and process
@@ -404,25 +408,24 @@ def _refresh_task_attachments(task: Task, user: UserModel) -> List[str]:
 
 def _get_kickoff_description_text(source) -> str:
     """
-    Returns kickoff description text for workflow or template.
+    Returns kickoff text for workflow or template.
+    Neither Workflow nor Template has kickoff_description; kickoff is
+    a related model: workflow.kickoff.first() / template.kickoff.first().
     Workflow: KickoffValue.clear_description.
-    Template: concatenation of kickoff field descriptions.
+    Template: concatenation of kickoff FieldTemplate.description.
     """
     if isinstance(source, Workflow):
-        kickoff_inst = getattr(source, 'kickoff_instance', None)
+        kickoff_inst = source.kickoff.first()
         if kickoff_inst is None:
             return ''
-        return getattr(kickoff_inst, 'clear_description', None) or ''
+        return (kickoff_inst.clear_description or '')
     if isinstance(source, Template):
-        kickoff_inst = getattr(source, 'kickoff_instance', None)
+        kickoff_inst = source.kickoff.first()
         if kickoff_inst is None:
-            return ''
-        fields = getattr(kickoff_inst, 'fields', None)
-        if fields is None:
             return ''
         parts = [
-            getattr(f, 'description', None) or ''
-            for f in fields.all()
+            (f.description or '')
+            for f in kickoff_inst.fields.all()
         ]
         return '\n'.join(parts)
     return ''

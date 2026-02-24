@@ -12,6 +12,7 @@ from src.storage.enums import SourceType
 from src.storage.utils import (
     extract_file_ids_from_text,
     refresh_attachments,
+    refresh_attachments_for_event,
     refresh_attachments_for_text,
 )
 
@@ -128,6 +129,50 @@ class TestRefreshAttachmentsForText:
             workflow=None,
             template=None,
         )
+
+    @override_settings(
+        FILE_SERVICE_URL='https://files.pneumatic.app',
+        FILE_DOMAIN='files.pneumatic.app',
+    )
+    @patch('src.storage.utils.AttachmentService')
+    @patch('src.storage.utils.Attachment.objects')
+    def test_refresh_attachments_for_event__bulk_create_returns_empty__false(
+        self,
+        mock_attachment_objects,
+        mock_service_class,
+    ):
+        # arrange: text has file link, but no existing attachments for event,
+        # and bulk_create_for_event returns [] (e.g. all IntegrityError)
+        mock_user = Mock()
+        mock_account = Mock()
+        mock_account.id = 1
+        mock_event = Mock()
+        mock_event.task_id = 1
+        mock_event.task = Mock()
+        mock_event.workflow = Mock()
+        mock_filter = mock_attachment_objects.filter.return_value
+        mock_filter.values_list.return_value = []
+        mock_exclude = mock_filter.exclude.return_value
+        mock_exclude.values_list.return_value = []
+        mock_service = Mock()
+        mock_service_class.return_value = mock_service
+        mock_service.bulk_create_for_event.return_value = []
+        text = "[doc.pdf](https://files.pneumatic.app/dup_file_123)"
+
+        # act
+        new_file_ids, has_attachments = refresh_attachments_for_event(
+            account=mock_account,
+            user=mock_user,
+            text=text,
+            event=mock_event,
+        )
+
+        # assert
+        assert new_file_ids == []
+        assert has_attachments is False
+        mock_service.bulk_create_for_event.assert_called_once()
+        call_kwargs = mock_service.bulk_create_for_event.call_args[1]
+        assert call_kwargs['file_ids'] == ['dup_file_123']
 
     @patch('src.storage.utils.Attachment.objects')
     def test_refresh_attachments_for_text__empty_text__deletes_unused(

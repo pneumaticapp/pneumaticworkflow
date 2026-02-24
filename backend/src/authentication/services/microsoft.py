@@ -471,7 +471,7 @@ class MicrosoftAuthService(
     ) -> Optional[str]:
         """Upload user photo from Graph and return public URL.
         Uses tokens from current auth flow (call right after get_user_data)."""
-        if not self.tokens:
+        if not self.tokens or not ms_graph_user_id:
             return None
         access_token = (
             f'{self.tokens["token_type"]} {self.tokens["access_token"]}'
@@ -491,10 +491,12 @@ class MicrosoftAuthService(
         old_photo = user.photo
         photo = user_data.get('photo')
         if not photo:
-            photo = self.upload_photo_for_user(
-                user,
-                user_data.get('ms_graph_user_id'),
-            )
+            ms_graph_user_id = user_data.get('ms_graph_user_id')
+            if ms_graph_user_id:
+                photo = self.upload_photo_for_user(
+                    user,
+                    ms_graph_user_id,
+                )
         if photo:
             user.photo = photo
             user.save(update_fields=['photo'])

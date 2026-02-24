@@ -4,7 +4,15 @@ Tests for WorkflowEvent attachments processing.
 from unittest.mock import Mock, patch
 
 import pytest
+from django.test import override_settings
 
+from src.processes.enums import WorkflowEventType
+from src.processes.tests.fixtures import (
+    create_test_attachment_for_event,
+    create_test_event,
+    create_test_user,
+    create_test_workflow,
+)
 from src.storage.enums import SourceType
 from src.storage.utils import _refresh_workflow_event_attachments
 
@@ -132,6 +140,45 @@ class TestRefreshWorkflowEventAttachments:
         # assert
         assert result == ['abc123']
         mock_event.save.assert_not_called()
+
+    @override_settings(
+        FILE_SERVICE_URL='https://files.pneumatic.app',
+        FILE_DOMAIN='files.pneumatic.app',
+    )
+    def test_refresh_workflow_event_attachments__all_attached_elsewhere__false(
+        self,
+    ):
+        # arrange: file_id already attached to event1; event2 has same link
+        # in text. bulk_create_for_event fails for all (IntegrityError),
+        # has_attachments must be False for event2
+        user = create_test_user()
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        task = workflow.tasks.first()
+        event1 = create_test_event(workflow=workflow, user=user)
+        event1.task = task
+        event1.save()
+        shared_file_id = 'shared_file_already_attached'
+        create_test_attachment_for_event(
+            account=user.account,
+            event=event1,
+            file_id=shared_file_id,
+        )
+        event2 = create_test_event(workflow=workflow, user=user)
+        event2.task = task
+        event2.type = WorkflowEventType.COMMENT
+        event2.text = (
+            f"[doc.pdf](https://files.pneumatic.app/{shared_file_id})"
+        )
+        event2.with_attachments = True
+        event2.save()
+
+        # act
+        result = _refresh_workflow_event_attachments(event2, user)
+
+        # assert
+        assert result == []
+        event2.refresh_from_db()
+        assert event2.with_attachments is False
 
 
 class TestSourceTypeFromEvent:
