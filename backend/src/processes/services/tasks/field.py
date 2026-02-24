@@ -551,19 +551,21 @@ class TaskFieldService(BaseWorkflowService):
 
         for file_id in file_ids:
             try:
-                # Lookup by (file_id, account). If found, leave as-is: do NOT
-                # update task/workflow/output — one Attachment per file_id.
-                attachment, created = Attachment.objects.get_or_create(
-                    file_id=file_id,
-                    account=self.account,
-                    defaults={
-                        'source_type': source_type,
-                        'access_type': AccessType.RESTRICTED,
-                        'task': self.instance.task,
-                        'workflow': self.instance.workflow,
-                        'output': self.instance,
-                    },
-                )
+                with transaction.atomic():
+                    # Lookup by (file_id, account). If found, leave as-is: do
+                    # NOT update task/workflow/output — one Attachment per
+                    # file_id.
+                    attachment, created = Attachment.objects.get_or_create(
+                        file_id=file_id,
+                        account=self.account,
+                        defaults={
+                            'source_type': source_type,
+                            'access_type': AccessType.RESTRICTED,
+                            'task': self.instance.task,
+                            'workflow': self.instance.workflow,
+                            'output': self.instance,
+                        },
+                    )
             except IntegrityError:
                 continue
             if created:
