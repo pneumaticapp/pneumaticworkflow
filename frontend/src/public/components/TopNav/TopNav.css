@@ -156,6 +156,7 @@
 }
 
 .navbar-right__search-opened-on-mobile {
+
   .user-avatar,
   .notifications {
     @media (--mobile) {
@@ -279,4 +280,12 @@
   &:focus-visible {
     outline: 0.1rem solid var(--pneumatic-color-link-hover) !important;
   }
+}
+
+.user-name-item {
+  color: var(--pneumatic-color-blacktext);
+  font-weight: 600;
+  cursor: default;
+  pointer-events: none;
+  border-bottom: 1px solid var(--pneumatic-color-black10);
 }

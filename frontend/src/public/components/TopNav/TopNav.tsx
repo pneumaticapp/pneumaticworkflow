@@ -28,6 +28,8 @@ export interface ITopNavProps {
   leaseLevel: TAccountLeaseLevel;
   isAccountOwner: boolean;
   accountOwnerPlan: IAccount;
+  firstName: string;
+  lastName: string;
   isFromWorkflowsLayout?: boolean;
   workflowsView?: EWorkflowsView;
 }
@@ -62,8 +64,11 @@ export function TopNav({
   redirectToCustomerPortal,
   isFromWorkflowsLayout,
   workflowsView,
+  firstName,
+  lastName,
 }: TTopNavProps) {
   const { formatMessage } = useIntl();
+  const userFullName = `${firstName} ${lastName}`.trim();
 
   const isPaywallVisible = Boolean(paywallType);
   const rightNavbarClassname = classnames('navbar-right', styles['navbar-right']);
@@ -132,6 +137,11 @@ export function TopNav({
   };
 
   const profileDropdownOptions = [
+    ...(userFullName ? [{
+      label: userFullName,
+      className: styles['user-name-item'],
+      mapKey: 'user-name',
+    }] : []),
     {
       label: formatMessage({ id: 'nav.profile' }),
       onClick: handleOptionClick(() => history.push(ERoutes.Profile)),
