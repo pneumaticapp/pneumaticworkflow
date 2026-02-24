@@ -4,7 +4,7 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 import { isArrayWithItems } from '../../utils/helpers';
-import { TUploadedFile } from '../../utils/uploadFilesNew';
+import { TUploadedFile } from '../../utils/uploadFiles';
 
 import { DocumentAttachment } from './DocumentAttachment';
 import { ImageAttachment } from './ImageAttachment';

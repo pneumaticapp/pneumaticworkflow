@@ -4,7 +4,7 @@ import * as React from 'react';
 import classnames from 'classnames';
 import { EExtraFieldMode } from '../../../../types/template';
 import { PencilSmallIcon } from '../../../icons';
-import { TUploadedFile, uploadFiles } from '../../../../utils/uploadFilesNew';
+import { TUploadedFile, uploadFiles } from '../../../../utils/uploadFiles';
 import { NotificationManager } from '../../../UI/Notifications';
 import { ExtraFieldFilesGrid } from './ExtraFieldFilesGrid';
 import { logger } from '../../../../utils/logger';

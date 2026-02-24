@@ -14,7 +14,7 @@ import { FileOutput } from './FileOutput';
 import { UserOutput } from './UserOutput';
 import { flatten, isArrayWithItems } from '../../utils/helpers';
 import { Attachments } from '../Attachments';
-import { TUploadedFile } from '../../utils/uploadFilesNew';
+import { TUploadedFile } from '../../utils/uploadFiles';
 import { RichText } from '../RichText';
 
 import styles from './KickoffOutputs.css';

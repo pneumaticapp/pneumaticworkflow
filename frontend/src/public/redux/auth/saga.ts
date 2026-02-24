@@ -65,7 +65,7 @@ import { clearAppFilters, setGeneralLoaderVisibility } from '../general/actions'
 import { getQueryStringParams, history } from '../../utils/history';
 import { watchNewTask, watchRemoveTask } from '../tasks/saga';
 import { watchNewNotifications } from '../notifications/saga';
-import { TUploadedFile, uploadUserAvatar } from '../../utils/uploadFilesNew';
+import { TUploadedFile, uploadUserAvatar } from '../../utils/uploadFiles';
 import { changePhotoProfile } from '../../api/changePhotoProfile';
 import { ELoggedState, IAuthUser } from '../../types/redux';
 import { resetFirebaseDeviceToken } from '../../firebase';

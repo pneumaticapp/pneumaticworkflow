@@ -2,7 +2,7 @@ import { commonRequest } from '../commonRequest';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { mapRequestBody } from '../../utils/mappers';
 import { ISendWorkflowCommentResponse } from '../sendWorkflowComment';
-import { TUploadedFile } from '../../utils/uploadFilesNew';
+import { TUploadedFile } from '../../utils/uploadFiles';
 
 export interface IEditComment {
   id: number;

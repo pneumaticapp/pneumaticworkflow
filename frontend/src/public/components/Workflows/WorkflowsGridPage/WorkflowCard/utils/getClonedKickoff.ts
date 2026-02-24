@@ -3,7 +3,7 @@
 import { copyAttachment } from '../../../../../api/copyAttachment';
 import { IExtraField, IKickoff, TExtraFieldValue } from '../../../../../types/template';
 import { IWorkflowDetailsKickoff } from '../../../../../types/workflow';
-import { TUploadedFile } from '../../../../../utils/uploadFilesNew';
+import { TUploadedFile } from '../../../../../utils/uploadFiles';
 import { getEditKickoff } from '../../../../../utils/workflows';
 
 export async function getClonedKickoff(

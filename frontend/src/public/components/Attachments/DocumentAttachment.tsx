@@ -4,7 +4,7 @@ import * as React from 'react';
 import classnames from 'classnames';
 
 import { DeleteBoldIcon, DocumentInfoIcon, VideoInfoIcon } from '../icons';
-import { TUploadedFile } from '../../utils/uploadFilesNew';
+import { TUploadedFile } from '../../utils/uploadFiles';
 import { getAttachmentTypeByFilename } from './utils/getAttachmentType';
 
 import styles from './Attachments.css';

@@ -6,7 +6,7 @@ import { useIntl } from 'react-intl';
 import { TForegroundColor } from '../common/types';
 import { getForegroundClass } from '../common/utils/getForegroundClass';
 import { FolderIcon } from '../../../icons';
-import { TUploadedFile, uploadFiles } from '../../../../utils/uploadFilesNew';
+import { TUploadedFile, uploadFiles } from '../../../../utils/uploadFiles';
 import { NotificationManager } from '../../Notifications';
 import { logger } from '../../../../utils/logger';
 import { ExtraFieldFilesGrid } from '../../../TemplateEdit/ExtraFields/File/ExtraFieldFilesGrid';

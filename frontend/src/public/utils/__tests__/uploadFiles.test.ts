@@ -1,6 +1,6 @@
 /* eslint-disable */
 /* prettier-ignore */
-import { getThumbnail } from '../uploadFilesNew';
+import { getThumbnail } from '../uploadFiles';
 
 describe('uploadFiles', () => {
   describe('getThumbnail', () => {
