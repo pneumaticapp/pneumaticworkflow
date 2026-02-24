@@ -27,7 +27,8 @@ def capture_sentry_message(
     data: Optional[dict] = None,
     level: str = SentryLogLevel.WARNING,
 ):
-
+    if level in (SentryLogLevel.DEBUG, SentryLogLevel.INFO):
+        return
     if settings.PROJECT_CONF['SENTRY_DSN']:
         with push_scope() as scope:
             if data:
