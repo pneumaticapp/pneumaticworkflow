@@ -1,4 +1,5 @@
 import pytest
+from django.conf import settings
 from firebase_admin.exceptions import (
     FirebaseError,
     InvalidArgumentError,
@@ -1041,7 +1042,7 @@ class TestPushNotificationService:
             'src.notifications.services.push.'
             'PushNotificationService._send',
         )
-        link = 'http://localhost/tasks/1'
+        link = f'{settings.FRONTEND_URL}/tasks/1'
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
@@ -1085,7 +1086,7 @@ class TestPushNotificationService:
             'src.notifications.services.push.'
             'PushNotificationService._send',
         )
-        link = 'http://localhost/tasks/1'
+        link = f'{settings.FRONTEND_URL}/tasks/1'
         service = PushNotificationService(
             account_id=account.id,
             logo_lg=account.logo_lg,
@@ -1134,7 +1135,7 @@ class TestPushNotificationService:
         )
         task_name = 'Task'
         workflow_name = 'Workflow'
-        link = 'http://localhost/tasks/1'
+        link = f'{settings.FRONTEND_URL}/tasks/1'
 
         # act
         service.send_overdue_task(
@@ -1176,7 +1177,7 @@ class TestPushNotificationService:
             'src.notifications.services.push.'
             'PushNotificationService._send',
         )
-        link = 'http://localhost/tasks/1'
+        link = f'{settings.FRONTEND_URL}/tasks/1'
 
         # act
         service.send_overdue_task(
@@ -1214,7 +1215,7 @@ class TestPushNotificationService:
         )
         task_name = 'Task'
         workflow_name = 'Workflow'
-        link = 'http://localhost/tasks/1'
+        link = f'{settings.FRONTEND_URL}/tasks/1'
 
         # act
         service.send_complete_task(
@@ -1254,7 +1255,7 @@ class TestPushNotificationService:
             'src.notifications.services.push.'
             'PushNotificationService._send',
         )
-        link = 'http://localhost/tasks/1'
+        link = f'{settings.FRONTEND_URL}/tasks/1'
 
         # act
         service.send_mention(
@@ -1291,7 +1292,7 @@ class TestPushNotificationService:
             'src.notifications.services.push.'
             'PushNotificationService._send',
         )
-        link = 'http://localhost/tasks/1'
+        link = f'{settings.FRONTEND_URL}/tasks/1'
 
         # act
         service.send_comment(
@@ -1329,7 +1330,7 @@ class TestPushNotificationService:
             'src.notifications.services.push.'
             'PushNotificationService._send',
         )
-        link = 'http://localhost/workflows/1'
+        link = f'{settings.FRONTEND_URL}/workflows/1'
 
         # act
         service.send_delay_workflow(
@@ -1373,7 +1374,7 @@ class TestPushNotificationService:
             'src.notifications.services.push.'
             'PushNotificationService._send',
         )
-        link = 'http://localhost/workflows/1'
+        link = f'{settings.FRONTEND_URL}/workflows/1'
 
         # act
         service.send_resume_workflow(
@@ -1418,7 +1419,7 @@ class TestPushNotificationService:
         )
         task_name = 'Task'
         workflow_name = 'Workflow'
-        link = 'http://localhost/tasks/1'
+        link = f'{settings.FRONTEND_URL}/tasks/1'
 
         # act
         service.send_due_date_changed(
@@ -1466,7 +1467,7 @@ class TestPushNotificationService:
         )
         text = ':dumb face:'
         workflow_name = 'some name'
-        link = 'http://localhost/tasks/1'
+        link = f'{settings.FRONTEND_URL}/tasks/1'
 
         # act
         service.send_reaction(
@@ -1513,7 +1514,7 @@ class TestPushNotificationService:
         )
         workflow_id = 3
         workflow_name = 'some name'
-        link = f'http://localhost/workflows/{workflow_id}'
+        link = f'{settings.FRONTEND_URL}/workflows/{workflow_id}'
 
         # act
         service.send_complete_workflow(
@@ -1551,7 +1552,7 @@ class TestPushNotificationService:
             'src.notifications.services.push.'
             'PushNotificationService._send',
         )
-        link = 'http://localhost/tasks/1'
+        link = f'{settings.FRONTEND_URL}/tasks/1'
         count = 1
 
         # act
@@ -1588,7 +1589,7 @@ class TestPushNotificationService:
             'src.notifications.services.push.'
             'PushNotificationService._send',
         )
-        link = 'http://localhost/tasks/1'
+        link = f'{settings.FRONTEND_URL}/tasks/1'
         count = 2
 
         # act

@@ -2,6 +2,7 @@ from datetime import timedelta
 
 import pytest
 from django.utils import timezone
+from django.conf import settings
 
 from src.accounts.enums import (
     BillingPlanType,
@@ -86,7 +87,7 @@ def test_send_due_date_changed__call_services__ok(mocker):
         account_id=account.id,
         logo_lg=account.logo_lg,
     )
-    link = f'http://localhost/tasks/{task.id}'
+    link = f'{settings.FRONTEND_URL}/tasks/{task.id}'
     push_notification_mock.assert_called_once_with(
         task_id=task.id,
         task_name=task.name,
@@ -182,7 +183,7 @@ def test_send_due_date_changed__call_services_with_group__ok(mocker):
         account_id=account.id,
         logo_lg=account.logo_lg,
     )
-    link = f'http://localhost/tasks/{task.id}'
+    link = f'{settings.FRONTEND_URL}/tasks/{task.id}'
     push_notification_mock.assert_called_once_with(
         task_id=task.id,
         task_name=task.name,

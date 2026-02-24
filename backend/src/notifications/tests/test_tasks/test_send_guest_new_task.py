@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import pytest
+from django.conf import settings
 
 from src.notifications.tasks import (
     _send_guest_new_task,
@@ -49,7 +50,7 @@ def test_send_guest_new_task__call_all_services__ok(mocker):
 
     # assert
     link = (
-        f'http://localhost/guest-task/{task.id}'
+        f'{settings.FRONTEND_URL}/guest-task/{task.id}'
         f'?token={token}&utm_campaign=guestUser&utm_term={guest.id}'
     )
     send_email_mock.assert_called_once_with(

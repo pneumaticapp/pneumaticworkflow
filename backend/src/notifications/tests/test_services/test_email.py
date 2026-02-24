@@ -1214,7 +1214,7 @@ def test_send_user_deactivated_email__ok(mocker):
         'src.notifications.services.email.'
         'EmailService._send',
     )
-    link = 'http://localhost/'
+    link = f'{settings.FRONTEND_URL}/'
     logo_lg = user_mock.account.logo_lg
     service = EmailService(
         account_id=user_mock.account_id,

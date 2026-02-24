@@ -1,4 +1,5 @@
 import pytest
+from django.conf import settings
 
 from src.accounts.enums import (
     NotificationType,
@@ -96,7 +97,7 @@ def test_send_comment_notification__call_services__ok(mocker):
         account_id=account.id,
         logo_lg=account.logo_lg,
     )
-    link = f'http://localhost/tasks/{task.id}'
+    link = f'{settings.FRONTEND_URL}/tasks/{task.id}'
     push_notification_mock.assert_called_once_with(
         task_id=task.id,
         user_id=account_owner.id,
