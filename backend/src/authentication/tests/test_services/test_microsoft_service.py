@@ -1752,6 +1752,10 @@ class TestMicrosoftAuthService:
         mocker.patch(
             'src.authentication.views.mixins.settings',
         )
+        mocker.patch(
+            'src.authentication.services.microsoft.'
+            'sync_account_file_fields',
+        )
         service = MicrosoftAuthService()
 
         # act
@@ -1792,6 +1796,10 @@ class TestMicrosoftAuthService:
         )
         mocker.patch(
             'src.authentication.views.mixins.settings',
+        )
+        mocker.patch(
+            'src.authentication.services.microsoft.'
+            'sync_account_file_fields',
         )
         service = MicrosoftAuthService()
 
@@ -1835,6 +1843,10 @@ class TestMicrosoftAuthService:
         mocker.patch(
             'src.authentication.views.mixins.settings',
         )
+        mocker.patch(
+            'src.authentication.services.microsoft.'
+            'sync_account_file_fields',
+        )
         service = MicrosoftAuthService()
         initial_photo = user.photo
 
@@ -1845,6 +1857,94 @@ class TestMicrosoftAuthService:
         user.refresh_from_db()
         assert user.photo == initial_photo
         upload_photo_mock.assert_called_once_with(user, 'ms-graph-123')
+
+    def test_apply_photo_to_user__photo_updated__calls_sync_account_file(
+        self,
+        mocker,
+    ):
+        # arrange
+        user = create_test_user()
+        old_photo = 'https://storage.example/old_photo.png'
+        new_photo = 'https://storage.example/new_photo.png'
+        user.photo = old_photo
+        user.save()
+        user_data = UserData(
+            email=user.email,
+            first_name='',
+            last_name='',
+            company_name='',
+            photo=new_photo,
+            job_title='',
+        )
+        client_mock = mocker.Mock()
+        mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService._build_msal_app',
+            return_value=client_mock,
+        )
+        mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        sync_account_file_fields_mock = mocker.patch(
+            'src.authentication.services.microsoft.'
+            'sync_account_file_fields',
+        )
+        service = MicrosoftAuthService()
+
+        # act
+        service.apply_photo_to_user(user, user_data)
+
+        # assert
+        user.refresh_from_db()
+        assert user.photo == new_photo
+        sync_account_file_fields_mock.assert_called_once_with(
+            account=user.account,
+            user=user,
+            old_values=[old_photo],
+            new_values=[new_photo],
+        )
+
+    def test_apply_photo_to_user__no_photo__sync_not_called(
+        self,
+        mocker,
+    ):
+        # arrange
+        user = create_test_user()
+        user_data = UserData(
+            email=user.email,
+            first_name='',
+            last_name='',
+            company_name='',
+            photo=None,
+            job_title='',
+            ms_graph_user_id='ms-graph-123',
+        )
+        client_mock = mocker.Mock()
+        mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService._build_msal_app',
+            return_value=client_mock,
+        )
+        upload_photo_mock = mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService.upload_photo_for_user',
+            return_value=None,
+        )
+        mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        sync_account_file_fields_mock = mocker.patch(
+            'src.authentication.services.microsoft.'
+            'sync_account_file_fields',
+        )
+        service = MicrosoftAuthService()
+
+        # act
+        service.apply_photo_to_user(user, user_data)
+
+        # assert
+        upload_photo_mock.assert_called_once_with(user, 'ms-graph-123')
+        sync_account_file_fields_mock.assert_not_called()
 
     def test_upload_photo_for_user__no_tokens__return_none(self, mocker):
         # arrange

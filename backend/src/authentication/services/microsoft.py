@@ -20,6 +20,7 @@ from src.utils.logging import (
     capture_sentry_message,
 )
 from src.utils.salt import get_salt
+from src.storage.utils import sync_account_file_fields
 
 UserModel = get_user_model()
 
@@ -487,6 +488,7 @@ class MicrosoftAuthService(
         user_data: UserData,
     ) -> None:
         """Set user.photo from user_data or upload for new user (signup)."""
+        old_photo = user.photo
         photo = user_data.get('photo')
         if not photo:
             photo = self.upload_photo_for_user(
@@ -496,6 +498,12 @@ class MicrosoftAuthService(
         if photo:
             user.photo = photo
             user.save(update_fields=['photo'])
+            sync_account_file_fields(
+                account=user.account,
+                user=user,
+                old_values=[old_photo],
+                new_values=[user.photo],
+            )
 
     def update_user_contacts(self, user: UserModel):
 
