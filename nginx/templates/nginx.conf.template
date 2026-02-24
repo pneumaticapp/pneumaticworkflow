@@ -223,6 +223,7 @@ http {
         index index.html index.nginx-debian.html;
 
         server_name ${FILE_DOMAIN};
+        client_max_body_size 100m;
 
         location / {
             proxy_pass http://file-service;

@@ -177,7 +177,7 @@ class FileSyncService:
                 return None
 
             # Generate unique file_id using salt
-            salt = get_salt()
+            salt = get_salt(6)
             file_id = (
                 f"{attachment.account_id}_{attachment.id}_{salt}_{filename}"
             )

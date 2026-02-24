@@ -6,10 +6,7 @@ from django.forms import (
 from src.accounts.models import (
     Contact,
 )
-from src.storage.services.exceptions import (
-    FileServiceConnectionException,
-    FileServiceException,
-)
+from src.storage.services.exceptions import FileServiceException
 from src.storage.services.file_service import FileServiceClient
 from src.utils.logging import (
     SentryLogLevel,
@@ -59,10 +56,7 @@ class ContactAdminForm(ModelForm):
                 account=self.instance.account,
             )
             self.instance.photo = file_url
-        except (
-            FileServiceConnectionException,
-            FileServiceException,
-        ) as ex:
+        except FileServiceException as ex:
             capture_sentry_message(
                 message='Contact photo upload failed',
                 data={

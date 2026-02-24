@@ -59,7 +59,10 @@ class Settings(BaseSettings):
     @property
     def check_permission_url(self) -> str:
         """Generate permission check URL."""
-        return f'{self.BACKEND_PRIVATE_URL}attachments/check-permission'
+        return (
+            f'{self.BACKEND_PRIVATE_URL.rstrip("/")}'
+            '/attachments/check-permission'
+        )
 
     @property
     def database_url(self) -> str:

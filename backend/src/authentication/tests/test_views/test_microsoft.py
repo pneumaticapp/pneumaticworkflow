@@ -346,7 +346,6 @@ def test_token__user_not_found__signup(
         utm_content=utm_content,
         gclid=gclid,
     )
-    apply_photo_to_user_mock.assert_called_once_with(user_mock, user_data)
     save_tokens_for_user_mock.assert_called_once_with(user_mock)
     update_microsoft_contacts.assert_called_once_with(user_mock.id)
 

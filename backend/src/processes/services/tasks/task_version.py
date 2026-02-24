@@ -289,10 +289,6 @@ class TaskUpdateVersionService(
             deleted_user_ids,
             deleted_group_ids,
         ) = self.instance.update_performers()
-        reassign_restricted_permissions_for_task(
-            task=self.instance,
-            user=self.user,
-        )
 
         performer_after = (
             TaskPerformer.objects
@@ -315,6 +311,10 @@ class TaskUpdateVersionService(
                     default_performer.is_new_tasks_subscriber,
                 ),
             )
+        reassign_restricted_permissions_for_task(
+            task=self.instance,
+            user=self.user,
+        )
         if deleted_group_ids:
             for user in (
                 account.users.

@@ -7,10 +7,7 @@ from django.utils.safestring import mark_safe
 from tinymce.widgets import TinyMCE
 
 from src.applications.models import Integration
-from src.storage.services.exceptions import (
-    FileServiceConnectionException,
-    FileServiceException,
-)
+from src.storage.services.exceptions import FileServiceException
 from src.storage.services.file_service import FileServiceClient
 from src.utils.logging import (
     SentryLogLevel,
@@ -74,10 +71,7 @@ class IntegrationCreateForm(ModelForm):
                 content_type='image/svg+xml',
                 account=self.user.account,
             )
-        except (
-            FileServiceConnectionException,
-            FileServiceException,
-        ) as ex:
+        except FileServiceException as ex:
             capture_sentry_message(
                 message='Integration logo upload failed',
                 data={
