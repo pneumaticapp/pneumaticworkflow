@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import pytest
+from django.conf import settings
 from django.utils import timezone
 
 from src.accounts.enums import (
@@ -72,7 +73,7 @@ def test_send_overdue_task_notification__call_all_services__ok(mocker):
         type=NotificationType.OVERDUE_TASK,
         status=NotificationStatus.NEW,
     )
-    link = f'http://localhost/tasks/{task.id}'
+    link = f'{settings.FRONTEND_URL}/tasks/{task.id}'
     send_email_mock.assert_called_once_with(
         user_id=user.id,
         user_email=user.email,
@@ -208,7 +209,7 @@ def test_send_overdue_task_notification__guest__ok(mocker):
         type=NotificationType.OVERDUE_TASK,
     )
     link = (
-        f'http://localhost/guest-task/{task.id}'
+        f'{settings.FRONTEND_URL}/guest-task/{task.id}'
         f'?token={token}&utm_campaign=guestUser&utm_term={guest.id}'
     )
     send_notification_mock.assert_called_once_with(
@@ -344,7 +345,7 @@ def test_send_overdue_task_notification__two_performers__ok(mocker):
         status=NotificationStatus.NEW,
     )
     assert send_notification_mock.call_count == 2
-    link = f'http://localhost/tasks/{task.id}'
+    link = f'{settings.FRONTEND_URL}/tasks/{task.id}'
     send_notification_mock.assert_has_calls(
         [
             mocker.call(
@@ -580,7 +581,7 @@ def test_send_overdue_task_notification__deleted_performer__skip(mocker):
         type=NotificationType.OVERDUE_TASK,
         status=NotificationStatus.NEW,
     )
-    link = f'http://localhost/tasks/{task.id}'
+    link = f'{settings.FRONTEND_URL}/tasks/{task.id}'
     send_notification_mock.assert_called_once_with(
         logging=user.account.log_api_requests,
         method_name=NotificationMethod.overdue_task,
@@ -643,7 +644,7 @@ def test_send_overdue_task_notification__completed_performer__skip(mocker):
         type=NotificationType.OVERDUE_TASK,
         status=NotificationStatus.NEW,
     )
-    link = f'http://localhost/tasks/{task.id}'
+    link = f'{settings.FRONTEND_URL}/tasks/{task.id}'
     send_notification_mock.assert_called_once_with(
         logging=user.account.log_api_requests,
         method_name=NotificationMethod.overdue_task,

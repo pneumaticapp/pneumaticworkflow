@@ -96,7 +96,7 @@ def test_send_unread_notifications__call_all_services__ok(mocker):
         logging=account.log_api_requests,
     )
     link = (
-        'http://localhost'
+        f'{settings.FRONTEND_URL}'
         '?utm_source=notifications&utm_campaign=unread_notifications'
     )
     send_email_mock.assert_called_once_with(
@@ -377,7 +377,7 @@ def test_send_unread_notifications__owner_invited_in_another_acc__ok(mocker):
     notification.refresh_from_db()
     assert notification.is_notified_about_not_read is True
     link = (
-        'http://localhost'
+        f'{settings.FRONTEND_URL}'
         '?utm_source=notifications&utm_campaign=unread_notifications'
     )
     send_notification_mock.assert_called_once_with(

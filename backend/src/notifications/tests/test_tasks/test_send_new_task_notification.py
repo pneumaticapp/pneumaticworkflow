@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import pytest
+from django.conf import settings
 from django.utils import timezone
 
 from src.notifications.enums import NotificationMethod
@@ -85,7 +86,7 @@ def test_send_new_task_notification__external_workflow__ok(api_client, mocker):
     )
 
     # assert
-    link = f'http://localhost/tasks/{task.id}'
+    link = f'{settings.FRONTEND_URL}/tasks/{task.id}'
     send_notification_mock.assert_called_once_with(
         logging=account.log_api_requests,
         account_id=account.id,
@@ -205,7 +206,7 @@ def test_send_new_task_notification__is_returned_true__call_services(mocker):
         account_id=account.id,
         logo_lg=logo_lg,
     )
-    link = f'http://localhost/tasks/{task.id}'
+    link = f'{settings.FRONTEND_URL}/tasks/{task.id}'
     push_notification_mock.assert_called_once_with(
         task_data=task_data,
         task_id=task.id,
@@ -339,7 +340,7 @@ def test_send_new_task_notification__is_returned_false__call_services(mocker):
         account_id=account.id,
         logo_lg=logo_lg,
     )
-    link = f'http://localhost/tasks/{task.id}'
+    link = f'{settings.FRONTEND_URL}/tasks/{task.id}'
     push_notification_mock.assert_called_once_with(
         task_data=task_data,
         task_id=task.id,
@@ -441,7 +442,7 @@ def test_send_new_task_notification__ok(mocker, value):
     convert_text_to_html_mock.assert_not_called()
     clear_markdown_mock.assert_not_called()
     get_duration_format_mock.assert_not_called()
-    link = f'http://localhost/tasks/{task.id}'
+    link = f'{settings.FRONTEND_URL}/tasks/{task.id}'
     send_notification_mock.assert_has_calls(
         [
             mocker.call(
@@ -617,7 +618,7 @@ def test_send_new_task_notification__task_data__ok(mocker):
     clear_markdown_mock.assert_not_called()
     get_duration_format_mock.assert_not_called()
     get_data_for_list_mock.assert_not_called()
-    link = f'http://localhost/tasks/{task.id}'
+    link = f'{settings.FRONTEND_URL}/tasks/{task.id}'
     send_notification_mock.assert_called_once_with(
         logging=logging,
         account_id=account.id,

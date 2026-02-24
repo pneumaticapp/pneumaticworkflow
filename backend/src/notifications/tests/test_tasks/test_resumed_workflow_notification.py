@@ -1,4 +1,5 @@
 import pytest
+from django.conf import settings
 from django.utils import timezone
 
 from src.accounts.enums import (
@@ -85,7 +86,7 @@ def test_send_resumed_workflow_notification__call_services__ok(mocker):
         account_id=account.id,
         logo_lg=account.logo_lg,
     )
-    link = f'http://localhost/workflows/{task.workflow_id}'
+    link = f'{settings.FRONTEND_URL}/workflows/{task.workflow_id}'
     push_notification_mock.assert_called_once_with(
         notification=notification,
         user_id=user.id,
@@ -180,7 +181,7 @@ def test_send_resumed_workflow_notification__call_services_with_group__ok(
         account_id=account.id,
         logo_lg=account.logo_lg,
     )
-    link = f'http://localhost/workflows/{task.workflow_id}'
+    link = f'{settings.FRONTEND_URL}/workflows/{task.workflow_id}'
     push_notification_mock.assert_called_once_with(
         notification=notification,
         user_id=user_in_group.id,
@@ -255,7 +256,7 @@ def test_send_resumed_workflow_notification__completed_performer__skip(
         type=NotificationType.RESUME_WORKFLOW,
     )
 
-    link = f'http://localhost/workflows/{task.workflow_id}'
+    link = f'{settings.FRONTEND_URL}/workflows/{task.workflow_id}'
     send_notification_mock.assert_called_once_with(
         logging=account.log_api_requests,
         notification=notification,
@@ -321,7 +322,7 @@ def test_send_resumed_workflow_notification__deleted_performer__skip(
         type=NotificationType.RESUME_WORKFLOW,
     )
 
-    link = f'http://localhost/workflows/{task.workflow_id}'
+    link = f'{settings.FRONTEND_URL}/workflows/{task.workflow_id}'
     send_notification_mock.assert_called_once_with(
         logging=account.log_api_requests,
         notification=notification,
