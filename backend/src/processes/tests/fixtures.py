@@ -308,6 +308,9 @@ def create_test_template(
     name: str = 'Test workflow',
     type_: str = TemplateType.CUSTOM,
     wf_name_template: Optional[str] = None,
+    description: str = 'Test desc',
+    reminder_notification: bool = False,
+    completion_notification: bool = False,
 ) -> Template:
 
     """Creating workflow templates."""
@@ -317,11 +320,13 @@ def create_test_template(
         name=name,
         finalizable=finalizable,
         account=account,
-        description='Test desc',
+        description=description,
         is_public=is_public,
         is_embedded=is_embedded,
         type=type_,
         wf_name_template=wf_name_template,
+        reminder_notification=reminder_notification,
+        completion_notification=completion_notification,
     )
     if kickoff is None:
         Kickoff.objects.create(
@@ -437,6 +442,8 @@ def create_test_workflow(
         finalizable=template.finalizable,
         due_date=due_date,
         ancestor_task=ancestor_task,
+        reminder_notification=template.reminder_notification,
+        completion_notification=template.completion_notification,
     )
     if custom_template:
         template_owners_ids = Template.objects.filter(

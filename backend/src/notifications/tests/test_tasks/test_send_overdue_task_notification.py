@@ -72,6 +72,7 @@ def test_send_overdue_task_notification__call_all_services__ok(mocker):
         type=NotificationType.OVERDUE_TASK,
         status=NotificationStatus.NEW,
     )
+    link = f'http://localhost/tasks/{task.id}'
     send_email_mock.assert_called_once_with(
         user_id=user.id,
         user_email=user.email,
@@ -87,6 +88,7 @@ def test_send_overdue_task_notification__call_all_services__ok(mocker):
         token=None,
         notification=notification,
         sync=True,
+        link=link,
     )
 
     send_ws_mock.assert_called_once_with(
@@ -104,6 +106,7 @@ def test_send_overdue_task_notification__call_all_services__ok(mocker):
         token=None,
         notification=notification,
         sync=True,
+        link=link,
     )
     push_notification_service_init_mock.assert_called_once_with(
         logging=account.log_api_requests,
@@ -125,6 +128,7 @@ def test_send_overdue_task_notification__call_all_services__ok(mocker):
         token=None,
         notification=notification,
         sync=True,
+        link=link,
     )
 
 
@@ -203,6 +207,10 @@ def test_send_overdue_task_notification__guest__ok(mocker):
         user_id=guest.id,
         type=NotificationType.OVERDUE_TASK,
     )
+    link = (
+        f'http://localhost/guest-task/{task.id}'
+        f'?token={token}&utm_campaign=guestUser&utm_term={guest.id}'
+    )
     send_notification_mock.assert_called_once_with(
         logging=account.log_api_requests,
         method_name=NotificationMethod.overdue_task,
@@ -222,6 +230,7 @@ def test_send_overdue_task_notification__guest__ok(mocker):
         notification=notification,
         sync=True,
         token=token,
+        link=link,
     )
     get_token_mock.assert_called_once_with(
         task_id=task.id,
@@ -335,44 +344,53 @@ def test_send_overdue_task_notification__two_performers__ok(mocker):
         status=NotificationStatus.NEW,
     )
     assert send_notification_mock.call_count == 2
-    send_notification_mock.has_calls([
-        mocker.call(
-            logging=user.account.log_api_requests,
-            method_name=NotificationMethod.overdue_task,
-            account_id=user.account_id,
-            user_id=user.id,
-            user_type=user.type,
-            user_email=user.email,
-            logo_lg=None,
-            task_id=task.id,
-            task_name=task.name,
-            workflow_id=workflow.id,
-            workflow_name=workflow.name,
-            template_name=workflow.template.name,
-            workflow_starter_id=workflow.workflow_starter_id,
-            workflow_starter_first_name=user.first_name,
-            workflow_starter_last_name=user.last_name,
-            notification=notification_1,
-        ),
-        mocker.call(
-            logging=user_2.account.log_api_requests,
-            method_name=NotificationMethod.overdue_task,
-            account_id=user.account_id,
-            user_id=user_2.id,
-            user_type=user.type,
-            user_email=user_2.email,
-            logo_lg=None,
-            task_id=task.id,
-            task_name=task.name,
-            workflow_id=workflow.id,
-            workflow_name=workflow.name,
-            template_name=workflow.template.name,
-            workflow_starter_id=workflow.workflow_starter_id,
-            workflow_starter_first_name=user.first_name,
-            workflow_starter_last_name=user.last_name,
-            notification=notification_2,
-        ),
-    ])
+    link = f'http://localhost/tasks/{task.id}'
+    send_notification_mock.assert_has_calls(
+        [
+            mocker.call(
+                logging=user.account.log_api_requests,
+                method_name=NotificationMethod.overdue_task,
+                account_id=user.account_id,
+                user_id=user.id,
+                user_type=user.type,
+                user_email=user.email,
+                logo_lg=None,
+                task_id=task.id,
+                task_name=task.name,
+                workflow_id=workflow.id,
+                workflow_name=workflow.name,
+                template_name=workflow.template.name,
+                workflow_starter_id=workflow.workflow_starter_id,
+                workflow_starter_first_name=user.first_name,
+                workflow_starter_last_name=user.last_name,
+                notification=notification_1,
+                sync=True,
+                token=None,
+                link=link,
+            ),
+            mocker.call(
+                logging=user_2.account.log_api_requests,
+                method_name=NotificationMethod.overdue_task,
+                account_id=user.account_id,
+                user_id=user_2.id,
+                user_type=user.type,
+                user_email=user_2.email,
+                logo_lg=None,
+                task_id=task.id,
+                task_name=task.name,
+                workflow_id=workflow.id,
+                workflow_name=workflow.name,
+                template_name=workflow.template.name,
+                workflow_starter_id=workflow.workflow_starter_id,
+                workflow_starter_first_name=user.first_name,
+                workflow_starter_last_name=user.last_name,
+                notification=notification_2,
+                sync=True,
+                token=None,
+                link=link,
+            ),
+        ],
+    )
 
 
 def test_send_overdue_task_notification__completed_task__skip(
@@ -562,6 +580,7 @@ def test_send_overdue_task_notification__deleted_performer__skip(mocker):
         type=NotificationType.OVERDUE_TASK,
         status=NotificationStatus.NEW,
     )
+    link = f'http://localhost/tasks/{task.id}'
     send_notification_mock.assert_called_once_with(
         logging=user.account.log_api_requests,
         method_name=NotificationMethod.overdue_task,
@@ -581,6 +600,7 @@ def test_send_overdue_task_notification__deleted_performer__skip(mocker):
         notification=notification,
         sync=True,
         token=None,
+        link=link,
     )
 
 
@@ -623,6 +643,7 @@ def test_send_overdue_task_notification__completed_performer__skip(mocker):
         type=NotificationType.OVERDUE_TASK,
         status=NotificationStatus.NEW,
     )
+    link = f'http://localhost/tasks/{task.id}'
     send_notification_mock.assert_called_once_with(
         logging=user.account.log_api_requests,
         method_name=NotificationMethod.overdue_task,
@@ -642,4 +663,5 @@ def test_send_overdue_task_notification__completed_performer__skip(mocker):
         notification=notification,
         sync=True,
         token=None,
+        link=link,
     )

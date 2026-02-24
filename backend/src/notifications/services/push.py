@@ -48,12 +48,14 @@ class PushNotificationService(NotificationService):
         NotificationMethod.complete_task,
         NotificationMethod.returned_task,
         NotificationMethod.overdue_task,
+        NotificationMethod.task_reminder,
         NotificationMethod.mention,
         NotificationMethod.comment,
         NotificationMethod.delay_workflow,
         NotificationMethod.resume_workflow,
         NotificationMethod.due_date_changed,
         NotificationMethod.reaction,
+        NotificationMethod.complete_workflow,
     }
 
     def _send_to_browsers(
@@ -247,6 +249,7 @@ class PushNotificationService(NotificationService):
 
     def send_new_task(
         self,
+        link: str,
         task_id: int,
         task_name: str,
         workflow_name: str,
@@ -258,13 +261,17 @@ class PushNotificationService(NotificationService):
             method_name=NotificationMethod.new_task,
             title=str(messages.MSG_NF_0002),
             body=str(messages.MSG_NF_0011(workflow_name, task_name)),
-            extra_data={'task_id': str(task_id)},
+            extra_data={
+                'task_id': str(task_id),
+                'link': link,
+            },
             user_id=user_id,
             user_email=user_email,
         )
 
     def send_complete_task(
         self,
+        link: str,
         task_id: int,
         task_name: str,
         workflow_name: str,
@@ -276,13 +283,37 @@ class PushNotificationService(NotificationService):
             method_name=NotificationMethod.complete_task,
             title=str(messages.MSG_NF_0012),
             body=str(messages.MSG_NF_0011(workflow_name, task_name)),
-            extra_data={'task_id': str(task_id)},
+            extra_data={
+                'task_id': str(task_id),
+                'link': link,
+            },            user_id=user_id,
+            user_email=user_email,
+        )
+
+    def send_complete_workflow(
+        self,
+        link: str,
+        workflow_id: int,
+        workflow_name: str,
+        user_id: int,
+        user_email: str,
+        **kwargs,
+    ):
+        self._send(
+            method_name=NotificationMethod.complete_workflow,
+            title=str(messages.MSG_NF_0021),
+            body=workflow_name,
+            extra_data={
+                'link': link,
+                'workflow_id': str(workflow_id),
+            },
             user_id=user_id,
             user_email=user_email,
         )
 
     def send_returned_task(
         self,
+        link: str,
         task_id: int,
         task_name: str,
         workflow_name: str,
@@ -294,16 +325,20 @@ class PushNotificationService(NotificationService):
             title=str(messages.MSG_NF_0003),
             body=str(messages.MSG_NF_0011(workflow_name, task_name)),
             method_name=NotificationMethod.returned_task,
-            extra_data={'task_id': str(task_id)},
+            extra_data={
+                'task_id': str(task_id),
+                'link': link,
+            },
             user_id=user_id,
             user_email=user_email,
         )
 
     def send_overdue_task(
         self,
+        link: str,
         user_id: int,
         user_email: str,
-        user_type: UserType,
+        user_type: UserType.LITERALS,
         task_id: int,
         task_name: str,
         workflow_name: str,
@@ -314,13 +349,17 @@ class PushNotificationService(NotificationService):
                 title=str(messages.MSG_NF_0004),
                 body=str(messages.MSG_NF_0011(workflow_name, task_name)),
                 method_name=NotificationMethod.overdue_task,
-                extra_data={'task_id': str(task_id)},
+                extra_data={
+                    'task_id': str(task_id),
+                    'link': link,
+                },
                 user_id=user_id,
                 user_email=user_email,
             )
 
     def send_mention(
         self,
+        link: str,
         task_id: int,
         user_id: int,
         user_email: str,
@@ -330,13 +369,17 @@ class PushNotificationService(NotificationService):
             title=str(messages.MSG_NF_0005),
             body='',
             method_name=NotificationMethod.mention,
-            extra_data={'task_id': str(task_id)},
+            extra_data={
+                'task_id': str(task_id),
+                'link': link,
+            },
             user_id=user_id,
             user_email=user_email,
         )
 
     def send_comment(
         self,
+        link: str,
         task_id: int,
         user_id: int,
         user_email: str,
@@ -346,7 +389,10 @@ class PushNotificationService(NotificationService):
             title=str(messages.MSG_NF_0006),
             body='',
             method_name=NotificationMethod.comment,
-            extra_data={'task_id': str(task_id)},
+            extra_data={
+                'task_id': str(task_id),
+                'link': link,
+            },
             user_id=user_id,
             user_email=user_email,
         )
@@ -355,9 +401,10 @@ class PushNotificationService(NotificationService):
         self,
         user_id: int,
         task_id: int,
+        workflow_id: int,
         workflow_name: str,
-        author_id: int,
         user_email: str,
+        link: str,
         **kwargs,
     ):
 
@@ -366,8 +413,9 @@ class PushNotificationService(NotificationService):
             body=workflow_name,
             method_name=NotificationMethod.delay_workflow,
             extra_data={
-                'task_id': str(task_id),
-                'author_id': str(author_id),
+                'workflow_id': str(workflow_id),
+                'task_id': str(task_id),  # TODO Deprecated
+                'link': link,
             },
             user_id=user_id,
             user_email=user_email,
@@ -375,11 +423,12 @@ class PushNotificationService(NotificationService):
 
     def send_resume_workflow(
         self,
+        link: str,
         user_id: int,
         user_email: str,
         task_id: int,
+        workflow_id: int,
         workflow_name: str,
-        author_id: int,
         **kwargs,
     ):
         self._send(
@@ -387,8 +436,9 @@ class PushNotificationService(NotificationService):
             body=workflow_name,
             method_name=NotificationMethod.resume_workflow,
             extra_data={
-                'task_id': str(task_id),
-                'author_id': str(author_id),
+                'workflow_id': str(workflow_id),
+                'task_id': str(task_id),  # TODO Deprecated
+                'link': link,
             },
             user_id=user_id,
             user_email=user_email,
@@ -396,6 +446,7 @@ class PushNotificationService(NotificationService):
 
     def send_due_date_changed(
         self,
+        link: str,
         task_id: int,
         task_name: str,
         workflow_name: str,
@@ -407,7 +458,10 @@ class PushNotificationService(NotificationService):
             title=str(messages.MSG_NF_0009),
             body=str(messages.MSG_NF_0011(workflow_name, task_name)),
             method_name=NotificationMethod.due_date_changed,
-            extra_data={'task_id': str(task_id)},
+            extra_data={
+                'task_id': str(task_id),
+                'link': link,
+            },
             user_id=user_id,
             user_email=user_email,
         )
@@ -420,6 +474,7 @@ class PushNotificationService(NotificationService):
         author_name: str,
         workflow_name: str,
         text: str,
+        link: str,
         **kwargs,
     ):
         self._send(
@@ -427,9 +482,34 @@ class PushNotificationService(NotificationService):
             body=f'{workflow_name}\n{text}',
             method_name=NotificationMethod.reaction,
             extra_data={
+                'link': link,
                 'task_id': str(task_id),
                 'text': text,
                 'user_id': str(user_id),
+            },
+            user_id=user_id,
+            user_email=user_email,
+        )
+
+    def send_task_reminder(
+        self,
+        link: str,
+        user_id: int,
+        user_email: str,
+        count: int,
+        **kwargs,
+    ):
+        if count == 1:
+            body = messages.MSG_NF_0023
+        else:
+            body = messages.MSG_NF_0024(count)
+
+        self._send(
+            title=str(messages.MSG_NF_0022),
+            body=str(body),
+            method_name=NotificationMethod.task_reminder,
+            extra_data={
+                'link': link,
             },
             user_id=user_id,
             user_email=user_email,

@@ -102,7 +102,7 @@ class WebSocketService(NotificationService):
 
     def _send(
         self,
-        method_name: NotificationMethod,
+        method_name: NotificationMethod.LITERALS,
         group_name: str,
         data: Dict[str, str],
         sync: bool = False,

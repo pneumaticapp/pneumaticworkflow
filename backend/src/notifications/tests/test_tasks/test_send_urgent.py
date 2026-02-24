@@ -88,11 +88,13 @@ def test_send_urgent_notification__call_services__ok(mocker):
         account_id=account.id,
         logging=account.log_api_requests,
     )
+    link = f'http://localhost/workflows/{task.id}'
     websocket_urgent_mock.assert_called_once_with(
         user_id=account_owner.id,
         user_email=account_owner.email,
         sync=True,
         notification=notification,
+        link=link,
     )
     websocket_not_urgent_mock.assert_not_called()
 
@@ -165,11 +167,13 @@ def test_send_urgent_notification__call_services_with_group__ok(mocker):
         account_id=account.id,
         logging=account.log_api_requests,
     )
+    link = f'http://localhost/workflows/{task.id}'
     websocket_urgent_mock.assert_called_once_with(
         user_id=user_in_group.id,
         user_email=user_in_group.email,
         sync=True,
         notification=notification,
+        link=link,
     )
     websocket_not_urgent_mock.assert_not_called()
 
@@ -232,11 +236,13 @@ def test_send_not_urgent_notification__call_services__ok(mocker):
         account_id=account.id,
         logging=account.log_api_requests,
     )
+    link = f'http://localhost/workflows/{task.id}'
     websocket_not_urgent_mock.assert_called_once_with(
         user_id=account_owner.id,
         user_email=account_owner.email,
         sync=True,
         notification=notification,
+        link=link,
     )
     websocket_urgent_mock.assert_not_called()
 
@@ -455,10 +461,12 @@ def test_send_urgent_notification__another_task__skip(mocker):
         text=None,
     )
 
+    link = f'http://localhost/workflows/{task_2.id}'
     websocket_urgent_mock.assert_called_once_with(
         user_id=account_owner.id,
         user_email=account_owner.email,
         sync=True,
         notification=notification,
+        link=link,
     )
     websocket_not_urgent_mock.assert_not_called()

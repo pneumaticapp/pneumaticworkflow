@@ -86,6 +86,7 @@ def test_send_due_date_changed__call_services__ok(mocker):
         account_id=account.id,
         logo_lg=account.logo_lg,
     )
+    link = f'http://localhost/tasks/{task.id}'
     push_notification_mock.assert_called_once_with(
         task_id=task.id,
         task_name=task.name,
@@ -95,6 +96,7 @@ def test_send_due_date_changed__call_services__ok(mocker):
         user_type=UserType.USER,
         sync=True,
         notification=notification,
+        link=link,
     )
     websocket_notification_mock.assert_called_once_with(
         task_id=task.id,
@@ -105,6 +107,7 @@ def test_send_due_date_changed__call_services__ok(mocker):
         user_type=UserType.USER,
         sync=True,
         notification=notification,
+        link=link,
     )
 
 
@@ -179,6 +182,7 @@ def test_send_due_date_changed__call_services_with_group__ok(mocker):
         account_id=account.id,
         logo_lg=account.logo_lg,
     )
+    link = f'http://localhost/tasks/{task.id}'
     push_notification_mock.assert_called_once_with(
         task_id=task.id,
         task_name=task.name,
@@ -188,6 +192,7 @@ def test_send_due_date_changed__call_services_with_group__ok(mocker):
         user_type=UserType.USER,
         sync=True,
         notification=notification,
+        link=link,
     )
     websocket_notification_mock.assert_called_once_with(
         task_id=task.id,
@@ -198,6 +203,7 @@ def test_send_due_date_changed__call_services_with_group__ok(mocker):
         user_type=UserType.USER,
         sync=True,
         notification=notification,
+        link=link,
     )
 
 

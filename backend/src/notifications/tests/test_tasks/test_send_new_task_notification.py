@@ -85,6 +85,7 @@ def test_send_new_task_notification__external_workflow__ok(api_client, mocker):
     )
 
     # assert
+    link = f'http://localhost/tasks/{task.id}'
     send_notification_mock.assert_called_once_with(
         logging=account.log_api_requests,
         account_id=account.id,
@@ -103,6 +104,7 @@ def test_send_new_task_notification__external_workflow__ok(api_client, mocker):
         text_description=text_description,
         due_in=None,
         overdue=None,
+        link=link,
         sync=True,
     )
 
@@ -203,6 +205,7 @@ def test_send_new_task_notification__is_returned_true__call_services(mocker):
         account_id=account.id,
         logo_lg=logo_lg,
     )
+    link = f'http://localhost/tasks/{task.id}'
     push_notification_mock.assert_called_once_with(
         task_data=task_data,
         task_id=task.id,
@@ -218,6 +221,7 @@ def test_send_new_task_notification__is_returned_true__call_services(mocker):
         text_description=text_description,
         due_in=formatted_date,
         overdue=None,
+        link=link,
     )
     email_notification_mock.assert_called_once_with(
         task_data=task_data,
@@ -234,6 +238,7 @@ def test_send_new_task_notification__is_returned_true__call_services(mocker):
         text_description=text_description,
         due_in=formatted_date,
         overdue=None,
+        link=link,
     )
 
 
@@ -334,6 +339,7 @@ def test_send_new_task_notification__is_returned_false__call_services(mocker):
         account_id=account.id,
         logo_lg=logo_lg,
     )
+    link = f'http://localhost/tasks/{task.id}'
     push_notification_mock.assert_called_once_with(
         task_data=task_data,
         task_id=task.id,
@@ -349,6 +355,7 @@ def test_send_new_task_notification__is_returned_false__call_services(mocker):
         text_description=text_description,
         due_in=formatted_date,
         overdue=None,
+        link=link,
     )
     email_notification_mock.assert_called_once_with(
         task_data=task_data,
@@ -365,13 +372,14 @@ def test_send_new_task_notification__is_returned_false__call_services(mocker):
         text_description=text_description,
         due_in=formatted_date,
         overdue=None,
+        link=link,
     )
 
 
 @pytest.mark.parametrize(
     'value', (
-        (True, NotificationMethod.new_task),
-        (False, NotificationMethod.returned_task),
+        (True, NotificationMethod.returned_task),
+        (False, NotificationMethod.new_task),
     ),
 )
 def test_send_new_task_notification__ok(mocker, value):
@@ -433,47 +441,52 @@ def test_send_new_task_notification__ok(mocker, value):
     convert_text_to_html_mock.assert_not_called()
     clear_markdown_mock.assert_not_called()
     get_duration_format_mock.assert_not_called()
-    send_notification_mock.has_calls(
-        mocker.call(
-            logging=logging,
-            account_id=account.id,
-            method_name=method_name,
-            user_id=owner.id,
-            user_email=owner.email,
-            wf_starter_name=owner.name,
-            wf_starter_photo=owner.photo,
-            logo_lg=account_logo,
-            template_name=template.name,
-            workflow_name=workflow.name,
-            task_id=task.id,
-            task_name=task.name,
-            task_data=task_data,
-            html_description=None,
-            text_description=None,
-            due_in=None,
-            overdue=None,
-            sync=True,
-        ),
-        mocker.call(
-            logging=logging,
-            account_id=account.id,
-            method_name=method_name,
-            user_id=user.id,
-            user_email=user.email,
-            wf_starter_name=owner.name,
-            wf_starter_photo=owner.photo,
-            logo_lg=account_logo,
-            template_name=template.name,
-            workflow_name=workflow.name,
-            task_id=task.id,
-            task_name=task.name,
-            task_data=task_data,
-            html_description=None,
-            text_description=None,
-            due_in=None,
-            overdue=None,
-            sync=True,
-        ),
+    link = f'http://localhost/tasks/{task.id}'
+    send_notification_mock.assert_has_calls(
+        [
+            mocker.call(
+                logging=logging,
+                account_id=account.id,
+                method_name=method_name,
+                user_id=owner.id,
+                user_email=owner.email,
+                wf_starter_name=owner.name,
+                wf_starter_photo=owner.photo,
+                logo_lg=account_logo,
+                template_name=template.name,
+                workflow_name=workflow.name,
+                task_id=task.id,
+                task_name=task.name,
+                task_data=task_data,
+                html_description=None,
+                text_description=None,
+                due_in=None,
+                overdue=None,
+                link=link,
+                sync=True,
+            ),
+            mocker.call(
+                logging=logging,
+                account_id=account.id,
+                method_name=method_name,
+                user_id=user.id,
+                user_email=user.email,
+                wf_starter_name=owner.name,
+                wf_starter_photo=owner.photo,
+                logo_lg=account_logo,
+                template_name=template.name,
+                workflow_name=workflow.name,
+                task_id=task.id,
+                task_name=task.name,
+                task_data=task_data,
+                html_description=None,
+                text_description=None,
+                due_in=None,
+                overdue=None,
+                link=link,
+                sync=True,
+            ),
+        ],
     )
 
 
@@ -604,6 +617,7 @@ def test_send_new_task_notification__task_data__ok(mocker):
     clear_markdown_mock.assert_not_called()
     get_duration_format_mock.assert_not_called()
     get_data_for_list_mock.assert_not_called()
+    link = f'http://localhost/tasks/{task.id}'
     send_notification_mock.assert_called_once_with(
         logging=logging,
         account_id=account.id,
@@ -622,5 +636,6 @@ def test_send_new_task_notification__task_data__ok(mocker):
         text_description=None,
         due_in=None,
         overdue=None,
+        link=link,
         sync=True,
     )

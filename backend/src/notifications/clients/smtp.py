@@ -12,6 +12,7 @@ from src.notifications.models import EmailTemplateModel
 
 class SMTPEmailClient(EmailClient):
 
+    DEFAULT_TEMPLATE_WORKFLOWS = 'workflows.html'
     DEFAULT_TEMPLATE_TASKS = 'tasks.html'
     DEFAULT_TEMPLATE_AUTH = 'auth.html'
     DEFAULT_TEMPLATE_DIGESTS = 'digests.html'
@@ -30,6 +31,8 @@ class SMTPEmailClient(EmailClient):
         EmailType.WORKFLOWS_DIGEST: DEFAULT_TEMPLATE_DIGESTS,
         EmailType.TASKS_DIGEST: DEFAULT_TEMPLATE_DIGESTS,
         EmailType.INVITE: DEFAULT_TEMPLATE_AUTH,
+        EmailType.COMPLETE_WORKFLOW: DEFAULT_TEMPLATE_WORKFLOWS,
+        EmailType.TASK_REMINDER: DEFAULT_TEMPLATE_AUTH,
     }
 
     def __init__(self, account_id: int):
@@ -140,15 +143,18 @@ class SMTPEmailClient(EmailClient):
             EmailType.UNREAD_NOTIFICATIONS: (
                 'You have unread notifications on Pneumatic'
             ),
-            EmailType.INVITE: 'Join your team 👥',
+            EmailType.COMPLETE_WORKFLOW: 'Workflow completed',
+            EmailType.TASK_REMINDER: (
+                'Reminder: you have unfinished tasks in Pneumatic'
+            ),
         }
 
         return subjects.get(template_code, f'Pneumatic - {template_code}')
 
     def _get_fallback_template(
-            self,
-            template_code: EmailType.LITERALS,
-            message_data: Dict[str, Any],
+        self,
+        template_code: EmailType.LITERALS,
+        message_data: Dict[str, Any],
     ) -> Tuple[str, str]:
         """Get simple fallback template when no file template exists."""
         subject = self._get_default_subject(template_code, message_data)

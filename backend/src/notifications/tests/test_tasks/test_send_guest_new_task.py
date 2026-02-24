@@ -48,6 +48,10 @@ def test_send_guest_new_task__call_all_services__ok(mocker):
     )
 
     # assert
+    link = (
+        f'http://localhost/guest-task/{task.id}'
+        f'?token={token}&utm_campaign=guestUser&utm_term={guest.id}'
+    )
     send_email_mock.assert_called_once_with(
         token=token,
         sender_name=user.get_full_name(),
@@ -57,4 +61,5 @@ def test_send_guest_new_task__call_all_services__ok(mocker):
         task_name=task.name,
         task_description=task.description,
         task_due_date=task.due_date,
+        link=link,
     )

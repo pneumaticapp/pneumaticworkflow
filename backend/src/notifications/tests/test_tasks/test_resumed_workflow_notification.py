@@ -85,13 +85,16 @@ def test_send_resumed_workflow_notification__call_services__ok(mocker):
         account_id=account.id,
         logo_lg=account.logo_lg,
     )
+    link = f'http://localhost/workflows/{task.workflow_id}'
     push_notification_mock.assert_called_once_with(
         notification=notification,
         user_id=user.id,
         user_email=user.email,
         task_id=task.id,
+        workflow_id=task.workflow_id,
         workflow_name=workflow.name,
         author_id=account_owner.id,
+        link=link,
         sync=True,
     )
     websocket_notification_mock.assert_called_once_with(
@@ -99,8 +102,10 @@ def test_send_resumed_workflow_notification__call_services__ok(mocker):
         user_id=user.id,
         user_email=user.email,
         task_id=task.id,
+        workflow_id=task.workflow_id,
         workflow_name=workflow.name,
         author_id=account_owner.id,
+        link=link,
         sync=True,
     )
 
@@ -175,13 +180,16 @@ def test_send_resumed_workflow_notification__call_services_with_group__ok(
         account_id=account.id,
         logo_lg=account.logo_lg,
     )
+    link = f'http://localhost/workflows/{task.workflow_id}'
     push_notification_mock.assert_called_once_with(
         notification=notification,
         user_id=user_in_group.id,
         user_email=user_in_group.email,
         task_id=task.id,
+        workflow_id=task.workflow_id,
         workflow_name=workflow.name,
         author_id=account_owner.id,
+        link=link,
         sync=True,
     )
     websocket_notification_mock.assert_called_once_with(
@@ -189,8 +197,10 @@ def test_send_resumed_workflow_notification__call_services_with_group__ok(
         user_id=user_in_group.id,
         user_email=user_in_group.email,
         task_id=task.id,
+        workflow_id=task.workflow_id,
         workflow_name=workflow.name,
         author_id=account_owner.id,
+        link=link,
         sync=True,
     )
 
@@ -245,6 +255,7 @@ def test_send_resumed_workflow_notification__completed_performer__skip(
         type=NotificationType.RESUME_WORKFLOW,
     )
 
+    link = f'http://localhost/workflows/{task.workflow_id}'
     send_notification_mock.assert_called_once_with(
         logging=account.log_api_requests,
         notification=notification,
@@ -254,8 +265,10 @@ def test_send_resumed_workflow_notification__completed_performer__skip(
         account_id=account.id,
         logo_lg=account.logo_lg,
         task_id=task.id,
+        workflow_id=task.workflow_id,
         workflow_name=workflow.name,
         author_id=account_owner.id,
+        link=link,
         sync=True,
     )
 
@@ -308,6 +321,7 @@ def test_send_resumed_workflow_notification__deleted_performer__skip(
         type=NotificationType.RESUME_WORKFLOW,
     )
 
+    link = f'http://localhost/workflows/{task.workflow_id}'
     send_notification_mock.assert_called_once_with(
         logging=account.log_api_requests,
         notification=notification,
@@ -317,8 +331,10 @@ def test_send_resumed_workflow_notification__deleted_performer__skip(
         account_id=account.id,
         logo_lg=account.logo_lg,
         task_id=task.id,
+        workflow_id=task.workflow_id,
         workflow_name=workflow.name,
         author_id=account_owner.id,
+        link=link,
         sync=True,
     )
 
