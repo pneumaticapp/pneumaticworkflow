@@ -856,6 +856,35 @@ def test_partial_update__ok(mocker):
     )
 
 
+def test_partial_update__logos_unchanged__sync_not_called(mocker):
+
+    # arrange
+    account = create_test_account(
+        lease_level=LeaseLevel.STANDARD,
+        billing_sync=False,
+    )
+    user = create_test_user(account=account)
+    name = 'New account name'
+    service = AccountService(
+        instance=account,
+        user=user,
+    )
+    sync_account_file_fields_mock = mocker.patch(
+        'src.accounts.services.account.sync_account_file_fields',
+    )
+
+    # act
+    result = service.partial_update(
+        name=name,
+        force_save=True,
+    )
+
+    # assert
+    account.refresh_from_db()
+    assert result.name == name
+    sync_account_file_fields_mock.assert_not_called()
+
+
 def test_partial_update__disabled_billing_sync__ok(mocker):
 
     # arrange

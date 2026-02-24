@@ -484,10 +484,11 @@ class TaskFieldService(BaseWorkflowService):
         else:
             file_ids = []
 
-        # Get current attachments for this field
+        # Get current attachments for this field (exclude event-linked ones)
         filter_kwargs = {
             'workflow': self.instance.workflow,
             'output': self.instance,
+            'event__isnull': True,
         }
         current_attachments = Attachment.objects.filter(**filter_kwargs)
 

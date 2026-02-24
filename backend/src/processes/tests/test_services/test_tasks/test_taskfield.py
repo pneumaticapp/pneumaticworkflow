@@ -4,6 +4,7 @@ from django.test import override_settings
 
 from src.processes.enums import (
     FieldType,
+    WorkflowEventType,
 )
 from src.processes.messages import workflow as messages
 from src.processes.models.templates.fields import (
@@ -27,6 +28,7 @@ from src.processes.services.tasks.selection import (
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
+    create_test_event,
     create_test_group,
     create_test_owner,
     create_test_template,
@@ -1115,6 +1117,201 @@ def test_partial_update__type_file_null_value__ok(mocker):
     assert task_field.clear_value == clear_value
     assert task_field.user_id is None
     assert task_field.group_id is None
+
+
+def test_remove_unused_attachments__event_linked_attachment_preserved(
+    mocker,
+):
+    """
+    Attachment with both output (field) and event set must NOT be deleted.
+
+    Without event__isnull=True in filter_kwargs such attachment would be
+    selected and deleted when field is cleared. With event__isnull=True
+    it is excluded and preserved (consistency refresh_attachments_for_text).
+    """
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        is_required=True,
+        type=FieldType.FILE,
+        workflow=workflow,
+    )
+    comment_event = create_test_event(
+        workflow=workflow,
+        user=user,
+        type_event=WorkflowEventType.COMMENT,
+    )
+    attachment_linked_to_event = Attachment.objects.create(
+        file_id='event_and_field_file.png',
+        account=user.account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
+        task=task,
+        workflow=workflow,
+        output=task_field,
+        event=comment_event,
+    )
+    get_valid_value_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._get_valid_value',
+        return_value=FieldData(
+            value='',
+            markdown_value='',
+            clear_value='',
+        ),
+    )
+    link_new_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._link_new_attachments',
+    )
+    update_selections_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._update_selections',
+    )
+    service = TaskFieldService(
+        instance=task_field,
+        user=user,
+    )
+
+    # act
+    service.partial_update(value=None)
+
+    # assert
+    get_valid_value_mock.assert_called_once()
+    assert Attachment.objects.filter(
+        id=attachment_linked_to_event.id,
+    ).exists()
+    link_new_mock.assert_called_once_with(None)
+    update_selections_mock.assert_not_called()
+
+
+def test_remove_unused_attachments__field_only_attachment_deleted(mocker):
+    """
+    Attachment with output=field and event=null is deleted when field cleared.
+
+    Normal case: only field-level attachments are considered for removal.
+    """
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-2',
+        is_required=False,
+        type=FieldType.FILE,
+        workflow=workflow,
+    )
+    field_only_attachment = Attachment.objects.create(
+        file_id='field_only_file.png',
+        account=user.account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
+        task=task,
+        workflow=workflow,
+        output=task_field,
+        event=None,
+    )
+    get_valid_value_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._get_valid_value',
+        return_value=FieldData(
+            value='',
+            markdown_value='',
+            clear_value='',
+        ),
+    )
+    link_new_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._link_new_attachments',
+    )
+    update_selections_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._update_selections',
+    )
+    service = TaskFieldService(
+        instance=task_field,
+        user=user,
+    )
+
+    # act
+    service.partial_update(value=None)
+
+    # assert
+    get_valid_value_mock.assert_called_once()
+    assert not Attachment.objects.filter(
+        id=field_only_attachment.id,
+    ).exists()
+    link_new_mock.assert_called_once_with(None)
+    update_selections_mock.assert_not_called()
+
+
+def test_remove_unused_attachments__comment_attachment_unchanged(mocker):
+    """
+    Comment attachment (output=null, event set) is out of scope for field.
+
+    Updating/clearing the field must not delete attachments linked to events.
+    """
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-3',
+        is_required=False,
+        type=FieldType.FILE,
+        workflow=workflow,
+    )
+    comment_event = create_test_event(
+        workflow=workflow,
+        user=user,
+        type_event=WorkflowEventType.COMMENT,
+    )
+    comment_attachment = Attachment.objects.create(
+        file_id='comment_only_file.png',
+        account=user.account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
+        task=task,
+        workflow=workflow,
+        output=None,
+        event=comment_event,
+    )
+    get_valid_value_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._get_valid_value',
+        return_value=FieldData(
+            value='',
+            markdown_value='',
+            clear_value='',
+        ),
+    )
+    link_new_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._link_new_attachments',
+    )
+    update_selections_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._update_selections',
+    )
+    service = TaskFieldService(
+        instance=task_field,
+        user=user,
+    )
+
+    # act
+    service.partial_update(value=None)
+
+    # assert
+    get_valid_value_mock.assert_called_once()
+    assert Attachment.objects.filter(id=comment_attachment.id).exists()
+    link_new_mock.assert_called_once_with(None)
+    update_selections_mock.assert_not_called()
 
 
 @pytest.mark.parametrize('raw_value', (0, 176516132789, 176516132.00000123))

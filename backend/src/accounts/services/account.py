@@ -139,14 +139,6 @@ class AccountService(
             gclid=gclid,
         )
 
-    def _create_actions(self, **kwargs):
-        sync_account_file_fields(
-            account=self.instance,
-            user=self.user,
-            old_values=[None, None],
-            new_values=[self.instance.logo_lg, self.instance.logo_sm],
-        )
-
     def inc_template_generations_count(self):
         self.partial_update(
             ai_templates_generations=(
@@ -280,12 +272,19 @@ class AccountService(
                 **update_kwargs,
                 force_save=force_save,
             )
-            sync_account_file_fields(
-                account=self.instance,
-                user=self.user,
-                old_values=[old_logo_lg, old_logo_sm],
-                new_values=[self.instance.logo_lg, self.instance.logo_sm],
-            )
+            if (old_logo_lg, old_logo_sm) != (
+                self.instance.logo_lg,
+                self.instance.logo_sm,
+            ):
+                sync_account_file_fields(
+                    account=self.instance,
+                    user=self.user,
+                    old_values=[old_logo_lg, old_logo_sm],
+                    new_values=[
+                        self.instance.logo_lg,
+                        self.instance.logo_sm,
+                    ],
+                )
             self._update_tenants()
             if settings.PROJECT_CONF['BILLING'] and self.instance.billing_sync:
                 self._update_stripe_account(**update_kwargs)
