@@ -465,12 +465,12 @@ class WorkflowActionService:
             WorkflowEventService.task_started_event(task)
 
         if not self.workflow.template.is_onboarding:
-            recipients_qst = (
+            recipients_set = (
                 TaskPerformer.objects
                 .by_task(task.id)
                 .exclude_directly_deleted()
-                .new_task_recipients()
-            ).order_by('id')
+                .get_user_ids_emails_subscriber_set()
+            )
 
             wf_starter = self.workflow.workflow_starter
             ws_recipients = None
@@ -482,19 +482,19 @@ class WorkflowActionService:
                 and not is_returned
                 and not self.workflow.is_external
             ):
-                for el in recipients_qst:
-                    if el.user_id == wf_starter.id:
-                        ws_recipients = (
-                            (el.user_id, el.email, el.is_subscribed),
-                        )
+                for uid, email, is_subscribed in recipients_set:
+                    if uid is None:
+                        continue
+                    row = (uid, email, is_subscribed)
+                    if uid == wf_starter.id:
+                        ws_recipients = (row,)
                     else:
-                        recipients.append(
-                            (el.user_id, el.email, el.is_subscribed),
-                        )
+                        recipients.append(row)
             else:
                 recipients = [
-                    (el.user_id, el.email, el.is_subscribed)
-                    for el in recipients_qst
+                    (uid, email, is_subscribed)
+                    for uid, email, is_subscribed in recipients_set
+                    if uid is not None
                 ]
             task_data = None
             if recipients:
