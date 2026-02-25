@@ -20,10 +20,14 @@ if (
 ):
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
+
+    from src.utils.logging import sentry_before_send
+
     kwargs = {
         'dsn': settings.PROJECT_CONF['SENTRY_DSN'],
         'integrations': [DjangoIntegration()],
         'send_default_pii': True,
+        'before_send': sentry_before_send,
     }
     if configuration == 'Production':
         kwargs['traces_sample_rate'] = 0.2
