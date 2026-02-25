@@ -476,12 +476,12 @@ class WorkflowActionService:
             self.workflow.is_legacy_template
             or not self.workflow.template.is_onboarding
         ):
-            recipients_qst = (
+            recipients_set = (
                 TaskPerformer.objects
                 .by_task(task.id)
                 .exclude_directly_deleted()
-                .new_task_recipients()
-            ).order_by('id')
+                .get_user_ids_emails_subscriber_set()
+            )
 
             wf_starter = self.workflow.workflow_starter
             ws_recipients = None
@@ -493,19 +493,16 @@ class WorkflowActionService:
                 and not is_returned
                 and not self.workflow.is_external
             ):
-                for el in recipients_qst:
-                    if el.user_id == wf_starter.id:
-                        ws_recipients = (
-                            (el.user_id, el.email, el.is_subscribed),
-                        )
+                for user_id, email, is_subscribed in recipients_set:
+                    row = (user_id, email, is_subscribed)
+                    if user_id == wf_starter.id:
+                        ws_recipients = (row,)
                     else:
-                        recipients.append(
-                            (el.user_id, el.email, el.is_subscribed),
-                        )
+                        recipients.append(row)
             else:
                 recipients = [
-                    (el.user_id, el.email, el.is_subscribed)
-                    for el in recipients_qst
+                    (user_id, email, is_subscribed)
+                    for user_id, email, is_subscribed in recipients_set
                 ]
             task_data = None
             if recipients:

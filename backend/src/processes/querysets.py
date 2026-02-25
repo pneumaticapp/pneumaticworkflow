@@ -865,29 +865,6 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
         )
         return (direct_users | group_users).distinct()
 
-    def new_task_recipients(self):
-
-        """ Returns task performers of users who are
-            subscribed to notifications about new tasks """
-
-        direct_users = self.filter(type=PerformerType.USER).only(
-            'user_id',
-            'user__email',
-            'user__is_new_tasks_subscriber',
-        ).annotate(
-            email=F('user__email'),
-            is_subscribed=F('user__is_new_tasks_subscriber'),
-        )
-        group_users = self.filter(group__isnull=False).only(
-            'group__users__id',
-            'group__users__email',
-            'group__users__is_new_tasks_subscriber',
-        ).annotate(
-            email=F('group__users__email'),
-            is_subscribed=F('group__users__is_new_tasks_subscriber'),
-        )
-        return direct_users.union(group_users)
-
 
 class ChecklistTemplateQuerySet(BaseQuerySet):
     pass
