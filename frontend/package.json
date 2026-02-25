@@ -113,6 +113,7 @@
   "devDependencies": {
     "@chromatic-com/storybook": "^1.2.20",
     "@csstools/postcss-global-data": "^2.1.1",
+    "@playwright/test": "^1.58.2",
     "@redux-saga/types": "^1.2.1",
     "@storybook/addon-essentials": "^8.0.0",
     "@storybook/addon-interactions": "^8.0.0",
@@ -242,7 +243,9 @@
     "check": "npm run lint && npm run test:prod",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "chromatic": "npx chromatic --project-token=chpt_84542468ff35306"
+    "chromatic": "npx chromatic --project-token=chpt_84542468ff35306",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui"
   },
   "repository": {
     "type": "git",

@@ -10,3 +10,9 @@ logs
 config/how
 *storybook.log
 .env
+
+# Playwright
+playwright-report/
+e2e/.auth/
+test-results/
+.blob/
