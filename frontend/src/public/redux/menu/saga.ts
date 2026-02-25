@@ -1,16 +1,18 @@
 /* eslint-disable no-restricted-syntax */
 import { all, fork, put, select, takeEvery } from 'redux-saga/effects';
-
 import { PayloadAction } from '@reduxjs/toolkit';
 import { EMenuActions, mergeMenuItems, setMenuItemCounter } from './actions';
+import { activeUsersCountFetchFinished, setCurrentPlan } from '../accounts/slice';
+import { TActiveUsersCountFetchFinishedPayload } from '../accounts/types';
+import { IAccountPlan } from '../../types/redux';
 import { getAuthUser } from '../selectors/user';
 import { generateMenuItems, createMenuCounter } from '../../utils/menu';
 import { IMenuItem } from '../../types/menu';
 import { getTotalTasksCount } from '../selectors/tasks';
 import { getAccountPlan } from '../selectors/accounts';
 import { TMenuCounter } from '../../constants/menu';
-import { EAccountsActions, TActiveUsersCountFetchFinished, TSetCurrentPlan } from '../actions';
 import { changeTasksCount } from '../tasks/slice';
+
 import { getTenantsCountStore } from '../selectors/tenants';
 
 export function* generateMenuSaga() {
@@ -27,7 +29,7 @@ export function* generateMenuSaga() {
   }
 }
 
-type TUpdateCounterAction = PayloadAction<number> | TActiveUsersCountFetchFinished | TSetCurrentPlan;
+type TUpdateCounterAction = PayloadAction<number>  | PayloadAction<TActiveUsersCountFetchFinishedPayload> | PayloadAction<IAccountPlan>;
 
 export function* updateCounterSaga(action: TUpdateCounterAction) {
   const tasksCount: ReturnType<typeof getTotalTasksCount> = yield select(getTotalTasksCount);
@@ -41,7 +43,7 @@ export function* updateCounterSaga(action: TUpdateCounterAction) {
     },
     {
       check: () =>
-        [EAccountsActions.ActiveUsersCountFetchFinished, EAccountsActions.SetCurrentPlan].some(
+        [activeUsersCountFetchFinished.type, setCurrentPlan.type].some(
           (t) => t === action.type,
         ),
       getCounters: () =>
@@ -64,7 +66,11 @@ export function* watchLoadMenu() {
 
 export function* watchUpdateCounter() {
   yield takeEvery(
-    [changeTasksCount.type, EAccountsActions.ActiveUsersCountFetchFinished, EAccountsActions.SetCurrentPlan],
+    [
+      changeTasksCount.type,
+      activeUsersCountFetchFinished.type,
+      setCurrentPlan.type,
+    ],
     updateCounterSaga,
   );
 }

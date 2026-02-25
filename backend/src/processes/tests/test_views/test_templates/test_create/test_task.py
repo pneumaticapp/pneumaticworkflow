@@ -3,10 +3,10 @@ from datetime import timedelta
 
 import pytest
 
+from src.accounts.enums import UserStatus
 from src.accounts.models import (
     UserInvite,
 )
-from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     ConditionAction,
@@ -2377,8 +2377,8 @@ class TestCreateTemplateRawPerformer:
         inactive_user = create_test_user(
             email='inactive@pneumatic.app',
             account=user.account,
+            status=UserStatus.INACTIVE,
         )
-        UserService.deactivate(inactive_user)
         api_client.token_authenticate(user)
         api_name_raw_performer = 'raw-performer-1'
 

@@ -1,9 +1,10 @@
-import { createAction, createSlice } from "@reduxjs/toolkit";
+import { createAction, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { checkSomeRouteIsActive } from '../../utils/history';
 import { ERoutes } from '../../constants/routes';
 import { ITeamStore } from '../../types/redux';
-import { TeamPages, TInviteUsersPayload } from "./types";
+import { TeamPages, TInviteUsersPayload, UserInvite } from "./types";
+import { TUserListItem } from '../../types/user';
 
 const initialTabTeam =
   checkSomeRouteIsActive(ERoutes.Groups) || checkSomeRouteIsActive(ERoutes.GroupDetails)
@@ -21,16 +22,16 @@ const teamSlice = createSlice({
   name: "team",
   initialState,
   reducers: {
-    changeTeamActiveTab: (state, action) => {
+    changeTeamActiveTab: (state, action: PayloadAction<TeamPages>) => {
       state.page = action.payload;
     },
-    updateTeamActiveTab: (state, action) => {
+    updateTeamActiveTab: (state, action: PayloadAction<TeamPages>) => {
       state.page = action.payload;
     },
-    setRecentInvitedUsers: (state, action) => {
+    setRecentInvitedUsers: (state, action: PayloadAction<TUserListItem[]>) => {
       state.recentInvitedUsers = action.payload;
     },
-    loadInvitesUsersSuccess: (state, action) => {
+    loadInvitesUsersSuccess: (state, action: PayloadAction<UserInvite[]>) => {
       state.invitesUsersList = action.payload;
     },
     openTeamInvitesPopup: (state) => {

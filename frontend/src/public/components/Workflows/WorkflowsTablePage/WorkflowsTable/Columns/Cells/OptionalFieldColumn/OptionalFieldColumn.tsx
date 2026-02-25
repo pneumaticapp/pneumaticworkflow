@@ -12,7 +12,7 @@ import { DocumentInfoIcon, ImageFileIcon } from '../../../../../../icons';
 import { urlWithProtocolRegex } from '../../../../../../../constants/defaultValues';
 
 import styles from './OptionalFieldColumn.css';
-import { getGroups } from '../../../../../../../redux/selectors/groups';
+import { getGroupsList } from '../../../../../../../redux/selectors/groups';
 import { getAccountsUsers } from '../../../../../../../redux/selectors/accounts';
 import { getTimezone } from '../../../../../../../redux/selectors/authUser';
 
@@ -24,7 +24,7 @@ export function OptionalFieldColumn({ value }: TProps) {
   }
 
   const users = useSelector(getAccountsUsers);
-  const groups = useSelector(getGroups);
+  const groups = useSelector(getGroupsList);
   const timezone = useSelector(getTimezone);
 
   const isUrl = (str: string) => {

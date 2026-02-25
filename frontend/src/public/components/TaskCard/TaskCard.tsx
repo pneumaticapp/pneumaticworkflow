@@ -60,7 +60,7 @@ import { DateFormat } from '../UI/DateFormat';
 import UserDataWithGroup from '../UserDataWithGroup';
 import { HelpModal } from './HelpModal/HelpModal';
 import { ReturnModal } from './ReturnModal';
-import { getGroups } from '../../redux/selectors/groups';
+import { getGroupsList } from '../../redux/selectors/groups';
 
 import styles from './TaskCard.css';
 
@@ -128,7 +128,7 @@ export function TaskCard({
   const { formatMessage } = useIntl();
   const { isMobile } = useCheckDevice();
 
-  const groups = useSelector(getGroups);
+  const groups = useSelector(getGroupsList);
   const saveOutputsToStorageDebounced = debounce(300, addOrUpdateStorageOutput);
 
   const guestsControllerRef = useRef<React.ElementRef<typeof GuestController> | null>(null);

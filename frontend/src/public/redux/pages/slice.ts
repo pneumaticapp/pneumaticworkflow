@@ -1,7 +1,8 @@
-import { createAction, createSlice } from "@reduxjs/toolkit";
+
+import { createAction, createSlice, PayloadAction } from "@reduxjs/toolkit";
 
 import { getBrowserConfig } from '../../utils/getConfig';
-import { IPagesStore } from './types';
+import { IPages, IPagesStore } from './types';
 
 const { pages } = getBrowserConfig();
 
@@ -13,14 +14,14 @@ const pagesSlice = createSlice({
   name: "pages",
   initialState,
   reducers: {
-    loadPagesSuccess: (state, action) => {
+    loadPagesSuccess: (state, action: PayloadAction<IPages>) => {
       state.list = action.payload;
     },
   },
 });
 
-export const loadPages = createAction('pages/loadPages');
-export const loadPagesFailed = createAction('pages/loadPagesFailed');
+export const loadPages = createAction<void>('pages/loadPages');
+export const loadPagesFailed = createAction<void>('pages/loadPagesFailed');
 
 export const {
   loadPagesSuccess,
