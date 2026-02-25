@@ -1,3 +1,5 @@
+from typing import Optional, List
+
 from rest_framework.decorators import action
 from rest_framework.generics import (
     get_object_or_404,
@@ -113,19 +115,29 @@ class WorkflowViewSet(
             queryset = queryset.filter(
                 owners=user.id,
             ).order_by('-date_created')
-        extra_prefetch = None
+        return self.prefetch_queryset(queryset)
+
+    def prefetch_queryset(
+        self,
+        queryset,
+        extra_fields: Optional[List[str]] = None,
+    ):
         if self.action in (
             'retrieve',
             'snooze',
             'resume',
-            'finish',
             'partial_update',
         ):
-            extra_prefetch = [
+            extra_fields = [
                 'kickoff__output__selections',
                 'kickoff__output__attachments',
             ]
-        return self.prefetch_queryset(queryset, extra_fields=extra_prefetch)
+        else:
+            extra_fields = None
+        return super().prefetch_queryset(
+            queryset=queryset,
+            extra_fields=extra_fields,
+        )
 
     def get_object(self):
 
