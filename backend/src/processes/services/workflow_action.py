@@ -482,16 +482,16 @@ class WorkflowActionService:
                 and not is_returned
                 and not self.workflow.is_external
             ):
-                for uid, email, is_subscribed in recipients_set:
-                    row = (uid, email, is_subscribed)
-                    if uid == wf_starter.id:
+                for user_id, email, is_subscribed in recipients_set:
+                    row = (user_id, email, is_subscribed)
+                    if user_id == wf_starter.id:
                         ws_recipients = (row,)
                     else:
                         recipients.append(row)
             else:
                 recipients = [
-                    (uid, email, is_subscribed)
-                    for uid, email, is_subscribed in recipients_set
+                    (user_id, email, is_subscribed)
+                    for user_id, email, is_subscribed in recipients_set
                 ]
             task_data = None
             if recipients:
