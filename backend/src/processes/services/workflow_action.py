@@ -481,6 +481,8 @@ class WorkflowActionService:
                 (user_id, email, is_subscribed)
                 for user_id, email, is_subscribed in recipients_set
             ]
+            # For tests to work stably, ordering by "user_id" is necessary
+            recipients.sort(key=lambda e: e[0])
             if (
                 len(task.parents) == 0
                 and not is_returned
