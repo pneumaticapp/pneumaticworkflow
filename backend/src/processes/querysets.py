@@ -801,12 +801,12 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
             'user_id',
             'user__email',
             'user__is_new_tasks_subscriber',
-        )
+        ).order_by('user_id')
         group_users = self.filter(group__isnull=False).values_list(
             'group__users__id',
             'group__users__email',
             'group__users__is_new_tasks_subscriber',
-        )
+        ).order_by('group__users__id')
         return set(direct_users).union(set(group_users))
 
     def group_ids(self):

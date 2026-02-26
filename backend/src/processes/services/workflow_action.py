@@ -477,26 +477,20 @@ class WorkflowActionService:
             )
 
             wf_starter = self.workflow.workflow_starter
-            ws_recipients = None
-            recipients = []
-            # Sent only websocket
-            # to the workflow starter performer on first tasks
+            recipients = ws_recipients = [
+                (user_id, email, is_subscribed)
+                for user_id, email, is_subscribed in recipients_set
+            ]
             if (
                 len(task.parents) == 0
                 and not is_returned
                 and not self.workflow.is_external
+                and wf_starter.id in recipients
             ):
-                for user_id, email, is_subscribed in recipients_set:
-                    row = (user_id, email, is_subscribed)
-                    if user_id == wf_starter.id:
-                        ws_recipients = (row,)
-                    else:
-                        recipients.append(row)
-            else:
-                recipients = [
-                    (user_id, email, is_subscribed)
-                    for user_id, email, is_subscribed in recipients_set
-                ]
+                # Don't sent email and push for a workflow starter
+                # on first tasks
+                recipients.remove(wf_starter.id)
+
             task_data = None
             if recipients:
                 task_data = task.get_data_for_list()
