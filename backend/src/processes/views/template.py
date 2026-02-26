@@ -1,5 +1,6 @@
 from typing import List, Optional
 
+from django.contrib.auth import get_user_model
 from django.db import DataError, transaction
 from django.db.models import Prefetch, Q
 from django.http import Http404
@@ -7,6 +8,7 @@ from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.viewsets import GenericViewSet
 
+from src.accounts.models import UserGroup
 from src.accounts.permissions import (
     AccountOwnerPermission,
     BillingPlanPermission,
@@ -29,6 +31,7 @@ from src.processes.models.templates.preset import TemplatePreset
 from src.processes.models.templates.system_template import SystemTemplate
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
+from src.processes.models.templates.viewer import TemplateViewer
 from src.processes.permissions import TemplateOwnerPermission
 from src.processes.queries import (
     TemplateStepsQuery,
@@ -59,6 +62,10 @@ from src.processes.serializers.templates.template import (
     TemplateTitlesByTasksSerializer,
     TemplateTitlesByWorkflowsSerializer,
     TemplateTitlesSerializer,
+)
+from src.processes.serializers.templates.viewer import (
+    TemplateViewerCreateSerializer,
+    TemplateViewerListSerializer,
 )
 from src.processes.serializers.workflows.workflow import (
     WorkflowCreateSerializer,
@@ -121,6 +128,8 @@ class TemplateViewSet(
         'fields': TemplateOnlyFieldsSerializer,
         'presets': TemplatePresetSerializer,
         'preset': TemplatePresetSerializer,
+        'viewers': 'TemplateViewerListSerializer',
+        'add_viewer': 'TemplateViewerCreateSerializer',
     }
 
     def get_permissions(self):
@@ -132,6 +141,9 @@ class TemplateViewSet(
             'discard_changes',
             'presets',
             'preset',
+            'viewers',
+            'add_viewer',
+            'remove_viewer',
         ):
             return (
                 UserIsAuthenticated(),
@@ -212,12 +224,16 @@ class TemplateViewSet(
         # Original method "prefetch_queryset"
         # does not working with custom defined Prefetch(...) fields
 
-        if self.action == 'retrieve':
+        if self.action in ('retrieve', 'update'):
+            viewers_qs = TemplateViewer.objects.filter(
+                is_deleted=False,
+            ).order_by('type', 'id')
             queryset = queryset.prefetch_related(
                 'kickoff',
                 'kickoff__fields',
                 'kickoff__fields__selections',
                 'owners',
+                Prefetch('viewers', queryset=viewers_qs),
                 Prefetch(
                     lookup='tasks',
                     queryset=(
@@ -695,6 +711,75 @@ class TemplateViewSet(
             raise_validation_error(message=ex.message)
 
         return self.response_ok(self.get_serializer(preset).data)
+
+    @action(methods=['GET'], detail=True, url_path='viewers')
+    def viewers(self, request, *args, **kwargs):
+        """List all viewers for a template"""
+        template = self.get_object()
+        viewers = TemplateViewer.objects.filter(
+            template=template,
+            is_deleted=False,
+        ).order_by('type', 'id')
+        serializer = TemplateViewerListSerializer(viewers, many=True)
+        return self.response_ok(serializer.data)
+
+    @action(methods=['POST'], detail=True, url_path='add-viewer')
+    def add_viewer(self, request, *args, **kwargs):
+        """Add a viewer to a template"""
+        template = self.get_object()
+        serializer = TemplateViewerCreateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        viewer_data = {
+            'template': template,
+            'type': serializer.validated_data['type'],
+            'account': request.user.account,
+        }
+
+        user_model = get_user_model()
+        if serializer.validated_data['type'] == 'user':
+            try:
+                user = user_model.objects.get(
+                    id=serializer.validated_data['user_id'],
+                    account=request.user.account,
+                )
+                viewer_data['user'] = user
+            except user_model.DoesNotExist:
+                raise_validation_error('User not found')
+        else:
+            try:
+                group = UserGroup.objects.get(
+                    id=serializer.validated_data['group_id'],
+                    account=request.user.account,
+                )
+                viewer_data['group'] = group
+            except UserGroup.DoesNotExist:
+                raise_validation_error('Group not found')
+
+        viewer = TemplateViewer.objects.create(**viewer_data)
+
+        response_serializer = TemplateViewerListSerializer(viewer)
+        return self.response_ok(response_serializer.data)
+
+    @action(
+        methods=['DELETE'],
+        detail=True,
+        url_path='remove-viewer/(?P<viewer_id>[^/.]+)',
+    )
+    def remove_viewer(self, request, viewer_id=None, *args, **kwargs):
+        """Remove a viewer from a template"""
+        template = self.get_object()
+
+        try:
+            viewer = TemplateViewer.objects.get(
+                id=viewer_id,
+                template=template,
+                is_deleted=False,
+            )
+            viewer.delete()
+            return self.response_ok({'message': 'Viewer removed successfully'})
+        except TemplateViewer.DoesNotExist:
+            raise_validation_error('Viewer not found')
 
 
 class TemplateIntegrationsViewSet(

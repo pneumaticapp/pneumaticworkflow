@@ -107,6 +107,12 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
             Q(owners__type='group', owners__group__users__id=user_id),
         ).distinct()
 
+    def with_template_viewer(self, user_id: int):
+        return self.filter(
+            Q(viewers__type='user', viewers__user_id=user_id) |
+            Q(viewers__type='group', viewers__group__users__id=user_id),
+        ).distinct()
+
     def get_owners_as_users(self):
         user_owners = self.filter(
             owners__type='user',
@@ -301,6 +307,18 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
     def with_template_owner(self, user_id: int):
         return self.exclude_legacy().filter(
             template__template_owners=user_id,
+        ).distinct()
+
+    def with_template_viewer(self, user_id: int):
+        return self.exclude_legacy().filter(
+            Q(
+                template__viewers__type='user',
+                template__viewers__user_id=user_id,
+            )
+            | Q(
+                template__viewers__type='group',
+                template__viewers__group__users__id=user_id,
+            ),
         ).distinct()
 
     def with_member(self, user_id: int):

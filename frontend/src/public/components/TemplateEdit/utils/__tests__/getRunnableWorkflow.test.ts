@@ -157,6 +157,7 @@ const templateResponseMock: ITemplateResponse = {
       apiName: 'owner-024t12',
     },
   ],
+  viewers: [],
   isActive: true,
   isPublic: false,
   publicUrl: null,

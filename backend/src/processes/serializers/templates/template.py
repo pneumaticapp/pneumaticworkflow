@@ -43,6 +43,7 @@ from src.processes.models.templates.template import (
     Template,
     TemplateDraft,
 )
+from src.processes.models.templates.viewer import TemplateViewer
 from src.processes.serializers.templates.kickoff import (
     KickoffListSerializer,
     KickoffOnlyFieldsSerializer,
@@ -54,6 +55,10 @@ from src.processes.serializers.templates.mixins import (
 )
 from src.processes.serializers.templates.owner import (
     TemplateOwnerSerializer,
+)
+from src.processes.serializers.templates.viewer import (
+    TemplateViewerListSerializer,
+    TemplateViewerSerializer,
 )
 from src.processes.serializers.templates.task import (
     ShortTaskSerializer,
@@ -110,6 +115,7 @@ class TemplateSerializer(
             'tasks',
             'kickoff',
             'owners',
+            'viewers',
             'is_active',
             'is_public',
             'is_embedded',
@@ -143,6 +149,7 @@ class TemplateSerializer(
     updated_by = IntegerField(read_only=True, source='updated_by_id')
     date_updated = DateTimeField(read_only=True)
     owners = TemplateOwnerSerializer(many=True, required=False)
+    viewers = SerializerMethodField()
     kickoff = KickoffSerializer(required=False)
     tasks = TaskTemplateSerializer(many=True, required=False)
     public_url = CharField(read_only=True)
@@ -404,12 +411,18 @@ class TemplateSerializer(
                     name='public_success_url',
                 )
 
+    def get_viewers(self, instance: Template) -> List[Dict[str, Any]]:
+        qs = instance.viewers.filter(is_deleted=False).order_by('type', 'id')
+        return TemplateViewerListSerializer(qs, many=True).data
+
     def to_representation(self, instance: Template):
         data = super().to_representation(instance)
         if data.get('description') is None:
             data['description'] = ''
         if data.get('tasks') is None:
             data['tasks'] = []
+        if data.get('viewers') is None:
+            data['viewers'] = []
         # TemplateSerializer cannot return a single Kickoff object
         # because the Template related with Kickoff by foreign key
         # instead of one to one relation. Getting the object manually:
@@ -505,6 +518,29 @@ class TemplateSerializer(
             self._update_draft(data=data)
             return self.instance
 
+    def _get_viewers_data_from_request(self) -> List[Dict[str, Any]]:
+        """Normalize viewers from request (initial_data) for create_or_update.
+        """
+        raw = self.initial_data.get('viewers') or []
+        result = []
+        for item in raw:
+            if not isinstance(item, dict):
+                continue
+            viewer_type = item.get('type')
+            source_id = item.get('source_id')
+            if viewer_type is None or source_id is None:
+                continue
+            api_name = (
+                item.get('api_name')
+                or create_api_name(prefix=TemplateViewer.api_name_prefix)
+            )
+            result.append({
+                'api_name': api_name,
+                'type': viewer_type,
+                'source_id': str(source_id),
+            })
+        return result
+
     def _set_constances(self, data: Dict[str, Any]):
         self.owners_data = data.get('owners', [])
         self.new_users_owners_ids = {
@@ -588,6 +624,20 @@ class TemplateSerializer(
                 'ancestors_by_tasks': ancestors_by_tasks,
             },
         )
+        viewers_data = self._get_viewers_data_from_request()
+        self.create_or_update_related(
+            slz_cls=TemplateViewerSerializer,
+            data=viewers_data,
+            ancestors_data={
+                'account': account,
+                'template': instance,
+            },
+            slz_context={
+                **self.context,
+                'template': instance,
+                'account': account,
+            },
+        )
 
         if instance.is_active:
             version_service = TemplateVersioningService(
@@ -657,6 +707,20 @@ class TemplateSerializer(
                 'tasks_api_names': tasks_api_names,
                 'parents_by_tasks': parents_by_tasks,
                 'ancestors_by_tasks': ancestors_by_tasks,
+            },
+        )
+        viewers_data = self._get_viewers_data_from_request()
+        self.create_or_update_related(
+            slz_cls=TemplateViewerSerializer,
+            data=viewers_data,
+            ancestors_data={
+                'account': account,
+                'template': instance,
+            },
+            slz_context={
+                **self.context,
+                'template': instance,
+                'account': account,
             },
         )
 

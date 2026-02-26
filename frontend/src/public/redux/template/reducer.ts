@@ -8,11 +8,24 @@ import { ETemplateActions, TTemplateActions } from './actions';
 
 export const initialTemplate: ITemplateStore = {
   data: {
+    name: '',
+    description: '',
+    isActive: false,
+    finalizable: false,
+    dateUpdated: null,
+    updatedBy: null,
     tasks: [] as ITemplateTask[],
     kickoff: getEmptyKickoff(),
     isPublic: false,
     publicUrl: null,
     publicSuccessUrl: null,
+    isEmbedded: false,
+    embedUrl: null,
+    wfNameTemplate: null,
+    tasksCount: 0,
+    performersCount: 0,
+    owners: [],
+    viewers: [],
   } as ITemplate,
   status: ETemplateStatus.Saved,
   AITemplate: {

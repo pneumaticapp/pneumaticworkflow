@@ -47,6 +47,45 @@ class TemplateOwnerPermission(BasePermission):
             )
 
 
+class TemplateViewerPermission(BasePermission):
+
+    """ For workflow read-only access via template viewers """
+
+    def has_permission(self, request, view):
+        try:
+            workflow_id = int(view.kwargs.get('pk'))
+        except (ValueError, TypeError):
+            return False
+        else:
+            # Account owner always has access
+            if request.user.is_account_owner:
+                return True
+
+            # Check if user is template viewer through workflow -> template
+            template_viewer_qst = (
+                Workflow.objects
+                .by_id(workflow_id)
+                .on_account(request.user.account_id)
+                .with_template_viewer(request.user.id)
+            )
+            return template_viewer_qst.exists()
+
+
+class WorkflowMemberOrViewerPermission(BasePermission):
+
+    """ Allow for workflow members or template viewers (read-only) """
+
+    def has_permission(self, request, view):
+        # First check WorkflowMemberPermission
+        member_permission = WorkflowMemberPermission()
+        if member_permission.has_permission(request, view):
+            return True
+
+        # If not a member, check TemplateViewerPermission
+        viewer_permission = TemplateViewerPermission()
+        return viewer_permission.has_permission(request, view)
+
+
 class WorkflowOwnerPermission(BasePermission):
 
     """ For workflow details API """

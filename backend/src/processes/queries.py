@@ -142,6 +142,25 @@ class WorkflowListQuery(
         self.params.update(params)
         return f"pw.workflow_starter_id in {result}"
 
+    def _get_template_viewer_allowed(self):
+        """User is viewer of the workflow's template (user or via group)."""
+        return """EXISTS (
+            SELECT 1 FROM processes_templateviewer ptv
+            WHERE ptv.template_id = pw.template_id
+              AND ptv.is_deleted IS FALSE
+              AND (
+                (ptv.type = 'user' AND ptv.user_id = %(user_id)s)
+                OR (
+                  ptv.type = 'group'
+                  AND ptv.group_id IN (
+                    SELECT aug.usergroup_id
+                    FROM accounts_usergroup_users aug
+                    WHERE aug.user_id = %(user_id)s
+                  )
+                )
+              )
+        )"""
+
     def _get_is_external(self):
         self.params.update({'is_external': self.is_external})
         return "pw.is_external = %(is_external)s"
@@ -162,6 +181,7 @@ class WorkflowListQuery(
                 AND (
                     pwo.user_id = %(user_id)s
                     OR pw.workflow_starter_id = %(user_id)s
+                    OR {self._get_template_viewer_allowed()}
                 )"""
             self.params['user_id'] = self.user_id
 
@@ -1109,9 +1129,29 @@ class TemplateListQuery(
             )
         """
 
+    def _get_viewers_cte(self):
+        """Templates where user is viewer (user or via group)."""
+        return """
+            SELECT ptv.template_id, ptv.user_id AS user_id
+            FROM processes_templateviewer AS ptv
+            WHERE ptv.type = 'user'
+              AND ptv.is_deleted IS FALSE
+              AND ptv.user_id = %(user_id)s
+            UNION
+            SELECT ptv.template_id, g.user_id AS user_id
+            FROM processes_templateviewer AS ptv
+            JOIN accounts_usergroup_users AS g ON g.usergroup_id = ptv.group_id
+            WHERE ptv.type = 'group'
+              AND ptv.is_deleted IS FALSE
+              AND g.user_id = %(user_id)s
+        """
+
     def _get_allowed(self):
         self.params.update({'allowed_id': self.user_id})
-        return """owners.user_id = %(allowed_id)s"""
+        return (
+            "(owners.user_id = %(allowed_id)s OR "
+            "viewers.user_id = %(allowed_id)s)"
+        )
 
     def _get_active(self):
         self.params.update({'is_active': self.is_active})
@@ -1154,12 +1194,9 @@ class TemplateListQuery(
         where = """
         WHERE pt.is_deleted = false AND
         pt.account_id = %(account_id)s AND
-        accounts_user.id = %(user_id)s
         """
-
         where = (
-            f'{where} AND {self._get_filter_by_type()} AND '
-            f'{self._get_allowed()}'
+            f'{where} {self._get_allowed()} AND {self._get_filter_by_type()}'
         )
 
         if self.search_text:
@@ -1175,7 +1212,8 @@ class TemplateListQuery(
 
     def _get_inner_sql(self):
         return f"""
-        WITH owners AS ({self.dereferenced_owners()})
+        WITH owners AS ({self.dereferenced_owners()}),
+        viewers AS ({self._get_viewers_cte()})
         SELECT DISTINCT
             pt.id,
             pt.is_deleted,
@@ -1199,6 +1237,7 @@ class TemplateListQuery(
           ptt.is_deleted = false
         )
         LEFT JOIN owners ON pt.id = owners.template_id
+        LEFT JOIN viewers ON pt.id = viewers.template_id
         LEFT JOIN accounts_user ON (
           owners.user_id = accounts_user.id AND
           accounts_user.is_deleted = false

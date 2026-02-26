@@ -227,6 +227,15 @@ export function TemplateEdit({
       ],
       isActive: false,
       finalizable: false,
+      dateUpdated: null,
+      updatedBy: null,
+      isPublic: false,
+      publicUrl: null,
+      publicSuccessUrl: null,
+      isEmbedded: false,
+      embedUrl: null,
+      tasksCount: 1,
+      performersCount: 0,
       owners: getNormalizedTemplateOwners(
         [
           {
@@ -238,6 +247,7 @@ export function TemplateEdit({
         accessConditions,
         users,
       ),
+      viewers: [],
       wfNameTemplate: '{{date}} — {{template-name}}',
     } as ITemplate;
   };

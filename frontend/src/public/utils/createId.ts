@@ -25,3 +25,4 @@ export const createConditionRuleApiName = () => createUniqueId('rule-xxxyxx');
 export const createConditionPredicateApiName = () => createUniqueId('predicate-xxxyxx');
 export const createDueDateApiName = () => createUniqueId('due-date-xxxyxx');
 export const createOwnerApiName = () => createUniqueId('owner-xxxyxx');
+export const createViewerApiName = () => createUniqueId('viewer-xxxyxx');

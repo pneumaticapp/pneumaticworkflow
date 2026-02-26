@@ -1,5 +1,6 @@
 from typing import Optional, List
 
+from django.db.models import Q
 from rest_framework.decorators import action
 from rest_framework.generics import (
     get_object_or_404,
@@ -36,6 +37,7 @@ from src.processes.paginations import WorkflowListPagination
 from src.processes.permissions import (
     GuestWorkflowEventsPermission,
     GuestWorkflowPermission,
+    WorkflowMemberOrViewerPermission,
     WorkflowMemberPermission,
     WorkflowOwnerPermission,
 )
@@ -110,7 +112,26 @@ class WorkflowViewSet(
         user = self.request.user
         queryset = Workflow.objects.on_account(user.account_id)
         if self.action in ('list', 'fields'):
-            queryset = queryset.with_member(user)
+            # For list action, include workflows where user is member
+            # OR template viewer
+            # But only if user is admin/account_owner OR template viewer
+            if user.is_account_owner or user.is_admin:
+                # Admin/account_owner can see workflows where they are members
+                queryset = queryset.with_member(user)
+            else:
+                # Regular users can see workflows where they are members
+                # OR template viewers
+                queryset = queryset.filter(
+                    Q(members=user.id) |  # Member access
+                    Q(
+                        template__viewers__type='user',
+                        template__viewers__user_id=user.id,
+                    ) |  # Template viewer access
+                    Q(
+                        template__viewers__type='group',
+                        template__viewers__group__users__id=user.id,
+                    ),
+                ).distinct()
         elif self.action == 'webhook_example':
             queryset = queryset.filter(
                 owners=user.id,
@@ -163,7 +184,8 @@ class WorkflowViewSet(
                 UserIsAuthenticated(),
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
-                UserIsAdminOrAccountOwner(),
+                # Allow admin/account_owner OR template viewers
+                # Note: UserIsAdminOrAccountOwner will be checked in queryset
             )
         if self.action == 'fields':
             return (
@@ -176,7 +198,7 @@ class WorkflowViewSet(
                 UserIsAuthenticated(),
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
-                WorkflowMemberPermission(),
+                WorkflowMemberOrViewerPermission(),
             )
         if self.action in (
             'destroy',
@@ -225,7 +247,7 @@ class WorkflowViewSet(
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
                 GuestWorkflowEventsPermission(),
-                WorkflowMemberPermission(),
+                WorkflowMemberOrViewerPermission(),
             )
         if self.action == 'webhook_example':
             return (
