@@ -87,10 +87,9 @@ git clone https://github.com/pneumaticapp/pneumaticworkflow.git
 ```
 or, you can simply download the [project's master folder](https://github.com/pneumaticapp/pneumaticworkflow/archive/refs/heads/master.zip) and unzip it
 
-### Edit the configuration files if necessary
+### Automatically create a .env config file and run
 
-
-If you want to be accessing Pneumatic over the Internet and the machine you plan to be running it on has an external IP address/domain name, all you need to do is create an .env file in the root directory of the project (touch .env) and add these lines to it:
+Cd into the project's directory, run ```chmod +x start.sh```, and then run the ```./start.sh``` script, passing it the address of your server as the sole argument(```./start.sh your-address```). If no argument is passed the script will use localhost as the default address and create a .env file setting the following parameters:
 
 <pre>
   # Without SSL
@@ -103,18 +102,11 @@ If you want to be accessing Pneumatic over the Internet and the machine you plan
   WSS_URL=ws://your-address:8001
 </pre>
 
-save the .env file and you're good to go.
+The script will then proceed to run ```docker compose up -d ```
 
-### Run Pneumatic
-
-To run Pneumatic cd into the project's directory and run the command
-
-```
-docker compose up -d
-```
 This will run it in detached mode, if you want to see what's happening omit the -d flag.
 
-Alternatively, you can run the Pneumatic containers from Docker Desktop.
+Alternatively, you can create a .env file with the required parameters manually and run pneumatic either in terminal by executing the ```docker compose up -d``` command in your project's directory or from docker desktop.
 
 Note, that the way it's currently configured, Pneumatic's frontend takes a while to get up and running.
 But you can almost immediately check that your backend is up by going to `http://your-address:8001/admin`
