@@ -66,6 +66,7 @@ def test___init____valid_user__set_attrs():
     assert service.account == account
     assert service.is_superuser == is_superuser
     assert service.auth_type == auth_type
+    assert service.sync is False
 
 
 def test_check_delay_workflow__running_no_active_has_delayed__set_delayed():
@@ -141,10 +142,8 @@ def test_force_delay_workflow__task_has_existing_delay__update_delay(mocker):
     account = create_test_account()
     owner = create_test_owner(account=account)
     workflow = create_test_workflow(user=owner)
-    workflow.status = WorkflowStatus.RUNNING
-    workflow.save()
     task = workflow.tasks.get(number=1)
-    task.status = TaskStatus.ACTIVE
+    task.status = TaskStatus.DELAYED
     task.save()
     delay = Delay.objects.create(
         task=task,
@@ -167,10 +166,14 @@ def test_force_delay_workflow__task_has_existing_delay__update_delay(mocker):
     service.force_delay_workflow(date_arg)
 
     # assert
-    delay.refresh_from_db()
-    assert delay.directly_status == DirectlyStatus.CREATED
+    workflow.refresh_from_db()
+    assert workflow.status == WorkflowStatus.DELAYED
     task.refresh_from_db()
     assert task.status == TaskStatus.DELAYED
+    delay.refresh_from_db()
+    assert delay.directly_status == DirectlyStatus.CREATED
+    assert delay.start_date is not None
+    assert delay.duration is not None
 
 
 def test_force_delay_workflow__task_no_delay__create_delay(mocker):
@@ -199,11 +202,16 @@ def test_force_delay_workflow__task_no_delay__create_delay(mocker):
     service.force_delay_workflow(date_arg)
 
     # assert
+    workflow.refresh_from_db()
+    assert workflow.status == WorkflowStatus.DELAYED
     task.refresh_from_db()
     assert task.status == TaskStatus.DELAYED
     created = Delay.objects.filter(task=task).first()
     assert created is not None
     assert created.workflow_id == workflow.id
+    assert created.directly_status == DirectlyStatus.CREATED
+    assert created.start_date is not None
+    assert created.duration is not None
 
 
 def test_force_delay_workflow__multiple_recipients__send_notifications(mocker):
@@ -347,6 +355,7 @@ def test__complete_workflow__has_delayed_tasks__end_delays(mocker):
     assert task.status == TaskStatus.ACTIVE
     workflow.refresh_from_db()
     assert workflow.status == WorkflowStatus.DONE
+    assert workflow.date_completed is not None
 
 
 def test__complete_workflow__is_urgent__clear_urgent_flag(mocker):
@@ -369,6 +378,8 @@ def test__complete_workflow__is_urgent__clear_urgent_flag(mocker):
     # assert
     workflow.refresh_from_db()
     assert workflow.is_urgent is False
+    assert workflow.status == WorkflowStatus.DONE
+    assert workflow.date_completed is not None
 
 
 def test__complete_workflow__webhook_exists__send_webhook(mocker):
@@ -2212,6 +2223,9 @@ def test_complete_task_for_user__cannot_complete__partial_user_done(mocker):
     # assert
     complete_mock.assert_not_called()
     assert result == task
+    task_performer = TaskPerformer.objects.get(task=task, user_id=owner.id)
+    assert task_performer.is_completed is True
+    assert task_performer.date_completed is not None
 
 
 def test_complete_task_for_user__owner_no_performer__force_complete(mocker):
@@ -2735,6 +2749,10 @@ def test__deactivate_task__no_action_delayed_direct_status__end_delay(mocker):
     # assert
     delay.refresh_from_db()
     assert delay.end_date is not None
+    task.refresh_from_db()
+    assert task.status == TaskStatus.PENDING
+    assert task.date_started is None
+    assert task.date_completed is None
 
 
 def test__deactivate_task__no_action_active__send_removed_notification(
@@ -2779,6 +2797,10 @@ def test__deactivate_task__no_action_active__send_removed_notification(
         recipients=mocker.ANY,
         account_id=task.account_id,
     )
+    task.refresh_from_db()
+    assert task.status == TaskStatus.PENDING
+    assert task.date_started is None
+    assert task.date_completed is None
 
 
 def test__deactivate_task__action_skip_task__mark_deactivated(mocker):
@@ -2862,6 +2884,7 @@ def test__return_workflow_to_task__not_running__set_running(mocker):
     # assert
     workflow.refresh_from_db()
     assert workflow.status == WorkflowStatus.RUNNING
+    assert workflow.date_completed is None
 
 
 def test__return_workflow_to_task__has_action_method__call_action(mocker):
