@@ -87,10 +87,9 @@ git clone https://github.com/pneumaticapp/pneumaticworkflow.git
 ```
 or, you can simply download the [project's master folder](https://github.com/pneumaticapp/pneumaticworkflow/archive/refs/heads/master.zip) and unzip it
 
-### Edit the configuration files if necessary
+### Create a .env config file
 
-
-If you want to be accessing Pneumatic over the Internet and the machine you plan to be running it on has an external IP address/domain name, all you need to do is create an .env file in the root directory of the project (touch .env) and add these lines to it:
+Cd into the project's directory and run the ```./start.sh``` script, passing it the address of your server as the sole argument(```./start.sh your-address```). If no argument is passed the script will use localhost as the default address and create a .env file setting the following parameters:
 
 <pre>
   # Without SSL
@@ -103,7 +102,6 @@ If you want to be accessing Pneumatic over the Internet and the machine you plan
   WSS_URL=ws://your-address:8001
 </pre>
 
-save the .env file and you're good to go.
 
 ### Run Pneumatic
 
