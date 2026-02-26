@@ -4,6 +4,7 @@ from datetime import timedelta
 import pytest
 import pytz
 from django.utils import timezone
+from django.test import override_settings
 
 from src.accounts.enums import (
     BillingPlanType,
@@ -46,7 +47,6 @@ from src.processes.models.templates.fields import (
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.raw_due_date import RawDueDateTemplate
 from src.processes.models.templates.template import Template
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.kickoff import KickoffValue
 from src.processes.models.workflows.task import TaskPerformer
@@ -81,6 +81,7 @@ from src.utils.validation import ErrorCode
 pytestmark = pytest.mark.django_db
 
 
+@override_settings(FILE_DOMAIN='files.example.com')
 def test_run__all__ok(api_client, mocker):
     # arrange
     webhook_payload = mocker.Mock()
@@ -154,18 +155,6 @@ def test_run__all__ok(api_client, mocker):
         field_template=kickoff_field_5,
         template=template,
     )
-    attach_1 = FileAttachment.objects.create(
-        name='first_file.png',
-        url='https://link.to/first_file.png',
-        size=15392,
-        account_id=user.account_id,
-    )
-    attach_2 = FileAttachment.objects.create(
-        name='sec_file.docx',
-        url='https://link.to/sec_file.docx',
-        size=15392,
-        account_id=user.account_id,
-    )
     task = template.tasks.order_by('number').first()
     task.name = 'Test name {{ %s }}' % kickoff_field.api_name
     task.description = (
@@ -220,7 +209,12 @@ def test_run__all__ok(api_client, mocker):
                 kickoff_field.api_name: 'JOHN CENA',
                 kickoff_field_2.api_name: None,
                 kickoff_field_3.api_name: 6351521536,
-                kickoff_field_4.api_name: [str(attach_1.id), str(attach_2.id)],
+                kickoff_field_4.api_name: [
+                    '[first_file.txt]'
+                    '(https://files.example.com/first_template_file)',
+                    '[second_file.txt]'
+                    '(https://files.example.com/sec_template_file)',
+                ],
                 kickoff_field_5.api_name: [
                     str(selection_1.api_name),
                     str(selection_2.api_name),
@@ -283,16 +277,23 @@ def test_run__all__ok(api_client, mocker):
     assert kickoff_field_data['name'] == kickoff_field.name
     assert kickoff_field_data['value'] == 'JOHN CENA'
     assert kickoff_field_data['user_id'] is None
-    assert kickoff_field_data['attachments'] == []
     assert kickoff_field_data['selections'] == []
 
     kickoff_field_4_data = data['kickoff']['output'][3]
-    assert len(kickoff_field_4_data['attachments']) == 2
-    attach_1_data = kickoff_field_4_data['attachments'][0]
-    assert attach_1_data['id'] == attach_1.id
-    assert attach_1_data['name'] == attach_1.name
-    assert attach_1_data['url'] == attach_1.url
-    assert attach_1_data['size'] == attach_1.size
+    # Check that file field contains Markdown formatted value
+    expected_markdown = (
+        '[first_file.txt](https://files.example.com/first_template_file), '
+        '[second_file.txt](https://files.example.com/sec_template_file)'
+    )
+    assert kickoff_field_4_data['markdown_value'] == expected_markdown
+    assert kickoff_field_4_data['clear_value'] == (
+        'https://files.example.com/first_template_file, '
+        'https://files.example.com/sec_template_file'
+    )
+    assert kickoff_field_4_data['value'] == (
+        'https://files.example.com/first_template_file, '
+        'https://files.example.com/sec_template_file'
+    )
 
     kickoff_field_5_data = data['kickoff']['output'][4]
     assert len(kickoff_field_5_data['selections']) == 2
@@ -316,11 +317,16 @@ def test_run__all__ok(api_client, mocker):
     assert workflow.due_date == due_date
     task_1 = workflow.tasks.get(number=1)
     assert task_1.name == 'Test name JOHN CENA'
+    expected_file_markdown = (
+        '[first_file.txt]'
+        '(https://files.example.com/first_template_file), '
+        '[second_file.txt]'
+        '(https://files.example.com/sec_template_file)'
+    )
     assert task_1.description == (
         'His name is... JOHN CENA '
         'Apr 09, 2171, 11:32PM link '
-        f'[{attach_1.name}]({attach_1.url}), '
-        f'[{attach_2.name}]({attach_2.url}).'
+        f'{expected_file_markdown}.'
         'selection 1, selection 2'
     )
     assert task_1.description_template == (

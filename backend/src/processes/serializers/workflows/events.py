@@ -5,9 +5,6 @@ from src.processes.enums import WorkflowEventType
 from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.task import Delay, Task
 from src.processes.models.workflows.workflow import Workflow
-from src.processes.serializers.file_attachment import (
-    FileAttachmentSerializer,
-)
 from src.processes.serializers.workflows.field import (
     TaskFieldSerializer,
 )
@@ -113,13 +110,11 @@ class WorkflowEventSerializer(serializers.ModelSerializer):
             'target_group_id',
             'delay',
             'task',
-            'attachments',
             'workflow_id',
             'watched',
             'reactions',
         )
     task = serializers.JSONField(source='task_json')
     delay = serializers.JSONField(source='delay_json')
-    attachments = FileAttachmentSerializer(many=True)
     created_tsp = TimeStampField(source='created')
     updated_tsp = TimeStampField(source='updated')

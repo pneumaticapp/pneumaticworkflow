@@ -7,7 +7,6 @@ from src.processes.enums import (
     TaskStatus,
     WorkflowStatus,
 )
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.services.events import (
     CommentService,
@@ -18,6 +17,7 @@ from src.processes.services.exceptions import (
 )
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_attachment_for_event,
     create_test_guest,
     create_test_user,
     create_test_workflow,
@@ -95,23 +95,17 @@ def test_create_text_and_attachment__ok(mocker, api_client):
         user=user,
         text='Some comment',
         task=task,
-        attachments=[1, 2],
         after_create_actions=False,
     )
-    attach_1 = FileAttachment.objects.create(
-        account_id=user.account_id,
-        name='filename.png',
-        size=384812,
-        url='https://cloud.google.com/bucket/filename_salt.png',
-        thumbnail_url='https://cloud.google.com/bucket/filename_thumb.png',
+    create_test_attachment_for_event(
+        account=user.account,
         event=event,
+        file_id='file_1.png',
     )
-    attach_2 = FileAttachment.objects.create(
-        account_id=user.account_id,
-        name='doc.docx',
-        size=2412413,
-        url='https://cloud.google.com/bucket/doc_salt.docx',
+    create_test_attachment_for_event(
+        account=user.account,
         event=event,
+        file_id='file_2.docx',
     )
     service_init_mock = mocker.patch.object(
         CommentService,
@@ -130,24 +124,11 @@ def test_create_text_and_attachment__ok(mocker, api_client):
         f'/workflows/{workflow.id}/comment',
         data={
             'text': event.text,
-            'attachments': [
-                attach_1.id,
-                attach_2.id,
-            ],
         },
     )
 
     # arrange
     assert response.status_code == 200
-    assert len(response.data['attachments']) == 2
-    attach_data = response.data['attachments'][0]
-    assert attach_data['id'] == attach_1.id
-    assert attach_data['name'] == attach_1.name
-    assert attach_data['url'] == attach_1.url
-    assert attach_data['thumbnail_url'] == attach_1.thumbnail_url
-    assert attach_data['thumbnail_url'] == attach_1.thumbnail_url
-    assert attach_data['size'] == attach_1.size
-
     service_init_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
@@ -156,7 +137,6 @@ def test_create_text_and_attachment__ok(mocker, api_client):
     comment_create_mock.assert_called_once_with(
         task=task,
         text=event.text,
-        attachments=[attach_1.id, attach_2.id],
     )
 
 

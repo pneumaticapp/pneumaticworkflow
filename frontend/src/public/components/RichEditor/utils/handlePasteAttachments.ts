@@ -10,7 +10,6 @@ const urlRegex = /((https?|ftp):\/\/)[a-z0-9.-]+\.[a-z]{2,}(\/\S*?(?=\.*(?:\s|,|
 
 export const handlePasteAttachments = async (
   e: ClipboardEvent,
-  accountId: number,
   editorState: EditorState,
   addAttachment: ReturnType<typeof createAttachmentPlugin>['addAttachment'],
   onStartUpload: () => void,
@@ -37,7 +36,6 @@ export const handlePasteAttachments = async (
   });
   const uploadedImages: TEditorAttachment[] = await uploadFiles(
     pastedImages.map((image) => image.getAsFile()).filter(Boolean) as File[],
-    accountId,
   );
 
   const editorStateWithImages = [...uploadedImages, ...textImageUrls].reduce((stateWithImages, uploadedImage) => {

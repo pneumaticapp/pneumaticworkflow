@@ -12,15 +12,15 @@ from src.accounts.models import Contact
 from src.authentication import messages
 from src.authentication.models import AccessToken
 from src.authentication.services import exceptions
+from src.authentication.entities import UserData
 from src.authentication.services.microsoft import (
     MicrosoftAuthService,
     MicrosoftGraphApiMixin,
 )
 from src.processes.tests.fixtures import (
     create_test_account,
-    create_test_user,
+    create_test_user, create_test_owner,
 )
-from src.storage.google_cloud import GoogleCloudService
 from src.utils.logging import SentryLogLevel
 
 pytestmark = pytest.mark.django_db
@@ -232,6 +232,7 @@ class TestMicrosoftGraphApiMixin:
 
         # arrange
         account = create_test_account()
+        create_test_owner(account=account)
         access_token = '!@#!@#@!wqww23'
         binary_photo = b'123'
         headers = {'content-type': 'image/svg+xml'}
@@ -239,10 +240,7 @@ class TestMicrosoftGraphApiMixin:
         headers_mock.__getitem__.side_effect = headers.__getitem__
         response_mock = mocker.Mock(headers=headers_mock, ok=True)
         response_mock.content = binary_photo
-        settings_mock = mocker.patch(
-            'src.authentication.services.microsoft.settings',
-        )
-        settings_mock.PROJECT_CONF = {'STORAGE': True}
+        expected_url = 'https://storage.example/photo.svg'
         graph_api_request_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftGraphApiMixin._graph_api_request',
@@ -253,16 +251,13 @@ class TestMicrosoftGraphApiMixin:
             'src.authentication.services.microsoft.get_salt',
             return_value=salt,
         )
-        public_url = 'https://test.com/image.svg'
-        storage_init_mock = mocker.patch.object(
-            GoogleCloudService,
-            attribute='__init__',
-            return_value=None,
+        file_service_mock = mocker.MagicMock()
+        file_service_mock.upload_file_with_attachment.return_value = (
+            expected_url
         )
-        upload_from_binary_mock = mocker.patch(
-            'src.storage.google_cloud.GoogleCloudService.'
-            'upload_from_binary',
-            return_value=public_url,
+        mocker.patch(
+            'src.authentication.services.microsoft.FileServiceClient',
+            return_value=file_service_mock,
         )
         user_id = 'UQ@SDW@31221'
         service = MicrosoftGraphApiMixin()
@@ -281,13 +276,13 @@ class TestMicrosoftGraphApiMixin:
             raise_exception=False,
         )
         get_salt_mock.assert_called_once()
-        storage_init_mock.assert_called_once()
-        upload_from_binary_mock.assert_called_once_with(
-            binary=binary_photo,
-            filepath=f'{salt}_photo_96x96.svg',
-            content_type=headers['content-type'],
+        file_service_mock.upload_file_with_attachment.assert_called_once_with(
+            file_content=binary_photo,
+            filename=f'{salt}_photo_96x96.svg',
+            content_type='image/svg+xml',
+            account=account,
         )
-        assert result == public_url
+        assert result == expected_url
 
     def test_get_user_photo__undefined_content_type__blank_image_ext(
         self,
@@ -296,6 +291,7 @@ class TestMicrosoftGraphApiMixin:
 
         # arrange
         account = create_test_account()
+        create_test_owner(account=account)
         access_token = '!@#!@#@!wqww23'
         binary_photo = b'123'
         headers = {'content-type': 'video|bla*-!file'}
@@ -303,10 +299,7 @@ class TestMicrosoftGraphApiMixin:
         headers_mock.__getitem__.side_effect = headers.__getitem__
         response_mock = mocker.Mock(headers=headers_mock, ok=True)
         response_mock.content = binary_photo
-        settings_mock = mocker.patch(
-            'src.authentication.services.microsoft.settings',
-        )
-        settings_mock.PROJECT_CONF = {'STORAGE': True}
+        expected_url = 'https://storage.example/photo'
         graph_api_request_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftGraphApiMixin._graph_api_request',
@@ -317,16 +310,13 @@ class TestMicrosoftGraphApiMixin:
             'src.authentication.services.microsoft.get_salt',
             return_value=salt,
         )
-        public_url = 'https://test.com/image.svg'
-        storage_init_mock = mocker.patch.object(
-            GoogleCloudService,
-            attribute='__init__',
-            return_value=None,
+        file_service_mock = mocker.MagicMock()
+        file_service_mock.upload_file_with_attachment.return_value = (
+            expected_url
         )
-        upload_from_binary_mock = mocker.patch(
-            'src.storage.google_cloud.GoogleCloudService.'
-            'upload_from_binary',
-            return_value=public_url,
+        mocker.patch(
+            'src.authentication.services.microsoft.FileServiceClient',
+            return_value=file_service_mock,
         )
         user_id = '!@#$#$#12ase'
         service = MicrosoftGraphApiMixin()
@@ -345,13 +335,13 @@ class TestMicrosoftGraphApiMixin:
             raise_exception=False,
         )
         get_salt_mock.assert_called_once()
-        storage_init_mock.assert_called_once()
-        upload_from_binary_mock.assert_called_once_with(
-            binary=binary_photo,
-            filepath=f'{salt}_photo_96x96',
-            content_type=headers['content-type'],
+        file_service_mock.upload_file_with_attachment.assert_called_once_with(
+            file_content=binary_photo,
+            filename=f'{salt}_photo_96x96',
+            content_type='video|bla*-!file',
+            account=account,
         )
-        assert result == public_url
+        assert result == expected_url
 
     def test_get_user_photo__not_found__return_none(self, mocker):
 
@@ -359,18 +349,10 @@ class TestMicrosoftGraphApiMixin:
         account = create_test_account()
         access_token = '!@#!@#@!wqww23'
         response_mock = mocker.Mock(ok=False)
-        settings_mock = mocker.patch(
-            'src.authentication.services.microsoft.settings',
-        )
-        settings_mock.PROJECT_CONF = {'STORAGE': True}
         graph_api_request_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftGraphApiMixin._graph_api_request',
             return_value=response_mock,
-        )
-        upload_from_binary_mock = mocker.patch(
-            'src.storage.google_cloud.GoogleCloudService.'
-            'upload_from_binary',
         )
         user_id = '!@W@##$%%$21'
         service = MicrosoftGraphApiMixin()
@@ -388,60 +370,6 @@ class TestMicrosoftGraphApiMixin:
             access_token=access_token,
             raise_exception=False,
         )
-        upload_from_binary_mock.assert_not_called()
-        assert result is None
-
-    def test_get_user_photo__disabled_storage__return_none(self, mocker):
-
-        # arrange
-        account = create_test_account()
-        access_token = '!@#!@#@!wqww23'
-        binary_photo = b'123'
-        headers = {'content-type': 'image/svg+xml'}
-        headers_mock = mocker.MagicMock()
-        headers_mock.__getitem__.side_effect = headers.__getitem__
-        response_mock = mocker.Mock(headers=headers_mock, ok=True)
-        response_mock.content = binary_photo
-        settings_mock = mocker.patch(
-            'src.authentication.services.microsoft.settings',
-        )
-        settings_mock.PROJECT_CONF = {'STORAGE': False}
-        graph_api_request_mock = mocker.patch(
-            'src.authentication.services.microsoft.'
-            'MicrosoftGraphApiMixin._graph_api_request',
-            return_value=response_mock,
-        )
-        salt = '123asd'
-        get_salt_mock = mocker.patch(
-            'src.authentication.services.microsoft.get_salt',
-            return_value=salt,
-        )
-        public_url = 'https://test.com/image.svg'
-        storage_init_mock = mocker.patch.object(
-            GoogleCloudService,
-            attribute='__init__',
-            return_value=None,
-        )
-        upload_from_binary_mock = mocker.patch(
-            'src.storage.google_cloud.GoogleCloudService.'
-            'upload_from_binary',
-            return_value=public_url,
-        )
-        user_id = 'UQ@SDW@31221'
-        service = MicrosoftGraphApiMixin()
-
-        # act
-        result = service._get_user_photo(
-            access_token=access_token,
-            user_id=user_id,
-            account=account,
-        )
-
-        # assert
-        graph_api_request_mock.assert_not_called()
-        get_salt_mock.assert_not_called()
-        storage_init_mock.assert_not_called()
-        upload_from_binary_mock.assert_not_called()
         assert result is None
 
 
@@ -539,11 +467,10 @@ class TestMicrosoftAuthService:
             'MicrosoftAuthService._get_user_profile_email',
             return_value=email,
         )
-        photo_url = 'https://test.image.com'
         get_user_photo_mock = mocker.patch(
             'src.authentication.services.microsoft.'
             'MicrosoftAuthService._get_user_photo',
-            return_value=photo_url,
+            return_value=None,
         )
         auth_response = mocker.Mock()
         mock_settings_mixins = mocker.patch(
@@ -561,16 +488,79 @@ class TestMicrosoftAuthService:
         get_user_mock.assert_called_once_with(access_token)
         get_user_profile_email_mock.assert_called_once_with(profile_data)
         get_user_photo_mock.assert_called_once_with(
+            account=None,
             access_token=access_token,
             user_id=profile_id,
-            account=None,
         )
         assert result['email'] == email
         assert result['first_name'] == first_name
         assert result['last_name'] == last_name
         assert result['company_name'] is None
-        assert result['photo'] == photo_url
+        assert result['photo'] is None
         assert result['job_title'] == job_title
+        assert result['ms_graph_user_id'] == profile_id
+
+    def test_get_user_data__account_exists__fetches_photo(
+        self,
+        mocker,
+    ):
+        # arrange
+        email = 'test@test.test'
+        account = create_test_account()
+        create_test_user(email=email, account=account)
+        client_mock = mocker.Mock()
+        mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService._build_msal_app',
+            return_value=client_mock,
+        )
+        access_token = 'Bearer x'
+        mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService._get_first_access_token',
+            return_value=access_token,
+        )
+        profile_id = 'ms-graph-id-123'
+        profile_data = {
+            'id': profile_id,
+            'mail': email,
+            'givenName': 'Fa',
+            'surname': 'La',
+            'jobTitle': 'QA',
+        }
+        mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService._get_user',
+            return_value=profile_data,
+        )
+        mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService._get_user_profile_email',
+            return_value=email,
+        )
+        photo_url = 'https://storage/photo.png'
+        get_user_photo_mock = mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService._get_user_photo',
+            return_value=photo_url,
+        )
+        auth_response = mocker.Mock()
+        mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        service = MicrosoftAuthService()
+
+        # act
+        result = service.get_user_data(auth_response)
+
+        # assert
+        assert result['photo'] == photo_url
+        assert result['ms_graph_user_id'] == profile_id
+        get_user_photo_mock.assert_called_once_with(
+            account=account,
+            access_token=access_token,
+            user_id=profile_id,
+        )
 
     def test_get_user_data__not_first_name__set_default(self, mocker):
 
@@ -1732,4 +1722,360 @@ class TestMicrosoftAuthService:
                 'exception_type': type(ex),
             },
             contractor='Microsoft Graph API',
+        )
+
+    def test_apply_photo_to_user__photo_in_user_data__sets_photo(
+        self,
+        mocker,
+    ):
+        # arrange
+        user = create_test_user()
+        photo_url = 'https://storage.example/photo.png'
+        user_data = UserData(
+            email=user.email,
+            first_name='',
+            last_name='',
+            company_name='',
+            photo=photo_url,
+            job_title='',
+        )
+        client_mock = mocker.Mock()
+        mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService._build_msal_app',
+            return_value=client_mock,
+        )
+        upload_photo_mock = mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService.upload_photo_for_user',
+        )
+        mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        mocker.patch(
+            'src.authentication.services.microsoft.'
+            'sync_account_file_fields',
+        )
+        service = MicrosoftAuthService()
+
+        # act
+        service.apply_photo_to_user(user, user_data)
+
+        # assert
+        user.refresh_from_db()
+        assert user.photo == photo_url
+        upload_photo_mock.assert_not_called()
+
+    def test_apply_photo_to_user__no_photo_upload_returns_url__sets_photo(
+        self,
+        mocker,
+    ):
+        # arrange
+        user = create_test_user()
+        ms_graph_user_id = 'ms-graph-123'
+        uploaded_url = 'https://storage.example/uploaded.png'
+        user_data = UserData(
+            email=user.email,
+            first_name='',
+            last_name='',
+            company_name='',
+            photo=None,
+            job_title='',
+            ms_graph_user_id=ms_graph_user_id,
+        )
+        client_mock = mocker.Mock()
+        mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService._build_msal_app',
+            return_value=client_mock,
+        )
+        upload_photo_mock = mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService.upload_photo_for_user',
+            return_value=uploaded_url,
+        )
+        mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        mocker.patch(
+            'src.authentication.services.microsoft.'
+            'sync_account_file_fields',
+        )
+        service = MicrosoftAuthService()
+
+        # act
+        service.apply_photo_to_user(user, user_data)
+
+        # assert
+        user.refresh_from_db()
+        assert user.photo == uploaded_url
+        upload_photo_mock.assert_called_once_with(
+            user,
+            ms_graph_user_id,
+        )
+
+    def test_apply_photo_to_user__no_photo_upload_returns_none__no_change(
+        self,
+        mocker,
+    ):
+        # arrange
+        user = create_test_user()
+        user_data = UserData(
+            email=user.email,
+            first_name='',
+            last_name='',
+            company_name='',
+            photo=None,
+            job_title='',
+            ms_graph_user_id='ms-graph-123',
+        )
+        client_mock = mocker.Mock()
+        mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService._build_msal_app',
+            return_value=client_mock,
+        )
+        upload_photo_mock = mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService.upload_photo_for_user',
+            return_value=None,
+        )
+        mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        mocker.patch(
+            'src.authentication.services.microsoft.'
+            'sync_account_file_fields',
+        )
+        service = MicrosoftAuthService()
+        initial_photo = user.photo
+
+        # act
+        service.apply_photo_to_user(user, user_data)
+
+        # assert
+        user.refresh_from_db()
+        assert user.photo == initial_photo
+        upload_photo_mock.assert_called_once_with(user, 'ms-graph-123')
+
+    def test_apply_photo_to_user__photo_updated__calls_sync_account_file(
+        self,
+        mocker,
+    ):
+        # arrange
+        user = create_test_user()
+        old_photo = 'https://storage.example/old_photo.png'
+        new_photo = 'https://storage.example/new_photo.png'
+        user.photo = old_photo
+        user.save()
+        user_data = UserData(
+            email=user.email,
+            first_name='',
+            last_name='',
+            company_name='',
+            photo=new_photo,
+            job_title='',
+        )
+        client_mock = mocker.Mock()
+        mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService._build_msal_app',
+            return_value=client_mock,
+        )
+        mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        sync_account_file_fields_mock = mocker.patch(
+            'src.authentication.services.microsoft.'
+            'sync_account_file_fields',
+        )
+        service = MicrosoftAuthService()
+
+        # act
+        service.apply_photo_to_user(user, user_data)
+
+        # assert
+        user.refresh_from_db()
+        assert user.photo == new_photo
+        sync_account_file_fields_mock.assert_called_once_with(
+            account=user.account,
+            user=user,
+            old_values=[old_photo],
+            new_values=[new_photo],
+        )
+
+    def test_apply_photo_to_user__no_photo__sync_not_called(
+        self,
+        mocker,
+    ):
+        # arrange
+        user = create_test_user()
+        user_data = UserData(
+            email=user.email,
+            first_name='',
+            last_name='',
+            company_name='',
+            photo=None,
+            job_title='',
+            ms_graph_user_id='ms-graph-123',
+        )
+        client_mock = mocker.Mock()
+        mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService._build_msal_app',
+            return_value=client_mock,
+        )
+        upload_photo_mock = mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService.upload_photo_for_user',
+            return_value=None,
+        )
+        mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        sync_account_file_fields_mock = mocker.patch(
+            'src.authentication.services.microsoft.'
+            'sync_account_file_fields',
+        )
+        service = MicrosoftAuthService()
+
+        # act
+        service.apply_photo_to_user(user, user_data)
+
+        # assert
+        upload_photo_mock.assert_called_once_with(user, 'ms-graph-123')
+        sync_account_file_fields_mock.assert_not_called()
+
+    def test_apply_photo_to_user__no_photo_no_ms_graph_user_id__no_upload(
+        self,
+        mocker,
+    ):
+        # arrange
+        user = create_test_user()
+        initial_photo = user.photo
+        user_data = UserData(
+            email=user.email,
+            first_name='',
+            last_name='',
+            company_name='',
+            photo=None,
+            job_title='',
+        )
+        client_mock = mocker.Mock()
+        mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService._build_msal_app',
+            return_value=client_mock,
+        )
+        upload_photo_mock = mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService.upload_photo_for_user',
+        )
+        mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        service = MicrosoftAuthService()
+
+        # act
+        service.apply_photo_to_user(user, user_data)
+
+        # assert
+        user.refresh_from_db()
+        assert user.photo == initial_photo
+        upload_photo_mock.assert_not_called()
+
+    def test_upload_photo_for_user__no_tokens__return_none(self, mocker):
+        # arrange
+        user = create_test_owner()
+        client_mock = mocker.Mock()
+        mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService._build_msal_app',
+            return_value=client_mock,
+        )
+        mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        service = MicrosoftAuthService()
+        service.tokens = None
+
+        # act
+        result = service.upload_photo_for_user(
+            user,
+            'ms-graph-id-123',
+        )
+
+        # assert
+        assert result is None
+
+    def test_upload_photo_for_user__empty_ms_graph_user_id__return_none(
+        self,
+        mocker,
+    ):
+        # arrange
+        user = create_test_owner()
+        client_mock = mocker.Mock()
+        mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService._build_msal_app',
+            return_value=client_mock,
+        )
+        mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        service = MicrosoftAuthService()
+        service.tokens = {
+            'token_type': 'Bearer',
+            'access_token': 'token',
+        }
+        get_user_photo_mock = mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService._get_user_photo',
+        )
+
+        # act
+        result = service.upload_photo_for_user(user, '')
+
+        # assert
+        assert result is None
+        get_user_photo_mock.assert_not_called()
+
+    def test_upload_photo_for_user__ok__return_url(self, mocker):
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        ms_graph_user_id = 'ms-graph-456'
+        expected_url = 'https://storage.example/photo.png'
+        client_mock = mocker.Mock()
+        mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService._build_msal_app',
+            return_value=client_mock,
+        )
+        mocker.patch(
+            'src.authentication.views.mixins.settings',
+        )
+        service = MicrosoftAuthService()
+        service.tokens = {
+            'token_type': 'Bearer',
+            'access_token': 'access-token-xyz',
+        }
+        get_user_photo_mock = mocker.patch(
+            'src.authentication.services.microsoft.'
+            'MicrosoftAuthService._get_user_photo',
+            return_value=expected_url,
+        )
+
+        # act
+        result = service.upload_photo_for_user(
+            user,
+            ms_graph_user_id,
+        )
+
+        # assert
+        assert result == expected_url
+        get_user_photo_mock.assert_called_once_with(
+            account=account,
+            access_token='Bearer access-token-xyz',
+            user_id=ms_graph_user_id,
         )

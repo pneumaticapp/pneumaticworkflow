@@ -259,7 +259,7 @@ class TaskViewSet(
             queryset = queryset.prefetch_related(
                 'checklists__selections',
                 'output__selections',
-                'output__attachments',
+                'output__storage_attachments',
             ).select_related(
                 'workflow',
             )
@@ -441,7 +441,7 @@ class TaskViewSet(
         task = self.get_object()
         qst = (
             WorkflowEvent.objects
-            .prefetch_related('attachments')
+            .prefetch_related('storage_attachments')
             .on_task(task.id)
             .type_in(WorkflowEventType.TASK_EVENTS)
         )

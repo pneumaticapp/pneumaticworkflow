@@ -129,7 +129,7 @@ export function AttachmentField({
 
     try {
       setUploadingState(true);
-      const newUploadedFiles = await uploadFiles(files, accountId, validators);
+      const newUploadedFiles = await uploadFiles(files, validators);
       const newFileWithThumbnailUrl = newUploadedFiles.map((item) => {
         return {
           ...item,
@@ -151,7 +151,7 @@ export function AttachmentField({
     }
   };
 
-  const handleDeleteFile = (id: number) => async () => {
+  const handleDeleteFile = (id: string) => () => {
     const newUploadedFiles = filesToUploadState.map((file) => (file.id === id ? { ...file, isRemoved: true } : file));
     setFilesToUploadState(newUploadedFiles);
     setUploadedFiles(newUploadedFiles);

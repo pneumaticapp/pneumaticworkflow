@@ -717,3 +717,78 @@ def test_create_template_from_library_template__ok(mocker):
         auth_type=auth_type,
         is_superuser=is_superuser,
     )
+
+
+def test_partial_update__ok(mocker):
+    # arrange
+    user = create_test_user()
+    template = create_test_template(user, is_active=True)
+    service = TemplateService(
+        user=user,
+        instance=template,
+    )
+    new_name = 'Updated template name'
+    refresh_mock = mocker.patch(
+        'src.processes.services.templates.template.refresh_attachments',
+    )
+
+    # act
+    service.partial_update(name=new_name, force_save=True)
+
+    # assert
+    template.refresh_from_db()
+    assert template.name == new_name
+    refresh_mock.assert_not_called()
+
+
+def test_partial_update__description__refresh_attachments_called(mocker):
+    # arrange
+    user = create_test_user()
+    template = create_test_template(user, is_active=True)
+    service = TemplateService(
+        user=user,
+        instance=template,
+    )
+    new_description = 'Updated description with file_123.png'
+    refresh_mock = mocker.patch(
+        'src.processes.services.templates.template.refresh_attachments',
+    )
+
+    # act
+    service.partial_update(
+        description=new_description,
+        force_save=True,
+    )
+
+    # assert
+    template.refresh_from_db()
+    assert template.description == new_description
+    refresh_mock.assert_called_once_with(
+        template,
+        user,
+    )
+
+
+def test_partial_update__without_description__refresh_attachments_not_called(
+    mocker,
+):
+    # arrange
+    user = create_test_user()
+    template = create_test_template(user, is_active=True)
+    service = TemplateService(
+        user=user,
+        instance=template,
+    )
+    refresh_mock = mocker.patch(
+        'src.processes.services.templates.template.refresh_attachments',
+    )
+
+    # act
+    service.partial_update(
+        name='Other name',
+        is_active=False,
+        force_save=True,
+    )
+
+    # assert
+    refresh_mock.assert_not_called()

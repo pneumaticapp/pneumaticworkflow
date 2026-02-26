@@ -129,7 +129,6 @@ export class RichEditor extends React.Component<IRichEditorProps, IRichEditorSta
     this.editorContainer.current.onpaste = (e) =>
       handlePasteAttachments(
         e,
-        this.props.accountId,
         this.state.editorState,
         this.attachmentPlugin.addAttachment,
         () => this.setState({ isLoading: true }),
@@ -308,11 +307,8 @@ export class RichEditor extends React.Component<IRichEditorProps, IRichEditorSta
   };
 
   private uploadAttachments = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { accountId } = this.props;
-
     await handleUploadAttachments(
       e,
-      accountId,
       this.state.editorState,
       this.attachmentPlugin.addAttachment,
       () => this.setState({ isLoading: true }),

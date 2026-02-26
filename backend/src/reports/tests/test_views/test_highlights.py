@@ -1115,7 +1115,6 @@ def test__kickoff_field_type_user__ok(api_client):
     # TODO Replace in https://my.pneumatic.app/workflows/18137/
     assert field_data['value'] == user.get_full_name()
     assert field_data['selections'] == []
-    assert field_data['attachments'] == []
     assert field_data['user_id'] == user.id
 
 

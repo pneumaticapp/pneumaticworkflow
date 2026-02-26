@@ -17,6 +17,7 @@ export interface IBrowserConfig {
   api: {
     publicUrl: string;
     wsPublicUrl: string;
+    fileServiceUrl: string;
     urls: typeof commonConfig.api.urls;
   };
   analyticsId: string;
@@ -82,6 +83,7 @@ export function getConfig(): TConfig {
     BACKEND_PRIVATE_URL,
     BACKEND_URL,
     WSS_URL,
+    FILE_SERVICE_URL,
     FIREBASE_VAPID_KEY,
     FIREBASE_API_KEY,
     FIREBASE_AUTH_DOMAIN,
@@ -94,30 +96,35 @@ export function getConfig(): TConfig {
     ANALYTICS_WRITE_KEY,
   } = process.env;
 
-  return merge(commonConfig, { env }, {
-    "host": FRONTEND_URL,
-    "formSubdomain": FORM_DOMAIN,
-    "mainPage": SITE_URL,
-    "api": {
-      "privateUrl": BACKEND_PRIVATE_URL,
-      "publicUrl": BACKEND_URL,
-      "wsPublicUrl": WSS_URL
+  return merge(
+    commonConfig,
+    { env },
+    {
+      host: FRONTEND_URL,
+      formSubdomain: FORM_DOMAIN,
+      mainPage: SITE_URL,
+      api: {
+        privateUrl: BACKEND_PRIVATE_URL,
+        publicUrl: BACKEND_URL,
+        wsPublicUrl: WSS_URL,
+        fileServiceUrl: FILE_SERVICE_URL || 'http://localhost:8002',
+      },
+      analyticsId: ANALYTICS_WRITE_KEY,
+      recaptchaSecret: RECAPTCHA_SITE_KEY,
+      firebase: {
+        vapidKey: FIREBASE_VAPID_KEY,
+        config: {
+          apiKey: FIREBASE_API_KEY,
+          authDomain: FIREBASE_AUTH_DOMAIN,
+          projectId: FIREBASE_PROJECT_ID,
+          storageBucket: FIREBASE_STORAGE_BUCKET,
+          messagingSenderId: FIREBASE_SENDER_ID,
+          appId: FIREBASE_APP_ID,
+          measurementId: FIREBASE_MEASUREMENT_ID,
+        },
+      },
     },
-    "analyticsId": ANALYTICS_WRITE_KEY,
-    "recaptchaSecret": RECAPTCHA_SITE_KEY,
-    "firebase": {
-      "vapidKey": FIREBASE_VAPID_KEY,
-      "config": {
-        "apiKey": FIREBASE_API_KEY,
-        "authDomain": FIREBASE_AUTH_DOMAIN,
-        "projectId": FIREBASE_PROJECT_ID,
-        "storageBucket": FIREBASE_STORAGE_BUCKET,
-        "messagingSenderId": FIREBASE_SENDER_ID,
-        "appId": FIREBASE_APP_ID,
-        "measurementId": FIREBASE_MEASUREMENT_ID
-      }
-    },
-  });
+  );
 }
 
 export function serverConfigToBrowser() {

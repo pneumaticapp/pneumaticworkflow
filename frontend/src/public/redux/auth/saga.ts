@@ -414,14 +414,8 @@ export function* fetchResendVerification() {
 
 export function* handleUploadUserPhoto({ payload: { photo, onComplete } }: TUploadUserPhoto) {
   try {
-    const {
-      authUser: {
-        account: { id },
-      },
-    }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
     yield put(setGeneralLoaderVisibility(true));
-    const [value]: TUploadedFile[] = yield uploadUserAvatar(photo, id!);
-
+    const [value]: TUploadedFile[] = yield uploadUserAvatar(photo);
     if (value?.url) {
       yield call(changePhotoProfile, { photo: value.url });
       yield put(setUserPhoto(value.url));

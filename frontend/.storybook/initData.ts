@@ -4,6 +4,7 @@ window['__pneumaticConfig'] = {
     api: {
       publicUrl: '',
       wsPublicUrl: '',
+      fileServiceUrl: 'http://localhost:8002',
       urls: {
         getInvites: '/accounts/user/contacts',
         getPages: '/pages/public',
@@ -125,6 +126,7 @@ window['__pneumaticConfig'] = {
         attachment: '/api/workflows/attachments/:id',
         attachmentPublic: '/workflows/public/attachments/:id',
         copyAttachment: '/workflows/attachments/:id/clone',
+        fileServiceUpload: '/upload',
         integrations: '/applications/integrations',
         integrationDetails: '/applications/integrations/:id',
         gettingStartedChecklist: '/accounts/user/checklist',

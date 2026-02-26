@@ -30,6 +30,7 @@ from src.generics.permissions import (
     UserIsAuthenticated,
 )
 from src.notifications.tasks import send_user_updated_notification
+from src.storage.utils import sync_account_file_fields
 from src.payment.stripe.exceptions import StripeServiceException
 from src.payment.stripe.service import StripeService
 from src.processes.enums import FieldType
@@ -114,6 +115,7 @@ class UserViewSet(
 
         old_first_name = request.user.first_name
         old_last_name = request.user.last_name
+        old_photo = request.user.photo
 
         user = slz.save()
 
@@ -151,6 +153,12 @@ class UserViewSet(
             logging=user.account.log_api_requests,
             account_id=user.account.id,
             user_data=UserWebsocketSerializer(user).data,
+        )
+        sync_account_file_fields(
+            account=user.account,
+            user=request.user,
+            old_values=[old_photo],
+            new_values=[user.photo],
         )
         self.identify(user)
         return self.response_ok(slz.data)

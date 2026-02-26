@@ -19,7 +19,6 @@ from src.processes.enums import (
     WorkflowEventActionType,
     WorkflowEventType,
 )
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.event import (
     WorkflowEvent,
     WorkflowEventAction,
@@ -35,17 +34,17 @@ from src.processes.serializers.workflows.events import (
     WorkflowEventSerializer,
 )
 from src.processes.services.exceptions import (
-    AttachmentNotFound,
     CommentedNotTask,
     CommentedTaskNotActive,
     CommentedWorkflowNotRunning,
     CommentIsDeleted,
     CommentTextRequired,
 )
-from src.services.markdown import (
-    MarkdownPatterns,
-    MarkdownService,
+from src.services.markdown import MarkdownService
+from src.storage.services.attachments import (
+    clear_guardian_permissions_for_attachment_ids,
 )
+from src.storage.utils import refresh_attachments
 
 UserModel = get_user_model()
 
@@ -227,7 +226,6 @@ class WorkflowEventService:
         task: Task,
         text: Optional[str],
         clear_text: Optional[str] = None,
-        attachments: Optional[List[int]] = None,
         after_create_actions: bool = True,
     ) -> WorkflowEvent:
 
@@ -241,7 +239,7 @@ class WorkflowEventService:
                 instance=task,
                 context={'event_type': WorkflowEventType.COMMENT},
             ).data,
-            with_attachments=bool(attachments),
+            with_attachments=False,  # Will be updated by refresh_attachments
             workflow=task.workflow,
             user=user,
         )
@@ -596,25 +594,6 @@ class CommentService(BaseModelService):
             self.account.id,
         ).only_ids()
 
-    def _update_attachments(self, ids: Optional[List[int]] = None):
-
-        """ Attach new attachments to comment event and remove previous """
-
-        if ids:
-            self.instance.attachments.exclude(id__in=ids).delete()
-            qst = FileAttachment.objects.on_account(
-                self.account.id,
-            ).with_event_or_not_attached(self.instance.id).by_ids(ids)
-
-            if qst.count() < len(ids):
-                raise AttachmentNotFound
-            qst.update(
-                event=self.instance,
-                workflow=self.instance.workflow,
-            )
-        else:
-            self.instance.attachments.all().delete()
-
     def _get_new_comment_recipients(
         self,
         task: Task,
@@ -668,7 +647,6 @@ class CommentService(BaseModelService):
         self,
         task: Task,
         text: Optional[str] = None,
-        attachments: Optional[List[int]] = None,
     ) -> WorkflowEvent:
 
         """ If the user is a performer and is mentioned in the message,
@@ -681,28 +659,22 @@ class CommentService(BaseModelService):
         workflow = task.workflow
         if workflow.is_completed:
             raise CommentedWorkflowNotRunning
-        if not text and not attachments:
+        if not text:
             raise CommentTextRequired
         clear_text = MarkdownService.clear(text) if text else None
-        if not attachments:
-            # find attachment ids in the text
-            pattern = MarkdownPatterns.MEDIA_PATTERN
-            attachments = pattern.findall(text)
-            if attachments:
-                attachments = [int(e) for e in attachments]
         with transaction.atomic():
             self.instance = WorkflowEventService.comment_created_event(
                 user=self.user,
                 task=task,
                 text=text,
                 clear_text=clear_text,
-                attachments=attachments,
+                after_create_actions=False,
             )
             if not task.contains_comments:
                 task.contains_comments = True
                 task.save(update_fields=['contains_comments'])
-            if attachments:
-                self._update_attachments(attachments)
+            refresh_attachments(source=self.instance, user=self.user)
+            WorkflowEventService._after_create_actions(self.instance)
             mentioned_users_ids, notify_users_ids = (
                 self._get_new_comment_recipients(task)
             )
@@ -747,26 +719,18 @@ class CommentService(BaseModelService):
         self,
         force_save=False,
         text: Optional[str] = None,
-        attachments: Optional[List[int]] = None,
     ) -> WorkflowEvent:
 
         self._validate_comment_action()
         task = self.instance.task
         if task is not None and not (task.is_active or task.is_delayed):
             raise CommentedTaskNotActive
-        if not text and not attachments:
+        if not text:
             raise CommentTextRequired
         clear_text = MarkdownService.clear(text) if text else None
-        if not attachments:
-            # find attachment ids in the text
-            pattern = MarkdownPatterns.MEDIA_PATTERN
-            attachments = pattern.findall(text)
-            if attachments:
-                attachments = [int(e) for e in attachments]
         kwargs = {
             'status': CommentStatus.UPDATED,
             'updated': timezone.now(),
-            'with_attachments': bool(attachments),
             'text': text,
             'clear_text': clear_text,
         }
@@ -776,8 +740,7 @@ class CommentService(BaseModelService):
                 force_save=force_save,
                 **kwargs,
             )
-            if attachments:
-                self._update_attachments(attachments)
+            refresh_attachments(source=self.instance, user=self.user)
             new_mentioned_users_ids = self._get_updated_comment_recipients()
             if new_mentioned_users_ids:
                 self.instance.workflow.members.add(*new_mentioned_users_ids)
@@ -808,7 +771,10 @@ class CommentService(BaseModelService):
         task = self.instance.task
         if task is not None and not (task.is_active or task.is_delayed):
             raise CommentedTaskNotActive
-        self.instance.attachments.delete()
+        storage_attachments = self.instance.storage_attachments
+        ids_to_delete = list(storage_attachments.values_list('id', flat=True))
+        clear_guardian_permissions_for_attachment_ids(ids_to_delete)
+        storage_attachments.delete()
         super().partial_update(
             status=CommentStatus.DELETED,
             with_attachments=False,

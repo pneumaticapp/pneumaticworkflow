@@ -59,7 +59,7 @@ export function ExtraFieldFile({
 
     try {
       setUploadingState(true);
-      const uploadedFiles = await uploadFiles(files, accountId);
+      const uploadedFiles = await uploadFiles(files);
       const newUploadedFiles = [...filesToUpload, ...(uploadedFiles as TUploadedFile[])];
       const newUploadedFilesIds = newUploadedFiles.filter((file) => !file.isRemoved).map((file) => String(file.id));
 
@@ -73,7 +73,7 @@ export function ExtraFieldFile({
     }
   };
 
-  const handleDeleteFile = (id: number) => async () => {
+  const handleDeleteFile = (id: string) => async () => {
     const newUploadedFiles = filesToUpload.map((file) => (file.id === id ? { ...file, isRemoved: true } : file));
     const newUploadedFilesIds = newUploadedFiles.filter((file) => !file.isRemoved).map((file) => String(file.id));
 

@@ -105,9 +105,6 @@ services:
       AI_PROVIDER: ${AI_PROVIDER}
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER}
-      STORAGE: ${STORAGE:-no}
-      STORAGE_PROVIDER: ${STORAGE_PROVIDER}
-      GOOGLE_APPLICATION_CREDENTIALS: /pneumatic_backend/google_api_credentials.json
       SENTRY_DSN: ${SENTRY_DSN}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
@@ -186,9 +183,6 @@ services:
       AI_PROVIDER: ${AI_PROVIDER}
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER}
-      STORAGE: ${STORAGE:-no}
-      STORAGE_PROVIDER: ${STORAGE_PROVIDER}
-      GOOGLE_APPLICATION_CREDENTIALS: /pneumatic_backend/google_api_credentials.json
       SENTRY_DSN: ${SENTRY_DSN}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
@@ -224,6 +218,183 @@ services:
       - pneumatic
     restart: always
 
+  backend:
+    build:
+      context: .
+    container_name: pneumatic-backend
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --no-input &&
+             python manage.py compilemessages &&
+             python manage.py runserver 0.0.0.0:8000"
+    environment:
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:8001}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      FORMS_URL: ${FORMS_URL:-http://form.localhost}
+      ENVIRONMENT: ${ENVIRONMENT:-Development}
+      LANGUAGE_CODE: ${LANGUAGE_CODE:-en}
+      CAPTCHA: ${CAPTCHA:-no}
+      ANALYTICS: ${ANALYTICS:-no}
+      BILLING: ${BILLING:-no}
+      SIGNUP: ${SIGNUP:-yes}
+      MS_AUTH: ${MS_AUTH:-no}
+      GOOGLE_AUTH: ${GOOGLE_AUTH:-no}
+      SSO_AUTH: ${SSO_AUTH:-no}
+      EMAIL: ${EMAIL:-no}
+      AI: ${AI:-no}
+      PUSH: ${PUSH:-no}
+      POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_password}
+      POSTGRES_DB: ${POSTGRES_DB:-postgres_db}
+      DJANGO_DEBUG: ${DJANGO_DEBUG:-yes}
+      ADMIN_PATH: ${ADMIN_PATH:-admin}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
+      DJANGO_SETTINGS_MODULE: src.settings
+      AUTH_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/1"
+      CACHE_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/0"
+      CHANNELS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/2"
+      SESSION_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/3"
+      CELERY_BROKER_URL: "amqp://${RABBITMQ_USER:-rabbitmq_user}:${RABBITMQ_PASSWORD:-rabbitmq_password}@rabbitmq:5672"
+      ALLOWED_HOSTS: "backend localhost 127.0.0.1"
+      VERIFICATION_CHECK: no
+      CORS_ORIGIN_ALLOW_ALL: yes
+      CORS_ALLOW_CREDENTIALS: yes
+      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://file-service:8000}
+      CORS_ORIGIN_WHITELIST: "http://localhost:8000 http://localhost:8002 ${FRONTEND_URL:-http://localhost}"
+      ENABLE_LOGGING: ${ENABLE_LOGGING:-yes}
+    volumes:
+      - ./:/pneumatic_backend
+    ports:
+      - "8001:8000"
+    depends_on:
+      - postgres
+      - rabbitmq
+      - redis
+    networks:
+      - pneumatic
+    restart: always
+
+  file-service:
+    build:
+      context: ../storage
+    container_name: pneumatic-file-service
+    environment:
+      DEBUG: ${FILE_DEBUG:-true}
+      CONFIG: ${FILE_CONFIG:-Development}
+      WORKERS: ${FILE_WORKERS:-1}
+      PORT: ${FILE_PORT:-8000}
+      ALLOWED_ORIGINS: ${FILE_ALLOWED_ORIGINS:-["*"]}
+      BACKEND_PRIVATE_URL: http://backend:8000/
+      POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
+      POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
+      POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
+      POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
+      POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
+      STORAGE_TYPE: ${FILE_STORAGE_TYPE:-local}
+      SEAWEEDFS_S3_ENDPOINT: ${FILE_SEAWEEDFS_S3_ENDPOINT:-http://seaweedfs-filer:8333}
+      SEAWEEDFS_S3_ACCESS_KEY: ${FILE_SEAWEEDFS_S3_ACCESS_KEY:-any-secret-key-will-work}
+      SEAWEEDFS_S3_SECRET_KEY: ${FILE_SEAWEEDFS_S3_SECRET_KEY:-any-secret-key-will-work}
+      SEAWEEDFS_S3_REGION: ${FILE_SEAWEEDFS_S3_REGION:-us-central1}
+      SEAWEEDFS_S3_USE_SSL: ${FILE_SEAWEEDFS_S3_USE_SSL:-false}
+      GCS_S3_ENDPOINT: ${FILE_GCS_S3_ENDPOINT}
+      GCS_S3_ACCESS_KEY: ${FILE_GCS_S3_ACCESS_KEY}
+      GCS_S3_SECRET_KEY: ${FILE_GCS_S3_SECRET_KEY}
+      GCS_S3_REGION: ${FILE_GCS_S3_REGION}
+      FASTAPI_BASE_URL: ${FILE_FASTAPI_BASE_URL:-http://localhost:8002}
+      BUCKET_PREFIX: ${FILE_BUCKET_PREFIX:-pneumatic-dev-test}
+      MAX_FILE_SIZE: ${FILE_MAX_FILE_SIZE:-104857600}
+      CHUNK_SIZE: ${FILE_CHUNK_SIZE:-1048576}
+      AUTH_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/1"
+      KEY_PREFIX_REDIS: ${FILE_KEY_PREFIX_REDIS:-:1:}
+      DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
+      AUTH_TOKEN_ITERATIONS: ${FILE_AUTH_TOKEN_ITERATIONS:-1}
+    volumes:
+      - file_service_media:/app/media
+    ports:
+      - "8002:8000"
+    depends_on:
+      - file-postgres
+      - redis
+      - backend
+    networks:
+      - pneumatic
+    restart: unless-stopped
+
+  file-postgres:
+    image: postgres:15-bookworm
+    container_name: pneumatic-file-postgres
+    environment:
+      POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
+      POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
+      POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
+    ports:
+      - "5433:5432"
+    volumes:
+      - file_postgres_data:/var/lib/postgresql/data
+    networks:
+      - pneumatic
+    restart: unless-stopped
+
+  seaweedfs-master:
+    image: chrislusf/seaweedfs:3.95
+    container_name: pneumatic-seaweedfs-master
+    command: master -ip=seaweedfs-master -port=9333
+    ports:
+      - "9333:9333"
+      - "19333:19333"
+    volumes:
+      - seaweedfs_master_data:/data
+    networks:
+      - pneumatic
+
+  seaweedfs-volume:
+    image: chrislusf/seaweedfs:3.95
+    container_name: pneumatic-seaweedfs-volume
+    command:
+      - volume
+      - -mserver=seaweedfs-master:9333
+      - -port=8080
+      - -ip=seaweedfs-volume
+      - -publicUrl=localhost:8080
+    ports:
+      - "8080:8080"
+      - "18080:18080"
+    depends_on:
+      - seaweedfs-master
+    volumes:
+      - seaweedfs_volume_data:/data
+    networks:
+      - pneumatic
+
+  seaweedfs-filer:
+    image: chrislusf/seaweedfs:3.95
+    container_name: pneumatic-seaweedfs-filer
+    command: filer -master="seaweedfs-master:9333" -s3 -s3.port=8333
+    ports:
+      - "8888:8888"
+      - "8333:8333"
+      - "18888:18888"
+    depends_on:
+      - seaweedfs-master
+      - seaweedfs-volume
+    volumes:
+      - ../storage/seaweedfs/filer.toml:/etc/seaweedfs/filer.toml
+      - seaweedfs_filer_data:/data
+    networks:
+      - pneumatic
 
 networks:
   pneumatic:
+
+volumes:
+  postgres_data:
+  postgres_backups:
+  redis_data:
+  rabbitmq_data:
+  rabbitmq_log:
+  file_postgres_data:
+  file_service_media:
+  seaweedfs_master_data:
+  seaweedfs_volume_data:
+  seaweedfs_filer_data:

@@ -42,7 +42,14 @@ from src.reports.tasks import (
     send_digest,
     send_tasks_digest,
 )
-from src.storage.tasks import switch_access_to_files
+from src.storage.enums import AccessType as StorageAccessType
+from src.storage.enums import SourceType as StorageSourceType
+from src.storage.services.exceptions import FileServiceException
+from src.storage.services.file_service import FileServiceClient
+from src.utils.logging import (
+    SentryLogLevel,
+    capture_sentry_message,
+)
 
 UserModel = get_user_model()
 
@@ -105,6 +112,40 @@ class UserAdminChangeForm(UserChangeForm):
         choices=Timezone.CHOICES,
         initial=settings.TIME_ZONE,
     )
+    photo_file = forms.FileField(
+        required=False,
+        label='Upload photo',
+    )
+
+    def clean_photo_file(self):
+        return self.cleaned_data.get('photo_file')
+
+    def save(self, commit=True):
+        photo_file = self.cleaned_data.get('photo_file')
+        if photo_file:
+            try:
+                file_service = FileServiceClient(user=self.instance)
+                file_url = file_service.upload_file_with_attachment(
+                    file_content=photo_file.read(),
+                    filename=photo_file.name.replace(' ', '_'),
+                    content_type=photo_file.content_type,
+                    account=self.instance.account,
+                    source_type=StorageSourceType.ACCOUNT,
+                    access_type=StorageAccessType.ACCOUNT,
+                )
+                self.instance.photo = file_url
+            except FileServiceException as ex:
+                capture_sentry_message(
+                    message='User photo upload failed',
+                    data={
+                        'filename': photo_file.name,
+                        'user_id': self.instance.id,
+                        'account_id': self.instance.account_id,
+                        'error': str(ex),
+                    },
+                    level=SentryLogLevel.ERROR,
+                )
+        return super().save(commit=commit)
 
 
 class GroupAdmin(ModelAdmin):
@@ -199,6 +240,7 @@ class UsersAdmin(UserAdmin, SignUpMixin):
                 'email',
                 'phone',
                 'photo',
+                'photo_file',
                 'password',
                 'is_account_owner',
                 'type',
@@ -712,12 +754,6 @@ class AccountAdmin(ModelAdmin):
                 prev=self.prev_lease_level,
                 new=obj.lease_level,
             )
-            if self.prev_bucket_is_public != obj.bucket_is_public:
-                switch_access_to_files.delay(
-                    user_id=request.user.id,
-                    account_id=obj.id,
-                    public_access=obj.bucket_is_public,
-                )
 
     def delete_model(self, request, obj):
 

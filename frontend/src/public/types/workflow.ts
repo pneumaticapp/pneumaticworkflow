@@ -228,7 +228,7 @@ export interface ITaskCommentItem {
 }
 
 export interface ITaskCommentAttachmentRequest {
-  id: number;
+  id: string;
 }
 
 export enum EWorkflowsLogSorting {

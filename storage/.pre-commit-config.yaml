@@ -1,0 +1,29 @@
+repos:
+  - repo: local
+    hooks:
+      - id: ruff-check
+        name: ruff check
+        entry: ruff check --config storage/ruff.toml --no-cache
+        language: system
+        types: [python]
+        files: ^storage/
+        require_serial: true
+        exclude: 'alembic|migrations'
+
+      - id: ruff-format
+        name: ruff format
+        entry: ruff format --config storage/ruff.toml --no-cache
+        language: system
+        types: [python]
+        files: ^storage/
+        require_serial: true
+        exclude: 'alembic|migrations'
+
+      - id: mypy-check
+        name: mypy
+        entry: mypy --config-file storage/mypy.ini storage/src/
+        language: system
+        types: [python]
+        files: ^storage/
+        pass_filenames: false
+        exclude: 'alembic|migrations'

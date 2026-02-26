@@ -1,6 +1,5 @@
 import re
 
-from django.conf import settings
 from django.db.models import Count, Q
 from rest_framework.permissions import BasePermission
 
@@ -8,9 +7,6 @@ from src.accounts.enums import UserType
 from src.processes.enums import PresetType
 from src.processes.messages.template import (
     MSG_PT_0023,
-)
-from src.processes.messages.workflow import (
-    MSG_PW_0001,
 )
 from src.processes.models.templates.preset import TemplatePreset
 from src.processes.models.templates.template import Template
@@ -351,14 +347,6 @@ class CommentReactionPermission(BasePermission):
         ).exists()
 
 
-class StoragePermission(BasePermission):
-
-    message = MSG_PW_0001
-
-    def has_permission(self, request, view):
-        return settings.PROJECT_CONF['STORAGE']
-
-
 class TemplatePresetPermission(BasePermission):
 
     def has_permission(self, request, view):
@@ -377,5 +365,8 @@ class TemplatePresetPermission(BasePermission):
             if preset.author_id == user.id or user.is_account_owner:
                 return True
             if preset.type == PresetType.ACCOUNT:
-                return preset.template.owners.filter(user_id=user.id).exists()
+                return preset.template.owners.filter(
+                    user_id=user.id,
+                    is_deleted=False,
+                ).exists()
             return False

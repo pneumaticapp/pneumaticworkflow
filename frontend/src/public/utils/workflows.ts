@@ -5,21 +5,17 @@ import {
   IWorkflowDetailsKickoff,
   ITaskCommentAttachmentRequest,
 } from '../types/workflow';
-import {
-  ITemplateTask,
-  IKickoff,
-  IExtraField,
-} from '../types/template';
+import { ITemplateTask, IKickoff, IExtraField } from '../types/template';
 import { isArrayWithItems, deepCopy } from './helpers';
 import { ExtraFieldsHelper } from '../components/TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
 import { TUploadedFile } from './uploadFiles';
 
-export const MAP_COMMENT_LOG: {[key: number]: EWorkflowLogEvent} = {
+export const MAP_COMMENT_LOG: { [key: number]: EWorkflowLogEvent } = {
   [EDashboardActivityAction.Reverted]: EWorkflowLogEvent.TaskRevert,
   [EDashboardActivityAction.Comment]: EWorkflowLogEvent.TaskComment,
 };
 
-export const COMMENT_FIELD_PLACEHOLDER: {[key in ECommentType]: string} = {
+export const COMMENT_FIELD_PLACEHOLDER: { [key in ECommentType]: string } = {
   [ECommentType.Comment]: 'Your comment...',
   [ECommentType.Reverted]: 'State the reason for return',
   [ECommentType.Finish]: 'State the reason for workflow completion',
@@ -47,7 +43,6 @@ export const moveTask = (a: number, b: number, arr: ITemplateTask[]): ITemplateT
 };
 
 export const moveWorkflowField = (a: number, b: number, arr: IExtraField[]) => {
-
   if (!Number.isFinite(a) && !Number.isFinite(b)) {
     return arr;
   }
@@ -84,5 +79,5 @@ export const mapFilesToRequest = (files?: TUploadedFile[]) => {
     return [];
   }
 
-  return files.map(file => ({ id: file.id } as ITaskCommentAttachmentRequest));
+  return files.map((file) => ({ id: file.id } as ITaskCommentAttachmentRequest));
 };

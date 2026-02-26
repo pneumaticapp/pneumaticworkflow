@@ -8,7 +8,6 @@ import { uploadFiles } from '../../../utils/uploadFiles';
 
 export async function handleUploadAttachments(
   e: React.ChangeEvent<HTMLInputElement>,
-  accountId: number,
   editorState: EditorState,
   addAttachment: ReturnType<typeof createAttachmentPlugin>['addAttachment'],
   onStartUpload: () => void,
@@ -24,7 +23,7 @@ export async function handleUploadAttachments(
   onStartUpload();
 
   try {
-    const uploadedFiles = await uploadFiles(files, accountId);
+    const uploadedFiles = await uploadFiles(files);
 
     const editorStateWithAttachments = uploadedFiles.reduce((stateWithAttachments, uploadedAttachment) => {
       if (!uploadedAttachment?.url) {

@@ -132,7 +132,9 @@ class Account(SoftDeleteModel):
         ),
     )
     log_api_requests = models.BooleanField(default=False)
+    # TODO remove legacy model after migration to file service.
     bucket_name = models.CharField(max_length=255, blank=True, null=True)
+    # TODO remove legacy model after migration to file service.
     bucket_is_public = models.BooleanField(default=True)
     objects = BaseSoftDeleteManager.from_queryset(AccountQuerySet)()
 
