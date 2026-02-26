@@ -573,6 +573,7 @@ export const ruMessages = {
   'template.kick-off-form-field-description-placeholder': 'Введите подсказку (необязательно)',
   'template.kick-off-form-field-name-placeholder': 'Введите название поля',
   'template.kick-off-form-required': 'Обязательное',
+  'template.kick-off-form-hidden': 'Скрытое',
   'template.kick-off-form-number-field-tooltip-title': 'Числовое поле',
   'template.kick-off-form-number-field-tooltop-text': 'Введите число',
   'template.kick-off-form-small-text-field-tooltip-title': 'Малое текстовое поле',

@@ -153,6 +153,7 @@ export function KickoffRedux({
                 id={index}
                 field={field}
                 fieldsCount={kickoff.fields.length}
+                showHiddenToggle
                 labelBackgroundColor={EInputNameBackgroundColor.White}
                 deleteField={() => handleDeleteField(index)}
                 moveFieldUp={() => handleMoveField(index, EMoveDirections.Up)}

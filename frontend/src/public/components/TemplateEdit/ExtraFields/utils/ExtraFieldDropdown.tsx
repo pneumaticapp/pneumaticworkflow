@@ -14,6 +14,8 @@ interface IKickoffDropdownProps {
   apiName?: string;
   isRequired: boolean;
   isRequiredDisabled: boolean;
+  isHidden?: boolean;
+  showHiddenToggle?: boolean;
   isFirstItem?: boolean;
   isLastItem?: boolean;
   onEditField(changedProps: Partial<IExtraField>): void;
@@ -26,6 +28,8 @@ export function ExtraFieldDropdown({
   apiName,
   isRequired,
   isRequiredDisabled,
+  isHidden = false,
+  showHiddenToggle = false,
   isFirstItem,
   isLastItem,
   onEditField,
@@ -85,6 +89,28 @@ export function ExtraFieldDropdown({
             </div>
           ),
         },
+        ...(showHiddenToggle
+          ? [
+            {
+              mapKey: 'template.kick-off-form-hidden',
+              label: (
+                  <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+                    <IntlMessages id="template.kick-off-form-hidden" />
+                    <Switch
+                      className={classnames(
+                        'custom-switch custom-switch-primary custom-switch-small ml-auto',
+                        styles['info-control_switch'],
+                      )}
+                      checked={isHidden}
+                      checkedChildren={null}
+                      unCheckedChildren={null}
+                      onChange={(isChecked) => onEditField({ isHidden: isChecked })}
+                    />
+                  </div>
+              ),
+            },
+          ]
+          : []),
         {
           label: formatMessage({ id: 'template.kick-off-form-delete-component' }),
           onClick: handleOptionClick(onDeleteField),
