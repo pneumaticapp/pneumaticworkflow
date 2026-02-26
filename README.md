@@ -89,7 +89,7 @@ or, you can simply download the [project's master folder](https://github.com/pne
 
 ### Create a .env config file
 
-Cd into the project's directory and run the ```./start.sh``` script, passing it the address of your server as the sole argument(```./start.sh your-address```). If no argument is passed the script will use localhost as the default address and create a .env file setting the following parameters:
+Cd into the project's directory, run ```chmod +x start.sh```, and then run the ```./start.sh``` script, passing it the address of your server as the sole argument(```./start.sh your-address```). If no argument is passed the script will use localhost as the default address and create a .env file setting the following parameters:
 
 <pre>
   # Without SSL
