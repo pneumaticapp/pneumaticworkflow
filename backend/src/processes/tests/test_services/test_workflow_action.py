@@ -185,8 +185,8 @@ def test_force_delay_workflow__task_no_delay__create_delay(mocker):
     task.status = TaskStatus.ACTIVE
     task.save()
     mocker.patch(
-        'src.processes.services.workflow_action'
-        '.send_delayed_workflow_notification.delay',
+        'src.processes.services.workflow_action.'
+        'send_delayed_workflow_notification.delay',
     )
     mocker.patch(
         'src.processes.services.workflow_action.send_removed_task_notification'
