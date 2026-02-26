@@ -2560,6 +2560,222 @@ def test_run__api_request__ok(mocker, api_client):
     )
 
 
+def test_run__group_performer__new_task_notification_to_group_members(
+    mocker,
+    api_client,
+):
+    """ Group as task performer: run sends new_task to all group members. """
+    # arrange
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    group_member = create_test_admin(
+        account=account,
+        email='group_member@test.test',
+    )
+    group = create_test_group(account, users=[group_member.id])
+    template = create_test_template(owner, is_active=True, tasks_count=1)
+    template_task_1 = template.tasks.get(number=1)
+    template_task_1.raw_performers.all().delete()
+    template_task_1.add_raw_performer(
+        performer_type=PerformerType.GROUP,
+        group=group,
+    )
+    send_new_task_notification_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'send_new_task_notification.delay',
+    )
+    mocker.patch.object(
+        TemplateIntegrationsService,
+        attribute='__init__',
+        return_value=None,
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.api_request',
+    )
+    task_data_mock = mocker.Mock()
+    mocker.patch(
+        'src.processes.models.workflows.task.Task.'
+        'get_data_for_list',
+        return_value=task_data_mock,
+    )
+    api_client.token_authenticate(
+        user=owner,
+        token_type=AuthTokenType.API,
+    )
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={'name': 'Test name'},
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    task = workflow.tasks.get(number=1)
+    send_new_task_notification_mock.assert_called_once()
+    call_kwargs = send_new_task_notification_mock.call_args[1]
+    recipients = call_kwargs['recipients']
+    expected = (
+        group_member.id,
+        group_member.email,
+        group_member.is_new_tasks_subscriber,
+    )
+    assert expected in recipients
+    assert call_kwargs['task_id'] == task.id
+    assert call_kwargs['account_id'] == account.id
+
+
+def test_run__user_and_group_performers__different_users__both_receive(
+    mocker,
+    api_client,
+):
+    """ User performer and group (other users): both get new_task. """
+    # arrange
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    direct_performer = create_test_admin(
+        account=account,
+        email='direct@test.test',
+    )
+    group_member = create_test_admin(
+        account=account,
+        email='group_member@test.test',
+    )
+    group = create_test_group(account, users=[group_member.id])
+    template = create_test_template(owner, is_active=True, tasks_count=1)
+    template_task_1 = template.tasks.get(number=1)
+    template_task_1.raw_performers.all().delete()
+    template_task_1.add_raw_performer(user=direct_performer)
+    template_task_1.add_raw_performer(
+        performer_type=PerformerType.GROUP,
+        group=group,
+    )
+    send_new_task_notification_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'send_new_task_notification.delay',
+    )
+    mocker.patch.object(
+        TemplateIntegrationsService,
+        attribute='__init__',
+        return_value=None,
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.api_request',
+    )
+    task_data_mock = mocker.Mock()
+    mocker.patch(
+        'src.processes.models.workflows.task.Task.'
+        'get_data_for_list',
+        return_value=task_data_mock,
+    )
+    api_client.token_authenticate(
+        user=owner,
+        token_type=AuthTokenType.API,
+    )
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={'name': 'Test name'},
+    )
+
+    # assert
+    assert response.status_code == 200
+    send_new_task_notification_mock.assert_called_once()
+    call_kwargs = send_new_task_notification_mock.call_args[1]
+    recipients = call_kwargs['recipients']
+    expected_direct = (
+        direct_performer.id,
+        direct_performer.email,
+        direct_performer.is_new_tasks_subscriber,
+    )
+    expected_group_member = (
+        group_member.id,
+        group_member.email,
+        group_member.is_new_tasks_subscriber,
+    )
+    assert expected_direct in recipients
+    assert expected_group_member in recipients
+    assert len(recipients) == 2
+
+
+def test_run__user_and_group_performers__same_user__single_notification(
+    mocker,
+    api_client,
+):
+    """ User performer and group with same user: one new_task (dedupe). """
+    # arrange
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account, email='performer@test.test')
+    group = create_test_group(account, users=[user.id])
+    template = create_test_template(owner, is_active=True, tasks_count=1)
+    template_task_1 = template.tasks.get(number=1)
+    template_task_1.raw_performers.all().delete()
+    template_task_1.add_raw_performer(user=user)
+    template_task_1.add_raw_performer(
+        performer_type=PerformerType.GROUP,
+        group=group,
+    )
+    send_new_task_notification_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'send_new_task_notification.delay',
+    )
+    mocker.patch.object(
+        TemplateIntegrationsService,
+        attribute='__init__',
+        return_value=None,
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.api_request',
+    )
+    task_data_mock = mocker.Mock()
+    mocker.patch(
+        'src.processes.models.workflows.task.Task.'
+        'get_data_for_list',
+        return_value=task_data_mock,
+    )
+    api_client.token_authenticate(
+        user=owner,
+        token_type=AuthTokenType.API,
+    )
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={'name': 'Test name'},
+    )
+
+    # assert
+    assert response.status_code == 200
+    send_new_task_notification_mock.assert_called_once()
+    call_kwargs = send_new_task_notification_mock.call_args[1]
+    recipients = call_kwargs['recipients']
+    expected = (
+        user.id,
+        user.email,
+        user.is_new_tasks_subscriber,
+    )
+    assert expected in recipients
+    assert len(recipients) == 1
+
+
 def test_run__due_date_more_than_current__ok(api_client, mocker):
 
     # arrange
