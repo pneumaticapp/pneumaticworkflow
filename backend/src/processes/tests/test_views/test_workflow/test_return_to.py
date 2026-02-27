@@ -337,7 +337,7 @@ def test_return_to__ok(mocker, api_client):
     task_3 = workflow.tasks.get(number=3)
     assert task_3.is_pending
     revert_workflow_event_mock.assert_called_once_with(
-        task=task_3,
+        task=task_1,
         user=user,
     )
     start_workflow_event_mock.assert_called_once_with(task_1)

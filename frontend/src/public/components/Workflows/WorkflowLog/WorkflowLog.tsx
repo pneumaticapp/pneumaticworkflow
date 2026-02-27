@@ -256,7 +256,9 @@ export const WorkflowLog = ({
         [EWorkflowLogEvent.WorkflowRun]: null,
         [EWorkflowLogEvent.AddedPerformerGroup]: <WorkflowLogAddedPerformerGroup {...event} />,
         [EWorkflowLogEvent.RemovedPerformerGroup]: <WorkflowLogRemovedPerformerGroup {...event} />,
-        [EWorkflowLogEvent.TaskSnoozed]: <WorkflowLogDelay delay={delay} theme={theme} />,
+        [EWorkflowLogEvent.TaskSnoozed]: (
+          <WorkflowLogDelay delay={delay} task={eventTask} theme={theme} type={eventType} />
+        ),
       };
 
       return (

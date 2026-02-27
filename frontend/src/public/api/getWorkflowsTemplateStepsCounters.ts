@@ -9,6 +9,7 @@ export interface IGetWorkflowsTemplateStepsCountersConfig {
   performersIdsFilter: number[];
   performersGroupIdsFilter: number[];
   workflowStartersIdsFilter: number[];
+  signal?: AbortSignal;
 }
 
 export function getWorkflowsTemplateStepsCounters({
@@ -17,8 +18,11 @@ export function getWorkflowsTemplateStepsCounters({
   performersIdsFilter,
   performersGroupIdsFilter,
   workflowStartersIdsFilter,
+  signal,
 }: IGetWorkflowsTemplateStepsCountersConfig) {
-  const { api: { urls } } = getBrowserConfigEnv();
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
 
   return commonRequest<TTemplateStepCounter[]>(
     `${urls.workflowsTemplateStepCounters}?${getQueryString({
@@ -28,6 +32,12 @@ export function getWorkflowsTemplateStepsCounters({
       performersGroupIdsFilter,
       workflowStartersIdsFilter,
     })}`,
+    {
+      signal,
+    },
+    {
+      shouldThrow: true,
+    },
   );
 }
 
@@ -38,15 +48,17 @@ export function getQueryString({
   performersGroupIdsFilter,
   workflowStartersIdsFilter,
 }: IGetWorkflowsTemplateStepsCountersConfig) {
-  const isExternal = workflowStartersIdsFilter?.some(userId => userId === EXTERNAL_USER_ID);
-  const workflowStarters = workflowStartersIdsFilter?.filter(userId => userId !== EXTERNAL_USER_ID);
+  const isExternal = workflowStartersIdsFilter?.some((userId) => userId === EXTERNAL_USER_ID);
+  const workflowStarters = workflowStartersIdsFilter?.filter((userId) => userId !== EXTERNAL_USER_ID);
 
   return [
-    statusFilter !== EWorkflowsStatus.All &&  `status=${statusFilter}`,
+    statusFilter !== EWorkflowsStatus.All && `status=${statusFilter}`,
     `template_ids=${templatesIdsFilter.join(',')}`,
     statusFilter === EWorkflowsStatus.Running && `current_performer_ids=${performersIdsFilter.join(',')}`,
     statusFilter === EWorkflowsStatus.Running && `current_performer_group_ids=${performersGroupIdsFilter.join(',')}`,
     `workflow_starter_ids=${workflowStarters.join(',')}`,
     isExternal && 'is_external=true',
-  ].filter(Boolean).join('&');
+  ]
+    .filter(Boolean)
+    .join('&');
 }
