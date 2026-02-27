@@ -115,6 +115,7 @@ class TaskSerializer(serializers.ModelSerializer):
             'sub_workflows',
             'status',
             'revert_tasks',
+            'is_read_only_viewer',
         )
 
     date_started_tsp = TimeStampField(source='date_started')
@@ -135,6 +136,7 @@ class TaskSerializer(serializers.ModelSerializer):
     due_date_tsp = TimeStampField(source='due_date')
     sub_workflows = serializers.SerializerMethodField()
     revert_tasks = TaskShortSerializer(many=True, source='get_revert_tasks')
+    is_read_only_viewer = serializers.SerializerMethodField()
 
     def get_is_completed(self, instance):
         #  TODO Remove in 41258
@@ -175,6 +177,56 @@ class TaskSerializer(serializers.ModelSerializer):
             WorkflowShortInfoSerializer,
         )
         return WorkflowShortInfoSerializer(instance=instance.workflow).data
+
+    def get_is_read_only_viewer(self, instance):
+        """
+        Determine if user has only read-only access via template viewer
+        (not as workflow member, owner, or task performer).
+        Template viewers who are assigned as task performers should have
+        full access to the task (can comment, etc).
+        """
+        user = self.context.get('user')
+        if not user or user.is_account_owner or user.is_admin:
+            return False
+
+        # Check if user is workflow member or owner
+        workflow = instance.workflow
+        is_workflow_member = (
+            workflow.members.filter(id=user.id).exists() or
+            workflow.owners.filter(id=user.id).exists()
+        )
+
+        if is_workflow_member:
+            return False
+
+        # Check if user is template owner
+        from django.db.models import Q
+        template = workflow.template
+        is_template_owner = template.owners.filter(
+            Q(type='user', user_id=user.id, is_deleted=False) |
+            Q(type='group', group__users__id=user.id, is_deleted=False),
+        ).exists()
+
+        if is_template_owner:
+            return False
+
+        # Check if user is task performer
+        from src.processes.models.workflows.task import TaskPerformer
+        performer_user_ids = (
+            TaskPerformer.objects
+            .by_task(instance.id)
+            .filter(task__account_id=user.account_id)
+            .get_user_ids_set()
+        )
+
+        if user.id in performer_user_ids:
+            return False
+
+        # Check if user has access via template viewer
+        return template.viewers.filter(
+            Q(type='user', user_id=user.id, is_deleted=False)
+            | Q(type='group', group__users__id=user.id, is_deleted=False),
+        ).exists()
 
 
 class TaskListSerializer(serializers.ModelSerializer):

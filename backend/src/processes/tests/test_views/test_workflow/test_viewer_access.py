@@ -24,7 +24,7 @@ class TestWorkflowViewerAccess:
         # arrange
         account = create_test_account()
         template_owner = create_test_user(account=account)
-        template = create_test_template(user=template_owner)
+        template = create_test_template(template_owner)
         workflow = create_test_workflow(template=template, user=template_owner)
 
         viewer_user = create_test_user(
@@ -55,7 +55,7 @@ class TestWorkflowViewerAccess:
         # arrange
         account = create_test_account()
         template_owner = create_test_user(account=account)
-        template = create_test_template(user=template_owner)
+        template = create_test_template(template_owner)
         workflow = create_test_workflow(template=template, user=template_owner)
 
         viewer_user = create_test_user(
@@ -88,12 +88,14 @@ class TestWorkflowViewerAccess:
         # arrange
         account = create_test_account()
         template_owner = create_test_user(account=account)
-        template = create_test_template(user=template_owner)
+        template = create_test_template(template_owner)
         workflow = create_test_workflow(template=template, user=template_owner)
 
         random_user = create_test_user(
             account=account,
             email='random@test.com',
+            is_admin=False,
+            is_account_owner=False,
         )
 
         api_client.token_authenticate(random_user)
@@ -109,7 +111,7 @@ class TestWorkflowViewerAccess:
         # arrange
         account = create_test_account()
         template_owner = create_test_user(account=account)
-        template = create_test_template(user=template_owner)
+        template = create_test_template(template_owner)
         workflow = create_test_workflow(template=template, user=template_owner)
 
         viewer_user = create_test_user(
@@ -138,12 +140,14 @@ class TestWorkflowViewerAccess:
         # arrange
         account = create_test_account()
         template_owner = create_test_user(account=account)
-        template = create_test_template(user=template_owner)
+        template = create_test_template(template_owner)
         workflow = create_test_workflow(template=template, user=template_owner)
 
         random_user = create_test_user(
             account=account,
             email='random@test.com',
+            is_admin=False,
+            is_account_owner=False,
         )
 
         api_client.token_authenticate(random_user)
@@ -159,12 +163,14 @@ class TestWorkflowViewerAccess:
         # arrange
         account = create_test_account()
         template_owner = create_test_user(account=account)
-        template = create_test_template(user=template_owner)
+        template = create_test_template(template_owner)
         workflow = create_test_workflow(template=template, user=template_owner)
 
         viewer_user = create_test_user(
             account=account,
             email='viewer@test.com',
+            is_admin=False,
+            is_account_owner=False,
         )
 
         # Create template viewer
@@ -190,12 +196,14 @@ class TestWorkflowViewerAccess:
         # arrange
         account = create_test_account()
         template_owner = create_test_user(account=account)
-        template = create_test_template(user=template_owner)
+        template = create_test_template(template_owner)
         workflow = create_test_workflow(template=template, user=template_owner)
 
         viewer_user = create_test_user(
             account=account,
             email='viewer@test.com',
+            is_admin=False,
+            is_account_owner=False,
         )
 
         # Create template viewer
@@ -207,10 +215,10 @@ class TestWorkflowViewerAccess:
         )
 
         api_client.token_authenticate(viewer_user)
-        url = reverse('workflows-terminate', args=[workflow.id])
+        url = reverse('workflows-detail', args=[workflow.id])
 
         # act
-        response = api_client.post(url)
+        response = api_client.delete(url)
 
         # assert
         # Template viewers should NOT be able to terminate workflows
@@ -220,12 +228,14 @@ class TestWorkflowViewerAccess:
         # arrange
         account = create_test_account()
         template_owner = create_test_user(account=account)
-        template = create_test_template(user=template_owner)
+        template = create_test_template(template_owner)
         workflow = create_test_workflow(template=template, user=template_owner)
 
         viewer_user = create_test_user(
             account=account,
             email='viewer@test.com',
+            is_admin=False,
+            is_account_owner=False,
         )
 
         # Create template viewer
@@ -236,9 +246,10 @@ class TestWorkflowViewerAccess:
             account=account,
         )
 
+        task = workflow.tasks.order_by('number').first()
         api_client.token_authenticate(viewer_user)
         url = reverse('workflows-return-to', args=[workflow.id])
-        data = {'task_id': workflow.current_task}
+        data = {'task_api_name': task.api_name}
 
         # act
         response = api_client.post(url, data)
@@ -306,7 +317,7 @@ class TestWorkflowViewerAccess:
             account=account,
             is_account_owner=True,
         )
-        template = create_test_template(user=account_owner, account=account)
+        template = create_test_template(account_owner)
         workflow = create_test_workflow(template=template, user=account_owner)
 
         api_client.token_authenticate(account_owner)
@@ -320,3 +331,116 @@ class TestWorkflowViewerAccess:
         data = response.json()
         workflow_ids = [item['id'] for item in data['results']]
         assert workflow.id in workflow_ids
+
+    def test_workflow_partial_update__owner_and_viewer__treated_as_owner(
+            self, api_client,
+    ):
+        # arrange: user is both template owner and template viewer
+        account = create_test_account()
+        user = create_test_user(
+            account=account,
+            is_admin=True,
+            is_account_owner=False,
+        )
+        template = create_test_template(user)
+        workflow = create_test_workflow(template=template, user=user)
+        TemplateViewer.objects.create(
+            template=template,
+            type=ViewerType.USER,
+            user=user,
+            account=account,
+        )
+        api_client.token_authenticate(user)
+        url = reverse('workflows-detail', args=[workflow.id])
+        data = {'name': 'Updated by owner'}
+
+        # act
+        response = api_client.patch(url, data)
+
+        # assert: owner has priority, so write is allowed
+        assert response.status_code == status.HTTP_200_OK
+        workflow.refresh_from_db()
+        assert workflow.name == 'Updated by owner'
+
+    def test_workflow_retrieve__template_viewer__is_read_only_viewer_true(
+        self, api_client,
+    ):
+        # arrange
+        account = create_test_account()
+        template_owner = create_test_user(account=account)
+        template = create_test_template(template_owner)
+        workflow = create_test_workflow(template=template, user=template_owner)
+
+        viewer_user = create_test_user(
+            account=account,
+            email='viewer@test.com',
+            is_admin=False,
+            is_account_owner=False,
+        )
+
+        # Create template viewer
+        TemplateViewer.objects.create(
+            template=template,
+            type=ViewerType.USER,
+            user=viewer_user,
+            account=account,
+        )
+
+        api_client.token_authenticate(viewer_user)
+        url = reverse('workflows-detail', args=[workflow.id])
+
+        # act
+        response = api_client.get(url)
+
+        # assert
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data['is_read_only_viewer'] is True
+
+    def test_workflow_retrieve__template_owner__is_read_only_viewer_false(
+        self, api_client,
+    ):
+        # arrange
+        account = create_test_account()
+        template_owner = create_test_user(account=account)
+        template = create_test_template(template_owner)
+        workflow = create_test_workflow(template=template, user=template_owner)
+
+        api_client.token_authenticate(template_owner)
+        url = reverse('workflows-detail', args=[workflow.id])
+
+        # act
+        response = api_client.get(url)
+
+        # assert
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data['is_read_only_viewer'] is False
+
+    def test_workflow_retrieve__workflow_member__is_read_only_viewer_false(
+        self, api_client,
+    ):
+        # arrange
+        account = create_test_account()
+        template_owner = create_test_user(account=account)
+        template = create_test_template(template_owner)
+        workflow = create_test_workflow(template=template, user=template_owner)
+
+        member_user = create_test_user(
+            account=account,
+            email='member@test.com',
+            is_admin=False,
+            is_account_owner=False,
+        )
+        workflow.members.add(member_user)
+
+        api_client.token_authenticate(member_user)
+        url = reverse('workflows-detail', args=[workflow.id])
+
+        # act
+        response = api_client.get(url)
+
+        # assert
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data['is_read_only_viewer'] is False

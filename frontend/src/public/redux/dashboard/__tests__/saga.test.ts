@@ -4,7 +4,7 @@ import * as matchers from 'redux-saga-test-plan/matchers';
 import { loadBreakdownTasks } from '../actions';
 import { fetchBreakdownTasks } from '../saga';
 import { getDashboardStore } from '../../selectors/dashboard';
-import { getIsAdmin } from '../../selectors/user';
+import { getCanAccessWorkflows } from '../../selectors/user';
 import { EDashboardModes, IDashboardStore, IDashboardTask } from '../../../types/redux';
 import { EDashboardTimeRange } from '../../../types/dashboard';
 import { reducer } from '../reducer';
@@ -58,7 +58,7 @@ describe('fetchBreakdownTasks', () => {
     return (
       expectSaga(fetchBreakdownTasks as any, fetchBreakdownTasksAction)
         .provide([
-          [matchers.select.selector(getIsAdmin), true],
+          [matchers.select.selector(getCanAccessWorkflows), true],
           [matchers.select.selector(getDashboardStore), mockDashboardStore],
           [matchers.call.fn(getDashboardWorkflowsTasks), mockTasks],
         ])

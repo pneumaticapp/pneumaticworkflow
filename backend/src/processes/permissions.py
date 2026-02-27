@@ -47,6 +47,75 @@ class TemplateOwnerPermission(BasePermission):
             )
 
 
+class TemplateOwnerAdminPermission(BasePermission):
+
+    """ Only template owners with admin role can add/remove viewers.
+    Account owner can always manage viewers. """
+
+    message = MSG_PT_0023
+
+    def has_permission(self, request, view):
+        if request.user.is_account_owner:
+            return True
+        if not getattr(request.user, 'is_admin', False):
+            return False
+        owner_permission = TemplateOwnerPermission()
+        return owner_permission.has_permission(request, view)
+
+
+class TemplateOwnerOrViewerPermission(BasePermission):
+
+    """ Allow access for template owners or template viewers (read-only) """
+
+    message = MSG_PT_0023
+
+    def has_permission(self, request, view):
+        try:
+            template_id = int(view.kwargs.get('pk'))
+        except (ValueError, TypeError):
+            return False
+
+        # Account owner always has access
+        if request.user.is_account_owner:
+            return True
+
+        # Check if user is template owner
+        template_owner_qst = (
+            Template.objects
+            .by_id(template_id)
+            .on_account(request.user.account_id)
+            .with_template_owner(request.user.id)
+        )
+        if template_owner_qst.exists():
+            return True
+
+        # Check if user is template viewer
+        template_viewer_qst = (
+            Template.objects
+            .by_id(template_id)
+            .on_account(request.user.account_id)
+            .with_template_viewer(request.user.id)
+        )
+        return template_viewer_qst.exists()
+
+
+class UserCanAccessHighlightsPermission(BasePermission):
+
+    """ Allow admin, account owner, template owner or template viewer
+        (of any template on account) to access highlights/dashboard. """
+
+    def has_permission(self, request, view):
+        if getattr(request.user, 'is_admin', False):
+            return True
+        if getattr(request.user, 'is_account_owner', False):
+            return True
+        base_qst = Template.objects.on_account(request.user.account_id)
+        return (
+            base_qst.with_template_owner(request.user.id).exists()
+            or base_qst.with_template_viewer(request.user.id).exists()
+        )
+
+
 class TemplateViewerPermission(BasePermission):
 
     """ For workflow read-only access via template viewers """
@@ -236,6 +305,107 @@ class TaskWorkflowMemberPermission(BasePermission):
             .get_user_ids_set()
         )
         return request.user.id in users_ids
+
+
+class TaskWorkflowMemberOrViewerPermission(BasePermission):
+
+    """Task retrieve/events: workflow members, template owners or viewers."""
+
+    def has_permission(self, request, view):
+        member_permission = TaskWorkflowMemberPermission()
+        if member_permission.has_permission(request, view):
+            return True
+        try:
+            task_id = int(view.kwargs.get('pk'))
+        except (ValueError, TypeError):
+            return False
+        task = (
+            Task.objects
+            .filter(id=task_id, account_id=request.user.account_id)
+            .select_related('workflow')
+            .first()
+        )
+        if task is None:
+            return False
+
+        # Check if user is template owner or viewer
+        workflow = (
+            Workflow.objects
+            .filter(pk=task.workflow_id)
+            .on_account(request.user.account_id)
+        )
+
+        # Check template owner
+        template_owner_exists = (
+            workflow.with_template_owner(request.user.id).exists()
+        )
+        if template_owner_exists:
+            return True
+
+        # Check template viewer
+        return workflow.with_template_viewer(request.user.id).exists()
+
+
+class TaskCommentPermission(BasePermission):
+
+    """
+    Allow task comments for:
+    - Account owners and admins
+    - Workflow members
+    - Template owners
+    - Template viewers ONLY if they are assigned as task performers
+    """
+
+    def has_permission(self, request, view):
+        try:
+            task_id = int(view.kwargs.get('pk'))
+        except (ValueError, TypeError):
+            return False
+
+        # Account owners and admins always have access
+        if request.user.is_account_owner or request.user.is_admin:
+            return True
+
+        # Skip guests - they will be handled by GuestTaskPermission
+        if request.user.type == UserType.GUEST:
+            return True
+
+        task = (
+            Task.objects
+            .filter(id=task_id, account_id=request.user.account_id)
+            .select_related('workflow')
+            .first()
+        )
+        if task is None:
+            return False
+
+        # Check if user is workflow member
+        is_workflow_member = (
+            task.workflow.members.filter(id=request.user.id).exists() or
+            task.workflow.owners.filter(id=request.user.id).exists()
+        )
+        if is_workflow_member:
+            return True
+
+        # Check if user is task performer
+        performer_user_ids = (
+            TaskPerformer.objects
+            .by_task(task_id)
+            .filter(task__account_id=request.user.account_id)
+            .get_user_ids_set()
+        )
+        if request.user.id in performer_user_ids:
+            return True
+
+        # Check if user is template owner
+        return task.workflow.template.owners.filter(
+            Q(type='user', user_id=request.user.id, is_deleted=False)
+            | Q(
+                type='group',
+                group__users__id=request.user.id,
+                is_deleted=False,
+            ),
+        ).exists()
 
 
 class GuestWorkflowPermission(BasePermission):

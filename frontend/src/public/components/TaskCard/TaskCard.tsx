@@ -237,6 +237,7 @@ export function TaskCard({
       viewMode !== ETaskCardViewMode.Guest,
       status !== ETaskStatus.Completed,
       workflow?.status !== EWorkflowStatus.Finished,
+      !task.isReadOnlyViewer,
     ].every(Boolean);
 
     return task.performers.map((performer) => {
@@ -265,6 +266,7 @@ export function TaskCard({
 
   const renderPerformersControllers = () => {
     if (status === ETaskStatus.Completed || workflow?.status === EWorkflowStatus.Finished) return null;
+    if (task.isReadOnlyViewer) return null;
 
     const performerDropdownOption = users.map((item) => {
       return {
@@ -340,7 +342,7 @@ export function TaskCard({
 
     return (
       <>
-        {authUser.isAdmin && (
+        {authUser.isAdmin && !task.isReadOnlyViewer && (
           <UsersDropdown
             isMulti
             controlSize="sm"
@@ -357,7 +359,7 @@ export function TaskCard({
           />
         )}
 
-        {viewMode !== ETaskCardViewMode.Guest && (
+        {viewMode !== ETaskCardViewMode.Guest && !task.isReadOnlyViewer && (
           <GuestController ref={guestsControllerRef} taskId={task.id} className={styles['guest-dropdown']} />
         )}
       </>
@@ -413,6 +415,8 @@ export function TaskCard({
   };
 
   const renderTaskButtons = () => {
+    if (task.isReadOnlyViewer) return null;
+    
     if (status === ETaskStatus.Completed || task.workflow.status === EWorkflowStatus.Finished) {
       const dateCompleted = task.dateCompleted || task.workflow.dateCompleted;
 
@@ -541,7 +545,10 @@ export function TaskCard({
         isLogMinimized={false}
         areTasksClickable={viewMode === ETaskCardViewMode.Single}
         minimizedLogMaxEvents={MINIMIZED_LOG_MAX_EVENTS}
-        isCommentFieldHidden={viewMode === ETaskCardViewMode.Guest && status === ETaskStatus.Completed}
+        isCommentFieldHidden={
+          task.isReadOnlyViewer ||
+          (viewMode === ETaskCardViewMode.Guest && status === ETaskStatus.Completed)
+        }
         isToggleCommentHidden
         sendComment={sendTaskWorkflowLogComments}
         changeWorkflowLogViewSettings={changeTaskWorkflowLogViewSettings}
@@ -589,7 +596,7 @@ export function TaskCard({
             {renderPerformers()}
           </div>
 
-          {viewMode !== ETaskCardViewMode.Guest && (
+          {viewMode !== ETaskCardViewMode.Guest && !task.isReadOnlyViewer && (
             <DueIn
               withTime
               timezone={authUser.timezone}
@@ -601,9 +608,23 @@ export function TaskCard({
               dateCompleted={task.dateCompleted || task.workflow.dateCompleted}
             />
           )}
+          {task.isReadOnlyViewer && task.dueDate && (
+            <DueIn
+              withTime
+              timezone={authUser.timezone}
+              dateFmt={authUser.dateFmt}
+              dueDate={task.dueDate}
+              containerClassName={styles['due-in']}
+              dateCompleted={task.dateCompleted || task.workflow.dateCompleted}
+              readOnly
+            />
+          )}
         </div>
 
-        <div className={styles['complete-form']}>
+        <div className={classnames(
+          styles['complete-form'],
+          task.isReadOnlyViewer && styles['complete-form_readonly']
+        )}>
           {helpText && (
             <button
               type="button"

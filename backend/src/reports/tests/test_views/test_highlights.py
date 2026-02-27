@@ -12,9 +12,13 @@ from src.generics.messages import (
 )
 from src.processes.enums import (
     FieldType,
+    OwnerType,
+    ViewerType,
     WorkflowEventType,
 )
 from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.viewer import TemplateViewer
 from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.task import Delay
 from src.processes.models.workflows.workflow import Workflow
@@ -36,6 +40,88 @@ from src.utils.validation import ErrorCode
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
+
+
+def test_highlights__template_viewer__ok(api_client):
+    # arrange: non-admin viewer sees events from template they can view
+    account = create_test_account()
+    template_owner = create_test_user(
+        account=account,
+        is_account_owner=True,
+    )
+    template = create_test_template(template_owner)
+    workflow = create_test_workflow(
+        template=template, user=template_owner, tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    viewer_user = create_test_user(
+        account=account,
+        email='viewer@test.com',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    TemplateViewer.objects.create(
+        template=template,
+        type=ViewerType.USER,
+        user=viewer_user,
+        account=account,
+    )
+    WorkflowEventService.comment_created_event(
+        text='Comment for viewer',
+        task=task,
+        user=template_owner,
+        after_create_actions=False,
+    )
+    api_client.token_authenticate(viewer_user)
+
+    # act
+    response = api_client.get('/reports/highlights')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['text'] == 'Comment for viewer'
+
+
+def test_highlights__template_owner_not_admin__ok(api_client):
+    # arrange: template owner (not admin, not account owner) can access
+    account = create_test_account()
+    account_owner = create_test_user(
+        account=account,
+        is_account_owner=True,
+    )
+    template = create_test_template(account_owner)
+    template_owner_user = create_test_user(
+        account=account,
+        email='templateowner@test.com',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    TemplateOwner.objects.create(
+        template=template,
+        account=account,
+        type=OwnerType.USER,
+        user_id=template_owner_user.id,
+    )
+    workflow = create_test_workflow(
+        template=template, user=account_owner, tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    WorkflowEventService.comment_created_event(
+        text='Comment for template owner',
+        task=task,
+        user=account_owner,
+        after_create_actions=False,
+    )
+    api_client.token_authenticate(template_owner_user)
+
+    # act
+    response = api_client.get('/reports/highlights')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['text'] == 'Comment for template owner'
 
 
 def test__ordering__ok(api_client):

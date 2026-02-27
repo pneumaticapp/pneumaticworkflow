@@ -22,7 +22,7 @@ class TestTemplateViewer:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        template = create_test_template(user=user, account=account)
+        template = create_test_template(user=user)
         viewer_user = create_test_user(
             account=account,
             email='viewer@test.com',
@@ -49,7 +49,7 @@ class TestTemplateViewer:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        template = create_test_template(user=user, account=account)
+        template = create_test_template(user=user)
         group = create_test_group(account=account, name='Test Group')
 
         # act
@@ -73,7 +73,7 @@ class TestTemplateViewer:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        template = create_test_template(user=user, account=account)
+        template = create_test_template(user=user)
         viewer_user = create_test_user(
             account=account,
             email='viewer@test.com',
@@ -102,7 +102,7 @@ class TestTemplateViewer:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        template = create_test_template(user=user, account=account)
+        template = create_test_template(user=user)
         viewer_user = create_test_user(
             account=account,
             email='viewer@test.com',
@@ -125,7 +125,7 @@ class TestTemplateViewer:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        template = create_test_template(user=user, account=account)
+        template = create_test_template(user=user)
         viewer_user1 = create_test_user(
             account=account,
             email='viewer1@test.com',
@@ -160,7 +160,7 @@ class TestTemplateViewer:
         # arrange
         account = create_test_account()
         user = create_test_user(account=account)
-        template = create_test_template(user=user, account=account)
+        template = create_test_template(user=user)
         viewer_user = create_test_user(
             account=account,
             email='viewer@test.com',

@@ -725,6 +725,9 @@ class TemplateSerializer(
         )
 
         if instance.is_active:
+            instance.refresh_from_db()
+            if getattr(instance, '_prefetched_objects_cache', None):
+                instance._prefetched_objects_cache = {}
             version_service = TemplateVersioningService(
                 schema=TemplateSchemaV1,
             )

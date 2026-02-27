@@ -379,6 +379,7 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
             'tasks',
             'kickoff',
             'due_date_tsp',
+            'is_read_only_viewer',
         )
 
     template = TemplateDetailsSerializer()
@@ -394,6 +395,7 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
         source='date_completed',
         read_only=True,
     )
+    is_read_only_viewer = serializers.SerializerMethodField()
 
     def get_kickoff(self, instance: Workflow):
         kickoff = instance.kickoff_instance
@@ -404,6 +406,43 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
     def get_tasks(self, instance: Workflow):
         tasks = instance.tasks.exclude(status=TaskStatus.SKIPPED)
         return WorkflowCurrentTaskSerializer(instance=tasks, many=True).data
+
+    def get_is_read_only_viewer(self, instance: Workflow):
+        """
+        Determine if user has only read-only access via template viewer
+        (not as workflow member, owner, or template owner).
+        """
+        user = self.context.get('user')
+        if not user or user.is_account_owner or user.is_admin:
+            return False
+
+        # Check if user is workflow member or owner
+        is_workflow_member = (
+            instance.members.filter(id=user.id).exists() or
+            instance.owners.filter(id=user.id).exists()
+        )
+
+        if is_workflow_member:
+            return False
+
+        # Check if user is template owner
+        template = instance.template
+        if not template:
+            return False
+
+        is_template_owner = template.owners.filter(
+            Q(type='user', user_id=user.id, is_deleted=False)
+            | Q(type='group', group__users__id=user.id, is_deleted=False),
+        ).exists()
+
+        if is_template_owner:
+            return False
+
+        # Check if user has access via template viewer
+        return template.viewers.filter(
+            Q(type='user', user_id=user.id, is_deleted=False)
+            | Q(type='group', group__users__id=user.id, is_deleted=False),
+        ).exists()
 
 
 class WorkflowNotificationSerializer(serializers.ModelSerializer):

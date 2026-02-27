@@ -273,7 +273,7 @@ def test_titles__user_not_template_owner__empty_result__ok(api_client):
         user=account_owner,
         template=template,
     )
-    request_user = create_test_admin(account=account)
+    request_user = create_test_not_admin(account=account)
     api_client.token_authenticate(request_user)
 
     # act
@@ -514,7 +514,7 @@ def test_titles__status__user_not_owner__empty_result(
         user=account_owner,
         template=template,
     )
-    request_user = create_test_admin(account=account)
+    request_user = create_test_not_admin(account=account)
     api_client.token_authenticate(request_user)
 
     # act
@@ -613,7 +613,7 @@ def test_titles__status_running__not_template_owner__empty_result(
         template=template,
     )
     task = workflow.tasks.get(number=1)
-    request_user = create_test_admin(account=account)
+    request_user = create_test_not_admin(account=account)
     TaskPerformer.objects.create(
         task=task,
         user=request_user,
@@ -711,7 +711,7 @@ def test_titles__status_done__another_user__not_found(
         template=template,
         status=WorkflowStatus.DONE,
     )
-    request_user = create_test_admin(account=account)
+    request_user = create_test_not_admin(account=account)
     api_client.token_authenticate(request_user)
 
     # act

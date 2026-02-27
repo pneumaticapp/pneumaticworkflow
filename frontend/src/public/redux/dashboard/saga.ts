@@ -26,7 +26,7 @@ import { getDashboardTasksBreakdown } from '../../api/dashboard/getDashboardTask
 import { getDashboardWorkflowsTasks } from '../../api/dashboard/getDashboardWorkflowsTasks';
 import { getDashboardTasksBySteps } from '../../api/dashboard/getDashboardTasks';
 import { EDashboardModes, IDashboardTask, TDashboardBreakdownItemResponse } from '../../types/redux';
-import { getIsAdmin } from '../selectors/user';
+import { getCanAccessWorkflows } from '../selectors/user';
 import {
   getDashboardBreakdownItems,
   getDashboardStore,
@@ -64,8 +64,8 @@ function* fetchDashboardData() {
 function* fetchDashboardCounters() {
   try {
     const timeRange: ReturnType<typeof getDashboardTimeRange> = yield select(getDashboardTimeRange);
-    const isAdmin: boolean = yield select(getIsAdmin);
-    const dashboardMode: EDashboardModes = yield isAdmin ? select(getDashboardMode) : EDashboardModes.Tasks;
+    const canAccessWorkflows: boolean = yield select(getCanAccessWorkflows);
+    const dashboardMode: EDashboardModes = yield canAccessWorkflows ? select(getDashboardMode) : EDashboardModes.Tasks;
     const timeRangeDates = getRangeDates(timeRange);
 
     const getCounters =
@@ -82,12 +82,12 @@ function* fetchDashboardCounters() {
 
 function* fetchDashboardBreakdownItems() {
   try {
-    const isAdmin: boolean = yield select(getIsAdmin);
+    const canAccessWorkflows: boolean = yield select(getCanAccessWorkflows);
     const { timeRange, mode }: ReturnType<typeof getDashboardStore> = yield select(getDashboardStore);
     const rangeDates = getRangeDates(timeRange);
 
     const getBreakdown =
-      isAdmin && mode === EDashboardModes.Workflows ? getDashboardWorkflowBreakdown : getDashboardTasksBreakdown;
+      canAccessWorkflows && mode === EDashboardModes.Workflows ? getDashboardWorkflowBreakdown : getDashboardTasksBreakdown;
     const breakdownItems: TDashboardBreakdownItemResponse[] = yield getBreakdown(rangeDates);
     const normalizedBreakdownItems = normalizeBreakdownItems(breakdownItems);
     yield put(setBreakdownItems(normalizedBreakdownItems));
@@ -98,7 +98,7 @@ function* fetchDashboardBreakdownItems() {
 }
 
 export function* fetchBreakdownTasks({ payload: { templateId } }: TLoadBreakdownTasks) {
-  const isAdmin: boolean = yield select(getIsAdmin);
+  const canAccessWorkflows: boolean = yield select(getCanAccessWorkflows);
   const {
     timeRange,
     breakdownItems,
@@ -115,7 +115,7 @@ export function* fetchBreakdownTasks({ payload: { templateId } }: TLoadBreakdown
     yield put(patchBreakdownItem({ templateId, changedFields: { areTasksLoading: true } }));
 
     const getBreakdownTasks =
-      isAdmin && dashboardMode === EDashboardModes.Workflows ? getDashboardWorkflowsTasks : getDashboardTasksBySteps;
+      canAccessWorkflows && dashboardMode === EDashboardModes.Workflows ? getDashboardWorkflowsTasks : getDashboardTasksBySteps;
 
     const [tasks]: [IDashboardTask[]] = yield all([
       call(getBreakdownTasks, {

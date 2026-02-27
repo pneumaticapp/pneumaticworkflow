@@ -36,6 +36,7 @@ type TDashboardDispatchProps = Pick<IDashboardProps,
 export function mapStateToProps(state: IApplicationState): TDashboardStoreProps {
   const { authUser, dashboard } = state;
   const isSubscribed = getIsUserSubsribed(state);
+  const canAccessWorkflows = authUser.isAdmin || authUser.hasWorkflowViewerAccess;
 
   return {
     isLoading: dashboard.isLoading,
@@ -43,7 +44,7 @@ export function mapStateToProps(state: IApplicationState): TDashboardStoreProps 
     isVerified: authUser.account.isVerified,
     timeRange: dashboard.timeRange,
     isSubscribed,
-    dashboardMode: authUser.isAdmin ? dashboard.mode : EDashboardModes.Tasks,
+    dashboardMode: canAccessWorkflows ? dashboard.mode : EDashboardModes.Tasks,
     settingsChanged: dashboard.settingsChanged,
     breakdownItems: dashboard.breakdownItems,
   };

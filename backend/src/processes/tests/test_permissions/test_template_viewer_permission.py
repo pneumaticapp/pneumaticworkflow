@@ -30,7 +30,7 @@ class TestTemplateViewerPermission:
             account=account,
             is_account_owner=True,
         )
-        template = create_test_template(user=account_owner, account=account)
+        template = create_test_template(user=account_owner)
         workflow = create_test_workflow(template=template, user=account_owner)
 
         request = Mock()
@@ -51,7 +51,7 @@ class TestTemplateViewerPermission:
         # arrange
         account = create_test_account()
         template_owner = create_test_user(account=account)
-        template = create_test_template(user=template_owner, account=account)
+        template = create_test_template(user=template_owner)
         workflow = create_test_workflow(template=template, user=template_owner)
 
         viewer_user = create_test_user(
@@ -85,7 +85,7 @@ class TestTemplateViewerPermission:
         # arrange
         account = create_test_account()
         template_owner = create_test_user(account=account)
-        template = create_test_template(user=template_owner, account=account)
+        template = create_test_template(user=template_owner)
         workflow = create_test_workflow(template=template, user=template_owner)
 
         viewer_user = create_test_user(
@@ -121,12 +121,13 @@ class TestTemplateViewerPermission:
         # arrange
         account = create_test_account()
         template_owner = create_test_user(account=account)
-        template = create_test_template(user=template_owner, account=account)
+        template = create_test_template(user=template_owner)
         workflow = create_test_workflow(template=template, user=template_owner)
 
         random_user = create_test_user(
             account=account,
             email='random@test.com',
+            is_account_owner=False,
         )
 
         request = Mock()
@@ -188,7 +189,7 @@ class TestWorkflowMemberOrViewerPermission:
         # arrange
         account = create_test_account()
         template_owner = create_test_user(account=account)
-        template = create_test_template(user=template_owner, account=account)
+        template = create_test_template(user=template_owner)
         workflow = create_test_workflow(template=template, user=template_owner)
 
         member_user = create_test_user(
@@ -215,7 +216,7 @@ class TestWorkflowMemberOrViewerPermission:
         # arrange
         account = create_test_account()
         template_owner = create_test_user(account=account)
-        template = create_test_template(user=template_owner, account=account)
+        template = create_test_template(user=template_owner)
         workflow = create_test_workflow(template=template, user=template_owner)
 
         viewer_user = create_test_user(
@@ -249,12 +250,13 @@ class TestWorkflowMemberOrViewerPermission:
         # arrange
         account = create_test_account()
         template_owner = create_test_user(account=account)
-        template = create_test_template(user=template_owner, account=account)
+        template = create_test_template(user=template_owner)
         workflow = create_test_workflow(template=template, user=template_owner)
 
         random_user = create_test_user(
             account=account,
             email='random@test.com',
+            is_account_owner=False,
         )
 
         request = Mock()

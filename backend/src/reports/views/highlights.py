@@ -4,8 +4,8 @@ from rest_framework.generics import ListAPIView
 from src.accounts.permissions import (
     BillingPlanPermission,
     ExpiredSubscriptionPermission,
-    UserIsAdminOrAccountOwner,
 )
+from src.processes.permissions import UserCanAccessHighlightsPermission
 from src.generics.mixins.views import BasePrefetchMixin
 from src.generics.permissions import (
     UserIsAuthenticated,
@@ -28,7 +28,7 @@ class HighlightsView(
         UserIsAuthenticated,
         ExpiredSubscriptionPermission,
         BillingPlanPermission,
-        UserIsAdminOrAccountOwner,
+        UserCanAccessHighlightsPermission,
     )
 
     def get_queryset(self):

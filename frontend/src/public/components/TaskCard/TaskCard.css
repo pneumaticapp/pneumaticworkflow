@@ -187,6 +187,12 @@
   }
 }
 
+.complete-form_readonly {
+  &::before {
+    display: none;
+  }
+}
+
 .task-output {
   margin-bottom: 32px;
 }

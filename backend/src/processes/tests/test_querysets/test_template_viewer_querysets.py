@@ -26,12 +26,10 @@ class TestTemplateQuerySetWithViewer:
         template_owner = create_test_user(account=account)
         template1 = create_test_template(
             user=template_owner,
-            account=account,
             name='Template 1',
         )
         template2 = create_test_template(
             user=template_owner,
-            account=account,
             name='Template 2',
         )
 
@@ -61,12 +59,10 @@ class TestTemplateQuerySetWithViewer:
         template_owner = create_test_user(account=account)
         template1 = create_test_template(
             user=template_owner,
-            account=account,
             name='Template 1',
         )
         template2 = create_test_template(
             user=template_owner,
-            account=account,
             name='Template 2',
         )
 
@@ -98,7 +94,6 @@ class TestTemplateQuerySetWithViewer:
         template_owner = create_test_user(account=account)
         template = create_test_template(
             user=template_owner,
-            account=account,
         )
 
         random_user = create_test_user(
@@ -119,7 +114,6 @@ class TestTemplateQuerySetWithViewer:
         template_owner = create_test_user(account=account)
         template = create_test_template(
             user=template_owner,
-            account=account,
         )
 
         viewer_user1 = create_test_user(
@@ -164,12 +158,10 @@ class TestWorkflowQuerySetWithViewer:
         template_owner = create_test_user(account=account)
         template1 = create_test_template(
             user=template_owner,
-            account=account,
             name='Template 1',
         )
         template2 = create_test_template(
             user=template_owner,
-            account=account,
             name='Template 2',
         )
         workflow1 = create_test_workflow(
@@ -205,12 +197,10 @@ class TestWorkflowQuerySetWithViewer:
         template_owner = create_test_user(account=account)
         template1 = create_test_template(
             user=template_owner,
-            account=account,
             name='Template 1',
         )
         template2 = create_test_template(
             user=template_owner,
-            account=account,
             name='Template 2',
         )
         workflow1 = create_test_workflow(
@@ -248,7 +238,6 @@ class TestWorkflowQuerySetWithViewer:
         template_owner = create_test_user(account=account)
         template = create_test_template(
             user=template_owner,
-            account=account,
         )
         workflow = create_test_workflow(template=template, user=template_owner)
 
@@ -283,7 +272,6 @@ class TestWorkflowQuerySetWithViewer:
         template_owner = create_test_user(account=account)
         template = create_test_template(
             user=template_owner,
-            account=account,
         )
         workflow = create_test_workflow(template=template, user=template_owner)
 

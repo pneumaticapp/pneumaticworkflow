@@ -75,6 +75,7 @@ def test_send_task_completed_webhook__ok(api_client, mocker):
                 ]),
             ],
             'is_urgent': False,
+            'is_read_only_viewer': False,
             'checklists_marked': 0,
             'checklists_total': 0,
             'checklists': [],
@@ -90,6 +91,7 @@ def test_send_task_completed_webhook__ok(api_client, mocker):
                 'finalizable': False,
                 'is_external': False,
                 'is_urgent': False,
+                'is_read_only_viewer': False,
                 'date_created_tsp': workflow.date_created.timestamp(),
                 'date_completed_tsp': None,
                 'workflow_starter': user.id,
@@ -241,6 +243,7 @@ def test_send_task_completed_webhook__sub_workflows__ok(api_client, mocker):
                 ]),
             ],
             'is_urgent': False,
+            'is_read_only_viewer': False,
             'checklists_marked': 0,
             'checklists_total': 0,
             'checklists': [],
@@ -328,6 +331,7 @@ def test_send_task_completed_webhook__sub_workflows__ok(api_client, mocker):
                 'workflow_starter': user.id,
                 'ancestor_task_id': None,
                 'is_legacy_template': False,
+                'is_read_only_viewer': False,
                 'legacy_template_name': None,
                 'owners': [user.id],
                 'template': OrderedDict([
@@ -456,6 +460,7 @@ def test_send_task_returned_webhook__ok(api_client, mocker):
                 ]),
             ],
             'is_urgent': False,
+            'is_read_only_viewer': False,
             'checklists_marked': 0,
             'checklists_total': 0,
             'checklists': [],
@@ -482,6 +487,7 @@ def test_send_task_returned_webhook__ok(api_client, mocker):
                 'workflow_starter': user.id,
                 'ancestor_task_id': None,
                 'is_legacy_template': False,
+                'is_read_only_viewer': False,
                 'legacy_template_name': None,
                 'owners': [user.id],
                 'template': OrderedDict([
@@ -587,6 +593,7 @@ def test_send_workflow_started_webhook__ok(api_client, mocker):
             'workflow_starter': user.id,
             'ancestor_task_id': None,
             'is_legacy_template': False,
+            'is_read_only_viewer': False,
             'legacy_template_name': None,
             'owners': [user.id],
             'template': OrderedDict([
@@ -689,6 +696,7 @@ def test_send_workflow_completed_webhook__ok(api_client, mocker):
             'workflow_starter': user.id,
             'ancestor_task_id': None,
             'is_legacy_template': False,
+            'is_read_only_viewer': False,
             'legacy_template_name': None,
             'owners': [user.id],
             'template': OrderedDict([

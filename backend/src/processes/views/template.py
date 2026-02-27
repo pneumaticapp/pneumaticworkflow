@@ -32,7 +32,11 @@ from src.processes.models.templates.system_template import SystemTemplate
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
 from src.processes.models.templates.viewer import TemplateViewer
-from src.processes.permissions import TemplateOwnerPermission
+from src.processes.permissions import (
+    TemplateOwnerAdminPermission,
+    TemplateOwnerPermission,
+    TemplateOwnerOrViewerPermission,
+)
 from src.processes.queries import (
     TemplateStepsQuery,
     TemplateTitlesByWorkflowsQuery,
@@ -133,17 +137,22 @@ class TemplateViewSet(
     }
 
     def get_permissions(self):
+        if self.action in ('add_viewer', 'remove_viewer'):
+            return (
+                UserIsAuthenticated(),
+                ExpiredSubscriptionPermission(),
+                BillingPlanPermission(),
+                UsersOverlimitedPermission(),
+                UserIsAdminOrAccountOwner(),
+                TemplateOwnerAdminPermission(),
+            )
         if self.action in (
-            'retrieve',
             'update',
             'clone',
             'destroy',
             'discard_changes',
             'presets',
             'preset',
-            'viewers',
-            'add_viewer',
-            'remove_viewer',
         ):
             return (
                 UserIsAuthenticated(),
@@ -152,6 +161,14 @@ class TemplateViewSet(
                 UsersOverlimitedPermission(),
                 UserIsAdminOrAccountOwner(),
                 TemplateOwnerPermission(),
+            )
+        if self.action in ('retrieve', 'viewers'):
+            return (
+                UserIsAuthenticated(),
+                ExpiredSubscriptionPermission(),
+                BillingPlanPermission(),
+                UsersOverlimitedPermission(),
+                TemplateOwnerOrViewerPermission(),
             )
         if self.action == 'run':
             return (
@@ -165,6 +182,7 @@ class TemplateViewSet(
             'list',
             'titles',
             'titles_by_events',
+            'titles_by_workflows',
             'titles_by_tasks',
             'steps',
             'fields',
@@ -206,13 +224,29 @@ class TemplateViewSet(
     def get_queryset(self):
         user = self.request.user
         qst = Template.objects.on_account(user.account_id).exclude_onboarding()
-        if self.action == 'fields':
-            # Template owner (if not workflows) or Workflow Member
-            qst = qst.filter(
-                Q(owners__type='user', owners__user_id=user.id) |
-                Q(owners__type='group', owners__group__users__id=user.id) |
-                Q(workflows__members=user.id),
-            ).distinct()
+
+        # Admin and account owner can see all templates
+        if not (user.is_admin or user.is_account_owner):
+            # Regular users can only see templates where they are:
+            # - owners, or template viewers, or workflow members
+            if self.action == 'fields':
+                # Template owner (if not workflows) or Workflow Member
+                qst = qst.filter(
+                    Q(owners__type='user', owners__user_id=user.id) |
+                    Q(owners__type='group', owners__group__users__id=user.id) |
+                    Q(workflows__members=user.id),
+                ).distinct()
+            else:
+                # For list/retrieve: owners or template viewers
+                qst = qst.filter(
+                    Q(owners__type='user', owners__user_id=user.id) |
+                    Q(owners__type='group', owners__group__users__id=user.id) |
+                    Q(viewers__type='user', viewers__user_id=user.id,
+                      viewers__is_deleted=False) |
+                    Q(viewers__type='group', viewers__group__users__id=user.id,
+                      viewers__is_deleted=False),
+                ).distinct()
+
         return self.prefetch_queryset(qst)
 
     def prefetch_queryset(
@@ -356,6 +390,7 @@ class TemplateViewSet(
                 template = serializer.save()
             else:
                 template = serializer.save_as_draft()
+        template = self.get_queryset().get(pk=template.pk)
         service = TemplateIntegrationsService(
             account=request.user.account,
             is_superuser=request.is_superuser,
@@ -388,7 +423,8 @@ class TemplateViewSet(
                 auth_type=request.token_type,
                 **serializer.get_analysis_counters(),
             )
-        return self.response_ok(serializer.get_response_data())
+        response_serializer = self.get_serializer(instance=template)
+        return self.response_ok(response_serializer.get_response_data())
 
     @action(methods=['POST'], detail=True)
     def clone(self, request, *args, **kwargs):
@@ -727,7 +763,16 @@ class TemplateViewSet(
     def add_viewer(self, request, *args, **kwargs):
         """Add a viewer to a template"""
         template = self.get_object()
-        serializer = TemplateViewerCreateSerializer(data=request.data)
+        raw = request.data
+        data = {}
+        for key, val in raw.items():
+            if isinstance(val, list) and len(val) == 1:
+                data[key] = val[0]
+            else:
+                data[key] = val
+        data.setdefault('user_id', data.get('userId'))
+        data.setdefault('group_id', data.get('groupId'))
+        serializer = TemplateViewerCreateSerializer(data=data)
         serializer.is_valid(raise_exception=True)
 
         viewer_data = {

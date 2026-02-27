@@ -202,11 +202,7 @@ def test_fields__not_workflow_member_not_owner__not_found(api_client):
     owner = create_test_owner(account=account)
     template = create_test_template(user=owner, tasks_count=1)
     create_test_workflow(user=owner, template=template)
-    user = create_test_owner(
-        email='user2@pneumaticapp',
-        account=account,
-        is_account_owner=False,
-    )
+    user = create_test_not_admin(account=account)
     api_client.token_authenticate(user)
 
     # act

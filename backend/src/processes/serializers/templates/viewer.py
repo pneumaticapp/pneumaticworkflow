@@ -130,16 +130,20 @@ class TemplateViewerSerializer(
 
 
 class TemplateViewerCreateSerializer(ModelSerializer):
-    """Simplified serializer for creating viewers via API"""
+    """Simplified serializer for creating viewers via API.
+    Accepts user_id/group_id (snake_case) or userId/groupId (camelCase)."""
+
+    userId = serializers.IntegerField(required=False, allow_null=True)  # noqa: N815
+    groupId = serializers.IntegerField(required=False, allow_null=True)  # noqa: N815
 
     class Meta:
         model = TemplateViewer
-        fields = ('type', 'user_id', 'group_id')
+        fields = ('type', 'user_id', 'group_id', 'userId', 'groupId')
 
     def validate(self, data):
         viewer_type = data.get('type')
-        user_id = data.get('user_id')
-        group_id = data.get('group_id')
+        user_id = data.get('user_id') or data.get('userId')
+        group_id = data.get('group_id') or data.get('groupId')
 
         if viewer_type == ViewerType.USER and not user_id:
             raise serializers.ValidationError(
@@ -161,6 +165,8 @@ class TemplateViewerCreateSerializer(ModelSerializer):
                 'user_id should not be provided for group type',
             )
 
+        data['user_id'] = user_id
+        data['group_id'] = group_id
         return data
 
 

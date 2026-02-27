@@ -27,6 +27,8 @@ const {
   api: { urls },
 } = getConfig();
 
+const publicDir = path.join(__dirname, '..', '..', 'public');
+
 export function initServer() {
   const webpackCompiler = webpack(webpackConfig);
   const app = express();
@@ -44,11 +46,11 @@ export function initServer() {
     );
   }
 
-  app.set('views', './public/');
+  app.set('views', publicDir);
   app.set('view engine', 'ejs');
   app.use(express.json());
   app.use('/assets/', express.static('assets'));
-  app.use('/static/', express.static('public'));
+  app.use('/static/', express.static(publicDir));
 
   app.post('/api/:path(*)', apiProxy('post'));
   app.get('/api/:path(*)', apiProxy('get'));

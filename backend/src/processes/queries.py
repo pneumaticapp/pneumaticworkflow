@@ -1576,12 +1576,28 @@ class HighlightsQuery(SqlQueryObject):
           workflow.template_id = template.id
         LEFT JOIN processes_workflow_owners workflow_owners ON
           workflow.id = workflow_owners.workflow_id
+        LEFT JOIN processes_templateviewer ptv_user ON
+          template.id = ptv_user.template_id
+          AND ptv_user.is_deleted IS FALSE
+          AND ptv_user.type = 'user'
+          AND ptv_user.user_id = %(user_id)s
+        LEFT JOIN processes_templateviewer ptv_grp ON
+          template.id = ptv_grp.template_id
+          AND ptv_grp.is_deleted IS FALSE
+          AND ptv_grp.type = 'group'
+        LEFT JOIN accounts_usergroup_users grp_u ON
+          ptv_grp.group_id = grp_u.usergroup_id
+          AND grp_u.user_id = %(user_id)s
         WHERE
           NOT we.is_deleted AND
           we.account_id = %(account_id)s AND
           NOT workflow.is_deleted AND
           NOT template.is_deleted AND
-          workflow_owners.user_id = %(user_id)s
+          (
+            workflow_owners.user_id = %(user_id)s
+            OR ptv_user.id IS NOT NULL
+            OR grp_u.user_id IS NOT NULL
+          )
         """
         ordering = 'ORDER BY we.created DESC, we.id DESC'
         sub_ordering = ' ORDER BY we.workflow_id, we.created DESC'
@@ -1774,6 +1790,7 @@ class TemplateTitlesByWorkflowsQuery(
         user: User,
         status: Optional[WorkflowStatus] = None,
     ):
+        self.user = user
         self.params = {
             'account_id': user.account.id,
             'user_id': user.id,
@@ -1791,6 +1808,60 @@ class TemplateTitlesByWorkflowsQuery(
         )
         self.params.update(params)
         return f"t.type NOT IN {result}"
+
+    def _get_accessible_templates(self):
+        """Returns templates where user is owner or viewer"""
+        if self.user.is_admin or self.user.is_account_owner:
+            # Admin/account owner can see all templates
+            return """
+                SELECT DISTINCT t.id AS template_id
+                FROM processes_template t
+                WHERE t.is_deleted IS FALSE
+                  AND t.account_id = %(account_id)s
+            """
+        # Regular users: owners + viewers
+        return """
+                SELECT DISTINCT template_id
+                FROM (
+                    -- Template owners (users)
+                    SELECT pto.template_id
+                    FROM processes_templateowner AS pto
+                    WHERE pto.type = 'user'
+                      AND pto.is_deleted IS FALSE
+                      AND pto.user_id = %(user_id)s
+
+                    UNION
+
+                    -- Template owners (groups)
+                    SELECT pto.template_id
+                    FROM processes_templateowner AS pto
+                    JOIN accounts_usergroup_users AS g
+                      ON g.usergroup_id = pto.group_id
+                    WHERE pto.type = 'group'
+                      AND pto.is_deleted IS FALSE
+                      AND g.user_id = %(user_id)s
+
+                    UNION
+
+                    -- Template viewers (users)
+                    SELECT ptv.template_id
+                    FROM processes_templateviewer AS ptv
+                    WHERE ptv.type = 'user'
+                      AND ptv.is_deleted IS FALSE
+                      AND ptv.user_id = %(user_id)s
+
+                    UNION
+
+                    -- Template viewers (groups)
+                    SELECT ptv.template_id
+                    FROM processes_templateviewer AS ptv
+                    JOIN accounts_usergroup_users AS g
+                      ON g.usergroup_id = ptv.group_id
+                    WHERE ptv.type = 'group'
+                      AND ptv.is_deleted IS FALSE
+                      AND g.user_id = %(user_id)s
+                ) accessible_templates
+            """
 
     def _get_workflows_count(self):
         result = """
@@ -1815,10 +1886,10 @@ class TemplateTitlesByWorkflowsQuery(
               t.name,
               COALESCE(pw.count, 0) AS count
             FROM (
-              {self.dereferenced_owners()}
-            ) pto
+              {self._get_accessible_templates()}
+            ) accessible
               INNER JOIN processes_template t
-                ON t.id = pto.template_id
+                ON t.id = accessible.template_id
               LEFT JOIN (
                 {self._get_workflows_count()}
               ) pw

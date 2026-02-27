@@ -25,6 +25,9 @@ export const getIsBlocked = ({
 
 export const getIsAdmin = ({ authUser }: IApplicationState) => authUser.isAdmin || false;
 
+export const getCanAccessWorkflows = ({ authUser }: IApplicationState) => 
+  (authUser?.isAdmin || authUser?.hasWorkflowViewerAccess) || false;
+
 export const getIsUserSubsribed = ({
   authUser: {
     account: { isSubscribed },

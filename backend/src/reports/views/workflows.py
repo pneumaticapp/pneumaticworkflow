@@ -1,3 +1,4 @@
+from django.db.models import Q
 from rest_framework.decorators import action
 from rest_framework.generics import get_object_or_404
 from rest_framework.pagination import LimitOffsetPagination
@@ -6,7 +7,9 @@ from rest_framework.viewsets import GenericViewSet
 from src.accounts.permissions import (
     BillingPlanPermission,
     ExpiredSubscriptionPermission,
-    UserIsAdminOrAccountOwner,
+)
+from src.processes.permissions import (
+    UserCanAccessHighlightsPermission,
 )
 from src.executor import RawSqlExecutor
 from src.generics.mixins.views import CustomViewSetMixin
@@ -38,7 +41,7 @@ class WorkflowsDashboardViewSet(
         UserIsAuthenticated,
         ExpiredSubscriptionPermission,
         BillingPlanPermission,
-        UserIsAdminOrAccountOwner,
+        UserCanAccessHighlightsPermission,
     )
     action_serializer_classes = {
         'overview': AccountDashboardOverviewSerializer,
@@ -87,12 +90,29 @@ class WorkflowsDashboardViewSet(
         filter_slz = BreakdownByStepsFilterSerializer(data=request.GET)
         filter_slz.is_valid(raise_exception=True)
         filters = filter_slz.validated_data
-        get_object_or_404(
+        # Check if user has access to template (owner or viewer)
+        template_qst = (
             Template.objects
             .on_account(self.request.user.account_id)
-            .with_template_owner(self.request.user.id),
-            pk=filters['template_id'],
+            .filter(
+                Q(owners__type='user', owners__user_id=self.request.user.id)
+                | Q(
+                    owners__type='group',
+                    owners__group__users__id=self.request.user.id,
+                )
+                | Q(
+                    viewers__type='user',
+                    viewers__user_id=self.request.user.id,
+                    viewers__is_deleted=False,
+                )
+                | Q(
+                    viewers__type='group',
+                    viewers__group__users__id=self.request.user.id,
+                    viewers__is_deleted=False,
+                ),
+            ).distinct()
         )
+        get_object_or_404(template_qst, pk=filters['template_id'])
         if filters.pop('now', None):
             query = WorkflowBreakdownByTasksNowQuery(
                 template_id=filters['template_id'],

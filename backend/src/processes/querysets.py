@@ -306,7 +306,14 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
 
     def with_template_owner(self, user_id: int):
         return self.exclude_legacy().filter(
-            template__template_owners=user_id,
+            Q(
+                template__owners__user_id=user_id,
+                template__owners__is_deleted=False,
+            )
+            | Q(
+                template__owners__group__users__id=user_id,
+                template__owners__is_deleted=False,
+            ),
         ).distinct()
 
     def with_template_viewer(self, user_id: int):

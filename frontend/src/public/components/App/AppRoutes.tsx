@@ -66,26 +66,35 @@ export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
             <Route path={ERoutes.CollectPaymentDetails} component={CollectPaymentDetails} />
             <Route path={ERoutes.AfterPaymentDetailsProvided} component={AfterPaymentDetailsProvided} />
             <Route path={ERoutes.Settings} component={Settings} />
-            <ProtectedRoute path={ERoutes.Workflows} hasAccess={user.isAdmin}>
+            <ProtectedRoute
+              path={ERoutes.Workflows}
+              hasAccess={user.isAdmin || user.hasWorkflowViewerAccess}
+            >
               <WorkflowsView />
             </ProtectedRoute>
-            <ProtectedRoute path={ERoutes.WorkflowDetail} hasAccess={user.isAdmin}>
+            <ProtectedRoute
+              path={ERoutes.WorkflowDetail}
+              hasAccess={user.isAdmin || user.hasWorkflowViewerAccess}
+            >
               <WorkflowsView />
             </ProtectedRoute>
             <ProtectedRoute path={ERoutes.TemplatesCreate} hasAccess={user.isAdmin}>
               <TemplateView />
             </ProtectedRoute>
-            <ProtectedRoute path={ERoutes.TemplateView} hasAccess={user.isAdmin}>
+            <ProtectedRoute path={ERoutes.TemplateView} hasAccess={user.isAdmin || user.hasWorkflowViewerAccess}>
               <TemplateView />
             </ProtectedRoute>
             <ProtectedRoute path={ERoutes.TemplatesEdit} hasAccess={user.isAdmin}>
               <TemplateView />
             </ProtectedRoute>
-            <ProtectedRoute path={ERoutes.Templates} hasAccess={user.isAdmin}>
+            <ProtectedRoute path={ERoutes.Templates} hasAccess={user.isAdmin || user.hasWorkflowViewerAccess}>
               <TemplatesView />
             </ProtectedRoute>
             <Route path={ERoutes.Tasks} component={TasksView} />
-            <ProtectedRoute path={ERoutes.Highlights} hasAccess={user.isAdmin}>
+            <ProtectedRoute
+              path={ERoutes.Highlights}
+              hasAccess={user.isAdmin || user.hasWorkflowViewerAccess}
+            >
               <HighlightsView />
             </ProtectedRoute>
             <ProtectedRoute path={ERoutes.Team} hasAccess={user.isAdmin}>
