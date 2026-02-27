@@ -1,4 +1,5 @@
 /* eslint-disable import/no-extraneous-dependencies */
+import * as fs from 'fs';
 import * as path from 'path';
 import * as express from 'express';
 import * as webpack from 'webpack';
@@ -28,6 +29,12 @@ const {
 } = getConfig();
 
 const publicDir = path.join(__dirname, '..', '..', 'public');
+const srcPublicDir = path.join(__dirname, '..', 'public');
+const mainEjsPath = path.join(publicDir, 'main.ejs');
+const viewsDir = fs.existsSync(mainEjsPath)
+  ? publicDir
+  : srcPublicDir;
+const mainViewName = fs.existsSync(mainEjsPath) ? 'main' : 'index';
 
 export function initServer() {
   const webpackCompiler = webpack(webpackConfig);
@@ -46,8 +53,9 @@ export function initServer() {
     );
   }
 
-  app.set('views', publicDir);
+  app.set('views', viewsDir);
   app.set('view engine', 'ejs');
+  app.set('mainViewName', mainViewName);
   app.use(express.json());
   app.use('/assets/', express.static('assets'));
   app.use('/static/', express.static(publicDir));

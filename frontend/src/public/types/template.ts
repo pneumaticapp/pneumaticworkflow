@@ -18,6 +18,7 @@ export interface ITemplate {
   updatedBy: number | null;
   owners: ITemplateOwner[];
   viewers: ITemplateViewer[];
+  starters: ITemplateStarter[];
   kickoff: IKickoff;
   tasks: ITemplateTask[];
   isPublic: boolean;
@@ -40,6 +41,12 @@ export interface ITemplateViewer {
   apiName: string;
   sourceId: string;
   type: ETemplateViewerType;
+}
+
+export interface ITemplateStarter {
+  apiName: string;
+  sourceId: string;
+  type: ETemplateStarterType;
 }
 
 export type TTransformedTask =
@@ -106,6 +113,11 @@ export enum ETemplateOwnerType {
 }
 
 export enum ETemplateViewerType {
+  User = 'user',
+  UserGroup = 'group',
+}
+
+export enum ETemplateStarterType {
   User = 'user',
   UserGroup = 'group',
 }

@@ -44,6 +44,7 @@ from src.processes.models.templates.template import (
     TemplateDraft,
 )
 from src.processes.models.templates.viewer import TemplateViewer
+from src.processes.models.templates.starter import TemplateStarter
 from src.processes.serializers.templates.kickoff import (
     KickoffListSerializer,
     KickoffOnlyFieldsSerializer,
@@ -59,6 +60,10 @@ from src.processes.serializers.templates.owner import (
 from src.processes.serializers.templates.viewer import (
     TemplateViewerListSerializer,
     TemplateViewerSerializer,
+)
+from src.processes.serializers.templates.starter import (
+    TemplateStarterListSerializer,
+    TemplateStarterSerializer,
 )
 from src.processes.serializers.templates.task import (
     ShortTaskSerializer,
@@ -116,6 +121,7 @@ class TemplateSerializer(
             'kickoff',
             'owners',
             'viewers',
+            'starters',
             'is_active',
             'is_public',
             'is_embedded',
@@ -150,6 +156,7 @@ class TemplateSerializer(
     date_updated = DateTimeField(read_only=True)
     owners = TemplateOwnerSerializer(many=True, required=False)
     viewers = SerializerMethodField()
+    starters = SerializerMethodField()
     kickoff = KickoffSerializer(required=False)
     tasks = TaskTemplateSerializer(many=True, required=False)
     public_url = CharField(read_only=True)
@@ -415,6 +422,10 @@ class TemplateSerializer(
         qs = instance.viewers.filter(is_deleted=False).order_by('type', 'id')
         return TemplateViewerListSerializer(qs, many=True).data
 
+    def get_starters(self, instance: Template) -> List[Dict[str, Any]]:
+        qs = instance.starters.filter(is_deleted=False).order_by('type', 'id')
+        return TemplateStarterListSerializer(qs, many=True).data
+
     def to_representation(self, instance: Template):
         data = super().to_representation(instance)
         if data.get('description') is None:
@@ -423,6 +434,8 @@ class TemplateSerializer(
             data['tasks'] = []
         if data.get('viewers') is None:
             data['viewers'] = []
+        if data.get('starters') is None:
+            data['starters'] = []
         # TemplateSerializer cannot return a single Kickoff object
         # because the Template related with Kickoff by foreign key
         # instead of one to one relation. Getting the object manually:
@@ -541,6 +554,29 @@ class TemplateSerializer(
             })
         return result
 
+    def _get_starters_data_from_request(self) -> List[Dict[str, Any]]:
+        """Normalize starters from request (initial_data) for create_or_update.
+        """
+        raw = self.initial_data.get('starters') or []
+        result = []
+        for item in raw:
+            if not isinstance(item, dict):
+                continue
+            starter_type = item.get('type')
+            source_id = item.get('source_id')
+            if starter_type is None or source_id is None:
+                continue
+            api_name = (
+                item.get('api_name')
+                or create_api_name(prefix=TemplateStarter.api_name_prefix)
+            )
+            result.append({
+                'api_name': api_name,
+                'type': starter_type,
+                'source_id': str(source_id),
+            })
+        return result
+
     def _set_constances(self, data: Dict[str, Any]):
         self.owners_data = data.get('owners', [])
         self.new_users_owners_ids = {
@@ -638,6 +674,20 @@ class TemplateSerializer(
                 'account': account,
             },
         )
+        starters_data = self._get_starters_data_from_request()
+        self.create_or_update_related(
+            slz_cls=TemplateStarterSerializer,
+            data=starters_data,
+            ancestors_data={
+                'account': account,
+                'template': instance,
+            },
+            slz_context={
+                **self.context,
+                'template': instance,
+                'account': account,
+            },
+        )
 
         if instance.is_active:
             version_service = TemplateVersioningService(
@@ -713,6 +763,20 @@ class TemplateSerializer(
         self.create_or_update_related(
             slz_cls=TemplateViewerSerializer,
             data=viewers_data,
+            ancestors_data={
+                'account': account,
+                'template': instance,
+            },
+            slz_context={
+                **self.context,
+                'template': instance,
+                'account': account,
+            },
+        )
+        starters_data = self._get_starters_data_from_request()
+        self.create_or_update_related(
+            slz_cls=TemplateStarterSerializer,
+            data=starters_data,
             ancestors_data={
                 'account': account,
                 'template': instance,

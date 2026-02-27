@@ -248,6 +248,7 @@ export function TemplateEdit({
         users,
       ),
       viewers: [],
+      starters: [],
       wfNameTemplate: '{{date}} — {{template-name}}',
     } as ITemplate;
   };

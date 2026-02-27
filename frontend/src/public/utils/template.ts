@@ -74,6 +74,7 @@ export const getNormalizedTemplate = (
     tasks: normalizedTasks,
     owners: normalizedTemplateOwners,
     viewers: template.viewers || [],
+    starters: template.starters || [],
   };
 };
 
@@ -152,5 +153,6 @@ export const mapTemplateRequest = (template: ITemplate): ITemplateRequest => {
     tasks: normilizedTasks,
     publicSuccessUrl: template.publicSuccessUrl || null,
     viewers: template.viewers ?? [],
+    starters: template.starters ?? [],
   };
 };

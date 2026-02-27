@@ -26,6 +26,7 @@ export const initialTemplate: ITemplateStore = {
     performersCount: 0,
     owners: [],
     viewers: [],
+    starters: [],
   } as ITemplate,
   status: ETemplateStatus.Saved,
   AITemplate: {

@@ -31,11 +31,13 @@ from src.processes.models.templates.preset import TemplatePreset
 from src.processes.models.templates.system_template import SystemTemplate
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
+from src.processes.models.templates.starter import TemplateStarter
 from src.processes.models.templates.viewer import TemplateViewer
 from src.processes.permissions import (
     TemplateOwnerAdminPermission,
     TemplateOwnerPermission,
     TemplateOwnerOrViewerPermission,
+    TemplateStarterPermission,
 )
 from src.processes.queries import (
     TemplateStepsQuery,
@@ -66,6 +68,10 @@ from src.processes.serializers.templates.template import (
     TemplateTitlesByTasksSerializer,
     TemplateTitlesByWorkflowsSerializer,
     TemplateTitlesSerializer,
+)
+from src.processes.serializers.templates.starter import (
+    TemplateStarterCreateSerializer,
+    TemplateStarterListSerializer,
 )
 from src.processes.serializers.templates.viewer import (
     TemplateViewerCreateSerializer,
@@ -134,10 +140,17 @@ class TemplateViewSet(
         'preset': TemplatePresetSerializer,
         'viewers': 'TemplateViewerListSerializer',
         'add_viewer': 'TemplateViewerCreateSerializer',
+        'starters': 'TemplateStarterListSerializer',
+        'add_starter': 'TemplateStarterCreateSerializer',
     }
 
     def get_permissions(self):
-        if self.action in ('add_viewer', 'remove_viewer'):
+        if self.action in (
+            'add_viewer',
+            'remove_viewer',
+            'add_starter',
+            'remove_starter',
+        ):
             return (
                 UserIsAuthenticated(),
                 ExpiredSubscriptionPermission(),
@@ -162,7 +175,7 @@ class TemplateViewSet(
                 UserIsAdminOrAccountOwner(),
                 TemplateOwnerPermission(),
             )
-        if self.action in ('retrieve', 'viewers'):
+        if self.action in ('retrieve', 'viewers', 'starters'):
             return (
                 UserIsAuthenticated(),
                 ExpiredSubscriptionPermission(),
@@ -176,7 +189,7 @@ class TemplateViewSet(
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
                 UsersOverlimitedPermission(),
-                TemplateOwnerPermission(),
+                TemplateStarterPermission(),
             )
         if self.action in (
             'list',
@@ -825,6 +838,86 @@ class TemplateViewSet(
             return self.response_ok({'message': 'Viewer removed successfully'})
         except TemplateViewer.DoesNotExist:
             raise_validation_error('Viewer not found')
+
+    @action(methods=['GET'], detail=True, url_path='starters')
+    def starters(self, request, *args, **kwargs):
+        """List all starters for a template"""
+        template = self.get_object()
+        starters = TemplateStarter.objects.filter(
+            template=template,
+            is_deleted=False,
+        ).order_by('type', 'id')
+        serializer = TemplateStarterListSerializer(starters, many=True)
+        return self.response_ok(serializer.data)
+
+    @action(methods=['POST'], detail=True, url_path='add-starter')
+    def add_starter(self, request, *args, **kwargs):
+        """Add a starter to a template"""
+        template = self.get_object()
+        raw = request.data
+        data = {}
+        for key, val in raw.items():
+            if isinstance(val, list) and len(val) == 1:
+                data[key] = val[0]
+            else:
+                data[key] = val
+        data.setdefault('user_id', data.get('userId'))
+        data.setdefault('group_id', data.get('groupId'))
+        serializer = TemplateStarterCreateSerializer(data=data)
+        serializer.is_valid(raise_exception=True)
+
+        starter_data = {
+            'template': template,
+            'type': serializer.validated_data['type'],
+            'account': request.user.account,
+        }
+
+        user_model = get_user_model()
+        if serializer.validated_data['type'] == 'user':
+            try:
+                user = user_model.objects.get(
+                    id=serializer.validated_data['user_id'],
+                    account=request.user.account,
+                )
+                starter_data['user'] = user
+            except user_model.DoesNotExist:
+                raise_validation_error('User not found')
+        else:
+            try:
+                group = UserGroup.objects.get(
+                    id=serializer.validated_data['group_id'],
+                    account=request.user.account,
+                )
+                starter_data['group'] = group
+            except UserGroup.DoesNotExist:
+                raise_validation_error('Group not found')
+
+        starter = TemplateStarter.objects.create(**starter_data)
+
+        response_serializer = TemplateStarterListSerializer(starter)
+        return self.response_ok(response_serializer.data)
+
+    @action(
+        methods=['DELETE'],
+        detail=True,
+        url_path='remove-starter/(?P<starter_id>[^/.]+)',
+    )
+    def remove_starter(self, request, starter_id=None, *args, **kwargs):
+        """Remove a starter from a template"""
+        template = self.get_object()
+
+        try:
+            starter = TemplateStarter.objects.get(
+                id=starter_id,
+                template=template,
+                is_deleted=False,
+            )
+            starter.delete()
+            return self.response_ok(
+                {'message': 'Starter removed successfully'},
+            )
+        except TemplateStarter.DoesNotExist:
+            raise_validation_error('Starter not found')
 
 
 class TemplateIntegrationsViewSet(

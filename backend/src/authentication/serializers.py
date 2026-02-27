@@ -184,17 +184,27 @@ class ContextUserSerializer(serializers.ModelSerializer):
             'date_fmt',
             'date_fdw',
             'has_workflow_viewer_access',
+            'has_workflow_starter_access',
         )
 
     account = ContextAccountSerializer()
     is_supermode = serializers.BooleanField(required=False)
     has_workflow_viewer_access = serializers.SerializerMethodField()
+    has_workflow_starter_access = serializers.SerializerMethodField()
     date_joined_tsp = TimeStampField(source='date_joined', read_only=True)
     date_fmt = DateFormatField(read_only=True)
 
     def get_has_workflow_viewer_access(self, obj) -> bool:
         templates_qs = Template.objects.on_account(obj.account_id)
         return (
+            templates_qs.with_template_viewer(obj.id).exists() or
+            templates_qs.with_template_owner(obj.id).exists()
+        )
+
+    def get_has_workflow_starter_access(self, obj) -> bool:
+        templates_qs = Template.objects.on_account(obj.account_id)
+        return (
+            templates_qs.with_template_starter(obj.id).exists() or
             templates_qs.with_template_viewer(obj.id).exists() or
             templates_qs.with_template_owner(obj.id).exists()
         )

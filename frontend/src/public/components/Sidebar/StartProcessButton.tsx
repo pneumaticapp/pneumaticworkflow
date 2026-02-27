@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import { PlayLogoIcon } from '../icons';
 import { IntlMessages } from '../IntlMessages';
 import { getTemplatesStore } from '../../redux/selectors/templates';
-import { getIsAdmin } from '../../redux/selectors/user';
+import { getCanAccessWorkflows } from '../../redux/selectors/user';
 
 import styles from './Sidebar.css';
 
@@ -15,10 +15,10 @@ export interface IStartProcessButton {
 }
 
 export const StartProcessButton = memo(function ({ tabIndex, onClick }: IStartProcessButton) {
-  const isAdmin = useSelector(getIsAdmin);
+  const canAccessWorkflows = useSelector(getCanAccessWorkflows);
   const { isTemplateOwner } = useSelector(getTemplatesStore);
 
-  if (!isAdmin && !isTemplateOwner) {
+  if (!canAccessWorkflows && !isTemplateOwner) {
     return null;
   }
 

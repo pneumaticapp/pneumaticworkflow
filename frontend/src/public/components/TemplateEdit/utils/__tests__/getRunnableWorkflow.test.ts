@@ -158,6 +158,7 @@ const templateResponseMock: ITemplateResponse = {
     },
   ],
   viewers: [],
+  starters: [],
   isActive: true,
   isPublic: false,
   publicUrl: null,

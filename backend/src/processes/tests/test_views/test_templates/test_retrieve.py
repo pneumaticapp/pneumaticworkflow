@@ -638,3 +638,18 @@ class TestRetrieveTemplate:
         assert len(raw_performers_data) == 1
         assert raw_performers_data[0]['type'] == PerformerType.GROUP
         assert raw_performers_data[0]['source_id'] == str(group.id)
+
+    def test_retrieve__template_without_starters__returns_starters_empty_list(
+        self, api_client,
+    ):
+        # arrange
+        user = create_test_user()
+        template = create_test_template(user)
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.get(f'/templates/{template.id}')
+
+        # assert
+        assert response.status_code == 200
+        assert response.json()['starters'] == []

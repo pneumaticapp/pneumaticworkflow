@@ -40,7 +40,8 @@ export async function mainHandler(req: Request, res: Response) {
       }
     }
 
-    return res.render('main', dataToRender);
+    const viewName = req.app?.get('mainViewName') ?? 'main';
+    return res.render(viewName, dataToRender);
   } catch (err) {
     resetCookie('token', req, res);
     return res.redirect(ERoutes.Login);

@@ -15,6 +15,7 @@ export interface IUnsavedUser {
   invite?: UserInvite;
   isAdmin?: boolean;
   hasWorkflowViewerAccess?: boolean;
+  hasWorkflowStarterAccess?: boolean;
   type: TUserType;
   language: string;
   timezone: string;

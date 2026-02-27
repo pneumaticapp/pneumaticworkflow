@@ -25,7 +25,7 @@ from src.processes.models.workflows.workflow import Workflow
 
 class TemplateOwnerPermission(BasePermission):
 
-    """ For template details API """
+    """ For template details API - only owners can edit templates """
 
     message = MSG_PT_0023
 
@@ -61,6 +61,32 @@ class TemplateOwnerAdminPermission(BasePermission):
             return False
         owner_permission = TemplateOwnerPermission()
         return owner_permission.has_permission(request, view)
+
+
+class TemplateStarterPermission(BasePermission):
+
+    """ Allow template starters to run workflows from templates """
+
+    message = MSG_PT_0023
+
+    def has_permission(self, request, view):
+        try:
+            template_id = int(view.kwargs.get('pk'))
+        except (ValueError, TypeError):
+            return False
+
+        # Account owner always has access
+        if request.user.is_account_owner:
+            return True
+
+        # Check if user has any access (starter, viewer, or owner)
+        template_access_qst = (
+            Template.objects
+            .by_id(template_id)
+            .on_account(request.user.account_id)
+            .with_template_access(request.user.id)
+        )
+        return template_access_qst.exists()
 
 
 class TemplateOwnerOrViewerPermission(BasePermission):
@@ -101,8 +127,9 @@ class TemplateOwnerOrViewerPermission(BasePermission):
 
 class UserCanAccessHighlightsPermission(BasePermission):
 
-    """ Allow admin, account owner, template owner or template viewer
-        (of any template on account) to access highlights/dashboard. """
+    """ Allow admin, account owner, template owner, template viewer,
+        or template starter (of any template on account) to access
+        highlights/dashboard. """
 
     def has_permission(self, request, view):
         if getattr(request.user, 'is_admin', False):
@@ -113,6 +140,7 @@ class UserCanAccessHighlightsPermission(BasePermission):
         return (
             base_qst.with_template_owner(request.user.id).exists()
             or base_qst.with_template_viewer(request.user.id).exists()
+            or base_qst.with_template_starter(request.user.id).exists()
         )
 
 

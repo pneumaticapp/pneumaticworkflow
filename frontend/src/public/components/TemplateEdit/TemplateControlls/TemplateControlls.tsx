@@ -7,6 +7,7 @@ import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 import { TemplateOwners } from '../TemplateOwners';
 import { TemplateViewers } from '../TemplateViewers';
+import { TemplateStarters } from '../TemplateStarters';
 import { ActivityIcon, BoxesIcon, EnableIcon, TrashIcon, UnionIcon, WarningIcon } from '../../icons';
 import { IntlMessages } from '../../IntlMessages';
 import { ShowMore } from '../../UI/ShowMore';
@@ -90,6 +91,7 @@ export function TemplateControlls({
     name: templateName,
     owners,
     viewers,
+    starters,
     isActive: isTemplateActive,
     finalizable: isTemplateFinalizable,
   } = template;
@@ -260,6 +262,17 @@ export function TemplateControlls({
             templateOwners={owners}
             onChangeTemplateOwners={(newTemplateOwners) =>
               patchTemplate({ changedFields: { owners: newTemplateOwners } })
+            }
+          />
+        </ShowMore>
+      </div>
+
+      <div className={styles['settings-block']}>
+        <ShowMore label={formatMessage({ id: 'template.starters' })}>
+          <TemplateStarters
+            templateStarters={starters}
+            onChangeTemplateStarters={(newTemplateStarters) =>
+              patchTemplate({ changedFields: { starters: newTemplateStarters } })
             }
           />
         </ShowMore>
