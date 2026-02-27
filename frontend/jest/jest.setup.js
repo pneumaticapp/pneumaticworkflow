@@ -4,6 +4,10 @@ var { enMessages } = require('../src/public/lang/locales/en_US');
 require('@testing-library/jest-dom');
 require('@testing-library/jest-dom/extend-expect');
 
+if (typeof global.React === 'undefined') {
+  global.React = require('react');
+}
+
 enzyme.configure({adapter: new Adapter() });
 
 jest.mock('../src/public/redux/store.ts', () => ({
