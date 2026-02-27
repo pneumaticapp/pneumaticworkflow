@@ -264,20 +264,22 @@ function WorkflowEditPopupComponent({
                   </span>
                 )}
                 <div className={styles['kickoff__inputs']}>
-                  {kickoffState.fields.map((field) => (
-                    <ExtraFieldIntl
-                      key={field.apiName}
-                      field={{ ...field }}
-                      editField={handleEditField(field.apiName)}
-                      showDropdown={false}
-                      mode={EExtraFieldMode.ProcessRun}
-                      labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
-                      namePlaceholder={field.name}
-                      descriptionPlaceholder={field.description}
-                      wrapperClassName={styles['kickoff-extra-field']}
-                      accountId={accountId}
-                    />
-                  ))}
+                  {kickoffState.fields
+                    .filter((field) => !field.isHidden)
+                    .map((field) => (
+                      <ExtraFieldIntl
+                        key={field.apiName}
+                        field={{ ...field }}
+                        editField={handleEditField(field.apiName)}
+                        showDropdown={false}
+                        mode={EExtraFieldMode.ProcessRun}
+                        labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
+                        namePlaceholder={field.name}
+                        descriptionPlaceholder={field.description}
+                        wrapperClassName={styles['kickoff-extra-field']}
+                        accountId={accountId}
+                      />
+                    ))}
                 </div>
               </div>
             )}
