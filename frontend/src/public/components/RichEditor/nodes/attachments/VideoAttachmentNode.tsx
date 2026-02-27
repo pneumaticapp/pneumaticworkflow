@@ -4,6 +4,9 @@ import {
   type LexicalNode,
   type NodeKey,
   type SerializedLexicalNode,
+  type DOMConversionMap,
+  type DOMConversionOutput,
+  type DOMExportOutput,
   $applyNodeReplacement,
   $getNodeByKey,
 } from 'lexical';
@@ -85,6 +88,24 @@ export class VideoAttachmentNode extends DecoratorNode<React.ReactElement> {
     return $createVideoAttachmentNode(serialized);
   }
 
+  static importDOM(): DOMConversionMap<HTMLDivElement> | null {
+    return {
+      div: (domNode: HTMLDivElement) => {
+        if (domNode.getAttribute('data-lexical-video-attachment') == null) return null;
+        return {
+          conversion: (element: HTMLDivElement): DOMConversionOutput => {
+            const url = element.getAttribute('data-lexical-attachment-url') ?? '';
+            const rawId = element.getAttribute('data-lexical-attachment-id');
+            const id = rawId != null ? parseInt(rawId, 10) : undefined;
+            const name = element.getAttribute('data-lexical-attachment-name') ?? undefined;
+            return { node: $createVideoAttachmentNode({ url, id, name }) };
+          },
+          priority: 2,
+        };
+      },
+    };
+  }
+
   constructor(url: string, id?: number, name?: string, key?: NodeKey) {
     super(key);
     this.attachmentUrl = url;
@@ -101,6 +122,23 @@ export class VideoAttachmentNode extends DecoratorNode<React.ReactElement> {
       id: this.attachmentId,
       name: this.attachmentName,
     };
+  }
+
+  exportDOM(): DOMExportOutput {
+    const div = document.createElement('div');
+    div.setAttribute('data-lexical-decorator', this.getType());
+    div.setAttribute('data-lexical-video-attachment', 'true');
+    div.setAttribute('data-lexical-attachment-url', this.attachmentUrl);
+    if (this.attachmentId != null) {
+      div.setAttribute('data-lexical-attachment-id', String(this.attachmentId));
+    }
+    if (this.attachmentName != null) {
+      div.setAttribute('data-lexical-attachment-name', this.attachmentName);
+    }
+    const video = document.createElement('video');
+    video.src = this.attachmentUrl;
+    div.appendChild(video);
+    return { element: div };
   }
 
   createDOM(): HTMLElement {
