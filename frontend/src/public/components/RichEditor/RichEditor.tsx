@@ -3,6 +3,7 @@ import React, {
   useCallback,
   useImperativeHandle,
   useRef,
+  useState,
 } from 'react';
 import classnames from 'classnames';
 import type { EditorState, LexicalEditor } from 'lexical';
@@ -86,8 +87,34 @@ export const RichEditor = forwardRef<
         : undefined,
   };
 
-  const builtInUpload = useAttachmentUpload(editorRef, accountId);
-  const onPasteFiles = usePasteUpload(editorRef, accountId);
+  const [isUploading, setIsUploading] = useState(false);
+
+  const rawUpload = useAttachmentUpload(editorRef, accountId);
+  const builtInUpload = useCallback(
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
+      setIsUploading(true);
+      try {
+        await rawUpload(e);
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [rawUpload],
+  );
+
+  const rawPasteUpload = usePasteUpload(editorRef, accountId);
+  const onPasteFiles = useCallback(
+    async (files: File[]) => {
+      setIsUploading(true);
+      try {
+        await rawPasteUpload(files);
+      } finally {
+        setIsUploading(false);
+      }
+    },
+    [rawPasteUpload],
+  );
+
   const onUploadAttachments = resolveUploadHandler(
     onUploadAttachmentsProp,
     accountId != null ? builtInUpload : undefined,
@@ -202,6 +229,7 @@ export const RichEditor = forwardRef<
             withMentions={withMentions}
             mentions={mentions}
             isModal={isModal}
+            isUploading={isUploading}
             onUploadAttachments={onUploadAttachments}
             onPasteFiles={accountId != null ? onPasteFiles : undefined}
             editorRef={editorRef}

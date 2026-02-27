@@ -16,6 +16,11 @@
   }
 }
 
+.editor-uploading {
+  pointer-events: none;
+  opacity: 0.6;
+}
+
 .controls-wrapper {
   display: flex;
   align-items: center;
