@@ -237,6 +237,7 @@ def test_create_instance__insert_kickoff_fields__ok(mocker):
         kickoff=template.kickoff_instance,
         template=template,
         api_name=field_api_name,
+        account=owner.account,
     )
     service = WorkflowService(
         user=owner,

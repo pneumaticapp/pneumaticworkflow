@@ -35,7 +35,7 @@ class TestUpdateTaskFields:
             tasks_count=1,
         )
         task = template.tasks.first()
-        field = FieldTemplate.objects.create(
+        FieldTemplate.objects.create(
             name='Name',
             type=FieldType.STRING,
             task=task,
@@ -43,6 +43,7 @@ class TestUpdateTaskFields:
             order=1,
             api_name='field-name-1',
             template=template,
+            account=user.account,
         )
         mocker.patch(
             'src.processes.services.templates.'
@@ -138,6 +139,7 @@ class TestUpdateTaskFields:
             order=1,
             api_name='field-name-1',
             template=template,
+            account=user.account,
         )
         mocker.patch(
             'src.processes.services.templates.'
@@ -306,6 +308,7 @@ class TestUpdateTaskFields:
             is_required=True,
             task=template_task,
             template=template,
+            account=user.account,
         )
         field_template_0 = FieldTemplate.objects.create(
             name='Field 0',
@@ -314,6 +317,7 @@ class TestUpdateTaskFields:
             is_required=False,
             task=template_task,
             template=template,
+            account=user.account,
         )
         field_template_2 = FieldTemplate.objects.create(
             name='Field 2',
@@ -322,6 +326,7 @@ class TestUpdateTaskFields:
             is_required=False,
             task=template_task,
             template=template,
+            account=user.account,
         )
         selection_template = FieldTemplateSelection.objects.create(
             field_template=field_template_2,
@@ -443,6 +448,7 @@ class TestUpdateTaskFields:
             api_name='field-name-1',
             template=template,
             description='',
+            account=user.account,
         )
         mocker.patch(
             'src.processes.services.templates.'
@@ -525,6 +531,7 @@ class TestUpdateTaskFields:
             api_name='field-name-1',
             template=template,
             description='',
+            account=user.account,
         )
         mocker.patch(
             'src.processes.services.templates.'
@@ -609,6 +616,7 @@ class TestUpdateTaskFields:
             order=1,
             api_name=field_api_name,
             template=template,
+            account=user.account,
         )
         mocker.patch(
             'src.processes.services.templates.'

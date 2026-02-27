@@ -67,6 +67,7 @@ class TestUpdateTemplate:
             type=FieldType.STRING,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
         create_integrations_mock = mocker.patch(
             'src.processes.services.templates.'
@@ -216,6 +217,7 @@ class TestUpdateTemplate:
             type=FieldType.STRING,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
         create_integrations_mock = mocker.patch(
             'src.processes.services.templates.'

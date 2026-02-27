@@ -111,6 +111,7 @@ def test_run__all__ok(api_client, mocker):
         kickoff=template.kickoff_instance,
         template=template,
         order=4,
+        account=user.account,
     )
     kickoff_field_2 = FieldTemplate.objects.create(
         name='User url',
@@ -119,6 +120,7 @@ def test_run__all__ok(api_client, mocker):
         kickoff=template.kickoff_instance,
         template=template,
         order=3,
+        account=user.account,
     )
     kickoff_field_3 = FieldTemplate.objects.create(
         name='User date',
@@ -127,6 +129,7 @@ def test_run__all__ok(api_client, mocker):
         kickoff=template.kickoff_instance,
         template=template,
         order=2,
+        account=user.account,
     )
     kickoff_field_4 = FieldTemplate.objects.create(
         name='User file',
@@ -135,6 +138,7 @@ def test_run__all__ok(api_client, mocker):
         kickoff=template.kickoff_instance,
         template=template,
         order=1,
+        account=user.account,
     )
     kickoff_field_5 = FieldTemplate.objects.create(
         name='Checkbox',
@@ -143,6 +147,7 @@ def test_run__all__ok(api_client, mocker):
         kickoff=template.kickoff_instance,
         template=template,
         order=0,
+        account=user.account,
     )
     selection_1 = FieldTemplateSelection.objects.create(
         value='selection 1',
@@ -185,6 +190,7 @@ def test_run__all__ok(api_client, mocker):
         description='Last description',
         task=task,
         template=template,
+        account=user.account,
     )
     task_2 = template.tasks.order_by('number')[1]
     task_2_description_template = (
@@ -448,6 +454,7 @@ def test_run__task_description_with_markdown__ok(
         is_required=False,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     task_template = template.tasks.get(number=1)
     task_template.description = '**Bold {{ %s }} text**' % field.api_name
@@ -501,6 +508,7 @@ def test_run__not_required_task_field__ok(mocker, api_client):
         is_required=False,
         type=FieldType.STRING,
         template=template,
+        account=user.account,
     )
     api_client.token_authenticate(user)
 
@@ -608,6 +616,7 @@ def test_run__performer_type_field_not_reused__ok(mocker, api_client):
         type=FieldType.USER,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user1.account,
     )
     template.tasks.first().delete_raw_performers()
     template.tasks.first().add_raw_performer(
@@ -670,6 +679,7 @@ def test_run__create_fields__ok(mocker, api_client):
         is_required=True,
         task=template.tasks.first(),
         template=template,
+        account=user.account,
     )
 
     # act
@@ -706,6 +716,7 @@ def test_run__skip_task_condition_by_two_predicates__ok(api_client, mocker):
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     second_kickoff_field = FieldTemplate.objects.create(
         name='Second name',
@@ -713,6 +724,7 @@ def test_run__skip_task_condition_by_two_predicates__ok(api_client, mocker):
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     template_task_1 = template.tasks.get(number=1)
     condition_template = ConditionTemplate.objects.create(
@@ -793,6 +805,7 @@ def test_run__conditions_end_workflow_and_skip_task__has_higher_priority(
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     template_task_1 = template.tasks.get(number=1)
     condition_template = ConditionTemplate.objects.create(
@@ -912,6 +925,7 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         kickoff=template.kickoff_instance,
         template=template,
         api_name=api_name_skip_field,
+        account=user.account,
     )
     selection = FieldTemplateSelection.objects.create(
         value='Click to skip first step',
@@ -928,6 +942,7 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         task=template_task_1,
         template=template,
         api_name=api_name_file,
+        account=user.account,
     )
     FieldTemplate.objects.create(
         order=2,
@@ -937,6 +952,7 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         task=template_task_1,
         template=template,
         api_name=api_name_url,
+        account=user.account,
     )
     FieldTemplate.objects.create(
         order=3,
@@ -946,6 +962,7 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         task=template_task_1,
         template=template,
         api_name=api_name_str,
+        account=user.account,
     )
     FieldTemplate.objects.create(
         order=4,
@@ -955,6 +972,7 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         task=template_task_1,
         template=template,
         api_name=api_name_text,
+        account=user.account,
     )
     checkbox_field = FieldTemplate.objects.create(
         order=5,
@@ -964,6 +982,7 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         task=template_task_1,
         template=template,
         api_name=api_name_checkbox,
+        account=user.account,
     )
     FieldTemplateSelection.objects.create(
         value='First checkbox',
@@ -984,6 +1003,7 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         task=template_task_1,
         template=template,
         api_name=api_name_radio,
+        account=user.account,
     )
     FieldTemplateSelection.objects.create(
         value='First radio',
@@ -1004,6 +1024,7 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         task=template_task_1,
         template=template,
         api_name=api_name_dropdown,
+        account=user.account,
     )
     FieldTemplateSelection.objects.create(
         value='First selection',
@@ -1308,6 +1329,7 @@ def test_run__end_workflow_condition_true__end_workflow(api_client, mocker):
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     second_kickoff_field = FieldTemplate.objects.create(
         name='Second name',
@@ -1315,6 +1337,7 @@ def test_run__end_workflow_condition_true__end_workflow(api_client, mocker):
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
 
     condition_template = ConditionTemplate.objects.create(
@@ -1401,6 +1424,7 @@ def test_run__skip_task_condition_by_one_of_predicates__ok(
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     second_kickoff_field = FieldTemplate.objects.create(
         name='Second name',
@@ -1408,6 +1432,7 @@ def test_run__skip_task_condition_by_one_of_predicates__ok(
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
 
     condition_template = ConditionTemplate.objects.create(
@@ -1620,6 +1645,7 @@ def test_run__type_url__ok(mocker, value, api_client):
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
 
     # act
@@ -1659,6 +1685,7 @@ def test_run__type_number__ok(mocker, api_client):
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     value = '30.01'
 
@@ -1715,6 +1742,7 @@ def test_run__type_url_invalid_url__validation_error(
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
 
     # act
@@ -1755,6 +1783,7 @@ def test_run__skip_task_1_event__ok(
         description='Last description',
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     task_template_1 = template.tasks.get(number=1)
     condition_template = ConditionTemplate.objects.create(
@@ -1845,6 +1874,7 @@ def test_run__field_type_radio_invalid__validation_error(
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     FieldTemplateSelection.objects.create(
         value='radio selection',
@@ -1899,6 +1929,7 @@ def test_run__field_type_dropdown_invalid__validation_error(
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     FieldTemplateSelection.objects.create(
         value='dropdown selection',
@@ -1952,6 +1983,7 @@ def test_run__field_type_checkbox_invalid__validation_error(
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     FieldTemplateSelection.objects.create(
         value='checkbox selection',
@@ -2005,6 +2037,7 @@ def test_run__field_type_checkbox_non_existent__validation_error(
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     FieldTemplateSelection.objects.create(
         value='checkbox selection',
@@ -2157,6 +2190,7 @@ def test_run__skip_task_no_performers__ok(
         name='Skip first task',
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     task_template_1 = template.tasks.get(number=1)
     condition_template = ConditionTemplate.objects.create(
@@ -2185,6 +2219,7 @@ def test_run__skip_task_no_performers__ok(
         description='Last description',
         task=task_template_1,
         template=template,
+        account=user.account,
     )
 
     # Set performer from first task field for second task
@@ -2387,6 +2422,7 @@ def test_update__user_field_with_group__ok(mocker, api_client):
         kickoff=template.kickoff_instance,
         template=template,
         api_name=field_api_name,
+        account=user.account,
     )
     template_task_1 = template.tasks.get(number=1)
     template_task_1.raw_performers.all().delete()
@@ -3578,6 +3614,7 @@ def test_run__wf_name_template_with_system_and_kickoff_vars__ok(
         kickoff=template.kickoff_instance,
         template=template,
         api_name=field_api_name,
+        account=user.account,
     )
     wf_name_template = 'Feedback from {{%s}} {{ date }}' % field_api_name
     template.wf_name_template = wf_name_template
@@ -3648,6 +3685,7 @@ def test_run__name_with_kickoff_vars_only__ok(
         kickoff=template.kickoff_instance,
         template=template,
         api_name=field_api_name_1,
+        account=user.account,
     )
     FieldTemplate.objects.create(
         name='User',
@@ -3656,6 +3694,7 @@ def test_run__name_with_kickoff_vars_only__ok(
         kickoff=template.kickoff_instance,
         template=template,
         api_name=field_api_name_2,
+        account=user.account,
     )
     FieldTemplate.objects.create(
         name='Url',
@@ -3664,6 +3703,7 @@ def test_run__name_with_kickoff_vars_only__ok(
         kickoff=template.kickoff_instance,
         template=template,
         api_name=field_api_name_3,
+        account=user.account,
     )
     wf_name_template = 'Feedback: {{%s}} from {{ %s }} Url: {{%s}}' % (
         field_api_name_1,
@@ -3726,6 +3766,7 @@ def test_run__string_abbreviation_after_insert_fields_vars__ok(
         kickoff=template.kickoff_instance,
         template=template,
         api_name=field_api_name,
+        account=user.account,
     )
     wf_name_template = 'a' * (WORKFLOW_NAME_LENGTH - 4)
     wf_name_template += '{{%s}}' % field_api_name
@@ -3788,6 +3829,7 @@ def test_run__user_provided_name__ok(
         kickoff=template.kickoff_instance,
         template=template,
         api_name=field_api_name,
+        account=user.account,
     )
     user_provided_wf_name = 'User provided workflow name'
 
@@ -4661,6 +4703,7 @@ def test_run__all_fields__ok(
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     kickoff_field_value = 'Some name'
     workflow = create_test_workflow(user=user, tasks_count=1)
@@ -4793,6 +4836,7 @@ def test_run__skip_and_start_condition_not_passed__not_start_task(
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     condition_template = ConditionTemplate.objects.create(
         task=template_task_3,

@@ -18,7 +18,7 @@ from src.processes.tests.fixtures import (
     create_test_account,
     create_test_template,
     create_test_user,
-    create_test_workflow,
+    create_test_workflow, create_test_owner,
 )
 from src.utils.validation import ErrorCode
 
@@ -311,45 +311,168 @@ class TestListTemplate:
         assert template_two.date_created > template_one.date_created
         assert template_three.date_created > template_two.date_created
 
-    def test_list__search(self, api_client):
-        user = create_test_user()
-        template = create_test_template(user)
-        another_template = create_test_template(user)
-        another_template.name = 'Not search name'
-        another_template.save()
-        search_text = template.name
+    def test_list__search_name__ok(self, api_client):
 
+        # arrange
+        user = create_test_owner()
+        template = create_test_template(user)
+        create_test_template(user, name='Not search name')
+        search_text = template.name
         api_client.token_authenticate(user)
+
+        # act
         response = api_client.get(f'/templates?search={search_text}')
 
+        # assert
         assert response.status_code == 200
         assert response.data[0]['id'] == template.id
 
-    def test_list__search_by_taskname(self, api_client):
-        user = create_test_user()
+    def test_list__search_description__ok(self, api_client):
+
+        # arrange
+        user = create_test_owner()
+        search_text = 'search'
+        template = create_test_template(user, tasks_count=1)
+        template.description = search_text
+        template.save()
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.get(f'/templates?search={search_text}')
+
+        # assert
+        assert response.status_code == 200
+        assert response.data[0]['id'] == template.id
+
+    def test_list__search_task_name__ok(self, api_client):
+
+        # arrange
+        user = create_test_owner()
         template = create_test_template(user)
         another_template = create_test_template(user)
         another_template.tasks.update(name='Not search name')
-        search_text = template.tasks.filter(number=1).first().name
-
+        search_text = template.tasks.get(number=1).name
         api_client.token_authenticate(user)
+
+        # act
         response = api_client.get(f'/templates?search={search_text}')
 
+        # assert
         assert response.status_code == 200
         assert response.data[0]['id'] == template.id
 
     def test_list__search_by_performer__ok(self, api_client):
-        user = create_test_user()
+
+        # arrange
+        user = create_test_owner()
         invited = create_invited_user(user)
         template = create_test_template(user)
         create_test_template(invited)
         search_text = user.email
-
         api_client.token_authenticate(user)
+
+        # act
         response = api_client.get(f'/templates?search={search_text}')
 
+        # assert
         assert response.status_code == 200
         assert response.data[0]['id'] == template.id
+
+    def test_list__search_priority_1__ok(self, api_client):
+
+        """ Search priority:
+            1. Template name (weight C);
+            2. Template description (weight D);
+        """
+
+        # arrange
+        user = create_test_owner()
+        search_text = 'search'
+
+        template_1 = create_test_template(
+            user=user,
+            tasks_count=1,
+            name=search_text,
+        )
+
+        create_test_template(user=user)
+
+        template_2 = create_test_template(user=user, tasks_count=1)
+        template_2.description = search_text
+        template_2.save()
+
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.get(f'/templates?search={search_text}')
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 2
+        assert response.data[0]['id'] == template_1.id
+        assert response.data[1]['id'] == template_2.id
+
+    def test_list__search_priority_2__ok(self, api_client):
+
+        """ Search priority:
+            1. Template name (weight C);
+            2. Template Task name (weight D);
+        """
+
+        # arrange
+        user = create_test_owner()
+        search_text = 'search'
+
+        template_2 = create_test_template(user=user, tasks_count=1)
+        template_2.tasks.update(name=search_text)
+
+        template_1 = create_test_template(
+            user=user,
+            tasks_count=1,
+            name=search_text,
+        )
+        create_test_template(user=user)
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.get(f'/templates?search={search_text}')
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 2
+        assert response.data[0]['id'] == template_1.id
+        assert response.data[1]['id'] == template_2.id
+
+    def test_list__search_priority_3__ok(self, api_client):
+
+        """ Search priority:
+            1. Template name (weight C);
+            2. Template Task description (weight D);
+        """
+
+        # arrange
+        user = create_test_owner()
+        search_text = 'search'
+
+        template_2 = create_test_template(user=user, tasks_count=1)
+        template_2.tasks.update(description=search_text)
+
+        template_1 = create_test_template(
+            user=user,
+            tasks_count=1,
+            name=search_text,
+        )
+        create_test_template(user=user)
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.get(f'/templates?search={search_text}')
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 2
+        assert response.data[0]['id'] == template_1.id
+        assert response.data[1]['id'] == template_2.id
 
     def test_list__track_analytics(self, api_client, mocker):
 

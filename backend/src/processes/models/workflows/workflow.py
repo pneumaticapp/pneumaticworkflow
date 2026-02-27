@@ -2,7 +2,6 @@
 from typing import Dict, Optional
 
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.search import SearchVectorField
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.utils import timezone
@@ -76,8 +75,6 @@ class Workflow(
     )
 
     objects = BaseSoftDeleteManager.from_queryset(WorkflowQuerySet)()
-
-    search_content = SearchVectorField(null=True)
 
     def webhook_payload(self):
         from src.processes.serializers.workflows.workflow import (

@@ -393,6 +393,7 @@ class TestCreateTemplateTask:
             api_name=field_api_name,
             kickoff=another_template.kickoff_instance,
             template=another_template,
+            account=user.account,
         )
 
         # act
@@ -750,6 +751,7 @@ class TestCreateTemplateTask:
             is_required=True,
             api_name=field_api_name,
             template=another_template,
+            account=user.account,
         )
 
         # act
@@ -2078,6 +2080,7 @@ class TestCreateTemplateRawPerformer:
             is_required=True,
             kickoff=another_template.kickoff_instance,
             template=another_template,
+            account=another_user.account,
         )
 
         user = create_test_user()

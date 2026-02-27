@@ -25,7 +25,7 @@ from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_template,
     create_test_user,
-    create_test_workflow,
+    create_test_workflow, create_test_account,
 )
 from src.services.markdown import MarkdownService
 from src.utils.validation import ErrorCode
@@ -543,6 +543,7 @@ def test_list__search__completed_prev_task_output_attachment__not_found(
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     FileAttachment.objects.create(
         name='fred.cena',
@@ -582,6 +583,7 @@ def test_list__search__active_task_field_attachment__not_found(
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     FileAttachment.objects.create(
         name='fred.cena',
@@ -695,6 +697,105 @@ def test_list__search__kickoff_description__not_found(api_client, mocker):
     assert len(response.data) == 0
 
 
+def test_list__search_priority_1__ok(api_client, mocker):
+
+    """ Search priority:
+        1. Task description (weight B);
+        3. Task TaskField value (weight C);
+        4. WorkflowEvent comment text (weight D);
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    search_text = 'search'
+
+    workflow_2 = create_test_workflow(owner, tasks_count=1)
+    task_2 = workflow_2.tasks.get(number=1)
+    TaskField.objects.create(
+        task=task_2,
+        type=FieldType.STRING,
+        workflow=workflow_2,
+        account=account,
+        value=search_text,
+    )
+
+    workflow_1 = create_test_workflow(owner, tasks_count=1)
+    task_1 = workflow_1.tasks.get(number=1)
+    task_1.description = search_text
+    task_1.save()
+
+    workflow_3 = create_test_workflow(owner, tasks_count=1)
+    task_3 = workflow_3.tasks.get(number=1)
+    WorkflowEventService.comment_created_event(
+        user=owner,
+        task=task_3,
+        text=search_text,
+        after_create_actions=False,
+    )
+    create_test_workflow(owner, tasks_count=1)
+
+    api_client.token_authenticate(owner)
+    mocker.patch('src.analysis.services.AnalyticService.search_search')
+
+    # act
+    response = api_client.get(f'/v3/tasks?search={search_text}')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 3
+    assert response.data[0]['id'] == task_1.id
+    assert response.data[1]['id'] == task_2.id
+    assert response.data[2]['id'] == task_3.id
+
+
+def test_list__search_priority_2__ok(api_client, mocker):
+
+    """ Search priority:
+        1. Workflow name (weight A)
+        2. Task TaskField value (weight C);
+        3. Task name (weight D);
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    search_text = 'search'
+
+    # workflow_1 = create_test_workflow(owner, tasks_count=1)
+
+    workflow_2 = create_test_workflow(owner, tasks_count=1)
+    task_2 = workflow_2.tasks.get(number=1)
+    TaskField.objects.create(
+        task=task_2,
+        type=FieldType.URL,
+        workflow=workflow_2,
+        account=account,
+        value=search_text,
+    )
+
+    workflow_1 = create_test_workflow(owner, tasks_count=1, name=search_text)
+    task_1 = workflow_1.tasks.get(number=1)
+
+    workflow_3 = create_test_workflow(owner, tasks_count=1)
+    task_3 = workflow_3.tasks.get(number=1)
+    task_3.name = search_text
+    task_3.save()
+
+    api_client.token_authenticate(owner)
+    mocker.patch('src.analysis.services.AnalyticService.search_search')
+
+    # act
+    response = api_client.get(f'/v3/tasks?search={search_text}')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 3
+    assert response.data[0]['id'] == task_1.id
+    assert response.data[1]['id'] == task_2.id
+    assert response.data[2]['id'] == task_3.id
+
+
 @pytest.mark.parametrize(
     'field_type',
     (
@@ -726,6 +827,7 @@ def test_list__search__in_active_task_field_value__ok(
         workflow=workflow,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
     api_client.token_authenticate(user)
     mocker.patch(
@@ -756,7 +858,7 @@ def test_list__search__in_active_task_field_value__ok(
         FieldType.URL,
     ),
 )
-def test_list__search__in_kickoff_field_value__ok(
+def test_list__search__in_kickoff_field_value__not_found(
     api_client,
     mocker,
     field_type,
@@ -765,7 +867,7 @@ def test_list__search__in_kickoff_field_value__ok(
     # arrange
     user = create_test_user()
     workflow = create_test_workflow(user, tasks_count=2)
-    task_1 = workflow.tasks.get(number=1)
+    workflow.tasks.get(number=1)
     value = 'text <fred@boy.com> some'
     TaskField.objects.create(
         kickoff=workflow.kickoff_instance,
@@ -774,6 +876,7 @@ def test_list__search__in_kickoff_field_value__ok(
         workflow=workflow,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
     api_client.token_authenticate(user)
     mocker.patch(
@@ -787,8 +890,7 @@ def test_list__search__in_kickoff_field_value__ok(
 
     # assert
     assert response.status_code == 200
-    assert len(response.data) == 1
-    assert response.data[0]['id'] == task_1.id
+    assert len(response.data) == 0
 
 
 @pytest.mark.parametrize(
@@ -815,6 +917,7 @@ def test_list__search__in_excluded_field_value__not_found(
         workflow=workflow,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
     api_client.token_authenticate(user)
     mocker.patch(
@@ -831,7 +934,7 @@ def test_list__search__in_excluded_field_value__not_found(
     assert len(response.data) == 0
 
 
-def test_list__search___full_uri_in_field___ok(
+def test_list__search__full_uri_in_field__ok(
     api_client,
     mocker,
 ):
@@ -842,12 +945,13 @@ def test_list__search___full_uri_in_field___ok(
     task_1 = workflow.tasks.get(number=1)
     value = 'https://translate.com/some-page?sl=ru&tl=ru&op=taranslate'
     TaskField.objects.create(
-        kickoff=workflow.kickoff_instance,
+        task=task_1,
         api_name='api-name-1',
         type=FieldType.URL,
         workflow=workflow,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
     api_client.token_authenticate(user)
     mocker.patch(
@@ -878,12 +982,13 @@ def test_list__search___domain__ok(
     task_1 = workflow.tasks.get(number=1)
     value = 'https://translate.com/some-page?sl=ru&tl=ru&op=taranslate'
     TaskField.objects.create(
-        kickoff=workflow.kickoff_instance,
+        task=task_1,
         api_name='api-name-1',
         type=FieldType.URL,
         workflow=workflow,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
     api_client.token_authenticate(user)
     mocker.patch(
@@ -922,6 +1027,7 @@ def test_list__search__markdown_filename_in_text_field__ok(
         type=FieldType.TEXT,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
 
     api_client.token_authenticate(user)
@@ -959,6 +1065,7 @@ def test_list__search__url_in_text_field__ok(
         type=FieldType.TEXT,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
     api_client.token_authenticate(user)
     mocker.patch(
@@ -995,6 +1102,7 @@ def test_list__search__email_in_text_field__ok(
         type=FieldType.TEXT,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
 
     api_client.token_authenticate(user)
@@ -1038,6 +1146,7 @@ def test_list__search__prev_task_markdown_filename_in_text__not_found(
         type=FieldType.TEXT,
         value=value,
         clear_value=MarkdownService.clear(value),
+        account=user.account,
     )
 
     api_client.token_authenticate(user)
@@ -1046,6 +1155,39 @@ def test_list__search__prev_task_markdown_filename_in_text__not_found(
         'search_search',
     )
     search_text = 'somefile.txt'
+
+    # act
+    response = api_client.get(f'/v3/tasks?search={search_text}')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
+
+
+def test_list__search__kickoff_field__not_found(
+    api_client,
+    mocker,
+):
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user, tasks_count=1)
+    value = 'https://translate.com/some-page?sl=ru&tl=ru&op=taranslate'
+    TaskField.objects.create(
+        kickoff=workflow.kickoff_instance,
+        api_name='api-name-1',
+        type=FieldType.URL,
+        workflow=workflow,
+        value=value,
+        clear_value=MarkdownService.clear(value),
+        account=user.account,
+    )
+    api_client.token_authenticate(user)
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'search_search',
+    )
+    search_text = 'translate.com'
 
     # act
     response = api_client.get(f'/v3/tasks?search={search_text}')

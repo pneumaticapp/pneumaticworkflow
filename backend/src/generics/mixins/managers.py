@@ -10,8 +10,13 @@ class NormalizeEmailMixin:
 
 class SearchSqlQueryMixin:
 
-    def _search_in(self, table: str, tsquery: str) -> str:
-        return f"{table}.search_content @@ {tsquery} = TRUE"
+    def _search_in(
+        self,
+        table: str,
+        tsquery: str,
+        field: str = 'search_content',
+    ) -> str:
+        return f"{table}.{field} @@ {tsquery} = TRUE"
 
     def _escape_tsquery_text(self, text: str) -> str:
         """ Escapes special characters for PostgreSQL tsquery.
@@ -42,7 +47,11 @@ class SearchSqlQueryMixin:
               word in single quotes
         """
 
-        words = self.search_text.replace("'", "''").split(' ')
+        prepared_search_text = re.sub(
+            r'https?:\/\/',
+            '', self.search_text,
+        )
+        words = prepared_search_text.replace("'", "''").split(' ')
         escaped_words = [self._escape_tsquery_text(word) for word in words]
 
         result = (" || ' | ' || ".join(
