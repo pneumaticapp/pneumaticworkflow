@@ -19,6 +19,7 @@ import {
   ChecklistPlugin,
   MentionsPlugin,
   PasteAttachmentPlugin,
+  DecoratorNavigationPlugin,
 } from '../../plugins';
 import { EditorControls } from '../EditorControls/EditorControls';
 import { EditorToolbar } from '../EditorToolbar/EditorToolbar';
@@ -109,6 +110,7 @@ export function LexicalEditorContent({
       <VariableTooltipPlugin />
       {withChecklists && <ChecklistPlugin />}
       <InsertAttachmentPlugin />
+      <DecoratorNavigationPlugin />
       {onPasteFiles ? (
         <PasteAttachmentPlugin onPasteFiles={onPasteFiles} />
       ) : null}
