@@ -92,6 +92,16 @@ class UserFirstDayWeek:
         (SATURDAY, 'Saturday'),
     )
 
+    LITERALS = Literal[
+        SUNDAY,
+        MONDAY,
+        TUESDAY,
+        WEDNESDAY,
+        THURSDAY,
+        FRIDAY,
+        SATURDAY,
+    ]
+
 
 class UserDateFormat:
 
@@ -137,6 +147,7 @@ class UserDateFormat:
         PY_USA_24: API_USA_24,
         PY_EUROPE_24: API_EUROPE_24,
     }
+    LITERALS = Literal[PY_USA_12, PY_EUROPE_12, PY_USA_24, PY_EUROPE_24]
 
 
 class LeaseLevel:

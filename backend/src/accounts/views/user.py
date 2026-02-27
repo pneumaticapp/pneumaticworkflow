@@ -17,10 +17,10 @@ from src.accounts.serializers.user import (
     ContactRequestSerializer,
     ContactResponseSerializer,
     UserSerializer,
-    UserWebsocketSerializer,
 )
+from src.accounts.services.exceptions import UserServiceException
+from src.accounts.services.user import UserService
 from src.analysis.mixins import BaseIdentifyMixin
-from src.analysis.services import AnalyticService
 from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import (
     CustomViewSetMixin,
@@ -29,11 +29,6 @@ from src.generics.permissions import (
     IsAuthenticated,
     UserIsAuthenticated,
 )
-from src.notifications.tasks import send_user_updated_notification
-from src.payment.stripe.exceptions import StripeServiceException
-from src.payment.stripe.service import StripeService
-from src.processes.enums import FieldType
-from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import Task
 from src.utils.validation import raise_validation_error
 
@@ -105,52 +100,17 @@ class UserViewSet(
         return self.response_ok(slz.data)
 
     def put(self, request, *args, **kwargs):
-        slz = self.get_serializer(
-            instance=request.user,
-            data=request.data,
-            partial=False,
-        )
+        user = request.user
+        slz = self.get_serializer(data=request.data)
         slz.is_valid(raise_exception=True)
-
-        old_first_name = request.user.first_name
-        old_last_name = request.user.last_name
-
-        user = slz.save()
-
-        if (
-            old_first_name != user.first_name or
-            old_last_name != user.last_name
-        ):
-            TaskField.objects.filter(
-                type=FieldType.USER,
-                user_id=user.id,
-            ).update(value=user.name)
-
-        if (
-            not user.account.is_tenant
-            and user.is_account_owner
-            and user.account.billing_sync
-        ):
-            try:
-                service = StripeService(
-                    user=user,
-                    auth_type=self.request.token_type,
-                    is_superuser=self.request.is_superuser,
-                )
-                service.update_customer()
-            except StripeServiceException as ex:
-                raise_validation_error(message=ex.message)
-
-        if slz.data.get('is_digest_subscriber') is False:
-            AnalyticService.users_digest(
-                user=user,
-                auth_type=self.request.token_type,
-                is_superuser=self.request.is_superuser,
-            )
-        send_user_updated_notification.delay(
-            logging=user.account.log_api_requests,
-            account_id=user.account.id,
-            user_data=UserWebsocketSerializer(user).data,
+        service = UserService(
+            user=user,
+            instance=user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
         )
-        self.identify(user)
-        return self.response_ok(slz.data)
+        try:
+            user = service.partial_update(**slz.validated_data)
+        except UserServiceException as ex:
+            raise_validation_error(message=ex.message)
+        return self.response_ok(UserSerializer(instance=user).data)
