@@ -13,3 +13,4 @@ export { VariableTooltipPlugin } from './VariableTooltipPlugin';
 export { ChecklistPlugin, INSERT_CHECKLIST_COMMAND } from './ChecklistPlugin';
 export { MentionsPlugin } from './MentionsPlugin';
 export { DecoratorNavigationPlugin } from './DecoratorNavigationPlugin';
+export { CopyAttachmentPlugin } from './CopyAttachmentPlugin/CopyAttachmentPlugin';
