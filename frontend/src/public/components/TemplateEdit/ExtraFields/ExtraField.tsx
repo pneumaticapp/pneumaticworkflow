@@ -46,7 +46,7 @@ interface IExtraFieldProps extends IWorkflowExtraFieldProps {
 function ExtraField(props: IExtraFieldProps) {
   const {
     field,
-    field: { apiName, isRequired = false },
+    field: { apiName, isRequired = false, isHidden = false },
     fieldsCount,
     showDropdown = true,
     deleteField,
@@ -160,6 +160,7 @@ function ExtraField(props: IExtraFieldProps) {
             apiName={apiName}
             isRequired={isRequired}
             isRequiredDisabled={getIsRequiredDisabled()}
+            isHidden={isHidden}
             onEditField={editField}
             onMoveFieldUp={handleMoveFieldUp}
             onMoveFieldDown={handleMoveFieldDown}

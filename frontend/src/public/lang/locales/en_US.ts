@@ -630,6 +630,7 @@ export const enMessages = {
   'template.kick-off-form-field-description-placeholder': 'Enter a hint (optional)',
   'template.kick-off-form-field-name-placeholder': 'Enter a field name',
   'template.kick-off-form-required': 'Required',
+  'template.kick-off-form-hidden': 'Hidden',
   'template.kick-off-form-number-field-tooltip-title': 'Numeric field',
   'template.kick-off-form-number-field-tooltop-text': 'The user can enter a number',
   'template.kick-off-form-small-text-field-tooltip-title': 'Small Text Field',

@@ -64,8 +64,6 @@ import { getGroups } from '../../redux/selectors/groups';
 
 import styles from './TaskCard.css';
 
-
-
 export enum ETaskCardViewMode {
   Single = 'single',
   List = 'list',
@@ -384,21 +382,22 @@ export function TaskCard({
         <p className={styles['task-output__title']}>
           <IntlMessages id="tasks.task-outputs-fill-help" />
         </p>
-
-        {outputValues?.map((field) => (
-          <ExtraFieldIntl
-            key={field.apiName}
-            field={field}
-            editField={handleEditField(field.apiName)}
-            showDropdown={false}
-            mode={EExtraFieldMode.ProcessRun}
-            labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
-            namePlaceholder={field.name}
-            descriptionPlaceholder={field.description}
-            wrapperClassName={styles['task-output__field']}
-            accountId={accountId}
-          />
-        ))}
+        {outputValues
+          ?.filter((field) => !field.isHidden)
+          .map((field) => (
+            <ExtraFieldIntl
+              key={field.apiName}
+              field={field}
+              editField={handleEditField(field.apiName)}
+              showDropdown={false}
+              mode={EExtraFieldMode.ProcessRun}
+              labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
+              namePlaceholder={field.name}
+              descriptionPlaceholder={field.description}
+              wrapperClassName={styles['task-output__field']}
+              accountId={accountId}
+            />
+          ))}
       </div>
     );
   };
@@ -565,11 +564,7 @@ export function TaskCard({
         onClose={() => setIsReturnModalOpen(false)}
         onConfirm={handleReturnTask}
       />
-      {helpText && <HelpModal
-        isOpen={isHelpModalOpen}
-        onClose={() => setIsHelpModalOpen(false)}
-        helpText={helpText}
-      />}
+      {helpText && <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} helpText={helpText} />}
       <div
         ref={wrapperRef}
         className={classnames(styles['container'], viewMode === ETaskCardViewMode.Guest && styles['container_guest'])}
@@ -605,11 +600,7 @@ export function TaskCard({
 
         <div className={styles['complete-form']}>
           {helpText && (
-            <button
-              type="button"
-              className={styles['help-trigger']}
-              onClick={() => setIsHelpModalOpen(true)}
-            >
+            <button type="button" className={styles['help-trigger']} onClick={() => setIsHelpModalOpen(true)}>
               <span className={styles['help-trigger__label']}>
                 {formatMessage({ id: 'task.help', defaultMessage: 'Help' })}
               </span>

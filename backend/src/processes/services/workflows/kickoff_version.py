@@ -23,6 +23,7 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
                 'description': template['description'],
                 'type': template['type'],
                 'is_required': template['is_required'],
+                'is_hidden': template.get('is_hidden', False),
                 'order': template['order'],
                 'workflow': self.instance.workflow,
             },
