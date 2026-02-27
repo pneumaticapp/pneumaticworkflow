@@ -11,6 +11,7 @@ jest.mock('../RichEditor', () => {
       focus: jest.fn(),
       insertVariable: jest.fn(),
       getEditor: jest.fn(),
+      clearContent: jest.fn(),
     }));
     return (
       <div data-testid="rich-editor-root" className={props.className as string}>
@@ -35,13 +36,14 @@ describe('RichEditor', () => {
     expect(screen.getByTestId('rich-editor-root')).toBeInTheDocument();
   });
 
-  it('exposes focus, insertVariable, getEditor via ref', () => {
+  it('exposes focus, insertVariable, getEditor, clearContent via ref', () => {
     const ref = React.createRef<IRichEditorHandle>();
     render(<RichEditor {...defaultProps} ref={ref} />);
     expect(ref.current).not.toBeNull();
     expect(typeof ref.current!.focus).toBe('function');
     expect(typeof ref.current!.insertVariable).toBe('function');
     expect(typeof ref.current!.getEditor).toBe('function');
+    expect(typeof ref.current!.clearContent).toBe('function');
   });
 
   it('renders title when provided', () => {
@@ -84,6 +86,12 @@ describe('RichEditor', () => {
     const ref = React.createRef<IRichEditorHandle>();
     render(<RichEditor {...defaultProps} ref={ref} />);
     expect(() => ref.current?.focus()).not.toThrow();
+  });
+
+  it('clearContent can be called without throwing', () => {
+    const ref = React.createRef<IRichEditorHandle>();
+    render(<RichEditor {...defaultProps} ref={ref} />);
+    expect(() => ref.current?.clearContent()).not.toThrow();
   });
 
   it('renders with defaultValue prop', () => {

@@ -113,6 +113,8 @@ export function EditorToolbar({
     ? allAttachmentButtons.filter((btn) => btn.attachmentType === 'file')
     : allAttachmentButtons;
 
+  const showAttachmentButtons = Boolean(onUploadAttachments);
+
   return (
     <div className={styles['toolbar-wrapper']}>
       <div
@@ -142,7 +144,8 @@ export function EditorToolbar({
             <div className={styles['separator']} aria-hidden />
           </>
         )}
-        {attachmentButtons.map(({ Icon, labels, accept }) => (
+        {showAttachmentButtons &&
+          attachmentButtons.map(({ Icon, labels, accept }) => (
           <AttachmentToolbarButton
             key={labels.aria}
             tooltipText={labels.tooltip}
@@ -153,7 +156,7 @@ export function EditorToolbar({
           >
             <Icon />
           </AttachmentToolbarButton>
-        ))}
+          ))}
       </div>
     </div>
   );
