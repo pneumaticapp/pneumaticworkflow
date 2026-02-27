@@ -4,7 +4,7 @@ import { applyMarkdownToEditor } from '../convertMarkdownToLexical';
 const mockPrepareChecklistsForRendering = jest.fn();
 const mockConvertFromMarkdownString = jest.fn();
 
-jest.mock('../../../../../utils/checklists/prepareChecklistsForRendering', () => ({
+jest.mock('../../../../utils/checklists/prepareChecklistsForRendering', () => ({
   prepareChecklistsForRendering: (md: string) => mockPrepareChecklistsForRendering(md),
 }));
 
@@ -73,7 +73,7 @@ describe('applyMarkdownToEditor', () => {
   });
 
   it('calls update when templateVariables are passed', () => {
-    const { EExtraFieldType } = require('../../../../../types/template');
+    const { EExtraFieldType } = require('../../../../types/template');
     const templateVariables = [
       { apiName: 'var1', title: 'Var 1', subtitle: '', type: EExtraFieldType.Text },
     ];

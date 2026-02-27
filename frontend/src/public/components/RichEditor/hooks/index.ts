@@ -1,4 +1,4 @@
-export { useAttachmentUpload } from './useAttachmentUpload';
+export { useAttachmentUpload, usePasteUpload } from './useAttachmentUpload';
 export { useFloatingFormPosition } from './useFloatingFormPosition';
 export type {
   IUseFloatingFormPositionOptions,

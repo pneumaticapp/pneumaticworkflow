@@ -5,6 +5,8 @@ export {
   INSERT_ATTACHMENT_COMMAND,
   type TInsertAttachmentPayload,
 } from './InsertAttachmentPlugin';
+export { PasteAttachmentPlugin } from './PasteAttachmentPlugin/PasteAttachmentPlugin';
+export type { IPasteAttachmentPluginProps } from './PasteAttachmentPlugin/PasteAttachmentPlugin';
 export { LinkPluginProvider, useLinkPlugin } from './LinkPlugin/index';
 export { LinkTooltipPlugin } from './LinkTooltipPlugin';
 export { VariableTooltipPlugin } from './VariableTooltipPlugin';

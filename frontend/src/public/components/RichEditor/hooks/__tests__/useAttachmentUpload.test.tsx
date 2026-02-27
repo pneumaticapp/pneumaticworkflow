@@ -3,23 +3,26 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { MutableRefObject } from 'react';
 import type { LexicalEditor } from 'lexical';
-import { useAttachmentUpload } from '../useAttachmentUpload';
-import { INSERT_ATTACHMENT_COMMAND } from '../../../plugins';
+import { useAttachmentUpload, usePasteUpload } from '../useAttachmentUpload';
+import { INSERT_ATTACHMENT_COMMAND } from '../../plugins';
 
-jest.mock('../../../../../../utils/uploadFiles', () => ({
+jest.mock('../../../../utils/uploadFiles', () => ({
   uploadFiles: jest.fn(),
 }));
-jest.mock('../../../../../Attachments/utils/getAttachmentType', () => ({
+jest.mock('../../../Attachments/utils/getAttachmentType', () => ({
   getAttachmentTypeByUrl: jest.fn(),
+  getAttachmentTypeByFilename: jest.fn(),
 }));
-jest.mock('../../../../../UI/Notifications', () => ({
+jest.mock('../../../UI/Notifications', () => ({
   NotificationManager: { warning: jest.fn() },
 }));
 
-const uploadFiles = require('../../../../../../utils/uploadFiles').uploadFiles as jest.Mock;
+const uploadFiles = require('../../../../utils/uploadFiles').uploadFiles as jest.Mock;
 const getAttachmentTypeByUrl =
-  require('../../../../../Attachments/utils/getAttachmentType').getAttachmentTypeByUrl as jest.Mock;
-const NotificationManager = require('../../../../../UI/Notifications').NotificationManager;
+  require('../../../Attachments/utils/getAttachmentType').getAttachmentTypeByUrl as jest.Mock;
+const getAttachmentTypeByFilename =
+  require('../../../Attachments/utils/getAttachmentType').getAttachmentTypeByFilename as jest.Mock;
+const NotificationManager = require('../../../UI/Notifications').NotificationManager;
 
 function TestWrapper({
   editorRef,
@@ -50,6 +53,7 @@ describe('useAttachmentUpload', () => {
     jest.clearAllMocks();
     editorRef = { current: { dispatchCommand } as unknown as LexicalEditor };
     getAttachmentTypeByUrl.mockReturnValue('file');
+    getAttachmentTypeByFilename.mockReturnValue(null);
   });
 
   describe('successful upload', () => {
@@ -176,6 +180,137 @@ describe('useAttachmentUpload', () => {
       const input = screen.getByTestId('file-input') as HTMLInputElement;
       await userEvent.upload(input, new File([''], 'x.pdf'));
       expect(input.value).toBe('');
+    });
+  });
+});
+
+describe('usePasteUpload', () => {
+  let editorRef: MutableRefObject<LexicalEditor | null>;
+  const dispatchCommand = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    editorRef = { current: { dispatchCommand } as unknown as LexicalEditor };
+    getAttachmentTypeByUrl.mockReturnValue('file');
+    getAttachmentTypeByFilename.mockReturnValue(null);
+  });
+
+  function TestPasteWrapper({
+    editorRef,
+    accountId,
+    handlerRef,
+  }: {
+    editorRef: MutableRefObject<LexicalEditor | null>;
+    accountId: number | undefined;
+    handlerRef?: React.MutableRefObject<((files: File[]) => Promise<void>) | null>;
+  }) {
+    const handlePaste = usePasteUpload(editorRef, accountId);
+    if (handlerRef) handlerRef.current = handlePaste;
+    return <div data-testid="paste-wrapper" />;
+  }
+
+  describe('successful upload', () => {
+    it('calls uploadFiles with files array and accountId', async () => {
+      const handlerRef: React.MutableRefObject<((files: File[]) => Promise<void>) | null> = {
+        current: null,
+      };
+      uploadFiles.mockResolvedValue([{ url: 'https://cdn.example.com/pasted.png', id: 1, name: 'pasted.png' }]);
+      render(<TestPasteWrapper editorRef={editorRef} accountId={42} handlerRef={handlerRef} />);
+      const file = new File(['content'], 'pasted.png', { type: 'image/png' });
+      await handlerRef.current!([file]);
+      expect(uploadFiles).toHaveBeenCalledWith([file], 42);
+    });
+
+    it('dispatches INSERT_ATTACHMENT_COMMAND for each uploaded file', async () => {
+      const handlerRef: React.MutableRefObject<((files: File[]) => Promise<void>) | null> = {
+        current: null,
+      };
+      uploadFiles.mockResolvedValue([
+        { url: 'https://a.com/1.png', id: 1, name: '1.png' },
+        { url: 'https://a.com/2.jpg', id: 2, name: '2.jpg' },
+      ]);
+      getAttachmentTypeByUrl.mockImplementation((url: string) =>
+        url.endsWith('.jpg') ? 'image' : 'image',
+      );
+      render(<TestPasteWrapper editorRef={editorRef} accountId={1} handlerRef={handlerRef} />);
+      await handlerRef.current!([
+        new File([''], '1.png'),
+        new File([''], '2.jpg'),
+      ]);
+      expect(dispatchCommand).toHaveBeenCalledTimes(2);
+      expect(dispatchCommand).toHaveBeenNthCalledWith(1, INSERT_ATTACHMENT_COMMAND, {
+        id: 1,
+        url: 'https://a.com/1.png',
+        name: '1.png',
+        type: 'image',
+      });
+      expect(dispatchCommand).toHaveBeenNthCalledWith(2, INSERT_ATTACHMENT_COMMAND, {
+        id: 2,
+        url: 'https://a.com/2.jpg',
+        name: '2.jpg',
+        type: 'image',
+      });
+    });
+
+    it('does not dispatch for items without url', async () => {
+      const handlerRef: React.MutableRefObject<((files: File[]) => Promise<void>) | null> = {
+        current: null,
+      };
+      uploadFiles.mockResolvedValue([
+        { id: 1, name: 'no-url.pdf' },
+        { url: 'https://a.com/yes.pdf', id: 2, name: 'yes.pdf' },
+      ]);
+      render(<TestPasteWrapper editorRef={editorRef} accountId={1} handlerRef={handlerRef} />);
+      await handlerRef.current!([new File([''], 'a.pdf')]);
+      expect(dispatchCommand).toHaveBeenCalledTimes(1);
+      expect(dispatchCommand).toHaveBeenCalledWith(
+        INSERT_ATTACHMENT_COMMAND,
+        expect.objectContaining({ url: 'https://a.com/yes.pdf' }),
+      );
+    });
+  });
+
+  describe('early return', () => {
+    it('does not call uploadFiles when files array is empty', async () => {
+      const handlerRef: React.MutableRefObject<((files: File[]) => Promise<void>) | null> = {
+        current: null,
+      };
+      render(<TestPasteWrapper editorRef={editorRef} accountId={1} handlerRef={handlerRef} />);
+      await handlerRef.current!([]);
+      expect(uploadFiles).not.toHaveBeenCalled();
+    });
+
+    it('does not call uploadFiles when accountId is undefined', async () => {
+      const handlerRef: React.MutableRefObject<((files: File[]) => Promise<void>) | null> = {
+        current: null,
+      };
+      render(<TestPasteWrapper editorRef={editorRef} accountId={undefined} handlerRef={handlerRef} />);
+      await handlerRef.current!([new File([''], 'x.pdf')]);
+      expect(uploadFiles).not.toHaveBeenCalled();
+    });
+
+    it('does not call uploadFiles when editorRef.current is null', async () => {
+      editorRef.current = null;
+      const handlerRef: React.MutableRefObject<((files: File[]) => Promise<void>) | null> = {
+        current: null,
+      };
+      render(<TestPasteWrapper editorRef={editorRef} accountId={1} handlerRef={handlerRef} />);
+      await handlerRef.current!([new File([''], 'x.pdf')]);
+      expect(uploadFiles).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('error handling', () => {
+    it('calls NotificationManager.warning on uploadFiles error', async () => {
+      const handlerRef: React.MutableRefObject<((files: File[]) => Promise<void>) | null> = {
+        current: null,
+      };
+      uploadFiles.mockRejectedValue(new Error('Network error'));
+      render(<TestPasteWrapper editorRef={editorRef} accountId={1} handlerRef={handlerRef} />);
+      await handlerRef.current!([new File([''], 'x.pdf')]);
+      expect(NotificationManager.warning).toHaveBeenCalledWith({
+        message: 'workflows.tasks-failed-to-upload-files',
+      });
     });
   });
 });

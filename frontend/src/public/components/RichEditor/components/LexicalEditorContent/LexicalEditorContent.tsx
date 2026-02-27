@@ -18,6 +18,7 @@ import {
   VariableTooltipPlugin,
   ChecklistPlugin,
   MentionsPlugin,
+  PasteAttachmentPlugin,
 } from '../../plugins';
 import { EditorControls } from '../EditorControls/EditorControls';
 import { EditorToolbar } from '../EditorToolbar/EditorToolbar';
@@ -36,6 +37,7 @@ export function LexicalEditorContent({
   mentions,
   isModal,
   onUploadAttachments,
+  onPasteFiles,
   editorRef,
   editorContainerRef,
   onChange,
@@ -100,6 +102,9 @@ export function LexicalEditorContent({
       <VariableTooltipPlugin />
       {withChecklists && <ChecklistPlugin />}
       <InsertAttachmentPlugin />
+      {onPasteFiles ? (
+        <PasteAttachmentPlugin onPasteFiles={onPasteFiles} />
+      ) : null}
       {showMentions && mentions ? <MentionsPlugin mentions={mentions} /> : null}
     </div>
   );

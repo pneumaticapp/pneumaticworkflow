@@ -18,7 +18,7 @@ import {
 import { LexicalComposer } from '@lexical/react/LexicalComposer';
 
 import { EditorHeader } from './components/EditorHeader';
-import { useAttachmentUpload } from './hooks';
+import { useAttachmentUpload, usePasteUpload } from './hooks';
 import type { IRichEditorHandle, IRichEditorProps } from './types';
 import { lexicalTheme } from './theme';
 import { LEXICAL_NODES } from './nodes';
@@ -87,6 +87,7 @@ export const RichEditor = forwardRef<
   };
 
   const builtInUpload = useAttachmentUpload(editorRef, accountId);
+  const onPasteFiles = usePasteUpload(editorRef, accountId);
   const onUploadAttachments = resolveUploadHandler(
     onUploadAttachmentsProp,
     accountId != null ? builtInUpload : undefined,
@@ -202,6 +203,7 @@ export const RichEditor = forwardRef<
             mentions={mentions}
             isModal={isModal}
             onUploadAttachments={onUploadAttachments}
+            onPasteFiles={accountId != null ? onPasteFiles : undefined}
             editorRef={editorRef}
             editorContainerRef={editorContainerRef}
             onChange={onChange}

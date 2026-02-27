@@ -11,3 +11,13 @@ config/how
 *storybook.log
 .env
 .cursor
+
+# Playwright
+tests/e2e/.auth/
+test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
+.blob/
+docs/

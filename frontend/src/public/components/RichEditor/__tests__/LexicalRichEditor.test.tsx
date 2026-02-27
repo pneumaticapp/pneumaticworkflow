@@ -8,7 +8,7 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import type { IRichEditorHandle, IRichEditorProps } from '../types';
 
-jest.mock('../LexicalRichEditor', () => {
+jest.mock('../RichEditor', () => {
   const React = require('react');
   return {
     RichEditor: React.forwardRef(
@@ -20,6 +20,7 @@ jest.mock('../LexicalRichEditor', () => {
           focus: jest.fn(),
           insertVariable: jest.fn(),
           getEditor: jest.fn(),
+          clearContent: jest.fn(),
         }));
         return React.createElement(
           'div',
@@ -35,7 +36,7 @@ jest.mock('../LexicalRichEditor', () => {
   };
 });
 
-const { RichEditor } = require('../LexicalRichEditor');
+const { RichEditor } = require('../RichEditor');
 
 const defaultProps: IRichEditorProps = {
   handleChange: jest.fn().mockResolvedValue(''),
@@ -65,13 +66,14 @@ describe('LexicalRichEditor (contract)', () => {
     expect(screen.getByTestId('rich-editor-root')).toHaveClass('my-editor');
   });
 
-  it('ref exposes focus, insertVariable, getEditor', () => {
+  it('ref exposes focus, insertVariable, getEditor, clearContent', () => {
     const ref = React.createRef<IRichEditorHandle>();
     render(React.createElement(RichEditor, { ...defaultProps, ref }));
     expect(ref.current).not.toBeNull();
     expect(typeof ref.current?.focus).toBe('function');
     expect(typeof ref.current?.insertVariable).toBe('function');
     expect(typeof ref.current?.getEditor).toBe('function');
+    expect(typeof ref.current?.clearContent).toBe('function');
   });
 
   it('insertVariable with empty args does not throw', () => {
