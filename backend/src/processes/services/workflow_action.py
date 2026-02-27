@@ -16,6 +16,7 @@ from src.notifications.tasks import (
     send_new_task_websocket,
     send_removed_task_notification,
     send_resumed_workflow_notification,
+    send_completed_workflow_notification,
 )
 from src.processes.enums import (
     ConditionAction,
@@ -242,6 +243,12 @@ class WorkflowActionService:
         self.workflow.status = WorkflowStatus.DONE
         self.workflow.date_completed = timezone.now()
         self.workflow.save(update_fields=update_fields)
+        if self.workflow.completion_notification:
+            send_completed_workflow_notification.delay(
+                logging=self.account.log_api_requests,
+                workflow_id=self.workflow.id,
+                logo_lg=self.account.logo_lg,
+            )
         if WebHook.objects.on_account(self.account.id).wf_completed().exists():
             send_workflow_completed_webhook.delay(
                 user_id=self.user.id,

@@ -96,6 +96,7 @@ def test_send_workflow_comment_watched__first_watched__ok(mocker):
     send_workflow_event_mock.assert_called_once_with(
         data=data,
         account_id=account.id,
+        logging=account.log_api_requests,
         logo_lg=account.logo_lg,
     )
 
@@ -159,4 +160,5 @@ def test_send_workflow_comment_watched__second_watched__ok(mocker):
         data=data,
         account_id=account.id,
         logo_lg=account.logo_lg,
+        logging=account.log_api_requests,
     )

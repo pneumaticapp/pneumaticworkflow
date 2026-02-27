@@ -39,6 +39,7 @@ def test_fields__active_template__ok(api_client):
         template=template,
         order=1,
         api_name='field-1',
+        account=user.account,
     )
     task = template.tasks.first()
     task_field = FieldTemplate.objects.create(
@@ -49,6 +50,7 @@ def test_fields__active_template__ok(api_client):
         template=template,
         order=2,
         api_name='field-2',
+        account=user.account,
     )
 
     # act
@@ -349,6 +351,7 @@ def test_fields__ordering__ok(api_client):
         kickoff=kickoff,
         template=template,
         order=2,
+        account=user.account,
     )
     kickoff_field_1 = FieldTemplate.objects.create(
         name='Field',
@@ -356,6 +359,7 @@ def test_fields__ordering__ok(api_client):
         kickoff=kickoff,
         template=template,
         order=1,
+        account=user.account,
     )
     task_1 = template.tasks.get(number=1)
     task_1_field_1 = FieldTemplate.objects.create(
@@ -364,6 +368,7 @@ def test_fields__ordering__ok(api_client):
         task=task_1,
         template=template,
         order=1,
+        account=user.account,
     )
     task_1_field_2 = FieldTemplate.objects.create(
         name='Field',
@@ -371,6 +376,7 @@ def test_fields__ordering__ok(api_client):
         task=task_1,
         template=template,
         order=2,
+        account=user.account,
     )
     task_2 = template.tasks.get(number=2)
     task_2_field_1 = FieldTemplate.objects.create(
@@ -379,6 +385,7 @@ def test_fields__ordering__ok(api_client):
         task=task_2,
         template=template,
         order=1,
+        account=user.account,
     )
     task_2_field_2 = FieldTemplate.objects.create(
         name='Field',
@@ -386,6 +393,7 @@ def test_fields__ordering__ok(api_client):
         task=task_2,
         template=template,
         order=2,
+        account=user.account,
     )
     # act
     response = api_client.get(f'/templates/{template.id}/fields')

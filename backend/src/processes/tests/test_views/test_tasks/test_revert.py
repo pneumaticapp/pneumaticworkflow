@@ -439,6 +439,7 @@ def test_revert__to_first_skipped_task__validation_error(api_client):
         type=FieldType.STRING,
         workflow=workflow,
         value='Yes',
+        account=owner.account,
     )
     condition = Condition.objects.create(
         task=task_1,
@@ -499,6 +500,7 @@ def test_revert__all_tasks_skipped__validation_error(api_client):
         type=FieldType.STRING,
         workflow=workflow,
         value='Yes',
+        account=owner.account,
     )
     condition = Condition.objects.create(
         task=task_1,
@@ -527,6 +529,7 @@ def test_revert__all_tasks_skipped__validation_error(api_client):
         type=FieldType.STRING,
         workflow=workflow,
         value='Yes',
+        account=owner.account,
     )
     condition_2 = Condition.objects.create(
         task=task_2,

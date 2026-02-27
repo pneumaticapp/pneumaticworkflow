@@ -7,7 +7,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models.query import QuerySet
 
-from src.accounts.models import UserGroup
+from src.accounts.models import UserGroup, AccountBaseMixin
 from src.processes.enums import (
     ConditionAction,
     FieldType,
@@ -49,6 +49,8 @@ class WorkflowMixin(models.Model):
     date_created = models.DateTimeField(auto_now_add=True)
     finalizable = models.BooleanField(default=False)
     version = models.IntegerField(default=0)
+    reminder_notification = models.BooleanField(default=False)
+    completion_notification = models.BooleanField(default=False)
 
     @abstractmethod
     def get_kickoff_output_fields(
@@ -171,7 +173,7 @@ class TaskMixin(models.Model):
     )
 
 
-class FieldMixin(models.Model):
+class FieldMixin(AccountBaseMixin):
 
     class Meta:
         abstract = True

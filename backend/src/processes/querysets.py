@@ -758,6 +758,18 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
     def completed(self):
         return self.filter(is_completed=True)
 
+    def completed_task(self):
+        return self.filter(task__status=TaskStatus.COMPLETED)
+
+    def acd_task_status(self):
+        return self.filter(
+            task__status__in=(
+                TaskStatus.ACTIVE,
+                TaskStatus.COMPLETED,
+                TaskStatus.DELAYED,
+            ),
+        )
+
     def not_completed(self):
         return self.filter(is_completed=False)
 
@@ -805,6 +817,21 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
         group_users = self.filter(group__isnull=False).values_list(
             'group__users__id',
             'group__users__email',
+            'group__users__is_new_tasks_subscriber',
+        )
+        return set(direct_users).union(set(group_users))
+
+    def get_user_ids_name_emails_subscriber_set(self):
+        direct_users = self.filter(user__isnull=False).values_list(
+            'user_id',
+            'user__email',
+            'user__first_name',
+            'user__is_new_tasks_subscriber',
+        )
+        group_users = self.filter(group__isnull=False).values_list(
+            'group__users__id',
+            'group__users__email',
+            'group__users__first_name',
             'group__users__is_new_tasks_subscriber',
         )
         return set(direct_users).union(set(group_users))
