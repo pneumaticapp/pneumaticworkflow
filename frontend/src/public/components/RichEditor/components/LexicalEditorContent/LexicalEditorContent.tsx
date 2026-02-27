@@ -22,6 +22,7 @@ import {
 } from '../../plugins';
 import { EditorControls } from '../EditorControls/EditorControls';
 import { EditorToolbar } from '../EditorToolbar/EditorToolbar';
+import { Loader } from '../../../UI/Loader';
 import type { ILexicalEditorContentProps } from '../../types';
 
 import styles from './LexicalEditorContent.css';
@@ -36,6 +37,7 @@ export function LexicalEditorContent({
   withMentions,
   mentions,
   isModal,
+  isUploading,
   onUploadAttachments,
   onPasteFiles,
   editorRef,
@@ -52,8 +54,13 @@ export function LexicalEditorContent({
   return (
     <div
       ref={editorContainerRef as React.RefObject<HTMLDivElement>}
-      className={classnames(styles['editor'], multiline && styles['editor-multiline'])}
+      className={classnames(
+        styles['editor'],
+        multiline && styles['editor-multiline'],
+        isUploading && styles['editor-uploading'],
+      )}
     >
+      <Loader isLoading={isUploading} />
       <RichTextPlugin
         contentEditable={
           <ContentEditable

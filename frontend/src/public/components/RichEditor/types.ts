@@ -54,6 +54,7 @@ export interface ILexicalEditorContentProps {
   withMentions: boolean;
   mentions: TMentionData[] | undefined;
   isModal: boolean | undefined;
+  isUploading?: boolean;
   onUploadAttachments?: (e: React.ChangeEvent<HTMLInputElement>) => Promise<void>;
   onPasteFiles?: (files: File[]) => Promise<void>;
   editorRef: MutableRefObject<LexicalEditor | null>;
