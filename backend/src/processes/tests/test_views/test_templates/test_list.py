@@ -12,10 +12,12 @@ from src.processes.enums import (
     TemplateType,
 )
 from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.starter import TemplateStarter
 from src.processes.models.templates.template import Template
 from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
+    create_test_group,
     create_test_template,
     create_test_user,
     create_test_workflow,
@@ -702,3 +704,79 @@ class TestListTemplate:
         assert response.data['count'] == 4
         assert len(response.data['results']) == 1
         assert response.data['results'][0]['id'] == template.id
+
+    def test_list__template_starter_user__not_in_list(self, api_client):
+        """
+        Template starter (user) should NOT see template in list.
+        Starters can only run workflows, not view templates in list.
+        """
+
+        # arrange
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        owner = create_test_user(
+            account=account,
+            is_account_owner=True,
+        )
+        starter_user = create_test_user(
+            account=account,
+            email='starter@test.test',
+            is_account_owner=False,
+        )
+        template = create_test_template(
+            user=owner,
+            is_active=True,
+        )
+        TemplateStarter.objects.create(
+            template=template,
+            account=account,
+            type=OwnerType.USER,
+            user_id=starter_user.id,
+        )
+        api_client.token_authenticate(starter_user)
+
+        # act
+        response = api_client.get('/templates')
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 0
+
+    def test_list__template_starter_group__not_in_list(self, api_client):
+        """
+        Template starter (via group) should NOT see template in list.
+        Starters can only run workflows, not view templates in list.
+        """
+
+        # arrange
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        owner = create_test_user(
+            account=account,
+            is_account_owner=True,
+        )
+        starter_user = create_test_user(
+            account=account,
+            email='starter@test.test',
+            is_account_owner=False,
+        )
+        group = create_test_group(
+            account=account,
+            users=[starter_user],
+        )
+        template = create_test_template(
+            user=owner,
+            is_active=True,
+        )
+        TemplateStarter.objects.create(
+            template=template,
+            account=account,
+            type=OwnerType.GROUP,
+            group=group,
+        )
+        api_client.token_authenticate(starter_user)
+
+        # act
+        response = api_client.get('/templates')
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 0

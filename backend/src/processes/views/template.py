@@ -164,7 +164,6 @@ class TemplateViewSet(
             'clone',
             'destroy',
             'discard_changes',
-            'presets',
             'preset',
         ):
             return (
@@ -175,13 +174,21 @@ class TemplateViewSet(
                 UserIsAdminOrAccountOwner(),
                 TemplateOwnerPermission(),
             )
-        if self.action in ('retrieve', 'viewers', 'starters'):
+        if self.action in ('viewers', 'starters', 'presets'):
             return (
                 UserIsAuthenticated(),
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
                 UsersOverlimitedPermission(),
                 TemplateOwnerOrViewerPermission(),
+            )
+        if self.action == 'retrieve':
+            return (
+                UserIsAuthenticated(),
+                ExpiredSubscriptionPermission(),
+                BillingPlanPermission(),
+                UsersOverlimitedPermission(),
+                TemplateOwnerPermission(),
             )
         if self.action == 'run':
             return (
@@ -244,19 +251,35 @@ class TemplateViewSet(
             pass  # No additional filtering needed
         # For other users (including admins), apply filtering logic
         elif self.action == 'fields':
-            # Template owner (if not workflows) or Workflow Member
+            # Template owner, viewer, or Workflow Member
             qst = qst.filter(
                 Q(owners__type='user', owners__user_id=user.id,
                   owners__is_deleted=False) |
                 Q(owners__type='group', owners__group__users__id=user.id,
                   owners__is_deleted=False) |
+                Q(viewers__type='user', viewers__user_id=user.id,
+                  viewers__is_deleted=False) |
+                Q(viewers__type='group', viewers__group__users__id=user.id,
+                  viewers__is_deleted=False) |
                 Q(workflows__members=user.id),
             ).distinct()
         elif self.action == 'run':
             # Template owners, viewers, and starters can run workflows
             qst = qst.with_template_access(user.id)
+        elif self.action in ('viewers', 'starters', 'presets'):
+            # Template owners and viewers can access these read-only actions
+            qst = qst.filter(
+                Q(owners__type='user', owners__user_id=user.id,
+                  owners__is_deleted=False) |
+                Q(owners__type='group', owners__group__users__id=user.id,
+                  owners__is_deleted=False) |
+                Q(viewers__type='user', viewers__user_id=user.id,
+                  viewers__is_deleted=False) |
+                Q(viewers__type='group', viewers__group__users__id=user.id,
+                  viewers__is_deleted=False),
+            ).distinct()
         else:
-            # For list/retrieve: only template owners
+            # For list/update/clone/destroy: only template owners
             qst = qst.filter(
                 Q(owners__type='user', owners__user_id=user.id,
                   owners__is_deleted=False) |

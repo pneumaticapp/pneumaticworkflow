@@ -1,15 +1,18 @@
 import pytest
 
+from src.accounts.models import UserGroup
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.authentication.tokens import PublicToken
 from src.processes.enums import (
     FieldType,
     OwnerType,
     PerformerType,
+    ViewerType,
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.template import Template
+from src.processes.models.templates.viewer import TemplateViewer
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
@@ -193,6 +196,105 @@ def test_fields__template_owner__ok(api_client):
 
     # assert
     assert response.status_code == 200
+
+
+def test_fields__template_owner_via_group__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    template = create_test_template(user=owner, tasks_count=1)
+    user = create_test_not_admin(account=account)
+    group = UserGroup.objects.create(
+        name='Test Group',
+        account=account,
+    )
+    group.users.add(user)
+    TemplateOwner.objects.create(
+        template=template,
+        account=account,
+        type=OwnerType.GROUP,
+        group=group,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}/fields')
+
+    # assert
+    assert response.status_code == 200
+
+
+def test_fields__template_viewer__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    template = create_test_template(user=owner, tasks_count=1)
+    user = create_test_not_admin(account=account)
+    TemplateViewer.objects.create(
+        template=template,
+        account=account,
+        type=ViewerType.USER,
+        user_id=user.id,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}/fields')
+
+    # assert
+    assert response.status_code == 200
+
+
+def test_fields__template_viewer_via_group__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    template = create_test_template(user=owner, tasks_count=1)
+    user = create_test_not_admin(account=account)
+    group = UserGroup.objects.create(
+        name='Test Group',
+        account=account,
+    )
+    group.users.add(user)
+    TemplateViewer.objects.create(
+        template=template,
+        account=account,
+        type=ViewerType.GROUP,
+        group=group,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}/fields')
+
+    # assert
+    assert response.status_code == 200
+
+
+def test_fields__template_viewer_deleted__not_found(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    template = create_test_template(user=owner, tasks_count=1)
+    user = create_test_not_admin(account=account)
+    TemplateViewer.objects.create(
+        template=template,
+        account=account,
+        type=ViewerType.USER,
+        user_id=user.id,
+        is_deleted=True,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}/fields')
+
+    # assert
+    assert response.status_code == 404
 
 
 def test_fields__not_workflow_member_not_owner__not_found(api_client):
