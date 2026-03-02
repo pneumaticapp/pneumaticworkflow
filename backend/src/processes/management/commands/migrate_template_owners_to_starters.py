@@ -41,85 +41,75 @@ class Command(BaseCommand):
 
         total_count = non_admin_owners.count()
         self.stdout.write(
-            f'Found {total_count} non-admin template owners to migrate',
+            f'Found {total_count} non-admin user template owners to migrate',
         )
-
-        if total_count == 0:
-            self.stdout.write(
-                self.style.SUCCESS('No non-admin owners found. '
-                                   'Nothing to migrate.'),
-            )
-            return
 
         migrated_count = 0
         skipped_count = 0
         error_count = 0
 
-        with transaction.atomic():
-            for owner in non_admin_owners:
-                try:
-                    # Check if starter already exists
-                    existing_starter = TemplateStarter.objects.filter(
-                        template=owner.template,
-                        type=owner.type,
-                        user=owner.user,
-                        is_deleted=False,
-                    ).first()
-
-                    if existing_starter:
-                        self.stdout.write(
-                            self.style.WARNING(
-                                f'Skipping: Starter already exists for '
-                                f'user {owner.user.email} '
-                                f'in template {owner.template.name}',
-                            ),
-                        )
-                        skipped_count += 1
-                        continue
-
-                    if not dry_run:
-                        # Create template starter
-                        TemplateStarter.objects.create(
+        if total_count > 0:
+            with transaction.atomic():
+                for owner in non_admin_owners:
+                    try:
+                        existing_starter = TemplateStarter.objects.filter(
                             template=owner.template,
                             type=owner.type,
                             user=owner.user,
-                            account=owner.account,
+                            is_deleted=False,
+                        ).first()
+
+                        if existing_starter:
+                            self.stdout.write(
+                                self.style.WARNING(
+                                    f'Skipping: Starter already exists for '
+                                    f'user {owner.user.email} '
+                                    f'in template {owner.template.name}',
+                                ),
+                            )
+                            skipped_count += 1
+                            continue
+
+                        if not dry_run:
+                            TemplateStarter.objects.create(
+                                template=owner.template,
+                                type=owner.type,
+                                user=owner.user,
+                                account=owner.account,
+                            )
+                            owner.delete()
+
+                        self.stdout.write(
+                            f'Migrated: {owner.user.email} -> '
+                            f'Template: {owner.template.name}',
                         )
+                        migrated_count += 1
 
-                        # Delete the owner
-                        owner.delete()
+                    except Exception as e:
+                        self.stdout.write(
+                            self.style.ERROR(
+                                f'Error migrating owner {owner.id}: {e!s}',
+                            ),
+                        )
+                        error_count += 1
+                        if not dry_run:
+                            raise
 
+                if dry_run:
                     self.stdout.write(
-                        f'Migrated: {owner.user.email} -> '
-                        f'Template: {owner.template.name}',
-                    )
-                    migrated_count += 1
-
-                except Exception as e:
-                    self.stdout.write(
-                        self.style.ERROR(
-                            f'Error migrating owner {owner.id}: {e!s}',
+                        self.style.WARNING(
+                            'DRY RUN COMPLETE - No changes were made',
                         ),
                     )
-                    error_count += 1
-                    if not dry_run:
-                        raise
-
-            if dry_run:
-                self.stdout.write(
-                    self.style.WARNING(
-                        'DRY RUN COMPLETE - No changes were made',
-                    ),
-                )
-            else:
-                self.stdout.write(
-                    self.style.SUCCESS(
-                        f'Migration complete! '
-                        f'Migrated: {migrated_count}, '
-                        f'Skipped: {skipped_count}, '
-                        f'Errors: {error_count}',
-                    ),
-                )
+                else:
+                    self.stdout.write(
+                        self.style.SUCCESS(
+                            f'User migration complete! '
+                            f'Migrated: {migrated_count}, '
+                            f'Skipped: {skipped_count}, '
+                            f'Errors: {error_count}',
+                        ),
+                    )
 
         # Also handle group-based owners
         non_admin_group_owners = TemplateOwner.objects.filter(

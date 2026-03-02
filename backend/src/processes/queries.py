@@ -180,7 +180,6 @@ class WorkflowListQuery(
             where = f"""{where}
                 AND (
                     pwo.user_id = %(user_id)s
-                    OR pw.workflow_starter_id = %(user_id)s
                     OR {self._get_template_viewer_allowed()}
                 )"""
             self.params['user_id'] = self.user_id

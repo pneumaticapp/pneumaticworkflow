@@ -133,6 +133,14 @@ class TemplateStarterCreateSerializer(ModelSerializer):
     """Simplified serializer for creating starters via API.
     Accepts user_id/group_id (snake_case) or userId/groupId (camelCase)."""
 
+    user_id = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+    )
+    group_id = serializers.IntegerField(
+        required=False,
+        allow_null=True,
+    )
     userId = serializers.IntegerField(  # noqa: N815
         required=False,
         allow_null=True,

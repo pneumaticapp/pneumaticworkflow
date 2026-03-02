@@ -114,11 +114,13 @@ class TestMigrateTemplateOwnersToStarters:
             account=account,
             email='user1@test.com',
             is_admin=False,
+            is_account_owner=False,
         )
         non_admin_user2 = create_test_user(
             account=account,
             email='user2@test.com',
             is_admin=False,
+            is_account_owner=False,
         )
         template = create_test_template(admin_user)
         group = create_test_group(

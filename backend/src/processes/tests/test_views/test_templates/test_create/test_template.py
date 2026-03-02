@@ -2143,7 +2143,12 @@ def test_create__non_admin_in_template_owners_premium__validation_error(
         is_account_owner=True,
         account=account,
     )
-    non_admin = create_test_user(is_admin=False, account=account)
+    non_admin = create_test_user(
+        email='nonadmin@test.test',
+        is_admin=False,
+        is_account_owner=False,
+        account=account,
+    )
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
@@ -2212,7 +2217,12 @@ def test_create__non_admin_in_template_owners_freemium__validation_error(
         is_account_owner=True,
         account=account,
     )
-    non_admin = create_test_user(is_admin=False, account=account)
+    non_admin = create_test_user(
+        email='nonadmin@test.test',
+        is_admin=False,
+        is_account_owner=False,
+        account=account,
+    )
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'

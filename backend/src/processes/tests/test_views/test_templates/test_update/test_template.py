@@ -1389,10 +1389,6 @@ class TestUpdateTemplate:
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.template_updated',
         )
-        kickoff_update_mock = mocker.patch(
-            'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.kickoff_updated',
-        )
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         user = create_test_user(
             is_account_owner=True,
@@ -1401,6 +1397,7 @@ class TestUpdateTemplate:
         non_admin = create_test_user(
             email='non_admin@test.test',
             is_admin=False,
+            is_account_owner=False,
             account=account,
         )
         api_client.token_authenticate(user)
@@ -1461,7 +1458,6 @@ class TestUpdateTemplate:
         assert response.data['details']['reason'] == messages.MSG_PT_0069
         assert response.data['details']['name'] == 'owners'
         template_update_mock.assert_not_called()
-        kickoff_update_mock.assert_not_called()
 
     def test_update__admin_in_template_owners__ok(
         self,
@@ -1472,10 +1468,6 @@ class TestUpdateTemplate:
         template_update_mock = mocker.patch(
             'src.processes.services.templates.'
             'integrations.TemplateIntegrationsService.template_updated',
-        )
-        kickoff_update_mock = mocker.patch(
-            'src.processes.services.templates.'
-            'integrations.TemplateIntegrationsService.kickoff_updated',
         )
         account = create_test_account(plan=BillingPlanType.PREMIUM)
         user = create_test_user(
@@ -1549,7 +1541,6 @@ class TestUpdateTemplate:
         assert response_data['owners'][1]['source_id'] == str(admin_user.id)
         assert response_data['owners'][1]['type'] == OwnerType.USER
         template_update_mock.assert_called_once()
-        kickoff_update_mock.assert_called_once()
 
     def test_update__make_public__ok(
         self,
