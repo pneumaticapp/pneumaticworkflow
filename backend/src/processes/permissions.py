@@ -381,7 +381,8 @@ class TaskCommentPermission(BasePermission):
     - Account owners and admins
     - Workflow members
     - Template owners
-    - Template viewers ONLY if they are assigned as task performers
+    - Template viewers
+    - Task performers
     """
 
     def has_permission(self, request, view):
@@ -425,8 +426,90 @@ class TaskCommentPermission(BasePermission):
         if request.user.id in performer_user_ids:
             return True
 
+        template = task.workflow.template
+
         # Check if user is template owner
-        return task.workflow.template.owners.filter(
+        is_template_owner = template.owners.filter(
+            Q(type='user', user_id=request.user.id, is_deleted=False)
+            | Q(
+                type='group',
+                group__users__id=request.user.id,
+                is_deleted=False,
+            ),
+        ).exists()
+        if is_template_owner:
+            return True
+
+        # Check if user is template viewer
+        return template.viewers.filter(
+            Q(type='user', user_id=request.user.id, is_deleted=False)
+            | Q(
+                type='group',
+                group__users__id=request.user.id,
+                is_deleted=False,
+            ),
+        ).exists()
+
+
+class WorkflowCommentPermission(BasePermission):
+
+    """
+    Allow workflow comments for:
+    - Account owners and admins
+    - Workflow members
+    - Template owners
+    - Template viewers
+    """
+
+    def has_permission(self, request, view):
+        try:
+            workflow_id = int(view.kwargs.get('pk'))
+        except (ValueError, TypeError):
+            return False
+
+        # Account owners and admins always have access
+        if request.user.is_account_owner or request.user.is_admin:
+            return True
+
+        # Skip guests - they will be handled by GuestWorkflowPermission
+        if request.user.type == UserType.GUEST:
+            return True
+
+        workflow = (
+            Workflow.objects
+            .filter(id=workflow_id, account_id=request.user.account_id)
+            .select_related('template')
+            .first()
+        )
+        if workflow is None:
+            return False
+
+        # Check if user is workflow member
+        is_workflow_member = (
+            workflow.members.filter(id=request.user.id).exists() or
+            workflow.owners.filter(id=request.user.id).exists()
+        )
+        if is_workflow_member:
+            return True
+
+        template = workflow.template
+        if not template:
+            return False
+
+        # Check if user is template owner
+        is_template_owner = template.owners.filter(
+            Q(type='user', user_id=request.user.id, is_deleted=False)
+            | Q(
+                type='group',
+                group__users__id=request.user.id,
+                is_deleted=False,
+            ),
+        ).exists()
+        if is_template_owner:
+            return True
+
+        # Check if user is template viewer
+        return template.viewers.filter(
             Q(type='user', user_id=request.user.id, is_deleted=False)
             | Q(
                 type='group',
@@ -565,26 +648,61 @@ class CommentEditPermission(BasePermission):
 
 class CommentReactionPermission(BasePermission):
 
-    """ Checks that authenticated guest has permission to requested workflow.
-        request.task_id exists only for guests """
+    """
+    Allow comment reactions/watched for:
+    - Account owners and admins
+    - Workflow members
+    - Template owners
+    - Template viewers
+    - Guests (for their task)
+    """
 
     def has_permission(self, request, view):
         try:
             comment_id = int(view.kwargs['pk'])
         except (TypeError, ValueError):
             return False
+
         user = request.user
         qst = WorkflowEvent.objects.filter(
             id=comment_id,
             account_id=user.account_id,
         ).type_comment()
-        if request.user.is_account_owner:
+
+        if user.is_account_owner or user.is_admin:
             return qst.exists()
-        if request.user.type == UserType.GUEST:
+
+        if user.type == UserType.GUEST:
             return qst.by_task(request.task_id).exists()
-        return qst.filter(
-            Q(workflow__members=request.user.id) |
-            Q(workflow__tasks__taskperformer__group__users=request.user.id),
+
+        # Check workflow members
+        is_member = qst.filter(
+            Q(workflow__members=user.id) |
+            Q(workflow__tasks__taskperformer__group__users=user.id),
+        ).exists()
+        if is_member:
+            return True
+
+        # Get comment to check template access
+        comment = qst.select_related('workflow__template').first()
+        if (not comment or not comment.workflow
+                or not comment.workflow.template):
+            return False
+
+        template = comment.workflow.template
+
+        # Check template owner
+        is_template_owner = template.owners.filter(
+            Q(type='user', user_id=user.id, is_deleted=False)
+            | Q(type='group', group__users__id=user.id, is_deleted=False),
+        ).exists()
+        if is_template_owner:
+            return True
+
+        # Check template viewer
+        return template.viewers.filter(
+            Q(type='user', user_id=user.id, is_deleted=False)
+            | Q(type='group', group__users__id=user.id, is_deleted=False),
         ).exists()
 
 

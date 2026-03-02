@@ -188,6 +188,9 @@
 }
 
 .complete-form_readonly {
+  margin: 0;
+  padding: 0;
+
   &::before {
     display: none;
   }

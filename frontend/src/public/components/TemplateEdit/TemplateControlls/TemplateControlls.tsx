@@ -268,22 +268,22 @@ export function TemplateControlls({
       </div>
 
       <div className={styles['settings-block']}>
-        <ShowMore label={formatMessage({ id: 'template.starters' })}>
-          <TemplateStarters
-            templateStarters={starters}
-            onChangeTemplateStarters={(newTemplateStarters) =>
-              patchTemplate({ changedFields: { starters: newTemplateStarters } })
+        <ShowMore label={formatMessage({ id: 'template.viewers' })}>
+          <TemplateViewers
+            templateViewers={viewers}
+            onChangeTemplateViewers={(newTemplateViewers) =>
+              patchTemplate({ changedFields: { viewers: newTemplateViewers } })
             }
           />
         </ShowMore>
       </div>
 
       <div className={styles['settings-block']}>
-        <ShowMore label={formatMessage({ id: 'template.viewers' })}>
-          <TemplateViewers
-            templateViewers={viewers}
-            onChangeTemplateViewers={(newTemplateViewers) =>
-              patchTemplate({ changedFields: { viewers: newTemplateViewers } })
+        <ShowMore label={formatMessage({ id: 'template.starters' })}>
+          <TemplateStarters
+            templateStarters={starters}
+            onChangeTemplateStarters={(newTemplateStarters) =>
+              patchTemplate({ changedFields: { starters: newTemplateStarters } })
             }
           />
         </ShowMore>

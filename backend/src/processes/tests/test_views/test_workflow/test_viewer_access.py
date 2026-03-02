@@ -397,6 +397,42 @@ class TestWorkflowViewerAccess:
         data = response.json()
         assert data['is_read_only_viewer'] is True
 
+    def test_workflow_retrieve__admin_template_viewer__is_read_only_viewer_ok(
+        self, api_client,
+    ):
+        """Admin who is ONLY template viewer should have read-only access."""
+        # arrange
+        account = create_test_account()
+        template_owner = create_test_user(account=account)
+        template = create_test_template(template_owner)
+        workflow = create_test_workflow(template=template, user=template_owner)
+
+        admin_viewer = create_test_user(
+            account=account,
+            email='admin_viewer@test.com',
+            is_admin=True,
+            is_account_owner=False,
+        )
+
+        # Create template viewer for admin
+        TemplateViewer.objects.create(
+            template=template,
+            type=ViewerType.USER,
+            user=admin_viewer,
+            account=account,
+        )
+
+        api_client.token_authenticate(admin_viewer)
+        url = reverse('workflows-detail', args=[workflow.id])
+
+        # act
+        response = api_client.get(url)
+
+        # assert
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data['is_read_only_viewer'] is True
+
     def test_workflow_retrieve__template_owner__is_read_only_viewer_false(
         self, api_client,
     ):

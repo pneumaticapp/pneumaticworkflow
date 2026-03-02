@@ -546,8 +546,7 @@ export function TaskCard({
         areTasksClickable={viewMode === ETaskCardViewMode.Single}
         minimizedLogMaxEvents={MINIMIZED_LOG_MAX_EVENTS}
         isCommentFieldHidden={
-          task.isReadOnlyViewer ||
-          (viewMode === ETaskCardViewMode.Guest && status === ETaskStatus.Completed)
+          viewMode === ETaskCardViewMode.Guest && status === ETaskStatus.Completed
         }
         isToggleCommentHidden
         sendComment={sendTaskWorkflowLogComments}

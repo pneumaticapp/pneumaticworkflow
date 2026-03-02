@@ -183,30 +183,43 @@ class TaskSerializer(serializers.ModelSerializer):
         Determine if user has only read-only access via template viewer
         (not as workflow member, owner, or task performer).
         Template viewers who are assigned as task performers should have
-        full access to the task (can comment, etc).
+        full access to the task.
+        Even admins/account owners who are ONLY template viewers should
+        have read-only access.
         """
         user = self.context.get('user')
-        if not user or user.is_account_owner or user.is_admin:
+        if not user:
             return False
 
-        # Check if user is workflow member or owner
+        from django.db.models import Q
         workflow = instance.workflow
+        template = workflow.template
+
+        # First check if user is template viewer
+        is_template_viewer = template.viewers.filter(
+            Q(type='user', user_id=user.id, is_deleted=False)
+            | Q(type='group', group__users__id=user.id, is_deleted=False),
+        ).exists()
+
+        if not is_template_viewer:
+            return False
+
+        # User is template viewer - check if they have other access
+        # that would give them full permissions
+
+        # Check if user is workflow member or owner
         is_workflow_member = (
             workflow.members.filter(id=user.id).exists() or
             workflow.owners.filter(id=user.id).exists()
         )
-
         if is_workflow_member:
             return False
 
         # Check if user is template owner
-        from django.db.models import Q
-        template = workflow.template
         is_template_owner = template.owners.filter(
             Q(type='user', user_id=user.id, is_deleted=False) |
             Q(type='group', group__users__id=user.id, is_deleted=False),
         ).exists()
-
         if is_template_owner:
             return False
 
@@ -218,15 +231,8 @@ class TaskSerializer(serializers.ModelSerializer):
             .filter(task__account_id=user.account_id)
             .get_user_ids_set()
         )
-
-        if user.id in performer_user_ids:
-            return False
-
-        # Check if user has access via template viewer
-        return template.viewers.filter(
-            Q(type='user', user_id=user.id, is_deleted=False)
-            | Q(type='group', group__users__id=user.id, is_deleted=False),
-        ).exists()
+        # User is ONLY template viewer - read-only access
+        return user.id not in performer_user_ids
 
 
 class TaskListSerializer(serializers.ModelSerializer):

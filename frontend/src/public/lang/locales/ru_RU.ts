@@ -508,6 +508,8 @@ export const ruMessages = {
   'template.owners': 'Владельцы Шаблонов',
   'template.owner-admin': 'Администратор',
   'template.owner-starter': 'Инициатор',
+  'template.user-admin': 'Администратор',
+  'template.user-role': 'Пользователь',
   'template.viewers': 'Наблюдатели Шаблонов',
   'template.starters': 'Инициаторы Шаблонов',
   'template.starters-dropdown-placeholder': 'Поиск по имени или email',

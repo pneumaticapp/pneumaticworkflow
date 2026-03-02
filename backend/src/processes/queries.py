@@ -1129,29 +1129,13 @@ class TemplateListQuery(
             )
         """
 
-    def _get_viewers_cte(self):
-        """Templates where user is viewer (user or via group)."""
-        return """
-            SELECT ptv.template_id, ptv.user_id AS user_id
-            FROM processes_templateviewer AS ptv
-            WHERE ptv.type = 'user'
-              AND ptv.is_deleted IS FALSE
-              AND ptv.user_id = %(user_id)s
-            UNION
-            SELECT ptv.template_id, g.user_id AS user_id
-            FROM processes_templateviewer AS ptv
-            JOIN accounts_usergroup_users AS g ON g.usergroup_id = ptv.group_id
-            WHERE ptv.type = 'group'
-              AND ptv.is_deleted IS FALSE
-              AND g.user_id = %(user_id)s
-        """
-
     def _get_allowed(self):
         self.params.update({'allowed_id': self.user_id})
-        return (
-            "(owners.user_id = %(allowed_id)s OR "
-            "viewers.user_id = %(allowed_id)s)"
-        )
+        return """(
+            owners.user_id = %(allowed_id)s
+            OR viewers.user_id = %(allowed_id)s
+            OR starters.user_id = %(allowed_id)s
+        )"""
 
     def _get_active(self):
         self.params.update({'is_active': self.is_active})
@@ -1210,10 +1194,48 @@ class TemplateListQuery(
 
         return where
 
+    @staticmethod
+    def _dereferenced_viewers():
+        return """
+            SELECT ptv.template_id, g.user_id AS user_id
+            FROM processes_templateviewer AS ptv
+            JOIN accounts_usergroup_users AS g
+              ON g.usergroup_id = ptv.group_id
+            WHERE ptv.type = 'group'
+              AND ptv.is_deleted IS FALSE
+              AND g.user_id = %(user_id)s
+            UNION
+            SELECT ptv.template_id, ptv.user_id
+            FROM processes_templateviewer AS ptv
+            WHERE ptv.type = 'user'
+              AND ptv.is_deleted IS FALSE
+              AND ptv.user_id = %(user_id)s
+        """
+
+    @staticmethod
+    def _dereferenced_starters():
+        return """
+            SELECT pts.template_id, g.user_id AS user_id
+            FROM processes_templatestarter AS pts
+            JOIN accounts_usergroup_users AS g
+              ON g.usergroup_id = pts.group_id
+            WHERE pts.type = 'group'
+              AND pts.is_deleted IS FALSE
+              AND g.user_id = %(user_id)s
+            UNION
+            SELECT pts.template_id, pts.user_id
+            FROM processes_templatestarter AS pts
+            WHERE pts.type = 'user'
+              AND pts.is_deleted IS FALSE
+              AND pts.user_id = %(user_id)s
+        """
+
     def _get_inner_sql(self):
         return f"""
-        WITH owners AS ({self.dereferenced_owners()}),
-        viewers AS ({self._get_viewers_cte()})
+        WITH
+          owners AS ({self.dereferenced_owners()}),
+          viewers AS ({self._dereferenced_viewers()}),
+          starters AS ({self._dereferenced_starters()})
         SELECT DISTINCT
             pt.id,
             pt.is_deleted,
@@ -1238,6 +1260,7 @@ class TemplateListQuery(
         )
         LEFT JOIN owners ON pt.id = owners.template_id
         LEFT JOIN viewers ON pt.id = viewers.template_id
+        LEFT JOIN starters ON pt.id = starters.template_id
         LEFT JOIN accounts_user ON (
           owners.user_id = accounts_user.id AND
           accounts_user.is_deleted = false
@@ -1811,15 +1834,18 @@ class TemplateTitlesByWorkflowsQuery(
 
     def _get_accessible_templates(self):
         """Returns templates where user is owner or viewer"""
-        if self.user.is_admin or self.user.is_account_owner:
-            # Admin/account owner can see all templates
+        # Account owner has full access to all templates in the account
+        if self.user.is_account_owner:
             return """
                 SELECT DISTINCT t.id AS template_id
                 FROM processes_template t
                 WHERE t.is_deleted IS FALSE
                   AND t.account_id = %(account_id)s
             """
-        # Regular users: owners + viewers
+        # For other users (including admins), apply filtering logic
+        # Users can see templates where they are:
+        # 1. Template owners (user or via group)
+        # 2. Template viewers (user or via group)
         return """
                 SELECT DISTINCT template_id
                 FROM (

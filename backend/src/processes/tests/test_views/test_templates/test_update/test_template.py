@@ -34,6 +34,7 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
 )
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
@@ -1375,6 +1376,178 @@ class TestUpdateTemplate:
         assert response_data['owners'][0].get('api_name')
         assert response_data['owners'][0]['source_id'] == str(user.id)
         assert response_data['owners'][0]['type'] == OwnerType.USER
+        template_update_mock.assert_called_once()
+        kickoff_update_mock.assert_called_once()
+
+    def test_update__non_admin_in_template_owners__validation_error(
+        self,
+        mocker,
+        api_client,
+    ):
+        # arrange
+        template_update_mock = mocker.patch(
+            'src.processes.services.templates.'
+            'integrations.TemplateIntegrationsService.template_updated',
+        )
+        kickoff_update_mock = mocker.patch(
+            'src.processes.services.templates.'
+            'integrations.TemplateIntegrationsService.kickoff_updated',
+        )
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(
+            is_account_owner=True,
+            account=account,
+        )
+        non_admin = create_test_user(
+            email='non_admin@test.test',
+            is_admin=False,
+            account=account,
+        )
+        api_client.token_authenticate(user)
+
+        template = create_test_template(
+            user=user,
+            is_active=True,
+            tasks_count=1,
+        )
+        task = template.tasks.first()
+
+        request_data = {
+            'id': template.id,
+            'is_active': True,
+            'is_public': template.is_public,
+            'description': '',
+            'name': 'Name changed',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': non_admin.id,
+                },
+            ],
+            'finalizable': True,
+            'kickoff': {
+                'id': template.kickoff_instance.id,
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        }
+
+        # act
+        response = api_client.put(
+            path=f'/templates/{template.id}',
+            data=request_data,
+        )
+
+        # assert
+        assert response.status_code == 400
+        assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+        assert response.data['message'] == messages.MSG_PT_0069
+        assert response.data['details']['reason'] == messages.MSG_PT_0069
+        assert response.data['details']['name'] == 'owners'
+        template_update_mock.assert_not_called()
+        kickoff_update_mock.assert_not_called()
+
+    def test_update__admin_in_template_owners__ok(
+        self,
+        mocker,
+        api_client,
+    ):
+        # arrange
+        template_update_mock = mocker.patch(
+            'src.processes.services.templates.'
+            'integrations.TemplateIntegrationsService.template_updated',
+        )
+        kickoff_update_mock = mocker.patch(
+            'src.processes.services.templates.'
+            'integrations.TemplateIntegrationsService.kickoff_updated',
+        )
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(
+            is_account_owner=True,
+            account=account,
+        )
+        admin_user = create_test_user(
+            email='admin@test.test',
+            is_admin=True,
+            account=account,
+        )
+        api_client.token_authenticate(user)
+
+        template = create_test_template(
+            user=user,
+            is_active=True,
+            tasks_count=1,
+        )
+        task = template.tasks.first()
+
+        request_data = {
+            'id': template.id,
+            'is_active': True,
+            'is_public': template.is_public,
+            'description': '',
+            'name': 'Name changed',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': admin_user.id,
+                },
+            ],
+            'finalizable': True,
+            'kickoff': {
+                'id': template.kickoff_instance.id,
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        }
+
+        # act
+        response = api_client.put(
+            path=f'/templates/{template.id}',
+            data=request_data,
+        )
+
+        # assert
+        assert response.status_code == 200
+        response_data = response.json()
+        assert len(response_data['owners']) == 2
+        assert response_data['owners'][0].get('api_name')
+        assert response_data['owners'][0]['source_id'] == str(user.id)
+        assert response_data['owners'][0]['type'] == OwnerType.USER
+        assert response_data['owners'][1].get('api_name')
+        assert response_data['owners'][1]['source_id'] == str(admin_user.id)
+        assert response_data['owners'][1]['type'] == OwnerType.USER
         template_update_mock.assert_called_once()
         kickoff_update_mock.assert_called_once()
 

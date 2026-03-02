@@ -403,6 +403,25 @@ class TemplateSerializer(
                 name='owners',
             )
 
+        # Validate that only admin users can be template owners
+        if self.new_users_owners_ids:
+            user_model = get_user_model()
+            non_admin_owners = (
+                user_model.objects
+                .filter(
+                    id__in=self.new_users_owners_ids,
+                    account=self.context['account'],
+                    is_admin=False,
+                    is_account_owner=False,
+                )
+                .exists()
+            )
+            if non_admin_owners:
+                self.raise_validation_error(
+                    message=messages.MSG_PT_0069,
+                    name='owners',
+                )
+
     def additional_validate_public_success_url(
         self,
         value: Dict[str, Any],

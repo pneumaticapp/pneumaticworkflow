@@ -37,8 +37,8 @@ from src.processes.paginations import WorkflowListPagination
 from src.processes.permissions import (
     GuestWorkflowEventsPermission,
     GuestWorkflowPermission,
+    WorkflowCommentPermission,
     WorkflowMemberOrViewerPermission,
-    WorkflowMemberPermission,
     WorkflowOwnerPermission,
 )
 from src.processes.serializers.comments import CommentCreateSerializer
@@ -112,25 +112,40 @@ class WorkflowViewSet(
         user = self.request.user
         queryset = Workflow.objects.on_account(user.account_id)
         if self.action in ('list', 'fields'):
-            # For list action, include workflows where user is member
-            # OR template viewer
-            # But only if user is admin/account_owner OR template viewer
-            if user.is_account_owner or user.is_admin:
-                # Admin/account_owner can see workflows where they are members
-                queryset = queryset.with_member(user)
+            # Account owner has full access to all workflows in the account
+            if user.is_account_owner:
+                # Account owner can see all workflows in the account
+                pass  # No additional filtering needed
             else:
-                # Regular users can see workflows where they are members
-                # OR template viewers
+                # For other users (including admins), apply filtering logic
+                # Users can see workflows where they are:
+                # 1. Workflow owners OR workflow starters OR workflow members
+                # 2. Template owners (user or via group)
+                # 3. Template viewers (user or via group)
                 queryset = queryset.filter(
-                    Q(members=user.id) |  # Member access
+                    Q(owners=user.id) |  # Workflow owner access
+                    Q(workflow_starter_id=user.id) |  # Workflow starter access
+                    Q(members=user.id) |  # Workflow member access
+                    Q(
+                        template__owners__type='user',
+                        template__owners__user_id=user.id,
+                        template__owners__is_deleted=False,
+                    ) |  # Template owner access (user)
+                    Q(
+                        template__owners__type='group',
+                        template__owners__group__users__id=user.id,
+                        template__owners__is_deleted=False,
+                    ) |  # Template owner access (group)
                     Q(
                         template__viewers__type='user',
                         template__viewers__user_id=user.id,
-                    ) |  # Template viewer access
+                        template__viewers__is_deleted=False,
+                    ) |  # Template viewer access (user)
                     Q(
                         template__viewers__type='group',
                         template__viewers__group__users__id=user.id,
-                    ),
+                        template__viewers__is_deleted=False,
+                    ),  # Template viewer access (group)
                 ).distinct()
         elif self.action == 'webhook_example':
             queryset = queryset.filter(
@@ -231,7 +246,7 @@ class WorkflowViewSet(
                 ExpiredSubscriptionPermission(),
                 UsersOverlimitedPermission(),
                 GuestWorkflowPermission(),
-                WorkflowMemberPermission(),
+                WorkflowCommentPermission(),
             )
         if self.action == 'complete':
             return (

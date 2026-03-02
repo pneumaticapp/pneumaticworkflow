@@ -569,6 +569,8 @@ export const enMessages = {
   'template.owners': 'Template Owners',
   'template.owner-admin': 'Admin',
   'template.owner-starter': 'Starter',
+  'template.user-admin': 'Admin',
+  'template.user-role': 'User',
   'template.viewers': 'Template Viewers',
   'template.starters': 'Template Starters',
   'template.starters-dropdown-placeholder': 'Search by name or email',

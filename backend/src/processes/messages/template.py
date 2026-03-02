@@ -278,3 +278,4 @@ MSG_PT_0068 = lambda name: format_lazy(
     ),
     name=name,
 )
+MSG_PT_0069 = _('Only admin users can be template owners.')

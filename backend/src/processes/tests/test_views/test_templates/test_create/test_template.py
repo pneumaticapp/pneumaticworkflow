@@ -2123,7 +2123,7 @@ def test_create_draft__skip_template_owners__set_default(
 
 
 @pytest.mark.parametrize('plan', BillingPlanType.PAYMENT_PLANS)
-def test_create__non_admin_in_template_owners_premium__ok(
+def test_create__non_admin_in_template_owners_premium__validation_error(
     plan,
     mocker,
     api_client,
@@ -2184,23 +2184,16 @@ def test_create__non_admin_in_template_owners_premium__ok(
     )
 
     # assert
-    assert response.status_code == 200
-    response_data = response.json()
-
-    assert response_data['owners'][0].get('api_name')
-    assert response_data['owners'][0]['source_id'] == str(owner.id)
-    assert response_data['owners'][0]['type'] == OwnerType.USER
-    assert response_data['owners'][1].get('api_name')
-    assert response_data['owners'][1]['source_id'] == str(non_admin.id)
-    assert response_data['owners'][1]['type'] == OwnerType.USER
-    template = Template.objects.get(id=response_data['id'])
-    assert template.owners.count() == 2
-    assert template.owners.filter(user_id=non_admin.id).exists()
-    template_create_mock.assert_called_once()
-    kickoff_create_mock.assert_called_once()
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_PT_0069
+    assert response.data['details']['reason'] == messages.MSG_PT_0069
+    assert response.data['details']['name'] == 'owners'
+    template_create_mock.assert_not_called()
+    kickoff_create_mock.assert_not_called()
 
 
-def test_create__non_admin_in_template_owners_freemium__ok(
+def test_create__non_admin_in_template_owners_freemium__validation_error(
     mocker,
     api_client,
 ):
@@ -2260,20 +2253,171 @@ def test_create__non_admin_in_template_owners_freemium__ok(
     )
 
     # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_PT_0069
+    assert response.data['details']['reason'] == messages.MSG_PT_0069
+    assert response.data['details']['name'] == 'owners'
+    template_create_mock.assert_not_called()
+    kickoff_create_mock.assert_not_called()
+
+
+def test_create__admin_in_template_owners__ok(
+    mocker,
+    api_client,
+):
+    # arrange
+    template_create_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    kickoff_create_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    account = create_test_account(plan=BillingPlanType.PREMIUM)
+    owner = create_test_user(
+        email='owner@test.test',
+        is_account_owner=True,
+        account=account,
+    )
+    admin_user = create_test_user(
+        email='admin@test.test',
+        is_admin=True,
+        account=account,
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': owner.id,
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': admin_user.id,
+                },
+            ],
+            'is_active': True,
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': admin_user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
     assert response.status_code == 200
     response_data = response.json()
 
     assert response_data['owners'][0].get('api_name')
-    assert response_data['owners'][0]['source_id'] == str(non_admin.id)
+    assert response_data['owners'][0]['source_id'] == str(owner.id)
     assert response_data['owners'][0]['type'] == OwnerType.USER
     assert response_data['owners'][1].get('api_name')
-    assert response_data['owners'][1]['source_id'] == str(owner.id)
+    assert response_data['owners'][1]['source_id'] == str(admin_user.id)
     assert response_data['owners'][1]['type'] == OwnerType.USER
     template = Template.objects.get(id=response_data['id'])
     assert template.owners.count() == 2
-    assert template.owners.filter(
-        type=OwnerType.USER, user_id=non_admin.id,
-    ).exists()
+    assert template.owners.filter(user_id=admin_user.id).exists()
+    template_create_mock.assert_called_once()
+    kickoff_create_mock.assert_called_once()
+
+
+def test_create__account_owner_in_template_owners__ok(
+    mocker,
+    api_client,
+):
+    # arrange
+    template_create_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    kickoff_create_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    account = create_test_account(plan=BillingPlanType.PREMIUM)
+    owner = create_test_user(
+        email='owner@test.test',
+        is_account_owner=True,
+        account=account,
+    )
+    another_owner = create_test_user(
+        email='owner2@test.test',
+        is_account_owner=True,
+        account=account,
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': owner.id,
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': another_owner.id,
+                },
+            ],
+            'is_active': True,
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': owner.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    response_data = response.json()
+
+    assert response_data['owners'][0].get('api_name')
+    assert response_data['owners'][0]['source_id'] == str(owner.id)
+    assert response_data['owners'][0]['type'] == OwnerType.USER
+    assert response_data['owners'][1].get('api_name')
+    assert response_data['owners'][1]['source_id'] == str(another_owner.id)
+    assert response_data['owners'][1]['type'] == OwnerType.USER
+    template = Template.objects.get(id=response_data['id'])
+    assert template.owners.count() == 2
+    assert template.owners.filter(user_id=another_owner.id).exists()
     template_create_mock.assert_called_once()
     kickoff_create_mock.assert_called_once()
 

@@ -46,7 +46,7 @@ export const getUserMenuItems = (user: IAuthUser, counters?: TMenuCounter[]): IM
       iconComponent: TemplatesIcon,
       label: 'menu.templates',
       to: ERoutes.Templates,
-      isHidden: !user.isAdmin && !user.hasWorkflowViewerAccess,
+      isHidden: !user.isAdmin,
     },
     {
       id: 'highlights',

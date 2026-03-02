@@ -244,7 +244,7 @@ class TestTaskCommentPermission:
         # assert
         assert result is True
 
-    def test_has_permission__template_viewer_not_performer__denied(self):
+    def test_has_permission__template_viewer_user__ok(self):
         # arrange
         account = create_test_account()
         template_owner = create_test_user(
@@ -285,7 +285,52 @@ class TestTaskCommentPermission:
         result = permission.has_permission(request, view)
 
         # assert
-        assert result is False
+        assert result is True
+
+    def test_has_permission__template_viewer_group__ok(self):
+        # arrange
+        account = create_test_account()
+        template_owner = create_test_user(
+            account=account, email='owner@test.com',
+        )
+        template = create_test_template(user=template_owner)
+        workflow = create_test_workflow(template=template, user=template_owner)
+        task = workflow.tasks.get(number=1)
+
+        # Create a separate user who is template viewer via group
+        viewer_user = create_test_user(
+            account=account,
+            email='viewer@test.com',
+            is_account_owner=False,
+            is_admin=False,
+        )
+        group = create_test_group(account=account, name='Viewers Group')
+        group.users.add(viewer_user)
+
+        # Create template viewer for group
+        TemplateViewer.objects.create(
+            template=template,
+            type=ViewerType.GROUP,
+            group=group,
+            account=account,
+        )
+
+        # Remove template_owner as task performer to test pure template viewer
+        TaskPerformer.objects.filter(task_id=task.id).delete()
+
+        request = Mock()
+        request.user = viewer_user
+
+        view = Mock()
+        view.kwargs = {'pk': str(task.id)}
+
+        permission = TaskCommentPermission()
+
+        # act
+        result = permission.has_permission(request, view)
+
+        # assert
+        assert result is True
 
     def test_has_permission__template_viewer_and_performer__ok(self):
         # arrange

@@ -392,7 +392,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
             workflowStatus={workflow.status}
             onClickTask={this.closeModal}
             areTasksClickable
-            isCommentFieldHidden={workflow?.isReadOnlyViewer}
+            isCommentFieldHidden={false}
           />
         </ModalBody>
       </>

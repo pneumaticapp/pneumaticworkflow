@@ -238,27 +238,31 @@ class TemplateViewSet(
         user = self.request.user
         qst = Template.objects.on_account(user.account_id).exclude_onboarding()
 
-        # Admin and account owner can see all templates
-        if not (user.is_admin or user.is_account_owner):
-            # Regular users can only see templates where they are:
-            # - owners, or template viewers, or workflow members
-            if self.action == 'fields':
-                # Template owner (if not workflows) or Workflow Member
-                qst = qst.filter(
-                    Q(owners__type='user', owners__user_id=user.id) |
-                    Q(owners__type='group', owners__group__users__id=user.id) |
-                    Q(workflows__members=user.id),
-                ).distinct()
-            else:
-                # For list/retrieve: owners or template viewers
-                qst = qst.filter(
-                    Q(owners__type='user', owners__user_id=user.id) |
-                    Q(owners__type='group', owners__group__users__id=user.id) |
-                    Q(viewers__type='user', viewers__user_id=user.id,
-                      viewers__is_deleted=False) |
-                    Q(viewers__type='group', viewers__group__users__id=user.id,
-                      viewers__is_deleted=False),
-                ).distinct()
+        # Account owner has full access to all templates in the account
+        if user.is_account_owner:
+            # Account owner can see all templates in the account
+            pass  # No additional filtering needed
+        # For other users (including admins), apply filtering logic
+        elif self.action == 'fields':
+            # Template owner (if not workflows) or Workflow Member
+            qst = qst.filter(
+                Q(owners__type='user', owners__user_id=user.id,
+                  owners__is_deleted=False) |
+                Q(owners__type='group', owners__group__users__id=user.id,
+                  owners__is_deleted=False) |
+                Q(workflows__members=user.id),
+            ).distinct()
+        elif self.action == 'run':
+            # Template owners, viewers, and starters can run workflows
+            qst = qst.with_template_access(user.id)
+        else:
+            # For list/retrieve: only template owners
+            qst = qst.filter(
+                Q(owners__type='user', owners__user_id=user.id,
+                  owners__is_deleted=False) |
+                Q(owners__type='group', owners__group__users__id=user.id,
+                  owners__is_deleted=False),
+            ).distinct()
 
         return self.prefetch_queryset(qst)
 

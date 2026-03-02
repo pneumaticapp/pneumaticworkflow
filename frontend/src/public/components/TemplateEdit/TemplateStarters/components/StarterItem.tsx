@@ -39,7 +39,9 @@ const StarterItem: FC<IStarterItemProps> = ({ userData, groupData, onRemove }) =
         </span>
         {userData && (
           <span className={styles['user-role']}>
-            {formatMessage({ id: 'template.starter-role' })}
+            {userData.isAdmin
+              ? formatMessage({ id: 'template.user-admin' })
+              : formatMessage({ id: 'template.user-role' })}
           </span>
         )}
         {groupData && (
