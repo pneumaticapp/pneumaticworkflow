@@ -1,5 +1,6 @@
 # ruff: noqa: PLC0415
 import re
+from django.db.models import Q
 from typing import Any, Dict, List, Optional
 
 from rest_framework import serializers
@@ -29,6 +30,7 @@ from src.processes.serializers.workflows.field import (
 from src.processes.serializers.workflows.task_performer import (
     TaskUserGroupPerformerSerializer,
 )
+from src.processes.models.workflows.task import TaskPerformer
 
 
 class TaskShortSerializer(serializers.ModelSerializer):
@@ -190,8 +192,6 @@ class TaskSerializer(serializers.ModelSerializer):
         user = self.context.get('user')
         if not user:
             return False
-
-        from django.db.models import Q
         workflow = instance.workflow
         template = workflow.template
 
@@ -224,7 +224,6 @@ class TaskSerializer(serializers.ModelSerializer):
             return False
 
         # Check if user is task performer
-        from src.processes.models.workflows.task import TaskPerformer
         performer_user_ids = (
             TaskPerformer.objects
             .by_task(instance.id)

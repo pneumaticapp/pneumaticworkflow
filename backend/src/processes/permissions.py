@@ -47,22 +47,6 @@ class TemplateOwnerPermission(BasePermission):
             )
 
 
-class TemplateOwnerAdminPermission(BasePermission):
-
-    """ Only template owners with admin role can add/remove viewers.
-    Account owner can always manage viewers. """
-
-    message = MSG_PT_0023
-
-    def has_permission(self, request, view):
-        if request.user.is_account_owner:
-            return True
-        if not getattr(request.user, 'is_admin', False):
-            return False
-        owner_permission = TemplateOwnerPermission()
-        return owner_permission.has_permission(request, view)
-
-
 class TemplateStarterPermission(BasePermission):
 
     """ Allow template starters to run workflows from templates """

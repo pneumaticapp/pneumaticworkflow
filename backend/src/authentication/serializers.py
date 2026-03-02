@@ -1,5 +1,6 @@
 from django.contrib.auth import authenticate, get_user_model
 from django.core.validators import RegexValidator
+from django.db.models import Exists, Q
 from drf_recaptcha.fields import ReCaptchaV2Field
 from rest_framework import serializers
 from typing import Any, Dict, Optional
@@ -15,7 +16,9 @@ from src.authentication.messages import (
 from src.generics.fields import DateFormatField, TimeStampField
 from src.generics.mixins.services import EncryptionMixin
 from src.generics.serializers import CustomValidationErrorMixin
-from src.processes.models.templates.template import Template
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.viewer import TemplateViewer
+from src.processes.models.templates.starter import TemplateStarter
 
 UserModel = get_user_model()
 
@@ -195,19 +198,54 @@ class ContextUserSerializer(serializers.ModelSerializer):
     date_fmt = DateFormatField(read_only=True)
 
     def get_has_workflow_viewer_access(self, obj) -> bool:
-        templates_qs = Template.objects.on_account(obj.account_id)
-        return (
-            templates_qs.with_template_viewer(obj.id).exists() or
-            templates_qs.with_template_owner(obj.id).exists()
-        )
+        access = self._get_template_access(obj)
+        return access['viewer']
 
     def get_has_workflow_starter_access(self, obj) -> bool:
-        templates_qs = Template.objects.on_account(obj.account_id)
-        return (
-            templates_qs.with_template_starter(obj.id).exists() or
-            templates_qs.with_template_viewer(obj.id).exists() or
-            templates_qs.with_template_owner(obj.id).exists()
+        access = self._get_template_access(obj)
+        return access['starter']
+
+    def _get_template_access(self, obj) -> dict:
+        if hasattr(self, '_template_access_cache'):
+            return self._template_access_cache
+
+        user_id = obj.id
+        account_id = obj.account_id
+
+        owner_subq = TemplateOwner.objects.filter(
+            template__account_id=account_id,
+        ).filter(
+            Q(type='user', user_id=user_id) |
+            Q(type='group', group__users__id=user_id),
         )
+        viewer_subq = TemplateViewer.objects.filter(
+            template__account_id=account_id,
+        ).filter(
+            Q(type='user', user_id=user_id) |
+            Q(type='group', group__users__id=user_id),
+        )
+        starter_subq = TemplateStarter.objects.filter(
+            template__account_id=account_id,
+        ).filter(
+            Q(type='user', user_id=user_id) |
+            Q(type='group', group__users__id=user_id),
+        )
+
+        result = UserModel.objects.filter(pk=user_id).annotate(
+            has_owner=Exists(owner_subq),
+            has_viewer=Exists(viewer_subq),
+            has_starter=Exists(starter_subq),
+        ).values('has_owner', 'has_viewer', 'has_starter').first()
+
+        has_owner = result['has_owner'] if result else False
+        has_viewer = result['has_viewer'] if result else False
+        has_starter = result['has_starter'] if result else False
+
+        self._template_access_cache = {
+            'viewer': has_owner or has_viewer,
+            'starter': has_owner or has_viewer or has_starter,
+        }
+        return self._template_access_cache
 
     def to_representation(self, data):
         data = super().to_representation(data)
