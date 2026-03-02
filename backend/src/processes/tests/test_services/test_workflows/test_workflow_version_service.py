@@ -267,6 +267,8 @@ def test_update_from_version__existing_values():
         name='Text field',
         kickoff=kickoff,
         template=template,
+        is_required=False,
+        is_hidden=True,
     )
     TaskField.objects.create(
         type=FieldType.TEXT,
@@ -281,6 +283,8 @@ def test_update_from_version__existing_values():
         name='Checkbox field',
         kickoff=kickoff,
         template=template,
+        is_required=False,
+        is_hidden=False,
     )
     FieldTemplateSelection.objects.create(
         value='first',
@@ -322,6 +326,12 @@ def test_update_from_version__existing_values():
     assert kickoff_fields.filter(
         type=FieldType.TEXT,
     ).first().is_required is False
+    assert kickoff_fields.filter(
+        type=FieldType.TEXT,
+    ).first().is_hidden is True
+    assert kickoff_fields.filter(
+        type=FieldType.CHECKBOX,
+    ).first().is_hidden is False
     assert kickoff_fields.filter(
         type=FieldType.CHECKBOX,
     ).first().selections.count() == 2

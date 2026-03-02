@@ -47,6 +47,7 @@ class TestUpdateKickoffFields:
             'description': 'Changed desc',
             'type': FieldType.TEXT,
             'is_required': True,
+            'is_hidden': False,
             'order': 2,
             'api_name': 'field-name-1',
         }
@@ -95,6 +96,7 @@ class TestUpdateKickoffFields:
         assert response_data['name'] == request_data['name']
         assert response_data['description'] == request_data['description']
         assert response_data['is_required'] == request_data['is_required']
+        assert response_data['is_hidden'] == request_data['is_hidden']
         assert response_data['order'] == request_data['order']
         assert response_data['api_name'] == request_data['api_name']
 
@@ -105,8 +107,90 @@ class TestUpdateKickoffFields:
         assert field.name == request_data['name']
         assert field.description == request_data['description']
         assert field.is_required == request_data['is_required']
+        assert field.is_hidden == request_data['is_hidden']
         assert field.order == request_data['order']
         assert field.api_name == request_data['api_name']
+
+    def test_update__kickoff_field_is_hidden__ok(
+        self,
+        mocker,
+        api_client,
+    ):
+
+        # arrange
+        user = create_test_user()
+        api_client.token_authenticate(user)
+        template = create_test_template(
+            user,
+            is_active=True,
+            tasks_count=1,
+        )
+        kickoff = template.kickoff_instance
+        task = template.tasks.first()
+        FieldTemplate.objects.create(
+            name='Name',
+            type=FieldType.STRING,
+            kickoff=template.kickoff_instance,
+            is_required=False,
+            order=1,
+            api_name='field-name-1',
+            template=template,
+        )
+        mocker.patch(
+            'src.processes.services.templates.'
+            'integrations.TemplateIntegrationsService.template_updated',
+        )
+        request_data = {
+            'name': 'Hidden field',
+            'description': '',
+            'type': FieldType.STRING,
+            'is_required': False,
+            'is_hidden': True,
+            'order': 1,
+            'api_name': 'field-name-1',
+        }
+
+        # act
+        response = api_client.put(
+            path=f'/templates/{template.id}',
+            data={
+                'id': template.id,
+                'name': template.name,
+                'is_active': True,
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+                'kickoff': {
+                    'fields': [request_data],
+                },
+                'tasks': [
+                    {
+                        'number': task.number,
+                        'name': task.name,
+                        'raw_performers': [
+                            {
+                                'type': PerformerType.USER,
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
+        )
+
+        # assert
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data['kickoff']['fields']) == 1
+        response_data = data['kickoff']['fields'][0]
+        assert response_data['is_hidden'] is True
+
+        kickoff.refresh_from_db()
+        field = kickoff.fields.first()
+        assert field.is_hidden is True
 
     def test_update__delete__ok(
         self,
