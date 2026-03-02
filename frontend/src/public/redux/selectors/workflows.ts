@@ -1,13 +1,16 @@
-import { IApplicationState, IStoreWorkflows, IWorkflowLog } from '../../types/redux';
+import { IApplicationState, IStoreWorkflows, IWorkflowLog, IWorkflowsList } from '../../types/redux';
 import {
   EWorkflowsLoadingStatus,
   EWorkflowsStatus,
   EWorkflowsView,
+  EWorkflowsSorting,
   ITemplateFilterItem,
   TUserCounter,
 } from '../../types/workflow';
 
 export const getWorkflowsStore = (state: IApplicationState): IStoreWorkflows => state.workflows;
+
+export const getWorkflowsList = (state: IApplicationState): IWorkflowsList => state.workflows.workflowsList;
 
 export const getWorkflowsSearchText = (state: IApplicationState): string => state.workflows.workflowsSearchText;
 
@@ -37,6 +40,9 @@ export const getWorkflowTemplateListItems = (state: IApplicationState): ITemplat
 
 export const getWorkflowsStatus = (state: IApplicationState): EWorkflowsStatus =>
   state.workflows.workflowsSettings.values.statusFilter;
+
+export const getWorkflowsSorting = (state: IApplicationState): EWorkflowsSorting =>
+  state.workflows.workflowsSettings.sorting;
 
 export const getWorkflowStartersIdsFilter = (state: IApplicationState): number[] =>
   state.workflows.workflowsSettings.values.workflowStartersIdsFilter;
