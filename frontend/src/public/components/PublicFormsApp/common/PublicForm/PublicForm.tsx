@@ -1,6 +1,5 @@
-/* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import ReCAPTCHA from 'react-google-recaptcha';
 import produce from 'immer';
@@ -52,12 +51,12 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
-  const [formState, setFormState] = React.useState<EPublicFormState>(EPublicFormState.WaitingForAction);
-  const [publicForm, setPublicForm] = React.useState<IPublicForm | null>(null);
-  const [captcha, setCaptcha] = React.useState('');
+  const [formState, setFormState] = useState<EPublicFormState>(EPublicFormState.WaitingForAction);
+  const [publicForm, setPublicForm] = useState<IPublicForm | null>(null);
+  const [captcha, setCaptcha] = useState('');
   useShouldHideIntercom();
 
-  React.useEffect(() => {
+  useEffect(() => {
     dispatch(usersFetchStarted({ showErrorNotification: false }));
     fetchPublicForm();
   }, []);

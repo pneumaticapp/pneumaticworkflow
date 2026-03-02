@@ -1,6 +1,5 @@
-/* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
+import { useState, useCallback, FormEvent, MouseEvent } from 'react';
 import classnames from 'classnames';
 import Truncate from 'react-truncate';
 import { Form, Modal, ModalBody, ModalHeader } from 'reactstrap';
@@ -72,15 +71,15 @@ function WorkflowEditPopupComponent({
 
   const descriptionLinesCount = 5;
 
-  const [workflowName, changeWorkflowName] = React.useState(
+  const [workflowName, changeWorkflowName] = useState(
     workflow.wfNameTemplate || `${reactElementToText(<DateFormat />)} — ${workflow.name}`,
   );
-  const [kickoffState, setKickoffState] = React.useState(getInitialKickoff(workflow.kickoff));
+  const [kickoffState, setKickoffState] = useState(getInitialKickoff(workflow.kickoff));
 
-  const [isUrgent, setIsUrgent] = React.useState(false);
+  const [isUrgent, setIsUrgent] = useState(false);
 
-  const [textExpaned, setTextExpanded] = React.useState(false);
-  const expandText = React.useCallback(() => setTextExpanded(!textExpaned), [textExpaned]);
+  const [textExpaned, setTextExpanded] = useState(false);
+  const expandText = useCallback(() => setTextExpanded(!textExpaned), [textExpaned]);
 
   const ellispis = (
     <a onClick={expandText} className={styles['description_more']}>
@@ -190,7 +189,7 @@ function WorkflowEditPopupComponent({
   };
 
   const renderTemplateEditButton = () => {
-    const redirectToWorkflowEdit = (e: React.MouseEvent) => {
+    const redirectToWorkflowEdit = (e: MouseEvent) => {
       e.preventDefault();
       const redirectUrl = ERoutes.TemplatesEdit.replace(':id', String(workflow.id));
 
@@ -212,7 +211,7 @@ function WorkflowEditPopupComponent({
     );
   };
 
-  const handleRunWorkflow = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleRunWorkflow = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     onRunWorkflow({
       ...workflow,

@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, MouseEvent } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 import { Link } from 'react-router-dom';
@@ -159,7 +159,7 @@ export function TaskCard({
     setOutputValues(outputFieldsWithValues);
   }, [task.id]);
 
-  const handleOpenWorkflowPopup = (workflowId: number | null) => (e: React.MouseEvent) => {
+  const handleOpenWorkflowPopup = (workflowId: number | null) => (e: MouseEvent) => {
     e.preventDefault();
     if (workflowId) {
       openWorkflowLogPopup({ workflowId });

@@ -189,7 +189,6 @@ export interface IExtraField {
   apiName: string;
   description?: string;
   isRequired?: boolean;
-  /** Признак «Скрытое» для полей кикоффа: показывать переключатель только в форме кикоффа, логика скрытия — отдельно. */
   isHidden?: boolean;
   name: string;
   type: EExtraFieldType;
