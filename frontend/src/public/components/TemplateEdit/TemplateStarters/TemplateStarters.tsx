@@ -29,11 +29,17 @@ export function TemplateStarters({ templateStarters = [], onChangeTemplateStarte
 
   const users = getNotDeletedUsers(useSelector(getUsers));
   const mapUsersDropdownValue = users.filter((user) =>
-    templateStarters.find(({ sourceId }) => Number(sourceId) === user.id),
+    templateStarters.find(
+      ({ sourceId, type }) =>
+        Number(sourceId) === user.id && type === ETemplateStarterType.User,
+    ),
   );
 
   const mapGroupDropdownValue = groups.filter((group) =>
-    templateStarters.find(({ sourceId }) => Number(sourceId) === group.id),
+    templateStarters.find(
+      ({ sourceId, type }) =>
+        Number(sourceId) === group.id && type === ETemplateStarterType.UserGroup,
+    ),
   );
 
   const templateStarterGroupDropdownOption = groups.map((group) => {
@@ -42,7 +48,7 @@ export function TemplateStarters({ templateStarters = [], onChangeTemplateStarte
       optionType: EOptionTypes.Group,
       type: ETaskPerformerType.UserGroup,
       label: group.name,
-      value: String(group.id),
+      value: `${EOptionTypes.Group}-${group.id}`,
     };
   });
 
@@ -53,7 +59,7 @@ export function TemplateStarters({ templateStarters = [], onChangeTemplateStarte
       lastName: '',
       optionType: EOptionTypes.User,
       label: getUserFullName(item),
-      value: String(item.id),
+      value: `${EOptionTypes.User}-${item.id}`,
     };
   });
 
@@ -67,7 +73,7 @@ export function TemplateStarters({ templateStarters = [], onChangeTemplateStarte
       ...item,
       optionType: EOptionTypes.User,
       label: getUserFullName(item),
-      value: String(item.id),
+      value: `${EOptionTypes.User}-${item.id}`,
     };
   });
 
@@ -76,12 +82,17 @@ export function TemplateStarters({ templateStarters = [], onChangeTemplateStarte
       ...item,
       optionType: EOptionTypes.Group,
       label: item.name,
-      value: String(item.id),
+      value: `${EOptionTypes.Group}-${item.id}`,
     };
   });
 
-  const handleRemoveTemplateStarter = ({ id }: Pick<TUsersDropdownOption, 'id'>) => {
-    const newTemplateStarters = templateStarters.filter(({ sourceId }) => sourceId !== String(id));
+  const handleRemoveTemplateStarter = (
+    { id, optionType }: Pick<TUsersDropdownOption, 'id' | 'optionType'>,
+  ) => {
+    const newTemplateStarters = templateStarters.filter(
+      ({ sourceId, type }) =>
+        !(sourceId === String(id) && type === (optionType as unknown as ETemplateStarterType)),
+    );
     onChangeTemplateStarters(newTemplateStarters);
   };
 
@@ -112,13 +123,20 @@ export function TemplateStarters({ templateStarters = [], onChangeTemplateStarte
       <div className={styles['starters-list']}>
         {templateStarters.map(({ sourceId, type }) => {
           return (
-            <UserDataWithGroup key={sourceId} idItem={Number(sourceId)} type={type as unknown as ETemplateOwnerType}>
+            <UserDataWithGroup
+              key={`${type}-${sourceId}`}
+              idItem={Number(sourceId)}
+              type={type as unknown as ETemplateOwnerType}
+            >
               {(user) => {
                 return (
                   <StarterItem
                     userData={user?.type !== ETemplateOwnerType.UserGroup ? user : undefined}
                     groupData={user?.type === ETemplateOwnerType.UserGroup ? user : undefined}
-                    onRemove={() => handleRemoveTemplateStarter({ id: Number(sourceId) })}
+                    onRemove={() => handleRemoveTemplateStarter({
+                      id: Number(sourceId),
+                      optionType: type as unknown as EOptionTypes,
+                    })}
                   />
                 );
               }}

@@ -31,11 +31,17 @@ export function TemplateOwners({ templateOwners = [], onChangeTemplateOwners }: 
   // Only admin users and account owners can be template owners
   const users = allUsers.filter(user => user.isAdmin || user.isAccountOwner);
   const mapUsersDropdownValue = users.filter((user) =>
-    templateOwners.find(({ sourceId }) => Number(sourceId) === user.id),
+    templateOwners.find(
+      ({ sourceId, type }) =>
+        Number(sourceId) === user.id && type === ETemplateOwnerType.User,
+    ),
   );
 
-  const mapGroupDropdownValue = groups.filter((user) =>
-    templateOwners.find(({ sourceId }) => Number(sourceId) === user.id),
+  const mapGroupDropdownValue = groups.filter((group) =>
+    templateOwners.find(
+      ({ sourceId, type }) =>
+        Number(sourceId) === group.id && type === ETemplateOwnerType.UserGroup,
+    ),
   );
 
   const templateOwnerGroupDropdownOption = groups.map((group) => {
@@ -44,7 +50,7 @@ export function TemplateOwners({ templateOwners = [], onChangeTemplateOwners }: 
       optionType: EOptionTypes.Group,
       type: ETaskPerformerType.UserGroup,
       label: group.name,
-      value: String(group.id),
+      value: `${EOptionTypes.Group}-${group.id}`,
     };
   });
 
@@ -55,7 +61,7 @@ export function TemplateOwners({ templateOwners = [], onChangeTemplateOwners }: 
       lastName: '',
       optionType: EOptionTypes.User,
       label: getUserFullName(item),
-      value: String(item.id),
+      value: `${EOptionTypes.User}-${item.id}`,
     };
   });
 
@@ -69,7 +75,7 @@ export function TemplateOwners({ templateOwners = [], onChangeTemplateOwners }: 
       ...item,
       optionType: EOptionTypes.User,
       label: getUserFullName(item),
-      value: String(item.id),
+      value: `${EOptionTypes.User}-${item.id}`,
     };
   });
 
@@ -78,12 +84,17 @@ export function TemplateOwners({ templateOwners = [], onChangeTemplateOwners }: 
       ...item,
       optionType: EOptionTypes.Group,
       label: item.name,
-      value: String(item.id),
+      value: `${EOptionTypes.Group}-${item.id}`,
     };
   });
 
-  const handleRemoveTemplateOwner = ({ id }: Pick<TUsersDropdownOption, 'id'>) => {
-    const newTemplateOwners = templateOwners.filter(({ sourceId }) => sourceId !== String(id));
+  const handleRemoveTemplateOwner = (
+    { id, optionType }: Pick<TUsersDropdownOption, 'id' | 'optionType'>,
+  ) => {
+    const newTemplateOwners = templateOwners.filter(
+      ({ sourceId, type }) =>
+        !(sourceId === String(id) && type === (optionType as unknown as ETemplateOwnerType)),
+    );
     onChangeTemplateOwners(newTemplateOwners);
   };
 
@@ -114,13 +125,16 @@ export function TemplateOwners({ templateOwners = [], onChangeTemplateOwners }: 
       <div className={styles['users']}>
         {templateOwners.map(({ sourceId, type }) => {
           return (
-            <UserDataWithGroup key={sourceId} idItem={Number(sourceId)} type={type}>
+            <UserDataWithGroup key={`${type}-${sourceId}`} idItem={Number(sourceId)} type={type}>
               {(user) => {
                 return (
                   <OwnerItem
                     name={getUserFullName(user)}
                     user={user}
-                    removeOwner={() => handleRemoveTemplateOwner({ id: Number(sourceId) })}
+                    removeOwner={() => handleRemoveTemplateOwner({
+                      id: Number(sourceId),
+                      optionType: type as unknown as EOptionTypes,
+                    })}
                   />
                 );
               }}

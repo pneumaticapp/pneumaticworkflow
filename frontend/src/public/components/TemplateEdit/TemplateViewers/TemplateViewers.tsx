@@ -29,11 +29,17 @@ export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers 
 
   const users = getNotDeletedUsers(useSelector(getUsers));
   const mapUsersDropdownValue = users.filter((user) =>
-    templateViewers.find(({ sourceId }) => Number(sourceId) === user.id),
+    templateViewers.find(
+      ({ sourceId, type }) =>
+        Number(sourceId) === user.id && type === ETemplateViewerType.User,
+    ),
   );
 
   const mapGroupDropdownValue = groups.filter((group) =>
-    templateViewers.find(({ sourceId }) => Number(sourceId) === group.id),
+    templateViewers.find(
+      ({ sourceId, type }) =>
+        Number(sourceId) === group.id && type === ETemplateViewerType.UserGroup,
+    ),
   );
 
   const templateViewerGroupDropdownOption = groups.map((group) => {
@@ -42,7 +48,7 @@ export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers 
       optionType: EOptionTypes.Group,
       type: ETaskPerformerType.UserGroup,
       label: group.name,
-      value: String(group.id),
+      value: `${EOptionTypes.Group}-${group.id}`,
     };
   });
 
@@ -53,7 +59,7 @@ export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers 
       lastName: '',
       optionType: EOptionTypes.User,
       label: getUserFullName(item),
-      value: String(item.id),
+      value: `${EOptionTypes.User}-${item.id}`,
     };
   });
 
@@ -67,7 +73,7 @@ export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers 
       ...item,
       optionType: EOptionTypes.User,
       label: getUserFullName(item),
-      value: String(item.id),
+      value: `${EOptionTypes.User}-${item.id}`,
     };
   });
 
@@ -76,12 +82,17 @@ export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers 
       ...item,
       optionType: EOptionTypes.Group,
       label: item.name,
-      value: String(item.id),
+      value: `${EOptionTypes.Group}-${item.id}`,
     };
   });
 
-  const handleRemoveTemplateViewer = ({ id }: Pick<TUsersDropdownOption, 'id'>) => {
-    const newTemplateViewers = templateViewers.filter(({ sourceId }) => sourceId !== String(id));
+  const handleRemoveTemplateViewer = (
+    { id, optionType }: Pick<TUsersDropdownOption, 'id' | 'optionType'>,
+  ) => {
+    const newTemplateViewers = templateViewers.filter(
+      ({ sourceId, type }) =>
+        !(sourceId === String(id) && type === (optionType as unknown as ETemplateViewerType)),
+    );
     onChangeTemplateViewers(newTemplateViewers);
   };
 
@@ -112,13 +123,20 @@ export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers 
       <div className={styles['viewers-list']}>
         {templateViewers.map(({ sourceId, type }) => {
           return (
-            <UserDataWithGroup key={sourceId} idItem={Number(sourceId)} type={type as unknown as ETemplateOwnerType}>
+            <UserDataWithGroup
+              key={`${type}-${sourceId}`}
+              idItem={Number(sourceId)}
+              type={type as unknown as ETemplateOwnerType}
+            >
               {(user) => {
                 return (
                   <ViewerItem
                     userData={user?.type !== ETemplateOwnerType.UserGroup ? user : undefined}
                     groupData={user?.type === ETemplateOwnerType.UserGroup ? user : undefined}
-                    onRemove={() => handleRemoveTemplateViewer({ id: Number(sourceId) })}
+                    onRemove={() => handleRemoveTemplateViewer({
+                      id: Number(sourceId),
+                      optionType: type as unknown as EOptionTypes,
+                    })}
                   />
                 );
               }}
