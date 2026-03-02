@@ -94,22 +94,8 @@ class OwnerType:
     )
 
 
-class ViewerType:
-    USER = 'user'
-    GROUP = 'group'
-    choices = (
-        (USER, USER),
-        (GROUP, GROUP),
-    )
-
-
-class StarterType:
-    USER = 'user'
-    GROUP = 'group'
-    choices = (
-        (USER, USER),
-        (GROUP, GROUP),
-    )
+ViewerType = OwnerType
+StarterType = OwnerType
 
 
 class DirectlyStatus:

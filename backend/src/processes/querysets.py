@@ -23,12 +23,15 @@ from src.generics.querysets import (
 from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
+    OwnerType,
     PerformerType,
     PresetType,
+    StarterType,
     SysTemplateType,
     TaskStatus,
     TemplateOrdering,
     TemplateType,
+    ViewerType,
     WorkflowEventActionType,
     WorkflowEventType,
     WorkflowStatus,
@@ -103,47 +106,62 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
 
     def with_template_owner(self, user_id: int):
         return self.filter(
-            Q(owners__type='user', owners__user_id=user_id) |
-            Q(owners__type='group', owners__group__users__id=user_id),
+            Q(owners__type=OwnerType.USER, owners__user_id=user_id) |
+            Q(owners__type=OwnerType.GROUP, owners__group__users__id=user_id),
         ).distinct()
 
     def with_template_viewer(self, user_id: int):
         return self.filter(
-            Q(viewers__type='user', viewers__user_id=user_id) |
-            Q(viewers__type='group', viewers__group__users__id=user_id),
+            Q(viewers__type=ViewerType.USER, viewers__user_id=user_id) |
+            Q(
+                viewers__type=ViewerType.GROUP,
+                viewers__group__users__id=user_id,
+            ),
         ).distinct()
 
     def with_template_starter(self, user_id: int):
         return self.filter(
-            Q(starters__type='user', starters__user_id=user_id) |
-            Q(starters__type='group', starters__group__users__id=user_id),
+            Q(starters__type=StarterType.USER, starters__user_id=user_id) |
+            Q(
+                starters__type=StarterType.GROUP,
+                starters__group__users__id=user_id,
+            ),
         ).distinct()
 
     def with_template_access(self, user_id: int):
         return self.filter(
-            Q(owners__type='user', owners__user_id=user_id) |
-            Q(owners__type='group', owners__group__users__id=user_id) |
-            Q(viewers__type='user', viewers__user_id=user_id) |
-            Q(viewers__type='group', viewers__group__users__id=user_id) |
-            Q(starters__type='user', starters__user_id=user_id) |
-            Q(starters__type='group', starters__group__users__id=user_id),
+            Q(owners__type=OwnerType.USER, owners__user_id=user_id) |
+            Q(owners__type=OwnerType.GROUP, owners__group__users__id=user_id) |
+            Q(viewers__type=ViewerType.USER, viewers__user_id=user_id) |
+            Q(
+                viewers__type=ViewerType.GROUP,
+                viewers__group__users__id=user_id,
+            ) |
+            Q(starters__type=StarterType.USER, starters__user_id=user_id) |
+            Q(
+                starters__type=StarterType.GROUP,
+                starters__group__users__id=user_id,
+            ),
         ).distinct()
 
     def with_template_owner_or_viewer(self, user_id: int):
         return self.filter(
-            Q(owners__type='user', owners__user_id=user_id) |
-            Q(owners__type='group', owners__group__users__id=user_id) |
-            Q(viewers__type='user', viewers__user_id=user_id) |
-            Q(viewers__type='group', viewers__group__users__id=user_id),
+            Q(owners__type=OwnerType.USER, owners__user_id=user_id) |
+            Q(owners__type=OwnerType.GROUP, owners__group__users__id=user_id) |
+            Q(viewers__type=ViewerType.USER, viewers__user_id=user_id) |
+            Q(
+                viewers__type=ViewerType.GROUP,
+                viewers__group__users__id=user_id,
+            ),
         ).distinct()
 
     def get_owners_as_users(self):
         user_owners = self.filter(
-            owners__type='user',
+            owners__type=OwnerType.USER,
             owners__user_id__isnull=False,
         ).values_list('owners__user_id', flat=True)
         group_owners = self.filter(
-            owners__type='group',
+            owners__type=OwnerType.GROUP,
             owners__group__users__isnull=False,
             owners__group__users__id__isnull=False,
         ).prefetch_related('owners__group__users').values_list(
@@ -343,11 +361,11 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
     def with_template_viewer(self, user_id: int):
         return self.exclude_legacy().filter(
             Q(
-                template__viewers__type='user',
+                template__viewers__type=ViewerType.USER,
                 template__viewers__user_id=user_id,
             )
             | Q(
-                template__viewers__type='group',
+                template__viewers__type=ViewerType.GROUP,
                 template__viewers__group__users__id=user_id,
             ),
         ).distinct()
@@ -355,11 +373,11 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
     def with_template_starter(self, user_id: int):
         return self.exclude_legacy().filter(
             Q(
-                template__starters__type='user',
+                template__starters__type=StarterType.USER,
                 template__starters__user_id=user_id,
             )
             | Q(
-                template__starters__type='group',
+                template__starters__type=StarterType.GROUP,
                 template__starters__group__users__id=user_id,
             ),
         ).distinct()
@@ -375,19 +393,19 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
                 template__owners__is_deleted=False,
             )
             | Q(
-                template__viewers__type='user',
+                template__viewers__type=ViewerType.USER,
                 template__viewers__user_id=user_id,
             )
             | Q(
-                template__viewers__type='group',
+                template__viewers__type=ViewerType.GROUP,
                 template__viewers__group__users__id=user_id,
             )
             | Q(
-                template__starters__type='user',
+                template__starters__type=StarterType.USER,
                 template__starters__user_id=user_id,
             )
             | Q(
-                template__starters__type='group',
+                template__starters__type=StarterType.GROUP,
                 template__starters__group__users__id=user_id,
             ),
         ).distinct()
@@ -403,11 +421,11 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
                 template__owners__is_deleted=False,
             )
             | Q(
-                template__viewers__type='user',
+                template__viewers__type=ViewerType.USER,
                 template__viewers__user_id=user_id,
             )
             | Q(
-                template__viewers__type='group',
+                template__viewers__type=ViewerType.GROUP,
                 template__viewers__group__users__id=user_id,
             ),
         ).distinct()

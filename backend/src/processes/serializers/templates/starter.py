@@ -10,6 +10,7 @@ from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
 )
 from src.processes.enums import StarterType
+from src.processes.messages.template import MSG_PT_0071
 from src.processes.models.templates.starter import TemplateStarter
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
@@ -79,13 +80,12 @@ class TemplateStarterSerializer(
             starter_data['user_id'] = int(validated_data['source_id'])
         elif validated_data['type'] == StarterType.GROUP:
             starter_data['group_id'] = int(validated_data['source_id'])
-        msg = (
-            "Starter with this api_name already exists for template "
-            f"{self.context['template'].name}"
-        )
         return self.create_or_update_instance(
             validated_data=starter_data,
-            not_unique_exception_msg=msg,
+            not_unique_exception_msg=MSG_PT_0071(
+                name=self.context['template'].name,
+                api_name=validated_data.get('api_name'),
+            ),
         )
 
     def update(
@@ -106,14 +106,13 @@ class TemplateStarterSerializer(
         elif validated_data['type'] == StarterType.GROUP:
             starter_data['group_id'] = int(validated_data['source_id'])
             starter_data['user_id'] = None
-        msg = (
-            "Starter with this api_name already exists for template "
-            f"{self.context['template'].name}"
-        )
         return self.create_or_update_instance(
             instance=instance,
             validated_data=starter_data,
-            not_unique_exception_msg=msg,
+            not_unique_exception_msg=MSG_PT_0071(
+                name=self.context['template'].name,
+                api_name=validated_data.get('api_name'),
+            ),
         )
 
     def to_representation(self, instance):

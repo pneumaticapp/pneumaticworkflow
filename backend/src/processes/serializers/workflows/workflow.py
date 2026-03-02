@@ -21,7 +21,9 @@ from src.generics.mixins.serializers import (
 )
 from src.generics.paginations import DefaultPagination
 from src.processes.enums import (
+    OwnerType,
     TaskStatus,
+    ViewerType,
     WorkflowApiStatus,
     WorkflowOrdering,
     WorkflowStatus,
@@ -424,8 +426,12 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
 
         # First check if user is template viewer
         is_template_viewer = template.viewers.filter(
-            Q(type='user', user_id=user.id, is_deleted=False)
-            | Q(type='group', group__users__id=user.id, is_deleted=False),
+            Q(type=ViewerType.USER, user_id=user.id, is_deleted=False)
+            | Q(
+                type=ViewerType.GROUP,
+                group__users__id=user.id,
+                is_deleted=False,
+            ),
         ).exists()
 
         if not is_template_viewer:
@@ -444,8 +450,12 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
 
         # Check if user is template owner
         is_template_owner = template.owners.filter(
-            Q(type='user', user_id=user.id, is_deleted=False)
-            | Q(type='group', group__users__id=user.id, is_deleted=False),
+            Q(type=OwnerType.USER, user_id=user.id, is_deleted=False)
+            | Q(
+                type=OwnerType.GROUP,
+                group__users__id=user.id,
+                is_deleted=False,
+            ),
         ).exists()
         # User is ONLY template viewer - read-only access
         return not is_template_owner

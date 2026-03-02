@@ -279,3 +279,19 @@ MSG_PT_0068 = lambda name: format_lazy(
     name=name,
 )
 MSG_PT_0069 = _('Only admin users can be template owners.')
+MSG_PT_0070 = lambda name, api_name: format_lazy(
+    _(
+        'Viewer with api_name "{api_name}" already exists '
+        'for template "{name}"',
+    ),
+    name=name,
+    api_name=api_name,
+)
+MSG_PT_0071 = lambda name, api_name: format_lazy(
+    _(
+        'Starter with api_name "{api_name}" already exists '
+        'for template "{name}"',
+    ),
+    name=name,
+    api_name=api_name,
+)

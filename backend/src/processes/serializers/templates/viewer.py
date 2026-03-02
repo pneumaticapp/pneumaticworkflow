@@ -10,6 +10,7 @@ from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
 )
 from src.processes.enums import ViewerType
+from src.processes.messages.template import MSG_PT_0070
 from src.processes.models.templates.viewer import TemplateViewer
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
@@ -79,13 +80,12 @@ class TemplateViewerSerializer(
             viewer_data['user_id'] = int(validated_data['source_id'])
         elif validated_data['type'] == ViewerType.GROUP:
             viewer_data['group_id'] = int(validated_data['source_id'])
-        msg = (
-            "Viewer with this api_name already exists for template "
-            f"{self.context['template'].name}"
-        )
         return self.create_or_update_instance(
             validated_data=viewer_data,
-            not_unique_exception_msg=msg,
+            not_unique_exception_msg=MSG_PT_0070(
+                name=self.context['template'].name,
+                api_name=validated_data.get('api_name'),
+            ),
         )
 
     def update(
@@ -106,14 +106,13 @@ class TemplateViewerSerializer(
         elif validated_data['type'] == ViewerType.GROUP:
             viewer_data['group_id'] = int(validated_data['source_id'])
             viewer_data['user_id'] = None
-        msg = (
-            "Viewer with this api_name already exists for template "
-            f"{self.context['template'].name}"
-        )
         return self.create_or_update_instance(
             instance=instance,
             validated_data=viewer_data,
-            not_unique_exception_msg=msg,
+            not_unique_exception_msg=MSG_PT_0070(
+                name=self.context['template'].name,
+                api_name=validated_data.get('api_name'),
+            ),
         )
 
     def to_representation(self, instance):

@@ -2,6 +2,7 @@ from django.contrib.auth import get_user_model
 from django.core.management.base import BaseCommand
 from django.db import transaction
 
+from src.processes.enums import OwnerType
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.starter import TemplateStarter
 
@@ -34,7 +35,7 @@ class Command(BaseCommand):
         # Get all template owners that are not admins
         non_admin_owners = TemplateOwner.objects.filter(
             is_deleted=False,
-            type='user',
+            type=OwnerType.USER,
             user__isnull=False,
             user__is_admin=False,
         ).select_related('user', 'template', 'account')
@@ -114,7 +115,7 @@ class Command(BaseCommand):
         # Also handle group-based owners
         non_admin_group_owners = TemplateOwner.objects.filter(
             is_deleted=False,
-            type='group',
+            type=OwnerType.GROUP,
             group__isnull=False,
         ).select_related('group', 'template', 'account')
 

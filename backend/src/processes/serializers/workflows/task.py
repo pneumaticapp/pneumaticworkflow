@@ -8,7 +8,7 @@ from rest_framework.exceptions import ValidationError
 
 from src.generics.fields import TimeStampField
 from src.generics.serializers import CustomValidationErrorMixin
-from src.processes.enums import TaskOrdering
+from src.processes.enums import OwnerType, TaskOrdering, ViewerType
 from src.processes.messages.workflow import (
     MSG_PW_0057,
     MSG_PW_0083,
@@ -197,8 +197,12 @@ class TaskSerializer(serializers.ModelSerializer):
 
         # First check if user is template viewer
         is_template_viewer = template.viewers.filter(
-            Q(type='user', user_id=user.id, is_deleted=False)
-            | Q(type='group', group__users__id=user.id, is_deleted=False),
+            Q(type=ViewerType.USER, user_id=user.id, is_deleted=False)
+            | Q(
+                type=ViewerType.GROUP,
+                group__users__id=user.id,
+                is_deleted=False,
+            ),
         ).exists()
 
         if not is_template_viewer:
@@ -217,8 +221,12 @@ class TaskSerializer(serializers.ModelSerializer):
 
         # Check if user is template owner
         is_template_owner = template.owners.filter(
-            Q(type='user', user_id=user.id, is_deleted=False) |
-            Q(type='group', group__users__id=user.id, is_deleted=False),
+            Q(type=OwnerType.USER, user_id=user.id, is_deleted=False)
+            | Q(
+                type=OwnerType.GROUP,
+                group__users__id=user.id,
+                is_deleted=False,
+            ),
         ).exists()
         if is_template_owner:
             return False

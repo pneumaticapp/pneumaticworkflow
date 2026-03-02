@@ -16,6 +16,7 @@ from src.authentication.messages import (
 from src.generics.fields import DateFormatField, TimeStampField
 from src.generics.mixins.services import EncryptionMixin
 from src.generics.serializers import CustomValidationErrorMixin
+from src.processes.enums import OwnerType, StarterType, ViewerType
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.viewer import TemplateViewer
 from src.processes.models.templates.starter import TemplateStarter
@@ -215,20 +216,20 @@ class ContextUserSerializer(serializers.ModelSerializer):
         owner_subq = TemplateOwner.objects.filter(
             template__account_id=account_id,
         ).filter(
-            Q(type='user', user_id=user_id) |
-            Q(type='group', group__users__id=user_id),
+            Q(type=OwnerType.USER, user_id=user_id) |
+            Q(type=OwnerType.GROUP, group__users__id=user_id),
         )
         viewer_subq = TemplateViewer.objects.filter(
             template__account_id=account_id,
         ).filter(
-            Q(type='user', user_id=user_id) |
-            Q(type='group', group__users__id=user_id),
+            Q(type=ViewerType.USER, user_id=user_id) |
+            Q(type=ViewerType.GROUP, group__users__id=user_id),
         )
         starter_subq = TemplateStarter.objects.filter(
             template__account_id=account_id,
         ).filter(
-            Q(type='user', user_id=user_id) |
-            Q(type='group', group__users__id=user_id),
+            Q(type=StarterType.USER, user_id=user_id) |
+            Q(type=StarterType.GROUP, group__users__id=user_id),
         )
 
         result = UserModel.objects.filter(pk=user_id).annotate(
