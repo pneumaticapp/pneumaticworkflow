@@ -129,6 +129,14 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
             Q(starters__type='group', starters__group__users__id=user_id),
         ).distinct()
 
+    def with_template_owner_or_viewer(self, user_id: int):
+        return self.filter(
+            Q(owners__type='user', owners__user_id=user_id) |
+            Q(owners__type='group', owners__group__users__id=user_id) |
+            Q(viewers__type='user', viewers__user_id=user_id) |
+            Q(viewers__type='group', viewers__group__users__id=user_id),
+        ).distinct()
+
     def get_owners_as_users(self):
         user_owners = self.filter(
             owners__type='user',
@@ -381,6 +389,26 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             | Q(
                 template__starters__type='group',
                 template__starters__group__users__id=user_id,
+            ),
+        ).distinct()
+
+    def with_template_owner_or_viewer(self, user_id: int):
+        return self.exclude_legacy().filter(
+            Q(
+                template__owners__user_id=user_id,
+                template__owners__is_deleted=False,
+            )
+            | Q(
+                template__owners__group__users__id=user_id,
+                template__owners__is_deleted=False,
+            )
+            | Q(
+                template__viewers__type='user',
+                template__viewers__user_id=user_id,
+            )
+            | Q(
+                template__viewers__type='group',
+                template__viewers__group__users__id=user_id,
             ),
         ).distinct()
 
