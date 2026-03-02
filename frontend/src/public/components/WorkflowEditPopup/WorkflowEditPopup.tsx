@@ -82,7 +82,15 @@ function WorkflowEditPopupComponent({
   const expandText = useCallback(() => setTextExpanded(!textExpaned), [textExpaned]);
 
   const ellispis = (
-    <a onClick={expandText} className={styles['description_more']}>
+    // eslint-disable-next-line jsx-a11y/anchor-is-valid
+    <a
+      href="#"
+      role="button"
+      tabIndex={0}
+      onClick={(e) => { e.preventDefault(); expandText(); }}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') expandText(); }}
+      className={styles['description_more']}
+    >
       <span className={styles['more_delimeter']}>{ELLIPSIS_CHAR}</span>
       <IntlMessages id="templates.description-more" />
     </a>
@@ -131,7 +139,7 @@ function WorkflowEditPopupComponent({
         </div>
         <div className={styles['popup-title']}>
           {isUrgent ? (
-            <div className={'urgent-badge'}>
+            <div className="urgent-badge">
               <IntlMessages id="workflows.card-urgent" />
             </div>
           ) : null}
@@ -139,15 +147,17 @@ function WorkflowEditPopupComponent({
         </div>
         {workflow.description && (
           <div className={styles['popup-description']}>
-            <Truncate lines={!textExpaned && descriptionLinesCount} ellipsis={ellispis} trimWhitespace={true}>
+            <Truncate lines={!textExpaned && descriptionLinesCount} ellipsis={ellispis} trimWhitespace>
+              {/* eslint-disable react/no-array-index-key */}
               {workflow.description.split('\n').map((el, i, arr) => {
                 const line = <span key={i}>{el}</span>;
                 if (i === arr.length - 1) {
                   return line;
-                } else {
-                  return [line, <br key={`${i}br`} />];
                 }
+
+                return [line, <br key={`${i}br`} />];
               })}
+              {/* eslint-enable react/no-array-index-key */}
             </Truncate>
           </div>
         )}

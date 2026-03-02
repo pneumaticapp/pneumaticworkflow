@@ -65,16 +65,16 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
     try {
       setFormState(EPublicFormState.Loading);
 
-      const publicForm = await getPublicForm();
+      const fetchedForm = await getPublicForm();
 
-      if (!publicForm) {
+      if (!fetchedForm) {
         setFormState(EPublicFormState.FormNotFound);
 
         return;
       }
 
-      const normalizedForm = produce(publicForm, (draftPublicForm) => {
-        draftPublicForm.kickoff.fields = new ExtraFieldsHelper(publicForm.kickoff.fields).getFieldsWithValues();
+      const normalizedForm = produce(fetchedForm, (draftPublicForm) => {
+        draftPublicForm.kickoff.fields = new ExtraFieldsHelper(fetchedForm.kickoff.fields).getFieldsWithValues();
       });
 
       setPublicForm(normalizedForm);
