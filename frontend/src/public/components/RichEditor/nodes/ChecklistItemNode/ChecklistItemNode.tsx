@@ -7,8 +7,11 @@ import {
   type LexicalNode,
   type NodeKey,
   $applyNodeReplacement,
+  $isElementNode,
   ElementNode,
 } from 'lexical';
+import { $createChecklistNode, $isChecklistNode } from '../ChecklistNode';
+import { createChecklistApiName } from '../../../../utils/createId';
 
 import {
   CHECKLIST_ITEM_CLASS,
@@ -98,6 +101,67 @@ export class ChecklistItemNode extends ElementNode {
 
   updateDOM() {
     return false;
+  }
+
+  canIndent(): boolean {
+    return false;
+  }
+
+  replace<N extends LexicalNode>(replaceWithNode: N, includeChildren?: boolean): N {
+    if ($isChecklistItemNode(replaceWithNode)) {
+      return super.replace(replaceWithNode);
+    }
+    const list = this.getParent();
+    if (!list || !$isChecklistNode(list)) {
+      return super.replace(replaceWithNode);
+    }
+
+    const isFirst = list.getFirstChild()?.is(this);
+    const isLast = list.getLastChild()?.is(this);
+
+    if (isFirst && isLast) {
+      list.insertBefore(replaceWithNode);
+    } else if (isFirst) {
+      list.insertBefore(replaceWithNode);
+    } else if (isLast) {
+      list.insertAfter(replaceWithNode);
+    } else {
+      const newList = $createChecklistNode({ listApiName: createChecklistApiName() });
+      let nextSibling = this.getNextSibling();
+      while (nextSibling) {
+        const nodeToAppend = nextSibling;
+        nextSibling = nextSibling.getNextSibling();
+        newList.append(nodeToAppend);
+      }
+      list.insertAfter(replaceWithNode);
+      replaceWithNode.insertAfter(newList);
+    }
+
+    if (includeChildren && $isElementNode(replaceWithNode)) {
+      this.getChildren().forEach((child) =>
+        (replaceWithNode as unknown as ElementNode).append(child),
+      );
+    }
+    this.remove();
+    if (list.getChildrenSize() === 0) {
+      list.remove();
+    }
+    return replaceWithNode;
+  }
+
+  insertAfter(node: LexicalNode, restoreSelection = true): LexicalNode {
+    const listNode = this.getParent();
+    if (!listNode || !$isChecklistNode(listNode) || $isChecklistItemNode(node)) {
+      return super.insertAfter(node, restoreSelection);
+    }
+    const siblings = this.getNextSiblings();
+    listNode.insertAfter(node, restoreSelection);
+    if (siblings.length > 0) {
+      const newListNode = $createChecklistNode({ listApiName: createChecklistApiName() });
+      siblings.forEach((sibling) => newListNode.append(sibling));
+      node.insertAfter(newListNode, restoreSelection);
+    }
+    return node;
   }
 
   exportJSON(): SerializedChecklistItemNode {

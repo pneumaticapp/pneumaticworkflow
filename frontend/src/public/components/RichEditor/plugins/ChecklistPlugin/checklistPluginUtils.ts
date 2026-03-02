@@ -263,6 +263,23 @@ export function getBackspaceOnEmptyChecklistPayload(): BackspaceOnEmptyChecklist
   return { itemKey: item.getKey(), parentKey: parent?.getKey() ?? null, prevItemKey: item.getPreviousSibling()?.getKey() ?? null };
 }
 
+export function isCursorAtStartOfChecklistItem(): string | null {
+  const sel = $getSelection();
+  if (!sel || !$isRangeSelection(sel) || !sel.isCollapsed()) return null;
+  const { anchor } = sel;
+  if (anchor.offset !== 0) return null;
+
+  const item = getChecklistItemNodeFromSelection();
+  if (!item || isChecklistItemEmpty(item)) return null;
+
+  let node: LexicalNode | null = anchor.getNode();
+  while (node && !node.is(item)) {
+    if (node.getPreviousSibling()) return null;
+    node = node.getParent();
+  }
+  return item.getKey();
+}
+
 export function applyBackspaceOnEmptyChecklist(payload: BackspaceOnEmptyChecklistPayload): void {
   const item = $getNodeByKey(payload.itemKey);
   if (!item || !$isChecklistItemNode(item)) return;
@@ -293,4 +310,50 @@ export function insertChecklistAndSelectFirst(
   checklistRoot.append(firstItem);
   $insertNodes([checklistRoot]);
   selectStartOfChecklistItem(firstItem);
+}
+
+export function convertChecklistItemToParagraph(item: ChecklistItemNode): void {
+  const parent = item.getParent();
+  const paragraph = $createParagraphNode();
+  item.getChildren().forEach((child) => {
+    if ($isParagraphNode(child)) {
+      child.getChildren().forEach((grandChild) => paragraph.append(grandChild));
+    } else {
+      paragraph.append(child);
+    }
+  });
+
+  if (!parent || !$isChecklistNode(parent)) {
+    item.replace(paragraph);
+    paragraph.selectStart();
+    return;
+  }
+
+  const siblings = parent.getChildren();
+  const itemIndex = siblings.findIndex((s) => s.getKey() === item.getKey());
+  const isOnly = siblings.length === 1;
+  const isFirst = itemIndex === 0;
+  const isLast = itemIndex === siblings.length - 1;
+
+  if (isOnly) {
+    parent.replace(paragraph);
+  } else if (isFirst) {
+    parent.insertBefore(paragraph);
+    item.remove();
+  } else if (isLast) {
+    parent.insertAfter(paragraph);
+    item.remove();
+  } else {
+    const afterItems = siblings.slice(itemIndex + 1);
+    parent.insertAfter(paragraph);
+    const newChecklist = $createChecklistNode({ listApiName: createChecklistApiName() });
+    paragraph.insertAfter(newChecklist);
+    afterItems.forEach((sibling) => {
+      sibling.remove();
+      newChecklist.append(sibling);
+    });
+    item.remove();
+  }
+
+  paragraph.selectStart();
 }

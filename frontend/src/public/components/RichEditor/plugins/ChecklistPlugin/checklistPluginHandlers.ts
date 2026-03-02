@@ -6,11 +6,13 @@ import {
   applyInsertParagraphFromEmptyChecklist,
   assignNewChecklistIds,
   convertBlockToChecklist,
+  convertChecklistItemToParagraph,
   getBackspaceOnEmptyChecklistPayload,
   getBlockNodeFromSelection,
   getChecklistItemNodeFromSelection,
   getInsertParagraphFromEmptyChecklistPayload,
   insertChecklistAndSelectFirst,
+  isCursorAtStartOfChecklistItem,
   nodesContainChecklist,
   removeDuplicateClipboardParagraphs,
   selectStartOfChecklistItem,
@@ -68,6 +70,13 @@ export function createInsertChecklistHandler(editor: LexicalEditor) {
     editor.update(() => {
       const selection = $getSelection();
       if (!$isRangeSelection(selection)) return;
+
+      const currentItem = getChecklistItemNodeFromSelection();
+      if (currentItem) {
+        convertChecklistItemToParagraph(currentItem);
+        return;
+      }
+
       const block = getBlockNodeFromSelection();
       if (
         block !== null &&
@@ -96,10 +105,24 @@ export function createInsertChecklistHandler(editor: LexicalEditor) {
 
 export function createBackspaceHandler(editor: LexicalEditor) {
   return (): boolean => {
-    const payload = editor.getEditorState().read(() => getBackspaceOnEmptyChecklistPayload());
-    if (payload == null) return false;
-    editor.update(() => applyBackspaceOnEmptyChecklist(payload));
-    return true;
+    const emptyPayload = editor.getEditorState().read(() => getBackspaceOnEmptyChecklistPayload());
+    if (emptyPayload != null) {
+      editor.update(() => applyBackspaceOnEmptyChecklist(emptyPayload));
+      return true;
+    }
+
+    const itemKey = editor.getEditorState().read(() => isCursorAtStartOfChecklistItem());
+    if (itemKey != null) {
+      editor.update(() => {
+        const item = $getNodeByKey(itemKey);
+        if (item && $isChecklistItemNode(item)) {
+          convertChecklistItemToParagraph(item);
+        }
+      });
+      return true;
+    }
+
+    return false;
   };
 }
 

@@ -98,6 +98,16 @@ export class ChecklistNode extends ElementNode {
     };
   }
 
+  // eslint-disable-next-line class-methods-use-this -- Lexical ElementNode.canBeEmpty() override
+  canBeEmpty(): boolean {
+    return false;
+  }
+
+  // eslint-disable-next-line class-methods-use-this -- Lexical ElementNode.canIndent() override
+  canIndent(): boolean {
+    return false;
+  }
+
   // eslint-disable-next-line class-methods-use-this -- Lexical ElementNode.isInline() override
   isInline(): boolean {
     return false;
