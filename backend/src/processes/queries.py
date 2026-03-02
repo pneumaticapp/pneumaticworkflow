@@ -14,6 +14,7 @@ from src.generics.mixins.queries import (
 from src.processes.enums import (
     DirectlyStatus,
     OwnerType,
+    StarterType,
     TaskOrdering,
     TaskStatus,
     TemplateOrdering,
@@ -1137,6 +1138,7 @@ class TemplateListQuery(
         return """(
             owners.user_id = %(allowed_id)s
             OR viewers.user_id = %(allowed_id)s
+            OR starters.user_id = %(allowed_id)s
         )"""
 
     def _get_active(self):
@@ -1215,11 +1217,31 @@ class TemplateListQuery(
               AND ptv.user_id = %(user_id)s
         """
 
+    def _dereferenced_starters(self):
+        self.params['starter_type_user'] = StarterType.USER
+        self.params['starter_type_group'] = StarterType.GROUP
+        return """
+            SELECT pts.template_id, g.user_id AS user_id
+            FROM processes_templatestarter AS pts
+            JOIN accounts_usergroup_users AS g
+              ON g.usergroup_id = pts.group_id
+            WHERE pts.type = %(starter_type_group)s
+              AND pts.is_deleted IS FALSE
+              AND g.user_id = %(user_id)s
+            UNION
+            SELECT pts.template_id, pts.user_id
+            FROM processes_templatestarter AS pts
+            WHERE pts.type = %(starter_type_user)s
+              AND pts.is_deleted IS FALSE
+              AND pts.user_id = %(user_id)s
+        """
+
     def _get_inner_sql(self):
         return f"""
         WITH
           owners AS ({self.dereferenced_owners()}),
-          viewers AS ({self._dereferenced_viewers()})
+          viewers AS ({self._dereferenced_viewers()}),
+          starters AS ({self._dereferenced_starters()})
         SELECT DISTINCT
             pt.id,
             pt.is_deleted,
@@ -1244,6 +1266,7 @@ class TemplateListQuery(
         )
         LEFT JOIN owners ON pt.id = owners.template_id
         LEFT JOIN viewers ON pt.id = viewers.template_id
+        LEFT JOIN starters ON pt.id = starters.template_id
         LEFT JOIN accounts_user ON (
           owners.user_id = accounts_user.id AND
           accounts_user.is_deleted = false

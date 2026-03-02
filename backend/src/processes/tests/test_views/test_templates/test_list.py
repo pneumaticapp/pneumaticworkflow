@@ -705,10 +705,10 @@ class TestListTemplate:
         assert len(response.data['results']) == 1
         assert response.data['results'][0]['id'] == template.id
 
-    def test_list__template_starter_user__not_in_list(self, api_client):
+    def test_list__template_starter_user__in_list(self, api_client):
         """
-        Template starter (user) should NOT see template in list.
-        Starters can only run workflows, not view templates in list.
+        Template starter (user) should see template in list.
+        Starters can run workflows and see templates in Run Workflow list.
         """
 
         # arrange
@@ -739,12 +739,13 @@ class TestListTemplate:
 
         # assert
         assert response.status_code == 200
-        assert len(response.data) == 0
+        assert len(response.data) == 1
+        assert response.data[0]['id'] == template.id
 
-    def test_list__template_starter_group__not_in_list(self, api_client):
+    def test_list__template_starter_group__in_list(self, api_client):
         """
-        Template starter (via group) should NOT see template in list.
-        Starters can only run workflows, not view templates in list.
+        Template starter (via group) should see template in list.
+        Starters can run workflows and see templates in Run Workflow list.
         """
 
         # arrange
@@ -779,4 +780,5 @@ class TestListTemplate:
 
         # assert
         assert response.status_code == 200
-        assert len(response.data) == 0
+        assert len(response.data) == 1
+        assert response.data[0]['id'] == template.id
