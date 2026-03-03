@@ -208,9 +208,6 @@ class WorkflowListQuery(
         elif self.is_external is not None:
             where = f'{where} AND {self._get_is_external()}'
 
-        if self.search_text:
-            where = f'{where} AND {self._get_search()}'
-
         if self.status is not None:
             where = f'{where} AND pw.status = %(status)s'
             self.params['status'] = self.status
@@ -245,13 +242,15 @@ class WorkflowListQuery(
             # ! Does not change
             # "ps.is_deleted = FALSE" to a "ps.is_deleted IS FALSE"
             # it breaks using gin index
-            result += """
+            result += f"""
                 INNER JOIN processes_searchcontent ps ON (
                   (
                     pw.id = ps.workflow_id
                     OR pw.template_id = ps.template_id
                   )
                   AND ps.is_deleted = FALSE
+                  AND ps.account_id = %(account_id)s
+                  AND {self._get_search()}
                 )
             """
         return result
@@ -974,9 +973,6 @@ class TaskListQuery(
             AND {self.get_is_completed_where()}
         """
 
-        if self.search_text:
-            where += f' AND {self._get_search()}'
-
         if self.template_task_api_name:
             where += f' AND {self._get_template_task_api_name()}'
 
@@ -1018,6 +1014,8 @@ class TaskListQuery(
                     )
                   )
                   AND ps.is_deleted = FALSE
+                  AND ps.account_id = %(account_id)s
+                  AND {self._get_search()}
                 )
             """
         if self.template_id:
@@ -1192,6 +1190,7 @@ class TemplateListQuery(
                 INNER JOIN processes_searchcontent ps ON (
                     pt.id = ps.template_id
                     AND ps.is_deleted = FALSE
+                    AND ps.account_id = %(account_id)s
                 )
             """
         if self.ordering in {

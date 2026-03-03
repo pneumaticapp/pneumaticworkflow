@@ -971,7 +971,7 @@ def test_list__search__full_uri_in_field__ok(
     assert response.data[0]['id'] == task_1.id
 
 
-def test_list__search___domain__ok(
+def test_list__search__domain__ok(
     api_client,
     mocker,
 ):
