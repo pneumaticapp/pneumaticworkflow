@@ -39,6 +39,7 @@ from src.processes.enums import (
 from src.processes.queries import (
     RunningTaskTemplateQuery,
     TemplateExportQuery,
+    TemplateListByOwnersQuery,
     TemplateListQuery,
     WorkflowListQuery,
 )
@@ -257,6 +258,44 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
         )
 
         query = TemplateListQuery(
+            user_id=user_id,
+            account_id=account_id,
+            ordering=ordering,
+            search_text=search,
+            is_active=is_active,
+            is_public=is_public,
+        )
+        return (
+            self.execute_raw(query)
+            .prefetch_related(
+                Prefetch(
+                    'owners',
+                    queryset=TemplateOwner.objects.order_by('type', 'id'),
+                ),
+                'kickoff',
+                'kickoff__fields',
+                'kickoff__fields__selections',
+            )
+        )
+
+    def raw_list_by_owners_query(
+        self,
+        account_id: int,
+        user_id: int,
+        ordering: Optional[TemplateOrdering] = None,
+        search: Optional[str] = None,
+        is_active: Optional[bool] = None,
+        is_public: Optional[bool] = None,
+    ):
+        """
+        Returns templates where the user is a Template Owner
+        (directly or via group membership).
+        """
+        from src.processes.models.templates.owner import (
+            TemplateOwner,
+        )
+
+        query = TemplateListByOwnersQuery(
             user_id=user_id,
             account_id=account_id,
             ordering=ordering,

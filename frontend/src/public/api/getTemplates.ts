@@ -62,3 +62,29 @@ export function getTemplatesQueryString({ limit, offset, sorting, searchText, is
     .filter(Boolean)
     .join('&');
 }
+
+export function getTemplatesByOwners({
+  offset,
+  limit,
+  sorting = ETemplatesSorting.DateDesc,
+  searchText = '',
+  isActive,
+}: Partial<IGetTemplatesConfig>) {
+  const {
+    api: { urls },
+  } = getBrowserConfigEnv();
+
+  const queryString = getTemplatesQueryString({
+    limit,
+    offset,
+    sorting,
+    searchText,
+    isActive,
+  });
+
+  return commonRequest<IGetTemplatesResponse>(
+    `${urls.templatesTitlesByOwners}?${queryString}`,
+    {},
+    { shouldThrow: true },
+  );
+}

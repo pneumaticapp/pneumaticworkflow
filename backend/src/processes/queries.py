@@ -1289,6 +1289,162 @@ class TemplateListQuery(
         """, self.params
 
 
+class TemplateListByOwnersQuery(
+    SqlQueryObject,
+    SearchSqlQueryMixin,
+    OrderByMixin,
+    DereferencedOwnersMixin,
+):
+    """
+    Returns templates where the user is a Template Owner
+    (directly or via group membership).
+    Unlike TemplateListQuery, this excludes viewers and starters.
+    """
+
+    ordering_map = TemplateOrdering.MAP
+
+    def __init__(
+        self,
+        user_id: int,
+        account_id: int,
+        ordering: Optional[str] = None,
+        search_text: Optional[str] = None,
+        is_active: Optional[bool] = None,
+        is_public: Optional[bool] = None,
+    ):
+        self.user_id = user_id
+        self.account_id = account_id
+        self.params = {
+            'account_id': self.account_id,
+            'user_id': user_id,
+        }
+        self.order = None
+        self.is_active = is_active
+        self.is_public = is_public
+        self.ordering = ordering
+        self.search_text = search_text
+
+    def _get_search(self):
+        tsquery, params = self._get_tsquery()
+        self.params.update(params)
+        return f"""
+            (
+              {self._search_in(table='pt', tsquery=tsquery)}
+              OR {self._search_in(table='ptt', tsquery=tsquery)}
+              OR {self._search_in(table='accounts_user', tsquery=tsquery)}
+            )
+        """
+
+    def _get_allowed(self):
+        self.params.update({'allowed_id': self.user_id})
+        return 'owners.user_id = %(allowed_id)s'
+
+    def _get_active(self):
+        self.params.update({'is_active': self.is_active})
+        return 'pt.is_active IS %(is_active)s'
+
+    def _get_public(self):
+        self.params.update({'is_public': self.is_public})
+        return 'pt.is_public IS %(is_public)s'
+
+    def _get_filter_by_type(self):
+        result, params = self._to_sql_list(
+            values=TemplateType.TYPES_ONBOARDING,
+            prefix='template_type',
+        )
+        self.params.update(params)
+        return f"pt.type NOT IN {result}"
+
+    def get_workflows_join(self):
+        if self.ordering in {
+            TemplateOrdering.USAGE,
+            TemplateOrdering.REVERSE_USAGE,
+        }:
+            return """
+                LEFT JOIN processes_workflow workflows ON (
+                  pt.id = workflows.template_id AND
+                  workflows.is_deleted = FALSE
+                )
+            """
+        return ''
+
+    def get_workflows_select(self):
+        if self.ordering in {
+            TemplateOrdering.USAGE,
+            TemplateOrdering.REVERSE_USAGE,
+        }:
+            return 'COUNT(DISTINCT workflows.id) AS workflows_count,'
+        return ''
+
+    def _get_inner_where(self):
+        where = """
+        WHERE pt.is_deleted = false AND
+        pt.account_id = %(account_id)s AND
+        """
+        where = (
+            f'{where} {self._get_allowed()} AND {self._get_filter_by_type()}'
+        )
+
+        if self.search_text:
+            where = f'{where} AND {self._get_search()}'
+
+        if self.is_active is not None:
+            where = f'{where} AND {self._get_active()}'
+
+        if self.is_public is not None:
+            where = f'{where} AND {self._get_public()}'
+
+        return where
+
+    def _get_inner_sql(self):
+        return f"""
+        WITH
+          owners AS ({self.dereferenced_owners()})
+        SELECT DISTINCT
+            pt.id,
+            pt.is_deleted,
+            pt.name,
+            pt.wf_name_template,
+            pt.description,
+            pt.date_created,
+            pt.finalizable,
+            pt.account_id,
+            pt.is_active,
+            pt.is_public,
+            pt.is_embedded,
+            pt.type,
+            pt.search_content,
+            {self.get_workflows_select()}
+            COUNT(DISTINCT ptt.id) as tasks_count
+
+        FROM processes_template pt
+        LEFT JOIN processes_tasktemplate ptt ON (
+          ptt.template_id = pt.id AND
+          ptt.is_deleted = false
+        )
+        LEFT JOIN owners ON pt.id = owners.template_id
+        LEFT JOIN accounts_user ON (
+          owners.user_id = accounts_user.id AND
+          accounts_user.is_deleted = false
+        )
+        {self.get_workflows_join()}
+
+        {self._get_inner_where()}
+        GROUP BY pt.id
+        """
+
+    def get_sql(self):
+        order_by = self.get_order_by(
+            pre_columns='templates.is_active DESC',
+            default_column='templates.id',
+        )
+        return f"""
+        SELECT *
+        FROM ({self._get_inner_sql()}) templates
+        {order_by}
+        """, self.params
+
+
 class TemplateExportQuery(
     SqlQueryObject,
     OrderByMixin,

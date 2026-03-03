@@ -115,6 +115,7 @@ class TemplateViewSet(
     serializer_class = TemplateSerializer
     action_serializer_classes = {
         'list': TemplateListSerializer,
+        'titles_by_owners': TemplateListSerializer,
         'run': WorkflowCreateSerializer,
         'steps': TemplateStepNameSerializer,
         'ai': TemplateAiSerializer,
@@ -172,6 +173,7 @@ class TemplateViewSet(
             'list',
             'titles',
             'titles_by_events',
+            'titles_by_owners',
             'titles_by_workflows',
             'titles_by_tasks',
             'steps',
@@ -463,6 +465,36 @@ class TemplateViewSet(
         search_text = data.get('search')
         user = request.user
         queryset = Template.objects.raw_list_query(
+            user_id=user.id,
+            account_id=user.account_id,
+            ordering=data.get('ordering'),
+            search=search_text,
+            is_active=data.get('is_active'),
+            is_public=data.get('is_public'),
+        )
+        if search_text:
+            AnalyticService.search_search(
+                user=request.user,
+                page='templates',
+                search_text=search_text,
+                is_superuser=request.is_superuser,
+                auth_type=request.token_type,
+            )
+        return self.paginated_response(queryset)
+
+    @action(methods=['GET'], detail=False, url_path='titles-by-owners')
+    def titles_by_owners(self, request, *args, **kwargs):
+        """
+        Returns templates where the current user is a Template Owner
+        (directly or via group membership).
+        """
+        filter_slz = TemplateListFilterSerializer(data=request.GET)
+        filter_slz.is_valid(raise_exception=True)
+
+        data = filter_slz.validated_data
+        search_text = data.get('search')
+        user = request.user
+        queryset = Template.objects.raw_list_by_owners_query(
             user_id=user.id,
             account_id=user.account_id,
             ordering=data.get('ordering'),
