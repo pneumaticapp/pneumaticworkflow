@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.postgres.search import SearchVectorField
 
 from src.accounts.models import AccountBaseMixin
+from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
 from src.processes.enums import SearchContentType
 from src.processes.models.templates.task import TaskTemplate
@@ -10,6 +11,7 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.querysets import SearchContentQuerySet
 
 
 class SearchContent(
@@ -55,6 +57,8 @@ class SearchContent(
         choices=SearchContentType.CHOICES,
         max_length=50,
     )
+
+    objects = BaseSoftDeleteManager.from_queryset(SearchContentQuerySet)()
 
     def __str__(self):
         return str(self.content)
