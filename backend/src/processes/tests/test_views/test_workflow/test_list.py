@@ -632,6 +632,7 @@ def test_list__search__soft_deleted_comment__not_found(api_client):
         text=search_text,
         after_create_actions=False,
     )
+    event.delete()
 
     api_client.token_authenticate(user)
 

@@ -1,6 +1,3 @@
-# ruff: noqa: PLC0415
-from typing import Any, Dict
-
 from django.db import models
 from django.db.models import Q, UniqueConstraint
 
@@ -35,21 +32,3 @@ class KickoffValue(
         help_text='Does not contains markdown',
     )
     objects = BaseSoftDeleteManager()
-
-    def _update_field(self, template: Dict[str, Any]):
-        from src.processes.models.workflows\
-            .fields import TaskField
-
-        return TaskField.objects.update_or_create(
-            kickoff=self,
-            template_id=template['id'],
-            defaults={
-                'name': template['name'],
-                'description': template['description'],
-                'type': template['type'],
-                'is_required': template['is_required'],
-                'api_name': template['api_name'],
-                'order': template['order'],
-                'workflow': self.workflow,
-            },
-        )

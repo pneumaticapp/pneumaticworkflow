@@ -280,7 +280,7 @@ class WorkflowListQuery(
         """
         if self.search_tsquery:
             result += f"""
-                ts_rank(ps.content, {self.search_tsquery}) AS search_rank
+                MAX(ts_rank(ps.content, {self.search_tsquery})) AS search_rank
             """
         return result
 
@@ -303,7 +303,7 @@ class WorkflowListQuery(
                 {self._get_select()}
                 {self._get_from()}
                 {self._get_where()}
-                GROUP BY pw.id{', search_rank' if self.search_tsquery else ''}
+                GROUP BY pw.id
                 ORDER BY pw.id
             ) AS workflows
             {order_by}
@@ -1032,9 +1032,11 @@ class TaskListQuery(
     def _get_select(self):
 
         result = f"""
-         SELECT DISTINCT ON (pt.id) pt.id,
+         SELECT
+            pt.id,
             pt.name,
-            pw.name as workflow_name,
+            pw.id AS workflow_id,
+            pw.name AS workflow_name,
             pt.due_date,
             EXTRACT(
               EPOCH FROM pt.due_date AT TIME ZONE 'UTC'
@@ -1043,6 +1045,7 @@ class TaskListQuery(
             EXTRACT(
               EPOCH FROM pt.date_started AT TIME ZONE 'UTC'
             ) AS date_started_tsp,
+            ptp.id AS task_performer_id,
             ptp.date_completed,
             EXTRACT(
               EPOCH FROM pt.date_completed AT TIME ZONE 'UTC'
@@ -1055,7 +1058,7 @@ class TaskListQuery(
         """
         if self.search_tsquery:
             result += f"""
-                ts_rank(ps.content, {self.search_tsquery}) AS search_rank
+                MAX(ts_rank(ps.content, {self.search_tsquery})) AS search_rank
             """
         return result
 
@@ -1064,6 +1067,7 @@ class TaskListQuery(
             {self._get_select()}
             {self._get_from()}
             {self._get_inner_where()}
+            GROUP BY pt.id, pw.id, ptp.id
             ORDER BY pt.id
         """
 
@@ -1246,7 +1250,7 @@ class TemplateListQuery(
         """
         if self.search_tsquery:
             result += f"""
-                ts_rank(ps.content, {self.search_tsquery}) AS search_rank
+                MAX(ts_rank(ps.content, {self.search_tsquery})) AS search_rank
             """
         return result
 
@@ -1256,7 +1260,7 @@ class TemplateListQuery(
         {self._get_select()}
         {self._get_from()}
         {self._get_inner_where()}
-        GROUP BY pt.id{', search_rank' if self.search_tsquery else ''}
+        GROUP BY pt.id
         """
 
     def get_sql(self):
