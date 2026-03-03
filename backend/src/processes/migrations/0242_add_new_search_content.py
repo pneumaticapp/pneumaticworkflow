@@ -187,7 +187,7 @@ class Migration(migrations.Migration):
             RETURNS trigger AS
             $BODY$
                 BEGIN
-                IF new.is_deleted THEN
+                IF (new.is_deleted OR new.status = 'deleted') THEN
                     UPDATE processes_searchcontent
                     SET is_deleted = TRUE
                     WHERE event_id = new.id

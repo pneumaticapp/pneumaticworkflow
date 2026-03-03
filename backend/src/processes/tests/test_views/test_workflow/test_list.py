@@ -19,6 +19,7 @@ from src.processes.enums import (
     WorkflowStatus,
 )
 from src.processes.messages import workflow as messages
+from src.processes.models import SearchContent
 from src.processes.models.templates.conditions import (
     ConditionTemplate,
     PredicateTemplate,
@@ -616,6 +617,31 @@ def test_list__search__strip_spaces__ok(api_client):
     # assert
     assert response.status_code == 200
     assert len(response.data['results']) == 1
+
+
+def test_list__search__soft_deleted_comment__not_found(api_client):
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    search_text = 'Search'
+    event = WorkflowEventService.comment_created_event(
+        user=user,
+        task=task,
+        text=search_text,
+        after_create_actions=False,
+    )
+
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/workflows?search={search_text}')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 0
+    assert not SearchContent.objects.filter(event=event).exists()
 
 
 def test_list__search__comment__ok(api_client):
