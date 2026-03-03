@@ -49,10 +49,12 @@ class Migration(migrations.Migration):
             },
             bases=(src.generics.mixins.models.SoftDeleteMixin, models.Model),
         ),
-        migrations.AddConstraint(
-            model_name='searchcontent',
-            constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('workflow', 'task', 'event', 'task_field', 'template', 'task_template'), name='processes_search_content_unique'),
-        ),
+        migrations.RunSQL("""
+            CREATE UNIQUE INDEX processes_search_content_unique
+            ON processes_searchcontent (workflow_id, task_id, event_id, task_field_id, template_id, task_template_id)
+            NULLS NOT DISTINCT
+            WHERE is_deleted = FALSE;
+        """),
         # create prepare search text func
         migrations.RunSQL("""
          -- Union text parts and excluding unwanted lexemes (www, <, >, **) from the text
