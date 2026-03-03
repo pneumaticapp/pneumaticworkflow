@@ -25,7 +25,7 @@ from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_template,
     create_test_user,
-    create_test_workflow, create_test_account,
+    create_test_workflow, create_test_account, create_test_admin,
 )
 from src.services.markdown import MarkdownService
 from src.utils.validation import ErrorCode
@@ -225,6 +225,45 @@ def test_list__search__ok(api_client, mocker):
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
+
+
+def test_list__search__user_performer_twice__remove_duplicate(
+    api_client,
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    group = create_test_group(account=account, users=[user])
+    workflow = create_test_workflow(owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+    )
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.USER,
+        user_id=user.id,
+    )
+
+    search_text = 'search'
+    task.name = search_text
+    task.save(update_fields=['name'])
+
+    api_client.token_authenticate(user)
+    mocker.patch('src.analysis.services.AnalyticService.search_search')
+
+    # act
+    response = api_client.get(f'/v3/tasks?search={search_text}')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['id'] == task.id
 
 
 def test_list__search__not_found__ok(api_client, mocker):

@@ -61,7 +61,7 @@ class Migration(migrations.Migration):
              CREATE OR REPLACE FUNCTION prepare_search_content(TEXT default '', TEXT default '', TEXT default '', TEXT default '')
              RETURNS TEXT AS $$ 
              BEGIN
-               RETURN REGEXP_REPLACE(CONCAT($1, ' ', $2, ' ', $3, ' ', $4), 'http(s)?:\\\\(www\.)?|www\.|\<|\>|\*\*', '', 'g');
+               RETURN REGEXP_REPLACE(CONCAT($1, ' ', $2, ' ', $3, ' ', $4), 'http(s)?://(www\.)?|www\.|\<|\>|\*\*', '', 'g');
              END;
              $$ LANGUAGE plpgsql;
         """),

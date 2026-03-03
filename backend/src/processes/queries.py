@@ -1043,8 +1043,8 @@ class TaskListQuery(
             EXTRACT(
               EPOCH FROM pt.date_started AT TIME ZONE 'UTC'
             ) AS date_started_tsp,
-            ptp.id AS task_performer_id,
-            ptp.date_completed,
+            MAX(ptp.id) AS task_performer_id,
+            MAX(ptp.date_completed) AS date_completed,
             EXTRACT(
               EPOCH FROM pt.date_completed AT TIME ZONE 'UTC'
             ) AS date_completed_tsp,
@@ -1065,7 +1065,7 @@ class TaskListQuery(
             {self._get_select()}
             {self._get_from()}
             {self._get_inner_where()}
-            GROUP BY pt.id, pw.id, ptp.id
+            GROUP BY pt.id, pw.id
             ORDER BY pt.id
         """
 

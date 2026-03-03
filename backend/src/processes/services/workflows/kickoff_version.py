@@ -25,7 +25,7 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
                 'is_required': template['is_required'],
                 'order': template['order'],
                 'workflow': self.instance.workflow,
-                'account': self.user.account,
+                'account': self.instance.account,
             },
         )
 
