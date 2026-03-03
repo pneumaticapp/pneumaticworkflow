@@ -1,4 +1,5 @@
 from datetime import datetime
+from copy import copy
 from typing import Callable, Iterable, Optional, Tuple
 
 from django.contrib.auth import get_user_model
@@ -478,12 +479,13 @@ class WorkflowActionService:
             )
 
             wf_starter = self.workflow.workflow_starter
-            recipients = ws_recipients = [
+            recipients = [
                 (user_id, email, is_subscribed)
                 for user_id, email, is_subscribed in recipients_set
             ]
             # For tests to work stably, ordering by "user_id" is necessary
             recipients.sort(key=lambda e: e[0])
+            ws_recipients = copy(recipients)
             if (
                 len(task.parents) == 0
                 and not is_returned
