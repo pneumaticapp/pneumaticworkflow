@@ -1231,7 +1231,7 @@ class TemplateListQuery(
     def _get_select(self):
 
         result = f"""
-        SELECT DISTINCT
+        SELECT
             pt.id,
             pt.is_deleted,
             pt.name,
