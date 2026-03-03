@@ -2,13 +2,22 @@ import React, { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 import { Avatar, FilterSelect } from '../../components/UI';
-import { setFilterWorkflowStarters as setWorkflowsFilterWorkflowStarters } from '../../redux/workflows/slice';
+import {
+  cancelCurrentPerformersCounters,
+  cancelTemplateTasksCounters,
+  setFilterWorkflowStarters as setWorkflowsFilterWorkflowStarters,
+} from '../../redux/workflows/slice';
 import { EXTERNAL_USER, getActiveUsers, getUserFullName } from '../../utils/users';
 import { StarterFilterIcon } from '../../components/icons';
 import styles from './WorkflowsLayout.css';
 import { ERenderPlaceholderType, getRenderPlaceholder } from './utils';
-import { getWorkflowStartersCounters, getWorkflowStartersIdsFilter } from '../../redux/selectors/workflows';
+import {
+  getWorkflowsStatus,
+  getWorkflowStartersCounters,
+  getWorkflowStartersIdsFilter,
+} from '../../redux/selectors/workflows';
 import { getAccountsUsers } from '../../redux/selectors/accounts';
+import { canFilterByTemplateStep } from '../../utils/workflows/filters';
 import { useCheckDevice } from '../../hooks/useCheckDevice';
 
 export function StarterFilterSelect() {
@@ -19,6 +28,7 @@ export function StarterFilterSelect() {
   const workflowStartersIdsFilter = useSelector(getWorkflowStartersIdsFilter);
   const workflowStartersCounters = useSelector(getWorkflowStartersCounters);
   const users = useSelector(getAccountsUsers);
+  const statusFilter = useSelector(getWorkflowsStatus);
 
   const activeUsers = getActiveUsers(users);
 
@@ -56,7 +66,13 @@ export function StarterFilterSelect() {
         optionIdKey="id"
         optionLabelKey="displayName"
         onChange={(workflowStarters: number[]) => dispatch(setWorkflowsFilterWorkflowStarters(workflowStarters))}
-        resetFilter={() => dispatch(setWorkflowsFilterWorkflowStarters([]))}
+        resetFilter={() => {
+          dispatch(setWorkflowsFilterWorkflowStarters([]));
+          if (!canFilterByTemplateStep(statusFilter)) {
+            dispatch(cancelCurrentPerformersCounters());
+            dispatch(cancelTemplateTasksCounters());
+          }
+        }}
         Icon={StarterFilterIcon}
         renderPlaceholder={() =>
           getRenderPlaceholder({

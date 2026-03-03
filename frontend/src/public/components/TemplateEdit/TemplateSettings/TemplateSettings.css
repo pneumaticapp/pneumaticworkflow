@@ -30,6 +30,10 @@
   margin-bottom: 1.6rem;
 }
 
+.description-editor {
+  min-height: 12rem;
+}
+
 .form-controll {
   font-size: 1.5rem !important;
 }
