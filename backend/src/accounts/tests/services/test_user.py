@@ -1432,6 +1432,7 @@ def test_update_related_user_fields__name_changed__ok():
         workflow=workflow,
         value=old_name,
         user_id=user.id,
+        account=account,
     )
     service = UserService(instance=user, user=owner)
 
@@ -1509,6 +1510,7 @@ def test_update_related_user_fields__another_account_field__not_changed():
         workflow=workflow,
         value=old_name,
         user_id=another_user.id,
+        account=another_user.account,
     )
     service = UserService(instance=user, user=owner)
 

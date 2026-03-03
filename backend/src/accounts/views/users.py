@@ -345,3 +345,22 @@ class UsersViewSet(
             request.user.account_id,
         )
         return self.response_ok(data=account_data)
+
+    @action(detail=True, methods=('post',))
+    def delete(self, request, *args, **kwargs):
+
+        # TODO Deprecated. Duplicate of the "destroy" action
+
+        request_user = request.user
+        user = self.get_object()
+        service = UserService(
+            user=request_user,
+            instance=user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        try:
+            service.deactivate()
+        except UserIsPerformerException as ex:
+            raise_validation_error(message=ex.message)
+        return self.response_ok()
