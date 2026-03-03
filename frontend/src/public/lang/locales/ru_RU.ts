@@ -831,6 +831,7 @@ export const ruMessages = {
   'workflows.export-csv-fail': 'Не удалось экспортировать процессы',
   'workflows.export-csv-empty-title': 'Нет процессов для экспорта',
   'workflows.export-csv-empty-message': 'По текущим фильтрам процессы не найдены.',
+  'workflows.export-deleted-group': 'Удалённая группа (ID: {id})',
   'workflows.comment-edit': 'Изменить',
   'workflows.comment-delete': 'Удалить',
   'workflows.comment-deleted': 'Комментарий удален',

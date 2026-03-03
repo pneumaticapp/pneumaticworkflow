@@ -30,9 +30,6 @@ import { WorkflowsTableActionsProps } from './types';
 
 import styles from './WorkflowsTable.css';
 
-
-
-
 export function WorkflowsTableActions({
   workflowsLoadingStatus,
   isWideTable = false,
@@ -112,6 +109,10 @@ export function WorkflowsTableActions({
           optionalFieldsFromWorkflow,
           timezone: timezone ?? undefined,
           headerLabels,
+          deletedGroupFallbackTemplate: formatMessage(
+            { id: 'workflows.export-deleted-group' },
+            { id: '{id}' },
+          ),
         });
         downloadWorkflowsCsv(csvContent);
       })

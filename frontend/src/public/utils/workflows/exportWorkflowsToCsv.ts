@@ -37,13 +37,14 @@ function getPerformersDisplayName(
   selectedUsers: { type: ETemplateOwnerType; sourceId: number }[],
   users: TUserListItem[],
   groups: IGroup[],
+  deletedGroupFallbackTemplate: string,
 ): string {
   if (!selectedUsers?.length) return '';
   return selectedUsers
     .map((p) => {
       if (p.type === ETemplateOwnerType.UserGroup) {
         const group = groups.find((g) => g.id === p.sourceId);
-        return group?.name ?? '';
+        return group?.name ?? deletedGroupFallbackTemplate.replace(/\{id\}/g, String(p.sourceId));
       }
       const user = getUserById(users, p.sourceId);
       return user ? getUserFullName(user) : '';
@@ -95,6 +96,8 @@ export interface IExportWorkflowsToCsvConfig {
   optionalFieldsFromWorkflow?: ITableViewFields[];
   timezone?: string;
   headerLabels: Record<string, string>;
+  /** Localized template for missing group in performers, use {id} placeholder for group ID */
+  deletedGroupFallbackTemplate: string;
 }
 
 const SYSTEM_COLUMNS = [
@@ -111,15 +114,16 @@ export function buildWorkflowsCsvContent({
   users,
   groups,
   selectedFields,
-  optionalFieldsFromWorkflow = [],
+  optionalFieldsFromWorkflow,
   timezone,
   headerLabels,
+  deletedGroupFallbackTemplate,
 }: IExportWorkflowsToCsvConfig): string {
   const headerKeys = selectedFields.length > 0
     ? selectedFields
     : [
       ...SYSTEM_COLUMNS,
-      ...optionalFieldsFromWorkflow.map((f) => f.apiName),
+      ...(optionalFieldsFromWorkflow ?? []).map((f) => f.apiName),
     ];
 
   const headers = headerKeys.map((key) => escapeCsvCell(headerLabels[key] ?? key));
@@ -148,6 +152,7 @@ export function buildWorkflowsCsvContent({
         workflow.selectedUsers,
         users,
         groups,
+        deletedGroupFallbackTemplate,
       ),
     };
 
@@ -158,7 +163,7 @@ export function buildWorkflowsCsvContent({
       if (SYSTEM_COLUMNS.includes(key as (typeof SYSTEM_COLUMNS)[number])) {
         return escapeCsvCell(systemValues[key]);
       }
-      const field = fieldsMap.get(key) ?? optionalFieldsFromWorkflow.find((f) => f.apiName === key);
+      const field = fieldsMap.get(key);
       return escapeCsvCell(
         getOptionalFieldValue(field, timezone, users, groups),
       );

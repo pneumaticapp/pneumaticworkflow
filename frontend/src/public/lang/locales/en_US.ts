@@ -898,6 +898,7 @@ export const enMessages = {
   'workflows.export-csv-fail': 'Failed to export workflows',
   'workflows.export-csv-empty-title': 'No workflows to export',
   'workflows.export-csv-empty-message': 'No workflows match the current filters.',
+  'workflows.export-deleted-group': 'Deleted Group (ID: {id})',
   'workflow.tune-view-modal-title': 'tune view',
   'workflow.tune-view-modal-applay-changes': 'Apply changes',
   'workflow.tune-view-modal-save-for-all': 'Save for all',
