@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef, MouseEvent } from 'react';
+import * as React from 'react';
+import { useEffect, useState, useRef, MouseEvent } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 import { Link } from 'react-router-dom';

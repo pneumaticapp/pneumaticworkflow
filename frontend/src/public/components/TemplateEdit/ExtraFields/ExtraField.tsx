@@ -1,4 +1,5 @@
-import React, { Ref, useCallback, useMemo } from 'react';
+import * as React from 'react';
+import { Ref, useCallback, useMemo } from 'react';
 import classnames from 'classnames';
 import { injectIntl, IntlShape } from 'react-intl';
 

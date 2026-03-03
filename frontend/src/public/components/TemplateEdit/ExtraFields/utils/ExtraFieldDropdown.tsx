@@ -78,6 +78,7 @@ export function ExtraFieldDropdown({
                   'custom-switch custom-switch-primary custom-switch-small ml-auto',
                   styles['info-control_switch'],
                 )}
+                aria-label={formatMessage({ id: 'template.kick-off-form-required' })}
                 checked={isRequired}
                 checkedChildren={null}
                 unCheckedChildren={null}
@@ -97,6 +98,7 @@ export function ExtraFieldDropdown({
                   'custom-switch custom-switch-primary custom-switch-small ml-auto',
                   styles['info-control_switch'],
                 )}
+                aria-label={formatMessage({ id: 'template.kick-off-form-hidden' })}
                 checked={isHidden}
                 checkedChildren={null}
                 unCheckedChildren={null}
