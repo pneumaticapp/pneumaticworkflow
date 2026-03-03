@@ -424,6 +424,7 @@ def test_return_to__skip_condition__validation_error(
         type=FieldType.USER,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     template_task_1 = template.tasks.get(number=1)
     template_task_2 = template.tasks.get(number=2)
@@ -673,6 +674,7 @@ def test_return_to__task_skipped_by_kickoff_field__update_status_to_pending(
         type=FieldType.CHECKBOX,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     selection_template = FieldTemplateSelection.objects.create(
         field_template=field_template,

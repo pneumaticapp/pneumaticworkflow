@@ -995,3 +995,8 @@ class TemplatePresetQuerySet(AccountBaseQuerySet):
                 type=PresetType.ACCOUNT,
             ),
         )
+
+
+class SearchContentQuerySet(AccountBaseQuerySet):
+
+    pass
