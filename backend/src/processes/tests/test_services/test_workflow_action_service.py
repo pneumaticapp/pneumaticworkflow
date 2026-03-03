@@ -1307,6 +1307,7 @@ def test_continue_task__ok(mocker):
         logging=account.log_api_requests,
         task_id=task.id,
         recipients=[
+            (owner.id, owner.email, True),
             (user.id, user.email, True),
         ],
         account_id=account.id,
@@ -1546,6 +1547,99 @@ def test_continue_task__root_task_wf_starter_and_user_performers__ok(mocker):
         logging=account.log_api_requests,
         account_id=account.id,
         recipients=[
+            (user.id, user.email, True),
+        ],
+        task_id=task.id,
+        task_name=task.name,
+        task_data=task.get_data_for_list(),
+        task_description=task.description,
+        workflow_name=workflow.name,
+        template_name=workflow.get_template_name(),
+        workflow_starter_name=owner.name,
+        workflow_starter_photo=owner.photo,
+        due_date_timestamp=None,
+        logo_lg=account.logo_lg,
+        is_returned=is_returned,
+    )
+    send_new_task_websocket_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        task_id=task.id,
+        recipients=[
+            (owner.id, owner.email, True),
+            (user.id, user.email, True),
+        ],
+        account_id=account.id,
+        task_data=task.get_data_for_list(),
+    )
+
+
+def test_continue_task__not_root_task_wf_starter_and_user_performers__ok(
+    mocker,
+):
+
+    """ Workflow starter can't receive email and push for a root tasks """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    workflow = create_test_workflow(
+        user=owner,
+        tasks_count=3,
+        active_task_number=2,
+    )
+    task = workflow.tasks.get(number=2)
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=user.id,
+    )
+    mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None,
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task.TaskService.partial_update',
+    )
+    current_date = timezone.now()
+    mocker.patch(
+        'src.processes.services.workflow_action.timezone.now',
+        return_value=current_date,
+    )
+    mocker.patch(
+        'src.processes.services.tasks.task.TaskService'
+        '.set_due_date_from_template',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.WorkflowEventService'
+        '.task_started_event',
+    )
+    send_new_task_notification_mock = mocker.patch(
+        'src.notifications.tasks.send_new_task_notification.delay',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        'src.notifications.tasks.send_new_task_websocket.delay',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.GuestJWTAuthService'
+        '.delete_task_guest_cache',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._start_next_tasks',
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+    is_returned = False
+
+    # act
+    service.continue_task(task=task, is_returned=is_returned)
+
+    # assert
+    send_new_task_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        recipients=[
+            (owner.id, owner.email, True),
             (user.id, user.email, True),
         ],
         task_id=task.id,
