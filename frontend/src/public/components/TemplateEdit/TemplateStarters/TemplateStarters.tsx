@@ -131,8 +131,8 @@ export function TemplateStarters({ templateStarters = [], onChangeTemplateStarte
               {(user) => {
                 return (
                   <StarterItem
-                    userData={user?.type !== ETemplateOwnerType.UserGroup ? user : undefined}
-                    groupData={user?.type === ETemplateOwnerType.UserGroup ? user : undefined}
+                    name={getUserFullName(user)}
+                    user={user}
                     onRemove={() => handleRemoveTemplateStarter({
                       id: Number(sourceId),
                       optionType: type as unknown as EOptionTypes,

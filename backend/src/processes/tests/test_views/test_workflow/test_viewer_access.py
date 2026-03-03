@@ -5,6 +5,7 @@ from rest_framework import status
 
 from src.processes.enums import ViewerType
 from src.processes.models.templates.viewer import TemplateViewer
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_group,
@@ -453,9 +454,50 @@ class TestWorkflowViewerAccess:
         data = response.json()
         assert data['is_read_only_viewer'] is False
 
-    def test_workflow_retrieve__workflow_member__is_read_only_viewer_false(
+    def test_workflow_retrieve__task_performer__is_read_only_viewer_false(
         self, api_client,
     ):
+        """
+        Task performers have full access (is_read_only_viewer=False).
+        Being in workflow.members is not enough - must be performer on a task.
+        """
+        # arrange
+        account = create_test_account()
+        template_owner = create_test_user(account=account)
+        template = create_test_template(template_owner, tasks_count=1)
+        workflow = create_test_workflow(template=template, user=template_owner)
+
+        performer_user = create_test_user(
+            account=account,
+            email='performer@test.com',
+            is_admin=False,
+            is_account_owner=False,
+        )
+        task = workflow.tasks.first()
+        TaskPerformer.objects.create(
+            task=task,
+            user=performer_user,
+        )
+        workflow.members.add(performer_user)
+
+        api_client.token_authenticate(performer_user)
+        url = reverse('workflows-detail', args=[workflow.id])
+
+        # act
+        response = api_client.get(url)
+
+        # assert
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        assert data['is_read_only_viewer'] is False
+
+    def test_workflow_retrieve__workflow_member__ok_read_only(
+        self, api_client,
+    ):
+        """
+        Users in workflow.members (e.g., mentioned in comments, performers)
+        have read-only access to the workflow.
+        """
         # arrange
         account = create_test_account()
         template_owner = create_test_user(account=account)
@@ -479,4 +521,4 @@ class TestWorkflowViewerAccess:
         # assert
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
-        assert data['is_read_only_viewer'] is False
+        assert data['is_read_only_viewer'] is True

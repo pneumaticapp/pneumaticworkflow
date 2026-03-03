@@ -5,30 +5,18 @@ import { Avatar, TAvatarUser } from '../../../UI';
 import { DeleteIcon } from '../../../icons';
 import { TUserListItem } from '../../../../types/user';
 import { ETemplateOwnerType } from '../../../../types/template';
-import { IGroup } from '../../../../redux/team/types';
 
 import styles from './StarterItem.css';
 
 interface IStarterItemProps {
-  userData?: TUserListItem;
-  groupData?: IGroup;
-  onRemove(params: { id: number }): void;
+  user: TUserListItem;
+  name: string;
+  onRemove(): void;
 }
 
-const StarterItem: FC<IStarterItemProps> = ({ userData, groupData, onRemove }) => {
+const StarterItem: FC<IStarterItemProps> = ({ user, name, onRemove }) => {
   const { formatMessage } = useIntl();
-  
-  const isGroup = !!groupData;
-  const user = userData || groupData;
-  const name = isGroup ? groupData!.name : `${userData!.firstName} ${userData!.lastName}`.trim() || userData!.email;
-  
-  const avatar: TAvatarUser = isGroup 
-    ? { type: ETemplateOwnerType.UserGroup, firstName: groupData!.name }
-    : userData || { type: ETemplateOwnerType.UserGroup };
-
-  const handleRemove = () => {
-    onRemove({ id: user!.id });
-  };
+  const avatar: TAvatarUser = user || { type: ETemplateOwnerType.UserGroup };
 
   return (
     <div className={styles['user']}>
@@ -37,20 +25,15 @@ const StarterItem: FC<IStarterItemProps> = ({ userData, groupData, onRemove }) =
         <span className={styles['user-name']} title={name}>
           {name}
         </span>
-        {userData && (
+        {user.type === ETemplateOwnerType.User && (
           <span className={styles['user-role']}>
-            {userData.isAdmin
+            {user.isAdmin
               ? formatMessage({ id: 'template.user-admin' })
               : formatMessage({ id: 'template.user-role' })}
           </span>
         )}
-        {groupData && (
-          <span className={styles['user-role']}>
-            {formatMessage({ id: 'template.starter-group-role' })}
-          </span>
-        )}
       </div>
-      <DeleteIcon onClick={handleRemove} className={styles['user-delete']} />
+      <DeleteIcon onClick={onRemove} className={styles['user-delete']} />
     </div>
   );
 };

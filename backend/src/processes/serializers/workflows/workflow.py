@@ -23,11 +23,11 @@ from src.generics.paginations import DefaultPagination
 from src.processes.enums import (
     OwnerType,
     TaskStatus,
-    ViewerType,
     WorkflowApiStatus,
     WorkflowOrdering,
     WorkflowStatus,
 )
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.messages import workflow as messages
 from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
@@ -411,44 +411,42 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
 
     def get_is_read_only_viewer(self, instance: Workflow):
         """
-        Determine if user has only read-only access via template viewer
-        (not as workflow member, owner, or template owner).
-        Even admins/account owners who are ONLY template viewers should
-        have read-only access.
+        Determine if user has only read-only access.
+        Read-only access applies to:
+        - Template viewers (regardless of admin status)
+        - Template starters
+        - Non-admin template owners
+        - Workflow owners who are no longer template owners (were removed)
+
+        Full access only for:
+        - Account owners
+        - Admin users who are CURRENTLY template owners
+        - Workflow members (performers on tasks)
         """
         user = self.context.get('user')
         if not user:
             return False
 
         template = instance.template
+
+        # Account owners always have full access
+        if user.is_account_owner:
+            return False
+
+        # Check if user is actual performer on any task in this workflow
+        # (not just workflow.members which includes template owners)
+        is_performer = TaskPerformer.objects.filter(
+            task__workflow=instance,
+            task__account_id=user.account_id,
+            user_id=user.id,
+        ).exists()
+        if is_performer:
+            return False
+
         if not template:
             return False
 
-        # First check if user is template viewer
-        is_template_viewer = template.viewers.filter(
-            Q(type=ViewerType.USER, user_id=user.id, is_deleted=False)
-            | Q(
-                type=ViewerType.GROUP,
-                group__users__id=user.id,
-                is_deleted=False,
-            ),
-        ).exists()
-
-        if not is_template_viewer:
-            return False
-
-        # User is template viewer - check if they have other access
-        # that would give them full permissions
-
-        # Check if user is workflow member or owner
-        is_workflow_member = (
-            instance.members.filter(id=user.id).exists() or
-            instance.owners.filter(id=user.id).exists()
-        )
-        if is_workflow_member:
-            return False
-
-        # Check if user is template owner
+        # Check CURRENT template owner status (not workflow.owners)
         is_template_owner = template.owners.filter(
             Q(type=OwnerType.USER, user_id=user.id, is_deleted=False)
             | Q(
@@ -457,8 +455,10 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
                 is_deleted=False,
             ),
         ).exists()
-        # User is ONLY template viewer - read-only access
-        return not is_template_owner
+
+        # Only admin template owners have full access.
+        # All other cases: read-only (non-admin owners, viewers, starters).
+        return not (is_template_owner and user.is_admin)
 
 
 class WorkflowNotificationSerializer(serializers.ModelSerializer):

@@ -34,7 +34,6 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
 )
-from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
@@ -1379,11 +1378,15 @@ class TestUpdateTemplate:
         template_update_mock.assert_called_once()
         kickoff_update_mock.assert_called_once()
 
-    def test_update__non_admin_in_template_owners__validation_error(
+    def test_update__non_admin_in_template_owners__ok(
         self,
         mocker,
         api_client,
     ):
+        """
+        Non-admin users can be added as template owners.
+        They will have viewer-level access (read-only).
+        """
         # arrange
         template_update_mock = mocker.patch(
             'src.processes.services.templates.'
@@ -1452,12 +1455,13 @@ class TestUpdateTemplate:
         )
 
         # assert
-        assert response.status_code == 400
-        assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-        assert response.data['message'] == messages.MSG_PT_0069
-        assert response.data['details']['reason'] == messages.MSG_PT_0069
-        assert response.data['details']['name'] == 'owners'
-        template_update_mock.assert_not_called()
+        assert response.status_code == 200
+        response_data = response.json()
+        assert len(response_data['owners']) == 2
+        owner_user_ids = [o['source_id'] for o in response_data['owners']]
+        assert str(user.id) in owner_user_ids
+        assert str(non_admin.id) in owner_user_ids
+        template_update_mock.assert_called_once()
 
     def test_update__admin_in_template_owners__ok(
         self,

@@ -12,13 +12,15 @@ import { TMenuCounter } from '../../constants/menu';
 import { EAccountsActions, TActiveUsersCountFetchFinished, TSetCurrentPlan } from '../actions';
 import { changeTasksCount } from '../tasks/slice';
 import { getTenantsCountStore } from '../selectors/tenants';
+import { getTemplatesStore } from '../selectors/templates';
 
 export function* generateMenuSaga() {
   try {
     const { authUser }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
+    const { isTemplateOwner }: ReturnType<typeof getTemplatesStore> = yield select(getTemplatesStore);
 
     // set the menu items sequentially: first the top-level items, and then the sub-items
-    for (const menuItemsPromise of generateMenuItems(authUser)) {
+    for (const menuItemsPromise of generateMenuItems(authUser, undefined, { isTemplateOwner })) {
       const menuItems: IMenuItem[] = yield menuItemsPromise;
       yield put(mergeMenuItems(menuItems));
     }

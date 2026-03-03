@@ -6,6 +6,7 @@ from django.core.exceptions import (
     ValidationError as ValidationCoreError,
 )
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from rest_framework.serializers import (
     BooleanField,
@@ -398,24 +399,6 @@ class TemplateSerializer(
                 message=messages.MSG_PT_0019,
                 name='owners',
             )
-
-        # Validate that only admin users can be template owners
-        if self.new_users_owners_ids:
-            non_admin_owners = (
-                UserModel.objects
-                .filter(
-                    id__in=self.new_users_owners_ids,
-                    account=self.context['account'],
-                    is_admin=False,
-                    is_account_owner=False,
-                )
-                .exists()
-            )
-            if non_admin_owners:
-                self.raise_validation_error(
-                    message=messages.MSG_PT_0069,
-                    name='owners',
-                )
 
     def additional_validate_public_success_url(
         self,
@@ -831,18 +814,42 @@ class TemplateListSerializer(ModelSerializer):
             'is_embedded',
             'description',
             'kickoff',
+            'is_editable',
         )
 
     owners = SerializerMethodField()
     kickoff = SerializerMethodField()
     tasks_count = IntegerField(read_only=True)
     workflows_count = IntegerField(read_only=True)
+    is_editable = SerializerMethodField()
 
     def get_owners(self, instance: Template):
         return TemplateOwnerSerializer(instance.owners, many=True).data
 
     def get_kickoff(self, instance: Template):
         return KickoffListSerializer(instance.kickoff, many=True).data[0]
+
+    def get_is_editable(self, instance: Template) -> bool:
+        """
+        Check if current user can edit this template.
+        Only admin users who are template owners can edit.
+        Non-admin owners have viewer-level access only.
+        """
+        user = self.context.get('user')
+        if not user:
+            return False
+        if user.is_account_owner:
+            return True
+        if not user.is_admin:
+            return False
+        return instance.owners.filter(
+            Q(type=OwnerType.USER, user_id=user.id, is_deleted=False)
+            | Q(
+                type=OwnerType.GROUP,
+                group__users__id=user.id,
+                is_deleted=False,
+            ),
+        ).exists()
 
 
 class TemplateOnlyFieldsSerializer(ModelSerializer):

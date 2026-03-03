@@ -239,12 +239,13 @@ class TestTitlesByOwners:
     def test_titles_by_owners__search__ok(self, api_client):
         """
         Search should work correctly.
+        Uses full word matching as PostgreSQL tsquery requires exact words.
         """
 
         # arrange
         user = create_test_user()
-        template = create_test_template(user, name='SearchableTemplate')
-        create_test_template(user, name='OtherTemplate')
+        template = create_test_template(user, name='Searchable Template')
+        create_test_template(user, name='Other Template')
         api_client.token_authenticate(user)
 
         # act

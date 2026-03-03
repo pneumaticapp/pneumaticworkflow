@@ -131,8 +131,8 @@ export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers 
               {(user) => {
                 return (
                   <ViewerItem
-                    userData={user?.type !== ETemplateOwnerType.UserGroup ? user : undefined}
-                    groupData={user?.type === ETemplateOwnerType.UserGroup ? user : undefined}
+                    name={getUserFullName(user)}
+                    user={user}
                     onRemove={() => handleRemoveTemplateViewer({
                       id: Number(sourceId),
                       optionType: type as unknown as EOptionTypes,

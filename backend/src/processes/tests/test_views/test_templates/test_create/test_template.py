@@ -2123,11 +2123,15 @@ def test_create_draft__skip_template_owners__set_default(
 
 
 @pytest.mark.parametrize('plan', BillingPlanType.PAYMENT_PLANS)
-def test_create__non_admin_in_template_owners_premium__validation_error(
+def test_create__non_admin_in_template_owners_premium__ok(
     plan,
     mocker,
     api_client,
 ):
+    """
+    Non-admin users can be added as template owners.
+    They will have viewer-level access (read-only).
+    """
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
@@ -2189,19 +2193,24 @@ def test_create__non_admin_in_template_owners_premium__validation_error(
     )
 
     # assert
-    assert response.status_code == 400
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == messages.MSG_PT_0069
-    assert response.data['details']['reason'] == messages.MSG_PT_0069
-    assert response.data['details']['name'] == 'owners'
-    template_create_mock.assert_not_called()
-    kickoff_create_mock.assert_not_called()
+    assert response.status_code == 200
+    response_data = response.json()
+    assert len(response_data['owners']) == 2
+    owner_user_ids = [o['source_id'] for o in response_data['owners']]
+    assert str(owner.id) in owner_user_ids
+    assert str(non_admin.id) in owner_user_ids
+    template_create_mock.assert_called_once()
+    kickoff_create_mock.assert_called_once()
 
 
-def test_create__non_admin_in_template_owners_freemium__validation_error(
+def test_create__non_admin_in_template_owners_freemium__ok(
     mocker,
     api_client,
 ):
+    """
+    Non-admin users can be added as template owners on freemium plan.
+    They will have viewer-level access (read-only).
+    """
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
@@ -2263,13 +2272,14 @@ def test_create__non_admin_in_template_owners_freemium__validation_error(
     )
 
     # assert
-    assert response.status_code == 400
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == messages.MSG_PT_0069
-    assert response.data['details']['reason'] == messages.MSG_PT_0069
-    assert response.data['details']['name'] == 'owners'
-    template_create_mock.assert_not_called()
-    kickoff_create_mock.assert_not_called()
+    assert response.status_code == 200
+    response_data = response.json()
+    assert len(response_data['owners']) == 2
+    owner_user_ids = [o['source_id'] for o in response_data['owners']]
+    assert str(owner.id) in owner_user_ids
+    assert str(non_admin.id) in owner_user_ids
+    template_create_mock.assert_called_once()
+    kickoff_create_mock.assert_called_once()
 
 
 def test_create__admin_in_template_owners__ok(

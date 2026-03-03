@@ -20,7 +20,18 @@ export type TMenuCounter = {
   type: TMenuCounterType;
 };
 
-export const getUserMenuItems = (user: IAuthUser, counters?: TMenuCounter[]): IMenuItem[] => {
+export interface IGetUserMenuItemsOptions {
+  isTemplateOwner?: boolean;
+}
+
+export const getUserMenuItems = (
+  user: IAuthUser,
+  counters?: TMenuCounter[],
+  options?: IGetUserMenuItemsOptions,
+): IMenuItem[] => {
+  const { isTemplateOwner } = options || {};
+  const canAccessTemplates = user.isAdmin || isTemplateOwner;
+
   const items: IMenuItem[] = [
     {
       id: 'dashboards',
@@ -46,7 +57,7 @@ export const getUserMenuItems = (user: IAuthUser, counters?: TMenuCounter[]): IM
       iconComponent: TemplatesIcon,
       label: 'menu.templates',
       to: ERoutes.Templates,
-      isHidden: !user.isAdmin,
+      isHidden: !canAccessTemplates,
     },
     {
       id: 'highlights',

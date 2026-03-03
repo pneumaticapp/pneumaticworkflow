@@ -31,7 +31,7 @@ from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
 from src.processes.models.templates.viewer import TemplateViewer
 from src.processes.permissions import (
-    TemplateOwnerPermission,
+    TemplateAdminOwnerPermission,
     TemplateOwnerOrViewerPermission,
     TemplateStarterPermission,
 )
@@ -143,7 +143,7 @@ class TemplateViewSet(
                 BillingPlanPermission(),
                 UsersOverlimitedPermission(),
                 UserIsAdminOrAccountOwner(),
-                TemplateOwnerPermission(),
+                TemplateAdminOwnerPermission(),
             )
         if self.action == 'presets':
             return (
@@ -159,7 +159,7 @@ class TemplateViewSet(
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
                 UsersOverlimitedPermission(),
-                TemplateOwnerPermission(),
+                TemplateAdminOwnerPermission(),
             )
         if self.action == 'run':
             return (

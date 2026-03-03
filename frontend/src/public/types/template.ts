@@ -197,6 +197,7 @@ export interface ITemplateListItem {
   performersCount: number;
   owners: number[];
   kickoff: IKickoff | null;
+  isEditable: boolean;
 }
 
 export interface ITableViewFields extends IExtraField {

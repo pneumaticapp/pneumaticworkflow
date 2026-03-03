@@ -27,9 +27,7 @@ export function TemplateOwners({ templateOwners = [], onChangeTemplateOwners }: 
   const billingPlan = useSelector(getSubscriptionPlan);
   const groups = useSelector((state: IApplicationState) => state.groups.list);
 
-  const allUsers = getNotDeletedUsers(useSelector(getUsers));
-  // Only admin users and account owners can be template owners
-  const users = allUsers.filter(user => user.isAdmin || user.isAccountOwner);
+  const users = getNotDeletedUsers(useSelector(getUsers));
   const mapUsersDropdownValue = users.filter((user) =>
     templateOwners.find(
       ({ sourceId, type }) =>
