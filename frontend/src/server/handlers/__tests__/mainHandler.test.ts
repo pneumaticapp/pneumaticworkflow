@@ -3,6 +3,10 @@ jest.mock('../../../public/utils/getConfig', () => ({
   getConfig: jest.fn().mockReturnValue(mockConfig),
   serverConfigToBrowser: jest.fn().mockReturnValue(mockConfig),
 }));
+jest.mock('../../../public/constants/enviroment', () => ({
+  ...jest.requireActual('../../../public/constants/enviroment'),
+  isEnvAnalytics: true,
+}));
 import { Request, Response } from 'express';
 import { mainHandler } from '../mainHandler';
 import { serverConfigToBrowser, getConfig } from '../../../public/utils/getConfig';
