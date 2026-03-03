@@ -50,6 +50,9 @@ class Migration(migrations.Migration):
             bases=(src.generics.mixins.models.SoftDeleteMixin, models.Model),
         ),
         migrations.RunSQL("""
+            DROP INDEX IF EXISTS processes_search_content_unique;
+        """),
+        migrations.RunSQL("""
             CREATE UNIQUE INDEX processes_search_content_unique
             ON processes_searchcontent (workflow_id, task_id, event_id, task_field_id, template_id, task_template_id)
             NULLS NOT DISTINCT
@@ -100,7 +103,7 @@ class Migration(migrations.Migration):
         """),
         migrations.RunSQL(sql="""
             CREATE TRIGGER workflow_insert AFTER INSERT OR UPDATE ON processes_workflow 
-            FOR EACH ROW EXECUTE FUNCTION create_workflow_search_content()
+            FOR EACH ROW EXECUTE FUNCTION create_workflow_search_content();
         """),
 
         # processes_task search content (task name has weight "D", task description has weight "B")
@@ -137,7 +140,7 @@ class Migration(migrations.Migration):
         """),
             migrations.RunSQL(sql="""
              CREATE TRIGGER task_insert AFTER INSERT OR UPDATE ON processes_task 
-             FOR EACH ROW EXECUTE FUNCTION create_task_search_content()
+             FOR EACH ROW EXECUTE FUNCTION create_task_search_content();
         """),
 
         # processes_taskfield search content (kickoff field value has weight "B", task field value has weight "C" )
@@ -178,7 +181,7 @@ class Migration(migrations.Migration):
         """),
         migrations.RunSQL(sql="""
              CREATE TRIGGER workflow_ins AFTER INSERT OR UPDATE ON processes_taskfield
-             FOR EACH ROW EXECUTE FUNCTION create_taskfield_search_content()
+             FOR EACH ROW EXECUTE FUNCTION create_taskfield_search_content();
         """),
 
         # processes_workflowevent search content (event with type "comment" text has weight "D" )
@@ -211,7 +214,7 @@ class Migration(migrations.Migration):
             CREATE TRIGGER workflowevent_insert AFTER INSERT OR UPDATE ON processes_workflowevent 
             FOR EACH ROW 
             WHEN (new.type = 5)
-            EXECUTE FUNCTION create_workflowevent_search_content()
+            EXECUTE FUNCTION create_workflowevent_search_content();
         """),
 
         # processes_template search content (name has weight "C", description has weight "D")
@@ -248,7 +251,7 @@ class Migration(migrations.Migration):
         """),
         migrations.RunSQL(sql="""
              CREATE TRIGGER template_ins AFTER INSERT OR UPDATE ON processes_template
-             FOR EACH ROW EXECUTE FUNCTION create_template_search_content()
+             FOR EACH ROW EXECUTE FUNCTION create_template_search_content();
         """),
 
         # processes_task_template search content (name has weight "D")
@@ -286,12 +289,12 @@ class Migration(migrations.Migration):
         """),
         migrations.RunSQL(sql="""
              CREATE TRIGGER task_template_ins AFTER INSERT OR UPDATE ON processes_tasktemplate
-             FOR EACH ROW EXECUTE FUNCTION create_task_template_search_content()
+             FOR EACH ROW EXECUTE FUNCTION create_task_template_search_content();
         """),
-        migrations.RunSQL(sql="UPDATE processes_workflow SET name=name"),
-        migrations.RunSQL(sql="UPDATE processes_task SET name=name"""),
-        migrations.RunSQL(sql="UPDATE processes_taskfield SET type=type"),
-        migrations.RunSQL(sql="UPDATE processes_workflowevent SET type=type"),
-        migrations.RunSQL(sql="UPDATE processes_template SET name=name"),
-        migrations.RunSQL(sql="UPDATE processes_tasktemplate SET name=name"),
+        migrations.RunSQL(sql="UPDATE processes_workflow SET name=name;"),
+        migrations.RunSQL(sql="UPDATE processes_task SET name=name;"),
+        migrations.RunSQL(sql="UPDATE processes_taskfield SET type=type;"),
+        migrations.RunSQL(sql="UPDATE processes_workflowevent SET type=type;"),
+        migrations.RunSQL(sql="UPDATE processes_template SET name=name;"),
+        migrations.RunSQL(sql="UPDATE processes_tasktemplate SET name=name;"),
     ]
