@@ -11,7 +11,7 @@ from src.accounts.enums import (
     UserDateFormat,
     UserFirstDayWeek,
 )
-from src.accounts.messages import MSG_A_0036
+from src.accounts import messages
 from src.accounts.services.exceptions import UserServiceException
 from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
@@ -266,7 +266,7 @@ def test_update__admin_update_account_owner_password__validation_error(
     assert response.status_code == 400
     partial_update_mock.assert_not_called()
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == MSG_A_0036
+    assert response.data['message'] == messages.MSG_A_0036
 
 
 def test_update__admin_update_account_owner_email__validation_error(
@@ -294,7 +294,7 @@ def test_update__admin_update_account_owner_email__validation_error(
     assert response.status_code == 400
     partial_update_mock.assert_not_called()
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == MSG_A_0036
+    assert response.data['message'] == messages.MSG_A_0036
 
 
 @pytest.mark.parametrize('date_fmt', [
@@ -1100,6 +1100,65 @@ def test_update__photo_exceeds_max__validation_error(api_client, mocker):
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     partial_update_mock.assert_not_called()
+
+
+def test_update__escalate_privileges__validation_error(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    target_user = create_test_not_admin(account=account)
+    partial_update_mock = mocker.patch(
+        'src.accounts.views.user.UserService.partial_update',
+        return_value=owner,
+    )
+    api_client.token_authenticate(target_user)
+
+    # act
+    response = api_client.put(
+        f'/accounts/users/{target_user.id}',
+        {'is_admin': True},
+    )
+
+    # assert
+    assert response.status_code == 403
+    partial_update_mock.assert_not_called()
+
+
+def test_update__downgrade_privileges__ok(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    target_user = create_test_admin(account=account)
+    user_service_init_mock = mocker.patch.object(
+        UserService,
+        attribute='__init__',
+        return_value=None,
+    )
+    partial_update_mock = mocker.patch(
+        'src.accounts.views.user.UserService.partial_update',
+        return_value=owner,
+    )
+    api_client.token_authenticate(target_user)
+
+    # act
+    response = api_client.put(
+        f'/accounts/users/{target_user.id}',
+        {'is_admin': False},
+    )
+
+    # assert
+    assert response.status_code == 200
+    user_service_init_mock.assert_called_once_with(
+        user=target_user,
+        instance=target_user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    partial_update_mock.assert_called_once_with(
+        is_admin=False,
+    )
 
 
 def test_update__harmful_chars_in_name__ok(api_client, mocker):

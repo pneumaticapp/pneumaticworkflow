@@ -21,7 +21,7 @@ from src.processes.tests.fixtures import (
     create_test_guest,
     create_test_group,
     create_test_owner,
-    create_test_workflow,
+    create_test_workflow, create_test_not_admin,
 )
 from src.utils.validation import ErrorCode
 
@@ -150,6 +150,35 @@ def test_put__all_fields__ok(api_client, mocker):
     assert data['is_comments_mentions_subscriber'] == (
         owner.is_comments_mentions_subscriber
     )
+
+
+def test_put__escalate_privileges__validation_error(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    request_data = {'is_admin': True}
+    user_service_init_mock = mocker.patch.object(
+        UserService,
+        attribute='__init__',
+        return_value=None,
+    )
+    partial_update_mock = mocker.patch(
+        'src.accounts.views.user.UserService.partial_update',
+        return_value=owner,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put('/accounts/user', request_data)
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == ''
+    user_service_init_mock.assert_not_called()
+    partial_update_mock.assert_not_called()
 
 
 def test_put__only_required_fields__ok(api_client, mocker):
