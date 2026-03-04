@@ -178,7 +178,10 @@ class UsersViewSet(
             auth_type=request.token_type,
         )
         try:
-            user = service.partial_update(**slz.validated_data)
+            user = service.partial_update(
+                **slz.validated_data,
+                force_save=True,
+            )
         except UserServiceException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok(UserSerializer(instance=user).data)

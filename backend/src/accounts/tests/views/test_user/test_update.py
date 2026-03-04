@@ -115,6 +115,7 @@ def test_put__all_fields__ok(api_client, mocker):
         date_fmt=UserDateFormat.PY_USA_24,
         date_fdw=date_fdw,
         user_groups=groups,
+        force_save=True,
     )
     data = response.data
     assert data['id'] == owner.id
@@ -216,6 +217,7 @@ def test_put__only_required_fields__ok(api_client, mocker):
     )
     partial_update_mock.assert_called_once_with(
         first_name=first_name,
+        force_save=True,
     )
     assert response.data['id'] == owner.id
     assert response.data['email'] == owner.email
@@ -252,6 +254,7 @@ def test_put__owner_updates_self_password__ok(api_client, mocker):
     )
     partial_update_mock.assert_called_once_with(
         raw_password=password,
+        force_save=True,
     )
     assert response.data['id'] == owner.id
     assert response.data['email'] == owner.email
@@ -482,6 +485,7 @@ def test_put__service_raise_exception__validation_error(
     )
     partial_update_mock.assert_called_once_with(
         first_name=first_name,
+        force_save=True,
     )
 
 
@@ -573,6 +577,7 @@ def test_put__euro_languages__ok(
     )
     partial_update_mock.assert_called_once_with(
         language=language,
+        force_save=True,
     )
 
 
@@ -648,6 +653,7 @@ def test_put__system_ru_language_allow_all__ok(
     )
     partial_update_mock.assert_called_once_with(
         language=language,
+        force_save=True,
     )
 
 
@@ -725,6 +731,7 @@ def test_put__first_name_integer_type__ok(
     )
     partial_update_mock.assert_called_once_with(
         first_name=str(first_name),
+        force_save=True,
     )
 
 
@@ -761,6 +768,7 @@ def test_put__last_name_integer_type__ok(
     )
     partial_update_mock.assert_called_once_with(
         last_name=str(last_name),
+        force_save=True,
     )
 
 
@@ -794,6 +802,7 @@ def test_put__phone_integer_type__ok(api_client, mocker):
     )
     partial_update_mock.assert_called_once_with(
         phone=str(phone),
+        force_save=True,
     )
 
 
@@ -951,6 +960,7 @@ def test_put__harmful_chars_in_name__ok(api_client, mocker):
     )
     partial_update_mock.assert_called_once_with(
         first_name=first_name,
+        force_save=True,
     )
 
 
@@ -984,4 +994,5 @@ def test_put__sql_like_input_in_field__no_execution(api_client, mocker):
     )
     partial_update_mock.assert_called_once_with(
         first_name=sql_like,
+        force_save=True,
     )
