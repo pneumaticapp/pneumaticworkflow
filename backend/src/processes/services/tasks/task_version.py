@@ -6,7 +6,7 @@ from django.utils.dateparse import parse_duration
 
 from src.notifications.tasks import (
     send_new_task_notification,
-    send_removed_task_notification,
+    send_removed_task_notification, send_new_task_websocket,
 )
 from src.processes.enums import TaskStatus
 from src.processes.models.workflows.checklist import (
@@ -167,6 +167,7 @@ class TaskUpdateVersionService(
                 'is_required': template['is_required'],
                 'order': template['order'],
                 'workflow': self.instance.workflow,
+                'account': self.instance.account,
             },
         )
 
@@ -370,6 +371,13 @@ class TaskUpdateVersionService(
                 ),
                 logo_lg=account.logo_lg,
                 is_returned=False,
+            )
+            send_new_task_websocket.delay(
+                logging=account.log_api_requests,
+                task_id=self.instance.id,
+                recipients=list(send_new_task_recipients),
+                account_id=account.id,
+                task_data=task_data,
             )
         if send_removed_task_recipients:
             task_data = task_data or self.instance.get_data_for_list()

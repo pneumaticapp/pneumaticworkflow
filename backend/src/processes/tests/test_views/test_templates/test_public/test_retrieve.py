@@ -34,6 +34,7 @@ class TestRetrievePublicTemplate:
             type=FieldType.TEXT,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
         auth_header_value = f'Token {template.public_id}'
         token = PublicToken(template.public_id)
@@ -238,6 +239,7 @@ class TestRetrieveEmbedTemplate:
             type=FieldType.TEXT,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
         auth_header_value = f'Token {template.embed_id}'
         token = EmbedToken(template.embed_id)
@@ -395,6 +397,7 @@ class TestRetrieveEmbedTemplate:
             type=FieldType.TEXT,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
         auth_header_value = f'Token {template.embed_id}'
         token = EmbedToken(template.embed_id)

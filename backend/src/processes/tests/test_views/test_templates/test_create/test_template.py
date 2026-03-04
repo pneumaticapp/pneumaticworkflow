@@ -2,11 +2,10 @@
 import pytest
 from django.conf import settings
 
-from src.accounts.enums import BillingPlanType
+from src.accounts.enums import BillingPlanType, UserStatus
 from src.accounts.models import (
     UserInvite,
 )
-from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
 from src.authentication.tokens import (
     EmbedToken,
@@ -1975,8 +1974,8 @@ def test_create__template_owners_inactive_user__validation_error(
     inactive_user = create_test_user(
         email='inactive@pneumatic.app',
         account=user.account,
+        status=UserStatus.INACTIVE,
     )
-    UserService.deactivate(inactive_user)
     api_client.token_authenticate(user)
 
     # act

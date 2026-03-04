@@ -1171,6 +1171,7 @@ def test__kickoff_field_type_user__ok(api_client):
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     api_client.token_authenticate(user)
 

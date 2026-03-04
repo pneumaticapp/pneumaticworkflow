@@ -1027,6 +1027,10 @@ class TestTaskUpdateVersionService:
             'src.processes.services.tasks.task_version.'
             'send_new_task_notification.delay',
         )
+        send_new_task_websocket_mock = mocker.patch(
+            'src.processes.services.tasks.task_version.'
+            'send_new_task_websocket.delay',
+        )
         send_removed_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
             'send_removed_task_notification.delay',
@@ -1074,6 +1078,17 @@ class TestTaskUpdateVersionService:
             due_date_timestamp=None,
             logo_lg=account.logo_lg,
             is_returned=False,
+        )
+        send_new_task_websocket_mock.assert_called_once_with(
+            logging=account.log_api_requests,
+            task_id=task.id,
+            recipients=[(
+                performer.id,
+                performer.email,
+                performer.is_new_tasks_subscriber,
+            )],
+            account_id=account.id,
+            task_data=task_data_mock,
         )
         send_removed_task_notification_mock.assert_not_called()
 
@@ -1112,6 +1127,10 @@ class TestTaskUpdateVersionService:
             'src.processes.services.tasks.task_version.'
             'send_new_task_notification.delay',
         )
+        send_new_task_websocket_mock = mocker.patch(
+            'src.processes.services.tasks.task_version.'
+            'send_new_task_websocket.delay',
+        )
         send_removed_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
             'send_removed_task_notification.delay',
@@ -1160,6 +1179,17 @@ class TestTaskUpdateVersionService:
             logo_lg=account.logo_lg,
             is_returned=False,
         )
+        send_new_task_websocket_mock.assert_called_once_with(
+            logging=account.log_api_requests,
+            task_id=task.id,
+            recipients=[(
+                performer.id,
+                performer.email,
+                performer.is_new_tasks_subscriber,
+            )],
+            account_id=account.id,
+            task_data=task_data_mock,
+        )
         send_removed_task_notification_mock.assert_not_called()
 
     def test_update_performers__remove_user_performers__ok(self, mocker):
@@ -1196,6 +1226,10 @@ class TestTaskUpdateVersionService:
             'src.processes.services.tasks.task_version.'
             'send_new_task_notification.delay',
         )
+        send_new_task_websocket_mock = mocker.patch(
+            'src.processes.services.tasks.task_version.'
+            'send_new_task_websocket.delay',
+        )
         send_removed_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
             'send_removed_task_notification.delay',
@@ -1225,6 +1259,7 @@ class TestTaskUpdateVersionService:
         add_raw_performer_mock.assert_not_called()
         get_data_for_list_mock.assert_called_once()
         send_new_task_notification_mock.assert_not_called()
+        send_new_task_websocket_mock.assert_not_called()
         send_removed_task_notification_mock.assert_called_once_with(
             task_id=task.id,
             recipients=[(performer.id, performer.email)],
@@ -1267,6 +1302,10 @@ class TestTaskUpdateVersionService:
             'src.processes.services.tasks.task_version.'
             'send_new_task_notification.delay',
         )
+        send_new_task_websocket_mock = mocker.patch(
+            'src.processes.services.tasks.task_version.'
+            'send_new_task_websocket.delay',
+        )
         send_removed_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
             'send_removed_task_notification.delay',
@@ -1296,6 +1335,7 @@ class TestTaskUpdateVersionService:
         add_raw_performer_mock.assert_not_called()
         get_data_for_list_mock.assert_called_once()
         send_new_task_notification_mock.assert_not_called()
+        send_new_task_websocket_mock.assert_not_called()
         send_removed_task_notification_mock.assert_called_once_with(
             task_id=task.id,
             recipients=[(performer.id, performer.email)],
@@ -1340,6 +1380,10 @@ class TestTaskUpdateVersionService:
         send_new_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
             'send_new_task_notification.delay',
+        )
+        send_new_task_websocket_mock = mocker.patch(
+            'src.processes.services.tasks.task_version.'
+            'send_new_task_websocket.delay',
         )
         send_removed_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
@@ -1392,6 +1436,17 @@ class TestTaskUpdateVersionService:
             logo_lg=account.logo_lg,
             is_returned=False,
         )
+        send_new_task_websocket_mock.assert_called_once_with(
+            logging=account.log_api_requests,
+            task_id=task.id,
+            recipients=[(
+                owner.id,
+                owner.email,
+                owner.is_new_tasks_subscriber,
+            )],
+            account_id=account.id,
+            task_data=task_data_mock,
+        )
         send_removed_task_notification_mock.assert_not_called()
 
     def test_update_performers__set_default_performer__workflow_starter__ok(
@@ -1432,6 +1487,10 @@ class TestTaskUpdateVersionService:
         send_new_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
             'send_new_task_notification.delay',
+        )
+        send_new_task_websocket_mock = mocker.patch(
+            'src.processes.services.tasks.task_version.'
+            'send_new_task_websocket.delay',
         )
         send_removed_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
@@ -1484,6 +1543,17 @@ class TestTaskUpdateVersionService:
             logo_lg=account.logo_lg,
             is_returned=False,
         )
+        send_new_task_websocket_mock.assert_called_once_with(
+            logging=account.log_api_requests,
+            task_id=task.id,
+            recipients=[(
+                workflow_starter.id,
+                workflow_starter.email,
+                workflow_starter.is_new_tasks_subscriber,
+            )],
+            account_id=account.id,
+            task_data=task_data_mock,
+        )
         send_removed_task_notification_mock.assert_not_called()
 
     def test_update_performers__new_user_already_performer__not_sent(
@@ -1526,6 +1596,10 @@ class TestTaskUpdateVersionService:
             'src.processes.services.tasks.task_version.'
             'send_new_task_notification.delay',
         )
+        send_new_task_websocket_mock = mocker.patch(
+            'src.processes.services.tasks.task_version.'
+            'send_new_task_websocket.delay',
+        )
         send_removed_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
             'send_removed_task_notification.delay',
@@ -1555,6 +1629,7 @@ class TestTaskUpdateVersionService:
         add_raw_performer_mock.assert_not_called()
         get_data_for_list_mock.assert_not_called()
         send_new_task_notification_mock.assert_not_called()
+        send_new_task_websocket_mock.assert_not_called()
         send_removed_task_notification_mock.assert_not_called()
 
     def test_update_performers__new_group_user_already_performer__not_sent(
@@ -1602,6 +1677,10 @@ class TestTaskUpdateVersionService:
             'src.processes.services.tasks.task_version.'
             'send_new_task_notification.delay',
         )
+        send_new_task_websocket_mock = mocker.patch(
+            'src.processes.services.tasks.task_version.'
+            'send_new_task_websocket.delay',
+        )
         send_removed_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
             'send_removed_task_notification.delay',
@@ -1631,6 +1710,7 @@ class TestTaskUpdateVersionService:
         add_raw_performer_mock.assert_not_called()
         get_data_for_list_mock.assert_not_called()
         send_new_task_notification_mock.assert_not_called()
+        send_new_task_websocket_mock.assert_not_called()
         send_removed_task_notification_mock.assert_not_called()
 
     def test_update_performers__removed_user_already_performer__not_sent(
@@ -1677,6 +1757,10 @@ class TestTaskUpdateVersionService:
             'src.processes.services.tasks.task_version.'
             'send_new_task_notification.delay',
         )
+        send_new_task_websocket_mock = mocker.patch(
+            'src.processes.services.tasks.task_version.'
+            'send_new_task_websocket.delay',
+        )
         send_removed_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
             'send_removed_task_notification.delay',
@@ -1706,6 +1790,7 @@ class TestTaskUpdateVersionService:
         add_raw_performer_mock.assert_not_called()
         get_data_for_list_mock.assert_not_called()
         send_new_task_notification_mock.assert_not_called()
+        send_new_task_websocket_mock.assert_not_called()
         send_removed_task_notification_mock.assert_not_called()
 
     def test_update_performers__removed_group_user_already_performer__not_sent(
@@ -1748,6 +1833,10 @@ class TestTaskUpdateVersionService:
             'src.processes.services.tasks.task_version.'
             'send_new_task_notification.delay',
         )
+        send_new_task_websocket_mock = mocker.patch(
+            'src.processes.services.tasks.task_version.'
+            'send_new_task_websocket.delay',
+        )
         send_removed_task_notification_mock = mocker.patch(
             'src.processes.services.tasks.task_version.'
             'send_removed_task_notification.delay',
@@ -1777,4 +1866,5 @@ class TestTaskUpdateVersionService:
         add_raw_performer_mock.assert_not_called()
         get_data_for_list_mock.assert_not_called()
         send_new_task_notification_mock.assert_not_called()
+        send_new_task_websocket_mock.assert_not_called()
         send_removed_task_notification_mock.assert_not_called()

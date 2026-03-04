@@ -23,7 +23,7 @@ from src.processes.enums import (
     WorkflowApiStatus,
     WorkflowEventType,
     WorkflowOrdering,
-    WorkflowStatus,
+    WorkflowStatus, SearchContentType,
 )
 from src.processes.messages.workflow import (
     MSG_PW_0024,
@@ -65,6 +65,12 @@ class WorkflowListQuery(
             'account_id': account_id,
             'limit': limit,
         }
+        self.search_text = search
+        if self.search_text:
+            self.search_tsquery, search_params = self._get_tsquery()
+            self.params.update(search_params)
+        else:
+            self.search_tsquery = None
         self.status = WorkflowApiStatus.MAP[status] if status else None
         if self.status == WorkflowStatus.RUNNING:
             self.tasks_status = (TaskStatus.ACTIVE,)
@@ -86,21 +92,17 @@ class WorkflowListQuery(
         self.current_performer_group_ids = current_performer_group_ids
         self.workflow_starter = workflow_starter
         self.is_external = is_external
-        self.search_text = search
         self.ancestor_task_id = ancestor_task_id
         self.user_id = user_id
 
     def _get_search(self):
-        tsquery, params = self._get_tsquery()
-        self.params.update(params)
-        return f"""
-            (
-              {self._search_in(table='pt', tsquery=tsquery)}
-              OR {self._search_in(table='pw', tsquery=tsquery)}
-              OR {self._search_in(table='we', tsquery=tsquery)}
-              OR {self._search_in(table='ptf', tsquery=tsquery)}
-            )
-        """
+        return str(
+            self._search_in(
+                table='ps',
+                field='content',
+                tsquery=self.search_tsquery,
+            ),
+        )
 
     def _get_template(self):
         result, params = self._to_sql_list(
@@ -230,9 +232,6 @@ class WorkflowListQuery(
         elif self.is_external is not None:
             where = f'{where} AND {self._get_is_external()}'
 
-        if self.search_text:
-            where = f'{where} AND {self._get_search()}'
-
         if self.status is not None:
             where = f'{where} AND pw.status = %(status)s'
             self.params['status'] = self.status
@@ -263,24 +262,25 @@ class WorkflowListQuery(
                 )
             """
 
-        if self.search_text:
-            result += """
-                LEFT JOIN processes_workflowevent we ON (
-                    pw.id = we.workflow_id AND
-                    we.is_deleted IS FALSE AND
-                    we.status != 'deleted' AND
-                    we.type = 5
-                )
-                LEFT JOIN processes_taskfield ptf ON (
-                    ptf.workflow_id = pw.id AND
-                    ptf.is_deleted IS FALSE AND
-                    ptf.kickoff_id IS NOT NULL
+        if self.search_tsquery:
+            # ! Does not change
+            # "ps.is_deleted = FALSE" to a "ps.is_deleted IS FALSE"
+            # it breaks using gin index
+            result += f"""
+                INNER JOIN processes_searchcontent ps ON (
+                  (
+                    pw.id = ps.workflow_id
+                    OR pw.template_id = ps.template_id
+                  )
+                  AND ps.is_deleted = FALSE
+                  AND ps.account_id = %(account_id)s
+                  AND {self._get_search()}
                 )
             """
         return result
 
     def _get_select(self):
-        return f"""
+        result = f"""
         SELECT
             pw.id,
             pw.name,
@@ -299,15 +299,24 @@ class WorkflowListQuery(
             pw.finalizable,
             MIN(pt.due_date) FILTER(
                 WHERE pt.status = '{TaskStatus.ACTIVE}'
-            ) AS nearest_due_date
+            ) AS nearest_due_date{',' if self.search_tsquery else ''}
         """
+        if self.search_tsquery:
+            result += f"""
+                MAX(ts_rank(ps.content, {self.search_tsquery})) AS search_rank
+            """
+        return result
 
     def get_sql(self) -> str:
+        pre_columns = None
         post_columns = None
         default_column = 'workflows.date_created DESC'
         if self.ordering == WorkflowOrdering.URGENT_FIRST:
             post_columns = default_column
+        if self.search_tsquery:
+            pre_columns = 'workflows.search_rank DESC'
         order_by = self.get_order_by(
+            pre_columns=pre_columns,
             default_column=default_column,
             post_columns=post_columns,
         )
@@ -937,31 +946,30 @@ class TaskListQuery(
 
         """ Search string should be validated """
 
-        self.template_id = template_id
-        self.template_task_api_name = template_task_api_name
-        self.ordering = ordering
-        self.is_completed = bool(is_completed)
         self.assigned_to = user.id if assigned_to is None else assigned_to
-        self.search_text = search
         self.params = {
             'account_id': user.account_id,
             'assigned_to': self.assigned_to,
         }
+        self.search_text = search
+        if self.search_text:
+            self.search_tsquery, search_params = self._get_tsquery()
+            self.params.update(search_params)
+        else:
+            self.search_tsquery = None
+        self.template_id = template_id
+        self.template_task_api_name = template_task_api_name
+        self.ordering = ordering
+        self.is_completed = bool(is_completed)
 
     def _get_search(self):
-        tsquery, params = self._get_tsquery()
-        self.params.update(params)
-        return f"""
-            (
-            {self._search_in(table='pt', tsquery=tsquery)}
-            OR
-            {self._search_in(table='pw', tsquery=tsquery)}
-            OR
-            {self._search_in(table='we', tsquery=tsquery)}
-            OR
-            {self._search_in(table='ptf', tsquery=tsquery)}
-            )
-        """
+        return str(
+            self._search_in(
+                table='ps',
+                field='content',
+                tsquery=self.search_tsquery,
+            ),
+        )
 
     def get_is_completed_where(self):
         if self.is_completed:
@@ -989,9 +997,6 @@ class TaskListQuery(
             AND {self.get_is_completed_where()}
         """
 
-        if self.search_text:
-            where += f' AND {self._get_search()}'
-
         if self.template_task_api_name:
             where += f' AND {self._get_template_task_api_name()}'
 
@@ -999,7 +1004,7 @@ class TaskListQuery(
             where += f' AND {self._get_template_id()}'
         return where
 
-    def _get_tables(self):
+    def _get_from(self):
         result = """
             FROM processes_task pt
             INNER JOIN processes_workflow pw ON (
@@ -1018,32 +1023,26 @@ class TaskListQuery(
               ag.is_deleted IS FALSE
             )
         """
-        if self.search_text:
-            result += """
-                LEFT JOIN processes_kickoffvalue kv ON pw.id = kv.workflow_id
-                LEFT JOIN processes_workflowevent we ON (
-                  we.is_deleted IS FALSE AND
-                  we.status != 'deleted' AND
-                  we.type = 5 AND
-                  pt.id = we.task_id
-                )
-                LEFT JOIN accounts_user au ON (
-                  au.id = ptp.user_id AND
-                  au.is_deleted IS FALSE
-                )
-                LEFT JOIN processes_fileattachment fa ON (
-                  pw.id=fa.workflow_id AND
-                  fa.is_deleted is FALSE
-                )
-                LEFT JOIN processes_taskfield ptf ON (
-                    (
-                       ptf.task_id = pt.id
-                       OR ptf.kickoff_id = kv.id
-                    ) AND
-                    ptf.is_deleted IS FALSE
+        if self.search_tsquery:
+            # Join task and workflow name search content only
+            # ! Does not change
+            # "ps.is_deleted = FALSE" to a "ps.is_deleted IS FALSE"
+            # it breaks using gin index
+            result += f"""
+                INNER JOIN processes_searchcontent ps ON (
+                  (
+                    pt.id = ps.task_id
+                    OR (
+                        pt.workflow_id = ps.workflow_id
+                        AND ps.type = '{SearchContentType.WORKFLOW}'
+                    )
+                  )
+                  AND ps.is_deleted = FALSE
+                  AND ps.account_id = %(account_id)s
+                  AND {self._get_search()}
                 )
             """
-        if self.search_text or self.template_id:
+        if self.template_id:
             result += """
                 LEFT JOIN processes_template t ON (
                   t.id = pw.template_id AND
@@ -1052,36 +1051,57 @@ class TaskListQuery(
             """
         return result
 
+    def _get_select(self):
+
+        result = f"""
+         SELECT
+            pt.id,
+            pt.name,
+            pw.id AS workflow_id,
+            pw.name AS workflow_name,
+            pt.due_date,
+            EXTRACT(
+              EPOCH FROM pt.due_date AT TIME ZONE 'UTC'
+            ) AS due_date_tsp,
+            pt.date_started,
+            EXTRACT(
+              EPOCH FROM pt.date_started AT TIME ZONE 'UTC'
+            ) AS date_started_tsp,
+            MAX(ptp.id) AS task_performer_id,
+            MAX(ptp.date_completed) AS date_completed,
+            EXTRACT(
+              EPOCH FROM pt.date_completed AT TIME ZONE 'UTC'
+            ) AS date_completed_tsp,
+            pw.template_id as template_id,
+            pt.api_name as template_task_api_name,
+            pt.api_name,
+            pt.is_urgent,
+            pt.status{',' if self.search_tsquery else ''}
+        """
+        if self.search_tsquery:
+            result += f"""
+                MAX(ts_rank(ps.content, {self.search_tsquery})) AS search_rank
+            """
+        return result
+
     def _get_inner_sql(self):
         return f"""
-            SELECT DISTINCT ON (pt.id) pt.id,
-                pt.name,
-                pw.name as workflow_name,
-                pt.due_date,
-                EXTRACT(
-                  EPOCH FROM pt.due_date AT TIME ZONE 'UTC'
-                ) AS due_date_tsp,
-                pt.date_started,
-                EXTRACT(
-                  EPOCH FROM pt.date_started AT TIME ZONE 'UTC'
-                ) AS date_started_tsp,
-                ptp.date_completed,
-                EXTRACT(
-                  EPOCH FROM pt.date_completed AT TIME ZONE 'UTC'
-                ) AS date_completed_tsp,
-                pw.template_id as template_id,
-                pt.api_name as template_task_api_name,
-                pt.api_name,
-                pt.is_urgent,
-                pt.status
-            {self._get_tables()}
+            {self._get_select()}
+            {self._get_from()}
             {self._get_inner_where()}
+            GROUP BY pt.id, pw.id
             ORDER BY pt.id
         """
 
     def get_sql(self):
+        pre_columns = []
+        if self.search_tsquery:
+            pre_columns.append('tasks.search_rank DESC')
+        if not self.is_completed:
+            pre_columns.append('tasks.is_urgent DESC')
+        pre_columns = ', '.join(pre_columns) if pre_columns else None
         order_by = self.get_order_by(
-            pre_columns=None if self.is_completed else 'tasks.is_urgent DESC',
+            pre_columns=pre_columns,
             default_column='tasks.date_started DESC',
         )
         s = f"""
@@ -1116,21 +1136,33 @@ class TemplateListQuery(
             'account_id': self.account_id,
             'user_id': user_id,
         }
+        self.search_text = search_text
+        if self.search_text:
+            self.search_tsquery, search_params = self._get_tsquery()
+            self.params.update(search_params)
+        else:
+            self.search_tsquery = None
         self.order = None
         self.is_active = is_active
         self.is_public = is_public
         self.ordering = ordering
-        self.search_text = search_text
 
     def _get_search(self):
-        tsquery, params = self._get_tsquery()
-        self.params.update(params)
         return f"""
-            (
-              {self._search_in(table='pt', tsquery=tsquery)}
-              OR {self._search_in(table='ptt', tsquery=tsquery)}
-              OR {self._search_in(table='accounts_user', tsquery=tsquery)}
-            )
+          (
+            {
+                self._search_in(
+                    table='ps',
+                    field='content',
+                    tsquery=self.search_tsquery
+                )
+            } OR {
+                self._search_in(
+                    table='accounts_user',
+                    tsquery=self.search_tsquery
+                )
+            }
+          )
         """
 
     def _get_allowed(self):
@@ -1157,19 +1189,6 @@ class TemplateListQuery(
         self.params.update(params)
         return f"pt.type NOT IN {result}"
 
-    def get_workflows_join(self):
-        if self.ordering in {
-            TemplateOrdering.USAGE,
-            TemplateOrdering.REVERSE_USAGE,
-        }:
-            return """
-                LEFT JOIN processes_workflow workflows ON (
-                  pt.id = workflows.template_id AND
-                  workflows.is_deleted = FALSE
-                )
-            """
-        return ''
-
     def get_workflows_select(self):
         if self.ordering in {
             TemplateOrdering.USAGE,
@@ -1177,6 +1196,42 @@ class TemplateListQuery(
         }:
             return 'COUNT(DISTINCT workflows.id) AS workflows_count,'
         return ''
+
+    def _get_from(self):
+        result = """
+        FROM processes_template pt
+        LEFT JOIN processes_tasktemplate ptt ON (
+          ptt.template_id = pt.id AND
+          ptt.is_deleted = false
+        )
+        LEFT JOIN owners ON pt.id = owners.template_id
+        LEFT JOIN accounts_user ON (
+          owners.user_id = accounts_user.id AND
+          accounts_user.is_deleted = false
+        )
+        """
+        if self.search_text:
+            # ! Does not change
+            # "ps.is_deleted = FALSE" to a "ps.is_deleted IS FALSE"
+            # it breaks using gin index
+            result += """
+                INNER JOIN processes_searchcontent ps ON (
+                    pt.id = ps.template_id
+                    AND ps.is_deleted = FALSE
+                    AND ps.account_id = %(account_id)s
+                )
+            """
+        if self.ordering in {
+            TemplateOrdering.USAGE,
+            TemplateOrdering.REVERSE_USAGE,
+        }:
+            result += """
+                LEFT JOIN processes_workflow workflows ON (
+                  pt.id = workflows.template_id AND
+                  workflows.is_deleted = FALSE
+                )
+            """
+        return result
 
     def _get_inner_where(self):
         where = """
@@ -1236,13 +1291,10 @@ class TemplateListQuery(
               AND pts.user_id = %(user_id)s
         """
 
-    def _get_inner_sql(self):
-        return f"""
-        WITH
-          owners AS ({self.dereferenced_owners()}),
-          viewers AS ({self._dereferenced_viewers()}),
-          starters AS ({self._dereferenced_starters()})
-        SELECT DISTINCT
+    def _get_select(self):
+
+        result = f"""
+        SELECT
             pt.id,
             pt.is_deleted,
             pt.name,
@@ -1254,32 +1306,36 @@ class TemplateListQuery(
             pt.is_active,
             pt.is_public,
             pt.is_embedded,
-            pt.type,
-            pt.search_content,
             {self.get_workflows_select()}
-            COUNT(DISTINCT ptt.id) as tasks_count
+            COUNT(DISTINCT ptt.id) as tasks_count,
+            pt.type{',' if self.search_tsquery else ''}
+        """
+        if self.search_tsquery:
+            result += f"""
+                MAX(ts_rank(ps.content, {self.search_tsquery})) AS search_rank
+            """
+        return result
 
-        FROM processes_template pt
-        LEFT JOIN processes_tasktemplate ptt ON (
-          ptt.template_id = pt.id AND
-          ptt.is_deleted = false
-        )
-        LEFT JOIN owners ON pt.id = owners.template_id
-        LEFT JOIN viewers ON pt.id = viewers.template_id
-        LEFT JOIN starters ON pt.id = starters.template_id
-        LEFT JOIN accounts_user ON (
-          owners.user_id = accounts_user.id AND
-          accounts_user.is_deleted = false
-        )
-        {self.get_workflows_join()}
-
+    def _get_inner_sql(self):
+        return f"""
+        WITH
+          owners AS ({self.dereferenced_owners()}),
+          viewers AS ({self._dereferenced_viewers()}),
+          starters AS ({self._dereferenced_starters()})
+        {self._get_select()}
+        {self._get_from()}
         {self._get_inner_where()}
         GROUP BY pt.id
         """
 
     def get_sql(self):
+        pre_columns = []
+        if self.search_tsquery:
+            pre_columns.append('templates.search_rank DESC')
+        pre_columns.append('templates.is_active DESC')
+        pre_columns = ', '.join(pre_columns) if pre_columns else None
         order_by = self.get_order_by(
-            pre_columns='templates.is_active DESC',
+            pre_columns=pre_columns,
             default_column='templates.id',
         )
         return f"""
@@ -1304,36 +1360,49 @@ class TemplateListByOwnersQuery(
     ordering_map = TemplateOrdering.MAP
 
     def __init__(
-        self,
-        user_id: int,
-        account_id: int,
-        ordering: Optional[str] = None,
-        search_text: Optional[str] = None,
-        is_active: Optional[bool] = None,
-        is_public: Optional[bool] = None,
+            self,
+            user_id: int,
+            account_id: int,
+            ordering: Optional[str] = None,
+            search_text: Optional[str] = None,
+            is_active: Optional[bool] = None,
+            is_public: Optional[bool] = None,
     ):
+
         self.user_id = user_id
         self.account_id = account_id
         self.params = {
             'account_id': self.account_id,
             'user_id': user_id,
         }
+        self.search_text = search_text
+        if self.search_text:
+            self.search_tsquery, search_params = self._get_tsquery()
+            self.params.update(search_params)
+        else:
+            self.search_tsquery = None
         self.order = None
         self.is_active = is_active
         self.is_public = is_public
         self.ordering = ordering
-        self.search_text = search_text
 
     def _get_search(self):
-        tsquery, params = self._get_tsquery()
-        self.params.update(params)
         return f"""
-            (
-              {self._search_in(table='pt', tsquery=tsquery)}
-              OR {self._search_in(table='ptt', tsquery=tsquery)}
-              OR {self._search_in(table='accounts_user', tsquery=tsquery)}
-            )
-        """
+              (
+                {
+        self._search_in(
+            table='ps',
+            field='content',
+            tsquery=self.search_tsquery
+        )
+        } OR {
+        self._search_in(
+            table='accounts_user',
+            tsquery=self.search_tsquery
+        )
+        }
+              )
+            """
 
     def _get_allowed(self):
         self.params.update({'allowed_id': self.user_id})
@@ -1355,19 +1424,6 @@ class TemplateListByOwnersQuery(
         self.params.update(params)
         return f"pt.type NOT IN {result}"
 
-    def get_workflows_join(self):
-        if self.ordering in {
-            TemplateOrdering.USAGE,
-            TemplateOrdering.REVERSE_USAGE,
-        }:
-            return """
-                LEFT JOIN processes_workflow workflows ON (
-                  pt.id = workflows.template_id AND
-                  workflows.is_deleted = FALSE
-                )
-            """
-        return ''
-
     def get_workflows_select(self):
         if self.ordering in {
             TemplateOrdering.USAGE,
@@ -1376,11 +1432,49 @@ class TemplateListByOwnersQuery(
             return 'COUNT(DISTINCT workflows.id) AS workflows_count,'
         return ''
 
+    def _get_from(self):
+        result = """
+            FROM processes_template pt
+            LEFT JOIN processes_tasktemplate ptt ON (
+              ptt.template_id = pt.id AND
+              ptt.is_deleted = false
+            )
+            LEFT JOIN owners ON pt.id = owners.template_id
+            LEFT JOIN viewers ON pt.id = viewers.template_id
+            LEFT JOIN starters ON pt.id = starters.template_id
+            LEFT JOIN accounts_user ON (
+              owners.user_id = accounts_user.id AND
+              accounts_user.is_deleted = false
+            )
+            """
+        if self.search_text:
+            # ! Does not change
+            # "ps.is_deleted = FALSE" to a "ps.is_deleted IS FALSE"
+            # it breaks using gin index
+            result += """
+                    INNER JOIN processes_searchcontent ps ON (
+                        pt.id = ps.template_id
+                        AND ps.is_deleted = FALSE
+                        AND ps.account_id = %(account_id)s
+                    )
+                """
+        if self.ordering in {
+            TemplateOrdering.USAGE,
+            TemplateOrdering.REVERSE_USAGE,
+        }:
+            result += """
+                LEFT JOIN processes_workflow workflows ON (
+                  pt.id = workflows.template_id AND
+                  workflows.is_deleted = FALSE
+                )
+            """
+        return result
+
     def _get_inner_where(self):
         where = """
-        WHERE pt.is_deleted = false AND
-        pt.account_id = %(account_id)s AND
-        """
+            WHERE pt.is_deleted = false AND
+            pt.account_id = %(account_id)s AND
+            """
         where = (
             f'{where} {self._get_allowed()} AND {self._get_filter_by_type()}'
         )
@@ -1396,53 +1490,55 @@ class TemplateListByOwnersQuery(
 
         return where
 
+    def _get_select(self):
+
+        result = f"""
+            SELECT
+                pt.id,
+                pt.is_deleted,
+                pt.name,
+                pt.wf_name_template,
+                pt.description,
+                pt.date_created,
+                pt.finalizable,
+                pt.account_id,
+                pt.is_active,
+                pt.is_public,
+                pt.is_embedded,
+                {self.get_workflows_select()}
+                COUNT(DISTINCT ptt.id) as tasks_count,
+                pt.type{',' if self.search_tsquery else ''}
+            """
+        if self.search_tsquery:
+            result += f"""
+                MAX(ts_rank(ps.content, {self.search_tsquery})) AS search_rank
+            """
+        return result
+
     def _get_inner_sql(self):
         return f"""
-        WITH
-          owners AS ({self.dereferenced_owners()})
-        SELECT DISTINCT
-            pt.id,
-            pt.is_deleted,
-            pt.name,
-            pt.wf_name_template,
-            pt.description,
-            pt.date_created,
-            pt.finalizable,
-            pt.account_id,
-            pt.is_active,
-            pt.is_public,
-            pt.is_embedded,
-            pt.type,
-            pt.search_content,
-            {self.get_workflows_select()}
-            COUNT(DISTINCT ptt.id) as tasks_count
-
-        FROM processes_template pt
-        LEFT JOIN processes_tasktemplate ptt ON (
-          ptt.template_id = pt.id AND
-          ptt.is_deleted = false
-        )
-        LEFT JOIN owners ON pt.id = owners.template_id
-        LEFT JOIN accounts_user ON (
-          owners.user_id = accounts_user.id AND
-          accounts_user.is_deleted = false
-        )
-        {self.get_workflows_join()}
-
-        {self._get_inner_where()}
-        GROUP BY pt.id
+            WITH owners AS ({self.dereferenced_owners()}),
+            {self._get_select()}
+            {self._get_from()}
+            {self._get_inner_where()}
+            GROUP BY pt.id
         """
 
     def get_sql(self):
+        pre_columns = []
+        if self.search_tsquery:
+            pre_columns.append('templates.search_rank DESC')
+        pre_columns.append('templates.is_active DESC')
+        pre_columns = ', '.join(pre_columns) if pre_columns else None
         order_by = self.get_order_by(
-            pre_columns='templates.is_active DESC',
+            pre_columns=pre_columns,
             default_column='templates.id',
         )
         return f"""
-        SELECT *
-        FROM ({self._get_inner_sql()}) templates
-        {order_by}
-        """, self.params
+            SELECT *
+            FROM ({self._get_inner_sql()}) templates
+            {order_by}
+            """, self.params
 
 
 class TemplateExportQuery(
@@ -1453,14 +1549,14 @@ class TemplateExportQuery(
     ordering_map = TemplateOrdering.MAP
 
     def __init__(
-        self,
-        user_id: int,
-        account_id: int,
-        ordering: Optional[str] = None,
-        is_active: Optional[bool] = None,
-        is_public: Optional[bool] = None,
-        owners_ids: Optional[List[int]] = None,
-        owners_group_ids: Optional[List[int]] = None,
+            self,
+            user_id: int,
+            account_id: int,
+            ordering: Optional[str] = None,
+            is_active: Optional[bool] = None,
+            is_public: Optional[bool] = None,
+            owners_ids: Optional[List[int]] = None,
+            owners_group_ids: Optional[List[int]] = None,
     ):
 
         self.user_id = user_id
