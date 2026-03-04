@@ -243,8 +243,8 @@ class ContextUserSerializer(serializers.ModelSerializer):
         has_starter = result['has_starter'] if result else False
 
         self._template_access_cache = {
-            'viewer': has_owner or has_viewer,
-            'starter': has_owner or has_viewer or has_starter,
+            'viewer': has_owner or has_viewer or has_starter,
+            'starter': has_owner or has_starter,
         }
         return self._template_access_cache
 

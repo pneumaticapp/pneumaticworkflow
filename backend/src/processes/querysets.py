@@ -402,10 +402,12 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             Q(
                 template__viewers__type=ViewerType.USER,
                 template__viewers__user_id=user_id,
+                template__viewers__is_deleted=False,
             )
             | Q(
                 template__viewers__type=ViewerType.GROUP,
                 template__viewers__group__users__id=user_id,
+                template__viewers__is_deleted=False,
             ),
         ).distinct()
 
@@ -414,10 +416,12 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             Q(
                 template__starters__type=StarterType.USER,
                 template__starters__user_id=user_id,
+                template__starters__is_deleted=False,
             )
             | Q(
                 template__starters__type=StarterType.GROUP,
                 template__starters__group__users__id=user_id,
+                template__starters__is_deleted=False,
             ),
         ).distinct()
 
@@ -434,18 +438,22 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             | Q(
                 template__viewers__type=ViewerType.USER,
                 template__viewers__user_id=user_id,
+                template__viewers__is_deleted=False,
             )
             | Q(
                 template__viewers__type=ViewerType.GROUP,
                 template__viewers__group__users__id=user_id,
+                template__viewers__is_deleted=False,
             )
             | Q(
                 template__starters__type=StarterType.USER,
                 template__starters__user_id=user_id,
+                template__starters__is_deleted=False,
             )
             | Q(
                 template__starters__type=StarterType.GROUP,
                 template__starters__group__users__id=user_id,
+                template__starters__is_deleted=False,
             ),
         ).distinct()
 
@@ -462,10 +470,12 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             | Q(
                 template__viewers__type=ViewerType.USER,
                 template__viewers__user_id=user_id,
+                template__viewers__is_deleted=False,
             )
             | Q(
                 template__viewers__type=ViewerType.GROUP,
                 template__viewers__group__users__id=user_id,
+                template__viewers__is_deleted=False,
             ),
         ).distinct()
 
