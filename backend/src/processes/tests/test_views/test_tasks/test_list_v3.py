@@ -1,3 +1,6 @@
+# TODO Deprecated: tests for GET /v3/tasks (TasksListView).
+#   Use test_list.py for GET /v2/tasks (TaskViewSet.list) instead.
+
 from datetime import timedelta
 
 import pytest
@@ -59,7 +62,7 @@ def test_list__default_ordering__ok(mocker, api_client):
     api_client.post(f'/v2/tasks/{task.id}/complete')
 
     # act
-    response = api_client.get('/v2/tasks')
+    response = api_client.get('/v3/tasks')
 
     # assert
     assert response.status_code == 200
@@ -115,7 +118,7 @@ def test_list__user_in_group__ok(api_client):
     create_test_workflow(user, tasks_count=1)
 
     # act
-    response = api_client.get('/v2/tasks')
+    response = api_client.get('/v3/tasks')
 
     # assert
     assert response.status_code == 200
@@ -157,7 +160,7 @@ def test_list__task_performer_group_empty__ok(api_client):
     create_test_workflow(user, tasks_count=1)
 
     # act
-    response = api_client.get('/v2/tasks')
+    response = api_client.get('/v3/tasks')
 
     # assert
     assert response.status_code == 200
@@ -179,7 +182,7 @@ def test_list__urgent_tasks_first__ok(api_client):
     task_31 = workflow_3.tasks.get(number=1)
 
     # act
-    response = api_client.get('/v2/tasks')
+    response = api_client.get('/v3/tasks')
 
     # assert
     assert response.status_code == 200
@@ -211,7 +214,7 @@ def test_list__search__ok(api_client, mocker):
     )
 
     # act
-    response = api_client.get(f'/v2/tasks?search={raw_search_text}')
+    response = api_client.get(f'/v3/tasks?search={raw_search_text}')
 
     # assert
     assert response.status_code == 200
@@ -258,7 +261,7 @@ def test_list__search__user_performer_twice__remove_duplicate(
     mocker.patch('src.analysis.services.AnalyticService.search_search')
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -281,7 +284,7 @@ def test_list__search__not_found__ok(api_client, mocker):
     search_text = 'DROP TABLE accounts_account'
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -323,7 +326,7 @@ def test_list__search__comment__ok(api_client, mocker):
     )
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -360,7 +363,7 @@ def test_list__search__comment__url_as_text__ok(api_client, mocker):
     )
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -397,7 +400,7 @@ def test_list__search__comment__markdown__ok(api_client, mocker):
     )
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -434,7 +437,7 @@ def test_list__search__not_comment_event__not_found(api_client, mocker):
     )
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -473,7 +476,7 @@ def test_list__search__another_task_comment__not_found(api_client, mocker):
     )
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -515,7 +518,7 @@ def test_list__search__comment_attachment__not_found(api_client, mocker):
     search_text = 'cena'
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -557,7 +560,7 @@ def test_list__search__another_task_comment_attachment__not_found(
     search_text = 'cen'
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -601,7 +604,7 @@ def test_list__search__completed_prev_task_output_attachment__not_found(
     search_text = 'cena'
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -641,7 +644,7 @@ def test_list__search__active_task_field_attachment__not_found(
     search_text = 'https://test.com/test.txt'
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -668,7 +671,7 @@ def test_list__search__active_task_description__ok(
     search_text = 'file.here'
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -705,7 +708,7 @@ def test_list__search__not_active_task_description__not_found(
     api_client.token_authenticate(user)
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -729,7 +732,7 @@ def test_list__search__kickoff_description__not_found(api_client, mocker):
         'src.analysis.services.AnalyticService.search_search',
     )
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -778,7 +781,7 @@ def test_list__search_priority_1__ok(api_client, mocker):
     mocker.patch('src.analysis.services.AnalyticService.search_search')
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -825,7 +828,7 @@ def test_list__search_priority_2__ok(api_client, mocker):
     mocker.patch('src.analysis.services.AnalyticService.search_search')
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -876,7 +879,7 @@ def test_list__search__in_active_task_field_value__ok(
     search_text = 'fred'
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -925,7 +928,7 @@ def test_list__search__in_kickoff_field_value__not_found(
     search_text = 'fred@boy.com'
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -966,7 +969,7 @@ def test_list__search__in_excluded_field_value__not_found(
     search_text = 'fred'
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -1000,7 +1003,7 @@ def test_list__search__full_uri_in_field__ok(
 
     # act
     response = api_client.get(
-        '/v2/tasks',
+        '/v3/tasks',
         data={'search': value},
     )
 
@@ -1037,7 +1040,7 @@ def test_list__search__domain__ok(
     search_text = 'translate.com'
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -1077,7 +1080,7 @@ def test_list__search__markdown_filename_in_text_field__ok(
     search_text = 'somefile.txt'
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -1114,7 +1117,7 @@ def test_list__search__url_in_text_field__ok(
     search_text = 'search.com/file.txt'
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -1152,7 +1155,7 @@ def test_list__search__email_in_text_field__ok(
     search_text = 'master@test.com'
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -1196,7 +1199,7 @@ def test_list__search__prev_task_markdown_filename_in_text__not_found(
     search_text = 'somefile.txt'
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -1229,7 +1232,7 @@ def test_list__search__kickoff_field__not_found(
     search_text = 'translate.com'
 
     # act
-    response = api_client.get(f'/v2/tasks?search={search_text}')
+    response = api_client.get(f'/v3/tasks?search={search_text}')
 
     # assert
     assert response.status_code == 200
@@ -1247,7 +1250,7 @@ def test_list__ordering_by_date__ok(api_client):
     task_21 = workflow_2.tasks.get(number=1)
 
     # act
-    response = api_client.get('/v2/tasks?ordering=date')
+    response = api_client.get('/v3/tasks?ordering=date')
 
     # assert
     assert response.status_code == 200
@@ -1267,7 +1270,7 @@ def test_list__ordering_by_reversed_date__ok(api_client):
     task_21 = workflow_2.tasks.get(number=1)
 
     # act
-    response = api_client.get('/v2/tasks?ordering=-date')
+    response = api_client.get('/v3/tasks?ordering=-date')
 
     # assert
     assert response.status_code == 200
@@ -1299,7 +1302,7 @@ def test_list__ordering_by_completed__ok(mocker, api_client):
 
     # act
     response = api_client.get(
-        '/v2/tasks?ordering=completed&is_completed=true',
+        '/v3/tasks?ordering=completed&is_completed=true',
     )
 
     # assert
@@ -1343,7 +1346,7 @@ def test_list__ordering_by_reversed_completed__ok(mocker, api_client):
 
     # act
     response = api_client.get(
-        '/v2/tasks?ordering=-completed&is_completed=true',
+        '/v3/tasks?ordering=-completed&is_completed=true',
     )
 
     # assert
@@ -1387,7 +1390,7 @@ def test_list__ordering_by_completed_required_completion_by_all__ok(
 
     # act
     response = api_client.get(
-        '/v2/tasks?ordering=completed&is_completed=true',
+        '/v3/tasks?ordering=completed&is_completed=true',
     )
 
     # assert
@@ -1448,7 +1451,7 @@ def test_list__ordering_by_completed_reversed_required_completion_by_all__ok(
 
     # act
     response = api_client.get(
-        '/v2/tasks?ordering=-completed&is_completed=true',
+        '/v3/tasks?ordering=-completed&is_completed=true',
     )
 
     # assert
@@ -1485,7 +1488,7 @@ def test_list__completed__non_completed_performers__not_view_in_list(
     api_client.token_authenticate(user=user_2)
 
     # act
-    response = api_client.get('/v2/tasks?is_completed=true')
+    response = api_client.get('/v3/tasks?is_completed=true')
 
     # assert
     assert response.status_code == 200
@@ -1511,7 +1514,7 @@ def test_list__ordering_by_overdue__ok(api_client):
     task_31 = workflow_3.tasks.get(number=1)
 
     # act
-    response = api_client.get('/v2/tasks?ordering=overdue')
+    response = api_client.get('/v3/tasks?ordering=overdue')
 
     # assert
     assert response.status_code == 200
@@ -1543,7 +1546,7 @@ def test_list__ordering_by_reversed_overdue__ok(api_client):
     task_31 = workflow_3.tasks.get(number=1)
 
     # act
-    response = api_client.get('/v2/tasks?ordering=-overdue')
+    response = api_client.get('/v3/tasks?ordering=-overdue')
 
     # assert
     assert response.status_code == 200
@@ -1563,7 +1566,7 @@ def test_list__invalid_ordering__validation_error(api_client):
 
     # act
     response = api_client.get(
-        f'/v2/tasks?ordering={invalid_ordering}',
+        f'/v3/tasks?ordering={invalid_ordering}',
     )
 
     # assert
@@ -1586,7 +1589,7 @@ def test_list__filter_assigned_to__ok(api_client):
     task = workflow.tasks.get(number=1)
 
     # act
-    response = api_client.get(f'/v2/tasks?assigned_to={user2.id}')
+    response = api_client.get(f'/v3/tasks?assigned_to={user2.id}')
 
     # assert
     assert response.status_code == 200
@@ -1601,7 +1604,7 @@ def test_list__filter_assigned_to_not_number__validation_error(api_client):
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get('/v2/tasks?assigned_to=DROP DATABASE')
+    response = api_client.get('/v3/tasks?assigned_to=DROP DATABASE')
 
     # assert
     message = 'A valid integer is required.'
@@ -1621,7 +1624,7 @@ def test_list__filter_assigned_to_not_admin__validation_error(api_client):
     create_test_workflow(user, tasks_count=1)
 
     # act
-    response = api_client.get(f'/v2/tasks?assigned_to={user2.id}')
+    response = api_client.get(f'/v3/tasks?assigned_to={user2.id}')
 
     # assert
     assert response.status_code == 400
@@ -1644,7 +1647,7 @@ def test_list__filter_is_completed_false__running_wf__ok(api_client):
     api_client.token_authenticate(user)
 
     # act
-    response = api_client.get('/v2/tasks?is_completed=false')
+    response = api_client.get('/v3/tasks?is_completed=false')
 
     # assert
     assert response.status_code == 200
@@ -1675,7 +1678,7 @@ def test_list__filter_is_completed_false__running_wf_completed_task__ok(
     api_client.token_authenticate(user)
 
     # act
-    response = api_client.get('/v2/tasks?is_completed=false')
+    response = api_client.get('/v3/tasks?is_completed=false')
 
     # assert
     assert response.status_code == 200
@@ -1698,7 +1701,7 @@ def test_list__filter_is_completed_false__another_user_task__not_found(
     api_client.token_authenticate(user)
 
     # act
-    response = api_client.get('/v2/tasks?is_completed=false')
+    response = api_client.get('/v3/tasks?is_completed=false')
 
     # assert
     assert response.status_code == 200
@@ -1722,7 +1725,7 @@ def test_list__filter_is_completed_false__done_wf__not_found(
     api_client.post(f'/v2/tasks/{task.id}/complete')
 
     # act
-    response = api_client.get('/v2/tasks?is_completed=false')
+    response = api_client.get('/v3/tasks?is_completed=false')
 
     # assert
     assert response.status_code == 200
@@ -1752,7 +1755,7 @@ def test_list__filter_is_completed_false_delayed_wf__not_found(
     workflow.save(update_fields=['status'])
 
     # act
-    response = api_client.get('/v2/tasks?is_completed=false')
+    response = api_client.get('/v3/tasks?is_completed=false')
 
     # assert
     assert response.status_code == 200
@@ -1783,7 +1786,7 @@ def test_list__filter_is_completed_false_terminated_wf__not_found(
     api_client.token_authenticate(user)
 
     # act
-    response = api_client.get('/v2/tasks?is_completed=false')
+    response = api_client.get('/v3/tasks?is_completed=false')
 
     # assert
     assert response.status_code == 200
@@ -1813,7 +1816,7 @@ def test_list__filter_is_completed_false_ended_wf__not_found(
     workflow.save()
 
     # act
-    response = api_client.get('/v2/tasks?is_completed=false')
+    response = api_client.get('/v3/tasks?is_completed=false')
 
     # assert
     assert response.status_code == 200
@@ -1828,7 +1831,7 @@ def test_list__filter_is_completed_not_bool__validation_error(api_client):
 
     # act
     response = api_client.get(
-        '/v2/tasks?is_completed=<script src="some.xss"></script>',
+        '/v3/tasks?is_completed=<script src="some.xss"></script>',
     )
 
     # assert
@@ -1852,7 +1855,7 @@ def test_list__filter_is_completed_true__running_wf__not_found(api_client):
     api_client.token_authenticate(user)
 
     # act
-    response = api_client.get('/v2/tasks?is_completed=true')
+    response = api_client.get('/v3/tasks?is_completed=true')
 
     # assert
     assert response.status_code == 200
@@ -1880,7 +1883,7 @@ def test_list__filter_is_completed_true__running_wf_completed_task__ok(
     api_client.post(f'/v2/tasks/{task.id}/complete')
 
     # act
-    response = api_client.get('/v2/tasks?is_completed=true')
+    response = api_client.get('/v3/tasks?is_completed=true')
 
     # assert
     assert response.status_code == 200
@@ -1911,7 +1914,7 @@ def test_list__filter_is_completed_true__another_user_task__not_found(
     api_client.token_authenticate(user)
 
     # act
-    response = api_client.get('/v2/tasks?is_completed=true')
+    response = api_client.get('/v3/tasks?is_completed=true')
 
     # assert
     assert response.status_code == 200
@@ -1940,7 +1943,7 @@ def test_list__filter_is_completed_true__done_wf__ok(
     task = workflow.tasks.get(number=1)
 
     # act
-    response = api_client.get('/v2/tasks?is_completed=true')
+    response = api_client.get('/v3/tasks?is_completed=true')
 
     # assert
     assert response.status_code == 200
@@ -1973,7 +1976,7 @@ def test_list__filter_is_completed_true__delayed_wf__ok(
     task = workflow.tasks.get(number=1)
 
     # act
-    response = api_client.get('/v2/tasks?is_completed=true')
+    response = api_client.get('/v3/tasks?is_completed=true')
 
     # assert
     assert response.status_code == 200
@@ -2005,7 +2008,7 @@ def test_list__filter_is_completed_true_terminated_wf__not_found(
     service.terminate_workflow()
 
     # act
-    response = api_client.get('/v2/tasks?is_completed=true')
+    response = api_client.get('/v3/tasks?is_completed=true')
 
     # assert
     assert response.status_code == 200
@@ -2036,7 +2039,7 @@ def test_list__filter_is_completed_true_ended_wf__ok(
     task = workflow.tasks.get(number=1)
 
     # act
-    response = api_client.get('/v2/tasks?is_completed=true')
+    response = api_client.get('/v3/tasks?is_completed=true')
 
     # assert
     assert response.status_code == 200
@@ -2059,7 +2062,7 @@ def test_list__filter_template_id__ok(api_client):
     create_test_workflow(user, template=template_2, tasks_count=1)
 
     # act
-    response = api_client.get(f'/v2/tasks?template_id={template_1.id}')
+    response = api_client.get(f'/v3/tasks?template_id={template_1.id}')
 
     # assert
     assert response.status_code == 200
@@ -2075,7 +2078,7 @@ def test_list__filter_template_id_not_number__validation_error(api_client):
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get("/v2/tasks?template_id=' OR 1='1")
+    response = api_client.get("/v3/tasks?template_id=' OR 1='1")
 
     # assert
     message = 'A valid integer is required.'
@@ -2102,7 +2105,7 @@ def test_list__filter_template_task_api_name__ok(api_client):
 
     # act
     response = api_client.get(
-        path='/v2/tasks',
+        path='/v3/tasks',
         data={
             'template_task_api_name': task_11.api_name,
         },
@@ -2125,7 +2128,7 @@ def test_list__filter_template_task_api_name__not_found(api_client):
 
     # act
     response = api_client.get(
-        path='/v2/tasks',
+        path='/v3/tasks',
         data={
             'template_task_api_name': 'not_found',
         },
@@ -2147,7 +2150,7 @@ def test_list__pagination__ok(api_client):
     create_test_workflow(user, tasks_count=1)
 
     # act
-    response = api_client.get('/v2/tasks?limit=1&offset=1')
+    response = api_client.get('/v3/tasks?limit=1&offset=1')
 
     # assert
     assert response.status_code == 200
@@ -2169,7 +2172,7 @@ def test_list__exclude_delayed_tasks__ok(api_client):
     api_client.post(f'/v2/tasks/{task.id}/complete')
 
     # act
-    response = api_client.get('/v2/tasks')
+    response = api_client.get('/v3/tasks')
 
     # assert
     assert response.status_code == 200
@@ -2213,7 +2216,7 @@ def test_list__uml_backslash_search__ok(api_client):
     search_query = "'uml\\':"
 
     response = api_client.get(
-        '/v2/tasks',
+        '/v3/tasks',
         data={
             'search': search_query,
             'limit': 20,
@@ -2250,7 +2253,7 @@ def test_list__sql_injection_in_search__ok(api_client, injection):
 
     # act
     response = api_client.get(
-        '/v2/tasks',
+        '/v3/tasks',
         data={
             'search': injection,
             'limit': 10,

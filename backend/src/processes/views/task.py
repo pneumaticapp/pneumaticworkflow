@@ -98,6 +98,9 @@ UserModel = get_user_model()
 
 class TasksListView(ListAPIView):
 
+    # TODO Deprecated: tests for GET /v3/tasks (TasksListView).
+    #   Use test_list.py for GET /v2/tasks (TaskViewSet.list) instead.
+
     serializer_class = TaskListSerializer
     permission_classes = (
         UserIsAuthenticated,
@@ -189,9 +192,16 @@ class TaskViewSet(
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
             )
+        if self.action == 'list':
+            return (
+                UserIsAuthenticated(),
+                ExpiredSubscriptionPermission(),
+                BillingPlanPermission(),
+            )
         return super().get_permissions()
 
     action_serializer_classes = {
+        'list': TaskListSerializer,
         'retrieve': TaskSerializer,
         'create_performer': TaskPerformerSerializer,
         'delete_performer': TaskPerformerSerializer,
@@ -212,6 +222,7 @@ class TaskViewSet(
     }
 
     action_paginator_classes = {
+        'list': LimitOffsetPagination,
         'events': LimitOffsetPagination,
     }
 
@@ -272,6 +283,29 @@ class TaskViewSet(
         if self.action == 'create_guest_performer':
             return (TaskPerformerGuestThrottle,)
         return ()
+
+    def list(self, request, *args, **kwargs):
+        user = request.user
+        filter_slz = TaskListFilterSerializer(
+            data=request.GET,
+            context={'user': user},
+        )
+        filter_slz.is_valid(raise_exception=True)
+        query = TaskListQuery(
+            user=user,
+            **filter_slz.validated_data,
+        )
+        queryset = TaskForList.objects.execute_raw(query)
+        search_text = filter_slz.validated_data.get('search')
+        if search_text:
+            AnalyticService.search_search(
+                user=user,
+                page='tasks',
+                search_text=search_text,
+                is_superuser=request.is_superuser,
+                auth_type=request.token_type,
+            )
+        return self.paginated_response(queryset)
 
     def retrieve(self, request, *args, **kwargs):
         task = self.get_object()
