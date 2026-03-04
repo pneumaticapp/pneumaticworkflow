@@ -1,10 +1,10 @@
 /* stylelint-disable selector-pseudo-class-no-unknown */
 /* stylelint-disable declaration-no-important */
 .dropdown {
-  margin: 16px 0;
+  margin: 1rem 0;
 
   :global .react-select__control {
-    min-height: 40px !important;
+    min-height: 2.5rem !important;
   }
 }
 
@@ -15,7 +15,7 @@
 }
 
 .dropdown-user__avatar {
-  margin-right: 8px;
+  margin-right: 0.5rem;
 }
 
 .dropdown-user__name {
@@ -26,5 +26,5 @@
 }
 
 .viewers-list {
-  margin-top: 16px;
+  margin-top: 1rem;
 }

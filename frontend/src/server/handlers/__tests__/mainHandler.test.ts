@@ -3,10 +3,6 @@ jest.mock('../../../public/utils/getConfig', () => ({
   getConfig: jest.fn().mockReturnValue(mockConfig),
   serverConfigToBrowser: jest.fn().mockReturnValue(mockConfig),
 }));
-jest.mock('../../../public/constants/enviroment', () => ({
-  ...jest.requireActual('../../../public/constants/enviroment'),
-  isEnvAnalytics: true,
-}));
 import { Request, Response } from 'express';
 import { mainHandler } from '../mainHandler';
 import { serverConfigToBrowser, getConfig } from '../../../public/utils/getConfig';
@@ -36,7 +32,7 @@ describe('handlers', () => {
         render: jest.fn(),
         redirect: jest.fn(),
       };
-      const env = process.env.MCS_RUN_ENV || "local";
+      const env = process.env.MCS_RUN_ENV || 'local';
       jest.spyOn(serverApi, 'get').mockResolvedValueOnce({});
 
       await mainHandler(req as unknown as Request, res as unknown as Response);
@@ -46,7 +42,7 @@ describe('handlers', () => {
         env,
         invitedUser: '{}',
         isBuildAnalytics: false,
-        pages: "{}",
+        pages: '{}',
         user: '{}',
       });
     });

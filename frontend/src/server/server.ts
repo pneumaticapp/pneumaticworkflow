@@ -1,5 +1,4 @@
 /* eslint-disable import/no-extraneous-dependencies */
-import * as fs from 'fs';
 import * as path from 'path';
 import * as express from 'express';
 import * as webpack from 'webpack';
@@ -17,24 +16,15 @@ import { SSOProvider } from './types';
 
 const webpackConfig = require('../../webpack.config');
 
-const { NODE_ENV = 'development'} = process.env;
+const { NODE_ENV = 'development' } = process.env;
 const devMode = NODE_ENV !== 'production';
 
 const isSSOAuth = process.env.SSO_AUTH !== 'no';
 const envSSOProvider = process.env.SSO_PROVIDER;
 
-
 const {
   api: { urls },
 } = getConfig();
-
-const publicDir = path.join(__dirname, '..', '..', 'public');
-const srcPublicDir = path.join(__dirname, '..', 'public');
-const mainEjsPath = path.join(publicDir, 'main.ejs');
-const viewsDir = fs.existsSync(mainEjsPath)
-  ? publicDir
-  : srcPublicDir;
-const mainViewName = fs.existsSync(mainEjsPath) ? 'main' : 'index';
 
 export function initServer() {
   const webpackCompiler = webpack(webpackConfig);
@@ -48,17 +38,14 @@ export function initServer() {
       }),
     );
 
-    app.use(
-      devMiddleware(webpackCompiler),
-    );
+    app.use(devMiddleware(webpackCompiler));
   }
 
-  app.set('views', viewsDir);
+  app.set('views', './public/');
   app.set('view engine', 'ejs');
-  app.set('mainViewName', mainViewName);
   app.use(express.json());
   app.use('/assets/', express.static('assets'));
-  app.use('/static/', express.static(publicDir));
+  app.use('/static/', express.static('public'));
 
   app.post('/api/:path(*)', apiProxy('post'));
   app.get('/api/:path(*)', apiProxy('get'));
@@ -111,7 +98,7 @@ export function initServer() {
   app.get(ERoutes.OAuthGoogle, oAuthHandler(urls.getGoogleAuthUri, urls.getGoogleAuthToken));
   app.get(ERoutes.OAuthMicrosoft, oAuthHandler(urls.getMicrosoftAuthUri, urls.getMicrosoftAuthToken));
 
-  if (isSSOAuth && envSSOProvider === SSOProvider.Auth0) { 
+  if (isSSOAuth && envSSOProvider === SSOProvider.Auth0) {
     app.get(ERoutes.OAuthSSOAuth0, oAuthHandler(urls.getSSOAuthUri, urls.getSSOAuthToken));
   }
 
