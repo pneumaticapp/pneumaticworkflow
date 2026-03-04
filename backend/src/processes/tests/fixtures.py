@@ -95,7 +95,10 @@ def create_test_account(
     is_verified: bool = True,
     billing_sync: bool = True,
     log_api_requests: bool = False,
-):
+) -> Account:
+
+    """Creating test accounts with billing/plan config."""
+
     plan_expiration = plan_expiration or (
         None if plan == BillingPlanType.FREEMIUM
         else timezone.now() + timedelta(days=1)
@@ -161,10 +164,13 @@ def create_test_user(
     date_fdw: int = UserFirstDayWeek.SUNDAY,
 ) -> UserModel:
 
-    """ Instead of this method use:
+    """
+        Creating users with custom configuration.
+        Instead of this method use:
         - create_test_owner
         - create_test_admin
-        - create_test_not_admin """
+        - create_test_not_admin
+    """
 
     account = account or create_test_account()
     return UserModel.objects.create(
@@ -188,6 +194,9 @@ def create_test_user(
 
 
 def create_test_owner(**kwargs) -> UserModel:
+
+    """Creating account owner users."""
+
     kwargs['is_account_owner'] = True
     kwargs['is_admin'] = True
     kwargs['email'] = kwargs.get('email', 'owner@pneumatic.app')
@@ -195,6 +204,9 @@ def create_test_owner(**kwargs) -> UserModel:
 
 
 def create_test_admin(*args, **kwargs) -> UserModel:
+
+    """Creating admin users (non-owners)."""
+
     kwargs['is_account_owner'] = False
     kwargs['is_admin'] = True
     kwargs['email'] = kwargs.get('email', 'admin@pneumatic.app')
@@ -202,6 +214,9 @@ def create_test_admin(*args, **kwargs) -> UserModel:
 
 
 def create_test_not_admin(*args, **kwargs) -> UserModel:
+
+    """Creating regular users (non-admin)."""
+
     kwargs['is_account_owner'] = False
     kwargs['is_admin'] = False
     kwargs['email'] = kwargs.get('email', 'not_admin@pneumatic.app')
@@ -211,7 +226,10 @@ def create_test_not_admin(*args, **kwargs) -> UserModel:
 def create_test_guest(
     email: str = 'guest@pneumatic.app',
     account: Optional[Account] = None,
-):
+) -> UserModel:
+
+    """Creating guest users."""
+
     account = account or create_test_account()
     return GuestService.create(
         email=email,
@@ -226,7 +244,10 @@ def create_invited_user(
     first_name='',
     last_name='',
     status: UserStatus = UserStatus.INVITED,
-):
+) -> UserModel:
+
+    """Testing user invitations."""
+
     invited_user = UserModel.objects.create(
         account=user.account,
         email=email,
@@ -255,6 +276,9 @@ def create_checklist_template(
     selections_count: int = 1,
     api_name_prefix: Optional[str] = None,
 ) -> ChecklistTemplate:
+
+    """Creating checklist templates."""
+
     if api_name_prefix is None:
         api_name_prefix = ''
     checklist_template = ChecklistTemplate.objects.create(
@@ -285,6 +309,9 @@ def create_test_template(
     type_: str = TemplateType.CUSTOM,
     wf_name_template: Optional[str] = None,
 ) -> Template:
+
+    """Creating workflow templates."""
+
     account = user.account
     template = Template.objects.create(
         name=name,
@@ -377,6 +404,9 @@ def create_test_workflow(
     ancestor_task: Optional[Task] = None,
     description: Optional[str] = None,
 ) -> Workflow:
+
+    """Creating workflow instances."""
+
     custom_template = template is not None
     if not custom_template:
         template = create_test_template(
@@ -491,6 +521,9 @@ def create_test_workflow(
 
 
 def get_workflow_create_data(user):
+
+    """Testing workflow creation APIs/serializers."""
+
     return {
         'name': 'Test workflow',
         'owners': [
@@ -591,7 +624,10 @@ def create_test_attachment(
     field: Optional[TaskField] = None,
     name: str = 'file.jpg',
     size: int = 215678,
-):
+) -> FileAttachment:
+
+    """Creating file attachments."""
+
     filename = f'{get_salt(30)}_{name}'
     thumb_filename = f'thumb_{filename}'
     attachment = FileAttachment(
@@ -617,7 +653,10 @@ def create_test_event(
     user: UserModel,
     type_event: Optional[WorkflowEventType] = WorkflowEventType.RUN,
     data_create: Optional[datetime] = None,
-):
+) -> WorkflowEvent:
+
+    """Creating workflow events."""
+
     task = workflow.tasks.get(number=1)
     event = WorkflowEvent.objects.create(
         type=type_event,
@@ -637,7 +676,10 @@ def create_test_group(
     name: str = 'Group_test',
     photo: Optional[str] = None,
     users: Optional[List[UserModel]] = None,
-):
+) -> UserGroup:
+
+    """Creating user groups."""
+
     group = UserGroup.objects.create(
         name=name,
         photo=photo,
@@ -649,7 +691,10 @@ def create_test_group(
     return group
 
 
-def create_wf_created_webhook(user: UserModel):
+def create_wf_created_webhook(user: UserModel) -> WebHook:
+
+    """Testing workflow started webhooks."""
+
     return WebHook.objects.create(
         user_id=user.id,
         event=HookEvent.WORKFLOW_STARTED,
@@ -658,7 +703,10 @@ def create_wf_created_webhook(user: UserModel):
     )
 
 
-def create_wf_completed_webhook(user: UserModel):
+def create_wf_completed_webhook(user: UserModel) -> WebHook:
+
+    """Testing workflow completed webhooks."""
+
     return WebHook.objects.create(
         user_id=user.id,
         event=HookEvent.WORKFLOW_COMPLETED,
@@ -667,7 +715,10 @@ def create_wf_completed_webhook(user: UserModel):
     )
 
 
-def create_task_completed_webhook(user: UserModel):
+def create_task_completed_webhook(user: UserModel) -> WebHook:
+
+    """Testing task completed webhooks."""
+
     return WebHook.objects.create(
         user_id=user.id,
         event=HookEvent.TASK_COMPLETED,
@@ -676,7 +727,10 @@ def create_task_completed_webhook(user: UserModel):
     )
 
 
-def create_task_returned_webhook(user: UserModel):
+def create_task_returned_webhook(user: UserModel) -> WebHook:
+
+    """Testing task returned webhooks."""
+
     return WebHook.objects.create(
         user_id=user.id,
         event=HookEvent.TASK_RETURNED,
@@ -692,7 +746,10 @@ def create_test_template_preset(
     is_default: bool = False,
     type: str = 'personal',  # noqa: A002
     fields: Optional[List[dict]] = None,
-):
+) -> TemplatePreset:
+
+    """Creating template presets."""
+
     preset = TemplatePreset.objects.create(
         template=template,
         author=author,

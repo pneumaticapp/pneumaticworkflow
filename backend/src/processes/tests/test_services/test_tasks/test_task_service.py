@@ -132,6 +132,7 @@ def test_get_task_due_date__rule_before_field__prev_task_field__ok():
         type=FieldType.DATE,
         value=tsp_end_date,
         workflow=workflow,
+        account=user.account,
     )
     RawDueDate.objects.create(
         task=task_2,
@@ -171,6 +172,7 @@ def test_get_task_due_date__rule_after_field__prev_task_field__ok():
         type=FieldType.DATE,
         value=tsp_end_date,
         workflow=workflow,
+        account=user.account,
     )
     RawDueDate.objects.create(
         task=task_2,
@@ -210,6 +212,7 @@ def test_get_task_due_date__rule_after_field__kickoff_field__ok():
         type=FieldType.DATE,
         value=tsp_end_date,
         workflow=workflow,
+        account=user.account,
     )
     RawDueDate.objects.create(
         task=task,

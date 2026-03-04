@@ -26,6 +26,7 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
                 'is_hidden': template.get('is_hidden', False),
                 'order': template['order'],
                 'workflow': self.instance.workflow,
+                'account': self.instance.account,
             },
         )
 

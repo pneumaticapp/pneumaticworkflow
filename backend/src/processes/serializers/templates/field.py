@@ -87,6 +87,7 @@ class FieldTemplateSerializer(
             'kickoff',
             'task',
             'template',
+            'account',
         }
 
     order = IntegerField()
@@ -141,6 +142,7 @@ class FieldTemplateSerializer(
                 'template': self.context['template'],
                 'kickoff': kickoff,
                 'task': task,
+                'account': self.context['account'],
                 **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0050(
@@ -178,6 +180,7 @@ class FieldTemplateSerializer(
                 'template': self.context['template'],
                 'kickoff': kickoff,
                 'task': task,
+                'account': self.context['account'],
                 **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0050(

@@ -40,6 +40,7 @@ class TestUpdateKickoffFields:
             order=1,
             api_name='field-name-1',
             template=template,
+            account=user.account,
         )
 
         request_data = {
@@ -135,6 +136,7 @@ class TestUpdateKickoffFields:
             order=1,
             api_name='field-name-1',
             template=template,
+            account=user.account,
         )
         mocker.patch(
             'src.processes.services.templates.'
@@ -216,6 +218,7 @@ class TestUpdateKickoffFields:
             order=1,
             api_name='field-name-1',
             template=template,
+            account=user.account,
         )
         mocker.patch(
             'src.processes.services.templates.'
@@ -285,6 +288,7 @@ class TestUpdateKickoffFields:
             order=1,
             api_name=field_api_name,
             template=template,
+            account=user.account,
         )
         mocker.patch(
             'src.processes.services.templates.'

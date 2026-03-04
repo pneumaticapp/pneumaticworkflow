@@ -73,7 +73,7 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
     create_wf_completed_webhook,
-    create_wf_created_webhook,
+    create_wf_created_webhook, create_test_not_admin,
 )
 from src.utils.dates import date_format
 from src.utils.validation import ErrorCode
@@ -111,6 +111,7 @@ def test_run__all__ok(api_client, mocker):
         kickoff=template.kickoff_instance,
         template=template,
         order=4,
+        account=user.account,
     )
     kickoff_field_2 = FieldTemplate.objects.create(
         name='User url',
@@ -119,6 +120,7 @@ def test_run__all__ok(api_client, mocker):
         kickoff=template.kickoff_instance,
         template=template,
         order=3,
+        account=user.account,
     )
     kickoff_field_3 = FieldTemplate.objects.create(
         name='User date',
@@ -127,6 +129,7 @@ def test_run__all__ok(api_client, mocker):
         kickoff=template.kickoff_instance,
         template=template,
         order=2,
+        account=user.account,
     )
     kickoff_field_4 = FieldTemplate.objects.create(
         name='User file',
@@ -135,6 +138,7 @@ def test_run__all__ok(api_client, mocker):
         kickoff=template.kickoff_instance,
         template=template,
         order=1,
+        account=user.account,
     )
     kickoff_field_5 = FieldTemplate.objects.create(
         name='Checkbox',
@@ -143,6 +147,7 @@ def test_run__all__ok(api_client, mocker):
         kickoff=template.kickoff_instance,
         template=template,
         order=0,
+        account=user.account,
     )
     selection_1 = FieldTemplateSelection.objects.create(
         value='selection 1',
@@ -185,6 +190,7 @@ def test_run__all__ok(api_client, mocker):
         description='Last description',
         task=task,
         template=template,
+        account=user.account,
     )
     task_2 = template.tasks.order_by('number')[1]
     task_2_description_template = (
@@ -198,7 +204,7 @@ def test_run__all__ok(api_client, mocker):
     task_2.save()
     due_date = timezone.now() + timedelta(days=1)
     due_date_tsp = due_date.timestamp()
-    analysis_mock = mocker.patch(
+    analytics_mock = mocker.patch(
         'src.analysis.services.AnalyticService.'
         'workflows_started',
     )
@@ -353,7 +359,7 @@ def test_run__all__ok(api_client, mocker):
     assert kv_selection_2.value == selection_2.value
     assert kv_selection_2.is_selected
 
-    analysis_mock.assert_called_once_with(
+    analytics_mock.assert_called_once_with(
         workflow=workflow,
         auth_type=AuthTokenType.USER,
         is_superuser=False,
@@ -448,6 +454,7 @@ def test_run__task_description_with_markdown__ok(
         is_required=False,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     task_template = template.tasks.get(number=1)
     task_template.description = '**Bold {{ %s }} text**' % field.api_name
@@ -501,6 +508,7 @@ def test_run__not_required_task_field__ok(mocker, api_client):
         is_required=False,
         type=FieldType.STRING,
         template=template,
+        account=user.account,
     )
     api_client.token_authenticate(user)
 
@@ -609,6 +617,7 @@ def test_run__performer_type_field_not_reused__ok(mocker, api_client):
         type=FieldType.USER,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user1.account,
     )
     template.tasks.first().delete_raw_performers()
     template.tasks.first().add_raw_performer(
@@ -671,6 +680,7 @@ def test_run__create_fields__ok(mocker, api_client):
         is_required=True,
         task=template.tasks.first(),
         template=template,
+        account=user.account,
     )
 
     # act
@@ -707,6 +717,7 @@ def test_run__skip_task_condition_by_two_predicates__ok(api_client, mocker):
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     second_kickoff_field = FieldTemplate.objects.create(
         name='Second name',
@@ -714,6 +725,7 @@ def test_run__skip_task_condition_by_two_predicates__ok(api_client, mocker):
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     template_task_1 = template.tasks.get(number=1)
     condition_template = ConditionTemplate.objects.create(
@@ -794,6 +806,7 @@ def test_run__conditions_end_workflow_and_skip_task__has_higher_priority(
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     template_task_1 = template.tasks.get(number=1)
     condition_template = ConditionTemplate.objects.create(
@@ -913,6 +926,7 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         kickoff=template.kickoff_instance,
         template=template,
         api_name=api_name_skip_field,
+        account=user.account,
     )
     selection = FieldTemplateSelection.objects.create(
         value='Click to skip first step',
@@ -929,6 +943,7 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         task=template_task_1,
         template=template,
         api_name=api_name_file,
+        account=user.account,
     )
     FieldTemplate.objects.create(
         order=2,
@@ -938,6 +953,7 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         task=template_task_1,
         template=template,
         api_name=api_name_url,
+        account=user.account,
     )
     FieldTemplate.objects.create(
         order=3,
@@ -947,6 +963,7 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         task=template_task_1,
         template=template,
         api_name=api_name_str,
+        account=user.account,
     )
     FieldTemplate.objects.create(
         order=4,
@@ -956,6 +973,7 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         task=template_task_1,
         template=template,
         api_name=api_name_text,
+        account=user.account,
     )
     checkbox_field = FieldTemplate.objects.create(
         order=5,
@@ -965,6 +983,7 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         task=template_task_1,
         template=template,
         api_name=api_name_checkbox,
+        account=user.account,
     )
     FieldTemplateSelection.objects.create(
         value='First checkbox',
@@ -985,6 +1004,7 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         task=template_task_1,
         template=template,
         api_name=api_name_radio,
+        account=user.account,
     )
     FieldTemplateSelection.objects.create(
         value='First radio',
@@ -1005,6 +1025,7 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         task=template_task_1,
         template=template,
         api_name=api_name_dropdown,
+        account=user.account,
     )
     FieldTemplateSelection.objects.create(
         value='First selection',
@@ -1309,6 +1330,7 @@ def test_run__end_workflow_condition_true__end_workflow(api_client, mocker):
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     second_kickoff_field = FieldTemplate.objects.create(
         name='Second name',
@@ -1316,6 +1338,7 @@ def test_run__end_workflow_condition_true__end_workflow(api_client, mocker):
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
 
     condition_template = ConditionTemplate.objects.create(
@@ -1402,6 +1425,7 @@ def test_run__skip_task_condition_by_one_of_predicates__ok(
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     second_kickoff_field = FieldTemplate.objects.create(
         name='Second name',
@@ -1409,6 +1433,7 @@ def test_run__skip_task_condition_by_one_of_predicates__ok(
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
 
     condition_template = ConditionTemplate.objects.create(
@@ -1621,6 +1646,7 @@ def test_run__type_url__ok(mocker, value, api_client):
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
 
     # act
@@ -1660,6 +1686,7 @@ def test_run__type_number__ok(mocker, api_client):
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     value = '30.01'
 
@@ -1716,6 +1743,7 @@ def test_run__type_url_invalid_url__validation_error(
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
 
     # act
@@ -1756,6 +1784,7 @@ def test_run__skip_task_1_event__ok(
         description='Last description',
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     task_template_1 = template.tasks.get(number=1)
     condition_template = ConditionTemplate.objects.create(
@@ -1846,6 +1875,7 @@ def test_run__field_type_radio_invalid__validation_error(
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     FieldTemplateSelection.objects.create(
         value='radio selection',
@@ -1900,6 +1930,7 @@ def test_run__field_type_dropdown_invalid__validation_error(
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     FieldTemplateSelection.objects.create(
         value='dropdown selection',
@@ -1953,6 +1984,7 @@ def test_run__field_type_checkbox_invalid__validation_error(
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     FieldTemplateSelection.objects.create(
         value='checkbox selection',
@@ -2006,6 +2038,7 @@ def test_run__field_type_checkbox_non_existent__validation_error(
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     FieldTemplateSelection.objects.create(
         value='checkbox selection',
@@ -2047,7 +2080,7 @@ def test_run__is_urgent__ok(mocker, api_client):
         'src.notifications.tasks'
         '.send_new_task_notification.delay',
     )
-    analysis_mock = mocker.patch(
+    analytics_mock = mocker.patch(
         'src.analysis.services.AnalyticService.'
         'workflows_started',
     )
@@ -2073,7 +2106,7 @@ def test_run__is_urgent__ok(mocker, api_client):
     assert workflow.is_urgent is True
     task = workflow.tasks.get(number=1)
     assert task.is_urgent is True
-    analysis_mock.assert_called_once_with(
+    analytics_mock.assert_called_once_with(
         workflow=workflow,
         auth_type=AuthTokenType.USER,
         is_superuser=False,
@@ -2158,6 +2191,7 @@ def test_run__skip_task_no_performers__ok(
         name='Skip first task',
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     task_template_1 = template.tasks.get(number=1)
     condition_template = ConditionTemplate.objects.create(
@@ -2186,6 +2220,7 @@ def test_run__skip_task_no_performers__ok(
         description='Last description',
         task=task_template_1,
         template=template,
+        account=user.account,
     )
 
     # Set performer from first task field for second task
@@ -2388,6 +2423,7 @@ def test_update__user_field_with_group__ok(mocker, api_client):
         kickoff=template.kickoff_instance,
         template=template,
         api_name=field_api_name,
+        account=user.account,
     )
     template_task_1 = template.tasks.get(number=1)
     template_task_1.raw_performers.all().delete()
@@ -2497,15 +2533,9 @@ def test_run__api_request__ok(mocker, api_client):
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.api_request',
     )
-    analysis_mock = mocker.patch(
+    analytics_mock = mocker.patch(
         'src.analysis.services.AnalyticService.'
         'workflows_started',
-    )
-    task_data_mock = mocker.Mock()
-    mocker.patch(
-        'src.processes.models.workflows.task.Task.'
-        'get_data_for_list',
-        return_value=task_data_mock,
     )
     api_client.token_authenticate(
         user=owner,
@@ -2540,7 +2570,7 @@ def test_run__api_request__ok(mocker, api_client):
         due_date_timestamp=None,
         logo_lg=account.logo_lg,
         is_returned=False,
-        task_data=task_data_mock,
+        task_data=task.get_data_for_list(),
     )
     get_user_agent_mock.assert_called_once()
     api_request_mock.assert_called_once_with(
@@ -2548,7 +2578,7 @@ def test_run__api_request__ok(mocker, api_client):
         user_agent=user_agent,
     )
     workflow = Workflow.objects.get(id=response.data['id'])
-    analysis_mock.assert_called_once_with(
+    analytics_mock.assert_called_once_with(
         workflow=workflow,
         auth_type=AuthTokenType.API,
         is_superuser=False,
@@ -2559,6 +2589,204 @@ def test_run__api_request__ok(mocker, api_client):
         is_superuser=False,
         user=owner,
     )
+
+
+def test_run__group_performer__new_task_notification_to_group_members(
+    mocker,
+    api_client,
+):
+    """ Group as task performer: run sends new_task to all group members. """
+    # arrange
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    group_member = create_test_admin(
+        account=account,
+        email='group_member@test.test',
+    )
+    group = create_test_group(account, users=[group_member.id])
+    template = create_test_template(owner, is_active=True, tasks_count=1)
+    template_task_1 = template.tasks.get(number=1)
+    template_task_1.raw_performers.all().delete()
+    template_task_1.add_raw_performer(
+        performer_type=PerformerType.GROUP,
+        group=group,
+    )
+    send_new_task_notification_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'send_new_task_notification.delay',
+    )
+    mocker.patch.object(
+        TemplateIntegrationsService,
+        attribute='__init__',
+        return_value=None,
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.api_request',
+    )
+    api_client.token_authenticate(
+        user=owner,
+        token_type=AuthTokenType.API,
+    )
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={'name': 'Test name'},
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    task = workflow.tasks.get(number=1)
+    send_new_task_notification_mock.assert_called_once()
+    call_kwargs = send_new_task_notification_mock.call_args[1]
+    recipients = call_kwargs['recipients']
+    expected = (
+        group_member.id,
+        group_member.email,
+        group_member.is_new_tasks_subscriber,
+    )
+    assert expected in recipients
+    assert call_kwargs['task_id'] == task.id
+    assert call_kwargs['account_id'] == account.id
+
+
+def test_run__user_and_group_performers__different_users__both_receive(
+    mocker,
+    api_client,
+):
+    """ User performer and group (other users): both get new_task. """
+    # arrange
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    direct_performer = create_test_admin(
+        account=account,
+        email='direct@test.test',
+    )
+    group_member = create_test_admin(
+        account=account,
+        email='group_member@test.test',
+    )
+    group = create_test_group(account, users=[group_member.id])
+    template = create_test_template(owner, is_active=True, tasks_count=1)
+    template_task_1 = template.tasks.get(number=1)
+    template_task_1.raw_performers.all().delete()
+    template_task_1.add_raw_performer(user=direct_performer)
+    template_task_1.add_raw_performer(
+        performer_type=PerformerType.GROUP,
+        group=group,
+    )
+    send_new_task_notification_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'send_new_task_notification.delay',
+    )
+    mocker.patch.object(
+        TemplateIntegrationsService,
+        attribute='__init__',
+        return_value=None,
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.api_request',
+    )
+    api_client.token_authenticate(
+        user=owner,
+        token_type=AuthTokenType.API,
+    )
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={'name': 'Test name'},
+    )
+
+    # assert
+    assert response.status_code == 200
+    send_new_task_notification_mock.assert_called_once()
+    call_kwargs = send_new_task_notification_mock.call_args[1]
+    recipients = call_kwargs['recipients']
+    expected_direct = (
+        direct_performer.id,
+        direct_performer.email,
+        direct_performer.is_new_tasks_subscriber,
+    )
+    expected_group_member = (
+        group_member.id,
+        group_member.email,
+        group_member.is_new_tasks_subscriber,
+    )
+    assert expected_direct in recipients
+    assert expected_group_member in recipients
+    assert len(recipients) == 2
+
+
+def test_run__user_and_group_performers__same_user__single_notification(
+    mocker,
+    api_client,
+):
+    """ User performer and group with same user: one new_task (dedupe). """
+    # arrange
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account, email='performer@test.test')
+    group = create_test_group(account, users=[user.id])
+    template = create_test_template(owner, is_active=True, tasks_count=1)
+    template_task_1 = template.tasks.get(number=1)
+    template_task_1.raw_performers.all().delete()
+    template_task_1.add_raw_performer(user=user)
+    template_task_1.add_raw_performer(
+        performer_type=PerformerType.GROUP,
+        group=group,
+    )
+    send_new_task_notification_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'send_new_task_notification.delay',
+    )
+    mocker.patch.object(
+        TemplateIntegrationsService,
+        attribute='__init__',
+        return_value=None,
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.api_request',
+    )
+    api_client.token_authenticate(
+        user=owner,
+        token_type=AuthTokenType.API,
+    )
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={'name': 'Test name'},
+    )
+
+    # assert
+    assert response.status_code == 200
+    send_new_task_notification_mock.assert_called_once()
+    call_kwargs = send_new_task_notification_mock.call_args[1]
+    recipients = call_kwargs['recipients']
+    expected = (
+        user.id,
+        user.email,
+        user.is_new_tasks_subscriber,
+    )
+    assert expected in recipients
+    assert len(recipients) == 1
 
 
 def test_run__due_date_more_than_current__ok(api_client, mocker):
@@ -3363,6 +3591,7 @@ def test_run__wf_name_template_with_system_and_kickoff_vars__ok(
         kickoff=template.kickoff_instance,
         template=template,
         api_name=field_api_name,
+        account=user.account,
     )
     wf_name_template = 'Feedback from {{%s}} {{ date }}' % field_api_name
     template.wf_name_template = wf_name_template
@@ -3433,6 +3662,7 @@ def test_run__name_with_kickoff_vars_only__ok(
         kickoff=template.kickoff_instance,
         template=template,
         api_name=field_api_name_1,
+        account=user.account,
     )
     FieldTemplate.objects.create(
         name='User',
@@ -3441,6 +3671,7 @@ def test_run__name_with_kickoff_vars_only__ok(
         kickoff=template.kickoff_instance,
         template=template,
         api_name=field_api_name_2,
+        account=user.account,
     )
     FieldTemplate.objects.create(
         name='Url',
@@ -3449,6 +3680,7 @@ def test_run__name_with_kickoff_vars_only__ok(
         kickoff=template.kickoff_instance,
         template=template,
         api_name=field_api_name_3,
+        account=user.account,
     )
     wf_name_template = 'Feedback: {{%s}} from {{ %s }} Url: {{%s}}' % (
         field_api_name_1,
@@ -3511,6 +3743,7 @@ def test_run__string_abbreviation_after_insert_fields_vars__ok(
         kickoff=template.kickoff_instance,
         template=template,
         api_name=field_api_name,
+        account=user.account,
     )
     wf_name_template = 'a' * (WORKFLOW_NAME_LENGTH - 4)
     wf_name_template += '{{%s}}' % field_api_name
@@ -3573,6 +3806,7 @@ def test_run__user_provided_name__ok(
         kickoff=template.kickoff_instance,
         template=template,
         api_name=field_api_name,
+        account=user.account,
     )
     user_provided_wf_name = 'User provided workflow name'
 
@@ -4446,6 +4680,7 @@ def test_run__all_fields__ok(
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     kickoff_field_value = 'Some name'
     workflow = create_test_workflow(user=user, tasks_count=1)
@@ -4578,6 +4813,7 @@ def test_run__skip_and_start_condition_not_passed__not_start_task(
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     condition_template = ConditionTemplate.objects.create(
         task=template_task_3,
@@ -4712,3 +4948,56 @@ def test_run__wf_name_template_with_workflow_id_and_other_vars__ok(
     expected_name = f'{template_name} #{workflow.id} - {formatted_date}'
     assert workflow.name == expected_name
     assert workflow.name_template == expected_name
+
+
+def test_run__group_performers__ok(mocker, api_client):
+
+    # arrange
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    send_new_task_websocket_mock = mocker.patch(
+        'src.notifications.tasks.send_new_task_websocket.delay',
+    )
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=owner,
+        is_active=True,
+        tasks_count=1,
+
+    )
+    template_task = template.tasks.get(number=1)
+    user_1 = create_test_admin(account=account)
+    user_2 = create_test_not_admin(account=account)
+    group = create_test_group(account=account, users=[user_1, user_2])
+    template_task.delete_raw_performers()
+    template_task.add_raw_performer(
+        group=group,
+        performer_type=PerformerType.GROUP,
+    )
+
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(f'/templates/{template.id}/run')
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    task = workflow.tasks.get(number=1)
+    send_new_task_websocket_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        task_id=task.id,
+        recipients=[
+            (user_1.id, user_1.email, user_1.is_new_tasks_subscriber),
+            (user_2.id, user_2.email, user_2.is_new_tasks_subscriber),
+        ],
+        account_id=account.id,
+        task_data=task.get_data_for_list(),
+    )

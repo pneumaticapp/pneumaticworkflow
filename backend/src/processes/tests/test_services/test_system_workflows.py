@@ -331,6 +331,7 @@ def get_kickoff_fields_values__user_field__set_current_user():
         kickoff=template.kickoff_instance,
         template=template,
         api_name=api_name,
+        account=user.account,
     )
     fields_data = {
         api_name: account_owner.id,
@@ -361,6 +362,7 @@ def get_kickoff_fields_values__existent_field_value__ok():
         kickoff=template.kickoff_instance,
         template=template,
         api_name=api_name,
+        account=user.account,
     )
     text = 'some text'
     service = SystemWorkflowService(user=user)
@@ -392,6 +394,7 @@ def get_kickoff_fields_values__default_field_value__ok():
         template=template,
         api_name=api_name,
         default='some {{user_first_name}} text',
+        account=user.account,
     )
     service = SystemWorkflowService(user=user)
 

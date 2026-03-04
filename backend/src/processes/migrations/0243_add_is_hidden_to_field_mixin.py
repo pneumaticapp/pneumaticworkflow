@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('processes', '0240_populate_user_group_predicates'),
+        ('processes', '0242_add_new_search_content'),
     ]
 
     operations = [
