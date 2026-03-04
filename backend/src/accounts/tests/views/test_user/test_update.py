@@ -13,6 +13,7 @@ from src.accounts.enums import (
 )
 from src.accounts.services.exceptions import UserServiceException
 from src.accounts.services.user import UserService
+from src.accounts import messages
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.models.workflows.task import TaskPerformer
@@ -21,7 +22,8 @@ from src.processes.tests.fixtures import (
     create_test_guest,
     create_test_group,
     create_test_owner,
-    create_test_workflow, create_test_not_admin,
+    create_test_workflow,
+    create_test_not_admin,
 )
 from src.utils.validation import ErrorCode
 
@@ -158,7 +160,6 @@ def test_put__escalate_privileges__validation_error(api_client, mocker):
     account = create_test_account()
     owner = create_test_owner(account=account)
     user = create_test_not_admin(account=account)
-    request_data = {'is_admin': True}
     user_service_init_mock = mocker.patch.object(
         UserService,
         attribute='__init__',
@@ -171,12 +172,15 @@ def test_put__escalate_privileges__validation_error(api_client, mocker):
     api_client.token_authenticate(user)
 
     # act
-    response = api_client.put('/accounts/user', request_data)
+    response = api_client.put(
+        path='/accounts/user',
+        data={'is_admin': True},
+    )
 
     # assert
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == ''
+    assert response.data['message'] == str(messages.MSG_A_0046)
     user_service_init_mock.assert_not_called()
     partial_update_mock.assert_not_called()
 

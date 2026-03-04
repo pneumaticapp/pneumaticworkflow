@@ -51,6 +51,12 @@ class UserViewSet(
         'contacts': ContactResponseSerializer,
     }
 
+    def get_serializer_context(self, **kwargs):
+        context = super().get_serializer_context(**kwargs)
+        context['account'] = self.request.user.account
+        context['user'] = self.request.user
+        return context
+
     def get_permissions(self):
         method = self.request.method
         if self.action is None and method == 'PUT':
