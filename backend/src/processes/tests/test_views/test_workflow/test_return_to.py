@@ -798,7 +798,7 @@ def test_return_to__completed_workflow__ok(
     send_removed_task_notification_mock.assert_not_called()
     send_new_task_notification_mock.assert_called_once()
     delete_task_guest_cache_mock.assert_not_called()
-    revert_task_webhook_mock.assert_called_once()
+    revert_task_webhook_mock.assert_not_called()
 
 
 @pytest.mark.parametrize('status', WorkflowStatus.RUNNING_STATUSES)

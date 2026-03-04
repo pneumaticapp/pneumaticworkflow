@@ -1464,6 +1464,47 @@ def test_retrieve__user_in_group_task_performer__ok(api_client, mocker):
     group_mock.assert_not_called()
 
 
+def test_retrieve__user_in_group_task_performer_but_not_member__ok(
+    api_client,
+    mocker,
+):
+
+    # TODO Temporary fix for users who are newly assigned to a groups
+    #  Remove when the workflow members are removed
+
+    # arrange
+    identify_mock = mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'identify',
+    )
+    group_mock = mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'group',
+    )
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    group_user = create_test_admin(account=account)
+    group = create_test_group(account, users=[group_user])
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+    )
+    api_client.token_authenticate(group_user)
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == task.id
+    assert response.data['workflow']['id'] == workflow.id
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()
+
+
 def test_retrieve__user_is_member_in_deleted_task__not_found(api_client):
 
     # arrange

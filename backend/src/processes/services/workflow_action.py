@@ -1,4 +1,5 @@
 from datetime import datetime
+from copy import copy
 from typing import Callable, Iterable, Optional, Tuple
 
 from django.contrib.auth import get_user_model
@@ -471,38 +472,37 @@ class WorkflowActionService:
         if not task_start_event_already_exist:
             WorkflowEventService.task_started_event(task)
 
-        if not self.workflow.template.is_onboarding:
-            recipients_qst = (
+        # Skip any "onboarding" workflow with a template
+        skip_sending_notification = (
+            not self.workflow.is_legacy_template
+            and self.workflow.template.is_onboarding
+        )
+        if not skip_sending_notification:
+            recipients_set = (
                 TaskPerformer.objects
                 .by_task(task.id)
                 .exclude_directly_deleted()
-                .new_task_recipients()
-            ).order_by('id')
+                .get_user_ids_emails_subscriber_set()
+            )
 
             wf_starter = self.workflow.workflow_starter
-            ws_recipients = None
-            recipients = []
-            # Sent only websocket
-            # to the workflow starter performer on first tasks
+            recipients = [
+                (user_id, email, is_subscribed)
+                for user_id, email, is_subscribed in recipients_set
+            ]
+            # For tests to work stably, ordering by "user_id" is necessary
+            recipients.sort(key=lambda e: e[0])
+            ws_recipients = copy(recipients)
             if (
                 len(task.parents) == 0
                 and not is_returned
                 and not self.workflow.is_external
+                and (wf_starter.id, wf_starter.email, True) in recipients
             ):
-                for el in recipients_qst:
-                    if el.user_id == wf_starter.id:
-                        ws_recipients = (
-                            (el.user_id, el.email, el.is_subscribed),
-                        )
-                    else:
-                        recipients.append(
-                            (el.user_id, el.email, el.is_subscribed),
-                        )
-            else:
-                recipients = [
-                    (el.user_id, el.email, el.is_subscribed)
-                    for el in recipients_qst
-                ]
+                # Don't sent email and push for a workflow starter
+                # on first tasks
+                recipients.remove((wf_starter.id, wf_starter.email, True))
+
             task_data = None
             if recipients:
                 task_data = task.get_data_for_list()
@@ -1050,7 +1050,7 @@ class WorkflowActionService:
         elif not self.user.is_account_owner:
             raise exceptions.UserNotPerformer
 
-        revert_to_tasks = revert_from_task.get_revert_tasks()
+        revert_to_tasks = list(revert_from_task.get_revert_tasks())
         self._validate_revert_is_possible(revert_to_tasks)
 
         with transaction.atomic():
@@ -1090,7 +1090,7 @@ class WorkflowActionService:
             )
 
         # validate revert from tasks
-        revert_from_tasks = self.workflow.tasks.active_or_delayed()
+        revert_from_tasks = list(self.workflow.tasks.active_or_delayed())
         if self.workflow.is_running:
             for revert_from_task in revert_from_tasks:
                 if revert_from_task.sub_workflows.running().exists():

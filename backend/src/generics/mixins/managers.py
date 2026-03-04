@@ -16,7 +16,7 @@ class SearchSqlQueryMixin:
         tsquery: str,
         field: str = 'search_content',
     ) -> str:
-        return f"{table}.{field} @@ {tsquery} = TRUE"
+        return f"{table}.{field} @@ {tsquery}"
 
     def _escape_tsquery_text(self, text: str) -> str:
         """ Escapes special characters for PostgreSQL tsquery.

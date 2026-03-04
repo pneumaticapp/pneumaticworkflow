@@ -94,7 +94,7 @@ database/backups
 database/data
 database/postgres_data
 staticfiles/
-
+.cursor/
 # pyenv
 .python-version
 

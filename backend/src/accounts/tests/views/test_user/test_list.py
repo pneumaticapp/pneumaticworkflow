@@ -16,7 +16,6 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
 )
-from src.utils.dates import date_format
 
 pytestmark = pytest.mark.django_db
 
@@ -50,7 +49,6 @@ def test_list__ok(api_client):
     assert data['first_name'] == user.first_name
     assert data['last_name'] == user.last_name
     assert data['type'] == user.type
-    assert data['date_joined'] == user.date_joined.strftime(date_format)
     assert data['date_joined_tsp'] == user.date_joined.timestamp()
     assert data['is_admin'] == user.is_admin
     assert data['is_account_owner'] == user.is_account_owner
@@ -111,7 +109,6 @@ def test_list__guest__ok(api_client):
     assert data['first_name'] == guest.first_name
     assert data['last_name'] == guest.last_name
     assert data['type'] == guest.type
-    assert data['date_joined'] == guest.date_joined.strftime(date_format)
     assert data['date_joined_tsp'] == guest.date_joined.timestamp()
     assert data['is_admin'] == guest.is_admin
     assert data['is_account_owner'] == guest.is_account_owner

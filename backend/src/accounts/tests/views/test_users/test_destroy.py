@@ -7,14 +7,13 @@ from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
 from src.processes.tests.fixtures import (
     create_test_account,
-    create_test_user, create_test_owner, create_test_admin,
+    create_test_user,
+    create_test_owner,
+    create_test_admin,
 )
 from src.utils.validation import ErrorCode
 
-
 pytestmark = pytest.mark.django_db
-
-# TODO Deprecated
 
 
 def test_delete_user__ok(
@@ -39,8 +38,8 @@ def test_delete_user__ok(
     api_client.token_authenticate(request_user)
 
     # act
-    response = api_client.post(
-        f'/accounts/users/{deleted_user.id}/delete',
+    response = api_client.delete(
+        f'/accounts/users/{deleted_user.id}',
     )
 
     # assert
@@ -60,11 +59,8 @@ def test_delete__user_is_performer__validation_error(
 ):
     # arrange
     account = create_test_account()
-    request_user = create_test_user(account=account)
-    deleted_user = create_test_user(
-        account=account,
-        email='deleted@test.test',
-    )
+    request_user = create_test_owner(account=account)
+    deleted_user = create_test_admin(account=account)
     user_service_init_mock = mocker.patch.object(
         UserService,
         attribute='__init__',
@@ -77,7 +73,7 @@ def test_delete__user_is_performer__validation_error(
     api_client.token_authenticate(request_user)
 
     # act
-    response = api_client.post(f'/accounts/users/{deleted_user.id}/delete')
+    response = api_client.delete(f'/accounts/users/{deleted_user.id}')
 
     # assert
     assert response.status_code == 400
@@ -105,14 +101,13 @@ def test_delete_user__another_account_user__not_found(
         return_value=None,
     )
     deactivate_mock = mocker.patch(
-        'src.accounts.services.user.UserService'
-        '.deactivate',
+        'src.accounts.services.user.UserService.deactivate',
     )
     api_client.token_authenticate(request_user)
 
     # act
-    response = api_client.post(
-        f'/accounts/users/{another_user.id}/delete',
+    response = api_client.delete(
+        f'/accounts/users/{another_user.id}',
     )
 
     # assert
@@ -150,8 +145,8 @@ def test_delete_user__not_admin__permission_denied(
     api_client.token_authenticate(request_user)
 
     # act
-    response = api_client.post(
-        f'/accounts/users/{deleted_user.id}/delete',
+    response = api_client.delete(
+        f'/accounts/users/{deleted_user.id}',
     )
 
     # assert
@@ -181,8 +176,8 @@ def test_delete__service_exception__validation_error(
     api_client.token_authenticate(owner)
 
     # act
-    response = api_client.post(
-        f'/accounts/users/{deleted_user.id}/delete',
+    response = api_client.delete(
+        f'/accounts/users/{deleted_user.id}',
     )
 
     # assert

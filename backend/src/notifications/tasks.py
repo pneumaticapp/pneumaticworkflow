@@ -230,7 +230,6 @@ def _send_new_task_websocket(
 
 @shared_task(base=NotificationTask)
 def send_new_task_notification(**kwargs):
-    _send_new_task_websocket(**kwargs)
     _send_new_task_notification(**kwargs)
 
 

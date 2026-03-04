@@ -7,7 +7,7 @@ from django.contrib.postgres.fields import JSONField
 from django.core.exceptions import (
     ObjectDoesNotExist,
 )
-from django.db import models
+from django.db import models, transaction
 
 from src.accounts.models import (
     AccountBaseMixin,
@@ -126,11 +126,12 @@ class Template(
         return self.owners.all()
 
     def delete(self, **kwargs):
-        self.workflows.update(
-            is_legacy_template=True,
-            legacy_template_name=self.name,
-        )
-        super().delete(**kwargs)
+        with transaction.atomic():
+            self.workflows.update(
+                is_legacy_template=True,
+                legacy_template_name=self.name,
+            )
+            super().delete(**kwargs)
 
     def get_draft(self):
         try:

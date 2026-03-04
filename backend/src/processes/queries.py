@@ -208,9 +208,6 @@ class WorkflowListQuery(
         elif self.is_external is not None:
             where = f'{where} AND {self._get_is_external()}'
 
-        if self.search_text:
-            where = f'{where} AND {self._get_search()}'
-
         if self.status is not None:
             where = f'{where} AND pw.status = %(status)s'
             self.params['status'] = self.status
@@ -245,13 +242,15 @@ class WorkflowListQuery(
             # ! Does not change
             # "ps.is_deleted = FALSE" to a "ps.is_deleted IS FALSE"
             # it breaks using gin index
-            result += """
+            result += f"""
                 INNER JOIN processes_searchcontent ps ON (
                   (
                     pw.id = ps.workflow_id
                     OR pw.template_id = ps.template_id
                   )
                   AND ps.is_deleted = FALSE
+                  AND ps.account_id = %(account_id)s
+                  AND {self._get_search()}
                 )
             """
         return result
@@ -280,7 +279,7 @@ class WorkflowListQuery(
         """
         if self.search_tsquery:
             result += f"""
-                ts_rank(ps.content, {self.search_tsquery}) AS search_rank
+                MAX(ts_rank(ps.content, {self.search_tsquery})) AS search_rank
             """
         return result
 
@@ -303,7 +302,7 @@ class WorkflowListQuery(
                 {self._get_select()}
                 {self._get_from()}
                 {self._get_where()}
-                GROUP BY pw.id{', search_rank' if self.search_tsquery else ''}
+                GROUP BY pw.id
                 ORDER BY pw.id
             ) AS workflows
             {order_by}
@@ -974,9 +973,6 @@ class TaskListQuery(
             AND {self.get_is_completed_where()}
         """
 
-        if self.search_text:
-            where += f' AND {self._get_search()}'
-
         if self.template_task_api_name:
             where += f' AND {self._get_template_task_api_name()}'
 
@@ -1018,6 +1014,8 @@ class TaskListQuery(
                     )
                   )
                   AND ps.is_deleted = FALSE
+                  AND ps.account_id = %(account_id)s
+                  AND {self._get_search()}
                 )
             """
         if self.template_id:
@@ -1032,9 +1030,11 @@ class TaskListQuery(
     def _get_select(self):
 
         result = f"""
-         SELECT DISTINCT ON (pt.id) pt.id,
+         SELECT
+            pt.id,
             pt.name,
-            pw.name as workflow_name,
+            pw.id AS workflow_id,
+            pw.name AS workflow_name,
             pt.due_date,
             EXTRACT(
               EPOCH FROM pt.due_date AT TIME ZONE 'UTC'
@@ -1043,7 +1043,8 @@ class TaskListQuery(
             EXTRACT(
               EPOCH FROM pt.date_started AT TIME ZONE 'UTC'
             ) AS date_started_tsp,
-            ptp.date_completed,
+            MAX(ptp.id) AS task_performer_id,
+            MAX(ptp.date_completed) AS date_completed,
             EXTRACT(
               EPOCH FROM pt.date_completed AT TIME ZONE 'UTC'
             ) AS date_completed_tsp,
@@ -1055,7 +1056,7 @@ class TaskListQuery(
         """
         if self.search_tsquery:
             result += f"""
-                ts_rank(ps.content, {self.search_tsquery}) AS search_rank
+                MAX(ts_rank(ps.content, {self.search_tsquery})) AS search_rank
             """
         return result
 
@@ -1064,6 +1065,7 @@ class TaskListQuery(
             {self._get_select()}
             {self._get_from()}
             {self._get_inner_where()}
+            GROUP BY pt.id, pw.id
             ORDER BY pt.id
         """
 
@@ -1188,6 +1190,7 @@ class TemplateListQuery(
                 INNER JOIN processes_searchcontent ps ON (
                     pt.id = ps.template_id
                     AND ps.is_deleted = FALSE
+                    AND ps.account_id = %(account_id)s
                 )
             """
         if self.ordering in {
@@ -1228,7 +1231,7 @@ class TemplateListQuery(
     def _get_select(self):
 
         result = f"""
-        SELECT DISTINCT
+        SELECT
             pt.id,
             pt.is_deleted,
             pt.name,
@@ -1246,7 +1249,7 @@ class TemplateListQuery(
         """
         if self.search_tsquery:
             result += f"""
-                ts_rank(ps.content, {self.search_tsquery}) AS search_rank
+                MAX(ts_rank(ps.content, {self.search_tsquery})) AS search_rank
             """
         return result
 
@@ -1256,7 +1259,7 @@ class TemplateListQuery(
         {self._get_select()}
         {self._get_from()}
         {self._get_inner_where()}
-        GROUP BY pt.id{', search_rank' if self.search_tsquery else ''}
+        GROUP BY pt.id
         """
 
     def get_sql(self):
