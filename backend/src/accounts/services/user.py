@@ -21,7 +21,9 @@ from src.accounts.models import (
 from src.accounts.serializers.user import UserWebsocketSerializer
 from src.accounts.services.exceptions import (
     AlreadyRegisteredException,
-    UserIsPerformerException, UserServiceException, PreventSelfDeletion,
+    UserIsPerformerException,
+    UserServiceException,
+    PreventSelfDeletion,
     PreventAccountOwnerDeletion,
 )
 from src.accounts.validators import user_is_last_performer
@@ -247,7 +249,7 @@ class UserService(
         ):
             try:
                 service = StripeService(
-                    user=self.user,
+                    user=self.instance,
                     auth_type=self.auth_type,
                     is_superuser=self.is_superuser,
                 )

@@ -33,7 +33,7 @@ from src.accounts.services.exceptions import (
     AlreadyAcceptedInviteException,
     InvalidTransferTokenException,
     ReassignServiceException,
-    UserIsPerformerException, UserServiceException,
+    UserServiceException,
 )
 from src.accounts.services.reassign import (
     ReassignService,
@@ -194,7 +194,7 @@ class UsersViewSet(
         )
         try:
             service.deactivate()
-        except UserIsPerformerException as ex:
+        except UserServiceException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok()
 
@@ -357,6 +357,6 @@ class UsersViewSet(
         )
         try:
             service.deactivate()
-        except UserIsPerformerException as ex:
+        except UserServiceException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok()

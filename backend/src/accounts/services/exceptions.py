@@ -68,11 +68,6 @@ class ExpiredTransferTokenException(BaseServiceException):
     default_message = MSG_A_0009
 
 
-class UserServiceException(BaseServiceException):
-
-    pass
-
-
 class UserNotFoundException(UserServiceException):
 
     default_message = MSG_A_0010
