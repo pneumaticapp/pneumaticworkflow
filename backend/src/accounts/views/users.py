@@ -137,12 +137,6 @@ class UsersViewSet(
                 .exclude(is_account_owner=True)
                 .exclude(id=user.id)
             )
-        elif self.action == 'destroy':
-            queryset = (
-                UserModel.objects
-                .on_account(account_id)
-                .exclude(id=user.id)
-            )
         else:
             queryset = UserModel.objects.on_account(account_id)
         return self.prefetch_queryset(queryset)

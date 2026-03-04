@@ -21,7 +21,8 @@ from src.accounts.models import (
 from src.accounts.serializers.user import UserWebsocketSerializer
 from src.accounts.services.exceptions import (
     AlreadyRegisteredException,
-    UserIsPerformerException, UserServiceException,
+    UserIsPerformerException, UserServiceException, PreventSelfDeletion,
+    PreventAccountOwnerDeletion,
 )
 from src.accounts.validators import user_is_last_performer
 from src.analysis.mixins import BaseIdentifyMixin
@@ -145,7 +146,7 @@ class UserService(
             account=self.instance.account,
             key=key,
         )
-        if user_groups:
+        if user_groups is not None:
             self.instance.user_groups.set(user_groups)
 
     def _create_actions(self, **kwargs):
@@ -275,6 +276,10 @@ class UserService(
         )
 
     def _validate_deactivate(self):
+        if self.instance.id == self.user.id:
+            raise PreventSelfDeletion
+        if self.instance.is_account_owner:
+            raise PreventAccountOwnerDeletion
         if user_is_last_performer(self.instance):
             raise UserIsPerformerException
 
@@ -337,11 +342,11 @@ class UserService(
                 super().partial_update(
                     password=make_password(raw_password),
                     **update_kwargs,
-                    force_save=force_save,
+                    force_save=True,
                 )
             else:
-                super().partial_update(**update_kwargs, force_save=force_save)
-            if user_groups:
+                super().partial_update(**update_kwargs, force_save=True)
+            if user_groups is not None:
                 self.instance.user_groups.set(user_groups)
             self._update_related_user_fields(old_name=old_name)
         self._update_related_stripe_account()
