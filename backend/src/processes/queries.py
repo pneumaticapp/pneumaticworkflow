@@ -1205,6 +1205,8 @@ class TemplateListQuery(
           ptt.is_deleted = false
         )
         LEFT JOIN owners ON pt.id = owners.template_id
+        LEFT JOIN viewers ON pt.id = viewers.template_id
+        LEFT JOIN starters ON pt.id = starters.template_id
         LEFT JOIN accounts_user ON (
           owners.user_id = accounts_user.id AND
           accounts_user.is_deleted = false
@@ -1440,8 +1442,6 @@ class TemplateListByOwnersQuery(
               ptt.is_deleted = false
             )
             LEFT JOIN owners ON pt.id = owners.template_id
-            LEFT JOIN viewers ON pt.id = viewers.template_id
-            LEFT JOIN starters ON pt.id = starters.template_id
             LEFT JOIN accounts_user ON (
               owners.user_id = accounts_user.id AND
               accounts_user.is_deleted = false
@@ -1517,7 +1517,7 @@ class TemplateListByOwnersQuery(
 
     def _get_inner_sql(self):
         return f"""
-            WITH owners AS ({self.dereferenced_owners()}),
+            WITH owners AS ({self.dereferenced_owners()})
             {self._get_select()}
             {self._get_from()}
             {self._get_inner_where()}
