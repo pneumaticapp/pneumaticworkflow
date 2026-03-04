@@ -12,7 +12,7 @@ class Migration(migrations.Migration):
     dependencies = [
         ('accounts', '0139_remove_account_external_id'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
-        ('processes', '0240_populate_user_group_predicates'),
+        ('processes', '0242_add_new_search_content'),
     ]
 
     operations = [
