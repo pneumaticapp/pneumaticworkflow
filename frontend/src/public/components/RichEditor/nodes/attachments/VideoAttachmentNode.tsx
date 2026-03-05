@@ -115,7 +115,6 @@ export class VideoAttachmentNode extends DecoratorNode<React.ReactElement> {
 
   exportJSON(): SerializedVideoAttachmentNode {
     return {
-      ...super.exportJSON(),
       type: 'video-attachment',
       version: 1,
       url: this.attachmentUrl,

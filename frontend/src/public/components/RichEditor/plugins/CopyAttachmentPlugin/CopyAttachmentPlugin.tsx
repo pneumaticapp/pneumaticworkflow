@@ -53,7 +53,7 @@ export function CopyAttachmentPlugin(): null {
 
   useEffect(() => {
     const handleClipboard = (event: ClipboardEvent | null): boolean => {
-      if (event == null || !(event instanceof ClipboardEvent)) {
+      if (event == null || !('clipboardData' in event)) {
         return false;
       }
       let handled = false;

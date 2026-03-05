@@ -94,7 +94,6 @@ export class ImageAttachmentNode extends DecoratorNode<React.ReactElement> {
 
   exportJSON(): SerializedImageAttachmentNode {
     return {
-      ...super.exportJSON(),
       type: 'image-attachment',
       version: 1,
       url: this.attachmentUrl,

@@ -97,7 +97,6 @@ export class FileAttachmentNode extends DecoratorNode<React.ReactElement> {
 
   exportJSON(): SerializedFileAttachmentNode {
     return {
-      ...super.exportJSON(),
       type: 'file-attachment',
       version: 1,
       url: this.attachmentUrl,
