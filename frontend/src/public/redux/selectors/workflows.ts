@@ -1,4 +1,4 @@
-import { IApplicationState, IStoreWorkflows, IWorkflowLog, IWorkflowsList } from '../../types/redux';
+import { IApplicationState, IStoreWorkflows, IWorkflowLog } from '../../types/redux';
 import {
   EWorkflowsLoadingStatus,
   EWorkflowsStatus,
@@ -9,8 +9,6 @@ import {
 } from '../../types/workflow';
 
 export const getWorkflowsStore = (state: IApplicationState): IStoreWorkflows => state.workflows;
-
-export const getWorkflowsList = (state: IApplicationState): IWorkflowsList => state.workflows.workflowsList;
 
 export const getWorkflowsSearchText = (state: IApplicationState): string => state.workflows.workflowsSearchText;
 

@@ -113,6 +113,7 @@ export function WorkflowsTableActions({
             { id: 'workflows.export-deleted-group' },
             { id: '{id}' },
           ),
+          multipleActiveTasksLabel: formatMessage({ id: 'workflows.multiple-active-tasks' }),
         });
         downloadWorkflowsCsv(csvContent);
       })

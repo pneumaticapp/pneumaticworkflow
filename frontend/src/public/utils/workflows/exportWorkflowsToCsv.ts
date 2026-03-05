@@ -98,6 +98,8 @@ export interface IExportWorkflowsToCsvConfig {
   headerLabels: Record<string, string>;
   /** Localized template for missing group in performers, use {id} placeholder for group ID */
   deletedGroupFallbackTemplate: string;
+  /** Localized label for workflows with multiple active tasks */
+  multipleActiveTasksLabel?: string;
 }
 
 const SYSTEM_COLUMNS = [
@@ -118,6 +120,7 @@ export function buildWorkflowsCsvContent({
   timezone,
   headerLabels,
   deletedGroupFallbackTemplate,
+  multipleActiveTasksLabel = 'Tasks',
 }: IExportWorkflowsToCsvConfig): string {
   const headerKeys = selectedFields.length > 0
     ? selectedFields
@@ -135,7 +138,7 @@ export function buildWorkflowsCsvContent({
       tasksCountWithoutSkipped: workflow.tasksCountWithoutSkipped,
     });
     const stepLabel = workflow.areMultipleTasks
-      ? 'Tasks'
+      ? multipleActiveTasksLabel
       : (workflow.oneActiveTaskName ?? '');
 
     const systemValues: Record<string, string> = {

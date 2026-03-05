@@ -171,7 +171,7 @@ describe('exportWorkflowsToCsv', () => {
       expect(result).toContain('Custom value');
     });
 
-    it('uses "Tasks" for step when areMultipleTasks is true', () => {
+    it('uses provided multipleActiveTasksLabel for step when areMultipleTasks is true', () => {
       const workflows = [
         minimalWorkflow({ areMultipleTasks: true, oneActiveTaskName: null }),
       ];
@@ -180,8 +180,9 @@ describe('exportWorkflowsToCsv', () => {
         workflows,
         selectedFields: ['system-column-step'],
         headerLabels: { 'system-column-step': 'Step' },
+        multipleActiveTasksLabel: 'Localized Tasks',
       });
-      expect(result).toContain('Tasks');
+      expect(result).toContain('Localized Tasks');
     });
 
     it('uses deletedGroupFallbackTemplate for performer when group is not in list', () => {
