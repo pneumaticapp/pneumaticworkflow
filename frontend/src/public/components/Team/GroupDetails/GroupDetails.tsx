@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useIntl } from 'react-intl';
-import classNames from 'classnames';
 import { useDispatch, useSelector } from 'react-redux';
+import classNames from 'classnames';
 import { history } from '../../../utils/history';
 
 import {
@@ -9,14 +9,15 @@ import {
   editModalOpen,
   createGroup,
   deleteGroup,
-  teamFetchStarted,
   resetGroup,
   updateUsersGroup,
   userListSortingChanged,
 } from '../../../redux/actions';
-import { IApplicationState } from '../../../types/redux';
+import { teamFetchStarted } from '../../../redux/accounts/slice';
+
 import { IGroup } from '../../../redux/team/types';
 import { EUserListSorting, TUserListItem } from '../../../types/user';
+
 import {
   IntegrateIcon,
   TrashIcon,
@@ -38,20 +39,23 @@ import {
 import { UserSelection } from '../UserSelection';
 import { GroupUser } from './GroupUser';
 
-import styles from './GroupDetails.css';
 import { EditGroupModal } from '../Groups/EditGroupModal';
 import { ERoutes } from '../../../constants/routes';
 import { TaskCarkSkeleton } from '../../TaskCard/TaskCarkSkeleton';
 import { TasksPlaceholderIcon } from '../../Tasks/TasksPlaceholderIcon';
 
+import styles from './GroupDetails.css';
+import { getCurrentGroupData, getCurrentGroupUserListSorting } from '../../../redux/selectors/groups';
+import { getAccountsTeamList } from '../../../redux/selectors/accounts';
+
 export function GroupDetails({ match }: any) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const group: IGroup | null = useSelector((state: IApplicationState) => state.groups.currentGroup.data);
-  const sorting: EUserListSorting = useSelector(
-    (state: IApplicationState) => state.groups.currentGroup.userListSorting,
-  );
-  const users: TUserListItem[] = useSelector((state: IApplicationState) => state.accounts.team.list);
+
+  const group: IGroup | null = useSelector(getCurrentGroupData);
+  const sorting: EUserListSorting = useSelector(getCurrentGroupUserListSorting);
+  const users: TUserListItem[] = useSelector(getAccountsTeamList);
+  
   const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {

@@ -23,7 +23,7 @@ import { Header } from '../../../UI/Typeography/Header';
 import { getPublicFormConfig } from '../../../../utils/getConfig';
 import { deleteRemovedFilesFromFields } from '../../../../api/deleteRemovedFilesFromFields';
 import { RichText } from '../../../RichText';
-import { usersFetchStarted } from '../../../../redux/actions';
+import { usersFetchStarted } from '../../../../redux/accounts/slice';
 import { TPublicFormType } from '../../../../types/publicForms';
 import { Copyright } from '../Copyright';
 import { FormSkeleton } from '../FormSkeleton';
@@ -33,8 +33,6 @@ import { prependHttp } from '../../../../utils/prependHttp';
 import submitedImage from '../images/SubmitedImage.svg';
 import * as ErrorImage from '../images/ErrorImage.svg';
 
-import styles from './PublicForm.css';
-
 import '../../../../assets/fonts/simple-line-icons/css/simple-line-icons.css';
 import '../../../../assets/fonts/iconsmind-s/css/iconsminds.css';
 import '../../../../assets/css/vendor/bootstrap.min.css';
@@ -42,6 +40,8 @@ import '../../../../assets/css/sass/themes/gogo.light.yellow.scss';
 import 'react-perfect-scrollbar/dist/css/styles.css';
 import 'rc-switch/assets/index.css';
 import { isEnvCaptcha } from '../../../../constants/enviroment';
+
+import styles from './PublicForm.css';
 
 interface IPublicFormsAppProps {
   type: TPublicFormType;
