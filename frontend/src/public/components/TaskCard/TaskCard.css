@@ -3,28 +3,28 @@
 
 .container {
   position: relative;
-  padding: 5rem;
+  padding: 80px;
   overflow: visible;
   color: var(--pneumatic-color-black100);
   background-color: white;
-  border-radius: 1.5rem;
+  border-radius: 24px;
   transition: box-shadow 0.2s ease-in-out;
 
   @media (--mobile) {
-    padding: 5rem 2rem;
+    padding: 80px 32px;
   }
 }
 
 .container_guest {
-  padding: 5rem 0;
+  padding: 80px 0;
 
   @media (--mobile) {
-    padding: 5rem 0;
+    padding: 80px 0;
   }
 
   .complete-form {
     @media (--mobile) {
-      padding: 2rem;
+      padding: 32px;
     }
 
     &::before {
@@ -37,18 +37,18 @@
 }
 
 .pretitle {
-  margin-bottom: 0.5rem;
+  margin-bottom: 8px;
   overflow: hidden;
-  font-size: 0.8125rem;
-  line-height: 1rem;
+  font-size: 13px;
+  line-height: 16px;
   color: var(--pneumatic-color-black48);
 }
 
 .dot {
-  margin: 0 0.5rem 0.125rem;
+  margin: 0 8px 2px;
   display: inline-block;
-  width: 0.25rem;
-  height: 0.25rem;
+  width: 4px;
+  height: 4px;
   vertical-align: baseline;
   background: var(--pneumatic-color-black48);
   border-radius: 50%;
@@ -56,13 +56,13 @@
 
 .date {
   display: block;
-  font-size: 0.8125rem;
+  font-size: 13px;
   font-weight: 600;
   white-space: nowrap;
   color: var(--pneumatic-color-black48);
 
   @media (--mobile) {
-    margin: 0 0 0.5rem;
+    margin: 0 0 8px;
   }
 }
 
@@ -79,35 +79,35 @@
 }
 
 .task-name-container {
-  margin: 0.5rem 0;
+  margin: 8px 0;
   display: flex;
 }
 
 .task-name__urgent-marker {
-  margin-top: -0.125rem;
-  margin-right: 0.5rem;
-  padding: 0.0625rem 0.5rem;
+  margin-top: -2px;
+  margin-right: 8px;
+  padding: 1px 8px;
   display: inline-flex;
   font-family: Nunito;
-  font-size: 0.8125rem;
+  font-size: 13px;
   font-weight: normal;
-  line-height: 1rem;
+  line-height: 16px;
   vertical-align: middle;
   color: white;
   background: var(--pneumatic-notification-1);
-  border-radius: 0.875rem;
+  border-radius: 14px;
 }
 
 .description {
-  margin: 1rem 0;
-  font-size: 0.9375rem;
-  line-height: 1.25rem;
+  margin: 16px 0;
+  font-size: 15px;
+  line-height: 20px;
   word-break: break-word;
   color: var(--pneumatic-color-black72);
 }
 
 .info {
-  margin: 2rem 0;
+  margin: 32px 0;
   display: flex;
   justify-content: space-between;
 
@@ -128,14 +128,14 @@
 
 .performer {
   align-items: center;
-  margin: 0.25rem;
-  padding: 0.375rem 0.5rem;
+  margin: 4px;
+  padding: 6px 8px;
   display: inline-flex;
-  font-size: 0.8125rem;
-  line-height: 1rem;
+  font-size: 13px;
+  line-height: 16px;
   color: var(--pneumatic-color-black100);
   background: var(--pneumatic-color-beige);
-  border-radius: 1rem;
+  border-radius: 16px;
   justify-content: space-between;
 
   button {
@@ -145,11 +145,11 @@
 }
 
 .performer__avatar {
-  margin-right: 0.25rem;
+  margin-right: 4px;
 }
 
 .performer__delete {
-  margin-left: 0.25rem;
+  margin-left: 4px;
   cursor: pointer;
   color: var(--pneumatic-color-black16);
   transition: color 0.1s ease-in-out;
@@ -162,11 +162,11 @@
 .complete-form {
   position: relative;
   z-index: 1;
-  margin: 2rem 0;
-  padding: 2rem;
+  margin: 32px 0;
+  padding: 32px;
 
   @media (--mobile) {
-    padding: 2rem 0;
+    padding: 32px 0;
   }
 
   &::before {
@@ -178,11 +178,11 @@
     bottom: 0;
     content: '';
     background: var(--pneumatic-color-beige);
-    border-radius: 1.5rem;
+    border-radius: 24px;
 
     @media (--mobile) {
-      right: -2rem;
-      left: -2rem;
+      right: -32px;
+      left: -32px;
     }
   }
 }
@@ -197,29 +197,29 @@
 }
 
 .task-output {
-  margin-bottom: 2rem;
+  margin-bottom: 32px;
 }
 
 .task-output__title {
-  margin-bottom: 1.5rem;
-  font-size: 0.9375rem;
+  margin-bottom: 24px;
+  font-size: 15px;
   font-weight: bold;
-  line-height: 1.25rem;
+  line-height: 20px;
 }
 
 .task-output__field {
-  margin: 0 0 1.25rem;
+  margin: 0 0 20px;
 
   :global .react-datepicker-wrapper input {
-    padding: 0.875rem 3.125rem 0.875rem 1rem !important;
+    padding: 14px 50px 14px 16px !important;
     width: 100% !important;
     font-family: Nunito, sans-serif !important;
-    font-size: 0.9375rem !important;
-    line-height: 1.25rem !important;
+    font-size: 15px !important;
+    line-height: 20px !important;
     color: #262522 !important;
     background: var(--pneumatic-color-beige) !important;
-    border: 0.0625rem solid #dcdcdb !important;
-    border-radius: 0.5rem !important;
+    border: 1px solid #dcdcdb !important;
+    border-radius: 8px !important;
     outline: none !important;
     transition: 0.15s ease-in border-color !important;
 
@@ -237,7 +237,7 @@
   display: flex;
 
   > * + * {
-    margin-left: 0.5rem;
+    margin-left: 8px;
   }
 }
 
@@ -250,11 +250,11 @@
 }
 
 .workflow-info {
-  margin-top: 2rem;
+  margin-top: 32px;
 }
 
 .minimize-log-button {
-  margin-top: 2rem;
+  margin-top: 32px;
   width: 100%;
 }
 
@@ -265,9 +265,9 @@
   align-items: center;
 
   &__text {
-    margin: 0 0 0 0.5rem;
-    font-size: 0.8125rem;
-    line-height: 1rem;
+    margin: 0 0 0 8px;
+    font-size: 13px;
+    line-height: 16px;
   }
 
   &__text-date {
@@ -284,18 +284,18 @@
 }
 
 .due-in {
-  margin-left: 0.5rem;
+  margin-left: 8px;
   padding: 0.6rem 0;
   display: block;
   flex-shrink: 0;
 
   @media (--mobile) {
-    margin: 2rem 0 0;
+    margin: 32px 0 0;
   }
 }
 
 .guest-task-name {
-  margin-bottom: 1rem;
+  margin-bottom: 16px;
   word-break: break-word;
 }
 
