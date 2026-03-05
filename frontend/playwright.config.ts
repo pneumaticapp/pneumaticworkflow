@@ -15,7 +15,7 @@ export default defineConfig({
     storageState: 'e2e/.auth/user.json',
     trace: 'on-first-retry',
     launchOptions: {
-      slowMo: 1200,
+      slowMo: Number(process.env.SLOW_MO) || 0,
     },
   },
   projects: [
