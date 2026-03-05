@@ -2,6 +2,7 @@ import type { ElementNode, LexicalNode } from 'lexical';
 import {
   $createParagraphNode,
   $getNodeByKey,
+  $getRoot,
   $getSelection,
   $insertNodes,
   $isElementNode,
@@ -204,6 +205,56 @@ export function getBlockNodeFromSelection(): ElementNode | null {
     n = parent;
   }
   return null;
+}
+
+/**
+ * Returns root-level block nodes (direct children of root) that intersect the current selection.
+ * Order matches document order.
+ */
+export function getSelectedRootBlocks(): ElementNode[] {
+  const selection = $getSelection();
+  if (!selection || !$isRangeSelection(selection)) return [];
+  const blockKeys = new Set<string>();
+  selection.getNodes().forEach((node) => {
+    let n: LexicalNode | null = node;
+    while (n) {
+      const parent: LexicalNode | null = n.getParent();
+      if (parent && $isRootOrShadowRoot(parent) && $isElementNode(n)) {
+        blockKeys.add(n.getKey());
+        break;
+      }
+      n = parent;
+    }
+  });
+  const root = $getRoot();
+  return root.getChildren().filter(
+    (child): child is ElementNode => $isElementNode(child) && blockKeys.has(child.getKey()),
+  );
+}
+
+/**
+ * Converts multiple root-level blocks into a single checklist with one item per block.
+ * Replaces the first block with the checklist and removes the rest.
+ */
+export function convertBlocksToChecklist(blocks: ElementNode[]): ChecklistItemNode | null {
+  if (blocks.length === 0) return null;
+  const listApiName = createChecklistApiName();
+  const checklistRoot = $createChecklistNode({ listApiName });
+  blocks.forEach((block) => {
+    if ($isChecklistNode(block) || $isChecklistItemNode(block) || $isLexicalListNode(block)) return;
+    const item = $createChecklistItemNode({
+      listApiName,
+      itemApiName: createChecklistSelectionApiName(),
+    });
+    [...block.getChildren()].forEach((child) => item.append(child));
+    checklistRoot.append(item);
+  });
+  if (checklistRoot.getChildrenSize() === 0) return null;
+  const firstBlock = blocks[0];
+  firstBlock.replace(checklistRoot);
+  blocks.slice(1).forEach((block) => block.remove());
+  const first = checklistRoot.getFirstChild();
+  return first && $isChecklistItemNode(first) ? (first as ChecklistItemNode) : null;
 }
 
 export function convertBlockToChecklist(block: ElementNode): ChecklistItemNode | null {

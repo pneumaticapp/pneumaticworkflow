@@ -6,12 +6,14 @@ import {
   applySplitChecklistEnter,
   assignNewChecklistIds,
   convertBlockToChecklist,
+  convertBlocksToChecklist,
   convertChecklistItemToParagraph,
   convertChecklistToList,
   convertListToChecklist,
   getBackspaceOnEmptyChecklistPayload,
   getBlockNodeFromSelection,
   getChecklistItemNodeFromSelection,
+  getSelectedRootBlocks,
   insertChecklistAndSelectFirst,
   isCursorAtStartOfChecklistItem,
   nodesContainChecklist,
@@ -59,6 +61,21 @@ export function createInsertChecklistHandler(editor: LexicalEditor) {
       if (currentItem) {
         convertChecklistItemToParagraph(currentItem);
         return;
+      }
+
+      const selectedBlocks = getSelectedRootBlocks();
+      const convertibleBlocks = selectedBlocks.filter(
+        (b) =>
+          !$isChecklistNode(b) &&
+          !$isChecklistItemNode(b) &&
+          !$isListNode(b),
+      );
+      if (convertibleBlocks.length >= 2) {
+        const firstItem = convertBlocksToChecklist(convertibleBlocks);
+        if (firstItem !== null) {
+          selectStartOfChecklistItem(firstItem);
+          return;
+        }
       }
 
       const block = getBlockNodeFromSelection();
