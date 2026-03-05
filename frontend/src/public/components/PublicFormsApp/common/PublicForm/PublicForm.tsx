@@ -1,6 +1,5 @@
-/* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import ReCAPTCHA from 'react-google-recaptcha';
 import produce from 'immer';
@@ -52,12 +51,12 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
-  const [formState, setFormState] = React.useState<EPublicFormState>(EPublicFormState.WaitingForAction);
-  const [publicForm, setPublicForm] = React.useState<IPublicForm | null>(null);
-  const [captcha, setCaptcha] = React.useState('');
+  const [formState, setFormState] = useState<EPublicFormState>(EPublicFormState.WaitingForAction);
+  const [publicForm, setPublicForm] = useState<IPublicForm | null>(null);
+  const [captcha, setCaptcha] = useState('');
   useShouldHideIntercom();
 
-  React.useEffect(() => {
+  useEffect(() => {
     dispatch(usersFetchStarted({ showErrorNotification: false }));
     fetchPublicForm();
   }, []);
@@ -66,16 +65,16 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
     try {
       setFormState(EPublicFormState.Loading);
 
-      const publicForm = await getPublicForm();
+      const fetchedForm = await getPublicForm();
 
-      if (!publicForm) {
+      if (!fetchedForm) {
         setFormState(EPublicFormState.FormNotFound);
 
         return;
       }
 
-      const normalizedForm = produce(publicForm, (draftPublicForm) => {
-        draftPublicForm.kickoff.fields = new ExtraFieldsHelper(publicForm.kickoff.fields).getFieldsWithValues();
+      const normalizedForm = produce(fetchedForm, (draftPublicForm) => {
+        draftPublicForm.kickoff.fields = new ExtraFieldsHelper(fetchedForm.kickoff.fields).getFieldsWithValues();
       });
 
       setPublicForm(normalizedForm);
@@ -140,20 +139,22 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
 
     return (
       <>
-        {publicForm.kickoff.fields.map((field) => (
-          <ExtraFieldIntl
-            key={field.apiName}
-            field={field}
-            editField={handleEditField(field.apiName)}
-            showDropdown={false}
-            mode={EExtraFieldMode.ProcessRun}
-            labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
-            namePlaceholder={field.name}
-            descriptionPlaceholder={field.description}
-            wrapperClassName={styles['output__field']}
-            accountId={publicForm.accountId}
-          />
-        ))}
+        {publicForm.kickoff.fields
+          .filter((field) => !field.isHidden)
+          .map((field) => (
+            <ExtraFieldIntl
+              key={field.apiName}
+              field={field}
+              editField={handleEditField(field.apiName)}
+              showDropdown={false}
+              mode={EExtraFieldMode.ProcessRun}
+              labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
+              namePlaceholder={field.name}
+              descriptionPlaceholder={field.description}
+              wrapperClassName={styles['output__field']}
+              accountId={publicForm.accountId}
+            />
+          ))}
 
         {isEnvCaptcha && publicForm?.showCaptcha && (
           <div className={styles['captcha']}>
