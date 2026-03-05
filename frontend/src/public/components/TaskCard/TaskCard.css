@@ -289,3 +289,32 @@
   margin-bottom: 16px;
   word-break: break-word;
 }
+
+.help-trigger {
+  margin-bottom: 1.6rem;
+  margin-left: auto;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font: inherit;
+  cursor: pointer;
+  color: var(--pneumatic-color-link-dark);
+  background: none;
+  border: none;
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}
+
+.help-trigger__label {
+  @mixin text-small;
+
+  font-weight: bold;
+}
+
+.help-trigger__icon {
+  flex-shrink: 0;
+  fill: var(--pneumatic-color-black32);
+}

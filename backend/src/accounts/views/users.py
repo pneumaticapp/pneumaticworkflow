@@ -22,7 +22,7 @@ from src.accounts.permissions import (
 from src.accounts.queries import CountTemplatesByUserQuery
 from src.accounts.serializers.user import (
     UserPrivilegesSerializer,
-    UserSerializer, UserCreateSerializer,
+    UserSerializer,
 )
 from src.accounts.serializers.users import (
     AcceptTransferSerializer,
@@ -33,7 +33,7 @@ from src.accounts.services.exceptions import (
     AlreadyAcceptedInviteException,
     InvalidTransferTokenException,
     ReassignServiceException,
-    UserIsPerformerException, UserServiceException,
+    UserServiceException,
 )
 from src.accounts.services.reassign import (
     ReassignService,
@@ -68,7 +68,6 @@ class UsersViewSet(
     pagination_class = LimitOffsetPagination
     filter_backends = [PneumaticFilterBackend]
     action_serializer_classes = {
-        'create': UserCreateSerializer,
         'reassign': ReassignSerializer,
         'privileges': UserPrivilegesSerializer,
     }
@@ -138,12 +137,6 @@ class UsersViewSet(
                 .exclude(is_account_owner=True)
                 .exclude(id=user.id)
             )
-        elif self.action == 'destroy':
-            queryset = (
-                UserModel.objects
-                .on_account(account_id)
-                .exclude(id=user.id)
-            )
         else:
             queryset = UserModel.objects.on_account(account_id)
         return self.prefetch_queryset(queryset)
@@ -167,7 +160,10 @@ class UsersViewSet(
 
     def update(self, request, *args, **kwargs):
         user = self.get_object()
-        slz = self.get_serializer(data=request.data)
+        slz = self.get_serializer(
+            instance=user,
+            data=request.data,
+        )
         slz.is_valid(raise_exception=True)
         service = UserService(
             user=request.user,
@@ -176,10 +172,16 @@ class UsersViewSet(
             auth_type=request.token_type,
         )
         try:
-            user = service.partial_update(**slz.validated_data)
+            user = service.partial_update(
+                **slz.validated_data,
+                force_save=True,
+            )
         except UserServiceException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok(UserSerializer(instance=user).data)
+
+    def partial_update(self, *args, **kwargs):
+        return self.update(*args, **kwargs)
 
     def destroy(self, request, *args, **kwargs):
         request_user = request.user
@@ -192,7 +194,7 @@ class UsersViewSet(
         )
         try:
             service.deactivate()
-        except UserIsPerformerException as ex:
+        except UserServiceException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok()
 
@@ -339,3 +341,22 @@ class UsersViewSet(
             request.user.account_id,
         )
         return self.response_ok(data=account_data)
+
+    @action(detail=True, methods=('post',))
+    def delete(self, request, *args, **kwargs):
+
+        # TODO Deprecated. Duplicate of the "destroy" action
+
+        request_user = request.user
+        user = self.get_object()
+        service = UserService(
+            user=request_user,
+            instance=user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        try:
+            service.deactivate()
+        except UserServiceException as ex:
+            raise_validation_error(message=ex.message)
+        return self.response_ok()

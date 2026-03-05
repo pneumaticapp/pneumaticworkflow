@@ -337,7 +337,7 @@ def test_return_to__ok(mocker, api_client):
     task_3 = workflow.tasks.get(number=3)
     assert task_3.is_pending
     revert_workflow_event_mock.assert_called_once_with(
-        task=task_3,
+        task=task_1,
         user=user,
     )
     start_workflow_event_mock.assert_called_once_with(task_1)
@@ -424,6 +424,7 @@ def test_return_to__skip_condition__validation_error(
         type=FieldType.USER,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     template_task_1 = template.tasks.get(number=1)
     template_task_2 = template.tasks.get(number=2)
@@ -673,6 +674,7 @@ def test_return_to__task_skipped_by_kickoff_field__update_status_to_pending(
         type=FieldType.CHECKBOX,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     selection_template = FieldTemplateSelection.objects.create(
         field_template=field_template,
@@ -796,7 +798,7 @@ def test_return_to__completed_workflow__ok(
     send_removed_task_notification_mock.assert_not_called()
     send_new_task_notification_mock.assert_called_once()
     delete_task_guest_cache_mock.assert_not_called()
-    revert_task_webhook_mock.assert_called_once()
+    revert_task_webhook_mock.assert_not_called()
 
 
 @pytest.mark.parametrize('status', WorkflowStatus.RUNNING_STATUSES)

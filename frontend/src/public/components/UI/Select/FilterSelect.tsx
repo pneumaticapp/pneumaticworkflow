@@ -139,6 +139,12 @@ export function FilterSelect<
     const mapSelectedOption = allOptions.filter((item) => newSelectedOptions.includes(item[optionIdKey]));
 
     onChange(newSelectedOptions, mapSelectedOption);
+
+    if (newSelectedOptions.length === allOptions.length) {
+      setIsSelectAll(true);
+    } else {
+      setIsSelectAll(false);
+    }
   };
 
   const renderSearchInput = () => {
@@ -256,12 +262,6 @@ export function FilterSelect<
         }
       };
 
-      const areAllSelected =
-        isMultiple &&
-        Array.isArray(selectedOptions) &&
-        allOptions.length > 0 &&
-        selectedOptions.length === allOptions.length;
-
       return (
         <DropdownItem
           className={classnames('dropdown-item-sm', styles['value-item'], styles['value-item__select-all'])}
@@ -269,7 +269,7 @@ export function FilterSelect<
           toggle={false}
         >
           <Checkbox
-            checked={isSelectAll || areAllSelected}
+            checked={isSelectAll}
             title={<span>{selectAllLabel}</span>}
             onClick={(e) => e.stopPropagation()}
             onChange={() => {}}

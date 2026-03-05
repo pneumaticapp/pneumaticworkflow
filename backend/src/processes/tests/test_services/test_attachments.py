@@ -35,6 +35,7 @@ def test_clone__ok():
         task=workflow.tasks.first(),
         value='text',
         workflow=workflow,
+        account=user.account,
     )
     attachment = FileAttachment.objects.create(
         name='filename.png',

@@ -9,7 +9,7 @@ from src.accounts.enums import (
     UserFirstDayWeek,
     UserStatus,
 )
-from src.accounts.messages import MSG_A_0005
+from src.accounts import messages
 from src.accounts.models import (
     APIKey,
     Contact,
@@ -19,7 +19,7 @@ from src.accounts.serializers.user import UserWebsocketSerializer
 from src.accounts.services.exceptions import (
     AlreadyRegisteredException,
     UserIsPerformerException,
-    UserServiceException,
+    UserServiceException, PreventSelfDeletion, PreventAccountOwnerDeletion,
 )
 from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
@@ -385,7 +385,7 @@ def test_create_instance__email_already_exists__raise_exception(mocker):
         )
 
     # assert
-    assert ex.value.message == MSG_A_0005
+    assert ex.value.message == messages.MSG_A_0005
 
 
 def test_create_instance__invited_email_exists__ok(mocker):
@@ -670,7 +670,7 @@ def test_create_related__groups__ok(mocker):
         return_value=key,
     )
 
-    user_data = {'key': 'value', 'groups': [group]}
+    user_data = {'key': 'value', 'user_groups': [group]}
     service = UserService(instance=user)
 
     # act
@@ -1128,6 +1128,50 @@ def test_validate_deactivate__user_is_not_performer__ok(mocker):
     user_is_performer_mock.assert_called_once_with(deleted_user)
 
 
+def test_validate_deactivate__delete_yourself_raise_exception(mocker):
+
+    # arrange
+    account = create_test_account()
+    create_test_owner(account=account)
+    deleted_user = create_test_admin(account=account)
+    user_is_performer_mock = mocker.patch(
+        'src.accounts.services.user.user_is_last_performer',
+        return_value=False,
+    )
+
+    service = UserService(instance=deleted_user, user=deleted_user)
+
+    # act
+    with pytest.raises(PreventSelfDeletion) as ex:
+        service._validate_deactivate()
+
+    # assert
+    assert ex.value.message == str(messages.MSG_A_0047)
+    user_is_performer_mock.assert_not_called()
+
+
+def test_validate_deactivate__delete_account_owner_raise_exception(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    user_is_performer_mock = mocker.patch(
+        'src.accounts.services.user.user_is_last_performer',
+        return_value=False,
+    )
+
+    service = UserService(instance=owner, user=user)
+
+    # act
+    with pytest.raises(PreventAccountOwnerDeletion) as ex:
+        service._validate_deactivate()
+
+    # assert
+    assert ex.value.message == str(messages.MSG_A_0048)
+    user_is_performer_mock.assert_not_called()
+
+
 def test_deactivate__ok(mocker):
 
     # arrange
@@ -1432,6 +1476,7 @@ def test_update_related_user_fields__name_changed__ok():
         workflow=workflow,
         value=old_name,
         user_id=user.id,
+        account=account,
     )
     service = UserService(instance=user, user=owner)
 
@@ -1509,6 +1554,7 @@ def test_update_related_user_fields__another_account_field__not_changed():
         workflow=workflow,
         value=old_name,
         user_id=another_user.id,
+        account=another_user.account,
     )
     service = UserService(instance=user, user=owner)
 
@@ -1840,7 +1886,7 @@ def test_partial_update__all_fields_end_to_end__ok(
     }
     raw_password = 'new password 123'
     update_kwargs = {
-        'groups': [new_group.id],
+        'user_groups': [new_group.id],
         'raw_password': raw_password,
         **user_data,
     }
@@ -1916,7 +1962,7 @@ def test_partial_update__all_fields_end_to_end__ok(
         user.is_comments_mentions_subscriber
     )
     assert user.user_groups.count() == 1
-    assert user.user_groups.first().id == update_kwargs['groups'][0]
+    assert user.user_groups.first().id == update_kwargs['user_groups'][0]
     assert user.password == safe_password
     make_password_mock.assert_called_once_with(raw_password)
 
@@ -1963,7 +2009,7 @@ def test_partial_update__default_force_save__ok(
     # assert
     assert result is user
     partial_update_mock.assert_called_once_with(
-        force_save=False,
+        force_save=True,
         **update_kwargs,
     )
     update_related_user_fields_mock.assert_called_once_with(
@@ -2026,6 +2072,61 @@ def test_partial_update__force_save_true__ok(
     )
     update_related_stripe_account_mock.assert_called_once_with()
     update_analytics_mock.assert_called_once_with(**update_kwargs)
+    send_user_updated_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        user_data=UserWebsocketSerializer(user).data,
+    )
+
+
+def test_partial_update__remove_all_groups__ok(
+    mocker,
+    identify_mock,
+):
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    create_test_group(account=account, users=[owner, user])
+    update_kwargs = {
+        'user_groups': [],
+    }
+    partial_update_mock = mocker.patch(
+        'src.generics.base.service.BaseModelService.partial_update',
+    )
+    update_related_user_fields_mock = mocker.patch(
+        'src.accounts.services.user.UserService.'
+        '_update_related_user_fields',
+    )
+    update_related_stripe_account_mock = mocker.patch(
+        'src.accounts.services.user.UserService.'
+        '_update_related_stripe_account',
+    )
+    update_analytics_mock = mocker.patch(
+        'src.accounts.services.user.UserService.'
+        '_update_analytics',
+    )
+    send_user_updated_notification_mock = mocker.patch(
+        'src.notifications.tasks.send_user_updated_notification.delay',
+    )
+    service = UserService(
+        instance=user,
+        user=owner,
+    )
+    # act
+    result = service.partial_update(**update_kwargs, force_save=True)
+
+    # assert
+    assert result is user
+    assert user.user_groups.count() == 0
+    partial_update_mock.assert_called_once_with(
+        force_save=True,
+    )
+    update_related_user_fields_mock.assert_called_once_with(
+        old_name=user.name,
+    )
+    update_related_stripe_account_mock.assert_called_once_with()
+    update_analytics_mock.assert_called_once_with()
     send_user_updated_notification_mock.assert_called_once_with(
         logging=account.log_api_requests,
         account_id=account.id,

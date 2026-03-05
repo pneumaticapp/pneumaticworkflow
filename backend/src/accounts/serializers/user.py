@@ -12,6 +12,7 @@ from src.accounts.models import Contact
 from src.accounts.serializers.group import (
     GroupNameSerializer,
 )
+from src.accounts.messages import MSG_A_0036, MSG_A_0046
 from src.accounts.serializers.user_invites import (
     UserListInviteSerializer,
 )
@@ -71,11 +72,11 @@ class UserSerializer(
             'date_fdw',
             'invite',
             'groups',
+            'password',
         )
         read_only_fields = (
             'id',
             'type',
-            'email',
             'invite',
             'status',
             'is_account_owner',
@@ -85,7 +86,7 @@ class UserSerializer(
     groups = RelatedListField(
         source='user_groups',
         child=serializers.IntegerField(),
-        read_only=True,
+        required=False,
     )
     date_joined_tsp = TimeStampField(source='date_joined', read_only=True)
     timezone = serializers.ChoiceField(
@@ -94,6 +95,7 @@ class UserSerializer(
     )
     date_fmt = DateFormatField(required=False)
     invite = serializers.SerializerMethodField(allow_null=True, read_only=True)
+    password = serializers.CharField(write_only=True, required=False)
 
     def get_invite(self, instance: UserModel):
         if instance.status_invited and instance.invite:
@@ -107,19 +109,21 @@ class UserSerializer(
         else:
             self.fields['language'].choices = Language.EURO_CHOICES
 
+    def validate_is_admin(self, value):
+        if value is True and not self.context['user'].is_admin:
+            raise serializers.ValidationError(MSG_A_0046)
+        return value
 
-class UserCreateSerializer(UserSerializer):
-
-    class Meta(UserSerializer.Meta):
-        read_only_fields = (
-            'id',
-            'type',
-            'invite',
-            'status',
-            'is_account_owner',
-            'groups',
-            'date_joined_tsp',
-        )
+    def validate(self, attrs):
+        if 'password' in attrs:
+            attrs['raw_password'] = attrs.pop('password')
+        if (
+            self.instance
+            and self.instance.is_account_owner
+            and self.instance != self.context['user']
+        ):
+            raise serializers.ValidationError(MSG_A_0036)
+        return attrs
 
 
 class UserPrivilegesSerializer(UserSerializer):

@@ -1,7 +1,8 @@
 import pytest
 
 from src.accounts.messages import MSG_A_0011
-from src.accounts.services.exceptions import UserIsPerformerException
+from src.accounts.services.exceptions import UserIsPerformerException, \
+    UserServiceException
 from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
 from src.processes.tests.fixtures import (
@@ -10,7 +11,10 @@ from src.processes.tests.fixtures import (
 )
 from src.utils.validation import ErrorCode
 
+
 pytestmark = pytest.mark.django_db
+
+# TODO Deprecated
 
 
 def test_delete_user__ok(
@@ -35,8 +39,8 @@ def test_delete_user__ok(
     api_client.token_authenticate(request_user)
 
     # act
-    response = api_client.delete(
-        f'/accounts/users/{deleted_user.id}',
+    response = api_client.post(
+        f'/accounts/users/{deleted_user.id}/delete',
     )
 
     # assert
@@ -56,8 +60,16 @@ def test_delete__user_is_performer__validation_error(
 ):
     # arrange
     account = create_test_account()
-    request_user = create_test_owner(account=account)
-    deleted_user = create_test_admin(account=account)
+    request_user = create_test_user(account=account)
+    deleted_user = create_test_user(
+        account=account,
+        email='deleted@test.test',
+    )
+    user_service_init_mock = mocker.patch.object(
+        UserService,
+        attribute='__init__',
+        return_value=None,
+    )
     deactivate_mock = mocker.patch(
         'src.accounts.services.user.UserService.deactivate',
         side_effect=UserIsPerformerException(),
@@ -65,12 +77,18 @@ def test_delete__user_is_performer__validation_error(
     api_client.token_authenticate(request_user)
 
     # act
-    response = api_client.delete(f'/accounts/users/{deleted_user.id}')
+    response = api_client.post(f'/accounts/users/{deleted_user.id}/delete')
 
     # assert
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == MSG_A_0011
+    user_service_init_mock.assert_called_once_with(
+        user=request_user,
+        instance=deleted_user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
     deactivate_mock.assert_called_once_with()
 
 
@@ -87,13 +105,14 @@ def test_delete_user__another_account_user__not_found(
         return_value=None,
     )
     deactivate_mock = mocker.patch(
-        'src.accounts.services.user.UserService.deactivate',
+        'src.accounts.services.user.UserService'
+        '.deactivate',
     )
     api_client.token_authenticate(request_user)
 
     # act
-    response = api_client.delete(
-        f'/accounts/users/{another_user.id}',
+    response = api_client.post(
+        f'/accounts/users/{another_user.id}/delete',
     )
 
     # assert
@@ -131,11 +150,49 @@ def test_delete_user__not_admin__permission_denied(
     api_client.token_authenticate(request_user)
 
     # act
-    response = api_client.delete(
-        f'/accounts/users/{deleted_user.id}',
+    response = api_client.post(
+        f'/accounts/users/{deleted_user.id}/delete',
     )
 
     # assert
     assert response.status_code == 403
     deactivate_mock.assert_not_called()
     user_service_init_mock.assert_not_called()
+
+
+def test_delete__service_exception__validation_error(
+    mocker,
+    api_client,
+):
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    deleted_user = create_test_admin(account=account)
+    user_service_init_mock = mocker.patch.object(
+        UserService,
+        attribute='__init__',
+        return_value=None,
+    )
+    message = 'error'
+    deactivate_mock = mocker.patch(
+        'src.accounts.services.user.UserService.deactivate',
+        side_effect=UserServiceException(message),
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/accounts/users/{deleted_user.id}/delete',
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == message
+    user_service_init_mock.assert_called_once_with(
+        user=owner,
+        instance=deleted_user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    deactivate_mock.assert_called_once_with()
