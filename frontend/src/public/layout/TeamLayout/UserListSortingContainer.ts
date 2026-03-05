@@ -2,7 +2,7 @@ import { connect } from 'react-redux';
 import { SelectMenu, ISelectMenuProps } from '../../components/UI';
 import { IApplicationState } from '../../types/redux';
 import { EUserListSorting } from '../../types/user';
-import { changeUserListSorting } from '../../redux/accounts/actions';
+import { userListSortingChanged as changeUserListSorting } from '../../redux/accounts/slice';
 import { userListSortingValues } from '../../constants/sortings';
 
 type TMapStateToProps = Pick<ISelectMenuProps<EUserListSorting>, 'activeValue' | 'values'>;

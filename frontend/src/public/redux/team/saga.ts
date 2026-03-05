@@ -8,7 +8,8 @@ import { history } from '../../utils/history';
 import { logger } from '../../utils/logger';
 import { showInvitesNotification } from '../../utils/users';
 import { fetchUsers } from '../accounts/saga';
-import { loadActiveUsersCount, teamFetchStarted } from '../actions';
+import { loadActiveUsersCount , teamFetchStarted } from '../accounts/slice';
+
 import { setGeneralLoaderVisibility } from '../general/actions';
 import { getUsers } from '../selectors/user';
 import { getInvites } from '../../api/team/getInvites';

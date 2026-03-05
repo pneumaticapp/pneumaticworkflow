@@ -5,12 +5,10 @@ import {
   loadNotificationsList,
   authenticateUser,
   watchUserWSEventsAction,
-  usersFetchStarted,
-  loadActiveUsersCount,
   generateMenu,
-  loadPlan,
   loadTenantsCount,
 } from '../../redux/actions';
+import { usersFetchStarted, loadActiveUsersCount, loadPlan } from '../../redux/accounts/slice';
 import { loadTasksCount } from '../../redux/tasks/slice';
 import { IMainLayoutComponentStoreProps, MainLayout } from './MainLayout';
 import { getUserPendingActions } from '../../redux/selectors/user';

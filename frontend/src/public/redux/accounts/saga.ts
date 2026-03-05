@@ -1,9 +1,6 @@
-/* eslint-disable */
-/* prettier-ignore */
-// tslint:disable: max-file-line-count
 import { all, call, fork, put, select, takeEvery, takeLatest } from 'redux-saga/effects';
+import { PayloadAction } from '@reduxjs/toolkit';
 import {
-  EAccountsActions,
   teamFetchFailed,
   teamFetchFinished,
   teamFetchStarted,
@@ -11,22 +8,35 @@ import {
   setCurrentPlan,
   usersFetchFailed,
   usersFetchFinished,
-  TLoadChangeUserAdmin,
   changeUserAdmin,
-  TDeleteUser,
-  TOpenDeleteUserModal,
-  TDeclineIvite,
   setDeleteUserModalState,
-  TCloseDeleteUserModal,
-  setUserWorkflowsCount,
+  setWorkflowsCount as setUserWorkflowsCount,
   usersFetchStarted,
   activeUsersCountFetchFinished,
-  TUsersFetchStarted,
   loadActiveUsersCount,
-} from '../actions';
+  closeCreateUserModal,
+  closeDeleteUserModal,
+  openDeleteUserModal,
+  userListSortingChanged,
+  loadChangeUserAdmin,
+  deleteUser as deleteUserAction,
+  declineInvite as declineInviteAction,
+  loadPlan,
+  startTrialSubscriptionAction,
+  startFreeSubscriptionAction,
+  createUser,
+} from './slice';
+
+import {
+  IChangeUserAdminProps,
+  TOpenDeleteUserModalPayload,
+  TDeleteUserPayload,
+  TUsersFetchPayload,
+  TDeclineInvitePayload,
+} from './types';
 
 import { getAccountsStore } from '../selectors/user';
-import { EUserListSorting, EUserStatus, TUserListItem } from '../../types/user';
+import { EUserListSorting, EUserStatus, ICreateUserRequest, TUserListItem } from '../../types/user';
 import { EDeleteUserModalState, IAccounts } from '../../types/redux';
 
 import { getErrorMessage } from '../../utils/getErrorMessage';
@@ -50,12 +60,10 @@ import { sortUsersByStatus, sortUsersByNameAsc, sortUsersByNameDesc } from '../.
 import { getAccountPlan } from '../selectors/accounts';
 import { getAbsolutePath } from '../../utils/getAbsolutePath';
 import { getTenantsCountStore } from '../selectors/tenants';
+import { createUser as createUserApi } from '../../api/createUser';
 
 export function* fetchUsers(
-  action: TUsersFetchStarted = {
-    type: EAccountsActions.UsersFetchStarted,
-    payload: { showErrorNotification: true },
-  },
+  action: PayloadAction<TUsersFetchPayload> = { type: 'accounts/usersFetchStarted', payload: { showErrorNotification: true } }
 ) {
   const { payload: { showErrorNotification } = { showErrorNotification: true } } = action;
 
@@ -106,8 +114,8 @@ export function* fetchActiveUsersCount() {
 export function* fetchPlan() {
   const currentPlan: ReturnType<typeof getAccountPlan> = yield select(getAccountPlan);
   try {
-    const currentPlan: TGetPlanResponse = yield call(getPlan);
-    yield put(setCurrentPlan(currentPlan));
+    const planResponse: TGetPlanResponse = yield call(getPlan);
+    yield put(setCurrentPlan(planResponse));
   } catch (error) {
     NotificationManager.notifyApiError(error, { title: 'plan.fetch-error', message: getErrorMessage(error) });
     console.info('fetch plan error : ', error);
@@ -126,7 +134,7 @@ function getSortedUsers(users: TUserListItem[], sorting: EUserListSorting) {
   const sortingMethodMap = {
     [EUserListSorting.NameAsc]: sortUsersByNameAsc,
     [EUserListSorting.NameDesc]: sortUsersByNameDesc,
-    [EUserListSorting.Status]: (users: TUserListItem[]) => sortUsersByStatus(sortUsersByNameAsc(users)),
+    [EUserListSorting.Status]: (usersList: TUserListItem[]) => sortUsersByStatus(sortUsersByNameAsc(usersList)),
   };
 
   return sortingMethodMap[sorting](users);
@@ -147,7 +155,7 @@ function* fetchTeam() {
   }
 }
 
-function* saveUserAdmin({ payload: { isAdmin, email, id } }: TLoadChangeUserAdmin) {
+function* saveUserAdmin({ payload: { isAdmin, email, id } }: PayloadAction<IChangeUserAdminProps>) {
   try {
     yield put(changeUserAdmin({ isAdmin, email, id }));
     yield changeUserPermissions(id);
@@ -167,14 +175,10 @@ async function fetchReassignWorkflows(oldUserId: number, newUserId: number | nul
     return;
   }
 
-  try {
-    await reassignWorkflows(oldUserId, newUserId);
-  } catch (error) {
-    throw error;
-  }
+  await reassignWorkflows(oldUserId, newUserId);
 }
 
-function* fetchDeleteUser({ payload: { userId, reassignedUserId } }: TDeleteUser) {
+function* fetchDeleteUser({ payload: { userId, reassignedUserId } }: PayloadAction<TDeleteUserPayload>) {
   try {
     yield put(setDeleteUserModalState(EDeleteUserModalState.PerformingAction));
     yield call(fetchReassignWorkflows, userId, reassignedUserId);
@@ -190,7 +194,7 @@ function* fetchDeleteUser({ payload: { userId, reassignedUserId } }: TDeleteUser
   }
 }
 
-function* fetchDeclineInvite({ payload: { userId, inviteId, reassignedUserId } }: TDeclineIvite) {
+function* fetchDeclineInvite({ payload: { userId, inviteId, reassignedUserId } }: PayloadAction<TDeclineInvitePayload>) {
   try {
     yield put(setDeleteUserModalState(EDeleteUserModalState.PerformingAction));
     yield call(fetchReassignWorkflows, userId, reassignedUserId);
@@ -206,14 +210,14 @@ function* fetchDeclineInvite({ payload: { userId, inviteId, reassignedUserId } }
   }
 }
 
-function* handleToggleDeleteUserModal(action: TOpenDeleteUserModal | TCloseDeleteUserModal) {
-  if (action.type === EAccountsActions.CloseDeleteUserModal) {
+function* handleToggleDeleteUserModal(action: PayloadAction<TOpenDeleteUserModalPayload> | PayloadAction<void>) {
+  if (action.type === 'accounts/closeDeleteUserModal') {
     return;
   }
 
   const {
     payload: { user },
-  } = action;
+  } = action as PayloadAction<TOpenDeleteUserModalPayload>;
 
   try {
     yield put(setDeleteUserModalState(EDeleteUserModalState.FetchingUserData));
@@ -274,51 +278,70 @@ function* startFreeSubscriptionSaga() {
   }
 }
 
+function* createUserSaga({ payload }: PayloadAction<ICreateUserRequest>) {
+  try {
+    yield call(createUserApi, payload);
+    NotificationManager.success({ message: 'team.create-user-success-msg' });
+    yield put(closeCreateUserModal());
+
+    yield put(teamFetchStarted({}));
+    yield put(usersFetchStarted());
+    yield put(loadActiveUsersCount());
+  } catch (error) {
+    NotificationManager.notifyApiError( error, { message: getErrorMessage(error) });
+    logger.error('failed to create user', error);
+  }
+}
+
 export function* watchFetchUser() {
-  yield takeEvery(EAccountsActions.UsersFetchStarted, fetchUsers);
+  yield takeEvery(usersFetchStarted.type, fetchUsers);
 }
 
 export function* watchFetchActiveUsersCount() {
-  yield takeEvery(EAccountsActions.ActiveUsersCountFetchStarted, fetchActiveUsersCount);
+  yield takeEvery(loadActiveUsersCount.type, fetchActiveUsersCount);
 }
 
 export function* watchFetchTeam() {
-  yield takeEvery(EAccountsActions.TeamFetchStarted, fetchTeam);
+  yield takeEvery(teamFetchStarted.type, fetchTeam);
 }
 
 export function* watchUserListSortingChnaged() {
-  yield takeEvery(EAccountsActions.UserListSortingChanged, onChangeUserSorting);
+  yield takeEvery(userListSortingChanged.type, onChangeUserSorting);
 }
 
 export function* watchChangeAdminUser() {
-  yield takeEvery(EAccountsActions.LoadChangeUserAdmin, saveUserAdmin);
+  yield takeEvery(loadChangeUserAdmin.type, saveUserAdmin);
 }
 
 export function* watchOpenDeleteUserModal() {
   yield takeLatest(
-    [EAccountsActions.OpenDeleteUserModal, EAccountsActions.CloseDeleteUserModal],
+    [openDeleteUserModal.type, closeDeleteUserModal.type],
     handleToggleDeleteUserModal,
   );
 }
 
 export function* watchDeleteUser() {
-  yield takeEvery(EAccountsActions.DeleteUser, fetchDeleteUser);
+  yield takeEvery(deleteUserAction.type, fetchDeleteUser);
 }
 
 export function* watchDeclineInvite() {
-  yield takeEvery(EAccountsActions.DeclineInvite, fetchDeclineInvite);
+  yield takeEvery(declineInviteAction.type, fetchDeclineInvite);
 }
 
 export function* watchFetchPlan() {
-  yield takeEvery(EAccountsActions.FetchPlan, fetchPlan);
+  yield takeEvery(loadPlan.type, fetchPlan);
 }
 
 export function* watchStartTrialSubscription() {
-  yield takeEvery(EAccountsActions.StartTrialSubscription, startTrialSubscriptionSaga);
+  yield takeEvery(startTrialSubscriptionAction.type, startTrialSubscriptionSaga);
 }
 
 export function* watchStartFreeSubscription() {
-  yield takeEvery(EAccountsActions.StartFreeSubscription, startFreeSubscriptionSaga);
+  yield takeEvery(startFreeSubscriptionAction.type, startFreeSubscriptionSaga);
+}
+
+export function* watchCreateUser() {
+  yield takeEvery(createUser.type, createUserSaga);
 }
 
 export function* rootSaga() {
@@ -334,5 +357,6 @@ export function* rootSaga() {
     fork(watchFetchPlan),
     fork(watchStartTrialSubscription),
     fork(watchStartFreeSubscription),
+    fork(watchCreateUser),
   ]);
 }
