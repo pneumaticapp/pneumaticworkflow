@@ -3,14 +3,13 @@ import { $getNodeByKey, $getSelection, $isRangeSelection } from 'lexical';
 import { $isListNode } from '@lexical/list';
 import {
   applyBackspaceOnEmptyChecklist,
-  applyInsertParagraphFromEmptyChecklist,
+  applySplitChecklistEnter,
   assignNewChecklistIds,
   convertBlockToChecklist,
   convertChecklistItemToParagraph,
   getBackspaceOnEmptyChecklistPayload,
   getBlockNodeFromSelection,
   getChecklistItemNodeFromSelection,
-  getInsertParagraphFromEmptyChecklistPayload,
   insertChecklistAndSelectFirst,
   isCursorAtStartOfChecklistItem,
   nodesContainChecklist,
@@ -29,12 +28,10 @@ import { createChecklistApiName, createChecklistSelectionApiName } from '../../.
 
 export function createEnterKeyHandler(editor: LexicalEditor) {
   return (event: KeyboardEvent | null): boolean => {
-    const paragraphPayload = editor.getEditorState().read(() =>
-      getInsertParagraphFromEmptyChecklistPayload(),
-    );
-    if (paragraphPayload !== null) {
+    const emptyPayload = editor.getEditorState().read(() => getBackspaceOnEmptyChecklistPayload());
+    if (emptyPayload !== null) {
       event?.preventDefault();
-      editor.update(() => applyInsertParagraphFromEmptyChecklist(paragraphPayload));
+      editor.update(() => applyBackspaceOnEmptyChecklist(emptyPayload));
       requestAnimationFrame(() => editor.focus());
       return true;
     }
@@ -44,22 +41,7 @@ export function createEnterKeyHandler(editor: LexicalEditor) {
     });
     if (checklistKey == null) return false;
     event?.preventDefault();
-    editor.update(() => {
-      const current = $getNodeByKey(checklistKey);
-      if (!current || !$isChecklistItemNode(current)) return;
-      const writable = current.getWritable();
-      const parent = writable.getParent();
-      const listApiName =
-        parent != null && $isChecklistNode(parent)
-          ? parent.getListApiName()
-          : writable.getListApiName();
-      const newNode = $createChecklistItemNode({
-        listApiName,
-        itemApiName: createChecklistSelectionApiName(),
-      });
-      writable.insertAfter(newNode);
-      selectStartOfChecklistItem(newNode);
-    });
+    editor.update(() => applySplitChecklistEnter());
     requestAnimationFrame(() => editor.focus());
     return true;
   };

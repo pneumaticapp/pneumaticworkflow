@@ -280,6 +280,31 @@ export function isCursorAtStartOfChecklistItem(): string | null {
   return item.getKey();
 }
 
+/**
+ * Splits the current checklist item at the selection: content to the right of the cursor
+ * is moved into a new ChecklistItemNode inserted after the current item.
+ */
+export function applySplitChecklistEnter(): void {
+  const selection = $getSelection();
+  if (!selection || !$isRangeSelection(selection)) return;
+  const newParagraph = selection.insertParagraph();
+  if (!newParagraph || !$isParagraphNode(newParagraph)) return;
+  const currentItem = newParagraph.getParent();
+  if (!currentItem || !$isChecklistItemNode(currentItem)) return;
+  const listApiName =
+    currentItem.getParent() && $isChecklistNode(currentItem.getParent())
+      ? (currentItem.getParent() as ChecklistNode).getListApiName()
+      : currentItem.getListApiName();
+  newParagraph.remove();
+  const newItem = $createChecklistItemNode({
+    listApiName,
+    itemApiName: createChecklistSelectionApiName(),
+  });
+  newItem.append(newParagraph);
+  currentItem.insertAfter(newItem);
+  selectStartOfChecklistItem(newItem);
+}
+
 export function applyBackspaceOnEmptyChecklist(payload: BackspaceOnEmptyChecklistPayload): void {
   const item = $getNodeByKey(payload.itemKey);
   if (!item || !$isChecklistItemNode(item)) return;
