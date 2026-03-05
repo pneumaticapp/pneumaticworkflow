@@ -361,6 +361,21 @@ export function selectStartOfChecklistItem(item: ChecklistItemNode): void {
   item.selectStart();
 }
 
+export function selectEndOfChecklistItem(item: ChecklistItemNode): void {
+  ensureParagraphInChecklistItem(item);
+  const textNode = item.getLastDescendant();
+  if (textNode && $isTextNode(textNode)) {
+    textNode.selectEnd();
+    return;
+  }
+  const last = item.getLastChild();
+  if (last && $isParagraphNode(last)) {
+    last.selectEnd();
+    return;
+  }
+  item.selectEnd();
+}
+
 export function getBackspaceOnEmptyChecklistPayload(): BackspaceOnEmptyChecklistPayload | null {
   const sel = $getSelection();
   if (!sel || !$isRangeSelection(sel) || !sel.isCollapsed()) return null;

@@ -19,6 +19,7 @@ import {
   nodesContainChecklist,
   removeDuplicateClipboardParagraphs,
   selectStartOfChecklistItem,
+  selectEndOfChecklistItem,
 } from './checklistPluginUtils';
 import {
   $createChecklistNode,
@@ -87,7 +88,7 @@ export function createInsertChecklistHandler(editor: LexicalEditor) {
       ) {
         const newItem = convertBlockToChecklist(block);
         if (newItem !== null) {
-          selectStartOfChecklistItem(newItem);
+          selectEndOfChecklistItem(newItem);
           return;
         }
       }
