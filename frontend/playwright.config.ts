@@ -12,7 +12,6 @@ export default defineConfig({
   reporter: 'html',
   use: {
     baseURL: 'http://localhost:8000',
-    storageState: 'e2e/.auth/user.json',
     trace: 'on-first-retry',
     launchOptions: {
       slowMo: Number(process.env.SLOW_MO) || 0,
