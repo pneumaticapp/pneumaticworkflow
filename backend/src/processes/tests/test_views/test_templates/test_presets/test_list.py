@@ -339,7 +339,7 @@ class TestTemplatePresetsListView:
         assert response.status_code == 200
         by_presets_mock.assert_called_once_with(viewer_user, template.id)
 
-    def test_presets__template_viewer_deleted__not_found(
+    def test_presets__template_viewer_deleted__permission_denied(
         self,
         api_client,
         mocker,
@@ -371,5 +371,5 @@ class TestTemplatePresetsListView:
         response = api_client.get(f'/templates/{template.id}/presets')
 
         # assert
-        assert response.status_code == 404
+        assert response.status_code == 403
         by_presets_mock.assert_not_called()

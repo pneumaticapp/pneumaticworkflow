@@ -295,3 +295,7 @@ MSG_PT_0071 = lambda name, api_name: format_lazy(
     name=name,
     api_name=api_name,
 )
+MSG_PT_0072 = _('Permission denied. You do not have access to this template.')
+MSG_PT_0073 = _(
+    'Permission denied. You are not a template owner or viewer.',
+)

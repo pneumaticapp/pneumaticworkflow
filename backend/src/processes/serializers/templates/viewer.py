@@ -3,7 +3,6 @@ from typing import Any, Dict
 from rest_framework.serializers import (
     CharField,
     ModelSerializer,
-    SerializerMethodField,
 )
 
 from src.generics.mixins.serializers import (
@@ -31,8 +30,6 @@ class TemplateViewerSerializer(
             'api_name',
             'type',
             'source_id',
-            'user_details',
-            'group_details',
         )
         create_or_update_fields = {
             'api_name',
@@ -46,26 +43,6 @@ class TemplateViewerSerializer(
 
     api_name = CharField(required=False, max_length=200)
     source_id = CharField(allow_null=True)
-    user_details = SerializerMethodField()
-    group_details = SerializerMethodField()
-
-    def get_user_details(self, obj):
-        if obj.type == ViewerType.USER and obj.user:
-            return {
-                'id': obj.user.id,
-                'email': obj.user.email,
-                'first_name': obj.user.first_name,
-                'last_name': obj.user.last_name,
-            }
-        return None
-
-    def get_group_details(self, obj):
-        if obj.type == ViewerType.GROUP and obj.group:
-            return {
-                'id': obj.group.id,
-                'name': obj.group.name,
-            }
-        return None
 
     def create(self, validated_data: Dict[str, Any]):
         self.additional_validate(validated_data)
@@ -77,9 +54,9 @@ class TemplateViewerSerializer(
         if validated_data.get('api_name'):
             viewer_data['api_name'] = validated_data['api_name']
         if validated_data['type'] == ViewerType.USER:
-            viewer_data['user_id'] = int(validated_data['source_id'])
+            viewer_data['user_id'] = validated_data['source_id']
         elif validated_data['type'] == ViewerType.GROUP:
-            viewer_data['group_id'] = int(validated_data['source_id'])
+            viewer_data['group_id'] = validated_data['source_id']
         return self.create_or_update_instance(
             validated_data=viewer_data,
             not_unique_exception_msg=MSG_PT_0070(
@@ -94,21 +71,13 @@ class TemplateViewerSerializer(
         validated_data: Dict[str, Any],
     ):
         self.additional_validate(validated_data)
-        viewer_data = {
-            'template': self.context['template'],
-            'account': self.context.get('account'),
-            'type': validated_data['type'],
-            'api_name': validated_data.get('api_name') or instance.api_name,
-        }
-        if validated_data['type'] == ViewerType.USER:
-            viewer_data['user_id'] = int(validated_data['source_id'])
-            viewer_data['group_id'] = None
-        elif validated_data['type'] == ViewerType.GROUP:
-            viewer_data['group_id'] = int(validated_data['source_id'])
-            viewer_data['user_id'] = None
         return self.create_or_update_instance(
             instance=instance,
-            validated_data=viewer_data,
+            validated_data={
+                'template': self.context['template'],
+                'account':  self.context.get('account'),
+                **validated_data,
+            },
             not_unique_exception_msg=MSG_PT_0070(
                 name=self.context['template'].name,
                 api_name=validated_data.get('api_name'),

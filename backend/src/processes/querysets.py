@@ -107,52 +107,90 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
 
     def with_template_owner(self, user_id: int):
         return self.filter(
-            Q(owners__type=OwnerType.USER, owners__user_id=user_id) |
-            Q(owners__type=OwnerType.GROUP, owners__group__users__id=user_id),
+            Q(
+                owners__type=OwnerType.USER,
+                owners__user_id=user_id,
+                owners__is_deleted=False,
+            ) | Q(
+                owners__type=OwnerType.GROUP,
+                owners__group__users__id=user_id,
+                owners__is_deleted=False,
+            ),
         ).distinct()
 
     def with_template_viewer(self, user_id: int):
         return self.filter(
-            Q(viewers__type=ViewerType.USER, viewers__user_id=user_id) |
             Q(
+                viewers__type=ViewerType.USER,
+                viewers__user_id=user_id,
+                viewers__is_deleted=False,
+            ) | Q(
                 viewers__type=ViewerType.GROUP,
                 viewers__group__users__id=user_id,
+                viewers__is_deleted=False,
             ),
         ).distinct()
 
     def with_template_starter(self, user_id: int):
         return self.filter(
-            Q(starters__type=StarterType.USER, starters__user_id=user_id) |
             Q(
+                starters__type=StarterType.USER,
+                starters__user_id=user_id,
+                starters__is_deleted=False,
+            ) | Q(
                 starters__type=StarterType.GROUP,
                 starters__group__users__id=user_id,
+                starters__is_deleted=False,
             ),
         ).distinct()
 
     def with_template_access(self, user_id: int):
         return self.filter(
-            Q(owners__type=OwnerType.USER, owners__user_id=user_id) |
-            Q(owners__type=OwnerType.GROUP, owners__group__users__id=user_id) |
-            Q(viewers__type=ViewerType.USER, viewers__user_id=user_id) |
             Q(
+                owners__type=OwnerType.USER,
+                owners__user_id=user_id,
+                owners__is_deleted=False,
+            ) | Q(
+                owners__type=OwnerType.GROUP,
+                owners__group__users__id=user_id,
+                owners__is_deleted=False,
+            ) | Q(
+                viewers__type=ViewerType.USER,
+                viewers__user_id=user_id,
+                viewers__is_deleted=False,
+            ) | Q(
                 viewers__type=ViewerType.GROUP,
                 viewers__group__users__id=user_id,
-            ) |
-            Q(starters__type=StarterType.USER, starters__user_id=user_id) |
-            Q(
+                viewers__is_deleted=False,
+            ) | Q(
+                starters__type=StarterType.USER,
+                starters__user_id=user_id,
+                starters__is_deleted=False,
+            ) | Q(
                 starters__type=StarterType.GROUP,
                 starters__group__users__id=user_id,
+                starters__is_deleted=False,
             ),
         ).distinct()
 
     def with_template_owner_or_viewer(self, user_id: int):
         return self.filter(
-            Q(owners__type=OwnerType.USER, owners__user_id=user_id) |
-            Q(owners__type=OwnerType.GROUP, owners__group__users__id=user_id) |
-            Q(viewers__type=ViewerType.USER, viewers__user_id=user_id) |
             Q(
+                owners__type=OwnerType.USER,
+                owners__user_id=user_id,
+                owners__is_deleted=False,
+            ) | Q(
+                owners__type=OwnerType.GROUP,
+                owners__group__users__id=user_id,
+                owners__is_deleted=False,
+            ) | Q(
+                viewers__type=ViewerType.USER,
+                viewers__user_id=user_id,
+                viewers__is_deleted=False,
+            ) | Q(
                 viewers__type=ViewerType.GROUP,
                 viewers__group__users__id=user_id,
+                viewers__is_deleted=False,
             ),
         ).distinct()
 
@@ -160,11 +198,13 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
         user_owners = self.filter(
             owners__type=OwnerType.USER,
             owners__user_id__isnull=False,
+            owners__is_deleted=False,
         ).values_list('owners__user_id', flat=True)
         group_owners = self.filter(
             owners__type=OwnerType.GROUP,
             owners__group__users__isnull=False,
             owners__group__users__id__isnull=False,
+            owners__is_deleted=False,
         ).prefetch_related('owners__group__users').values_list(
             'owners__group__users__id', flat=True,
         )
@@ -402,10 +442,11 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             Q(
                 template__viewers__type=ViewerType.USER,
                 template__viewers__user_id=user_id,
-            )
-            | Q(
+                template__viewers__is_deleted=False,
+            ) | Q(
                 template__viewers__type=ViewerType.GROUP,
                 template__viewers__group__users__id=user_id,
+                template__viewers__is_deleted=False,
             ),
         ).distinct()
 
@@ -414,10 +455,11 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             Q(
                 template__starters__type=StarterType.USER,
                 template__starters__user_id=user_id,
-            )
-            | Q(
+                template__starters__is_deleted=False,
+            ) | Q(
                 template__starters__type=StarterType.GROUP,
                 template__starters__group__users__id=user_id,
+                template__starters__is_deleted=False,
             ),
         ).distinct()
 
@@ -426,26 +468,25 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             Q(
                 template__owners__user_id=user_id,
                 template__owners__is_deleted=False,
-            )
-            | Q(
+            ) | Q(
                 template__owners__group__users__id=user_id,
                 template__owners__is_deleted=False,
-            )
-            | Q(
+            ) | Q(
                 template__viewers__type=ViewerType.USER,
                 template__viewers__user_id=user_id,
-            )
-            | Q(
+                template__viewers__is_deleted=False,
+            ) | Q(
                 template__viewers__type=ViewerType.GROUP,
                 template__viewers__group__users__id=user_id,
-            )
-            | Q(
+                template__viewers__is_deleted=False,
+            ) | Q(
                 template__starters__type=StarterType.USER,
                 template__starters__user_id=user_id,
-            )
-            | Q(
+                template__starters__is_deleted=False,
+            ) | Q(
                 template__starters__type=StarterType.GROUP,
                 template__starters__group__users__id=user_id,
+                template__starters__is_deleted=False,
             ),
         ).distinct()
 
@@ -454,18 +495,17 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             Q(
                 template__owners__user_id=user_id,
                 template__owners__is_deleted=False,
-            )
-            | Q(
+            ) | Q(
                 template__owners__group__users__id=user_id,
                 template__owners__is_deleted=False,
-            )
-            | Q(
+            ) | Q(
                 template__viewers__type=ViewerType.USER,
                 template__viewers__user_id=user_id,
-            )
-            | Q(
+                template__viewers__is_deleted=False,
+            ) | Q(
                 template__viewers__type=ViewerType.GROUP,
                 template__viewers__group__users__id=user_id,
+                template__viewers__is_deleted=False,
             ),
         ).distinct()
 

@@ -9,12 +9,18 @@ from src.accounts.enums import (
     UserFirstDayWeek,
     UserType,
 )
+from src.accounts.models import UserGroup
+from src.processes.enums import OwnerType, ViewerType, StarterType
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.viewer import TemplateViewer
+from src.processes.models.templates.starter import TemplateStarter
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.payment.enums import BillingPeriod
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_guest,
+    create_test_template,
     create_test_user,
     create_test_workflow,
 )
@@ -111,6 +117,8 @@ def test_context__ok(api_client):
     )
     assert data['account']['trial_is_active'] == account.trial_is_active
     assert data['account']['trial_ended'] == account.trial_ended
+    assert data['has_workflow_viewer_access'] is False
+    assert data['has_workflow_starter_access'] is False
 
 
 def test_context__guest__ok(api_client):
@@ -157,6 +165,8 @@ def test_context__guest__ok(api_client):
     assert data['timezone'] == owner.timezone
     assert data['date_fmt'] == UserDateFormat.MAP_TO_API[owner.date_fmt]
     assert data['date_fdw'] == owner.date_fdw
+    assert data['has_workflow_viewer_access'] is False
+    assert data['has_workflow_starter_access'] is False
 
 
 def test_context__disable_billing_sync__ok(api_client):
@@ -172,3 +182,285 @@ def test_context__disable_billing_sync__ok(api_client):
     # assert
     assert response.status_code == 200
     assert response.data['account']['billing_sync'] is False
+
+
+def test_context__user_has_workflow_viewer_access_as_owner__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account)
+    create_test_template(user, tasks_count=0)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/auth/context')
+
+    # assert
+    assert response.status_code == 200
+    data = response.data
+    assert data['has_workflow_viewer_access'] is True
+    assert data['has_workflow_starter_access'] is True
+
+
+def test_context__user_has_workflow_viewer_access_as_viewer__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_user(
+        account=account,
+        email='owner@test.test',
+        is_account_owner=True,
+    )
+    user = create_test_user(
+        account=account,
+        email='user@test.test',
+    )
+    template = create_test_template(owner, tasks_count=0)
+    TemplateViewer.objects.create(
+        template=template,
+        account=account,
+        type=ViewerType.USER,
+        user_id=user.id,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/auth/context')
+
+    # assert
+    assert response.status_code == 200
+    data = response.data
+    assert data['has_workflow_viewer_access'] is True
+    assert data['has_workflow_starter_access'] is True
+
+
+def test_context__user_has_workflow_starter_access_only__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_user(
+        account=account,
+        email='owner@test.test',
+        is_account_owner=True,
+    )
+    user = create_test_user(
+        account=account,
+        email='user@test.test',
+    )
+    template = create_test_template(owner, tasks_count=0)
+    TemplateStarter.objects.create(
+        template=template,
+        account=account,
+        type=StarterType.USER,
+        user_id=user.id,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/auth/context')
+
+    # assert
+    assert response.status_code == 200
+    data = response.data
+    assert data['has_workflow_viewer_access'] is False
+    assert data['has_workflow_starter_access'] is True
+
+
+def test_context__user_has_no_workflow_access__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_user(
+        account=account,
+        email='owner@test.test',
+        is_account_owner=True,
+    )
+    user = create_test_user(
+        account=account,
+        email='user@test.test',
+    )
+    create_test_template(owner, tasks_count=0)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/auth/context')
+
+    # assert
+    assert response.status_code == 200
+    data = response.data
+    assert data['has_workflow_viewer_access'] is False
+    assert data['has_workflow_starter_access'] is False
+
+
+def test_context__user_has_workflow_access_via_group_as_owner__ok(
+    api_client,
+):
+    # arrange
+    account = create_test_account()
+    owner = create_test_user(
+        account=account,
+        email='owner@test.test',
+        is_account_owner=True,
+    )
+    user = create_test_user(
+        account=account,
+        email='user@test.test',
+    )
+    group = UserGroup.objects.create(
+        name='Test Group',
+        account=account,
+    )
+    group.users.add(user)
+    template = create_test_template(owner, tasks_count=0)
+    TemplateOwner.objects.create(
+        template=template,
+        account=account,
+        type=OwnerType.GROUP,
+        group_id=group.id,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/auth/context')
+
+    # assert
+    assert response.status_code == 200
+    data = response.data
+    assert data['has_workflow_viewer_access'] is True
+    assert data['has_workflow_starter_access'] is True
+
+
+def test_context__user_has_workflow_access_via_group_as_viewer__ok(
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_user(
+        account=account,
+        email='owner@test.test',
+        is_account_owner=True,
+    )
+    user = create_test_user(
+        account=account,
+        email='user@test.test',
+    )
+    group = UserGroup.objects.create(
+        name='Test Group',
+        account=account,
+    )
+    group.users.add(user)
+    template = create_test_template(owner, tasks_count=0)
+    TemplateViewer.objects.create(
+        template=template,
+        account=account,
+        type=ViewerType.GROUP,
+        group_id=group.id,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/auth/context')
+
+    # assert
+    assert response.status_code == 200
+    data = response.data
+    assert data['has_workflow_viewer_access'] is True
+    assert data['has_workflow_starter_access'] is True
+
+
+def test_context__user_has_workflow_access_via_group_as_starter__ok(
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_user(
+        account=account,
+        email='owner@test.test',
+        is_account_owner=True,
+    )
+    user = create_test_user(
+        account=account,
+        email='user@test.test',
+    )
+    group = UserGroup.objects.create(
+        name='Test Group',
+        account=account,
+    )
+    group.users.add(user)
+    template = create_test_template(owner, tasks_count=0)
+    TemplateStarter.objects.create(
+        template=template,
+        account=account,
+        type=StarterType.GROUP,
+        group_id=group.id,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/auth/context')
+
+    # assert
+    assert response.status_code == 200
+    data = response.data
+    assert data['has_workflow_viewer_access'] is False
+    assert data['has_workflow_starter_access'] is True
+
+
+def test_context__user_multiple_templates_mixed_access__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_user(
+        account=account,
+        email='owner@test.test',
+        is_account_owner=True,
+    )
+    user = create_test_user(
+        account=account,
+        email='user@test.test',
+    )
+    template1 = create_test_template(owner, tasks_count=0)
+    template2 = create_test_template(owner, tasks_count=0)
+    create_test_template(owner, tasks_count=0)
+    TemplateViewer.objects.create(
+        template=template1,
+        account=account,
+        type=ViewerType.USER,
+        user_id=user.id,
+    )
+    TemplateStarter.objects.create(
+        template=template2,
+        account=account,
+        type=StarterType.USER,
+        user_id=user.id,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/auth/context')
+
+    # assert
+    assert response.status_code == 200
+    data = response.data
+    assert data['has_workflow_viewer_access'] is True
+    assert data['has_workflow_starter_access'] is True
+
+
+def test_context__template_access_cache_works__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account)
+    create_test_template(user, tasks_count=0)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/auth/context')
+
+    # assert
+    assert response.status_code == 200
+    data = response.data
+    assert data['has_workflow_viewer_access'] is True
+    assert data['has_workflow_starter_access'] is True

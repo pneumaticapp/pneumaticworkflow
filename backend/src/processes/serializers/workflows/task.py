@@ -211,13 +211,15 @@ class TaskSerializer(serializers.ModelSerializer):
         is_performer = TaskPerformer.objects.filter(
             task__workflow=workflow,
             task__account_id=user.account_id,
-            user_id=user.id,
+        ).filter(
+            Q(user_id=user.id) |
+            Q(group__users__id=user.id),
         ).exists()
         if is_performer:
             return False
 
         if not template:
-            return False
+            return True
 
         # Check CURRENT template owner status (not workflow.owners)
         is_template_owner = template.owners.filter(

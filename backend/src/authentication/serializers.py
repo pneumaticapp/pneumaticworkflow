@@ -215,18 +215,21 @@ class ContextUserSerializer(serializers.ModelSerializer):
 
         owner_subq = TemplateOwner.objects.filter(
             template__account_id=account_id,
+            is_deleted=False,
         ).filter(
             Q(type=OwnerType.USER, user_id=user_id) |
             Q(type=OwnerType.GROUP, group__users__id=user_id),
         )
         viewer_subq = TemplateViewer.objects.filter(
             template__account_id=account_id,
+            is_deleted=False,
         ).filter(
             Q(type=ViewerType.USER, user_id=user_id) |
             Q(type=ViewerType.GROUP, group__users__id=user_id),
         )
         starter_subq = TemplateStarter.objects.filter(
             template__account_id=account_id,
+            is_deleted=False,
         ).filter(
             Q(type=StarterType.USER, user_id=user_id) |
             Q(type=StarterType.GROUP, group__users__id=user_id),

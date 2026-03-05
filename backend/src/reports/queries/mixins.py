@@ -46,10 +46,12 @@ class TemplateViewerMixin:
         return """
         LEFT JOIN processes_templateviewer ptv_user ON
             pt.id = ptv_user.template_id AND
-            ptv_user.type = 'user'
+            ptv_user.type = 'user' AND
+            ptv_user.is_deleted IS FALSE
         LEFT JOIN processes_templateviewer ptv_grp ON
             pt.id = ptv_grp.template_id AND
-            ptv_grp.type = 'group'
+            ptv_grp.type = 'group' AND
+            ptv_grp.is_deleted IS FALSE
         LEFT JOIN accounts_usergroup_users ptv_group ON
             ptv_grp.group_id = ptv_group.usergroup_id
         """

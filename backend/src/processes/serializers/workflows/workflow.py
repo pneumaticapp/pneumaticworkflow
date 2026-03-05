@@ -444,7 +444,7 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
             return False
 
         if not template:
-            return False
+            return True
 
         # Check CURRENT template owner status (not workflow.owners)
         is_template_owner = template.owners.filter(

@@ -522,3 +522,43 @@ class TestWorkflowViewerAccess:
         assert response.status_code == status.HTTP_200_OK
         data = response.json()
         assert data['is_read_only_viewer'] is True
+
+    def test_workflow_retrieve__no_template__member_is_read_only_viewer_true(
+        self, api_client,
+    ):
+        """
+        When a workflow has no associated template, a non-owner/non-performer
+        member must receive is_read_only_viewer=True (read-only), not False.
+
+        Regression test for the bug where `if not template: return False`
+        incorrectly granted full access.
+        """
+        # arrange
+        account = create_test_account()
+        template_owner = create_test_user(account=account)
+        template = create_test_template(template_owner)
+        workflow = create_test_workflow(template=template, user=template_owner)
+
+        # Detach the template to simulate a legacy/templateless workflow
+        workflow.template = None
+        workflow.save(update_fields=['template'])
+
+        member_user = create_test_user(
+            account=account,
+            email='member_no_template@test.com',
+            is_admin=False,
+            is_account_owner=False,
+        )
+        workflow.members.add(member_user)
+
+        api_client.token_authenticate(member_user)
+        url = reverse('workflows-detail', args=[workflow.id])
+
+        # act
+        response = api_client.get(url)
+
+        # assert
+        assert response.status_code == status.HTTP_200_OK
+        data = response.json()
+        # Without a template, a plain member must be read-only, not full-access
+        assert data['is_read_only_viewer'] is True

@@ -29,6 +29,7 @@ from src.processes.models.templates.preset import TemplatePreset
 from src.processes.models.templates.system_template import SystemTemplate
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.viewer import TemplateViewer
 from src.processes.permissions import (
     TemplateAdminOwnerPermission,
@@ -274,11 +275,14 @@ class TemplateViewSet(
             viewers_qs = TemplateViewer.objects.filter(
                 is_deleted=False,
             ).order_by('type', 'id')
+            owners_qs = TemplateOwner.objects.filter(
+                is_deleted=False,
+            ).order_by('type', 'id')
             queryset = queryset.prefetch_related(
                 'kickoff',
                 'kickoff__fields',
                 'kickoff__fields__selections',
-                'owners',
+                Prefetch('owners', queryset=owners_qs),
                 Prefetch('viewers', queryset=viewers_qs),
                 Prefetch(
                     lookup='tasks',

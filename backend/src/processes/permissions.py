@@ -8,6 +8,8 @@ from src.accounts.enums import UserType
 from src.processes.enums import OwnerType, PresetType
 from src.processes.messages.template import (
     MSG_PT_0023,
+    MSG_PT_0072,
+    MSG_PT_0073,
 )
 from src.processes.messages.workflow import (
     MSG_PW_0001,
@@ -58,7 +60,7 @@ class TemplateStarterPermission(BasePermission):
 
     """ Allow template starters to run workflows from templates """
 
-    message = MSG_PT_0023
+    message = MSG_PT_0072
 
     def has_permission(self, request, view):
         try:
@@ -84,7 +86,7 @@ class TemplateOwnerOrViewerPermission(BasePermission):
 
     """ Allow access for template owners or template viewers (read-only) """
 
-    message = MSG_PT_0023
+    message = MSG_PT_0073
 
     def has_permission(self, request, view):
         try:
@@ -380,6 +382,8 @@ class TaskWorkflowMemberPermission(BasePermission):
         ).select_related('workflow', 'workflow__template').first()
 
         if not task:
+            # If task doesn't exist, let Django handle 404 response
+            # by allowing permission and letting get_object_or_404 fail
             return True
 
         workflow = task.workflow
@@ -694,6 +698,7 @@ class CommentReactionPermission(BasePermission):
         # Check workflow members
         is_member = qst.filter(
             Q(workflow__members=user.id) |
+            Q(workflow__tasks__taskperformer__user_id=user.id) |
             Q(workflow__tasks__taskperformer__group__users=user.id),
         ).exists()
         if is_member:
