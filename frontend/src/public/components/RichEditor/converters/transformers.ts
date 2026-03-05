@@ -10,7 +10,7 @@ import {
 import { MENTION } from './mentionMarkdown';
 import { createVariableTransformer } from './variableMarkdown';
 import { createChecklistTransformer } from './checklistMarkdown';
-import { ATTACHMENT } from './attachmentMarkdown';
+import { ATTACHMENT, ATTACHMENT_INLINE } from './attachmentMarkdown';
 import type { TTaskVariable } from '../../TemplateEdit/types';
 
 /**
@@ -22,6 +22,7 @@ import type { TTaskVariable } from '../../TemplateEdit/types';
 export function createMarkdownTransformers(templateVariables?: TTaskVariable[]) {
   return [
     ATTACHMENT,
+    ATTACHMENT_INLINE,
     HEADING,
     QUOTE,
     UNORDERED_LIST,

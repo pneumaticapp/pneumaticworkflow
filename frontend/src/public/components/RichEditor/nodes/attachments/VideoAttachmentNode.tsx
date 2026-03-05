@@ -13,6 +13,7 @@ import {
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { DeleteBoldIcon } from '../../../icons';
 import type { TAttachmentPayload } from './types';
+import { buildAttachmentMarkdownString } from './attachmentMarkdownFormat';
 import styles from './VideoAttachmentNode.css';
 
 export type SerializedVideoAttachmentNode = TAttachmentPayload & SerializedLexicalNode;
@@ -148,6 +149,15 @@ export class VideoAttachmentNode extends DecoratorNode<React.ReactElement> {
 
   updateDOM(): false {
     return (this.getType(), false);
+  }
+
+  getTextContent(): string {
+    return buildAttachmentMarkdownString(
+      this.attachmentName ?? '',
+      this.attachmentUrl,
+      this.attachmentId,
+      'video',
+    );
   }
 
   decorate(): React.ReactElement {

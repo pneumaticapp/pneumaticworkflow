@@ -13,6 +13,7 @@ import {
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
 import { ImageAttachment } from '../../../Attachments/ImageAttachment';
 import type { TAttachmentPayload } from './types';
+import { buildAttachmentMarkdownString } from './attachmentMarkdownFormat';
 
 export type SerializedImageAttachmentNode = TAttachmentPayload & SerializedLexicalNode;
 
@@ -128,6 +129,15 @@ export class ImageAttachmentNode extends DecoratorNode<React.ReactElement> {
 
   updateDOM(): false {
     return (this.getType(), false);
+  }
+
+  getTextContent(): string {
+    return buildAttachmentMarkdownString(
+      this.attachmentName ?? '',
+      this.attachmentUrl,
+      this.attachmentId,
+      'image',
+    );
   }
 
   decorate(): React.ReactElement {

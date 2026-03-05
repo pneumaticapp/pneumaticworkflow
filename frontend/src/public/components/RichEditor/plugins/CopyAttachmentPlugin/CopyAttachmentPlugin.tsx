@@ -14,6 +14,12 @@ import {
   setLexicalClipboardDataTransfer,
 } from '@lexical/clipboard';
 
+/**
+ * Builds expanded clipboard data when selection contains decorator nodes.
+ * Must run in a Lexical update context (COPY/CUT handlers are already invoked
+ * inside editor.update()), because $getClipboardDataFromSelection clones nodes
+ * for HTML export and Lexical throws in read-only mode.
+ */
 function $buildExpandedClipboardData(
   event: ClipboardEvent,
 ): boolean {
@@ -44,9 +50,10 @@ function $buildExpandedClipboardData(
 /**
  * Ensures images, video and other decorator nodes are included when copying
  * or cutting a selection. In Safari the DOM selection may skip decorator
- * elements so RangeSelection.getNodes() can miss them. We read the committed
- * Lexical selection (via editor.read()) and use getNodesBetween() to collect
- * all nodes—including decorators—then write the expanded data to clipboard.
+ * elements so RangeSelection.getNodes() can miss them. The COPY/CUT command
+ * is already run inside editor.update(), so we use getNodesBetween() to
+ * collect all nodes—including decorators—then write the expanded data to
+ * clipboard (node cloning for HTML export requires a writable context).
  */
 export function CopyAttachmentPlugin(): null {
   const [editor] = useLexicalComposerContext();
@@ -56,11 +63,7 @@ export function CopyAttachmentPlugin(): null {
       if (event == null || !('clipboardData' in event)) {
         return false;
       }
-      let handled = false;
-      editor.read(() => {
-        handled = $buildExpandedClipboardData(event);
-      });
-      return handled;
+      return $buildExpandedClipboardData(event);
     };
 
     const removeCopy = editor.registerCommand<ClipboardEvent | null>(
