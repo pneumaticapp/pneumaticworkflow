@@ -109,6 +109,7 @@ export function WorkflowsTableActions({
           optionalFieldsFromWorkflow,
           timezone: timezone ?? undefined,
           headerLabels,
+          multipleTasksLabel: formatMessage({ id: 'workflows.multiple-active-tasks' }),
           deletedGroupFallbackTemplate: formatMessage(
             { id: 'workflows.export-deleted-group' },
             { id: '{id}' },
