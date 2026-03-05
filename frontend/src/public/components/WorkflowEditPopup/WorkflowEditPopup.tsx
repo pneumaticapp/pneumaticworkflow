@@ -232,6 +232,8 @@ function WorkflowEditPopupComponent({
     });
   };
 
+  const visibleKickoffFields = kickoffState?.fields.filter((field) => !field.isHidden);
+
   return (
     <div className={styles['popup']}>
       <Modal
@@ -261,7 +263,7 @@ function WorkflowEditPopupComponent({
               foregroundColor="beige"
               size="xl"
             />
-            {kickoffState && isArrayWithItems(kickoffState.fields) && (
+            {kickoffState && isArrayWithItems(visibleKickoffFields) && (
               <div className={styles['popup__kickoff']}>
                 <SectionTitle className={styles['section-title']}>
                   {formatMessage({ id: 'template.kick-off-form-title' })}
@@ -273,9 +275,7 @@ function WorkflowEditPopupComponent({
                   </span>
                 )}
                 <div className={styles['kickoff__inputs']}>
-                  {kickoffState.fields
-                    .filter((field) => !field.isHidden)
-                    .map((field) => (
+                  {visibleKickoffFields.map((field) => (
                       <ExtraFieldIntl
                         key={field.apiName}
                         field={{ ...field }}
@@ -288,7 +288,7 @@ function WorkflowEditPopupComponent({
                         wrapperClassName={styles['kickoff-extra-field']}
                         accountId={accountId}
                       />
-                    ))}
+                  ))}
                 </div>
               </div>
             )}

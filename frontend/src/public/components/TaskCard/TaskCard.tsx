@@ -374,7 +374,9 @@ export function TaskCard({
   };
 
   const renderOutputFields = () => {
-    if (!isArrayWithItems(outputValues) || status === ETaskStatus.Completed) {
+    const visibleOutputs = outputValues?.filter((field) => !field.isHidden);
+
+    if (!isArrayWithItems(visibleOutputs) || status === ETaskStatus.Completed) {
       return null;
     }
 
@@ -383,8 +385,7 @@ export function TaskCard({
         <p className={styles['task-output__title']}>
           <IntlMessages id="tasks.task-outputs-fill-help" />
         </p>
-        {outputValues
-          ?.filter((field) => !field.isHidden)
+        {visibleOutputs
           .map((field) => (
             <ExtraFieldIntl
               key={field.apiName}
