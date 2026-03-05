@@ -1,6 +1,7 @@
 /* eslint-disable */
 import classnames from 'classnames';
-import React, { useState, useRef, ChangeEvent, forwardRef, ReactNode, Ref } from 'react';
+import * as React from 'react';
+import { useState, useRef, ChangeEvent, forwardRef, ReactNode, Ref } from 'react';
 
 import { Field, EFieldTagName } from '../../../Field';
 import { validateKickoffFieldName } from '../../../../utils/validators';

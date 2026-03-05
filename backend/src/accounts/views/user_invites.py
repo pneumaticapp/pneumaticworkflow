@@ -21,11 +21,9 @@ from src.accounts.services.exceptions import (
     AlreadyAcceptedInviteException,
     AlreadyRegisteredException,
     InvalidOrExpiredToken,
-    UserIsPerformerException,
     UserNotFoundException,
     UsersLimitInvitesException,
 )
-from src.accounts.services.user import UserService
 from src.accounts.services.user_invite import UserInviteService
 from src.accounts.throttling import (
     InvitesTokenThrottle,
@@ -156,16 +154,18 @@ class UserInviteViewSet(
 
     @action(detail=True, methods=['post'])
     def accept(self, request, **kwargs):
+        invite = self.get_object()
         slz = self.get_serializer(data=request.data)
         slz.is_valid(raise_exception=True)
         service = UserInviteService(
+            request_user=invite.invited_user,
             current_url=request.META.get('HTTP_X_CURRENT_URL'),
             is_superuser=False,
             auth_type=AuthTokenType.USER,
         )
         try:
             user = service.accept(
-                invite=self.get_object(),
+                invite=invite,
                 **slz.validated_data,
             )
         except AlreadyRegisteredException as ex:
@@ -185,10 +185,12 @@ class UserInviteViewSet(
     def decline(self, request):
         queryset = self.get_queryset()
         invite = get_object_or_404(queryset, pk=request.data.get('invite_id'))
-        try:
-            UserService.deactivate(invite.invited_user)
-        except UserIsPerformerException as ex:
-            raise_validation_error(message=ex.message)
+        service = UserInviteService(
+            request_user=invite.invited_user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        service.decline(invite)
         return self.response_ok()
 
     @action(detail=True, methods=['post'])

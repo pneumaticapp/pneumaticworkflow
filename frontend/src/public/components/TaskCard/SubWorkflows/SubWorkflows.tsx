@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import classnames from 'classnames';
 
 import { IWorkflowControllsProps, WorkflowControlls } from '../../Workflows/WorkflowControlls';

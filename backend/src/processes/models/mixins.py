@@ -7,7 +7,7 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models.query import QuerySet
 
-from src.accounts.models import UserGroup
+from src.accounts.models import UserGroup, AccountBaseMixin
 from src.processes.enums import (
     ConditionAction,
     FieldType,
@@ -171,7 +171,7 @@ class TaskMixin(models.Model):
     )
 
 
-class FieldMixin(models.Model):
+class FieldMixin(AccountBaseMixin):
 
     class Meta:
         abstract = True
@@ -184,6 +184,7 @@ class FieldMixin(models.Model):
     description = models.TextField(null=True, blank=True)
     is_required = models.BooleanField(default=False)
     order = models.IntegerField(default=0)
+    is_hidden = models.BooleanField(default=False)
 
 
 class ConditionMixin(models.Model):

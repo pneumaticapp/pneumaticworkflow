@@ -12,14 +12,12 @@ from src.accounts.messages import (
     MSG_A_0005,
     MSG_A_0006,
     MSG_A_0007,
-    MSG_A_0011,
     MSG_A_0013,
     MSG_A_0040,
 )
 from src.accounts.services.exceptions import (
     AlreadyAcceptedInviteException,
     AlreadyRegisteredException,
-    UserIsPerformerException,
     UserNotFoundException,
     UsersLimitInvitesException,
 )
@@ -590,9 +588,13 @@ class TestDecline:
         account = create_test_account()
         request_user = create_test_user(account=account)
         invited_user = create_invited_user(request_user)
-        deactivate_mock = mocker.patch(
-            'src.accounts.services.user.UserService'
-            '.deactivate',
+        invite_service_init_mock = mocker.patch.object(
+            UserInviteService,
+            attribute='__init__',
+            return_value=None,
+        )
+        decline_mock = mocker.patch(
+            'src.accounts.services.user_invite.UserInviteService.decline',
         )
         api_client.token_authenticate(request_user)
 
@@ -604,36 +606,12 @@ class TestDecline:
 
         # assert
         assert response.status_code == 204
-        deactivate_mock.assert_called_once_with(invited_user)
-
-    def test_decline__user_is_performer__validation_error(
-        self,
-        mocker,
-        api_client,
-    ):
-
-        # arrange
-        account = create_test_account()
-        request_user = create_test_user(account=account)
-        invited_user = create_invited_user(request_user)
-        deactivate_mock = mocker.patch(
-            'src.accounts.services.user.UserService'
-            '.deactivate',
-            side_effect=UserIsPerformerException(),
+        invite_service_init_mock.assert_called_once_with(
+            request_user=invited_user,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
         )
-        api_client.token_authenticate(request_user)
-
-        # act
-        response = api_client.post(
-            '/accounts/invites/decline',
-            data={'invite_id': invited_user.invite.id},
-        )
-
-        # assert
-        assert response.status_code == 400
-        assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-        assert response.data['message'] == MSG_A_0011
-        deactivate_mock.assert_called_once_with(invited_user)
+        decline_mock.assert_called_once_with(invited_user.invite)
 
     def test_decline__another_account_invite__not_found(
         self,
@@ -651,11 +629,15 @@ class TestDecline:
             account=another_account,
         )
         another_invited_user = create_invited_user(another_user)
-        api_client.token_authenticate(request_user)
-        deactivate_mock = mocker.patch(
-            'src.accounts.services.user.UserService'
-            '.deactivate',
+        invite_service_init_mock = mocker.patch.object(
+            UserInviteService,
+            attribute='__init__',
+            return_value=None,
         )
+        decline_mock = mocker.patch(
+            'src.accounts.services.user_invite.UserInviteService.decline',
+        )
+        api_client.token_authenticate(request_user)
 
         # act
         response = api_client.post(
@@ -665,7 +647,8 @@ class TestDecline:
 
         # assert
         assert response.status_code == 404
-        deactivate_mock.assert_not_called()
+        invite_service_init_mock.assert_not_called()
+        decline_mock.assert_not_called()
 
     def test_decline__accepted_invite__not_found(
         self,
@@ -681,11 +664,15 @@ class TestDecline:
         invite.status = UserInviteStatus.ACCEPTED
         invite.save()
 
-        api_client.token_authenticate(request_user)
-        deactivate_mock = mocker.patch(
-            'src.accounts.services.user.UserService'
-            '.deactivate',
+        invite_service_init_mock = mocker.patch.object(
+            UserInviteService,
+            attribute='__init__',
+            return_value=None,
         )
+        decline_mock = mocker.patch(
+            'src.accounts.services.user_invite.UserInviteService.decline',
+        )
+        api_client.token_authenticate(request_user)
 
         # act
         response = api_client.post(
@@ -695,7 +682,8 @@ class TestDecline:
 
         # assert
         assert response.status_code == 404
-        deactivate_mock.assert_not_called()
+        invite_service_init_mock.assert_not_called()
+        decline_mock.assert_not_called()
 
     def test_decline__not_admin__permission_denied(
         self,
@@ -706,12 +694,15 @@ class TestDecline:
         # arrange
         request_user = create_test_user(is_admin=False, is_account_owner=False)
         invited_user = create_invited_user(request_user)
-
-        api_client.token_authenticate(request_user)
-        deactivate_mock = mocker.patch(
-            'src.accounts.services.user.UserService'
-            '.deactivate',
+        invite_service_init_mock = mocker.patch.object(
+            UserInviteService,
+            attribute='__init__',
+            return_value=None,
         )
+        decline_mock = mocker.patch(
+            'src.accounts.services.user_invite.UserInviteService.decline',
+        )
+        api_client.token_authenticate(request_user)
 
         # act
         response = api_client.post(
@@ -721,7 +712,8 @@ class TestDecline:
 
         # assert
         assert response.status_code == 403
-        deactivate_mock.assert_not_called()
+        invite_service_init_mock.assert_not_called()
+        decline_mock.assert_not_called()
 
 
 class TestToken:
@@ -993,6 +985,7 @@ class TestAccept:
         assert response.status_code == 200
         assert response.data['token'] == token
         service_mock.assert_called_once_with(
+            request_user=user,
             current_url=current_url,
             is_superuser=False,
             auth_type=AuthTokenType.USER,
@@ -1061,6 +1054,7 @@ class TestAccept:
         assert response.status_code == 200
         assert response.data['token'] == token
         service_mock.assert_called_once_with(
+            request_user=user,
             current_url=current_url,
             is_superuser=False,
             auth_type=AuthTokenType.USER,
@@ -1596,6 +1590,7 @@ class TestAccept:
         assert response.data['code'] == ErrorCode.VALIDATION_ERROR
         assert response.data['message'] == MSG_A_0005
         service_mock.assert_called_once_with(
+            request_user=user,
             current_url=current_url,
             is_superuser=False,
             auth_type=AuthTokenType.USER,

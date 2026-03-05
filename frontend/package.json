@@ -122,6 +122,7 @@
     "@storybook/blocks": "^8.0.0",
     "@storybook/react": "^8.0.0",
     "@storybook/react-webpack5": "^8.0.0",
+    "@playwright/test": "^1.58.2",
     "@storybook/test": "^8.0.0",
     "@testing-library/jest-dom": "^5.14.1",
     "@testing-library/react": "^12.0.0",
@@ -240,6 +241,8 @@
     "test:prod": "jest --ci",
     "test:updateSnapshot": "jest --updateSnapshot",
     "check": "npm run lint && npm run test:prod",
+    "e2e": "playwright test",
+    "e2e:ui": "playwright test --ui",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "chromatic": "npx chromatic --project-token=chpt_84542468ff35306"

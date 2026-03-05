@@ -171,7 +171,6 @@ class GroupPerformerService(BasePerformerService2):
                 wf_starter = workflow.workflow_starter
                 wf_starter_name = wf_starter.name if wf_starter else None
                 wf_starter_photo = wf_starter.photo if wf_starter else None
-
                 send_new_task_notification.delay(
                     logging=self.user.account.log_api_requests,
                     account_id=self.user.account_id,

@@ -21,3 +21,7 @@ test-results/
 /playwright/.auth/
 .blob/
 docs/
+
+.cursor/
+
+e2e/.auth/
