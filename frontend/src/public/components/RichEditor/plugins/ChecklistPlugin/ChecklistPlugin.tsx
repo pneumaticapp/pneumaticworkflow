@@ -4,11 +4,13 @@ import {
   COMMAND_PRIORITY_HIGH,
   COMMAND_PRIORITY_LOW,
   KEY_BACKSPACE_COMMAND,
+  KEY_DELETE_COMMAND,
   KEY_ENTER_COMMAND,
   SELECTION_INSERT_CLIPBOARD_NODES_COMMAND,
 } from 'lexical';
 import {
   createBackspaceHandler,
+  createDeleteHandler,
   createEnterKeyHandler,
   createInsertChecklistHandler,
   createConvertChecklistToListHandler,
@@ -47,6 +49,14 @@ export function ChecklistPlugin(): null {
     return editor.registerCommand(
       KEY_BACKSPACE_COMMAND,
       createBackspaceHandler(editor),
+      COMMAND_PRIORITY_HIGH,
+    );
+  }, [editor]);
+
+  useEffect(() => {
+    return editor.registerCommand(
+      KEY_DELETE_COMMAND,
+      createDeleteHandler(editor),
       COMMAND_PRIORITY_HIGH,
     );
   }, [editor]);

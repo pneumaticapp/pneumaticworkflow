@@ -13,11 +13,13 @@ import {
   getBackspaceOnEmptyChecklistPayload,
   getBlockNodeFromSelection,
   getChecklistItemNodeFromSelection,
+  getFullySelectedChecklistRoots,
   getSelectedRootBlocks,
   insertChecklistAndSelectFirst,
   isCursorAtStartOfChecklistItem,
   nodesContainChecklist,
   removeDuplicateClipboardParagraphs,
+  replaceSelectedChecklistsWithParagraph,
   selectStartOfChecklistItem,
   selectEndOfChecklistItem,
 } from './checklistPluginUtils';
@@ -114,6 +116,14 @@ export function createInsertChecklistHandler(editor: LexicalEditor) {
 
 export function createBackspaceHandler(editor: LexicalEditor) {
   return (event: KeyboardEvent): boolean => {
+    const selectedChecklists = editor.getEditorState().read(() => getFullySelectedChecklistRoots());
+    if (selectedChecklists !== null) {
+      event.preventDefault();
+      editor.update(() => replaceSelectedChecklistsWithParagraph(selectedChecklists));
+      requestAnimationFrame(() => editor.focus());
+      return true;
+    }
+
     const emptyPayload = editor.getEditorState().read(() => getBackspaceOnEmptyChecklistPayload());
     if (emptyPayload != null) {
       event.preventDefault();
@@ -130,6 +140,20 @@ export function createBackspaceHandler(editor: LexicalEditor) {
           convertChecklistItemToParagraph(item);
         }
       });
+      return true;
+    }
+
+    return false;
+  };
+}
+
+export function createDeleteHandler(editor: LexicalEditor) {
+  return (event: KeyboardEvent): boolean => {
+    const selectedChecklists = editor.getEditorState().read(() => getFullySelectedChecklistRoots());
+    if (selectedChecklists !== null) {
+      event.preventDefault();
+      editor.update(() => replaceSelectedChecklistsWithParagraph(selectedChecklists));
+      requestAnimationFrame(() => editor.focus());
       return true;
     }
 

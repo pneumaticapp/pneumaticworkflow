@@ -233,6 +233,31 @@ export function getSelectedRootBlocks(): ElementNode[] {
 }
 
 /**
+ * When selection is not collapsed, returns root-level ChecklistNodes that are the only blocks
+ * in the selection (all selected root blocks are checklists). Returns null otherwise.
+ */
+export function getFullySelectedChecklistRoots(): ChecklistNode[] | null {
+  const selection = $getSelection();
+  if (!selection || !$isRangeSelection(selection) || selection.isCollapsed()) return null;
+  const blocks = getSelectedRootBlocks();
+  if (blocks.length === 0) return null;
+  const checklists = blocks.filter((b): b is ChecklistNode => $isChecklistNode(b));
+  if (checklists.length !== blocks.length) return null;
+  return checklists;
+}
+
+/**
+ * Replaces the given root-level checklists with a single empty paragraph and selects it.
+ */
+export function replaceSelectedChecklistsWithParagraph(checklists: ChecklistNode[]): void {
+  if (checklists.length === 0) return;
+  const paragraph = $createParagraphNode();
+  checklists[0].replace(paragraph);
+  checklists.slice(1).forEach((c) => c.remove());
+  paragraph.selectStart();
+}
+
+/**
  * Converts multiple root-level blocks into a single checklist with one item per block.
  * Replaces the first block with the checklist and removes the rest.
  */
@@ -246,7 +271,9 @@ export function convertBlocksToChecklist(blocks: ElementNode[]): ChecklistItemNo
       listApiName,
       itemApiName: createChecklistSelectionApiName(),
     });
-    [...block.getChildren()].forEach((child) => item.append(child));
+    const paragraph = $createParagraphNode();
+    [...block.getChildren()].forEach((child) => paragraph.append(child));
+    item.append(paragraph);
     checklistRoot.append(item);
   });
   if (checklistRoot.getChildrenSize() === 0) return null;
@@ -269,9 +296,9 @@ export function convertBlockToChecklist(block: ElementNode): ChecklistItemNode |
   });
   firstItem.setFormat(block.getFormatType());
   firstItem.setIndent(block.getIndent());
-  block.getChildren().forEach((child) => {
-    firstItem.append(child);
-  });
+  const paragraph = $createParagraphNode();
+  block.getChildren().forEach((child) => paragraph.append(child));
+  firstItem.append(paragraph);
   if ($isChecklistNode(prevSibling)) {
     prevSibling.append(firstItem);
     block.remove();
