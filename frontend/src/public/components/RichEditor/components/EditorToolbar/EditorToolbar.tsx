@@ -4,6 +4,7 @@ import { FORMAT_TEXT_COMMAND } from 'lexical';
 import {
   INSERT_ORDERED_LIST_COMMAND,
   INSERT_UNORDERED_LIST_COMMAND,
+  REMOVE_LIST_COMMAND,
 } from '@lexical/list';
 import { TOGGLE_LINK_COMMAND } from '@lexical/link';
 
@@ -44,8 +45,20 @@ export function EditorToolbar({
 
   const applyBold = () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
   const applyItalic = () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
-  const applyOrderedList = () => editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
-  const applyUnorderedList = () => editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
+  const applyOrderedList = () => {
+    if (listType === 'number') {
+      editor.dispatchCommand(REMOVE_LIST_COMMAND, undefined);
+    } else {
+      editor.dispatchCommand(INSERT_ORDERED_LIST_COMMAND, undefined);
+    }
+  };
+  const applyUnorderedList = () => {
+    if (listType === 'bullet') {
+      editor.dispatchCommand(REMOVE_LIST_COMMAND, undefined);
+    } else {
+      editor.dispatchCommand(INSERT_UNORDERED_LIST_COMMAND, undefined);
+    }
+  };
   const applyChecklist = () => editor.dispatchCommand(INSERT_CHECKLIST_COMMAND, undefined);
 
   const toggleLink = () => {

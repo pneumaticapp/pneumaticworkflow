@@ -3,7 +3,6 @@ import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext
 import {
   COMMAND_PRIORITY_HIGH,
   COMMAND_PRIORITY_LOW,
-  COMMAND_PRIORITY_NORMAL,
   KEY_BACKSPACE_COMMAND,
   KEY_ENTER_COMMAND,
   SELECTION_INSERT_CLIPBOARD_NODES_COMMAND,
@@ -39,7 +38,7 @@ export function ChecklistPlugin(): null {
     return editor.registerCommand(
       KEY_BACKSPACE_COMMAND,
       createBackspaceHandler(editor),
-      COMMAND_PRIORITY_NORMAL,
+      COMMAND_PRIORITY_HIGH,
     );
   }, [editor]);
 

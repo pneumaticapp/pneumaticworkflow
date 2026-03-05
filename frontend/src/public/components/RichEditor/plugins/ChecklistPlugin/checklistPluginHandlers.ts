@@ -104,15 +104,17 @@ export function createInsertChecklistHandler(editor: LexicalEditor) {
 }
 
 export function createBackspaceHandler(editor: LexicalEditor) {
-  return (): boolean => {
+  return (event: KeyboardEvent): boolean => {
     const emptyPayload = editor.getEditorState().read(() => getBackspaceOnEmptyChecklistPayload());
     if (emptyPayload != null) {
+      event.preventDefault();
       editor.update(() => applyBackspaceOnEmptyChecklist(emptyPayload));
       return true;
     }
 
     const itemKey = editor.getEditorState().read(() => isCursorAtStartOfChecklistItem());
     if (itemKey != null) {
+      event.preventDefault();
       editor.update(() => {
         const item = $getNodeByKey(itemKey);
         if (item && $isChecklistItemNode(item)) {
