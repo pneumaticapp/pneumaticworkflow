@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import ReCAPTCHA from 'react-google-recaptcha';
 import produce from 'immer';
@@ -138,20 +139,22 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
 
     return (
       <>
-        {publicForm.kickoff.fields.map((field) => (
-          <ExtraFieldIntl
-            key={field.apiName}
-            field={field}
-            editField={handleEditField(field.apiName)}
-            showDropdown={false}
-            mode={EExtraFieldMode.ProcessRun}
-            labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
-            namePlaceholder={field.name}
-            descriptionPlaceholder={field.description}
-            wrapperClassName={styles['output__field']}
-            accountId={publicForm.accountId}
-          />
-        ))}
+        {publicForm.kickoff.fields
+          .filter((field) => !field.isHidden)
+          .map((field) => (
+            <ExtraFieldIntl
+              key={field.apiName}
+              field={field}
+              editField={handleEditField(field.apiName)}
+              showDropdown={false}
+              mode={EExtraFieldMode.ProcessRun}
+              labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
+              namePlaceholder={field.name}
+              descriptionPlaceholder={field.description}
+              wrapperClassName={styles['output__field']}
+              accountId={publicForm.accountId}
+            />
+          ))}
 
         {isEnvCaptcha && publicForm?.showCaptcha && (
           <div className={styles['captcha']}>

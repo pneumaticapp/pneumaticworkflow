@@ -71,6 +71,7 @@ class TestCreateKickoffFields:
         assert response_data['api_name'] == request_data['api_name']
         assert response_data['description'] == ''
         assert response_data['is_required'] is False
+        assert response_data['is_hidden'] is False
         assert response_data['default'] == ''
         assert 'selections' not in response_data
 
@@ -81,6 +82,7 @@ class TestCreateKickoffFields:
         assert field.api_name == request_data['api_name']
         assert field.description is None
         assert field.is_required is False
+        assert field.is_hidden is False
         assert field.default == ''
         assert not field.selections.exists()
 
@@ -98,6 +100,7 @@ class TestCreateKickoffFields:
             'description': 'desc',
             'order': 1,
             'is_required': True,
+            'is_hidden': False,
             'api_name': 'text-field-1',
             'default': 'default value',
         }
@@ -143,6 +146,7 @@ class TestCreateKickoffFields:
         assert response_data['api_name'] == request_data['api_name']
         assert response_data['description'] == request_data['description']
         assert response_data['is_required'] == request_data['is_required']
+        assert response_data['is_hidden'] == request_data['is_hidden']
         assert response_data['default'] == request_data['default']
         assert 'selections' not in response_data
 
@@ -153,8 +157,69 @@ class TestCreateKickoffFields:
         assert field.api_name == request_data['api_name']
         assert field.description == request_data['description']
         assert field.is_required == request_data['is_required']
+        assert field.is_hidden == request_data['is_hidden']
         assert field.default == request_data['default']
         assert not field.selections.exists()
+
+    def test_create__kickoff_field_is_hidden__ok(
+        self,
+        api_client,
+    ):
+
+        # arrange
+        user = create_test_user()
+        api_client.token_authenticate(user)
+        request_data = {
+            'type': FieldType.TEXT,
+            'name': 'Hidden field',
+            'order': 1,
+            'is_required': False,
+            'is_hidden': True,
+            'api_name': 'hidden-field-1',
+        }
+
+        # act
+        response = api_client.post(
+            path='/templates',
+            data={
+                'name': 'Template',
+                'is_active': True,
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+                'kickoff': {
+                    'fields': [request_data],
+                },
+                'tasks': [
+                    {
+                        'number': 1,
+                        'name': 'First step',
+                        'raw_performers': [
+                            {
+                                'type': PerformerType.USER,
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
+        )
+
+        # assert
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data['kickoff']['fields']) == 1
+
+        response_data = data['kickoff']['fields'][0]
+        assert response_data['is_hidden'] is True
+        assert response_data['is_required'] is False
+
+        field = FieldTemplate.objects.get(api_name=request_data['api_name'])
+        assert field.is_hidden is True
+        assert field.is_required is False
 
     def test_create__fields_with_equal_api_names__save_last(
         self,

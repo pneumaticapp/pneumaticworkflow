@@ -1,9 +1,10 @@
 /// <reference types="node" />
 import { defineConfig, devices } from '@playwright/test';
 
+const STORAGE_STATE = 'e2e/.auth/user.json';
+
 export default defineConfig({
   testDir: './e2e',
-  globalSetup: './e2e/global-setup.ts',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
@@ -17,7 +18,56 @@ export default defineConfig({
       slowMo: 1200,
     },
   },
-  projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
+  projects: [
+    {
+      name: 'setup',
+      testMatch: /.*\.setup\.ts/,
+    },
+
+    /* --- DESKTOP BROWSERS --- */
+    {
+      name: 'chromium',
+      use: {
+        ...devices['Desktop Chrome'],
+        storageState: STORAGE_STATE,
+      },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'firefox',
+      use: {
+        ...devices['Desktop Firefox'],
+        storageState: STORAGE_STATE,
+      },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'webkit',
+      use: {
+        ...devices['Desktop Safari'],
+        storageState: STORAGE_STATE,
+      },
+      dependencies: ['setup'],
+    },
+
+    /* --- MOBILE DEVICES --- */
+    {
+      name: 'Mobile Chrome',
+      use: {
+        ...devices['Pixel 5'],
+        storageState: STORAGE_STATE,
+      },
+      dependencies: ['setup'],
+    },
+    {
+      name: 'Mobile Safari',
+      use: {
+        ...devices['iPhone 12'],
+        storageState: STORAGE_STATE,
+      },
+      dependencies: ['setup'],
+    },
+  ],
   webServer: {
     command: 'npm run local',
     url: 'http://localhost:8000',

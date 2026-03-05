@@ -190,6 +190,7 @@ def test_fields__simple_field_types__ok(api_client, field_type):
         clear_value='bold text',
         workflow=workflow,
         is_required=True,
+        is_hidden=False,
         description='Some description',
         account=user.account,
     )
@@ -205,6 +206,7 @@ def test_fields__simple_field_types__ok(api_client, field_type):
     assert fields_data[0]['id'] == field.id
     assert fields_data[0]['order'] == 1
     assert fields_data[0]['is_required'] == field.is_required
+    assert fields_data[0]['is_hidden'] == field.is_hidden
     assert fields_data[0]['task_id'] == task.id
     assert fields_data[0]['kickoff_id'] is None
     assert fields_data[0]['type'] == field_type
