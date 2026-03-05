@@ -214,6 +214,7 @@ export interface IExtraField {
   apiName: string;
   description?: string;
   isRequired?: boolean;
+  isHidden?: boolean;
   name: string;
   type: EExtraFieldType;
   value?: TExtraFieldValue;

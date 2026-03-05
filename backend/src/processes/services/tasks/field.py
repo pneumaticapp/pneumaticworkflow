@@ -302,6 +302,7 @@ class TaskFieldService(BaseWorkflowService):
             task_id=kwargs.get('task_id'),
             type=instance_template.type,
             is_required=instance_template.is_required,
+            is_hidden=instance_template.is_hidden,
             name=instance_template.name,
             description=instance_template.description,
             api_name=instance_template.api_name,

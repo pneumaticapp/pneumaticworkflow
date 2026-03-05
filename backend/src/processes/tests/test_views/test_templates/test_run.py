@@ -528,6 +528,7 @@ def test_run__not_required_task_field__ok(mocker, api_client):
     assert field.type == field_template.type
     assert field.description == field_template.description
     assert field.is_required is False
+    assert field.is_hidden is False
     assert field.value == ''
 
 
