@@ -19,7 +19,7 @@ import {
   FileAttachmentButtonIcon,
   ChecklistIcon,
 } from '../../../icons';
-import { INSERT_CHECKLIST_COMMAND } from '../../plugins/ChecklistPlugin';
+import { CONVERT_CHECKLIST_TO_LIST_COMMAND, INSERT_CHECKLIST_COMMAND } from '../../plugins/ChecklistPlugin';
 import { useCheckDevice } from '../../../../hooks/useCheckDevice';
 import { useLinkPlugin } from '../../plugins/LinkPlugin';
 import { useToolbarState } from './useToolbarState';
@@ -46,6 +46,10 @@ export function EditorToolbar({
   const applyBold = () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'bold');
   const applyItalic = () => editor.dispatchCommand(FORMAT_TEXT_COMMAND, 'italic');
   const applyOrderedList = () => {
+    if (isChecklist) {
+      editor.dispatchCommand(CONVERT_CHECKLIST_TO_LIST_COMMAND, 'number');
+      return;
+    }
     if (listType === 'number') {
       editor.dispatchCommand(REMOVE_LIST_COMMAND, undefined);
     } else {
@@ -53,6 +57,10 @@ export function EditorToolbar({
     }
   };
   const applyUnorderedList = () => {
+    if (isChecklist) {
+      editor.dispatchCommand(CONVERT_CHECKLIST_TO_LIST_COMMAND, 'bullet');
+      return;
+    }
     if (listType === 'bullet') {
       editor.dispatchCommand(REMOVE_LIST_COMMAND, undefined);
     } else {

@@ -11,9 +11,10 @@ import {
   createBackspaceHandler,
   createEnterKeyHandler,
   createInsertChecklistHandler,
+  createConvertChecklistToListHandler,
   createPasteClipboardNodesHandler,
 } from './checklistPluginHandlers';
-import { INSERT_CHECKLIST_COMMAND } from './insertChecklistCommand';
+import { CONVERT_CHECKLIST_TO_LIST_COMMAND, INSERT_CHECKLIST_COMMAND } from './insertChecklistCommand';
 
 export function ChecklistPlugin(): null {
   const [editor] = useLexicalComposerContext();
@@ -30,6 +31,14 @@ export function ChecklistPlugin(): null {
     return editor.registerCommand(
       INSERT_CHECKLIST_COMMAND,
       createInsertChecklistHandler(editor),
+      COMMAND_PRIORITY_LOW,
+    );
+  }, [editor]);
+
+  useEffect(() => {
+    return editor.registerCommand(
+      CONVERT_CHECKLIST_TO_LIST_COMMAND,
+      createConvertChecklistToListHandler(editor),
       COMMAND_PRIORITY_LOW,
     );
   }, [editor]);

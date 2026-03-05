@@ -7,6 +7,8 @@ import {
   assignNewChecklistIds,
   convertBlockToChecklist,
   convertChecklistItemToParagraph,
+  convertChecklistToList,
+  convertListToChecklist,
   getBackspaceOnEmptyChecklistPayload,
   getBlockNodeFromSelection,
   getChecklistItemNodeFromSelection,
@@ -72,6 +74,13 @@ export function createInsertChecklistHandler(editor: LexicalEditor) {
           return;
         }
       }
+      if (block !== null && $isListNode(block)) {
+        const newItem = convertListToChecklist(block);
+        if (newItem !== null) {
+          selectStartOfChecklistItem(newItem);
+          return;
+        }
+      }
       const listApiName = createChecklistApiName();
       const checklistRoot = $createChecklistNode({ listApiName });
       const firstItem = $createChecklistItemNode({
@@ -122,6 +131,28 @@ export function createPasteClipboardNodesHandler() {
       filtered.some((n, i) => n !== payload.nodes[i]);
     if (!changed) return false;
     payload.selection.insertNodes(filtered);
+    return true;
+  };
+}
+
+export function createConvertChecklistToListHandler(editor: LexicalEditor) {
+  return (listType: 'number' | 'bullet'): boolean => {
+    const handled = editor.getEditorState().read(() => {
+      const item = getChecklistItemNodeFromSelection();
+      if (!item) return false;
+      const parent = item.getParent();
+      if (!parent || !$isChecklistNode(parent)) return false;
+      return true;
+    });
+    if (!handled) return false;
+    editor.update(() => {
+      const item = getChecklistItemNodeFromSelection();
+      if (!item) return;
+      const parent = item.getParent();
+      if (!parent || !$isChecklistNode(parent)) return;
+      convertChecklistToList(parent, listType);
+    });
+    requestAnimationFrame(() => editor.focus());
     return true;
   };
 }

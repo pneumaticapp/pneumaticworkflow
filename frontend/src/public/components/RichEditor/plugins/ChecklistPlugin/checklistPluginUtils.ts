@@ -11,6 +11,12 @@ import {
   $isTextNode,
   $setSelection,
 } from 'lexical';
+import {
+  $createListItemNode as $createLexicalListItemNode,
+  $createListNode as $createLexicalListNode,
+  $isListItemNode as $isLexicalListItemNode,
+  $isListNode as $isLexicalListNode,
+} from '@lexical/list';
 
 import {
   ChecklistNode,
@@ -229,6 +235,56 @@ export function convertBlockToChecklist(block: ElementNode): ChecklistItemNode |
   checklistRoot.append(firstItem);
   block.replace(checklistRoot);
   return firstItem;
+}
+
+/**
+ * Converts a Lexical ListNode (bullet/number) into a ChecklistNode. Each ListItemNode becomes a ChecklistItemNode.
+ */
+export function convertListToChecklist(listNode: LexicalNode): ChecklistItemNode | null {
+  if (!$isLexicalListNode(listNode)) return null;
+  const list = listNode as import('@lexical/list').ListNode;
+  const listType = list.getListType();
+  if (listType === 'check') return null;
+  const listApiName = createChecklistApiName();
+  const checklistRoot = $createChecklistNode({ listApiName });
+  const listItems = list.getChildren().filter((n): n is import('@lexical/list').ListItemNode => $isLexicalListItemNode(n));
+  listItems.forEach((listItem) => {
+    const checklistItem = $createChecklistItemNode({
+      listApiName,
+      itemApiName: createChecklistSelectionApiName(),
+    });
+    const paragraph = $createParagraphNode();
+    const itemChildren = listItem.getChildren();
+    itemChildren.forEach((child) => {
+      if ($isParagraphNode(child)) {
+        [...child.getChildren()].forEach((c) => paragraph.append(c));
+      } else {
+        paragraph.append(child);
+      }
+    });
+    checklistItem.append(paragraph);
+    checklistRoot.append(checklistItem);
+  });
+  list.replace(checklistRoot);
+  const first = checklistRoot.getFirstChild();
+  return first && $isChecklistItemNode(first) ? (first as ChecklistItemNode) : null;
+}
+
+/**
+ * Converts a ChecklistNode into a Lexical ListNode (bullet or number). Each ChecklistItemNode becomes a ListItemNode.
+ */
+export function convertChecklistToList(checklistNode: LexicalNode, listType: 'number' | 'bullet'): import('@lexical/list').ListNode | null {
+  if (!$isChecklistNode(checklistNode)) return null;
+  const checklist = checklistNode as ChecklistNode;
+  const lexicalList = $createLexicalListNode(listType);
+  const items = checklist.getChildren().filter((n): n is ChecklistItemNode => $isChecklistItemNode(n));
+  items.forEach((item) => {
+    const listItem = $createLexicalListItemNode();
+    [...item.getChildren()].forEach((child) => listItem.append(child));
+    lexicalList.append(listItem);
+  });
+  checklist.replace(lexicalList);
+  return lexicalList;
 }
 
 /** Ensure checklist item has a paragraph child so cursor is visible. */
