@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
     dependencies = [
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
         ('accounts', '0139_remove_account_external_id'),
-        ('processes', '0242_add_new_search_content'),
+        ('processes', '0243_add_is_hidden_to_field_mixin'),
     ]
 
     operations = [
