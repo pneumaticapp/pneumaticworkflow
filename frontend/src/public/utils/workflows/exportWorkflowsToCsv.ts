@@ -6,6 +6,7 @@ import { getUserFullName, EXTERNAL_USER } from '../users';
 import { getUserById } from '../../components/UserData/utils/getUserById';
 import { toDateString } from '../dateTime';
 import { getWorkflowProgress } from '../../components/Workflows/utils/getWorkflowProgress';
+import { ALL_SYSTEM_FIELD_NAMES } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
 
 const CSV_QUOTE = '"';
 const CSV_DOUBLE_QUOTE = '""';
@@ -101,15 +102,6 @@ export interface IExportWorkflowsToCsvConfig {
   deletedGroupFallbackTemplate: string;
 }
 
-const SYSTEM_COLUMNS = [
-  'system-column-workflow',
-  'system-column-templateName',
-  'system-column-starter',
-  'system-column-progress',
-  'system-column-step',
-  'system-column-performer',
-] as const;
-
 export function buildWorkflowsCsvContent({
   workflows,
   users,
@@ -124,7 +116,7 @@ export function buildWorkflowsCsvContent({
   const headerKeys = selectedFields.length > 0
     ? selectedFields
     : [
-      ...SYSTEM_COLUMNS,
+      ...ALL_SYSTEM_FIELD_NAMES,
       ...(optionalFieldsFromWorkflow ?? []).map((f) => f.apiName),
     ];
 
@@ -162,7 +154,7 @@ export function buildWorkflowsCsvContent({
     workflow.fields?.forEach((f) => fieldsMap.set(f.apiName, f));
 
     const cells = headerKeys.map((key) => {
-      if (SYSTEM_COLUMNS.includes(key as (typeof SYSTEM_COLUMNS)[number])) {
+      if (ALL_SYSTEM_FIELD_NAMES.includes(key)) {
         return escapeCsvCell(systemValues[key]);
       }
       const field = fieldsMap.get(key);

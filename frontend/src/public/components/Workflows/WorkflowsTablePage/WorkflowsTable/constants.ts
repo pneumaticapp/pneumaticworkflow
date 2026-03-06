@@ -25,12 +25,3 @@ export const SYSTEM_FIELDS: TSystemField[] = [
 ];
 
 export const SKELETON_ROWS = Array.from({ length: 5 }, (_, index) => `skeleton-row-${index}`);
-
-export const DEFAULT_HEADER_KEYS = [
-  'system-column-workflow',
-  'system-column-templateName',
-  'system-column-starter',
-  'system-column-progress',
-  'system-column-step',
-  'system-column-performer',
-];

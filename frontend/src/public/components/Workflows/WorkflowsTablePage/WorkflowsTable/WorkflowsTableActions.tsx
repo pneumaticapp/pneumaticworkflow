@@ -25,7 +25,7 @@ import { getTimezone } from '../../../../redux/selectors/authUser';
 import { buildWorkflowsCsvContent, downloadWorkflowsCsv } from '../../../../utils/workflows/exportWorkflowsToCsv';
 import { fetchAllWorkflowsForExport } from '../../../../api/workflows/fetchAllWorkflowsForExport';
 import { NotificationManager } from '../../../UI/Notifications';
-import { DEFAULT_HEADER_KEYS } from './constants';
+import { ALL_SYSTEM_FIELD_NAMES } from './constants';
 import { WorkflowsTableActionsProps } from './types';
 
 import styles from './WorkflowsTable.css';
@@ -69,7 +69,7 @@ export function WorkflowsTableActions({
 
   const handleExportCsvClick = useCallback(() => {
     setIsExporting(true);
-    const fields = selectedFields.length ? selectedFields : DEFAULT_HEADER_KEYS;
+    const fields = selectedFields.length ? selectedFields : ALL_SYSTEM_FIELD_NAMES;
     fetchAllWorkflowsForExport({
       statusFilter,
       sorting,
@@ -117,8 +117,8 @@ export function WorkflowsTableActions({
         });
         downloadWorkflowsCsv(csvContent);
       })
-      .catch(() => {
-        NotificationManager.notifyApiError(null, { message: 'workflows.export-csv-fail' });
+      .catch((error) => {
+        NotificationManager.notifyApiError(error, { message: 'workflows.export-csv-fail' });
       })
       .finally(() => {
         setIsExporting(false);
