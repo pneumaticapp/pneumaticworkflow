@@ -107,6 +107,9 @@
     z-index: 1;
     top: -1.2rem;
     left: 1.2rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     max-width: calc(100% - 6.4rem);
     background-color: var(--pneumatic-color-white);
     background-clip: text;

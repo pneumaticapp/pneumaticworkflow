@@ -1,0 +1,24 @@
+.actions {
+  margin-left: auto;
+}
+
+.controls {
+  display: flex;
+  width: 100%;
+  pointer-events: none;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.controls__send-button {
+  pointer-events: all;
+}
+
+.controls__send-button:disabled {
+  pointer-events: none;
+  opacity: 0.5;
+}
+
+.controls__send-button + .controls__send-button {
+  margin-left: 0.8rem;
+}
