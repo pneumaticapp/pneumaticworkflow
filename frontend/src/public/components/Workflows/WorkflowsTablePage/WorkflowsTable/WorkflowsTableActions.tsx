@@ -20,7 +20,7 @@ import {
   getWorkflowsSearchText,
 } from '../../../../redux/selectors/workflows';
 import { getAccountsUsers } from '../../../../redux/selectors/accounts';
-import { getGroups } from '../../../../redux/selectors/groups';
+import { getGroupsList } from '../../../../redux/selectors/groups';
 import { getTimezone } from '../../../../redux/selectors/authUser';
 import { buildWorkflowsCsvContent, downloadWorkflowsCsv } from '../../../../utils/workflows/exportWorkflowsToCsv';
 import { fetchAllWorkflowsForExport } from '../../../../api/workflows/fetchAllWorkflowsForExport';
@@ -48,7 +48,7 @@ export function WorkflowsTableActions({
   const performersGroupIdsFilter = useSelector(getWorkflowPerformersGroupsIdsFilter);
   const searchText = useSelector(getWorkflowsSearchText);
   const users = useSelector(getAccountsUsers);
-  const groups = useSelector(getGroups);
+  const groups = useSelector(getGroupsList);
   const timezone = useSelector(getTimezone);
 
   const [isExporting, setIsExporting] = useState(false);
