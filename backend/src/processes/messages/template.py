@@ -278,24 +278,23 @@ MSG_PT_0068 = lambda name: format_lazy(
     ),
     name=name,
 )
-MSG_PT_0069 = _('Only admin users can be template owners.')
+MSG_PT_0069 = lambda name, api_name: format_lazy(
+    _(
+        'A viewer with the api_name "{api_name}" already exists '
+        'for the template "{name}".',
+    ),
+    name=name,
+    api_name=api_name,
+)
 MSG_PT_0070 = lambda name, api_name: format_lazy(
     _(
-        'Viewer with api_name "{api_name}" already exists '
-        'for template "{name}"',
+        'A starter with the api_name "{api_name}" already exists '
+        'for the template "{name}".',
     ),
     name=name,
     api_name=api_name,
 )
-MSG_PT_0071 = lambda name, api_name: format_lazy(
-    _(
-        'Starter with api_name "{api_name}" already exists '
-        'for template "{name}"',
-    ),
-    name=name,
-    api_name=api_name,
-)
-MSG_PT_0072 = _('Permission denied. You do not have access to this template.')
-MSG_PT_0073 = _(
+MSG_PT_0071 = _('Permission denied. You do not have access to this template.')
+MSG_PT_0072 = _(
     'Permission denied. You are not a template owner or viewer.',
 )
