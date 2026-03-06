@@ -1,6 +1,7 @@
 import pytest
 from django.conf import settings
 
+from src.notifications.enums import NotificationMethod
 from src.notifications.services.push import PushNotificationService
 from src.notifications.tasks import _send_reminder_task_notification
 from src.processes.tests.fixtures import (
@@ -75,5 +76,126 @@ def test_send_reminder_task__call_all_services__ok(mocker):
         user_first_name=account_owner.first_name,
         user_type=account_owner.type,
         count=1,
+        sync=True,
+    )
+
+
+def test_send_reminder_task__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        tasks_count=1,
+        reminder_notification=True,
+    )
+    workflow = create_test_workflow(account_owner, template=template)
+    task = workflow.tasks.get(number=1)
+
+    send_notification_mock = mocker.patch(
+        'src.notifications.tasks._send_notification',
+    )
+
+    # act
+    _send_reminder_task_notification()
+
+    # assert
+    send_notification_mock.assert_called_once_with(
+        account_id=account.id,
+        logging=account.log_api_requests,
+        logo_lg=account.logo_lg,
+        method_name=NotificationMethod.task_reminder,
+        user_id=account_owner.id,
+        user_first_name=account_owner.first_name,
+        user_email=account_owner.email,
+        user_type=account_owner.type,
+        count=1,
+        task_id=task.id,
+        token=None,
+        link=f'{settings.FRONTEND_URL}/tasks',
+        sync=True,
+    )
+
+
+def test_send_reminder_task__two_tasks_from_diff_templates__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template_1 = create_test_template(
+        user=account_owner,
+        tasks_count=1,
+        reminder_notification=True,
+    )
+    template_2 = create_test_template(
+        user=account_owner,
+        tasks_count=1,
+        reminder_notification=True,
+    )
+    workflow_1 = create_test_workflow(account_owner, template=template_1)
+    task_1 = workflow_1.tasks.get(number=1)
+
+    create_test_workflow(account_owner, template=template_2)
+    send_notification_mock = mocker.patch(
+        'src.notifications.tasks._send_notification',
+    )
+
+    # act
+    _send_reminder_task_notification()
+
+    # assert
+    send_notification_mock.assert_called_once_with(
+        account_id=account.id,
+        logging=account.log_api_requests,
+        logo_lg=account.logo_lg,
+        method_name=NotificationMethod.task_reminder,
+        user_id=account_owner.id,
+        user_first_name=account_owner.first_name,
+        user_email=account_owner.email,
+        user_type=account_owner.type,
+        count=2,
+        task_id=task_1.id,
+        token=None,
+        link=f'{settings.FRONTEND_URL}/tasks',
+        sync=True,
+    )
+
+
+def test_send_reminder_task__two_tasks_from_one_template__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=account_owner,
+        tasks_count=1,
+        reminder_notification=True,
+    )
+    workflow = create_test_workflow(account_owner, template=template)
+    task_1 = workflow.tasks.get(number=1)
+
+    create_test_workflow(account_owner, template=template)
+    send_notification_mock = mocker.patch(
+        'src.notifications.tasks._send_notification',
+    )
+
+    # act
+    _send_reminder_task_notification()
+
+    # assert
+    send_notification_mock.assert_called_once_with(
+        account_id=account.id,
+        logging=account.log_api_requests,
+        logo_lg=account.logo_lg,
+        method_name=NotificationMethod.task_reminder,
+        user_id=account_owner.id,
+        user_first_name=account_owner.first_name,
+        user_email=account_owner.email,
+        user_type=account_owner.type,
+        count=2,
+        task_id=task_1.id,
+        token=None,
+        link=f'{settings.FRONTEND_URL}/tasks',
         sync=True,
     )

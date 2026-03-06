@@ -130,6 +130,7 @@ class SMTPEmailClient(EmailClient):
 
         subjects = {
             EmailType.NEW_TASK: 'New Task Assigned',
+            EmailType.INVITE: 'Join your team',
             EmailType.TASK_RETURNED: 'Task Returned',
             EmailType.OVERDUE_TASK: 'Task Overdue',
             EmailType.GUEST_NEW_TASK: 'New Task Assigned',

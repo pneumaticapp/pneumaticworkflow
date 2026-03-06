@@ -99,7 +99,7 @@ class UsersWithRemainderTaskQuery(SqlQueryObject, DereferencedPerformersMixin):
           au.first_name AS user_first_name,
           au.email AS user_email,
           au.type AS user_type,
-          pt.id AS task_id,
+          MIN(pt.id) AS task_id,
           aa.id AS account_id,
           aa.logo_lg,
           aa.log_api_requests AS logging,
@@ -126,7 +126,7 @@ class UsersWithRemainderTaskQuery(SqlQueryObject, DereferencedPerformersMixin):
           AND pt.status = '{TaskStatus.ACTIVE}'
           AND dereferenced_performers.is_completed IS FALSE
           AND au.status = '{UserStatus.ACTIVE}'
-        GROUP BY au.id, pt.id, aa.id
+        GROUP BY au.id, aa.id
         ORDER BY au.id
         """
         return result, {}
