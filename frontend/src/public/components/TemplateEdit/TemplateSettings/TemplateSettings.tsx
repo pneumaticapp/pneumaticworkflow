@@ -14,8 +14,7 @@ import { TemplateControllsContainer } from '../TemplateControlls';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { IInfoWarningProps, InfoWarningsModal } from '../InfoWarningsModal';
 import { TemplateLastUpdateInfo } from '../TemplateLastUpdateInfo';
-import { RichEditorContainer } from '../../RichEditor';
-import { getInitialEditorState } from '../../RichEditor/utils/converters';
+import { RichEditor } from '../../RichEditor';
 
 import styles from './TemplateSettings.css';
 
@@ -24,7 +23,7 @@ export function TemplateSettings() {
   const dispatch = useDispatch();
   const template = useSelector(getTemplateData);
   const [isInfoWarningsModaOpen, setIsInfoWarningsModaOpen] = useState(false);
-  const [infoWarnings, setInfoWarnings] = useState<any>([]);
+  const [infoWarnings, setInfoWarnings] = useState<((props: IInfoWarningProps) => JSX.Element)[]>([]);
 
   const handleChangeTemplateField = (field: keyof ITemplate) => (value: ITemplate[keyof ITemplate]) => {
     const workflow = template;
@@ -77,13 +76,13 @@ export function TemplateSettings() {
           editButtonHint={formatMessage({ id: 'template.edit-name' })}
         />
         <div className={styles['description']}>
-          <RichEditorContainer
+          <RichEditor
             key={template.id ?? 'new'}
             withToolbar={false}
             placeholder={formatMessage({ id: 'template.placeholder' })}
             className={styles['description-editor']}
-            initialState={getInitialEditorState(template.description)}
-            handleChange={(value) => {
+            defaultValue={template.description ?? ''}
+            handleChange={(value: string) => {
               handleChangeTextField('description')(value);
               return Promise.resolve(value);
             }}
