@@ -1,4 +1,5 @@
 import pytest
+from django.conf import settings
 
 from src.accounts.enums import NotificationType
 from src.accounts.models import Notification
@@ -73,6 +74,7 @@ def test_send_complete_task_notification__call_services(mocker):
         logo_lg=logo_lg,
         account_id=account.id,
     )
+    link = f'{settings.FRONTEND_URL}/tasks/{task.id}'
     push_notification_mock.assert_called_once_with(
         task_id=task.id,
         task_name=task.name,
@@ -81,6 +83,7 @@ def test_send_complete_task_notification__call_services(mocker):
         sync=True,
         user_email=user_email,
         notification=notification,
+        link=link,
     )
     ws_notification_mock.assert_called_once_with(
         task_id=task.id,
@@ -90,6 +93,7 @@ def test_send_complete_task_notification__call_services(mocker):
         sync=True,
         user_email=user_email,
         notification=notification,
+        link=link,
     )
 
 
@@ -135,6 +139,7 @@ def test_send_complete_task_notification__ok(api_client, mocker):
         account_id=account.id,
         type=NotificationType.COMPLETE_TASK,
     )
+    link = f'{settings.FRONTEND_URL}/tasks/{task.id}'
     send_notification_mock.assert_called_once_with(
         logging=account.log_api_requests,
         logo_lg=logo_lg,
@@ -146,5 +151,6 @@ def test_send_complete_task_notification__ok(api_client, mocker):
         workflow_name=workflow_name,
         task_id=task.id,
         task_name=task.name,
+        link=link,
         sync=True,
     )

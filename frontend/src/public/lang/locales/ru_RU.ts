@@ -516,6 +516,8 @@ export const ruMessages = {
   'template.discard-popup-keep-editing-button': 'Продолжить редактирование',
   'template.enable-template': 'Включить шаблон',
   'templates.enable-to-complete-workflow': 'Завершить \nна любом этапе',
+  'templates.notify-on-completion': 'Уведомлять при завершении',
+  'templates.daily-reminder': 'Ежедневное напоминание',
   'template.name-placeholder': 'Название Шаблона',
   'template.invite-team-member': 'Пригласить исполнителя',
   'template.edit-name': 'Изменить Название Шаблона',

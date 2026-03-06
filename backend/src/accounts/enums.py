@@ -3,17 +3,21 @@ from typing_extensions import Literal
 
 class NotificationType:
 
+    # TODO Union with the NotificationMethod
+
     SYSTEM = 'system'
     COMMENT = 'comment'
     MENTION = 'mention'
     URGENT = 'urgent'
     NOT_URGENT = 'not_urgent'
     OVERDUE_TASK = 'overdue_task'
+    REMINDER_TASK = 'reminder_task'
     DELAY_WORKFLOW = 'snooze_workflow'
     RESUME_WORKFLOW = 'resume_workflow'
     DUE_DATE_CHANGED = 'due_date_changed'
     REACTION = 'reaction'
     COMPLETE_TASK = 'complete_task'
+    COMPLETE_WORKFLOW = 'complete_workflow'
 
     URGENT_TYPES = (
         URGENT,
@@ -27,11 +31,13 @@ class NotificationType:
         (URGENT, 'urgent'),
         (NOT_URGENT, 'not urgent'),
         (OVERDUE_TASK, 'overdue task'),
+        (REMINDER_TASK, 'reminder task'),
         (DELAY_WORKFLOW, 'snooze workflow'),
         (RESUME_WORKFLOW, 'resume workflow'),
         (DUE_DATE_CHANGED, 'due date changed'),
         (REACTION, 'reaction'),
         (COMPLETE_TASK, 'complete task'),
+        (COMPLETE_WORKFLOW, 'complete workflow'),
     )
 
 

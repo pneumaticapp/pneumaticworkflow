@@ -575,6 +575,8 @@ export const enMessages = {
   'template.discard-popup-keep-editing-button': 'Keep editing',
   'template.enable-template': 'Enable Template',
   'templates.enable-to-complete-workflow': 'Complete \nat any stage',
+  'templates.notify-on-completion': 'NOTIFY ON COMPLETION',
+  'templates.daily-reminder': 'DAILY REMINDER',
   'template.name-placeholder': 'Template Name',
   'template.invite-team-member': 'Invite team member',
   'template.all-users': 'All Users',
