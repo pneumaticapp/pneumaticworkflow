@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
+import * as React from 'react';
+import { useEffect, useState, useRef, MouseEvent } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 import { Link } from 'react-router-dom';
@@ -60,11 +61,9 @@ import { DateFormat } from '../UI/DateFormat';
 import UserDataWithGroup from '../UserDataWithGroup';
 import { HelpModal } from './HelpModal/HelpModal';
 import { ReturnModal } from './ReturnModal';
-import { getGroups } from '../../redux/selectors/groups';
+import { getGroupsList } from '../../redux/selectors/groups';
 
 import styles from './TaskCard.css';
-
-
 
 export enum ETaskCardViewMode {
   Single = 'single',
@@ -128,7 +127,7 @@ export function TaskCard({
   const { formatMessage } = useIntl();
   const { isMobile } = useCheckDevice();
 
-  const groups = useSelector(getGroups);
+  const groups = useSelector(getGroupsList);
   const saveOutputsToStorageDebounced = debounce(300, addOrUpdateStorageOutput);
 
   const guestsControllerRef = useRef<React.ElementRef<typeof GuestController> | null>(null);
@@ -161,7 +160,7 @@ export function TaskCard({
     setOutputValues(outputFieldsWithValues);
   }, [task.id]);
 
-  const handleOpenWorkflowPopup = (workflowId: number | null) => (e: React.MouseEvent) => {
+  const handleOpenWorkflowPopup = (workflowId: number | null) => (e: MouseEvent) => {
     e.preventDefault();
     if (workflowId) {
       openWorkflowLogPopup({ workflowId });
@@ -375,7 +374,9 @@ export function TaskCard({
   };
 
   const renderOutputFields = () => {
-    if (!isArrayWithItems(outputValues) || status === ETaskStatus.Completed) {
+    const visibleOutputs = outputValues?.filter((field) => !field.isHidden);
+
+    if (!isArrayWithItems(visibleOutputs) || status === ETaskStatus.Completed) {
       return null;
     }
 
@@ -384,21 +385,21 @@ export function TaskCard({
         <p className={styles['task-output__title']}>
           <IntlMessages id="tasks.task-outputs-fill-help" />
         </p>
-
-        {outputValues?.map((field) => (
-          <ExtraFieldIntl
-            key={field.apiName}
-            field={field}
-            editField={handleEditField(field.apiName)}
-            showDropdown={false}
-            mode={EExtraFieldMode.ProcessRun}
-            labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
-            namePlaceholder={field.name}
-            descriptionPlaceholder={field.description}
-            wrapperClassName={styles['task-output__field']}
-            accountId={accountId}
-          />
-        ))}
+        {visibleOutputs
+          .map((field) => (
+            <ExtraFieldIntl
+              key={field.apiName}
+              field={field}
+              editField={handleEditField(field.apiName)}
+              showDropdown={false}
+              mode={EExtraFieldMode.ProcessRun}
+              labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
+              namePlaceholder={field.name}
+              descriptionPlaceholder={field.description}
+              wrapperClassName={styles['task-output__field']}
+              accountId={accountId}
+            />
+          ))}
       </div>
     );
   };
@@ -565,11 +566,7 @@ export function TaskCard({
         onClose={() => setIsReturnModalOpen(false)}
         onConfirm={handleReturnTask}
       />
-      {helpText && <HelpModal
-        isOpen={isHelpModalOpen}
-        onClose={() => setIsHelpModalOpen(false)}
-        helpText={helpText}
-      />}
+      {helpText && <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} helpText={helpText} />}
       <div
         ref={wrapperRef}
         className={classnames(styles['container'], viewMode === ETaskCardViewMode.Guest && styles['container_guest'])}
@@ -605,11 +602,7 @@ export function TaskCard({
 
         <div className={styles['complete-form']}>
           {helpText && (
-            <button
-              type="button"
-              className={styles['help-trigger']}
-              onClick={() => setIsHelpModalOpen(true)}
-            >
+            <button type="button" className={styles['help-trigger']} onClick={() => setIsHelpModalOpen(true)}>
               <span className={styles['help-trigger__label']}>
                 {formatMessage({ id: 'task.help', defaultMessage: 'Help' })}
               </span>

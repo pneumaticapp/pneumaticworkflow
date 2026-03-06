@@ -1,4 +1,5 @@
-import React, { ChangeEvent, ReactNode, useCallback, useEffect, useRef } from 'react';
+import * as React from 'react';
+import { ChangeEvent, ReactNode, useCallback, useEffect, useRef } from 'react';
 import classnames from 'classnames';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';

@@ -1,7 +1,7 @@
 import { connect } from 'react-redux';
 
 import { IApplicationState } from '../../../../types/redux';
-import { closeDeleteUserModal, declineInvite, deleteUser } from '../../../../redux/actions';
+import { closeDeleteUserModal, declineInvite, deleteUser } from '../../../../redux/accounts/slice';
 import { IDeleteTeamUserPopupProps, DeleteTeamUserPopup } from './DeleteTeamUserPopup';
 import { EUserStatus } from '../../../../types/user';
 

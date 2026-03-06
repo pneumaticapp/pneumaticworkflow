@@ -186,6 +186,7 @@ class FieldMixin(AccountBaseMixin):
     description = models.TextField(null=True, blank=True)
     is_required = models.BooleanField(default=False)
     order = models.IntegerField(default=0)
+    is_hidden = models.BooleanField(default=False)
 
 
 class ConditionMixin(models.Model):

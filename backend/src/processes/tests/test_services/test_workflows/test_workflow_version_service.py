@@ -409,6 +409,8 @@ class TestWorkflowUpdateVersionService:
             kickoff=kickoff,
             template=template,
             account=user.account,
+            is_required=False,
+            is_hidden=True,
         )
         TaskField.objects.create(
             type=FieldType.TEXT,
@@ -425,6 +427,8 @@ class TestWorkflowUpdateVersionService:
             kickoff=kickoff,
             template=template,
             account=user.account,
+            is_required=False,
+            is_hidden=False,
         )
         FieldTemplateSelection.objects.create(
             value='first',
@@ -466,6 +470,12 @@ class TestWorkflowUpdateVersionService:
         assert kickoff_fields.filter(
             type=FieldType.TEXT,
         ).first().is_required is False
+        assert kickoff_fields.filter(
+            type=FieldType.TEXT,
+        ).first().is_hidden is True
+        assert kickoff_fields.filter(
+            type=FieldType.CHECKBOX,
+        ).first().is_hidden is False
         assert kickoff_fields.filter(
             type=FieldType.CHECKBOX,
         ).first().selections.count() == 2

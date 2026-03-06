@@ -36,11 +36,13 @@ class FieldSchemaV1(serializers.ModelSerializer):
 
     class Meta:
         model = FieldTemplate
+
         fields = (
             'name',
             'type',
             'description',
             'is_required',
+            'is_hidden',
             'api_name',
             'order',
             'default',

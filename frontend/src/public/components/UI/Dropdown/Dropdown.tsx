@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import classnames from 'classnames';
 import { UncontrolledDropdown, DropdownToggle, DropdownMenu } from 'reactstrap';
 import OutsideClickHandler from 'react-outside-click-handler';
