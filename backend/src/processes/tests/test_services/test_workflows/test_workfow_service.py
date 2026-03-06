@@ -95,6 +95,8 @@ def test_create_instance__all_fields__ok(mocker):
         is_active=True,
         tasks_count=1,
         finalizable=True,
+        reminder_notification=True,
+        completion_notification=True,
     )
     create_workflow_name_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
@@ -151,6 +153,8 @@ def test_create_instance__all_fields__ok(mocker):
     assert workflow.is_urgent == is_urgent
     assert workflow.due_date == due_date
     assert workflow.ancestor_task == ancestor_task
+    assert workflow.reminder_notification is True
+    assert workflow.completion_notification is True
 
 
 def test_create_instance__external_workflow__ok(mocker):

@@ -90,6 +90,8 @@ export function TemplateControlls({
     owners,
     isActive: isTemplateActive,
     finalizable: isTemplateFinalizable,
+    completionNotification: isCompletionNotification,
+    reminderNotification: isReminderNotification,
   } = template;
 
   const runnableWorkflow = getRunnableWorkflow(template);
@@ -317,6 +319,36 @@ export function TemplateControlls({
             checkedChildren={null}
             unCheckedChildren={null}
             onChange={(value) => patchTemplate({ changedFields: { finalizable: value } })}
+          />
+        </div>
+        <div className={styles['info-control']}>
+          <div className={styles['switch-label']}>
+            <IntlMessages id="templates.notify-on-completion" />
+          </div>
+          <Switch
+            className={classnames(
+              'custom-switch custom-switch-primary custom-switch-small ml-auto',
+              styles['info-control_switch'],
+            )}
+            checked={isCompletionNotification}
+            checkedChildren={null}
+            unCheckedChildren={null}
+            onChange={(value) => patchTemplate({ changedFields: { completionNotification: value } })}
+          />
+        </div>
+        <div className={styles['info-control']}>
+          <div className={styles['switch-label']}>
+            <IntlMessages id="templates.daily-reminder" />
+          </div>
+          <Switch
+            className={classnames(
+              'custom-switch custom-switch-primary custom-switch-small ml-auto',
+              styles['info-control_switch'],
+            )}
+            checked={isReminderNotification}
+            checkedChildren={null}
+            unCheckedChildren={null}
+            onChange={(value) => patchTemplate({ changedFields: { reminderNotification: value } })}
           />
         </div>
       </div>

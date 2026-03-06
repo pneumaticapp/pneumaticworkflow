@@ -94,3 +94,26 @@ class DereferencedPerformersMixin:
                 AND ptp.user_id = %(user_id)s
               )
         """
+
+    @staticmethod
+    def all_dereferenced_performers():
+
+        """ Convert group performers to users and return it (for any user) """
+
+        return f"""
+            SELECT DISTINCT ON (user_id, ptp.task_id)
+              (
+                CASE
+                  WHEN ptp.type = '{PerformerType.GROUP}' THEN g.user_id
+                  ELSE ptp.user_id
+                END
+              ) AS user_id,
+              ptp.task_id,
+              ptp.is_completed
+            FROM processes_taskperformer ptp
+            LEFT JOIN accounts_usergroup_users g
+              ON g.usergroup_id = ptp.group_id
+            WHERE
+              ptp.is_deleted IS FALSE
+              AND ptp.directly_status != '{DirectlyStatus.DELETED}'
+        """
