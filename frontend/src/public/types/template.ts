@@ -17,8 +17,6 @@ export interface ITemplate {
   dateUpdated: string | null;
   updatedBy: number | null;
   owners: ITemplateOwner[];
-  viewers: ITemplateViewer[];
-  starters: ITemplateStarter[];
   kickoff: IKickoff;
   tasks: ITemplateTask[];
   isPublic: boolean;
@@ -31,23 +29,21 @@ export interface ITemplate {
   performersCount: number;
 }
 
+export enum ETemplateOwnerRole {
+  Owner = 'owner',
+  Viewer = 'viewer',
+  Starter = 'starter',
+}
+
 export interface ITemplateOwner {
   apiName: string;
   sourceId: string;
   type: ETemplateOwnerType;
+  role: ETemplateOwnerRole;
 }
 
-export interface ITemplateViewer {
-  apiName: string;
-  sourceId: string;
-  type: ETemplateViewerType;
-}
-
-export interface ITemplateStarter {
-  apiName: string;
-  sourceId: string;
-  type: ETemplateStarterType;
-}
+export type ITemplateViewer = ITemplateOwner;
+export type ITemplateStarter = ITemplateOwner;
 
 export type TTransformedTask =
   | { apiName: string; name: string; needSteName: null; fields: TSystemField[] }
@@ -112,15 +108,11 @@ export enum ETemplateOwnerType {
   UserGroup = 'group',
 }
 
-export enum ETemplateViewerType {
-  User = 'user',
-  UserGroup = 'group',
-}
+export const ETemplateViewerType = ETemplateOwnerType;
+export type ETemplateViewerType = ETemplateOwnerType;
 
-export enum ETemplateStarterType {
-  User = 'user',
-  UserGroup = 'group',
-}
+export const ETemplateStarterType = ETemplateOwnerType;
+export type ETemplateStarterType = ETemplateOwnerType;
 
 export enum ETaskPerformerType {
   User = 'user',

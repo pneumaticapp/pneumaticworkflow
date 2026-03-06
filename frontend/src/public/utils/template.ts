@@ -10,6 +10,7 @@ import {
   ITemplateTaskResponse,
   ITemplateTaskPerformer,
   ETemplateOwnerType,
+  ETemplateOwnerRole,
   ITemplateOwner,
 } from '../types/template';
 import { getUrlParams } from './getUrlParams';
@@ -73,8 +74,6 @@ export const getNormalizedTemplate = (
     kickoff: normalizedKickoff,
     tasks: normalizedTasks,
     owners: normalizedTemplateOwners,
-    viewers: template.viewers || [],
-    starters: template.starters || [],
   };
 };
 
@@ -104,6 +103,7 @@ export const getNormalizedTemplateOwners = (
       sourceId: String(user.id),
       apiName: createOwnerApiName(),
       type: ETemplateOwnerType.User,
+      role: ETemplateOwnerRole.Owner,
     } as ITemplateOwner
   });
 
@@ -152,7 +152,5 @@ export const mapTemplateRequest = (template: ITemplate): ITemplateRequest => {
     name: template.name || DEFAULT_TEMPLATE_NAME,
     tasks: normilizedTasks,
     publicSuccessUrl: template.publicSuccessUrl || null,
-    viewers: template.viewers ?? [],
-    starters: template.starters ?? [],
   };
 };

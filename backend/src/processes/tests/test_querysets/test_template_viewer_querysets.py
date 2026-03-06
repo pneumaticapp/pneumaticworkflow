@@ -1,9 +1,9 @@
 import pytest
 from django.contrib.auth import get_user_model
 
-from src.processes.enums import ViewerType
+from src.processes.enums import OwnerType, OwnerRole
 from src.processes.models.templates.template import Template
-from src.processes.models.templates.viewer import TemplateViewer
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
     create_test_account,
@@ -39,9 +39,10 @@ class TestTemplateQuerySetWithViewer:
         )
 
         # Create viewer for template1 only
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template1,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer_user,
             account=account,
         )
@@ -74,9 +75,10 @@ class TestTemplateQuerySetWithViewer:
         group.users.add(viewer_user)
 
         # Create viewer for template1 only
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template1,
-            type=ViewerType.GROUP,
+            type=OwnerType.GROUP,
             group=group,
             account=account,
         )
@@ -128,15 +130,17 @@ class TestTemplateQuerySetWithViewer:
         group.users.add(viewer_user2)
 
         # Create multiple viewers for same template
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer_user1,
             account=account,
         )
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.GROUP,
+            type=OwnerType.GROUP,
             group=group,
             account=account,
         )
@@ -177,9 +181,10 @@ class TestWorkflowQuerySetWithViewer:
         )
 
         # Create viewer for template1 only
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template1,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer_user,
             account=account,
         )
@@ -218,9 +223,10 @@ class TestWorkflowQuerySetWithViewer:
         group.users.add(viewer_user)
 
         # Create viewer for template1 only
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template1,
-            type=ViewerType.GROUP,
+            type=OwnerType.GROUP,
             group=group,
             account=account,
         )
@@ -252,9 +258,10 @@ class TestWorkflowQuerySetWithViewer:
         )
 
         # Create viewer for template
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer_user,
             account=account,
         )

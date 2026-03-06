@@ -10,10 +10,8 @@ from src.accounts.enums import (
     UserType,
 )
 from src.accounts.models import UserGroup
-from src.processes.enums import OwnerType, ViewerType, StarterType
+from src.processes.enums import OwnerType
 from src.processes.models.templates.owner import TemplateOwner
-from src.processes.models.templates.viewer import TemplateViewer
-from src.processes.models.templates.starter import TemplateStarter
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.payment.enums import BillingPeriod
 from src.processes.models.workflows.task import TaskPerformer
@@ -216,10 +214,11 @@ def test_context__user_has_workflow_viewer_access_as_viewer__ok(api_client):
         email='user@test.test',
     )
     template = create_test_template(owner, tasks_count=0)
-    TemplateViewer.objects.create(
+    TemplateOwner.objects.create(
+        role='viewer',
         template=template,
         account=account,
-        type=ViewerType.USER,
+        type=OwnerType.USER,
         user_id=user.id,
     )
     api_client.token_authenticate(user)
@@ -248,10 +247,11 @@ def test_context__user_has_workflow_starter_access_only__ok(api_client):
         email='user@test.test',
     )
     template = create_test_template(owner, tasks_count=0)
-    TemplateStarter.objects.create(
+    TemplateOwner.objects.create(
+        role='starter',
         template=template,
         account=account,
-        type=StarterType.USER,
+        type=OwnerType.USER,
         user_id=user.id,
     )
     api_client.token_authenticate(user)
@@ -351,10 +351,11 @@ def test_context__user_has_workflow_access_via_group_as_viewer__ok(
     )
     group.users.add(user)
     template = create_test_template(owner, tasks_count=0)
-    TemplateViewer.objects.create(
+    TemplateOwner.objects.create(
+        role='viewer',
         template=template,
         account=account,
-        type=ViewerType.GROUP,
+        type=OwnerType.GROUP,
         group_id=group.id,
     )
     api_client.token_authenticate(user)
@@ -390,10 +391,11 @@ def test_context__user_has_workflow_access_via_group_as_starter__ok(
     )
     group.users.add(user)
     template = create_test_template(owner, tasks_count=0)
-    TemplateStarter.objects.create(
+    TemplateOwner.objects.create(
+        role='starter',
         template=template,
         account=account,
-        type=StarterType.GROUP,
+        type=OwnerType.GROUP,
         group_id=group.id,
     )
     api_client.token_authenticate(user)
@@ -424,16 +426,18 @@ def test_context__user_multiple_templates_mixed_access__ok(api_client):
     template1 = create_test_template(owner, tasks_count=0)
     template2 = create_test_template(owner, tasks_count=0)
     create_test_template(owner, tasks_count=0)
-    TemplateViewer.objects.create(
+    TemplateOwner.objects.create(
+        role='viewer',
         template=template1,
         account=account,
-        type=ViewerType.USER,
+        type=OwnerType.USER,
         user_id=user.id,
     )
-    TemplateStarter.objects.create(
+    TemplateOwner.objects.create(
+        role='starter',
         template=template2,
         account=account,
-        type=StarterType.USER,
+        type=OwnerType.USER,
         user_id=user.id,
     )
     api_client.token_authenticate(user)

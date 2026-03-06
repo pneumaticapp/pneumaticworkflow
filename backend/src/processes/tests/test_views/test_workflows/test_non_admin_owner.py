@@ -10,13 +10,10 @@ Non-admin users who are workflow owners should have viewer-level access:
 import pytest
 
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
-    StarterType,
-    ViewerType,
 )
 from src.processes.models.templates.owner import TemplateOwner
-from src.processes.models.templates.starter import TemplateStarter
-from src.processes.models.templates.viewer import TemplateViewer
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_group,
@@ -55,6 +52,7 @@ class TestNonAdminWorkflowOwnerRetrieve:
             tasks_count=1,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=account,
             type=OwnerType.USER,
@@ -246,12 +244,15 @@ class TestNonAdminTemplateOwnerWorkflowReadOnly:
             tasks_count=1,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=account,
             type=OwnerType.USER,
             user=non_admin_owner,
         )
-        template.viewers.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
+            template=template,
             account=account,
             type=OwnerType.USER,
             user=non_admin_owner,
@@ -283,7 +284,9 @@ class TestNonAdminTemplateOwnerWorkflowReadOnly:
             is_active=True,
             tasks_count=1,
         )
-        template.viewers.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
+            template=template,
             account=account,
             type=OwnerType.USER,
             user=admin_owner,
@@ -326,12 +329,15 @@ class TestNonAdminTemplateOwnerWorkflowReadOnly:
             tasks_count=1,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=account,
             type=OwnerType.GROUP,
             group=group,
         )
-        template.viewers.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
+            template=template,
             account=account,
             type=OwnerType.GROUP,
             group=group,
@@ -350,7 +356,7 @@ class TestNonAdminTemplateOwnerWorkflowReadOnly:
         assert response.data['is_read_only_viewer'] is True
 
 
-class TestAdminOnlyTemplateViewerReadOnly:
+class TestAdminOnlyTemplateOwnerReadOnly:
     """
     Bug 1: Admin who is ONLY Template Viewer should have read-only access.
     Admin should not get full access just because they are admin.
@@ -379,10 +385,11 @@ class TestAdminOnlyTemplateViewerReadOnly:
             is_active=True,
             tasks_count=1,
         )
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
             account=account,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=admin_viewer,
         )
         workflow = create_test_workflow(
@@ -429,6 +436,7 @@ class TestRoleChangeFromOwnerToViewer:
             tasks_count=1,
         )
         template_owner = TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=account,
             type=OwnerType.USER,
@@ -442,10 +450,11 @@ class TestRoleChangeFromOwnerToViewer:
 
         template_owner.is_deleted = True
         template_owner.save()
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
             account=account,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=admin_user,
         )
         api_client.token_authenticate(admin_user)
@@ -496,10 +505,11 @@ class TestRoleChangeFromOwnerToViewer:
         template_owner.save()
         workflow.owners.remove(admin_user)
         workflow.members.remove(admin_user)
-        TemplateStarter.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.STARTER,
             template=template,
             account=account,
-            type=StarterType.USER,
+            type=OwnerType.USER,
             user=admin_user,
         )
         api_client.token_authenticate(admin_user)
@@ -542,6 +552,7 @@ class TestNonAdminRoleChangeReadOnly:
             tasks_count=1,
         )
         template_owner = TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=account,
             type=OwnerType.USER,
@@ -555,10 +566,11 @@ class TestNonAdminRoleChangeReadOnly:
 
         template_owner.is_deleted = True
         template_owner.save()
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
             account=account,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=non_admin_user,
         )
         api_client.token_authenticate(non_admin_user)
@@ -609,10 +621,11 @@ class TestNonAdminRoleChangeReadOnly:
         template_owner.save()
         workflow.owners.remove(non_admin_user)
         workflow.members.remove(non_admin_user)
-        TemplateStarter.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.STARTER,
             template=template,
             account=account,
-            type=StarterType.USER,
+            type=OwnerType.USER,
             user=non_admin_user,
         )
         api_client.token_authenticate(non_admin_user)

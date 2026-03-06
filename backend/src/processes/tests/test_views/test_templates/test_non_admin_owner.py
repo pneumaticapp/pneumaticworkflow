@@ -13,6 +13,7 @@ Non-admin users who are template owners should have viewer-level access:
 import pytest
 
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     PerformerType,
 )
@@ -53,6 +54,7 @@ class TestNonAdminOwnerTemplateRetrieve:
             tasks_count=1,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=account,
             type=OwnerType.USER,
@@ -92,6 +94,7 @@ class TestNonAdminOwnerTemplateRetrieve:
             tasks_count=1,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=account,
             type=OwnerType.GROUP,
@@ -154,6 +157,7 @@ class TestNonAdminOwnerTemplateUpdate:
             tasks_count=1,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=account,
             type=OwnerType.USER,
@@ -172,6 +176,7 @@ class TestNonAdminOwnerTemplateUpdate:
                     {
                         'type': OwnerType.USER,
                         'source_id': str(admin_owner.id),
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'tasks': [
@@ -225,6 +230,7 @@ class TestNonAdminOwnerTemplateUpdate:
                     {
                         'type': OwnerType.USER,
                         'source_id': str(admin_owner.id),
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'tasks': [
@@ -272,6 +278,7 @@ class TestNonAdminOwnerTemplateClone:
             tasks_count=1,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=account,
             type=OwnerType.USER,
@@ -310,6 +317,7 @@ class TestNonAdminOwnerTemplateDestroy:
             tasks_count=1,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=account,
             type=OwnerType.USER,
@@ -348,6 +356,7 @@ class TestNonAdminOwnerTemplateRun:
             tasks_count=1,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=account,
             type=OwnerType.USER,
@@ -387,6 +396,7 @@ class TestNonAdminOwnerTemplateRun:
             tasks_count=1,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=account,
             type=OwnerType.GROUP,
@@ -429,6 +439,7 @@ class TestNonAdminOwnerTemplatePresets:
             tasks_count=1,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=account,
             type=OwnerType.USER,
@@ -466,6 +477,7 @@ class TestNonAdminOwnerTemplatePresets:
             tasks_count=1,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=account,
             type=OwnerType.USER,
@@ -514,10 +526,12 @@ class TestNonAdminOwnerCanBeAddedAsOwner:
                     {
                         'type': OwnerType.USER,
                         'source_id': str(admin_owner.id),
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': str(non_admin_user.id),
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'tasks': [
@@ -584,10 +598,12 @@ class TestNonAdminOwnerCanBeAddedAsOwner:
                     {
                         'type': OwnerType.USER,
                         'source_id': str(admin_owner.id),
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': str(non_admin_user.id),
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'tasks': [
@@ -641,6 +657,7 @@ class TestNonAdminOwnerTemplateList:
             tasks_count=1,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=account,
             type=OwnerType.USER,

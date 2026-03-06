@@ -94,8 +94,15 @@ class OwnerType:
     )
 
 
-ViewerType = OwnerType
-StarterType = OwnerType
+class OwnerRole:
+    OWNER = 'owner'
+    VIEWER = 'viewer'
+    STARTER = 'starter'
+    choices = (
+        (OWNER, OWNER),
+        (VIEWER, VIEWER),
+        (STARTER, STARTER),
+    )
 
 
 class DirectlyStatus:

@@ -56,12 +56,6 @@ from src.processes.serializers.templates.mixins import (
 from src.processes.serializers.templates.owner import (
     TemplateOwnerSerializer,
 )
-from src.processes.serializers.templates.viewer import (
-    TemplateViewerSerializer,
-)
-from src.processes.serializers.templates.starter import (
-    TemplateStarterSerializer,
-)
 from src.processes.serializers.templates.task import (
     ShortTaskSerializer,
     TaskTemplatePrivilegesSerializer,
@@ -117,8 +111,6 @@ class TemplateSerializer(
             'tasks',
             'kickoff',
             'owners',
-            'viewers',
-            'starters',
             'is_active',
             'is_public',
             'is_embedded',
@@ -152,8 +144,6 @@ class TemplateSerializer(
     updated_by = IntegerField(read_only=True, source='updated_by_id')
     date_updated = DateTimeField(read_only=True)
     owners = TemplateOwnerSerializer(many=True, required=False)
-    viewers = TemplateViewerSerializer(many=True, required=False)
-    starters = TemplateStarterSerializer(many=True, required=False)
     kickoff = KickoffSerializer(required=False)
     tasks = TaskTemplateSerializer(many=True, required=False)
     public_url = CharField(read_only=True)
@@ -421,10 +411,6 @@ class TemplateSerializer(
             data['description'] = ''
         if data.get('tasks') is None:
             data['tasks'] = []
-        if data.get('viewers') is None:
-            data['viewers'] = []
-        if data.get('starters') is None:
-            data['starters'] = []
         # TemplateSerializer cannot return a single Kickoff object
         # because the Template related with Kickoff by foreign key
         # instead of one to one relation. Getting the object manually:
@@ -603,30 +589,6 @@ class TemplateSerializer(
                 'ancestors_by_tasks': ancestors_by_tasks,
             },
         )
-        self.create_or_update_related(
-            slz_cls=TemplateViewerSerializer,
-            data=validated_data.get('viewers', []),
-            ancestors_data={
-                'account': account,
-                'template': instance,
-            },
-            slz_context={
-                **self.context,
-                'template': instance,
-            },
-        )
-        self.create_or_update_related(
-            slz_cls=TemplateStarterSerializer,
-            data=validated_data.get('starters', []),
-            ancestors_data={
-                'account': account,
-                'template': instance,
-            },
-            slz_context={
-                **self.context,
-                'template': instance,
-            },
-        )
 
         if instance.is_active:
             version_service = TemplateVersioningService(
@@ -696,30 +658,6 @@ class TemplateSerializer(
                 'tasks_api_names': tasks_api_names,
                 'parents_by_tasks': parents_by_tasks,
                 'ancestors_by_tasks': ancestors_by_tasks,
-            },
-        )
-        self.create_or_update_related(
-            slz_cls=TemplateViewerSerializer,
-            data=validated_data.get('viewers', []),
-            ancestors_data={
-                'account': account,
-                'template': instance,
-            },
-            slz_context={
-                **self.context,
-                'template': instance,
-            },
-        )
-        self.create_or_update_related(
-            slz_cls=TemplateStarterSerializer,
-            data=validated_data.get('starters', []),
-            ancestors_data={
-                'account': account,
-                'template': instance,
-            },
-            slz_context={
-                **self.context,
-                'template': instance,
             },
         )
 

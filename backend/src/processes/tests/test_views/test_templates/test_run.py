@@ -21,12 +21,11 @@ from src.processes.enums import (
     DirectlyStatus,
     DueDateRule,
     FieldType,
+    OwnerRole,
     OwnerType,
     PerformerType,
     PredicateOperator,
-    StarterType,
     TaskStatus,
-    ViewerType,
     WorkflowEventType,
     WorkflowStatus,
 )
@@ -46,8 +45,6 @@ from src.processes.models.templates.fields import (
     FieldTemplateSelection,
 )
 from src.processes.models.templates.owner import TemplateOwner
-from src.processes.models.templates.starter import TemplateStarter
-from src.processes.models.templates.viewer import TemplateViewer
 from src.processes.models.templates.raw_due_date import RawDueDateTemplate
 from src.processes.models.templates.template import Template
 from src.processes.models.workflows.attachment import FileAttachment
@@ -1221,6 +1218,7 @@ def test_skip_delayed_task__fields_is_empty(mocker, api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -1510,6 +1508,7 @@ def test_run__cancel_delay__ok(api_client, mocker):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1570,6 +1569,7 @@ def test_run__cancel_delay__ok(api_client, mocker):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -2345,10 +2345,12 @@ def test_run__user_field_invited_transfer__ok(
                 {
                     'type': OwnerType.USER,
                     'source_id': account_2_owner.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': account_2_new_user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -3063,6 +3065,7 @@ def test_run__task_name_with_field__ok(mocker, api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -3157,6 +3160,7 @@ def test_run__task_name_with_kickoff_data_value_int__ok(mocker, api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -3242,6 +3246,7 @@ def test_run__task_name_with_kickoff_data_value_float__ok(mocker, api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -3329,6 +3334,7 @@ def test_run__task_name_with_invalid_kickoff_data_value__validation_error(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -3416,6 +3422,7 @@ def test_run__task_name_with_field_2__ok(mocker, api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -5043,9 +5050,10 @@ def test_run__template_viewer_user__ok(mocker, api_client):
         is_account_owner=False,
         is_admin=False,
     )
-    TemplateViewer.objects.create(
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
         template=template,
-        type=ViewerType.USER,
+        type=OwnerType.USER,
         user=viewer_user,
         account=account,
     )
@@ -5102,9 +5110,10 @@ def test_run__template_viewer_group__ok(mocker, api_client):
     group = create_test_group(account=account, name='Viewers Group')
     group.users.add(viewer_user)
 
-    TemplateViewer.objects.create(
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
         template=template,
-        type=ViewerType.GROUP,
+        type=OwnerType.GROUP,
         group=group,
         account=account,
     )
@@ -5159,6 +5168,7 @@ def test_run__template_owner_not_admin__ok(mocker, api_client):
         is_admin=False,
     )
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         type=OwnerType.USER,
         user=owner_user,
@@ -5214,9 +5224,10 @@ def test_run__template_starter_not_admin__ok(mocker, api_client):
         is_account_owner=False,
         is_admin=False,
     )
-    TemplateStarter.objects.create(
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
         template=template,
-        type=StarterType.USER,
+        type=OwnerType.USER,
         user=starter_user,
         account=account,
     )

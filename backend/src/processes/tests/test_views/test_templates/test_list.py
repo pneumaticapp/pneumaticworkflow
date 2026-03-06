@@ -7,12 +7,12 @@ from src.accounts.messages import (
 )
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     PerformerType,
     TemplateType,
 )
 from src.processes.models.templates.owner import TemplateOwner
-from src.processes.models.templates.starter import TemplateStarter
 from src.processes.models.templates.template import Template
 from src.processes.tests.fixtures import (
     create_invited_user,
@@ -43,6 +43,7 @@ class TestListTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -75,6 +76,7 @@ class TestListTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -125,6 +127,7 @@ class TestListTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -173,6 +176,7 @@ class TestListTemplate:
             is_active=True,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=account,
             type=OwnerType.USER,
@@ -676,6 +680,7 @@ class TestListTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},
@@ -709,6 +714,7 @@ class TestListTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},
@@ -849,7 +855,8 @@ class TestListTemplate:
             user=owner,
             is_active=True,
         )
-        TemplateStarter.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.STARTER,
             template=template,
             account=account,
             type=OwnerType.USER,
@@ -890,7 +897,8 @@ class TestListTemplate:
             user=owner,
             is_active=True,
         )
-        TemplateStarter.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.STARTER,
             template=template,
             account=account,
             type=OwnerType.GROUP,

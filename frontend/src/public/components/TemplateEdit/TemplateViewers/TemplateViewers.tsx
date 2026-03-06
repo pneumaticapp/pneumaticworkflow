@@ -9,15 +9,15 @@ import { trackInviteTeamInPage } from '../../../utils/analytics';
 import { getNotDeletedUsers, getUserFullName } from '../../../utils/users';
 import { EOptionTypes, TUsersDropdownOption, UsersDropdown } from '../../UI/form/UsersDropdown';
 import { getIsUserSubsribed, getSubscriptionPlan, getUsers } from '../../../redux/selectors/user';
-import { ETaskPerformerType, ETemplateOwnerType, ETemplateViewerType, ITemplate, ITemplateViewer } from '../../../types/template';
+import { ETaskPerformerType, ETemplateOwnerRole, ETemplateOwnerType, ETemplateViewerType, ITemplateOwner } from '../../../types/template';
 import ViewerItem from './components';
 
 import styles from './TemplateViewers.css';
 import UserDataWithGroup from '../../UserDataWithGroup';
 
 interface ITemplateViewersProps {
-  templateViewers: ITemplate['viewers'];
-  onChangeTemplateViewers(templateViewers: ITemplateViewer[]): void;
+  templateViewers: ITemplateOwner[];
+  onChangeTemplateViewers(templateViewers: ITemplateOwner[]): void;
 }
 
 export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers }: ITemplateViewersProps) {
@@ -98,10 +98,11 @@ export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers 
 
   const handleAddTemplateViewers = ({ id, optionType }: Pick<TUsersDropdownOption, 'id' | 'optionType'>) => {
     if (!isSubscribed && billingPlan !== ESubscriptionPlan.Free) return;
-    const newViewer: ITemplateViewer = {
+    const newViewer: ITemplateOwner = {
       sourceId: String(id),
       apiName: createViewerApiName(),
       type: optionType as unknown as ETemplateViewerType,
+      role: ETemplateOwnerRole.Viewer,
     };
     onChangeTemplateViewers([...templateViewers, newViewer]);
   };

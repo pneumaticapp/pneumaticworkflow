@@ -30,11 +30,10 @@ from src.processes.models.templates.system_template import SystemTemplate
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
 from src.processes.models.templates.owner import TemplateOwner
-from src.processes.models.templates.viewer import TemplateViewer
 from src.processes.permissions import (
     TemplateAdminOwnerPermission,
     TemplateOwnerOrViewerPermission,
-    TemplateStarterPermission,
+    TemplateOwnerPermission,
 )
 from src.processes.queries import (
     TemplateStepsQuery,
@@ -168,7 +167,7 @@ class TemplateViewSet(
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
                 UsersOverlimitedPermission(),
-                TemplateStarterPermission(),
+                TemplateOwnerPermission(),
             )
         if self.action in (
             'list',
@@ -227,13 +226,11 @@ class TemplateViewSet(
             # Template owner, viewer, or Workflow Member
             qst = qst.filter(
                 Q(owners__type='user', owners__user_id=user.id,
-                  owners__is_deleted=False) |
+                  owners__is_deleted=False,
+                  owners__role__in=('owner', 'viewer')) |
                 Q(owners__type='group', owners__group__users__id=user.id,
-                  owners__is_deleted=False) |
-                Q(viewers__type='user', viewers__user_id=user.id,
-                  viewers__is_deleted=False) |
-                Q(viewers__type='group', viewers__group__users__id=user.id,
-                  viewers__is_deleted=False) |
+                  owners__is_deleted=False,
+                  owners__role__in=('owner', 'viewer')) |
                 Q(workflows__members=user.id),
             ).distinct()
         elif self.action == 'run':
@@ -241,16 +238,7 @@ class TemplateViewSet(
             qst = qst.with_template_access(user.id)
         elif self.action == 'presets':
             # Template owners and viewers can access presets
-            qst = qst.filter(
-                Q(owners__type='user', owners__user_id=user.id,
-                  owners__is_deleted=False) |
-                Q(owners__type='group', owners__group__users__id=user.id,
-                  owners__is_deleted=False) |
-                Q(viewers__type='user', viewers__user_id=user.id,
-                  viewers__is_deleted=False) |
-                Q(viewers__type='group', viewers__group__users__id=user.id,
-                  viewers__is_deleted=False),
-            ).distinct()
+            qst = qst.with_template_owner_or_viewer(user.id)
         else:
             # For list/update/clone/destroy: only template owners
             qst = qst.filter(
@@ -272,18 +260,14 @@ class TemplateViewSet(
         # does not working with custom defined Prefetch(...) fields
 
         if self.action in ('retrieve', 'update'):
-            viewers_qs = TemplateViewer.objects.filter(
-                is_deleted=False,
-            ).order_by('type', 'id')
             owners_qs = TemplateOwner.objects.filter(
                 is_deleted=False,
-            ).order_by('type', 'id')
+            ).order_by('role', 'type', 'id')
             queryset = queryset.prefetch_related(
                 'kickoff',
                 'kickoff__fields',
                 'kickoff__fields__selections',
                 Prefetch('owners', queryset=owners_qs),
-                Prefetch('viewers', queryset=viewers_qs),
                 Prefetch(
                     lookup='tasks',
                     queryset=(

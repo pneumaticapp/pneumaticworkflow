@@ -2,8 +2,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from unittest.mock import Mock
 
-from src.processes.enums import ViewerType, OwnerType
-from src.processes.models.templates.viewer import TemplateViewer
+from src.processes.enums import OwnerRole, OwnerType
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.permissions import TaskCommentPermission
@@ -185,6 +184,7 @@ class TestTaskCommentPermission:
 
         # Create template owner
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             type=OwnerType.USER,
             user=owner_user,
@@ -224,6 +224,7 @@ class TestTaskCommentPermission:
 
         # Create template owner for group
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             type=OwnerType.GROUP,
             group=group,
@@ -263,9 +264,10 @@ class TestTaskCommentPermission:
         )
 
         # Create template viewer
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer_user,
             account=account,
         )
@@ -308,9 +310,10 @@ class TestTaskCommentPermission:
         group.users.add(viewer_user)
 
         # Create template viewer for group
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.GROUP,
+            type=OwnerType.GROUP,
             group=group,
             account=account,
         )
@@ -351,9 +354,10 @@ class TestTaskCommentPermission:
         )
 
         # Create template viewer
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer_user,
             account=account,
         )

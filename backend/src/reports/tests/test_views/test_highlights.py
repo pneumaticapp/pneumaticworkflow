@@ -13,12 +13,10 @@ from src.generics.messages import (
 from src.processes.enums import (
     FieldType,
     OwnerType,
-    ViewerType,
     WorkflowEventType,
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.owner import TemplateOwner
-from src.processes.models.templates.viewer import TemplateViewer
 from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.task import Delay
 from src.processes.models.workflows.workflow import Workflow
@@ -60,9 +58,10 @@ def test_highlights__template_viewer__ok(api_client):
         is_account_owner=False,
         is_admin=False,
     )
-    TemplateViewer.objects.create(
+    TemplateOwner.objects.create(
+        role='viewer',
         template=template,
-        type=ViewerType.USER,
+        type=OwnerType.USER,
         user=viewer_user,
         account=account,
     )

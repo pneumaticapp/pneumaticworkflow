@@ -1,7 +1,6 @@
 import {
   ETemplateOwnerType,
-  ETemplateViewerType,
-  ETemplateStarterType,
+  ETemplateOwnerRole,
   ETaskPerformerType,
   ITemplateResponse,
   ITemplate,
@@ -39,10 +38,9 @@ const createMockTemplateResponse = (
       apiName: 'owner-123456',
       sourceId: '1',
       type: ETemplateOwnerType.User,
+      role: ETemplateOwnerRole.Owner,
     },
   ],
-  viewers: [],
-  starters: [],
   kickoff: {
     description: '',
     fields: [],
@@ -93,10 +91,9 @@ const createMockTemplate = (overrides: Partial<ITemplate> = {}): ITemplate => ({
       apiName: 'owner-123456',
       sourceId: '1',
       type: ETemplateOwnerType.User,
+      role: ETemplateOwnerRole.Owner,
     },
   ],
-  viewers: [],
-  starters: [],
   kickoff: getEmptyKickoff(),
   tasks: [
     {
@@ -157,11 +154,8 @@ describe('template utilities', () => {
   describe('getNormalizedTemplate', () => {
     const mockUsers: TUserListItem[] = [createMockUser({ id: 1 }), createMockUser({ id: 2 })];
 
-    it('normalizes template with empty viewers and starters', () => {
-      const templateResponse = createMockTemplateResponse({
-        viewers: [],
-        starters: [],
-      });
+    it('normalizes template with only owners', () => {
+      const templateResponse = createMockTemplateResponse();
 
       const result = getNormalizedTemplate(
         templateResponse,
@@ -170,24 +164,32 @@ describe('template utilities', () => {
         ESubscriptionPlan.Premium,
       );
 
-      expect(result.viewers).toEqual([]);
-      expect(result.starters).toEqual([]);
+      const ownerRoles = result.owners.map(o => o.role);
+      expect(ownerRoles).toEqual([ETemplateOwnerRole.Owner]);
     });
 
-    it('normalizes template with viewers', () => {
-      const viewers = [
+    it('normalizes template with viewers in owners', () => {
+      const owners = [
+        {
+          apiName: 'owner-123456',
+          sourceId: '1',
+          type: ETemplateOwnerType.User,
+          role: ETemplateOwnerRole.Owner,
+        },
         {
           apiName: 'viewer-123456',
           sourceId: '1',
-          type: ETemplateViewerType.User,
+          type: ETemplateOwnerType.User,
+          role: ETemplateOwnerRole.Viewer,
         },
         {
           apiName: 'viewer-789012',
           sourceId: '2',
-          type: ETemplateViewerType.UserGroup,
+          type: ETemplateOwnerType.UserGroup,
+          role: ETemplateOwnerRole.Viewer,
         },
       ];
-      const templateResponse = createMockTemplateResponse({ viewers });
+      const templateResponse = createMockTemplateResponse({ owners });
 
       const result = getNormalizedTemplate(
         templateResponse,
@@ -196,23 +198,33 @@ describe('template utilities', () => {
         ESubscriptionPlan.Premium,
       );
 
-      expect(result.viewers).toEqual(viewers);
+      expect(result.owners).toEqual(owners);
+      const viewers = result.owners.filter(o => o.role === ETemplateOwnerRole.Viewer);
+      expect(viewers).toHaveLength(2);
     });
 
-    it('normalizes template with starters', () => {
-      const starters = [
+    it('normalizes template with starters in owners', () => {
+      const owners = [
+        {
+          apiName: 'owner-123456',
+          sourceId: '1',
+          type: ETemplateOwnerType.User,
+          role: ETemplateOwnerRole.Owner,
+        },
         {
           apiName: 'starter-123456',
           sourceId: '1',
-          type: ETemplateStarterType.User,
+          type: ETemplateOwnerType.User,
+          role: ETemplateOwnerRole.Starter,
         },
         {
           apiName: 'starter-789012',
           sourceId: '3',
-          type: ETemplateStarterType.UserGroup,
+          type: ETemplateOwnerType.UserGroup,
+          role: ETemplateOwnerRole.Starter,
         },
       ];
-      const templateResponse = createMockTemplateResponse({ starters });
+      const templateResponse = createMockTemplateResponse({ owners });
 
       const result = getNormalizedTemplate(
         templateResponse,
@@ -221,25 +233,32 @@ describe('template utilities', () => {
         ESubscriptionPlan.Premium,
       );
 
-      expect(result.starters).toEqual(starters);
+      const starters = result.owners.filter(o => o.role === ETemplateOwnerRole.Starter);
+      expect(starters).toHaveLength(2);
     });
 
-    it('normalizes template with both viewers and starters', () => {
-      const viewers = [
+    it('normalizes template with all roles in owners', () => {
+      const owners = [
+        {
+          apiName: 'owner-123456',
+          sourceId: '1',
+          type: ETemplateOwnerType.User,
+          role: ETemplateOwnerRole.Owner,
+        },
         {
           apiName: 'viewer-123456',
           sourceId: '1',
-          type: ETemplateViewerType.User,
+          type: ETemplateOwnerType.User,
+          role: ETemplateOwnerRole.Viewer,
         },
-      ];
-      const starters = [
         {
           apiName: 'starter-123456',
           sourceId: '2',
-          type: ETemplateStarterType.User,
+          type: ETemplateOwnerType.User,
+          role: ETemplateOwnerRole.Starter,
         },
       ];
-      const templateResponse = createMockTemplateResponse({ viewers, starters });
+      const templateResponse = createMockTemplateResponse({ owners });
 
       const result = getNormalizedTemplate(
         templateResponse,
@@ -248,26 +267,11 @@ describe('template utilities', () => {
         ESubscriptionPlan.Premium,
       );
 
-      expect(result.viewers).toEqual(viewers);
-      expect(result.starters).toEqual(starters);
-    });
-
-    it('handles undefined viewers and starters gracefully', () => {
-      const templateResponse = createMockTemplateResponse();
-      // @ts-expect-error - testing undefined handling
-      delete templateResponse.viewers;
-      // @ts-expect-error - testing undefined handling
-      delete templateResponse.starters;
-
-      const result = getNormalizedTemplate(
-        templateResponse,
-        true,
-        mockUsers,
-        ESubscriptionPlan.Premium,
-      );
-
-      expect(result.viewers).toEqual([]);
-      expect(result.starters).toEqual([]);
+      expect(result.owners).toEqual(owners);
+      const viewers = result.owners.filter(o => o.role === ETemplateOwnerRole.Viewer);
+      const starters = result.owners.filter(o => o.role === ETemplateOwnerRole.Starter);
+      expect(viewers).toHaveLength(1);
+      expect(starters).toHaveLength(1);
     });
 
     it('calculates tasksCount correctly', () => {
@@ -298,92 +302,32 @@ describe('template utilities', () => {
   });
 
   describe('mapTemplateRequest', () => {
-    it('maps template with empty viewers and starters', () => {
-      const template = createMockTemplate({
-        viewers: [],
-        starters: [],
-      });
-
-      const result = mapTemplateRequest(template);
-
-      expect(result.viewers).toEqual([]);
-      expect(result.starters).toEqual([]);
-    });
-
-    it('maps template with viewers', () => {
-      const viewers = [
+    it('maps template with owners of different roles', () => {
+      const owners = [
+        {
+          apiName: 'owner-123456',
+          sourceId: '1',
+          type: ETemplateOwnerType.User,
+          role: ETemplateOwnerRole.Owner,
+        },
         {
           apiName: 'viewer-123456',
           sourceId: '1',
-          type: ETemplateViewerType.User,
+          type: ETemplateOwnerType.User,
+          role: ETemplateOwnerRole.Viewer,
         },
-        {
-          apiName: 'viewer-789012',
-          sourceId: '2',
-          type: ETemplateViewerType.UserGroup,
-        },
-      ];
-      const template = createMockTemplate({ viewers });
-
-      const result = mapTemplateRequest(template);
-
-      expect(result.viewers).toEqual(viewers);
-    });
-
-    it('maps template with starters', () => {
-      const starters = [
-        {
-          apiName: 'starter-123456',
-          sourceId: '1',
-          type: ETemplateStarterType.User,
-        },
-        {
-          apiName: 'starter-789012',
-          sourceId: '3',
-          type: ETemplateStarterType.UserGroup,
-        },
-      ];
-      const template = createMockTemplate({ starters });
-
-      const result = mapTemplateRequest(template);
-
-      expect(result.starters).toEqual(starters);
-    });
-
-    it('maps template with both viewers and starters', () => {
-      const viewers = [
-        {
-          apiName: 'viewer-123456',
-          sourceId: '1',
-          type: ETemplateViewerType.User,
-        },
-      ];
-      const starters = [
         {
           apiName: 'starter-123456',
           sourceId: '2',
-          type: ETemplateStarterType.User,
+          type: ETemplateOwnerType.User,
+          role: ETemplateOwnerRole.Starter,
         },
       ];
-      const template = createMockTemplate({ viewers, starters });
+      const template = createMockTemplate({ owners });
 
       const result = mapTemplateRequest(template);
 
-      expect(result.viewers).toEqual(viewers);
-      expect(result.starters).toEqual(starters);
-    });
-
-    it('handles undefined viewers and starters with nullish coalescing', () => {
-      const template = createMockTemplate();
-      // @ts-expect-error - testing undefined handling
-      delete template.viewers;
-      // @ts-expect-error - testing undefined handling
-      delete template.starters;
-
-      const result = mapTemplateRequest(template);
-
-      expect(result.viewers).toEqual([]);
-      expect(result.starters).toEqual([]);
+      expect(result.owners).toEqual(owners);
     });
 
     it('preserves template name', () => {

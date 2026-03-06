@@ -1,8 +1,8 @@
 import pytest
 
 from src.accounts.models import UserGroup
-from src.processes.enums import PresetType, ViewerType
-from src.processes.models.templates.viewer import TemplateViewer
+from src.processes.enums import OwnerRole, OwnerType, PresetType
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
@@ -259,10 +259,11 @@ class TestTemplatePresetsListView:
             email='viewer@test.com',
         )
         template = create_test_template(template_owner, is_active=True)
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
             account=account,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user_id=viewer_user.id,
         )
 
@@ -306,10 +307,11 @@ class TestTemplatePresetsListView:
             account=account,
         )
         group.users.add(viewer_user)
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
             account=account,
-            type=ViewerType.GROUP,
+            type=OwnerType.GROUP,
             group=group,
         )
 
@@ -352,10 +354,11 @@ class TestTemplatePresetsListView:
             email='viewer@test.com',
         )
         template = create_test_template(template_owner, is_active=True)
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
             account=account,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user_id=viewer_user.id,
             is_deleted=True,
         )

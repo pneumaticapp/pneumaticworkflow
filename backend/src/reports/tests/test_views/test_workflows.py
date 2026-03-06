@@ -5,11 +5,10 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from src.processes.enums import (
-    ViewerType,
+    OwnerType,
     WorkflowStatus,
 )
 from src.processes.models.templates.owner import TemplateOwner
-from src.processes.models.templates.viewer import TemplateViewer
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
     create_invited_user,
@@ -596,9 +595,10 @@ class TestDashboardOverviewTemplateOwnerViewerE2E:
             email='viewer@test.test',
             is_account_owner=False,
         )
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role='viewer',
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer,
             account=account,
         )
@@ -633,9 +633,10 @@ class TestDashboardOverviewTemplateOwnerViewerE2E:
             email='viewer@test.test',
             is_account_owner=False,
         )
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role='viewer',
             template=template_visible,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer,
             account=account,
         )
@@ -708,9 +709,10 @@ class TestDashboardOverviewTemplateOwnerViewerE2E:
             email='viewer@test.test',
             is_account_owner=False,
         )
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role='viewer',
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer,
             account=account,
         )
@@ -2316,10 +2318,11 @@ class TestOverviewQueryAnalysis:
 
         # Template viewer has access to
         accessible_template = create_test_template(owner)
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role='viewer',
             template=accessible_template,
             user=viewer,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             account_id=account.id,
         )
 

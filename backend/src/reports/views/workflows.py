@@ -95,20 +95,17 @@ class WorkflowsDashboardViewSet(
             Template.objects
             .on_account(self.request.user.account_id)
             .filter(
-                Q(owners__type='user', owners__user_id=self.request.user.id)
+                Q(
+                    owners__type='user',
+                    owners__user_id=self.request.user.id,
+                    owners__is_deleted=False,
+                    owners__role__in=('owner', 'viewer'),
+                )
                 | Q(
                     owners__type='group',
                     owners__group__users__id=self.request.user.id,
-                )
-                | Q(
-                    viewers__type='user',
-                    viewers__user_id=self.request.user.id,
-                    viewers__is_deleted=False,
-                )
-                | Q(
-                    viewers__type='group',
-                    viewers__group__users__id=self.request.user.id,
-                    viewers__is_deleted=False,
+                    owners__is_deleted=False,
+                    owners__role__in=('owner', 'viewer'),
                 ),
             ).distinct()
         )

@@ -9,7 +9,7 @@ import { trackInviteTeamInPage } from '../../../utils/analytics';
 import { getNotDeletedUsers, getUserFullName } from '../../../utils/users';
 import { EOptionTypes, TUsersDropdownOption, UsersDropdown } from '../../UI/form/UsersDropdown';
 import { getIsUserSubsribed, getSubscriptionPlan, getUsers } from '../../../redux/selectors/user';
-import { ETaskPerformerType, ETemplateOwnerType, ITemplate, ITemplateOwner } from '../../../types/template';
+import { ETaskPerformerType, ETemplateOwnerRole, ETemplateOwnerType, ITemplate, ITemplateOwner } from '../../../types/template';
 import OwnerItem from './components';
 
 import styles from './TemplateOwners.css';
@@ -102,6 +102,7 @@ export function TemplateOwners({ templateOwners = [], onChangeTemplateOwners }: 
       sourceId: String(id),
       apiName: createOwnerApiName(),
       type: optionType as unknown as ETemplateOwnerType,
+      role: ETemplateOwnerRole.Owner,
     };
     onChangeTemplateOwners([...templateOwners, newOwner]);
   };

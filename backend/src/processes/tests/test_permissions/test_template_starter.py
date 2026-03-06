@@ -1,10 +1,9 @@
 import pytest
 from django.contrib.auth import get_user_model
 
-from src.processes.enums import ViewerType
-from src.processes.models.templates.starter import TemplateStarter
-from src.processes.models.templates.viewer import TemplateViewer
-from src.processes.permissions import TemplateStarterPermission
+from src.processes.enums import OwnerRole, OwnerType
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.permissions import TemplateOwnerPermission
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_group,
@@ -26,7 +25,7 @@ class MockRequest:
         self.user = user
 
 
-class TestTemplateStarterPermission:
+class TestTemplateOwnerPermission:
 
     def test_has_permission__account_owner__ok(self):
         # arrange
@@ -42,7 +41,7 @@ class TestTemplateStarterPermission:
         )
         template = create_test_template(template_owner)
 
-        permission = TemplateStarterPermission()
+        permission = TemplateOwnerPermission()
         request = MockRequest(account_owner)
         view = MockView(template.id)
 
@@ -67,14 +66,15 @@ class TestTemplateStarterPermission:
         template = create_test_template(template_owner)
 
         # Add user as starter
-        TemplateStarter.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.STARTER,
             template=template,
-            type='user',
+            type=OwnerType.USER,
             user=starter_user,
             account=account,
         )
 
-        permission = TemplateStarterPermission()
+        permission = TemplateOwnerPermission()
         request = MockRequest(starter_user)
         view = MockView(template.id)
 
@@ -93,7 +93,7 @@ class TestTemplateStarterPermission:
         )
         template = create_test_template(template_owner)
 
-        permission = TemplateStarterPermission()
+        permission = TemplateOwnerPermission()
         request = MockRequest(template_owner)
         view = MockView(template.id)
 
@@ -118,7 +118,7 @@ class TestTemplateStarterPermission:
             is_account_owner=False,
         )
 
-        permission = TemplateStarterPermission()
+        permission = TemplateOwnerPermission()
         request = MockRequest(random_user)
         view = MockView(template.id)
 
@@ -133,7 +133,7 @@ class TestTemplateStarterPermission:
         account = create_test_account()
         user = create_test_user(account=account)
 
-        permission = TemplateStarterPermission()
+        permission = TemplateOwnerPermission()
         request = MockRequest(user)
         view = MockView('invalid')
 
@@ -152,7 +152,7 @@ class TestTemplateStarterPermission:
             is_admin=False,
         )
 
-        permission = TemplateStarterPermission()
+        permission = TemplateOwnerPermission()
         request = MockRequest(user)
         view = MockView(99999)
 
@@ -178,14 +178,15 @@ class TestTemplateStarterPermission:
         )
         template = create_test_template(template_owner)
 
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer_user,
             account=account,
         )
 
-        permission = TemplateStarterPermission()
+        permission = TemplateOwnerPermission()
         request = MockRequest(viewer_user)
         view = MockView(template.id)
 
@@ -213,14 +214,15 @@ class TestTemplateStarterPermission:
         group = create_test_group(account=account, name='Viewers Group')
         group.users.add(viewer_user)
 
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.GROUP,
+            type=OwnerType.GROUP,
             group=group,
             account=account,
         )
 
-        permission = TemplateStarterPermission()
+        permission = TemplateOwnerPermission()
         request = MockRequest(viewer_user)
         view = MockView(template.id)
 

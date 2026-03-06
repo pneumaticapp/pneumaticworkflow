@@ -2,8 +2,8 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 
-from src.processes.enums import ViewerType
-from src.processes.models.templates.viewer import TemplateViewer
+from src.processes.enums import OwnerRole, OwnerType
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_group,
@@ -16,7 +16,7 @@ UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
 
 
-class TestTemplateViewer:
+class TestTemplateOwner:
 
     def test_create_user_viewer__ok(self):
         # arrange
@@ -29,21 +29,22 @@ class TestTemplateViewer:
         )
 
         # act
-        viewer = TemplateViewer.objects.create(
+        viewer = TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer_user,
             account=account,
         )
 
         # assert
         assert viewer.template == template
-        assert viewer.type == ViewerType.USER
+        assert viewer.type == OwnerType.USER
         assert viewer.user == viewer_user
         assert viewer.group is None
         assert viewer.account == account
         assert not viewer.is_deleted
-        assert viewer.api_name.startswith('viewer')
+        assert viewer.api_name.startswith('owner')
 
     def test_create_group_viewer__ok(self):
         # arrange
@@ -53,21 +54,22 @@ class TestTemplateViewer:
         group = create_test_group(account=account, name='Test Group')
 
         # act
-        viewer = TemplateViewer.objects.create(
+        viewer = TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.GROUP,
+            type=OwnerType.GROUP,
             group=group,
             account=account,
         )
 
         # assert
         assert viewer.template == template
-        assert viewer.type == ViewerType.GROUP
+        assert viewer.type == OwnerType.GROUP
         assert viewer.user is None
         assert viewer.group == group
         assert viewer.account == account
         assert not viewer.is_deleted
-        assert viewer.api_name.startswith('viewer')
+        assert viewer.api_name.startswith('owner')
 
     def test_create_duplicate_api_name__constraint_error(self):
         # arrange
@@ -80,9 +82,10 @@ class TestTemplateViewer:
         )
 
         # Create first viewer
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer_user,
             account=account,
             api_name='test_viewer',
@@ -90,9 +93,10 @@ class TestTemplateViewer:
 
         # act & assert
         with pytest.raises(IntegrityError):
-            TemplateViewer.objects.create(
+            TemplateOwner.objects.create(
+                role=OwnerRole.VIEWER,
                 template=template,
-                type=ViewerType.USER,
+                type=OwnerType.USER,
                 user=viewer_user,
                 account=account,
                 api_name='test_viewer',
@@ -107,9 +111,10 @@ class TestTemplateViewer:
             account=account,
             email='viewer@test.com',
         )
-        viewer = TemplateViewer.objects.create(
+        viewer = TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer_user,
             account=account,
         )
@@ -137,21 +142,23 @@ class TestTemplateViewer:
         group = create_test_group(account=account, name='Test Group')
 
         # act
-        user_viewer = TemplateViewer.objects.create(
+        user_viewer = TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer_user1,
             account=account,
         )
-        group_viewer = TemplateViewer.objects.create(
+        group_viewer = TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.GROUP,
+            type=OwnerType.GROUP,
             group=group,
             account=account,
         )
 
         # assert
-        viewers = template.viewers.all()
+        viewers = template.owners.filter(role=OwnerRole.VIEWER)
         assert len(viewers) == 2
         assert user_viewer in viewers
         assert group_viewer in viewers
@@ -168,21 +175,23 @@ class TestTemplateViewer:
         group = create_test_group(account=account, name='Test Group')
 
         # act
-        group_viewer = TemplateViewer.objects.create(
+        group_viewer = TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.GROUP,
+            type=OwnerType.GROUP,
             group=group,
             account=account,
         )
-        user_viewer = TemplateViewer.objects.create(
+        user_viewer = TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer_user,
             account=account,
         )
 
         # assert
-        viewers = list(TemplateViewer.objects.all())
+        viewers = list(TemplateOwner.objects.filter(role=OwnerRole.VIEWER))
         # Ordered by type (group before user alphabetically)
         assert viewers[0] == group_viewer
         assert viewers[1] == user_viewer

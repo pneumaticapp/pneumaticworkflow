@@ -23,15 +23,14 @@ from src.generics.querysets import (
 from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
+    OwnerRole,
     OwnerType,
     PerformerType,
     PresetType,
-    StarterType,
     SysTemplateType,
     TaskStatus,
     TemplateOrdering,
     TemplateType,
-    ViewerType,
     WorkflowEventActionType,
     WorkflowEventType,
     WorkflowStatus,
@@ -108,10 +107,12 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
     def with_template_owner(self, user_id: int):
         return self.filter(
             Q(
+                owners__role=OwnerRole.OWNER,
                 owners__type=OwnerType.USER,
                 owners__user_id=user_id,
                 owners__is_deleted=False,
             ) | Q(
+                owners__role=OwnerRole.OWNER,
                 owners__type=OwnerType.GROUP,
                 owners__group__users__id=user_id,
                 owners__is_deleted=False,
@@ -121,26 +122,30 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
     def with_template_viewer(self, user_id: int):
         return self.filter(
             Q(
-                viewers__type=ViewerType.USER,
-                viewers__user_id=user_id,
-                viewers__is_deleted=False,
+                owners__role=OwnerRole.VIEWER,
+                owners__type=OwnerType.USER,
+                owners__user_id=user_id,
+                owners__is_deleted=False,
             ) | Q(
-                viewers__type=ViewerType.GROUP,
-                viewers__group__users__id=user_id,
-                viewers__is_deleted=False,
+                owners__role=OwnerRole.VIEWER,
+                owners__type=OwnerType.GROUP,
+                owners__group__users__id=user_id,
+                owners__is_deleted=False,
             ),
         ).distinct()
 
     def with_template_starter(self, user_id: int):
         return self.filter(
             Q(
-                starters__type=StarterType.USER,
-                starters__user_id=user_id,
-                starters__is_deleted=False,
+                owners__role=OwnerRole.STARTER,
+                owners__type=OwnerType.USER,
+                owners__user_id=user_id,
+                owners__is_deleted=False,
             ) | Q(
-                starters__type=StarterType.GROUP,
-                starters__group__users__id=user_id,
-                starters__is_deleted=False,
+                owners__role=OwnerRole.STARTER,
+                owners__type=OwnerType.GROUP,
+                owners__group__users__id=user_id,
+                owners__is_deleted=False,
             ),
         ).distinct()
 
@@ -154,43 +159,21 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
                 owners__type=OwnerType.GROUP,
                 owners__group__users__id=user_id,
                 owners__is_deleted=False,
-            ) | Q(
-                viewers__type=ViewerType.USER,
-                viewers__user_id=user_id,
-                viewers__is_deleted=False,
-            ) | Q(
-                viewers__type=ViewerType.GROUP,
-                viewers__group__users__id=user_id,
-                viewers__is_deleted=False,
-            ) | Q(
-                starters__type=StarterType.USER,
-                starters__user_id=user_id,
-                starters__is_deleted=False,
-            ) | Q(
-                starters__type=StarterType.GROUP,
-                starters__group__users__id=user_id,
-                starters__is_deleted=False,
             ),
         ).distinct()
 
     def with_template_owner_or_viewer(self, user_id: int):
         return self.filter(
             Q(
+                owners__role__in=(OwnerRole.OWNER, OwnerRole.VIEWER),
                 owners__type=OwnerType.USER,
                 owners__user_id=user_id,
                 owners__is_deleted=False,
             ) | Q(
+                owners__role__in=(OwnerRole.OWNER, OwnerRole.VIEWER),
                 owners__type=OwnerType.GROUP,
                 owners__group__users__id=user_id,
                 owners__is_deleted=False,
-            ) | Q(
-                viewers__type=ViewerType.USER,
-                viewers__user_id=user_id,
-                viewers__is_deleted=False,
-            ) | Q(
-                viewers__type=ViewerType.GROUP,
-                viewers__group__users__id=user_id,
-                viewers__is_deleted=False,
             ),
         ).distinct()
 
@@ -428,10 +411,12 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
     def with_template_owner(self, user_id: int):
         return self.exclude_legacy().filter(
             Q(
+                template__owners__role=OwnerRole.OWNER,
                 template__owners__user_id=user_id,
                 template__owners__is_deleted=False,
             )
             | Q(
+                template__owners__role=OwnerRole.OWNER,
                 template__owners__group__users__id=user_id,
                 template__owners__is_deleted=False,
             ),
@@ -440,26 +425,28 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
     def with_template_viewer(self, user_id: int):
         return self.exclude_legacy().filter(
             Q(
-                template__viewers__type=ViewerType.USER,
-                template__viewers__user_id=user_id,
-                template__viewers__is_deleted=False,
-            ) | Q(
-                template__viewers__type=ViewerType.GROUP,
-                template__viewers__group__users__id=user_id,
-                template__viewers__is_deleted=False,
+                template__owners__role=OwnerRole.VIEWER,
+                template__owners__user_id=user_id,
+                template__owners__is_deleted=False,
+            )
+            | Q(
+                template__owners__role=OwnerRole.VIEWER,
+                template__owners__group__users__id=user_id,
+                template__owners__is_deleted=False,
             ),
         ).distinct()
 
     def with_template_starter(self, user_id: int):
         return self.exclude_legacy().filter(
             Q(
-                template__starters__type=StarterType.USER,
-                template__starters__user_id=user_id,
-                template__starters__is_deleted=False,
-            ) | Q(
-                template__starters__type=StarterType.GROUP,
-                template__starters__group__users__id=user_id,
-                template__starters__is_deleted=False,
+                template__owners__role=OwnerRole.STARTER,
+                template__owners__user_id=user_id,
+                template__owners__is_deleted=False,
+            )
+            | Q(
+                template__owners__role=OwnerRole.STARTER,
+                template__owners__group__users__id=user_id,
+                template__owners__is_deleted=False,
             ),
         ).distinct()
 
@@ -467,45 +454,31 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
         return self.exclude_legacy().filter(
             Q(
                 template__owners__user_id=user_id,
+                template__owners__role=OwnerRole.OWNER,
                 template__owners__is_deleted=False,
             ) | Q(
                 template__owners__group__users__id=user_id,
+                template__owners__role=OwnerRole.OWNER,
                 template__owners__is_deleted=False,
-            ) | Q(
-                template__viewers__type=ViewerType.USER,
-                template__viewers__user_id=user_id,
-                template__viewers__is_deleted=False,
-            ) | Q(
-                template__viewers__type=ViewerType.GROUP,
-                template__viewers__group__users__id=user_id,
-                template__viewers__is_deleted=False,
-            ) | Q(
-                template__starters__type=StarterType.USER,
-                template__starters__user_id=user_id,
-                template__starters__is_deleted=False,
-            ) | Q(
-                template__starters__type=StarterType.GROUP,
-                template__starters__group__users__id=user_id,
-                template__starters__is_deleted=False,
             ),
         ).distinct()
 
     def with_template_owner_or_viewer(self, user_id: int):
         return self.exclude_legacy().filter(
             Q(
+                template__owners__role__in=(
+                    OwnerRole.OWNER, OwnerRole.VIEWER,
+                ),
+                template__owners__type=OwnerType.USER,
                 template__owners__user_id=user_id,
                 template__owners__is_deleted=False,
             ) | Q(
+                template__owners__role__in=(
+                    OwnerRole.OWNER, OwnerRole.VIEWER,
+                ),
+                template__owners__type=OwnerType.GROUP,
                 template__owners__group__users__id=user_id,
                 template__owners__is_deleted=False,
-            ) | Q(
-                template__viewers__type=ViewerType.USER,
-                template__viewers__user_id=user_id,
-                template__viewers__is_deleted=False,
-            ) | Q(
-                template__viewers__type=ViewerType.GROUP,
-                template__viewers__group__users__id=user_id,
-                template__viewers__is_deleted=False,
             ),
         ).distinct()
 

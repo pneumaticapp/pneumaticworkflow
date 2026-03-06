@@ -16,10 +16,8 @@ from src.authentication.messages import (
 from src.generics.fields import DateFormatField, TimeStampField
 from src.generics.mixins.services import EncryptionMixin
 from src.generics.serializers import CustomValidationErrorMixin
-from src.processes.enums import OwnerType, StarterType, ViewerType
+from src.processes.enums import OwnerRole, OwnerType
 from src.processes.models.templates.owner import TemplateOwner
-from src.processes.models.templates.viewer import TemplateViewer
-from src.processes.models.templates.starter import TemplateStarter
 
 UserModel = get_user_model()
 
@@ -213,27 +211,16 @@ class ContextUserSerializer(serializers.ModelSerializer):
         user_id = obj.id
         account_id = obj.account_id
 
-        owner_subq = TemplateOwner.objects.filter(
+        base_qs = TemplateOwner.objects.filter(
             template__account_id=account_id,
             is_deleted=False,
         ).filter(
             Q(type=OwnerType.USER, user_id=user_id) |
             Q(type=OwnerType.GROUP, group__users__id=user_id),
         )
-        viewer_subq = TemplateViewer.objects.filter(
-            template__account_id=account_id,
-            is_deleted=False,
-        ).filter(
-            Q(type=ViewerType.USER, user_id=user_id) |
-            Q(type=ViewerType.GROUP, group__users__id=user_id),
-        )
-        starter_subq = TemplateStarter.objects.filter(
-            template__account_id=account_id,
-            is_deleted=False,
-        ).filter(
-            Q(type=StarterType.USER, user_id=user_id) |
-            Q(type=StarterType.GROUP, group__users__id=user_id),
-        )
+        owner_subq = base_qs.filter(role=OwnerRole.OWNER)
+        viewer_subq = base_qs.filter(role=OwnerRole.VIEWER)
+        starter_subq = base_qs.filter(role=OwnerRole.STARTER)
 
         result = UserModel.objects.filter(pk=user_id).annotate(
             has_owner=Exists(owner_subq),

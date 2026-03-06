@@ -11,8 +11,8 @@ from src.processes.services.events import (
 from src.processes.services.exceptions import (
     CommentServiceException,
 )
-from src.processes.enums import ViewerType
-from src.processes.models.templates.viewer import TemplateViewer
+from src.processes.enums import OwnerRole, OwnerType
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
@@ -181,9 +181,10 @@ def test_watched__template_viewer__ok(api_client, mocker):
         is_account_owner=False,
         is_admin=False,
     )
-    TemplateViewer.objects.create(
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
         template=workflow.template,
-        type=ViewerType.USER,
+        type=OwnerType.USER,
         user=viewer_user,
         account=owner.account,
     )

@@ -5,7 +5,7 @@ from django.db.models import Q
 from rest_framework.permissions import BasePermission
 
 from src.accounts.enums import UserType
-from src.processes.enums import OwnerType, PresetType
+from src.processes.enums import OwnerRole, OwnerType, PresetType
 from src.processes.messages.template import (
     MSG_PT_0023,
     MSG_PT_0072,
@@ -56,9 +56,9 @@ class TemplateAdminOwnerPermission(BasePermission):
         return template_owner_qst.exists()
 
 
-class TemplateStarterPermission(BasePermission):
+class TemplateOwnerPermission(BasePermission):
 
-    """ Allow template starters to run workflows from templates """
+    """ Allow access for template owners, viewers, and starters """
 
     message = MSG_PT_0072
 
@@ -123,30 +123,6 @@ class UserCanAccessHighlightsPermission(BasePermission):
             .with_template_access(request.user.id)
             .exists()
         )
-
-
-class TemplateViewerPermission(BasePermission):
-
-    """ For workflow read-only access via template viewers """
-
-    def has_permission(self, request, view):
-        try:
-            workflow_id = int(view.kwargs.get('pk'))
-        except (ValueError, TypeError):
-            return False
-        else:
-            # Account owner always has access
-            if request.user.is_account_owner:
-                return True
-
-            # Check if user is template viewer through workflow -> template
-            template_viewer_qst = (
-                Workflow.objects
-                .by_id(workflow_id)
-                .on_account(request.user.account_id)
-                .with_template_viewer(request.user.id)
-            )
-            return template_viewer_qst.exists()
 
 
 class WorkflowMemberOrViewerPermission(BasePermission):
@@ -265,12 +241,10 @@ class WorkflowMemberPermission(BasePermission):
         template = workflow.template
         if template and user.is_admin:
             is_template_owner = template.owners.filter(
-                Q(type=OwnerType.USER, user_id=user.id, is_deleted=False)
-                | Q(
-                    type=OwnerType.GROUP,
-                    group__users__id=user.id,
-                    is_deleted=False,
-                ),
+                Q(type=OwnerType.USER, user_id=user.id)
+                | Q(type=OwnerType.GROUP, group__users__id=user.id),
+                role=OwnerRole.OWNER,
+                is_deleted=False,
             ).exists()
             if is_template_owner:
                 return True
@@ -409,12 +383,10 @@ class TaskWorkflowMemberPermission(BasePermission):
         template = workflow.template
         if template and user.is_admin:
             is_template_owner = template.owners.filter(
-                Q(type=OwnerType.USER, user_id=user.id, is_deleted=False)
-                | Q(
-                    type=OwnerType.GROUP,
-                    group__users__id=user.id,
-                    is_deleted=False,
-                ),
+                Q(type=OwnerType.USER, user_id=user.id)
+                | Q(type=OwnerType.GROUP, group__users__id=user.id),
+                role=OwnerRole.OWNER,
+                is_deleted=False,
             ).exists()
             if is_template_owner:
                 return True

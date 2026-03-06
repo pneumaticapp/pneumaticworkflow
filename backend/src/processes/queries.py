@@ -14,12 +14,10 @@ from src.generics.mixins.queries import (
 from src.processes.enums import (
     DirectlyStatus,
     OwnerType,
-    StarterType,
     TaskOrdering,
     TaskStatus,
     TemplateOrdering,
     TemplateType,
-    ViewerType,
     WorkflowApiStatus,
     WorkflowEventType,
     WorkflowOrdering,
@@ -149,12 +147,14 @@ class WorkflowListQuery(
 
     def _get_template_viewer_allowed(self):
         """User is viewer of the workflow's template (user or via group)."""
-        self.params['viewer_type_user'] = ViewerType.USER
-        self.params['viewer_type_group'] = ViewerType.GROUP
+        self.params['viewer_type_user'] = OwnerType.USER
+        self.params['viewer_type_group'] = OwnerType.GROUP
+        self.params['role_viewer'] = 'viewer'
         return """EXISTS (
-            SELECT 1 FROM processes_templateviewer ptv
+            SELECT 1 FROM processes_templateowner ptv
             WHERE ptv.template_id = pw.template_id
               AND ptv.is_deleted IS FALSE
+              AND ptv.role = %(role_viewer)s
               AND (
                 (ptv.type = %(viewer_type_user)s AND ptv.user_id = %(user_id)s)
                 OR (
@@ -1256,39 +1256,45 @@ class TemplateListQuery(
         return where
 
     def _dereferenced_viewers(self):
-        self.params['viewer_type_user'] = ViewerType.USER
-        self.params['viewer_type_group'] = ViewerType.GROUP
+        self.params['viewer_type_user'] = OwnerType.USER
+        self.params['viewer_type_group'] = OwnerType.GROUP
+        self.params['role_viewer'] = 'viewer'
         return """
             SELECT ptv.template_id, g.user_id AS user_id
-            FROM processes_templateviewer AS ptv
+            FROM processes_templateowner AS ptv
             JOIN accounts_usergroup_users AS g
               ON g.usergroup_id = ptv.group_id
-            WHERE ptv.type = %(viewer_type_group)s
+            WHERE ptv.role = %(role_viewer)s
+              AND ptv.type = %(viewer_type_group)s
               AND ptv.is_deleted IS FALSE
               AND g.user_id = %(user_id)s
             UNION
             SELECT ptv.template_id, ptv.user_id
-            FROM processes_templateviewer AS ptv
-            WHERE ptv.type = %(viewer_type_user)s
+            FROM processes_templateowner AS ptv
+            WHERE ptv.role = %(role_viewer)s
+              AND ptv.type = %(viewer_type_user)s
               AND ptv.is_deleted IS FALSE
               AND ptv.user_id = %(user_id)s
         """
 
     def _dereferenced_starters(self):
-        self.params['starter_type_user'] = StarterType.USER
-        self.params['starter_type_group'] = StarterType.GROUP
+        self.params['starter_type_user'] = OwnerType.USER
+        self.params['starter_type_group'] = OwnerType.GROUP
+        self.params['role_starter'] = 'starter'
         return """
             SELECT pts.template_id, g.user_id AS user_id
-            FROM processes_templatestarter AS pts
+            FROM processes_templateowner AS pts
             JOIN accounts_usergroup_users AS g
               ON g.usergroup_id = pts.group_id
-            WHERE pts.type = %(starter_type_group)s
+            WHERE pts.role = %(role_starter)s
+              AND pts.type = %(starter_type_group)s
               AND pts.is_deleted IS FALSE
               AND g.user_id = %(user_id)s
             UNION
             SELECT pts.template_id, pts.user_id
-            FROM processes_templatestarter AS pts
-            WHERE pts.type = %(starter_type_user)s
+            FROM processes_templateowner AS pts
+            WHERE pts.role = %(role_starter)s
+              AND pts.type = %(starter_type_user)s
               AND pts.is_deleted IS FALSE
               AND pts.user_id = %(user_id)s
         """
@@ -1839,8 +1845,8 @@ class HighlightsQuery(SqlQueryObject):
             self.date_after_tsp = date_after_tsp
 
     def get_sql(self):
-        self.sql_params['viewer_type_user'] = ViewerType.USER
-        self.sql_params['viewer_type_group'] = ViewerType.GROUP
+        self.sql_params['viewer_type_user'] = OwnerType.USER
+        self.sql_params['viewer_type_group'] = OwnerType.GROUP
         subquery = """
         SELECT DISTINCT ON (we.workflow_id)
           we.id,
@@ -1859,14 +1865,16 @@ class HighlightsQuery(SqlQueryObject):
           workflow.template_id = template.id
         LEFT JOIN processes_workflow_owners workflow_owners ON
           workflow.id = workflow_owners.workflow_id
-        LEFT JOIN processes_templateviewer ptv_user ON
+        LEFT JOIN processes_templateowner ptv_user ON
           template.id = ptv_user.template_id
           AND ptv_user.is_deleted IS FALSE
+          AND ptv_user.role = 'viewer'
           AND ptv_user.type = %(viewer_type_user)s
           AND ptv_user.user_id = %(user_id)s
-        LEFT JOIN processes_templateviewer ptv_grp ON
+        LEFT JOIN processes_templateowner ptv_grp ON
           template.id = ptv_grp.template_id
           AND ptv_grp.is_deleted IS FALSE
+          AND ptv_grp.role = 'viewer'
           AND ptv_grp.type = %(viewer_type_group)s
         LEFT JOIN accounts_usergroup_users grp_u ON
           ptv_grp.group_id = grp_u.usergroup_id
@@ -2108,8 +2116,8 @@ class TemplateTitlesByWorkflowsQuery(
         # 2. Template viewers (user or via group)
         self.params['owner_type_user'] = OwnerType.USER
         self.params['owner_type_group'] = OwnerType.GROUP
-        self.params['viewer_type_user'] = ViewerType.USER
-        self.params['viewer_type_group'] = ViewerType.GROUP
+        self.params['viewer_type_user'] = OwnerType.USER
+        self.params['viewer_type_group'] = OwnerType.GROUP
         return """
                 SELECT DISTINCT template_id
                 FROM (
@@ -2135,8 +2143,9 @@ class TemplateTitlesByWorkflowsQuery(
 
                     -- Template viewers (users)
                     SELECT ptv.template_id
-                    FROM processes_templateviewer AS ptv
-                    WHERE ptv.type = %(viewer_type_user)s
+                    FROM processes_templateowner AS ptv
+                    WHERE ptv.role = 'viewer'
+                      AND ptv.type = %(viewer_type_user)s
                       AND ptv.is_deleted IS FALSE
                       AND ptv.user_id = %(user_id)s
 
@@ -2144,10 +2153,11 @@ class TemplateTitlesByWorkflowsQuery(
 
                     -- Template viewers (groups)
                     SELECT ptv.template_id
-                    FROM processes_templateviewer AS ptv
+                    FROM processes_templateowner AS ptv
                     JOIN accounts_usergroup_users AS g
                       ON g.usergroup_id = ptv.group_id
-                    WHERE ptv.type = %(viewer_type_group)s
+                    WHERE ptv.role = 'viewer'
+                      AND ptv.type = %(viewer_type_group)s
                       AND ptv.is_deleted IS FALSE
                       AND g.user_id = %(user_id)s
                 ) accessible_templates

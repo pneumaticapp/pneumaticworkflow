@@ -78,8 +78,6 @@ const DEFAULT_TEMPLATE: ITemplate = {
   finalizable: true,
   isActive: true,
   owners: [],
-  viewers: [],
-  starters: [],
   tasks: [],
   kickoff: getEmptyKickoff(),
   dateUpdated: '2020-11-18T07:05:56.518930Z',

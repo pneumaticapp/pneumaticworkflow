@@ -21,6 +21,7 @@ from src.generics.mixins.serializers import (
 )
 from src.generics.paginations import DefaultPagination
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     TaskStatus,
     WorkflowApiStatus,
@@ -448,10 +449,16 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
 
         # Check CURRENT template owner status (not workflow.owners)
         is_template_owner = template.owners.filter(
-            Q(type=OwnerType.USER, user_id=user.id, is_deleted=False)
+            Q(
+                type=OwnerType.USER,
+                user_id=user.id,
+                role=OwnerRole.OWNER,
+                is_deleted=False,
+            )
             | Q(
                 type=OwnerType.GROUP,
                 group__users__id=user.id,
+                role=OwnerRole.OWNER,
                 is_deleted=False,
             ),
         ).exists()

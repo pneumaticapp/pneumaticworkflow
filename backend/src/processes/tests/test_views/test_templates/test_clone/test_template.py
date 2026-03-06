@@ -2,6 +2,7 @@ import pytest
 
 from src.accounts.enums import BillingPlanType
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     PerformerType,
 )
@@ -43,6 +44,7 @@ class TestCopyTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},
@@ -151,6 +153,7 @@ class TestCopyTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             "tasks_count": 7,
@@ -199,6 +202,7 @@ class TestCopyTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -245,6 +249,7 @@ class TestCopyTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},

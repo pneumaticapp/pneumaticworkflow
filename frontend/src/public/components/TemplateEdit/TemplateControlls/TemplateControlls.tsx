@@ -14,7 +14,7 @@ import { ShowMore } from '../../UI/ShowMore';
 import { getLinkToWorkflows } from '../../../utils/routes/getLinkToWorkflows';
 import { getLinkToHighlightsByTemplate } from '../../../utils/routes/getLinkToHighlightsByTemplate';
 import { Button } from '../../UI/Buttons/Button';
-import { ITemplate } from '../../../types/template';
+import { ETemplateOwnerRole, ITemplateOwner, ITemplate } from '../../../types/template';
 import {
   TCloneTemplatePayload,
   TDeleteTemplatePayload,
@@ -90,11 +90,13 @@ export function TemplateControlls({
     id: templateId,
     name: templateName,
     owners,
-    viewers,
-    starters,
     isActive: isTemplateActive,
     finalizable: isTemplateFinalizable,
   } = template;
+
+  const viewers = owners.filter((o: ITemplateOwner) => o.role === ETemplateOwnerRole.Viewer);
+  const starters = owners.filter((o: ITemplateOwner) => o.role === ETemplateOwnerRole.Starter);
+  const pureOwners = owners.filter((o: ITemplateOwner) => o.role === ETemplateOwnerRole.Owner);
 
   const runnableWorkflow = getRunnableWorkflow(template);
   const isSavedTemplate = React.useMemo(() => Boolean(templateId), [templateId]);
@@ -259,9 +261,9 @@ export function TemplateControlls({
       <div className={styles['settings-block']}>
         <ShowMore label={formatMessage({ id: 'template.owners' })} isInitiallyVisible={isCreateTemplate()}>
           <TemplateOwners
-            templateOwners={owners}
+            templateOwners={pureOwners}
             onChangeTemplateOwners={(newTemplateOwners) =>
-              patchTemplate({ changedFields: { owners: newTemplateOwners } })
+              patchTemplate({ changedFields: { owners: [...newTemplateOwners, ...viewers, ...starters] } })
             }
           />
         </ShowMore>
@@ -271,8 +273,8 @@ export function TemplateControlls({
         <ShowMore label={formatMessage({ id: 'template.viewers' })}>
           <TemplateViewers
             templateViewers={viewers}
-            onChangeTemplateViewers={(newTemplateViewers) =>
-              patchTemplate({ changedFields: { viewers: newTemplateViewers } })
+            onChangeTemplateViewers={(newViewers) =>
+              patchTemplate({ changedFields: { owners: [...pureOwners, ...newViewers, ...starters] } })
             }
           />
         </ShowMore>
@@ -282,8 +284,8 @@ export function TemplateControlls({
         <ShowMore label={formatMessage({ id: 'template.starters' })}>
           <TemplateStarters
             templateStarters={starters}
-            onChangeTemplateStarters={(newTemplateStarters) =>
-              patchTemplate({ changedFields: { starters: newTemplateStarters } })
+            onChangeTemplateStarters={(newStarters) =>
+              patchTemplate({ changedFields: { owners: [...pureOwners, ...viewers, ...newStarters] } })
             }
           />
         </ShowMore>

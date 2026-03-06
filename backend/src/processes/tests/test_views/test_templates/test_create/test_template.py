@@ -13,6 +13,7 @@ from src.authentication.tokens import (
 )
 from src.processes.enums import (
     FieldType,
+    OwnerRole,
     OwnerType,
     PerformerType,
     PredicateOperator,
@@ -78,6 +79,7 @@ def test_create__only_required_fields__defaults_ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -171,11 +173,13 @@ def test_create__only_required_fields_with_group__defaults_ok(
                 'api_name': 'owner-gft3g3625',
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
             {
                 'api_name': 'owner-gf216g1625',
                 'type': OwnerType.GROUP,
                 'source_id': group.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -302,10 +306,12 @@ def test_create__all_fields__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
             {
                 'type': OwnerType.USER,
                 'source_id': user2.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -502,6 +508,7 @@ def test_create__current_user_in_group__ok(
                     'api_name': 'owner-gft3g3625',
                     'type': OwnerType.GROUP,
                     'source_id': group.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -581,10 +588,12 @@ def test_create__draft__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
             {
                 'type': OwnerType.USER,
                 'source_id': user_2.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': False,
@@ -693,6 +702,7 @@ def test_create__draft_null_tasks__create_empty_tasks(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': False,
@@ -736,6 +746,7 @@ def test_create__draft_skip_tasks__create_empty_tasks(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': False,
@@ -809,6 +820,7 @@ def test_create__draft_null_owners__create_default_owner(
         {
             'type': OwnerType.USER,
             'api_name': 'some',
+            'role': OwnerRole.OWNER,
         },
     ),
 )
@@ -889,6 +901,7 @@ def test_create__public__ok(mocker, api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -949,6 +962,7 @@ def test_create__embed__ok(api_client, mocker):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1021,6 +1035,7 @@ def test_create__public_success_url__ok(value, api_client, mocker):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1088,6 +1103,7 @@ def test_create__public_success_url_invalid__validation_error(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -1145,6 +1161,7 @@ def test_create__name_is_required__validation_error(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -1206,6 +1223,7 @@ def test_create__not_name_in_draft__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': False,
@@ -1262,6 +1280,7 @@ def test_create__name_is_required_two_errors__validation_error(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1317,6 +1336,7 @@ def test_create__user_field_in_public_task__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -1424,6 +1444,7 @@ def test_create__public_url_limit_is_reached__validation_error(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1493,6 +1514,7 @@ def test_create__embed_url_limit_is_reached__validation_error(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1585,10 +1607,12 @@ def test_create__create_with_equal_api_names__ok(api_client, mocker):
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
             {
                 'type': OwnerType.USER,
                 'source_id': user2.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -1674,10 +1698,12 @@ def test_create__template_owners_from_another_account__validation_error(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': another_user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1736,6 +1762,7 @@ def test_create__template_owners_without_current_user__validation_error(
                 {
                     'type': OwnerType.USER,
                     'source_id': invited_user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1793,10 +1820,12 @@ def test_create__template_owners_user_source_id_none__validation_error(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': None,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1854,10 +1883,12 @@ def test_create__template_owners_group_source_id_none__validation_error(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.GROUP,
                     'source_id': None,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1926,10 +1957,12 @@ def test_create__template_owners_pending_transfer__ok(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': invited_user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1987,6 +2020,7 @@ def test_create__template_owners_inactive_user__validation_error(
                 {
                     'type': OwnerType.USER,
                     'source_id': inactive_user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},
@@ -2036,6 +2070,7 @@ def test_create__change_template_owners__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -2168,10 +2203,12 @@ def test_create__non_admin_in_template_owners_premium__ok(
                 {
                     'type': OwnerType.USER,
                     'source_id': owner.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': non_admin.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -2247,10 +2284,12 @@ def test_create__non_admin_in_template_owners_freemium__ok(
                 {
                     'type': OwnerType.USER,
                     'source_id': non_admin.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': owner.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -2321,10 +2360,12 @@ def test_create__admin_in_template_owners__ok(
                 {
                     'type': OwnerType.USER,
                     'source_id': owner.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': admin_user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -2401,10 +2442,12 @@ def test_create__account_owner_in_template_owners__ok(
                 {
                     'type': OwnerType.USER,
                     'source_id': owner.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': another_owner.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -2490,6 +2533,7 @@ def test_create__api_request__ok(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -2553,10 +2597,12 @@ def test_create__draft_invalid_template_owners_format__set_default(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
             {
                 'type': OwnerType.USER,
                 'source_id': {'user_id': user_2.id},
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': False,
@@ -2613,10 +2659,12 @@ def test_create__draft_another_acc_users_in_template_owners__set_default(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
             {
                 'type': OwnerType.USER,
                 'source_id': another_user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': False,
@@ -2677,6 +2725,7 @@ def test_create__active_template__wf_name_template__sys_vars__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -2737,6 +2786,7 @@ def test_create__draft_template__wf_name_template__sys_vars__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': False,
@@ -2797,6 +2847,7 @@ def test_create__wf_name_template__only_sys_vars__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -2870,6 +2921,7 @@ def test_create__wf_name_template__field__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -2949,6 +3001,7 @@ def test_create__wf_name_template__field_with_selections__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -3027,6 +3080,7 @@ def test_create__wf_name_template__only_fields__not_required__validation_error(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -3109,6 +3163,7 @@ def test_create__wf_name_template__not_existent_field__validation_error(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -3179,6 +3234,7 @@ def test_create__wf_name_template__blank_value__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -3245,6 +3301,7 @@ def test_create__raw_performers_group__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -3308,6 +3365,7 @@ def test_create__wf_name_template__with_workflow_id__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -3365,6 +3423,7 @@ def test_create__wf_name_template__workflow_id_with_other_sys_vars__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,

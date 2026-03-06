@@ -130,22 +130,14 @@ class WorkflowViewSet(
                         template__owners__type='user',
                         template__owners__user_id=user.id,
                         template__owners__is_deleted=False,
-                    ) |  # Template owner access (user)
+                        template__owners__role__in=('owner', 'viewer'),
+                    ) |  # Template owner/viewer access (user)
                     Q(
                         template__owners__type='group',
                         template__owners__group__users__id=user.id,
                         template__owners__is_deleted=False,
-                    ) |  # Template owner access (group)
-                    Q(
-                        template__viewers__type='user',
-                        template__viewers__user_id=user.id,
-                        template__viewers__is_deleted=False,
-                    ) |  # Template viewer access (user)
-                    Q(
-                        template__viewers__type='group',
-                        template__viewers__group__users__id=user.id,
-                        template__viewers__is_deleted=False,
-                    ),  # Template viewer access (group)
+                        template__owners__role__in=('owner', 'viewer'),
+                    ),  # Template owner/viewer access (group)
                 ).distinct()
         elif self.action == 'webhook_example':
             queryset = queryset.filter(

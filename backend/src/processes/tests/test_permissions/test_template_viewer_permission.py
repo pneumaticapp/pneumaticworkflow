@@ -2,10 +2,9 @@ import pytest
 from django.contrib.auth import get_user_model
 from unittest.mock import Mock
 
-from src.processes.enums import ViewerType
-from src.processes.models.templates.viewer import TemplateViewer
+from src.processes.enums import OwnerRole, OwnerType
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.permissions import (
-    TemplateViewerPermission,
     WorkflowMemberOrViewerPermission,
 )
 from src.processes.tests.fixtures import (
@@ -21,7 +20,7 @@ UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
 
 
-class TestTemplateViewerPermission:
+class TestWorkflowViewerPermission:
 
     def test_has_permission__account_owner__ok(self):
         # arrange
@@ -39,7 +38,7 @@ class TestTemplateViewerPermission:
         view = Mock()
         view.kwargs = {'pk': str(workflow.id)}
 
-        permission = TemplateViewerPermission()
+        permission = WorkflowMemberOrViewerPermission()
 
         # act
         result = permission.has_permission(request, view)
@@ -60,9 +59,10 @@ class TestTemplateViewerPermission:
         )
 
         # Create template viewer
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer_user,
             account=account,
         )
@@ -73,7 +73,7 @@ class TestTemplateViewerPermission:
         view = Mock()
         view.kwargs = {'pk': str(workflow.id)}
 
-        permission = TemplateViewerPermission()
+        permission = WorkflowMemberOrViewerPermission()
 
         # act
         result = permission.has_permission(request, view)
@@ -96,9 +96,10 @@ class TestTemplateViewerPermission:
         group.users.add(viewer_user)
 
         # Create template viewer for group
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.GROUP,
+            type=OwnerType.GROUP,
             group=group,
             account=account,
         )
@@ -109,7 +110,7 @@ class TestTemplateViewerPermission:
         view = Mock()
         view.kwargs = {'pk': str(workflow.id)}
 
-        permission = TemplateViewerPermission()
+        permission = WorkflowMemberOrViewerPermission()
 
         # act
         result = permission.has_permission(request, view)
@@ -136,7 +137,7 @@ class TestTemplateViewerPermission:
         view = Mock()
         view.kwargs = {'pk': str(workflow.id)}
 
-        permission = TemplateViewerPermission()
+        permission = WorkflowMemberOrViewerPermission()
 
         # act
         result = permission.has_permission(request, view)
@@ -155,7 +156,7 @@ class TestTemplateViewerPermission:
         view = Mock()
         view.kwargs = {'pk': 'invalid'}
 
-        permission = TemplateViewerPermission()
+        permission = WorkflowMemberOrViewerPermission()
 
         # act
         result = permission.has_permission(request, view)
@@ -174,7 +175,7 @@ class TestTemplateViewerPermission:
         view = Mock()
         view.kwargs = {}
 
-        permission = TemplateViewerPermission()
+        permission = WorkflowMemberOrViewerPermission()
 
         # act
         result = permission.has_permission(request, view)
@@ -225,9 +226,10 @@ class TestWorkflowMemberOrViewerPermission:
         )
 
         # Create template viewer
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer_user,
             account=account,
         )

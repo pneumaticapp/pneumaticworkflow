@@ -3,8 +3,11 @@ from django.contrib.auth import get_user_model
 from django.urls import reverse
 from rest_framework import status
 
-from src.processes.enums import ViewerType
-from src.processes.models.templates.viewer import TemplateViewer
+from src.processes.enums import (
+    OwnerRole,
+    OwnerType,
+)
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
@@ -34,9 +37,10 @@ class TestWorkflowViewerAccess:
         )
 
         # Create template viewer
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer_user,
             account=account,
         )
@@ -67,9 +71,10 @@ class TestWorkflowViewerAccess:
         group.users.add(viewer_user)
 
         # Create template viewer for group
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.GROUP,
+            type=OwnerType.GROUP,
             group=group,
             account=account,
         )
@@ -121,9 +126,10 @@ class TestWorkflowViewerAccess:
         )
 
         # Create template viewer
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer_user,
             account=account,
         )
@@ -175,9 +181,10 @@ class TestWorkflowViewerAccess:
         )
 
         # Create template viewer
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer_user,
             account=account,
         )
@@ -208,9 +215,10 @@ class TestWorkflowViewerAccess:
         )
 
         # Create template viewer
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer_user,
             account=account,
         )
@@ -240,9 +248,10 @@ class TestWorkflowViewerAccess:
         )
 
         # Create template viewer
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer_user,
             account=account,
         )
@@ -286,9 +295,10 @@ class TestWorkflowViewerAccess:
         )
 
         # Create template viewer for template1 only
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role='viewer',
             template=template1,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer_user,
             account=account,
         )
@@ -345,9 +355,10 @@ class TestWorkflowViewerAccess:
         )
         template = create_test_template(user)
         workflow = create_test_workflow(template=template, user=user)
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=user,
             account=account,
         )
@@ -380,9 +391,10 @@ class TestWorkflowViewerAccess:
         )
 
         # Create template viewer
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=viewer_user,
             account=account,
         )
@@ -416,9 +428,10 @@ class TestWorkflowViewerAccess:
         )
 
         # Create template viewer for admin
-        TemplateViewer.objects.create(
+        TemplateOwner.objects.create(
+            role=OwnerRole.VIEWER,
             template=template,
-            type=ViewerType.USER,
+            type=OwnerType.USER,
             user=admin_viewer,
             account=account,
         )

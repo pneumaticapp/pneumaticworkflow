@@ -44,12 +44,14 @@ class TemplateViewerMixin:
     def _get_template_viewer_joins(self):
         """Returns JOIN clauses for template viewers."""
         return """
-        LEFT JOIN processes_templateviewer ptv_user ON
+        LEFT JOIN processes_templateowner ptv_user ON
             pt.id = ptv_user.template_id AND
+            ptv_user.role = 'viewer' AND
             ptv_user.type = 'user' AND
             ptv_user.is_deleted IS FALSE
-        LEFT JOIN processes_templateviewer ptv_grp ON
+        LEFT JOIN processes_templateowner ptv_grp ON
             pt.id = ptv_grp.template_id AND
+            ptv_grp.role = 'viewer' AND
             ptv_grp.type = 'group' AND
             ptv_grp.is_deleted IS FALSE
         LEFT JOIN accounts_usergroup_users ptv_group ON
@@ -63,23 +65,29 @@ class TemplateViewerMixin:
         FROM (
             SELECT template_id, user_id
             FROM processes_templateowner
-            WHERE type = 'user' AND is_deleted IS FALSE
+            WHERE role = 'owner' AND type = 'user' AND is_deleted IS FALSE
             UNION
             SELECT pto.template_id, aug.user_id
             FROM processes_templateowner pto
             JOIN accounts_usergroup_users aug
                 ON pto.group_id = aug.usergroup_id
-            WHERE pto.type = 'group' AND pto.is_deleted IS FALSE
+            WHERE
+                pto.role = 'owner' AND
+                pto.type = 'group' AND
+                pto.is_deleted IS FALSE
             UNION
             SELECT template_id, user_id
-            FROM processes_templateviewer
-            WHERE type = 'user' AND is_deleted IS FALSE
+            FROM processes_templateowner
+            WHERE role = 'viewer' AND type = 'user' AND is_deleted IS FALSE
             UNION
             SELECT ptv.template_id, aug.user_id
-            FROM processes_templateviewer ptv
+            FROM processes_templateowner ptv
             JOIN accounts_usergroup_users aug
                 ON ptv.group_id = aug.usergroup_id
-            WHERE ptv.type = 'group' AND ptv.is_deleted IS FALSE
+            WHERE
+                ptv.role = 'viewer' AND
+                ptv.type = 'group' AND
+                ptv.is_deleted IS FALSE
         ) AS template_access
         """
 

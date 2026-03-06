@@ -26,6 +26,7 @@ from src.payment.enums import BillingPeriod
 from src.processes.enums import (
     ConditionAction,
     FieldType,
+    OwnerRole,
     OwnerType,
     PerformerType,
     PredicateOperator,
@@ -332,6 +333,7 @@ def create_test_template(
         kickoff.template = template
         kickoff.save()
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account,
         type=OwnerType.USER,
@@ -530,6 +532,7 @@ def get_workflow_create_data(user):
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'description': 'Test workflow description',

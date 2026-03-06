@@ -10,10 +10,10 @@ from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
     FieldType,
+    OwnerRole,
     OwnerType,
     PerformerType,
     TaskStatus,
-    ViewerType,
     WorkflowStatus,
 )
 from src.processes.models.templates.checklist import (
@@ -35,7 +35,6 @@ from src.processes.models.workflows.task import (
     Delay,
     TaskPerformer,
 )
-from src.processes.models.templates.viewer import TemplateViewer
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.events import WorkflowEventService
 from src.processes.services.tasks.performers import (
@@ -243,9 +242,10 @@ def test_retrieve__template_viewer__ok(api_client):
         is_account_owner=False,
         is_admin=False,
     )
-    TemplateViewer.objects.create(
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
         template=template,
-        type=ViewerType.USER,
+        type=OwnerType.USER,
         user=viewer_user,
         account=account,
     )
@@ -310,6 +310,7 @@ def test_retrieve__delete_delay_before_active_task__found(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -1667,9 +1668,10 @@ def test_retrieve__template_viewer_not_performer__is_read_only_viewer_true(
     )
 
     # Create template viewer
-    TemplateViewer.objects.create(
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
         template=template,
-        type=ViewerType.USER,
+        type=OwnerType.USER,
         user=viewer_user,
         account=account,
     )
@@ -1718,9 +1720,10 @@ def test_retrieve__admin_template_viewer_not_performer__is_read_only_viewer_ok(
     )
 
     # Create template viewer for admin
-    TemplateViewer.objects.create(
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
         template=template,
-        type=ViewerType.USER,
+        type=OwnerType.USER,
         user=admin_viewer,
         account=account,
     )
@@ -1768,9 +1771,10 @@ def test_retrieve__template_viewer_and_performer__is_read_only_viewer_false(
     )
 
     # Create template viewer
-    TemplateViewer.objects.create(
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
         template=template,
-        type=ViewerType.USER,
+        type=OwnerType.USER,
         user=viewer_user,
         account=account,
     )
@@ -1822,6 +1826,7 @@ def test_retrieve__admin_template_owner__is_read_only_viewer_false(
     )
 
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         type=OwnerType.USER,
         user=admin_owner_user,
@@ -1872,6 +1877,7 @@ def test_retrieve__non_admin_template_owner__is_read_only_viewer_true(
     )
 
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         type=OwnerType.USER,
         user=non_admin_owner_user,

@@ -5,14 +5,13 @@ from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.authentication.tokens import PublicToken
 from src.processes.enums import (
     FieldType,
+    OwnerRole,
     OwnerType,
     PerformerType,
-    ViewerType,
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.template import Template
-from src.processes.models.templates.viewer import TemplateViewer
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
@@ -99,6 +98,7 @@ def test_fields__draft_template__return_from_db(api_client):
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': False,
@@ -186,6 +186,7 @@ def test_fields__template_owner__ok(api_client):
     template = create_test_template(user=owner, tasks_count=1)
     user = create_test_not_admin(account=account)
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account,
         type=OwnerType.USER,
@@ -213,6 +214,7 @@ def test_fields__template_owner_via_group__ok(api_client):
     )
     group.users.add(user)
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account,
         type=OwnerType.GROUP,
@@ -234,10 +236,11 @@ def test_fields__template_viewer__ok(api_client):
     owner = create_test_owner(account=account)
     template = create_test_template(user=owner, tasks_count=1)
     user = create_test_not_admin(account=account)
-    TemplateViewer.objects.create(
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
         template=template,
         account=account,
-        type=ViewerType.USER,
+        type=OwnerType.USER,
         user_id=user.id,
     )
     api_client.token_authenticate(user)
@@ -261,10 +264,11 @@ def test_fields__template_viewer_via_group__ok(api_client):
         account=account,
     )
     group.users.add(user)
-    TemplateViewer.objects.create(
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
         template=template,
         account=account,
-        type=ViewerType.GROUP,
+        type=OwnerType.GROUP,
         group=group,
     )
     api_client.token_authenticate(user)
@@ -283,10 +287,11 @@ def test_fields__template_viewer_deleted__not_found(api_client):
     owner = create_test_owner(account=account)
     template = create_test_template(user=owner, tasks_count=1)
     user = create_test_not_admin(account=account)
-    TemplateViewer.objects.create(
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
         template=template,
         account=account,
-        type=ViewerType.USER,
+        type=OwnerType.USER,
         user_id=user.id,
         is_deleted=True,
     )
@@ -325,6 +330,7 @@ def test_fields__workflow_member_and_template_owner__ok(api_client):
     workflow = create_test_workflow(user=owner, template=template)
     request_user = create_test_not_admin(account=account)
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account,
         type=OwnerType.USER,
@@ -349,6 +355,7 @@ def test_fields__not_authenticated__permission_denied(api_client):
     workflow = create_test_workflow(user=owner, template=template)
     request_user = create_test_not_admin(account=account)
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account,
         type=OwnerType.USER,

@@ -9,15 +9,15 @@ import { trackInviteTeamInPage } from '../../../utils/analytics';
 import { getNotDeletedUsers, getUserFullName } from '../../../utils/users';
 import { EOptionTypes, TUsersDropdownOption, UsersDropdown } from '../../UI/form/UsersDropdown';
 import { getIsUserSubsribed, getSubscriptionPlan, getUsers } from '../../../redux/selectors/user';
-import { ETaskPerformerType, ETemplateOwnerType, ETemplateStarterType, ITemplate, ITemplateStarter } from '../../../types/template';
+import { ETaskPerformerType, ETemplateOwnerRole, ETemplateOwnerType, ETemplateStarterType, ITemplateOwner } from '../../../types/template';
 import StarterItem from './components';
 
 import styles from './TemplateStarters.css';
 import UserDataWithGroup from '../../UserDataWithGroup';
 
 interface ITemplateStartersProps {
-  templateStarters: ITemplate['starters'];
-  onChangeTemplateStarters(templateStarters: ITemplateStarter[]): void;
+  templateStarters: ITemplateOwner[];
+  onChangeTemplateStarters(templateStarters: ITemplateOwner[]): void;
 }
 
 export function TemplateStarters({ templateStarters = [], onChangeTemplateStarters }: ITemplateStartersProps) {
@@ -98,10 +98,11 @@ export function TemplateStarters({ templateStarters = [], onChangeTemplateStarte
 
   const handleAddTemplateStarters = ({ id, optionType }: Pick<TUsersDropdownOption, 'id' | 'optionType'>) => {
     if (!isSubscribed && billingPlan !== ESubscriptionPlan.Free) return;
-    const newStarter: ITemplateStarter = {
+    const newStarter: ITemplateOwner = {
       sourceId: String(id),
       apiName: createStarterApiName(),
       type: optionType as unknown as ETemplateStarterType,
+      role: ETemplateOwnerRole.Starter,
     };
     onChangeTemplateStarters([...templateStarters, newStarter]);
   };

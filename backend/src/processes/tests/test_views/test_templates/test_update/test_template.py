@@ -15,6 +15,7 @@ from src.authentication.tokens import (
 )
 from src.processes.enums import (
     FieldType,
+    OwnerRole,
     OwnerType,
     PerformerType,
     WorkflowStatus,
@@ -94,10 +95,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': user2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': True,
@@ -237,10 +240,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': user2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': True,
@@ -343,10 +348,12 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': False,
@@ -373,10 +380,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': user2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': True,
@@ -469,6 +478,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': False,
@@ -512,6 +522,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': True,
@@ -603,6 +614,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': False,
@@ -647,6 +659,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': True,
@@ -707,6 +720,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': False,
@@ -743,6 +757,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': False,
@@ -809,6 +824,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': False,
@@ -845,6 +861,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user_2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': False,
@@ -912,6 +929,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -951,6 +969,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'finalizable': template.finalizable,
@@ -1007,6 +1026,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -1042,6 +1062,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': template.finalizable,
@@ -1107,6 +1128,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': template.finalizable,
@@ -1181,10 +1203,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.GROUP,
                     'source_id': group.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': template.finalizable,
@@ -1254,14 +1278,17 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.GROUP,
                     'source_id': group.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.GROUP,
                     'source_id': group_2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': template.finalizable,
@@ -1343,6 +1370,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],            'finalizable': True,
             'kickoff': {
@@ -1424,10 +1452,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': non_admin.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': True,
@@ -1504,10 +1534,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': admin_user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': True,
@@ -1569,6 +1601,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -1606,6 +1639,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': template.finalizable,
@@ -1657,6 +1691,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -1694,6 +1729,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': template.finalizable,
@@ -1758,10 +1794,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': user_2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': True,
@@ -1854,6 +1892,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': account_1_owner.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': True,
@@ -1928,10 +1967,12 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': non_admin.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': owner.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'finalizable': True,
@@ -2017,10 +2058,12 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': non_admin.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': owner.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'finalizable': True,
@@ -2123,6 +2166,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'finalizable': True,
@@ -2205,10 +2249,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': user2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},
@@ -2297,10 +2343,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': user2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},
