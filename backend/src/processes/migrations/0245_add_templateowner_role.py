@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('processes', '0243_add_is_hidden_to_field_mixin'),
+        ('processes', '0244_add_reminder'),
     ]
 
     operations = [

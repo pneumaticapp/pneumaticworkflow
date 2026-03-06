@@ -619,17 +619,9 @@ msgid "The user or group specified for a \"User\" field does not exist."
 msgstr "Der Benutzer oder die Gruppe, die für ein Feld des Typs \"Benutzer\" angegeben wurde, existiert nicht."
 
 #: src/processes/messages/template.py:281
-msgid "A viewer with the api_name \"{api_name}\" already exists for the template \"{name}\"."
-msgstr "Für die Vorlage \"{name}\" existiert bereits ein Betrachter mit dem api_name \"{api_name}\"."
-
-#: src/processes/messages/template.py:289
-msgid "A starter with the api_name \"{api_name}\" already exists for the template \"{name}\"."
-msgstr "Für die Vorlage \"{name}\" existiert bereits ein Starter mit dem api_name \"{api_name}\"."
-
-#: src/processes/messages/template.py:297
 msgid "Permission denied. You do not have access to this template."
 msgstr "Zugriff verweigert. Sie haben keinen Zugriff auf diese Vorlage."
 
-#: src/processes/messages/template.py:298
+#: src/processes/messages/template.py:282
 msgid "Permission denied. You are not a template owner or viewer."
 msgstr "Zugriff verweigert. Sie sind weder Eigentümer noch Betrachter dieser Vorlage."

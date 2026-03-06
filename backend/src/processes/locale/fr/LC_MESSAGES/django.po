@@ -618,17 +618,9 @@ msgid "The user or group specified for a \"User\" field does not exist."
 msgstr "L'utilisateur ou le groupe spécifié pour un champ de type \"Utilisateur\" n'existe pas."
 
 #: src/processes/messages/template.py:281
-msgid "A viewer with the api_name \"{api_name}\" already exists for the template \"{name}\"."
-msgstr "Un visualiseur avec le api_name \"{api_name}\" existe déjà pour le modèle \"{name}\"."
-
-#: src/processes/messages/template.py:289
-msgid "A starter with the api_name \"{api_name}\" already exists for the template \"{name}\"."
-msgstr "Un lanceur avec le api_name \"{api_name}\" existe déjà pour le modèle \"{name}\"."
-
-#: src/processes/messages/template.py:297
 msgid "Permission denied. You do not have access to this template."
 msgstr "Accès refusé. Vous n’avez pas accès à ce modèle."
 
-#: src/processes/messages/template.py:298
+#: src/processes/messages/template.py:282
 msgid "Permission denied. You are not a template owner or viewer."
 msgstr "Accès refusé. Vous n’êtes ni propriétaire ni visualiseur de ce modèle."

@@ -8,8 +8,8 @@ from src.accounts.enums import UserType
 from src.processes.enums import OwnerRole, OwnerType, PresetType
 from src.processes.messages.template import (
     MSG_PT_0023,
-    MSG_PT_0072,
-    MSG_PT_0073,
+    MSG_PT_0069,
+    MSG_PT_0070,
 )
 from src.processes.messages.workflow import (
     MSG_PW_0001,
@@ -60,7 +60,7 @@ class TemplateOwnerPermission(BasePermission):
 
     """ Allow access for template owners, viewers, and starters """
 
-    message = MSG_PT_0072
+    message = MSG_PT_0069
 
     def has_permission(self, request, view):
         try:
@@ -86,7 +86,7 @@ class TemplateOwnerOrViewerPermission(BasePermission):
 
     """ Allow access for template owners or template viewers (read-only) """
 
-    message = MSG_PT_0073
+    message = MSG_PT_0070
 
     def has_permission(self, request, view):
         try:

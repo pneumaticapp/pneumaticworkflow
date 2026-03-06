@@ -75,6 +75,8 @@ const createMockTemplateResponse = (
   isEmbedded: false,
   embedUrl: null,
   wfNameTemplate: null,
+  completionNotification: false,
+  reminderNotification: false,
   ...overrides,
 });
 
@@ -136,6 +138,8 @@ const createMockTemplate = (overrides: Partial<ITemplate> = {}): ITemplate => ({
   wfNameTemplate: null,
   tasksCount: 1,
   performersCount: 1,
+  completionNotification: false,
+  reminderNotification: false,
   ...overrides,
 });
 
