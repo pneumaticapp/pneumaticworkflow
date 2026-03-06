@@ -13,6 +13,7 @@ from src.authentication.tokens import (
 )
 from src.processes.enums import (
     FieldType,
+    OwnerRole,
     OwnerType,
     PerformerType,
     PredicateOperator,
@@ -78,6 +79,7 @@ def test_create__only_required_fields__defaults_ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -171,11 +173,13 @@ def test_create__only_required_fields_with_group__defaults_ok(
                 'api_name': 'owner-gft3g3625',
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
             {
                 'api_name': 'owner-gf216g1625',
                 'type': OwnerType.GROUP,
                 'source_id': group.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -304,10 +308,12 @@ def test_create__all_fields__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
             {
                 'type': OwnerType.USER,
                 'source_id': user2.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -508,6 +514,7 @@ def test_create__current_user_in_group__ok(
                     'api_name': 'owner-gft3g3625',
                     'type': OwnerType.GROUP,
                     'source_id': group.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -587,10 +594,12 @@ def test_create__draft__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
             {
                 'type': OwnerType.USER,
                 'source_id': user_2.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': False,
@@ -699,6 +708,7 @@ def test_create__draft_null_tasks__create_empty_tasks(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': False,
@@ -742,6 +752,7 @@ def test_create__draft_skip_tasks__create_empty_tasks(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': False,
@@ -815,6 +826,7 @@ def test_create__draft_null_owners__create_default_owner(
         {
             'type': OwnerType.USER,
             'api_name': 'some',
+            'role': OwnerRole.OWNER,
         },
     ),
 )
@@ -895,6 +907,7 @@ def test_create__public__ok(mocker, api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -955,6 +968,7 @@ def test_create__embed__ok(api_client, mocker):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1027,6 +1041,7 @@ def test_create__public_success_url__ok(value, api_client, mocker):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1094,6 +1109,7 @@ def test_create__public_success_url_invalid__validation_error(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -1151,6 +1167,7 @@ def test_create__name_is_required__validation_error(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -1212,6 +1229,7 @@ def test_create__not_name_in_draft__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': False,
@@ -1268,6 +1286,7 @@ def test_create__name_is_required_two_errors__validation_error(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1323,6 +1342,7 @@ def test_create__user_field_in_public_task__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -1430,6 +1450,7 @@ def test_create__public_url_limit_is_reached__validation_error(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1499,6 +1520,7 @@ def test_create__embed_url_limit_is_reached__validation_error(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1591,10 +1613,12 @@ def test_create__create_with_equal_api_names__ok(api_client, mocker):
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
             {
                 'type': OwnerType.USER,
                 'source_id': user2.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -1680,10 +1704,12 @@ def test_create__template_owners_from_another_account__validation_error(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': another_user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1742,6 +1768,7 @@ def test_create__template_owners_without_current_user__validation_error(
                 {
                     'type': OwnerType.USER,
                     'source_id': invited_user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1799,10 +1826,12 @@ def test_create__template_owners_user_source_id_none__validation_error(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': None,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1860,10 +1889,12 @@ def test_create__template_owners_group_source_id_none__validation_error(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.GROUP,
                     'source_id': None,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1932,10 +1963,12 @@ def test_create__template_owners_pending_transfer__ok(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': invited_user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1993,6 +2026,7 @@ def test_create__template_owners_inactive_user__validation_error(
                 {
                     'type': OwnerType.USER,
                     'source_id': inactive_user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},
@@ -2042,6 +2076,7 @@ def test_create__change_template_owners__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -2133,6 +2168,10 @@ def test_create__non_admin_in_template_owners_premium__ok(
     mocker,
     api_client,
 ):
+    """
+    Non-admin users can be added as template owners.
+    They will have viewer-level access (read-only).
+    """
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
@@ -2148,7 +2187,12 @@ def test_create__non_admin_in_template_owners_premium__ok(
         is_account_owner=True,
         account=account,
     )
-    non_admin = create_test_user(is_admin=False, account=account)
+    non_admin = create_test_user(
+        email='nonadmin@test.test',
+        is_admin=False,
+        is_account_owner=False,
+        account=account,
+    )
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
@@ -2165,10 +2209,12 @@ def test_create__non_admin_in_template_owners_premium__ok(
                 {
                     'type': OwnerType.USER,
                     'source_id': owner.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': non_admin.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -2191,16 +2237,10 @@ def test_create__non_admin_in_template_owners_premium__ok(
     # assert
     assert response.status_code == 200
     response_data = response.json()
-
-    assert response_data['owners'][0].get('api_name')
-    assert response_data['owners'][0]['source_id'] == str(owner.id)
-    assert response_data['owners'][0]['type'] == OwnerType.USER
-    assert response_data['owners'][1].get('api_name')
-    assert response_data['owners'][1]['source_id'] == str(non_admin.id)
-    assert response_data['owners'][1]['type'] == OwnerType.USER
-    template = Template.objects.get(id=response_data['id'])
-    assert template.owners.count() == 2
-    assert template.owners.filter(user_id=non_admin.id).exists()
+    assert len(response_data['owners']) == 2
+    owner_user_ids = [o['source_id'] for o in response_data['owners']]
+    assert str(owner.id) in owner_user_ids
+    assert str(non_admin.id) in owner_user_ids
     template_create_mock.assert_called_once()
     kickoff_create_mock.assert_called_once()
 
@@ -2209,6 +2249,10 @@ def test_create__non_admin_in_template_owners_freemium__ok(
     mocker,
     api_client,
 ):
+    """
+    Non-admin users can be added as template owners on freemium plan.
+    They will have viewer-level access (read-only).
+    """
     # arrange
     template_create_mock = mocker.patch(
         'src.processes.views.template.'
@@ -2224,7 +2268,12 @@ def test_create__non_admin_in_template_owners_freemium__ok(
         is_account_owner=True,
         account=account,
     )
-    non_admin = create_test_user(is_admin=False, account=account)
+    non_admin = create_test_user(
+        email='nonadmin@test.test',
+        is_admin=False,
+        is_account_owner=False,
+        account=account,
+    )
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
@@ -2241,10 +2290,12 @@ def test_create__non_admin_in_template_owners_freemium__ok(
                 {
                     'type': OwnerType.USER,
                     'source_id': non_admin.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': owner.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -2267,18 +2318,174 @@ def test_create__non_admin_in_template_owners_freemium__ok(
     # assert
     assert response.status_code == 200
     response_data = response.json()
+    assert len(response_data['owners']) == 2
+    owner_user_ids = [o['source_id'] for o in response_data['owners']]
+    assert str(owner.id) in owner_user_ids
+    assert str(non_admin.id) in owner_user_ids
+    template_create_mock.assert_called_once()
+    kickoff_create_mock.assert_called_once()
+
+
+def test_create__admin_in_template_owners__ok(
+    mocker,
+    api_client,
+):
+    # arrange
+    template_create_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    kickoff_create_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    account = create_test_account(plan=BillingPlanType.PREMIUM)
+    owner = create_test_user(
+        email='owner@test.test',
+        is_account_owner=True,
+        account=account,
+    )
+    admin_user = create_test_user(
+        email='admin@test.test',
+        is_admin=True,
+        account=account,
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': owner.id,
+                    'role': OwnerRole.OWNER,
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': admin_user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'is_active': True,
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': admin_user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    response_data = response.json()
 
     assert response_data['owners'][0].get('api_name')
-    assert response_data['owners'][0]['source_id'] == str(non_admin.id)
+    assert response_data['owners'][0]['source_id'] == str(owner.id)
     assert response_data['owners'][0]['type'] == OwnerType.USER
     assert response_data['owners'][1].get('api_name')
-    assert response_data['owners'][1]['source_id'] == str(owner.id)
+    assert response_data['owners'][1]['source_id'] == str(admin_user.id)
     assert response_data['owners'][1]['type'] == OwnerType.USER
     template = Template.objects.get(id=response_data['id'])
     assert template.owners.count() == 2
-    assert template.owners.filter(
-        type=OwnerType.USER, user_id=non_admin.id,
-    ).exists()
+    assert template.owners.filter(user_id=admin_user.id).exists()
+    template_create_mock.assert_called_once()
+    kickoff_create_mock.assert_called_once()
+
+
+def test_create__account_owner_in_template_owners__ok(
+    mocker,
+    api_client,
+):
+    # arrange
+    template_create_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    kickoff_create_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    account = create_test_account(plan=BillingPlanType.PREMIUM)
+    owner = create_test_user(
+        email='owner@test.test',
+        is_account_owner=True,
+        account=account,
+    )
+    another_owner = create_test_user(
+        email='owner2@test.test',
+        is_account_owner=True,
+        account=account,
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': owner.id,
+                    'role': OwnerRole.OWNER,
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': another_owner.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'is_active': True,
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': owner.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    response_data = response.json()
+
+    assert response_data['owners'][0].get('api_name')
+    assert response_data['owners'][0]['source_id'] == str(owner.id)
+    assert response_data['owners'][0]['type'] == OwnerType.USER
+    assert response_data['owners'][1].get('api_name')
+    assert response_data['owners'][1]['source_id'] == str(another_owner.id)
+    assert response_data['owners'][1]['type'] == OwnerType.USER
+    template = Template.objects.get(id=response_data['id'])
+    assert template.owners.count() == 2
+    assert template.owners.filter(user_id=another_owner.id).exists()
     template_create_mock.assert_called_once()
     kickoff_create_mock.assert_called_once()
 
@@ -2332,6 +2539,7 @@ def test_create__api_request__ok(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -2395,10 +2603,12 @@ def test_create__draft_invalid_template_owners_format__set_default(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
             {
                 'type': OwnerType.USER,
                 'source_id': {'user_id': user_2.id},
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': False,
@@ -2455,10 +2665,12 @@ def test_create__draft_another_acc_users_in_template_owners__set_default(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
             {
                 'type': OwnerType.USER,
                 'source_id': another_user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': False,
@@ -2519,6 +2731,7 @@ def test_create__active_template__wf_name_template__sys_vars__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -2579,6 +2792,7 @@ def test_create__draft_template__wf_name_template__sys_vars__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': False,
@@ -2639,6 +2853,7 @@ def test_create__wf_name_template__only_sys_vars__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -2712,6 +2927,7 @@ def test_create__wf_name_template__field__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -2791,6 +3007,7 @@ def test_create__wf_name_template__field_with_selections__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -2869,6 +3086,7 @@ def test_create__wf_name_template__only_fields__not_required__validation_error(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -2951,6 +3169,7 @@ def test_create__wf_name_template__not_existent_field__validation_error(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -3021,6 +3240,7 @@ def test_create__wf_name_template__blank_value__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -3087,6 +3307,7 @@ def test_create__raw_performers_group__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -3150,6 +3371,7 @@ def test_create__wf_name_template__with_workflow_id__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -3207,6 +3429,7 @@ def test_create__wf_name_template__workflow_id_with_other_sys_vars__ok(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,

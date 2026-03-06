@@ -21,6 +21,7 @@ describe('reducer', () => {
           kickoff: null,
           isActive: true,
           isPublic: false,
+          isEditable: true,
         },
       ],
     };

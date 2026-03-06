@@ -8,6 +8,7 @@ from src.generics.mixins.queries import DereferencedOwnersMixin
 from src.processes.enums import TemplateType, WorkflowStatus
 from src.queries import SqlQueryObject
 from src.reports.queries.mixins import (
+    TemplateViewerMixin,
     WorkflowsMixin,
     WorkflowsNowMixin,
     WorkflowTasksMixin,
@@ -17,6 +18,7 @@ from src.reports.queries.mixins import (
 
 class OverviewQuery(
     WorkflowsMixin,
+    TemplateViewerMixin,
     SqlQueryObject,
 ):
     def __init__(
@@ -60,21 +62,18 @@ class OverviewQuery(
           pt.type IN (%(type_user)s, %(type_generic)s)
         LEFT JOIN
           processes_workflow_owners pwo ON pw.id = pwo.workflow_id
+        {self._get_template_owner_joins()}
+        {self._get_template_viewer_joins()}
         LEFT JOIN overdue_workflows ow ON pw.id = ow.workflow_id
         WHERE pw.account_id = %(account_id)s AND
           pw.is_deleted IS FALSE AND
-          (
-            (
-              pw.is_legacy_template IS TRUE AND
-              pw.workflow_starter_id = %(user_id)s
-            ) OR
-            pwo.user_id = %(user_id)s
-          )
+          {self._get_user_workflow_access_clause()}
         """, self.params
 
 
 class OverviewNowQuery(
     WorkflowsNowMixin,
+    TemplateViewerMixin,
     SqlQueryObject,
 ):
     def __init__(
@@ -111,21 +110,19 @@ class OverviewNowQuery(
           pt.type IN (%(type_user)s, %(type_generic)s)
         LEFT JOIN
           processes_workflow_owners pwo ON pw.id = pwo.workflow_id
+        {self._get_template_owner_joins()}
+        {self._get_template_viewer_joins()}
         LEFT JOIN overdue_workflows ow ON pw.id = ow.workflow_id
         WHERE pw.account_id = %(account_id)s AND
           pw.is_deleted IS FALSE AND
-          pw.status = %(status_running)s AND (
-            (
-              pw.is_legacy_template IS TRUE AND
-              pw.workflow_starter_id = %(user_id)s
-            ) OR
-            pwo.user_id = %(user_id)s
-          )
+          pw.status = %(status_running)s AND
+          {self._get_user_workflow_access_clause()}
         """, self.params
 
 
 class WorkflowBreakdownQuery(
     WorkflowsMixin,
+    TemplateViewerMixin,
     SqlQueryObject,
     DereferencedOwnersMixin,
 ):
@@ -150,7 +147,7 @@ class WorkflowBreakdownQuery(
         return f"""
         WITH
           overdue_workflows AS ({self._overdue_workflows_cte()}),
-          all_owners AS ({self.dereferenced_owners()})
+          template_access AS ({self._get_template_access_cte()})
         SELECT
           pt.id AS template_id,
           pt.name AS template_name,
@@ -170,12 +167,12 @@ class WorkflowBreakdownQuery(
         FROM processes_template pt
         LEFT JOIN processes_workflow pw ON pw.template_id = pt.id AND
           pw.is_deleted IS FALSE
-        JOIN all_owners AS owners ON pt.id = owners.template_id
+        JOIN template_access AS ta ON pt.id = ta.template_id
         LEFT JOIN overdue_workflows ow ON pw.id = ow.workflow_id
         WHERE pt.account_id = %(account_id)s AND
           pt.is_deleted IS FALSE AND
           pt.type IN (%(type_user)s, %(type_generic)s) AND
-          owners.user_id = %(user_id)s
+          ta.user_id = %(user_id)s
         GROUP BY pt.id
         ORDER BY in_progress DESC, template_id
         """, self.params
@@ -183,6 +180,7 @@ class WorkflowBreakdownQuery(
 
 class WorkflowBreakdownNowQuery(
     WorkflowsNowMixin,
+    TemplateViewerMixin,
     SqlQueryObject,
     DereferencedOwnersMixin,
 ):
@@ -204,7 +202,7 @@ class WorkflowBreakdownNowQuery(
         return f"""
         WITH
           overdue_workflows AS ({self._overdue_workflows_now_cte()}),
-          all_owners AS ({self.dereferenced_owners()})
+          template_access AS ({self._get_template_access_cte()})
         SELECT
           pt.id AS template_id,
           pt.name AS template_name,
@@ -221,12 +219,12 @@ class WorkflowBreakdownNowQuery(
         LEFT JOIN processes_workflow pw ON pw.template_id = pt.id AND
           pw.is_deleted IS FALSE AND
           pw.status = %(status_running)s
-        JOIN all_owners AS owners ON pt.id = owners.template_id
+        JOIN template_access AS ta ON pt.id = ta.template_id
         LEFT JOIN overdue_workflows ow ON pw.id = ow.workflow_id
         WHERE pt.account_id = %(account_id)s AND
           pt.is_deleted IS FALSE AND
           pt.type IN (%(type_user)s, %(type_generic)s) AND
-          owners.user_id = %(user_id)s
+          ta.user_id = %(user_id)s
         GROUP BY pt.id
         ORDER BY in_progress DESC, template_id
         """, self.params

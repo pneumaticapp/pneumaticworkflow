@@ -23,6 +23,8 @@ from src.generics.querysets import (
 from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
+    OwnerRole,
+    OwnerType,
     PerformerType,
     PresetType,
     SysTemplateType,
@@ -36,6 +38,7 @@ from src.processes.enums import (
 from src.processes.queries import (
     RunningTaskTemplateQuery,
     TemplateExportQuery,
+    TemplateListByOwnersQuery,
     TemplateListQuery,
     WorkflowListQuery,
 )
@@ -103,19 +106,88 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
 
     def with_template_owner(self, user_id: int):
         return self.filter(
-            Q(owners__type='user', owners__user_id=user_id) |
-            Q(owners__type='group', owners__group__users__id=user_id),
+            Q(
+                owners__role=OwnerRole.OWNER,
+                owners__type=OwnerType.USER,
+                owners__user_id=user_id,
+                owners__is_deleted=False,
+            ) | Q(
+                owners__role=OwnerRole.OWNER,
+                owners__type=OwnerType.GROUP,
+                owners__group__users__id=user_id,
+                owners__is_deleted=False,
+            ),
+        ).distinct()
+
+    def with_template_viewer(self, user_id: int):
+        return self.filter(
+            Q(
+                owners__role=OwnerRole.VIEWER,
+                owners__type=OwnerType.USER,
+                owners__user_id=user_id,
+                owners__is_deleted=False,
+            ) | Q(
+                owners__role=OwnerRole.VIEWER,
+                owners__type=OwnerType.GROUP,
+                owners__group__users__id=user_id,
+                owners__is_deleted=False,
+            ),
+        ).distinct()
+
+    def with_template_starter(self, user_id: int):
+        return self.filter(
+            Q(
+                owners__role=OwnerRole.STARTER,
+                owners__type=OwnerType.USER,
+                owners__user_id=user_id,
+                owners__is_deleted=False,
+            ) | Q(
+                owners__role=OwnerRole.STARTER,
+                owners__type=OwnerType.GROUP,
+                owners__group__users__id=user_id,
+                owners__is_deleted=False,
+            ),
+        ).distinct()
+
+    def with_template_access(self, user_id: int):
+        return self.filter(
+            Q(
+                owners__type=OwnerType.USER,
+                owners__user_id=user_id,
+                owners__is_deleted=False,
+            ) | Q(
+                owners__type=OwnerType.GROUP,
+                owners__group__users__id=user_id,
+                owners__is_deleted=False,
+            ),
+        ).distinct()
+
+    def with_template_owner_or_viewer(self, user_id: int):
+        return self.filter(
+            Q(
+                owners__role__in=(OwnerRole.OWNER, OwnerRole.VIEWER),
+                owners__type=OwnerType.USER,
+                owners__user_id=user_id,
+                owners__is_deleted=False,
+            ) | Q(
+                owners__role__in=(OwnerRole.OWNER, OwnerRole.VIEWER),
+                owners__type=OwnerType.GROUP,
+                owners__group__users__id=user_id,
+                owners__is_deleted=False,
+            ),
         ).distinct()
 
     def get_owners_as_users(self):
         user_owners = self.filter(
-            owners__type='user',
+            owners__type=OwnerType.USER,
             owners__user_id__isnull=False,
+            owners__is_deleted=False,
         ).values_list('owners__user_id', flat=True)
         group_owners = self.filter(
-            owners__type='group',
+            owners__type=OwnerType.GROUP,
             owners__group__users__isnull=False,
             owners__group__users__id__isnull=False,
+            owners__is_deleted=False,
         ).prefetch_related('owners__group__users').values_list(
             'owners__group__users__id', flat=True,
         )
@@ -229,6 +301,44 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
             )
         )
 
+    def raw_list_by_owners_query(
+        self,
+        account_id: int,
+        user_id: int,
+        ordering: Optional[TemplateOrdering] = None,
+        search: Optional[str] = None,
+        is_active: Optional[bool] = None,
+        is_public: Optional[bool] = None,
+    ):
+        """
+        Returns templates where the user is a Template Owner
+        (directly or via group membership).
+        """
+        from src.processes.models.templates.owner import (
+            TemplateOwner,
+        )
+
+        query = TemplateListByOwnersQuery(
+            user_id=user_id,
+            account_id=account_id,
+            ordering=ordering,
+            search_text=search,
+            is_active=is_active,
+            is_public=is_public,
+        )
+        return (
+            self.execute_raw(query)
+            .prefetch_related(
+                Prefetch(
+                    'owners',
+                    queryset=TemplateOwner.objects.order_by('type', 'id'),
+                ),
+                'kickoff',
+                'kickoff__fields',
+                'kickoff__fields__selections',
+            )
+        )
+
     def raw_export_query(
         self,
         account_id: int,
@@ -300,7 +410,76 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
 
     def with_template_owner(self, user_id: int):
         return self.exclude_legacy().filter(
-            template__template_owners=user_id,
+            Q(
+                template__owners__role=OwnerRole.OWNER,
+                template__owners__user_id=user_id,
+                template__owners__is_deleted=False,
+            )
+            | Q(
+                template__owners__role=OwnerRole.OWNER,
+                template__owners__group__users__id=user_id,
+                template__owners__is_deleted=False,
+            ),
+        ).distinct()
+
+    def with_template_viewer(self, user_id: int):
+        return self.exclude_legacy().filter(
+            Q(
+                template__owners__role=OwnerRole.VIEWER,
+                template__owners__user_id=user_id,
+                template__owners__is_deleted=False,
+            )
+            | Q(
+                template__owners__role=OwnerRole.VIEWER,
+                template__owners__group__users__id=user_id,
+                template__owners__is_deleted=False,
+            ),
+        ).distinct()
+
+    def with_template_starter(self, user_id: int):
+        return self.exclude_legacy().filter(
+            Q(
+                template__owners__role=OwnerRole.STARTER,
+                template__owners__user_id=user_id,
+                template__owners__is_deleted=False,
+            )
+            | Q(
+                template__owners__role=OwnerRole.STARTER,
+                template__owners__group__users__id=user_id,
+                template__owners__is_deleted=False,
+            ),
+        ).distinct()
+
+    def with_template_access(self, user_id: int):
+        return self.exclude_legacy().filter(
+            Q(
+                template__owners__user_id=user_id,
+                template__owners__role=OwnerRole.OWNER,
+                template__owners__is_deleted=False,
+            ) | Q(
+                template__owners__group__users__id=user_id,
+                template__owners__role=OwnerRole.OWNER,
+                template__owners__is_deleted=False,
+            ),
+        ).distinct()
+
+    def with_template_owner_or_viewer(self, user_id: int):
+        return self.exclude_legacy().filter(
+            Q(
+                template__owners__role__in=(
+                    OwnerRole.OWNER, OwnerRole.VIEWER,
+                ),
+                template__owners__type=OwnerType.USER,
+                template__owners__user_id=user_id,
+                template__owners__is_deleted=False,
+            ) | Q(
+                template__owners__role__in=(
+                    OwnerRole.OWNER, OwnerRole.VIEWER,
+                ),
+                template__owners__type=OwnerType.GROUP,
+                template__owners__group__users__id=user_id,
+                template__owners__is_deleted=False,
+            ),
         ).distinct()
 
     def with_member(self, user_id: int):

@@ -2,6 +2,7 @@ import pytest
 
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
+    OwnerRole,
     ConditionAction,
     FieldType,
     OwnerType,
@@ -48,6 +49,7 @@ class TestCopyTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -119,6 +121,7 @@ class TestCopyTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -203,6 +206,7 @@ class TestCopyTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},

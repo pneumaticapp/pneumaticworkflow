@@ -619,3 +619,11 @@ msgstr "Нельзя написать комментарий к неактивн
 #: src/processes/messages/workflow.py:181
 msgid "The user or group specified for a \"User\" field does not exist."
 msgstr "Указанный пользователь или группа для поля типа \"Пользователь\" не существует."
+
+#: src/processes/messages/template.py:281
+msgid "Permission denied. You do not have access to this template."
+msgstr "Доступ запрещён. У вас нет доступа к этому шаблону."
+
+#: src/processes/messages/template.py:282
+msgid "Permission denied. You are not a template owner or viewer."
+msgstr "Доступ запрещён. Вы не являетесь владельцем или наблюдателем этого шаблона."

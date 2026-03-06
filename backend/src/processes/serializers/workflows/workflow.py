@@ -21,11 +21,14 @@ from src.generics.mixins.serializers import (
 )
 from src.generics.paginations import DefaultPagination
 from src.processes.enums import (
+    OwnerRole,
+    OwnerType,
     TaskStatus,
     WorkflowApiStatus,
     WorkflowOrdering,
     WorkflowStatus,
 )
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.messages import workflow as messages
 from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
@@ -379,6 +382,7 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
             'tasks',
             'kickoff',
             'due_date_tsp',
+            'is_read_only_viewer',
         )
 
     template = TemplateDetailsSerializer()
@@ -394,6 +398,7 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
         source='date_completed',
         read_only=True,
     )
+    is_read_only_viewer = serializers.SerializerMethodField()
 
     def get_kickoff(self, instance: Workflow):
         kickoff = instance.kickoff_instance
@@ -404,6 +409,63 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
     def get_tasks(self, instance: Workflow):
         tasks = instance.tasks.exclude(status=TaskStatus.SKIPPED)
         return WorkflowCurrentTaskSerializer(instance=tasks, many=True).data
+
+    def get_is_read_only_viewer(self, instance: Workflow):
+        """
+        Determine if user has only read-only access.
+        Read-only access applies to:
+        - Template viewers (regardless of admin status)
+        - Template starters
+        - Non-admin template owners
+        - Workflow owners who are no longer template owners (were removed)
+
+        Full access only for:
+        - Account owners
+        - Admin users who are CURRENTLY template owners
+        - Workflow members (performers on tasks)
+        """
+        user = self.context.get('user')
+        if not user:
+            return False
+
+        template = instance.template
+
+        # Account owners always have full access
+        if user.is_account_owner:
+            return False
+
+        # Check if user is actual performer on any task in this workflow
+        # (not just workflow.members which includes template owners)
+        is_performer = TaskPerformer.objects.filter(
+            task__workflow=instance,
+            task__account_id=user.account_id,
+            user_id=user.id,
+        ).exists()
+        if is_performer:
+            return False
+
+        if not template:
+            return True
+
+        # Check CURRENT template owner status (not workflow.owners)
+        is_template_owner = template.owners.filter(
+            Q(
+                type=OwnerType.USER,
+                user_id=user.id,
+                role=OwnerRole.OWNER,
+                is_deleted=False,
+            )
+            | Q(
+                type=OwnerType.GROUP,
+                group__users__id=user.id,
+                role=OwnerRole.OWNER,
+                is_deleted=False,
+            ),
+        ).exists()
+
+        # Only admin template owners have full access.
+        # All other cases: read-only (non-admin owners, viewers, starters).
+        return not (is_template_owner and user.is_admin)
 
 
 class WorkflowNotificationSerializer(serializers.ModelSerializer):

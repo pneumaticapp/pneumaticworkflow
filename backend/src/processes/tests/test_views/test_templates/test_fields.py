@@ -1,9 +1,11 @@
 import pytest
 
+from src.accounts.models import UserGroup
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.authentication.tokens import PublicToken
 from src.processes.enums import (
     FieldType,
+    OwnerRole,
     OwnerType,
     PerformerType,
 )
@@ -96,6 +98,7 @@ def test_fields__draft_template__return_from_db(api_client):
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': False,
@@ -183,6 +186,7 @@ def test_fields__template_owner__ok(api_client):
     template = create_test_template(user=owner, tasks_count=1)
     user = create_test_not_admin(account=account)
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account,
         type=OwnerType.USER,
@@ -197,6 +201,109 @@ def test_fields__template_owner__ok(api_client):
     assert response.status_code == 200
 
 
+def test_fields__template_owner_via_group__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    template = create_test_template(user=owner, tasks_count=1)
+    user = create_test_not_admin(account=account)
+    group = UserGroup.objects.create(
+        name='Test Group',
+        account=account,
+    )
+    group.users.add(user)
+    TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
+        template=template,
+        account=account,
+        type=OwnerType.GROUP,
+        group=group,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}/fields')
+
+    # assert
+    assert response.status_code == 200
+
+
+def test_fields__template_viewer__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    template = create_test_template(user=owner, tasks_count=1)
+    user = create_test_not_admin(account=account)
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
+        template=template,
+        account=account,
+        type=OwnerType.USER,
+        user_id=user.id,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}/fields')
+
+    # assert
+    assert response.status_code == 200
+
+
+def test_fields__template_viewer_via_group__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    template = create_test_template(user=owner, tasks_count=1)
+    user = create_test_not_admin(account=account)
+    group = UserGroup.objects.create(
+        name='Test Group',
+        account=account,
+    )
+    group.users.add(user)
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
+        template=template,
+        account=account,
+        type=OwnerType.GROUP,
+        group=group,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}/fields')
+
+    # assert
+    assert response.status_code == 200
+
+
+def test_fields__template_viewer_deleted__not_found(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    template = create_test_template(user=owner, tasks_count=1)
+    user = create_test_not_admin(account=account)
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
+        template=template,
+        account=account,
+        type=OwnerType.USER,
+        user_id=user.id,
+        is_deleted=True,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}/fields')
+
+    # assert
+    assert response.status_code == 404
+
+
 def test_fields__not_workflow_member_not_owner__not_found(api_client):
 
     # arrange
@@ -204,11 +311,7 @@ def test_fields__not_workflow_member_not_owner__not_found(api_client):
     owner = create_test_owner(account=account)
     template = create_test_template(user=owner, tasks_count=1)
     create_test_workflow(user=owner, template=template)
-    user = create_test_owner(
-        email='user2@pneumaticapp',
-        account=account,
-        is_account_owner=False,
-    )
+    user = create_test_not_admin(account=account)
     api_client.token_authenticate(user)
 
     # act
@@ -227,6 +330,7 @@ def test_fields__workflow_member_and_template_owner__ok(api_client):
     workflow = create_test_workflow(user=owner, template=template)
     request_user = create_test_not_admin(account=account)
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account,
         type=OwnerType.USER,
@@ -251,6 +355,7 @@ def test_fields__not_authenticated__permission_denied(api_client):
     workflow = create_test_workflow(user=owner, template=template)
     request_user = create_test_not_admin(account=account)
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account,
         type=OwnerType.USER,

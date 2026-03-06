@@ -29,7 +29,12 @@ from src.processes.models.templates.preset import TemplatePreset
 from src.processes.models.templates.system_template import SystemTemplate
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
-from src.processes.permissions import TemplateOwnerPermission
+from src.processes.models.templates.owner import TemplateOwner
+from src.processes.permissions import (
+    TemplateAdminOwnerPermission,
+    TemplateOwnerOrViewerPermission,
+    TemplateOwnerPermission,
+)
 from src.processes.queries import (
     TemplateStepsQuery,
     TemplateTitlesByWorkflowsQuery,
@@ -110,6 +115,7 @@ class TemplateViewSet(
     serializer_class = TemplateSerializer
     action_serializer_classes = {
         'list': TemplateListSerializer,
+        'titles_by_owners': TemplateListSerializer,
         'run': WorkflowCreateSerializer,
         'steps': TemplateStepNameSerializer,
         'ai': TemplateAiSerializer,
@@ -125,12 +131,10 @@ class TemplateViewSet(
 
     def get_permissions(self):
         if self.action in (
-            'retrieve',
             'update',
             'clone',
             'destroy',
             'discard_changes',
-            'presets',
             'preset',
         ):
             return (
@@ -139,7 +143,23 @@ class TemplateViewSet(
                 BillingPlanPermission(),
                 UsersOverlimitedPermission(),
                 UserIsAdminOrAccountOwner(),
-                TemplateOwnerPermission(),
+                TemplateAdminOwnerPermission(),
+            )
+        if self.action == 'presets':
+            return (
+                UserIsAuthenticated(),
+                ExpiredSubscriptionPermission(),
+                BillingPlanPermission(),
+                UsersOverlimitedPermission(),
+                TemplateOwnerOrViewerPermission(),
+            )
+        if self.action == 'retrieve':
+            return (
+                UserIsAuthenticated(),
+                ExpiredSubscriptionPermission(),
+                BillingPlanPermission(),
+                UsersOverlimitedPermission(),
+                TemplateAdminOwnerPermission(),
             )
         if self.action == 'run':
             return (
@@ -153,6 +173,8 @@ class TemplateViewSet(
             'list',
             'titles',
             'titles_by_events',
+            'titles_by_owners',
+            'titles_by_workflows',
             'titles_by_tasks',
             'steps',
             'fields',
@@ -194,13 +216,38 @@ class TemplateViewSet(
     def get_queryset(self):
         user = self.request.user
         qst = Template.objects.on_account(user.account_id).exclude_onboarding()
-        if self.action == 'fields':
-            # Template owner (if not workflows) or Workflow Member
+
+        # Account owner has full access to all templates in the account
+        if user.is_account_owner:
+            # Account owner can see all templates in the account
+            pass  # No additional filtering needed
+        # For other users (including admins), apply filtering logic
+        elif self.action == 'fields':
+            # Template owner, viewer, or Workflow Member
             qst = qst.filter(
-                Q(owners__type='user', owners__user_id=user.id) |
-                Q(owners__type='group', owners__group__users__id=user.id) |
+                Q(owners__type='user', owners__user_id=user.id,
+                  owners__is_deleted=False,
+                  owners__role__in=('owner', 'viewer')) |
+                Q(owners__type='group', owners__group__users__id=user.id,
+                  owners__is_deleted=False,
+                  owners__role__in=('owner', 'viewer')) |
                 Q(workflows__members=user.id),
             ).distinct()
+        elif self.action == 'run':
+            # Template owners, viewers, and starters can run workflows
+            qst = qst.with_template_access(user.id)
+        elif self.action == 'presets':
+            # Template owners and viewers can access presets
+            qst = qst.with_template_owner_or_viewer(user.id)
+        else:
+            # For list/update/clone/destroy: only template owners
+            qst = qst.filter(
+                Q(owners__type='user', owners__user_id=user.id,
+                  owners__is_deleted=False) |
+                Q(owners__type='group', owners__group__users__id=user.id,
+                  owners__is_deleted=False),
+            ).distinct()
+
         return self.prefetch_queryset(qst)
 
     def prefetch_queryset(
@@ -212,12 +259,15 @@ class TemplateViewSet(
         # Original method "prefetch_queryset"
         # does not working with custom defined Prefetch(...) fields
 
-        if self.action == 'retrieve':
+        if self.action in ('retrieve', 'update'):
+            owners_qs = TemplateOwner.objects.filter(
+                is_deleted=False,
+            ).order_by('role', 'type', 'id')
             queryset = queryset.prefetch_related(
                 'kickoff',
                 'kickoff__fields',
                 'kickoff__fields__selections',
-                'owners',
+                Prefetch('owners', queryset=owners_qs),
                 Prefetch(
                     lookup='tasks',
                     queryset=(
@@ -340,6 +390,7 @@ class TemplateViewSet(
                 template = serializer.save()
             else:
                 template = serializer.save_as_draft()
+        template = self.get_queryset().get(pk=template.pk)
         service = TemplateIntegrationsService(
             account=request.user.account,
             is_superuser=request.is_superuser,
@@ -372,7 +423,8 @@ class TemplateViewSet(
                 auth_type=request.token_type,
                 **serializer.get_analysis_counters(),
             )
-        return self.response_ok(serializer.get_response_data())
+        response_serializer = self.get_serializer(instance=template)
+        return self.response_ok(response_serializer.get_response_data())
 
     @action(methods=['POST'], detail=True)
     def clone(self, request, *args, **kwargs):
@@ -401,6 +453,36 @@ class TemplateViewSet(
         search_text = data.get('search')
         user = request.user
         queryset = Template.objects.raw_list_query(
+            user_id=user.id,
+            account_id=user.account_id,
+            ordering=data.get('ordering'),
+            search=search_text,
+            is_active=data.get('is_active'),
+            is_public=data.get('is_public'),
+        )
+        if search_text:
+            AnalyticService.search_search(
+                user=request.user,
+                page='templates',
+                search_text=search_text,
+                is_superuser=request.is_superuser,
+                auth_type=request.token_type,
+            )
+        return self.paginated_response(queryset)
+
+    @action(methods=['GET'], detail=False, url_path='titles-by-owners')
+    def titles_by_owners(self, request, *args, **kwargs):
+        """
+        Returns templates where the current user is a Template Owner
+        (directly or via group membership).
+        """
+        filter_slz = TemplateListFilterSerializer(data=request.GET)
+        filter_slz.is_valid(raise_exception=True)
+
+        data = filter_slz.validated_data
+        search_text = data.get('search')
+        user = request.user
+        queryset = Template.objects.raw_list_by_owners_query(
             user_id=user.id,
             account_id=user.account_id,
             ordering=data.get('ordering'),
