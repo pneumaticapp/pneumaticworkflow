@@ -76,6 +76,8 @@ const DEFAULT_TEMPLATE: ITemplate = {
   name: 'Customer study process',
   description: '',
   finalizable: true,
+  completionNotification: false,
+  reminderNotification: false,
   isActive: true,
   owners: [],
   tasks: [],

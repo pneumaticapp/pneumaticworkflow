@@ -27,6 +27,8 @@ export const initialTemplate: ITemplateStore = {
     owners: [],
     viewers: [],
     starters: [],
+    completionNotification: false,
+    reminderNotification: false,
   } as ITemplate,
   status: ETemplateStatus.Saved,
   AITemplate: {

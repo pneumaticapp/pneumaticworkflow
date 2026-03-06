@@ -40,6 +40,8 @@ class TestCopyTemplate:
             'is_active': is_active,
             'is_public': True,
             'finalizable': True,
+            'reminder_notification': True,
+            'completion_notification': True,
             'owners': [
                 {
                     'type': OwnerType.USER,
@@ -90,7 +92,9 @@ class TestCopyTemplate:
         assert response_2_data['is_active'] is False
         assert response_2_data['is_public'] is True
         assert response_2_data['public_url'] is not None
-        assert response_2_data['finalizable'] == request_data['finalizable']
+        assert response_2_data['finalizable'] is True
+        assert response_2_data['reminder_notification'] is True
+        assert response_2_data['completion_notification'] is True
         assert (
             response_2_data['owners'][0]['source_id'] ==
             str(request_data['owners'][0]['source_id'])
