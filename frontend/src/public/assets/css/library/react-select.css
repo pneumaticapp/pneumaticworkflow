@@ -40,7 +40,10 @@
 
   .react-select__placeholder {
     color: var(--pneumatic-color-black32);
-    @mixin text-overflow;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    text-wrap: wrap;
+    word-break: break-word;
   }
 
   .react-select__input-container,
