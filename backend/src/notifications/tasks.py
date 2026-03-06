@@ -371,7 +371,7 @@ def send_overdue_task_notification():
     with periodic_lock('send_overdue_task_notification') as acquired:
         if not acquired:
             return
-    _send_overdue_task_notification()
+        _send_overdue_task_notification()
 
 
 def _send_reminder_task_notification():
@@ -405,7 +405,7 @@ def send_reminder_task_notification():
     with periodic_lock('send_reminder_task_notification') as acquired:
         if not acquired:
             return
-    _send_reminder_task_notification()
+        _send_reminder_task_notification()
 
 
 def _send_workflows_digest_notification(
@@ -910,7 +910,7 @@ def _send_urgent_notification(
 ):
     for task_id in task_ids:
         task = Task.objects.select_related('workflow').get(id=task_id)
-        link = f'{settings.FRONTEND_URL}/workflows/{task.id}'
+        link = f'{settings.FRONTEND_URL}/tasks/{task.id}'
         users = (
             TaskPerformer.objects
             .by_task(task_id)
@@ -1183,7 +1183,7 @@ def send_workflow_comment_watched():
     with periodic_lock('comment_watched', lock_expire) as acquired:
         if not acquired:
             return
-    _send_workflow_comment_watched()
+        _send_workflow_comment_watched()
 
 
 def _send_reaction_notification(

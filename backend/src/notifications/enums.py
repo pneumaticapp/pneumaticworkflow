@@ -128,7 +128,7 @@ class EmailType:
         (USER_DEACTIVATED, 'User Deactivated'),
         (NEW_TASK, 'New Task'),
         (TASK_RETURNED, 'Task Returned'),
-        (TASK_REMINDER, 'Task Remainder'),
+        (TASK_REMINDER, 'Task Reminder'),
         (ACCOUNT_VERIFICATION, 'Account Verification'),
         (WORKFLOWS_DIGEST, 'Workflows Digest'),
         (TASKS_DIGEST, 'Tasks Digest'),

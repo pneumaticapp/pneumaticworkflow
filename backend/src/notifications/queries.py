@@ -122,6 +122,7 @@ class UsersWithRemainderTaskQuery(SqlQueryObject, DereferencedPerformersMixin):
           AND pw.status = '{WorkflowStatus.RUNNING}'
           AND pw.reminder_notification = TRUE
           AND pw.is_deleted = FALSE
+          AND pt.is_deleted = FALSE
           AND pt.status = '{TaskStatus.ACTIVE}'
           AND dereferenced_performers.is_completed IS FALSE
           AND au.status = '{UserStatus.ACTIVE}'
