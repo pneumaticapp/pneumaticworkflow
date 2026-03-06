@@ -1,6 +1,13 @@
 import { useEffect } from 'react';
 import { useLexicalComposerContext } from '@lexical/react/LexicalComposerContext';
-import { $getSelection, $isRangeSelection, COMMAND_PRIORITY_EDITOR } from 'lexical';
+import {
+  $getSelection,
+  $isRangeSelection,
+  $isRootNode,
+  $createParagraphNode,
+  COMMAND_PRIORITY_EDITOR,
+  type LexicalNode,
+} from 'lexical';
 import { $insertNodeToNearestRoot } from '@lexical/utils';
 import {
   $createImageAttachmentNode,
@@ -11,6 +18,28 @@ import {
   FileAttachmentNode,
 } from '../../nodes/attachments';
 import { INSERT_ATTACHMENT_COMMAND } from './insertAttachmentCommand';
+
+/**
+ * Moves a block-level decorator out of a ParagraphNode to root level.
+ * Handles text splitting: nodes after the decorator go into a new paragraph.
+ */
+function $promoteBlockDecorator(node: LexicalNode): void {
+  const parent = node.getParent();
+  if (parent == null || $isRootNode(parent)) return;
+
+  const nodesAfter = node.getNextSiblings();
+  parent.insertAfter(node);
+
+  if (nodesAfter.length > 0) {
+    const newParagraph = $createParagraphNode();
+    node.insertAfter(newParagraph);
+    nodesAfter.forEach((n) => newParagraph.append(n));
+  }
+
+  if (parent.getChildrenSize() === 0) {
+    parent.remove();
+  }
+}
 
 export function InsertAttachmentPlugin(): null {
   const [editor] = useLexicalComposerContext();
@@ -28,7 +57,7 @@ export function InsertAttachmentPlugin(): null {
       );
     }
 
-    return editor.registerCommand(
+    const removeInsert = editor.registerCommand(
       INSERT_ATTACHMENT_COMMAND,
       (payload) => {
         const selection = $getSelection();
@@ -48,6 +77,26 @@ export function InsertAttachmentPlugin(): null {
       },
       COMMAND_PRIORITY_EDITOR,
     );
+
+    const removeImageTransform = editor.registerNodeTransform(
+      ImageAttachmentNode,
+      $promoteBlockDecorator,
+    );
+    const removeVideoTransform = editor.registerNodeTransform(
+      VideoAttachmentNode,
+      $promoteBlockDecorator,
+    );
+    const removeFileTransform = editor.registerNodeTransform(
+      FileAttachmentNode,
+      $promoteBlockDecorator,
+    );
+
+    return () => {
+      removeInsert();
+      removeImageTransform();
+      removeVideoTransform();
+      removeFileTransform();
+    };
   }, [editor]);
 
   return null;
