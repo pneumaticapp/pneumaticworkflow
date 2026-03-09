@@ -13,7 +13,7 @@ import styles from './WorkflowsTable.css';
 import { getWorkflowTemplatesIdsFilter } from '../../../../redux/selectors/workflows';
 
 function TuneViewIconWithMargin() {
-  return <TuneViewIcon style={{ marginRight: '2px' }} />;
+  return <TuneViewIcon style={{ marginRight: '0.2rem' }} />;
 }
 
 interface WorkflowsTableActionsProps {

@@ -28,6 +28,7 @@ export interface ITopNavProps {
   leaseLevel: TAccountLeaseLevel;
   isAccountOwner: boolean;
   accountOwnerPlan: IAccount;
+  isAdmin: boolean;
   firstName: string;
   lastName: string;
   isFromWorkflowsLayout?: boolean;
@@ -64,6 +65,7 @@ export function TopNav({
   redirectToCustomerPortal,
   isFromWorkflowsLayout,
   workflowsView,
+  isAdmin,
   firstName,
   lastName,
 }: TTopNavProps) {
@@ -168,12 +170,14 @@ export function TopNav({
     {
       label: formatMessage({ id: 'nav.team' }),
       onClick: handleOptionClick(() => history.push(ERoutes.Team)),
+      isHidden: !isAdmin,
       Icon: UsersIcon,
       withUpperline: true,
     },
     {
       label: formatMessage({ id: 'nav.integration' }),
       onClick: handleOptionClick(() => history.push(ERoutes.Integrations)),
+      isHidden: !isAdmin,
       Icon: IntegrationSmIcon,
     },
     {
