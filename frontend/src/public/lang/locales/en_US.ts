@@ -405,6 +405,8 @@ export const enMessages = {
   'nav.settings': 'Settings',
   'nav.free-plan': 'Free plan',
   'nav.customer-portal': 'My subscription',
+  'nav.team': 'Team',
+  'nav.integration': 'Integration',
 
   'pages.error-title': 'Ooops... looks like something went wrong!',
   'pages.error-code': 'Error code',

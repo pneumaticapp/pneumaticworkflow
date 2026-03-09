@@ -12,6 +12,10 @@ import { PageTitle } from '../../../PageTitle';
 import styles from './WorkflowsTable.css';
 import { getWorkflowTemplatesIdsFilter } from '../../../../redux/selectors/workflows';
 
+function TuneViewIconWithMargin() {
+  return <TuneViewIcon style={{ marginRight: '2px' }} />;
+}
+
 interface WorkflowsTableActionsProps {
   workflowsLoadingStatus: EWorkflowsLoadingStatus;
   isWideTable?: boolean;
@@ -43,7 +47,7 @@ export function WorkflowsTableActions({
       label={isMobile ? '' : formatMessage({ id: 'workflow.tune-view-button' })}
       size="sm"
       disabled={isDisabled}
-      icon={TuneViewIcon}
+      icon={TuneViewIconWithMargin}
       onClick={handleTuneViewClick}
     />
   );
