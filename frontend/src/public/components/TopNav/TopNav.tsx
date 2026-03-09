@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
@@ -146,7 +146,7 @@ export function TopNav({
     {
       label: formatMessage({ id: 'nav.profile' }),
       onClick: handleOptionClick(() => history.push(ERoutes.Profile)),
-      withUpperline: true,
+      withUpperline: !!userFullName,
       Icon: PersonIcon,
     },
     {
