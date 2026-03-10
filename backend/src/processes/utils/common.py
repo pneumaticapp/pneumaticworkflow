@@ -22,7 +22,7 @@ from src.utils.salt import get_salt
 VAR_PATTERN = re.compile(r'{{\s*([^\{\}\s]+)\s*}}')
 VAR_PATTERN_TEMPLATE = r'\{\{(\s*?)%s(\s*?)\}\}'
 VAR_PATTERN_FIELD = re.compile(
-    r'\{\{(\s*?)((?!date|template-name|workflow-id).)+(\s*?)\}\}',
+    r'\{\{(\s*?)((?!date|template-name|workflow-id|workflow-starter).)+(\s*?)\}\}',
 )
 VAR_PATTERN_WORKFLOW_ID = re.compile(r'\{\{\s*workflow-id\s*\}\}')
 

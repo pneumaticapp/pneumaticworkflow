@@ -890,6 +890,7 @@ export const ruMessages = {
   'kickoff.system-varibale-date': 'Дата',
   'kickoff.system-varibale-template-name': 'Имя шаблона',
   'kickoff.system-varibale-workflow-id': 'ID процесса',
+  'kickoff.system-varibale-workflow-starter': 'Запустивший процесс',
   'sorting.date-asc': 'Сначала старые',
   'sorting.date-desc': 'Сначала новые',
   'sorting.overdue': 'Сначала просроченные',

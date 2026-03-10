@@ -109,6 +109,13 @@ export const useWorkflowNameVariables = (kickoff?: Pick<IKickoff, 'fields'>) => 
         richSubtitle: null,
         type: EExtraFieldType.Number,
       },
+      {
+        apiName: 'workflow-starter',
+        title: formatMessage({ id: 'kickoff.system-varibale-workflow-starter' }),
+        subtitle: formatMessage({ id: 'kickoff.system-varibale' }),
+        richSubtitle: null,
+        type: EExtraFieldType.String,
+      },
     ],
     [formatMessage],
   );

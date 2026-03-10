@@ -69,6 +69,10 @@ class WorkflowService(
         }
         if workflow_starter:
             values.update(workflow_starter.get_dynamic_mapping())
+            values['workflow-starter'] = (
+                f'{workflow_starter.first_name}'
+                f' {workflow_starter.last_name}'
+            ).strip()
 
         if user_provided_name:
             result = insert_fields_values_to_text(
