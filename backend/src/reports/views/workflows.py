@@ -8,8 +8,12 @@ from src.accounts.permissions import (
     BillingPlanPermission,
     ExpiredSubscriptionPermission,
 )
+from src.processes.enums import (
+    OwnerType,
+    OwnerRole,
+)
 from src.processes.permissions import (
-    UserCanAccessHighlightsPermission,
+    UserCanAccessDashboardPermission,
 )
 from src.executor import RawSqlExecutor
 from src.generics.mixins.views import CustomViewSetMixin
@@ -41,7 +45,7 @@ class WorkflowsDashboardViewSet(
         UserIsAuthenticated,
         ExpiredSubscriptionPermission,
         BillingPlanPermission,
-        UserCanAccessHighlightsPermission,
+        UserCanAccessDashboardPermission,
     )
     action_serializer_classes = {
         'overview': AccountDashboardOverviewSerializer,
@@ -96,16 +100,16 @@ class WorkflowsDashboardViewSet(
             .on_account(self.request.user.account_id)
             .filter(
                 Q(
-                    owners__type='user',
+                    owners__type=OwnerType.USER,
                     owners__user_id=self.request.user.id,
                     owners__is_deleted=False,
-                    owners__role__in=('owner', 'viewer'),
+                    owners__role__in=(OwnerRole.OWNER, OwnerRole.VIEWER),
                 )
                 | Q(
-                    owners__type='group',
+                    owners__type=OwnerType.GROUP,
                     owners__group__users__id=self.request.user.id,
                     owners__is_deleted=False,
-                    owners__role__in=('owner', 'viewer'),
+                    owners__role__in=(OwnerRole.OWNER, OwnerRole.VIEWER),
                 ),
             ).distinct()
         )

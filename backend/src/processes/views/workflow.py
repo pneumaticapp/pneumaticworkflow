@@ -26,7 +26,11 @@ from src.generics.permissions import (
     IsAuthenticated,
     UserIsAuthenticated,
 )
-from src.processes.enums import WorkflowEventType
+from src.processes.enums import (
+    OwnerType,
+    OwnerRole,
+    WorkflowEventType,
+)
 from src.processes.filters import (
     WorkflowEventFilter,
     WorkflowWebhookFilterSet,
@@ -127,16 +131,22 @@ class WorkflowViewSet(
                     Q(workflow_starter_id=user.id) |  # Workflow starter access
                     Q(members=user.id) |  # Workflow member access
                     Q(
-                        template__owners__type='user',
+                        template__owners__type=OwnerType.USER,
                         template__owners__user_id=user.id,
                         template__owners__is_deleted=False,
-                        template__owners__role__in=('owner', 'viewer'),
+                        template__owners__role__in=(
+                            OwnerRole.OWNER,
+                            OwnerRole.VIEWER,
+                        ),
                     ) |  # Template owner/viewer access (user)
                     Q(
-                        template__owners__type='group',
+                        template__owners__type=OwnerType.GROUP,
                         template__owners__group__users__id=user.id,
                         template__owners__is_deleted=False,
-                        template__owners__role__in=('owner', 'viewer'),
+                        template__owners__role__in=(
+                            OwnerRole.OWNER,
+                            OwnerRole.VIEWER,
+                        ),
                     ),  # Template owner/viewer access (group)
                 ).distinct()
         elif self.action == 'webhook_example':

@@ -108,14 +108,30 @@ class TemplateOwnerOrViewerPermission(BasePermission):
 
 class UserCanAccessHighlightsPermission(BasePermission):
 
-    """ Allow admin, account owner, template owner, template viewer,
-        or template starter (of any template on account) to access
-        highlights/dashboard. """
+    """ Allow admin, account owner, template owners or template viewers
+        (of any template on account) to access Highlights and Reports.
+        Template starters are NOT allowed — they only have access
+        to Dashboard and My Tasks sections. """
 
     def has_permission(self, request, view):
-        if getattr(request.user, 'is_admin', False):
+        if request.user.is_admin or request.user.is_account_owner:
             return True
-        if getattr(request.user, 'is_account_owner', False):
+        return (
+            Template.objects
+            .on_account(request.user.account_id)
+            .with_template_owner_or_viewer(request.user.id)
+            .exists()
+        )
+
+
+class UserCanAccessDashboardPermission(BasePermission):
+
+    """ Allow admin, account owner, template owner, template viewer,
+        or template starter (of any template on account) to access Dashboard.
+        All template roles grant Dashboard access. """
+
+    def has_permission(self, request, view):
+        if request.user.is_admin or request.user.is_account_owner:
             return True
         return (
             Template.objects
@@ -724,5 +740,9 @@ class TemplatePresetPermission(BasePermission):
         if preset.type == PresetType.ACCOUNT:
             if not user.is_admin:
                 return False
-            return preset.template.owners.filter(user_id=user.id).exists()
+            return preset.template.owners.filter(
+                user_id=user.id,
+                role=OwnerRole.OWNER,
+                is_deleted=False,
+            ).exists()
         return False

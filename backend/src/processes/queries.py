@@ -184,6 +184,14 @@ class WorkflowListQuery(
             AND pw.account_id = %(account_id)s """
 
         if self.user_id:
+            # Workflow list visibility: user sees workflows where they are
+            # a workflow owner OR a template viewer.
+            # NOTE: workflow starters are intentionally excluded from the
+            # list \u2014 a user who only started a workflow
+            # (and is not an owner or viewer)
+            # should NOT see it in the workflow list. They can
+            # still access the workflow directly via WorkflowMemberPermission,
+            # but it is not surfaced in the list view by design.
             where = f"""{where}
                 AND (
                     pwo.user_id = %(user_id)s

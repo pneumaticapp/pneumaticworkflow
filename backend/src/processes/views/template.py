@@ -22,6 +22,10 @@ from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
 from src.generics.permissions import UserIsAuthenticated
+from src.processes.enums import (
+    OwnerType,
+    OwnerRole,
+)
 from src.processes.filters import TemplateFilter
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.kickoff import Kickoff
@@ -225,13 +229,17 @@ class TemplateViewSet(
         elif self.action == 'fields':
             # Template owner, viewer, or Workflow Member
             qst = qst.filter(
-                Q(owners__type='user', owners__user_id=user.id,
-                  owners__is_deleted=False,
-                  owners__role__in=('owner', 'viewer')) |
-                Q(owners__type='group', owners__group__users__id=user.id,
-                  owners__is_deleted=False,
-                  owners__role__in=('owner', 'viewer')) |
-                Q(workflows__members=user.id),
+                Q(
+                    owners__type=OwnerType.USER,
+                    owners__user_id=user.id,
+                    owners__is_deleted=False,
+                    owners__role__in=(OwnerRole.OWNER, OwnerRole.VIEWER),
+                ) | Q(
+                    owners__type=OwnerType.GROUP,
+                    owners__group__users__id=user.id,
+                    owners__is_deleted=False,
+                    owners__role__in=(OwnerRole.OWNER, OwnerRole.VIEWER),
+                ) | Q(workflows__members=user.id),
             ).distinct()
         elif self.action == 'run':
             # Template owners, viewers, and starters can run workflows
@@ -240,13 +248,8 @@ class TemplateViewSet(
             # Template owners and viewers can access presets
             qst = qst.with_template_owner_or_viewer(user.id)
         else:
-            # For list/update/clone/destroy: only template owners
-            qst = qst.filter(
-                Q(owners__type='user', owners__user_id=user.id,
-                  owners__is_deleted=False) |
-                Q(owners__type='group', owners__group__users__id=user.id,
-                  owners__is_deleted=False),
-            ).distinct()
+            # For update/clone/destroy/retrieve: only template owners
+            qst = qst.with_template_owner(user.id)
 
         return self.prefetch_queryset(qst)
 
