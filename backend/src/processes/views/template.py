@@ -35,9 +35,9 @@ from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.permissions import (
+    TemplateAccessPermission,
     TemplateAdminOwnerPermission,
     TemplateOwnerOrViewerPermission,
-    TemplateOwnerPermission,
 )
 from src.processes.queries import (
     TemplateStepsQuery,
@@ -171,7 +171,7 @@ class TemplateViewSet(
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
                 UsersOverlimitedPermission(),
-                TemplateOwnerPermission(),
+                TemplateAccessPermission(),
             )
         if self.action in (
             'list',

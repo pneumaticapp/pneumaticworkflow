@@ -31,10 +31,12 @@ class TemplateViewerMixin:
         return """
         LEFT JOIN processes_templateowner pto_user ON
             pt.id = pto_user.template_id AND
+            pto_user.role = 'owner' AND
             pto_user.type = 'user' AND
             pto_user.is_deleted IS FALSE
         LEFT JOIN processes_templateowner pto_grp ON
             pt.id = pto_grp.template_id AND
+            pto_grp.role = 'owner' AND
             pto_grp.type = 'group' AND
             pto_grp.is_deleted IS FALSE
         LEFT JOIN accounts_usergroup_users pto_group ON

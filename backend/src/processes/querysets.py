@@ -179,11 +179,13 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
 
     def get_owners_as_users(self):
         user_owners = self.filter(
+            owners__role=OwnerRole.OWNER,
             owners__type=OwnerType.USER,
             owners__user_id__isnull=False,
             owners__is_deleted=False,
         ).values_list('owners__user_id', flat=True)
         group_owners = self.filter(
+            owners__role=OwnerRole.OWNER,
             owners__type=OwnerType.GROUP,
             owners__group__users__isnull=False,
             owners__group__users__id__isnull=False,
@@ -454,11 +456,9 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
         return self.exclude_legacy().filter(
             Q(
                 template__owners__user_id=user_id,
-                template__owners__role=OwnerRole.OWNER,
                 template__owners__is_deleted=False,
             ) | Q(
                 template__owners__group__users__id=user_id,
-                template__owners__role=OwnerRole.OWNER,
                 template__owners__is_deleted=False,
             ),
         ).distinct()

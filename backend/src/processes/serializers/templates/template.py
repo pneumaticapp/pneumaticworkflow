@@ -31,6 +31,7 @@ from src.generics.mixins.serializers import (
 from src.generics.validators import NoSchemaURLValidator
 from src.processes.consts import TEMPLATE_NAME_LENGTH
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     PerformerType,
     TemplateOrdering,
@@ -538,14 +539,12 @@ class TemplateSerializer(
             for owner in self.owners_data
             if owner.get('type') == OwnerType.USER
             and owner.get('source_id') is not None
-            and owner.get('role') is not None
         }
         self.new_groups_owner_role_pairs = {
             (int(owner.get('source_id')), owner.get('role'))
             for owner in self.owners_data
             if owner.get('type') == OwnerType.GROUP
             and owner.get('source_id') is not None
-            and owner.get('role') is not None
         }
         self.users_in_groups_owners_ids = (
             UserModel.objects
@@ -808,8 +807,14 @@ class TemplateListSerializer(ModelSerializer):
         if not user.is_admin:
             return False
         return instance.owners.filter(
-            Q(type=OwnerType.USER, user_id=user.id, is_deleted=False)
+            Q(
+                role=OwnerRole.OWNER,
+                type=OwnerType.USER,
+                user_id=user.id,
+                is_deleted=False,
+            )
             | Q(
+                role=OwnerRole.OWNER,
                 type=OwnerType.GROUP,
                 group__users__id=user.id,
                 is_deleted=False,

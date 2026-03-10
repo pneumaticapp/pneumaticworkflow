@@ -56,7 +56,7 @@ class TemplateAdminOwnerPermission(BasePermission):
         return template_owner_qst.exists()
 
 
-class TemplateOwnerPermission(BasePermission):
+class TemplateAccessPermission(BasePermission):
 
     """ Allow access for template owners, viewers, and starters """
 
@@ -741,8 +741,16 @@ class TemplatePresetPermission(BasePermission):
             if not user.is_admin:
                 return False
             return preset.template.owners.filter(
-                user_id=user.id,
-                role=OwnerRole.OWNER,
-                is_deleted=False,
+                Q(
+                    type=OwnerType.USER,
+                    user_id=user.id,
+                    role=OwnerRole.OWNER,
+                    is_deleted=False,
+                ) | Q(
+                    type=OwnerType.GROUP,
+                    group__users__id=user.id,
+                    role=OwnerRole.OWNER,
+                    is_deleted=False,
+                ),
             ).exists()
         return False

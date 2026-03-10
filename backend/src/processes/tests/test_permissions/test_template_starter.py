@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 
 from src.processes.enums import OwnerRole, OwnerType
 from src.processes.models.templates.owner import TemplateOwner
-from src.processes.permissions import TemplateOwnerPermission
+from src.processes.permissions import TemplateAccessPermission
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_group,
@@ -25,7 +25,7 @@ class MockRequest:
         self.user = user
 
 
-class TestTemplateOwnerPermission:
+class TestTemplateAccessPermission:
 
     def test_has_permission__account_owner__ok(self):
         # arrange
@@ -41,7 +41,7 @@ class TestTemplateOwnerPermission:
         )
         template = create_test_template(template_owner)
 
-        permission = TemplateOwnerPermission()
+        permission = TemplateAccessPermission()
         request = MockRequest(account_owner)
         view = MockView(template.id)
 
@@ -74,7 +74,7 @@ class TestTemplateOwnerPermission:
             account=account,
         )
 
-        permission = TemplateOwnerPermission()
+        permission = TemplateAccessPermission()
         request = MockRequest(starter_user)
         view = MockView(template.id)
 
@@ -93,7 +93,7 @@ class TestTemplateOwnerPermission:
         )
         template = create_test_template(template_owner)
 
-        permission = TemplateOwnerPermission()
+        permission = TemplateAccessPermission()
         request = MockRequest(template_owner)
         view = MockView(template.id)
 
@@ -118,7 +118,7 @@ class TestTemplateOwnerPermission:
             is_account_owner=False,
         )
 
-        permission = TemplateOwnerPermission()
+        permission = TemplateAccessPermission()
         request = MockRequest(random_user)
         view = MockView(template.id)
 
@@ -133,7 +133,7 @@ class TestTemplateOwnerPermission:
         account = create_test_account()
         user = create_test_user(account=account)
 
-        permission = TemplateOwnerPermission()
+        permission = TemplateAccessPermission()
         request = MockRequest(user)
         view = MockView('invalid')
 
@@ -152,7 +152,7 @@ class TestTemplateOwnerPermission:
             is_admin=False,
         )
 
-        permission = TemplateOwnerPermission()
+        permission = TemplateAccessPermission()
         request = MockRequest(user)
         view = MockView(99999)
 
@@ -186,7 +186,7 @@ class TestTemplateOwnerPermission:
             account=account,
         )
 
-        permission = TemplateOwnerPermission()
+        permission = TemplateAccessPermission()
         request = MockRequest(viewer_user)
         view = MockView(template.id)
 
@@ -222,7 +222,7 @@ class TestTemplateOwnerPermission:
             account=account,
         )
 
-        permission = TemplateOwnerPermission()
+        permission = TemplateAccessPermission()
         request = MockRequest(viewer_user)
         view = MockView(template.id)
 
@@ -231,3 +231,109 @@ class TestTemplateOwnerPermission:
 
         # assert
         assert result is True
+
+    def test_has_permission__template_starter_group__ok(self):
+        # arrange
+        account = create_test_account()
+        starter_user = create_test_user(
+            account=account,
+            email='starter@test.com',
+            is_admin=False,
+            is_account_owner=False,
+        )
+        template_owner = create_test_user(
+            account=account,
+            email='owner@test.com',
+            is_admin=True,
+        )
+        template = create_test_template(template_owner)
+        group = create_test_group(account=account, name='Starters Group')
+        group.users.add(starter_user)
+
+        TemplateOwner.objects.create(
+            role=OwnerRole.STARTER,
+            template=template,
+            type=OwnerType.GROUP,
+            group=group,
+            account=account,
+        )
+
+        permission = TemplateAccessPermission()
+        request = MockRequest(starter_user)
+        view = MockView(template.id)
+
+        # act
+        result = permission.has_permission(request, view)
+
+        # assert
+        assert result is True
+
+    def test_has_permission__template_owner_group__ok(self):
+        # arrange
+        account = create_test_account()
+        group_member = create_test_user(
+            account=account,
+            email='member@test.com',
+            is_admin=False,
+            is_account_owner=False,
+        )
+        template_owner = create_test_user(
+            account=account,
+            email='owner@test.com',
+            is_admin=True,
+        )
+        template = create_test_template(template_owner)
+        group = create_test_group(account=account, name='Owners Group')
+        group.users.add(group_member)
+
+        TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
+            template=template,
+            type=OwnerType.GROUP,
+            group=group,
+            account=account,
+        )
+
+        permission = TemplateAccessPermission()
+        request = MockRequest(group_member)
+        view = MockView(template.id)
+
+        # act
+        result = permission.has_permission(request, view)
+
+        # assert
+        assert result is True
+
+    def test_has_permission__deleted_owner__forbidden(self):
+        # arrange
+        account = create_test_account()
+        template_owner = create_test_user(
+            account=account,
+            email='owner@test.com',
+            is_admin=True,
+        )
+        template = create_test_template(template_owner)
+        ex_user = create_test_user(
+            account=account,
+            email='ex_user@test.com',
+            is_admin=False,
+            is_account_owner=False,
+        )
+        TemplateOwner.objects.create(
+            role=OwnerRole.STARTER,
+            template=template,
+            type=OwnerType.USER,
+            user=ex_user,
+            account=account,
+            is_deleted=True,
+        )
+
+        permission = TemplateAccessPermission()
+        request = MockRequest(ex_user)
+        view = MockView(template.id)
+
+        # act
+        result = permission.has_permission(request, view)
+
+        # assert
+        assert result is False
