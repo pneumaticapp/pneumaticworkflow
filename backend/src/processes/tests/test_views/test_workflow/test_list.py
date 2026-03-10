@@ -19,7 +19,7 @@ from src.processes.enums import (
     WorkflowStatus,
 )
 from src.processes.messages import workflow as messages
-from src.processes.models import SearchContent
+from src.processes.models.search_content import SearchContent
 from src.processes.models.templates.conditions import (
     ConditionTemplate,
     PredicateTemplate,
