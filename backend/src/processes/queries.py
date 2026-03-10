@@ -2122,10 +2122,14 @@ class TemplateTitlesByWorkflowsQuery(
         # Users can see templates where they are:
         # 1. Template owners (user or via group)
         # 2. Template viewers (user or via group)
+        # NOTE: starters do NOT get access to template titles / workflow
+        # counts used in Highlights and Reports.
         self.params['owner_type_user'] = OwnerType.USER
         self.params['owner_type_group'] = OwnerType.GROUP
         self.params['viewer_type_user'] = OwnerType.USER
         self.params['viewer_type_group'] = OwnerType.GROUP
+        self.params['owner_role'] = 'owner'
+        self.params['viewer_role'] = 'viewer'
         return """
                 SELECT DISTINCT template_id
                 FROM (
@@ -2133,6 +2137,7 @@ class TemplateTitlesByWorkflowsQuery(
                     SELECT pto.template_id
                     FROM processes_templateowner AS pto
                     WHERE pto.type = %(owner_type_user)s
+                      AND pto.role = %(owner_role)s
                       AND pto.is_deleted IS FALSE
                       AND pto.user_id = %(user_id)s
 
@@ -2144,6 +2149,7 @@ class TemplateTitlesByWorkflowsQuery(
                     JOIN accounts_usergroup_users AS g
                       ON g.usergroup_id = pto.group_id
                     WHERE pto.type = %(owner_type_group)s
+                      AND pto.role = %(owner_role)s
                       AND pto.is_deleted IS FALSE
                       AND g.user_id = %(user_id)s
 
@@ -2152,7 +2158,7 @@ class TemplateTitlesByWorkflowsQuery(
                     -- Template viewers (users)
                     SELECT ptv.template_id
                     FROM processes_templateowner AS ptv
-                    WHERE ptv.role = 'viewer'
+                    WHERE ptv.role = %(viewer_role)s
                       AND ptv.type = %(viewer_type_user)s
                       AND ptv.is_deleted IS FALSE
                       AND ptv.user_id = %(user_id)s
@@ -2164,7 +2170,7 @@ class TemplateTitlesByWorkflowsQuery(
                     FROM processes_templateowner AS ptv
                     JOIN accounts_usergroup_users AS g
                       ON g.usergroup_id = ptv.group_id
-                    WHERE ptv.role = 'viewer'
+                    WHERE ptv.role = %(viewer_role)s
                       AND ptv.type = %(viewer_type_group)s
                       AND ptv.is_deleted IS FALSE
                       AND g.user_id = %(user_id)s

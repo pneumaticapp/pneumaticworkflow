@@ -386,8 +386,15 @@ class TemplateSerializer(
                 message=messages.MSG_PT_0057,
                 name='owners',
             )
-        all_users = self.new_users_owners_ids | self.users_in_groups_owners_ids
-        if self.context['user'].id not in all_users:
+
+        # Verify the current user appears as an actual owner (role='owner'),
+        # NOT merely as a viewer or starter. Using role-scoped id sets prevents
+        # a request that lists the current user only as viewer/starter from
+        # passing, which would leave the template with zero real owners.
+        actual_owner_users = (
+            self.new_users_owner_ids | self.users_in_groups_owner_ids
+        )
+        if self.context['user'].id not in actual_owner_users:
             self.raise_validation_error(
                 message=messages.MSG_PT_0018,
                 name='owners',
@@ -546,9 +553,24 @@ class TemplateSerializer(
             if owner.get('type') == OwnerType.GROUP
             and owner.get('source_id') is not None
         }
-        self.users_in_groups_owners_ids = (
+        self.new_users_owner_ids = {
+            int(owner.get('source_id'))
+            for owner in self.owners_data
+            if owner.get('type') == OwnerType.USER
+            and owner.get('source_id') is not None
+            and owner.get('role') == OwnerRole.OWNER
+        }
+        self.new_groups_owner_ids = {
+            int(owner.get('source_id'))
+            for owner in self.owners_data
+            if owner.get('type') == OwnerType.GROUP
+            and owner.get('source_id') is not None
+            and owner.get('role') == OwnerRole.OWNER
+        }
+        # Users that belong specifically to groups with role='owner'
+        self.users_in_groups_owner_ids = (
             UserModel.objects
-            .get_users_in_groups(group_ids=self.new_groups_owners_ids)
+            .get_users_in_groups(group_ids=self.new_groups_owner_ids)
             .user_ids_set()
         )
         self.in_account_user_ids = set(
