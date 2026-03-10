@@ -6,10 +6,26 @@ const EXPORT_PAGE_LIMIT = 100;
 
 export type TFetchAllWorkflowsParams = Omit<IGetWorkflowsConfig, 'offset' | 'limit'>;
 
-function transformPageResults(response: { results: unknown[] }): IWorkflowClient[] {
-  const resultsAsTsp = response.results as unknown as TWorkflowResponse[];
-  const withDates = mapWorkflowsToISOStringToRedux(resultsAsTsp);
+/** Raw API response: results use timestamp fields (Tsp), not ISO strings */
+interface IRawWorkflowsPageResponse {
+  results: TWorkflowResponse[];
+  count: number;
+}
+
+function transformPageResults(response: IRawWorkflowsPageResponse): IWorkflowClient[] {
+  const withDates = mapWorkflowsToISOStringToRedux(response.results);
   return mapWorkflowsAddComputedPropsToRedux(withDates as IWorkflow[]);
+}
+
+function getRemainingOffsets(
+  totalCount: number,
+  firstPageLength: number,
+  pageLimit: number,
+): number[] {
+  const remaining = totalCount - firstPageLength;
+  if (remaining <= 0) return [];
+  const pageCount = Math.ceil(remaining / pageLimit);
+  return Array.from({ length: pageCount }, (_, i) => (i + 1) * pageLimit);
 }
 
 /**
@@ -21,27 +37,23 @@ export async function fetchAllWorkflowsForExport(
   pageLimit: number = EXPORT_PAGE_LIMIT,
 ): Promise<IWorkflowClient[]> {
   const first = await getWorkflows({ ...params, offset: 0, limit: pageLimit });
-  const allResults = transformPageResults(first);
+  const rawFirst = first as unknown as IRawWorkflowsPageResponse;
+  const allResults = transformPageResults(rawFirst);
 
-  if (first.results.length === 0 || allResults.length >= first.count) {
+  if (rawFirst.results.length === 0 || allResults.length >= rawFirst.count) {
     return allResults;
   }
 
-  const totalCount = first.count;
-  const offsets = Array.from(
-    { length: Math.ceil((totalCount - first.results.length) / pageLimit) },
-    (_, i) => (i + 1) * pageLimit,
-  );
-
-  const rest = await offsets.reduce<Promise<IWorkflowClient[]>>(
+  const offsets = getRemainingOffsets(rawFirst.count, rawFirst.results.length, pageLimit);
+  const restResults = await offsets.reduce<Promise<IWorkflowClient[]>>(
     async (accPromise, offset) => {
       const acc = await accPromise;
       const next = await getWorkflows({ ...params, offset, limit: pageLimit });
-      const page = transformPageResults(next);
-      return [...acc, ...page];
+      const rawNext = next as unknown as IRawWorkflowsPageResponse;
+      return [...acc, ...transformPageResults(rawNext)];
     },
     Promise.resolve([]),
   );
 
-  return [...allResults, ...rest];
+  return [...allResults, ...restResults];
 }
