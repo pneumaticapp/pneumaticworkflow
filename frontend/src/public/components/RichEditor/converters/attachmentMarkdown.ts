@@ -35,7 +35,13 @@ function createAttachmentNodeFromMatch(
 ): ReturnType<typeof $createImageAttachmentNode> {
   const nameRaw = match[1] ?? '';
   const name = nameRaw.replace(/\\(.)/g, (_, c) => c);
-  const url = (match[2] ?? '').trim();
+  const urlRaw = (match[2] ?? '').trim();
+  let url: string;
+  try {
+    url = decodeURIComponent(urlRaw);
+  } catch {
+    url = urlRaw;
+  }
   const id = match[3] ? parseInt(String(match[3]), 10) : undefined;
   const entityType = (match[4] ?? '') as TAttachmentEntityType;
   const create = nodeCreators[entityType];

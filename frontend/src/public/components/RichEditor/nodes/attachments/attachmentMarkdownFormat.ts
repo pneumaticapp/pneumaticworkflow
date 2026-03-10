@@ -7,6 +7,14 @@ export function escapeAttachmentNameForMarkdown(name: string): string {
 }
 
 /**
+ * Encodes URL for use inside markdown link parentheses (...).
+ * Parentheses would otherwise end the URL segment and break parsing.
+ */
+function encodeAttachmentUrlForMarkdown(url: string): string {
+  return url.replace(/\)/g, '%29').replace(/\(/g, '%28');
+}
+
+/**
  * Builds the markdown string for an attachment so that Lexical markdown export
  * (which uses DecoratorNode.getTextContent()) and the ATTACHMENT transformer
  * both produce the same format. Backend can persist this and we can re-import it.
@@ -20,6 +28,7 @@ export function buildAttachmentMarkdownString(
   entityType: TAttachmentEntityType,
 ): string {
   const escapedName = escapeAttachmentNameForMarkdown(name);
+  const encodedUrl = encodeAttachmentUrlForMarkdown(url);
   const idPart = id != null ? `attachment_id:${id} ` : '';
-  return `![${escapedName}](${url} "${idPart}entityType:${entityType}")`;
+  return `![${escapedName}](${encodedUrl} "${idPart}entityType:${entityType}")`;
 }
