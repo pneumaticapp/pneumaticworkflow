@@ -49,11 +49,11 @@ export default defineConfig({
       dependencies: ['setup'],
     },
 
-    /* --- MOBILE DEVICES --- */
+    /* --- MOBILE DEVICES (narrowest viewport) --- */
     {
       name: 'Mobile Chrome',
       use: {
-        ...devices['Pixel 5'],
+        ...devices['Galaxy S8'],
         storageState: STORAGE_STATE,
       },
       dependencies: ['setup'],
@@ -61,7 +61,7 @@ export default defineConfig({
     {
       name: 'Mobile Safari',
       use: {
-        ...devices['iPhone 12'],
+        ...devices['iPhone SE'],
         storageState: STORAGE_STATE,
       },
       dependencies: ['setup'],
