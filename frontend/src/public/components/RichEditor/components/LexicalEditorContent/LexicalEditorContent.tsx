@@ -103,7 +103,7 @@ export function LexicalEditorContent({
       {withControls && onSubmit ? (
         <SubmitOnKeyPlugin onSubmit={onSubmit} />
       ) : null}
-      <OnChangePlugin onChange={onChange} />
+      <OnChangePlugin ignoreSelectionChange onChange={onChange} />
       <MarkdownShortcutPlugin transformers={ELEMENT_TRANSFORMERS} />
 
       <LinkPlugin />

@@ -39,7 +39,7 @@ export function handleNumericPaste(
   } else if (!hasDecimalSeparator) {
     newValue = currentValue.substring(0, selStart) + processedText + currentValue.substring(selEnd);
   } else {
-    newValue = currentValue.substring(0, selStart) + text + currentValue.substring(selEnd);
+    newValue = currentValue.substring(0, selStart) + processedText.replace(/\./g, '') + currentValue.substring(selEnd);
   }
 
   onChange({

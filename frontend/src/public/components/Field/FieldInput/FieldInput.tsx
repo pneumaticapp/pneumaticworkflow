@@ -39,7 +39,7 @@ export function FieldInput({
       value={valueString}
       onValueChange={(values) => {
         onChange({
-          target: { value: values.value, name: '', type: 'text' },
+          target: { value: values.value, name: rest.name ?? '', type: 'text' },
         } as React.ChangeEvent<HTMLInputElement>);
       }}
       allowNegative

@@ -58,8 +58,8 @@ export class ChecklistNode extends ElementNode {
   }
 
   // eslint-disable-next-line class-methods-use-this -- Lexical ElementNode.updateDOM() override
-  updateDOM(): boolean {
-    return false;
+  updateDOM(prevNode: ChecklistNode): boolean {
+    return this.__listApiName !== prevNode.__listApiName;
   }
 
   exportDOM(): { element: HTMLUListElement } {

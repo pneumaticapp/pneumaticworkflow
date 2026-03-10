@@ -1,23 +1,6 @@
 import { useState, useCallback } from 'react';
 import type { ILinkFormState, TLinkFormMode, IScrollSnapshot } from '../plugins/LinkPlugin/types';
-
-function findScrollableElements(from: Element): Element[] {
-  const result: Element[] = [];
-  let current: Element | null = from;
-  while (current && current !== document.body) {
-    const style = window.getComputedStyle(current);
-    const scrollable =
-      style.overflow === 'auto' ||
-      style.overflow === 'scroll' ||
-      style.overflowX === 'auto' ||
-      style.overflowX === 'scroll' ||
-      style.overflowY === 'auto' ||
-      style.overflowY === 'scroll';
-    if (scrollable) result.push(current);
-    current = current.parentElement;
-  }
-  return result;
-}
+import { findScrollableElements } from '../utils/findScrollableElements';
 
 function captureScrollSnapshots(from: Element): IScrollSnapshot[] {
   return findScrollableElements(from).map(el => ({

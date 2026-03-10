@@ -22,10 +22,14 @@ function MentionMenuListComponent({
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    const id = requestAnimationFrame(() => {
-      requestAnimationFrame(() => setVisible(true));
+    let innerId: number | undefined;
+    const outerId = requestAnimationFrame(() => {
+      innerId = requestAnimationFrame(() => setVisible(true));
     });
-    return () => cancelAnimationFrame(id);
+    return () => {
+      cancelAnimationFrame(outerId);
+      if (innerId != null) cancelAnimationFrame(innerId);
+    };
   }, []);
 
   useEffect(() => {

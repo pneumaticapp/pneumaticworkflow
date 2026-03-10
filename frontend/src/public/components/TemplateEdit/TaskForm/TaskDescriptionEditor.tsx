@@ -42,7 +42,9 @@ export function TaskDescriptionEditor({
     e.stopPropagation();
 
     if (!editorRef.current || apiName == null) return;
-    
+
+    editorRef.current.focus();
+
     const newVariable = listVariables?.find((variable) => variable.apiName === apiName);
 
     if (!newVariable) return;

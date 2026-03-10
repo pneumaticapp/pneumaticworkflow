@@ -35,7 +35,7 @@ describe('convertLexicalToMarkdown', () => {
     expect(convertLexicalToMarkdown(editorState)).toBe('**bold** text');
   });
 
-  it('returns empty string when error is thrown in read', () => {
+  it('rethrows when error is thrown in read', () => {
     const editorState = {
       read: (cb: () => void) => {
         cb();
@@ -44,7 +44,7 @@ describe('convertLexicalToMarkdown', () => {
     mockConvertToMarkdown.mockImplementation(() => {
       throw new Error('Conversion failed');
     });
-    expect(convertLexicalToMarkdown(editorState)).toBe('');
+    expect(() => convertLexicalToMarkdown(editorState)).toThrow('Conversion failed');
   });
 
   it('logs error to console.error on exception', () => {
@@ -55,17 +55,17 @@ describe('convertLexicalToMarkdown', () => {
     mockConvertToMarkdown.mockImplementation(() => {
       throw err;
     });
-    convertLexicalToMarkdown(editorState);
+    expect(() => convertLexicalToMarkdown(editorState)).toThrow(err);
     expect(consoleSpy).toHaveBeenCalledWith('❌ Error converting lexical to markdown:', err);
   });
 
-  it('returns empty string when read throws', () => {
+  it('rethrows when read throws', () => {
     const editorState = {
       read: () => {
         throw new Error('Read failed');
       },
     } as unknown as EditorState;
-    expect(convertLexicalToMarkdown(editorState)).toBe('');
+    expect(() => convertLexicalToMarkdown(editorState)).toThrow('Read failed');
     expect(consoleSpy).toHaveBeenCalled();
   });
 });

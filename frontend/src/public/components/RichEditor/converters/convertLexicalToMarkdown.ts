@@ -17,6 +17,6 @@ export function convertLexicalToMarkdown(
     return result;
   } catch (error) {
     console.error('❌ Error converting lexical to markdown:', error);
-    return '';
+    throw error;
   }
 }

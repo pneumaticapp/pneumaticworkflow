@@ -37,11 +37,15 @@ export class ChecklistItemNode extends ElementNode {
     return new ChecklistItemNode(node.__listApiName, node.__itemApiName, node.getKey());
   }
 
-  static importJSON(serialized: SerializedChecklistItemNode): ChecklistItemNode {
-    return $createChecklistItemNode({
-      listApiName: serialized.listApiName,
-      itemApiName: serialized.itemApiName,
+  static importJSON(serializedNode: SerializedChecklistItemNode): ChecklistItemNode {
+    const node = $createChecklistItemNode({
+      listApiName: serializedNode.listApiName,
+      itemApiName: serializedNode.itemApiName,
     });
+    node.setFormat(serializedNode.format);
+    node.setIndent(serializedNode.indent);
+    node.setDirection(serializedNode.direction);
+    return node;
   }
 
   constructor(listApiName: string, itemApiName: string, key?: NodeKey) {
@@ -56,6 +60,12 @@ export class ChecklistItemNode extends ElementNode {
 
   getItemApiName(): string {
     return this.__itemApiName;
+  }
+
+  setListApiName(listApiName: string): this {
+    const self = this.getWritable();
+    self.__listApiName = listApiName;
+    return self;
   }
 
   createDOM(config: EditorConfig): HTMLElement {
@@ -109,7 +119,7 @@ export class ChecklistItemNode extends ElementNode {
 
   replace<N extends LexicalNode>(replaceWithNode: N, includeChildren?: boolean): N {
     if ($isChecklistItemNode(replaceWithNode)) {
-      return super.replace(replaceWithNode);
+      return super.replace(replaceWithNode, includeChildren);
     }
     const list = this.getParent();
     if (!list || !$isChecklistNode(list)) {
@@ -131,6 +141,9 @@ export class ChecklistItemNode extends ElementNode {
       while (nextSibling) {
         const nodeToAppend = nextSibling;
         nextSibling = nextSibling.getNextSibling();
+        if ($isChecklistItemNode(nodeToAppend)) {
+          nodeToAppend.setListApiName(newList.getListApiName());
+        }
         newList.append(nodeToAppend);
       }
       list.insertAfter(replaceWithNode);
@@ -154,11 +167,16 @@ export class ChecklistItemNode extends ElementNode {
     if (!listNode || !$isChecklistNode(listNode) || $isChecklistItemNode(node)) {
       return super.insertAfter(node, restoreSelection);
     }
-    const siblings = this.getNextSiblings();
+    const siblings = this.getNextSiblings().filter((sibling) => sibling !== node);
     listNode.insertAfter(node, restoreSelection);
     if (siblings.length > 0) {
       const newListNode = $createChecklistNode({ listApiName: createChecklistApiName() });
-      siblings.forEach((sibling) => newListNode.append(sibling));
+      siblings.forEach((sibling) => {
+        if ($isChecklistItemNode(sibling)) {
+          sibling.setListApiName(newListNode.getListApiName());
+        }
+        newListNode.append(sibling);
+      });
       node.insertAfter(newListNode, restoreSelection);
     }
     return node;

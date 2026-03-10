@@ -16,13 +16,13 @@ import { ECustomEditorEntities } from '../utils/types';
 
 type TAttachmentEntityType = ECustomEditorEntities.Image | ECustomEditorEntities.Video | ECustomEditorEntities.File;
 
-/** Full-line match for block-level import (line is only the image). */
+/** Full-line match for block-level import (line is only the image). Name allows escaped ] and \. */
 const ATTACHMENT_RE =
-  /^!?\[([^\]]*)\]\((.*?)\s*"(?:attachment_id:(\d*)\s*)?entityType:(image|video|file)[^"]*"\)?$/;
+  /^!?\[((?:[^\]\\]|\\.)*)\]\((.*?)\s*"(?:attachment_id:(\d*)\s*)?entityType:(image|video|file)[^"]*"\)?$/;
 
 /** Inline match when line was merged by normalizeMarkdown (image inside a line). */
 export const ATTACHMENT_IMPORT_RE =
-  /!?\[([^\]]*)\]\((.*?)\s*"(?:attachment_id:(\d*)\s*)?entityType:(image|video|file)[^"]*"\)?/;
+  /!?\[((?:[^\]\\]|\\.)*)\]\((.*?)\s*"(?:attachment_id:(\d*)\s*)?entityType:(image|video|file)[^"]*"\)?/;
 
 const nodeCreators = {
   [ECustomEditorEntities.Image]: $createImageAttachmentNode,
@@ -33,7 +33,8 @@ const nodeCreators = {
 function createAttachmentNodeFromMatch(
   match: RegExpMatchArray | string[],
 ): ReturnType<typeof $createImageAttachmentNode> {
-  const name = match[1] ?? '';
+  const nameRaw = match[1] ?? '';
+  const name = nameRaw.replace(/\\(.)/g, (_, c) => c);
   const url = (match[2] ?? '').trim();
   const id = match[3] ? parseInt(String(match[3]), 10) : undefined;
   const entityType = (match[4] ?? '') as TAttachmentEntityType;

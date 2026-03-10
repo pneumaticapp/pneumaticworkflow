@@ -120,61 +120,63 @@ export const RichEditor = forwardRef<
     accountId != null ? builtInUpload : undefined,
   );
 
-  const onChange = (editorState: EditorState): void => {
-    const markdown = convertLexicalToMarkdown(editorState);
+  const onChange = useCallback(
+    (editorState: EditorState): void => {
+      const markdown = convertLexicalToMarkdown(editorState);
 
-    if (handleChangeChecklists) {
-      const checklistsData = prepareChecklistsForAPI(markdown);
-      handleChangeChecklists(checklistsData);
-    }
-
-    handleChange(markdown);
-  };
-
-  const insertVariableToEditor = (
-    apiName: string,
-    variableTitle: string,
-    subtitle: string,
-  ): void => {
-    const editor = editorRef.current;
-    if (!editor) return;
-
-    editor.update(() => {
-      const selection = $getSelection();
-      if (!$isRangeSelection(selection)) return;
-
-      const variableNode = $createVariableNode({
-        apiName,
-        title: variableTitle,
-        subtitle,
-      });
-
-      const needSpace = ((): boolean => {
-        if (!selection.isCollapsed()) return true;
-        const {anchor} = selection;
-        const node = anchor.getNode();
-        if ($isTextNode(node)) {
-          const text = node.getTextContent();
-          if (anchor.offset < text.length && text[anchor.offset] === ' ') return false;
-        }
-        const nextNode = node.getNextSibling();
-        if (nextNode && $isTextNode(nextNode) && nextNode.getTextContent().startsWith(' ')) {
-          return false;
-        }
-        return true;
-      })();
-
-      if (needSpace) {
-        $insertNodes([variableNode, $createTextNode(' ')]);
-        const after = variableNode.getNextSibling();
-        if (after && $isTextNode(after)) after.selectEnd();
-        else variableNode.selectNext();
-      } else {
-        $insertNodes([variableNode]);
-        variableNode.selectNext();
+      if (handleChangeChecklists) {
+        const checklistsData = prepareChecklistsForAPI(markdown);
+        handleChangeChecklists(checklistsData);
       }
-    });
-  };
+
+      handleChange(markdown);
+    },
+    [handleChange, handleChangeChecklists],
+  );
+
+  const insertVariableToEditor = useCallback(
+    (apiName: string, variableTitle: string, subtitle: string): void => {
+      const editor = editorRef.current;
+      if (!editor) return;
+
+      editor.update(() => {
+        const selection = $getSelection();
+        if (!$isRangeSelection(selection)) return;
+
+        const variableNode = $createVariableNode({
+          apiName,
+          title: variableTitle,
+          subtitle,
+        });
+
+        const needSpace = ((): boolean => {
+          if (!selection.isCollapsed()) return true;
+          const {anchor} = selection;
+          const node = anchor.getNode();
+          if ($isTextNode(node)) {
+            const text = node.getTextContent();
+            if (anchor.offset < text.length && text[anchor.offset] === ' ') return false;
+          }
+          const nextNode = node.getNextSibling();
+          if (nextNode && $isTextNode(nextNode) && nextNode.getTextContent().startsWith(' ')) {
+            return false;
+          }
+          return true;
+        })();
+
+        if (needSpace) {
+          $insertNodes([variableNode, $createTextNode(' ')]);
+          const after = variableNode.getNextSibling();
+          if (after && $isTextNode(after)) after.selectEnd();
+          else variableNode.selectNext();
+        } else {
+          $insertNodes([variableNode]);
+          variableNode.selectNext();
+        }
+      });
+    },
+    [],
+  );
 
   const clearContent = useCallback((): void => {
     const editor = editorRef.current;

@@ -1,5 +1,4 @@
 import type { TextMatchTransformer } from '@lexical/markdown';
-import { $createTextNode, $isTextNode } from 'lexical';
 import { mentionsRegex } from '../../../constants/defaultValues';
 import { MentionNode, $createMentionNode, $isMentionNode } from '../nodes/MentionNode';
 
@@ -20,12 +19,6 @@ export const MENTION: TextMatchTransformer = {
     }
     const mentionNode = $createMentionNode({ id, name });
     textNode.replace(mentionNode);
-    const next = mentionNode.getNextSibling();
-    const hasSpaceAfter =
-      next && $isTextNode(next) && next.getTextContent().startsWith(' ');
-    if (!hasSpaceAfter) {
-      mentionNode.insertAfter($createTextNode(' '));
-    }
   },
   type: 'text-match',
 };

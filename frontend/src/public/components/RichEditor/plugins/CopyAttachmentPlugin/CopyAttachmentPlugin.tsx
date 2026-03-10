@@ -79,9 +79,11 @@ export function CopyAttachmentPlugin(): null {
         if (copyHandled) {
           editor.update(() => {
             const selection = $getSelection();
-            if ($isRangeSelection(selection)) {
-              selection.removeText();
-            }
+            if (!$isRangeSelection(selection) || selection.isCollapsed()) return;
+            const anchorNode = selection.anchor.getNode();
+            const focusNode = selection.focus.getNode();
+            const fullNodes = anchorNode.getNodesBetween(focusNode);
+            fullNodes.forEach((node) => node.remove());
           });
         }
         return copyHandled;

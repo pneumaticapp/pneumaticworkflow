@@ -222,7 +222,9 @@ export class VariableNode extends DecoratorNode<React.ReactElement> {
    * Creates the DOM element that will contain the decorated content.
    */
   createDOM(): HTMLElement {
-    return this.createVariableSpanElement(false);
+    const span = this.createVariableSpanElement(false);
+    span.contentEditable = 'false';
+    return span;
   }
 
   /**

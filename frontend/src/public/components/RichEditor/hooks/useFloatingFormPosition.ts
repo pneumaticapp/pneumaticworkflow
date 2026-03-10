@@ -1,25 +1,8 @@
 import { useCallback, useEffect, useLayoutEffect, useState } from 'react';
+import { findScrollableElements } from '../utils/findScrollableElements';
 
 const DEFAULT_OFFSET_PX = 10;
 const VIEWPORT_EDGE_PX = 10;
-
-function findScrollableElements(element: Element): Element[] {
-  const result: Element[] = [];
-  let current: Element | null = element;
-  while (current && current !== document.body) {
-    const style = window.getComputedStyle(current);
-    const scrollable =
-      style.overflow === 'auto' ||
-      style.overflow === 'scroll' ||
-      style.overflowX === 'auto' ||
-      style.overflowX === 'scroll' ||
-      style.overflowY === 'auto' ||
-      style.overflowY === 'scroll';
-    if (scrollable) result.push(current);
-    current = current.parentElement;
-  }
-  return result;
-}
 
 function getAnchorRect(
   getAnchorRectFn: (() => DOMRect | null) | null | undefined,
@@ -39,8 +22,8 @@ function computePositionInContainer(
   const containerRect = container.getBoundingClientRect();
   const paddingTop = containerRect.top + (container.clientTop || 0);
   const paddingLeft = containerRect.left + (container.clientLeft || 0);
-  const relLeft = anchorRect.left - paddingLeft;
-  const relTop = anchorRect.top - paddingTop;
+  const relLeft = anchorRect.left - paddingLeft + container.scrollLeft;
+  const relTop = anchorRect.top - paddingTop + container.scrollTop;
   return {
     left: relLeft + anchorRect.width / 2,
     top: relTop - formHeight - offsetPx,
