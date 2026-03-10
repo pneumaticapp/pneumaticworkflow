@@ -1925,6 +1925,142 @@ def test_create__template_owners_group_source_id_none__validation_error(
     kickoff_create_mock.assert_not_called()
 
 
+def test_create__template_owner_in_two_different_roles__ok(
+    mocker,
+    api_client,
+):
+    """A single user may appear in the owners list more than once
+    as long as each entry has a distinct role (e.g. OWNER + VIEWER).
+    This is a regression test for the bug where MSG_PT_0057 was raised
+    for legitimate multi-role assignments."""
+
+    # arrange
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    account = create_test_account(plan=BillingPlanType.PREMIUM)
+    user = create_test_user(account=account)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        '/templates',
+        data={
+            'name': 'Template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.VIEWER,
+                },
+            ],
+            'is_active': True,
+            'description': '',
+            'kickoff': {},
+            'tasks': [
+                {
+                    'name': 'First step',
+                    'number': 1,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    response_data = response.json()
+    assert len(response_data['owners']) == 2
+    roles = {o['role'] for o in response_data['owners']}
+    assert OwnerRole.OWNER in roles
+    assert OwnerRole.VIEWER in roles
+
+
+def test_create__template_owner_same_role_twice__validation_error(
+    mocker,
+    api_client,
+):
+    """Sending the same (user, role) pair twice must be rejected
+    with MSG_PT_0057 regardless of the introduction of multi-role support."""
+
+    # arrange
+    template_create_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    kickoff_create_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    account = create_test_account(plan=BillingPlanType.PREMIUM)
+    user = create_test_user(account=account)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        '/templates',
+        data={
+            'name': 'Template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'is_active': True,
+            'description': '',
+            'kickoff': {},
+            'tasks': [
+                {
+                    'name': 'First step',
+                    'number': 1,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_PT_0057
+    assert response.data['details']['reason'] == messages.MSG_PT_0057
+    assert response.data['details']['name'] == 'owners'
+    template_create_mock.assert_not_called()
+    kickoff_create_mock.assert_not_called()
+
+
 def test_create__template_owners_pending_transfer__ok(
     mocker,
     api_client,

@@ -373,10 +373,14 @@ class TemplateSerializer(
                 name='owners',
             )
 
-        count_new_owners_ids = (
-            len(self.new_users_owners_ids) + len(self.new_groups_owners_ids)
+        # A duplicate is the same entity in the same role twice.
+        # A user/group legitimately appearing in multiple different roles
+        # produces multiple entries in owners_data but unique (id, role) pairs.
+        count_unique_owner_role_pairs = (
+            len(self.new_users_owner_role_pairs)
+            + len(self.new_groups_owner_role_pairs)
         )
-        if len(self.owners_data) != count_new_owners_ids:
+        if len(self.owners_data) != count_unique_owner_role_pairs:
             self.raise_validation_error(
                 message=messages.MSG_PT_0057,
                 name='owners',
@@ -512,6 +516,8 @@ class TemplateSerializer(
 
     def _set_constances(self, data: Dict[str, Any]):
         self.owners_data = data.get('owners', [])
+        # Unique user ids (regardless of role) — used for account membership
+        # checks and for verifying that the current user is among owners.
         self.new_users_owners_ids = {
             int(owner.get('source_id'))
             for owner in self.owners_data
@@ -523,6 +529,23 @@ class TemplateSerializer(
             for owner in self.owners_data
             if owner.get('type') == OwnerType.GROUP
             and owner.get('source_id') is not None
+        }
+        # Unique (source_id, role) pairs per type — used for duplicate
+        # detection. A user/group may appear in multiple roles, but the
+        # same (entity, role) combination is a duplicate.
+        self.new_users_owner_role_pairs = {
+            (int(owner.get('source_id')), owner.get('role'))
+            for owner in self.owners_data
+            if owner.get('type') == OwnerType.USER
+            and owner.get('source_id') is not None
+            and owner.get('role') is not None
+        }
+        self.new_groups_owner_role_pairs = {
+            (int(owner.get('source_id')), owner.get('role'))
+            for owner in self.owners_data
+            if owner.get('type') == OwnerType.GROUP
+            and owner.get('source_id') is not None
+            and owner.get('role') is not None
         }
         self.users_in_groups_owners_ids = (
             UserModel.objects
