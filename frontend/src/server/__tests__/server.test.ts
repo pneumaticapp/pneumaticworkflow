@@ -27,6 +27,9 @@ jest.mock('webpack-dev-middleware');
 jest.mock('webpack-hot-middleware');
 jest.mock('../handlers/mainHandler');
 jest.mock('../middleware/authMiddleware');
+jest.mock('../utils/initSentryServer', () => ({
+  initSentryServer: jest.fn(),
+}));
 jest.mock('../../public/utils/getConfig', () => ({
   getConfig: () => mockConfig,
 }));

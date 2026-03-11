@@ -16,6 +16,10 @@ const envKeys = Object.keys(Object.assign(env, process.env)).reduce((prev, next)
   return prev;
 }, {});
 
+const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN;
+const sentryRelease = process.env.SENTRY_RELEASE;
+const enableSentryUpload = Boolean(sentryAuthToken && sentryRelease && !devMode);
+
 module.exports = {
   entry: {
     main: devMode ? ['webpack-hot-middleware/client?path=/__webpack_hmr', './src/public/browser.tsx'] : './src/public/browser.tsx',
@@ -118,6 +122,22 @@ module.exports = {
     new ForkTsCheckerWebpackPlugin(),
     // Uncomment to run Bundle Analyzer
     // new BundleAnalyzerPlugin(),
+    ...(enableSentryUpload
+      ? [
+          (() => {
+            const { sentryWebpackPlugin } = require('@sentry/webpack-plugin');
+            return sentryWebpackPlugin({
+              org: process.env.SENTRY_ORG,
+              project: process.env.SENTRY_PROJECT,
+              authToken: sentryAuthToken,
+              release: { name: sentryRelease, inject: true },
+              errorHandler: (err) => {
+                console.warn('Sentry source map upload failed:', err);
+              },
+            });
+          })(),
+        ]
+      : []),
     {
       apply: (compiler) => {
         compiler.hooks.done.tap('DonePlugin', (stats) => {
@@ -140,6 +160,7 @@ module.exports = {
     },
   },
   mode: NODE_ENV,
+  devtool: devMode ? 'eval-cheap-module-source-map' : 'hidden-source-map',
 };
 
 

@@ -22,7 +22,7 @@ import { resetSuperuserToken } from './redux/auth/utils/superuserToken';
 // Fix smooth scroll in Safari
 smoothscroll.polyfill();
 
-initSentry(getBrowserConfig);
+initSentry(getBrowserConfig, 'main');
 addEventListener('beforeunload', resetSuperuserToken);
 
 const root = document.getElementById('pneumatic-frontend');

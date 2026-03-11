@@ -13,12 +13,12 @@ config/how
 .cursor/
 
 # Playwright
+playwright-report/
+e2e/.auth/
 tests/e2e/.auth/
 test-results/
-/playwright-report/
 /blob-report/
 /playwright/.cache/
 /playwright/.auth/
 .blob/
 docs/
-e2e/.auth/
