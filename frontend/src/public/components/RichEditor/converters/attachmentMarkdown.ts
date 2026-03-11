@@ -36,12 +36,9 @@ function createAttachmentNodeFromMatch(
   const nameRaw = match[1] ?? '';
   const name = nameRaw.replace(/\\(.)/g, (_, c) => c);
   const urlRaw = (match[2] ?? '').trim();
-  let url: string;
-  try {
-    url = decodeURIComponent(urlRaw);
-  } catch {
-    url = urlRaw;
-  }
+  // Use URL as-is to avoid corrupting presigned/signed URLs (e.g. S3) where
+  // decoding %26, %3D, %2B in query params would alter the signature.
+  const url = urlRaw;
   const id = match[3] ? parseInt(String(match[3]), 10) : undefined;
   const entityType = (match[4] ?? '') as TAttachmentEntityType;
   const create = nodeCreators[entityType];
