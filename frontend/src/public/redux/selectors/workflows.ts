@@ -3,6 +3,7 @@ import {
   EWorkflowsLoadingStatus,
   EWorkflowsStatus,
   EWorkflowsView,
+  EWorkflowsSorting,
   ITemplateFilterItem,
   TUserCounter,
 } from '../../types/workflow';
@@ -37,6 +38,9 @@ export const getWorkflowTemplateListItems = (state: IApplicationState): ITemplat
 
 export const getWorkflowsStatus = (state: IApplicationState): EWorkflowsStatus =>
   state.workflows.workflowsSettings.values.statusFilter;
+
+export const getWorkflowsSorting = (state: IApplicationState): EWorkflowsSorting =>
+  state.workflows.workflowsSettings.sorting;
 
 export const getWorkflowStartersIdsFilter = (state: IApplicationState): number[] =>
   state.workflows.workflowsSettings.values.workflowStartersIdsFilter;
