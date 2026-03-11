@@ -209,6 +209,14 @@
   color: var(--pneumatic-color-black72);
 }
 
+.notification-item__completed-task-name {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: bottom;
+
+  @mixin text-truncate;
+}
+
 .avatar__container {
   width: 40px;
   height: 40px;

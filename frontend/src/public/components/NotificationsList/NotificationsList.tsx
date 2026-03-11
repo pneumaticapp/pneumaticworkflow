@@ -102,7 +102,10 @@ export const NotificationsList = ({
             icon: <TaskCompleteIcon size="sm" />,
             title: getUserFullName(author),
             subtitle: notification.workflow.name,
-            text: formatMessage({ id: 'workflows.log-complete' }, { taskName: notification.task.name }),
+            text: formatMessage(
+              { id: 'workflows.log-complete' },
+              { taskName: <span className={styles['notification-item__completed-task-name']}>{notification.task.name}</span> },
+            ),
             link: getTaskDetailRoute(notification.task.id),
           };
         }
