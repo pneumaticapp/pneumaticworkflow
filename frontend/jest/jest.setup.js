@@ -8,15 +8,15 @@ if (typeof global.React === 'undefined') {
   global.React = require('react');
 }
 
-enzyme.configure({adapter: new Adapter() });
+enzyme.configure({ adapter: new Adapter() });
 
 jest.mock('../src/public/redux/store.ts', () => ({
   store: {},
-}))
+}));
 
 jest.mock('../src/public/utils/analytics/utils.ts', () => ({
   getAnalyticsId: () => 'HACXziUYBTFoyfOSjcfaagk4DR5Gww6n',
-  getAnalyticsPageParams: () => (['Main']),
+  getAnalyticsPageParams: () => ['Main'],
 }));
 
 jest.mock('react-intl', () => {
@@ -42,19 +42,45 @@ jest.mock('../src/public/redux/store', () => {
   return {
     store: {
       getState: () => state,
-    }
-  }
+    },
+  };
 });
 
 jest.mock('react-redux', () => {
+  const mockState = {
+    authUser: {
+      isSuperuser: false,
+      account: {
+        billingPlan: 'free',
+        plan: 'free',
+        isSubscribed: false,
+        billingSync: false,
+        name: '',
+        tenantName: '',
+        planExpiration: null,
+        leaseLevel: 'standard',
+        logoSm: null,
+        logoLg: null,
+        trialEnded: false,
+        trialIsActive: false,
+      },
+    },
+    groups: {
+      list: [],
+    },
+    accounts: {
+      isCreateUserModalOpen: false,
+    },
+  };
+
   return {
     connect: (mapStateToProps, mapDispatchToProps) => (ReactComponent) => ({
       mapStateToProps,
       mapDispatchToProps,
-      ReactComponent
+      ReactComponent,
     }),
     Provider: ({ children }) => children,
     useDispatch: jest.fn(),
-    useSelector: (callback) => jest.fn(callback)
-  }
+    useSelector: jest.fn((callback) => callback(mockState)),
+  };
 });

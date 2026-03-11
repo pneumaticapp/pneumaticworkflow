@@ -586,6 +586,7 @@ def test_retrieve__get_performers_type_field__ok(api_client):
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
 
     template_first_task = template.tasks.order_by(
@@ -664,6 +665,7 @@ def test_retrieve__field_user__ok(api_client):
         is_required=True,
         task=template_task,
         template=template,
+        account=user.account,
     )
     response = api_client.post(
         path=f'/templates/{template.id}/run',
@@ -717,6 +719,7 @@ def test_retrieve__field_date__ok(api_client):
         is_required=True,
         task=template_task,
         template=template,
+        account=user.account,
     )
     response = api_client.post(
         path=f'/templates/{template.id}/run',
@@ -767,6 +770,7 @@ def test_retrieve__field_url__ok(api_client):
         is_required=True,
         task=template_task,
         template=template,
+        account=user.account,
     )
     response = api_client.post(
         path=f'/templates/{template.id}/run',
@@ -817,6 +821,7 @@ def test_retrieve__field_with_selections__ok(api_client):
         is_required=True,
         task=template_task,
         template=template,
+        account=user.account,
     )
     FieldTemplateSelection.objects.create(
         field_template=field_template,
@@ -880,6 +885,7 @@ def test_retrieve__field_with_attachments__ok(api_client):
         is_required=True,
         task=template_task,
         template=template,
+        account=user.account,
     )
 
     response = api_client.post(
@@ -943,6 +949,7 @@ def test_retrieve__fields_ordering__ok(api_client):
         is_required=True,
         task=template_task,
         template=template,
+        account=user.account,
     )
     field_template_0 = FieldTemplate.objects.create(
         name='Field 0',
@@ -951,6 +958,7 @@ def test_retrieve__fields_ordering__ok(api_client):
         is_required=False,
         task=template_task,
         template=template,
+        account=user.account,
     )
     field_template_2 = FieldTemplate.objects.create(
         name='Field 2',
@@ -959,6 +967,7 @@ def test_retrieve__fields_ordering__ok(api_client):
         is_required=False,
         task=template_task,
         template=template,
+        account=user.account,
     )
     FieldTemplateSelection.objects.create(
         field_template=field_template_2,
@@ -1436,6 +1445,47 @@ def test_retrieve__user_in_group_task_performer__ok(api_client, mocker):
     group = create_test_group(account, users=[group_user])
     workflow = create_test_workflow(user=owner, tasks_count=1)
     workflow.members.add(group_user)
+    task = workflow.tasks.get(number=1)
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        type=PerformerType.GROUP,
+        group_id=group.id,
+    )
+    api_client.token_authenticate(group_user)
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == task.id
+    assert response.data['workflow']['id'] == workflow.id
+    identify_mock.assert_not_called()
+    group_mock.assert_not_called()
+
+
+def test_retrieve__user_in_group_task_performer_but_not_member__ok(
+    api_client,
+    mocker,
+):
+
+    # TODO Temporary fix for users who are newly assigned to a groups
+    #  Remove when the workflow members are removed
+
+    # arrange
+    identify_mock = mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'identify',
+    )
+    group_mock = mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'group',
+    )
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    group_user = create_test_admin(account=account)
+    group = create_test_group(account, users=[group_user])
     task = workflow.tasks.get(number=1)
     TaskPerformer.objects.create(
         task_id=task.id,

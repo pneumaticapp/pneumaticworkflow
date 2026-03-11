@@ -28,6 +28,8 @@ if (
     import sentry_sdk
     from sentry_sdk.integrations.django import DjangoIntegration
 
+    from src.utils.logging import sentry_before_send
+
     def traces_sampler(sampling_context: dict) -> float:
         scheme = sampling_context['asgi_scope']['scheme']
         if scheme not in {'http', 'https'}:
@@ -42,6 +44,7 @@ if (
         'integrations': [DjangoIntegration()],
         'send_default_pii': True,
         'traces_sampler': traces_sampler,
+        'before_send': sentry_before_send,
     }
     sentry_sdk.init(**kwargs)
 

@@ -190,7 +190,9 @@ def test_fields__simple_field_types__ok(api_client, field_type):
         clear_value='bold text',
         workflow=workflow,
         is_required=True,
+        is_hidden=False,
         description='Some description',
+        account=user.account,
     )
     api_client.token_authenticate(user)
 
@@ -204,6 +206,7 @@ def test_fields__simple_field_types__ok(api_client, field_type):
     assert fields_data[0]['id'] == field.id
     assert fields_data[0]['order'] == 1
     assert fields_data[0]['is_required'] == field.is_required
+    assert fields_data[0]['is_hidden'] == field.is_hidden
     assert fields_data[0]['task_id'] == task.id
     assert fields_data[0]['kickoff_id'] is None
     assert fields_data[0]['type'] == field_type
@@ -236,6 +239,7 @@ def test_fields__field_types_with_selections__ok(api_client, field_type):
         workflow=workflow,
         is_required=True,
         description='Some description',
+        account=user.account,
     )
     FieldSelection.objects.create(
         field=field,
@@ -278,6 +282,7 @@ def test_fields__type_file__ok(api_client):
         workflow=workflow,
         is_required=True,
         description='Some description',
+        account=user.account,
     )
     FileAttachment.objects.create(
         name='file',
@@ -449,6 +454,7 @@ def test_fields__filter_by_fields__ok(api_client):
         value='text',
         api_name='field-1',
         workflow=workflow,
+        account=user.account,
     )
     TaskField.objects.create(
         order=2,
@@ -458,6 +464,7 @@ def test_fields__filter_by_fields__ok(api_client):
         value='text 2',
         api_name='field-2',
         workflow=workflow,
+        account=user.account,
     )
     api_client.token_authenticate(user)
 
@@ -493,6 +500,7 @@ def test_fields__filter_by_multiple_fields__ok(api_client):
         value='text',
         api_name='field-1',
         workflow=workflow,
+        account=user.account,
     )
     field_2 = TaskField.objects.create(
         order=2,
@@ -502,6 +510,7 @@ def test_fields__filter_by_multiple_fields__ok(api_client):
         value='text 2',
         api_name='field-2',
         workflow=workflow,
+        account=user.account,
     )
     TaskField.objects.create(
         order=2,
@@ -511,6 +520,7 @@ def test_fields__filter_by_multiple_fields__ok(api_client):
         value='text 2',
         api_name='field-non-selected',
         workflow=workflow,
+        account=user.account,
     )
 
     api_client.token_authenticate(user)
@@ -554,6 +564,7 @@ def test_fields__multiple_workflows_and_multiple_fields__ok(api_client):
         value='text',
         api_name='field-1',
         workflow=workflow,
+        account=user.account,
     )
     workflow_2 = create_test_workflow(user, tasks_count=2)
     field_2 = TaskField.objects.create(
@@ -564,6 +575,7 @@ def test_fields__multiple_workflows_and_multiple_fields__ok(api_client):
         value='text 2',
         api_name='field-2',
         workflow=workflow_2,
+        account=user.account,
     )
 
     api_client.token_authenticate(user)
@@ -608,6 +620,7 @@ def test_fields__filter_by_invalid_fields__ok(api_client):
         value='text',
         api_name='field-1',
         workflow=workflow,
+        account=user.account,
     )
     TaskField.objects.create(
         order=2,
@@ -617,6 +630,7 @@ def test_fields__filter_by_invalid_fields__ok(api_client):
         value='text 2',
         api_name='field-2',
         workflow=workflow,
+        account=user.account,
     )
     api_client.token_authenticate(user)
 

@@ -26,6 +26,7 @@ class TestCopyKickoffFields:
             'description': 'Desc',
             'type': FieldType.USER,
             'is_required': True,
+            'is_hidden': False,
             'order': 1,
             'api_name': 'field-1',
         }
@@ -78,4 +79,62 @@ class TestCopyKickoffFields:
         assert response_2_data['description'] == request_data['description']
         assert response_2_data['type'] == request_data['type']
         assert response_2_data['is_required'] == request_data['is_required']
+        assert response_2_data['is_hidden'] == request_data['is_hidden']
         assert response_2_data['order'] == request_data['order']
+
+    def test_clone__kickoff_field_is_hidden__ok(self, api_client):
+
+        # arrange
+        user = create_test_user()
+        api_client.token_authenticate(user)
+
+        response = api_client.post(
+            path='/templates',
+            data={
+                'name': 'Template',
+                'is_active': True,
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+                'kickoff': {
+                    'fields': [
+                        {
+                            'name': 'Hidden field',
+                            'type': FieldType.TEXT,
+                            'is_required': False,
+                            'is_hidden': True,
+                            'order': 1,
+                            'api_name': 'hidden-field-1',
+                        },
+                    ],
+                },
+                'tasks': [
+                    {
+                        'number': 1,
+                        'name': 'First step',
+                        'raw_performers': [
+                            {
+                                'type': PerformerType.USER,
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
+        )
+        template = Template.objects.get(id=response.data['id'])
+
+        # act
+        response = api_client.post(
+            f'/templates/{template.id}/clone',
+        )
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data['kickoff']['fields']) == 1
+        cloned_field = response.data['kickoff']['fields'][0]
+        assert cloned_field['is_hidden'] is True
+        assert cloned_field['is_required'] is False
