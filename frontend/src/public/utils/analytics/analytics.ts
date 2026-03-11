@@ -69,7 +69,7 @@ export class Analytics {
     // eslint-disable-next-line no-plusplus
     this.eventsCounter++;
     if (this.eventsCounter > MAX_EVENTS_PER_PERIOD) {
-      sentry.captureException('WARNING! Suspicious user activity.');
+      sentry.captureMessage('Suspicious user activity: analytics throttle exceeded', 'warning');
       this.isThrottleMode = true;
     }
   };

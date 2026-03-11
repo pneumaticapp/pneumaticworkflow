@@ -5,6 +5,7 @@ import * as webpack from 'webpack';
 import * as devMiddleware from 'webpack-dev-middleware';
 import * as hotMiddleware from 'webpack-hot-middleware';
 
+import { initSentryServer } from './utils/initSentryServer';
 import { mainHandler, oAuthHandler, apiProxy } from './handlers';
 import { authMiddleware, verificateAccountMiddleware, forwardForSubdomain } from './middleware';
 import { getConfig, serverConfigToBrowser } from '../public/utils/getConfig';
@@ -28,6 +29,8 @@ const {
 } = getConfig();
 
 export function initServer() {
+  initSentryServer();
+
   const webpackCompiler = webpack(webpackConfig);
   const app = express();
   const { host, port = 8000, formSubdomain, mainPage, firebase } = getConfig();
