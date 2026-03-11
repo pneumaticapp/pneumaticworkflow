@@ -647,6 +647,27 @@ class PresetType:
     )
 
 
+class SearchContentType:
+
+    WORKFLOW = 'workflow'
+    KICKOFF_FIELD = 'kickoff_field'
+    TASK_FIELD = 'task_field'
+    TASK = 'task'
+    TEMPLATE = 'template'
+    EVENT = 'event'
+    TASK_TEMPLATE = 'task_template'
+
+    CHOICES = (
+        (WORKFLOW, WORKFLOW),
+        (KICKOFF_FIELD, KICKOFF_FIELD),
+        (TASK_FIELD, TASK_FIELD),
+        (TASK, TASK),
+        (TEMPLATE, TEMPLATE),
+        (EVENT, EVENT),
+        (TASK_TEMPLATE, TASK_TEMPLATE),
+    )
+
+
 class FileAttachmentAccessType:
     ACCOUNT = 'account'
     RESTRICTED = 'restricted'

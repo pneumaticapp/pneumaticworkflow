@@ -26,3 +26,10 @@ MSG_NF_0017 = _('Profile was verify')
 MSG_NF_0018 = _('Send workflows digest')
 MSG_NF_0019 = _('Send tasks digest')
 MSG_NF_0020 = _('Join your team')
+MSG_NF_0021 = _('Workflow was completed')
+MSG_NF_0022 = _('Reminder')
+MSG_NF_0023 = _('You have unfinished task in Pneumatic')
+MSG_NF_0024 = lambda count: format_lazy(
+    _('You have {count} unfinished tasks in Pneumatic'),
+    count=count,
+)

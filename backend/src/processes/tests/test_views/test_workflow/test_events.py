@@ -958,6 +958,7 @@ def test_retrieve__complete_task__field_user__ok(api_client):
         is_required=True,
         task=template_task,
         template=template,
+        account=user.account,
     )
     workflow = create_test_workflow(template=template, user=user)
     task = workflow.tasks.get(number=1)
@@ -1037,6 +1038,7 @@ def test_retrieve__complete_task__field_with_selections__ok(
         is_required=True,
         task=template_task,
         template=template,
+        account=user.account,
     )
     FieldTemplateSelection.objects.create(
         field_template=field_template,
@@ -1096,6 +1098,7 @@ def test_retrieve__complete_task__field_date__ok(api_client):
         is_required=True,
         task=template_task,
         template=template,
+        account=user.account,
     )
     workflow = create_test_workflow(template=template, user=user)
     task = workflow.tasks.get(number=1)
@@ -1172,6 +1175,7 @@ def test_retrieve__complete_task__field_with_attachments__ok(
         is_required=True,
         task=template_task,
         template=template,
+        account=user.account,
     )
 
     workflow = create_test_workflow(user=user, template=template)

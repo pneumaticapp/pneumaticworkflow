@@ -102,6 +102,7 @@ class TestPartialUpdateWorkflow:
             is_required=False,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
 
         response = api_client.post(
@@ -157,6 +158,7 @@ class TestPartialUpdateWorkflow:
             is_required=False,
             kickoff=kickoff_template,
             template=template,
+            account=user.account,
         )
         template_task = template.tasks.get(number=1)
         template_task.description = '**Bold {{ %s }} text**' % (field.api_name)
@@ -212,6 +214,7 @@ class TestPartialUpdateWorkflow:
             is_required=False,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
 
         due_date = timezone.now() + timedelta(days=1)
@@ -260,6 +263,7 @@ class TestPartialUpdateWorkflow:
             kickoff=template.kickoff_instance,
             order=0,
             template=template,
+            account=user.account,
         )
         kickoff_field_2 = FieldTemplate.objects.create(
             name='User url',
@@ -268,6 +272,7 @@ class TestPartialUpdateWorkflow:
             kickoff=template.kickoff_instance,
             order=4,
             template=template,
+            account=user.account,
         )
         kickoff_field_2_select_1 = FieldTemplateSelection.objects.create(
             field_template=kickoff_field_2,
@@ -286,6 +291,7 @@ class TestPartialUpdateWorkflow:
             kickoff=template.kickoff_instance,
             order=5,
             template=template,
+            account=user.account,
         )
         FieldTemplateSelection.objects.create(
             field_template=kickoff_field_3,
@@ -304,6 +310,7 @@ class TestPartialUpdateWorkflow:
             kickoff=template.kickoff_instance,
             order=9,
             template=template,
+            account=user.account,
         )
         template_task_1 = template.tasks.get(number=1)
         template_task_1.description = (
@@ -408,6 +415,7 @@ class TestPartialUpdateWorkflow:
             kickoff=template.kickoff_instance,
             template=template,
             api_name='api-name-2',
+            account=user.account,
         )
         template_task = template.tasks.get(number=1)
         duration = timedelta(hours=1, milliseconds=1)
@@ -476,6 +484,7 @@ class TestPartialUpdateWorkflow:
             kickoff=template.kickoff_instance,
             order=9,
             template=template,
+            account=user.account,
         )
 
         api_client.token_authenticate(user)
@@ -522,6 +531,7 @@ class TestPartialUpdateWorkflow:
             is_required=False,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
         required_field = FieldTemplate.objects.create(
             name='User',
@@ -529,6 +539,7 @@ class TestPartialUpdateWorkflow:
             is_required=True,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
 
         api_client.token_authenticate(user)
@@ -577,6 +588,7 @@ class TestPartialUpdateWorkflow:
             kickoff=template.kickoff_instance,
             order=0,
             template=template,
+            account=user.account,
         )
 
         template_task_1 = template.tasks.get(number=1)
@@ -671,6 +683,7 @@ class TestPartialUpdateWorkflow:
             kickoff=template.kickoff_instance,
             order=0,
             template=template,
+            account=user.account,
         )
 
         template_task_1 = template.tasks.get(number=1)
@@ -773,6 +786,7 @@ class TestPartialUpdateWorkflow:
             is_required=False,
             task=template_task_1,
             template=template,
+            account=user.account,
         )
         kickoff_field = FieldTemplate.objects.create(
             name='User name',
@@ -781,6 +795,7 @@ class TestPartialUpdateWorkflow:
             kickoff=kickoff,
             order=0,
             template=template,
+            account=user.account,
         )
         kickoff_field_2 = FieldTemplate.objects.create(
             name='User url',
@@ -789,6 +804,7 @@ class TestPartialUpdateWorkflow:
             kickoff=kickoff,
             order=4,
             template=template,
+            account=user.account,
         )
         kickoff_field_2_select_1 = FieldTemplateSelection.objects.create(
             field_template=kickoff_field_2,
@@ -807,6 +823,7 @@ class TestPartialUpdateWorkflow:
             kickoff=kickoff,
             order=5,
             template=template,
+            account=user.account,
         )
         FieldTemplateSelection.objects.create(
             field_template=kickoff_field_3,
@@ -1532,6 +1549,7 @@ class TestPartialUpdateWorkflow:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name,
+            account=user.account,
         )
         wf_name_template = (
             'Feedback from {{%s}} {{ date }} {{ workflow-id }}'
@@ -1606,6 +1624,7 @@ class TestPartialUpdateWorkflow:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name_1,
+            account=user.account,
         )
         FieldTemplate.objects.create(
             name='User',
@@ -1614,6 +1633,7 @@ class TestPartialUpdateWorkflow:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name_2,
+            account=user.account,
         )
         FieldTemplate.objects.create(
             name='Url',
@@ -1622,6 +1642,7 @@ class TestPartialUpdateWorkflow:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name_3,
+            account=user.account,
         )
         wf_name_template = 'Feedback: {{%s}} from {{ %s }} Url: {{%s}}' % (
             field_api_name_1,
@@ -1699,6 +1720,7 @@ class TestUpdatePerformer:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name,
+            account=user.account,
         )
         template_task_1 = template.tasks.get(number=1)
         template_task_1.raw_performers.all().delete()
@@ -1808,6 +1830,7 @@ class TestUpdatePerformer:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name,
+            account=user.account,
         )
         template_task_1 = template.tasks.get(number=1)
         template_task_1.raw_performers.all().delete()
@@ -1900,6 +1923,7 @@ class TestUpdatePerformer:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name,
+            account=user.account,
         )
         template_task_1 = template.tasks.get(number=1)
         template_task_1.raw_performers.all().delete()
@@ -1982,6 +2006,7 @@ class TestUpdatePerformer:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name,
+            account=account_1_owner.account,
         )
         template_task_1 = template.tasks.get(number=1)
         template_task_1.raw_performers.all().delete()

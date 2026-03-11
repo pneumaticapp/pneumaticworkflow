@@ -37,6 +37,7 @@ class PublicFieldTemplateSerializer(ModelSerializer):
             'name',
             'description',
             'is_required',
+            'is_hidden',
             'selections',
             'order',
             'api_name',
@@ -68,6 +69,7 @@ class FieldTemplateSerializer(
             'name',
             'description',
             'is_required',
+            'is_hidden',
             'selections',
             'order',
             'api_name',
@@ -81,9 +83,11 @@ class FieldTemplateSerializer(
             'order',
             'default',
             'api_name',
+            'is_hidden',
             'kickoff',
             'task',
             'template',
+            'account',
         }
 
     order = IntegerField()
@@ -138,6 +142,7 @@ class FieldTemplateSerializer(
                 'template': self.context['template'],
                 'kickoff': kickoff,
                 'task': task,
+                'account': self.context['account'],
                 **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0050(
@@ -175,6 +180,7 @@ class FieldTemplateSerializer(
                 'template': self.context['template'],
                 'kickoff': kickoff,
                 'task': task,
+                'account': self.context['account'],
                 **validated_data,
             },
             not_unique_exception_msg=MSG_PT_0050(
@@ -206,6 +212,7 @@ class FieldTemplateShortViewSerializer(ModelSerializer):
             'type',
             'order',
             'description',
+            'is_hidden',
             'api_name',
         )
 
@@ -218,6 +225,7 @@ class FieldTemplateListSerializer(ModelSerializer):
             'name',
             'type',
             'is_required',
+            'is_hidden',
             'description',
             'api_name',
             'selections',

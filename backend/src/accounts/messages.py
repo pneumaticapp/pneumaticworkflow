@@ -95,3 +95,9 @@ MSG_A_0045 = lambda name: format_lazy(
     _('Group with the name "{name}" already exists.'),
     name=name,
 )
+MSG_A_0046 = _(
+    'Permission denied. '
+    'Only an administrator can grant administrator privileges.',
+)
+MSG_A_0047 = _('You can\'t delete yourself.')
+MSG_A_0048 = _('You can\'t delete the account owner.')

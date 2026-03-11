@@ -1,7 +1,7 @@
 /* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
-import { mount, render } from 'enzyme';
+import { render } from 'enzyme';
 import { RichText, IRichTextProps } from '../RichText';
 
 describe('RichText', () => {
@@ -11,7 +11,7 @@ describe('RichText', () => {
       isMarkdownMode: true,
     };
 
-    const wrapper = mount(<RichText {...props} />);
+    const wrapper = render(<RichText {...props} />);
 
     expect(wrapper).toMatchSnapshot();
   });
@@ -34,7 +34,7 @@ describe('RichText', () => {
     const usersString = users.map(({ name, id }) => `[${name}|${id}]`).join(', ');
     const props: IRichTextProps = { text: `Hello, ${usersString}`, isMarkdownMode: true, };
 
-    const wrapper = mount(<RichText {...props} />);
+    const wrapper = render(<RichText {...props} />);
 
     for (let user of users) {
       expect(wrapper.text()).toContain(`@${user.name}`);
@@ -44,7 +44,7 @@ describe('RichText', () => {
   it('renderes correct html for plain text', () => {
     const props: IRichTextProps = { text: 'Some plain text', isMarkdownMode: true, };
 
-    const wrapper = mount(<RichText {...props} />);
+    const wrapper = render(<RichText {...props} />);
 
     expect(wrapper).toMatchSnapshot();
   });
@@ -55,7 +55,7 @@ describe('RichText', () => {
       isMarkdownMode: false,
     };
 
-    const wrapper = mount(<RichText {...props} />);
+    const wrapper = render(<RichText {...props} />);
 
     expect(wrapper.text()).toBe('<script>console.log("I\'ll try to hack you")</script>');
   });
@@ -63,9 +63,9 @@ describe('RichText', () => {
   it('empty render if text prop is null', () => {
     const props: IRichTextProps = { text: null, isMarkdownMode: true, };
 
-    const wrapper = mount(<RichText {...props} />);
+    const wrapper = render(<RichText {...props} />);
 
-    expect(wrapper.isEmptyRender()).toBe(true);
+    expect(wrapper.html()).toBe('');
   });
 
   it('RichText and youtube in text flag return text with youtube iframe', () => {

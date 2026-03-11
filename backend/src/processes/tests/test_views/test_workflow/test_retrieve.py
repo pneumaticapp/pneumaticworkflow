@@ -252,6 +252,7 @@ def test_retrieve__kickoff_field_user__ok(api_client):
         kickoff=template.kickoff_instance,
         order=1,
         template=template,
+        account=user.account,
     )
 
     response = api_client.post(
@@ -302,6 +303,7 @@ def test_retrieve__kickoff_field_date__ok(api_client):
         kickoff=template.kickoff_instance,
         order=1,
         template=template,
+        account=user.account,
     )
 
     response = api_client.post(
@@ -350,6 +352,7 @@ def test_retrieve__kickoff_field_with_selections__ok(api_client):
         kickoff=template.kickoff_instance,
         order=1,
         template=template,
+        account=user.account,
     )
     selection_template = FieldTemplateSelection.objects.create(
         field_template=field_template,
@@ -410,6 +413,7 @@ def test_retrieve__kickoff_field_with_attachments__ok(api_client):
         kickoff=template.kickoff_instance,
         order=1,
         template=template,
+        account=user.account,
     )
 
     response = api_client.post(
@@ -482,6 +486,7 @@ def test_retrieve__with_kickoff(api_client):
         kickoff=template.kickoff_instance,
         order=1,
         template=template,
+        account=user.account,
     )
     kickoff_field_2 = FieldTemplate.objects.create(
         name='User url',
@@ -490,6 +495,7 @@ def test_retrieve__with_kickoff(api_client):
         kickoff=template.kickoff_instance,
         order=2,
         template=template,
+        account=user.account,
     )
     kickoff_field_3 = FieldTemplate.objects.create(
         name='User date',
@@ -498,6 +504,7 @@ def test_retrieve__with_kickoff(api_client):
         kickoff=template.kickoff_instance,
         order=3,
         template=template,
+        account=user.account,
     )
     task = template.tasks.order_by('number').first()
     task.description = (
@@ -515,6 +522,7 @@ def test_retrieve__with_kickoff(api_client):
         description='Last description',
         task=task,
         template=template,
+        account=user.account,
     )
     second_task = template.tasks.order_by('number')[1]
     second_task.description = (

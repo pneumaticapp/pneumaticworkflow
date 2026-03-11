@@ -1,0 +1,13 @@
+.help-modal__title {
+  @mixin h6;
+
+  margin: 0 0 1.6rem;
+  font-weight: bold;
+}
+
+.help-modal__content {
+  @mixin text-base;
+
+  margin: 0 0 1.6rem;
+  color: var(--pneumatic-color-black72);
+}

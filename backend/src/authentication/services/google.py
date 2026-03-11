@@ -236,16 +236,6 @@ class GoogleAuthService(
         """
 
         state = self._get_cache(key=auth_response['state'])
-        capture_sentry_message(
-            message='Google OAuth state validation',
-            data={
-                'state_from_request': auth_response['state'],
-                'state_from_cache': state,
-                'cache_key_prefix': self.cache_key_prefix,
-            },
-            level=SentryLogLevel.INFO,
-        )
-
         if not state:
             raise exceptions.TokenInvalidOrExpired
 
@@ -257,17 +247,6 @@ class GoogleAuthService(
             'grant_type': 'authorization_code',
             'redirect_uri': self.redirect_uri,
         }
-
-        capture_sentry_message(
-            message='Google OAuth token exchange request',
-            data={
-                'redirect_uri': self.redirect_uri,
-                'client_id': self.client_id,
-                'code_length': len(auth_response['code']),
-            },
-            level=SentryLogLevel.INFO,
-        )
-
         response = requests.post(token_url, data=data)
 
         if not response.ok:
@@ -309,17 +288,6 @@ class GoogleAuthService(
 
         state = str(uuid4())
         self._set_cache(value=state, key=state)
-
-        capture_sentry_message(
-            message='Google OAuth state created and cached',
-            data={
-                'state': state,
-                'cache_key_prefix': self.cache_key_prefix,
-                'cache_timeout': self.cache_timeout,
-                'cache': self.cache,
-            },
-            level=SentryLogLevel.INFO,
-        )
 
         auth_url = 'https://accounts.google.com/o/oauth2/v2/auth'
         params = {

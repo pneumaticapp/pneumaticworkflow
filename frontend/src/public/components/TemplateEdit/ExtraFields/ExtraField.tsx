@@ -1,4 +1,5 @@
-import React, { Ref, useCallback, useMemo } from 'react';
+import * as React from 'react';
+import { Ref, useCallback, useMemo } from 'react';
 import classnames from 'classnames';
 import { injectIntl, IntlShape } from 'react-intl';
 
@@ -46,7 +47,7 @@ interface IExtraFieldProps extends IWorkflowExtraFieldProps {
 function ExtraField(props: IExtraFieldProps) {
   const {
     field,
-    field: { apiName, isRequired = false },
+    field: { apiName, isRequired = false, isHidden = false },
     fieldsCount,
     showDropdown = true,
     deleteField,
@@ -160,6 +161,7 @@ function ExtraField(props: IExtraFieldProps) {
             apiName={apiName}
             isRequired={isRequired}
             isRequiredDisabled={getIsRequiredDisabled()}
+            isHidden={isHidden}
             onEditField={editField}
             onMoveFieldUp={handleMoveFieldUp}
             onMoveFieldDown={handleMoveFieldDown}

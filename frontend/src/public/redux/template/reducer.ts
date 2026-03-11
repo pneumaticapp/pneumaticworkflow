@@ -13,6 +13,8 @@ export const initialTemplate: ITemplateStore = {
     isPublic: false,
     publicUrl: null,
     publicSuccessUrl: null,
+    completionNotification: false,
+    reminderNotification: false,
   } as ITemplate,
   status: ETemplateStatus.Saved,
   AITemplate: {

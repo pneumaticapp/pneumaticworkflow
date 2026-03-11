@@ -557,6 +557,8 @@ class Notification(
     AccountBaseMixin,
 ):
 
+    # TODO Move to the "notifications" module
+
     author = models.ForeignKey(
         User,
         on_delete=models.CASCADE,

@@ -3,7 +3,6 @@ from collections import defaultdict
 from typing import List, Optional, Set, Tuple
 
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 from django.utils import timezone
 
@@ -88,8 +87,6 @@ class Task(
         blank=True,
         help_text='Does not contains markdown',
     )
-
-    search_content = SearchVectorField(null=True)
 
     objects = BaseSoftDeleteManager.from_queryset(TasksQuerySet)()
 

@@ -1,7 +1,6 @@
 from typing import Optional
 from urllib.parse import unquote
 
-from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 
 from src.accounts.models import AccountBaseMixin
@@ -57,7 +56,6 @@ class FileAttachment(
         choices=FileAttachmentAccessType.CHOICES,
         default=FileAttachmentAccessType.ACCOUNT,
     )
-    search_content = SearchVectorField(null=True)
 
     objects = BaseSoftDeleteManager.from_queryset(FileAttachmentQuerySet)()
 
