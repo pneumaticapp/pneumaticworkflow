@@ -1,10 +1,10 @@
 from rest_framework.serializers import (
     CharField,
-    DateTimeField,
     IntegerField,
     ModelSerializer,
 )
 
+from src.generics.fields import TimeStampField
 from src.processes.models.templates.dataset import Dataset, DatasetItem
 
 
@@ -18,7 +18,7 @@ class DatasetItemSerializer(ModelSerializer):
             'order',
         )
 
-    id = IntegerField(read_only=True)
+    id = IntegerField(required=False)
     value = CharField(max_length=200)
     order = IntegerField(default=0)
 
@@ -31,13 +31,16 @@ class DatasetListSerializer(ModelSerializer):
             'id',
             'name',
             'description',
-            'date_created',
+            'date_created_tsp',
         )
 
     id = IntegerField(read_only=True)
     name = CharField(max_length=200)
     description = CharField(allow_blank=True, default='')
-    date_created = DateTimeField(read_only=True)
+    date_created_tsp = TimeStampField(
+        source='date_created',
+        read_only=True,
+    )
 
 
 class DatasetSerializer(ModelSerializer):
@@ -55,5 +58,8 @@ class DatasetSerializer(ModelSerializer):
     id = IntegerField(read_only=True)
     name = CharField(max_length=200)
     description = CharField(allow_blank=True, default='')
-    date_created = DateTimeField(read_only=True)
-    items = DatasetItemSerializer(many=True, read_only=True)
+    date_created_tsp = TimeStampField(
+        source='date_created',
+        read_only=True,
+    )
+    items = DatasetItemSerializer(many=True)

@@ -15,6 +15,7 @@ from src.processes.serializers.templates.dataset import (
     DatasetListSerializer,
     DatasetSerializer,
 )
+from src.processes.services.templates.dataset import DataSetService
 
 
 class DatasetViewSet(
@@ -81,10 +82,12 @@ class DatasetViewSet(
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        dataset = Dataset.objects.create(
-            account=request.user.account,
-            **serializer.validated_data,
+        service = DataSetService(
+            user=request.user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
         )
+        dataset = service.create(**serializer.validated_data)
         response_serializer = DatasetSerializer(dataset)
         return self.response_created(response_serializer.data)
 
@@ -101,11 +104,26 @@ class DatasetViewSet(
             partial=True,
         )
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        service = DataSetService(
+            user=request.user,
+            instance=dataset,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        service.partial_update(
+            force_save=True,
+            **serializer.validated_data,
+        )
         response_serializer = DatasetSerializer(dataset)
         return self.response_ok(response_serializer.data)
 
     def destroy(self, request, *args, **kwargs):
         dataset = self.get_object()
-        dataset.delete()
+        service = DataSetService(
+            user=request.user,
+            instance=dataset,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        service.delete()
         return self.response_ok()
