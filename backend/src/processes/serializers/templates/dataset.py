@@ -32,6 +32,7 @@ class DatasetListSerializer(ModelSerializer):
             'name',
             'description',
             'date_created_tsp',
+            'items_count',
         )
 
     id = IntegerField(read_only=True)
@@ -41,6 +42,7 @@ class DatasetListSerializer(ModelSerializer):
         source='date_created',
         read_only=True,
     )
+    items_count = IntegerField(read_only=True)
 
 
 class DatasetSerializer(ModelSerializer):

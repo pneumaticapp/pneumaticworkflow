@@ -1,4 +1,5 @@
 from typing import Optional, List
+from django.db.models import Count
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.viewsets import GenericViewSet
 
@@ -8,8 +9,10 @@ from src.accounts.permissions import (
     UserIsAdminOrAccountOwner,
     UsersOverlimitedPermission,
 )
+from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import UserIsAuthenticated
+from src.processes.filters import DatasetFilter
 from src.processes.models.templates.dataset import Dataset
 from src.processes.serializers.templates.dataset import (
     DatasetListSerializer,
@@ -28,6 +31,10 @@ class DatasetViewSet(
     }
     action_paginator_classes = {
         'list': LimitOffsetPagination,
+    }
+    filter_backends = (PneumaticFilterBackend,)
+    action_filterset_classes = {
+        'list': DatasetFilter,
     }
 
     def get_serializer_context(self, **kwargs):
@@ -59,6 +66,10 @@ class DatasetViewSet(
     def get_queryset(self):
         user = self.request.user
         queryset = Dataset.objects.on_account(user.account_id)
+        if self.action == 'list':
+            queryset = queryset.annotate(
+                items_count=Count('items'),
+            )
         return self.prefetch_queryset(queryset)
 
     def prefetch_queryset(
@@ -76,8 +87,8 @@ class DatasetViewSet(
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        serializer = self.get_serializer(queryset, many=True)
-        return self.response_ok(serializer.data)
+        queryset = self.filter_queryset(queryset)
+        return self.paginated_response(queryset)
 
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
