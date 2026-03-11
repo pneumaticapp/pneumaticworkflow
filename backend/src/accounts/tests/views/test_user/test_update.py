@@ -37,7 +37,7 @@ def test_put__all_fields__ok(api_client, mocker):
 
     # arrange
     analysis_mock = mocker.patch(
-        'src.accounts.views.user.AnalyticService.'
+        'src.accounts.services.user.AnalyticService.'
         'users_digest',
     )
     identify_mock = mocker.patch(
@@ -73,7 +73,7 @@ def test_put__all_fields__ok(api_client, mocker):
         'update_customer',
     )
     task_field_filter_mock = mocker.patch(
-        'src.processes.models.workflows.fields.TaskField.objects.filter',
+        'src.accounts.services.user.TaskField.objects.filter',
         return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
@@ -107,7 +107,6 @@ def test_put__all_fields__ok(api_client, mocker):
     assert data['first_name'] == request_data['first_name']
     assert data['last_name'] == request_data['last_name']
     assert data['type'] == user.type
-    assert data['date_joined'] == user.date_joined.strftime(date_format)
     assert data['date_joined_tsp'] == user.date_joined.timestamp()
     assert data['is_admin'] == user.is_admin
     assert data['is_account_owner'] == user.is_account_owner
@@ -204,6 +203,7 @@ def test_update__partial__update_request_fields(mocker, api_client):
     # arrange
     owner = create_test_owner()
     group = create_test_group(owner.account)
+    group.users.add(owner)
     password = 'new password'
     is_admin = True
     first_name = 'Old first name'

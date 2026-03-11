@@ -617,12 +617,14 @@ def test_link_new_attachments__existing_file_id__does_not_overwrite():
         api_name='file-field-a',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     field_b = TaskField.objects.create(
         task=task,
         api_name='file-field-b',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     service_a = TaskFieldService(instance=field_a, user=user)
     service_a._link_new_attachments(markdown_values=['shared_file_id'])
@@ -1166,6 +1168,7 @@ def test_remove_unused_attachments__event_linked_attachment_preserved(
         is_required=True,
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     comment_event = create_test_event(
         workflow=workflow,
@@ -1232,6 +1235,7 @@ def test_remove_unused_attachments__field_only_attachment_deleted(mocker):
         is_required=False,
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     field_only_attachment = Attachment.objects.create(
         file_id='field_only_file.png',
@@ -1293,6 +1297,7 @@ def test_remove_unused_attachments__comment_attachment_unchanged(mocker):
         is_required=False,
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     comment_event = create_test_event(
         workflow=workflow,
@@ -1978,6 +1983,7 @@ def test_get_valid_file_value__external_domain_link__raise_exception():
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(user=user, instance=field)
     raw_value = ['[x](https://other.com/id12345678)']

@@ -95,6 +95,7 @@ class TestTemplateAttachmentsE2E:
             template=template,
             order=0,
             api_name='kickoff-field-1',
+            account=template.account,
         )
 
         # act

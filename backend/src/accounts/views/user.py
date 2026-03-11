@@ -108,6 +108,7 @@ class UserViewSet(
 
     def put(self, request, *args, **kwargs):
         user = request.user
+        old_photo = user.photo
         slz = self.get_serializer(data=request.data)
         slz.is_valid(raise_exception=True)
         service = UserService(
@@ -125,8 +126,8 @@ class UserViewSet(
             raise_validation_error(message=ex.message)
         sync_account_file_fields(
             account=user.account,
-            user=request.user,
-            old_values=[request.user.photo],
+            user=user,
+            old_values=[old_photo],
             new_values=[user.photo],
         )
         return self.response_ok(UserSerializer(instance=user).data)

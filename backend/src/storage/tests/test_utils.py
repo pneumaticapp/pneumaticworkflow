@@ -676,6 +676,7 @@ class TestRefreshAttachments:
             template=template,
             order=0,
             api_name='kickoff-field-1',
+            account=user.account,
         )
 
         # act
@@ -880,6 +881,7 @@ class TestExtractAllFileIdsFromSource:
             template=template,
             order=0,
             api_name='kickoff-field-1',
+            account=user.account,
         )
 
         # act

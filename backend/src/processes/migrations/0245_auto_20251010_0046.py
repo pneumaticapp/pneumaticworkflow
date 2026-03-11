@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('processes', '0240_populate_user_group_predicates'),
+        ('processes', '0244_add_reminder'),
     ]
 
     operations = [
