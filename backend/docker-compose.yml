@@ -72,6 +72,7 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
       FORMS_URL: ${FORMS_URL:-http://form.localhost}
       ENVIRONMENT: ${ENVIRONMENT:-Production}
+      RELEASE: ${RELEASE:-1.0.0}
       LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru
       CAPTCHA: ${CAPTCHA:-no}
       ANALYTICS: ${ANALYTICS:-no}
@@ -167,6 +168,7 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
       FORMS_URL: ${FORMS_URL:-http://form.localhost}
       ENVIRONMENT: ${ENVIRONMENT:-Production}
+      RELEASE: ${RELEASE:-1.0.0}
       LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru
       CAPTCHA: ${CAPTCHA:-no}
       ANALYTICS: ${ANALYTICS:-no}
