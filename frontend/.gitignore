@@ -10,7 +10,7 @@ logs
 config/how
 *storybook.log
 .env
-.cursor
+.cursor/
 
 # Playwright
 tests/e2e/.auth/

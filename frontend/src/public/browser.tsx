@@ -25,17 +25,48 @@ smoothscroll.polyfill();
 initSentry(getBrowserConfig);
 addEventListener('beforeunload', resetSuperuserToken);
 
-ReactDOM.render(
-  <Provider store={store}>
-    <React.Suspense fallback={<div className="loading" />}>
-      <Router history={history}>
-        <ErrorBoundary FallbackComponent={ErrorFallback}>
-          <PersistGate loading={null} persistor={persistor}>
-            <AppContainer />
-          </PersistGate>
-        </ErrorBoundary>
-      </Router>
-    </React.Suspense>
-  </Provider>,
-  document.getElementById('pneumatic-frontend'),
-);
+const root = document.getElementById('pneumatic-frontend');
+
+const storeRef = { current: store };
+const persistorRef = { current: persistor };
+if (typeof window !== 'undefined' && !(window as Window & { __REDUX_STORE_REF__?: typeof storeRef }).__REDUX_STORE_REF__) {
+  (window as Window & { __REDUX_STORE_REF__?: typeof storeRef; __REDUX_PERSISTOR_REF__?: typeof persistorRef }).__REDUX_STORE_REF__ = storeRef;
+  (window as Window & { __REDUX_PERSISTOR_REF__?: typeof persistorRef }).__REDUX_PERSISTOR_REF__ = persistorRef;
+}
+
+function render(App: React.ComponentType) {
+  const currentStore = (window as Window & { __REDUX_STORE_REF__?: { current: typeof store } }).__REDUX_STORE_REF__?.current ?? store;
+  const currentPersistor = (window as Window & { __REDUX_PERSISTOR_REF__?: { current: typeof persistor } }).__REDUX_PERSISTOR_REF__?.current ?? persistor;
+  ReactDOM.render(
+    <Provider store={currentStore}>
+      <React.Suspense fallback={<div className="loading" />}>
+        <Router history={history}>
+          <ErrorBoundary FallbackComponent={ErrorFallback}>
+            <PersistGate loading={null} persistor={currentPersistor}>
+              <App />
+            </PersistGate>
+          </ErrorBoundary>
+        </Router>
+      </React.Suspense>
+    </Provider>,
+    root,
+  );
+}
+
+render(AppContainer);
+
+const hot = (module as NodeModule & {
+  hot?: {
+    accept: (pathOrCallback: string | (() => void), callback?: () => void) => void;
+  };
+}).hot;
+if (hot) {
+  hot.accept('./components/App', () => {
+    const { AppContainer: NextAppContainer } = require('./components/App');
+    render(NextAppContainer);
+  });
+  hot.accept(() => {
+    const { AppContainer: NextAppContainer } = require('./components/App');
+    render(NextAppContainer);
+  });
+}

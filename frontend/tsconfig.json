@@ -13,7 +13,7 @@
     "noUnusedLocals": true,
     "sourceMap": true,
     "strictNullChecks": true,
-    "target": "es5",
+    "target": "es2015",
     "jsx": "react",
     "experimentalDecorators": false,
     "downlevelIteration": true,

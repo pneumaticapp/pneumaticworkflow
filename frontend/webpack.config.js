@@ -18,9 +18,13 @@ const envKeys = Object.keys(Object.assign(env, process.env)).reduce((prev, next)
 
 module.exports = {
   entry: {
-    main: devMode ? ['webpack-hot-middleware/client?path=/__webpack_hmr&reload=true', './src/public/browser.tsx'] : './src/public/browser.tsx',
+    main: devMode ? ['webpack-hot-middleware/client?path=/__webpack_hmr', './src/public/browser.tsx'] : './src/public/browser.tsx',
     forms: './src/public/forms.tsx',
   },
+  cache: devMode
+    ? { type: 'filesystem', buildDependencies: { config: [__filename] } }
+    : false,
+  devtool: devMode ? 'eval-cheap-module-source-map' : undefined,
   output: {
     filename: devMode ? '[name].js' : '[name].[contenthash].js',
     path: path.resolve(__dirname, './public'),
@@ -44,12 +48,12 @@ module.exports = {
       {
         test: /\.css$/,
         use: [
-          MiniCssExtractPlugin.loader,
+          devMode ? 'style-loader' : MiniCssExtractPlugin.loader,
           {
             loader: 'css-loader',
             options: {
               modules: {
-                localIdentName: devMode ? '[path][name]__[local]--[hash:base64:5]' : '[local]--[hash:base64:5]',
+                localIdentName: '[local]--[hash:base64:5]',
                 getLocalIdent: (loaderContext, _, localName) => {
                   const { resourcePath } = loaderContext;
                   if (resourcePath.includes(fontsDir) || resourcePath.includes('node_modules')) {
@@ -131,6 +135,9 @@ module.exports = {
   ],
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
+    alias: {
+      'react/jsx-runtime': path.resolve(__dirname, 'node_modules/react/jsx-runtime.js'),
+    },
   },
   mode: NODE_ENV,
 };
