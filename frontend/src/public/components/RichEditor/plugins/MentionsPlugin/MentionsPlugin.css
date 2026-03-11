@@ -1,0 +1,46 @@
+.menu {
+  position: absolute;
+  z-index: 2;
+  margin-top: 0.4em;
+  padding: 0.31rem 0.25rem;
+  display: flex;
+  overflow: auto;
+  flex-direction: column;
+  box-sizing: border-box;
+  width: 19.2rem;
+  cursor: pointer;
+  background: var(--pneumatic-color-white, white);
+  border-radius: 0.5rem;
+  box-shadow: 0 0.5rem 1rem rgba(98, 98, 95, 0.08);
+  transition: transform 0.25s cubic-bezier(0.3, 1.2, 0.2, 1);
+  transform: scale(0);
+  transform-origin: top left;
+}
+
+.menu.menu-visible {
+  transform: scale(1);
+}
+
+.item {
+  padding: 0.6rem 1.2rem;
+  display: block;
+  overflow-x: clip;
+  box-sizing: border-box;
+  width: 100%;
+  text-align: left;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  color: var(--pneumatic-color-black100);
+  background: transparent;
+  border: none;
+  transition: background-color 0.4s cubic-bezier(0.27, 1.27, 0.48, 0.56);
+}
+
+.item:hover,
+.item[aria-selected='true'] {
+  position: relative;
+  color: var(--pneumatic-color-link-hover);
+  background-color: #fdf7ee;
+  border-radius: 0.4rem;
+}

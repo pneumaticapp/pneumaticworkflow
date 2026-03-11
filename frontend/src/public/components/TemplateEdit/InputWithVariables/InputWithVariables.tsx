@@ -1,16 +1,13 @@
 import React from 'react';
-import classnames from 'classnames';
 
 import { TTaskVariable } from '../types';
-
-import { variablesDecorator } from '../utils/variablesDecorator';
-import { addVariableEntityToEditor } from '../utils/addVariableEntityToEditor';
 import { escapeMarkdown } from '../../../utils/escapeMarkdown';
 import { VariableList } from '../VariableList';
-import { getInitialEditorState } from '../../RichEditor/utils/converters';
-import { RichEditor, RichEditorContainer } from '../../RichEditor';
+import { RichEditor, type IRichEditorHandle, type IRichEditorProps } from '../../RichEditor';
 
 import styles from './InputWithVariables.css';
+
+
 
 export interface IEditorWithVariablesProps {
   placeholder?: string;
@@ -20,10 +17,10 @@ export interface IEditorWithVariablesProps {
   title?: string;
   className?: string;
   toolipText: string;
-  foregroundColor?: React.ComponentProps<typeof RichEditor>['foregroundColor'];
-  size?: 'xl' | 'lg';
-  onChange: React.ComponentProps<typeof RichEditor>['handleChange'];
+  foregroundColor?: IRichEditorProps['foregroundColor'];
+  onChange: IRichEditorProps['handleChange'];
 }
+
 export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
   placeholder,
   listVariables,
@@ -33,50 +30,43 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
   title,
   toolipText,
   foregroundColor,
-  size = 'lg',
   onChange,
 }) => {
-  const editor = React.useRef<RichEditor>(null);
+  const editorRef = React.useRef<IRichEditorHandle>(null);
   const formattedValue = escapeMarkdown(value);
 
   const handleInsertVariable = (apiName?: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
-
-    if (!editor.current) {
-      return;
-    }
-
+    if (!editorRef.current || apiName == null) return;
     const newVariable = listVariables?.find((variable) => variable.apiName === apiName);
-    editor.current.onChange(
-      addVariableEntityToEditor(editor.current.state.editorState, {
-        title: newVariable?.title,
-        subtitle: newVariable?.subtitle,
-        apiName,
-      }),
+    editorRef.current.insertVariable(
+      apiName,
+      newVariable?.title ?? '',
+      newVariable?.subtitle ?? '',
     );
   };
 
   return (
-    <RichEditorContainer
-      ref={editor}
+    <RichEditor
+      ref={editorRef}
       title={title}
-      placeholder={placeholder}
-      initialState={getInitialEditorState(formattedValue, templateVariables)}
+      placeholder={placeholder ?? ''}
+      defaultValue={formattedValue}
       handleChange={onChange}
-      decorators={[variablesDecorator]}
       withToolbar={false}
       multiline={false}
-      className={classnames(size === 'xl' ? styles['editor_xl'] : styles['editor_lg'], className)}
+      className={className}
       foregroundColor={foregroundColor}
       stripPastedFormatting
+      templateVariables={templateVariables}
     >
       <VariableList
         variables={listVariables}
         onVariableClick={handleInsertVariable}
         className={styles['variables']}
         tooltipText={toolipText}
-        focusEditor={() => editor.current?.focus()}
+        focusEditor={() => editorRef.current?.focus()}
       />
-    </RichEditorContainer>
+    </RichEditor>
   );
 };

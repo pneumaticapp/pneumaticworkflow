@@ -85,6 +85,7 @@ import { createAITemplate } from './utils/createAITemplate';
 import { trackCrozdesk } from '../../utils/analytics/trackCrozdesk';
 import { getBrowserConfig } from '../../utils/getConfig';
 import { getCustomerPortalLink } from '../../api/getCustomerPortalLink';
+import { setSentryUser } from '../../utils/sentryUser';
 import { createTemplateFromName } from './utils/createTemplateFromName';
 import { ITemplate } from '../../types/template';
 import { watchNewWorkflowsEvent } from '../workflows/saga';
@@ -98,6 +99,8 @@ export function* authenticateUser(redirectUrl?: string, isRegister: boolean = fa
       account: { isSubscribed, billingPlan, billingSync },
     } = user;
     yield put(authUserSuccess(user));
+
+    setSentryUser({ id: user.id, email: user.email });
 
     if (((isEnvBilling || (!isEnvBilling && billingSync)) && isRegister) || (!isSubscribed && !billingPlan)) {
       yield call(collectPaymentDetailsSaga);
@@ -294,6 +297,7 @@ export function* logout(action: TLogoutUser) {
     yield handleLogoutUnsubscribing({ shouldExpireToken: true });
 
     yield put(logoutUserSuccess());
+    setSentryUser(null);
 
     if (redirectUrl) {
       yield put(redirectToLogin());

@@ -15,5 +15,10 @@ config/how
 # Playwright
 playwright-report/
 e2e/.auth/
+tests/e2e/.auth/
 test-results/
+/blob-report/
+/playwright/.cache/
+/playwright/.auth/
 .blob/
+docs/

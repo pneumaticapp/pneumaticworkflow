@@ -1,0 +1,6 @@
+{
+  "watch": ["src/server", "src/index.ts", "webpack.config.js", "config"],
+  "ignore": ["src/public", "public", "node_modules"],
+  "exec": "ts-node",
+  "ext": "ts,js,json"
+}
