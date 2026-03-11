@@ -182,11 +182,21 @@ class TaskWorkflowMemberPermission(BasePermission):
             ),
         )
         is_member = query.values('is_member').first()
+        # Task not found
         if is_member is None:
-            # Task not found
             return True
-        # Task found - check membership
-        return bool(is_member['is_member'])
+        # if not member
+        is_member = bool(is_member['is_member'])
+        if is_member:
+            return True
+        # TODO Tmp fix for a new added users to the group
+        users_ids = (
+            TaskPerformer.objects
+            .by_task(task_id)
+            .filter(task__account_id=request.user.account_id)
+            .get_user_ids_set()
+        )
+        return request.user.id in users_ids
 
 
 class GuestWorkflowPermission(BasePermission):

@@ -758,6 +758,18 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
     def completed(self):
         return self.filter(is_completed=True)
 
+    def completed_task(self):
+        return self.filter(task__status=TaskStatus.COMPLETED)
+
+    def acd_task_status(self):
+        return self.filter(
+            task__status__in=(
+                TaskStatus.ACTIVE,
+                TaskStatus.COMPLETED,
+                TaskStatus.DELAYED,
+            ),
+        )
+
     def not_completed(self):
         return self.filter(is_completed=False)
 
@@ -809,6 +821,21 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
         )
         return set(direct_users).union(set(group_users))
 
+    def get_user_ids_name_emails_subscriber_set(self):
+        direct_users = self.filter(user__isnull=False).values_list(
+            'user_id',
+            'user__email',
+            'user__first_name',
+            'user__is_new_tasks_subscriber',
+        )
+        group_users = self.filter(group__isnull=False).values_list(
+            'group__users__id',
+            'group__users__email',
+            'group__users__first_name',
+            'group__users__is_new_tasks_subscriber',
+        )
+        return set(direct_users).union(set(group_users))
+
     def group_ids(self):
         qst = self.filter(type='group').values_list('group_id', flat=True)
         return tuple(elem for elem in qst)
@@ -837,29 +864,6 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
             )
         )
         return (direct_users | group_users).distinct()
-
-    def new_task_recipients(self):
-
-        """ Returns task performers of users who are
-            subscribed to notifications about new tasks """
-
-        direct_users = self.filter(type=PerformerType.USER).only(
-            'user_id',
-            'user__email',
-            'user__is_new_tasks_subscriber',
-        ).annotate(
-            email=F('user__email'),
-            is_subscribed=F('user__is_new_tasks_subscriber'),
-        )
-        group_users = self.filter(group__isnull=False).only(
-            'group__users__id',
-            'group__users__email',
-            'group__users__is_new_tasks_subscriber',
-        ).annotate(
-            email=F('group__users__email'),
-            is_subscribed=F('group__users__is_new_tasks_subscriber'),
-        )
-        return direct_users.union(group_users)
 
 
 class ChecklistTemplateQuerySet(BaseQuerySet):
@@ -1018,3 +1022,8 @@ class TemplatePresetQuerySet(AccountBaseQuerySet):
                 type=PresetType.ACCOUNT,
             ),
         )
+
+
+class SearchContentQuerySet(AccountBaseQuerySet):
+
+    pass

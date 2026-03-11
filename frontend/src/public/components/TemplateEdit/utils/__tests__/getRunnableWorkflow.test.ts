@@ -164,6 +164,8 @@ const templateResponseMock: ITemplateResponse = {
   embedUrl: null,
   isEmbedded: false,
   finalizable: true,
+  completionNotification: false,
+  reminderNotification: false,
   updatedBy: 306,
   dateUpdated: '2021-10-13T14:24:43.980066Z',
   wfNameTemplate: null,

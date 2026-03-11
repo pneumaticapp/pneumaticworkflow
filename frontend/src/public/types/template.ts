@@ -14,6 +14,8 @@ export interface ITemplate {
   description: string;
   isActive: boolean;
   finalizable: boolean;
+  completionNotification: boolean;
+  reminderNotification: boolean;
   dateUpdated: string | null;
   updatedBy: number | null;
   owners: ITemplateOwner[];
@@ -189,6 +191,7 @@ export interface IExtraField {
   apiName: string;
   description?: string;
   isRequired?: boolean;
+  isHidden?: boolean;
   name: string;
   type: EExtraFieldType;
   value?: TExtraFieldValue;
