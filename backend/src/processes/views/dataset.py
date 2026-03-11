@@ -18,7 +18,9 @@ from src.processes.serializers.templates.dataset import (
     DatasetListSerializer,
     DatasetSerializer,
 )
+from src.processes.services.exceptions import DataSetServiceException
 from src.processes.services.templates.dataset import DataSetService
+from src.utils.validation import raise_validation_error
 
 
 class DatasetViewSet(
@@ -98,7 +100,10 @@ class DatasetViewSet(
             is_superuser=request.is_superuser,
             auth_type=request.token_type,
         )
-        dataset = service.create(**serializer.validated_data)
+        try:
+            dataset = service.create(**serializer.validated_data)
+        except DataSetServiceException as ex:
+            raise_validation_error(message=ex.message)
         response_serializer = DatasetSerializer(dataset)
         return self.response_created(response_serializer.data)
 
@@ -121,10 +126,13 @@ class DatasetViewSet(
             is_superuser=request.is_superuser,
             auth_type=request.token_type,
         )
-        service.partial_update(
-            force_save=True,
-            **serializer.validated_data,
-        )
+        try:
+            service.partial_update(
+                force_save=True,
+                **serializer.validated_data,
+            )
+        except DataSetServiceException as ex:
+            raise_validation_error(message=ex.message)
         response_serializer = DatasetSerializer(dataset)
         return self.response_ok(response_serializer.data)
 
@@ -136,5 +144,8 @@ class DatasetViewSet(
             is_superuser=request.is_superuser,
             auth_type=request.token_type,
         )
-        service.delete()
+        try:
+            service.delete()
+        except DataSetServiceException as ex:
+            raise_validation_error(message=ex.message)
         return self.response_ok()

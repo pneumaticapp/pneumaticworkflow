@@ -193,6 +193,11 @@ class TemplatePresetServiceException(BaseServiceException):
     pass
 
 
+class DataSetServiceException(BaseServiceException):
+
+    pass
+
+
 class CommentedNotTask(CommentServiceException):
 
     default_message = pw_messages.MSG_PW_0077
