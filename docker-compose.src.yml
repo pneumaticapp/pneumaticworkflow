@@ -144,6 +144,11 @@ services:
       CORS_ORIGIN_WHITELIST: "http://localhost:8000 ${FRONTEND_URL:-http://localhost}"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
       FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://file-service:8000}
+      FILE_POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
+      FILE_POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
+      FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
+      FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
+      FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
     expose:
       - 8000
     volumes:
@@ -243,6 +248,12 @@ services:
       CORS_ALLOW_CREDENTIALS: yes
       CORS_ORIGIN_WHITELIST: "http://localhost:8000 ${FRONTEND_URL:-http://localhost}"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
+      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://file-service:8000}
+      FILE_POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
+      FILE_POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
+      FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
+      FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
+      FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
     volumes:
       - ./backend:/pneumatic_backend
     command: >
@@ -335,6 +346,12 @@ services:
       CORS_ALLOW_CREDENTIALS: yes
       CORS_ORIGIN_WHITELIST: "http://localhost:8000 ${FRONTEND_URL:-http://localhost}"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
+      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://file-service:8000}
+      FILE_POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
+      FILE_POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
+      FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
+      FILE_POSTGRES_HOST: ${FILE_POSTGRES_HOST:-file-postgres}
+      FILE_POSTGRES_PORT: ${FILE_POSTGRES_PORT:-5432}
     volumes:
       - ./backend:/pneumatic_backend
     command: celery --pidfile= --app src.celery_app:app beat -l warning -S django

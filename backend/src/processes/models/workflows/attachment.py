@@ -28,7 +28,7 @@ class FileAttachment(
     thumbnail_url = models.URLField(max_length=1024, null=True, blank=True)
     size = models.PositiveIntegerField(default=0)
     file_id = models.CharField(
-        max_length=64,
+        max_length=512,
         unique=True,
         null=True,
         blank=True,

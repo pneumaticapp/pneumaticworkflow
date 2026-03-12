@@ -31,7 +31,7 @@ class Attachment(SoftDeleteModel, AccountBaseMixin):
         ]
 
     file_id = models.CharField(
-        max_length=64,
+        max_length=512,
         unique=True,
         help_text='Unique file identifier in the file service',
     )

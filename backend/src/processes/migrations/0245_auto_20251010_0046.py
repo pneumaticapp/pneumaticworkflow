@@ -18,6 +18,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='fileattachment',
             name='file_id',
-            field=models.CharField(blank=True, max_length=64, null=True, unique=True),
+            field=models.CharField(blank=True, max_length=512, null=True, unique=True),
         ),
     ]

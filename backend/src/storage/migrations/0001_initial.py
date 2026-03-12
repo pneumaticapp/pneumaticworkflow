@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('is_deleted', models.BooleanField(default=False)),
-                ('file_id', models.CharField(help_text='Unique file identifier in the file service', max_length=64, unique=True)),
+                ('file_id', models.CharField(help_text='Unique file identifier in the file service', max_length=512, unique=True)),
                 ('access_type', models.CharField(choices=[('public', 'Public'), ('account', 'Account'), ('restricted', 'Restricted')], default='account', help_text='File access type', max_length=20)),
                 ('source_type', models.CharField(choices=[('Account', 'Account'), ('Workflow', 'Workflow'), ('Task', 'Task'), ('Template', 'Template')], help_text='File source type', max_length=20)),
                 ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='accounts.Account')),

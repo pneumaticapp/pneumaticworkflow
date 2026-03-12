@@ -71,6 +71,12 @@ class Common(Configuration):
     if FILE_SERVICE_URL:
         parsed = urlparse(FILE_SERVICE_URL)
         FILE_DOMAIN = parsed.netloc
+        
+    FILE_POSTGRES_DB = env.get('FILE_POSTGRES_DB')
+    FILE_POSTGRES_USER = env.get('FILE_POSTGRES_USER')
+    FILE_POSTGRES_PASSWORD = env.get('FILE_POSTGRES_PASSWORD')
+    FILE_POSTGRES_HOST = env.get('FILE_POSTGRES_HOST')
+    FILE_POSTGRES_PORT = env.get('FILE_POSTGRES_PORT')
 
     # Auth
     AUTH_USER_MODEL = 'accounts.User'
