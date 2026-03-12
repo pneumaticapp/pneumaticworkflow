@@ -43,12 +43,6 @@ class TestTemplateAttachmentsE2E:
         # arrange
         owner = create_test_admin()
         template = create_test_template(owner, is_active=True)
-        TemplateOwner.objects.create(
-            template=template,
-            account=template.account,
-            user=owner,
-            type=OwnerType.USER,
-        )
         template.description = (
             'Template file: '
             '[file](https://files.example.com/template_e2e_123)'

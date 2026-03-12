@@ -211,7 +211,7 @@ services:
       AI_PROVIDER: ${AI_PROVIDER:-}
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER:-}
-      SENTRY_DSN: ${SENTRY_DSN:-}}
+      SENTRY_DSN: ${SENTRY_DSN:-}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres_password}

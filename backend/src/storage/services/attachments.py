@@ -209,7 +209,11 @@ class AttachmentService(BaseModelService):
         ).delete()
 
         # Assign permissions to template owners (exclude soft-deleted)
-        template_owners = template.owners.filter(is_deleted=False)
+        template_owners = template.owners.filter(
+            is_deleted=False,
+            type=OwnerType.USER,
+            user__isnull=False,
+        )
         for owner in template_owners:
             if owner.user:
                 assign_perm(

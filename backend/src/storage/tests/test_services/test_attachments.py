@@ -178,8 +178,11 @@ class TestAttachmentServiceBulkCreate:
 
         # assert
         assert Attachment.objects.filter(
+            file_id='new_file',
+        ).exists()
+        assert Attachment.objects.filter(
             task=task,
-        ).count() >= 1
+        ).count() == 2
 
 
 class TestAttachmentServiceCheckPermission:

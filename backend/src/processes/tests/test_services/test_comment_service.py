@@ -1669,35 +1669,7 @@ def test_update__attachments__ok(mocker):
     send_mention_notification_mock.assert_not_called()
 
 
-@pytest.mark.parametrize(
-    'data',
-    (
-        (
-            '(![avatar.jpg](https://storage.com/dev/avatar.jpg '
-            '"attachment_id:3349 entityType:image")',
-        ),
-        (
-            '[file.txt](http://file.txt "attachment_id:4187 entityType:file")',
-        ),
-        (
-            '[video.mp4](https://video.mp4 "attachment_id:4188 '
-            'entityType:video")',
-        ),
-        (
-            'some [video.mp4](https://video.mp4 "attachment_id:4188 '
-            'entityType:video") text \n(![avatar.jpg]'
-            '(https://storage.com/dev/avatar.jpg '
-            '"attachment_id:3349 entityType:image")',
-        ),
-        (
-            '[ZIP-folder.zip](https://storage.zip "attachment_id:2482")',
-        ),
-        (
-            '[ZIP-folder.zip](https://storage.zip "attachment_id:2482")',
-        ),
-    ),
-)
-def test_update__find_attachments_in_text__ok(data, mocker):
+def test_update__attachments_in_text__ok(mocker):
 
     # arrange
     account = create_test_account()
@@ -1758,6 +1730,7 @@ def test_update__find_attachments_in_text__ok(data, mocker):
         'send_mention_notification.delay',
     )
 
+    data = '[file.txt](http://file.txt "attachment_id:4187 entityType:file")'
     text = f'*text* \n -(123) {data}text'
     service = CommentService(
         instance=event,

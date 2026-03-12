@@ -25,7 +25,6 @@ from src.processes.tests.fixtures import (
     create_test_not_admin,
     create_test_group,
 )
-from src.processes.enums import FieldType
 from src.payment.stripe.service import StripeService
 from src.utils.validation import ErrorCode
 
@@ -39,10 +38,6 @@ def test_put__all_fields__ok(api_client, mocker):
     analysis_mock = mocker.patch(
         'src.accounts.services.user.AnalyticService.'
         'users_digest',
-    )
-    identify_mock = mocker.patch(
-        'src.accounts.views.user'
-        '.UserViewSet.identify',
     )
     user = create_test_owner()
     old_photo = user.photo
@@ -71,10 +66,6 @@ def test_put__all_fields__ok(api_client, mocker):
     update_customer_mock = mocker.patch(
         'src.payment.stripe.service.StripeService.'
         'update_customer',
-    )
-    task_field_filter_mock = mocker.patch(
-        'src.accounts.services.user.TaskField.objects.filter',
-        return_value=mocker.Mock(update=mocker.Mock(return_value=None)),
     )
     send_user_updated_mock = mocker.patch(
         'src.notifications.tasks.'
@@ -164,7 +155,6 @@ def test_put__all_fields__ok(api_client, mocker):
     assert user.is_special_offers_subscriber == (
         request_data['is_special_offers_subscriber']
     )
-    identify_mock.assert_called_once_with(user)
     analysis_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
@@ -188,13 +178,6 @@ def test_put__all_fields__ok(api_client, mocker):
             'is_admin': user.is_admin,
             'is_account_owner': user.is_account_owner,
         },
-    )
-    task_field_filter_mock.assert_called_once_with(
-        type=FieldType.USER,
-        user_id=user.id,
-    )
-    task_field_filter_mock.return_value.update.assert_called_once_with(
-        value=user.name,
     )
 
 

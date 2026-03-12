@@ -357,7 +357,7 @@ class UserService(
                 super().partial_update(**update_kwargs, force_save=True)
             if user_groups is not None:
                 self.instance.user_groups.set(user_groups)
-        self._update_related_user_fields(old_name=old_name)
+            self._update_related_user_fields(old_name=old_name)
         self._update_related_stripe_account()
         self._update_analytics(**update_kwargs)
         send_user_updated_notification.delay(

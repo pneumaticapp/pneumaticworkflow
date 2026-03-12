@@ -32,8 +32,8 @@ class UnitOfWork:
 
     async def commit(self) -> None:
         """Commit transaction."""
-        await self._session.commit()
+        await self._transaction.commit()
 
     async def rollback(self) -> None:
         """Rollback transaction."""
-        await self._session.rollback()
+        await self._transaction.rollback()

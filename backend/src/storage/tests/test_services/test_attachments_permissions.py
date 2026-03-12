@@ -103,18 +103,22 @@ class TestAttachmentServiceTaskPermissions:
     def test_assign_task_permissions__template_owner__ok(self):
         # arrange
         owner = create_test_admin()
+        template_owner = create_test_user(
+            account=owner.account,
+            email='task_template_owner@test.pneumatic.app',
+        )
         template = create_test_template(owner, is_active=True)
         TemplateOwner.objects.create(
             template=template,
             account=template.account,
-            user=owner,
+            user=template_owner,
             type=OwnerType.USER,
         )
         workflow = create_test_workflow(
             user=owner,
+            template=template,
             tasks_count=1,
         )
-        workflow.template = template
         workflow.save()
         task = workflow.tasks.first()
         service = AttachmentService(user=owner)
@@ -130,10 +134,10 @@ class TestAttachmentServiceTaskPermissions:
 
         # assert
         attachment = service.instance
-        svc = AttachmentService(user=owner)
+        svc = AttachmentService(user=template_owner)
         assert svc.check_user_permission(
-            user_id=owner.id,
-            account_id=owner.account_id,
+            user_id=template_owner.id,
+            account_id=template_owner.account_id,
             file_id=attachment.file_id,
         )
 
@@ -160,8 +164,11 @@ class TestAttachmentServiceTaskPermissions:
             group=group,
             type=OwnerType.GROUP,
         )
-        workflow = create_test_workflow(user=owner, tasks_count=1)
-        workflow.template = template
+        workflow = create_test_workflow(
+            user=owner,
+            template=template,
+            tasks_count=1,
+        )
         workflow.save()
         task = workflow.tasks.first()
         service = AttachmentService(user=owner)
@@ -436,15 +443,22 @@ class TestAttachmentServiceWorkflowPermissions:
     def test_assign_workflow_permissions__template_owner__ok(self):
         # arrange
         owner = create_test_admin()
+        template_owner = create_test_user(
+            account=owner.account,
+            email='workflow_template_owner@test.pneumatic.app',
+        )
         template = create_test_template(owner, is_active=True)
         TemplateOwner.objects.create(
             template=template,
             account=template.account,
-            user=owner,
+            user=template_owner,
             type=OwnerType.USER,
         )
-        workflow = create_test_workflow(user=owner, tasks_count=1)
-        workflow.template = template
+        workflow = create_test_workflow(
+            user=owner,
+            template=template,
+            tasks_count=1,
+        )
         workflow.save()
         service = AttachmentService(user=owner)
 
@@ -459,10 +473,10 @@ class TestAttachmentServiceWorkflowPermissions:
 
         # assert
         attachment = service.instance
-        svc = AttachmentService(user=owner)
+        svc = AttachmentService(user=template_owner)
         assert svc.check_user_permission(
-            user_id=owner.id,
-            account_id=owner.account_id,
+            user_id=template_owner.id,
+            account_id=template_owner.account_id,
             file_id=attachment.file_id,
         )
 
@@ -491,8 +505,11 @@ class TestAttachmentServiceWorkflowPermissions:
             group=group,
             type=OwnerType.GROUP,
         )
-        workflow = create_test_workflow(user=owner, tasks_count=1)
-        workflow.template = template
+        workflow = create_test_workflow(
+            user=owner,
+            template=template,
+            tasks_count=1,
+        )
         workflow.save()
         service = AttachmentService(user=owner)
 
