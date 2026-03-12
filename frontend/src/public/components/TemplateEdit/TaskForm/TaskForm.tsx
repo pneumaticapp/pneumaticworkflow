@@ -236,7 +236,6 @@ export function TaskForm({
             className={styles['task-name-field']}
             title={formatMessage({ id: 'tasks.task-task-name' })}
             toolipText={formatMessage({ id: 'tasks.task-description-button-tooltip' })}
-            size="lg"
           />
           <TaskDescriptionEditor
             handleChange={(value: string) => {

@@ -1,24 +1,32 @@
 import * as React from 'react';
-import * as Sentry from '@sentry/react';
 
+import { captureException } from '../../utils/sentryCapture';
 import { getWithExpiry } from './utils/getWithExpiry';
 import { setWithExpiry } from './utils/setWithExpiry';
 import { GeneralLoader } from '../GeneralLoader';
 
 export interface IErrorFallbackProps {
-  // tslint:disable-next-line: no-any
-  error: any;
+  error: Error | unknown;
 }
 
 const LS_CHUNK_FAILED_FLAG = 'chunk_failed';
 const chunkFailedMessage = /chunk/;
 
-export function ErrorFallback({ error }: IErrorFallbackProps) {
-  const isChunkError = error?.message && chunkFailedMessage.test(error.message);
+function getErrorMessage(error: Error | unknown): string | undefined {
+  if (error instanceof Error) return error.message;
+  if (error !== null && typeof error === 'object' && 'message' in error && typeof (error as { message: unknown }).message === 'string') {
+    return (error as { message: string }).message;
+  }
+  return undefined;
+}
 
-  // Handle failed lazy loading of a JS/CSS chunk.
+export function ErrorFallback({ error }: IErrorFallbackProps) {
+  const message = getErrorMessage(error);
+  const isChunkError = message !== undefined && chunkFailedMessage.test(message);
+
   React.useEffect(() => {
-    Sentry.captureException(error);
+    const err = error instanceof Error ? error : new Error(getErrorMessage(error) ?? String(error));
+    captureException(err);
 
     if (isChunkError) {
       if (!getWithExpiry(LS_CHUNK_FAILED_FLAG)) {
@@ -35,7 +43,7 @@ export function ErrorFallback({ error }: IErrorFallbackProps) {
   return (
     <div>
       <p>Something went wrong.</p>
-      <pre>{error?.message}</pre>
+      <pre>{message ?? String(error)}</pre>
     </div>
   );
 }

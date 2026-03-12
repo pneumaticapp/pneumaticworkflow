@@ -52,6 +52,7 @@ import { countUserWorkflows, TCountUserWorkflowsResponse } from '../../api/count
 import { reassignWorkflows } from '../../api/reassignWorkflows';
 import { ESubscriptionPlan } from '../../types/account';
 import { logger } from '../../utils/logger';
+import { setSentryUser } from '../../utils/sentryUser';
 import { setGeneralLoaderVisibility } from '../general/actions';
 import { auth } from '../../api/auth';
 import { startFreeSubscription } from '../../api/startFreeSubscription';
@@ -268,6 +269,7 @@ function* startFreeSubscriptionSaga() {
     yield fetchPlan();
     const result: TAuthUserResult = yield call(auth.getUser);
     yield put(authUserSuccess(result));
+    setSentryUser({ id: result.id, email: result.email });
     NotificationManager.success({ message: 'pricing.switched-to-free-plan' });
   } catch (error) {
     const message = getErrorMessage(error);

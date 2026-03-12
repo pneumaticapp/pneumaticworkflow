@@ -6,17 +6,13 @@ import { openTuneViewModal } from '../../../../redux/workflows/slice';
 import { EWorkflowsLoadingStatus } from '../../../../types/workflow';
 import { EPageTitle } from '../../../../constants/defaultValues';
 import { Button, Tooltip } from '../../../UI';
-import { TuneViewIcon } from '../../../icons';
+import { TuneViewIcon, DownloadIcon } from '../../../icons';
 import { PageTitle } from '../../../PageTitle';
+import { getWorkflowTemplatesIdsFilter } from '../../../../redux/selectors/workflows';
+import { useWorkflowsExportCsv } from '../../../../hooks/useWorkflowsExportCsv';
+import { WorkflowsTableActionsProps } from './types';
 
 import styles from './WorkflowsTable.css';
-import { getWorkflowTemplatesIdsFilter } from '../../../../redux/selectors/workflows';
-
-interface WorkflowsTableActionsProps {
-  workflowsLoadingStatus: EWorkflowsLoadingStatus;
-  isWideTable?: boolean;
-  isMobile?: boolean;
-}
 
 export function WorkflowsTableActions({
   workflowsLoadingStatus,
@@ -25,11 +21,18 @@ export function WorkflowsTableActions({
 }: WorkflowsTableActionsProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
+  const { handleExportCsvClick, isExporting } = useWorkflowsExportCsv();
 
   const templatesIdsFilter = useSelector(getWorkflowTemplatesIdsFilter);
+
   const isDisabled = useMemo(
     () => templatesIdsFilter.length !== 1 || workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList,
     [templatesIdsFilter.length, workflowsLoadingStatus],
+  );
+
+  const isExportDisabled = useMemo(
+    () => workflowsLoadingStatus === EWorkflowsLoadingStatus.LoadingList || isExporting,
+    [workflowsLoadingStatus, isExporting],
   );
 
   const handleTuneViewClick = () => {
@@ -49,23 +52,58 @@ export function WorkflowsTableActions({
     />
   );
 
+  const exportCsvButton = (
+    <Button
+      className={styles['tune-view-button']}
+      buttonStyle="transparent-black"
+      label={
+        isMobile
+          ? ''
+          : formatMessage({ id: isExporting ? 'workflows.export-csv-loading' : 'workflows.export-csv' })
+      }
+      size="sm"
+      disabled={isExportDisabled}
+      icon={DownloadIcon}
+      onClick={handleExportCsvClick}
+    />
+  );
+
   return (
     <div
       className={isWideTable ? styles['container__actions--wide-table'] : styles['container__actions--narrow-table']}
     >
       <PageTitle titleId={EPageTitle.Workflows} className={styles['title']} withUnderline={false} isFromTableView />
 
-      {isDisabled ? (
-        <Tooltip
-          content={formatMessage({ id: 'workflow.tune-view-tooltip' })}
-          appendTo={() => document.body}
-          contentClassName={styles['workflow-tune-view-tooltip']}
-        >
-          <div>{tuneViewButton}</div>
-        </Tooltip>
-      ) : (
-        tuneViewButton
-      )}
+      <div className={styles['actions-buttons']}>
+        {isDisabled ? (
+          <Tooltip
+            content={formatMessage({ id: 'workflow.tune-view-tooltip' })}
+            appendTo={() => document.body}
+            contentClassName={styles['workflow-tune-view-tooltip']}
+          >
+            <div>{tuneViewButton}</div>
+          </Tooltip>
+        ) : (
+          tuneViewButton
+        )}
+        {isExportDisabled ? (
+          <Tooltip
+            content={formatMessage({
+              id: isExporting ? 'workflows.export-csv-loading' : 'workflows.export-csv-tooltip',
+            })}
+            contentClassName={styles['workflow-tune-view-tooltip']}
+          >
+            <div>{exportCsvButton}</div>
+          </Tooltip>
+        ) : (
+          <Tooltip
+            content={formatMessage({ id: 'workflows.export-csv-tooltip-all' })}
+            contentClassName={styles['workflow-tune-view-tooltip']}
+          >
+            <div>{exportCsvButton}</div>
+          </Tooltip>
+        )}
+      </div>
     </div>
   );
 }
