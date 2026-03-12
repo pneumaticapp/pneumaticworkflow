@@ -246,6 +246,10 @@
   }
 }
 
+.tune-view-icon {
+  margin-right: 0.2rem !important;
+}
+
 .workflow-tune-view-tooltip {
   padding: 0.4rem 0.8rem;
   text-align: center;
