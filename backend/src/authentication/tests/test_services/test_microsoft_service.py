@@ -1901,7 +1901,7 @@ class TestMicrosoftAuthService:
             account=user.account,
             user=user,
             old_values=[old_photo],
-            new_values=[new_photo],
+            new_values=[],
         )
 
     def test_apply_photo_to_user__no_photo__sync_not_called(

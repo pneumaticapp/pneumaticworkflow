@@ -38,13 +38,13 @@ class TestErrorCode:
             code='TEST_001',
             message='Test error',
             error_type=ErrorType.VALIDATION,
-            http_status=400,
+            http_status=422,
         )
 
         assert error_code.code == 'TEST_001'
         assert error_code.message == 'Test error'
         assert error_code.error_type == ErrorType.VALIDATION
-        assert error_code.http_status == 400
+        assert error_code.http_status == 422
 
     def test_error_code_with_details(self):
         """Test error code with details."""
@@ -118,14 +118,14 @@ class TestBaseAppException:
             code='TEST_001',
             message='Test error',
             error_type=ErrorType.VALIDATION,
-            http_status=400,
+            http_status=422,
         )
 
         exception = BaseAppError(error_code, details='Test details')
 
         assert exception.error_code == error_code
         assert exception.details == 'Test details'
-        assert exception.http_status == 400
+        assert exception.http_status == 422
         assert exception.error_type == ErrorType.VALIDATION
         assert str(exception) == 'TEST_001: Test error'
 
@@ -135,7 +135,7 @@ class TestBaseAppException:
             code='TEST_001',
             message='Test error',
             error_type=ErrorType.VALIDATION,
-            http_status=400,
+            http_status=422,
         )
 
         exception = BaseAppError(error_code, details='Test details')
@@ -408,7 +408,7 @@ class TestValidationExceptions:
         assert exception.error_code.code == 'VAL_001'
         assert exception.error_code.message == 'Invalid file size'
         assert exception.details == 'File size must be positive'
-        assert exception.http_status == 400
+        assert exception.http_status == 422
         assert exception.error_type.value == 'validation'
 
 

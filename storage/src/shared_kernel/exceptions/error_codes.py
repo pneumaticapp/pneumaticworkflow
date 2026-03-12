@@ -150,13 +150,13 @@ VALIDATION_ERROR_CODES = {
         code='VAL_001',
         message=MSG_VAL_001,
         error_type=ErrorType.VALIDATION,
-        http_status=400,
+        http_status=422,
     ),
     'MISSING_REQUIRED_FIELD': ErrorCode(
         code='VAL_002',
         message=MSG_VAL_007,
         error_type=ErrorType.VALIDATION,
-        http_status=400,
+        http_status=422,
     ),
 }
 

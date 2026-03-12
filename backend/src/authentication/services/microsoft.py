@@ -500,11 +500,16 @@ class MicrosoftAuthService(
         if photo:
             user.photo = photo
             user.save(update_fields=['photo'])
+            old_values = (
+                [old_photo]
+                if old_photo and old_photo != photo
+                else []
+            )
             sync_account_file_fields(
                 account=user.account,
                 user=user,
-                old_values=[old_photo],
-                new_values=[user.photo],
+                old_values=old_values,
+                new_values=[],
             )
 
     def update_user_contacts(self, user: UserModel):
