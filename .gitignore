@@ -7,3 +7,4 @@ nginx/logs
 nginx/keys
 nginx/config/nginx.conf
 firebase-push.json
+.antigravity

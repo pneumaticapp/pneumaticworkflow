@@ -10,6 +10,7 @@ export const Button = React.forwardRef(
     {
       className,
       labelClassName,
+      iconClassName,
       buttonStyle = 'black',
       disabled,
       label,
@@ -49,7 +50,7 @@ export const Button = React.forwardRef(
         {...rest}
       >
         <Loader isLoading={isLoading} spinnerColor={loaderColorMap[buttonStyle]} />
-        {Icon && <Icon className={classnames(styles['icon'], isLoading && styles['button-inner_hidden'])} />}
+        {Icon && <Icon className={classnames(styles['icon'], isLoading && styles['button-inner_hidden'], iconClassName)} />}
         {label && (
           <span className={classnames(isLoading && styles['button-inner_hidden'], labelClassName)}>{label}</span>
         )}
@@ -92,6 +93,7 @@ type TButtonSize = 'sm' | 'md' | 'lg';
 export interface IButtonCommonProps {
   className?: string;
   labelClassName?: string;
+  iconClassName?: string;
   buttonStyle?: TButtonStyle;
   label?: string;
   isLoading?: boolean;

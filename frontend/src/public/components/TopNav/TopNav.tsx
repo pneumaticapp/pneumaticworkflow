@@ -1,10 +1,10 @@
-import React from 'react';
+import * as React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { ERoutes } from '../../constants/routes';
 import { PaywallReminder } from './PaywallReminder';
-import { BellIcon } from '../icons';
+import { BellIcon, PersonIcon, TuneViewIcon, SuitcaseIcon, CreditCardIcon, UsersIcon, IntegrationSmIcon, TurnOffIcon } from '../icons';
 import { EPlanActions } from '../../utils/getPlanPendingActions';
 import { CurrentUserAvatar, Dropdown, TDropdownOption } from '../UI';
 import { history } from '../../utils/history';
@@ -28,6 +28,9 @@ export interface ITopNavProps {
   leaseLevel: TAccountLeaseLevel;
   isAccountOwner: boolean;
   accountOwnerPlan: IAccount;
+  isAdmin: boolean;
+  firstName: string;
+  lastName: string;
   isFromWorkflowsLayout?: boolean;
   workflowsView?: EWorkflowsView;
 }
@@ -62,8 +65,12 @@ export function TopNav({
   redirectToCustomerPortal,
   isFromWorkflowsLayout,
   workflowsView,
+  isAdmin,
+  firstName,
+  lastName,
 }: TTopNavProps) {
   const { formatMessage } = useIntl();
+  const userFullName = `${firstName} ${lastName}`.trim();
 
   const isPaywallVisible = Boolean(paywallType);
   const rightNavbarClassname = classnames('navbar-right', styles['navbar-right']);
@@ -132,30 +139,53 @@ export function TopNav({
   };
 
   const profileDropdownOptions = [
+    userFullName && {
+      label: userFullName,
+      className: styles['user-name-item'],
+    },
     {
       label: formatMessage({ id: 'nav.profile' }),
       onClick: handleOptionClick(() => history.push(ERoutes.Profile)),
+      withUpperline: !!userFullName,
+      Icon: PersonIcon,
     },
     {
       label: formatMessage({ id: 'nav.settings' }),
       onClick: handleOptionClick(() => history.push(ERoutes.AccountSettings)),
+      Icon: TuneViewIcon,
     },
     isEnvBilling && {
       label: formatMessage({ id: 'nav.pricing' }),
       onClick: handleOptionClick(() => window.open('https://www.pneumatic.app/pricing/')),
       color: 'orange',
       isHidden: leaseLevel === 'tenant',
+      Icon: SuitcaseIcon,
     },
     isEnvBilling && {
       label: formatMessage({ id: 'nav.customer-portal' }),
       onClick: redirectToCustomerPortal,
       isHidden: !showCustomerPortalLink,
+      Icon: CreditCardIcon,
+    },
+    {
+      label: formatMessage({ id: 'nav.team' }),
+      onClick: handleOptionClick(() => history.push(ERoutes.Team)),
+      isHidden: !isAdmin,
+      Icon: UsersIcon,
+      withUpperline: true,
+    },
+    {
+      label: formatMessage({ id: 'nav.integration' }),
+      onClick: handleOptionClick(() => history.push(ERoutes.Integrations)),
+      isHidden: !isAdmin,
+      Icon: IntegrationSmIcon,
     },
     {
       label: formatMessage({ id: 'user.sign-out' }),
       onClick: handleOptionClick(logoutUser),
       color: 'red',
       withUpperline: true,
+      Icon: TurnOffIcon,
     },
   ].filter((item) => typeof item === 'object') as TDropdownOption[];
 
