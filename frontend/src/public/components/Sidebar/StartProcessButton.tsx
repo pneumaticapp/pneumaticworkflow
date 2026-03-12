@@ -14,7 +14,7 @@ export interface IStartProcessButton {
   onClick(): void;
 }
 
-export const StartProcessButton = memo(function ({ tabIndex, onClick }: IStartProcessButton) {
+export const StartProcessButton = memo(function StartProcessButtonContent({ tabIndex, onClick }: IStartProcessButton) {
   const isAdmin = useSelector(getIsAdmin);
   const { isTemplateOwner } = useSelector(getTemplatesStore);
 

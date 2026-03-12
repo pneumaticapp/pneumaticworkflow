@@ -1,15 +1,20 @@
 import type { Meta, StoryObj } from '@storybook/react';
 import { ExtraFieldDate } from './ExtraFieldDate';
-import { EExtraFieldMode } from '../../../../types/template';
+import { EExtraFieldMode, IExtraField } from '../../../../types/template';
 
 const meta = {
   title: 'UI/ExtraFieldDate',
-  component: ExtraFieldDate as React.ComponentType<any>,
+  component: ExtraFieldDate as React.ComponentType<unknown>,
   tags: ['autodocs'],
 } satisfies Meta<typeof ExtraFieldDate>;
 
 export default meta;
 type Story = StoryObj<typeof meta>;
+
+const formatMessage = ({ id }: { id: string }): string => id;
+const editField = (updates: Partial<IExtraField>): void => {
+  console.log('Field updated:', updates);
+};
 
 export const Default: Story = {
   args: {
@@ -20,10 +25,10 @@ export const Default: Story = {
       description: 'Select a due date'
     },
     intl: {
-      formatMessage: ({ id }) => id
+      formatMessage
     },
     mode: EExtraFieldMode.Kickoff,
-    editField: (updates) => console.log('Field updated:', updates),
+    editField,
     isDisabled: false
   }
 };
@@ -37,10 +42,10 @@ export const Required: Story = {
       description: 'Select a due date'
     },
     intl: {
-      formatMessage: ({ id }) => id
+      formatMessage
     },
     mode: EExtraFieldMode.Kickoff,
-    editField: (updates) => console.log('Field updated:', updates),
+    editField,
     isDisabled: false
   }
 };
@@ -54,10 +59,10 @@ export const Disabled: Story = {
       description: 'Select a due date'
     },
     intl: {
-      formatMessage: ({ id }) => id
+      formatMessage
     },
     mode: EExtraFieldMode.Kickoff,
-    editField: (updates) => console.log('Field updated:', updates),
+    editField,
     isDisabled: true
   }
 };
