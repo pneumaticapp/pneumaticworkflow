@@ -11,7 +11,6 @@ from src.processes.enums import (
     FieldType,
     PerformerType,
     PredicateOperator,
-    TaskStatus,
     WorkflowStatus,
 )
 from src.processes.models.workflows.raw_due_date import RawDueDate
@@ -212,9 +211,7 @@ class TestTaskUpdateVersionService:
         )
 
         # assert
-        fields_values_mock.assert_called_once_with(
-            tasks_filter_kwargs={'task__status': TaskStatus.COMPLETED},
-        )
+        fields_values_mock.assert_called_once_with()
         create_or_update_instance_mock.assert_called_once_with(
             data=data,
             workflow=workflow,
@@ -362,9 +359,7 @@ class TestTaskUpdateVersionService:
         )
 
         # assert
-        fields_values_mock.assert_called_once_with(
-            tasks_filter_kwargs={'task__status': TaskStatus.COMPLETED},
-        )
+        fields_values_mock.assert_called_once_with()
         create_or_update_instance_mock.assert_called_once_with(
             data=data,
             workflow=workflow,

@@ -165,6 +165,7 @@ def create_test_user(
 ) -> UserModel:
 
     """
+        TODO Do not call directly!
         Creating users with custom configuration.
         Instead of this method use:
         - create_test_owner
