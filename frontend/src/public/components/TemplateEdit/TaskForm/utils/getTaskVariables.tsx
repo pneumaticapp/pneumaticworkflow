@@ -7,13 +7,28 @@ import { StepName } from '../../../StepName';
 import { getPreviousTasks } from './getPreviousTasks';
 import { EStartingType } from '../Conditions/utils/getDropdownOperators';
 
+export const WORKFLOW_STARTER_VARIABLE_API_NAME = 'workflow-starter';
+export const WORKFLOW_STARTER_VARIABLE_TITLE = 'Workflow starter';
+export const SYSTEM_VARIABLE_SUBTITLE = 'System variable';
+
 type TGetVariablesParam = {
   kickoff?: Pick<IKickoff, 'fields'>;
   tasks?: (Pick<ITemplateTask, 'fields'> & { name?: ITemplateTask['name'] })[];
   templateId?: number;
 };
 
-export function getVariables({ kickoff, tasks, templateId }: TGetVariablesParam) {
+export function getSystemVariables(): TTaskVariable[] {
+  return [
+    {
+      apiName: WORKFLOW_STARTER_VARIABLE_API_NAME,
+      title: WORKFLOW_STARTER_VARIABLE_TITLE,
+      subtitle: SYSTEM_VARIABLE_SUBTITLE,
+      type: EExtraFieldType.String,
+    },
+  ];
+}
+
+export function getFieldVariables({ kickoff, tasks, templateId }: TGetVariablesParam): TTaskVariable[] {
   const tasksVariables = tasks
     ?.reduce((acc, task) => {
       const fieldsWithTasks = task.fields.map((field) => [task, field] as const);
@@ -35,6 +50,10 @@ export function getVariables({ kickoff, tasks, templateId }: TGetVariablesParam)
   return [...(kickoffVariables || []), ...(tasksVariables || [])];
 }
 
+export function getVariables(params: TGetVariablesParam): TTaskVariable[] {
+  return [...getSystemVariables(), ...getFieldVariables(params)];
+}
+
 export function getKickoffVariables(kickoff?: Pick<IKickoff, 'fields'>) {
   return kickoff?.fields.map((field) => getVariableFromField(field, 'Kick-off form')) || [];
 }
@@ -45,7 +64,7 @@ export function getTaskVariables(
   currentTask: ITemplateTask,
   templateId?: number,
 ): TTaskVariable[] {
-  return getVariables({
+  return getFieldVariables({
     kickoff,
     tasks: getPreviousTasks(currentTask, tasks),
     templateId,

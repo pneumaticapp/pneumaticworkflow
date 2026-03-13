@@ -9,7 +9,10 @@ from src.analysis.actions import (
 )
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
-from src.processes.consts import WORKFLOW_NAME_LENGTH
+from src.processes.consts import (
+    GUEST_WORKFLOW_STARTER_NAME,
+    WORKFLOW_NAME_LENGTH,
+)
 from src.processes.models.templates.template import Template
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.serializers.workflows.kickoff_value import (
@@ -69,10 +72,12 @@ class WorkflowService(
         }
         if workflow_starter:
             values.update(workflow_starter.get_dynamic_mapping())
-            values['workflow-starter'] = (
-                f'{workflow_starter.first_name}'
-                f' {workflow_starter.last_name}'
-            ).strip()
+
+        values['workflow-starter'] = (
+            workflow_starter.name
+            if workflow_starter
+            else GUEST_WORKFLOW_STARTER_NAME
+        )
 
         if user_provided_name:
             result = insert_fields_values_to_text(

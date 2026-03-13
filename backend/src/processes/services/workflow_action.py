@@ -7,6 +7,8 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
+from src.processes.consts import GUEST_WORKFLOW_STARTER_NAME
+
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
@@ -322,6 +324,14 @@ class WorkflowActionService:
                 TaskStatus.COMPLETED, TaskStatus.SKIPPED,
             )},
         )
+
+        workflow_starter = self.workflow.workflow_starter
+        fields_values['workflow-starter'] = (
+            workflow_starter.name
+            if workflow_starter
+            else GUEST_WORKFLOW_STARTER_NAME
+        )
+
         task_service.insert_fields_values(fields_values=fields_values)
 
         WorkflowEventService.task_skip_event(task)
@@ -403,6 +413,13 @@ class WorkflowActionService:
         for task in tasks:
             task_service = TaskService(instance=task, user=self.user)
             fields_values = self.workflow.get_kickoff_fields_markdown_values()
+            workflow_starter = self.workflow.workflow_starter
+            fields_values['workflow-starter'] = (
+                workflow_starter.name
+                if workflow_starter
+                else GUEST_WORKFLOW_STARTER_NAME
+            )
+
             task_service.insert_fields_values(fields_values=fields_values)
 
         WorkflowEventService.workflow_run_event(
@@ -634,6 +651,14 @@ class WorkflowActionService:
                 TaskStatus.COMPLETED, TaskStatus.SKIPPED,
             )},
         )
+
+        workflow_starter = self.workflow.workflow_starter
+        fields_values['workflow-starter'] = (
+            workflow_starter.name
+            if workflow_starter
+            else GUEST_WORKFLOW_STARTER_NAME
+        )
+
         task_service.insert_fields_values(fields_values=fields_values)
         task.update_performers(restore_performers=True)
         task_performers_exists = (

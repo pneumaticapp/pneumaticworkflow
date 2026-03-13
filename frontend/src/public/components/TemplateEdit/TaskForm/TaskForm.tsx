@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useLayoutEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useIntl } from 'react-intl';
 
 import { TaskDescriptionEditor } from './TaskDescriptionEditor';
@@ -15,7 +15,7 @@ import { TPatchTaskPayload } from '../../../redux/actions';
 
 import { ReturnTo } from './ReturnTo';
 import { DueDate } from './DueDate';
-import { getSingleLineVariables } from './utils/getTaskVariables';
+import { getSingleLineVariables, getSystemVariables } from './utils/getTaskVariables';
 
 import styles from '../TemplateEdit.css';
 
@@ -59,6 +59,14 @@ export function TaskForm({
   const { formatMessage } = useIntl();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const taskName = task.name || '';
+  const listSystemVariables = useMemo(() => [
+    ...getSystemVariables().map(variable => ({
+      ...variable,
+      title: formatMessage({ id: `kickoff.system-varibale-${variable.apiName}` }),
+      subtitle: formatMessage({ id: 'kickoff.system-varibale' }),
+    })),
+    ...listVariables,
+  ], [listVariables, formatMessage]);
   const taskFormPartsRefs = {
     [ETaskFormParts.AssignPerformers]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.DueIn]: useRef<HTMLDivElement>(null),
@@ -225,7 +233,7 @@ export function TaskForm({
         <div className={styles['task-fields-wrapper']}>
           <InputWithVariables
             placeholder={formatMessage({ id: 'tasks.task-task-name-placeholder' })}
-            listVariables={getSingleLineVariables(listVariables)}
+            listVariables={getSingleLineVariables(listSystemVariables)}
             templateVariables={templateVariables}
             value={taskName}
             onChange={(value: string) => {
@@ -246,7 +254,7 @@ export function TaskForm({
             }}
             handleChangeChecklists={handleTaskFieldChange('checklists')}
             value={task.description || ''}
-            listVariables={listVariables}
+            listVariables={listSystemVariables}
             templateVariables={templateVariables}
             accountId={accountId}
           />
