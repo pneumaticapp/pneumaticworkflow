@@ -473,16 +473,6 @@ class TemplateViewSet(
             auth_type=request.token_type,
             is_superuser=request.is_superuser,
         )
-        if self.request.token_type == AuthTokenType.API:
-            service = TemplateIntegrationsService(
-                account=request.user.account,
-                is_superuser=request.is_superuser,
-                user=request.user,
-            )
-            service.api_request(
-                template=template,
-                user_agent=get_user_agent(request),
-            )
         return self.response_ok()
 
     @action(methods=['GET'], detail=False, url_path='titles-by-workflows')
