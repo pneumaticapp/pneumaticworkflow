@@ -19,7 +19,7 @@ jest.mock('react-intl', () => ({
 
 jest.mock('../../../../UI/form/UsersDropdown', () => ({
   UsersDropdown: jest.fn(() => null),
-  EOptionTypes: { User: 'user', Group: 'user-group' },
+  EOptionTypes: { User: 'user', Group: 'group' },
 }));
 
 jest.mock('../../utils/FieldWithName', () => ({
@@ -102,8 +102,8 @@ describe('ExtraFieldUser', () => {
 
       const props = getDropdownProps();
       expect(props.value).toBeDefined();
-      expect(props.value.value).toBe('user-group-1');
-      expect(props.value.optionType).toBe('user-group');
+      expect(props.value.value).toBe('group-1');
+      expect(props.value.optionType).toBe('group');
     });
 
     it('returns undefined value when neither userId nor groupId are set', () => {
