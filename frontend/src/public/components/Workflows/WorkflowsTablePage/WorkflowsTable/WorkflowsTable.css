@@ -246,6 +246,10 @@
   }
 }
 
+.tune-view-icon {
+  margin-right: 0.2rem !important;
+}
+
 .actions-buttons {
   display: flex;
   gap: 0.8rem;

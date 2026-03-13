@@ -359,6 +359,8 @@ export const ruMessages = {
   'nav.pricing': 'Ценообразование',
   'nav.free-plan': 'Бесплатный план',
   'nav.customer-portal': 'Моя подписка',
+  'nav.team': 'Команда',
+  'nav.integration': 'Интеграция',
   'pages.error-title': 'Ой... похоже, что-то пошло не так!',
   'pages.error-code': 'Код ошибки',
   'pages.go-back-home': 'ВЕРНУТЬСЯ ДОМОЙ',

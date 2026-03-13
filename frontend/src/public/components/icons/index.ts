@@ -174,3 +174,8 @@ export * from './StarterFilterIcon';
 export * from './StatusTitlesIcon';
 export * from './PerformerFilterIcon';
 export * from './TaskFilterIcon';
+export * from './TurnOffIcon';
+export * from './PersonIcon';
+export * from './SuitcaseIcon';
+export * from './IntegrationSmIcon';
+export * from './UsersIcon';
