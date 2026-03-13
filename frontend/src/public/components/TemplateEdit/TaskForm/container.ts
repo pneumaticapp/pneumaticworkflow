@@ -18,6 +18,7 @@ const mapStateToProps = (state: IApplicationState, { task }: TOwnProps): TStoreP
     template: {
       data: { kickoff, tasks, id },
     },
+    settings: { locale },
     authUser: { account },
     team: { isInvitesPopupOpen: isTeamInvitesModalOpen },
   } = state;
@@ -25,7 +26,7 @@ const mapStateToProps = (state: IApplicationState, { task }: TOwnProps): TStoreP
 
   return {
     listVariables: getTaskVariables(kickoff, tasks, task, id),
-    templateVariables: getVariables({ kickoff, tasks, templateId: id }),
+    templateVariables: getVariables({ kickoff, tasks, templateId: id }, locale),
     isSubscribed,
     accountId: account.id || -1,
     isTeamInvitesModalOpen,

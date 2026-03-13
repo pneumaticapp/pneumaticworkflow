@@ -2,6 +2,8 @@ import React, { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 
 import { IKickoff, IExtraField, ITemplateTask, EExtraFieldType } from '../../../../types/template';
+import { AppLocale } from '../../../../lang';
+import { ELocale } from '../../../../types/redux';
 import { TTaskVariable } from '../../types';
 import { StepName } from '../../../StepName';
 import { getPreviousTasks } from './getPreviousTasks';
@@ -17,12 +19,26 @@ type TGetVariablesParam = {
   templateId?: number;
 };
 
-export function getSystemVariables(): TTaskVariable[] {
+const getLocalizedMessage = (locale: ELocale | undefined, id: string, fallback: string) => {
+  if (!locale) {
+    return fallback;
+  }
+
+  const messages = AppLocale[locale].messages as Record<string, string>;
+
+  return messages[id] || fallback;
+};
+
+export function getSystemVariables(locale?: ELocale): TTaskVariable[] {
   return [
     {
       apiName: WORKFLOW_STARTER_VARIABLE_API_NAME,
-      title: WORKFLOW_STARTER_VARIABLE_TITLE,
-      subtitle: SYSTEM_VARIABLE_SUBTITLE,
+      title: getLocalizedMessage(
+        locale,
+        `kickoff.system-varibale-${WORKFLOW_STARTER_VARIABLE_API_NAME}`,
+        WORKFLOW_STARTER_VARIABLE_TITLE,
+      ),
+      subtitle: getLocalizedMessage(locale, 'kickoff.system-varibale', SYSTEM_VARIABLE_SUBTITLE),
       type: EExtraFieldType.String,
     },
   ];
@@ -50,8 +66,8 @@ export function getFieldVariables({ kickoff, tasks, templateId }: TGetVariablesP
   return [...(kickoffVariables || []), ...(tasksVariables || [])];
 }
 
-export function getVariables(params: TGetVariablesParam): TTaskVariable[] {
-  return [...getSystemVariables(), ...getFieldVariables(params)];
+export function getVariables(params: TGetVariablesParam, locale?: ELocale): TTaskVariable[] {
+  return [...getSystemVariables(locale), ...getFieldVariables(params)];
 }
 
 export function getKickoffVariables(kickoff?: Pick<IKickoff, 'fields'>) {

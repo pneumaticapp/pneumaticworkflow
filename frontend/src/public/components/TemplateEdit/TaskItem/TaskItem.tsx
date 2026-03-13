@@ -8,6 +8,7 @@ import { ExtraFieldsLabels } from '../ExtraFields/utils/ExtraFieldsLabels';
 import { getVariables } from '../TaskForm/utils/getTaskVariables';
 
 import { ITemplateTask } from '../../../types/template';
+import { IApplicationState } from '../../../types/redux';
 import { ETaskFormParts } from '../types';
 
 import { TaskItemUsers } from './TaskItemUsers';
@@ -29,7 +30,8 @@ export const TaskItem = ({ task, toggleIsOpenTask, setScrollTarget }: ITaskItemP
 
   const kickoff = useSelector(getKickoff);
   const tasks = useSelector(getTemplateTasks);
-  const allVariables = getVariables({ kickoff, tasks });
+  const locale = useSelector((state: IApplicationState) => state.settings.locale);
+  const allVariables = getVariables({ kickoff, tasks }, locale);
 
   const handleClickOnLabel = (taskFormParts: ETaskFormParts) => {
     setScrollTarget(taskFormParts);
