@@ -60,13 +60,9 @@ export function TaskForm({
   const wrapperRef = useRef<HTMLDivElement>(null);
   const taskName = task.name || '';
   const listSystemVariables = useMemo(() => [
-    ...getSystemVariables().map(variable => ({
-      ...variable,
-      title: formatMessage({ id: `kickoff.system-varibale-${variable.apiName}` }),
-      subtitle: formatMessage({ id: 'kickoff.system-varibale' }),
-    })),
+    ...getSystemVariables(),
     ...listVariables,
-  ], [listVariables, formatMessage]);
+  ], [listVariables]);
   const taskFormPartsRefs = {
     [ETaskFormParts.AssignPerformers]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.DueIn]: useRef<HTMLDivElement>(null),
