@@ -100,6 +100,8 @@ class Command(BaseCommand):
             minute="0",
             hour="8",
             day_of_week="5",
+            day_of_month="*",
+            month_of_year="*",
             timezone=pytz.timezone("US/Central"),
         )
         self._create_or_skip_task(
@@ -139,6 +141,8 @@ class Command(BaseCommand):
             minute="0",
             hour="11",
             day_of_week="1",
+            day_of_month="*",
+            month_of_year="*",
             timezone=pytz.timezone("US/Central"),
         )
         self._create_or_skip_task(
@@ -152,6 +156,10 @@ class Command(BaseCommand):
         name = "continue_delayed_processes"
         schedule, _ = CrontabSchedule.objects.get_or_create(
             minute="*/1",
+            hour="*",
+            day_of_week="*",
+            day_of_month="*",
+            month_of_year="*",
             timezone=pytz.timezone("UTC"),
         )
         self._create_or_skip_task(
