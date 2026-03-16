@@ -914,7 +914,7 @@ def test_put__photo_exceeds_max__validation_error(api_client, mocker):
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
-    long_photo = 'https://x.co/' + 'a' * 1015
+    long_photo = 'https://x.co/' + 'a' * 2040
     request_data = {'photo': long_photo}
     partial_update_mock = mocker.patch(
         'src.accounts.views.user.UserService.partial_update',
