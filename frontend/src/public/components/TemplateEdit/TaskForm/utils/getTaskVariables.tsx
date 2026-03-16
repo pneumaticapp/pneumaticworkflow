@@ -11,6 +11,9 @@ export const WORKFLOW_STARTER_VARIABLE_API_NAME = 'workflow-starter';
 export const WORKFLOW_STARTER_VARIABLE_TITLE = 'Workflow starter';
 export const SYSTEM_VARIABLE_SUBTITLE = 'System variable';
 
+const SYSTEM_VARIABLE_API_NAMES = [WORKFLOW_STARTER_VARIABLE_API_NAME];
+export const isSystemVariable = (apiName: string) => SYSTEM_VARIABLE_API_NAMES.includes(apiName);
+
 type TGetVariablesParam = {
   kickoff?: Pick<IKickoff, 'fields'>;
   tasks?: (Pick<ITemplateTask, 'fields'> & { name?: ITemplateTask['name'] })[];

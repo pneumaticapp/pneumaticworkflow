@@ -4,6 +4,7 @@ import * as React from 'react';
 import ReactDOMServer from 'react-dom/server';
 import * as xssFilters from 'xss-filters';
 import { useDispatch } from 'react-redux';
+import { useIntl } from 'react-intl';
 import { Remarkable } from 'remarkable';
 import { linkify } from './linkify';
 
@@ -16,6 +17,7 @@ import {
 } from '../../constants/defaultValues';
 import { isArrayWithItems } from '../../utils/helpers';
 import { TTaskVariable } from '../TemplateEdit/types';
+import { isSystemVariable } from '../TemplateEdit/TaskForm/utils/getTaskVariables';
 import { truncateString } from '../../utils/truncateString';
 import { openFullscreenImage } from '../../redux/general/actions';
 import { DocumentAttachment } from '../Attachments/DocumentAttachment';
@@ -92,6 +94,7 @@ export function RichText({
     );
 
   const dispatch = useDispatch();
+  const { formatMessage } = useIntl();
   const conatainerRef = React.useRef<HTMLDivElement>(null);
 
   const handleClick = React.useCallback((event: MouseEvent) => {
@@ -156,8 +159,12 @@ export function RichText({
           return match;
         }
 
+        const title = isSystemVariable(variableApiName)
+          ? formatMessage({ id: `kickoff.system-varibale-${variableApiName}` })
+          : variable.title;
+
         return `<span class="${badgeStyles['badge']} ${badgeStyles['specifity']}">${truncateString(
-          variable.title,
+          title,
           MAX_VARIABLE_LENGTH,
         )}</span>`;
       },

@@ -1,6 +1,7 @@
 /* eslint-disable */
 /* prettier-ignore */
 import * as React from 'react';
+import { useIntl } from 'react-intl';
 
 import {
   ContentBlock,
@@ -9,6 +10,7 @@ import {
 } from 'draft-js';
 import { Badge } from '../../../utils/badge/Badge';
 import { ECustomEditorEntities } from '../../RichEditor/utils/types';
+import { isSystemVariable } from '../TaskForm/utils/getTaskVariables';
 
 const findVariableEntities = (
   contentBlock: ContentBlock,
@@ -31,9 +33,19 @@ interface IVariableAdapterProps {
 }
 
 const VariableAdapter = (props: IVariableAdapterProps) => {
-  const subtitle = props.contentState.getEntity(props.entityKey).getData().subtitle;
+  const { formatMessage } = useIntl();
+  const { subtitle, apiName } = props.contentState.getEntity(props.entityKey).getData();
+  const isSystem = isSystemVariable(apiName);
 
-  return <Badge subtitle={subtitle} title={props.children} />;
+  const localizedTitle = isSystem
+    ? formatMessage({ id: `kickoff.system-varibale-${apiName}` })
+    : props.children;
+
+  const localizedSubtitle = isSystem
+    ? formatMessage({ id: 'kickoff.system-varibale' })
+    : subtitle;
+
+  return <Badge subtitle={localizedSubtitle} title={localizedTitle} />;
 };
 
 export const variablesDecorator = new CompositeDecorator([
