@@ -327,3 +327,57 @@ def test_create_related__ok(mocker):
         redefined_performer=None,
     )
     update_owners_mock.assert_called_once()
+
+
+def test_create_workflow_name__with_user__ok():
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=owner,
+        is_active=True,
+        tasks_count=1,
+        wf_name_template='WF by {{ workflow-starter }}',
+    )
+    service = WorkflowService(
+        user=owner,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    result = service._create_workflow_name(
+        template=template,
+        workflow_starter=owner,
+    )
+
+    # assert
+    assert result == 'WF by John Doe'
+
+
+def test_create_workflow_name__without_user__guest_name():
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=owner,
+        is_active=True,
+        tasks_count=1,
+        wf_name_template='WF by {{ workflow-starter }}',
+    )
+    service = WorkflowService(
+        user=owner,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    result = service._create_workflow_name(
+        template=template,
+        workflow_starter=None,
+    )
+
+    # assert
+    assert result == 'WF by Guest'
