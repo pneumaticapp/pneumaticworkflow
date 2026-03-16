@@ -676,7 +676,7 @@ def test_send_overdue_task_notification__group_performer__ok(mocker):
 
     # arrange
     user = create_test_owner()
-    group_user = create_test_admin()
+    group_user = create_test_admin(account=user.account)
     group = create_test_group(user.account, users=[group_user])
 
     workflow = create_test_workflow(user, tasks_count=1)
