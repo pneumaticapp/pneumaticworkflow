@@ -2,7 +2,6 @@
 
 from django.db import migrations, models
 
-
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -10,6 +9,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunSQL(
+            "UPDATE accounts_notification SET text = '' WHERE text IS NULL;",
+            migrations.RunSQL.noop
+        ),
         migrations.AlterField(
             model_name='notification',
             name='text',
