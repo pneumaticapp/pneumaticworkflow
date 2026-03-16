@@ -19,7 +19,6 @@ from rest_framework.serializers import (
 )
 
 from src.generics.exceptions import BaseServiceException
-from src.processes.consts import SYSTEM_TEMPLATE_VARS
 from src.generics.fields import (
     TimeStampField,
 )
@@ -33,6 +32,7 @@ from src.processes.consts import TEMPLATE_NAME_LENGTH
 from src.processes.enums import (
     OwnerType,
     PerformerType,
+    SystemVariable,
     TemplateOrdering,
     TemplateType,
     WorkflowApiStatus, TaskStatus,
@@ -301,7 +301,7 @@ class TemplateSerializer(
         if not api_names_in_name:
             return
 
-        sys_vars = SYSTEM_TEMPLATE_VARS
+        sys_vars = SystemVariable.WORKFLOW_NAME_VARS
         sys_vars_is_used = bool(api_names_in_name & sys_vars)
         api_names_in_name -= sys_vars
         available_fields = self._get_raw_fields_from_kickoff(data)

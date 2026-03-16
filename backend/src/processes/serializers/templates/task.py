@@ -12,7 +12,6 @@ from rest_framework.serializers import (
 )
 
 from src.analysis.services import AnalyticService
-from src.processes.consts import SYSTEM_TEMPLATE_VARS
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
@@ -20,6 +19,7 @@ from src.generics.mixins.serializers import (
 from src.processes.enums import (
     PerformerType,
     PredicateType,
+    SystemVariable,
 )
 from src.processes.messages import template as messages
 from src.processes.models.templates.fields import FieldTemplate
@@ -177,9 +177,8 @@ class TaskTemplateSerializer(
         if not api_names_in_name:
             return
 
-        sys_vars = SYSTEM_TEMPLATE_VARS
-        sys_vars_is_used = bool(api_names_in_name & sys_vars)
-        api_names_in_name -= sys_vars
+        sys_vars_is_used = bool(api_names_in_name & SystemVariable.TASK_VARS)
+        api_names_in_name -= SystemVariable.TASK_VARS
 
         available_fields = self._get_task_available_fields()
         available_api_names = {field.api_name for field in available_fields}
@@ -223,8 +222,7 @@ class TaskTemplateSerializer(
         if not api_names_in_description:
             return True
 
-        sys_vars = SYSTEM_TEMPLATE_VARS
-        api_names_in_description -= sys_vars
+        api_names_in_description -= SystemVariable.TASK_VARS
 
         available_api_names_for_description = {
             field.api_name for field in self._get_task_available_fields()

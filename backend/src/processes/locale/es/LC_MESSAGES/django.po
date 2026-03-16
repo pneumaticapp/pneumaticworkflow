@@ -617,3 +617,7 @@ msgstr "No puedes escribir un comentario en una tarea inactiva."
 #: src/processes/messages/workflow.py:182
 msgid "The user or group specified for a \"User\" field does not exist."
 msgstr "El usuario o grupo especificado para un campo de tipo \"Usuario\" no existe."
+
+#: src/processes/messages/workflow.py:182
+msgid "Guest"
+msgstr "Invitado"

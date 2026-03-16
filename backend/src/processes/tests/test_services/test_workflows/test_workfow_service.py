@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import FieldType
+from src.processes.messages.workflow import MSG_PW_0091
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.services.tasks.task import TaskService
 from src.processes.services.workflows.workflow import WorkflowService
@@ -329,7 +330,7 @@ def test_create_related__ok(mocker):
     update_owners_mock.assert_called_once()
 
 
-def test_create_workflow_name__with_user__ok():
+def test_create_workflow_name__with_workflow_starter_variable__ok():
 
     # arrange
     account = create_test_account()
@@ -380,4 +381,4 @@ def test_create_workflow_name__without_user__guest_name():
     )
 
     # assert
-    assert result == 'WF by Guest'
+    assert result == f'WF by {MSG_PW_0091}'
