@@ -1,0 +1,16 @@
+.checklist-item {
+  position: relative;
+  padding-left: 2.8rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.8rem;
+}
+
+.checkbox {
+  position: absolute;
+  left: 0;
+  width: 2rem;
+  height: 2rem;
+  border: 0.1rem solid var(--pneumatic-color-black16);
+  border-radius: 0.4rem;
+}

@@ -131,7 +131,6 @@ export function KickoffRedux({
             }}
             className={styles['workflow-name-field']}
             toolipText={formatMessage({ id: 'kickoff.workflow-name-tooltip' })}
-            size="lg"
           />
         </div>
 

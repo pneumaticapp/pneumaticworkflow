@@ -69,7 +69,7 @@ export class Analytics {
     // eslint-disable-next-line no-plusplus
     this.eventsCounter++;
     if (this.eventsCounter > MAX_EVENTS_PER_PERIOD) {
-      sentry.captureException('WARNING! Suspicious user activity.');
+      sentry.captureMessage('Suspicious user activity: analytics throttle exceeded', 'warning');
       this.isThrottleMode = true;
     }
   };
@@ -115,8 +115,21 @@ export class Analytics {
   public reset = this.throttle('reset');
 }
 
-const isSupermode = store?.getState?.().authUser.isSupermode || false;
-export const analytics = new Analytics(isSupermode);
+let analyticsInstance: Analytics | null = null;
+
+function getAnalyticsInstance(): Analytics {
+  if (!analyticsInstance) {
+    const isSupermode = store?.getState?.().authUser?.isSupermode ?? false;
+    analyticsInstance = new Analytics(isSupermode);
+  }
+  return analyticsInstance;
+}
+
+export const analytics = new Proxy({} as Analytics, {
+  get(_, prop: keyof Analytics) {
+    return getAnalyticsInstance()[prop];
+  },
+});
 
 export const trackPage = (...args: any[]) => {
   analytics.page(...args);

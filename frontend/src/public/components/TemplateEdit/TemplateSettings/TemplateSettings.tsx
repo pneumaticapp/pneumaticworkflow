@@ -14,8 +14,7 @@ import { TemplateControllsContainer } from '../TemplateControlls';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { IInfoWarningProps, InfoWarningsModal } from '../InfoWarningsModal';
 import { TemplateLastUpdateInfo } from '../TemplateLastUpdateInfo';
-import { RichEditorContainer } from '../../RichEditor';
-import { getInitialEditorState } from '../../RichEditor/utils/converters';
+import { RichEditor } from '../../RichEditor';
 
 import styles from './TemplateSettings.css';
 
@@ -77,12 +76,12 @@ export function TemplateSettings() {
           editButtonHint={formatMessage({ id: 'template.edit-name' })}
         />
         <div className={styles['description']}>
-          <RichEditorContainer
+          <RichEditor
             key={template.id ?? 'new'}
             withToolbar={false}
             placeholder={formatMessage({ id: 'template.placeholder' })}
             className={styles['description-editor']}
-            initialState={getInitialEditorState(template.description)}
+            defaultValue={template.description ?? ''}
             handleChange={(value) => {
               handleChangeTextField('description')(value);
               return Promise.resolve(value);

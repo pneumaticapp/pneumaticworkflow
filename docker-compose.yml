@@ -73,6 +73,7 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
       FORMS_URL: ${FORMS_URL:-http://form.localhost}
       ENVIRONMENT: ${ENVIRONMENT:-Production}
+      RELEASE: ${RELEASE:-1.0.0}
       LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru
       CAPTCHA: ${CAPTCHA:-no}
       ANALYTICS: ${ANALYTICS:-no}
@@ -174,6 +175,7 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
       FORMS_URL: ${FORMS_URL:-http://form.localhost}
       ENVIRONMENT: ${ENVIRONMENT:-Production}
+      RELEASE: ${RELEASE:-1.0.0}
       LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru
       CAPTCHA: ${CAPTCHA:-no}
       ANALYTICS: ${ANALYTICS:-no}
@@ -270,6 +272,7 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
       FORMS_URL: ${FORMS_URL:-http://form.localhost}
       ENVIRONMENT: ${ENVIRONMENT:-Production}
+      RELEASE: ${RELEASE:-1.0.0}
       LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru
       CAPTCHA: ${CAPTCHA:-no}
       ANALYTICS: ${ANALYTICS:-no}
@@ -380,7 +383,9 @@ services:
       AI: ${AI:-no}
       PUSH: ${PUSH:-no}
       STORAGE: ${STORAGE:-no}
+      RELEASE: ${RELEASE:-1.0.0}
       SENTRY_DSN: ${SENTRY_FRONTEND_DSN:-}
+      SENTRY_RELEASE: ${RELEASE:-1.0.0}
       FIREBASE_VAPID_KEY: ${FIREBASE_VAPID_KEY:-}
       FIREBASE_API_KEY: ${FIREBASE_API_KEY:-}
       FIREBASE_AUTH_DOMAIN: ${FIREBASE_AUTH_DOMAIN:-}
