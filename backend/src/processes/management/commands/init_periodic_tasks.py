@@ -33,6 +33,7 @@ class Command(BaseCommand):
             self._ensure_unread_notifications,
             self._ensure_weekly_digest,
             self._ensure_continue_delayed_processes,
+            self._ensure_reminder_task_notification,
         ]
 
         for task_func in tasks:
@@ -158,4 +159,18 @@ class Command(BaseCommand):
             task_path="src.processes.tasks.delay.continue_delayed_workflows",
             schedule_obj=schedule,
             schedule_field="crontab",
+        )
+
+    def _ensure_reminder_task_notification(self):
+        name = "Reminder task notification"
+        schedule, _ = IntervalSchedule.objects.get_or_create(
+            every=1,
+            period=IntervalSchedule.DAYS,
+        )
+        self._create_or_skip_task(
+            name=name,
+            task_path=(
+                "src.notifications.tasks.send_reminder_task_notification"
+            ),
+            schedule_obj=schedule,
         )
