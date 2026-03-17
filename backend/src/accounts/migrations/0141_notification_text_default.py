@@ -5,7 +5,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0139_remove_account_external_id'),
+        ('accounts', '0140_alter_user_photo_max_length'),
     ]
 
     operations = [
