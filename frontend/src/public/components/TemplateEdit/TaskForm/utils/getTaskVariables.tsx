@@ -4,6 +4,7 @@ import { useIntl } from 'react-intl';
 
 import { IKickoff, IExtraField, ITemplateTask, EExtraFieldType } from '../../../../types/template';
 import { TTaskVariable } from '../../types';
+import { IGetLocalizedSystemVariableParams, IGetLocalizedSystemVariableReturn } from './types';
 import { StepName } from '../../../StepName';
 import { getPreviousTasks } from './getPreviousTasks';
 import { EStartingType } from '../Conditions/utils/getDropdownOperators';
@@ -14,6 +15,22 @@ export const SYSTEM_VARIABLE_SUBTITLE = 'System variable';
 
 const SYSTEM_VARIABLE_API_NAMES = [WORKFLOW_STARTER_VARIABLE_API_NAME];
 export const isSystemVariable = (apiName: string) => SYSTEM_VARIABLE_API_NAMES.includes(apiName);
+
+export function getLocalizedSystemVariable({
+  apiName,
+  title,
+  subtitle,
+  formatMessage,
+}: IGetLocalizedSystemVariableParams): IGetLocalizedSystemVariableReturn {
+  if (!isSystemVariable(apiName)) {
+    return { title, subtitle };
+  }
+
+  return {
+    title: formatMessage({ id: `kickoff.system-varibale-${apiName}` }),
+    subtitle: formatMessage({ id: 'kickoff.system-varibale' }),
+  };
+}
 
 type TGetVariablesParam = {
   kickoff?: Pick<IKickoff, 'fields'>;

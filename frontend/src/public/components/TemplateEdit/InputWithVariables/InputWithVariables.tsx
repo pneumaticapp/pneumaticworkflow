@@ -1,5 +1,6 @@
 import React from 'react';
 
+import classnames from 'classnames';
 import { TTaskVariable } from '../types';
 import { escapeMarkdown } from '../../../utils/escapeMarkdown';
 import { VariableList } from '../VariableList';
@@ -55,7 +56,7 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
       handleChange={onChange}
       withToolbar={false}
       multiline={false}
-      className={className}
+      className={classnames(className, styles['input-with-variables'])}
       foregroundColor={foregroundColor}
       stripPastedFormatting
       templateVariables={templateVariables}

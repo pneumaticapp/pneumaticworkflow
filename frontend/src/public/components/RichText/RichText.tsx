@@ -16,7 +16,7 @@ import {
 } from '../../constants/defaultValues';
 import { isArrayWithItems } from '../../utils/helpers';
 import { TTaskVariable } from '../TemplateEdit/types';
-import { isSystemVariable } from '../TemplateEdit/TaskForm/utils/getTaskVariables';
+import { getLocalizedSystemVariable } from '../TemplateEdit/TaskForm/utils/getTaskVariables';
 import { truncateString } from '../../utils/truncateString';
 import { openFullscreenImage } from '../../redux/general/actions';
 import { DocumentAttachment } from '../Attachments/DocumentAttachment';
@@ -158,9 +158,11 @@ export function RichText({
           return match;
         }
 
-        const title = isSystemVariable(variableApiName)
-          ? formatMessage({ id: `kickoff.system-varibale-${variableApiName}` })
-          : variable.title;
+        const { title } = getLocalizedSystemVariable({
+          apiName: variableApiName,
+          title: variable.title,
+          formatMessage,
+        });
 
         return `<span class="${badgeStyles['badge']} ${badgeStyles['specifity']}">${truncateString(
           title,

@@ -12,7 +12,7 @@ import {
 } from 'lexical';
 
 import type { SerializedVariableNode, TVariableNodePayload } from './types';
-import { isSystemVariable } from '../../../TemplateEdit/TaskForm/utils/getTaskVariables';
+import { getLocalizedSystemVariable } from '../../../TemplateEdit/TaskForm/utils/getTaskVariables';
 
 import styles from './VariableNode.css';
 
@@ -39,15 +39,13 @@ function VariableComponent({
   subtitle,
 }: VariableComponentProps): React.ReactElement {
   const { formatMessage } = useIntl();
-  const isSystem = isSystemVariable(apiName);
+  const { title: localizedTitle, subtitle: localizedSubtitle } = getLocalizedSystemVariable({
+    apiName,
+    title,
+    subtitle,
+    formatMessage,
+  });
 
-  const localizedTitle = isSystem
-    ? formatMessage({ id: `kickoff.system-varibale-${apiName}` })
-    : title;
-
-  const localizedSubtitle = isSystem
-    ? formatMessage({ id: 'kickoff.system-varibale' })
-    : subtitle;
 
   return (
     <span

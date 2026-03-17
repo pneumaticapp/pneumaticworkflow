@@ -11,7 +11,7 @@ import { isArrayWithItems } from '../../../utils/helpers';
 import { ExpandIcon } from '../../icons';
 import { ELearnMoreLinks } from '../../../constants/defaultValues';
 import { TTaskVariable } from '../types';
-import { isSystemVariable } from '../TaskForm/utils/getTaskVariables';
+import { getLocalizedSystemVariable } from '../TaskForm/utils/getTaskVariables';
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
 import { TooltipRichContent } from '../TooltipRichContent';
 import styles from './VariableList.css';
@@ -99,13 +99,12 @@ export const VariableList = ({
               options={{ suppressScrollX: true, wheelPropagation: false }}
             >
               {variables.map(({ title, richSubtitle, subtitle, apiName }) => {
-                const isSystem = isSystemVariable(apiName);
-                const displayTitle = isSystem
-                  ? formatMessage({ id: `kickoff.system-varibale-${apiName}` })
-                  : title;
-                const displaySubtitle = isSystem
-                  ? formatMessage({ id: 'kickoff.system-varibale' })
-                  : subtitle;
+                const { title: displayTitle, subtitle: displaySubtitle } = getLocalizedSystemVariable({
+                  apiName,
+                  title,
+                  subtitle,
+                  formatMessage,
+                });
 
                 return (
                   <Tooltip
