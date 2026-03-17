@@ -20,7 +20,7 @@ import { ETemplatesSorting } from '../../types/workflow';
 
 type TStoreProps = Pick<
   ITemplatesProps,
-  'templatesList' | 'loading' | 'canEdit' | 'templatesListSorting' | 'systemTemplates'
+  'templatesList' | 'loading' | 'templatesListSorting' | 'systemTemplates'
 >;
 
 type TDispatchProps = Pick<
@@ -39,14 +39,10 @@ type TDispatchProps = Pick<
 >;
 
 export function mapStateToProps({
-  authUser: { isAccountOwner, isAdmin },
   templates: { isListLoading, templatesList, templatesListSorting, systemTemplates },
 }: IApplicationState): TStoreProps {
-  const canEdit = isAccountOwner || isAdmin;
-
   return {
     systemTemplates,
-    canEdit,
     loading: isListLoading,
     templatesList,
     templatesListSorting,

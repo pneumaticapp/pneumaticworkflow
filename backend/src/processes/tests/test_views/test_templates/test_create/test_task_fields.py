@@ -2,6 +2,7 @@ import pytest
 
 from src.processes.enums import (
     FieldType,
+    OwnerRole,
     OwnerType,
     PerformerType,
 )
@@ -40,6 +41,7 @@ class TestCreateTemplateTaskFields:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -113,6 +115,7 @@ class TestCreateTemplateTaskFields:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -183,6 +186,7 @@ class TestCreateTemplateTaskFields:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -237,6 +241,7 @@ class TestCreateTemplateTaskFields:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -294,6 +299,7 @@ class TestCreateTemplateTaskFields:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -325,6 +331,7 @@ class TestCreateTemplateTaskFields:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -377,6 +384,7 @@ class TestCreateTemplateTaskFields:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,

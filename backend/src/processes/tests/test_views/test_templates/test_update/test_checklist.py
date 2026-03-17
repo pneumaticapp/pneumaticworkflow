@@ -2,6 +2,7 @@ import pytest
 
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     PerformerType,
 )
@@ -81,6 +82,7 @@ def test_update__create__ok(api_client, mocker):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},
@@ -192,6 +194,7 @@ def test_update__delete__ok(api_client, mocker):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},
@@ -269,6 +272,7 @@ def test_update__fields_with_equal_api_names__validation_error(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},

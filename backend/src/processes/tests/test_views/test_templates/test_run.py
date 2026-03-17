@@ -21,6 +21,7 @@ from src.processes.enums import (
     DirectlyStatus,
     DueDateRule,
     FieldType,
+    OwnerRole,
     OwnerType,
     PerformerType,
     PredicateOperator,
@@ -1217,6 +1218,7 @@ def test_skip_delayed_task__fields_is_empty(mocker, api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -1506,6 +1508,7 @@ def test_run__cancel_delay__ok(api_client, mocker):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1566,6 +1569,7 @@ def test_run__cancel_delay__ok(api_client, mocker):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -2341,10 +2345,12 @@ def test_run__user_field_invited_transfer__ok(
                 {
                     'type': OwnerType.USER,
                     'source_id': account_2_owner.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': account_2_new_user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -3059,6 +3065,7 @@ def test_run__task_name_with_field__ok(mocker, api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -3153,6 +3160,7 @@ def test_run__task_name_with_kickoff_data_value_int__ok(mocker, api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -3238,6 +3246,7 @@ def test_run__task_name_with_kickoff_data_value_float__ok(mocker, api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -3325,6 +3334,7 @@ def test_run__task_name_with_invalid_kickoff_data_value__validation_error(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -3412,6 +3422,7 @@ def test_run__task_name_with_field_2__ok(mocker, api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -5001,3 +5012,234 @@ def test_run__group_performers__ok(mocker, api_client):
         account_id=account.id,
         task_data=task.get_data_for_list(),
     )
+
+
+def test_run__template_viewer_user__ok(mocker, api_client):
+    """
+    Template viewer (user) should be able to run workflow from template.
+    """
+
+    # arrange
+    mocker.patch(
+        'src.notifications.tasks'
+        '.send_new_task_notification.delay',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    account = create_test_account()
+    template_owner = create_test_user(
+        email='owner@test.test',
+        account=account,
+        is_account_owner=True,
+    )
+    template = create_test_template(
+        user=template_owner,
+        is_active=True,
+        tasks_count=1,
+    )
+
+    viewer_user = create_test_user(
+        account=account,
+        email='viewer@test.test',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
+        template=template,
+        type=OwnerType.USER,
+        user=viewer_user,
+        account=account,
+    )
+
+    api_client.token_authenticate(viewer_user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={'name': 'Test workflow'},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert Workflow.objects.filter(id=response.data['id']).exists()
+
+
+def test_run__template_viewer_group__ok(mocker, api_client):
+    """
+    Template viewer (via group) should be able to run workflow from template.
+    """
+
+    # arrange
+    mocker.patch(
+        'src.notifications.tasks'
+        '.send_new_task_notification.delay',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    account = create_test_account()
+    template_owner = create_test_user(
+        email='owner@test.test',
+        account=account,
+        is_account_owner=True,
+    )
+    template = create_test_template(
+        user=template_owner,
+        is_active=True,
+        tasks_count=1,
+    )
+
+    viewer_user = create_test_user(
+        account=account,
+        email='viewer@test.test',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    group = create_test_group(account=account, name='Viewers Group')
+    group.users.add(viewer_user)
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
+        template=template,
+        type=OwnerType.GROUP,
+        group=group,
+        account=account,
+    )
+
+    api_client.token_authenticate(viewer_user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={'name': 'Test workflow'},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert Workflow.objects.filter(id=response.data['id']).exists()
+
+
+def test_run__template_owner_not_admin__ok(mocker, api_client):
+    """
+    Template owner (non-admin) should be able to run workflow from template.
+    """
+
+    # arrange
+    mocker.patch(
+        'src.notifications.tasks'
+        '.send_new_task_notification.delay',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    account = create_test_account()
+    account_owner = create_test_user(
+        email='account_owner@test.test',
+        account=account,
+        is_account_owner=True,
+    )
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1,
+    )
+
+    owner_user = create_test_user(
+        account=account,
+        email='owner@test.test',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
+        template=template,
+        type=OwnerType.USER,
+        user=owner_user,
+        account=account,
+    )
+
+    api_client.token_authenticate(owner_user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={'name': 'Test workflow'},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert Workflow.objects.filter(id=response.data['id']).exists()
+
+
+def test_run__template_starter_not_admin__ok(mocker, api_client):
+    """
+    Template starter (non-admin) should be able to run workflow from template.
+    """
+
+    # arrange
+    mocker.patch(
+        'src.notifications.tasks'
+        '.send_new_task_notification.delay',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    account = create_test_account()
+    account_owner = create_test_user(
+        email='account_owner@test.test',
+        account=account,
+        is_account_owner=True,
+    )
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1,
+    )
+
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.test',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    api_client.token_authenticate(starter_user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={'name': 'Test workflow'},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert Workflow.objects.filter(id=response.data['id']).exists()
