@@ -24,6 +24,7 @@ export function DueIn({
   withTime,
   timezone,
   dateFmt,
+  readOnly = false,
   onSave,
   onRemove,
 }: IDueInProps) {
@@ -46,7 +47,7 @@ export function DueIn({
   };
 
   const handleSave = () => {
-    if (!selectedDate) return;
+    if (!selectedDate || !onSave) return;
 
     if (!timeString) {
       onSave(selectedDate.toISOString());
@@ -68,7 +69,7 @@ export function DueIn({
   };
 
   const handleRemove = () => {
-    if (dueInData) {
+    if (dueInData && onRemove) {
       onRemove();
       setTimeString('');
     }
@@ -103,6 +104,14 @@ export function DueIn({
       </Tooltip>
     );
   };
+
+  if (readOnly) {
+    return (
+      <div className={containerClassName}>
+        <div className={classnames(styles['due-date'])}>{renderLabel()}</div>
+      </div>
+    );
+  }
 
   return (
     <div className={containerClassName}>

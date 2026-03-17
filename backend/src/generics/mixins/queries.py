@@ -10,12 +10,14 @@ class DereferencedOwnersMixin:
             JOIN accounts_usergroup_users AS g
               ON g.usergroup_id = pto.group_id
             WHERE pto.type = 'group'
+              AND pto.role = 'owner'
               AND pto.is_deleted IS FALSE
               AND g.user_id = %(user_id)s
             UNION
             SELECT pto.template_id, pto.user_id
             FROM processes_templateowner AS pto
             WHERE pto.type = 'user'
+              AND pto.role = 'owner'
               AND pto.is_deleted IS FALSE
               AND pto.user_id = %(user_id)s
         """
@@ -34,6 +36,7 @@ class DereferencedOwnersMixin:
             LEFT JOIN accounts_usergroup_users ug
               ON pto.type = 'group' AND pto.group_id = ug.usergroup_id
             WHERE pto.template_id = %(template_id)s
+              AND pto.role = 'owner'
               AND pto.is_deleted IS FALSE
               AND COALESCE(pto.user_id, ug.user_id) IS NOT NULL
         """

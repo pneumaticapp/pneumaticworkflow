@@ -13,7 +13,7 @@ import {
 
 const mapStateToProps = ({
   dashboard: { timeRange: currentTimeRange, mode: dashboardMode },
-  authUser: { account: { isVerified }, isAdmin, isAccountOwner },
+  authUser: { account: { isVerified }, isAdmin, isAccountOwner, hasWorkflowViewerAccess },
 }: IApplicationState): IDashboardLayoutStoreProps => {
   return {
     isVerified,
@@ -21,6 +21,7 @@ const mapStateToProps = ({
     dashboardMode,
     isAdmin,
     isAccountOwner,
+    hasWorkflowViewerAccess,
   };
 };
 

@@ -16,6 +16,7 @@ export interface IDashboardLayoutStoreProps {
   currentTimeRange: EDashboardTimeRange;
   dashboardMode: EDashboardModes;
   isAdmin?: boolean;
+  hasWorkflowViewerAccess?: boolean;
 }
 
 export interface IDashboardLayoutDispatchProps {
@@ -57,10 +58,12 @@ export class DashboardLayoutComponent extends React.Component<TAppLayoutComponen
       setDashboardMode(newDashboardMode);
     };
 
+    const canAccessWorkflows = this.props.isAdmin || this.props.hasWorkflowViewerAccess;
+
     return (
       <div className={styles['navbar-left__content']}>
         <div className={styles['filters']}>
-          {this.props.isAdmin && (
+          {canAccessWorkflows && (
             <Tabs values={this.dashboardModes} activeValueId={dashboardMode} onChange={handleSetDashboardMode} />
           )}
           <SelectMenu
