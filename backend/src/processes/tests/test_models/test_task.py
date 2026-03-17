@@ -647,6 +647,7 @@ def test_get_raw_performers_fields_dict__field_type_new__ok(mocker):
 
     # assert
     get_fields_as_dict_mock.assert_called_once_with(
+        tasks_filter_kwargs={'task__number__lt': task.number},
         fields_filter_kwargs={
             'type': 'user',
             'api_name__in': {field_api_name},

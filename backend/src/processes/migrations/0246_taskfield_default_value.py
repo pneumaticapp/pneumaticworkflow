@@ -3,6 +3,14 @@
 from django.db import migrations, models
 
 
+def set_taskfield_empty_values(apps, schema_editor):
+    TaskField = apps.get_model('processes', 'TaskField')
+    TaskField.objects.filter(clear_value__isnull=True).update(clear_value='')
+    TaskField.objects.filter(markdown_value__isnull=True).update(
+        markdown_value='',
+    )
+
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -10,6 +18,10 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.RunPython(
+            set_taskfield_empty_values,
+            migrations.RunPython.noop,
+        ),
         migrations.AlterField(
             model_name='taskfield',
             name='clear_value',

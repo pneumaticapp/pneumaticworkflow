@@ -223,6 +223,7 @@ class Task(
                 api_names.add(raw_performer_template['field']['api_name'])
         if api_names:
             fields_dict = self.workflow.get_fields_as_dict(
+                tasks_filter_kwargs={'task__number__lt': self.number},
                 fields_filter_kwargs={
                     'type': FieldType.USER,
                     'api_name__in': api_names,
@@ -367,6 +368,7 @@ class Task(
 
         if api_names:
             user_fields = self.workflow.get_fields(
+                tasks_filter_kwargs={'task__number__lt': self.number},
                 fields_filter_kwargs={
                     'type': FieldType.USER,
                     'api_name__in': api_names.keys(),
