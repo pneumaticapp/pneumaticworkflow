@@ -2906,18 +2906,33 @@ def test_list__not_authenticated__permission_denied(api_client):
     assert response.status_code == 401
 
 
-def test_list__not_admin__permission_denied(api_client):
+def test_list__user_starter_role__empty_list(api_client):
 
     # arrange
     account = create_test_account()
-    not_admin = create_test_not_admin(account=account)
-    api_client.token_authenticate(not_admin)
+    account_owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    template = create_test_template(
+        user=account_owner,
+        tasks_count=1,
+    )
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        account=account,
+        type=OwnerType.USER,
+        user_id=user.id,
+    )
+    create_test_workflow(account_owner, template=template)
+
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get('/workflows')
 
     # assert
-    assert response.status_code == 403
+    assert response.status_code == 200
+    assert len(response.data['results']) == 0
 
 
 def test_list__expired_subscription__permission_denied(api_client):

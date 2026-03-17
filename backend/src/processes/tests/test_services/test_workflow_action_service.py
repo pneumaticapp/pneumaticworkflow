@@ -10,10 +10,12 @@ from src.processes.enums import (
     TaskStatus,
     WorkflowStatus,
     TemplateType,
+    FieldType,
 )
 from src.processes.models.workflows.conditions import Condition
 from src.processes.models.workflows.task import Delay, TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.fields import TaskField
 from src.processes.services import exceptions
 from src.processes.services.tasks.field import TaskFieldService
 from src.processes.services.tasks.task import TaskService
@@ -1219,6 +1221,63 @@ def test_skip_task__not_returned__set_skipped_start_next(mocker):
     task_skip_event_mock.assert_called_once_with(task)
     start_prev_tasks_mock.assert_not_called()
     start_next_tasks_mock.assert_called_once_with(parent_task=task)
+
+
+def test_skip_task__skipped_fields__insert_blank_value(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=owner,
+        tasks_count=2,
+        active_task_number=2,
+    )
+    task_1 = workflow.tasks.get(number=1)
+    field = TaskField.objects.create(
+        task=task_1,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        workflow=workflow,
+        account=account,
+    )
+    task_2 = workflow.tasks.get(number=2)
+    task_service_init_mock = mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None,
+    )
+    insert_fields_values_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.insert_fields_values',
+    )
+    task_skip_event_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowEventService'
+        '.task_skip_event',
+    )
+    start_prev_tasks_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._start_prev_tasks',
+    )
+    start_next_tasks_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._start_next_tasks',
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+    is_returned = False
+
+    # act
+    service.skip_task(task=task_2, is_returned=is_returned)
+
+    # assert
+    task_2.refresh_from_db()
+    assert task_2.status == TaskStatus.SKIPPED
+    task_service_init_mock.assert_called_once_with(instance=task_2, user=owner)
+    insert_fields_values_mock.assert_called_once_with(
+        fields_values={field.api_name: ''},
+    )
+    task_skip_event_mock.assert_called_once_with(task_2)
+    start_prev_tasks_mock.assert_not_called()
+    start_next_tasks_mock.assert_called_once_with(parent_task=task_2)
 
 
 def test_continue_task__ok(mocker):
