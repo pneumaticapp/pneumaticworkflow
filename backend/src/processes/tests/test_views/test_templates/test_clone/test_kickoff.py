@@ -1,6 +1,7 @@
 import pytest
 
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     PerformerType,
 )
@@ -29,6 +30,7 @@ class TestCopyKickoff:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},

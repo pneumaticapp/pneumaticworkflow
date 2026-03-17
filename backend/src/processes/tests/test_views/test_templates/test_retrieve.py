@@ -9,6 +9,7 @@ from src.accounts.tokens import (
 )
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
+    OwnerRole,
     DueDateRule,
     FieldType,
     OwnerType,
@@ -46,10 +47,12 @@ class TestRetrieveTemplate:
             {
                 'type': OwnerType.USER,
                 'source_id': str(user.id),
+                'role': OwnerRole.OWNER,
             },
             {
                 'type': OwnerType.USER,
                 'source_id': str(user2.id),
+                'role': OwnerRole.OWNER,
             },
         ]
         request_data = {
@@ -263,6 +266,7 @@ class TestRetrieveTemplate:
                 'type': OwnerType.USER,
                 'source_id': str(user.id),
                 'api_name': 'owner-xcbjag',
+                'role': OwnerRole.OWNER,
             },
         ]
         request_data = {
@@ -465,11 +469,13 @@ class TestRetrieveTemplate:
                         'type': OwnerType.USER,
                         'source_id': account_1_owner.id,
                         'api_name': 'user-1',
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user_to_transfer.id,
                         'api_name': 'user-2',
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': False,
@@ -595,10 +601,12 @@ class TestRetrieveTemplate:
             {
                 'type': OwnerType.USER,
                 'source_id': str(user.id),
+                'role': OwnerRole.OWNER,
             },
             {
                 'type': OwnerType.USER,
                 'source_id': str(user2.id),
+                'role': OwnerRole.OWNER,
             },
         ]
         request_data = {

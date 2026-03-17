@@ -1,0 +1,150 @@
+import React from 'react';
+import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
+
+import { IApplicationState } from '../../../types/redux';
+import { ESubscriptionPlan } from '../../../types/account';
+import { createViewerApiName } from '../../../utils/createId';
+import { trackInviteTeamInPage } from '../../../utils/analytics';
+import { getNotDeletedUsers, getUserFullName } from '../../../utils/users';
+import { EOptionTypes, TUsersDropdownOption, UsersDropdown } from '../../UI/form/UsersDropdown';
+import { getIsUserSubsribed, getSubscriptionPlan, getUsers } from '../../../redux/selectors/user';
+import { ETaskPerformerType, ETemplateOwnerRole, ETemplateOwnerType, ETemplateViewerType, ITemplateOwner } from '../../../types/template';
+import ViewerItem from './components';
+
+import styles from './TemplateViewers.css';
+import UserDataWithGroup from '../../UserDataWithGroup';
+
+interface ITemplateViewersProps {
+  templateViewers: ITemplateOwner[];
+  onChangeTemplateViewers(templateViewers: ITemplateOwner[]): void;
+}
+
+export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers }: ITemplateViewersProps) {
+  const { formatMessage } = useIntl();
+
+  const isSubscribed = useSelector(getIsUserSubsribed);
+  const billingPlan = useSelector(getSubscriptionPlan);
+  const groups = useSelector((state: IApplicationState) => state.groups.list);
+
+  const users = getNotDeletedUsers(useSelector(getUsers));
+  const mapUsersDropdownValue = users.filter((user) =>
+    templateViewers.find(
+      ({ sourceId, type }) =>
+        Number(sourceId) === user.id && type === ETemplateViewerType.User,
+    ),
+  );
+
+  const mapGroupDropdownValue = groups.filter((group) =>
+    templateViewers.find(
+      ({ sourceId, type }) =>
+        Number(sourceId) === group.id && type === ETemplateViewerType.UserGroup,
+    ),
+  );
+
+  const templateViewerGroupDropdownOption = groups.map((group) => {
+    return {
+      ...group,
+      optionType: EOptionTypes.Group,
+      type: ETaskPerformerType.UserGroup,
+      label: group.name,
+      value: `${EOptionTypes.Group}-${group.id}`,
+    };
+  });
+
+  const templateViewerDropdownOption = users.map((item) => {
+    return {
+      ...item,
+      firstName: '',
+      lastName: '',
+      optionType: EOptionTypes.User,
+      label: getUserFullName(item),
+      value: `${EOptionTypes.User}-${item.id}`,
+    };
+  });
+
+  const option = [
+    ...templateViewerGroupDropdownOption,
+    ...templateViewerDropdownOption,
+  ] as unknown as TUsersDropdownOption[];
+
+  const tplViewerDropdownValueUsers = mapUsersDropdownValue.map((item) => {
+    return {
+      ...item,
+      optionType: EOptionTypes.User,
+      label: getUserFullName(item),
+      value: `${EOptionTypes.User}-${item.id}`,
+    };
+  });
+
+  const tplViewerDropdownValueGroup = mapGroupDropdownValue.map((item) => {
+    return {
+      ...item,
+      optionType: EOptionTypes.Group,
+      label: item.name,
+      value: `${EOptionTypes.Group}-${item.id}`,
+    };
+  });
+
+  const handleRemoveTemplateViewer = (
+    { id, optionType }: Pick<TUsersDropdownOption, 'id' | 'optionType'>,
+  ) => {
+    const newTemplateViewers = templateViewers.filter(
+      ({ sourceId, type }) =>
+        !(sourceId === String(id) && type === (optionType as unknown as ETemplateViewerType)),
+    );
+    onChangeTemplateViewers(newTemplateViewers);
+  };
+
+  const handleAddTemplateViewers = ({ id, optionType }: Pick<TUsersDropdownOption, 'id' | 'optionType'>) => {
+    if (!isSubscribed && billingPlan !== ESubscriptionPlan.Free) return;
+    const newViewer: ITemplateOwner = {
+      sourceId: String(id),
+      apiName: createViewerApiName(),
+      type: optionType as unknown as ETemplateViewerType,
+      role: ETemplateOwnerRole.Viewer,
+    };
+    onChangeTemplateViewers([...templateViewers, newViewer]);
+  };
+
+  return (
+    <>
+      <UsersDropdown
+        isMulti
+        className={styles['dropdown']}
+        placeholder={formatMessage({ id: 'template.viewers-dropdown-placeholder' })}
+        options={option}
+        onChange={handleAddTemplateViewers}
+        onChangeSelected={handleRemoveTemplateViewer}
+        value={[...tplViewerDropdownValueUsers, ...tplViewerDropdownValueGroup]}
+        onUsersInvited={({ id, optionType }) => handleAddTemplateViewers({ id, optionType })}
+        onClickInvite={() => trackInviteTeamInPage('Template viewers')}
+        inviteLabel={formatMessage({ id: 'template.invite-team-member' })}
+      />
+      <div className={styles['viewers-list']}>
+        {templateViewers.map(({ sourceId, type }) => {
+          return (
+            <UserDataWithGroup
+              key={`${type}-${sourceId}`}
+              idItem={Number(sourceId)}
+              type={type as unknown as ETemplateOwnerType}
+            >
+              {(user) => {
+                return (
+                  <ViewerItem
+                    name={getUserFullName(user)}
+                    user={user}
+                    onRemove={() => handleRemoveTemplateViewer({
+                      id: Number(sourceId),
+                      optionType: type as unknown as EOptionTypes,
+                    })}
+                  />
+                );
+              }}
+            </UserDataWithGroup>
+          );
+        })}
+      </div>
+    </>
+  );
+}

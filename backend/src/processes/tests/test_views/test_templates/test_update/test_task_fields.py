@@ -1,6 +1,7 @@
 import pytest
 
 from src.processes.enums import (
+    OwnerRole,
     FieldType,
     OwnerType,
     PerformerType,
@@ -71,6 +72,7 @@ class TestUpdateTaskFields:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -170,6 +172,7 @@ class TestUpdateTaskFields:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -245,6 +248,7 @@ class TestUpdateTaskFields:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -339,6 +343,7 @@ class TestUpdateTaskFields:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -445,6 +450,7 @@ class TestUpdateTaskFields:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -555,6 +561,7 @@ class TestUpdateTaskFields:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -637,6 +644,7 @@ class TestUpdateTaskFields:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -723,6 +731,7 @@ class TestUpdateTaskFields:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},

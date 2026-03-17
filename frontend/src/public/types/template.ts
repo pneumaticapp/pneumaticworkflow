@@ -31,11 +31,21 @@ export interface ITemplate {
   performersCount: number;
 }
 
+export enum ETemplateOwnerRole {
+  Owner = 'owner',
+  Viewer = 'viewer',
+  Starter = 'starter',
+}
+
 export interface ITemplateOwner {
   apiName: string;
   sourceId: string;
   type: ETemplateOwnerType;
+  role: ETemplateOwnerRole;
 }
+
+export type ITemplateViewer = ITemplateOwner;
+export type ITemplateStarter = ITemplateOwner;
 
 export type TTransformedTask =
   | { apiName: string; name: string; needSteName: null; fields: TSystemField[] }
@@ -99,6 +109,12 @@ export enum ETemplateOwnerType {
   User = 'user',
   UserGroup = 'group',
 }
+
+export const ETemplateViewerType = ETemplateOwnerType;
+export type ETemplateViewerType = ETemplateOwnerType;
+
+export const ETemplateStarterType = ETemplateOwnerType;
+export type ETemplateStarterType = ETemplateOwnerType;
 
 export enum ETaskPerformerType {
   User = 'user',
@@ -175,6 +191,7 @@ export interface ITemplateListItem {
   performersCount: number;
   owners: number[];
   kickoff: IKickoff | null;
+  isEditable: boolean;
 }
 
 export interface ITableViewFields extends IExtraField {

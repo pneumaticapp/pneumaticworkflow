@@ -72,6 +72,7 @@ class TemplateOwnerSchemaV1(serializers.ModelSerializer):
     class Meta:
         model = TemplateOwner
         fields = (
+            'role',
             'type',
             'user_id',
             'group_id',
