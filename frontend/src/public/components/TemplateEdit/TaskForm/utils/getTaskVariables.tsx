@@ -23,12 +23,15 @@ export function getLocalizedSystemVariable({
   formatMessage,
 }: IGetLocalizedSystemVariableParams): IGetLocalizedSystemVariableReturn {
   if (!isSystemVariable(apiName)) {
-    return { title, subtitle };
+    return {
+      title,
+      ...(subtitle !== undefined && { subtitle }),
+    };
   }
 
   return {
     title: formatMessage({ id: `kickoff.system-varibale-${apiName}` }),
-    subtitle: formatMessage({ id: 'kickoff.system-varibale' }),
+    ...(subtitle !== undefined && { subtitle: formatMessage({ id: 'kickoff.system-varibale' }) }),
   };
 }
 

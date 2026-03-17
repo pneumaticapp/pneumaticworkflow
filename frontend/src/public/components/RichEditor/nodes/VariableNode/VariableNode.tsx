@@ -46,13 +46,14 @@ function VariableComponent({
     formatMessage,
   });
 
-
   return (
     <span
       className={classnames(styles['variable'], 'lexical-rich-editor-variable')}
       data-lexical-variable-api={apiName}
-      data-lexical-variable-title={localizedTitle}
-      data-lexical-variable-subtitle={localizedSubtitle ?? ''}
+      data-lexical-variable-title={title}
+      data-lexical-variable-subtitle={subtitle ?? ''}
+      data-tooltip-title={localizedTitle}
+      data-tooltip-subtitle={localizedSubtitle ?? ''}
     >
       {localizedTitle || apiName}
     </span>
