@@ -1,6 +1,7 @@
 import pytest
 
 from src.processes.enums import (
+    OwnerRole,
     FieldType,
     OwnerType,
     PerformerType,
@@ -35,6 +36,7 @@ class TestCopyFieldSelections:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},

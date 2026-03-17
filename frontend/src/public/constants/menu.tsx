@@ -20,7 +20,18 @@ export type TMenuCounter = {
   type: TMenuCounterType;
 };
 
-export const getUserMenuItems = (user: IAuthUser, counters?: TMenuCounter[]): IMenuItem[] => {
+export interface IGetUserMenuItemsOptions {
+  isTemplateOwner?: boolean;
+}
+
+export const getUserMenuItems = (
+  user: IAuthUser,
+  counters?: TMenuCounter[],
+  options?: IGetUserMenuItemsOptions,
+): IMenuItem[] => {
+  const { isTemplateOwner } = options || {};
+  const canAccessTemplates = user.isAdmin || isTemplateOwner;
+
   const items: IMenuItem[] = [
     {
       id: 'dashboards',
@@ -39,21 +50,21 @@ export const getUserMenuItems = (user: IAuthUser, counters?: TMenuCounter[]): IM
       iconComponent: WorkflowsIcon,
       label: 'menu.workflows',
       to: ERoutes.Workflows,
-      isHidden: !user.isAdmin,
+      isHidden: !user.isAdmin && !user.hasWorkflowViewerAccess,
     },
     {
       id: 'templates',
       iconComponent: TemplatesIcon,
       label: 'menu.templates',
       to: ERoutes.Templates,
-      isHidden: !user.isAdmin,
+      isHidden: !canAccessTemplates,
     },
     {
       id: 'highlights',
       iconComponent: TaskAcivityIcon,
       label: 'menu.highlights',
       to: ERoutes.Highlights,
-      isHidden: !user.isAdmin,
+      isHidden: !user.isAdmin && !user.hasWorkflowViewerAccess,
     },
     {
       id: 'team',

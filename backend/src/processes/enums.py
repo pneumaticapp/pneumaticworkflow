@@ -94,6 +94,17 @@ class OwnerType:
     )
 
 
+class OwnerRole:
+    OWNER = 'owner'
+    VIEWER = 'viewer'
+    STARTER = 'starter'
+    choices = (
+        (OWNER, OWNER),
+        (VIEWER, VIEWER),
+        (STARTER, STARTER),
+    )
+
+
 class DirectlyStatus:
 
     NO_STATUS = 0

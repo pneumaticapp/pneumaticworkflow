@@ -3,6 +3,7 @@ import pytest
 from src.accounts.enums import BillingPlanType
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
+    OwnerRole,
     ConditionAction,
     FieldType,
     OwnerType,
@@ -56,6 +57,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -121,6 +123,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -206,6 +209,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -279,6 +283,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -347,6 +352,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -412,6 +418,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -483,6 +490,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -562,6 +570,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -672,6 +681,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -761,6 +771,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -848,6 +859,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -931,6 +943,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -1049,6 +1062,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -1154,6 +1168,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -1241,6 +1256,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -1311,6 +1327,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -1405,6 +1422,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -1516,6 +1534,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -1627,6 +1646,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -1719,6 +1739,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -1802,6 +1823,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -1911,6 +1933,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -2002,6 +2025,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -2093,6 +2117,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -2184,6 +2209,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -2283,6 +2309,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': owner.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -2366,6 +2393,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': owner.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -2439,6 +2467,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': owner.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -2512,6 +2541,7 @@ class TestCreateConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': owner.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},

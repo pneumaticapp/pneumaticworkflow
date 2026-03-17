@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 
 from src.accounts.enums import BillingPlanType
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
 )
 from src.processes.models.templates.owner import TemplateOwner
@@ -118,6 +119,7 @@ def test_delete__template_owner_not_admin__permission_denied(
         tasks_count=1,
     )
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account_owner.account,
         type=OwnerType.USER,

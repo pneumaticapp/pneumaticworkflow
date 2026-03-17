@@ -137,6 +137,7 @@ def test_delete_reaction__user_not_member__permission_denied(
         account=owner.account,
         email='not-member@test.test',
         is_account_owner=False,
+        is_admin=False,
     )
     service_init_mock = mocker.patch.object(
         CommentService,

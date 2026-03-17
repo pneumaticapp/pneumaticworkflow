@@ -5,6 +5,7 @@ from django.contrib.auth import get_user_model
 from django.utils import timezone
 
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     TaskStatus,
     WorkflowStatus,
@@ -158,6 +159,7 @@ def test_resume__template_owner__not_admin__permission_denied(
         tasks_count=1,
     )
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account_owner.account,
         type=OwnerType.USER,
