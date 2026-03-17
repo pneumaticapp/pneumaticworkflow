@@ -1,1 +1,1 @@
-export { default } from './StarterItem';
+export { default as StarterItem } from './StarterItem';

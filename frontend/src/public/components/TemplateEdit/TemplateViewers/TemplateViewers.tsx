@@ -9,8 +9,15 @@ import { trackInviteTeamInPage } from '../../../utils/analytics';
 import { getNotDeletedUsers, getUserFullName } from '../../../utils/users';
 import { EOptionTypes, TUsersDropdownOption, UsersDropdown } from '../../UI/form/UsersDropdown';
 import { getIsUserSubsribed, getSubscriptionPlan, getUsers } from '../../../redux/selectors/user';
-import { ETaskPerformerType, ETemplateOwnerRole, ETemplateOwnerType, ETemplateViewerType, ITemplateOwner } from '../../../types/template';
-import ViewerItem from './components';
+import {
+  ETaskPerformerType,
+  ETemplateOwnerRole,
+  ETemplateOwnerType,
+  TemplateViewerType,
+  TTemplateViewerType,
+  ITemplateOwner
+} from '../../../types/template';
+import { ViewerItem } from './components';
 
 import styles from './TemplateViewers.css';
 import UserDataWithGroup from '../../UserDataWithGroup';
@@ -31,14 +38,14 @@ export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers 
   const mapUsersDropdownValue = users.filter((user) =>
     templateViewers.find(
       ({ sourceId, type }) =>
-        Number(sourceId) === user.id && type === ETemplateViewerType.User,
+        Number(sourceId) === user.id && type === TemplateViewerType.User,
     ),
   );
 
   const mapGroupDropdownValue = groups.filter((group) =>
     templateViewers.find(
       ({ sourceId, type }) =>
-        Number(sourceId) === group.id && type === ETemplateViewerType.UserGroup,
+        Number(sourceId) === group.id && type === TemplateViewerType.UserGroup,
     ),
   );
 
@@ -91,7 +98,7 @@ export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers 
   ) => {
     const newTemplateViewers = templateViewers.filter(
       ({ sourceId, type }) =>
-        !(sourceId === String(id) && type === (optionType as unknown as ETemplateViewerType)),
+        !(sourceId === String(id) && type === (optionType as unknown as TTemplateViewerType)),
     );
     onChangeTemplateViewers(newTemplateViewers);
   };
@@ -101,7 +108,7 @@ export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers 
     const newViewer: ITemplateOwner = {
       sourceId: String(id),
       apiName: createViewerApiName(),
-      type: optionType as unknown as ETemplateViewerType,
+      type: optionType as unknown as TTemplateViewerType,
       role: ETemplateOwnerRole.Viewer,
     };
     onChangeTemplateViewers([...templateViewers, newViewer]);

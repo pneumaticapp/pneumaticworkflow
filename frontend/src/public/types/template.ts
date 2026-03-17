@@ -110,11 +110,11 @@ export enum ETemplateOwnerType {
   UserGroup = 'group',
 }
 
-export const ETemplateViewerType = ETemplateOwnerType;
-export type ETemplateViewerType = ETemplateOwnerType;
+export const TemplateViewerType = ETemplateOwnerType;
+export type TTemplateViewerType = ETemplateOwnerType;
 
-export const ETemplateStarterType = ETemplateOwnerType;
-export type ETemplateStarterType = ETemplateOwnerType;
+export const TemplateStarterType = ETemplateOwnerType;
+export type TTemplateStarterType = ETemplateOwnerType;
 
 export enum ETaskPerformerType {
   User = 'user',

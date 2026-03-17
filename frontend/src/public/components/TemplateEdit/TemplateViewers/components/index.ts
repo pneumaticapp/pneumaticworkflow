@@ -1,1 +1,1 @@
-export { default } from './ViewerItem';
+export { default as ViewerItem } from './ViewerItem';
