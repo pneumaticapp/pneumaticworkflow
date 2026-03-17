@@ -2,6 +2,7 @@ import pytest
 
 from src.accounts.enums import BillingPlanType
 from src.processes.enums import (
+    OwnerRole,
     ConditionAction,
     FieldType,
     OwnerType,
@@ -55,6 +56,7 @@ class TestCopyConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -131,6 +133,7 @@ class TestCopyConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -210,6 +213,7 @@ class TestCopyConditionTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {

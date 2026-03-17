@@ -50,6 +50,7 @@ def test_webhook_example__body__ok(api_client):
         'ancestor_task_id': None,
         'is_legacy_template': False,
         'legacy_template_name': None,
+        'is_read_only_viewer': False,
         'owners': [user.id],
         'template': OrderedDict([
             ('id', template.id),

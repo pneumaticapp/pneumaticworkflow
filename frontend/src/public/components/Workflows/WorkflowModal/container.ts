@@ -47,7 +47,7 @@ export type TDispatchProps = Pick<
 >;
 
 export function mapStateToProps({
-  authUser: { id: currentUserId, isAccountOwner, timezone, dateFmt, language },
+  authUser: { id: currentUserId, isAccountOwner, isAdmin, timezone, dateFmt, language },
   workflows: {
     workflowLog: {
       workflowId,
@@ -67,9 +67,8 @@ export function mapStateToProps({
     fullscreenImage: { isOpen: isFullscreenImageOpen },
   },
 }: IApplicationState): TStoreProps {
-  const isTemplateOwner = workflow?.owners?.some((id) => id === currentUserId);
-
-  const canEdit = [isAccountOwner, isTemplateOwner].some(Boolean);
+  const isWorkflowOwner = workflow?.owners?.some((id) => id === currentUserId) ?? false;
+  const canEdit = Boolean(isAccountOwner) || (isWorkflowOwner && Boolean(isAdmin));
 
   return {
     dateFmt,

@@ -49,16 +49,18 @@ export default defineConfig({
         ...devices['Desktop Safari'],
       },
     },
+
+    /* --- MOBILE DEVICES (narrowest viewport) --- */
     {
       name: 'Mobile Chrome',
       use: {
-        ...devices['Pixel 5'],
+        ...devices['Galaxy S8'],
       },
     },
     {
       name: 'Mobile Safari',
       use: {
-        ...devices['iPhone 12'],
+        ...devices['iPhone SE'],
       },
     },
   ],

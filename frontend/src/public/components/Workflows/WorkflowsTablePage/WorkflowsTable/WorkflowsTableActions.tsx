@@ -47,6 +47,7 @@ export function WorkflowsTableActions({
       size="sm"
       disabled={isDisabled}
       icon={TuneViewIcon}
+      iconClassName={styles['tune-view-icon']}
       onClick={handleTuneViewClick}
     />
   );

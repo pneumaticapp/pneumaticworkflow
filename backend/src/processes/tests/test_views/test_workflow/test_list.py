@@ -10,6 +10,7 @@ from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
     FieldType,
+    OwnerRole,
     OwnerType,
     PerformerType,
     PredicateOperator,
@@ -1835,6 +1836,7 @@ def test_list__filter__multiple_current_performer_group_ids__ok(api_client):
     api_client.token_authenticate(another_user)
     template = create_test_template(user=user, tasks_count=2)
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account,
         type=OwnerType.USER,
@@ -1885,6 +1887,7 @@ def test_list__filter_multiple_current_performer_group_user__ok(api_client):
     api_client.token_authenticate(another_user)
     template = create_test_template(user=user, tasks_count=2)
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account,
         type=OwnerType.USER,
