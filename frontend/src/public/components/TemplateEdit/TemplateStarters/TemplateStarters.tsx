@@ -9,8 +9,15 @@ import { trackInviteTeamInPage } from '../../../utils/analytics';
 import { getNotDeletedUsers, getUserFullName } from '../../../utils/users';
 import { EOptionTypes, TUsersDropdownOption, UsersDropdown } from '../../UI/form/UsersDropdown';
 import { getIsUserSubsribed, getSubscriptionPlan, getUsers } from '../../../redux/selectors/user';
-import { ETaskPerformerType, ETemplateOwnerRole, ETemplateOwnerType, ETemplateStarterType, ITemplateOwner } from '../../../types/template';
-import StarterItem from './components';
+import {
+  ETaskPerformerType,
+  ETemplateOwnerRole,
+  ETemplateOwnerType,
+  TemplateStarterType,
+  TTemplateStarterType,
+  ITemplateOwner
+} from '../../../types/template';
+import { StarterItem } from './components';
 
 import styles from './TemplateStarters.css';
 import UserDataWithGroup from '../../UserDataWithGroup';
@@ -31,14 +38,14 @@ export function TemplateStarters({ templateStarters = [], onChangeTemplateStarte
   const mapUsersDropdownValue = users.filter((user) =>
     templateStarters.find(
       ({ sourceId, type }) =>
-        Number(sourceId) === user.id && type === ETemplateStarterType.User,
+        Number(sourceId) === user.id && type === TemplateStarterType.User,
     ),
   );
 
   const mapGroupDropdownValue = groups.filter((group) =>
     templateStarters.find(
       ({ sourceId, type }) =>
-        Number(sourceId) === group.id && type === ETemplateStarterType.UserGroup,
+        Number(sourceId) === group.id && type === TemplateStarterType.UserGroup,
     ),
   );
 
@@ -91,7 +98,7 @@ export function TemplateStarters({ templateStarters = [], onChangeTemplateStarte
   ) => {
     const newTemplateStarters = templateStarters.filter(
       ({ sourceId, type }) =>
-        !(sourceId === String(id) && type === (optionType as unknown as ETemplateStarterType)),
+        !(sourceId === String(id) && type === (optionType as unknown as TTemplateStarterType)),
     );
     onChangeTemplateStarters(newTemplateStarters);
   };
@@ -101,7 +108,7 @@ export function TemplateStarters({ templateStarters = [], onChangeTemplateStarte
     const newStarter: ITemplateOwner = {
       sourceId: String(id),
       apiName: createStarterApiName(),
-      type: optionType as unknown as ETemplateStarterType,
+      type: optionType as unknown as TTemplateStarterType,
       role: ETemplateOwnerRole.Starter,
     };
     onChangeTemplateStarters([...templateStarters, newStarter]);
