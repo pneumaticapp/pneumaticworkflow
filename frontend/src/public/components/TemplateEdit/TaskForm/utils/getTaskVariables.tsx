@@ -1,4 +1,5 @@
-import React, { useMemo } from 'react';
+import * as React from 'react';
+import { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 
 import { IKickoff, IExtraField, ITemplateTask, EExtraFieldType } from '../../../../types/template';
@@ -20,6 +21,13 @@ type TGetVariablesParam = {
   templateId?: number;
 };
 
+/**
+ * This function duplicates the system variables defined in useWorkflowNameVariables hook
+ * with hardcoded (non-localized) titles. It exists because getVariables() is called from
+ * a Redux saga (templates/saga.ts), where React hooks cannot be used.
+ * Localization of these titles is handled at render time via isSystemVariable() checks.
+ * TODO: refactor to store only apiName/type in Redux, and localize in components.
+ */
 export function getSystemVariables(): TTaskVariable[] {
   return [
     {

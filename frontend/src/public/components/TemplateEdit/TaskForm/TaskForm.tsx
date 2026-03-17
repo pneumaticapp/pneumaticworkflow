@@ -1,4 +1,5 @@
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
+import * as React from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useIntl } from 'react-intl';
 
 import { TaskDescriptionEditor } from './TaskDescriptionEditor';
