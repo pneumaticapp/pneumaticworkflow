@@ -82,7 +82,7 @@ def test_send_urgent_notification__call_services__ok(mocker):
         author_id=user.id,
         account_id=account.id,
         type=NotificationType.URGENT,
-        text=None,
+        text='',
     )
     websocket_service_init_mock.assert_called_once_with(
         logo_lg=account.logo_lg,
@@ -161,7 +161,7 @@ def test_send_urgent_notification__call_services_with_group__ok(mocker):
         author_id=user.id,
         account_id=account.id,
         type=NotificationType.URGENT,
-        text=None,
+        text='',
     )
     websocket_service_init_mock.assert_called_once_with(
         logo_lg=account.logo_lg,
@@ -230,7 +230,7 @@ def test_send_not_urgent_notification__call_services__ok(mocker):
         author_id=user.id,
         account_id=account.id,
         type=NotificationType.NOT_URGENT,
-        text=None,
+        text='',
     )
     websocket_service_init_mock.assert_called_once_with(
         logo_lg=account.logo_lg,
@@ -296,7 +296,7 @@ def test_send_urgent_notification_completed_performer__skip(mocker):
         author_id=user.id,
         account_id=account.id,
         type=NotificationType.URGENT,
-        text=None,
+        text='',
     ).exists()
 
     websocket_urgent_mock.assert_not_called()
@@ -352,7 +352,7 @@ def test_send_urgent_notification_deleted_performer__skip(mocker):
         author_id=user.id,
         account_id=account.id,
         type=NotificationType.URGENT,
-        text=None,
+        text='',
     ).exists()
 
     websocket_urgent_mock.assert_not_called()
@@ -406,7 +406,7 @@ def test_send_urgent_notification_guest_performer__skip(mocker):
         author_id=user.id,
         account_id=account.id,
         type=NotificationType.URGENT,
-        text=None,
+        text='',
     ).exists()
 
     websocket_urgent_mock.assert_not_called()
@@ -459,7 +459,7 @@ def test_send_urgent_notification__another_task__skip(mocker):
         author_id=user.id,
         account_id=account.id,
         type=NotificationType.URGENT,
-        text=None,
+        text='',
     )
 
     link = f'{settings.FRONTEND_URL}/tasks/{task_2.id}'
