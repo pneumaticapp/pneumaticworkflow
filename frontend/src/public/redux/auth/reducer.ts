@@ -32,6 +32,7 @@ const EMPTY_USER: IAuthUser = {
   },
   id: -1,
   isAdmin: false,
+  hasWorkflowViewerAccess: false,
   firstName: '',
   lastName: '',
   token: parseCookies(document.cookie).token || '',

@@ -621,3 +621,11 @@ msgstr "El usuario o grupo especificado para un campo de tipo \"Usuario\" no exi
 #: src/processes/messages/workflow.py:182
 msgid "Guest"
 msgstr "Invitado"
+
+#: src/processes/messages/template.py:281
+msgid "Permission denied. You do not have access to this template."
+msgstr "Permiso denegado. No tienes acceso a esta plantilla."
+
+#: src/processes/messages/template.py:282
+msgid "Permission denied. You are not a template owner or viewer."
+msgstr "Permiso denegado. No eres propietario ni visualizador de esta plantilla."

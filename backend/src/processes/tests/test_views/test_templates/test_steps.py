@@ -2,6 +2,7 @@ import pytest
 
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     PerformerType,
     TaskStatus,
@@ -80,6 +81,7 @@ def test_steps__admin__ok(api_client):
     template_task = template.tasks.get(number=1)
     request_user = create_test_admin(account=account)
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account,
         user_id=request_user.id,
@@ -110,6 +112,7 @@ def test_steps__not_admin__ok(api_client):
     template_task = template.tasks.get(number=1)
     request_user = create_test_not_admin(account=account)
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account,
         user_id=request_user.id,
@@ -141,6 +144,7 @@ def test_steps__group_is_template_owner__ok(api_client):
     request_user = create_test_admin(account=account)
     group = create_test_group(account, users=[request_user])
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account,
         type=OwnerType.GROUP,
@@ -216,6 +220,7 @@ def test_steps__invited_user__unauthorized(api_client):
     )
     request_user = create_invited_user(user=account_owner)
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account,
         user_id=request_user.id,
@@ -242,6 +247,7 @@ def test_steps__deleted_user__unauthorized(api_client):
     )
     request_user = create_test_admin(account=account)
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account,
         user_id=request_user.id,
@@ -269,6 +275,7 @@ def test_steps__user_from_another_acc__empty_result(api_client):
     )
     another_account_user = create_test_owner(email='another@pneumatic.app')
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account,
         user_id=another_account_user.id,

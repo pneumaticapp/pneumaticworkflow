@@ -1,5 +1,6 @@
 # ruff: noqa: PLC0415
 import re
+from django.db.models import Q
 from typing import Any, Dict, List, Optional
 
 from rest_framework import serializers
@@ -7,7 +8,7 @@ from rest_framework.exceptions import ValidationError
 
 from src.generics.fields import TimeStampField
 from src.generics.serializers import CustomValidationErrorMixin
-from src.processes.enums import TaskOrdering
+from src.processes.enums import OwnerRole, OwnerType, TaskOrdering
 from src.processes.messages.workflow import (
     MSG_PW_0057,
     MSG_PW_0083,
@@ -29,6 +30,7 @@ from src.processes.serializers.workflows.field import (
 from src.processes.serializers.workflows.task_performer import (
     TaskUserGroupPerformerSerializer,
 )
+from src.processes.models.workflows.task import TaskPerformer
 
 
 class TaskShortSerializer(serializers.ModelSerializer):
@@ -115,6 +117,7 @@ class TaskSerializer(serializers.ModelSerializer):
             'sub_workflows',
             'status',
             'revert_tasks',
+            'is_read_only_viewer',
         )
 
     date_started_tsp = TimeStampField(source='date_started')
@@ -135,6 +138,7 @@ class TaskSerializer(serializers.ModelSerializer):
     due_date_tsp = TimeStampField(source='due_date')
     sub_workflows = serializers.SerializerMethodField()
     revert_tasks = TaskShortSerializer(many=True, source='get_revert_tasks')
+    is_read_only_viewer = serializers.SerializerMethodField()
 
     def get_is_completed(self, instance):
         #  TODO Remove in 41258
@@ -175,6 +179,67 @@ class TaskSerializer(serializers.ModelSerializer):
             WorkflowShortInfoSerializer,
         )
         return WorkflowShortInfoSerializer(instance=instance.workflow).data
+
+    def get_is_read_only_viewer(self, instance):
+        """
+        Determine if user has only read-only access.
+        Read-only access applies to:
+        - Template viewers (regardless of admin status)
+        - Template starters
+        - Non-admin template owners
+        - Workflow owners who are no longer template owners (were removed)
+
+        Full access only for:
+        - Account owners
+        - Task performers (for this specific task)
+        - Admin users who are CURRENTLY template owners
+        - Workflow members (performers on other tasks in this workflow)
+        """
+        user = self.context.get('user')
+        if not user:
+            return False
+
+        workflow = instance.workflow
+        template = workflow.template
+
+        # Account owners always have full access
+        if user.is_account_owner:
+            return False
+
+        # Check if user is actual performer on any task in this workflow
+        # (not just workflow.members which includes template owners)
+        is_performer = TaskPerformer.objects.filter(
+            task__workflow=workflow,
+            task__account_id=user.account_id,
+        ).filter(
+            Q(user_id=user.id) |
+            Q(group__users__id=user.id),
+        ).exists()
+        if is_performer:
+            return False
+
+        if not template:
+            return True
+
+        # Check CURRENT template owner status (not workflow.owners)
+        is_template_owner = template.owners.filter(
+            Q(
+                type=OwnerType.USER,
+                user_id=user.id,
+                role=OwnerRole.OWNER,
+                is_deleted=False,
+            )
+            | Q(
+                type=OwnerType.GROUP,
+                group__users__id=user.id,
+                role=OwnerRole.OWNER,
+                is_deleted=False,
+            ),
+        ).exists()
+
+        # Only admin template owners have full access.
+        # All other cases: read-only (non-admin owners, viewers, starters).
+        return not (is_template_owner and user.is_admin)
 
 
 class TaskListSerializer(serializers.ModelSerializer):

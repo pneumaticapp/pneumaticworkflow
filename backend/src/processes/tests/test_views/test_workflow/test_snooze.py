@@ -7,6 +7,7 @@ from django.utils import timezone
 from src.analysis.customerio.tests.fixtures import create_test_account
 from src.generics.messages import MSG_GE_0007
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     TaskStatus,
     WorkflowStatus,
@@ -192,6 +193,7 @@ def test_snooze__template_owner__not_admin__permission_denied(
         tasks_count=1,
     )
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account_owner.account,
         type=OwnerType.USER,

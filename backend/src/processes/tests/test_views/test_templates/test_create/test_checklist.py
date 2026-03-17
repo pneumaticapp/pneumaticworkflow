@@ -2,6 +2,7 @@ import pytest
 
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     PerformerType,
 )
@@ -48,6 +49,7 @@ def test_create__ok(api_client, mocker):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -134,6 +136,7 @@ def test_create__generate_api_name__ok(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -195,6 +198,7 @@ def test_create__draft__ok(api_client, mocker):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': False,
@@ -248,6 +252,7 @@ def test_create__fields_with_equal_api_names__validation_error(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -326,6 +331,7 @@ def test_create__skip_selections__validation_error(api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -376,6 +382,7 @@ def test_create__empty_selections__validation_error(api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -433,6 +440,7 @@ def test_create__validation_error_with_task_api_name__ok(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -482,6 +490,7 @@ def test_create__null_selections__validation_error(api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -534,6 +543,7 @@ def test_create__list_without_dict__validation_error(api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,

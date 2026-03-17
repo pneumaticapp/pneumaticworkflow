@@ -16,6 +16,8 @@ from src.processes.services.events import (
 from src.processes.services.exceptions import (
     CommentServiceException,
 )
+from src.processes.enums import OwnerRole, OwnerType
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_guest,
@@ -292,6 +294,62 @@ def test_create__guest_another_workflow__permission_denied(
     assert response.status_code == 403
     service_init_mock.assert_not_called()
     comment_create_mock.assert_not_called()
+
+
+def test_create__template_viewer__ok(api_client, mocker):
+
+    # arrange
+    owner = create_test_user(is_account_owner=True)
+    workflow = create_test_workflow(owner)
+    task = workflow.tasks.get(number=1)
+    event = WorkflowEventService.comment_created_event(
+        text='Viewer comment',
+        task=task,
+        user=owner,
+        after_create_actions=False,
+    )
+    viewer_user = create_test_user(
+        account=owner.account,
+        email='viewer@test.test',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
+        template=workflow.template,
+        type=OwnerType.USER,
+        user=viewer_user,
+        account=owner.account,
+    )
+    service_init_mock = mocker.patch.object(
+        CommentService,
+        attribute='__init__',
+        return_value=None,
+    )
+    comment_create_mock = mocker.patch(
+        'src.processes.services.events.'
+        'CommentService.create',
+        return_value=event,
+    )
+    api_client.token_authenticate(viewer_user)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/comment',
+        data={'text': event.text},
+    )
+
+    # assert
+    assert response.status_code == 200
+    service_init_mock.assert_called_once_with(
+        user=viewer_user,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    comment_create_mock.assert_called_once_with(
+        task=task,
+        text=event.text,
+    )
 
 
 def test_create__service_exception__validation_error(

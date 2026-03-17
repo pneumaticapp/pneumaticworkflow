@@ -5,6 +5,7 @@ import pytest
 
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
+    OwnerRole,
     ConditionAction,
     DueDateRule,
     FieldType,
@@ -127,10 +128,12 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -217,6 +220,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -304,6 +308,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -324,6 +329,7 @@ class TestUpdateTemplateTask:
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ]
         mocker.patch(
@@ -374,6 +380,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -449,6 +456,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -544,6 +552,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -671,6 +680,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -789,10 +799,12 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -945,18 +957,22 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user1.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user1_new.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2_new.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -1091,18 +1107,22 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user1.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user1_new.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2_new.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -1234,10 +1254,12 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user1.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -1367,14 +1389,17 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user1.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user3.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -1480,6 +1505,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -1653,6 +1679,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -1715,6 +1742,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -1776,6 +1804,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -1841,6 +1870,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -1908,6 +1938,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -2032,6 +2063,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -2109,6 +2141,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -2185,6 +2218,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -2250,6 +2284,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -2306,10 +2341,12 @@ class TestUpdateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -2403,10 +2440,12 @@ class TestUpdateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -2506,10 +2545,12 @@ class TestUpdateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -2592,10 +2633,12 @@ class TestUpdateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -2705,10 +2748,12 @@ class TestUpdateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -2826,6 +2871,7 @@ class TestUpdateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -2888,6 +2934,7 @@ class TestUpdateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},

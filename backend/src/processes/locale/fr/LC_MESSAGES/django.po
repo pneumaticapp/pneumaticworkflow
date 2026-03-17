@@ -620,3 +620,11 @@ msgstr "L'utilisateur ou le groupe spécifié pour un champ de type \"Utilisateu
 #: src/processes/messages/workflow.py:182
 msgid "Guest"
 msgstr "Invité"
+
+#: src/processes/messages/template.py:281
+msgid "Permission denied. You do not have access to this template."
+msgstr "Accès refusé. Vous n’avez pas accès à ce modèle."
+
+#: src/processes/messages/template.py:282
+msgid "Permission denied. You are not a template owner or viewer."
+msgstr "Accès refusé. Vous n’êtes ni propriétaire ni visualiseur de ce modèle."

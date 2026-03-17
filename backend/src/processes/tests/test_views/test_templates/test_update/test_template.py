@@ -15,6 +15,7 @@ from src.authentication.tokens import (
 )
 from src.processes.enums import (
     FieldType,
+    OwnerRole,
     OwnerType,
     PerformerType,
     WorkflowStatus,
@@ -100,10 +101,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': user2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -246,10 +249,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': user2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': True,
@@ -352,10 +357,12 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': False,
@@ -382,10 +389,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': user2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': True,
@@ -478,6 +487,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': False,
@@ -521,6 +531,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': True,
@@ -612,6 +623,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': False,
@@ -656,6 +668,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': True,
@@ -716,6 +729,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': False,
@@ -752,6 +766,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': False,
@@ -818,6 +833,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': False,
@@ -854,6 +870,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user_2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': False,
@@ -921,6 +938,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -960,6 +978,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'finalizable': template.finalizable,
@@ -1016,6 +1035,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -1051,6 +1071,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': template.finalizable,
@@ -1116,6 +1137,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': template.finalizable,
@@ -1190,10 +1212,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.GROUP,
                     'source_id': group.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': template.finalizable,
@@ -1263,14 +1287,17 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.GROUP,
                     'source_id': group.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.GROUP,
                     'source_id': group_2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': template.finalizable,
@@ -1352,6 +1379,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],            'finalizable': True,
             'kickoff': {
@@ -1389,6 +1417,178 @@ class TestUpdateTemplate:
         template_update_mock.assert_called_once()
         kickoff_update_mock.assert_called_once()
 
+    def test_update__non_admin_in_template_owners__ok(
+        self,
+        mocker,
+        api_client,
+    ):
+        """
+        Non-admin users can be added as template owners.
+        They will have viewer-level access (read-only).
+        """
+        # arrange
+        template_update_mock = mocker.patch(
+            'src.processes.services.templates.'
+            'integrations.TemplateIntegrationsService.template_updated',
+        )
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(
+            is_account_owner=True,
+            account=account,
+        )
+        non_admin = create_test_user(
+            email='non_admin@test.test',
+            is_admin=False,
+            is_account_owner=False,
+            account=account,
+        )
+        api_client.token_authenticate(user)
+
+        template = create_test_template(
+            user=user,
+            is_active=True,
+            tasks_count=1,
+        )
+        task = template.tasks.first()
+
+        request_data = {
+            'id': template.id,
+            'is_active': True,
+            'is_public': template.is_public,
+            'description': '',
+            'name': 'Name changed',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': non_admin.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'finalizable': True,
+            'kickoff': {
+                'id': template.kickoff_instance.id,
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        }
+
+        # act
+        response = api_client.put(
+            path=f'/templates/{template.id}',
+            data=request_data,
+        )
+
+        # assert
+        assert response.status_code == 200
+        response_data = response.json()
+        assert len(response_data['owners']) == 2
+        owner_user_ids = [o['source_id'] for o in response_data['owners']]
+        assert str(user.id) in owner_user_ids
+        assert str(non_admin.id) in owner_user_ids
+        template_update_mock.assert_called_once()
+
+    def test_update__admin_in_template_owners__ok(
+        self,
+        mocker,
+        api_client,
+    ):
+        # arrange
+        template_update_mock = mocker.patch(
+            'src.processes.services.templates.'
+            'integrations.TemplateIntegrationsService.template_updated',
+        )
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(
+            is_account_owner=True,
+            account=account,
+        )
+        admin_user = create_test_user(
+            email='admin@test.test',
+            is_admin=True,
+            account=account,
+        )
+        api_client.token_authenticate(user)
+
+        template = create_test_template(
+            user=user,
+            is_active=True,
+            tasks_count=1,
+        )
+        task = template.tasks.first()
+
+        request_data = {
+            'id': template.id,
+            'is_active': True,
+            'is_public': template.is_public,
+            'description': '',
+            'name': 'Name changed',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': admin_user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'finalizable': True,
+            'kickoff': {
+                'id': template.kickoff_instance.id,
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        }
+
+        # act
+        response = api_client.put(
+            path=f'/templates/{template.id}',
+            data=request_data,
+        )
+
+        # assert
+        assert response.status_code == 200
+        response_data = response.json()
+        assert len(response_data['owners']) == 2
+        assert response_data['owners'][0].get('api_name')
+        assert response_data['owners'][0]['source_id'] == str(user.id)
+        assert response_data['owners'][0]['type'] == OwnerType.USER
+        assert response_data['owners'][1].get('api_name')
+        assert response_data['owners'][1]['source_id'] == str(admin_user.id)
+        assert response_data['owners'][1]['type'] == OwnerType.USER
+        template_update_mock.assert_called_once()
+
     def test_update__make_public__ok(
         self,
         mocker,
@@ -1410,6 +1610,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -1447,6 +1648,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': template.finalizable,
@@ -1498,6 +1700,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -1535,6 +1738,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': template.finalizable,
@@ -1599,10 +1803,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': user_2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': True,
@@ -1695,6 +1901,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': account_1_owner.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': True,
@@ -1769,10 +1976,12 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': non_admin.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': owner.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'finalizable': True,
@@ -1858,10 +2067,12 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': non_admin.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': owner.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'finalizable': True,
@@ -1964,6 +2175,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'finalizable': True,
@@ -2046,10 +2258,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': user2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},
@@ -2138,10 +2352,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': user2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},
