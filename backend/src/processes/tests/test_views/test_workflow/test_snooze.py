@@ -4,7 +4,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
-from src.analysis.customerio.tests.fixtures import create_test_account
+from src.accounts.enums import BillingPlanType
 from src.generics.messages import MSG_GE_0007
 from src.processes.enums import (
     OwnerType,
@@ -17,10 +17,12 @@ from src.processes.services.exceptions import (
 )
 from src.processes.tests.fixtures import (
     create_test_admin,
+    create_test_not_admin,
     create_test_owner,
     create_test_template,
     create_test_user,
     create_test_workflow,
+    create_test_account,
 )
 from src.utils.validation import ErrorCode
 
@@ -281,3 +283,144 @@ def test_snooze__service_exception__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == message
     snooze_mock.assert_called_once_with(date=date)
+
+
+def test_snooze__not_authenticated__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    date = timezone.now() + timedelta(days=1)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/snooze',
+        data={'date': date.timestamp()},
+    )
+
+    # assert
+    assert response.status_code == 401
+
+
+def test_snooze__expired_subscription__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    account.plan_expiration = timezone.now() - timedelta(hours=1)
+    account.save()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    date = timezone.now() + timedelta(days=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/snooze',
+        data={'date': date.timestamp()},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_snooze__billing_plan__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(plan=None)
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    date = timezone.now() + timedelta(days=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/snooze',
+        data={'date': date.timestamp()},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_snooze__not_owner__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    admin = create_test_admin(
+        account=account,
+        email='admin@test.test',
+    )
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    date = timezone.now() + timedelta(days=1)
+    api_client.token_authenticate(admin)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/snooze',
+        data={'date': date.timestamp()},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_snooze__users_overlimited__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.PREMIUM,
+        max_users=1,
+    )
+    owner = create_test_owner(account=account)
+    create_test_not_admin(account=account)
+    account.active_users = 2
+    account.save()
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    date = timezone.now() + timedelta(days=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/snooze',
+        data={'date': date.timestamp()},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_snooze__not_found__not_found(api_client):
+
+    # arrange
+    user = create_test_owner()
+    api_client.token_authenticate(user)
+    date = timezone.now() + timedelta(days=1)
+
+    # act
+    response = api_client.post(
+        '/workflows/99999999/snooze',
+        data={'date': date.timestamp()},
+    )
+
+    # assert
+    assert response.status_code == 404
+
+
+def test_snooze__missing_date__validation_error(api_client):
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/snooze',
+        data={},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR

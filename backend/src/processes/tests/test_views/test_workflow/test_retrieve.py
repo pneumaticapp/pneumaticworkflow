@@ -4,6 +4,7 @@ from datetime import timedelta
 import pytest
 from django.utils import timezone
 
+from src.accounts.enums import BillingPlanType
 from src.processes.enums import (
     FieldType,
     PerformerType,
@@ -21,8 +22,11 @@ from src.processes.models.workflows.task import (
 )
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
+    create_test_account,
     create_test_admin,
     create_test_group,
+    create_test_not_admin,
+    create_test_owner,
     create_test_template,
     create_test_user,
     create_test_workflow,
@@ -664,3 +668,79 @@ def test_retrieve__user_in_group_task_performer__ok(api_client):
     # assert
     assert response.status_code == 200
     assert response.data['id'] == workflow.id
+
+
+def test_retrieve__not_authenticated__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+
+    # act
+    response = api_client.get(f'/workflows/{workflow.id}')
+
+    # assert
+    assert response.status_code == 401
+
+
+def test_retrieve__expired_subscription__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.UNLIMITED,
+        plan_expiration=timezone.now() - timedelta(hours=1),
+    )
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(f'/workflows/{workflow.id}')
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_retrieve__billing_plan__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(plan=None)
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(f'/workflows/{workflow.id}')
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_retrieve__not_member__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    not_admin = create_test_not_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(not_admin)
+
+    # act
+    response = api_client.get(f'/workflows/{workflow.id}')
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_retrieve__not_found__not_found(api_client):
+
+    # arrange
+    user = create_test_user()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/workflows/99999999')
+
+    # assert
+    assert response.status_code == 404

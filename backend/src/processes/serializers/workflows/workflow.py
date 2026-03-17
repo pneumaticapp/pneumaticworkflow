@@ -213,11 +213,6 @@ class WorkflowUpdateSerializer(
     is_urgent = serializers.BooleanField(required=False)
     due_date_tsp = TimeStampField(required=False, allow_null=True)
 
-    def validate_due_date(self, value):
-        if value and value <= timezone.now():
-            raise ValidationError(messages.MSG_PW_0051)
-        return value
-
     def validate_due_date_tsp(self, value):
         if value and value <= timezone.now():
             raise ValidationError(messages.MSG_PW_0051)

@@ -1,5 +1,8 @@
+from datetime import timedelta
+
 import pytest
 from django.contrib.auth import get_user_model
+from django.utils import timezone
 
 from src.accounts.enums import BillingPlanType
 from src.processes.enums import (
@@ -11,6 +14,9 @@ from src.processes.services.exceptions import (
 )
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_admin,
+    create_test_not_admin,
+    create_test_owner,
     create_test_template,
     create_test_user,
     create_test_workflow,
@@ -212,4 +218,94 @@ def test_delete__not_workflow__not_found(
 
     # assert
     assert response.status_code == 404
+    terminate_mock.assert_not_called()
+
+
+def test_destroy__expired_subscription__permission_denied(api_client, mocker):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.UNLIMITED,
+        plan_expiration=timezone.now() - timedelta(hours=1),
+    )
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+    terminate_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowActionService.terminate_workflow',
+    )
+
+    # act
+    response = api_client.delete(f'/workflows/{workflow.id}')
+
+    # assert
+    assert response.status_code == 403
+    terminate_mock.assert_not_called()
+
+
+def test_destroy__billing_plan__permission_denied(api_client, mocker):
+
+    # arrange
+    account = create_test_account(plan=None)
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+    terminate_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowActionService.terminate_workflow',
+    )
+
+    # act
+    response = api_client.delete(f'/workflows/{workflow.id}')
+
+    # assert
+    assert response.status_code == 403
+    terminate_mock.assert_not_called()
+
+
+def test_destroy__not_owner__permission_denied(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    admin = create_test_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(admin)
+    terminate_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowActionService.terminate_workflow',
+    )
+
+    # act
+    response = api_client.delete(f'/workflows/{workflow.id}')
+
+    # assert
+    assert response.status_code == 403
+    terminate_mock.assert_not_called()
+
+
+def test_destroy__users_overlimited__permission_denied(api_client, mocker):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.PREMIUM,
+        max_users=1,
+    )
+    owner = create_test_owner(account=account)
+    create_test_not_admin(account=account)
+    account.active_users = 2
+    account.save()
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+    terminate_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowActionService.terminate_workflow',
+    )
+
+    # act
+    response = api_client.delete(f'/workflows/{workflow.id}')
+
+    # assert
+    assert response.status_code == 403
     terminate_mock.assert_not_called()
