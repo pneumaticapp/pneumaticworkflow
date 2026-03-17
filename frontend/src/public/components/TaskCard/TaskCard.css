@@ -187,6 +187,15 @@
   }
 }
 
+.complete-form_readonly {
+  margin: 0;
+  padding: 0;
+
+  &::before {
+    display: none;
+  }
+}
+
 .task-output {
   margin-bottom: 32px;
 }

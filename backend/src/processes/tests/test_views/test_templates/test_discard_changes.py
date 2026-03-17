@@ -3,6 +3,7 @@ import pytest
 from src.processes.enums import (
     FieldType,
     OwnerType,
+    OwnerRole,
     PerformerType,
 )
 from src.processes.messages.template import (
@@ -28,6 +29,7 @@ def test_discard_changes__active_template__not_change(api_client):
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -92,6 +94,7 @@ def test_discard_changes__draft_template__discard_changes(api_client):
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -230,6 +233,7 @@ def test_discard_changes__draft_unused_template__delete_template(api_client):
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': False,

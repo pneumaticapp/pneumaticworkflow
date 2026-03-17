@@ -21,7 +21,6 @@ import { isEnvAi } from '../../../constants/enviroment';
 export interface ITemplatesUserProps {
   templatesList: ITemplatesList;
   loading?: boolean;
-  canEdit: boolean | undefined;
   cloneTemplate(payload: TCloneTemplatePayload): void;
   deleteTemplate(payload: TDeleteTemplatePayload): void;
   loadTemplates(offset: number): void;
@@ -32,7 +31,6 @@ export interface ITemplatesUserProps {
 export function TemplatesUser({
   templatesList,
   loading,
-  canEdit,
   cloneTemplate,
   deleteTemplate,
   loadTemplates,
@@ -111,7 +109,7 @@ export function TemplatesUser({
             {...template}
             key={template.id}
             onRunWorkflow={() => openRunWorkflowModal({ templateId: template.id })}
-            canEdit={canEdit}
+            canEdit={template.isEditable}
             cloneTemplate={cloneTemplate}
             deleteTemplate={deleteTemplate}
           />

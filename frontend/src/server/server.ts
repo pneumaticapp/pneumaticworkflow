@@ -17,12 +17,11 @@ import { SSOProvider } from './types';
 
 const webpackConfig = require('../../webpack.config');
 
-const { NODE_ENV = 'development'} = process.env;
+const { NODE_ENV = 'development' } = process.env;
 const devMode = NODE_ENV !== 'production';
 
 const isSSOAuth = process.env.SSO_AUTH !== 'no';
 const envSSOProvider = process.env.SSO_PROVIDER;
-
 
 const {
   api: { urls },
@@ -101,7 +100,7 @@ export function initServer() {
   app.get(ERoutes.OAuthGoogle, oAuthHandler(urls.getGoogleAuthUri, urls.getGoogleAuthToken));
   app.get(ERoutes.OAuthMicrosoft, oAuthHandler(urls.getMicrosoftAuthUri, urls.getMicrosoftAuthToken));
 
-  if (isSSOAuth && envSSOProvider === SSOProvider.Auth0) { 
+  if (isSSOAuth && envSSOProvider === SSOProvider.Auth0) {
     app.get(ERoutes.OAuthSSOAuth0, oAuthHandler(urls.getSSOAuthUri, urls.getSSOAuthToken));
   }
 

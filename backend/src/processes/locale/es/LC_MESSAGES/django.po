@@ -617,3 +617,11 @@ msgstr "No puedes escribir un comentario en una tarea inactiva."
 #: src/processes/messages/workflow.py:182
 msgid "The user or group specified for a \"User\" field does not exist."
 msgstr "El usuario o grupo especificado para un campo de tipo \"Usuario\" no existe."
+
+#: src/processes/messages/template.py:281
+msgid "Permission denied. You do not have access to this template."
+msgstr "Permiso denegado. No tienes acceso a esta plantilla."
+
+#: src/processes/messages/template.py:282
+msgid "Permission denied. You are not a template owner or viewer."
+msgstr "Permiso denegado. No eres propietario ni visualizador de esta plantilla."

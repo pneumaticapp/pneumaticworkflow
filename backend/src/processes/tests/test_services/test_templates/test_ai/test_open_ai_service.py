@@ -10,6 +10,7 @@ from src.authentication.enums import (
     AuthTokenType,
 )
 from src.processes.enums import (
+    OwnerRole,
     ConditionAction,
     OwnerType,
     PerformerType,
@@ -495,6 +496,7 @@ def test_get_template_data__ok(mocker):
         {
             'type': OwnerType.USER,
             'source_id': str(user.id),
+            'role': OwnerRole.OWNER,
         },
     ]
     assert template_data['kickoff'] == {

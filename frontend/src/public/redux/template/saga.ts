@@ -219,6 +219,7 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void) {
     dateUpdated: savedTemplate.dateUpdated,
     publicUrl: savedTemplate.publicUrl,
     embedUrl: savedTemplate.embedUrl,
+    owners: savedTemplate.owners ?? lastTemplateState.owners,
     tasks: (() => {
       const savedTasksMap = new Map(savedTemplate.tasks.map((task) => [task.apiName, task]));
       return lastTemplateState.tasks.map((task) => ({
