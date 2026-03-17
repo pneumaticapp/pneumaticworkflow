@@ -10,6 +10,7 @@ import {
   ITemplateTaskResponse,
   ITemplateTaskPerformer,
   ETemplateOwnerType,
+  ETemplateOwnerRole,
   ITemplateOwner,
 } from '../types/template';
 import { getUrlParams } from './getUrlParams';
@@ -102,6 +103,7 @@ export const getNormalizedTemplateOwners = (
       sourceId: String(user.id),
       apiName: createOwnerApiName(),
       type: ETemplateOwnerType.User,
+      role: ETemplateOwnerRole.Owner,
     } as ITemplateOwner
   });
 

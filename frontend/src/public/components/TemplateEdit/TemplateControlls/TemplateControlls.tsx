@@ -6,13 +6,15 @@ import { useIntl } from 'react-intl';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { TemplateOwners } from '../TemplateOwners';
+import { TemplateViewers } from '../TemplateViewers';
+import { TemplateStarters } from '../TemplateStarters';
 import { ActivityIcon, BoxesIcon, EnableIcon, TrashIcon, UnionIcon, WarningIcon } from '../../icons';
 import { IntlMessages } from '../../IntlMessages';
 import { ShowMore } from '../../UI/ShowMore';
 import { getLinkToWorkflows } from '../../../utils/routes/getLinkToWorkflows';
 import { getLinkToHighlightsByTemplate } from '../../../utils/routes/getLinkToHighlightsByTemplate';
 import { Button } from '../../UI/Buttons/Button';
-import { ITemplate } from '../../../types/template';
+import { ETemplateOwnerRole, ITemplateOwner, ITemplate } from '../../../types/template';
 import {
   TCloneTemplatePayload,
   TDeleteTemplatePayload,
@@ -93,6 +95,10 @@ export function TemplateControlls({
     completionNotification: isCompletionNotification,
     reminderNotification: isReminderNotification,
   } = template;
+
+  const viewers = owners.filter((o: ITemplateOwner) => o.role === ETemplateOwnerRole.Viewer);
+  const starters = owners.filter((o: ITemplateOwner) => o.role === ETemplateOwnerRole.Starter);
+  const pureOwners = owners.filter((o: ITemplateOwner) => o.role === ETemplateOwnerRole.Owner);
 
   const runnableWorkflow = getRunnableWorkflow(template);
   const isSavedTemplate = React.useMemo(() => Boolean(templateId), [templateId]);
@@ -257,9 +263,31 @@ export function TemplateControlls({
       <div className={styles['settings-block']}>
         <ShowMore label={formatMessage({ id: 'template.owners' })} isInitiallyVisible={isCreateTemplate()}>
           <TemplateOwners
-            templateOwners={owners}
+            templateOwners={pureOwners}
             onChangeTemplateOwners={(newTemplateOwners) =>
-              patchTemplate({ changedFields: { owners: newTemplateOwners } })
+              patchTemplate({ changedFields: { owners: [...newTemplateOwners, ...viewers, ...starters] } })
+            }
+          />
+        </ShowMore>
+      </div>
+
+      <div className={styles['settings-block']}>
+        <ShowMore label={formatMessage({ id: 'template.viewers' })}>
+          <TemplateViewers
+            templateViewers={viewers}
+            onChangeTemplateViewers={(newViewers) =>
+              patchTemplate({ changedFields: { owners: [...pureOwners, ...newViewers, ...starters] } })
+            }
+          />
+        </ShowMore>
+      </div>
+
+      <div className={styles['settings-block']}>
+        <ShowMore label={formatMessage({ id: 'template.starters' })}>
+          <TemplateStarters
+            templateStarters={starters}
+            onChangeTemplateStarters={(newStarters) =>
+              patchTemplate({ changedFields: { owners: [...pureOwners, ...viewers, ...newStarters] } })
             }
           />
         </ShowMore>
