@@ -1,7 +1,16 @@
 import { EExtraFieldType, IKickoff, ITemplateTask } from '../../../../../types/template';
 import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
 import { TTaskVariable } from '../../../types';
-import { getTaskVariables } from '../getTaskVariables';
+import {
+  getTaskVariables,
+  getSystemVariables,
+  getVariables,
+  getSingleLineVariables,
+  isSystemVariable,
+  WORKFLOW_STARTER_VARIABLE_API_NAME,
+  WORKFLOW_STARTER_VARIABLE_TITLE,
+  SYSTEM_VARIABLE_SUBTITLE,
+} from '../getTaskVariables';
 
 const mockKikoff: IKickoff = {
   description: 'Kickoff description',
@@ -125,5 +134,101 @@ describe('getTaskVariables', () => {
     const expectedResult = expectedSecondTaskVariables;
 
     expect(actualResult).toStrictEqual(expectedResult);
+  });
+});
+
+describe('getSystemVariables', () => {
+  it('returns array with workflow-starter variable', () => {
+    const result = getSystemVariables();
+
+    expect(result).toEqual([
+      {
+        apiName: WORKFLOW_STARTER_VARIABLE_API_NAME,
+        title: WORKFLOW_STARTER_VARIABLE_TITLE,
+        subtitle: SYSTEM_VARIABLE_SUBTITLE,
+        type: EExtraFieldType.String,
+      },
+    ]);
+  });
+});
+
+describe('isSystemVariable', () => {
+  it('returns true for workflow-starter', () => {
+    expect(isSystemVariable(WORKFLOW_STARTER_VARIABLE_API_NAME)).toBe(true);
+  });
+
+  it('returns false for a regular field apiName', () => {
+    expect(isSystemVariable('client-name-3967')).toBe(false);
+  });
+
+  it('returns false for an empty string', () => {
+    expect(isSystemVariable('')).toBe(false);
+  });
+});
+
+describe('getVariables', () => {
+  it('returns system variables first, then field variables', () => {
+    const result = getVariables({ kickoff: mockKikoff, tasks: [] });
+
+    expect(result[0].apiName).toBe(WORKFLOW_STARTER_VARIABLE_API_NAME);
+    expect(result[1].apiName).toBe('client-name-3967');
+  });
+
+  it('includes both system and kickoff variables', () => {
+    const result = getVariables({ kickoff: mockKikoff, tasks: [] });
+
+    expect(result).toHaveLength(2);
+  });
+
+  it('returns only system variables when no kickoff or tasks provided', () => {
+    const result = getVariables({});
+
+    expect(result).toHaveLength(1);
+    expect(result[0].apiName).toBe(WORKFLOW_STARTER_VARIABLE_API_NAME);
+  });
+});
+
+describe('getSingleLineVariables', () => {
+  it('includes String type variables (like workflow-starter)', () => {
+    const variables: TTaskVariable[] = [
+      {
+        apiName: WORKFLOW_STARTER_VARIABLE_API_NAME,
+        title: WORKFLOW_STARTER_VARIABLE_TITLE,
+        type: EExtraFieldType.String,
+      },
+      {
+        apiName: 'text-field',
+        title: 'Text',
+        type: EExtraFieldType.Text,
+      },
+    ];
+
+    const result = getSingleLineVariables(variables);
+
+    expect(result).toHaveLength(1);
+    expect(result[0].apiName).toBe(WORKFLOW_STARTER_VARIABLE_API_NAME);
+  });
+
+  it('filters out multi-line types (Text, File, Url)', () => {
+    const variables: TTaskVariable[] = [
+      { apiName: 'text', title: 'Text', type: EExtraFieldType.Text },
+      { apiName: 'file', title: 'File', type: EExtraFieldType.File },
+      { apiName: 'url', title: 'Url', type: EExtraFieldType.Url },
+    ];
+
+    expect(getSingleLineVariables(variables)).toHaveLength(0);
+  });
+
+  it('keeps Number, Date, User, Radio, Checkbox, Creatable types', () => {
+    const variables: TTaskVariable[] = [
+      { apiName: 'num', title: 'Num', type: EExtraFieldType.Number },
+      { apiName: 'date', title: 'Date', type: EExtraFieldType.Date },
+      { apiName: 'user', title: 'User', type: EExtraFieldType.User },
+      { apiName: 'radio', title: 'Radio', type: EExtraFieldType.Radio },
+      { apiName: 'check', title: 'Check', type: EExtraFieldType.Checkbox },
+      { apiName: 'drop', title: 'Drop', type: EExtraFieldType.Creatable },
+    ];
+
+    expect(getSingleLineVariables(variables)).toHaveLength(6);
   });
 });
