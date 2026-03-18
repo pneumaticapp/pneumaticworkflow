@@ -1,5 +1,6 @@
-import React from 'react';
+import * as React from 'react';
 import classnames from 'classnames';
+import { useIntl } from 'react-intl';
 import {
   type LexicalNode,
   type NodeKey,
@@ -11,6 +12,7 @@ import {
 } from 'lexical';
 
 import type { SerializedVariableNode, TVariableNodePayload } from './types';
+import { getLocalizedSystemVariable } from '../../../TemplateEdit/TaskForm/utils/getTaskVariables';
 
 import styles from './VariableNode.css';
 
@@ -36,14 +38,24 @@ function VariableComponent({
   title,
   subtitle,
 }: VariableComponentProps): React.ReactElement {
+  const { formatMessage } = useIntl();
+  const { title: localizedTitle, subtitle: localizedSubtitle } = getLocalizedSystemVariable({
+    apiName,
+    title,
+    subtitle,
+    formatMessage,
+  });
+
   return (
     <span
       className={classnames(styles['variable'], 'lexical-rich-editor-variable')}
       data-lexical-variable-api={apiName}
       data-lexical-variable-title={title}
       data-lexical-variable-subtitle={subtitle ?? ''}
+      data-tooltip-title={localizedTitle}
+      data-tooltip-subtitle={localizedSubtitle ?? ''}
     >
-      {title || apiName}
+      {localizedTitle || apiName}
     </span>
   );
 }
