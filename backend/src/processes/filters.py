@@ -14,7 +14,7 @@ from src.generics.filters import (
     TsQuerySearchFilter,
 )
 from src.processes.enums import TaskStatus, WorkflowStatus
-from src.processes.models.templates.dataset import Dataset
+from src.processes.models.dataset import Dataset
 from src.processes.models.templates.system_template import SystemTemplate
 from src.processes.models.templates.template import Template
 from src.processes.models.workflows.event import WorkflowEvent

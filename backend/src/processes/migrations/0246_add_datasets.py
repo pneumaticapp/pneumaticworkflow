@@ -9,7 +9,7 @@ import src.generics.mixins.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0141_auto_20260310_1646'),
+        ('accounts', '0141_notification_text_default'),
         ('processes', '0245_add_templateowner_role'),
     ]
 

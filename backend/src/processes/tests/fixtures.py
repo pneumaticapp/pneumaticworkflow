@@ -53,6 +53,7 @@ from src.processes.models.templates.preset import (
 )
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
+from src.processes.models.dataset import Dataset, DatasetItem
 from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.conditions import (
     Condition,
@@ -780,3 +781,26 @@ def create_test_template_preset(
             )
 
     return preset
+
+
+def create_test_dataset(
+    account: Account,
+    name: str = 'Test Dataset',
+    description: str = '',
+    items_count: int = 2,
+) -> Dataset:
+
+    """Creating datasets with a given number of items."""
+
+    dataset = Dataset.objects.create(
+        account=account,
+        name=name,
+        description=description,
+    )
+    for i in range(1, items_count + 1):
+        DatasetItem.objects.create(
+            dataset=dataset,
+            value=f'Item {i}',
+            order=i,
+        )
+    return dataset

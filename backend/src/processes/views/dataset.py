@@ -13,7 +13,7 @@ from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import UserIsAuthenticated
 from src.processes.filters import DatasetFilter
-from src.processes.models.templates.dataset import Dataset
+from src.processes.models.dataset import Dataset
 from src.processes.serializers.templates.dataset import (
     DatasetListSerializer,
     DatasetSerializer,

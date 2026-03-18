@@ -3,7 +3,7 @@ from typing import Any, Dict, List, Optional
 from django.contrib.auth import get_user_model
 
 from src.generics.base.service import BaseModelService
-from src.processes.models.templates.dataset import Dataset, DatasetItem
+from src.processes.models.dataset import Dataset, DatasetItem
 
 UserModel = get_user_model()
 

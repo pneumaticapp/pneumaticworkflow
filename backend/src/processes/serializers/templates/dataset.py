@@ -5,7 +5,7 @@ from rest_framework.serializers import (
 )
 
 from src.generics.fields import TimeStampField
-from src.processes.models.templates.dataset import Dataset, DatasetItem
+from src.processes.models.dataset import Dataset, DatasetItem
 
 
 class DatasetItemSerializer(ModelSerializer):
@@ -53,7 +53,7 @@ class DatasetSerializer(ModelSerializer):
             'id',
             'name',
             'description',
-            'date_created',
+            'date_created_tsp',
             'items',
         )
 
@@ -64,4 +64,4 @@ class DatasetSerializer(ModelSerializer):
         source='date_created',
         read_only=True,
     )
-    items = DatasetItemSerializer(many=True)
+    items = DatasetItemSerializer(many=True, required=False, default=list)
