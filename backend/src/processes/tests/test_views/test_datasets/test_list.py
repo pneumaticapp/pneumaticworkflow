@@ -126,7 +126,8 @@ def test_list__ordering_by_name_asc__ok(api_client):
     # assert
     assert response.status_code == 200
     ids = [item['id'] for item in response.data]
-    assert ids.index(dataset_a.id) < ids.index(dataset_z.id)
+    assert ids[0] == dataset_a.id
+    assert ids[1] == dataset_z.id
 
 
 def test_list__ordering_by_name_desc__ok(api_client):
@@ -146,7 +147,8 @@ def test_list__ordering_by_name_desc__ok(api_client):
     # assert
     assert response.status_code == 200
     ids = [item['id'] for item in response.data]
-    assert ids.index(dataset_z.id) < ids.index(dataset_a.id)
+    assert ids[0] == dataset_z.id
+    assert ids[1] == dataset_a.id
 
 
 def test_list__ordering_by_date_asc__ok(api_client):
@@ -166,7 +168,8 @@ def test_list__ordering_by_date_asc__ok(api_client):
     # assert
     assert response.status_code == 200
     ids = [item['id'] for item in response.data]
-    assert ids.index(dataset_first.id) < ids.index(dataset_second.id)
+    assert ids[0] == dataset_first.id
+    assert ids[1] == dataset_second.id
 
 
 def test_list__ordering_by_date_desc_default__ok(api_client):
@@ -186,7 +189,8 @@ def test_list__ordering_by_date_desc_default__ok(api_client):
     # assert
     assert response.status_code == 200
     ids = [item['id'] for item in response.data]
-    assert ids.index(dataset_second.id) < ids.index(dataset_first.id)
+    assert ids[0] == dataset_second.id
+    assert ids[1] == dataset_first.id
 
 
 def test_list__items_count_annotated__ok(api_client):
