@@ -203,8 +203,8 @@ def test_create_instance__skip_value__ok(mocker):
     get_valid_value_mock.assert_not_called()
     task_field = service.instance
     assert task_field.value == ''
-    assert task_field.clear_value == ''
-    assert task_field.markdown_value == ''
+    assert task_field.clear_value is None
+    assert task_field.markdown_value is None
     assert task_field.user_id is None
     assert task_field.group_id is None
 
