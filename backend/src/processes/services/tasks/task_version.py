@@ -8,7 +8,6 @@ from src.notifications.tasks import (
     send_new_task_notification,
     send_removed_task_notification, send_new_task_websocket,
 )
-from src.processes.enums import TaskStatus
 from src.processes.models.workflows.checklist import (
     ChecklistSelection,
 )
@@ -415,20 +414,18 @@ class TaskUpdateVersionService(
         """
 
         workflow = kwargs['workflow']
-        completed_tasks_fields_values = workflow.get_fields_markdown_values(
-            tasks_filter_kwargs={'task__status': TaskStatus.COMPLETED},
-        )
+        tasks_fields_values = workflow.get_fields_markdown_values()
         self._create_or_update_instance(
             data=data,
             workflow=workflow,
-            fields_values=completed_tasks_fields_values,
+            fields_values=tasks_fields_values,
         )
         self._update_fields(data=data.get('fields'))
         self._update_conditions(data=data.get('conditions'))
         self._update_checklists(
             data=data.get('checklists'),
             version=version,
-            fields_values=completed_tasks_fields_values,
+            fields_values=tasks_fields_values,
         )
         self._update_delay(new_duration=data.get('delay'))
         # Don't snooze active tasks if delay created
