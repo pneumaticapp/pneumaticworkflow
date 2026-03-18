@@ -8,8 +8,8 @@ import { CustomTooltip } from '../../../UI';
 
 // Constants
 const VARIABLE_CHIP_SELECTOR = '.lexical-rich-editor-variable';
-const VARIABLE_TITLE_ATTRIBUTE = 'data-lexical-variable-title';
-const VARIABLE_SUBTITLE_ATTRIBUTE = 'data-lexical-variable-subtitle';
+const VARIABLE_TITLE_ATTRIBUTE = 'data-tooltip-title';
+const VARIABLE_SUBTITLE_ATTRIBUTE = 'data-tooltip-subtitle';
 
 /**
  * Represents a hovered variable element with its data.
