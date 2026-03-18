@@ -568,7 +568,7 @@ class Notification(
         on_delete=models.CASCADE,
         related_name='notifications',
     )
-    text = models.TextField(null=True)
+    text = models.TextField(default='')
     type = models.CharField(max_length=24, choices=NotificationType.CHOICES)
     status = models.CharField(
         max_length=10,
