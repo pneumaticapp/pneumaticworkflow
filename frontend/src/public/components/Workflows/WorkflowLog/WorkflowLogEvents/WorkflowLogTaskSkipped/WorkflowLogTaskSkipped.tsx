@@ -71,17 +71,13 @@ export function WorkflowLogTaskSkipped({ task, theme }: IWorkflowLogTaskSkippedP
     <div className={classnames(styles['container'], getThemeClassName())}>
       <div className={styles['top-area']}>
         <div className={styles['top-area__meta']}>
-          <p className={styles['pre-title']}>
-            {formatMessage({ id: 'workflows.step-pre-title' }, { task: task?.number })}
-          </p>
+          <Header tag="h3" size="6" className={styles['task-name']}>
+            {task?.name}
+          </Header>
           <p className={styles['skipped']}>
             {formatMessage({ id: 'workflows.log-task-skipped' })}
           </p>
         </div>
-
-        <Header tag="h3" size="6" className={styles['task-name']}>
-          {task?.name}
-        </Header>
       </div>
 
       <div className={styles['bottom-area']}>

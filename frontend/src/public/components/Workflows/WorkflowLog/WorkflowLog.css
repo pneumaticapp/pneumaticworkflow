@@ -70,6 +70,20 @@
   }
 }
 
+.popup-body-controls-right-toggles {
+  display: flex;
+  gap: 8px;
+
+  @media (--mobile) {
+    flex-direction: column;
+    width: 100%;
+
+    div {
+      margin: 0;
+    }
+  }
+}
+
 .switch-container {
   margin: 8px 0;
   display: flex;
