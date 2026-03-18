@@ -10,6 +10,7 @@ from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
     FieldType,
+    OwnerRole,
     OwnerType,
     PerformerType,
     TaskStatus,
@@ -23,6 +24,7 @@ from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
 )
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.template import Template
 from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.checklist import (
@@ -227,6 +229,36 @@ def test_retrieve__admin_not_workflow_member__permission_denied(api_client):
     assert response.status_code == 403
 
 
+def test_retrieve__template_viewer__ok(api_client):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+    workflow = create_test_workflow(template=template, user=template_owner)
+    task = workflow.tasks.order_by('number').first()
+    viewer_user = create_test_user(
+        account=account,
+        email='viewer@test.com',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
+        template=template,
+        type=OwnerType.USER,
+        user=viewer_user,
+        account=account,
+    )
+    api_client.token_authenticate(viewer_user)
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == task.id
+
+
 def test_retrieve__delayed_task__not_found(api_client, mocker):
 
     # arrange
@@ -278,6 +310,7 @@ def test_retrieve__delete_delay_before_active_task__found(
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'is_active': True,
@@ -1613,3 +1646,350 @@ def test_retrieve__custom_revert_tasks__ok(api_client, mocker):
             'api_name': task_3.api_name,
         },
     ]
+
+
+def test_retrieve__template_viewer_not_performer__is_read_only_viewer_true(
+    api_client,
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(user=template_owner)
+    workflow = create_test_workflow(template=template, user=template_owner)
+    task = workflow.tasks.get(number=1)
+
+    viewer_user = create_test_user(
+        account=account,
+        email='viewer@test.com',
+        is_account_owner=False,
+        is_admin=False,
+    )
+
+    # Create template viewer
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
+        template=template,
+        type=OwnerType.USER,
+        user=viewer_user,
+        account=account,
+    )
+
+    # Remove template_owner as task performer to test pure template viewer
+    TaskPerformer.objects.filter(task_id=task.id).delete()
+
+    api_client.token_authenticate(viewer_user)
+
+    mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'identify',
+    )
+    mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'group',
+    )
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == task.id
+    assert response.data['is_read_only_viewer'] is True
+
+
+def test_retrieve__admin_template_viewer_not_performer__is_read_only_viewer_ok(
+    api_client,
+    mocker,
+):
+    """Admin who is ONLY template viewer should have read-only access."""
+
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(user=template_owner)
+    workflow = create_test_workflow(template=template, user=template_owner)
+    task = workflow.tasks.get(number=1)
+
+    admin_viewer = create_test_user(
+        account=account,
+        email='admin_viewer@test.com',
+        is_account_owner=False,
+        is_admin=True,
+    )
+
+    # Create template viewer for admin
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
+        template=template,
+        type=OwnerType.USER,
+        user=admin_viewer,
+        account=account,
+    )
+
+    # Remove template_owner as task performer
+    TaskPerformer.objects.filter(task_id=task.id).delete()
+
+    api_client.token_authenticate(admin_viewer)
+
+    mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'identify',
+    )
+    mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'group',
+    )
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == task.id
+    assert response.data['is_read_only_viewer'] is True
+
+
+def test_retrieve__template_viewer_and_performer__is_read_only_viewer_false(
+    api_client,
+    mocker,
+):
+
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(user=template_owner)
+    workflow = create_test_workflow(template=template, user=template_owner)
+    task = workflow.tasks.get(number=1)
+
+    viewer_user = create_test_user(
+        account=account,
+        email='viewer@test.com',
+        is_account_owner=False,
+        is_admin=False,
+    )
+
+    # Create template viewer
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
+        template=template,
+        type=OwnerType.USER,
+        user=viewer_user,
+        account=account,
+    )
+
+    # Make user a task performer
+    TaskPerformer.objects.create(
+        task_id=task.id,
+        user_id=viewer_user.id,
+    )
+
+    api_client.token_authenticate(viewer_user)
+
+    mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'identify',
+    )
+    mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'group',
+    )
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == task.id
+    assert response.data['is_read_only_viewer'] is False
+
+
+def test_retrieve__admin_template_owner__is_read_only_viewer_false(
+    api_client,
+    mocker,
+):
+    """Admin template owner has full access (is_read_only_viewer=False)."""
+
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(user=template_owner)
+    workflow = create_test_workflow(template=template, user=template_owner)
+    task = workflow.tasks.get(number=1)
+
+    admin_owner_user = create_test_user(
+        account=account,
+        email='admin_owner@test.com',
+        is_account_owner=False,
+        is_admin=True,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
+        template=template,
+        type=OwnerType.USER,
+        user=admin_owner_user,
+        account=account,
+    )
+
+    api_client.token_authenticate(admin_owner_user)
+
+    mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'identify',
+    )
+    mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'group',
+    )
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == task.id
+    assert response.data['is_read_only_viewer'] is False
+
+
+def test_retrieve__non_admin_template_owner__is_read_only_viewer_true(
+    api_client,
+    mocker,
+):
+    """
+    Non-admin template owner has read-only
+    access (is_read_only_viewer=True).
+    """
+
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(user=template_owner)
+    workflow = create_test_workflow(template=template, user=template_owner)
+    task = workflow.tasks.get(number=1)
+
+    non_admin_owner_user = create_test_user(
+        account=account,
+        email='non_admin_owner@test.com',
+        is_account_owner=False,
+        is_admin=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
+        template=template,
+        type=OwnerType.USER,
+        user=non_admin_owner_user,
+        account=account,
+    )
+
+    api_client.token_authenticate(non_admin_owner_user)
+
+    mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'identify',
+    )
+    mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'group',
+    )
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == task.id
+    assert response.data['is_read_only_viewer'] is True
+
+
+def test_retrieve__task_performer__is_read_only_viewer_false(
+    api_client,
+    mocker,
+):
+    """
+    Task performer has full access (is_read_only_viewer=False).
+    Note: Simply being in workflow.members is not enough.
+    """
+
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(user=template_owner)
+    workflow = create_test_workflow(template=template, user=template_owner)
+    task = workflow.tasks.get(number=1)
+
+    performer_user = create_test_user(
+        account=account,
+        email='performer@test.com',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    TaskPerformer.objects.create(
+        task=task,
+        user=performer_user,
+    )
+    workflow.members.add(performer_user)
+
+    api_client.token_authenticate(performer_user)
+
+    mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'identify',
+    )
+    mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'group',
+    )
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == task.id
+    assert response.data['is_read_only_viewer'] is False
+
+
+def test_retrieve__workflow_member__ok_read_only(
+    api_client,
+    mocker,
+):
+    """
+    Users in workflow.members (e.g., mentioned in comments, performers)
+    have read-only access to tasks.
+    """
+
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(user=template_owner)
+    workflow = create_test_workflow(template=template, user=template_owner)
+    task = workflow.tasks.get(number=1)
+
+    member_user = create_test_user(
+        account=account,
+        email='member@test.com',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    workflow.members.add(member_user)
+
+    api_client.token_authenticate(member_user)
+
+    mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'identify',
+    )
+    mocker.patch(
+        'src.processes.views.task.TaskViewSet.'
+        'group',
+    )
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['is_read_only_viewer'] is True

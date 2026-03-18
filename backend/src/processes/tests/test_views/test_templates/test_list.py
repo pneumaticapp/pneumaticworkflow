@@ -7,6 +7,7 @@ from src.accounts.messages import (
 )
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     PerformerType,
     TemplateType,
@@ -16,6 +17,7 @@ from src.processes.models.templates.template import Template
 from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
+    create_test_group,
     create_test_template,
     create_test_user,
     create_test_workflow, create_test_owner,
@@ -41,6 +43,7 @@ class TestListTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -73,6 +76,7 @@ class TestListTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -123,6 +127,7 @@ class TestListTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -171,6 +176,7 @@ class TestListTemplate:
             is_active=True,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=account,
             type=OwnerType.USER,
@@ -674,6 +680,7 @@ class TestListTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},
@@ -707,6 +714,7 @@ class TestListTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},
@@ -825,3 +833,83 @@ class TestListTemplate:
         assert response.data['count'] == 4
         assert len(response.data['results']) == 1
         assert response.data['results'][0]['id'] == template.id
+
+    def test_list__template_starter_user__in_list(self, api_client):
+        """
+        Template starter (user) should see template in list.
+        Starters can run workflows and see templates in Run Workflow list.
+        """
+
+        # arrange
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        owner = create_test_user(
+            account=account,
+            is_account_owner=True,
+        )
+        starter_user = create_test_user(
+            account=account,
+            email='starter@test.test',
+            is_account_owner=False,
+        )
+        template = create_test_template(
+            user=owner,
+            is_active=True,
+        )
+        TemplateOwner.objects.create(
+            role=OwnerRole.STARTER,
+            template=template,
+            account=account,
+            type=OwnerType.USER,
+            user_id=starter_user.id,
+        )
+        api_client.token_authenticate(starter_user)
+
+        # act
+        response = api_client.get('/templates')
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 1
+        assert response.data[0]['id'] == template.id
+
+    def test_list__template_starter_group__in_list(self, api_client):
+        """
+        Template starter (via group) should see template in list.
+        Starters can run workflows and see templates in Run Workflow list.
+        """
+
+        # arrange
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        owner = create_test_user(
+            account=account,
+            is_account_owner=True,
+        )
+        starter_user = create_test_user(
+            account=account,
+            email='starter@test.test',
+            is_account_owner=False,
+        )
+        group = create_test_group(
+            account=account,
+            users=[starter_user],
+        )
+        template = create_test_template(
+            user=owner,
+            is_active=True,
+        )
+        TemplateOwner.objects.create(
+            role=OwnerRole.STARTER,
+            template=template,
+            account=account,
+            type=OwnerType.GROUP,
+            group=group,
+        )
+        api_client.token_authenticate(starter_user)
+
+        # act
+        response = api_client.get('/templates')
+
+        # assert
+        assert response.status_code == 200
+        assert len(response.data) == 1
+        assert response.data[0]['id'] == template.id

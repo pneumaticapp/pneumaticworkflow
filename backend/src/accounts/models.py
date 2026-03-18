@@ -412,7 +412,7 @@ class User(AbstractUser, SoftDeleteModel):
         null=True,
         blank=True,
     )
-    photo = models.URLField(max_length=1024, null=True, blank=True)
+    photo = models.URLField(max_length=2048, null=True, blank=True)
     status = models.CharField(
         choices=UserStatus.CHOICES,
         max_length=16,
@@ -568,7 +568,7 @@ class Notification(
         on_delete=models.CASCADE,
         related_name='notifications',
     )
-    text = models.TextField(null=True)
+    text = models.TextField(default='')
     type = models.CharField(max_length=24, choices=NotificationType.CHOICES)
     status = models.CharField(
         max_length=10,

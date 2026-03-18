@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { Redirect, Route, Switch } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 
 import { checkSomeRouteIsActive } from '../../utils/history';
 import { REDIRECT_URL_STORAGE_KEY } from '../../constants/storageKeys';
@@ -23,6 +24,7 @@ import { TenantsView } from '../../views/Tenants';
 import { ELoggedState, IAuthUser } from '../../types/redux';
 import { CollectPaymentDetails } from '../CollectPaymentDetails';
 import { AfterPaymentDetailsProvided } from '../AfterPaymentDetailsProvided';
+import { getTemplatesStore } from '../../redux/selectors/templates';
 
 export interface IAppRoutesProps {
   user: IAuthUser;
@@ -42,6 +44,7 @@ const REDIRECT_FORBIDDEN_ROUTES = [
 ];
 
 export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
+  const { isTemplateOwner } = useSelector(getTemplatesStore);
   const redirectUrl = sessionStorage.getItem(REDIRECT_URL_STORAGE_KEY);
 
   const shouldRedirectToUrl = redirectUrl && !checkSomeRouteIsActive(...REDIRECT_FORBIDDEN_ROUTES);
@@ -51,6 +54,8 @@ export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
 
     return <Redirect to={redirectUrl!} />;
   }
+
+  const canAccessTemplates = user.isAdmin || isTemplateOwner;
 
   return (
     <Switch>
@@ -66,26 +71,35 @@ export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
             <Route path={ERoutes.CollectPaymentDetails} component={CollectPaymentDetails} />
             <Route path={ERoutes.AfterPaymentDetailsProvided} component={AfterPaymentDetailsProvided} />
             <Route path={ERoutes.Settings} component={Settings} />
-            <ProtectedRoute path={ERoutes.Workflows} hasAccess={user.isAdmin}>
+            <ProtectedRoute
+              path={ERoutes.Workflows}
+              hasAccess={user.isAdmin || user.hasWorkflowViewerAccess}
+            >
               <WorkflowsView />
             </ProtectedRoute>
-            <ProtectedRoute path={ERoutes.WorkflowDetail} hasAccess={user.isAdmin}>
+            <ProtectedRoute
+              path={ERoutes.WorkflowDetail}
+              hasAccess={user.isAdmin || user.hasWorkflowViewerAccess}
+            >
               <WorkflowsView />
             </ProtectedRoute>
             <ProtectedRoute path={ERoutes.TemplatesCreate} hasAccess={user.isAdmin}>
               <TemplateView />
             </ProtectedRoute>
-            <ProtectedRoute path={ERoutes.TemplateView} hasAccess={user.isAdmin}>
+            <ProtectedRoute path={ERoutes.TemplateView} hasAccess={canAccessTemplates || user.hasWorkflowViewerAccess}>
               <TemplateView />
             </ProtectedRoute>
             <ProtectedRoute path={ERoutes.TemplatesEdit} hasAccess={user.isAdmin}>
               <TemplateView />
             </ProtectedRoute>
-            <ProtectedRoute path={ERoutes.Templates} hasAccess={user.isAdmin}>
+            <ProtectedRoute path={ERoutes.Templates} hasAccess={canAccessTemplates}>
               <TemplatesView />
             </ProtectedRoute>
             <Route path={ERoutes.Tasks} component={TasksView} />
-            <ProtectedRoute path={ERoutes.Highlights} hasAccess={user.isAdmin}>
+            <ProtectedRoute
+              path={ERoutes.Highlights}
+              hasAccess={user.isAdmin || user.hasWorkflowViewerAccess}
+            >
               <HighlightsView />
             </ProtectedRoute>
             <ProtectedRoute path={ERoutes.Team} hasAccess={user.isAdmin}>

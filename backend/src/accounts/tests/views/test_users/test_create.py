@@ -707,7 +707,7 @@ def test_create__photo_exceeds_max__validation_error(api_client, mocker):
     owner = create_test_owner()
     create_mock = mocker.patch('src.accounts.views.users.UserService.create')
     email = 'some@email.com'
-    photo = 'https://x.co/' + 'a' * 1015
+    photo = 'https://x.co/' + 'a' * 2040
     api_client.token_authenticate(owner)
 
     # act

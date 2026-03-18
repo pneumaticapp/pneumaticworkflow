@@ -1,0 +1,1 @@
+export { SubmitOnKeyPlugin } from './SubmitOnKeyPlugin';

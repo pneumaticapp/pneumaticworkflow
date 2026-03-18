@@ -1,16 +1,17 @@
 const utils = jest.requireActual('../../public/utils/getConfig');
 
 jest.mock('mini-css-extract-plugin', () => {
-  const plugin = () => {};
-  plugin.loader = {};
-  return plugin;
+  class MiniCssExtractPlugin {}
+  (MiniCssExtractPlugin as unknown as { loader: unknown }).loader = {};
+  return MiniCssExtractPlugin;
 });
 
 jest.mock('webpack', () => {
-  const plugin = () => {};
-  plugin.HotModuleReplacementPlugin = () => {};
-  plugin.DefinePlugin = () => {};
-  return plugin;
+  const webpackFn = Object.assign(() => ({}), {
+    DefinePlugin: class DefinePlugin {},
+    HotModuleReplacementPlugin: class HotModuleReplacementPlugin {},
+  });
+  return webpackFn;
 });
 
 jest.mock('fork-ts-checker-webpack-plugin', () => {
@@ -26,10 +27,13 @@ jest.mock('webpack-dev-middleware');
 jest.mock('webpack-hot-middleware');
 jest.mock('../handlers/mainHandler');
 jest.mock('../middleware/authMiddleware');
+jest.mock('../utils/initSentryServer', () => ({
+  initSentryServer: jest.fn(),
+}));
 jest.mock('../../public/utils/getConfig', () => ({
   getConfig: () => mockConfig,
 }));
-jest.mock('../../../webpack.config.js');
+jest.mock('../../../webpack.config.js', () => ({}));
 
 let express: typeof import('express');
 let app: any;

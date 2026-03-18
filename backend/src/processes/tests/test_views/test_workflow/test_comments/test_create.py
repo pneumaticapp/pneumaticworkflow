@@ -1,4 +1,9 @@
+from datetime import timedelta
+
 import pytest
+from django.utils import timezone
+
+from src.accounts.enums import BillingPlanType
 
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
@@ -16,9 +21,13 @@ from src.processes.services.events import (
 from src.processes.services.exceptions import (
     CommentServiceException,
 )
+from src.processes.enums import OwnerRole, OwnerType
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_guest,
+    create_test_not_admin,
+    create_test_owner,
     create_test_user,
     create_test_workflow,
 )
@@ -294,6 +303,62 @@ def test_create__guest_another_workflow__permission_denied(
     comment_create_mock.assert_not_called()
 
 
+def test_create__template_viewer__ok(api_client, mocker):
+
+    # arrange
+    owner = create_test_user(is_account_owner=True)
+    workflow = create_test_workflow(owner)
+    task = workflow.tasks.get(number=1)
+    event = WorkflowEventService.comment_created_event(
+        text='Viewer comment',
+        task=task,
+        user=owner,
+        after_create_actions=False,
+    )
+    viewer_user = create_test_user(
+        account=owner.account,
+        email='viewer@test.test',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
+        template=workflow.template,
+        type=OwnerType.USER,
+        user=viewer_user,
+        account=owner.account,
+    )
+    service_init_mock = mocker.patch.object(
+        CommentService,
+        attribute='__init__',
+        return_value=None,
+    )
+    comment_create_mock = mocker.patch(
+        'src.processes.services.events.'
+        'CommentService.create',
+        return_value=event,
+    )
+    api_client.token_authenticate(viewer_user)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/comment',
+        data={'text': event.text},
+    )
+
+    # assert
+    assert response.status_code == 200
+    service_init_mock.assert_called_once_with(
+        user=viewer_user,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    comment_create_mock.assert_called_once_with(
+        task=task,
+        text=event.text,
+    )
+
+
 def test_create__service_exception__validation_error(
     api_client,
     mocker,
@@ -386,3 +451,160 @@ def test_create__snoozed_workflow__ok(api_client, mocker):
         task=task,
         text=event.text,
     )
+
+
+def test_comment__not_authenticated__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/comment',
+        data={'text': 'Some comment'},
+    )
+
+    # assert
+    assert response.status_code == 401
+
+
+def test_comment__expired_subscription__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.UNLIMITED,
+        plan_expiration=timezone.now() - timedelta(hours=1),
+    )
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/comment',
+        data={'text': 'Some comment'},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_comment__billing_plan__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(plan=None)
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/comment',
+        data={'text': 'Some comment'},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_comment__users_overlimited__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.PREMIUM,
+        max_users=1,
+    )
+    owner = create_test_owner(account=account)
+    create_test_not_admin(account=account)
+    account.active_users = 2
+    account.save()
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/comment',
+        data={'text': 'Some comment'},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_comment__not_member__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    not_admin = create_test_not_admin(
+        account=account,
+        email='notadmin@test.test',
+    )
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(not_admin)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/comment',
+        data={'text': 'Some comment'},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_comment__not_found__not_found(api_client):
+
+    # arrange
+    user = create_test_owner()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        '/workflows/99999999/comment',
+        data={'text': 'Some comment'},
+    )
+
+    # assert
+    assert response.status_code == 404
+
+
+def test_comment__no_text_no_attachments__validation_error(api_client):
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/comment',
+        data={},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+
+
+def test_comment__invalid_attachment__validation_error(api_client):
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/comment',
+        data={
+            'text': 'Some comment',
+            'attachments': ['not-an-integer'],
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR

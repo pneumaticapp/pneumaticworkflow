@@ -7,6 +7,11 @@ nginx/logs
 nginx/keys
 nginx/config/nginx.conf
 firebase-push.json
-.agents/
+
 .vscode/
 .cursor/
+.cursorrules/
+.agents/
+.agent/
+.antigravity/
+

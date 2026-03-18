@@ -65,6 +65,7 @@ services:
     command: >
       sh -c "python manage.py migrate &&
              python manage.py collectstatic --no-input &&
+             python manage.py init_periodic_tasks &&
              python manage.py compilemessages &&
              gunicorn src.asgi:application --workers ${WORKERS_COUNT:-2} -k uvicorn.workers.UvicornWorker --worker-tmp-dir /dev/shm --bind unix:/tmp/gunicorn/pneumatic-backend.sock --timeout 200"
     environment:
@@ -72,6 +73,7 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
       FORMS_URL: ${FORMS_URL:-http://form.localhost}
       ENVIRONMENT: ${ENVIRONMENT:-Production}
+      RELEASE: ${RELEASE:-1.0.0}
       LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru
       CAPTCHA: ${CAPTCHA:-no}
       ANALYTICS: ${ANALYTICS:-no}
@@ -173,6 +175,7 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
       FORMS_URL: ${FORMS_URL:-http://form.localhost}
       ENVIRONMENT: ${ENVIRONMENT:-Production}
+      RELEASE: ${RELEASE:-1.0.0}
       LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru
       CAPTCHA: ${CAPTCHA:-no}
       ANALYTICS: ${ANALYTICS:-no}
@@ -268,6 +271,7 @@ services:
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
       FORMS_URL: ${FORMS_URL:-http://form.localhost}
       ENVIRONMENT: ${ENVIRONMENT:-Production}
+      RELEASE: ${RELEASE:-1.0.0}
       LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru
       CAPTCHA: ${CAPTCHA:-no}
       ANALYTICS: ${ANALYTICS:-no}
@@ -377,7 +381,9 @@ services:
       AI: ${AI:-no}
       PUSH: ${PUSH:-no}
       STORAGE: ${STORAGE:-no}
+      RELEASE: ${RELEASE:-1.0.0}
       SENTRY_DSN: ${SENTRY_FRONTEND_DSN:-}
+      SENTRY_RELEASE: ${RELEASE:-1.0.0}
       FIREBASE_VAPID_KEY: ${FIREBASE_VAPID_KEY:-}
       FIREBASE_API_KEY: ${FIREBASE_API_KEY:-}
       FIREBASE_AUTH_DOMAIN: ${FIREBASE_AUTH_DOMAIN:-}

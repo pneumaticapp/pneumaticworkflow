@@ -2,6 +2,7 @@ import pytest
 
 from src.accounts.enums import BillingPlanType
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     PerformerType,
     WorkflowApiStatus,
@@ -808,6 +809,7 @@ class TestWorkflowCountsByCPerformer:
         template_1 = create_test_template(user_1, is_active=True)
         template_2 = create_test_template(user_2, is_active=True)
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template_2,
             account=account,
             type=OwnerType.USER,
@@ -851,6 +853,7 @@ class TestWorkflowCountsByCPerformer:
             is_public=True,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template_2,
             account=account,
             type=OwnerType.USER,
@@ -897,6 +900,7 @@ class TestWorkflowCountsByCPerformer:
             is_public=True,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template_2,
             account=account,
             type=OwnerType.USER,
@@ -1252,6 +1256,7 @@ class TestWorkflowCountsByTemplateTask:
         group = create_test_group(account, users=[user])
         template_1 = create_test_template(user=user, tasks_count=1)
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template_1,
             account=account,
             type=OwnerType.USER,
@@ -1260,6 +1265,7 @@ class TestWorkflowCountsByTemplateTask:
         template_2 = create_test_template(user=user2, tasks_count=2)
         template_3 = create_test_template(user=user, tasks_count=1)
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template_3,
             account=account,
             type=OwnerType.USER,
@@ -1331,6 +1337,7 @@ class TestWorkflowCountsByTemplateTask:
         group = create_test_group(account, users=[user])
         template_1 = create_test_template(user=user, tasks_count=1)
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template_1,
             account=account,
             type=OwnerType.USER,
@@ -1339,6 +1346,7 @@ class TestWorkflowCountsByTemplateTask:
         template_2 = create_test_template(user=user2, tasks_count=2)
         template_3 = create_test_template(user=user, tasks_count=1)
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template_3,
             account=account,
             type=OwnerType.USER,
@@ -1411,6 +1419,7 @@ class TestWorkflowCountsByTemplateTask:
         group = create_test_group(account, users=[user2])
         template_1 = create_test_template(user=user, tasks_count=1)
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template_1,
             account=account,
             type=OwnerType.USER,
@@ -1419,6 +1428,7 @@ class TestWorkflowCountsByTemplateTask:
         template_2 = create_test_template(user=user2, tasks_count=2)
         template_3 = create_test_template(user=user, tasks_count=1)
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template_3,
             account=account,
             type=OwnerType.USER,
@@ -1492,6 +1502,7 @@ class TestWorkflowCountsByTemplateTask:
         group = create_test_group(account, users=[user])
         template_1 = create_test_template(user=user, tasks_count=1)
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template_1,
             account=account,
             type=OwnerType.USER,
@@ -1500,6 +1511,7 @@ class TestWorkflowCountsByTemplateTask:
         template_2 = create_test_template(user=user2, tasks_count=2)
         template_3 = create_test_template(user=user, tasks_count=1)
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template_3,
             account=account,
             type=OwnerType.USER,
@@ -1667,6 +1679,7 @@ class TestWorkflowCountsByTemplateTask:
 
         template_2 = create_test_template(user_2, is_active=True)
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template_2,
             account=account,
             type=OwnerType.USER,
@@ -1676,6 +1689,7 @@ class TestWorkflowCountsByTemplateTask:
 
         template_3 = create_test_template(user_3, is_active=True)
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template_3,
             account=account,
             type=OwnerType.USER,

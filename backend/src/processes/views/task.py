@@ -36,9 +36,10 @@ from src.processes.models.workflows.task import (
 )
 from src.processes.permissions import (
     GuestTaskPermission,
+    TaskCommentPermission,
     TaskCompletePermission,
     TaskRevertPermission,
-    TaskWorkflowMemberPermission,
+    TaskWorkflowMemberOrViewerPermission,
     TaskWorkflowOwnerPermission,
 )
 from src.processes.queries import TaskListQuery
@@ -138,16 +139,20 @@ class TaskViewSet(
     filter_backends = (PneumaticFilterBackend,)
 
     def get_permissions(self):
-        if self.action in (
-            'retrieve',
-            'events',
-            'comment',
-        ):
+        if self.action in ('retrieve', 'events'):
             return (
                 IsAuthenticated(),
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
-                TaskWorkflowMemberPermission(),
+                TaskWorkflowMemberOrViewerPermission(),
+                GuestTaskPermission(),
+            )
+        if self.action == 'comment':
+            return (
+                IsAuthenticated(),
+                ExpiredSubscriptionPermission(),
+                BillingPlanPermission(),
+                TaskCommentPermission(),
                 GuestTaskPermission(),
             )
         if self.action in (

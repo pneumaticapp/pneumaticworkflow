@@ -1,0 +1,1 @@
+export { LinkTooltipPlugin } from './LinkTooltipPlugin';
