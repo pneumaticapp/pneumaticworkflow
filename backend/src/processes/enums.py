@@ -94,6 +94,17 @@ class OwnerType:
     )
 
 
+class OwnerRole:
+    OWNER = 'owner'
+    VIEWER = 'viewer'
+    STARTER = 'starter'
+    choices = (
+        (OWNER, OWNER),
+        (VIEWER, VIEWER),
+        (STARTER, STARTER),
+    )
+
+
 class DirectlyStatus:
 
     NO_STATUS = 0
@@ -666,3 +677,15 @@ class SearchContentType:
         (EVENT, EVENT),
         (TASK_TEMPLATE, TASK_TEMPLATE),
     )
+
+
+class SystemVariable:
+
+    DATE = 'date'
+    TEMPLATE_NAME = 'template-name'
+    WORKFLOW_ID = 'workflow-id'
+    WORKFLOW_STARTER = 'workflow-starter'
+
+    WORKFLOW_NAME_VARS = {DATE, TEMPLATE_NAME, WORKFLOW_ID, WORKFLOW_STARTER}
+
+    TASK_VARS = {WORKFLOW_STARTER}

@@ -1,5 +1,6 @@
 import { variableRegex } from '../../../../constants/defaultValues';
 import { TTaskVariable } from '../../types';
+import { getLocalizedSystemVariable, isSystemVariable } from './getTaskVariables';
 
 export type TSubtitleSegment =
   | { type: 'text'; value: string; id: string }
@@ -8,6 +9,7 @@ export type TSubtitleSegment =
 export const getFormattedSubtitleSegments = (
   subtitle: string,
   variables: TTaskVariable[],
+  formatMessage?: any,
 ): TSubtitleSegment[] => {
   const replaceRegex = new RegExp(variableRegex, 'gi');
   const segments: TSubtitleSegment[] = [];
@@ -21,7 +23,17 @@ export const getFormattedSubtitleSegments = (
     }
     const apiName = match[1];
     const item = variables.find((elem) => elem.apiName === apiName);
-    segments.push({ type: 'variable', title: item?.title ?? match[0], id: `v-${id}` });
+    
+    let segmentTitle = item?.title ?? match[0];
+    if (formatMessage && isSystemVariable(apiName)) {
+      segmentTitle = getLocalizedSystemVariable({
+        apiName,
+        title: segmentTitle,
+        formatMessage,
+      }).title;
+    }
+
+    segments.push({ type: 'variable', title: segmentTitle, id: `v-${id}` });
     id += 1;
     lastIndex = replaceRegex.lastIndex;
     match = replaceRegex.exec(subtitle);
