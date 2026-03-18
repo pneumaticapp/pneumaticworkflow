@@ -412,7 +412,7 @@ class User(AbstractUser, SoftDeleteModel):
         null=True,
         blank=True,
     )
-    photo = models.URLField(max_length=1024, null=True, blank=True)
+    photo = models.URLField(max_length=2048, null=True, blank=True)
     status = models.CharField(
         choices=UserStatus.CHOICES,
         max_length=16,
