@@ -7,6 +7,7 @@ from django.db import transaction
 from django.db.models import Q
 from django.utils import timezone
 
+from src.processes.utils.common import get_workflow_starter_name
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
@@ -318,6 +319,9 @@ class WorkflowActionService:
             user=self.user or self.workflow.account.get_owner(),
         )
         fields_values = self.workflow.get_fields_markdown_values()
+        fields_values['workflow-starter'] = get_workflow_starter_name(
+            self.workflow.workflow_starter,
+        )
         task_service.insert_fields_values(fields_values=fields_values)
 
         WorkflowEventService.task_skip_event(task)
@@ -399,6 +403,10 @@ class WorkflowActionService:
         for task in tasks:
             task_service = TaskService(instance=task, user=self.user)
             fields_values = self.workflow.get_kickoff_fields_markdown_values()
+            fields_values['workflow-starter'] = get_workflow_starter_name(
+                self.workflow.workflow_starter,
+            )
+
             task_service.insert_fields_values(fields_values=fields_values)
 
         WorkflowEventService.workflow_run_event(
@@ -626,6 +634,9 @@ class WorkflowActionService:
             user=self.user or self.workflow.account.get_owner(),
         )
         fields_values = self.workflow.get_fields_markdown_values()
+        fields_values['workflow-starter'] = get_workflow_starter_name(
+            self.workflow.workflow_starter,
+        )
         task_service.insert_fields_values(fields_values=fields_values)
         task.update_performers(restore_performers=True)
         task_performers_exists = (

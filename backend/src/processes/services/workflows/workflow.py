@@ -10,6 +10,7 @@ from src.analysis.actions import (
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.processes.consts import WORKFLOW_NAME_LENGTH
+from src.processes.utils.common import get_workflow_starter_name
 from src.processes.models.templates.template import Template
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.serializers.workflows.kickoff_value import (
@@ -69,6 +70,10 @@ class WorkflowService(
         }
         if workflow_starter:
             values.update(workflow_starter.get_dynamic_mapping())
+
+        values['workflow-starter'] = get_workflow_starter_name(
+            workflow_starter,
+        )
 
         if user_provided_name:
             result = insert_fields_values_to_text(

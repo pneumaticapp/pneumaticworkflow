@@ -179,3 +179,4 @@ MSG_PW_0089 = _('You cannot write a comment on a inactive task.')
 MSG_PW_0090 = _(
     'The user or group specified for a "User" field does not exist.',
 )
+MSG_PW_0091 = _('Guest')

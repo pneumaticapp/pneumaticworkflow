@@ -6,3 +6,7 @@
   display: flex;
   transition: all 0.15s ease-in 0s;
 }
+
+.input-with-variables [data-testid='rich-editor-contenteditable'] {
+  padding-right: 6rem;
+}

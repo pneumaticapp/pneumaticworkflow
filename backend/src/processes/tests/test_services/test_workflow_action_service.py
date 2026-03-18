@@ -1174,7 +1174,9 @@ def test_skip_task__is_returned_has_parents__set_pending_start_prev(mocker):
     task.refresh_from_db()
     assert task.status == TaskStatus.PENDING
     task_service_init_mock.assert_called_once_with(instance=task, user=owner)
-    insert_fields_values_mock.assert_called_once_with(fields_values={})
+    insert_fields_values_mock.assert_called_once_with(
+        fields_values={'workflow-starter': 'John Doe'},
+    )
     task_skip_event_mock.assert_called_once_with(task)
     start_prev_tasks_mock.assert_called_once_with(task)
     start_next_tasks_mock.assert_not_called()
@@ -1217,7 +1219,54 @@ def test_skip_task__not_returned__set_skipped_start_next(mocker):
     task.refresh_from_db()
     assert task.status == TaskStatus.SKIPPED
     task_service_init_mock.assert_called_once_with(instance=task, user=owner)
-    insert_fields_values_mock.assert_called_once_with(fields_values={})
+    insert_fields_values_mock.assert_called_once_with(
+        fields_values={'workflow-starter': 'John Doe'},
+    )
+    task_skip_event_mock.assert_called_once_with(task)
+    start_prev_tasks_mock.assert_not_called()
+    start_next_tasks_mock.assert_called_once_with(parent_task=task)
+
+
+def test_skip_task__external__guest_workflow_starter(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, is_external=True)
+    task = workflow.tasks.get(number=2)
+    task_service_init_mock = mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None,
+    )
+    insert_fields_values_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.insert_fields_values',
+    )
+    task_skip_event_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowEventService'
+        '.task_skip_event',
+    )
+    start_prev_tasks_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._start_prev_tasks',
+    )
+    start_next_tasks_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._start_next_tasks',
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+    is_returned = False
+
+    # act
+    service.skip_task(task=task, is_returned=is_returned)
+
+    # assert
+    task.refresh_from_db()
+    assert task.status == TaskStatus.SKIPPED
+    task_service_init_mock.assert_called_once_with(instance=task, user=owner)
+    insert_fields_values_mock.assert_called_once_with(
+        fields_values={'workflow-starter': 'Guest'},
+    )
     task_skip_event_mock.assert_called_once_with(task)
     start_prev_tasks_mock.assert_not_called()
     start_next_tasks_mock.assert_called_once_with(parent_task=task)
@@ -2336,7 +2385,9 @@ def test_start_workflow__ok(mocker):
         instance=root_task,
         user=owner,
     )
-    insert_fields_values_mock.assert_called_once_with(fields_values={})
+    insert_fields_values_mock.assert_called_once_with(
+        fields_values={'workflow-starter': 'John Doe'},
+    )
     workflow_run_event_mock.assert_called_once_with(
         workflow=workflow,
         user=owner,
@@ -2396,7 +2447,9 @@ def test_start_workflow__with_ancestor_task__fire_sub_wf_event(mocker):
         instance=task,
         user=user,
     )
-    insert_fields_values_mock.assert_called_once_with(fields_values={})
+    insert_fields_values_mock.assert_called_once_with(
+        fields_values={'workflow-starter': 'John Doe'},
+    )
     workflow_run_event_mock.assert_called_once_with(
         workflow=workflow,
         user=user,
@@ -2457,7 +2510,9 @@ def test_start_workflow__webhook_exists__send_webhook(mocker):
         instance=task,
         user=owner,
     )
-    insert_fields_values_mock.assert_called_once_with(fields_values={})
+    insert_fields_values_mock.assert_called_once_with(
+        fields_values={'workflow-starter': 'John Doe'},
+    )
     workflow_run_event_mock.assert_called_once_with(
         workflow=workflow,
         user=owner,
@@ -2470,6 +2525,64 @@ def test_start_workflow__webhook_exists__send_webhook(mocker):
         account_id=account.id,
         payload=workflow.webhook_payload(),
     )
+
+
+def test_start_workflow__external__guest_workflow_starter(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, is_external=True)
+    root_task = workflow.tasks.get(number=1)
+    task_service_init_mock = mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None,
+    )
+    insert_fields_values_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.insert_fields_values',
+    )
+    workflow_run_event_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowEventService'
+        '.workflow_run_event',
+    )
+    sub_workflow_run_event_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowEventService'
+        '.sub_workflow_run_event',
+    )
+    start_next_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._start_next_tasks',
+    )
+    check_delay_workflow_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.check_delay_workflow',
+    )
+    send_workflow_started_webhook_mock = mocker.patch(
+        'src.processes.services.workflow_action'
+        '.send_workflow_started_webhook.delay',
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+
+    # act
+    service.start_workflow()
+
+    # assert
+    task_service_init_mock.assert_called_once_with(
+        instance=root_task,
+        user=owner,
+    )
+    insert_fields_values_mock.assert_called_once_with(
+        fields_values={'workflow-starter': 'Guest'},
+    )
+    workflow_run_event_mock.assert_called_once_with(
+        workflow=workflow,
+        user=owner,
+    )
+    sub_workflow_run_event_mock.assert_not_called()
+    start_next_mock.assert_called_once_with()
+    check_delay_workflow_mock.assert_called_once_with()
+    send_workflow_started_webhook_mock.assert_not_called()
 
 
 def test_update_tasks_status__task_pending__call_action_method(mocker):
