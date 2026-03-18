@@ -10,10 +10,12 @@ from src.processes.enums import (
     TaskStatus,
     WorkflowStatus,
     TemplateType,
+    FieldType,
 )
 from src.processes.models.workflows.conditions import Condition
 from src.processes.models.workflows.task import Delay, TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.fields import TaskField
 from src.processes.services import exceptions
 from src.processes.services.tasks.field import TaskFieldService
 from src.processes.services.tasks.task import TaskService
@@ -1173,7 +1175,7 @@ def test_skip_task__is_returned_has_parents__set_pending_start_prev(mocker):
     assert task.status == TaskStatus.PENDING
     task_service_init_mock.assert_called_once_with(instance=task, user=owner)
     insert_fields_values_mock.assert_called_once_with(
-        fields_values={'workflow-starter': 'John Doe'},
+        fields_values={'workflow-starter': owner.name},
     )
     task_skip_event_mock.assert_called_once_with(task)
     start_prev_tasks_mock.assert_called_once_with(task)
@@ -1218,7 +1220,7 @@ def test_skip_task__not_returned__set_skipped_start_next(mocker):
     assert task.status == TaskStatus.SKIPPED
     task_service_init_mock.assert_called_once_with(instance=task, user=owner)
     insert_fields_values_mock.assert_called_once_with(
-        fields_values={'workflow-starter': 'John Doe'},
+        fields_values={'workflow-starter': owner.name},
     )
     task_skip_event_mock.assert_called_once_with(task)
     start_prev_tasks_mock.assert_not_called()
@@ -1268,6 +1270,66 @@ def test_skip_task__external__guest_workflow_starter(mocker):
     task_skip_event_mock.assert_called_once_with(task)
     start_prev_tasks_mock.assert_not_called()
     start_next_tasks_mock.assert_called_once_with(parent_task=task)
+
+
+def test_skip_task__skipped_fields__insert_null_value(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=owner,
+        tasks_count=2,
+        active_task_number=2,
+    )
+    task_1 = workflow.tasks.get(number=1)
+    field = TaskField.objects.create(
+        task=task_1,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        workflow=workflow,
+        account=account,
+    )
+    task_2 = workflow.tasks.get(number=2)
+    task_service_init_mock = mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None,
+    )
+    insert_fields_values_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.insert_fields_values',
+    )
+    task_skip_event_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowEventService'
+        '.task_skip_event',
+    )
+    start_prev_tasks_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._start_prev_tasks',
+    )
+    start_next_tasks_mock = mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '._start_next_tasks',
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+    is_returned = False
+
+    # act
+    service.skip_task(task=task_2, is_returned=is_returned)
+
+    # assert
+    task_2.refresh_from_db()
+    assert task_2.status == TaskStatus.SKIPPED
+    task_service_init_mock.assert_called_once_with(instance=task_2, user=owner)
+    insert_fields_values_mock.assert_called_once_with(
+        fields_values={
+            'workflow-starter': owner.name,
+            field.api_name: None,
+        },
+    )
+    task_skip_event_mock.assert_called_once_with(task_2)
+    start_prev_tasks_mock.assert_not_called()
+    start_next_tasks_mock.assert_called_once_with(parent_task=task_2)
 
 
 def test_continue_task__ok(mocker):
@@ -2327,7 +2389,7 @@ def test_start_workflow__ok(mocker):
         user=owner,
     )
     insert_fields_values_mock.assert_called_once_with(
-        fields_values={'workflow-starter': 'John Doe'},
+        fields_values={'workflow-starter': owner.name},
     )
     workflow_run_event_mock.assert_called_once_with(
         workflow=workflow,
@@ -2389,7 +2451,7 @@ def test_start_workflow__with_ancestor_task__fire_sub_wf_event(mocker):
         user=user,
     )
     insert_fields_values_mock.assert_called_once_with(
-        fields_values={'workflow-starter': 'John Doe'},
+        fields_values={'workflow-starter': owner.name},
     )
     workflow_run_event_mock.assert_called_once_with(
         workflow=workflow,
@@ -2452,7 +2514,7 @@ def test_start_workflow__webhook_exists__send_webhook(mocker):
         user=owner,
     )
     insert_fields_values_mock.assert_called_once_with(
-        fields_values={'workflow-starter': 'John Doe'},
+        fields_values={'workflow-starter': owner.name},
     )
     workflow_run_event_mock.assert_called_once_with(
         workflow=workflow,
@@ -3268,11 +3330,13 @@ def test_start_task__no_performers__skip_and_fire_skip_event(mocker):
     task.status = TaskStatus.PENDING
     task.save()
     TaskPerformer.objects.filter(task=task).delete()
-    fields_values = {}
-    get_fields_markdown_values_mock = mocker.patch(
-        'src.processes.services.workflow_action.Workflow'
-        '.get_fields_markdown_values',
-        return_value=fields_values,
+    task_service_init_mock = mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None,
+    )
+    insert_fields_values_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.insert_fields_values',
     )
     update_performers_mock = mocker.patch(
         'src.processes.services.workflow_action.Task.update_performers',
@@ -3297,7 +3361,15 @@ def test_start_task__no_performers__skip_and_fire_skip_event(mocker):
     # assert
     task.refresh_from_db()
     assert task.status == TaskStatus.SKIPPED
-    get_fields_markdown_values_mock.assert_called_once()
+    task_service_init_mock.assert_called_once_with(
+        instance=task,
+        user=owner,
+    )
+    insert_fields_values_mock.assert_called_once_with(
+        fields_values={
+            'workflow-starter': owner.name,
+        },
+    )
     update_performers_mock.assert_called_once_with(restore_performers=True)
     task_skip_no_performers_event_mock.assert_called_once_with(task)
     start_next_tasks_mock.assert_called_once_with(parent_task=task)
@@ -3314,11 +3386,13 @@ def test_start_task__no_performers_is_returned__start_prev_tasks(mocker):
     task.status = TaskStatus.PENDING
     task.save()
     TaskPerformer.objects.filter(task=task).delete()
-    fields_values = {}
-    get_fields_markdown_values_mock = mocker.patch(
-        'src.processes.services.workflow_action.Workflow'
-        '.get_fields_markdown_values',
-        return_value=fields_values,
+    task_service_init_mock = mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None,
+    )
+    insert_fields_values_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.insert_fields_values',
     )
     update_performers_mock = mocker.patch(
         'src.processes.services.workflow_action.Task.update_performers',
@@ -3345,7 +3419,15 @@ def test_start_task__no_performers_is_returned__start_prev_tasks(mocker):
     # assert
     task.refresh_from_db()
     assert task.status == TaskStatus.SKIPPED
-    get_fields_markdown_values_mock.assert_called_once()
+    task_service_init_mock.assert_called_once_with(
+        instance=task,
+        user=owner,
+    )
+    insert_fields_values_mock.assert_called_once_with(
+        fields_values={
+            'workflow-starter': owner.name,
+        },
+    )
     update_performers_mock.assert_called_once_with(restore_performers=True)
     task_skip_no_performers_event_mock.assert_called_once_with(task)
     start_prev_tasks_mock.assert_called_once_with(task)
@@ -3362,11 +3444,13 @@ def test_start_task__performers_is_returned__continue_wf_returned(mocker):
     task.status = TaskStatus.PENDING
     task.save()
     task.update_performers()
-    fields_values = {}
-    get_fields_markdown_values_mock = mocker.patch(
-        'src.processes.services.workflow_action.Workflow'
-        '.get_fields_markdown_values',
-        return_value=fields_values,
+    task_service_init_mock = mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None,
+    )
+    insert_fields_values_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.insert_fields_values',
     )
     update_performers_mock = mocker.patch(
         'src.processes.services.workflow_action.Task.update_performers',
@@ -3383,7 +3467,15 @@ def test_start_task__performers_is_returned__continue_wf_returned(mocker):
     service.start_task(task=task, is_returned=is_returned)
 
     # assert
-    get_fields_markdown_values_mock.assert_called_once()
+    task_service_init_mock.assert_called_once_with(
+        instance=task,
+        user=owner,
+    )
+    insert_fields_values_mock.assert_called_once_with(
+        fields_values={
+            'workflow-starter': owner.name,
+        },
+    )
     update_performers_mock.assert_called_once_with(restore_performers=True)
     continue_workflow_mock.assert_called_once_with(
         task=task,
@@ -3407,11 +3499,13 @@ def test_start_task__performers_has_active_delay__delay_task(mocker):
         duration=timedelta(hours=1),
         start_date=timezone.now(),
     )
-    fields_values = {}
-    get_fields_markdown_values_mock = mocker.patch(
-        'src.processes.services.workflow_action.Workflow'
-        '.get_fields_markdown_values',
-        return_value=fields_values,
+    task_service_init_mock = mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None,
+    )
+    insert_fields_values_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.insert_fields_values',
     )
     update_performers_mock = mocker.patch(
         'src.processes.services.workflow_action.Task.update_performers',
@@ -3435,7 +3529,15 @@ def test_start_task__performers_has_active_delay__delay_task(mocker):
     service.start_task(task=task)
 
     # assert
-    get_fields_markdown_values_mock.assert_called_once()
+    task_service_init_mock.assert_called_once_with(
+        instance=task,
+        user=owner,
+    )
+    insert_fields_values_mock.assert_called_once_with(
+        fields_values={
+            'workflow-starter': owner.name,
+        },
+    )
     update_performers_mock.assert_called_once_with(restore_performers=True)
     get_active_delay_mock.assert_called_once()
     delay_task_mock.assert_called_once_with(task=task, delay=delay)
@@ -3452,11 +3554,13 @@ def test_start_task__performers_no_delay__continue_workflow(mocker):
     task.status = TaskStatus.PENDING
     task.save()
     task.update_performers()
-    fields_values = {}
-    get_fields_markdown_values_mock = mocker.patch(
-        'src.processes.services.workflow_action.Workflow'
-        '.get_fields_markdown_values',
-        return_value=fields_values,
+    task_service_init_mock = mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None,
+    )
+    insert_fields_values_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.insert_fields_values',
     )
     update_performers_mock = mocker.patch(
         'src.processes.services.workflow_action.Task.update_performers',
@@ -3477,12 +3581,137 @@ def test_start_task__performers_no_delay__continue_workflow(mocker):
     service.start_task(task=task, is_returned=is_returned)
 
     # assert
-    get_fields_markdown_values_mock.assert_called_once()
+    task_service_init_mock.assert_called_once_with(
+        instance=task,
+        user=owner,
+    )
+    insert_fields_values_mock.assert_called_once_with(
+        fields_values={
+            'workflow-starter': owner.name,
+        },
+    )
     update_performers_mock.assert_called_once_with(restore_performers=True)
     get_active_delay_mock.assert_called_once()
     continue_workflow_mock.assert_called_once_with(
         task=task,
         is_returned=is_returned,
+    )
+
+
+@pytest.mark.parametrize('status', TaskStatus.INACTIVE_STATUS)
+def test_start_task__inactive_task_field_value__insert_value(mocker, status):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.status = status
+    task.save()
+    field_api_name = 'field-api-name'
+    field_value = 'Some value'
+    field_clear_value = 'Some clear value'
+    field_markdown_value = 'Some markdown value'
+    TaskField.objects.create(
+        task=task,
+        type=FieldType.STRING,
+        workflow=workflow,
+        account=account,
+        value=field_value,
+        clear_value=field_clear_value,
+        markdown_value=field_markdown_value,
+        api_name=field_api_name,
+    )
+
+    task_service_init_mock = mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None,
+    )
+    insert_fields_values_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.insert_fields_values',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.Task.update_performers',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.Task.get_active_delay',
+        return_value=None,
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.continue_workflow',
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+    is_returned = False
+
+    # act
+    service.start_task(task=task, is_returned=is_returned)
+
+    # assert
+    task_service_init_mock.assert_called_once_with(
+        instance=task,
+        user=owner,
+    )
+    insert_fields_values_mock.assert_called_once_with(
+        fields_values={
+            field_api_name: field_markdown_value,
+            'workflow-starter': owner.name,
+        },
+    )
+
+
+def test_start_task__field_value_blank__insert_null_value(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    field_api_name = 'field-api-name'
+    TaskField.objects.create(
+        task=task,
+        type=FieldType.STRING,
+        workflow=workflow,
+        account=account,
+        api_name=field_api_name,
+    )
+
+    task_service_init_mock = mocker.patch.object(
+        TaskService,
+        attribute='__init__',
+        return_value=None,
+    )
+    insert_fields_values_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.insert_fields_values',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.Task.update_performers',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.Task.get_active_delay',
+        return_value=None,
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.WorkflowActionService'
+        '.continue_workflow',
+    )
+    service = WorkflowActionService(user=owner, workflow=workflow)
+    is_returned = False
+
+    # act
+    service.start_task(task=task, is_returned=is_returned)
+
+    # assert
+    task_service_init_mock.assert_called_once_with(
+        instance=task,
+        user=owner,
+    )
+    insert_fields_values_mock.assert_called_once_with(
+        fields_values={
+            field_api_name: None,
+            'workflow-starter': owner.name,
+        },
     )
 
 

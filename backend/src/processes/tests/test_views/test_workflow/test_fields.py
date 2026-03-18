@@ -1,4 +1,9 @@
+from datetime import timedelta
+
 import pytest
+from django.utils import timezone
+
+from src.accounts.enums import BillingPlanType
 
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
@@ -771,3 +776,94 @@ def test_fields__not_auth__not_authenticated(api_client):
 
     # assert
     assert response.status_code == 401
+
+
+def test_fields__expired_subscription__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.UNLIMITED,
+        plan_expiration=timezone.now() - timedelta(hours=1),
+    )
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/workflows/fields')
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_fields__billing_plan__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(plan=None)
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/workflows/fields')
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_fields__limit_above_max__validation_error(api_client):
+
+    # arrange
+    user = create_test_owner()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(
+        '/workflows/fields',
+        data={'limit': 10000},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+
+
+def test_fields__offset_below_min__validation_error(api_client):
+
+    # arrange
+    user = create_test_owner()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(
+        '/workflows/fields',
+        data={'offset': -1},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+
+
+def test_fields__all_params__ok(api_client):
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=1,
+        status=WorkflowStatus.DONE,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(
+        '/workflows/fields',
+        data={
+            'template_id': workflow.template.id,
+            'status': WorkflowApiStatus.DONE,
+            'limit': 1,
+            'offset': 0,
+        },
+    )
+
+    # assert
+    assert response.status_code == 200

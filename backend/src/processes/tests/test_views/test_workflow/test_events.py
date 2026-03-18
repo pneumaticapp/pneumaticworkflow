@@ -3,6 +3,7 @@ from datetime import timedelta
 import pytest
 from django.utils import timezone
 
+from src.accounts.enums import BillingPlanType
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
@@ -45,6 +46,7 @@ from src.processes.tests.fixtures import (
     create_test_account,
     create_test_group,
     create_test_guest,
+    create_test_not_admin,
     create_test_owner,
     create_test_template,
     create_test_user,
@@ -1640,3 +1642,119 @@ def test_retrieve__return_workflow_to_task__one_event(api_client):
         workflow_id=workflow_id,
         type=WorkflowEventType.REVERT,
     ).count() == 1
+
+
+def test_events__not_authenticated__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+
+    # act
+    response = api_client.get(f'/workflows/{workflow.id}/events')
+
+    # assert
+    assert response.status_code == 401
+
+
+def test_events__expired_subscription__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.UNLIMITED,
+        plan_expiration=timezone.now() - timedelta(hours=1),
+    )
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(f'/workflows/{workflow.id}/events')
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_events__billing_plan__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(plan=None)
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(f'/workflows/{workflow.id}/events')
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_events__not_member__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    not_admin = create_test_not_admin(
+        account=account,
+        email='notadmin@test.test',
+    )
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(not_admin)
+
+    # act
+    response = api_client.get(f'/workflows/{workflow.id}/events')
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_events__not_found__not_found(api_client):
+
+    # arrange
+    user = create_test_owner()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/workflows/99999999/events')
+
+    # assert
+    assert response.status_code == 404
+
+
+def test_events__no_params__ok(api_client):
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/workflows/{workflow.id}/events')
+
+    # assert
+    assert response.status_code == 200
+
+
+def test_events__all_params__ok(api_client):
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(
+        f'/workflows/{workflow.id}/events',
+        data={
+            'ordering': 'created',
+            'include_comments': True,
+            'only_attachments': False,
+            'limit': 10,
+            'offset': 0,
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
