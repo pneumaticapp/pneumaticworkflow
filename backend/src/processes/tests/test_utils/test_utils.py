@@ -139,6 +139,13 @@ class TestInsertValueToText:
 
         assert result == 'My name is Andre. I was born in Boston'
 
+    def test_insert_value_with_backslashes(self):
+        text = 'Value is {{val}}'
+        values = {'val': '\\\\\\'}
+        result = insert_fields_values_to_text(text, values)
+
+        assert result == 'Value is \\\\\\'
+
 
 class TestGetDurationFormat:
     @pytest.mark.parametrize(

@@ -6,6 +6,7 @@ import pytz
 from django.utils import timezone
 
 from src.accounts.enums import (
+    BillingPlanType,
     NotificationType,
     SourceType,
 )
@@ -44,6 +45,7 @@ from src.processes.services.events import (
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
+    create_test_not_admin,
     create_test_owner,
     create_test_template,
     create_test_workflow,
@@ -2047,3 +2049,538 @@ class TestUpdatePerformer:
             user_id=account_1_new_user.id,
             task_id=task.id,
         ).exclude_directly_deleted().exists()
+
+
+def test_partial_update__name__analytic_called__ok(
+    mocker,
+    api_client,
+):
+    """PATCH workflow name: 200, name updated in DB, analytics notified."""
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user)
+    api_client.token_authenticate(user=user)
+    new_name = 'Updated workflow name'
+
+    workflows_updated_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_updated',
+    )
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={'name': new_name},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['name'] == new_name
+
+    workflow.refresh_from_db()
+    assert workflow.name == new_name
+
+    workflows_updated_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+
+
+def test_partial_update__is_urgent_changed__urgent_service_called__ok(
+    mocker,
+    api_client,
+):
+    """
+    PATCH is_urgent False→True: 200, is_urgent updated,
+    analytics and urgent service notified.
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, is_urgent=False)
+    api_client.token_authenticate(user=user)
+
+    workflows_updated_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_updated',
+    )
+    workflows_urgent_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_urgent',
+    )
+    urgent_service_resolve_mock = mocker.patch(
+        'src.processes.services.urgent.UrgentService.resolve',
+    )
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={'is_urgent': True},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['is_urgent'] is True
+
+    workflow.refresh_from_db()
+    assert workflow.is_urgent is True
+
+    workflows_updated_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+    workflows_urgent_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+        action=WorkflowActions.marked,
+    )
+    urgent_service_resolve_mock.assert_called_once_with(
+        workflow=workflow,
+        user=user,
+    )
+
+
+def test_partial_update__is_urgent_not_changed__only_updated_analytic__ok(
+    mocker,
+    api_client,
+):
+    """
+    PATCH is_urgent same value: 200, urgent analytics
+    and service not triggered.
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, is_urgent=False)
+    api_client.token_authenticate(user=user)
+
+    workflows_updated_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_updated',
+    )
+    workflows_urgent_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_urgent',
+    )
+    urgent_service_resolve_mock = mocker.patch(
+        'src.processes.services.urgent.UrgentService.resolve',
+    )
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={'is_urgent': False},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['is_urgent'] is False
+
+    workflows_updated_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+    workflows_urgent_mock.assert_not_called()
+    urgent_service_resolve_mock.assert_not_called()
+
+
+def test_partial_update__kickoff_without_name_vars__task_services_called__ok(
+    mocker,
+    api_client,
+):
+    """
+    PATCH kickoff without name vars: 200, kickoff updated,
+    task due dates and performers recalculated.
+    """
+
+    # arrange
+    user = create_test_owner()
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    kickoff_field = FieldTemplate.objects.create(
+        name='Text field',
+        type=FieldType.TEXT,
+        is_required=False,
+        kickoff=template.kickoff_instance,
+        order=0,
+        template=template,
+        account=user.account,
+    )
+    workflow = create_test_workflow(user=user, template=template)
+    api_client.token_authenticate(user=user)
+
+    workflows_updated_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_updated',
+    )
+    insert_fields_values_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.insert_fields_values',
+    )
+    set_due_date_from_template_mock = mocker.patch(
+        'src.processes.services.tasks.task'
+        '.TaskService.set_due_date_from_template',
+    )
+    update_performers_mock = mocker.patch(
+        'src.processes.models.workflows.task.Task.update_performers',
+    )
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={
+            'kickoff': {
+                kickoff_field.api_name: 'new value',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+
+    workflows_updated_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+    assert insert_fields_values_mock.call_count == 1
+    assert set_due_date_from_template_mock.call_count == 1
+    assert update_performers_mock.call_count >= 1
+
+
+def test_partial_update__kickoff_with_name_vars__name_updated__ok(
+    mocker,
+    api_client,
+):
+    """
+    PATCH kickoff with name vars: 200, workflow name
+    interpolated, task data recalculated.
+    """
+
+    # arrange
+    user = create_test_owner()
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    kickoff_field = FieldTemplate.objects.create(
+        name='Text field',
+        type=FieldType.TEXT,
+        is_required=False,
+        kickoff=template.kickoff_instance,
+        order=0,
+        template=template,
+        account=user.account,
+    )
+    name_template = 'Workflow {{ %s }}' % kickoff_field.api_name
+    workflow = create_test_workflow(
+        user=user,
+        template=template,
+        name_template=name_template,
+    )
+    updated_name = 'Workflow updated name'
+    api_client.token_authenticate(user=user)
+
+    workflows_updated_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_updated',
+    )
+    contains_fields_vars_mock = mocker.patch(
+        'src.processes.serializers.workflows.workflow.contains_fields_vars',
+        return_value=True,
+    )
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.processes.serializers.workflows.workflow'
+        '.insert_fields_values_to_text',
+        return_value=updated_name,
+    )
+    insert_fields_values_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.insert_fields_values',
+    )
+    set_due_date_from_template_mock = mocker.patch(
+        'src.processes.services.tasks.task'
+        '.TaskService.set_due_date_from_template',
+    )
+    update_performers_mock = mocker.patch(
+        'src.processes.models.workflows.task.Task.update_performers',
+    )
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={
+            'kickoff': {
+                kickoff_field.api_name: 'some value',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['name'] == updated_name
+
+    workflow.refresh_from_db()
+    assert workflow.name == updated_name
+
+    workflows_updated_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+    contains_fields_vars_mock.assert_called_once_with(name_template)
+    insert_fields_values_to_text_mock.assert_called_once_with(
+        text=name_template,
+        fields_values=mocker.ANY,
+    )
+    assert insert_fields_values_mock.call_count == 1
+    assert set_due_date_from_template_mock.call_count == 1
+    assert update_performers_mock.call_count >= 1
+
+
+def test_partial_update__kickoff_and_is_urgent__all_task_services_called__ok(
+    mocker,
+    api_client,
+):
+    """
+    PATCH kickoff + is_urgent False→True: 200, urgency and
+    kickoff applied, task data recalculated.
+    """
+
+    # arrange
+    user = create_test_owner()
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    kickoff_field = FieldTemplate.objects.create(
+        name='Text field',
+        type=FieldType.TEXT,
+        is_required=False,
+        kickoff=template.kickoff_instance,
+        order=0,
+        template=template,
+        account=user.account,
+    )
+    workflow = create_test_workflow(
+        user=user,
+        template=template,
+        is_urgent=False,
+    )
+    api_client.token_authenticate(user=user)
+
+    workflows_updated_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_updated',
+    )
+    workflows_urgent_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_urgent',
+    )
+    urgent_service_resolve_mock = mocker.patch(
+        'src.processes.services.urgent.UrgentService.resolve',
+    )
+    task_partial_update_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.partial_update',
+    )
+    insert_fields_values_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.insert_fields_values',
+    )
+    set_due_date_from_template_mock = mocker.patch(
+        'src.processes.services.tasks.task'
+        '.TaskService.set_due_date_from_template',
+    )
+    update_performers_mock = mocker.patch(
+        'src.processes.models.workflows.task.Task.update_performers',
+    )
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={
+            'is_urgent': True,
+            'kickoff': {
+                kickoff_field.api_name: 'new kickoff value',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['is_urgent'] is True
+
+    workflow.refresh_from_db()
+    assert workflow.is_urgent is True
+
+    workflows_updated_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+    workflows_urgent_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+        action=WorkflowActions.marked,
+    )
+    urgent_service_resolve_mock.assert_called_once_with(
+        workflow=workflow,
+        user=user,
+    )
+    assert task_partial_update_mock.call_count == 1
+    task_partial_update_mock.assert_has_calls(
+        [mocker.call(is_urgent=True)],
+        any_order=True,
+    )
+    assert insert_fields_values_mock.call_count == 1
+    assert set_due_date_from_template_mock.call_count == 1
+    assert update_performers_mock.call_count >= 1
+
+
+def test_partial_update__due_date_tsp__analytic_called__ok(
+    mocker,
+    api_client,
+):
+    """
+    PATCH due_date_tsp: 200, due_date updated in DB,
+    urgent analytics not triggered.
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user)
+    api_client.token_authenticate(user=user)
+    due_date = timezone.now() + timedelta(days=3)
+
+    workflows_updated_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_updated',
+    )
+    workflows_urgent_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_urgent',
+    )
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={'due_date_tsp': due_date.timestamp()},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['due_date_tsp'] == due_date.timestamp()
+
+    workflow.refresh_from_db()
+    assert workflow.due_date == due_date
+
+    workflows_updated_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+    workflows_urgent_mock.assert_not_called()
+
+
+def test_partial_update__not_authenticated__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={'name': 'New name'},
+    )
+
+    # assert
+    assert response.status_code == 401
+
+
+def test_partial_update__expired_subscription__permission_denied(
+    api_client,
+):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.UNLIMITED,
+        plan_expiration=timezone.now() - timedelta(hours=1),
+    )
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={'name': 'New name'},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_partial_update__billing_plan__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(plan=None)
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={'name': 'New name'},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_partial_update__users_overlimited__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.PREMIUM,
+        max_users=1,
+    )
+    owner = create_test_owner(account=account)
+    create_test_not_admin(account=account)
+    account.active_users = 2
+    account.save()
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={'name': 'New name'},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_partial_update__not_found__not_found(api_client):
+
+    # arrange
+    user = create_test_owner()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.patch(
+        '/workflows/99999999',
+        data={'name': 'New name'},
+    )
+
+    # assert
+    assert response.status_code == 404

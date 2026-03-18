@@ -65,6 +65,7 @@ services:
     command: >
       sh -c "python manage.py migrate &&
              python manage.py collectstatic --no-input &&
+             python manage.py init_periodic_tasks &&
              python manage.py compilemessages &&
              gunicorn src.asgi:application --workers ${WORKERS_COUNT:-2} -k uvicorn.workers.UvicornWorker --worker-tmp-dir /dev/shm --bind unix:/tmp/gunicorn/pneumatic-backend.sock --timeout 200"
     environment:

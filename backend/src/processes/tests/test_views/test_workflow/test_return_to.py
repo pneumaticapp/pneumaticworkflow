@@ -3,6 +3,7 @@ from datetime import timedelta
 import pytest
 from django.utils import timezone
 
+from src.accounts.enums import BillingPlanType
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     ConditionAction,
@@ -32,6 +33,7 @@ from src.processes.tests.fixtures import (
     create_task_returned_webhook,
     create_test_account,
     create_test_admin,
+    create_test_not_admin,
     create_test_owner,
     create_test_template,
     create_test_user,
@@ -870,3 +872,146 @@ def test_return_to__sub_workflow_completed__ok(api_client):
     assert task_1.is_active
     task_2.refresh_from_db()
     assert task_2.is_pending
+
+
+def test_return_to__not_authenticated__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task = workflow.tasks.get(number=1)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/return-to',
+        data={'task_api_name': task.api_name},
+    )
+
+    # assert
+    assert response.status_code == 401
+
+
+def test_return_to__expired_subscription__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.UNLIMITED,
+        plan_expiration=timezone.now() - timedelta(hours=1),
+    )
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task = workflow.tasks.get(number=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/return-to',
+        data={'task_api_name': task.api_name},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_return_to__billing_plan__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(plan=None)
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task = workflow.tasks.get(number=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/return-to',
+        data={'task_api_name': task.api_name},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_return_to__not_admin__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    not_admin = create_test_not_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task = workflow.tasks.get(number=1)
+    api_client.token_authenticate(not_admin)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/return-to',
+        data={'task_api_name': task.api_name},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_return_to__not_owner__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    admin = create_test_admin(
+        account=account,
+        email='admin@test.test',
+    )
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task = workflow.tasks.get(number=1)
+    api_client.token_authenticate(admin)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/return-to',
+        data={'task_api_name': task.api_name},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_return_to__users_overlimited__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.PREMIUM,
+        max_users=1,
+    )
+    owner = create_test_owner(account=account)
+    create_test_not_admin(account=account)
+    account.active_users = 2
+    account.save()
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task = workflow.tasks.get(number=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/return-to',
+        data={'task_api_name': task.api_name},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_return_to__not_found__not_found(api_client):
+
+    # arrange
+    user = create_test_owner()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        '/workflows/99999999/return-to',
+        data={'task_api_name': 'some-task'},
+    )
+
+    # assert
+    assert response.status_code == 404
