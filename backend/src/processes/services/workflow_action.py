@@ -319,9 +319,6 @@ class WorkflowActionService:
             user=self.user or self.workflow.account.get_owner(),
         )
         fields_values = self.workflow.get_fields_markdown_values()
-        fields_values['workflow-starter'] = get_workflow_starter_name(
-            self.workflow.workflow_starter,
-        )
         task_service.insert_fields_values(fields_values=fields_values)
 
         WorkflowEventService.task_skip_event(task)
@@ -634,9 +631,6 @@ class WorkflowActionService:
             user=self.user or self.workflow.account.get_owner(),
         )
         fields_values = self.workflow.get_fields_markdown_values()
-        fields_values['workflow-starter'] = get_workflow_starter_name(
-            self.workflow.workflow_starter,
-        )
         task_service.insert_fields_values(fields_values=fields_values)
         task.update_performers(restore_performers=True)
         task_performers_exists = (
