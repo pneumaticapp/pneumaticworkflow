@@ -402,7 +402,7 @@ def test_update_from_version__all_fields__active_task__ok(mocker):
 
 
 @pytest.mark.parametrize('status', TaskStatus.INACTIVE_STATUS)
-def test_update_from_version__inactive_task_field_value__insert_empty(
+def test_update_from_version__inactive_task_field_value__insert_null(
     mocker,
     status,
 ):
@@ -543,7 +543,7 @@ def test_update_from_version__inactive_task_field_value__insert_empty(
     create_or_update_instance_mock.assert_called_once_with(
         data=data,
         workflow=workflow,
-        fields_values={field_api_name: ''},
+        fields_values={field_api_name: None},
     )
     update_fields_mock.assert_called_once_with(
         data=data['fields'],
@@ -554,7 +554,7 @@ def test_update_from_version__inactive_task_field_value__insert_empty(
     update_checklists_mock.assert_called_once_with(
         data=data['checklists'],
         version=version,
-        fields_values={field_api_name: ''},
+        fields_values={field_api_name: None},
     )
     update_raw_due_date_mock.assert_called_once_with(
         data=data['raw_due_date'],

@@ -1175,7 +1175,7 @@ def test_skip_task__is_returned_has_parents__set_pending_start_prev(mocker):
     assert task.status == TaskStatus.PENDING
     task_service_init_mock.assert_called_once_with(instance=task, user=owner)
     insert_fields_values_mock.assert_called_once_with(
-        fields_values={'workflow-starter': 'John Doe'},
+        fields_values={'workflow-starter': owner.name},
     )
     task_skip_event_mock.assert_called_once_with(task)
     start_prev_tasks_mock.assert_called_once_with(task)
@@ -1220,7 +1220,7 @@ def test_skip_task__not_returned__set_skipped_start_next(mocker):
     assert task.status == TaskStatus.SKIPPED
     task_service_init_mock.assert_called_once_with(instance=task, user=owner)
     insert_fields_values_mock.assert_called_once_with(
-        fields_values={'workflow-starter': 'John Doe'},
+        fields_values={'workflow-starter': owner.name},
     )
     task_skip_event_mock.assert_called_once_with(task)
     start_prev_tasks_mock.assert_not_called()
@@ -1272,7 +1272,7 @@ def test_skip_task__external__guest_workflow_starter(mocker):
     start_next_tasks_mock.assert_called_once_with(parent_task=task)
 
 
-def test_skip_task__skipped_fields__insert_blank_value(mocker):
+def test_skip_task__skipped_fields__insert_null_value(mocker):
 
     # arrange
     account = create_test_account()
@@ -1322,7 +1322,10 @@ def test_skip_task__skipped_fields__insert_blank_value(mocker):
     assert task_2.status == TaskStatus.SKIPPED
     task_service_init_mock.assert_called_once_with(instance=task_2, user=owner)
     insert_fields_values_mock.assert_called_once_with(
-        fields_values={field.api_name: ''},
+        fields_values={
+            'workflow-starter': owner.name,
+            field.api_name: None,
+        },
     )
     task_skip_event_mock.assert_called_once_with(task_2)
     start_prev_tasks_mock.assert_not_called()
@@ -2386,7 +2389,7 @@ def test_start_workflow__ok(mocker):
         user=owner,
     )
     insert_fields_values_mock.assert_called_once_with(
-        fields_values={'workflow-starter': 'John Doe'},
+        fields_values={'workflow-starter': owner.name},
     )
     workflow_run_event_mock.assert_called_once_with(
         workflow=workflow,
@@ -2448,7 +2451,7 @@ def test_start_workflow__with_ancestor_task__fire_sub_wf_event(mocker):
         user=user,
     )
     insert_fields_values_mock.assert_called_once_with(
-        fields_values={'workflow-starter': 'John Doe'},
+        fields_values={'workflow-starter': owner.name},
     )
     workflow_run_event_mock.assert_called_once_with(
         workflow=workflow,
@@ -2511,7 +2514,7 @@ def test_start_workflow__webhook_exists__send_webhook(mocker):
         user=owner,
     )
     insert_fields_values_mock.assert_called_once_with(
-        fields_values={'workflow-starter': 'John Doe'},
+        fields_values={'workflow-starter': owner.name},
     )
     workflow_run_event_mock.assert_called_once_with(
         workflow=workflow,
@@ -3362,7 +3365,11 @@ def test_start_task__no_performers__skip_and_fire_skip_event(mocker):
         instance=task,
         user=owner,
     )
-    insert_fields_values_mock.assert_called_once_with(fields_values={})
+    insert_fields_values_mock.assert_called_once_with(
+        fields_values={
+            'workflow-starter': owner.name,
+        },
+    )
     update_performers_mock.assert_called_once_with(restore_performers=True)
     task_skip_no_performers_event_mock.assert_called_once_with(task)
     start_next_tasks_mock.assert_called_once_with(parent_task=task)
@@ -3416,7 +3423,11 @@ def test_start_task__no_performers_is_returned__start_prev_tasks(mocker):
         instance=task,
         user=owner,
     )
-    insert_fields_values_mock.assert_called_once_with(fields_values={})
+    insert_fields_values_mock.assert_called_once_with(
+        fields_values={
+            'workflow-starter': owner.name,
+        },
+    )
     update_performers_mock.assert_called_once_with(restore_performers=True)
     task_skip_no_performers_event_mock.assert_called_once_with(task)
     start_prev_tasks_mock.assert_called_once_with(task)
@@ -3460,7 +3471,11 @@ def test_start_task__performers_is_returned__continue_wf_returned(mocker):
         instance=task,
         user=owner,
     )
-    insert_fields_values_mock.assert_called_once_with(fields_values={})
+    insert_fields_values_mock.assert_called_once_with(
+        fields_values={
+            'workflow-starter': owner.name,
+        },
+    )
     update_performers_mock.assert_called_once_with(restore_performers=True)
     continue_workflow_mock.assert_called_once_with(
         task=task,
@@ -3518,7 +3533,11 @@ def test_start_task__performers_has_active_delay__delay_task(mocker):
         instance=task,
         user=owner,
     )
-    insert_fields_values_mock.assert_called_once_with(fields_values={})
+    insert_fields_values_mock.assert_called_once_with(
+        fields_values={
+            'workflow-starter': owner.name,
+        },
+    )
     update_performers_mock.assert_called_once_with(restore_performers=True)
     get_active_delay_mock.assert_called_once()
     delay_task_mock.assert_called_once_with(task=task, delay=delay)
@@ -3566,7 +3585,11 @@ def test_start_task__performers_no_delay__continue_workflow(mocker):
         instance=task,
         user=owner,
     )
-    insert_fields_values_mock.assert_called_once_with(fields_values={})
+    insert_fields_values_mock.assert_called_once_with(
+        fields_values={
+            'workflow-starter': owner.name,
+        },
+    )
     update_performers_mock.assert_called_once_with(restore_performers=True)
     get_active_delay_mock.assert_called_once()
     continue_workflow_mock.assert_called_once_with(
@@ -3633,11 +3656,12 @@ def test_start_task__inactive_task_field_value__insert_value(mocker, status):
     insert_fields_values_mock.assert_called_once_with(
         fields_values={
             field_api_name: field_markdown_value,
+            'workflow-starter': owner.name,
         },
     )
 
 
-def test_start_task__field_value_blank__insert_value(mocker):
+def test_start_task__field_value_blank__insert_null_value(mocker):
 
     # arrange
     account = create_test_account()
@@ -3685,7 +3709,8 @@ def test_start_task__field_value_blank__insert_value(mocker):
     )
     insert_fields_values_mock.assert_called_once_with(
         fields_values={
-            field_api_name: '',
+            field_api_name: None,
+            'workflow-starter': owner.name,
         },
     )
 

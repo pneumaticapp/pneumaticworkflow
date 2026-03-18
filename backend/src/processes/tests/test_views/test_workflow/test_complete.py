@@ -834,7 +834,7 @@ def test_complete__task_not_found__validation_error(api_client):
     # assert
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == messages.MSG_PW_0076
+    assert response.data['message'] == messages.MSG_PW_0077
 
 
 def test_complete__service_exception__validation_error(mocker, api_client):

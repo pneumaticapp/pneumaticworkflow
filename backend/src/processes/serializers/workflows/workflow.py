@@ -303,7 +303,7 @@ class WorkflowTaskCompleteSerializer(
             Q(id=task_id) | Q(api_name=task_api_name),
         ).first()
         if task is None:
-            raise ValidationError(messages.MSG_PW_0076)
+            raise ValidationError(messages.MSG_PW_0077)
         if not task.is_active:
             raise ValidationError(messages.MSG_PW_0086)
 
