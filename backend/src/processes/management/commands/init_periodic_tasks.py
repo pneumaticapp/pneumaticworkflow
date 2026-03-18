@@ -47,18 +47,17 @@ class Command(BaseCommand):
         """
         Universal method to create a PeriodicTask if it doesn't already exist.
         """
-        _, created = PeriodicTask.objects.get_or_create(
-            name=name,
-            defaults={
-                "task": task_path,
-                schedule_field: schedule_obj,
-            },
-        )
+        if PeriodicTask.objects.filter(task=task_path).exists():
+            return
 
-        if created:
-            self.stdout.write(
-                self.style.SUCCESS(f"Task '{name}' has been created."),
-            )
+        PeriodicTask.objects.create(
+            name=name,
+            task=task_path,
+            **{schedule_field: schedule_obj},
+        )
+        self.stdout.write(
+            self.style.SUCCESS(f"Task '{name}' has been created."),
+        )
 
     # ──────────────────────────────────────────────
     #  Specific tasks
