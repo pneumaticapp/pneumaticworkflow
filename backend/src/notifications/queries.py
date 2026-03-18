@@ -6,7 +6,6 @@ from src.accounts.enums import NotificationType, UserStatus
 from src.generics.mixins.queries import DereferencedPerformersMixin
 from src.notifications.enums import NotificationMethod
 from src.processes.enums import (
-    DirectlyStatus,
     TaskStatus,
     WorkflowStatus,
 )
@@ -17,7 +16,7 @@ from src.queries import (
 UserModel = get_user_model()
 
 
-class UsersWithOverdueTaskQuery(SqlQueryObject):
+class UsersWithOverdueTaskQuery(SqlQueryObject, DereferencedPerformersMixin):
 
     def get_sql(self) -> Tuple[str, dict]:
         return f"""
@@ -64,22 +63,23 @@ class UsersWithOverdueTaskQuery(SqlQueryObject):
             INNER JOIN processes_task pt
               ON pw.id = pt.workflow_id
               AND pt.status = '{TaskStatus.ACTIVE}'
-            INNER JOIN processes_taskperformer ptp
-              ON pt.id = ptp.task_id
+            INNER JOIN (
+              {self.all_dereferenced_performers()}
+            ) dereferenced_performers
+              ON pt.id = dereferenced_performers.task_id
             INNER JOIN accounts_user au
-              ON au.id = ptp.user_id
+              ON au.id = dereferenced_performers.user_id
             INNER JOIN accounts_account aa
               ON au.account_id = aa.id
             LEFT JOIN accounts_notification an
               ON an.task_id = pt.id
-              AND an.user_id = ptp.user_id
+              AND an.user_id = dereferenced_performers.user_id
               AND an.type = '{NotificationType.OVERDUE_TASK}'
             WHERE pt.is_deleted is FALSE
               AND pw.status = '{WorkflowStatus.RUNNING}'
               AND pt.due_date IS NOT NULL
               AND pt.due_date <= NOW()
-              AND ptp.is_completed IS FALSE
-              AND ptp.directly_status != '{DirectlyStatus.DELETED}'
+              AND dereferenced_performers.is_completed IS FALSE
               AND au.status = '{UserStatus.ACTIVE}'
         ) result INNER JOIN accounts_user au
           ON au.id = result.workflow_starter_id
