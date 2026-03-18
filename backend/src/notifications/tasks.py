@@ -717,21 +717,18 @@ def _send_completed_workflow_notification(
         .get(id=workflow_id)
     )
     if workflow.is_external:
-        workflow_starter_name = 'External User'
-        workflow_starter_photo = None
-    else:
-        workflow_starter_name = workflow.workflow_starter.name
-        workflow_starter_photo = workflow.workflow_starter.photo
+        return
+    workflow_starter_name = workflow.workflow_starter.name
+    workflow_starter_photo = workflow.workflow_starter.photo
 
     workflow_json = NotificationWorkflowSerializer(instance=workflow).data
     users = (
-        TaskPerformer.objects
-        .acd_task_status()
-        .users()
-        .by_workflow(workflow_id)
-        .exclude_directly_deleted()
-        .order_by('id')
-        .get_user_ids_name_emails_subscriber_set()
+        (
+            workflow.workflow_starter.id,
+            workflow.workflow_starter.email,
+            workflow.workflow_starter.first_name,
+            True,
+        ),
     )
     link = f'{settings.FRONTEND_URL}/workflows/{workflow_id}'
 
