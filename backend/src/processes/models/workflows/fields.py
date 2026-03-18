@@ -28,15 +28,17 @@ class TaskField(
         ordering = ['-order', 'id']
 
     value = models.TextField(
+        blank=True,
         help_text='Human readable value',
-        default='',
     )
     clear_value = models.TextField(
-        default='',
+        null=True,
+        blank=True,
         help_text='Does not contains markdown',
     )
     markdown_value = models.TextField(
-        default='',
+        null=True,
+        blank=True,
         help_text='Contains markdown representation',
     )
     task = models.ForeignKey(
