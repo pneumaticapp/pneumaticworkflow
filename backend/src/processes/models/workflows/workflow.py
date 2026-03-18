@@ -16,6 +16,7 @@ from src.processes.querysets import (
     TaskFieldQuerySet,
     WorkflowQuerySet,
 )
+from src.processes.utils.common import get_workflow_starter_name
 
 UserModel = get_user_model()
 
@@ -185,3 +186,23 @@ class Workflow(
     @property
     def is_completed(self):
         return self.status == WorkflowStatus.DONE
+
+    def get_fields_markdown_values(
+        self,
+        tasks_filter_kwargs: Optional[Dict] = None,
+        tasks_exclude_kwargs: Optional[Dict] = None,
+        fields_filter_kwargs: Optional[Dict] = None,
+    ) -> Dict[str, str]:
+        """Extends parent method by adding the workflow-starter
+            system variable to the substitution dictionary."""
+
+        fields_values = super().get_fields_markdown_values(
+            tasks_filter_kwargs=tasks_filter_kwargs,
+            tasks_exclude_kwargs=tasks_exclude_kwargs,
+            fields_filter_kwargs=fields_filter_kwargs,
+        )
+
+        fields_values['workflow-starter'] = get_workflow_starter_name(
+            self.workflow_starter,
+        )
+        return fields_values
