@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('accounts', '0141_auto_20260310_1646'),
-        ('processes', '0244_add_reminder'),
+        ('processes', '0245_add_templateowner_role'),
     ]
 
     operations = [
