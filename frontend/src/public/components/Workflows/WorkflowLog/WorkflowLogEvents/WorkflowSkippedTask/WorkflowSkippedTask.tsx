@@ -1,7 +1,7 @@
-/* eslint-disable */
-/* prettier-ignore */
+
 import * as React from 'react';
-import * as classnames from 'classnames';
+import { useCallback } from 'react';
+import classnames from 'classnames';
 import { Link } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 
@@ -44,7 +44,7 @@ export function WorkflowSkippedTask({
     );
   };
 
-  const getThemeClassName = React.useCallback(() => {
+  const getThemeClassName = useCallback(() => {
     const themeClassNameMap: { [key in TWorkflowLogTheme]: string } = {
       beige: styles['container-beige'],
       white: styles['container-white'],

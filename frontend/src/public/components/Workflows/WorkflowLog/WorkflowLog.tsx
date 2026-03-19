@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import * as React from 'react';
+import { useEffect } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import Switch from 'rc-switch';
