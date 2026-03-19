@@ -13,6 +13,7 @@ import {
   changeTaskWorkflowLogViewSettings,
   changeTaskWorkflowLog,
   sendTaskWorkflowLogComments,
+  toggleTaskSkippedTasksVisibility,
 } from '../../redux/actions';
 import { openWorkflowLogPopup, clearWorkflow, setWorkflowFinished } from '../../redux/workflows/slice';
 import { IApplicationState } from '../../types/redux';
@@ -29,6 +30,7 @@ type TDispatchProps = Pick<
   | 'setWorkflowFinished'
   | 'changeTaskWorkflowLogViewSettings'
   | 'sendTaskWorkflowLogComments'
+  | 'toggleTaskSkippedTasksVisibility'
   | 'setCurrentTask'
   | 'changeTaskWorkflowLog'
   | 'clearWorkflow'
@@ -65,6 +67,7 @@ export const mapDispatchToProps: TDispatchProps = {
   setWorkflowFinished,
   changeTaskWorkflowLogViewSettings,
   sendTaskWorkflowLogComments,
+  toggleTaskSkippedTasksVisibility,
   setCurrentTask,
   changeTaskWorkflowLog,
   clearWorkflow,
