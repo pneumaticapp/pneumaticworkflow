@@ -49,26 +49,29 @@
 
 .form-ai-generate {
   display: flex;
+  flex-direction: column;
 
-  @media (--mobile) {
-    display: block;
-  }
+  &__textarea {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 14px;
+    line-height: 20px;
+    font-family: inherit;
+    border: 1px solid var(--pneumatic-color-black16);
+    border-radius: 8px;
+    resize: vertical;
+    min-height: 80px;
+    outline: none;
+    box-sizing: border-box;
 
-  &__input {
-    @media (--mobile) {
-      margin-bottom: 8px;
+    &:focus {
+      border-color: var(--pneumatic-color-blue);
     }
   }
 
   &__button {
-    margin-top: 8px;
-    width: 100%;
-
-    @media (--desktop) {
-      margin-top: 0;
-      margin-left: 8px;
-      width: initial;
-    }
+    margin-top: 12px;
+    align-self: flex-start;
   }
 }
 

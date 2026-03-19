@@ -1,6 +1,8 @@
+import json
 import pytest
 from django.contrib.auth import get_user_model
 
+from src.ai.enums import OpenAIPromptTarget
 from src.ai.tests.fixtures import create_test_prompt
 from src.processes.enums import (
     ConditionAction,
@@ -20,7 +22,10 @@ UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
 
 
-def test_get_short_template_data__ok(mocker):
+# === Legacy text path ===
+
+
+def test_get_short_template_data__legacy_text_path__ok(mocker):
 
     # arrange
     description = 'My lovely business process'
@@ -102,7 +107,123 @@ def test_get_short_template_data__ok(mocker):
     assert task_2_predicate['value'] is None
 
 
-def test_get_template_data__not_steps__raise_exception(mocker):
+# === JSON path with GET_TEMPLATE prompt ===
+
+
+def test_get_short_template_data__json_path__ok(mocker):
+
+    # arrange
+    description = 'My lovely business process'
+    create_test_prompt(target=OpenAIPromptTarget.GET_TEMPLATE)
+    ai_json = json.dumps({
+        'name': 'My Workflow',
+        'description': 'A workflow',
+        'kickoff': {
+            'fields': [
+                {
+                    'order': 1,
+                    'name': 'Input Field',
+                    'type': 'string',
+                    'is_required': True,
+                },
+            ],
+        },
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'First task',
+                'description': 'Do the first thing',
+                'fields': [
+                    {
+                        'order': 1,
+                        'name': 'Output',
+                        'type': 'text',
+                    },
+                ],
+            },
+            {
+                'number': 2,
+                'name': 'Second task',
+                'description': 'Do the second thing',
+            },
+        ],
+    })
+    get_json_response_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'ai.AnonOpenAiService._get_json_response',
+        return_value=ai_json,
+    )
+    ip = '168.01.01.8'
+    user_agent = 'Some browser'
+
+    service = AnonOpenAiService(
+        ident=ip,
+        user_agent=user_agent,
+    )
+
+    # act
+    data = service.get_short_template_data(
+        user_description=description,
+    )
+
+    # assert
+    get_json_response_mock.assert_called_once()
+    assert data['name'] == 'My Workflow'
+    assert len(data['tasks']) == 2
+    assert data['tasks'][0]['name'] == 'First task'
+    assert data['tasks'][0]['api_name']
+    assert 'fields' not in data['tasks'][0]
+    assert data['tasks'][1]['name'] == 'Second task'
+
+
+# === JSON path with no prompt (default instruction) ===
+
+
+def test_get_short_template_data__no_prompt__uses_default(mocker):
+
+    # arrange
+    description = 'My lovely business process'
+    ai_json = json.dumps({
+        'name': 'Generated',
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'Step one',
+                'description': 'First step',
+            },
+        ],
+    })
+    get_json_response_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'ai.AnonOpenAiService._get_json_response',
+        return_value=ai_json,
+    )
+    ip = '168.01.01.8'
+    user_agent = 'Some browser'
+
+    service = AnonOpenAiService(
+        ident=ip,
+        user_agent=user_agent,
+    )
+
+    # act
+    data = service.get_short_template_data(
+        user_description=description,
+    )
+
+    # assert
+    get_json_response_mock.assert_called_once_with(
+        user_description=description,
+        prompt=None,
+    )
+    assert data['name'] == 'Generated'
+    assert len(data['tasks']) == 1
+
+
+# === Error cases ===
+
+
+def test_get_short_template_data__legacy_not_steps__raise_exception(mocker):
 
     # arrange
     description = 'My lovely business process'
@@ -151,21 +272,14 @@ def test_get_template_data__not_steps__raise_exception(mocker):
     )
 
 
-def test_get_template_data__not_prompt__raise_exception(mocker):
+def test_get_short_template_data__json_parse_error__raise_exception(mocker):
 
     # arrange
     description = 'My lovely business process'
-    get_response_mock = mocker.patch(
+    mocker.patch(
         'src.processes.services.templates.'
-        'ai.AnonOpenAiService._get_response',
-    )
-    get_tasks_data_from_text_mock = mocker.patch(
-        'src.processes.services.templates.'
-        'ai.AnonOpenAiService._get_steps_data_from_text',
-    )
-    log_mock = mocker.patch(
-        'src.processes.services.templates.'
-        'ai.AnonOpenAiService._log',
+        'ai.AnonOpenAiService._get_json_response',
+        return_value='broken json {{',
     )
     ip = '168.01.01.8'
     user_agent = 'Some browser'
@@ -176,13 +290,10 @@ def test_get_template_data__not_prompt__raise_exception(mocker):
     )
 
     # act
-    with pytest.raises(OpenAiStepsPromptNotExist) as ex:
+    with pytest.raises(OpenAiTemplateStepsNotExist) as ex:
         service.get_short_template_data(
             user_description=description,
         )
 
     # assert
-    get_response_mock.assert_not_called()
-    get_tasks_data_from_text_mock.assert_not_called()
-    log_mock.assert_not_called()
-    assert ex.value.message == messages.MSG_PW_0046
+    assert ex.value.message == messages.MSG_PW_0045
