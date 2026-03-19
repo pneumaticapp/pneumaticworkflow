@@ -1,4 +1,5 @@
-import React, { useEffect } from 'react';
+import * as React from 'react';
+import { useEffect } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import Switch from 'rc-switch';
@@ -48,13 +49,14 @@ export const WorkflowLog = ({
   isCommentsShown,
   isCommentFieldHidden,
   isOnlyAttachmentsShown,
+  isSkippedTasksShown,
   workflowId,
   includeHeader,
   isLogMinimized,
   isLoading,
   minimizedLogMaxEvents,
   areTasksClickable,
-  isToggleCommentHidden,
+  areRightTogglesHidden,
   workflowStatus,
   changeWorkflowLogViewSettings,
   sendComment,
@@ -63,6 +65,7 @@ export const WorkflowLog = ({
   isInTaskCard,
   taskId,
   taskStatus,
+  toggleSkippedTasksVisibility,
 }: IWorkflowLogProps) => {
   const { formatMessage } = useIntl();
 
@@ -115,21 +118,40 @@ export const WorkflowLog = ({
               )}
             />
           </div>
-          {!isToggleCommentHidden && (
-            <div className={styles['switch-container']}>
-              <IntlMessages id="workflows.log-comments">
-                {(text) => <span className={styles['switch-container__label']}>{text}</span>}
-              </IntlMessages>
-              <Switch
-                className={classnames(
-                  'custom-switch custom-switch-primary custom-switch-small',
-                  styles['switch-container__button'],
-                )}
-                checkedChildren={null}
-                unCheckedChildren={null}
-                checked={isCommentsShown}
-                onChange={toggleComments}
-              />
+          {!areRightTogglesHidden && (
+            <div className={styles['popup-body-controls-right-toggles']}>
+              <div className={styles['switch-container']}>
+                <IntlMessages id="workflows.log-skipped-tasks">
+                  {(text) => <span className={styles['switch-container__label']}>{text}</span>}
+                </IntlMessages>
+                <Switch
+                  className={classnames(
+                    'custom-switch custom-switch-primary custom-switch-small',
+                    styles['switch-container__button'],
+                  )}
+                  checkedChildren={null}
+                  unCheckedChildren={null}
+                  checked={isSkippedTasksShown}
+                  onChange={toggleSkippedTasks}
+                  aria-label={formatMessage({ id: 'workflows.log-skipped-tasks' })}
+                />
+              </div>
+              <div className={styles['switch-container']}>
+                <IntlMessages id="workflows.log-comments">
+                  {(text) => <span className={styles['switch-container__label']}>{text}</span>}
+                </IntlMessages>
+                <Switch
+                  className={classnames(
+                    'custom-switch custom-switch-primary custom-switch-small',
+                    styles['switch-container__button'],
+                  )}
+                  checkedChildren={null}
+                  unCheckedChildren={null}
+                  checked={isCommentsShown}
+                  onChange={toggleComments}
+                  aria-label={formatMessage({ id: 'workflows.log-comments' })}
+                />
+              </div>
             </div>
           )}
         </div>
@@ -147,6 +169,10 @@ export const WorkflowLog = ({
         isOnlyAttachmentsShown,
       });
     }
+  };
+
+  const toggleSkippedTasks = () => {
+    toggleSkippedTasksVisibility();
   };
 
   const toggleAttachments = () => {
@@ -205,7 +231,16 @@ export const WorkflowLog = ({
       return <WorkflowLogSkeleton theme={theme} />;
     }
 
-    const normalizedItems = isLogMinimized && minimizedLogMaxEvents ? items.slice(0, minimizedLogMaxEvents) : items;
+    const filteredItems = isSkippedTasksShown
+      ? items
+      : items.filter(
+        (event) =>
+          event.type !== EWorkflowLogEvent.TaskSkipped &&
+            event.type !== EWorkflowLogEvent.TaskSkippedDueLackAssignedPerformers,
+      );
+
+    const normalizedItems =
+      isLogMinimized && minimizedLogMaxEvents ? filteredItems.slice(0, minimizedLogMaxEvents) : filteredItems;
 
     return normalizedItems.map((event) => {
       const { task: eventTask, type: eventType, delay, id } = event;
@@ -289,6 +324,7 @@ export interface IWorkflowLogProps {
   isCommentsShown: boolean;
   isCommentFieldHidden?: boolean;
   isOnlyAttachmentsShown: boolean;
+  isSkippedTasksShown: boolean;
   workflowId: number | null;
   includeHeader: boolean;
   workflowStatus: EWorkflowStatus;
@@ -296,8 +332,9 @@ export interface IWorkflowLogProps {
   isLoading?: boolean;
   minimizedLogMaxEvents?: number;
   areTasksClickable?: boolean;
-  isToggleCommentHidden?: boolean;
+  areRightTogglesHidden?: boolean;
   changeWorkflowLogViewSettings(payload: IChangeWorkflowLogViewSettingsPayload): void;
+  toggleSkippedTasksVisibility(): void;
   sendComment({ text, attachments, taskId }: ISendWorkflowLogComment): void;
   onClickTask?(): void;
   onUnmount?(): void;

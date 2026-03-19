@@ -235,6 +235,7 @@ export interface IWorkflowLog {
   items: IWorkflowLogItem[];
   isCommentsShown: boolean;
   isOnlyAttachmentsShown: boolean;
+  isSkippedTasksShown: boolean;
   sorting: EWorkflowsLogSorting;
   isOpen: boolean;
   workflowId: number | null;
