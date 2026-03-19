@@ -53,4 +53,20 @@ class Migration(migrations.Migration):
             name='dataset',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='processes.Dataset'),
         ),
+        migrations.AddConstraint(
+            model_name='dataset',
+            constraint=models.UniqueConstraint(
+                condition=models.Q(is_deleted=False),
+                fields=['account', 'name'],
+                name='dataset_account_name_unique',
+            ),
+        ),
+        migrations.AddConstraint(
+            model_name='datasetitem',
+            constraint=models.UniqueConstraint(
+                condition=models.Q(is_deleted=False),
+                fields=['dataset', 'value'],
+                name='datasetitem_dataset_value_unique',
+            ),
+        ),
     ]

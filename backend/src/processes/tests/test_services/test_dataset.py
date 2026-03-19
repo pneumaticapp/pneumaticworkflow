@@ -1,7 +1,12 @@
 import pytest
 
 from src.processes.models.dataset import Dataset
+from src.processes.messages.workflow import MSG_PW_0092, MSG_PW_0093
 from src.processes.services.dataset import DataSetService
+from src.processes.services.exceptions import (
+    DataSetNameNotUniqueException,
+    DataSetItemValueNotUniqueException,
+)
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_dataset,
@@ -375,3 +380,126 @@ def test__partial_update__default_force_save__ok(mocker):
     dataset.refresh_from_db()
     assert dataset.name == old_name
     _update_items_mock.assert_not_called()
+
+
+def test__create__duplicate_dataset_name_same_account__integrity_error():
+
+    """Dataset name must be unique per account (is_deleted=False)"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    duplicate_name = 'My Dataset'
+    create_test_dataset(
+        account=account,
+        name=duplicate_name,
+        items_count=0,
+    )
+    service = DataSetService(user=user)
+
+    # act
+    with pytest.raises(DataSetNameNotUniqueException) as ex:
+        service._create_instance(name=duplicate_name)
+
+    # assert
+    assert str(ex.value.message) == str(MSG_PW_0092)
+
+
+def test__create__duplicate_dataset_name_different_account__ok():
+
+    """Same dataset name is allowed for different accounts"""
+
+    # arrange
+    account1 = create_test_account(name='Account 1')
+    account2 = create_test_account(name='Account 2')
+    user2 = create_test_owner(account=account2)
+    shared_name = 'My Dataset'
+    create_test_dataset(
+        account=account1,
+        name=shared_name,
+        items_count=0,
+    )
+    service = DataSetService(user=user2)
+
+    # act
+    result = service._create_instance(name=shared_name)
+
+    # assert
+    assert result.name == shared_name
+    assert result.account == account2
+
+
+def test__partial_update__duplicate_name_same_account__integrity_error():
+
+    """Rename to existing name in same account raises error"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    existing_name = 'Already Taken'
+    create_test_dataset(
+        account=account,
+        name=existing_name,
+        items_count=0,
+    )
+    dataset = create_test_dataset(
+        account=account,
+        name='Original Name',
+        items_count=0,
+    )
+    service = DataSetService(user=user, instance=dataset)
+
+    # act
+    with pytest.raises(DataSetNameNotUniqueException) as ex:
+        service.partial_update(
+            name=existing_name,
+            force_save=True,
+        )
+
+    # assert
+    assert str(ex.value.message) == str(MSG_PW_0092)
+
+
+def test__create_items__duplicate_value_same_dataset__integrity_error():
+
+    """DatasetItem value must be unique within a dataset (is_deleted=False)"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account, items_count=0)
+    service = DataSetService(user=user, instance=dataset)
+    items_data = [
+        {'value': 'Same Value', 'order': 1},
+        {'value': 'Same Value', 'order': 2},
+    ]
+
+    # act
+    with pytest.raises(DataSetItemValueNotUniqueException) as ex:
+        service._create_items(items_data=items_data)
+
+    # assert
+    assert str(ex.value.message) == str(MSG_PW_0093)
+
+
+def test__update_items__duplicate_value_same_dataset__integrity_error():
+
+    """Updating two items in the same dataset to the same value raises error"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account, items_count=2)
+    items = list(dataset.items.order_by('order'))
+    service = DataSetService(user=user, instance=dataset)
+    items_data = [
+        {'id': items[0].id, 'value': 'Same Value', 'order': 1},
+        {'id': items[1].id, 'value': 'Same Value', 'order': 2},
+    ]
+
+    # act
+    with pytest.raises(DataSetItemValueNotUniqueException) as ex:
+        service._update_items(items_data=items_data)
+
+    # assert
+    assert str(ex.value.message) == str(MSG_PW_0093)

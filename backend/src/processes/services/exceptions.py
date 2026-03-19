@@ -198,6 +198,16 @@ class DataSetServiceException(BaseServiceException):
     pass
 
 
+class DataSetNameNotUniqueException(DataSetServiceException):
+
+    default_message = pw_messages.MSG_PW_0092
+
+
+class DataSetItemValueNotUniqueException(DataSetServiceException):
+
+    default_message = pw_messages.MSG_PW_0093
+
+
 class CommentedNotTask(CommentServiceException):
 
     default_message = pw_messages.MSG_PW_0077

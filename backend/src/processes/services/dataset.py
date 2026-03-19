@@ -1,9 +1,14 @@
 from typing import Any, Dict, List, Optional
 
 from django.contrib.auth import get_user_model
+from django.db import IntegrityError
 
 from src.generics.base.service import BaseModelService
 from src.processes.models.dataset import Dataset, DatasetItem
+from src.processes.services.exceptions import (
+    DataSetItemValueNotUniqueException,
+    DataSetNameNotUniqueException,
+)
 
 UserModel = get_user_model()
 
@@ -16,11 +21,14 @@ class DataSetService(BaseModelService):
         description: str = '',
         **kwargs,
     ):
-        self.instance = Dataset.objects.create(
-            account=self.account,
-            name=name,
-            description=description,
-        )
+        try:
+            self.instance = Dataset.objects.create(
+                account=self.account,
+                name=name,
+                description=description,
+            )
+        except IntegrityError as ex:
+            raise DataSetNameNotUniqueException from ex
         return self.instance
 
     def _create_related(
@@ -36,11 +44,15 @@ class DataSetService(BaseModelService):
         force_save: bool = False,
         **update_kwargs,
     ) -> Dataset:
+
         items = update_kwargs.pop('items', None)
-        result = super().partial_update(
-            force_save=force_save,
-            **update_kwargs,
-        )
+        try:
+            result = super().partial_update(
+                force_save=force_save,
+                **update_kwargs,
+            )
+        except IntegrityError as ex:
+            raise DataSetNameNotUniqueException from ex
         if items is not None:
             self._update_items(items_data=items)
         return result
@@ -60,7 +72,10 @@ class DataSetService(BaseModelService):
             )
             for item_data in items_data
         ]
-        DatasetItem.objects.bulk_create(items_to_create)
+        try:
+            DatasetItem.objects.bulk_create(items_to_create)
+        except IntegrityError as ex:
+            raise DataSetItemValueNotUniqueException from ex
 
     def _update_items(
         self,
@@ -99,9 +114,15 @@ class DataSetService(BaseModelService):
             self.instance.items.filter(id__in=ids_to_delete).delete()
 
         if items_to_update:
-            DatasetItem.objects.bulk_update(
-                items_to_update,
-                fields=['value', 'order'],
-            )
+            try:
+                DatasetItem.objects.bulk_update(
+                    items_to_update,
+                    fields=['value', 'order'],
+                )
+            except IntegrityError as ex:
+                raise DataSetItemValueNotUniqueException from ex
         if items_to_create:
-            DatasetItem.objects.bulk_create(items_to_create)
+            try:
+                DatasetItem.objects.bulk_create(items_to_create)
+            except IntegrityError as ex:
+                raise DataSetItemValueNotUniqueException from ex

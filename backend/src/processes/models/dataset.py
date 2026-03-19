@@ -1,4 +1,5 @@
 from django.db import models
+from django.db.models import Q, UniqueConstraint
 
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
@@ -10,6 +11,13 @@ class Dataset(SoftDeleteModel, AccountBaseMixin):
 
     class Meta:
         ordering = ['-id']
+        constraints = [
+            UniqueConstraint(
+                fields=['account', 'name'],
+                condition=Q(is_deleted=False),
+                name='dataset_account_name_unique',
+            ),
+        ]
 
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True, default='')
@@ -25,6 +33,13 @@ class DatasetItem(SoftDeleteModel):
 
     class Meta:
         ordering = ['order', 'id']
+        constraints = [
+            UniqueConstraint(
+                fields=['dataset', 'value'],
+                condition=Q(is_deleted=False),
+                name='datasetitem_dataset_value_unique',
+            ),
+        ]
 
     dataset = models.ForeignKey(
         Dataset,
