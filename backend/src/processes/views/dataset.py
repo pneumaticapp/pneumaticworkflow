@@ -19,7 +19,7 @@ from src.processes.serializers.templates.dataset import (
     DatasetSerializer,
 )
 from src.processes.services.exceptions import DataSetServiceException
-from src.processes.services.templates.dataset import DataSetService
+from src.processes.services.dataset import DataSetService
 from src.utils.validation import raise_validation_error
 
 
