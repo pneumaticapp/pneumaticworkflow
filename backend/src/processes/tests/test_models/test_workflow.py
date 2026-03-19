@@ -92,3 +92,15 @@ class TestWorkflow:
         # assert
         assert 'workflow-starter' in fields_values
         assert fields_values['workflow-starter'] == user.name
+
+    def test_get_kickoff_fields_markdown_values__workflow_starter__ok(self):
+        # arrange
+        user = create_test_user()
+        workflow = create_test_workflow(user=user)
+
+        # act
+        fields_values = workflow.get_kickoff_fields_markdown_values()
+
+        # assert
+        assert 'workflow-starter' in fields_values
+        assert fields_values['workflow-starter'] == user.name

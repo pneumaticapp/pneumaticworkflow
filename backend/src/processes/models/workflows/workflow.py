@@ -187,6 +187,22 @@ class Workflow(
     def is_completed(self):
         return self.status == WorkflowStatus.DONE
 
+    def get_kickoff_fields_markdown_values(
+        self,
+        fields_filter_kwargs: Optional[Dict] = None,
+    ) -> Dict[str, str]:
+        """Extends parent method by adding the workflow-starter
+            system variable to the substitution dictionary."""
+
+        fields_values = super().get_kickoff_fields_markdown_values(
+            fields_filter_kwargs=fields_filter_kwargs,
+        )
+
+        fields_values['workflow-starter'] = get_workflow_starter_name(
+            self.workflow_starter,
+        )
+        return fields_values
+
     def get_fields_markdown_values(
         self,
         tasks_filter_kwargs: Optional[Dict] = None,
