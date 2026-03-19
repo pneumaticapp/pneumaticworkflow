@@ -15,6 +15,7 @@ from src.processes.models.templates.checklist import (
 )
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.raw_due_date import RawDueDate
+from src.authentication.enums import AuthTokenType
 from src.processes.services.tasks.task import TaskService
 from src.processes.tests.fixtures import (
     create_test_template,
@@ -574,3 +575,635 @@ def test_set_due_date_directly__ok(mocker):
         logo_lg=user.account.logo_lg,
     )
     due_date_changed_event_mock.assert_called_once_with(task=task, user=user)
+
+
+def test_insert_fields_values__description_template_used__ok(mocker):
+    """
+    Sets `instance.description` using the value returned by
+    `insert_fields_values_to_text` called with `description_template`.
+    """
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.description_template = 'Hello {{field-1}}'
+    task.save(update_fields=['description_template'])
+    name_template = task.name_template
+    new_description = 'Hello World'
+    fields_values = {'field-1': 'World'}
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.processes.services.tasks.task'
+        '.insert_fields_values_to_text',
+        return_value=new_description,
+    )
+    markdown_clear_mock = mocker.patch(
+        'src.processes.services.tasks.task.MarkdownService.clear',
+    )
+    checklist_service_mock = mocker.patch(
+        'src.processes.services.tasks.task.ChecklistService',
+    )
+    save_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.save',
+    )
+    service = TaskService(user=user, instance=task)
+
+    # act
+    service.insert_fields_values(fields_values=fields_values)
+
+    # assert
+    assert service.instance.description == new_description
+    assert insert_fields_values_to_text_mock.call_count == 2
+    insert_fields_values_to_text_mock.assert_has_calls([
+        mocker.call(
+            text=task.description_template,
+            fields_values=fields_values,
+        ),
+        mocker.call(
+            text=name_template,
+            fields_values=fields_values,
+        ),
+        ],
+        any_order=True,
+    )
+    markdown_clear_mock.assert_called_once_with(new_description)
+    checklist_service_mock.assert_not_called()
+    save_mock.assert_called_once_with()
+
+
+def test_insert_fields_values__clear_description_updated__ok(mocker):
+    """
+    Sets `instance.clear_description` to the value returned by
+    `MarkdownService.clear` applied to the new description.
+    """
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    description_template = task.description_template
+    name_template = task.name_template
+    new_description = 'Hello World'
+    clear_description = 'Hello World clear'
+    fields_values = {'field-1': 'World'}
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.processes.services.tasks.task'
+        '.insert_fields_values_to_text',
+        return_value=new_description,
+    )
+    markdown_clear_mock = mocker.patch(
+        'src.processes.services.tasks.task.MarkdownService.clear',
+        return_value=clear_description,
+    )
+    checklist_service_mock = mocker.patch(
+        'src.processes.services.tasks.task.ChecklistService',
+    )
+    save_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.save',
+    )
+    service = TaskService(user=user, instance=task)
+
+    # act
+    service.insert_fields_values(fields_values=fields_values)
+
+    # assert
+    assert service.instance.clear_description == clear_description
+    assert insert_fields_values_to_text_mock.call_count == 2
+    insert_fields_values_to_text_mock.assert_has_calls([
+        mocker.call(
+            text=description_template,
+            fields_values=fields_values,
+        ),
+        mocker.call(
+            text=name_template,
+            fields_values=fields_values,
+        ),
+        ],
+        any_order=True,
+    )
+    markdown_clear_mock.assert_called_once_with(new_description)
+    checklist_service_mock.assert_not_called()
+    save_mock.assert_called_once_with()
+
+
+def test_insert_fields_values__name_template_used__ok(mocker):
+    """
+    Sets `instance.name` using the value returned by
+    `insert_fields_values_to_text` called with `name_template`.
+    """
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    description_template = task.description_template
+    task.name_template = 'Task {{field-1}}'
+    task.save(update_fields=['name_template'])
+    new_name = 'Task Alpha'
+    fields_values = {'field-1': 'Alpha'}
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.processes.services.tasks.task'
+        '.insert_fields_values_to_text',
+        return_value=new_name,
+    )
+    markdown_clear_mock = mocker.patch(
+        'src.processes.services.tasks.task.MarkdownService.clear',
+    )
+    checklist_service_mock = mocker.patch(
+        'src.processes.services.tasks.task.ChecklistService',
+    )
+    save_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.save',
+    )
+    service = TaskService(user=user, instance=task)
+
+    # act
+    service.insert_fields_values(fields_values=fields_values)
+
+    # assert
+    assert service.instance.name == new_name
+    assert insert_fields_values_to_text_mock.call_count == 2
+    insert_fields_values_to_text_mock.assert_has_calls([
+        mocker.call(
+            text=description_template,
+            fields_values=fields_values,
+        ),
+        mocker.call(
+            text=task.name_template,
+            fields_values=fields_values,
+        ),
+        ],
+        any_order=True,
+    )
+    markdown_clear_mock.assert_called_once_with(new_name)
+    checklist_service_mock.assert_not_called()
+    save_mock.assert_called_once_with()
+
+
+def test_insert_fields_values__three_fields_marked_for_update__ok(
+    mocker,
+):
+    """
+    Adds `description`, `clear_description`, and `name` to
+    `update_fields` before calling `save`.
+    """
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    description_template = task.description_template
+    name_template = task.name_template
+    new_description = 'Updated description'
+    fields_values = {'field-1': 'val'}
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.processes.services.tasks.task'
+        '.insert_fields_values_to_text',
+        return_value=new_description,
+    )
+    markdown_clear_mock = mocker.patch(
+        'src.processes.services.tasks.task.MarkdownService.clear',
+    )
+    checklist_service_mock = mocker.patch(
+        'src.processes.services.tasks.task.ChecklistService',
+    )
+    save_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.save',
+    )
+    service = TaskService(user=user, instance=task)
+
+    # act
+    service.insert_fields_values(fields_values=fields_values)
+
+    # assert
+    assert 'description' in service.update_fields
+    assert 'clear_description' in service.update_fields
+    assert 'name' in service.update_fields
+    assert insert_fields_values_to_text_mock.call_count == 2
+    insert_fields_values_to_text_mock.assert_has_calls([
+        mocker.call(
+            text=description_template,
+            fields_values=fields_values,
+        ),
+        mocker.call(
+            text=name_template,
+            fields_values=fields_values,
+        ),
+        ],
+        any_order=True,
+    )
+    markdown_clear_mock.assert_called_once_with(new_description)
+    checklist_service_mock.assert_not_called()
+    save_mock.assert_called_once_with()
+
+
+def test_insert_fields_values__save_called_once__ok(mocker):
+    """
+    Calls `self.save()` exactly once after updating all three fields.
+    """
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    description_template = task.description_template
+    name_template = task.name_template
+    new_description = 'Updated description'
+    fields_values = {'field-1': 'val'}
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.processes.services.tasks.task'
+        '.insert_fields_values_to_text',
+        return_value=new_description,
+    )
+    markdown_clear_mock = mocker.patch(
+        'src.processes.services.tasks.task.MarkdownService.clear',
+    )
+    checklist_service_mock = mocker.patch(
+        'src.processes.services.tasks.task.ChecklistService',
+    )
+    save_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.save',
+    )
+    service = TaskService(user=user, instance=task)
+
+    # act
+    service.insert_fields_values(fields_values=fields_values)
+
+    # assert
+    assert insert_fields_values_to_text_mock.call_count == 2
+    insert_fields_values_to_text_mock.assert_has_calls([
+        mocker.call(
+            text=description_template,
+            fields_values=fields_values,
+        ),
+        mocker.call(
+            text=name_template,
+            fields_values=fields_values,
+        ),
+        ],
+        any_order=True,
+    )
+    markdown_clear_mock.assert_called_once_with(new_description)
+    checklist_service_mock.assert_not_called()
+    save_mock.assert_called_once_with()
+
+
+def test_insert_fields_values__description_template_passed_to_insert__ok(
+    mocker,
+):
+    """
+    Calls `insert_fields_values_to_text` with
+    `text=description_template` and the provided `fields_values`.
+    """
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    description_template = 'Hello {{field-1}}'
+    task.description_template = description_template
+    task.save(update_fields=['description_template'])
+    name_template = task.name_template
+    new_description = 'Updated description'
+    fields_values = {'field-1': 'World'}
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.processes.services.tasks.task'
+        '.insert_fields_values_to_text',
+        return_value=new_description,
+    )
+    markdown_clear_mock = mocker.patch(
+        'src.processes.services.tasks.task.MarkdownService.clear',
+    )
+    checklist_service_mock = mocker.patch(
+        'src.processes.services.tasks.task.ChecklistService',
+    )
+    save_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.save',
+    )
+    service = TaskService(user=user, instance=task)
+
+    # act
+    service.insert_fields_values(fields_values=fields_values)
+
+    # assert
+    assert insert_fields_values_to_text_mock.call_count == 2
+    insert_fields_values_to_text_mock.assert_has_calls([
+        mocker.call(
+            text=description_template,
+            fields_values=fields_values,
+        ),
+        mocker.call(
+            text=name_template,
+            fields_values=fields_values,
+        ),
+        ],
+        any_order=True,
+    )
+    markdown_clear_mock.assert_called_once_with(new_description)
+    checklist_service_mock.assert_not_called()
+    save_mock.assert_called_once_with()
+
+
+def test_insert_fields_values__name_template_passed_to_insert__ok(
+    mocker,
+):
+    """
+    Calls `insert_fields_values_to_text` with
+    `text=name_template` and the provided `fields_values`.
+    """
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    description_template = task.description_template
+    name_template = 'Task {{field-1}}'
+    task.name_template = name_template
+    task.save(update_fields=['name_template'])
+    new_description = 'Updated description'
+    fields_values = {'field-1': 'Alpha'}
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.processes.services.tasks.task'
+        '.insert_fields_values_to_text',
+        return_value=new_description,
+    )
+    markdown_clear_mock = mocker.patch(
+        'src.processes.services.tasks.task.MarkdownService.clear',
+    )
+    checklist_service_mock = mocker.patch(
+        'src.processes.services.tasks.task.ChecklistService',
+    )
+    save_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.save',
+    )
+    service = TaskService(user=user, instance=task)
+
+    # act
+    service.insert_fields_values(fields_values=fields_values)
+
+    # assert
+    assert insert_fields_values_to_text_mock.call_count == 2
+    insert_fields_values_to_text_mock.assert_has_calls([
+        mocker.call(
+            text=description_template,
+            fields_values=fields_values,
+        ),
+        mocker.call(
+            text=name_template,
+            fields_values=fields_values,
+        ),
+        ],
+        any_order=True,
+    )
+    markdown_clear_mock.assert_called_once_with(new_description)
+    checklist_service_mock.assert_not_called()
+    save_mock.assert_called_once_with()
+
+
+def test_insert_fields_values__markdown_clear_receives_new_description__ok(
+    mocker,
+):
+    """
+    Calls `MarkdownService.clear` with the new description value
+    (result of `insert_fields_values_to_text`).
+    """
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    description_template = task.description_template
+    name_template = task.name_template
+    new_description = 'Hello World'
+    fields_values = {'field-1': 'World'}
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.processes.services.tasks.task'
+        '.insert_fields_values_to_text',
+        return_value=new_description,
+    )
+    markdown_clear_mock = mocker.patch(
+        'src.processes.services.tasks.task.MarkdownService.clear',
+    )
+    checklist_service_mock = mocker.patch(
+        'src.processes.services.tasks.task.ChecklistService',
+    )
+    save_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.save',
+    )
+    service = TaskService(user=user, instance=task)
+
+    # act
+    service.insert_fields_values(fields_values=fields_values)
+
+    # assert
+    assert insert_fields_values_to_text_mock.call_count == 2
+    insert_fields_values_to_text_mock.assert_has_calls([
+        mocker.call(
+            text=description_template,
+            fields_values=fields_values,
+        ),
+        mocker.call(
+            text=name_template,
+            fields_values=fields_values,
+        ),
+        ],
+        any_order=True,
+    )
+    markdown_clear_mock.assert_called_once_with(new_description)
+    checklist_service_mock.assert_not_called()
+    save_mock.assert_called_once_with()
+
+
+def test_insert_fields_values__checklist_service_init_args__ok(mocker):
+    """
+    Creates one `ChecklistService` per checklist with correct
+    `instance`, `user`, `is_superuser`, `auth_type`.
+    """
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    description_template = task.description_template
+    name_template = task.name_template
+    new_description = 'Updated description'
+    fields_values = {'field-1': 'val'}
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.processes.services.tasks.task'
+        '.insert_fields_values_to_text',
+        return_value=new_description,
+    )
+    markdown_clear_mock = mocker.patch(
+        'src.processes.services.tasks.task.MarkdownService.clear',
+    )
+    checklist_service_init_mock = mocker.patch(
+        'src.processes.services.tasks.task.ChecklistService.__init__',
+        return_value=None,
+    )
+    checklist_insert_mock = mocker.patch(
+        'src.processes.services.tasks.task'
+        '.ChecklistService.insert_fields_values',
+    )
+    save_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.save',
+    )
+    is_superuser = False
+    auth_type = AuthTokenType.USER
+    service = TaskService(
+        user=user,
+        instance=task,
+        is_superuser=is_superuser,
+        auth_type=auth_type,
+    )
+    checklists = list(task.checklists.all())
+
+    # act
+    service.insert_fields_values(fields_values=fields_values)
+
+    # assert
+    assert insert_fields_values_to_text_mock.call_count == 2
+    insert_fields_values_to_text_mock.assert_has_calls([
+        mocker.call(
+            text=description_template,
+            fields_values=fields_values,
+        ),
+        mocker.call(
+            text=name_template,
+            fields_values=fields_values,
+        ),
+        ],
+        any_order=True,
+    )
+    markdown_clear_mock.assert_called_once_with(new_description)
+    assert checklist_service_init_mock.call_count == len(checklists)
+    checklist_service_init_mock.assert_has_calls(
+        [
+            mocker.call(
+                instance=checklist,
+                user=user,
+                is_superuser=is_superuser,
+                auth_type=auth_type,
+            )
+            for checklist in checklists
+        ],
+        any_order=True,
+    )
+    assert checklist_insert_mock.call_count == len(checklists)
+    save_mock.assert_called_once_with()
+
+
+def test_insert_fields_values__insert_called_per_checklist__ok(mocker):
+    """
+    Calls `checklist_service.insert_fields_values(fields_values)`
+    for each checklist returned by `checklists.all()`.
+    """
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    description_template = task.description_template
+    name_template = task.name_template
+    new_description = 'Updated description'
+    fields_values = {'field-1': 'val'}
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.processes.services.tasks.task'
+        '.insert_fields_values_to_text',
+        return_value=new_description,
+    )
+    markdown_clear_mock = mocker.patch(
+        'src.processes.services.tasks.task.MarkdownService.clear',
+    )
+    checklist_service_init_mock = mocker.patch(
+        'src.processes.services.tasks.task.ChecklistService.__init__',
+        return_value=None,
+    )
+    insert_fields_values_mock = mocker.patch(
+        'src.processes.services.tasks.task'
+        '.ChecklistService.insert_fields_values',
+    )
+    save_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.save',
+    )
+    service = TaskService(user=user, instance=task)
+    checklists_count = task.checklists.all().count()
+
+    # act
+    service.insert_fields_values(fields_values=fields_values)
+
+    # assert
+    assert insert_fields_values_to_text_mock.call_count == 2
+    insert_fields_values_to_text_mock.assert_has_calls([
+        mocker.call(
+            text=description_template,
+            fields_values=fields_values,
+        ),
+        mocker.call(
+            text=name_template,
+            fields_values=fields_values,
+        ),
+        ],
+        any_order=True,
+    )
+    markdown_clear_mock.assert_called_once_with(new_description)
+    assert checklist_service_init_mock.call_count == checklists_count
+    assert insert_fields_values_mock.call_count == checklists_count
+    insert_fields_values_mock.assert_has_calls(
+        [mocker.call(fields_values)] * checklists_count,
+        any_order=True,
+    )
+    save_mock.assert_called_once_with()
+
+
+def test_insert_fields_values__no_checklists__skip(mocker):
+    """
+    Does not instantiate `ChecklistService` when
+    `checklists.all()` returns an empty list.
+    """
+
+    # arrange
+    user = create_test_user()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task.checklists.all().delete()
+    description_template = task.description_template
+    name_template = task.name_template
+    new_description = 'Updated description'
+    fields_values = {'field-1': 'val'}
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.processes.services.tasks.task'
+        '.insert_fields_values_to_text',
+        return_value=new_description,
+    )
+    markdown_clear_mock = mocker.patch(
+        'src.processes.services.tasks.task.MarkdownService.clear',
+    )
+    checklist_service_init_mock = mocker.patch(
+        'src.processes.services.tasks.task.ChecklistService.__init__',
+        return_value=None,
+    )
+    save_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.save',
+    )
+    service = TaskService(user=user, instance=task)
+
+    # act
+    service.insert_fields_values(fields_values=fields_values)
+
+    # assert
+    assert insert_fields_values_to_text_mock.call_count == 2
+    insert_fields_values_to_text_mock.assert_has_calls([
+        mocker.call(
+            text=description_template,
+            fields_values=fields_values,
+        ),
+        mocker.call(
+            text=name_template,
+            fields_values=fields_values,
+        ),
+        ],
+        any_order=True,
+    )
+    markdown_clear_mock.assert_called_once_with(new_description)
+    checklist_service_init_mock.assert_not_called()
+    save_mock.assert_called_once_with()

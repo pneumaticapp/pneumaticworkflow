@@ -2132,3 +2132,42 @@ def test_partial_update__remove_all_groups__ok(
         account_id=account.id,
         user_data=UserWebsocketSerializer(user).data,
     )
+
+
+def test_create_instance__photo_url_longer_than_1024_chars__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    create_test_owner(account=account)
+    email = 'google.user@test.test'
+    password = 'somepassword'
+    long_photo_url = (
+        'https://lh3.googleusercontent.com/a-/ALV-UjWKVqsz6krMJcnaNuFH'
+        'WiZtnxWb4FtOnjXtR5FWJCLmC4BNRr8sL3SJnHC1fvMMJARBLV-1n0MQs5xe'
+        'bNR6HPYkC-zhOakqc9WLeI0M-522lIZNzZ5WNB0H3AUT_XGR7fGhAmaO8y24'
+        'DSnoyES8Ovb57eq-LdiW76LV6ki9NQwB5HdNoLb9emGGa6jNNP9qEAEip03sb'
+        '4PXejO4rdS_3DaeT3BpGTYE3sbl0GhxrFi7mH_64kE1iLyNNz55s9bUPETriQ'
+        'SDSIaINGOeQmFP5U_WfEFaZ-wT8kADHm2kirRNGIstCh0uKTHOnQCKmzKCx_D'
+        'Xfsco_ADXd8KyVOA-S7jmpsp3-e_rfp93JTi8hOQvnYB2OPA0t7G-NFbfFEeA'
+        'o5HWW9Hzf3psxtmkrds3Qix0lDh-tfUchtp4NdVAkXut0vI-axgVAgiuM7F2W'
+        'dzijaTVw6Ecwz7Nb7m_O4' +
+        'X' * 800 +
+        '=s96-c'
+    )
+    mocker.patch(
+        'src.accounts.services.user.make_password',
+        return_value='hashed_password',
+    )
+    service = UserService()
+
+    # act
+    user = service._create_instance(
+        account=account,
+        email=email,
+        password=password,
+        photo=long_photo_url,
+    )
+
+    # assert
+    assert user.photo == long_photo_url
+    assert len(user.photo) > 1024

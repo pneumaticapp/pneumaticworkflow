@@ -3,7 +3,6 @@ from typing import Any, Dict, Optional
 from django.contrib.auth import get_user_model
 
 from src.processes.consts import WORKFLOW_NAME_LENGTH
-from src.processes.enums import TaskStatus
 from src.processes.serializers.workflows.kickoff_value import (
     KickoffValueSerializer,
 )
@@ -26,8 +25,7 @@ class WorkflowSerializerMixin:
         if is_urgent is not None and not update_fields_values:
             tasks.update(is_urgent=is_urgent)
         elif update_fields_values:
-            fields_values = self.instance.get_fields_markdown_values(
-                tasks_filter_kwargs={'task__status': TaskStatus.COMPLETED})
+            fields_values = self.instance.get_fields_markdown_values()
             for task in tasks:
                 task_service = TaskService(
                     instance=task,
