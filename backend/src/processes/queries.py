@@ -13,6 +13,7 @@ from src.generics.mixins.queries import (
 )
 from src.processes.enums import (
     DirectlyStatus,
+    OwnerRole,
     OwnerType,
     TaskOrdering,
     TaskStatus,
@@ -2110,15 +2111,6 @@ class TemplateTitlesByWorkflowsQuery(
 
     def _get_accessible_templates(self):
         """Returns templates where user is owner or viewer"""
-        # Account owner has full access to all templates in the account
-        if self.user.is_account_owner:
-            return """
-                SELECT DISTINCT t.id AS template_id
-                FROM processes_template t
-                WHERE t.is_deleted IS FALSE
-                  AND t.account_id = %(account_id)s
-            """
-        # For other users (including admins), apply filtering logic
         # Users can see templates where they are:
         # 1. Template owners (user or via group)
         # 2. Template viewers (user or via group)
@@ -2128,8 +2120,8 @@ class TemplateTitlesByWorkflowsQuery(
         self.params['owner_type_group'] = OwnerType.GROUP
         self.params['viewer_type_user'] = OwnerType.USER
         self.params['viewer_type_group'] = OwnerType.GROUP
-        self.params['owner_role'] = 'owner'
-        self.params['viewer_role'] = 'viewer'
+        self.params['owner_role'] = OwnerRole.OWNER
+        self.params['viewer_role'] = OwnerRole.VIEWER
         return """
                 SELECT DISTINCT template_id
                 FROM (
