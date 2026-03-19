@@ -133,6 +133,7 @@ export const WorkflowLog = ({
                   unCheckedChildren={null}
                   checked={isSkippedTasksShown}
                   onChange={toggleSkippedTasks}
+                  aria-label={formatMessage({ id: 'workflows.log-skipped-tasks' })}
                 />
               </div>
               <div className={styles['switch-container']}>
@@ -148,6 +149,7 @@ export const WorkflowLog = ({
                   unCheckedChildren={null}
                   checked={isCommentsShown}
                   onChange={toggleComments}
+                  aria-label={formatMessage({ id: 'workflows.log-comments' })}
                 />
               </div>
             </div>
