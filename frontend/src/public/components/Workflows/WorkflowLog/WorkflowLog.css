@@ -1,15 +1,15 @@
 /* stylelint-disable selector-pseudo-class-no-unknown, selector-max-compound-selectors, declaration-no-important */
 .popup-body__no-events {
   font-family: var(--pneumatic-font-serif);
-  font-size: 20px;
+  font-size: 2rem;
   font-weight: 800;
-  line-height: 24px;
+  line-height: 2.4rem;
   text-align: center;
   color: var(--pneumatic-color-black32);
 }
 
 .popup-body__close-button {
-  margin-bottom: 32px;
+  margin-bottom: 3.2rem;
   margin-left: auto;
   padding: 0;
   background: none;
@@ -17,20 +17,20 @@
 }
 
 .close-button__icon {
-  color: #dcdcdb;
+  color: var(--pneumatic-color-black16);
   transition: color 0.1s ease-in-out;
 
   &:hover {
-    color: #b9b9b8;
+    color: var(--pneumatic-color-black32);
   }
 }
 
 .popup-body-controls {
-  padding-bottom: 32px;
+  padding-bottom: 3.2rem;
 }
 
 .popup-body-controls__inner {
-  margin: -8px 0;
+  margin: -0.8rem 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -43,7 +43,7 @@
 }
 
 .popup-body-controls-general {
-  margin-right: 8px;
+  margin-right: 0.8rem;
   display: flex;
   flex-wrap: wrap;
 
@@ -55,7 +55,7 @@
 }
 
 .popup-body-controls-general__item {
-  margin: 8px 0;
+  margin: 0.8rem 0;
 }
 
 .popup-body-controls-general__item_beige {
@@ -63,15 +63,29 @@
 }
 
 .popup-body-controls-general__item:not(:last-child) {
-  margin-right: 8px;
+  margin-right: 0.8rem;
 
   @media (--mobile) {
     margin: 0;
   }
 }
 
+.popup-body-controls-right-toggles {
+  display: flex;
+  gap: 0.8rem;
+
+  @media (--mobile) {
+    flex-direction: column;
+    width: 100%;
+
+    div {
+      margin: 0;
+    }
+  }
+}
+
 .switch-container {
-  margin: 8px 0;
+  margin: 0.8rem 0;
   display: flex;
   flex-flow: row;
   align-items: center;
@@ -82,10 +96,11 @@
 }
 
 .switch-container__label {
-  font-family: Nunito, sans-serif;
-  font-size: 11px;
+  @mixin font-text;
+
+  font-size: 1.1rem;
   font-weight: 800;
-  line-height: 15px;
+  line-height: 1.5rem;
   text-align: right;
   letter-spacing: 0.05em;
   text-transform: uppercase;
@@ -93,7 +108,7 @@
 }
 
 .switch-container__button {
-  margin-left: 8px;
+  margin-left: 0.8rem;
 
   @media (--mobile) {
     margin-left: auto;
@@ -101,21 +116,21 @@
 }
 
 .popup-body-avatar {
-  width: 40px;
-  height: 40px;
+  width: 4rem;
+  height: 4rem;
   border-radius: 50%;
 
   @media (--mobile) {
-    width: 32px;
-    height: 32px;
+    width: 3.2rem;
+    height: 3.2rem;
   }
 }
 
 .process-log-item:not(:last-child) {
-  margin-bottom: 16px;
+  margin-bottom: 1.6rem;
 }
 
 .comment-field {
-  margin-bottom: 32px;
+  margin-bottom: 3.2rem;
   padding: 0;
 }

@@ -48,6 +48,7 @@ export interface IWorkflowModalStoreProps {
   sorting: EWorkflowsLogSorting;
   isCommentsShown: boolean;
   isOnlyAttachmentsShown: boolean;
+  isSkippedTasksShown: boolean;
   isOpen: boolean;
   timezone: string;
   dateFmt: string;
@@ -64,6 +65,7 @@ export interface IWorkflowModalStoreProps {
   setIsEditWorkflowName(payload: boolean): void;
   setIsEditKickoff(payload: boolean): void;
   changeWorkflowLogViewSettings(payload: IChangeWorkflowLogViewSettingsPayload): void;
+  toggleSkippedTasksVisibility(): void;
   editWorkflow(payload: TEditWorkflowPayload): void;
   setWorkflowEdit(payload: IWorkflowEditData): void;
   toggleModal(): void;
@@ -319,11 +321,13 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
       sorting,
       isCommentsShown,
       isOnlyAttachmentsShown,
+      isSkippedTasksShown,
       workflow,
       items,
       workflowId,
       isLoading,
       changeWorkflowLogViewSettings,
+      toggleSkippedTasksVisibility,
       sendWorkflowLogComments,
       isLogLoading,
     } = this.props;
@@ -385,8 +389,10 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
             isLoading={isLogLoading}
             isCommentsShown={isCommentsShown}
             isOnlyAttachmentsShown={isOnlyAttachmentsShown}
+            isSkippedTasksShown={isSkippedTasksShown}
             workflowId={workflowId}
             changeWorkflowLogViewSettings={changeWorkflowLogViewSettings}
+            toggleSkippedTasksVisibility={toggleSkippedTasksVisibility}
             includeHeader
             sendComment={sendWorkflowLogComments}
             workflowStatus={workflow.status}
