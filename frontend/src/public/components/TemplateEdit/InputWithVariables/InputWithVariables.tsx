@@ -55,6 +55,7 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
       defaultValue={formattedValue}
       handleChange={onChange}
       withToolbar={false}
+      withMentions={false}
       multiline={false}
       className={classnames(className, styles['input-with-variables'])}
       foregroundColor={foregroundColor}

@@ -478,6 +478,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
           isOpen={isOpen}
           toggle={this.closeModal}
           backdrop="static"
+          keyboard={false}
           wrapClassName={classnames('processes-workflows-popup', 'processes-inwork-popup', styles['inwork-popup'])}
           className={styles['inwork-popup-dialog']}
           contentClassName={classnames(styles['inwork-popup-content'])}

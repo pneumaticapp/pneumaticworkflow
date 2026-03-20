@@ -1,5 +1,6 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
 import classnames from 'classnames';
 import { InView } from 'react-intersection-observer';
 import data from '@emoji-mart/data';
@@ -9,7 +10,7 @@ import { useClickOutside } from '../../../../../hooks/useClickOutside';
 import { IDeleteComment } from '../../../../../api/workflows/deleteComment';
 import { Avatar } from '../../../../UI/Avatar';
 import { EWorkflowStatus, IWorkflowLogItem } from '../../../../../types/workflow';
-import { getUserFullName } from '../../../../../utils/users';
+import { getUserFullName , getNotDeletedUsers } from '../../../../../utils/users';
 import { RichText } from '../../../../RichText';
 import { Attachments } from '../../../../Attachments';
 import { UserData } from '../../../../UserData';
@@ -22,6 +23,7 @@ import {
   CommentWatchedIcon,
 } from '../../../../icons';
 import { RichEditor } from '../../../../RichEditor';
+import { getMentionData } from '../../../../RichEditor/utils/getMentionData';
 import { IAccount, TUserListItem } from '../../../../../types/user';
 import { useStatePromise } from '../../../../../hooks/useStatePromise';
 import { TUploadedFile } from '../../../../../utils/uploadFiles';
@@ -30,6 +32,8 @@ import { IWatchedComment } from '../../../../../api/workflows/watchedComment';
 import { Tooltip } from '../../../../UI';
 import { ICreateReaction } from '../../../../../api/workflows/createReactionComment';
 import { IDeleteReaction } from '../../../../../api/workflows/deleteReactionComment';
+import { getUsers } from '../../../../../redux/selectors/user';
+
 
 import styles from './WorkflowLogTaskComment.css';
 import { DateFormat } from '../../../../UI/DateFormat';
@@ -55,6 +59,12 @@ export function WorkflowLogTaskComment({
   deleteReactionComment,
 }: TWorkflowLogTaskCommentProps) {
   const { formatMessage } = useIntl();
+
+  const allUsers = useSelector(getUsers);
+  const mentions = useMemo(
+    () => getMentionData(getNotDeletedUsers(allUsers)),
+    [allUsers],
+  );
 
   const clickRef = useRef<HTMLButtonElement>(null);
   const [isShowTooltipEmoji, setIsShowTooltipEmoji] = useState(false);
@@ -232,6 +242,7 @@ export function WorkflowLogTaskComment({
               onCancel={() => setIsEdit(false)}
               onSubmit={() => handleEditComment()}
               accountId={userId as number}
+              mentions={mentions}
             />
           ))}
 
