@@ -1,5 +1,6 @@
 import * as React from 'react';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
+import { useSelector } from 'react-redux';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 import Switch from 'rc-switch';
@@ -41,6 +42,9 @@ import { WorkflowLogRemovedPerformerGroup } from './WorkflowLogEvents/WorkflowLo
 
 import styles from './WorkflowLog.css';
 import { IChangeWorkflowLogViewSettingsPayload, ISendWorkflowLogComment } from '../../../redux/workflows/types';
+import { getUsers } from '../../../redux/selectors/user';
+import { getNotDeletedUsers } from '../../../utils/users';
+import { getMentionData } from '../../RichEditor/utils/getMentionData';
 
 export const WorkflowLog = ({
   theme,
@@ -68,6 +72,12 @@ export const WorkflowLog = ({
   toggleSkippedTasksVisibility,
 }: IWorkflowLogProps) => {
   const { formatMessage } = useIntl();
+
+  const users = useSelector(getUsers);
+  const mentions = useMemo(
+    () => getMentionData(getNotDeletedUsers(users)),
+    [users],
+  );
 
   useEffect(() => {
     return () => {
@@ -213,7 +223,7 @@ export const WorkflowLog = ({
 
     return (
       <div className={styles['comment-field']}>
-        <PopupCommentFieldContainer sendComment={sendComment} taskId={taskId} />
+        <PopupCommentFieldContainer sendComment={sendComment} taskId={taskId} mentions={mentions} />
       </div>
     );
   };
@@ -270,6 +280,7 @@ export const WorkflowLog = ({
           <WorkflowLogTaskCommentContainer
             workflowStatus={workflowStatus}
             isOnlyAttachmentsShown={isOnlyAttachmentsShown}
+            mentions={mentions}
             {...event}
           />
         ),

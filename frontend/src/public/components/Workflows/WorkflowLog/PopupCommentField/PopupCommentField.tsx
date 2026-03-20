@@ -1,38 +1,29 @@
 import * as React from 'react';
-import { useMemo } from 'react';
 import { useIntl } from 'react-intl';
-import { useSelector } from 'react-redux';
 
 import { RichEditor, type IRichEditorHandle } from '../../../RichEditor';
-import { getMentionData } from '../../../RichEditor/utils/getMentionData';
+import { type TMentionData } from '../../../RichEditor/types';
 import { Avatar } from '../../../UI/Avatar';
 import { IAuthUser } from '../../../../types/redux';
 import { TUploadedFile } from '../../../../utils/uploadFiles';
 import { ISendWorkflowLogComment } from '../../../../redux/workflows/types';
 import { useStatePromise } from '../../../../hooks/useStatePromise';
 import { isArrayWithItems } from '../../../../utils/helpers';
-import { getUsers } from '../../../../redux/selectors/user';
-import { getNotDeletedUsers } from '../../../../utils/users';
 
 import styles from './PopupCommentField.css';
 
 export interface IPopupCommentFieldProps {
   user: IAuthUser;
+  mentions: TMentionData[];
   sendComment({ text, attachments, taskId }: ISendWorkflowLogComment): void;
   taskId?: number;
 }
 
 export type TPopupCommentFieldProps = IPopupCommentFieldProps;
 
-export function PopupCommentField({ user, sendComment, taskId }: TPopupCommentFieldProps) {
+export function PopupCommentField({ user, mentions, sendComment, taskId }: TPopupCommentFieldProps) {
   const { formatMessage } = useIntl();
   const editorRef = React.useRef<IRichEditorHandle>(null);
-
-  const users = useSelector(getUsers);
-  const mentions = useMemo(
-    () => getMentionData(getNotDeletedUsers(users)),
-    [users],
-  );
 
   const [commentText, setCommentText] = useStatePromise('');
   const [filesToUpload, setFilesToUpload] = useStatePromise<TUploadedFile[]>([]);
