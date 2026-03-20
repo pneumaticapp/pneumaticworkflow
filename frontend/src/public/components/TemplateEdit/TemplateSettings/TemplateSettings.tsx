@@ -79,6 +79,7 @@ export function TemplateSettings() {
           <RichEditor
             key={template.id ?? 'new'}
             withToolbar={false}
+            withMentions={false}
             placeholder={formatMessage({ id: 'template.placeholder' })}
             className={styles['description-editor']}
             defaultValue={template.description ?? ''}

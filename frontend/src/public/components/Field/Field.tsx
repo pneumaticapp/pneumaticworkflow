@@ -107,6 +107,7 @@ export function Field({
             }}
             className={styles['rich-editor']}
             accountId={accountId as number}
+            withMentions={false}
           />
         );
       default:
