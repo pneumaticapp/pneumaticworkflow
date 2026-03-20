@@ -18,6 +18,7 @@ import {
   COMMAND_PRIORITY_CRITICAL,
 } from 'lexical';
 import { $createMentionNode } from '../../nodes/MentionNode';
+import { subscribeBlurClose } from './subscribeBlurClose';
 import type { MenuState, MentionMenuOption } from './types';
 import { buildOptions, filterOptions, TRIGGER_REGEX } from './mentionOptions';
 
@@ -228,6 +229,11 @@ export function useMentionMenu(mentions: { id?: number; name: string; link?: str
       ),
     );
   }, [editor, mentions.length, closeMenu, applyMention]);
+  useEffect(() => {
+    if (!menuState) return undefined;
+
+    return subscribeBlurClose(editor, closeMenu);
+  }, [editor, menuState, closeMenu]);
 
   return {
     menuState,

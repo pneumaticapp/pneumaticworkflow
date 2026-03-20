@@ -1,5 +1,6 @@
-import React, { memo, useRef, useEffect, useState } from 'react';
+import React, { memo, useRef, useEffect, useLayoutEffect, useState } from 'react';
 import type { MentionMenuOption } from './types';
+import { getPositionRelativeToParent } from './getPositionRelativeToParent';
 import styles from './MentionsPlugin.css';
 
 type MentionMenuListProps = {
@@ -20,6 +21,7 @@ function MentionMenuListComponent({
   const menuRef = useRef<HTMLDivElement>(null);
   const optionRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const [visible, setVisible] = useState(false);
+  const [position, setPosition] = useState({ top: 0, left: 0 });
 
   useEffect(() => {
     let innerId: number | undefined;
@@ -31,6 +33,10 @@ function MentionMenuListComponent({
       if (innerId != null) cancelAnimationFrame(innerId);
     };
   }, []);
+
+  useLayoutEffect(() => {
+    setPosition(getPositionRelativeToParent(menuRef.current, rect));
+  }, [rect]);
 
   useEffect(() => {
     const el = optionRefs.current[highlightedIndex];
@@ -49,9 +55,8 @@ function MentionMenuListComponent({
         options[highlightedIndex] ? `mention-option-${options[highlightedIndex].key}` : undefined
       }
       style={{
-        position: 'fixed',
-        top: rect.bottom + 4,
-        left: rect.left,
+        top: position.top,
+        left: position.left,
         zIndex: 1100,
       }}
       onMouseDown={(e) => e.preventDefault()}
