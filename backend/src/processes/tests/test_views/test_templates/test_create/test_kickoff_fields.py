@@ -282,8 +282,12 @@ class TestCreateKickoffFields:
         data = response.data['kickoff']['fields'][0]
         assert data['api_name'] == request_data['api_name']
 
+    @pytest.mark.parametrize(
+        'field_type', FieldType.TYPES_WITH_SELECTIONS,
+    )
     def test_create__kickoff_field_with_dataset__ok(
         self,
+        field_type,
         api_client,
     ):
 
@@ -298,7 +302,7 @@ class TestCreateKickoffFields:
         dataset = create_test_dataset(account=account)
         api_client.token_authenticate(user)
         request_data = {
-            'type': FieldType.TEXT,
+            'type': field_type,
             'name': 'Dataset field',
             'order': 1,
             'api_name': 'text-field-1',
@@ -365,11 +369,14 @@ class TestCreateKickoffFields:
         user = create_test_owner(account=account)
         api_client.token_authenticate(user)
         request_data = {
-            'type': FieldType.TEXT,
+            'type': FieldType.DROPDOWN,
             'name': 'Text field',
             'order': 1,
             'api_name': 'text-field-1',
             'dataset': None,
+            'selections': [
+                {'value': 'Option 1'},
+            ],
         }
 
         # act
@@ -433,7 +440,7 @@ class TestCreateKickoffFields:
         other_dataset = create_test_dataset(account=other_account)
         api_client.token_authenticate(user)
         request_data = {
-            'type': FieldType.TEXT,
+            'type': FieldType.DROPDOWN,
             'name': 'Text field',
             'order': 1,
             'api_name': 'text-field-1',
@@ -597,69 +604,6 @@ def test_create__kickoff_field_selection_type_with_selections__ok(
     assert len(response_field['selections']) == 2
 
 
-def test_create__kickoff_field_selection_type_with_dataset__ok(
-    api_client,
-):
-
-    """
-    Creating a template with a kickoff field of a selection type (DROPDOWN)
-    with a dataset provided succeeds with a 200 response.
-    The additional_validate method passes when dataset is present.
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    dataset = create_test_dataset(account=account)
-    api_client.token_authenticate(user=user)
-    request_data = {
-        'type': FieldType.DROPDOWN,
-        'name': 'Dropdown field',
-        'order': 1,
-        'api_name': 'dropdown-field-1',
-        'dataset': dataset.id,
-    }
-
-    # act
-    response = api_client.post(
-        path='/templates',
-        data={
-            'name': 'Template',
-            'is_active': True,
-            'owners': [
-                {
-                    'type': OwnerType.USER,
-                    'source_id': user.id,
-                    'role': OwnerRole.OWNER,
-                },
-            ],
-            'kickoff': {
-                'fields': [request_data],
-            },
-            'tasks': [
-                {
-                    'number': 1,
-                    'name': 'First step',
-                    'raw_performers': [
-                        {
-                            'type': PerformerType.USER,
-                            'source_id': user.id,
-                        },
-                    ],
-                },
-            ],
-        },
-    )
-
-    # assert
-    assert response.status_code == 200
-    data = response.json()
-    assert len(data['kickoff']['fields']) == 1
-    response_field = data['kickoff']['fields'][0]
-    assert response_field['type'] == request_data['type']
-    assert response_field['dataset'] == dataset.id
-
-
 def test_create__kickoff_field_non_selection_type_no_selections_no_dataset__ok(
     api_client,
 ):
@@ -717,3 +661,5 @@ def test_create__kickoff_field_non_selection_type_no_selections_no_dataset__ok(
     assert len(data['kickoff']['fields']) == 1
     response_field = data['kickoff']['fields'][0]
     assert response_field['type'] == request_data['type']
+    assert 'dataset' not in response_field
+    assert 'selections' not in response_field

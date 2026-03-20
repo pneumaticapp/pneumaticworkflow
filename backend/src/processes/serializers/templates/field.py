@@ -135,6 +135,7 @@ class FieldTemplateSerializer(
             data['description'] = ''
         if data['type'] not in FieldType.TYPES_WITH_SELECTIONS:
             data.pop('selections', None)
+            data.pop('dataset', None)
         return data
 
     def create(self, validated_data: Dict[str, Any]):

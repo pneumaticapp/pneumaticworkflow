@@ -781,8 +781,12 @@ class TestUpdateTaskFields:
         assert field_data['order'] == 2
         assert field_data['is_required'] == field.is_required
 
+    @pytest.mark.parametrize(
+        'field_type', FieldType.TYPES_WITH_SELECTIONS,
+    )
     def test_update__task_field_set_dataset__ok(
         self,
+        field_type,
         mocker,
         api_client,
     ):
@@ -804,7 +808,7 @@ class TestUpdateTaskFields:
         task = template.tasks.first()
         FieldTemplate.objects.create(
             name='Text field',
-            type=FieldType.TEXT,
+            type=field_type,
             task=task,
             is_required=False,
             order=1,
@@ -819,7 +823,7 @@ class TestUpdateTaskFields:
         api_client.token_authenticate(user)
         request_data = {
             'name': 'Text field',
-            'type': FieldType.TEXT,
+            'type': field_type,
             'is_required': False,
             'is_hidden': False,
             'order': 1,
@@ -915,11 +919,14 @@ class TestUpdateTaskFields:
         api_client.token_authenticate(user)
         request_data = {
             'name': 'Text field',
-            'type': FieldType.TEXT,
+            'type': FieldType.RADIO,
             'is_required': False,
             'is_hidden': False,
             'order': 1,
             'api_name': 'text-field-1',
+            'selections': [
+                {'value': 'Option 1'},
+            ],
             'dataset': None,
         }
 
@@ -1393,4 +1400,6 @@ def test_update__task_field_non_selection_type_no_selections_no_dataset__ok(
     assert len(data['tasks'][0]['fields']) == 1
     response_field = data['tasks'][0]['fields'][0]
     assert response_field['type'] == request_data['type']
+    assert 'dataset' not in response_field
+    assert 'selections' not in response_field
     template_updated_mock.assert_called_once_with(template=template)

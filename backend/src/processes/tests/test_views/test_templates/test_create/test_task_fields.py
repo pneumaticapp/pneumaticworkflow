@@ -428,8 +428,12 @@ class TestCreateTemplateTaskFields:
         assert response.data['details']['reason'] == message
         assert response.data['details']['api_name'] == field_api_name
 
+    @pytest.mark.parametrize(
+        'field_type', FieldType.TYPES_WITH_SELECTIONS,
+    )
     def test_create__task_field_with_dataset__ok(
         self,
+        field_type,
         api_client,
     ):
 
@@ -444,7 +448,7 @@ class TestCreateTemplateTaskFields:
         dataset = create_test_dataset(account=account)
         api_client.token_authenticate(user)
         request_data = {
-            'type': FieldType.TEXT,
+            'type': field_type,
             'name': 'Dataset field',
             'order': 1,
             'api_name': 'text-field-1',
@@ -510,11 +514,14 @@ class TestCreateTemplateTaskFields:
         user = create_test_owner(account=account)
         api_client.token_authenticate(user)
         request_data = {
-            'type': FieldType.TEXT,
+            'type': FieldType.DROPDOWN,
             'name': 'Text field',
             'order': 1,
             'api_name': 'text-field-1',
             'dataset': None,
+            'selections': [
+                {'value': 'Option 1'},
+            ],
         }
 
         # act
@@ -856,3 +863,5 @@ def test_create__task_field_non_selection_type_no_selections_no_dataset__ok(
     assert len(data['tasks'][0]['fields']) == 1
     response_field = data['tasks'][0]['fields'][0]
     assert response_field['type'] == request_data['type']
+    assert 'dataset' not in response_field
+    assert 'selections' not in response_field

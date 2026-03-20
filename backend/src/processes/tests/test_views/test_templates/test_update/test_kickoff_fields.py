@@ -359,8 +359,12 @@ class TestUpdateKickoffFields:
         assert field_data['type'] == FieldType.TEXT
         assert field_data['order'] == 2
 
+    @pytest.mark.parametrize(
+        'field_type', FieldType.TYPES_WITH_SELECTIONS,
+    )
     def test_update__kickoff_field_set_dataset__ok(
         self,
+        field_type,
         mocker,
         api_client,
     ):
@@ -382,7 +386,7 @@ class TestUpdateKickoffFields:
         task = template.tasks.first()
         FieldTemplate.objects.create(
             name='Text field',
-            type=FieldType.TEXT,
+            type=field_type,
             kickoff=template.kickoff_instance,
             is_required=False,
             order=1,
@@ -397,7 +401,7 @@ class TestUpdateKickoffFields:
         api_client.token_authenticate(user)
         request_data = {
             'name': 'Text field',
-            'type': FieldType.TEXT,
+            'type': field_type,
             'is_required': False,
             'is_hidden': False,
             'order': 1,
@@ -494,12 +498,15 @@ class TestUpdateKickoffFields:
         api_client.token_authenticate(user)
         request_data = {
             'name': 'Text field',
-            'type': FieldType.TEXT,
+            'type': FieldType.RADIO,
             'is_required': False,
             'is_hidden': False,
             'order': 1,
             'api_name': 'text-field-1',
             'dataset': None,
+            'selections': [
+                {'value': 'Option 1'},
+            ],
         }
 
         # act
@@ -967,4 +974,6 @@ def test_update__kickoff_field_non_selection_type_no_selections_no_dataset__ok(
     assert len(data['kickoff']['fields']) == 1
     response_field = data['kickoff']['fields'][0]
     assert response_field['type'] == request_data['type']
+    assert 'dataset' not in response_field
+    assert 'selections' not in response_field
     template_updated_mock.assert_called_once_with(template=template)
