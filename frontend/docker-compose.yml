@@ -120,6 +120,8 @@ services:
       EMAIL_TIMEOUT: ${EMAIL_TIMEOUT:-}
       AI: ${AI:-no}
       AI_PROVIDER: ${AI_PROVIDER:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_API_ORG: ${OPENAI_API_ORG:-}
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER:-}
       STORAGE: ${STORAGE:-no}
@@ -218,6 +220,8 @@ services:
       EMAIL_TIMEOUT: ${EMAIL_TIMEOUT:-}
       AI: ${AI:-no}
       AI_PROVIDER: ${AI_PROVIDER:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_API_ORG: ${OPENAI_API_ORG:-}
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER:-}
       STORAGE: ${STORAGE:-no}
@@ -313,6 +317,8 @@ services:
       EMAIL_TIMEOUT: ${EMAIL_TIMEOUT:-}
       AI: ${AI:-no}
       AI_PROVIDER: ${AI_PROVIDER:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_API_ORG: ${OPENAI_API_ORG:-}
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER:-}
       STORAGE: ${STORAGE:-no}

@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 
-import { Button, Header, InputField, Modal } from '../UI';
+import { Button, Header, Modal } from '../UI';
 import { TGenerateAITemplatePayload } from '../../redux/actions';
 import { ITemplate, ITemplateTask, TAITemplateGenerationStatus } from '../../types/template';
 import { useDidUpdateEffect } from '../../hooks/useDidUpdateEffect';
@@ -31,7 +31,7 @@ export function TemplateAIModal({
   setTemplateGenerationStatus,
 }: ITemplateAIModalProps) {
   const { formatMessage } = useIntl();
-  const inputRef = useRef<HTMLInputElement | null>(null);
+  const inputRef = useRef<HTMLTextAreaElement | null>(null);
   const [description, setDescription] = useState('');
   const [renderedTemplate, setRenderedTemplate] = useState<ITemplate | null>(null);
   const [heightContainer, setHeightContainer] = useState(0);
@@ -163,13 +163,18 @@ export function TemplateAIModal({
         <p className={styles['ai-generate__caption']}>{formatMessage({ id: 'ai-template.description' })}</p>
 
         <form onSubmit={handleGenerateTemplate} className={styles['form-ai-generate']}>
-          <InputField
+          <textarea
             value={description}
             onChange={(e) => setDescription(e.currentTarget.value)}
-            fieldSize="md"
-            className={styles['form__input']}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.stopPropagation();
+              }
+            }}
+            className={styles['form-ai-generate__textarea']}
             placeholder={formatMessage({ id: 'ai-template.input-placeholder' })}
-            inputRef={inputRef}
+            ref={inputRef}
+            rows={4}
           />
 
           {generationStatus !== 'generating' ? (

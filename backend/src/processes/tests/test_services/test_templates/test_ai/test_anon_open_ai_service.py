@@ -1,7 +1,10 @@
+import json
 import pytest
 from django.contrib.auth import get_user_model
 
+from src.ai.enums import OpenAIPromptTarget
 from src.ai.tests.fixtures import create_test_prompt
+from src.processes.consts import TEMPLATE_NAME_LENGTH
 from src.processes.enums import (
     ConditionAction,
     PredicateOperator,
@@ -15,12 +18,16 @@ from src.processes.services.exceptions import (
 from src.processes.services.templates.ai import (
     AnonOpenAiService,
 )
+from src.utils.logging import SentryLogLevel
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
 
 
-def test_get_short_template_data__ok(mocker):
+# === Legacy text path ===
+
+
+def test_get_short_template_data__legacy_text_path__ok(mocker):
 
     # arrange
     description = 'My lovely business process'
@@ -102,7 +109,123 @@ def test_get_short_template_data__ok(mocker):
     assert task_2_predicate['value'] is None
 
 
-def test_get_template_data__not_steps__raise_exception(mocker):
+# === JSON path with GET_TEMPLATE prompt ===
+
+
+def test_get_short_template_data__json_path__ok(mocker):
+
+    # arrange
+    description = 'My lovely business process'
+    create_test_prompt(target=OpenAIPromptTarget.GET_TEMPLATE)
+    ai_json = json.dumps({
+        'name': 'My Workflow',
+        'description': 'A workflow',
+        'kickoff': {
+            'fields': [
+                {
+                    'order': 1,
+                    'name': 'Input Field',
+                    'type': 'string',
+                    'is_required': True,
+                },
+            ],
+        },
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'First task',
+                'description': 'Do the first thing',
+                'fields': [
+                    {
+                        'order': 1,
+                        'name': 'Output',
+                        'type': 'text',
+                    },
+                ],
+            },
+            {
+                'number': 2,
+                'name': 'Second task',
+                'description': 'Do the second thing',
+            },
+        ],
+    })
+    get_json_response_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'ai.AnonOpenAiService._get_json_response',
+        return_value=ai_json,
+    )
+    ip = '168.01.01.8'
+    user_agent = 'Some browser'
+
+    service = AnonOpenAiService(
+        ident=ip,
+        user_agent=user_agent,
+    )
+
+    # act
+    data = service.get_short_template_data(
+        user_description=description,
+    )
+
+    # assert
+    get_json_response_mock.assert_called_once()
+    assert data['name'] == 'My Workflow'
+    assert len(data['tasks']) == 2
+    assert data['tasks'][0]['name'] == 'First task'
+    assert data['tasks'][0]['api_name']
+    assert 'fields' not in data['tasks'][0]
+    assert data['tasks'][1]['name'] == 'Second task'
+
+
+# === JSON path with no prompt (default instruction) ===
+
+
+def test_get_short_template_data__no_prompt__uses_default(mocker):
+
+    # arrange
+    description = 'My lovely business process'
+    ai_json = json.dumps({
+        'name': 'Generated',
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'Step one',
+                'description': 'First step',
+            },
+        ],
+    })
+    get_json_response_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'ai.AnonOpenAiService._get_json_response',
+        return_value=ai_json,
+    )
+    ip = '168.01.01.8'
+    user_agent = 'Some browser'
+
+    service = AnonOpenAiService(
+        ident=ip,
+        user_agent=user_agent,
+    )
+
+    # act
+    data = service.get_short_template_data(
+        user_description=description,
+    )
+
+    # assert
+    get_json_response_mock.assert_called_once_with(
+        user_description=description,
+        prompt=None,
+    )
+    assert data['name'] == 'Generated'
+    assert len(data['tasks']) == 1
+
+
+# === Error cases ===
+
+
+def test_get_short_template_data__legacy_not_steps__raise_exception(mocker):
 
     # arrange
     description = 'My lovely business process'
@@ -151,21 +274,14 @@ def test_get_template_data__not_steps__raise_exception(mocker):
     )
 
 
-def test_get_template_data__not_prompt__raise_exception(mocker):
+def test_get_short_template_data__json_parse_error__raise_exception(mocker):
 
     # arrange
     description = 'My lovely business process'
-    get_response_mock = mocker.patch(
+    mocker.patch(
         'src.processes.services.templates.'
-        'ai.AnonOpenAiService._get_response',
-    )
-    get_tasks_data_from_text_mock = mocker.patch(
-        'src.processes.services.templates.'
-        'ai.AnonOpenAiService._get_steps_data_from_text',
-    )
-    log_mock = mocker.patch(
-        'src.processes.services.templates.'
-        'ai.AnonOpenAiService._log',
+        'ai.AnonOpenAiService._get_json_response',
+        return_value='broken json {{',
     )
     ip = '168.01.01.8'
     user_agent = 'Some browser'
@@ -176,13 +292,405 @@ def test_get_template_data__not_prompt__raise_exception(mocker):
     )
 
     # act
-    with pytest.raises(OpenAiStepsPromptNotExist) as ex:
+    with pytest.raises(OpenAiTemplateStepsNotExist) as ex:
         service.get_short_template_data(
             user_description=description,
         )
 
     # assert
-    get_response_mock.assert_not_called()
-    get_tasks_data_from_text_mock.assert_not_called()
-    log_mock.assert_not_called()
-    assert ex.value.message == messages.MSG_PW_0046
+    assert ex.value.message == messages.MSG_PW_0045
+
+
+# === AnonOpenAiService._log_exception (3.17) ===
+
+
+def test_anon_log_exception__ok__calls_sentry(mocker):
+
+    """
+
+    Calls capture_sentry_message with ident
+
+    """
+
+    # arrange
+    ip = '168.01.01.8'
+    user_agent = 'Some browser'
+    service = AnonOpenAiService(
+        ident=ip,
+        user_agent=user_agent,
+    )
+    prompt = create_test_prompt()
+    description = 'some description'
+    ex = Exception('some error')
+    sentry_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'ai.capture_sentry_message',
+    )
+
+    # act
+    service._log_exception(
+        prompt=prompt,
+        user_description=description,
+        ex=ex,
+    )
+
+    # assert
+    sentry_mock.assert_called_once_with(
+        message=(
+            f'Error AI gen template from landing ({ip})'
+        ),
+        data={
+            'ident': ip,
+            'user-agent': user_agent,
+            'ex': {
+                'error': str(ex),
+            },
+            'request': {
+                'user_description': description,
+                'prompt': prompt.as_dict(),
+            },
+        },
+        level=SentryLogLevel.INFO,
+    )
+
+
+# === AnonOpenAiService._log (3.18) ===
+
+
+def test_anon_log__ok__calls_sentry(mocker):
+
+    """
+
+    Calls capture_sentry_message with ident
+
+    """
+
+    # arrange
+    ip = '168.01.01.8'
+    user_agent = 'Some browser'
+    service = AnonOpenAiService(
+        ident=ip,
+        user_agent=user_agent,
+    )
+    prompt = create_test_prompt()
+    description = 'some description'
+    message = 'some message'
+    response_text = 'some response'
+    sentry_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'ai.capture_sentry_message',
+    )
+
+    # act
+    service._log(
+        prompt=prompt,
+        user_description=description,
+        message=message,
+        response_text=response_text,
+    )
+
+    # assert
+    sentry_mock.assert_called_once_with(
+        message=(
+            f'Error AI gen template from landing ({ip})'
+        ),
+        data={
+            'ident': ip,
+            'user-agent': user_agent,
+            'message': message,
+            'response': {
+                'text': response_text,
+            },
+            'request': {
+                'user_description': description,
+                'prompt': prompt.as_dict(),
+            },
+        },
+        level=SentryLogLevel.INFO,
+    )
+
+
+# === AnonOpenAiService._get_step_data_from_text (3.19) ===
+
+
+def test_anon_get_step_data__ok__no_performer(mocker):
+
+    """
+
+    Returns dict without performers
+
+    """
+
+    # arrange
+    ip = '168.01.01.8'
+    user_agent = 'Some browser'
+    service = AnonOpenAiService(
+        ident=ip,
+        user_agent=user_agent,
+    )
+    api_name = 'task-123'
+    create_api_name_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'ai.create_api_name',
+        return_value=api_name,
+    )
+
+    # act
+    result = service._get_step_data_from_text(
+        number=1,
+        name='Task one',
+        description='Do something',
+        prev_task_api_name=None,
+    )
+
+    # assert
+    assert result['number'] == 1
+    assert result['name'] == 'Task one'
+    assert result['api_name'] == api_name
+    assert result['description'] == 'Do something'
+    assert 'raw_performers' not in result
+    assert len(result['conditions']) == 1
+    assert create_api_name_mock.call_count == 4
+
+
+# === get_short_template_data (3.20) — new tests ===
+
+
+def test_get_short_tmpl__no_tasks_prompt__logs(mocker):
+
+    """
+
+    JSON path empty tasks with prompt logs
+
+    """
+
+    # arrange
+    description = 'My lovely business process'
+    prompt = create_test_prompt(
+        target=OpenAIPromptTarget.GET_TEMPLATE,
+    )
+    ai_json = json.dumps({
+        'name': 'My Workflow',
+        'tasks': [],
+    })
+    response_text = ai_json
+    mocker.patch(
+        'src.processes.services.templates.'
+        'ai.AnonOpenAiService._get_json_response',
+        return_value=response_text,
+    )
+    log_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'ai.AnonOpenAiService._log',
+    )
+    ip = '168.01.01.8'
+    user_agent = 'Some browser'
+    service = AnonOpenAiService(
+        ident=ip,
+        user_agent=user_agent,
+    )
+
+    # act
+    with pytest.raises(OpenAiTemplateStepsNotExist):
+        service.get_short_template_data(
+            user_description=description,
+        )
+
+    # assert
+    log_mock.assert_called_once_with(
+        prompt=prompt,
+        user_description=description,
+        message='Template tasks not found',
+        response_text=response_text,
+    )
+
+
+def test_get_short_tmpl__no_tasks_no_prompt__raises(mocker):
+
+    """
+
+    JSON path empty tasks no prompt raises
+
+    """
+
+    # arrange
+    description = 'My lovely business process'
+    ai_json = json.dumps({
+        'name': 'My Workflow',
+        'tasks': [],
+    })
+    mocker.patch(
+        'src.processes.services.templates.'
+        'ai.AnonOpenAiService._get_json_response',
+        return_value=ai_json,
+    )
+    log_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'ai.AnonOpenAiService._log',
+    )
+    ip = '168.01.01.8'
+    user_agent = 'Some browser'
+    service = AnonOpenAiService(
+        ident=ip,
+        user_agent=user_agent,
+    )
+
+    # act
+    with pytest.raises(OpenAiTemplateStepsNotExist):
+        service.get_short_template_data(
+            user_description=description,
+        )
+
+    # assert
+    assert log_mock.call_count == 0
+
+
+def test_get_short_tmpl__no_steps_prompt__raises(mocker):
+
+    """
+
+    Steps prompt not exist raises
+
+    """
+
+    # arrange
+    description = 'My lovely business process'
+
+    # create steps prompt with active messages so the
+    # first condition routes to else (steps) branch
+    create_test_prompt()
+    ip = '168.01.01.8'
+    user_agent = 'Some browser'
+    service = AnonOpenAiService(
+        ident=ip,
+        user_agent=user_agent,
+    )
+
+    # mock _get_response to raise the exception
+    # simulating the defensive guard behavior
+    mocker.patch(
+        'src.processes.services.templates.'
+        'ai.AnonOpenAiService._get_response',
+        side_effect=OpenAiStepsPromptNotExist(),
+    )
+
+    # act
+    with pytest.raises(OpenAiStepsPromptNotExist):
+        service.get_short_template_data(
+            user_description=description,
+        )
+
+
+def test_get_short_tmpl__empty_name__defaults(mocker):
+
+    """
+
+    Empty name defaults to user_description
+
+    """
+
+    # arrange
+    description = 'My lovely business process'
+    ai_json = json.dumps({
+        'name': '',
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'Step one',
+                'description': 'First step',
+            },
+        ],
+    })
+    mocker.patch(
+        'src.processes.services.templates.'
+        'ai.AnonOpenAiService._get_json_response',
+        return_value=ai_json,
+    )
+    ip = '168.01.01.8'
+    user_agent = 'Some browser'
+    service = AnonOpenAiService(
+        ident=ip,
+        user_agent=user_agent,
+    )
+
+    # act
+    data = service.get_short_template_data(
+        user_description=description,
+    )
+
+    # assert
+    assert data['name'] == description[:TEMPLATE_NAME_LENGTH]
+
+
+def test_get_short_tmpl__tasks__minimal_fields(mocker):
+
+    """
+
+    Tasks stripped to minimal fields
+
+    """
+
+    # arrange
+    description = 'My lovely business process'
+    create_test_prompt(
+        target=OpenAIPromptTarget.GET_TEMPLATE,
+    )
+    ai_json = json.dumps({
+        'name': 'Workflow',
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'Task A',
+                'description': 'Do A',
+                'fields': [
+                    {
+                        'order': 1,
+                        'name': 'Field',
+                        'type': 'string',
+                    },
+                ],
+            },
+            {
+                'number': 2,
+                'name': 'Task B',
+                'description': 'Do B',
+            },
+        ],
+    })
+    mocker.patch(
+        'src.processes.services.templates.'
+        'ai.AnonOpenAiService._get_json_response',
+        return_value=ai_json,
+    )
+    ip = '168.01.01.8'
+    user_agent = 'Some browser'
+    service = AnonOpenAiService(
+        ident=ip,
+        user_agent=user_agent,
+    )
+
+    # act
+    data = service.get_short_template_data(
+        user_description=description,
+    )
+
+    # assert
+    assert len(data['tasks']) == 2
+    task_1 = data['tasks'][0]
+    assert set(task_1.keys()) == {
+        'number', 'name', 'api_name',
+        'description', 'conditions',
+    }
+    assert task_1['number'] == 1
+    assert task_1['name'] == 'Task A'
+    assert task_1['description'] == 'Do A'
+    assert task_1['api_name']
+    assert len(task_1['conditions']) == 1
+
+    task_2 = data['tasks'][1]
+    assert set(task_2.keys()) == {
+        'number', 'name', 'api_name',
+        'description', 'conditions',
+    }
+    assert task_2['number'] == 2
+    assert task_2['name'] == 'Task B'

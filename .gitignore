@@ -13,4 +13,8 @@ firebase-push.json
 .agent/
 .agents/
 .antigravity/
-
+CLAUDE.md
+AI_GENERATION.md
+CHANGES.md
+RUN_BRANCH.md
+SYSTEM_PROMPT.md
