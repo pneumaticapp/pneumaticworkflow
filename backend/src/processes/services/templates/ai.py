@@ -45,6 +45,8 @@ from src.utils.logging import (
 
 UserModel = get_user_model()
 
+# Fallback system prompt used when no active OpenAiPrompt
+# with target GET_TEMPLATE is configured in Django Admin.
 DEFAULT_TEMPLATE_INSTRUCTION = """You are a workflow template designer.
 Your job is to design workflow templates based on user descriptions of their business processes.
 Each template consists of a kickoff form and tasks.
@@ -115,19 +117,7 @@ If the user description implies conditional logic (e.g., "if X then skip Y"), no
 
 Given a user description of a business process, generate a workflow template JSON as per the structure above."""
 
-VALID_FIELD_TYPES = {
-    FieldType.STRING,
-    FieldType.TEXT,
-    FieldType.RADIO,
-    FieldType.CHECKBOX,
-    FieldType.DATE,
-    FieldType.URL,
-    FieldType.DROPDOWN,
-    FieldType.FILE,
-    FieldType.USER,
-    FieldType.NUMBER,
-}
-
+VALID_FIELD_TYPES = {c[0] for c in FieldType.CHOICES}
 SELECTION_FIELD_TYPES = FieldType.TYPES_WITH_SELECTIONS
 
 
@@ -164,7 +154,7 @@ class BaseAiService:
 
     def _openai_headers(self):
         headers = {
-            'Authorization': 'Bearer %s' % settings.OPENAI_API_KEY,
+            'Authorization': f'Bearer {settings.OPENAI_API_KEY}',
             'Content-Type': 'application/json',
         }
         if settings.OPENAI_API_ORG:
@@ -200,7 +190,7 @@ class BaseAiService:
     ) -> str:
 
         if not settings.OPENAI_API_KEY:
-            return self._test_response()
+            raise OpenAiServiceUnavailable
 
         # Build instructions and input from prompt messages
         instructions = None
@@ -223,6 +213,12 @@ class BaseAiService:
         }
         if instructions:
             payload['instructions'] = instructions
+        if prompt.presence_penalty:
+            payload['presence_penalty'] = prompt.presence_penalty
+        if prompt.frequency_penalty:
+            payload['frequency_penalty'] = (
+                prompt.frequency_penalty
+            )
 
         try:
             return self._call_responses_api(payload)
@@ -271,6 +267,14 @@ class BaseAiService:
         }
         if instructions:
             payload['instructions'] = instructions
+        if prompt and prompt.presence_penalty:
+            payload['presence_penalty'] = (
+                prompt.presence_penalty
+            )
+        if prompt and prompt.frequency_penalty:
+            payload['frequency_penalty'] = (
+                prompt.frequency_penalty
+            )
 
         try:
             return self._call_responses_api(payload)
@@ -454,6 +458,7 @@ class BaseAiService:
             'type': field_type,
             'is_required': bool(field_data.get('is_required', False)),
             'description': field_data.get('description', ''),
+            'default': field_data.get('default', ''),
             'api_name': field_data.get('api_name') or create_api_name('field'),
         }
         if field_type in SELECTION_FIELD_TYPES:
@@ -473,6 +478,11 @@ class BaseAiService:
     def _parse_template_from_json(self, text: str) -> dict:
         json_str = self._extract_json(text)
         data = json.loads(json_str)
+        if not isinstance(data, dict):
+            raise TypeError(
+                f'Expected JSON object,'
+                f' got {type(data).__name__}',
+            )
         template_name = data.get('name', '')[:TEMPLATE_NAME_LENGTH]
         description = data.get('description', '')
 
