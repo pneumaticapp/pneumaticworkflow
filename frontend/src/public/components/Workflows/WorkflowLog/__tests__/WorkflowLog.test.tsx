@@ -14,6 +14,10 @@ import {
 import { makeLogEvent, resetLogEventId } from '../../../../__stubs__/workflowLogEvents';
 import { intlMock } from '../../../../__stubs__/intlMock';
 
+jest.mock('react-redux', () => ({
+  useSelector: () => [],
+}));
+
 jest.mock('../WorkflowLogEvents', () => ({
   WorkflowLogTaskComplete: () => <div data-testid="log-event" />,
   WorkflowLogTaskSkipped: () => <div data-testid="log-event" />,
