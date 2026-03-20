@@ -52,7 +52,7 @@ function MentionMenuListComponent({
         position: 'fixed',
         top: rect.bottom + 4,
         left: rect.left,
-        zIndex: 10,
+        zIndex: 1100,
       }}
       onMouseDown={(e) => e.preventDefault()}
     >

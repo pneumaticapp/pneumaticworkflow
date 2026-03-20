@@ -37,6 +37,7 @@ export function ReturnModal({ isOpen, onClose, onConfirm }: IReturnModalProps) {
               return message;
             }}
             isModal={isModal}
+            withMentions={false}
           />
         </div>
 

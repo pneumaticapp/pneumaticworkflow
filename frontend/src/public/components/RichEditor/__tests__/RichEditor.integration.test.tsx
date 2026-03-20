@@ -36,7 +36,7 @@ describe('RichEditor integration', () => {
 
   it('contract: ref exposes focus, insertVariable, clearContent, getEditor', () => {
     const ref = React.createRef<IRichEditorHandle>();
-    render(<RichEditor ref={ref} handleChange={() => Promise.resolve('')} />);
+    render(<RichEditor ref={ref} handleChange={() => Promise.resolve('')} withMentions={false} />);
     expect(ref.current).not.toBeNull();
     expect(typeof ref.current?.focus).toBe('function');
     expect(typeof ref.current?.insertVariable).toBe('function');
@@ -46,7 +46,7 @@ describe('RichEditor integration', () => {
 
   it('contract: handleChange is invoked when parent passes it', () => {
     const handleChange = jest.fn().mockResolvedValue('');
-    render(<RichEditor handleChange={handleChange} />);
+    render(<RichEditor handleChange={handleChange} withMentions={false} />);
     expect(handleChange).not.toHaveBeenCalled();
   });
 });
