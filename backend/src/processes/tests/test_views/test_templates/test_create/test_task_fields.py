@@ -9,6 +9,9 @@ from src.processes.enums import (
 from src.processes.messages import template as messages
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_dataset,
+    create_test_owner,
     create_test_user,
 )
 
@@ -424,3 +427,192 @@ class TestCreateTemplateTaskFields:
         assert response.data['message'] == message
         assert response.data['details']['reason'] == message
         assert response.data['details']['api_name'] == field_api_name
+
+    def test_create__task_field_with_dataset__ok(
+        self,
+        api_client,
+    ):
+
+        """
+        Creating a template with a task field that references a dataset
+        saves the dataset FK and returns dataset id in the response.
+        """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        dataset = create_test_dataset(account=account)
+        api_client.token_authenticate(user)
+        request_data = {
+            'type': FieldType.TEXT,
+            'name': 'Dataset field',
+            'order': 1,
+            'api_name': 'text-field-1',
+            'dataset': dataset.id,
+        }
+
+        # act
+        response = api_client.post(
+            path='/templates',
+            data={
+                'name': 'Template',
+                'is_active': True,
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id,
+                        'role': OwnerRole.OWNER,
+                    },
+                ],
+                'kickoff': {},
+                'tasks': [
+                    {
+                        'number': 1,
+                        'name': 'First step',
+                        'fields': [request_data],
+                        'raw_performers': [
+                            {
+                                'type': PerformerType.USER,
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
+        )
+
+        # assert
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data['tasks'][0]['fields']) == 1
+
+        response_data = data['tasks'][0]['fields'][0]
+        assert response_data['dataset'] == dataset.id
+
+        field = FieldTemplate.objects.get(
+            api_name=response_data['api_name'],
+        )
+        assert field.dataset_id == dataset.id
+
+    def test_create__task_field_dataset_null__ok(
+        self,
+        api_client,
+    ):
+
+        """
+        Creating a template with a task field where dataset is explicitly
+        null saves the field with dataset=None and returns null
+        in the response.
+        """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        api_client.token_authenticate(user)
+        request_data = {
+            'type': FieldType.TEXT,
+            'name': 'Text field',
+            'order': 1,
+            'api_name': 'text-field-1',
+            'dataset': None,
+        }
+
+        # act
+        response = api_client.post(
+            path='/templates',
+            data={
+                'name': 'Template',
+                'is_active': True,
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id,
+                        'role': OwnerRole.OWNER,
+                    },
+                ],
+                'kickoff': {},
+                'tasks': [
+                    {
+                        'number': 1,
+                        'name': 'First step',
+                        'fields': [request_data],
+                        'raw_performers': [
+                            {
+                                'type': PerformerType.USER,
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
+        )
+
+        # assert
+        assert response.status_code == 200
+        data = response.json()
+        assert len(data['tasks'][0]['fields']) == 1
+
+        response_data = data['tasks'][0]['fields'][0]
+        assert response_data['dataset'] is None
+
+        field = FieldTemplate.objects.get(
+            api_name=response_data['api_name'],
+        )
+        assert field.dataset_id is None
+
+    def test_create__task_field_dataset_other_account__validation_error(
+        self,
+        api_client,
+    ):
+
+        """
+        Creating a template with a task field that references a dataset
+        belonging to another account returns a 400 validation error.
+        """
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        other_account = create_test_account(name='Other Company')
+        other_dataset = create_test_dataset(account=other_account)
+        api_client.token_authenticate(user)
+        request_data = {
+            'type': FieldType.TEXT,
+            'name': 'Text field',
+            'order': 1,
+            'api_name': 'text-field-1',
+            'dataset': other_dataset.id,
+        }
+
+        # act
+        response = api_client.post(
+            path='/templates',
+            data={
+                'name': 'Template',
+                'is_active': True,
+                'owners': [
+                    {
+                        'type': OwnerType.USER,
+                        'source_id': user.id,
+                        'role': OwnerRole.OWNER,
+                    },
+                ],
+                'kickoff': {},
+                'tasks': [
+                    {
+                        'number': 1,
+                        'name': 'First step',
+                        'fields': [request_data],
+                        'raw_performers': [
+                            {
+                                'type': PerformerType.USER,
+                                'source_id': user.id,
+                            },
+                        ],
+                    },
+                ],
+            },
+        )
+
+        # assert
+        assert response.status_code == 400

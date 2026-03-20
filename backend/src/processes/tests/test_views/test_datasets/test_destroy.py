@@ -170,8 +170,7 @@ def test_destroy__service_exception__validation_error(mocker, api_client):
         return_value=None,
     )
     delete_mock = mocker.patch(
-        'src.processes.services.templates'
-        '.dataset.DataSetService.delete',
+        'src.processes.services.dataset.DataSetService.delete',
         side_effect=DataSetServiceException(
             message=error_message,
         ),
@@ -208,8 +207,7 @@ def test_destroy__ok(mocker, api_client):
         return_value=None,
     )
     delete_mock = mocker.patch(
-        'src.processes.services.templates'
-        '.dataset.DataSetService.delete',
+        'src.processes.services.dataset.DataSetService.delete',
     )
 
     # act

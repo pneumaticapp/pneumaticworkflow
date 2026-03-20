@@ -190,8 +190,7 @@ def test_partial_update__name_too_long__validation_error(mocker, api_client):
         return_value=None,
     )
     partial_update_mock = mocker.patch(
-        'src.processes.services.templates'
-        '.dataset.DataSetService.partial_update',
+        'src.processes.services.dataset.DataSetService.partial_update',
     )
     long_name = 'x' * 201
 
@@ -225,8 +224,7 @@ def test_partial_update__item_value_too_long__validation_error(
         return_value=None,
     )
     partial_update_mock = mocker.patch(
-        'src.processes.services.templates'
-        '.dataset.DataSetService.partial_update',
+        'src.processes.services.dataset.DataSetService.partial_update',
     )
     data = {'items': [{'value': 'x' * 201}]}
 
@@ -257,8 +255,7 @@ def test_partial_update__minimal_data__ok(mocker, api_client):
         return_value=None,
     )
     partial_update_mock = mocker.patch(
-        'src.processes.services.templates'
-        '.dataset.DataSetService.partial_update',
+        'src.processes.services.dataset.DataSetService.partial_update',
         return_value=dataset,
     )
 
@@ -298,8 +295,7 @@ def test_partial_update__full_data__ok(mocker, api_client):
         return_value=None,
     )
     partial_update_mock = mocker.patch(
-        'src.processes.services.templates'
-        '.dataset.DataSetService.partial_update',
+        'src.processes.services.dataset.DataSetService.partial_update',
         return_value=dataset,
     )
     items = [{'value': 'Updated item', 'order': 0}]
@@ -351,11 +347,8 @@ def test_partial_update__service_exception__validation_error(
         return_value=None,
     )
     partial_update_mock = mocker.patch(
-        'src.processes.services.templates'
-        '.dataset.DataSetService.partial_update',
-        side_effect=DataSetServiceException(
-            message=error_message,
-        ),
+        'src.processes.services.dataset.DataSetService.partial_update',
+        side_effect=DataSetServiceException(message=error_message),
     )
     data = {'name': 'Updated Name'}
 

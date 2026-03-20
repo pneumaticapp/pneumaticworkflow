@@ -6,6 +6,7 @@ from rest_framework.serializers import (
     ModelSerializer,
 )
 
+from src.generics.fields import AccountPrimaryKeyRelatedField
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
@@ -16,6 +17,7 @@ from src.processes.messages.template import (
     MSG_PT_0006,
     MSG_PT_0050,
 )
+from src.processes.models.dataset import Dataset
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
@@ -74,6 +76,7 @@ class FieldTemplateSerializer(
             'order',
             'api_name',
             'default',
+            'dataset',
         )
         create_or_update_fields = {
             'type',
@@ -88,10 +91,16 @@ class FieldTemplateSerializer(
             'task',
             'template',
             'account',
+            'dataset',
         }
 
     order = IntegerField()
     api_name = CharField(required=False, max_length=200)
+    dataset = AccountPrimaryKeyRelatedField(
+        queryset=Dataset.objects.all(),
+        required=False,
+        allow_null=True,
+    )
     selections = FieldTemplateSelectionSerializer(
         many=True,
         required=False,
