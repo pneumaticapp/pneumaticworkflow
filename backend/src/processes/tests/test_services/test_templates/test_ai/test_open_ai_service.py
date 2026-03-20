@@ -66,7 +66,7 @@ def test_get_response__ci_configuration__return_test_response(mocker):
     test_response = mocker.Mock()
     test_response_mock = mocker.patch(
         'src.processes.services.templates.'
-        'ai.OpenAiService._test_response',
+        'ai.OpenAiService._test_steps_response',
         return_value=test_response,
     )
 
@@ -121,6 +121,62 @@ def test_get_response__ok(mocker):
     # assert
     assert response == ai_response
     call_api_mock.assert_called_once()
+    payload = call_api_mock.call_args[0][0]
+    assert payload['presence_penalty'] == prompt.presence_penalty
+    assert payload['frequency_penalty'] == prompt.frequency_penalty
+
+
+def test_get_response__multiple_messages__uses_ordered_input(mocker):
+
+    # arrange
+    description = 'some description'
+    prompt = create_test_prompt(messages_count=4)
+    message_1 = prompt.messages.filter(order=1).first()
+    message_1.role = OpenAIRole.SYSTEM
+    message_1.content = 'System 1'
+    message_1.save()
+    message_2 = prompt.messages.filter(order=2).first()
+    message_2.role = OpenAIRole.USER
+    message_2.content = 'User 1 {{ user_description }}'
+    message_2.save()
+    message_3 = prompt.messages.filter(order=3).first()
+    message_3.role = OpenAIRole.ASSISTANT
+    message_3.content = 'Assistant example'
+    message_3.save()
+    message_4 = prompt.messages.filter(order=4).first()
+    message_4.role = OpenAIRole.SYSTEM
+    message_4.content = 'System 2'
+    message_4.save()
+
+    mocker.patch(
+        'src.processes.services.templates.ai.settings.OPENAI_API_KEY',
+        'some_key',
+    )
+    user = create_test_user()
+    service = OpenAiService(
+        ident=user.id,
+        user=user,
+        auth_type=AuthTokenType.USER,
+    )
+    call_api_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'ai.BaseAiService._call_responses_api',
+        return_value='ok',
+    )
+
+    # act
+    service._get_response(
+        user_description=description,
+        prompt=prompt,
+    )
+
+    # assert
+    payload = call_api_mock.call_args[0][0]
+    assert payload['instructions'] == 'System 1\n\nSystem 2'
+    assert payload['input'] == [
+        {'role': OpenAIRole.USER, 'content': 'User 1 some description'},
+        {'role': OpenAIRole.ASSISTANT, 'content': 'Assistant example'},
+    ]
 
 
 def test_get_response__api_error__raise_exception(mocker):
@@ -235,6 +291,62 @@ def test_get_json_response__ok__uses_responses_api(mocker):
     assert payload['model'] == 'gpt-4.1-mini'
     assert 'instructions' in payload
     assert payload['input'] == description
+    assert payload['presence_penalty'] == 0
+    assert payload['frequency_penalty'] == 0
+
+
+def test_get_json_response__prompt_messages__uses_ordered_input(mocker):
+
+    # arrange
+    description = 'some description'
+    prompt = create_test_prompt(messages_count=3)
+    prompt.presence_penalty = 0.7
+    prompt.frequency_penalty = -0.4
+    prompt.save()
+    message_1 = prompt.messages.filter(order=1).first()
+    message_1.role = OpenAIRole.SYSTEM
+    message_1.content = 'System message'
+    message_1.save()
+    message_2 = prompt.messages.filter(order=2).first()
+    message_2.role = OpenAIRole.ASSISTANT
+    message_2.content = 'Assistant example'
+    message_2.save()
+    message_3 = prompt.messages.filter(order=3).first()
+    message_3.role = OpenAIRole.USER
+    message_3.content = 'User asks: {{ user_description }}'
+    message_3.save()
+
+    mocker.patch(
+        'src.processes.services.templates.ai.settings.OPENAI_API_KEY',
+        'some_key',
+    )
+    user = create_test_user()
+    service = OpenAiService(
+        ident=user.id,
+        user=user,
+        auth_type=AuthTokenType.USER,
+    )
+    call_api_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'ai.BaseAiService._call_responses_api',
+        return_value='{"name":"T","tasks":[]}',
+    )
+
+    # act
+    service._get_json_response(
+        user_description=description,
+        prompt=prompt,
+    )
+
+    # assert
+    payload = call_api_mock.call_args[0][0]
+    assert payload['instructions'] == 'System message'
+    assert payload['input'] == [
+        {'role': OpenAIRole.ASSISTANT, 'content': 'Assistant example'},
+        {'role': OpenAIRole.USER, 'content': 'User asks: some description'},
+    ]
+    assert payload['presence_penalty'] == prompt.presence_penalty
+    assert payload['frequency_penalty'] == prompt.frequency_penalty
 
 
 def test_get_json_response__api_error__raise_exception(mocker):

@@ -107,6 +107,34 @@ def test_get_short_template_data__legacy_text_path__ok(mocker):
     assert task_2_predicate['value'] is None
 
 
+def test_get_short_template_data__legacy_path_without_api_key__ok(mocker):
+
+    # arrange
+    description = 'My lovely business process'
+    create_test_prompt()
+    mocker.patch(
+        'src.processes.services.templates.ai.settings.OPENAI_API_KEY',
+        None,
+    )
+    ip = '168.01.01.8'
+    user_agent = 'Some browser'
+
+    service = AnonOpenAiService(
+        ident=ip,
+        user_agent=user_agent,
+    )
+
+    # act
+    template_data = service.get_short_template_data(
+        user_description=description,
+    )
+
+    # assert
+    assert template_data['name'] == description
+    assert len(template_data['tasks']) == 4
+    assert template_data['tasks'][0]['name'] == 'Inspect hive'
+
+
 # === JSON path with GET_TEMPLATE prompt ===
 
 

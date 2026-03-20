@@ -200,26 +200,20 @@ class BaseAiService:
     ) -> str:
 
         if not settings.OPENAI_API_KEY:
-            return self._test_response()
+            return self._test_steps_response()
 
-        # Build instructions and input from prompt messages
-        instructions = None
-        user_input = user_description
-        for elem in prompt.messages.order_by('order'):
-            content = insert_fields_values_to_text(
-                text=elem.content,
-                fields_values={'user_description': user_description},
-            )
-            if elem.role == 'system':
-                instructions = content
-            elif elem.role == 'user':
-                user_input = content
+        instructions, user_input = self._get_prompt_instructions_and_input(
+            prompt=prompt,
+            user_description=user_description,
+        )
 
         payload = {
             'model': prompt.model,
             'input': user_input,
             'temperature': prompt.temperature,
             'top_p': prompt.top_p,
+            'presence_penalty': prompt.presence_penalty,
+            'frequency_penalty': prompt.frequency_penalty,
         }
         if instructions:
             payload['instructions'] = instructions
@@ -244,19 +238,10 @@ class BaseAiService:
             return self._test_response()
 
         if prompt and prompt.messages.active().exists():
-            instructions = None
-            user_input = user_description
-            for elem in prompt.messages.order_by('order'):
-                content = insert_fields_values_to_text(
-                    text=elem.content,
-                    fields_values={
-                        'user_description': user_description,
-                    },
-                )
-                if elem.role == 'system':
-                    instructions = content
-                elif elem.role == 'user':
-                    user_input = content
+            instructions, user_input = self._get_prompt_instructions_and_input(
+                prompt=prompt,
+                user_description=user_description,
+            )
         else:
             instructions = DEFAULT_TEMPLATE_INSTRUCTION
             user_input = user_description
@@ -268,6 +253,12 @@ class BaseAiService:
             'input': user_input,
             'temperature': prompt.temperature if prompt else 0.7,
             'top_p': prompt.top_p if prompt else 1,
+            'presence_penalty': (
+                prompt.presence_penalty if prompt else 0
+            ),
+            'frequency_penalty': (
+                prompt.frequency_penalty if prompt else 0
+            ),
         }
         if instructions:
             payload['instructions'] = instructions
@@ -282,6 +273,44 @@ class BaseAiService:
                     user_description=user_description,
                 )
             raise
+
+    def _get_prompt_instructions_and_input(
+        self,
+        prompt: OpenAiPrompt,
+        user_description: str,
+    ):
+        instructions_parts = []
+        input_messages = []
+        for elem in prompt.messages.active().order_by('order'):
+            content = insert_fields_values_to_text(
+                text=elem.content,
+                fields_values={'user_description': user_description},
+            )
+            if elem.role == 'system':
+                instructions_parts.append(content)
+            elif elem.role in ('user', 'assistant'):
+                input_messages.append({
+                    'role': elem.role,
+                    'content': content,
+                })
+        instructions = (
+            '\n\n'.join(instructions_parts)
+            if instructions_parts
+            else None
+        )
+        if not input_messages:
+            return instructions, user_description
+        if len(input_messages) == 1 and input_messages[0]['role'] == 'user':
+            return instructions, input_messages[0]['content']
+        return instructions, input_messages
+
+    def _test_steps_response(self):
+        return '\n'.join((
+            'Inspect hive | Inspect the beehive to determine readiness for honey collection.',
+            'Smoke the bees | Use a smoker to calm the bees before working with the frames.',
+            'Extract honey | Extract honey from the hive frames and collect it for processing.',
+            'Bottle and label | Bottle the honey and label each jar for storage and sale.',
+        ))
 
     def _test_response(self):
         return json.dumps({
