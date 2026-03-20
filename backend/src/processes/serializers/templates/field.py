@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from rest_framework.serializers import (
     CharField,
@@ -41,6 +41,7 @@ class PublicFieldTemplateSerializer(ModelSerializer):
             'is_required',
             'is_hidden',
             'selections',
+            'dataset',
             'order',
             'api_name',
             'default',
@@ -52,6 +53,7 @@ class PublicFieldTemplateSerializer(ModelSerializer):
         many=True,
         required=False,
     )
+    dataset = IntegerField(required=False)
 
 
 class FieldTemplateSerializer(
@@ -106,18 +108,12 @@ class FieldTemplateSerializer(
         required=False,
     )
 
-    def additional_validate_selections(
-        self,
-        value: List[Dict[str, Any]],
-        data: Dict[str, Any],
-    ):
+    def additional_validate(self, data: Dict[str, Any]):
 
-        # TODO Need API test
-        selection_not_provided = (
+        if (
             data['type'] in FieldType.TYPES_WITH_SELECTIONS
-            and not value
-        )
-        if selection_not_provided:
+            and not (data.get('selections') or data.get('dataset'))
+        ):
             self.raise_validation_error(
                 message=MSG_PT_0005,
                 api_name=data.get('api_name'),

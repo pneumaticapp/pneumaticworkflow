@@ -10,7 +10,9 @@ MSG_PT_0004 = lambda name: _(
     'Some fields referenced in the conditions of task "{name}" do not exist.',
 ).format(name=name)
 
-MSG_PT_0005 = _('Selections can\'t be empty on radio or checkbox fields.')
+MSG_PT_0005 = _(
+    'You should provide a "selections" or "dataset" for the field.',
+)
 MSG_PT_0006 = _('A field with a type \'User\' should be required.')
 MSG_PT_0007 = _('Workflow template name is empty.')
 MSG_PT_0008 = _('Some of fields in "workflow template name" don\'t exist.')
