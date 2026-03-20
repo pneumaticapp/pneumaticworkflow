@@ -235,7 +235,17 @@ class FieldTemplateListSerializer(ModelSerializer):
             'description',
             'api_name',
             'selections',
+            'dataset',
             'order',
         )
 
     selections = FieldTemplateSelectionListSerializer(many=True)
+
+    def to_representation(self, data: Dict[str, Any]):
+        data = super().to_representation(data)
+        if data.get('description') is None:
+            data['description'] = ''
+        if data['type'] not in FieldType.TYPES_WITH_SELECTIONS:
+            data.pop('selections', None)
+            data.pop('dataset', None)
+        return data
