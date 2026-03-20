@@ -1,4 +1,4 @@
-import React, { memo, useRef, useEffect, useState } from 'react';
+import React, { memo, useRef, useEffect, useLayoutEffect, useState } from 'react';
 import type { MentionMenuOption } from './types';
 import { getPositionRelativeToParent } from './getPositionRelativeToParent';
 import styles from './MentionsPlugin.css';
@@ -34,7 +34,7 @@ function MentionMenuListComponent({
     };
   }, []);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     setPosition(getPositionRelativeToParent(menuRef.current, rect));
   }, [rect]);
 
