@@ -396,7 +396,6 @@ class TaskCommentPermission(BasePermission):
 
     """
     Allow task comments for:
-    - Account owners and admins
     - Guests
     - Workflow members and owners
     - Task performers (direct and via group)
@@ -412,11 +411,7 @@ class TaskCommentPermission(BasePermission):
 
         user = request.user
 
-        if (
-            user.type != UserType.USER or
-            user.is_account_owner or
-            user.is_admin
-        ):
+        if request.user.type != UserType.USER:
             return True
 
         user_id = user.id
@@ -443,7 +438,6 @@ class WorkflowCommentPermission(BasePermission):
 
     """
     Allow workflow comments for:
-    - Account owners and admins
     - Guests
     - Workflow members and owners
     - Group task performers
@@ -459,11 +453,7 @@ class WorkflowCommentPermission(BasePermission):
 
         user = request.user
 
-        if (
-            user.type != UserType.USER or
-            user.is_account_owner or
-            user.is_admin
-        ):
+        if request.user.type != UserType.USER:
             return True
 
         user_id = user.id
