@@ -102,6 +102,42 @@ class TemplateOwnerOrViewerPermission(BasePermission):
         )
 
 
+class TemplateFieldsPermission(BasePermission):
+
+    """ Allow access for template owners, viewers or workflow members """
+
+    message = MSG_PT_0070
+
+    def has_permission(self, request, view):
+        try:
+            template_id = int(view.kwargs.get('pk'))
+        except (ValueError, TypeError):
+            return False
+
+        user = request.user
+        if user.is_account_owner:
+            return True
+
+        return (
+            Template.objects
+            .by_id(template_id)
+            .on_account(user.account_id)
+            .filter(
+                Q(
+                    owners__type=OwnerType.USER,
+                    owners__user_id=user.id,
+                    owners__is_deleted=False,
+                    owners__role__in=(OwnerRole.OWNER, OwnerRole.VIEWER),
+                ) | Q(
+                    owners__type=OwnerType.GROUP,
+                    owners__group__users__id=user.id,
+                    owners__is_deleted=False,
+                    owners__role__in=(OwnerRole.OWNER, OwnerRole.VIEWER),
+                ) | Q(workflows__members=user.id),
+            ).exists()
+        )
+
+
 class UserCanAccessHighlightsPermission(BasePermission):
 
     """ Allow admin, account owner, template owners or template viewers

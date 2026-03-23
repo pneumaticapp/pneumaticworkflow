@@ -1,7 +1,7 @@
 from typing import List, Optional
 
 from django.db import DataError, transaction
-from django.db.models import Prefetch, Q
+from django.db.models import Prefetch
 from django.http import Http404
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
@@ -22,10 +22,6 @@ from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
 from src.generics.permissions import UserIsAuthenticated
-from src.processes.enums import (
-    OwnerType,
-    OwnerRole,
-)
 from src.processes.filters import TemplateFilter
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.kickoff import Kickoff
@@ -38,6 +34,7 @@ from src.processes.permissions import (
     TemplateAccessPermission,
     TemplateAdminOwnerPermission,
     TemplateOwnerOrViewerPermission,
+    TemplateFieldsPermission,
 )
 from src.processes.queries import (
     TemplateStepsQuery,
@@ -182,12 +179,18 @@ class TemplateViewSet(
             'titles_by_workflows',
             'titles_by_tasks',
             'steps',
-            'fields',
         ):
             return (
                 UserIsAuthenticated(),
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
+            )
+        if self.action == 'fields':
+            return (
+                UserIsAuthenticated(),
+                ExpiredSubscriptionPermission(),
+                BillingPlanPermission(),
+                TemplateFieldsPermission(),
             )
         if self.action == 'ai':
             return (
@@ -221,37 +224,6 @@ class TemplateViewSet(
     def get_queryset(self):
         user = self.request.user
         qst = Template.objects.on_account(user.account_id).exclude_onboarding()
-
-        # Account owner has full access to all templates in the account
-        if user.is_account_owner:
-            # Account owner can see all templates in the account
-            pass  # No additional filtering needed
-        # For other users (including admins), apply filtering logic
-        elif self.action == 'fields':
-            # Template owner, viewer, or Workflow Member
-            qst = qst.filter(
-                Q(
-                    owners__type=OwnerType.USER,
-                    owners__user_id=user.id,
-                    owners__is_deleted=False,
-                    owners__role__in=(OwnerRole.OWNER, OwnerRole.VIEWER),
-                ) | Q(
-                    owners__type=OwnerType.GROUP,
-                    owners__group__users__id=user.id,
-                    owners__is_deleted=False,
-                    owners__role__in=(OwnerRole.OWNER, OwnerRole.VIEWER),
-                ) | Q(workflows__members=user.id),
-            ).distinct()
-        elif self.action == 'run':
-            # Template owners, viewers, and starters can run workflows
-            qst = qst.with_template_access(user.id)
-        elif self.action == 'presets':
-            # Template owners and viewers can access presets
-            qst = qst.with_template_owner_or_viewer(user.id)
-        else:
-            # For update/clone/destroy/retrieve: only template owners
-            qst = qst.with_template_owner(user.id)
-
         return self.prefetch_queryset(qst)
 
     def prefetch_queryset(
