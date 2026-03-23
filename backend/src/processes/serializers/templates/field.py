@@ -53,7 +53,7 @@ class PublicFieldTemplateSerializer(ModelSerializer):
         many=True,
         required=False,
     )
-    dataset = IntegerField(required=False)
+    dataset = AccountPrimaryKeyRelatedField()
 
 
 class FieldTemplateSerializer(
