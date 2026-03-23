@@ -411,7 +411,7 @@ class TaskCommentPermission(BasePermission):
 
         user = request.user
 
-        if request.user.type != UserType.USER:
+        if user.type != UserType.USER or user.is_account_owner:
             return True
 
         user_id = user.id
@@ -453,7 +453,7 @@ class WorkflowCommentPermission(BasePermission):
 
         user = request.user
 
-        if request.user.type != UserType.USER:
+        if user.type != UserType.USER or user.is_account_owner:
             return True
 
         user_id = user.id
