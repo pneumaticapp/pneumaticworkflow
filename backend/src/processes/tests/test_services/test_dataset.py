@@ -237,7 +237,7 @@ def test__update_items__no_items_to_create__skip():
     assert items[1].value == 'Updated Second'
 
 
-def test__delete__instance__ok():
+def test__delete__ok(mocker):
 
     """Instance deleted"""
 
@@ -247,12 +247,27 @@ def test__delete__instance__ok():
     dataset = create_test_dataset(account=account)
     dataset_id = dataset.id
     service = DataSetService(user=user, instance=dataset)
+    serialized_data = mocker.Mock()
+    dataset_serializer_mock = mocker.patch(
+        'src.processes.services.dataset.DatasetSerializer',
+        return_value=mocker.Mock(data=serialized_data),
+    )
+    send_dataset_deleted_notification_mock = mocker.patch(
+        'src.notifications.tasks.'
+        'send_dataset_deleted_notification.delay',
+    )
 
     # act
     service.delete()
 
     # assert
     assert not Dataset.objects.filter(id=dataset_id).exists()
+    dataset_serializer_mock.assert_called_once_with(dataset)
+    send_dataset_deleted_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        dataset_data=serialized_data,
+    )
 
 
 def test__create_related__items_provided__ok(mocker):
@@ -328,7 +343,15 @@ def test__partial_update__items_provided__ok(mocker):
     items = [
         {'value': 'Item 1', 'order': 1},
     ]
-
+    serialized_data = mocker.Mock()
+    dataset_serializer_mock = mocker.patch(
+        'src.processes.services.dataset.DatasetSerializer',
+        return_value=mocker.Mock(data=serialized_data),
+    )
+    send_dataset_updated_notification_mock = mocker.patch(
+        'src.notifications.tasks.'
+        'send_dataset_updated_notification.delay',
+    )
     _update_items_mock = mocker.patch.object(service, '_update_items')
 
     # act
@@ -337,6 +360,12 @@ def test__partial_update__items_provided__ok(mocker):
     # assert
     assert result == dataset
     _update_items_mock.assert_called_once_with(items_data=items)
+    dataset_serializer_mock.assert_called_once_with(dataset)
+    send_dataset_updated_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        dataset_data=serialized_data,
+    )
 
 
 def test__partial_update__items_none__skip(mocker):
@@ -350,6 +379,15 @@ def test__partial_update__items_none__skip(mocker):
     service = DataSetService(user=user, instance=dataset)
 
     _update_items_mock = mocker.patch.object(service, '_update_items')
+    serialized_data = mocker.Mock()
+    dataset_serializer_mock = mocker.patch(
+        'src.processes.services.dataset.DatasetSerializer',
+        return_value=mocker.Mock(data=serialized_data),
+    )
+    send_dataset_updated_notification_mock = mocker.patch(
+        'src.notifications.tasks.'
+        'send_dataset_updated_notification.delay',
+    )
 
     # act
     result = service.partial_update()
@@ -357,6 +395,12 @@ def test__partial_update__items_none__skip(mocker):
     # assert
     assert result == dataset
     _update_items_mock.assert_not_called()
+    dataset_serializer_mock.assert_called_once_with(dataset)
+    send_dataset_updated_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        dataset_data=serialized_data,
+    )
 
 
 def test__partial_update__default_force_save__ok(mocker):
@@ -372,6 +416,15 @@ def test__partial_update__default_force_save__ok(mocker):
     new_name = 'Updated Name'
 
     _update_items_mock = mocker.patch.object(service, '_update_items')
+    serialized_data = mocker.Mock()
+    dataset_serializer_mock = mocker.patch(
+        'src.processes.services.dataset.DatasetSerializer',
+        return_value=mocker.Mock(data=serialized_data),
+    )
+    send_dataset_updated_notification_mock = mocker.patch(
+        'src.notifications.tasks.'
+        'send_dataset_updated_notification.delay',
+    )
 
     # act
     service.partial_update(name=new_name)
@@ -380,6 +433,12 @@ def test__partial_update__default_force_save__ok(mocker):
     dataset.refresh_from_db()
     assert dataset.name == old_name
     _update_items_mock.assert_not_called()
+    dataset_serializer_mock.assert_called_once_with(dataset)
+    send_dataset_updated_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        dataset_data=serialized_data,
+    )
 
 
 def test__create__duplicate_dataset_name_same_account__integrity_error():
@@ -503,3 +562,35 @@ def test__update_items__duplicate_value_same_dataset__integrity_error():
 
     # assert
     assert str(ex.value.message) == str(MSG_PW_0093)
+
+
+def test__create_actions__sends_created_notification__ok(mocker):
+
+    """ send_dataset_created_notification.delay
+        is called after dataset is created """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account, items_count=0)
+    service = DataSetService(user=user, instance=dataset)
+    serialized_data = {'id': dataset.id, 'name': dataset.name, 'items': []}
+    dataset_serializer_mock = mocker.patch(
+        'src.processes.services.dataset.DatasetSerializer',
+        return_value=mocker.Mock(data=serialized_data),
+    )
+    send_dataset_created_notification_mock = mocker.patch(
+        'src.notifications.tasks.'
+        'send_dataset_created_notification.delay',
+    )
+
+    # act
+    service._create_actions()
+
+    # assert
+    dataset_serializer_mock.assert_called_once_with(dataset)
+    send_dataset_created_notification_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        dataset_data=serialized_data,
+    )

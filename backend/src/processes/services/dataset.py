@@ -4,7 +4,13 @@ from django.contrib.auth import get_user_model
 from django.db import IntegrityError
 
 from src.generics.base.service import BaseModelService
+from src.notifications.tasks import (
+    send_dataset_created_notification,
+    send_dataset_deleted_notification,
+    send_dataset_updated_notification,
+)
 from src.processes.models.dataset import Dataset, DatasetItem
+from src.processes.serializers.templates.dataset import DatasetSerializer
 from src.processes.services.exceptions import (
     DataSetItemValueNotUniqueException,
     DataSetNameNotUniqueException,
@@ -39,6 +45,13 @@ class DataSetService(BaseModelService):
         if items:
             self._create_items(items_data=items)
 
+    def _create_actions(self, **kwargs):
+        send_dataset_created_notification.delay(
+            logging=self.account.log_api_requests,
+            account_id=self.account.id,
+            dataset_data=DatasetSerializer(self.instance).data,
+        )
+
     def partial_update(
         self,
         force_save: bool = False,
@@ -55,9 +68,19 @@ class DataSetService(BaseModelService):
             raise DataSetNameNotUniqueException from ex
         if items is not None:
             self._update_items(items_data=items)
+        send_dataset_updated_notification.delay(
+            logging=self.account.log_api_requests,
+            account_id=self.account.id,
+            dataset_data=DatasetSerializer(self.instance).data,
+        )
         return result
 
     def delete(self) -> None:
+        send_dataset_deleted_notification.delay(
+            logging=self.account.log_api_requests,
+            account_id=self.account.id,
+            dataset_data=DatasetSerializer(self.instance).data,
+        )
         self.instance.delete()
 
     def _create_items(

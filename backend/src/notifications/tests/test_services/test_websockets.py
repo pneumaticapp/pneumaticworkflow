@@ -935,3 +935,153 @@ def test_send_complete_task__ok(mocker):
         sync=True,
     )
     slz_mock.assert_called_once_with(notification)
+
+
+def test_send_dataset_created__ok(mocker):
+
+    """send_dataset_created routes to EventsConsumer with correct payload"""
+
+    # arrange
+    user_id = 42
+    dataset_data = {'id': 1, 'name': 'My Dataset', 'items': []}
+    send_mock = mocker.patch(
+        'src.notifications.services.websockets.'
+        'WebSocketService._send',
+    )
+    uuid_mock = mocker.patch(
+        'src.notifications.services.websockets.uuid.uuid4',
+        return_value='fixed-uuid',
+    )
+    now_mock = mocker.patch(
+        'src.notifications.services.websockets.timezone.now',
+        return_value=mocker.Mock(
+            timestamp=mocker.Mock(return_value=1000.0),
+        ),
+    )
+    service = WebSocketService(
+        logging=True,
+        logo_lg='https://logo.com',
+        account_id=123,
+    )
+
+    # act
+    service.send_dataset_created(
+        user_id=user_id,
+        dataset_data=dataset_data,
+        sync=True,
+    )
+
+    # assert
+    send_mock.assert_called_once_with(
+        method_name=NotificationMethod.dataset_created,
+        group_name=f'events_{user_id}',
+        data={
+            'id': 'fixed-uuid',
+            'date_created_tsp': 1000.0,
+            'type': NotificationMethod.dataset_created,
+            'data': dataset_data,
+        },
+        sync=True,
+    )
+    uuid_mock.assert_called_once()
+    now_mock.assert_called_once()
+
+
+def test_send_dataset_updated__ok(mocker):
+
+    """send_dataset_updated routes to EventsConsumer with correct payload"""
+
+    # arrange
+    user_id = 42
+    dataset_data = {'id': 1, 'name': 'Updated Name', 'items': []}
+    send_mock = mocker.patch(
+        'src.notifications.services.websockets.'
+        'WebSocketService._send',
+    )
+    uuid_mock = mocker.patch(
+        'src.notifications.services.websockets.uuid.uuid4',
+        return_value='fixed-uuid',
+    )
+    now_mock = mocker.patch(
+        'src.notifications.services.websockets.timezone.now',
+        return_value=mocker.Mock(
+            timestamp=mocker.Mock(return_value=2000.0),
+        ),
+    )
+    service = WebSocketService(
+        logging=True,
+        logo_lg='https://logo.com',
+        account_id=123,
+    )
+
+    # act
+    service.send_dataset_updated(
+        user_id=user_id,
+        dataset_data=dataset_data,
+        sync=True,
+    )
+
+    # assert
+    send_mock.assert_called_once_with(
+        method_name=NotificationMethod.dataset_updated,
+        group_name=f'events_{user_id}',
+        data={
+            'id': 'fixed-uuid',
+            'date_created_tsp': 2000.0,
+            'type': NotificationMethod.dataset_updated,
+            'data': dataset_data,
+        },
+        sync=True,
+    )
+    uuid_mock.assert_called_once()
+    now_mock.assert_called_once()
+
+
+def test_send_dataset_deleted__ok(mocker):
+
+    """send_dataset_deleted routes to EventsConsumer with correct payload"""
+
+    # arrange
+    user_id = 42
+    dataset_data = {'id': 1, 'name': 'Deleted Dataset', 'items': []}
+    send_mock = mocker.patch(
+        'src.notifications.services.websockets.'
+        'WebSocketService._send',
+    )
+    uuid_mock = mocker.patch(
+        'src.notifications.services.websockets.uuid.uuid4',
+        return_value='fixed-uuid',
+    )
+    now_mock = mocker.patch(
+        'src.notifications.services.websockets.timezone.now',
+        return_value=mocker.Mock(
+            timestamp=mocker.Mock(return_value=3000.0),
+        ),
+    )
+    service = WebSocketService(
+        logging=True,
+        logo_lg='https://logo.com',
+        account_id=123,
+    )
+
+    # act
+    service.send_dataset_deleted(
+        user_id=user_id,
+        dataset_data=dataset_data,
+        sync=True,
+    )
+
+    # assert
+    send_mock.assert_called_once_with(
+        method_name=NotificationMethod.dataset_deleted,
+        group_name=f'events_{user_id}',
+        data={
+            'id': 'fixed-uuid',
+            'date_created_tsp': 3000.0,
+            'type': NotificationMethod.dataset_deleted,
+            'data': dataset_data,
+        },
+        sync=True,
+    )
+    uuid_mock.assert_called_once()
+    now_mock.assert_called_once()
