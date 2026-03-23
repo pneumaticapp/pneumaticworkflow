@@ -163,6 +163,7 @@ class TemplateViewSet(
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
                 UsersOverlimitedPermission(),
+                UserIsAdminOrAccountOwner(),
                 TemplateAdminOwnerPermission(),
             )
         if self.action == 'run':
