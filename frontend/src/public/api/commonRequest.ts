@@ -94,7 +94,7 @@ axiosInstance.interceptors.response.use(
 
     const data = error.response?.data;
     const payload = typeof data === 'string' ? { error: data } : data ?? {};
-    return Promise.reject(Object.assign(new Error(), payload, { status: error.response?.status }));
+    return Promise.reject(Object.assign(new Error(), payload, { status: error.response?.status, loggedByInterceptor: true }));
   },
 );
 
@@ -130,9 +130,12 @@ export async function commonRequest<T>(
     }
 
     return response.data as T;
-  } catch (error) {
+  } catch (error: any) {
     if (shouldThrow) {
       throw error;
+    }
+    if (!error.loggedByInterceptor) {
+      logger.error(error);
     }
     return undefined as unknown as T;
   }
