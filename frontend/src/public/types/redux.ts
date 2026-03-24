@@ -34,6 +34,7 @@ import { ESubscriptionPlan } from './account';
 import { IMenuItem } from './menu';
 import { EWebhooksTypeEvent, IWebhook } from './webhooks';
 import { ETenantsSorting, ITenant } from './tenants';
+import { IDataset, IDatasetListItem } from './dataset';
 import { IPagesStore } from '../redux/pages/types';
 import { TeamPages, IGroup, UserInvite } from '../redux/team/types';
 
@@ -62,6 +63,7 @@ export interface IApplicationState {
   team: ITeamStore;
   groups: IGroupsStore;
   tenants: ITenantsStore;
+  datasets: IDatasetsStore; 
 }
 
 export enum ELoggedState {
@@ -359,6 +361,18 @@ export type ITenantsStore = {
 };
 
 export type IWebhookStore = Record<EWebhooksTypeEvent, IWebhook>;
+
+export type IDatasetsStore = {
+  items: IDatasetListItem[];
+  isLoading: boolean;
+  searchQuery: string;                
+  sortOrder: 'asc' | 'desc';         
+
+  currentDataset: IDataset | null;    
+  isCurrentDatasetLoading: boolean;   
+  currentSearchQuery: string;         
+  currentSortOrder: 'asc' | 'desc';  
+};
 
 export interface IAction<Type> {
   type: Type;

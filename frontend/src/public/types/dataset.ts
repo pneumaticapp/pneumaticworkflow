@@ -39,8 +39,8 @@ export interface IGetDatasetParams {
 
 export interface ICreateDatasetParams {
   name: string;
-  description: string;
-  items: IDatasetItem[];
+  description?: string;
+  items?: Omit<IDatasetItem, 'id'>[];
 }
 
 export interface IUpdateDatasetParams {
