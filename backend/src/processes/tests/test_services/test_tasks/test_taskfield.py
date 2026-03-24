@@ -36,7 +36,7 @@ from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_template,
     create_test_user,
-    create_test_workflow,
+    create_test_workflow, create_test_dataset,
 )
 
 UserModel = get_user_model()
@@ -46,8 +46,10 @@ pytestmark = pytest.mark.django_db
 def test_create_instance__task_field__ok(mocker):
 
     # arrange
-    user = create_test_user()
+    account = create_test_account()
+    user = create_test_owner(account=account)
     template = create_test_template(user=user, tasks_count=1)
+    dataset = create_test_dataset(account=account, items_count=0)
     field_template = FieldTemplate.objects.create(
         type=FieldType.FILE,
         name='Some file',
@@ -58,6 +60,7 @@ def test_create_instance__task_field__ok(mocker):
         template=template,
         is_required=True,
         account=user.account,
+        dataset=dataset,
     )
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
@@ -109,19 +112,23 @@ def test_create_instance__task_field__ok(mocker):
     assert task_field.clear_value == clear_value
     assert task_field.user_id == user_id
     assert task_field.group_id == group_id
+    assert task_field.dataset == dataset
 
 
 def test_create_instance__kickoff_field__ok(mocker):
 
     # arrange
-    user = create_test_user()
-    template = create_test_template(user, tasks_count=1)
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    dataset = create_test_dataset(account=account, items_count=0)
     field_template = FieldTemplate.objects.create(
         type=FieldType.TEXT,
         name='Some text',
         kickoff=template.kickoff_instance,
         template=template,
         account=user.account,
+        dataset=dataset,
     )
     workflow = create_test_workflow(user=user, template=template)
     value = 'https://john.cena/john.cena'
@@ -155,6 +162,7 @@ def test_create_instance__kickoff_field__ok(mocker):
     task_field = service.instance
     assert task_field.task is None
     assert task_field.kickoff_id == workflow.kickoff_instance.id
+    assert task_field.dataset == dataset
 
 
 def test_create_instance__skip_value__ok(mocker):

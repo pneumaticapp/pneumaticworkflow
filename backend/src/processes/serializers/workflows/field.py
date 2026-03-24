@@ -46,8 +46,11 @@ class TaskFieldSerializer(serializers.ModelSerializer):
             'attachments',
         )
 
-    selections = FieldSelectionListSerializer(many=True, required=False)
+    selections = serializers.SerializerMethodField()
     attachments = FileAttachmentSerializer(many=True)
+
+    def get_selections(self, instance: TaskField):
+        return list(instance.selections.values_list('value', flat=True))
 
 
 class TaskFieldListSerializer(serializers.ModelSerializer):
