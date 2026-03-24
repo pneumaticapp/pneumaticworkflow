@@ -1,6 +1,5 @@
 from typing import Optional, List
 
-from django.db.models import Q
 from rest_framework.decorators import action
 from rest_framework.generics import (
     get_object_or_404,
@@ -27,8 +26,6 @@ from src.generics.permissions import (
     UserIsAuthenticated,
 )
 from src.processes.enums import (
-    OwnerType,
-    OwnerRole,
     WorkflowEventType,
 )
 from src.processes.filters import (
@@ -115,41 +112,7 @@ class WorkflowViewSet(
     def get_queryset(self):
         user = self.request.user
         queryset = Workflow.objects.on_account(user.account_id)
-        if self.action in ('list', 'fields'):
-            # Account owner has full access to all workflows in the account
-            if user.is_account_owner:
-                # Account owner can see all workflows in the account
-                pass  # No additional filtering needed
-            else:
-                # For other users (including admins), apply filtering logic
-                # Users can see workflows where they are:
-                # 1. Workflow owners OR workflow starters OR workflow members
-                # 2. Template owners (user or via group)
-                # 3. Template viewers (user or via group)
-                queryset = queryset.filter(
-                    Q(owners=user.id) |  # Workflow owner access
-                    Q(workflow_starter_id=user.id) |  # Workflow starter access
-                    Q(members=user.id) |  # Workflow member access
-                    Q(
-                        template__owners__type=OwnerType.USER,
-                        template__owners__user_id=user.id,
-                        template__owners__is_deleted=False,
-                        template__owners__role__in=(
-                            OwnerRole.OWNER,
-                            OwnerRole.VIEWER,
-                        ),
-                    ) |  # Template owner/viewer access (user)
-                    Q(
-                        template__owners__type=OwnerType.GROUP,
-                        template__owners__group__users__id=user.id,
-                        template__owners__is_deleted=False,
-                        template__owners__role__in=(
-                            OwnerRole.OWNER,
-                            OwnerRole.VIEWER,
-                        ),
-                    ),  # Template owner/viewer access (group)
-                ).distinct()
-        elif self.action == 'webhook_example':
+        if self.action == 'webhook_example':
             queryset = queryset.filter(
                 owners=user.id,
             ).order_by('-date_created')
@@ -201,8 +164,6 @@ class WorkflowViewSet(
                 UserIsAuthenticated(),
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
-                # Allow admin/account_owner OR template viewers
-                # Note: UserIsAdminOrAccountOwner will be checked in queryset
             )
         if self.action == 'fields':
             return (

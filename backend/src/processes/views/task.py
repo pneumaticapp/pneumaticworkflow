@@ -152,8 +152,8 @@ class TaskViewSet(
                 IsAuthenticated(),
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
-                TaskCommentPermission(),
                 GuestTaskPermission(),
+                TaskCommentPermission(),
             )
         if self.action in (
             'create_performer',

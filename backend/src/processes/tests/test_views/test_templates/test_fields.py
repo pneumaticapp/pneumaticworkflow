@@ -301,7 +301,7 @@ def test_fields__template_viewer_deleted__not_found(api_client):
     response = api_client.get(f'/templates/{template.id}/fields')
 
     # assert
-    assert response.status_code == 404
+    assert response.status_code == 403
 
 
 def test_fields__not_workflow_member_not_owner__not_found(api_client):
@@ -318,7 +318,7 @@ def test_fields__not_workflow_member_not_owner__not_found(api_client):
     response = api_client.get(f'/templates/{template.id}/fields')
 
     # assert
-    assert response.status_code == 404
+    assert response.status_code == 403
 
 
 def test_fields__workflow_member_and_template_owner__ok(api_client):

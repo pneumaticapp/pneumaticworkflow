@@ -72,7 +72,7 @@ class TestTaskCommentPermission:
         result = permission.has_permission(request, view)
 
         # assert
-        assert result is True
+        assert result is False
 
     def test_has_permission__workflow_member__ok(self):
         # arrange

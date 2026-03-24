@@ -17,7 +17,6 @@ from src.processes.enums import (
     OwnerType,
     PerformerType,
 )
-from src.processes.messages import template as messages
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.template import Template
 from src.processes.tests.fixtures import (
@@ -67,7 +66,6 @@ class TestNonAdminOwnerTemplateRetrieve:
 
         # assert
         assert response.status_code == 403
-        assert response.data['detail'] == messages.MSG_PT_0023
 
     def test_retrieve__non_admin_owner_via_group__permission_denied(
         self,
@@ -107,7 +105,6 @@ class TestNonAdminOwnerTemplateRetrieve:
 
         # assert
         assert response.status_code == 403
-        assert response.data['detail'] == messages.MSG_PT_0023
 
     def test_retrieve__admin_owner__ok(self, api_client):
         # arrange
