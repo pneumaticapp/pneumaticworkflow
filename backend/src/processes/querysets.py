@@ -1206,3 +1206,11 @@ class TemplatePresetQuerySet(AccountBaseQuerySet):
 class SearchContentQuerySet(AccountBaseQuerySet):
 
     pass
+
+
+class DatasetQuerySet(AccountBaseQuerySet):
+    pass
+
+
+class DatasetItemQuerySet(BaseQuerySet):
+    pass

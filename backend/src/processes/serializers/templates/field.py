@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 from rest_framework.serializers import (
     CharField,
@@ -6,6 +6,7 @@ from rest_framework.serializers import (
     ModelSerializer,
 )
 
+from src.generics.fields import AccountPrimaryKeyRelatedField
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
@@ -16,6 +17,7 @@ from src.processes.messages.template import (
     MSG_PT_0006,
     MSG_PT_0050,
 )
+from src.processes.models.dataset import Dataset
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
@@ -39,6 +41,7 @@ class PublicFieldTemplateSerializer(ModelSerializer):
             'is_required',
             'is_hidden',
             'selections',
+            'dataset',
             'order',
             'api_name',
             'default',
@@ -50,6 +53,7 @@ class PublicFieldTemplateSerializer(ModelSerializer):
         many=True,
         required=False,
     )
+    dataset = AccountPrimaryKeyRelatedField()
 
 
 class FieldTemplateSerializer(
@@ -74,6 +78,7 @@ class FieldTemplateSerializer(
             'order',
             'api_name',
             'default',
+            'dataset',
         )
         create_or_update_fields = {
             'type',
@@ -88,27 +93,27 @@ class FieldTemplateSerializer(
             'task',
             'template',
             'account',
+            'dataset',
         }
 
     order = IntegerField()
     api_name = CharField(required=False, max_length=200)
+    dataset = AccountPrimaryKeyRelatedField(
+        queryset=Dataset.objects.all(),
+        required=False,
+        allow_null=True,
+    )
     selections = FieldTemplateSelectionSerializer(
         many=True,
         required=False,
     )
 
-    def additional_validate_selections(
-        self,
-        value: List[Dict[str, Any]],
-        data: Dict[str, Any],
-    ):
+    def additional_validate(self, data: Dict[str, Any]):
 
-        # TODO Need API test
-        selection_not_provided = (
+        if (
             data['type'] in FieldType.TYPES_WITH_SELECTIONS
-            and not value
-        )
-        if selection_not_provided:
+            and not (data.get('selections') or data.get('dataset'))
+        ):
             self.raise_validation_error(
                 message=MSG_PT_0005,
                 api_name=data.get('api_name'),
@@ -130,6 +135,7 @@ class FieldTemplateSerializer(
             data['description'] = ''
         if data['type'] not in FieldType.TYPES_WITH_SELECTIONS:
             data.pop('selections', None)
+            data.pop('dataset', None)
         return data
 
     def create(self, validated_data: Dict[str, Any]):
@@ -229,7 +235,17 @@ class FieldTemplateListSerializer(ModelSerializer):
             'description',
             'api_name',
             'selections',
+            'dataset',
             'order',
         )
 
     selections = FieldTemplateSelectionListSerializer(many=True)
+
+    def to_representation(self, data: Dict[str, Any]):
+        data = super().to_representation(data)
+        if data.get('description') is None:
+            data['description'] = ''
+        if data['type'] not in FieldType.TYPES_WITH_SELECTIONS:
+            data.pop('selections', None)
+            data.pop('dataset', None)
+        return data
