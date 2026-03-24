@@ -2,7 +2,6 @@
 /* prettier-ignore */
 import * as React from 'react';
 import classnames from 'classnames';
-import AutosizeInput from 'react-input-autosize';
 
 import { DropdownList } from '../../../UI/DropdownList';
 
@@ -47,16 +46,11 @@ export function ExtraFieldCreatable({
   labelBackgroundColor,
   innerRef,
 }: IWorkflowExtraFieldProps) {
-  const fieldNameInputRef = React.useRef<HTMLInputElement | null>(null);
   const optionInputsRefs = React.useRef<HTMLInputElement[]>([]);
 
   React.useEffect(() => {
     optionInputsRefs.current.forEach((input) => fitInputWidth(input, DEFAULT_OPTION_INPUT_WIDTH));
   }, [field.selections]);
-
-  React.useEffect(() => {
-    fitInputWidth(fieldNameInputRef.current, DEFAULT_FIELD_INPUT_WIDTH);
-  }, []);
 
   const { useCallback, useState, useMemo } = React;
 
@@ -212,10 +206,11 @@ export function ExtraFieldCreatable({
     };
 
     return (
-      <div
-        className={classnames('has-float-label', inputStyles['dropdown-container'])}
-        data-autofocus-first-field={true}
-      >
+      <div className={inputStyles['dropdown-container']} data-autofocus-first-field={true}>
+        <div className={fieldNameClassName}>
+          <div className={styles['kick-off-input__name-readonly']}>{field.name}</div>
+          {isRequired && <span className={styles['kick-off-required-sign']} />}
+        </div>
         <DropdownList
           options={dropdownSelections}
           onChange={handleSelectableChange}
@@ -224,18 +219,6 @@ export function ExtraFieldCreatable({
           isSearchable={false}
           value={displayValue.label ? displayValue : null}
         />
-        <div className={fieldNameClassName}>
-          <AutosizeInput
-            inputRef={(ref) => (fieldNameInputRef.current = ref)}
-            inputClassName={inputStyles['kickoff-create-field-name-input']}
-            disabled={mode !== EExtraFieldMode.Kickoff || isDisabled}
-            onChange={handleChangeName}
-            placeholder={namePlaceholder}
-            type="text"
-            value={field.name}
-          />
-          {isRequired && <span className={styles['kick-off-required-sign']} />}
-        </div>
       </div>
     );
   };

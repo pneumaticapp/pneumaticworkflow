@@ -123,6 +123,8 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
 
     const fieldNameError = useMemo(() => validateKickoffFieldName(name), [name]);
 
+    const isKickoffEditorMode = mode === EExtraFieldMode.Kickoff;
+
     const fieldNameClassName = useMemo(
       () =>
         classnames(
@@ -160,27 +162,36 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
     return (
       <div className={styles['kick-off-input__field']} data-autofocus-first-field>
         <div className={fieldNameClassName}>
-          <TextareaAutosize
-            disabled={mode !== EExtraFieldMode.Kickoff || isDisabled}
-            onChange={handleChangeName}
-            placeholder={namePlaceholder}
-            value={name}
-            ref={handleNameTextareaRef}
-            onFocus={handleNameFocus}
-            onBlur={handleNameBlur}
-            minRows={1}
-            className={styles['kick-off-input__name-textarea']}
-          />
-          {isRequired && <span className={styles['kick-off-required-sign']} />}
-          {!isFocused && mode === EExtraFieldMode.Kickoff && (
-            <button
-              type="button"
-              aria-label="Edit field name"
-              onClick={handleEditNameClick}
-              className={styles['kick-off-edit-name']}
-            >
-              <PencilSmallIcon />
-            </button>
+          {isKickoffEditorMode ? (
+            <>
+              <TextareaAutosize
+                disabled={isDisabled}
+                onChange={handleChangeName}
+                placeholder={namePlaceholder}
+                value={name}
+                ref={handleNameTextareaRef}
+                onFocus={handleNameFocus}
+                onBlur={handleNameBlur}
+                minRows={1}
+                className={styles['kick-off-input__name-textarea']}
+              />
+              {isRequired && <span className={styles['kick-off-required-sign']} />}
+              {!isFocused && (
+                <button
+                  type="button"
+                  aria-label="Edit field name"
+                  onClick={handleEditNameClick}
+                  className={styles['kick-off-edit-name']}
+                >
+                  <PencilSmallIcon />
+                </button>
+              )}
+            </>
+          ) : (
+            <>
+              <div className={styles['kick-off-input__name-readonly']}>{name}</div>
+              {isRequired && <span className={styles['kick-off-required-sign']} />}
+            </>
           )}
         </div>
         <div className={styles['kick-off-input__description']} {...descriptionInteractiveProps}>

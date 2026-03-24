@@ -1,15 +1,12 @@
 import * as React from 'react';
-import { ChangeEvent, ReactNode, useCallback, useEffect, useRef } from 'react';
+import { ChangeEvent, ReactNode, useCallback } from 'react';
 import classnames from 'classnames';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
-import AutosizeInput from 'react-input-autosize';
-
 import { EOptionTypes, UsersDropdown } from '../../../UI/form/UsersDropdown';
 import { getUsers } from '../../../../redux/selectors/user';
 import { EUserDropdownOptionType, TUserListItem } from '../../../../types/user';
 import { trackInviteTeamInPage } from '../../../../utils/analytics';
-import { fitInputWidth } from '../utils/fitInputWidth';
 import { getInputNameBackground } from '../utils/getInputNameBackground';
 import { ArrowDropdownIcon } from '../../../icons';
 import { FieldWithName } from '../utils/FieldWithName';
@@ -23,8 +20,6 @@ import { IGroupDropdownOption } from '../../../../redux/team/types';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
 import inputStyles from './ExtraFieldUser.css';
-
-const DEFAULT_FIELD_INPUT_WIDTH = 120;
 
 export interface IExtraFieldUserProps extends IWorkflowExtraFieldProps {
   users: TUserListItem[];
@@ -47,19 +42,12 @@ export function ExtraFieldUser({
   const users: ReturnType<typeof getUsers> = getNotDeletedUsers(useSelector(getUsers));
   const groups = useSelector(getGroupsList);
 
-  const fieldNameInputRef = useRef<HTMLInputElement | null>(null);
-
-  useEffect(() => {
-    fitInputWidth(fieldNameInputRef.current, DEFAULT_FIELD_INPUT_WIDTH);
-  }, []);
-
   const { description } = field;
 
   const fieldNameClassName = classnames(getInputNameBackground(labelBackgroundColor), styles['kick-off-input__name']);
 
   const handleChangeName = useCallback(
     (e: ChangeEvent<HTMLInputElement>) => {
-      fitInputWidth(e.target, DEFAULT_FIELD_INPUT_WIDTH);
       editField({ name: e.target.value });
     },
     [editField],
@@ -134,6 +122,10 @@ export function ExtraFieldUser({
 
     return (
       <div className={classnames(inputStyles['dropdown-container'])} data-autofocus-first-field>
+        <div className={fieldNameClassName}>
+          <div className={styles['kick-off-input__name-readonly']}>{field.name}</div>
+          {isRequired && <span className={styles['kick-off-required-sign']} />}
+        </div>
         <UsersDropdown
           options={selectionsDropdownOption}
           onChange={handleUserDropdownChange}
@@ -148,20 +140,6 @@ export function ExtraFieldUser({
           inviteLabel={formatMessage({ id: 'template.invite-team-member' })}
           onUsersInvited={onUsersInvited}
         />
-        <div className={fieldNameClassName}>
-          <AutosizeInput
-            inputRef={(ref) => {
-              fieldNameInputRef.current = ref;
-            }}
-            inputClassName={inputStyles['kickoff-create-field-name-input']}
-            disabled={mode !== EExtraFieldMode.Kickoff || isDisabled}
-            onChange={handleChangeName}
-            placeholder={namePlaceholder}
-            type="text"
-            value={field.name}
-          />
-          {isRequired && <span className={styles['kick-off-required-sign']} />}
-        </div>
       </div>
     );
   };
