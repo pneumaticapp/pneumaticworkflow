@@ -213,6 +213,7 @@ export interface IExtraField {
   type: EExtraFieldType;
   value?: TExtraFieldValue;
   selections?: IExtraFieldSelection[];
+  dataset?: number | null;
   attachments?: TUploadedFile[];
   order: number;
   userId: number | null;
