@@ -9,7 +9,7 @@ import { identifyAppPartOnClient } from '../utils/identifyAppPart/identifyAppPar
 import { getCurrentToken } from '../utils/auth';
 import { envBackendURL } from '../constants/enviroment';
 import { isRequestCanceled } from '../utils/isRequestCanceled';
-import { isUserError } from './getResponseLogLevel';
+import { isUserError } from './isUserError';
 
 export type TRequestType = 'public' | 'local';
 export type TResponseType = 'json' | 'text' | 'empty';

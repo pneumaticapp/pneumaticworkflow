@@ -1,5 +1,5 @@
 // <reference types="jest" />
-import { isUserError, USER_ERROR_STATUSES } from '../getResponseLogLevel';
+import { isUserError, USER_ERROR_STATUSES } from '../isUserError';
 
 describe('isUserError', () => {
   it.each([401, 403, 404])('status %d returns true (user error)', (status) => {
