@@ -77,7 +77,6 @@ export function ExtraFieldCreatable({
 
   const handleChangeName = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      fitInputWidth(e.target, DEFAULT_FIELD_INPUT_WIDTH);
       editField({ name: e.target.value });
     },
     [editField],
