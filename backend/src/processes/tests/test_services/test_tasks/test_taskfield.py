@@ -371,7 +371,7 @@ def test_create_selections_with_value__checkbox_api_name__ok(
         instance=task_field,
         user=user,
     )
-    raw_value = [selection_template_1.api_name]
+    raw_value = [selection_template_1.value]
 
     # act
     service._create_selections_with_value(
@@ -417,8 +417,9 @@ def test_create_selections_with_value__radio_dropdown_api_name__ok(
         api_name='api-name-1',
         account=user.account,
     )
+    value = 'first'
     selection_template_1 = FieldTemplateSelection.objects.create(
-        value='first',
+        value=value,
         field_template=field_template,
         template=template,
     )
@@ -441,11 +442,10 @@ def test_create_selections_with_value__radio_dropdown_api_name__ok(
         instance=task_field,
         user=user,
     )
-    raw_value = selection_template_1.api_name
 
     # act
     service._create_selections_with_value(
-        raw_value=raw_value,
+        raw_value=value,
         instance_template=field_template,
     )
 
@@ -810,8 +810,9 @@ def test_update_selections__checkbox_api_name__ok(
         api_name='api-name-1',
         account=user.account,
     )
+    value = 'first'
     selection_template_1 = FieldTemplateSelection.objects.create(
-        value='first',
+        value=value,
         field_template=field_template,
         template=template,
     )
@@ -846,7 +847,7 @@ def test_update_selections__checkbox_api_name__ok(
         instance=task_field,
         user=user,
     )
-    raw_value = [selection_1.api_name]
+    raw_value = [selection_1.value]
 
     # act
     service._update_selections(raw_value=raw_value)
@@ -897,8 +898,9 @@ def test_update_selections__radio_dropdown_api_name__ok(
         api_name='api-name-1',
         account=user.account,
     )
+    value = 'first'
     selection_template_1 = FieldTemplateSelection.objects.create(
-        value='first',
+        value=value,
         field_template=field_template,
         template=template,
     )
@@ -933,10 +935,9 @@ def test_update_selections__radio_dropdown_api_name__ok(
         instance=task_field,
         user=user,
     )
-    raw_value = selection_1.api_name
 
     # act
-    service._update_selections(raw_value=raw_value)
+    service._update_selections(raw_value=value)
 
     # assert
     selection_service_init_mock.call_count = 2
@@ -1401,14 +1402,13 @@ def test_get_valid_radio_value__api_name__ok(mocker):
         workflow=workflow,
         account=user.account,
     )
-    selection = FieldSelection.objects.create(
+    FieldSelection.objects.create(
         field=task_field,
         value=selection_template.value,
         api_name=selection_template.api_name,
         is_selected=True,
     )
     service = TaskFieldService(instance=task_field)
-    raw_value = selection.api_name
     clear_value = 'clear value'
     clear_markdown_mock = mocker.patch(
         'src.processes.services.tasks.field.'
@@ -1418,7 +1418,7 @@ def test_get_valid_radio_value__api_name__ok(mocker):
 
     # act
     field_data = service._get_valid_radio_value(
-        raw_value=raw_value,
+        raw_value=value,
         selections=field_template.selections.all(),
     )
 
@@ -1460,7 +1460,6 @@ def test_get_valid_radio_value__first_create_selection__ok(mocker):
         account=user.account,
     )
     service = TaskFieldService(instance=task_field)
-    raw_value = selection_template.api_name
     clear_value = 'clear value'
     clear_markdown_mock = mocker.patch(
         'src.processes.services.tasks.field.'
@@ -1470,7 +1469,7 @@ def test_get_valid_radio_value__first_create_selection__ok(mocker):
 
     # act
     field_data = service._get_valid_radio_value(
-        raw_value=raw_value,
+        raw_value=value,
         selections=field_template.selections.all(),
     )
 
@@ -1577,7 +1576,7 @@ def test_get_valid_checkbox_value__one_api_name__ok(mocker):
         is_selected=True,
     )
     service = TaskFieldService(instance=task_field)
-    raw_value = [selection_template.api_name]
+    raw_value = [value]
     clear_value = 'clear value'
     clear_markdown_mock = mocker.patch(
         'src.processes.services.tasks.field.'
@@ -1651,7 +1650,7 @@ def test_get_valid_checkbox_value__many_api_names__ok(mocker):
         return_value=clear_value,
     )
     service = TaskFieldService(instance=task_field)
-    raw_value = [selection_template_1.api_name, selection_template_2.api_name]
+    raw_value = [value_1, value_2]
     value = f'{value_1}, {value_2}'
 
     # act

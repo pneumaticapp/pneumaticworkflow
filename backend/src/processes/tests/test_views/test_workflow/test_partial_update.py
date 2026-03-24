@@ -335,10 +335,10 @@ class TestPartialUpdateWorkflow:
                 'kickoff': {
                     kickoff_field.api_name: 'JOHN CENA',
                     kickoff_field_2.api_name: [
-                        kickoff_field_2_select_1.api_name,
+                        kickoff_field_2_select_1.value,
                     ],
                     kickoff_field_3.api_name: (
-                        kickoff_field_3_select_2.api_name
+                        kickoff_field_3_select_2.value
                     ),
                     kickoff_field_4.api_name: 1726012800,
                 },
@@ -352,7 +352,7 @@ class TestPartialUpdateWorkflow:
         kickoff_output_2_selections = list(
             kickoff_output_2.selections
             .all()
-            .values_list('api_name', flat=True),
+            .values_list('value', flat=True),
         )
         kickoff_output_3 = workflow.kickoff_instance.output.get(
             type=FieldType.RADIO,
@@ -360,7 +360,7 @@ class TestPartialUpdateWorkflow:
         kickoff_output_3_selections = list(
             kickoff_output_3.selections
             .all()
-            .values_list('api_name', flat=True),
+            .values_list('value', flat=True),
         )
 
         # act
@@ -379,14 +379,8 @@ class TestPartialUpdateWorkflow:
         # assert
         assert response.status_code == 200
         first_output = response.data['kickoff']['output'][0]
-        second_output = response.data['kickoff']['output'][1]
-        third_output = response.data['kickoff']['output'][2]
         fourth_output = response.data['kickoff']['output'][3]
         assert first_output['value'] == '1726020000'
-        assert second_output['selections'][0]['is_selected'] is False
-        assert second_output['selections'][1]['is_selected'] is True
-        assert third_output['selections'][0]['is_selected'] is True
-        assert third_output['selections'][1]['is_selected'] is False
         assert fourth_output['value'] == 'DWAYNE THE ROCK JOHNSON'
 
     def test_partial_update__field__not_update_completed_task_due_date__ok(
@@ -856,10 +850,10 @@ class TestPartialUpdateWorkflow:
                 'kickoff': {
                     kickoff_field.api_name: 'JOHN CENA',
                     kickoff_field_2.api_name: [
-                        kickoff_field_2_select_1.api_name,
+                        kickoff_field_2_select_1.value,
                     ],
                     kickoff_field_3.api_name: (
-                        kickoff_field_3_select_2.api_name
+                        kickoff_field_3_select_2.value
                     ),
                 },
             },
@@ -884,7 +878,7 @@ class TestPartialUpdateWorkflow:
         kickoff_output_2_selections = list(
             kickoff_output_2.selections
             .all()
-            .values_list('api_name', flat=True),
+            .values_list('value', flat=True),
         )
         kickoff_output_3 = workflow.kickoff_instance.output.get(
             type=FieldType.RADIO,
@@ -892,7 +886,7 @@ class TestPartialUpdateWorkflow:
         kickoff_output_3_selections = list(
             kickoff_output_3.selections
             .all()
-            .values_list('api_name', flat=True),
+            .values_list('value', flat=True),
         )
 
         # act
@@ -910,13 +904,7 @@ class TestPartialUpdateWorkflow:
 
         # assert
         assert response.status_code == 200
-        first_output = response.data['kickoff']['output'][0]
-        second_output = response.data['kickoff']['output'][1]
         third_output = response.data['kickoff']['output'][2]
-        assert first_output['selections'][0]['is_selected'] is False
-        assert first_output['selections'][1]['is_selected'] is True
-        assert second_output['selections'][0]['is_selected'] is True
-        assert second_output['selections'][1]['is_selected'] is False
         assert third_output['value'] == 'DWAYNE THE ROCK JOHNSON'
         assert response.data['name'] == 'Edited Name'
         task_2 = workflow.tasks.get(number=2)

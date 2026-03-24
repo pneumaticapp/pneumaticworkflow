@@ -710,7 +710,7 @@ def test_return_to__task_skipped_by_kickoff_field__update_status_to_pending(
         data={
             'name': 'Test name',
             'kickoff': {
-                field_template.api_name: [selection_template.api_name],
+                field_template.api_name: [selection_template.value],
             },
         },
     )

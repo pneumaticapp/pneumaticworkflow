@@ -1080,11 +1080,7 @@ def test_retrieve__complete_task__field_with_selections__ok(
     assert field_data['attachments'] == []
     assert field_data['order'] == field.order
     assert field_data['user_id'] is None
-    selection_data = field_data['selections'][0]
-    assert selection_data['id'] == selection.id
-    assert selection_data['api_name'] == selection.api_name
-    assert selection_data['is_selected'] is True
-    assert selection_data['value'] == selection.value
+    assert field_data['selections'][0] == selection.value
 
 
 def test_retrieve__complete_task__field_date__ok(api_client):

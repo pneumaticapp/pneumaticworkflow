@@ -229,8 +229,8 @@ def test_run__all__ok(api_client, mocker):
                 kickoff_field_3.api_name: 6351521536,
                 kickoff_field_4.api_name: [str(attach_1.id), str(attach_2.id)],
                 kickoff_field_5.api_name: [
-                    str(selection_1.api_name),
-                    str(selection_2.api_name),
+                    str(selection_1.value),
+                    str(selection_2.value),
                 ],
             },
         },
@@ -303,11 +303,7 @@ def test_run__all__ok(api_client, mocker):
 
     kickoff_field_5_data = data['kickoff']['output'][4]
     assert len(kickoff_field_5_data['selections']) == 2
-    selection_1_data = kickoff_field_5_data['selections'][0]
-    assert selection_1_data['id']
-    assert selection_1_data['api_name'] == selection_1.api_name
-    assert selection_1_data['value'] == selection_1.value
-    assert selection_1_data['is_selected'] is True
+    assert kickoff_field_5_data['selections'][0] == selection_1.value
     assert data['id'] == workflow.id
     assert data['tasks'][0]['performers'] == [
         {
@@ -1063,7 +1059,7 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         f'/templates/{template.id}/run',
         data={
             'kickoff': {
-                api_name_skip_field: [selection.api_name],
+                api_name_skip_field: [selection.value],
             },
         },
     )
@@ -1277,7 +1273,7 @@ def test_skip_delayed_task__fields_is_empty(mocker, api_client):
         data={
             'name': 'test workflow',
             'kickoff': {
-                api_name_skip_field: [selection.api_name],
+                api_name_skip_field: [selection.value],
             },
         },
     )
@@ -3498,8 +3494,8 @@ def test_run__task_name_with_field_2__ok(mocker, api_client):
         data={
             'kickoff': {
                 api_name_1: [
-                    str(selection_1.api_name),
-                    str(selection_2.api_name),
+                    str(selection_1.value),
+                    str(selection_2.value),
                 ],
                 api_name_2: 1726012800,
                 api_name_3: str(user.email),

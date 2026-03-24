@@ -1,5 +1,3 @@
-
-from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from src.processes.models.workflows.fields import (
@@ -9,8 +7,6 @@ from src.processes.models.workflows.fields import (
 from src.processes.serializers.file_attachment import (
     FileAttachmentSerializer,
 )
-
-UserModel = get_user_model()
 
 
 class FieldSelectionListSerializer(serializers.ModelSerializer):
@@ -49,8 +45,10 @@ class TaskFieldSerializer(serializers.ModelSerializer):
     selections = serializers.SerializerMethodField()
     attachments = FileAttachmentSerializer(many=True)
 
-    def get_selections(self, instance: TaskField):
-        return list(instance.selections.values_list('value', flat=True))
+    def get_selections(self, instance: TaskField) -> list:
+        if hasattr(instance, 'selections_values'):
+            return [s.value for s in instance.selections_values]
+        return [s.value for s in instance.selections.only('value')]
 
 
 class TaskFieldListSerializer(serializers.ModelSerializer):

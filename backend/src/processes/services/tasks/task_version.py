@@ -168,7 +168,7 @@ class TaskUpdateVersionService(
                 'order': template['order'],
                 'workflow': self.instance.workflow,
                 'account': self.instance.account,
-                'dataset': template['dataset'],
+                'dataset_id': template['dataset_id'],
             },
         )
 
