@@ -439,7 +439,7 @@ def test_create__not_authenticated__permission_denied(
     comment_create_mock.assert_not_called()
 
 
-def test_create__non_existent_task__not_found(api_client):
+def test_create__non_existent_task__permission_denied(api_client):
     # arrange
     user = create_test_owner()
     non_task = 991651
@@ -452,7 +452,7 @@ def test_create__non_existent_task__not_found(api_client):
     )
 
     # assert
-    assert response.status_code == 404
+    assert response.status_code == 403
 
 
 def test_create__user_is_member_in_deleted_task__not_found(api_client):
@@ -476,7 +476,9 @@ def test_create__user_is_member_in_deleted_task__not_found(api_client):
     assert response.status_code == 404
 
 
-def test_create__user_is_not_member_in_deleted_task__not_found(api_client):
+def test_create__user_is_not_member_in_deleted_task__permission_denied(
+    api_client,
+):
 
     # arrange
     user = create_test_owner()
@@ -493,4 +495,4 @@ def test_create__user_is_not_member_in_deleted_task__not_found(api_client):
     )
 
     # assert
-    assert response.status_code == 404
+    assert response.status_code == 403
