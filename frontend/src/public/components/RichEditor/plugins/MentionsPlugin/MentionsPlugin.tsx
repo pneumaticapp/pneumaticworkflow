@@ -1,5 +1,4 @@
 import React from 'react';
-import { createPortal } from 'react-dom';
 import { useMentionMenu } from './useMentionMenu';
 import { MentionMenuList } from './MentionMenuList';
 import type { MentionsPluginProps } from './types';
@@ -29,5 +28,5 @@ export function MentionsPlugin({ mentions }: MentionsPluginProps): React.ReactEl
     />
   );
 
-  return createPortal(menuContent, document.body);
+  return menuContent;
 }

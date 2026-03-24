@@ -220,17 +220,21 @@ def test_update_from_version__only_required_fields__ok(mocker):
     )
 
     # assert
+    expected_fields_values = {
+        field_api_name: field_markdown_value,
+        'workflow-starter': user.name,
+    }
     create_or_update_instance_mock.assert_called_once_with(
         data=data,
         workflow=workflow,
-        fields_values={field_api_name: field_markdown_value},
+        fields_values=expected_fields_values,
     )
     update_fields_mock.assert_called_once_with(data=None)
     update_conditions_mock.assert_called_once_with(data=None)
     update_checklists_mock.assert_called_once_with(
         data=None,
         version=version,
-        fields_values={field_api_name: field_markdown_value},
+        fields_values=expected_fields_values,
     )
     update_raw_due_date_mock.assert_called_once_with(data=None)
     set_due_date_from_template.assert_called_once()
@@ -376,10 +380,14 @@ def test_update_from_version__all_fields__active_task__ok(mocker):
     )
 
     # assert
+    expected_fields_values = {
+        field_api_name: field_markdown_value,
+        'workflow-starter': user.name,
+    }
     create_or_update_instance_mock.assert_called_once_with(
         data=data,
         workflow=workflow,
-        fields_values={field_api_name: field_markdown_value},
+        fields_values=expected_fields_values,
     )
     update_fields_mock.assert_called_once_with(
         data=data['fields'],
@@ -390,7 +398,7 @@ def test_update_from_version__all_fields__active_task__ok(mocker):
     update_checklists_mock.assert_called_once_with(
         data=data['checklists'],
         version=version,
-        fields_values={field_api_name: field_markdown_value},
+        fields_values=expected_fields_values,
     )
     update_raw_due_date_mock.assert_called_once_with(
         data=data['raw_due_date'],
@@ -540,10 +548,14 @@ def test_update_from_version__inactive_task_field_value__insert_null(
     )
 
     # assert
+    expected_fields_values = {
+        field_api_name: None,
+        'workflow-starter': user.name,
+    }
     create_or_update_instance_mock.assert_called_once_with(
         data=data,
         workflow=workflow,
-        fields_values={field_api_name: None},
+        fields_values=expected_fields_values,
     )
     update_fields_mock.assert_called_once_with(
         data=data['fields'],
@@ -554,7 +566,7 @@ def test_update_from_version__inactive_task_field_value__insert_null(
     update_checklists_mock.assert_called_once_with(
         data=data['checklists'],
         version=version,
-        fields_values={field_api_name: None},
+        fields_values=expected_fields_values,
     )
     update_raw_due_date_mock.assert_called_once_with(
         data=data['raw_due_date'],

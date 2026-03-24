@@ -8,6 +8,7 @@ import {
   setWorkflowEdit,
   sendWorkflowLogComments,
   editWorkflow,
+  toggleSkippedTasksVisibility,
 } from '../../../redux/workflows/slice';
 
 import { IApplicationState } from '../../../types/redux';
@@ -23,6 +24,7 @@ export type TStoreProps = Pick<
   | 'sorting'
   | 'isCommentsShown'
   | 'isOnlyAttachmentsShown'
+  | 'isSkippedTasksShown'
   | 'isLogLoading'
   | 'workflow'
   | 'items'
@@ -38,6 +40,7 @@ export type TStoreProps = Pick<
 export type TDispatchProps = Pick<
   IWorkflowModalProps,
   | 'changeWorkflowLogViewSettings'
+  | 'toggleSkippedTasksVisibility'
   | 'sendWorkflowLogComments'
   | 'setIsEditWorkflowName'
   | 'setIsEditKickoff'
@@ -53,6 +56,7 @@ export function mapStateToProps({
       workflowId,
       isCommentsShown,
       isOnlyAttachmentsShown,
+      isSkippedTasksShown,
       isOpen,
       items,
       sorting,
@@ -81,6 +85,7 @@ export function mapStateToProps({
     isCommentsShown,
     isLogLoading,
     isOnlyAttachmentsShown,
+    isSkippedTasksShown,
     isLoading: isWorkflowLoading,
     isOpen,
     items,
@@ -93,6 +98,7 @@ export function mapStateToProps({
 
 export const mapDispatchToProps: TDispatchProps = {
   changeWorkflowLogViewSettings,
+  toggleSkippedTasksVisibility,
   sendWorkflowLogComments,
   setIsEditWorkflowName,
   setIsEditKickoff,

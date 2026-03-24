@@ -20,14 +20,12 @@ export type TMentionData = {
   link?: string;
 };
 
-export interface IRichEditorProps {
+export interface IRichEditorBaseProps {
   isModal?: boolean;
   accountId?: number;
-  mentions?: TMentionData[];
   placeholder?: string;
   className?: string;
   defaultValue?: string;
-  withMentions?: boolean;
   withToolbar?: boolean;
   withChecklists?: boolean;
   multiline?: boolean;
@@ -45,6 +43,18 @@ export interface IRichEditorProps {
   onSubmit?(): void;
   onCancel?(): void;
 }
+
+type WithMentionsProps = {
+  withMentions?: true;
+  mentions: TMentionData[];
+};
+
+type WithoutMentionsProps = {
+  withMentions: false;
+  mentions?: never;
+};
+
+export type IRichEditorProps = IRichEditorBaseProps & (WithMentionsProps | WithoutMentionsProps);
 
 export interface ILexicalEditorContentProps {
   placeholder?: string;

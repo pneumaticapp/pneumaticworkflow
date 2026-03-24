@@ -92,6 +92,7 @@ export interface ITaskCardProps {
   setWorkflowFinished(payload: TSetWorkflowFinishedPayload): void;
   sendTaskWorkflowLogComments(payload: ISendWorkflowLogComment): void;
   changeTaskWorkflowLogViewSettings(payload: IChangeWorkflowLogViewSettingsPayload): void;
+  toggleTaskSkippedTasksVisibility(): void;
   setCurrentTask(task: ITask | null): void;
   clearWorkflow(): void;
   openWorkflowLogPopup(payload: TOpenWorkflowLogPopupPayload): void;
@@ -116,6 +117,7 @@ export function TaskCard({
   setTaskReverted,
   sendTaskWorkflowLogComments,
   changeTaskWorkflowLogViewSettings,
+  toggleTaskSkippedTasksVisibility,
   clearWorkflow,
   addTaskPerformer,
   removeTaskPerformer,
@@ -541,6 +543,7 @@ export function TaskCard({
         sorting={workflowLog.sorting}
         isCommentsShown={workflowLog.isCommentsShown}
         isOnlyAttachmentsShown={workflowLog.isOnlyAttachmentsShown}
+        isSkippedTasksShown={workflowLog.isSkippedTasksShown}
         workflowId={workflowLog.workflowId}
         includeHeader
         isLogMinimized={false}
@@ -549,9 +552,10 @@ export function TaskCard({
         isCommentFieldHidden={
           viewMode === ETaskCardViewMode.Guest && status === ETaskStatus.Completed
         }
-        isToggleCommentHidden
+        areRightTogglesHidden
         sendComment={sendTaskWorkflowLogComments}
         changeWorkflowLogViewSettings={changeTaskWorkflowLogViewSettings}
+        toggleSkippedTasksVisibility={toggleTaskSkippedTasksVisibility}
         onUnmount={() =>
           changeTaskWorkflowLog({
             isOnlyAttachmentsShown: false,

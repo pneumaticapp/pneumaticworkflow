@@ -22,6 +22,7 @@ import {
   CommentWatchedIcon,
 } from '../../../../icons';
 import { RichEditor } from '../../../../RichEditor';
+import { type TMentionData } from '../../../../RichEditor/types';
 import { IAccount, TUserListItem } from '../../../../../types/user';
 import { useStatePromise } from '../../../../../hooks/useStatePromise';
 import { TUploadedFile } from '../../../../../utils/uploadFiles';
@@ -30,6 +31,8 @@ import { IWatchedComment } from '../../../../../api/workflows/watchedComment';
 import { Tooltip } from '../../../../UI';
 import { ICreateReaction } from '../../../../../api/workflows/createReactionComment';
 import { IDeleteReaction } from '../../../../../api/workflows/deleteReactionComment';
+
+
 
 import styles from './WorkflowLogTaskComment.css';
 import { DateFormat } from '../../../../UI/DateFormat';
@@ -53,6 +56,7 @@ export function WorkflowLogTaskComment({
   watchedComment,
   createReactionComment,
   deleteReactionComment,
+  mentions,
 }: TWorkflowLogTaskCommentProps) {
   const { formatMessage } = useIntl();
 
@@ -232,6 +236,7 @@ export function WorkflowLogTaskComment({
               onCancel={() => setIsEdit(false)}
               onSubmit={() => handleEditComment()}
               accountId={userId as number}
+              mentions={mentions}
             />
           ))}
 
@@ -386,6 +391,7 @@ export type TWorkflowLogTaskCommentProps = Pick<
   currentUserId: number;
   workflowModal: boolean;
   workflowStatus: EWorkflowStatus;
+  mentions: TMentionData[];
   isOnlyAttachmentsShown?: boolean;
   editComment(payload: IEditComment): void;
   deleteComment(payload: IDeleteComment): void;

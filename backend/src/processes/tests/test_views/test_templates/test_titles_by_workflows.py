@@ -2,6 +2,7 @@ import pytest
 
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     TemplateType,
     WorkflowApiStatus,
@@ -282,6 +283,73 @@ def test_titles__user_not_template_owner__empty_result__ok(api_client):
     # assert
     assert response.status_code == 200
     assert len(response.data) == 0
+
+
+def test_titles__account_owner_not_template_owner__empty_result__ok(
+    api_client,
+):
+
+    """Account owner should only see templates where they are
+       an owner or viewer, not all templates in the account."""
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    admin = create_test_admin(account=account)
+    template = create_test_template(
+        user=admin,
+        is_active=True,
+        tasks_count=1,
+    )
+    create_test_workflow(
+        user=admin,
+        template=template,
+    )
+    api_client.token_authenticate(account_owner)
+
+    # act
+    response = api_client.get('/templates/titles-by-workflows')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
+
+
+def test_titles__account_owner_is_viewer__ok(api_client):
+
+    """Account owner with viewer role should see the template."""
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    admin = create_test_admin(account=account)
+    template = create_test_template(
+        user=admin,
+        is_active=True,
+        tasks_count=1,
+    )
+    create_test_workflow(
+        user=admin,
+        template=template,
+    )
+    TemplateOwner.objects.create(
+        template=template,
+        account=account,
+        user_id=account_owner.id,
+        type=OwnerType.USER,
+        role=OwnerRole.VIEWER,
+    )
+    api_client.token_authenticate(account_owner)
+
+    # act
+    response = api_client.get('/templates/titles-by-workflows')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['id'] == template.id
+    assert response.data[0]['name'] == template.name
+    assert response.data[0]['count'] == 1
 
 
 def test_titles__invited_user__unauthorized(api_client):
