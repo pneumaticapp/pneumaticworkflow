@@ -9,6 +9,7 @@ import { identifyAppPartOnClient } from '../utils/identifyAppPart/identifyAppPar
 import { getCurrentToken } from '../utils/auth';
 import { envBackendURL } from '../constants/enviroment';
 import { isRequestCanceled } from '../utils/isRequestCanceled';
+import { isUserError } from './isUserError';
 
 export type TRequestType = 'public' | 'local';
 export type TResponseType = 'json' | 'text' | 'empty';
@@ -80,7 +81,11 @@ axiosInstance.interceptors.response.use(
     }
 
     if (error.response) {
-      logger.error('Response Error:', error.response.data);
+      if (isUserError(error.response.status)) {
+        logger.info('Response Error:', error.response.data);
+      } else {
+        logger.error('Response Error:', error.response.data);
+      }
     } else if (error.request) {
       logger.error('Request Error:', error.request);
     } else {
