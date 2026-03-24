@@ -8,6 +8,7 @@
   flex-direction: column;
   box-sizing: border-box;
   width: 19.2rem;
+  max-height: 35.2rem;
   cursor: pointer;
   background: var(--pneumatic-color-white, white);
   border-radius: 0.5rem;
