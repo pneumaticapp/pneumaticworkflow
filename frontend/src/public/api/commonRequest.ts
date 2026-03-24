@@ -134,7 +134,6 @@ export async function commonRequest<T>(
     if (shouldThrow) {
       throw error;
     }
-    logger.error(error);
     return undefined as unknown as T;
   }
 }
