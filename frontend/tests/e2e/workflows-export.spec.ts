@@ -1,18 +1,18 @@
 /**
- * E2E: Export workflows to CSV.
+ * E2E: Export workflows to Excel (.xlsx).
  * Run after Playwright is configured: npx playwright test tests/e2e/workflows-export.spec.ts
  * Requires: app running (e.g. baseURL in playwright.config), authenticated user, at least one template.
  */
 import { test, expect } from '@playwright/test';
 
-test.describe('Workflows export to CSV', () => {
+test.describe('Workflows export to Excel', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/workflows');
     await page.waitForLoadState('networkidle');
   });
 
   test('happy path: export button visible and click triggers export flow', async ({ page }) => {
-    const exportButton = page.getByRole('button', { name: /Export CSV/i });
+    const exportButton = page.getByRole('button', { name: /Export Excel/i });
     await expect(exportButton).toBeVisible();
 
     const downloadPromise = page.waitForEvent('download', { timeout: 15000 }).catch(() => null);
@@ -24,7 +24,7 @@ test.describe('Workflows export to CSV', () => {
 
     const download = await downloadPromise;
     if (download) {
-      expect(download.suggestedFilename()).toBe('workflows.csv');
+      expect(download.suggestedFilename()).toBe('workflows.xlsx');
     } else {
       const errorNotification = page.getByText(/No workflows to export|Failed to export/i);
       const hasEmptyOrError = await errorNotification.isVisible().catch(() => false);
@@ -33,7 +33,7 @@ test.describe('Workflows export to CSV', () => {
   });
 
   test('empty result: warning shown when no workflows match filters', async ({ page }) => {
-    const exportButton = page.getByRole('button', { name: /Export CSV/i });
+    const exportButton = page.getByRole('button', { name: /Export Excel/i });
     await expect(exportButton).toBeVisible();
 
     await exportButton.click();

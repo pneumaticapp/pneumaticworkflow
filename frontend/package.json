@@ -53,6 +53,7 @@
     "draftjs-filters": "^2.5.0",
     "ejs": "^2.7.1",
     "emoji-mart": "^5.5.2",
+    "exceljs": "^4.4.0",
     "express": "^4.18.2",
     "firebase": "^9.15.0",
     "formik": "^2.2.9",
@@ -259,8 +260,6 @@
     "e2e:headed": "playwright test --headed",
     "e2e:debug": "playwright test --headed --slowMo=500",
     "check": "npm run lint && npm run test:prod",
-    "e2e": "playwright test",
-    "e2e:ui": "playwright test --ui",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "chromatic": "npx chromatic --project-token=chpt_84542468ff35306"
