@@ -1,3 +1,4 @@
+import { Workbook } from 'exceljs';
 import { ITableViewFields, EExtraFieldType, ETemplateOwnerType } from '../../../types/template';
 import { TUserListItem } from '../../../types/user';
 import { IGroup } from '../../../redux/team/types';
@@ -145,8 +146,7 @@ export function buildWorkflowsExportRows({
 }
 
 export async function buildWorkflowsXlsxBuffer(rows: string[][]) {
-  const exceljs = await import('exceljs');
-  const workbook = new exceljs.Workbook();
+  const workbook = new Workbook();
   const sheet = workbook.addWorksheet('Workflows');
   rows.forEach((cells) => {
     sheet.addRow(cells);
