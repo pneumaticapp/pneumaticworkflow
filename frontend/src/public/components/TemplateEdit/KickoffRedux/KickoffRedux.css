@@ -85,12 +85,14 @@
 
 .kick-off-input {
   display: flex;
+  min-width: 0;
 
   .kick-off-input__field {
     position: relative;
     display: flex;
     flex-direction: column;
     flex-grow: 1;
+    min-width: 0;
   }
 
   svg {
@@ -114,10 +116,11 @@
     margin: 0 1.2rem -1rem;
     display: inline-flex;
     box-sizing: border-box;
-    width: max-content;
+    width: calc(100% - 2.4rem);
+    min-width: 0;
     max-width: calc(100% - 2.4rem);
     background-color: var(--pneumatic-color-white);
-    align-self: flex-start;
+    align-self: stretch;
     align-items: flex-end;
     justify-content: flex-start;
 
@@ -150,9 +153,10 @@
     }
 
     .kick-off-input__name-textarea {
-      flex: none;
       box-sizing: border-box;
-      width: max-content;
+      flex: 1 1 auto;
+      width: 100%;
+      min-width: 0;
       max-width: 100%;
       min-height: 1.6rem;
       field-sizing: content;
@@ -180,7 +184,8 @@
       padding: 0 0.4rem;
       display: block;
       box-sizing: border-box;
-      width: max-content;
+      width: 100%;
+      min-width: 0;
       max-width: 100%;
       font-family: Nunito, sans-serif;
       font-size: 1.3rem;
