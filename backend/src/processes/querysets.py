@@ -809,9 +809,6 @@ class FieldSelectionQuerySet(BaseQuerySet):
     def exclude_values(self, values: List[str]):
         return self.filter(~Q(value__in=values))
 
-    def selected(self):
-        return self.filter(is_selected=True)
-
 
 class SystemTemplateQuerySet(BaseQuerySet):
 

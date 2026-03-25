@@ -16,7 +16,7 @@ from src.processes.models.templates.fields import (
     FieldTemplate,
 )
 from src.processes.models.workflows.attachment import FileAttachment
-from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.fields import TaskField, FieldSelection
 from src.processes.services.base import BaseWorkflowService
 from src.processes.services.tasks.exceptions import TaskFieldException
 from src.processes.services.tasks.selection import SelectionService
@@ -375,14 +375,7 @@ class TaskFieldService(BaseWorkflowService):
         self,
         instance_template: FieldTemplate,
     ):
-
-        for selection_template in instance_template.selections.all():
-            selection_service = SelectionService(user=self.user)
-            selection_service.create(
-                instance_template=selection_template,
-                field_id=self.instance.id,
-                is_selected=False,
-            )
+        pass
 
     def _get_selections_values(
         self,
@@ -402,51 +395,43 @@ class TaskFieldService(BaseWorkflowService):
     ):
         """ raw_value - validated FieldTemplateSelection id(s) or None """
 
-        if raw_value in self.NULL_VALUES:
-            for selection_template in instance_template.selections.all():
-                selection_service = SelectionService(user=self.user)
-                selection_service.create(
-                    instance_template=selection_template,
-                    field_id=self.instance.id,
-                    is_selected=False,
-                )
-        else:
+        if raw_value not in self.NULL_VALUES:
             selections_values = self._get_selections_values(raw_value)
             for selection_template in instance_template.selections.all():
-                selection_service = SelectionService(user=self.user)
-                selection_service.create(
-                    instance_template=selection_template,
-                    field_id=self.instance.id,
-                    is_selected=(
-                        selection_template.value in selections_values
-                    ),
-                )
+                if selection_template.value in selections_values:
+                    selection_service = SelectionService(user=self.user)
+                    selection_service.create(
+                        instance_template=selection_template,
+                        field_id=self.instance.id,
+                    )
 
     def _update_selections(self, raw_value: Union[str, List[str], None]):
 
-        """ raw_value - validated FieldSelection id """
+        """ raw_value - validated FieldSelection value(s) or None """
 
         if raw_value in self.NULL_VALUES:
-            for selection in self.instance.selections.all():
-                selection_service = SelectionService(
-                    instance=selection,
-                    user=self.user,
-                )
-                selection_service.partial_update(
-                    is_selected=False,
-                    force_save=True,
-                )
+
+            # Remove all selected values
+            self.instance.selections.all().delete()
         else:
             selections_values = self._get_selections_values(raw_value)
-            for selection in self.instance.selections.all():
-                selection_service = SelectionService(
-                    instance=selection,
-                    user=self.user,
-                )
-                selection_service.partial_update(
-                    is_selected=selection.value in selections_values,
-                    force_save=True,
-                )
+
+            # Delete selections that are no longer selected
+            self.instance.selections.exclude_values(
+                list(selections_values),
+            ).delete()
+
+            # Create new selections for values not yet stored
+            existing_values = set(
+                self.instance.selections.values_list('value', flat=True),
+            )
+            for selection_value in selections_values:
+                if selection_value not in existing_values:
+                    FieldSelection.objects.create(
+                        field=self.instance,
+                        value=selection_value,
+                        api_name=selection_value,
+                    )
 
     def _remove_unused_attachments(
         self,

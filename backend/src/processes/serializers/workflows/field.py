@@ -15,7 +15,6 @@ class FieldSelectionListSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'value',
-            'is_selected',
             'api_name',
         )
 
@@ -51,6 +50,7 @@ class TaskFieldSerializer(serializers.ModelSerializer):
             for i in instance.dataset.dataset_values:
                 result.append(i.value)
         return result
+        # return [s.value for s in instance.selections.only('value')]
 
 
 class TaskFieldListSerializer(serializers.ModelSerializer):

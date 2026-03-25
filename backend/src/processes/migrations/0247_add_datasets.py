@@ -68,4 +68,8 @@ class Migration(migrations.Migration):
                 name='datasetitem_dataset_value_unique',
             ),
         ),
+        migrations.RemoveField(
+            model_name='fieldselection',
+            name='is_selected',
+        ),
     ]

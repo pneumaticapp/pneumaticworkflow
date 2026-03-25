@@ -874,9 +874,11 @@ def test_retrieve__field_with_selections__ok(api_client):
     field = task.output.first()
     field.value = 'some value'
     field.save(update_fields=['value'])
-    selection = field.selections.first()
-    selection.is_selected = True
-    selection.save(update_fields=['is_selected'])
+    FieldSelection.objects.create(
+        field=field,
+        value='some value',
+        api_name='some-value',
+    )
 
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')
@@ -894,7 +896,7 @@ def test_retrieve__field_with_selections__ok(api_client):
     assert field_data['order'] == field.order
     assert field_data['user_id'] is None
     assert field_data['value'] == 'some value'
-    assert field_data['selections'] == [selection.value]
+    assert field_data['selections'] == ['some value']
 
 
 def test_retrieve__field_with_dataset__ok(api_client):
