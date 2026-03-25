@@ -46,9 +46,11 @@ class TaskFieldSerializer(serializers.ModelSerializer):
     attachments = FileAttachmentSerializer(many=True)
 
     def get_selections(self, instance: TaskField) -> list:
-        if hasattr(instance, 'selections_values'):
-            return [s.value for s in instance.selections_values]
-        return [s.value for s in instance.selections.only('value')]
+        result = [s.value for s in instance.selections_values]
+        if instance.dataset_id:
+            for i in instance.dataset.dataset_values:
+                result.append(i.value)
+        return result
 
 
 class TaskFieldListSerializer(serializers.ModelSerializer):
@@ -72,3 +74,31 @@ class TaskFieldListSerializer(serializers.ModelSerializer):
             'user_id',
             'group_id',
         )
+
+
+class TaskFieldEventSerializer(serializers.ModelSerializer):
+
+    # TODO Replace with TaskFileListSerializer after integrating
+    #  the file service. The only difference is the "attachments" field
+    #  (which will be removed when integrating the file service).
+
+    class Meta:
+        model = TaskField
+        fields = (
+            'id',
+            'order',
+            'type',
+            'is_required',
+            'is_hidden',
+            'description',
+            'api_name',
+            'name',
+            'value',
+            'markdown_value',
+            'clear_value',
+            'user_id',
+            'group_id',
+            'attachments',
+        )
+
+    attachments = FileAttachmentSerializer(many=True)

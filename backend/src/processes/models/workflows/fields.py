@@ -76,6 +76,7 @@ class FieldSelection(
         on_delete=models.CASCADE,
         related_name='selections',
     )
+    # TODO Remove after datasets integration
     is_selected = models.BooleanField(default=False)
     value = models.CharField(max_length=200)
 

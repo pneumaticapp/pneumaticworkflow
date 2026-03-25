@@ -31,6 +31,7 @@ from src.processes.models.workflows.checklist import (
     Checklist,
     ChecklistSelection,
 )
+from src.processes.models.workflows.fields import TaskField, FieldSelection
 from src.processes.models.workflows.task import (
     Delay,
     TaskPerformer,
@@ -49,7 +50,7 @@ from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_template,
     create_test_user,
-    create_test_workflow,
+    create_test_workflow, create_test_dataset,
 )
 from src.utils.dates import date_format
 
@@ -894,6 +895,81 @@ def test_retrieve__field_with_selections__ok(api_client):
     assert field_data['user_id'] is None
     assert field_data['value'] == 'some value'
     assert field_data['selections'] == [selection.value]
+
+
+def test_retrieve__field_with_dataset__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    dataset = create_test_dataset(account=account, items_count=2)
+    field = TaskField.objects.create(
+        name='Dataset field',
+        order=1,
+        type=FieldType.CHECKBOX,
+        task=task,
+        workflow=workflow,
+        account=account,
+        dataset=dataset,
+    )
+    selection_1 = FieldSelection.objects.create(
+        field=field,
+        value='value 1',
+    )
+    selection_2 = FieldSelection.objects.create(
+        field=field,
+        value='value 2',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == 200
+    field_data = response.data['output'][0]
+    assert field_data['id'] == field.id
+    assert len(field_data['selections']) == 4
+    assert field_data['selections'] == [
+        selection_1.value,
+        selection_2.value,
+        dataset.items.get(order=1).value,
+        dataset.items.get(order=2).value,
+    ]
+
+
+def test_retrieve__field_with_dataset_and_selections__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    dataset = create_test_dataset(account=account, items_count=2)
+    field = TaskField.objects.create(
+        name='Dataset field',
+        order=1,
+        type=FieldType.CHECKBOX,
+        task=task,
+        workflow=workflow,
+        account=account,
+        dataset=dataset,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == 200
+    field_data = response.data['output'][0]
+    assert field_data['id'] == field.id
+    assert field_data['selections'] == [
+        dataset.items.get(order=1).value,
+        dataset.items.get(order=2).value,
+    ]
 
 
 def test_retrieve__field_with_attachments__ok(api_client):

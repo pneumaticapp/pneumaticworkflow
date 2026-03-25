@@ -30,6 +30,7 @@ from src.processes.filters import (
     TaskWebhookFilterSet,
     WorkflowEventFilter,
 )
+from src.processes.models.dataset import DatasetItem
 from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.fields import FieldSelection
 from src.processes.models.workflows.task import (
@@ -265,12 +266,21 @@ class TaskViewSet(
         if self.action == 'retrieve':
             queryset = queryset.prefetch_related(
                 'checklists__selections',
+                'output__attachments',
                 Prefetch(
                     'output__selections',
                     queryset=FieldSelection.objects.only('value'),
                     to_attr='selections_values',
                 ),
-                'output__attachments',
+                Prefetch(
+                    'output__dataset__items',
+                    queryset=(
+                        DatasetItem.objects
+                        .only('value')
+                        .order_by('order')
+                    ),
+                    to_attr='dataset_values',
+                ),
             ).select_related(
                 'workflow',
             )
