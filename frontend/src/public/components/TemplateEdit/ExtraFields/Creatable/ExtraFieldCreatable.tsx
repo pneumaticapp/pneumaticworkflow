@@ -22,7 +22,6 @@ import styles from '../../KickoffRedux/KickoffRedux.css';
 import inputStyles from './ExtraFieldCreatable.css';
 
 const DEFAULT_OPTION_INPUT_WIDTH = 120;
-const DEFAULT_FIELD_INPUT_WIDTH = 120;
 
 export interface IDropdownSelection extends IExtraFieldSelection {
   label: string;
@@ -76,8 +75,7 @@ export function ExtraFieldCreatable({
   const fieldNameClassName = classnames(getInputNameBackground(labelBackgroundColor), styles['kick-off-input__name']);
 
   const handleChangeName = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      fitInputWidth(e.target, DEFAULT_FIELD_INPUT_WIDTH);
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       editField({ name: e.target.value });
     },
     [editField],

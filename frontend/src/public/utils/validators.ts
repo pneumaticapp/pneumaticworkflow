@@ -146,10 +146,6 @@ export const KICKOFF_FIELD_NAME_RULES: IRule[] = [
     message: 'validation.kickoff-form-field-name-empty',
     isInvalid: isEmpty,
   },
-  // {
-  //   message: 'validation.kickoff-form-field-name-too-long',
-  //   isInvalid: (value) => value.length > 120,
-  // },
 ];
 
 export const KICKOFF_FIELD_DESCRIPTION_RULES: IRule[] = [
