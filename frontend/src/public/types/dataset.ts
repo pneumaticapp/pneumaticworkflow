@@ -53,3 +53,7 @@ export interface IUpdateDatasetParams {
 export interface IDeleteDatasetParams {
   id: number;
 }
+export enum EDatasetsSorting {
+  NameAsc = 'name-asc',
+  NameDesc = 'name-desc',
+}

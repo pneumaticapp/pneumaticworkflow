@@ -317,3 +317,12 @@ export type TTemplatePreset = {
 };
 
 export type TAddTemplatePreset = Omit<TTemplatePreset, 'id' | 'author' | 'dateCreatedTsp'>;
+
+export enum ETemplatesTab {
+  Templates = 'templates',
+  Datasets = 'datasets',
+}
+
+export interface ITemplatesLayoutProps {
+  children: JSX.Element;
+}

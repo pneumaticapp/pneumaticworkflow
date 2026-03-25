@@ -496,6 +496,8 @@ export const ruMessages = {
   'task.progressbar-hint': 'Отметьте все элементы в списке, чтобы выполнить задачу.',
   'task.need-complete-embedded-processes': 'Задачу нельзя завершить, пока не завершены связанные с задачей процессы',
   'task.need-return-embedded-processes': 'Задачу нельзя вернуть, пока не завершены связанные с задачей процессы',
+  'templates.tab-templates': 'Шаблоны',
+  'templates.tab-datasets': 'Наборы данных',
   'templates.title': 'Шаблоны процессов',
   'templates.title.tooltip': 'Просматривайте, создавайте и генерируйте шаблоны',
   'templates.title-system': 'Изучите примеры шаблонов',
@@ -1290,4 +1292,6 @@ export const ruMessages = {
   'due-date.time.12': '10:01am',
   'due-date.time.24': '18:01',
   'due-date.time-too-early': 'Дата выполнения должна быть больше текущей.',
+  'datasets.title': 'Наборы данных',
+  'datasets.title.tooltip': 'Наборы элементов данных для использования в выпадающих списках.',
 };

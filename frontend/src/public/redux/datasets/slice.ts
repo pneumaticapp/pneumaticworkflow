@@ -2,14 +2,14 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { IDatasetsStore } from '../../types/redux';
-import { IDataset, IDatasetListItem, ICreateDatasetParams, IUpdateDatasetParams } from '../../types/dataset';
+import { IDataset, IDatasetListItem, ICreateDatasetParams, IUpdateDatasetParams, EDatasetsSorting } from '../../types/dataset';
 import { TDeleteDatasetPayload } from './types';
 
 export const initialState: IDatasetsStore = {
   items: [],
   isLoading: false,
   searchQuery: '',
-  sortOrder: 'asc',
+  datasetsListSorting: EDatasetsSorting.NameAsc,
 
   currentDataset: null,
   isCurrentDatasetLoading: false,
@@ -38,8 +38,8 @@ const datasetsSlice = createSlice({
       state.searchQuery = action.payload;
     },
 
-    setSortOrder: (state, action: PayloadAction<'asc' | 'desc'>) => {
-      state.sortOrder = action.payload;
+    setDatasetsListSorting: (state, action: PayloadAction<EDatasetsSorting>) => {
+      state.datasetsListSorting = action.payload;
     },
 
     loadDataset: (state, _action: PayloadAction<{ id: number }>) => {
@@ -93,7 +93,7 @@ export const {
   loadDatasetsSuccess,
   loadDatasetsFailed,
   setSearchQuery,
-  setSortOrder,
+  setDatasetsListSorting,
 
   loadDataset,
   loadDatasetSuccess,

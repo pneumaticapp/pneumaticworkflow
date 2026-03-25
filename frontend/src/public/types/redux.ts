@@ -34,7 +34,7 @@ import { ESubscriptionPlan } from './account';
 import { IMenuItem } from './menu';
 import { EWebhooksTypeEvent, IWebhook } from './webhooks';
 import { ETenantsSorting, ITenant } from './tenants';
-import { IDataset, IDatasetListItem } from './dataset';
+import { IDataset, IDatasetListItem, EDatasetsSorting } from './dataset';
 import { IPagesStore } from '../redux/pages/types';
 import { TeamPages, IGroup, UserInvite } from '../redux/team/types';
 
@@ -366,7 +366,7 @@ export type IDatasetsStore = {
   items: IDatasetListItem[];
   isLoading: boolean;
   searchQuery: string;                
-  sortOrder: 'asc' | 'desc';         
+  datasetsListSorting: EDatasetsSorting;         
 
   currentDataset: IDataset | null;    
   isCurrentDatasetLoading: boolean;   

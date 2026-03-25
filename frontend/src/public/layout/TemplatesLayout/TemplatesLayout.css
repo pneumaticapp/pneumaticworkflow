@@ -16,10 +16,15 @@
 .navbar-left__content {
   display: flex;
   justify-content: space-between;
+  gap: 8px;
 
   @media (--mobile) {
     width: 100%;
     justify-content: center;
     flex-flow: column nowrap;
   }
+}
+
+.dataset__sorting-toggle-text {
+  margin-right: 4px !important;
 }

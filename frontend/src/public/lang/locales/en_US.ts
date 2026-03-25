@@ -555,6 +555,8 @@ export const enMessages = {
   'task.return-to.placeholder': 'Write your message...',
   'task.return-to.confirm': 'Confirm',
   'task.return-to.cancel': 'CANCEL',
+  'templates.tab-templates': 'Templates',
+  'templates.tab-datasets': 'Datasets',
   'templates.title': 'My Workflow Templates',
   'templates.title.tooltip': 'Browse, create, and generate templates',
   'templates.title-system': 'Explore Workflow Template Examples',
@@ -1383,4 +1385,6 @@ export const enMessages = {
   'due-date.time-invalid.12': 'Enter time in 12-hour format (e.g., 10:00am)',
   'due-date.time-invalid.24': 'Enter time in 24-hour format (e.g., 18:01)',
   'due-date.time-too-early': 'Due date should be greater than current.',
+  'datasets.title': 'Datasets',
+  'datasets.title.tooltip': 'Collections of data items for use in drop-down fields',
 };

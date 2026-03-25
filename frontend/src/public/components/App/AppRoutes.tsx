@@ -21,6 +21,7 @@ import { IntegrationDetailsView } from '../../views/IntegrationDetails';
 import { MainLayout } from '../../layout';
 import { GuestTask } from '../GuestTask';
 import { TenantsView } from '../../views/Tenants';
+import { DatasetsView } from '../../views/Datasets';
 import { ELoggedState, IAuthUser } from '../../types/redux';
 import { CollectPaymentDetails } from '../CollectPaymentDetails';
 import { AfterPaymentDetailsProvided } from '../AfterPaymentDetailsProvided';
@@ -117,6 +118,13 @@ export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
               hasAccess={user.isAdmin && user.account.leaseLevel !== 'tenant'}
             >
               <TenantsView />
+            </ProtectedRoute>
+            <ProtectedRoute
+              exact
+              path={ERoutes.Datasets}
+              hasAccess={user.isAdmin || user.isAccountOwner}
+            >
+              <DatasetsView />
             </ProtectedRoute>
 
             <Redirect exact from="/" to={ERoutes.Main} />
