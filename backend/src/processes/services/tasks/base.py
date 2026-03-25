@@ -140,6 +140,29 @@ class BasePerformersService:
             account_id=request_user.account.id,
             user_key=user_key,
         )
+        # If user is on vacation, add substitute group instead
+        if (
+            user.is_absent
+            and user.vacation_substitute_group_id
+        ):
+            tp, created = TaskPerformer.objects.get_or_create(
+                task_id=task.id,
+                type=PerformerType.GROUP,
+                group_id=user.vacation_substitute_group_id,
+                defaults={
+                    'directly_status': DirectlyStatus.CREATED,
+                },
+            )
+            if created and run_actions:
+                cls._create_actions(
+                    task=task,
+                    user=user,
+                    request_user=request_user,
+                    current_url=current_url,
+                    is_superuser=is_superuser,
+                    auth_type=auth_type,
+                )
+            return user, tp
         task_performer, created = TaskPerformer.objects.get_or_create(
             task_id=task.id,
             type=PerformerType.USER,

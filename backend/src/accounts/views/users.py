@@ -42,6 +42,8 @@ from src.accounts.services.user import UserService
 from src.accounts.services.user_transfer import (
     UserTransferService,
 )
+from src.accounts.services.vacation import VacationDelegationService
+from src.accounts.serializers.user import VacationActivateSerializer
 from src.analysis.mixins import BaseIdentifyMixin
 from src.executor import RawSqlExecutor
 from src.generics.filters import PneumaticFilterBackend
@@ -299,6 +301,45 @@ class UsersViewSet(
               </script>
               You was successfully transferred to account {account.name}
           """)
+
+    @action(
+        detail=True,
+        methods=('post', 'delete'),
+        url_path='vacation',
+    )
+    def vacation(self, request, pk=None, *args, **kwargs):
+
+        user = self.get_object()
+
+        if request.method == 'POST':
+            slz = VacationActivateSerializer(
+                data=request.data,
+                context=self.get_serializer_context(),
+            )
+            slz.is_valid(raise_exception=True)
+            data = slz.validated_data
+
+            if data.get('vacation_start_date'):
+                user.vacation_start_date = data['vacation_start_date']
+            if data.get('vacation_end_date'):
+                user.vacation_end_date = data['vacation_end_date']
+            user.save(update_fields=[
+                'vacation_start_date', 'vacation_end_date',
+            ])
+
+            service = VacationDelegationService(user=user)
+            service.activate(
+                substitute_user_ids=data['substitute_user_ids'],
+                absence_status=data.get('absence_status', 'vacation'),
+            )
+        else:
+            if not user.is_absent:
+                raise_validation_error(message='User is not currently absent.')
+            service = VacationDelegationService(user=user)
+            service.deactivate()
+
+        user.refresh_from_db()
+        return self.response_ok(UserSerializer(instance=user).data)
 
     @action(
         detail=True,

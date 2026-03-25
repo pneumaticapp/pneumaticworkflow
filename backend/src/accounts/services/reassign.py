@@ -51,6 +51,11 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.queries import UpdateWorkflowOwnersQuery
 from src.processes.tasks.tasks import complete_tasks
 
+from src.accounts.enums import UserGroupType
+from src.accounts.services.vacation import (
+    VacationDelegationService,
+)
+
 UserModel = get_user_model()
 
 
@@ -475,6 +480,26 @@ class ReassignService:
                     user=self.old_user,
                 ).update(user=self.new_user)
 
+    def _cleanup_personal_groups(self):
+        """Remove old_user from personal (vacation) groups.
+
+        If the group becomes empty after removal, auto-deactivate
+        vacation for the group owner.
+        """
+        if not self.old_user:
+            return
+        personal_groups = UserGroup.objects.filter(
+            type=UserGroupType.PERSONAL,
+            users=self.old_user,
+        )
+        for group in personal_groups:
+            group.users.remove(self.old_user)
+            if not group.users.exists():
+                # Auto-deactivate vacation for the owner
+                owners = group.vacation_owner.all()
+                for owner in owners:
+                    VacationDelegationService(owner).deactivate()
+
     def reassign_everywhere(self):
         with transaction.atomic():
             self._reassign_in_raw_performer_templates()
@@ -486,6 +511,7 @@ class ReassignService:
             self._reassign_in_workflow_members()
             self._reassign_in_template_conditions()
             self._reassign_in_conditions()
+            self._cleanup_personal_groups()
             if self.new_user:
                 user_id = self.new_user.id
             elif self.new_group and self.new_group.users.exists():

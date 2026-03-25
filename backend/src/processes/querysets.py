@@ -700,7 +700,10 @@ class TasksQuerySet(TasksBaseQuerySet):
                     workflow__status=WorkflowStatus.RUNNING,
                 ),
             ) & ~Q(
-                taskperformer__directly_status=DirectlyStatus.DELETED,
+                taskperformer__directly_status__in=(
+                    DirectlyStatus.DELETED,
+                    DirectlyStatus.DELEGATED,
+                ),
             ),
         )
 
@@ -724,7 +727,10 @@ class TasksQuerySet(TasksBaseQuerySet):
                     workflow__status=WorkflowStatus.RUNNING,
                 ),
             ) & ~Q(
-                taskperformer__directly_status=DirectlyStatus.DELETED,
+                taskperformer__directly_status__in=(
+                    DirectlyStatus.DELETED,
+                    DirectlyStatus.DELEGATED,
+                ),
             ),
         )
 
@@ -738,7 +744,10 @@ class TasksQuerySet(TasksBaseQuerySet):
 
     def exclude_directly_deleted(self):
         return self.exclude(
-            taskperformer__directly_status=DirectlyStatus.DELETED,
+            taskperformer__directly_status__in=(
+                DirectlyStatus.DELETED,
+                DirectlyStatus.DELEGATED,
+            ),
         )
 
     def apd_status(self):
@@ -959,7 +968,12 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
         return self.filter(directly_status=DirectlyStatus.NO_STATUS)
 
     def exclude_directly_deleted(self):
-        return self.exclude(directly_status=DirectlyStatus.DELETED)
+        return self.exclude(
+            directly_status__in=(
+                DirectlyStatus.DELETED,
+                DirectlyStatus.DELEGATED,
+            ),
+        )
 
     def user_is_subscriber(self):
         return self.filter(

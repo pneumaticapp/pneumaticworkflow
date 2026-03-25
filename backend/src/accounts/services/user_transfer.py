@@ -6,9 +6,13 @@ from rest_framework_simplejwt.exceptions import TokenError
 from src.accounts.enums import (
     BillingPlanType,
     UserInviteStatus,
+    UserGroupType,
     UserStatus,
 )
-from src.accounts.models import UserInvite
+from src.accounts.models import UserGroup, UserInvite
+from src.accounts.services.vacation import (
+    VacationDelegationService,
+)
 from src.accounts.serializers.user import UserWebsocketSerializer
 from src.accounts.services.account import AccountService
 from src.accounts.services.exceptions import (
@@ -128,6 +132,16 @@ class UserTransferService(
                 new_user=new_user,
             )
             service.reassign_everywhere()
+        # Remove from personal (vacation substitute) groups
+        personal_groups = UserGroup.objects.filter(
+            type=UserGroupType.PERSONAL,
+            users=self.prev_user,
+        )
+        for group in personal_groups:
+            group.users.remove(self.prev_user)
+            if not group.users.exists():
+                for owner in group.vacation_owner.all():
+                    VacationDelegationService(owner).deactivate()
         remove_user_from_draft(
             account_id=self.prev_user.account.id,
             user_id=self.prev_user.id,

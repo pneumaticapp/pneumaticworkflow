@@ -207,6 +207,19 @@
   line-height: 20px;
 }
 
+.absent-warning {
+  @mixin text-small;
+
+  margin-top: 8px;
+  display: flex;
+  align-items: center;
+  color: #ff9800;
+
+  &-icon {
+    margin-right: 4px;
+  }
+}
+
 .task-output__field {
   margin: 0 0 20px;
 

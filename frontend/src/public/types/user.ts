@@ -30,10 +30,23 @@ export enum EUserDropdownOptionType {
 
 export type TUserListItem = Pick<
   IUnsavedUser,
-  'email' | 'isAdmin' | 'isAccountOwner' | 'firstName' | 'lastName' | 'phone' | 'photo' | 'invite' | 'isAdmin' | 'type'
+  | 'email'
+  | 'isAdmin'
+  | 'isAccountOwner'
+  | 'firstName'
+  | 'lastName'
+  | 'phone'
+  | 'photo'
+  | 'invite'
+  | 'type'
 > & {
   id: number;
   status: EUserStatus;
+  absenceStatus?: EAbsenceStatus;
+  vacationStartDate?: string | null;
+  vacationEndDate?: string | null;
+  substituteUserIds?: number[];
+  isAbsent?: boolean;
 };
 
 export type TAccountLeaseLevel = 'standard' | 'partner' | 'tenant';
@@ -69,13 +82,19 @@ export type TUserInvited = Pick<IUnsavedUser, 'firstName' | 'lastName' | 'timezo
   password: string;
 };
 
-export const enum EUserStatus {
+export enum EUserStatus {
   Invited = 'invited',
   Active = 'active',
   Deleted = 'deleted',
   Registration = 'registration',
   Inactive = 'inactive',
   External = 'external',
+}
+
+export const enum EAbsenceStatus {
+  Active = 'active',
+  Vacation = 'vacation',
+  SickLeave = 'sick_leave',
 }
 
 export type TUserId = {
@@ -140,4 +159,9 @@ export interface IUserResponse {
   dateFdw: number;
   groups: number[];
   invite: UserInvite | null;
+  absenceStatus?: EAbsenceStatus;
+  vacationStartDate?: string | null;
+  vacationEndDate?: string | null;
+  substituteUserIds?: number[];
+  isAbsent?: boolean;
 }

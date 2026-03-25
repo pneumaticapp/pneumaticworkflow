@@ -90,6 +90,10 @@ export interface IAuthUser extends IUnsavedUser {
   timezone: string;
   dateFmt: string;
   dateFdw: string;
+  absenceStatus?: string;
+  vacationStartDate?: string | null;
+  vacationEndDate?: string | null;
+  isAbsent?: boolean;
 }
 
 export interface IInvitedUser {

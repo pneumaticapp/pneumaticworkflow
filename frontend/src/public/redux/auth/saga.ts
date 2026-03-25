@@ -39,6 +39,8 @@ import {
   TLogoutUser,
   TMakeStripePayment,
   makeStripePayment,
+  TVacationActivate,
+  vacationSuccess,
 } from './actions';
 
 import { resendVerification } from '../../api/resendVerification';
@@ -46,7 +48,7 @@ import { ERoutes } from '../../constants/routes';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { setJwtCookie, removeAuthCookies } from '../../utils/authCookie';
 import { setOAuthRegistrationCompleted } from '../../api/setOAuthRegistrationCompleted';
-import { TUserInvited } from '../../types/user';
+import { TUserInvited, IUserResponse } from '../../types/user';
 import { getAuthUser, getInvitedUser } from '../selectors/user';
 import { getOAuthId, getOAuthType } from '../../utils/auth';
 import { editProfile, IUpdateUserRequest, IUpdateUserResponse, TUpdateUserMappedResponse } from '../../api/editProfile';
@@ -91,6 +93,7 @@ import { ITemplate } from '../../types/template';
 import { watchNewWorkflowsEvent } from '../workflows/saga';
 import { removeLocalStorage } from '../../utils/localStorage';
 import { isEnvBilling } from '../../constants/enviroment';
+import { activateVacation, deactivateVacation } from '../../api/vacation';
 
 export function* authenticateUser(redirectUrl?: string, isRegister: boolean = false) {
   try {
@@ -590,6 +593,42 @@ function* redirectToCustomerPortalSaga() {
   }
 }
 
+export function* handleVacationActivate({ payload }: TVacationActivate) {
+  try {
+    const result: IUserResponse = yield call(activateVacation, payload);
+    if (result) {
+      yield put(vacationSuccess({
+        absenceStatus: result.absenceStatus || 'vacation',
+        vacationStartDate: result.vacationStartDate || null,
+        vacationEndDate: result.vacationEndDate || null,
+        isAbsent: !!result.isAbsent,
+      }));
+      NotificationManager.success({ message: 'Vacation activated' });
+    }
+  } catch (error) {
+    logger.error('vacation activate error', error);
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+  }
+}
+
+export function* handleVacationDeactivate() {
+  try {
+    const result: IUserResponse = yield call(deactivateVacation);
+    if (result) {
+      yield put(vacationSuccess({
+        absenceStatus: result.absenceStatus || 'vacation',
+        vacationStartDate: result.vacationStartDate || null,
+        vacationEndDate: result.vacationEndDate || null,
+        isAbsent: !!result.isAbsent,
+      }));
+      NotificationManager.success({ message: 'Vacation deactivated' });
+    }
+  } catch (error) {
+    logger.error('vacation deactivate error', error);
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+  }
+}
+
 export function* watchAuthUser() {
   yield takeEvery(EAuthActions.AuthUser, authUserSaga);
 }
@@ -686,6 +725,14 @@ export function* watchRedirectToCustomerPortal() {
   yield takeEvery(EAuthActions.RedirectToCustomerPortal, redirectToCustomerPortalSaga);
 }
 
+export function* watchVacationActivate() {
+  yield takeEvery(EAuthActions.VacationActivate, handleVacationActivate);
+}
+
+export function* watchVacationDeactivate() {
+  yield takeEvery(EAuthActions.VacationDeactivate, handleVacationDeactivate);
+}
+
 export function* rootSaga() {
   yield all([
     fork(watchLoginUser),
@@ -712,5 +759,7 @@ export function* rootSaga() {
     fork(watchMakeStripePayment),
     fork(watchOnAfterPaymentDetailsProvided),
     fork(watchRedirectToCustomerPortal),
+    fork(watchVacationActivate),
+    fork(watchVacationDeactivate),
   ]);
 }

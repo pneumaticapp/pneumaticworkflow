@@ -112,6 +112,14 @@ export const reducer = (state = INIT_STATE, action: TAuthActions | ReturnType<ty
         draftState.account.planExpiration = planExpiration;
       });
     }
+    case EAuthActions.VacationSuccess:
+      return {
+        ...state,
+        absenceStatus: action.payload.absenceStatus,
+        vacationStartDate: action.payload.vacationStartDate,
+        vacationEndDate: action.payload.vacationEndDate,
+        isAbsent: action.payload.isAbsent,
+      };
 
     default:
       return { ...state };

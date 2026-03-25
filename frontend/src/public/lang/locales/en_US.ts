@@ -210,6 +210,21 @@ export const enMessages = {
   'user-info.logo-lg-desc':
     'This is the logo your clients will see in the email notifications and newsletters.' +
     ' A 340x96px PNG, JPG, or SVG picture up to 5 MB in size.',
+
+  'user-info.vacation.title': 'Out of Office',
+  'user-info.vacation.active': 'You are currently out of office',
+  'user-info.vacation.from': 'From: {date}',
+  'user-info.vacation.to': 'To: {date}',
+  'user-info.vacation.start-date': 'First day',
+  'user-info.vacation.end-date': 'Last day',
+  'user-info.vacation.substitutes': 'Select substitutes:',
+  'user-info.vacation.type': 'Type',
+  'user-info.vacation.type.vacation': 'Vacation',
+  'user-info.vacation.type.sick-leave': 'Sick Leave',
+  'user-info.vacation.type.active': 'Active',
+  'user-info.vacation.activate': 'Activate',
+  'user-info.vacation.deactivate': 'Return',
+
   'user-account.company-settings': 'Company settings',
   'user-account.change-submit': 'Save changes',
   'user.invite-invalid-token': 'Your invite token is invalid',
@@ -276,6 +291,7 @@ export const enMessages = {
   'team.modal-email-tab': 'Email',
   'team.modal-google-tab': 'Google',
   'team.modal-microsoft-tab': 'microsoft',
+  'team.card-vacation-settings': 'Out of Office',
   'team.card-delete': 'Delete',
   'team.card-revoke-invite': 'Revoke invite',
   'team.card-resend-invite': 'Resend invite',
@@ -308,6 +324,7 @@ export const enMessages = {
   'team.book-demo': 'Book demo',
   'team.add-button': 'Add',
   'team.search-field': 'Quick search...',
+  'team.card-absent-badge': 'Out of Office',
   'team.add-email-placeholder': 'Email address',
   'team.empty-placeholder-title': 'No Users found',
   'team.empty-placeholder-description': 'Try changing your filter settings or invite more peoples in your team.',
@@ -530,6 +547,8 @@ export const enMessages = {
   'tasks.success-placeholder-link': 'View dashboard',
 
   'task.add-performer': 'Add performer',
+  'task.absent-performer-warning': '{name} is out of office. Task will be assigned to substitutes.',
+  'task.is-overdue': 'Task is overdue',
   'task.add-guest': 'Add guest',
   'task.add-guest-field-placeholder': 'Email address',
   'task.add-guest-add-button': 'Add',

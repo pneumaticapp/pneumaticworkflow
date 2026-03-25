@@ -73,6 +73,11 @@ class UserSerializer(
             'invite',
             'groups',
             'password',
+            'absence_status',
+            'vacation_start_date',
+            'vacation_end_date',
+            'is_absent',
+            'substitute_user_ids',
         )
         read_only_fields = (
             'id',
@@ -81,6 +86,7 @@ class UserSerializer(
             'status',
             'is_account_owner',
             'date_joined_tsp',
+            'is_absent',
         )
 
     groups = RelatedListField(
@@ -96,11 +102,21 @@ class UserSerializer(
     date_fmt = DateFormatField(required=False)
     invite = serializers.SerializerMethodField(allow_null=True, read_only=True)
     password = serializers.CharField(write_only=True, required=False)
+    is_absent = serializers.BooleanField(read_only=True)
+    substitute_user_ids = serializers.SerializerMethodField()
 
     def get_invite(self, instance: UserModel):
         if instance.status_invited and instance.invite:
             return UserListInviteSerializer(instance.invite).data
         return None
+
+    def get_substitute_user_ids(self, instance: UserModel) -> list[int]:
+        if instance.vacation_substitute_group_id:
+            return list(
+                instance.vacation_substitute_group.users
+                .values_list('id', flat=True),
+            )
+        return []
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -267,3 +283,49 @@ class UserWebsocketSerializer(serializers.ModelSerializer):
             'is_admin',
             'is_account_owner',
         )
+
+
+class VacationActivateSerializer(
+    CustomValidationErrorMixin,
+    serializers.Serializer,
+):
+    from src.accounts.enums import AbsenceStatus  # noqa: PLC0415
+    substitute_user_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        min_length=1,
+    )
+    vacation_start_date = serializers.DateField(
+        required=False,
+        allow_null=True,
+    )
+    vacation_end_date = serializers.DateField(
+        required=False,
+        allow_null=True,
+    )
+    absence_status = serializers.ChoiceField(
+        choices=AbsenceStatus.CHOICES,
+        required=False,
+        default=AbsenceStatus.VACATION,
+    )
+
+    def validate_substitute_user_ids(self, value):
+        user = self.context['user']
+        account_id = user.account_id
+
+        if user.id in value:
+            raise serializers.ValidationError(
+                'Cannot delegate to yourself.',
+            )
+
+        existing = set(
+            UserModel.objects
+            .on_account(account_id)
+            .filter(id__in=value)
+            .values_list('id', flat=True),
+        )
+        missing = set(value) - existing
+        if missing:
+            raise serializers.ValidationError(
+                f'Users not found: {sorted(missing)}',
+            )
+        return value

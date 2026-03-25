@@ -11,6 +11,7 @@ from django.db.models import Manager, Q, UniqueConstraint
 from django.utils import timezone
 
 from src.accounts.enums import (
+    AbsenceStatus,
     BillingPlanType,
     Language,
     LeaseLevel,
@@ -20,6 +21,7 @@ from src.accounts.enums import (
     Timezone,
     UserDateFormat,
     UserFirstDayWeek,
+    UserGroupType,
     UserInviteStatus,
     UserStatus,
     UserType,
@@ -462,6 +464,28 @@ class User(AbstractUser, SoftDeleteModel):
     is_complete_tasks_subscriber = models.BooleanField(default=True)
     is_comments_mentions_subscriber = models.BooleanField(default=True)
 
+    # Vacation / Out of Office
+    absence_status = models.CharField(
+        max_length=20,
+        choices=AbsenceStatus.CHOICES,
+        default=AbsenceStatus.ACTIVE,
+    )
+    vacation_start_date = models.DateField(null=True, blank=True)
+    vacation_end_date = models.DateField(null=True, blank=True)
+    vacation_substitute_group = models.ForeignKey(
+        'accounts.UserGroup',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='vacation_owner',
+    )
+    # Saved notification settings (for restoring after vacation)
+    _saved_notify_about_tasks = models.NullBooleanField(null=True)
+    _saved_is_new_tasks_subscriber = models.NullBooleanField(null=True)
+    _saved_is_complete_tasks_subscriber = models.NullBooleanField(
+        null=True,
+    )
+
     last_digest_send_time = models.DateTimeField(null=True)
     last_tasks_digest_send_time = models.DateTimeField(null=True)
 
@@ -472,6 +496,10 @@ class User(AbstractUser, SoftDeleteModel):
     )()
 
     search_content = SearchVectorField(null=True)
+
+    @property
+    def is_absent(self):
+        return self.absence_status != AbsenceStatus.ACTIVE
 
     def get_dynamic_mapping(self) -> Dict[str, str]:
         return {
@@ -664,6 +692,11 @@ class UserGroup(SoftDeleteModel):
         Account,
         on_delete=models.CASCADE,
         related_name='user_groups',
+    )
+    type = models.CharField(
+        max_length=20,
+        choices=UserGroupType.CHOICES,
+        default=UserGroupType.REGULAR,
     )
     objects = BaseSoftDeleteManager.from_queryset(GroupQuerySet)()
 

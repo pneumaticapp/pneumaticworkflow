@@ -19,11 +19,13 @@ import { getErrorsObject } from '../../utils/formik/getErrorsObject';
 import { Header } from '../UI/Typeography/Header';
 import { SectionTitle } from '../UI/Typeography/SectionTitle';
 import { IAuthUser } from '../../types/redux';
+import { TUserListItem } from '../../types/user';
 import { FormikCheckbox } from '../UI/Fields/Checkbox';
 import { AvatarController } from './AvatarController';
 import { FormikDropdownList} from '../UI';
 import { LockIcon } from '../icons/LockIcon';
 import { ChangePassword } from './ChangePassword';
+import { VacationSettings } from '../VacationSettings';
 
 import styles from './Profile.css';
 
@@ -32,6 +34,14 @@ export interface IProfileProps {
   editCurrentUser(body: IUpdateUserRequest): void;
   sendChangePassword(body: TPasswordFields): void;
   onChangeTab(tab: ESettingsTabs): void;
+  onVacationActivate(data: {
+    substituteUserIds: number[];
+    vacationStartDate: string | null;
+    vacationEndDate: string | null;
+    absenceStatus?: string;
+  }): void;
+  onVacationDeactivate(): void;
+  availableUsers: TUserListItem[];
 }
 
 export type TProfileFields = {
@@ -51,7 +61,15 @@ export type TProfileFields = {
   dateformat: string;
 };
 
-export function Profile({ user, editCurrentUser, sendChangePassword, onChangeTab }: IProfileProps) {
+export function Profile({
+  user,
+  editCurrentUser,
+  sendChangePassword,
+  onChangeTab,
+  onVacationActivate,
+  onVacationDeactivate,
+  availableUsers,
+}: IProfileProps) {
   const { formatMessage } = useIntl();
   const [isOpenModal, setIsOpenModal] = useState(false);
   const {
@@ -279,6 +297,17 @@ export function Profile({ user, editCurrentUser, sendChangePassword, onChangeTab
         handleCloseModal={() => setIsOpenModal(false)}
         sendChangePassword={sendChangePassword}
         loading={loading}
+      />
+      <VacationSettings
+        isAbsent={user.isAbsent || false}
+        absenceStatus={user.absenceStatus}
+        vacationStartDate={user.vacationStartDate || null}
+        vacationEndDate={user.vacationEndDate || null}
+        substituteUserIds={[]}
+        availableUsers={availableUsers || []}
+        onActivate={onVacationActivate}
+        onDeactivate={onVacationDeactivate}
+        isLoading={loading}
       />
     </div>
   );

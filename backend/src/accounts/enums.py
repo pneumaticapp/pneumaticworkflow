@@ -316,3 +316,27 @@ class Language:
     LITERALS = Literal[en, es, de, fr, ru]
     VALUES = (en, es, de, fr, ru)
     EURO_VALUES = (en, es, de, fr)
+
+
+class UserGroupType:
+
+    REGULAR = 'regular'
+    PERSONAL = 'personal'
+
+    CHOICES = (
+        (REGULAR, 'Regular'),
+        (PERSONAL, 'Personal'),
+    )
+
+
+class AbsenceStatus:
+
+    ACTIVE = 'active'
+    VACATION = 'vacation'
+    SICK_LEAVE = 'sick_leave'
+
+    CHOICES = (
+        (ACTIVE, 'Active'),
+        (VACATION, 'On vacation'),
+        (SICK_LEAVE, 'Sick leave'),
+    )

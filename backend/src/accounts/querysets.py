@@ -319,4 +319,6 @@ class ContactQuerySet(AccountBaseQuerySet):
 
 class GroupQuerySet(AccountBaseQuerySet):
 
-    pass
+    def exclude_personal(self):
+        from src.accounts.enums import UserGroupType  # noqa: PLC0415
+        return self.exclude(type=UserGroupType.PERSONAL)
