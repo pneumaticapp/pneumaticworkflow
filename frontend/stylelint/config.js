@@ -255,7 +255,7 @@ module.exports = {
         // Property
         // 'property-blacklist': array|string,
         'property-case': 'lower',
-        'property-no-unknown': [true, { ignoreProperties: ['composes'] }],
+        'property-no-unknown': [true, { ignoreProperties: ['composes', 'field-sizing'] }],
         'property-no-vendor-prefix': true,
         // 'property-whitelist': array|string,
         // Keyframe declaration
