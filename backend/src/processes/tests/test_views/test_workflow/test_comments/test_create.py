@@ -555,7 +555,7 @@ def test_comment__not_member__permission_denied(api_client):
     assert response.status_code == 403
 
 
-def test_comment__not_found__not_found(api_client):
+def test_comment__not_found__permission_denied(api_client):
 
     # arrange
     user = create_test_owner()
@@ -568,7 +568,7 @@ def test_comment__not_found__not_found(api_client):
     )
 
     # assert
-    assert response.status_code == 404
+    assert response.status_code == 403
 
 
 def test_comment__no_text_no_attachments__validation_error(api_client):
