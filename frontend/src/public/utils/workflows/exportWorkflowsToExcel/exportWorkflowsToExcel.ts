@@ -1,27 +1,18 @@
-import { IWorkflowClient } from '../../types/workflow';
-import { ITableViewFields, EExtraFieldType, ETemplateOwnerType } from '../../types/template';
-import { TUserListItem } from '../../types/user';
-import { IGroup } from '../../redux/team/types';
-import { getUserFullName, EXTERNAL_USER } from '../users';
-import { getUserById } from '../../components/UserData/utils/getUserById';
-import { toDateString } from '../dateTime';
-import { getWorkflowProgress } from '../../components/Workflows/utils/getWorkflowProgress';
-import { ALL_SYSTEM_FIELD_NAMES } from '../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
+import { ITableViewFields, EExtraFieldType, ETemplateOwnerType } from '../../../types/template';
+import { TUserListItem } from '../../../types/user';
+import { IGroup } from '../../../redux/team/types';
+import { getUserFullName, EXTERNAL_USER } from '../../users';
+import { getUserById } from '../../../components/UserData/utils/getUserById';
+import { toDateString } from '../../dateTime';
+import { getWorkflowProgress } from '../../../components/Workflows/utils/getWorkflowProgress';
+import { ALL_SYSTEM_FIELD_NAMES } from '../../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
+import { IExportWorkflowsToExcelConfig } from './types';
 
-const CSV_QUOTE = '"';
-const CSV_DOUBLE_QUOTE = '""';
+export const WORKFLOWS_XLSX_MIME =
+  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
 
-function escapeCsvCell(value: string | number | null | undefined): string {
-  if (value === null || value === undefined) {
-    return '';
-  }
-  const str = String(value);
-  const needsQuoting = /[",\r\n]/.test(str);
-  if (needsQuoting) {
-    return CSV_QUOTE + str.replace(/"/g, CSV_DOUBLE_QUOTE) + CSV_QUOTE;
-  }
-  return str;
-}
+export const WORKFLOWS_XLSX_DEFAULT_FILENAME = 'workflows.xlsx';
+
 
 function getStarterDisplayName(
   workflowStarter: number | null,
@@ -89,20 +80,7 @@ function getOptionalFieldValue(
   }
 }
 
-export interface IExportWorkflowsToCsvConfig {
-  workflows: IWorkflowClient[];
-  users: TUserListItem[];
-  groups: IGroup[];
-  selectedFields: string[];
-  optionalFieldsFromWorkflow?: ITableViewFields[];
-  timezone?: string;
-  headerLabels: Record<string, string>;
-  multipleTasksLabel: string;
-  /** Localized template for missing group in performers, use {id} placeholder for group ID */
-  deletedGroupFallbackTemplate: string;
-}
-
-export function buildWorkflowsCsvContent({
+export function buildWorkflowsExportRows({
   workflows,
   users,
   groups,
@@ -112,7 +90,7 @@ export function buildWorkflowsCsvContent({
   headerLabels,
   multipleTasksLabel,
   deletedGroupFallbackTemplate,
-}: IExportWorkflowsToCsvConfig): string {
+}: IExportWorkflowsToExcelConfig): string[][] {
   const headerKeys = selectedFields.length > 0
     ? selectedFields
     : [
@@ -120,8 +98,8 @@ export function buildWorkflowsCsvContent({
       ...(optionalFieldsFromWorkflow ?? []).map((f) => f.apiName),
     ];
 
-  const headers = headerKeys.map((key) => escapeCsvCell(headerLabels[key] ?? key));
-  const rows: string[] = [headers.join(',')];
+  const headerRow = headerKeys.map((key) => headerLabels[key] ?? key);
+  const bodyRows: string[][] = [];
 
   workflows.forEach((workflow) => {
     const progress = getWorkflowProgress({
@@ -153,25 +131,34 @@ export function buildWorkflowsCsvContent({
     const fieldsMap = new Map<string, ITableViewFields>();
     workflow.fields?.forEach((f) => fieldsMap.set(f.apiName, f));
 
-    const cells = headerKeys.map((key) => {
+    const row = headerKeys.map((key) => {
       if (ALL_SYSTEM_FIELD_NAMES.includes(key)) {
-        return escapeCsvCell(systemValues[key]);
+        return systemValues[key];
       }
       const field = fieldsMap.get(key);
-      return escapeCsvCell(
-        getOptionalFieldValue(field, timezone, users, groups),
-      );
+      return getOptionalFieldValue(field, timezone, users, groups);
     });
-    rows.push(cells.join(','));
+    bodyRows.push(row);
   });
 
-  return rows.join('\r\n');
+  return [headerRow, ...bodyRows];
 }
 
-const UTF8_BOM = '\uFEFF';
+export async function buildWorkflowsXlsxBuffer(rows: string[][]) {
+  const exceljs = await import('exceljs');
+  const workbook = new exceljs.Workbook();
+  const sheet = workbook.addWorksheet('Workflows');
+  rows.forEach((cells) => {
+    sheet.addRow(cells);
+  });
+  return workbook.xlsx.writeBuffer();
+}
 
-export function downloadWorkflowsCsv(csvContent: string, filename = 'workflows.csv'): void {
-  const blob = new Blob([UTF8_BOM + csvContent], { type: 'text/csv;charset=utf-8' });
+export function downloadWorkflowsExcel(
+  buffer: BlobPart,
+  filename = WORKFLOWS_XLSX_DEFAULT_FILENAME,
+): void {
+  const blob = new Blob([buffer], { type: WORKFLOWS_XLSX_MIME });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.setAttribute('href', url);

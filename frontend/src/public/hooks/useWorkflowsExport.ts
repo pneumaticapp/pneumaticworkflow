@@ -17,7 +17,11 @@ import {
 import { getAccountsUsers } from '../redux/selectors/accounts';
 import { getGroupsList } from '../redux/selectors/groups';
 import { getTimezone } from '../redux/selectors/authUser';
-import { buildWorkflowsCsvContent, downloadWorkflowsCsv } from '../utils/workflows/exportWorkflowsToCsv';
+import {
+  buildWorkflowsExportRows,
+  buildWorkflowsXlsxBuffer,
+  downloadWorkflowsExcel,
+} from '../utils/workflows/exportWorkflowsToExcel';
 import { NotificationManager } from '../components/UI/Notifications';
 import { ALL_SYSTEM_FIELD_NAMES } from '../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
 
@@ -41,7 +45,7 @@ function getExportHeaderLabels(
   return headerLabels;
 }
 
-export function useWorkflowsExportCsv() {
+export function useWorkflowsExport() {
   const { formatMessage } = useIntl();
   const [isExporting, setIsExporting] = useState(false);
 
@@ -58,7 +62,7 @@ export function useWorkflowsExportCsv() {
   const groups = useSelector(getGroupsList);
   const timezone = useSelector(getTimezone);
 
-  const handleExportCsvClick = useCallback(async () => {
+  const handleExportClick = useCallback(async () => {
     setIsExporting(true);
     try {
       const fields = selectedFields.length ? selectedFields : ALL_SYSTEM_FIELD_NAMES;
@@ -76,15 +80,15 @@ export function useWorkflowsExportCsv() {
 
       if (items.length === 0) {
         NotificationManager.warning({
-          title: formatMessage({ id: 'workflows.export-csv-empty-title' }),
-          message: formatMessage({ id: 'workflows.export-csv-empty-message' }),
+          title: formatMessage({ id: 'workflows.export-excel-empty-title' }),
+          message: formatMessage({ id: 'workflows.export-excel-empty-message' }),
         });
         return;
       }
 
       const optionalFieldsFromWorkflow = items[0]?.fields ?? [];
       const headerLabels = getExportHeaderLabels(formatMessage, optionalFieldsFromWorkflow);
-      const csvContent = buildWorkflowsCsvContent({
+      const rows = buildWorkflowsExportRows({
         workflows: items,
         users,
         groups,
@@ -98,9 +102,10 @@ export function useWorkflowsExportCsv() {
           { id: '{id}' },
         ),
       });
-      downloadWorkflowsCsv(csvContent);
+      const buffer = await buildWorkflowsXlsxBuffer(rows);
+      downloadWorkflowsExcel(buffer);
     } catch (error) {
-      NotificationManager.notifyApiError(error, { message: 'workflows.export-csv-fail' });
+      NotificationManager.notifyApiError(error, { message: 'workflows.export-excel-fail' });
     } finally {
       setIsExporting(false);
     }
@@ -120,5 +125,5 @@ export function useWorkflowsExportCsv() {
     timezone,
   ]);
 
-  return { handleExportCsvClick, isExporting };
+  return { handleExportClick, isExporting };
 }

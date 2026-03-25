@@ -9,7 +9,7 @@ import { Button, Tooltip } from '../../../UI';
 import { TuneViewIcon, DownloadIcon } from '../../../icons';
 import { PageTitle } from '../../../PageTitle';
 import { getWorkflowTemplatesIdsFilter } from '../../../../redux/selectors/workflows';
-import { useWorkflowsExportCsv } from '../../../../hooks/useWorkflowsExportCsv';
+import { useWorkflowsExport } from '../../../../hooks/useWorkflowsExport';
 import { WorkflowsTableActionsProps } from './types';
 
 import styles from './WorkflowsTable.css';
@@ -21,7 +21,7 @@ export function WorkflowsTableActions({
 }: WorkflowsTableActionsProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const { handleExportCsvClick, isExporting } = useWorkflowsExportCsv();
+  const { handleExportClick, isExporting } = useWorkflowsExport();
 
   const templatesIdsFilter = useSelector(getWorkflowTemplatesIdsFilter);
 
@@ -52,19 +52,19 @@ export function WorkflowsTableActions({
     />
   );
 
-  const exportCsvButton = (
+  const exportExcelButton = (
     <Button
       className={styles['tune-view-button']}
       buttonStyle="transparent-black"
       label={
         isMobile
           ? ''
-          : formatMessage({ id: isExporting ? 'workflows.export-csv-loading' : 'workflows.export-csv' })
+          : formatMessage({ id: isExporting ? 'workflows.export-excel-loading' : 'workflows.export-excel' })
       }
       size="sm"
       disabled={isExportDisabled}
       icon={DownloadIcon}
-      onClick={handleExportCsvClick}
+      onClick={handleExportClick}
     />
   );
 
@@ -89,18 +89,18 @@ export function WorkflowsTableActions({
         {isExportDisabled ? (
           <Tooltip
             content={formatMessage({
-              id: isExporting ? 'workflows.export-csv-loading' : 'workflows.export-csv-tooltip',
+              id: isExporting ? 'workflows.export-excel-loading' : 'workflows.export-excel-tooltip',
             })}
             contentClassName={styles['workflow-tune-view-tooltip']}
           >
-            <div>{exportCsvButton}</div>
+            <div>{exportExcelButton}</div>
           </Tooltip>
         ) : (
           <Tooltip
-            content={formatMessage({ id: 'workflows.export-csv-tooltip-all' })}
+            content={formatMessage({ id: 'workflows.export-excel-tooltip-all' })}
             contentClassName={styles['workflow-tune-view-tooltip']}
           >
-            <div>{exportCsvButton}</div>
+            <div>{exportExcelButton}</div>
           </Tooltip>
         )}
       </div>
