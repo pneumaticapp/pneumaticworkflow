@@ -229,6 +229,17 @@ export const GROUP_NAME_RULES: IRule[] = [
   },
 ];
 
+export const DATASET_NAME_RULES: IRule[] = [
+  {
+    message: 'validation.dataset-name-empty',
+    isInvalid: isEmpty,
+  },
+  {
+    message: 'validation.dataset-name-to-long',
+    isInvalid: (value) => value.length > 200,
+  },
+];
+
 export const validateFieldCreator =
   (rules: IRule[]) =>
   (value: any): string => {
@@ -256,3 +267,4 @@ export const validateDelayField = validateFieldCreator(DELAY_RULES);
 export const validateCheckboxAndRadioField = validateFieldCreator(CHECKBOX_AND_RADIO_FIELDS_RULUES);
 export const validateTenantName = validateFieldCreator(TENANT_NAME_RULES);
 export const validateGroupName = validateFieldCreator(GROUP_NAME_RULES);
+export const validateDatasetName = validateFieldCreator(DATASET_NAME_RULES);

@@ -7,6 +7,7 @@ import { EPageTitle } from '../../constants/defaultValues';
 import { openCreateModal } from '../../redux/datasets/slice';
 import { AddCardButton } from '../UI';
 import { RoundDocIcon } from '../icons';
+import { DatasetModal } from './DatasetModal/DatasetModal';
 
 import styles from '../Templates/Templates.css';
 
@@ -30,6 +31,7 @@ export function Datasets() {
           icon={<RoundDocIcon />}
         />
       </div>
+      <DatasetModal />
     </div>
   );
 }

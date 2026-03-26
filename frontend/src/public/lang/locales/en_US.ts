@@ -1390,4 +1390,8 @@ export const enMessages = {
   'datasets.new-dataset.title': 'New Dataset',
   'datasets.new-dataset.caption': 'Create a new dataset for use in dropdown lists',
   'datasets.new-dataset.description': 'Once a new dataset has been created, you can immediately start adding items to it.',
+  'datasets.modal-button-create': 'Create',
+  'datasets.modal-button-cancel': 'CANCEL',
+  'validation.dataset-name-empty': 'Please enter a dataset name',
+  'validation.dataset-name-to-long': 'The dataset name is longer than 200 characters',
 };
