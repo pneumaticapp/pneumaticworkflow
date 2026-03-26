@@ -1,8 +1,22 @@
+jest.mock('exceljs', () => ({
+  Workbook: jest.fn().mockImplementation(() => ({
+    addWorksheet: jest.fn().mockReturnValue({
+      addRow: jest.fn(),
+    }),
+    xlsx: {
+      writeBuffer: jest.fn().mockResolvedValue(new Uint8Array([80, 75, 4, 8]).buffer),
+    },
+  })),
+}));
+
 import {
-  buildWorkflowsCsvContent,
-  downloadWorkflowsCsv,
-  IExportWorkflowsToCsvConfig,
-} from '../exportWorkflowsToCsv';
+  buildWorkflowsExportRows,
+  buildWorkflowsXlsxBuffer,
+  downloadWorkflowsExcel,
+  IExportWorkflowsToExcelConfig,
+  WORKFLOWS_XLSX_DEFAULT_FILENAME,
+  WORKFLOWS_XLSX_MIME,
+} from '../exportWorkflowsToExcel';
 import { IWorkflowClient } from '../../../types/workflow';
 import { ITableViewFields } from '../../../types/template';
 import { ETemplateOwnerType } from '../../../types/template';
@@ -35,9 +49,9 @@ const systemHeaderLabels: Record<string, string> = {
   'system-column-performer': 'Performer',
 };
 
-describe('exportWorkflowsToCsv', () => {
-  describe('buildWorkflowsCsvContent', () => {
-    const baseConfig: IExportWorkflowsToCsvConfig = {
+describe('exportWorkflowsToExcel', () => {
+  describe('buildWorkflowsExportRows', () => {
+    const baseConfig: IExportWorkflowsToExcelConfig = {
       workflows: [],
       users: [],
       groups: [],
@@ -48,7 +62,7 @@ describe('exportWorkflowsToCsv', () => {
     };
 
     it('returns only header row when workflows array is empty', () => {
-      const result = buildWorkflowsCsvContent({
+      const rows = buildWorkflowsExportRows({
         ...baseConfig,
         selectedFields: [
           'system-column-workflow',
@@ -60,21 +74,32 @@ describe('exportWorkflowsToCsv', () => {
         ],
         headerLabels: systemHeaderLabels,
       });
-      const lines = result.split('\r\n');
-      expect(lines).toHaveLength(1);
-      expect(lines[0]).toBe(
-        'Workflow,Template,Starter,Progress,Step,Performer',
-      );
+      expect(rows).toHaveLength(1);
+      expect(rows[0]).toEqual([
+        'Workflow',
+        'Template',
+        'Starter',
+        'Progress',
+        'Step',
+        'Performer',
+      ]);
     });
 
     it('uses default system columns when selectedFields is empty and no optional fields', () => {
-      const result = buildWorkflowsCsvContent({
+      const rows = buildWorkflowsExportRows({
         ...baseConfig,
         selectedFields: [],
         optionalFieldsFromWorkflow: [],
         headerLabels: systemHeaderLabels,
       });
-      expect(result).toContain('Workflow,Template,Starter,Progress,Step,Performer');
+      expect(rows[0]).toEqual([
+        'Workflow',
+        'Template',
+        'Starter',
+        'Progress',
+        'Step',
+        'Performer',
+      ]);
     });
 
     it('outputs one data row for one workflow with system columns', () => {
@@ -91,7 +116,7 @@ describe('exportWorkflowsToCsv', () => {
         }),
       ];
       const users = [{ id: 1, firstName: 'Alice', lastName: 'Smith', email: '' } as never];
-      const result = buildWorkflowsCsvContent({
+      const rows = buildWorkflowsExportRows({
         ...baseConfig,
         workflows,
         users,
@@ -105,29 +130,36 @@ describe('exportWorkflowsToCsv', () => {
         ],
         headerLabels: systemHeaderLabels,
       });
-      const lines = result.split('\r\n');
-      expect(lines).toHaveLength(2);
-      expect(lines[0]).toBe(
-        'Workflow,Template,Starter,Progress,Step,Performer',
-      );
-      expect(lines[1]).toContain('My Process');
-      expect(lines[1]).toContain('T1');
-      expect(lines[1]).toContain('Alice Smith');
-      expect(lines[1]).toContain('50%');
-      expect(lines[1]).toContain('Task A');
+      expect(rows).toHaveLength(2);
+      expect(rows[0]).toEqual([
+        'Workflow',
+        'Template',
+        'Starter',
+        'Progress',
+        'Step',
+        'Performer',
+      ]);
+      expect(rows[1]).toEqual([
+        'My Process',
+        'T1',
+        'Alice Smith',
+        '50%',
+        'Task A',
+        '',
+      ]);
     });
 
-    it('escapes CSV cells containing comma and double quote', () => {
+    it('keeps raw cell values with comma and double quote without CSV escaping', () => {
       const workflows = [
         minimalWorkflow({ name: 'Name with "quotes" and, comma' }),
       ];
-      const result = buildWorkflowsCsvContent({
+      const rows = buildWorkflowsExportRows({
         ...baseConfig,
         workflows,
         selectedFields: ['system-column-workflow'],
         headerLabels: { 'system-column-workflow': 'Name' },
       });
-      expect(result).toContain('"Name with ""quotes"" and, comma"');
+      expect(rows[1][0]).toBe('Name with "quotes" and, comma');
     });
 
     it('includes optional fields when provided and in selectedFields', () => {
@@ -158,7 +190,7 @@ describe('exportWorkflowsToCsv', () => {
           ],
         }),
       ];
-      const result = buildWorkflowsCsvContent({
+      const rows = buildWorkflowsExportRows({
         ...baseConfig,
         workflows,
         selectedFields: ['system-column-workflow', 'field-custom'],
@@ -168,22 +200,22 @@ describe('exportWorkflowsToCsv', () => {
           'field-custom': 'Custom',
         },
       });
-      expect(result).toContain('Custom');
-      expect(result).toContain('Custom value');
+      expect(rows[0]).toContain('Custom');
+      expect(rows[1]).toContain('Custom value');
     });
 
     it('uses localized multipleTasksLabel for step when areMultipleTasks is true', () => {
       const workflows = [
         minimalWorkflow({ areMultipleTasks: true, oneActiveTaskName: null }),
       ];
-      const result = buildWorkflowsCsvContent({
+      const rows = buildWorkflowsExportRows({
         ...baseConfig,
         workflows,
         selectedFields: ['system-column-step'],
         headerLabels: { 'system-column-step': 'Step' },
         multipleTasksLabel: 'Localized Multiple Tasks',
       });
-      expect(result).toContain('Localized Multiple Tasks');
+      expect(rows[1][0]).toBe('Localized Multiple Tasks');
     });
 
     it('uses deletedGroupFallbackTemplate for performer when group is not in list', () => {
@@ -194,7 +226,7 @@ describe('exportWorkflowsToCsv', () => {
           ],
         }),
       ];
-      const result = buildWorkflowsCsvContent({
+      const rows = buildWorkflowsExportRows({
         ...baseConfig,
         workflows,
         groups: [],
@@ -202,12 +234,23 @@ describe('exportWorkflowsToCsv', () => {
         headerLabels: { 'system-column-performer': 'Performer' },
         deletedGroupFallbackTemplate: 'Deleted Group (ID: {id})',
       });
-      expect(result).toContain('Deleted Group (ID: 999)');
+      expect(rows[1][0]).toBe('Deleted Group (ID: 999)');
     });
   });
 
-  describe('downloadWorkflowsCsv', () => {
-    it('creates blob with UTF-8 BOM and csv content and triggers download', () => {
+  describe('buildWorkflowsXlsxBuffer', () => {
+    it('returns non-empty buffer for sample rows', async () => {
+      const buffer = await buildWorkflowsXlsxBuffer([
+        ['A', 'B'],
+        ['1', '2'],
+      ]);
+      expect(buffer).toBeDefined();
+      expect(buffer.byteLength).toBeGreaterThan(0);
+    });
+  });
+
+  describe('downloadWorkflowsExcel', () => {
+    it('creates xlsx blob and triggers download', () => {
       const createObjectURL = jest.fn(() => 'blob:mock-url');
       const revokeObjectURL = jest.fn();
       const click = jest.fn();
@@ -229,16 +272,17 @@ describe('exportWorkflowsToCsv', () => {
       jest.spyOn(document.body, 'appendChild').mockImplementation(() => mockLink as never);
       jest.spyOn(document.body, 'removeChild').mockImplementation(() => mockLink as never);
 
-      downloadWorkflowsCsv('col1,col2\r\nv1,v2', 'export.csv');
+      const sampleBuffer = new ArrayBuffer(8);
+      downloadWorkflowsExcel(sampleBuffer, 'export.xlsx');
 
       expect(createObjectURL).toHaveBeenCalledTimes(1);
       const callArgs = (createObjectURL as jest.Mock).mock.calls[0];
       const blob = callArgs?.[0] as Blob | undefined;
       expect(blob).toBeDefined();
-      expect(blob?.type).toBe('text/csv;charset=utf-8');
+      expect(blob?.type).toBe(WORKFLOWS_XLSX_MIME);
       expect(blob?.size).toBeGreaterThan(0);
       expect(mockLink.setAttribute).toHaveBeenCalledWith('href', 'blob:mock-url');
-      expect(mockLink.setAttribute).toHaveBeenCalledWith('download', 'export.csv');
+      expect(mockLink.setAttribute).toHaveBeenCalledWith('download', 'export.xlsx');
       expect(click).toHaveBeenCalled();
       expect(revokeObjectURL).toHaveBeenCalledWith('blob:mock-url');
 
@@ -247,7 +291,7 @@ describe('exportWorkflowsToCsv', () => {
       URL.revokeObjectURL = originalRevokeObjectURL;
     });
 
-    it('uses default filename workflows.csv when not provided', () => {
+    it('uses default WORKFLOWS_XLSX_DEFAULT_FILENAME when not provided', () => {
       const createObjectURL = jest.fn(() => 'blob:mock-url');
       const mockLink = { setAttribute: jest.fn(), style: {}, click: jest.fn() };
       const originalCreateObjectURL = URL.createObjectURL;
@@ -261,9 +305,9 @@ describe('exportWorkflowsToCsv', () => {
       jest.spyOn(document.body, 'appendChild').mockImplementation(() => mockLink as never);
       jest.spyOn(document.body, 'removeChild').mockImplementation(() => mockLink as never);
 
-      downloadWorkflowsCsv('a,b');
+      downloadWorkflowsExcel(new ArrayBuffer(4));
 
-      expect(mockLink.setAttribute).toHaveBeenCalledWith('download', 'workflows.csv');
+      expect(mockLink.setAttribute).toHaveBeenCalledWith('download', WORKFLOWS_XLSX_DEFAULT_FILENAME);
 
       URL.createObjectURL = originalCreateObjectURL;
       URL.revokeObjectURL = originalRevokeObjectURL;

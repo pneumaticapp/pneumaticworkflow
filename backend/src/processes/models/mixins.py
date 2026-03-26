@@ -178,7 +178,7 @@ class FieldMixin(AccountBaseMixin):
     class Meta:
         abstract = True
 
-    name = models.CharField(max_length=120)
+    name = models.TextField()
     type = models.CharField(
         choices=FieldType.CHOICES,
         max_length=10,
