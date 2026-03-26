@@ -791,9 +791,6 @@ class FieldTemplateValuesQuerySet(BaseQuerySet):
     def by_api_names(self, api_names: List[str]):
         return self.filter(api_name__in=api_names)
 
-    def selected(self):
-        return self.filter(is_selected=True)
-
 
 class FieldSelectionQuerySet(BaseQuerySet):
 

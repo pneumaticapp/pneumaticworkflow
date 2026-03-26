@@ -698,7 +698,7 @@ def test_return_to__task_skipped_by_kickoff_field__update_status_to_pending(
         operator=PredicateOperator.EQUAL,
         field_type=field_template.type,
         field=field_template.api_name,
-        value=selection_template.api_name,
+        value=selection_template.value,
         template=template,
     )
 

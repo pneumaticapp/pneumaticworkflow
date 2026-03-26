@@ -264,12 +264,18 @@ class TestConditionCheckService:
         workflow = create_test_workflow(user, tasks_count=2)
         first_task = workflow.tasks.first()
         second_task = workflow.tasks.last()
+        if is_selected_first:
+            value = 'select-1'
+        elif is_selected_second:
+            value = 'select-2'
+        else:
+            value = ''
         first_field = TaskField.objects.create(
             name='Hero',
             api_name='hero-1',
             task=first_task,
             type=FieldType.DROPDOWN,
-            value='',
+            value=value,
             workflow=workflow,
             account=user.account,
         )
@@ -277,12 +283,10 @@ class TestConditionCheckService:
             field=first_field,
             api_name='select-1',
             value='1',
-            is_selected=is_selected_first,
         )
         FieldSelection.objects.create(
             field=first_field,
             api_name='select-2',
-            is_selected=is_selected_second,
             value='2',
         )
 
@@ -344,14 +348,22 @@ class TestConditionCheckService:
         # arrange
         user = create_test_user()
         workflow = create_test_workflow(user, tasks_count=2)
-        first_task = workflow.tasks.first()
-        second_task = workflow.tasks.last()
+        first_task = workflow.tasks.get(number=1)
+        second_task = workflow.tasks.get(number=2)
+        if is_selected_first and is_selected_second:
+            value = 'select-1,select-2'
+        elif is_selected_first:
+            value = 'select-1'
+        elif is_selected_second:
+            value = 'select-2'
+        else:
+            value = ''
         first_field = TaskField.objects.create(
             name='Hero',
             api_name='hero-1',
             task=first_task,
             type=FieldType.CHECKBOX,
-            value='',
+            value=value,
             workflow=workflow,
             account=user.account,
         )
@@ -359,12 +371,10 @@ class TestConditionCheckService:
             field=first_field,
             api_name='select-1',
             value='1',
-            is_selected=is_selected_first,
         )
         FieldSelection.objects.create(
             field=first_field,
             api_name='select-2',
-            is_selected=is_selected_second,
             value='2',
         )
 

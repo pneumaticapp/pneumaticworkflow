@@ -12,9 +12,5 @@ class DropdownResolver(Resolver):
             Q(kickoff__workflow_id=self._workflow_id),
             api_name=self._predicate.field,
         )
-        selected = list(field.selections.selected().values_list(
-            'api_name',
-            flat=True,
-        ))
-        self.field_value = selected[0] if selected else None
+        self.field_value = field.value or None
         self.predicate_value = self._predicate.value
