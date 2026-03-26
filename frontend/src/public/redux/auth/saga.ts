@@ -604,7 +604,6 @@ export function* handleVacationActivate({ payload }: TVacationActivate) {
         substituteUserIds: result.substituteUserIds || [],
         isAbsent: !!result.isAbsent,
       }));
-      NotificationManager.success({ message: 'Vacation activated' });
     }
   } catch (error) {
     logger.error('vacation activate error', error);
@@ -623,7 +622,6 @@ export function* handleVacationDeactivate() {
         substituteUserIds: result.substituteUserIds || [],
         isAbsent: !!result.isAbsent,
       }));
-      NotificationManager.success({ message: 'Vacation deactivated' });
     }
   } catch (error) {
     logger.error('vacation deactivate error', error);

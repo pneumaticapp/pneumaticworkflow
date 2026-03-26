@@ -116,7 +116,7 @@ export function VacationSettings({
 
       <div className={styles['vacation-form']} data-testid="vacation-form">
         <DropdownList
-          label={formatMessage({ id: 'user-info.vacation.status', defaultMessage: 'Status' })}
+          label={formatMessage({ id: 'user-info.vacation.status', defaultMessage: 'Options' })}
           options={STATUS_OPTIONS}
           value={STATUS_OPTIONS.find(o => o.value === activeTab)}
           onChange={(option: any) => setActiveTab(option.value)}

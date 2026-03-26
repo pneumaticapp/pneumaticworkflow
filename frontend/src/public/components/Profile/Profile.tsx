@@ -122,7 +122,7 @@ function ProfileVacationFields({ availableUsers }: { availableUsers: TUserListIt
       </SectionTitle>
       
       <FormikDropdownList
-         label={formatMessage({ id: 'user-info.vacation.status', defaultMessage: 'Status' })}
+         label={formatMessage({ id: 'user-info.vacation.status', defaultMessage: 'Options' })}
          className={styles['field']}
          name="absenceStatus"
          options={STATUS_OPTIONS}

@@ -211,7 +211,8 @@ export const enMessages = {
     'This is the logo your clients will see in the email notifications and newsletters.' +
     ' A 340x96px PNG, JPG, or SVG picture up to 5 MB in size.',
 
-  'user-info.vacation.title': 'Out of Office',
+  'user-info.vacation.title': 'Status',
+  'user-info.vacation.status': 'Options',
   'user-info.vacation.active': 'You are currently out of office',
   'user-info.vacation.from': 'From: {date}',
   'user-info.vacation.to': 'To: {date}',
@@ -224,6 +225,8 @@ export const enMessages = {
   'user-info.vacation.type.active': 'Active',
   'user-info.vacation.activate': 'Activate',
   'user-info.vacation.deactivate': 'Return',
+  'user-info.vacation.activated-success': 'Vacation activated',
+  'user-info.vacation.deactivated-success': 'Vacation deactivated',
 
   'user-account.company-settings': 'Company settings',
   'user-account.change-submit': 'Save changes',
@@ -291,7 +294,7 @@ export const enMessages = {
   'team.modal-email-tab': 'Email',
   'team.modal-google-tab': 'Google',
   'team.modal-microsoft-tab': 'microsoft',
-  'team.card-vacation-settings': 'Out of Office',
+  'team.card-vacation-settings': 'Status',
   'team.card-delete': 'Delete',
   'team.card-revoke-invite': 'Revoke invite',
   'team.card-resend-invite': 'Resend invite',
