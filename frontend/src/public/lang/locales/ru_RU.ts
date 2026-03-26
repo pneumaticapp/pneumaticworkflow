@@ -489,7 +489,7 @@ export const ruMessages = {
     'Вы выполнили все задачи и теперь можете отдохнуть или посмотреть свою продуктивность на главной странице.',
   'tasks.success-placeholder-link': 'Просмотреть Главное',
   'task.add-performer': 'Добавить исполнителя',
-  'task.absent-performer-warning': '{name} отсутствует. Задача будет назначена заместителям.',
+
   'task.is-overdue': 'Задача просрочена',
   'task.add-guest': 'Добавить гостя',
   'task.add-guest-add-button': 'Добавить',

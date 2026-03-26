@@ -110,7 +110,7 @@ class DirectlyStatus:
     NO_STATUS = 0
     DELETED = 1
     CREATED = 2
-    DELEGATED = 3  # Frozen: user is on vacation
+    DELEGATED = 3
 
     CHOICES = (
         (NO_STATUS, 'no status'),

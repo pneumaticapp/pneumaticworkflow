@@ -213,7 +213,7 @@ export const enMessages = {
 
   'user-info.vacation.title': 'Status',
   'user-info.vacation.status': 'Options',
-  'user-info.vacation.active': 'You are currently out of office',
+  'user-info.vacation.active': 'You are currently unavailable',
   'user-info.vacation.from': 'From: {date}',
   'user-info.vacation.to': 'To: {date}',
   'user-info.vacation.start-date': 'First day',
@@ -327,7 +327,7 @@ export const enMessages = {
   'team.book-demo': 'Book demo',
   'team.add-button': 'Add',
   'team.search-field': 'Quick search...',
-  'team.card-absent-badge': 'Out of Office',
+  'team.card-absent-badge': 'Unavailable',
   'team.add-email-placeholder': 'Email address',
   'team.empty-placeholder-title': 'No Users found',
   'team.empty-placeholder-description': 'Try changing your filter settings or invite more peoples in your team.',
@@ -550,7 +550,7 @@ export const enMessages = {
   'tasks.success-placeholder-link': 'View dashboard',
 
   'task.add-performer': 'Add performer',
-  'task.absent-performer-warning': '{name} is out of office. Task will be assigned to substitutes.',
+
   'task.is-overdue': 'Task is overdue',
   'task.add-guest': 'Add guest',
   'task.add-guest-field-placeholder': 'Email address',

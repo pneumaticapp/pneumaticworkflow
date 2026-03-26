@@ -84,6 +84,12 @@ function ProfileVacationFields({ availableUsers }: { availableUsers: TUserListIt
   const { values, setFieldValue, errors, submitCount } = useFormikContext<TProfileFields>();
   const { formatMessage } = useIntl();
   
+  useEffect(() => {
+    if (values.absenceStatus !== 'active' && !values.vacationStartDate) {
+      setFieldValue('vacationStartDate', formatDateLocal(new Date()));
+    }
+  }, [values.absenceStatus, values.vacationStartDate, setFieldValue]);
+  
   const STATUS_OPTIONS = [
     { value: 'active', label: formatMessage({ id: 'user-info.vacation.type.active', defaultMessage: 'Active' }) },
     { value: 'vacation', label: formatMessage({ id: 'user-info.vacation.type.vacation' }) },

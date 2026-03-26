@@ -59,7 +59,9 @@ class TasksOverviewQuery(
         WHERE
           pt.is_deleted IS FALSE AND
           (ptp.user_id = %(user_id)s OR aug.user_id IS NOT NULL) AND
-          ptp.directly_status != '{DirectlyStatus.DELETED}' AND
+          ptp.directly_status NOT IN (
+            '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+          ) AND
           pw.is_deleted IS FALSE AND
           pw.account_id = %(account_id)s AND
           (ag.is_deleted IS FALSE OR ag.id IS NULL)
@@ -106,7 +108,9 @@ class TasksOverviewNowQuery(
           pt.is_deleted IS FALSE AND
           (ptp.user_id = %(user_id)s OR aug.user_id IS NOT NULL) AND
           ptp.is_completed IS FALSE AND
-          ptp.directly_status != '{DirectlyStatus.DELETED}' AND
+          ptp.directly_status NOT IN (
+            '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+          ) AND
           pw.is_deleted IS FALSE AND
           pw.account_id = %(account_id)s AND
           (ag.is_deleted IS FALSE OR ag.id IS NULL)
@@ -161,7 +165,9 @@ class TasksBreakdownQuery(
         WHERE
           pt.is_deleted IS FALSE AND
           (ptp.user_id = %(user_id)s OR aug.user_id IS NOT NULL) AND
-          ptp.directly_status != '{DirectlyStatus.DELETED}' AND
+          ptp.directly_status NOT IN (
+            '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+          ) AND
           pw.is_deleted IS FALSE AND
           pw.account_id = %(account_id)s AND
           (ag.is_deleted IS FALSE OR ag.id IS NULL) AND
@@ -216,7 +222,9 @@ class TasksBreakdownNowQuery(
           pt.is_deleted IS FALSE AND
           (ptp.user_id = %(user_id)s OR aug.user_id IS NOT NULL) AND
           ptp.is_completed IS FALSE AND
-          ptp.directly_status != '{DirectlyStatus.DELETED}' AND
+          ptp.directly_status NOT IN (
+            '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+          ) AND
           pw.is_deleted IS FALSE AND
           pw.account_id = %(account_id)s AND
           (ag.is_deleted IS FALSE OR ag.id IS NULL) AND
@@ -279,7 +287,9 @@ class TasksBreakdownByStepsQuery(
         LEFT JOIN accounts_usergroup ag ON ag.id = aug.usergroup_id
         WHERE
           (ptp.user_id = %(user_id)s OR aug.user_id IS NOT NULL) AND
-          ptp.directly_status != '{DirectlyStatus.DELETED}' AND
+          ptp.directly_status NOT IN (
+            '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+          ) AND
           pt.is_deleted IS FALSE AND
           tt.is_deleted IS FALSE AND
           tt.template_id = %(template_id)s AND
@@ -337,7 +347,9 @@ class TasksBreakdownByStepsNowQuery(
           pw.is_deleted IS FALSE AND
           (ag.is_deleted IS FALSE OR ag.id IS NULL) AND
           ptp.is_completed IS FALSE AND
-          ptp.directly_status != '{DirectlyStatus.DELETED}'
+          ptp.directly_status NOT IN (
+            '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+          )
         GROUP BY tt.id, tt.number
         ORDER BY tt.number
         """, self.params
@@ -428,7 +440,9 @@ class TasksDigestQuery(
           tt.is_deleted IS FALSE AND
           au.is_deleted IS FALSE AND
           au.status = '{UserStatus.ACTIVE}' AND
-          ptp.directly_status != '{DirectlyStatus.DELETED}'
+          ptp.directly_status NOT IN (
+            '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+          )
           {self._get_subscriber_where()}
           {self._get_user_where()}
         GROUP BY au.id, ptmp.id, tt.id

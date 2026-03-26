@@ -376,21 +376,7 @@ export function TaskCard({
               inviteLabel={formatMessage({ id: 'template.invite-team-member' })}
               title={formatMessage({ id: 'task.add-performer' })}
             />
-            {performerDropdownValue.map((p) => {
-              const u = users.find((user) => user.id === p.id);
-              if (u?.isAbsent) {
-                return (
-                  <div key={p.id} className={styles['absent-warning']}>
-                    <span className={styles['absent-warning-icon']}>⚠️</span>
-                    {formatMessage(
-                      { id: 'task.absent-performer-warning' },
-                      { name: `${u.firstName} ${u.lastName}`.trim() }
-                    )}
-                  </div>
-                );
-              }
-              return null;
-            })}
+
           </>
         )}
 

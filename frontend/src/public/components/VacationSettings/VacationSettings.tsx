@@ -198,11 +198,12 @@ export function VacationSettings({
           )}
           {activeTab === 'active' && isAbsent && (
             <Button
-              label={formatMessage({ id: 'user-info.vacation.deactivate' })}
+              label={formatMessage({ id: 'user-info.change-submit', defaultMessage: 'Save changes' })}
               onClick={onDeactivate}
               isLoading={isLoading}
-              size="sm"
-              buttonStyle="transparent-black"
+              disabled={isLoading}
+              size="lg"
+              buttonStyle="yellow"
               data-testid="vacation-deactivate-btn"
             />
           )}

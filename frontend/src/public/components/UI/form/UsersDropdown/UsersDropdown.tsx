@@ -167,7 +167,7 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
           <p className={styles['user-option__label']}>
             {option.label}
             {(currentUser as TUserListItem)?.isAbsent && (
-              <span className={styles['user-option__badge']} title="Out Of Office">
+              <span className={styles['user-option__badge']}>
                 {(currentUser as TUserListItem)?.absenceStatus === 'sick_leave' ? ' 🏥' : ' ✈️'}
               </span>
             )}
