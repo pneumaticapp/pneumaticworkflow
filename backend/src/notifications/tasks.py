@@ -88,6 +88,7 @@ __all__ = [
     'send_user_deleted_notification',
     'send_user_transfer_notification',
     'send_user_updated_notification',
+    'send_vacation_delegation_notification',
     'send_verification_notification',
     'send_workflow_comment_watched',
     'send_workflow_event',
@@ -1438,3 +1439,36 @@ def _send_user_deleted_notification(
 @shared_task(base=NotificationTask)
 def send_user_deleted_notification(**kwargs):
     _send_user_deleted_notification(**kwargs)
+
+
+def _send_vacation_delegation_notification(
+    user_id: int,
+    user_email: str,
+    user_first_name: str,
+    account_id: int,
+    tasks_count: int,
+    vacation_owner_name: str,
+    logo_lg: Optional[str] = None,
+    logging: bool = False,
+    **kwargs,
+):
+    """Send vacation delegation summary letter through notification system."""
+
+    _send_notification(
+        method_name=NotificationMethod.vacation_delegation,
+        user_id=user_id,
+        user_email=user_email,
+        account_id=account_id,
+        logo_lg=logo_lg,
+        logging=logging,
+        user_first_name=user_first_name,
+        tasks_count=tasks_count,
+        vacation_owner_name=vacation_owner_name,
+        link=f'{settings.FRONTEND_URL}/tasks',
+        sync=True,
+    )
+
+
+@shared_task(base=NotificationTask)
+def send_vacation_delegation_notification(**kwargs):
+    _send_vacation_delegation_notification(**kwargs)

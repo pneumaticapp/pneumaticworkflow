@@ -1,6 +1,10 @@
+from django.contrib.auth import get_user_model
 from django.db import transaction
 
 from src.accounts.enums import AbsenceStatus, UserGroupType
+from src.notifications.tasks import (
+    send_vacation_delegation_notification,
+)
 from src.processes.enums import (
     DirectlyStatus,
     PerformerType,
@@ -57,6 +61,21 @@ class VacationDelegationService:
 
                 self.user.absence_status = absence_status
                 self.user.save(update_fields=['absence_status'])
+
+                if task_ids:
+                    substitutes = get_user_model().objects.filter(
+                        id__in=substitute_user_ids,
+                    )
+                    for sub in substitutes:
+                        send_vacation_delegation_notification.delay(
+                            user_id=sub.id,
+                            user_email=sub.email,
+                            user_first_name=sub.first_name,
+                            account_id=self.user.account_id,
+                            tasks_count=len(task_ids),
+                            vacation_owner_name=self.user.get_full_name(),
+                        )
+
                 return
 
             # 1. Create substitute group
@@ -164,6 +183,20 @@ class VacationDelegationService:
             self.user.absence_status = absence_status
             self.user.vacation_substitute_group = group
             self.user.save()
+
+            if task_ids:
+                substitutes = get_user_model().objects.filter(
+                    id__in=substitute_user_ids,
+                )
+                for sub in substitutes:
+                    send_vacation_delegation_notification.delay(
+                        user_id=sub.id,
+                        user_email=sub.email,
+                        user_first_name=sub.first_name,
+                        account_id=self.user.account_id,
+                        tasks_count=len(task_ids),
+                        vacation_owner_name=self.user.get_full_name(),
+                    )
 
     def deactivate(self):
         """Deactivate vacation delegation for the user.
