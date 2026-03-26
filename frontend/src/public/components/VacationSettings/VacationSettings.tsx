@@ -4,10 +4,12 @@ import { useIntl } from 'react-intl';
 
 import { Button } from '../UI/Buttons/Button';
 import { Header } from '../UI/Typeography/Header';
-import { Tabs } from '../UI/Tabs';
+import { DropdownList } from '../UI/DropdownList';
 import { DateField } from '../UI/Fields/DateField';
 import { UsersDropdown, EOptionTypes } from '../UI/form/UsersDropdown';
+import { UserPerformer, EBgColorTypes } from '../UI/UserPerformer';
 import { TUserListItem } from '../../types/user';
+import { ETaskPerformerType } from '../../types/template';
 import { getUserFullName } from '../../utils/users';
 
 import styles from './VacationSettings.css';
@@ -42,6 +44,7 @@ export function VacationSettings({
   absenceStatus,
   vacationStartDate,
   vacationEndDate,
+  substituteUserIds,
   availableUsers,
   onActivate,
   onDeactivate,
@@ -54,13 +57,17 @@ export function VacationSettings({
   const [activeTab, setActiveTab] = useState<string>('active');
   const [startDate, setStartDate] = useState<string | null>(initStartDate);
   const [endDate, setEndDate] = useState<string | null>(vacationEndDate || null);
-  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>(substituteUserIds || []);
+  const [hasSubmitted, setHasSubmitted] = useState<boolean>(false);
 
   useEffect(() => {
     setActiveTab(isAbsent ? (absenceStatus || 'vacation') : 'active');
   }, [isAbsent, absenceStatus]);
 
   const handleActivate = () => {
+    setHasSubmitted(true);
+    if (activeTab !== 'active' && selectedUserIds.length === 0) return;
+    
     onActivate({
       substituteUserIds: selectedUserIds,
       absenceStatus: activeTab,
@@ -70,9 +77,9 @@ export function VacationSettings({
   };
 
   const STATUS_OPTIONS = [
-    { id: 'active', label: formatMessage({ id: 'user-info.vacation.type.active', defaultMessage: 'Active' }) },
-    { id: 'vacation', label: formatMessage({ id: 'user-info.vacation.type.vacation' }) },
-    { id: 'sick_leave', label: formatMessage({ id: 'user-info.vacation.type.sick-leave' }) },
+    { value: 'active', label: formatMessage({ id: 'user-info.vacation.type.active', defaultMessage: 'Active' }) },
+    { value: 'vacation', label: formatMessage({ id: 'user-info.vacation.type.vacation' }) },
+    { value: 'sick_leave', label: formatMessage({ id: 'user-info.vacation.type.sick-leave' }) },
   ];
 
   const mapUserOptions = availableUsers.map(u => ({
@@ -87,6 +94,7 @@ export function VacationSettings({
       const id = Number(selected.id);
       if (!selectedUserIds.includes(id)) {
         setSelectedUserIds([...selectedUserIds, id]);
+        if (hasSubmitted) setHasSubmitted(false);
       }
     }
   };
@@ -107,48 +115,40 @@ export function VacationSettings({
       </Header>
 
       <div className={styles['vacation-form']} data-testid="vacation-form">
-        <Tabs
-          activeValueId={activeTab}
-          values={STATUS_OPTIONS}
-          onChange={(val) => setActiveTab(val as string)}
-          containerClassName={styles['tabs-container']}
+        <DropdownList
+          label={formatMessage({ id: 'user-info.vacation.status', defaultMessage: 'Status' })}
+          options={STATUS_OPTIONS}
+          value={STATUS_OPTIONS.find(o => o.value === activeTab)}
+          onChange={(option: any) => setActiveTab(option.value)}
+          controlSize="lg"
+          isSearchable={false}
+          className={styles['status-dropdown']}
         />
 
         {activeTab !== 'active' && (
           <div className={styles['form-content']}>
-            <div className={styles['vacation-dates']}>
-              <div className={styles['vacation-field']} data-testid="vacation-start-input">
-                {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-                <label className={styles['vacation-field-label']}>
-                  {formatMessage({ id: 'user-info.vacation.start-date' })}
-                </label>
+            <div className={styles['dates-row']}>
+              <div className={styles['date-field']} data-testid="vacation-start-input">
                 <DateField
                   value={startDate || null}
                   onChange={(date: Date | null) => setStartDate(formatDateLocal(date))}
                   fieldSize="lg"
-                  containerClassName={styles['date-field']}
+                  title={formatMessage({ id: 'user-info.vacation.start-date' })}
                 />
               </div>
-              <div className={styles['vacation-field']} data-testid="vacation-end-input">
-                {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-                <label className={styles['vacation-field-label']}>
-                  {formatMessage({ id: 'user-info.vacation.end-date' })}
-                </label>
+              <div className={styles['date-field']} data-testid="vacation-end-input">
                 <DateField
                   value={endDate || null}
                   onChange={(date: Date | null) => setEndDate(formatDateLocal(date))}
                   fieldSize="lg"
-                  containerClassName={styles['date-field']}
+                  title={formatMessage({ id: 'user-info.vacation.end-date' })}
                 />
               </div>
             </div>
 
             <div className={styles['vacation-substitutes']}>
-              {/* eslint-disable-next-line jsx-a11y/label-has-associated-control */}
-              <label className={styles['vacation-field-label']}>
-                {formatMessage({ id: 'user-info.vacation.substitutes' })}
-              </label>
               <UsersDropdown
+                label={formatMessage({ id: 'user-info.vacation.substitutes' })}
                 isMulti
                 controlSize="lg"
                 options={mapUserOptions}
@@ -159,7 +159,21 @@ export function VacationSettings({
                 placeholder={formatMessage({ id: 'user-info.vacation.substitutes' })}
                 inviteLabel=""
                 onClickInvite={() => {}}
+                isRequired
+                errorMessage={hasSubmitted && selectedUserIds.length === 0 ? formatMessage({ id: 'validation.required', defaultMessage: 'Please select at least one substitute.' }) : undefined}
               />
+              {selectedUserOptions.length > 0 && (
+                <div className={styles['selected-users']}>
+                  {selectedUserOptions.map((opt) => (
+                    <UserPerformer
+                      key={opt.id}
+                      user={{ ...opt, type: ETaskPerformerType.User }}
+                      bgColor={EBgColorTypes.Light}
+                      onClick={() => handleRemoveUser(opt)}
+                    />
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -173,10 +187,11 @@ export function VacationSettings({
         <div className={styles['vacation-actions']}>
           {activeTab !== 'active' && (
             <Button
-              label={formatMessage({ id: 'user-info.vacation.activate' })}
+              label={formatMessage({ id: 'user-info.change-submit', defaultMessage: 'Save changes' })}
               onClick={handleActivate}
               isLoading={isLoading}
-              size="sm"
+              disabled={isLoading}
+              size="lg"
               buttonStyle="yellow"
               data-testid="vacation-activate-btn"
             />

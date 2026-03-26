@@ -27,10 +27,40 @@ from src.processes.serializers.workflows.delay import (
 from src.processes.serializers.workflows.field import (
     TaskFieldSerializer,
 )
-from src.processes.serializers.workflows.task_performer import (
-    TaskUserGroupPerformerSerializer,
-)
+
+
 from src.processes.models.workflows.task import TaskPerformer
+
+
+def get_performers_for_task(instance) -> List[Dict[str, Any]]:
+    from src.accounts.enums import UserGroupType
+    if hasattr(instance, 'all_performers'):
+        performers = instance.all_performers
+    else:
+        performers = (
+            instance.exclude_directly_deleted_taskperformer_set()
+            .select_related('group')
+            .prefetch_related('group__users')
+        )
+    ret = []
+    for p in performers:
+        item = {
+            'is_completed': p.is_completed,
+            'date_completed_tsp': (
+                p.date_completed.timestamp()
+                if p.date_completed else None
+            ),
+            'type': p.type,
+            'source_id': p.group_id if p.type == 'group' else p.user_id,
+        }
+        if (
+            p.type == 'group'
+            and p.group
+            and p.group.type == UserGroupType.PERSONAL
+        ):
+            item['label'] = p.group.name
+        ret.append(item)
+    return ret
 
 
 class TaskShortSerializer(serializers.ModelSerializer):
@@ -84,11 +114,7 @@ class WorkflowCurrentTaskSerializer(serializers.ModelSerializer):
         return None
 
     def get_performers(self, instance) -> List[Dict[str, Any]]:
-        if hasattr(instance, 'all_performers'):
-            performers = instance.all_performers
-        else:
-            performers = instance.exclude_directly_deleted_taskperformer_set()
-        return TaskUserGroupPerformerSerializer(performers, many=True).data
+        return get_performers_for_task(instance)
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -122,10 +148,7 @@ class TaskSerializer(serializers.ModelSerializer):
 
     date_started_tsp = TimeStampField(source='date_started')
     date_completed_tsp = TimeStampField(source='date_completed')
-    performers = TaskUserGroupPerformerSerializer(
-        many=True,
-        source='exclude_directly_deleted_taskperformer_set',
-    )
+    performers = serializers.SerializerMethodField()
     workflow = serializers.SerializerMethodField()
     output = TaskFieldSerializer(many=True)
     delay = serializers.SerializerMethodField(required=False, allow_null=True)
@@ -139,6 +162,9 @@ class TaskSerializer(serializers.ModelSerializer):
     sub_workflows = serializers.SerializerMethodField()
     revert_tasks = TaskShortSerializer(many=True, source='get_revert_tasks')
     is_read_only_viewer = serializers.SerializerMethodField()
+
+    def get_performers(self, instance) -> List[Dict[str, Any]]:
+        return get_performers_for_task(instance)
 
     def get_is_completed(self, instance):
         #  TODO Remove in 41258

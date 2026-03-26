@@ -39,6 +39,8 @@ export interface IUsersDropdownProps<TOption extends TUsersDropdownOption> exten
   onUsersInvited?(invitedUsers: any): void;
   onClickInvite(): void;
   onClickAllUsers?(value: boolean): void;
+  errorMessage?: string;
+  isRequired?: boolean;
 }
 
 export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
@@ -58,6 +60,8 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
   isMulti,
   onClickAllUsers,
   value,
+  errorMessage,
+  isRequired,
   ...restProps
 }: IUsersDropdownProps<TOption>) {
   const { formatMessage } = useIntl();
@@ -199,6 +203,8 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
       formatOptionLabel={handleFormatOptionLabel}
       className={className}
       value={value}
+      errorMessage={errorMessage}
+      isRequired={isRequired}
       {...restProps}
     />
   );

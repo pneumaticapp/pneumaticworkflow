@@ -118,6 +118,7 @@ export const reducer = (state = INIT_STATE, action: TAuthActions | ReturnType<ty
         absenceStatus: action.payload.absenceStatus,
         vacationStartDate: action.payload.vacationStartDate,
         vacationEndDate: action.payload.vacationEndDate,
+        substituteUserIds: action.payload.substituteUserIds,
         isAbsent: action.payload.isAbsent,
       };
 

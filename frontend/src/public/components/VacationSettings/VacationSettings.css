@@ -6,7 +6,7 @@
   margin-bottom: 24px;
 }
 
-.tabs-container {
+.status-dropdown {
   margin-bottom: 24px;
 }
 
@@ -35,22 +35,14 @@
   margin: 0;
 }
 
-.vacation-field {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.vacation-field-label {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-text-main, #333);
-}
-
-.vacation-dates {
+.dates-row {
   display: flex;
   gap: 16px;
+}
+
+.dates-row > * {
+  flex: 1;
+  min-width: 0;
 }
 
 .date-field {

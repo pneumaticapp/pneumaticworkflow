@@ -606,6 +606,8 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
                             queryset=(
                                 TaskPerformer.objects
                                 .exclude_directly_deleted()
+                                .select_related('group')
+                                .prefetch_related('group__users')
                             ),
                         ),
                         Prefetch(

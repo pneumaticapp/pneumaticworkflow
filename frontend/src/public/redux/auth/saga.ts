@@ -601,6 +601,7 @@ export function* handleVacationActivate({ payload }: TVacationActivate) {
         absenceStatus: result.absenceStatus || 'vacation',
         vacationStartDate: result.vacationStartDate || null,
         vacationEndDate: result.vacationEndDate || null,
+        substituteUserIds: result.substituteUserIds || [],
         isAbsent: !!result.isAbsent,
       }));
       NotificationManager.success({ message: 'Vacation activated' });
@@ -619,6 +620,7 @@ export function* handleVacationDeactivate() {
         absenceStatus: result.absenceStatus || 'vacation',
         vacationStartDate: result.vacationStartDate || null,
         vacationEndDate: result.vacationEndDate || null,
+        substituteUserIds: result.substituteUserIds || [],
         isAbsent: !!result.isAbsent,
       }));
       NotificationManager.success({ message: 'Vacation deactivated' });

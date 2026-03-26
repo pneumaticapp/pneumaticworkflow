@@ -10,6 +10,8 @@ import { NotificationManager } from '../../UI/Notifications';
 import { getErrorMessage } from '../../../utils/getErrorMessage';
 import { teamFetchStarted, usersFetchStarted } from '../../../redux/accounts/slice';
 import { getAccountsUsers } from '../../../redux/selectors/accounts';
+import { getAuthUser } from '../../../redux/selectors/user';
+import { vacationSuccess } from '../../../redux/auth/actions';
 
 export interface IVacationSettingsModalProps {
   isOpen: boolean;
@@ -21,6 +23,7 @@ export function VacationSettingsModal({ isOpen, onClose, user }: IVacationSettin
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   const [isLoading, setIsLoading] = useState(false);
+  const { authUser } = useSelector(getAuthUser);
 
   const availableUsers: TUserListItem[] = useSelector(getAccountsUsers).filter(
     (u: TUserListItem) => u.id !== user?.id && u.status === 'active'
@@ -30,10 +33,21 @@ export function VacationSettingsModal({ isOpen, onClose, user }: IVacationSettin
     if (!user?.id) return;
     setIsLoading(true);
     try {
-      await activateVacation(data, user.id);
+      const result = await activateVacation(data, user.id);
       NotificationManager.success({ message: formatMessage({ id: 'user-info.vacation.activated-success' }) });
       dispatch(teamFetchStarted({}));
       dispatch(usersFetchStarted());
+      
+      if (authUser.id === user.id && result) {
+        dispatch(vacationSuccess({
+          absenceStatus: result.absenceStatus || 'vacation',
+          vacationStartDate: result.vacationStartDate || null,
+          vacationEndDate: result.vacationEndDate || null,
+          substituteUserIds: result.substituteUserIds || [],
+          isAbsent: !!result.isAbsent,
+        }));
+      }
+
       onClose();
     } catch (error) {
       NotificationManager.notifyApiError(error, { title: 'error.general', message: getErrorMessage(error) });
@@ -46,10 +60,21 @@ export function VacationSettingsModal({ isOpen, onClose, user }: IVacationSettin
     if (!user?.id) return;
     setIsLoading(true);
     try {
-      await deactivateVacation(user.id);
+      const result = await deactivateVacation(user.id);
       NotificationManager.success({ message: formatMessage({ id: 'user-info.vacation.deactivated-success' }) });
       dispatch(teamFetchStarted({}));
       dispatch(usersFetchStarted());
+
+      if (authUser.id === user.id && result) {
+        dispatch(vacationSuccess({
+          absenceStatus: result.absenceStatus || 'vacation',
+          vacationStartDate: result.vacationStartDate || null,
+          vacationEndDate: result.vacationEndDate || null,
+          substituteUserIds: result.substituteUserIds || [],
+          isAbsent: !!result.isAbsent,
+        }));
+      }
+
       onClose();
     } catch (error) {
       NotificationManager.notifyApiError(error, { title: 'error.general', message: getErrorMessage(error) });

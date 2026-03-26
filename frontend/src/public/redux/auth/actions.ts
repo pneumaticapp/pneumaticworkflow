@@ -425,6 +425,7 @@ export type TVacationSuccessPayload = {
   absenceStatus: string;
   vacationStartDate: string | null;
   vacationEndDate: string | null;
+  substituteUserIds: number[];
   isAbsent: boolean;
 };
 export type TVacationSuccess = ITypedReduxAction<EAuthActions.VacationSuccess, TVacationSuccessPayload>;

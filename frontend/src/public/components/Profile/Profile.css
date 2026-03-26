@@ -61,3 +61,13 @@
     margin: 0;
   }
 }
+
+.dates-row {
+  display: flex;
+  gap: 16px;
+}
+
+.dates-row > * {
+  flex: 1;
+  min-width: 0;
+}

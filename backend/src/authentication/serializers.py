@@ -187,6 +187,11 @@ class ContextUserSerializer(serializers.ModelSerializer):
             'date_fdw',
             'has_workflow_viewer_access',
             'has_workflow_starter_access',
+            'absence_status',
+            'vacation_start_date',
+            'vacation_end_date',
+            'is_absent',
+            'substitute_user_ids',
         )
 
     account = ContextAccountSerializer()
@@ -195,6 +200,16 @@ class ContextUserSerializer(serializers.ModelSerializer):
     has_workflow_starter_access = serializers.SerializerMethodField()
     date_joined_tsp = TimeStampField(source='date_joined', read_only=True)
     date_fmt = DateFormatField(read_only=True)
+    is_absent = serializers.BooleanField(read_only=True)
+    substitute_user_ids = serializers.SerializerMethodField()
+
+    def get_substitute_user_ids(self, instance: UserModel) -> list:
+        if instance.vacation_substitute_group_id:
+            return list(
+                instance.vacation_substitute_group.users
+                .values_list('id', flat=True),
+            )
+        return []
 
     def get_has_workflow_viewer_access(self, obj) -> bool:
         access = self._get_template_access(obj)

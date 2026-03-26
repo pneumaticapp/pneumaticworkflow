@@ -140,26 +140,18 @@ class UserViewSet(
 
     def _activate_vacation(self, request):
         user = request.user
-        if user.is_absent:
-            raise_validation_error(
-                message='Vacation is already active.',
-            )
         slz = VacationActivateSerializer(
             data=request.data,
-            context=self.get_serializer_context(),
+            context={**self.get_serializer_context(), 'vacation_user': user},
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
         # Save dates if provided
-        if data.get('vacation_start_date'):
-            user.vacation_start_date = (
-                data['vacation_start_date']
-            )
-        if data.get('vacation_end_date'):
-            user.vacation_end_date = (
-                data['vacation_end_date']
-            )
+        if 'vacation_start_date' in data:
+            user.vacation_start_date = data['vacation_start_date']
+        if 'vacation_end_date' in data:
+            user.vacation_end_date = data['vacation_end_date']
         user.save(update_fields=[
             'vacation_start_date',
             'vacation_end_date',

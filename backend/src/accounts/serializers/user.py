@@ -1,3 +1,5 @@
+from typing import List
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Prefetch, Q
@@ -110,7 +112,7 @@ class UserSerializer(
             return UserListInviteSerializer(instance.invite).data
         return None
 
-    def get_substitute_user_ids(self, instance: UserModel) -> list[int]:
+    def get_substitute_user_ids(self, instance: UserModel) -> List[int]:
         if instance.vacation_substitute_group_id:
             return list(
                 instance.vacation_substitute_group.users
@@ -309,7 +311,7 @@ class VacationActivateSerializer(
     )
 
     def validate_substitute_user_ids(self, value):
-        user = self.context['user']
+        user = self.context.get('vacation_user', self.context.get('user'))
         account_id = user.account_id
 
         if user.id in value:
@@ -329,3 +331,15 @@ class VacationActivateSerializer(
                 f'Users not found: {sorted(missing)}',
             )
         return value
+
+    def validate(self, attrs):
+        if not attrs.get('substitute_user_ids'):
+            raise serializers.ValidationError(
+                {
+                    'substitute_user_ids': [
+                        'Please select at least one substitute.',
+                    ],
+                },
+            )
+
+        return attrs

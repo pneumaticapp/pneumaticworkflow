@@ -31,6 +31,34 @@ class VacationDelegationService:
         from src.processes.services.events import WorkflowEventService  # noqa: PLC0415
 
         with transaction.atomic():
+            if self.user.is_absent and self.user.vacation_substitute_group:
+                group = self.user.vacation_substitute_group
+                group.users.set(substitute_user_ids)
+
+                # Ensure new substitutes have workflow access
+                task_ids = (
+                    TaskPerformer.objects
+                    .filter(group=group)
+                    .values_list('task_id', flat=True)
+                    .distinct()
+                )
+                wf_ids = (
+                    Task.objects
+                    .filter(id__in=task_ids)
+                    .values_list('workflow_id', flat=True)
+                    .distinct()
+                )
+                for wf_id in wf_ids:
+                    for sub_id in substitute_user_ids:
+                        Workflow.members.through.objects.get_or_create(
+                            workflow_id=wf_id,
+                            user_id=sub_id,
+                        )
+
+                self.user.absence_status = absence_status
+                self.user.save(update_fields=['absence_status'])
+                return
+
             # 1. Create substitute group
             group = UserGroup.objects.create(
                 name=f"Substitutes {self.user.get_full_name()}",

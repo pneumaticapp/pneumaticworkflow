@@ -93,6 +93,7 @@ export interface IAuthUser extends IUnsavedUser {
   absenceStatus?: string;
   vacationStartDate?: string | null;
   vacationEndDate?: string | null;
+  substituteUserIds?: number[];
   isAbsent?: boolean;
 }
 

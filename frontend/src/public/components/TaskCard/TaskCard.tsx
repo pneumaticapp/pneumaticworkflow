@@ -242,6 +242,23 @@ export function TaskCard({
     ].every(Boolean);
 
     return task.performers.map((performer) => {
+      if (performer.type === ETemplateOwnerType.UserGroup && performer.label) {
+        return (
+          <UserPerformer
+            key={performer.sourceId}
+            user={{
+              ...performer,
+              sourceId: String(performer.sourceId),
+              value: String(performer.sourceId),
+            }}
+            bgColor={EBgColorTypes.Light}
+            {...(isPossibleToRemovePerformer && {
+              onClick: () => removeTaskPerformer({ taskId: task.id, userId: performer }),
+            })}
+          />
+        );
+      }
+
       return (
         <UserDataWithGroup key={performer.sourceId} idItem={performer.sourceId} type={performer.type}>
           {(user) => {
