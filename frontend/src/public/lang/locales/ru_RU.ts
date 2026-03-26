@@ -1294,4 +1294,7 @@ export const ruMessages = {
   'due-date.time-too-early': 'Дата выполнения должна быть больше текущей.',
   'datasets.title': 'Наборы данных',
   'datasets.title.tooltip': 'Наборы элементов данных для использования в выпадающих списках.',
+  'datasets.new-dataset.title': 'Новый набор данных',
+  'datasets.new-dataset.caption': 'Создайте новый набор данных для использования в выпадающих списках',
+  'datasets.new-dataset.description': 'После создания набора данных вы сможете сразу начать добавлять в него элементы.',
 };

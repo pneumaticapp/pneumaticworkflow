@@ -1,6 +1,7 @@
 export * from './Avatar';
 export * from './Buttons/Button';
 export * from './Buttons/DropdownButton';
+export * from './Buttons/AddCardButton';
 export * from './CustomTooltip';
 export * from './DropdownList';
 export * from './Duration';

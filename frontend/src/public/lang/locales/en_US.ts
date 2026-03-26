@@ -1387,4 +1387,7 @@ export const enMessages = {
   'due-date.time-too-early': 'Due date should be greater than current.',
   'datasets.title': 'Datasets',
   'datasets.title.tooltip': 'Collections of data items for use in drop-down fields',
+  'datasets.new-dataset.title': 'New Dataset',
+  'datasets.new-dataset.caption': 'Create a new dataset for use in dropdown lists',
+  'datasets.new-dataset.description': 'Once a new dataset has been created, you can immediately start adding items to it.',
 };

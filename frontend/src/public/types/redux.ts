@@ -368,6 +368,8 @@ export type IDatasetsStore = {
   searchQuery: string;                
   datasetsListSorting: EDatasetsSorting;         
 
+  isCreateModalOpen: boolean;
+  
   currentDataset: IDataset | null;    
   isCurrentDatasetLoading: boolean;   
   currentSearchQuery: string;         

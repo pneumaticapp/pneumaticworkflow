@@ -10,6 +10,7 @@ export const initialState: IDatasetsStore = {
   isLoading: false,
   searchQuery: '',
   datasetsListSorting: EDatasetsSorting.NameAsc,
+  isCreateModalOpen: false,
 
   currentDataset: null,
   isCurrentDatasetLoading: false,
@@ -40,6 +41,14 @@ const datasetsSlice = createSlice({
 
     setDatasetsListSorting: (state, action: PayloadAction<EDatasetsSorting>) => {
       state.datasetsListSorting = action.payload;
+    },
+
+    openCreateModal: (state) => {
+      state.isCreateModalOpen = true;
+    },
+
+    closeCreateModal: (state) => {
+      state.isCreateModalOpen = false;
     },
 
     loadDataset: (state, _action: PayloadAction<{ id: number }>) => {
@@ -94,6 +103,8 @@ export const {
   loadDatasetsFailed,
   setSearchQuery,
   setDatasetsListSorting,
+  openCreateModal,
+  closeCreateModal,
 
   loadDataset,
   loadDatasetSuccess,
