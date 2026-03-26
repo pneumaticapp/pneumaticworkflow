@@ -1,28 +1,53 @@
-import React, { FormEvent, useState, useEffect } from 'react';
+import * as React from 'react';
+import { useState, FormEvent, ChangeEvent } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { validateDatasetName } from '../../../utils/validators';
 import { Button, Header, InputField, Modal } from '../../UI';
-import { closeCreateModal, createDatasetAction } from '../../../redux/datasets/slice';
-import { isCreateModalOpen } from '../../../redux/selectors/datasets';
+import {
+  closeCreateModal,
+  closeEditModal,
+  createDatasetAction,
+  updateDatasetAction,
+} from '../../../redux/datasets/slice';
+import { isCreateModalOpen, isEditModalOpen, getCurrentDataset } from '../../../redux/selectors/datasets';
 
+import { EDatasetModalType, IDatasetModalProps } from './types';
 import styles from './DatasetModal.css';
 
-export function DatasetModal() {
+const CONFIG = {
+  [EDatasetModalType.Create]: {
+    title: 'datasets.new-dataset.title',
+    description: 'datasets.new-dataset.description',
+    submitLabel: 'datasets.modal-button-create',
+    isModalOpenSelector: isCreateModalOpen,
+    closeAction: closeCreateModal,
+    placeholder: 'datasets.new-dataset.title',
+  },
+  [EDatasetModalType.Edit]: {
+    title: 'datasets.edit-dataset.title',
+    description: 'datasets.edit-dataset.description',
+    submitLabel: 'datasets.modal-button-confirm',
+    isModalOpenSelector: isEditModalOpen,
+    closeAction: closeEditModal,
+    placeholder: '',
+  },
+};
+
+export function DatasetModal({ type }: IDatasetModalProps) {
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
-  const isOpen = useSelector(isCreateModalOpen);
 
-  const [inputName, setInputName] = useState('');
+  const { title, description, submitLabel, isModalOpenSelector, closeAction, placeholder } = CONFIG[type];
+  const isOpen = useSelector(isModalOpenSelector);
+  const currentDataset = useSelector(getCurrentDataset);
+
+  const initialName = type === EDatasetModalType.Edit && currentDataset ? currentDataset.name : '';
+
+  const [inputName, setInputName] = useState(initialName);
   const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (isOpen) {
-      setInputName('');
-      setError('');
-    }
-  }, [isOpen]);
+  const [hasChanges, setHasChanges] = useState(false);
 
   const validationForm = () => {
     const currentError = validateDatasetName(inputName);
@@ -35,41 +60,59 @@ export function DatasetModal() {
   };
 
   const handleCloseModal = () => {
-    dispatch(closeCreateModal());
-    setError('');
+    dispatch(closeAction());
   };
 
-  const handleCreateDataset = (e: FormEvent<HTMLFormElement>) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.currentTarget.value;
+    setHasChanges(true);
+    setInputName(newValue);
+
+    if (error) {
+      setError(validateDatasetName(newValue));
+    }
+  };
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!validationForm()) return;
-    dispatch(
-      createDatasetAction({
-        name: inputName,
-      })
-    );
+
+    if (type === EDatasetModalType.Create) {
+      dispatch(createDatasetAction({ name: inputName }));
+    } else if (currentDataset) {
+      dispatch(updateDatasetAction({ id: currentDataset.id, name: inputName }));
+    }
     handleCloseModal();
   };
+
+  const isSubmitDisabled = !inputName || (type === EDatasetModalType.Edit && !hasChanges);
 
   return (
     <Modal isOpen={isOpen} onClose={handleCloseModal} width="sm">
       <div>
         <Header tag="p" size="6" className={styles['dataset-modal__title']}>
-          {formatMessage({ id: 'datasets.new-dataset.title' })}
+          {formatMessage({ id: title })}
         </Header>
         <p className={styles['dataset-modal__description']}>
-          {formatMessage({ id: 'datasets.new-dataset.description' })}
+          {formatMessage({ id: description })}
         </p>
-        <form onSubmit={handleCreateDataset} data-autofocus-first-field>
+        <form onSubmit={handleSubmit} data-autofocus-first-field>
           <InputField
             autoFocus
             value={inputName}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setInputName(e.currentTarget.value)}
+            onChange={handleInputChange}
             errorMessage={error}
             fieldSize="md"
-            placeholder={formatMessage({ id: 'datasets.new-dataset.title' })}
+            placeholder={placeholder ? formatMessage({ id: placeholder }) : ''}
           />
           <div className={styles['dataset-modal__footer']}>
-            <Button type="submit" label={formatMessage({ id: 'datasets.modal-button-create' })} buttonStyle="yellow" size="md" disabled={!inputName} />
+            <Button
+              type="submit"
+              label={formatMessage({ id: submitLabel })}
+              buttonStyle="yellow"
+              size="md"
+              disabled={isSubmitDisabled}
+            />
             <Button
               type="button"
               buttonStyle="link-dark-text"

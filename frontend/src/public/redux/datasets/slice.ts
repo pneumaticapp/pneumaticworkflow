@@ -11,6 +11,7 @@ export const initialState: IDatasetsStore = {
   searchQuery: '',
   datasetsListSorting: EDatasetsSorting.NameAsc,
   isCreateModalOpen: false,
+  isEditModalOpen: false,
 
   currentDataset: null,
   isCurrentDatasetLoading: false,
@@ -49,6 +50,14 @@ const datasetsSlice = createSlice({
 
     closeCreateModal: (state) => {
       state.isCreateModalOpen = false;
+    },
+
+    openEditModal: (state) => {
+      state.isEditModalOpen = true;
+    },
+
+    closeEditModal: (state) => {
+      state.isEditModalOpen = false;
     },
 
     loadDataset: (state, _action: PayloadAction<{ id: number }>) => {
@@ -105,6 +114,8 @@ export const {
   setDatasetsListSorting,
   openCreateModal,
   closeCreateModal,
+  openEditModal,
+  closeEditModal,
 
   loadDataset,
   loadDatasetSuccess,

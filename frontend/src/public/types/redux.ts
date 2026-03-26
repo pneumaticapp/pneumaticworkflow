@@ -369,6 +369,7 @@ export type IDatasetsStore = {
   datasetsListSorting: EDatasetsSorting;         
 
   isCreateModalOpen: boolean;
+  isEditModalOpen: boolean;
   
   currentDataset: IDataset | null;    
   isCurrentDatasetLoading: boolean;   
