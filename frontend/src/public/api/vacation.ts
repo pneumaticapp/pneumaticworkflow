@@ -17,7 +17,7 @@ export function activateVacation(
   const urls = getBrowserConfigEnv().api.urls as Record<string, string>;
   const url = userId 
     ? urls.vacationUserActivate.replace(':id', String(userId)) 
-    : 'vacationActivate';
+    : urls.vacationActivate;
 
   return commonRequest<IUserResponse>(
     url,
@@ -32,7 +32,7 @@ export function deactivateVacation(userId?: number) {
   const urls = getBrowserConfigEnv().api.urls as Record<string, string>;
   const url = userId 
     ? urls.vacationUserDeactivate.replace(':id', String(userId)) 
-    : 'vacationDeactivate';
+    : urls.vacationDeactivate;
 
   return commonRequest<IUserResponse>(
     url,

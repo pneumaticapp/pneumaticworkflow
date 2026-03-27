@@ -1,7 +1,7 @@
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import * as React from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { Formik, Form, FormikConfig } from 'formik';
-import classNames from 'classnames';
 
 import {
   FIRST_DAY_OPTIONS,
@@ -26,15 +26,12 @@ import { AvatarController } from './AvatarController';
 import { FormikDropdownList } from '../UI';
 import { LockIcon } from '../icons/LockIcon';
 import { ChangePassword } from './ChangePassword';
-
-import { useFormikContext } from 'formik';
-import { DateField } from '../UI/Fields/DateField';
-import { UsersDropdown, EOptionTypes } from '../UI/form/UsersDropdown';
-import { UserPerformer, EBgColorTypes } from '../UI/UserPerformer';
-import { getUserFullName } from '../../utils/users';
-import { ETaskPerformerType } from '../../types/template';
+import { ProfileVacationFields } from './ProfileVacationFields';
 
 import styles from './Profile.css';
+
+const arraysEqual = (a: number[], b: number[]) =>
+  a.length === b.length && a.every((v, i) => v === b[i]);
 
 export interface IProfileProps {
   user: IAuthUser;
@@ -72,119 +69,7 @@ export type TProfileFields = {
   substituteUserIds: number[];
 };
 
-const formatDateLocal = (date: Date | null): string | null => {
-  if (!date) return null;
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
-};
 
-function ProfileVacationFields({ availableUsers }: { availableUsers: TUserListItem[] }) {
-  const { values, setFieldValue, errors, submitCount } = useFormikContext<TProfileFields>();
-  const { formatMessage } = useIntl();
-  
-  useEffect(() => {
-    if (values.absenceStatus !== 'active' && !values.vacationStartDate) {
-      setFieldValue('vacationStartDate', formatDateLocal(new Date()));
-    }
-  }, [values.absenceStatus, values.vacationStartDate, setFieldValue]);
-  
-  const STATUS_OPTIONS = [
-    { value: 'active', label: formatMessage({ id: 'user-info.vacation.type.active', defaultMessage: 'Active' }) },
-    { value: 'vacation', label: formatMessage({ id: 'user-info.vacation.type.vacation' }) },
-    { value: 'sick_leave', label: formatMessage({ id: 'user-info.vacation.type.sick-leave' }) },
-  ];
-
-  const mapUserOptions = availableUsers.map((u) => ({
-    ...u,
-    optionType: EOptionTypes.User,
-    value: String(u.id),
-    label: getUserFullName({ firstName: u.firstName, lastName: u.lastName }),
-  }));
-
-  const handleAddUser = (selected: any) => {
-    if (selected && selected.id) {
-      const id = Number(selected.id);
-      if (!values.substituteUserIds.includes(id)) {
-        setFieldValue('substituteUserIds', [...values.substituteUserIds, id]);
-      }
-    }
-  };
-
-  const handleRemoveUser = (selected: any) => {
-    if (selected && selected.id) {
-      const id = Number(selected.id);
-      setFieldValue('substituteUserIds', values.substituteUserIds.filter(userId => userId !== id));
-    }
-  };
-  
-  const selectedUserOptions = mapUserOptions.filter(opt => values.substituteUserIds.includes(opt.id));
-
-  return (
-    <fieldset className={styles['fields-group']}>
-      <SectionTitle className={styles['fields-group__title']}>
-        {formatMessage({ id: 'user-info.vacation.title' })}
-      </SectionTitle>
-      
-      <FormikDropdownList
-         label={formatMessage({ id: 'user-info.vacation.status', defaultMessage: 'Options' })}
-         className={styles['field']}
-         name="absenceStatus"
-         options={STATUS_OPTIONS}
-      />
-      
-      {values.absenceStatus !== 'active' && (
-        <>
-          <div className={classNames(styles['field'], styles['dates-row'])}>
-            <DateField
-              value={values.vacationStartDate}
-              onChange={(date: Date | null) => setFieldValue('vacationStartDate', formatDateLocal(date))}
-              fieldSize="lg"
-              title={formatMessage({ id: 'user-info.vacation.start-date' })}
-            />
-            <DateField
-              value={values.vacationEndDate}
-              onChange={(date: Date | null) => setFieldValue('vacationEndDate', formatDateLocal(date))}
-              fieldSize="lg"
-              title={formatMessage({ id: 'user-info.vacation.end-date' })}
-            />
-          </div>
-          
-          <div className={styles['field']}>
-            <UsersDropdown
-              label={formatMessage({ id: 'user-info.vacation.substitutes' })}
-              isMulti
-              controlSize="lg"
-              options={mapUserOptions}
-              value={selectedUserOptions}
-              onChange={handleAddUser}
-              onChangeSelected={handleRemoveUser}
-              isSearchable
-              placeholder={formatMessage({ id: 'user-info.vacation.substitutes' })}
-              inviteLabel=""
-              onClickInvite={() => {}}
-              isRequired
-              errorMessage={submitCount > 0 && errors.substituteUserIds ? String(errors.substituteUserIds) : undefined}
-            />
-            {selectedUserOptions.length > 0 && (
-              <div style={{ marginTop: '8px', display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                {selectedUserOptions.map((opt) => (
-                  <UserPerformer
-                    key={opt.id}
-                    user={{ ...opt, type: ETaskPerformerType.User }}
-                    bgColor={EBgColorTypes.Light}
-                    onClick={() => handleRemoveUser(opt)}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
-        </>
-      )}
-    </fieldset>
-  );
-}
 
 export function Profile({
   user,
@@ -266,11 +151,11 @@ export function Profile({
     
     // Determine if any vacation fields have changed
     const prevAbsenceStatus = user.isAbsent ? (user.absenceStatus || 'vacation') : 'active';
-    const vacationSettingsChanged = 
+    const vacationSettingsChanged =
       absenceStatus !== prevAbsenceStatus ||
       vacationStartDate !== (user.vacationStartDate || null) ||
       vacationEndDate !== (user.vacationEndDate || null) ||
-      JSON.stringify(substituteUserIds) !== JSON.stringify(user.substituteUserIds || []);
+      !arraysEqual(substituteUserIds, user.substituteUserIds || []);
       
     if (vacationSettingsChanged) {
       if (nextIsAbsent) {
@@ -306,7 +191,16 @@ export function Profile({
           });
 
           if (values.absenceStatus !== 'active' && (!values.substituteUserIds || values.substituteUserIds.length === 0)) {
-            errors.substituteUserIds = 'Please select at least one substitute.';
+            errors.substituteUserIds = formatMessage({ id: 'validation.required' });
+          }
+
+          if (
+            values.absenceStatus !== 'active' &&
+            values.vacationStartDate &&
+            values.vacationEndDate &&
+            values.vacationEndDate < values.vacationStartDate
+          ) {
+            errors.vacationEndDate = formatMessage({ id: 'user-info.vacation.end-date-before-start' });
           }
 
           return { ...errors };
@@ -438,7 +332,7 @@ export function Profile({
 
             <button type="button" className={styles['change-pass']} onClick={() => setIsOpenModal(true)}>
               <LockIcon></LockIcon>
-              <p>Change your password</p>
+              <p>{formatMessage({ id: 'user-info.change-your-password' })}</p>
             </button>
           </fieldset>
 

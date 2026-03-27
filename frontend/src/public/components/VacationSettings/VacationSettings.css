@@ -1,13 +1,13 @@
 .vacation-settings {
-  margin-top: 24px;
+  margin-top: 2.4rem;
 }
 
 .header {
-  margin-bottom: 24px;
+  margin-bottom: 2.4rem;
 }
 
 .status-dropdown {
-  margin-bottom: 24px;
+  margin-bottom: 2.4rem;
 }
 
 .vacation-form {
@@ -18,17 +18,17 @@
 .form-content {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 1.6rem;
 }
 
 .vacation-active {
-  padding: 16px;
+  padding: 1.6rem;
   display: flex;
   flex-direction: column;
-  background: var(--color-bg-secondary, whitesmoke);
-  border-radius: 8px;
+  background: var(--pneumatic-color-beige);
+  border-radius: 0.8rem;
   align-items: flex-start;
-  gap: 16px;
+  gap: 1.6rem;
 }
 
 .vacation-active p {
@@ -37,7 +37,7 @@
 
 .dates-row {
   display: flex;
-  gap: 16px;
+  gap: 1.6rem;
 }
 
 .dates-row > * {
@@ -52,19 +52,19 @@
 .vacation-substitutes {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 0.8rem;
 }
 
 .selected-users {
-  margin-top: 8px;
+  margin-top: 0.8rem;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0.8rem;
 }
 
 .vacation-actions {
-  margin-top: 24px;
+  margin-top: 2.4rem;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 1.6rem;
 }

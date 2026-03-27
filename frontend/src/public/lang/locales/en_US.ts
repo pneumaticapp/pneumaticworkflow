@@ -227,6 +227,7 @@ export const enMessages = {
   'user-info.vacation.deactivate': 'Return',
   'user-info.vacation.activated-success': 'Vacation activated',
   'user-info.vacation.deactivated-success': 'Vacation deactivated',
+  'user-info.vacation.end-date-before-start': 'Last day cannot be before First day',
 
   'user-account.company-settings': 'Company settings',
   'user-account.change-submit': 'Save changes',

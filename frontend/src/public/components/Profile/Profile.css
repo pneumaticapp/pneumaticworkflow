@@ -64,10 +64,17 @@
 
 .dates-row {
   display: flex;
-  gap: 16px;
+  gap: 1.6rem;
 }
 
 .dates-row > * {
   flex: 1;
   min-width: 0;
+}
+
+.selected-users {
+  margin-top: 0.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
 }

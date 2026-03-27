@@ -213,7 +213,7 @@
   margin-top: 8px;
   display: flex;
   align-items: center;
-  color: #ff9800;
+  color: var(--pneumatic-color-warning);
 
   &-icon {
     margin-right: 4px;

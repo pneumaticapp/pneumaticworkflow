@@ -1,24 +1,29 @@
+// <reference types="jest" />
 import * as React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { intlMock } from '../../../__stubs__/intlMock';
 import { VacationSettings } from '../VacationSettings';
 
 jest.mock('../../UI/Fields/DateField', () => ({
-  DateField: ({ value, onChange, 'data-testid': testId }: any) => (
-    <input
-      type="date"
-      data-testid={testId || 'date-field'}
-      value={value || ''}
-      onChange={(e) => {
-        const parts = e.target.value.split('-');
-        if (parts.length === 3) {
-          onChange(new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])));
-        } else {
-          onChange(null);
-        }
-      }}
-    />
+  DateField: ({ value, onChange, title }: any) => (
+    <div>
+      <label>{title}</label>
+      <input
+        type="date"
+        aria-label={title}
+        value={value || ''}
+        onChange={(e) => {
+          const parts = e.target.value.split('-');
+          if (parts.length === 3) {
+            onChange(new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])));
+          } else {
+            onChange(null);
+          }
+        }}
+      />
+    </div>
   ),
 }));
 
@@ -39,15 +44,6 @@ jest.mock('../../UI/form/UsersDropdown', () => ({
   ),
 }));
 
-jest.mock('../../UserDataWithGroup', () => ({
-  __esModule: true,
-  default: ({ children, idItem }: any) => (
-    <div data-testid={`user-data-wrapper-${idItem}`}>
-      {children({ id: idItem, firstName: 'Mock', lastName: 'User' })}
-    </div>
-  ),
-}));
-
 jest.mock('../../UI/UserPerformer', () => ({
   UserPerformer: ({ user, onClick }: any) => (
     <button data-testid={`remove-user-${user.value}`} onClick={onClick}>
@@ -57,17 +53,18 @@ jest.mock('../../UI/UserPerformer', () => ({
   EBgColorTypes: { Light: 'light' },
 }));
 
-jest.mock('../../UI/Tabs', () => ({
-  Tabs: ({ values, activeValueId, onChange }: any) => (
-    <div data-testid="tabs">
-      {values.map((val: any) => (
+jest.mock('../../UI/DropdownList', () => ({
+  DropdownList: ({ options, value, onChange, label }: any) => (
+    <div data-testid="status-dropdown">
+      <span>{label}</span>
+      {options.map((opt: any) => (
         <button
-          key={val.id}
-          data-testid={`tab-${val.id}`}
-          className={activeValueId === val.id ? 'active' : ''}
-          onClick={() => onChange(val.id)}
+          key={opt.value}
+          data-testid={`status-${opt.value}`}
+          className={value && value.value === opt.value ? 'active' : ''}
+          onClick={() => onChange(opt)}
         >
-          {val.label}
+          {opt.label}
         </button>
       ))}
     </div>
@@ -89,6 +86,12 @@ jest.mock('../../UI/Typeography/Header', () => ({
 describe('VacationSettings', () => {
   const mockOnActivate = jest.fn();
   const mockOnDeactivate = jest.fn();
+  const t = (id: string) => intlMock.formatMessage({ id });
+
+  const TITLE = t('user-info.vacation.title');
+
+  const ACTIVE_MSG = t('user-info.vacation.active');
+
 
   const makeUser = (overrides: Record<string, unknown> = {}) => ({
     id: 10,
@@ -116,75 +119,95 @@ describe('VacationSettings', () => {
     jest.clearAllMocks();
   });
 
-  it('renders header', () => {
-    render(<VacationSettings {...baseProps} />);
-    expect(screen.getByTestId('header')).toHaveTextContent(intlMock.formatMessage({ id: 'user-info.vacation.title' }));
-  });
+  describe('Рендер', () => {
+    it('отображает заголовок', () => {
+      render(<VacationSettings {...baseProps} />);
+      expect(screen.getByTestId('header')).toHaveTextContent(TITLE);
+    });
 
-  it('renders tabs and defaults to active if not absent', () => {
-    render(<VacationSettings {...baseProps} />);
-    expect(screen.getByTestId('tab-active')).toHaveClass('active');
-    expect(screen.queryByTestId('vacation-start-input')).not.toBeInTheDocument();
-  });
+    it('по умолчанию выбирает статус active если не absent', () => {
+      render(<VacationSettings {...baseProps} />);
+      expect(screen.getByTestId('status-active')).toHaveClass('active');
+      expect(screen.queryByTestId('vacation-start-input')).not.toBeInTheDocument();
+    });
 
-  it('defaults to vacation if absent', () => {
-    render(<VacationSettings {...baseProps} isAbsent={true} />);
-    expect(screen.getByTestId('tab-vacation')).toHaveClass('active');
-    expect(screen.getByTestId('vacation-start-input')).toBeInTheDocument();
-  });
-
-  it('allows activating vacation with dates and substitutes', () => {
-    render(<VacationSettings {...baseProps} />);
-    
-    // Switch to vacation tab
-    fireEvent.click(screen.getByTestId('tab-vacation'));
-    
-    // Set dates
-    const startInput = screen.getByTestId('vacation-start-input').querySelector('input')!;
-    const endInput = screen.getByTestId('vacation-end-input').querySelector('input')!;
-    
-    fireEvent.change(startInput, { target: { value: '2026-04-01' } });
-    fireEvent.change(endInput, { target: { value: '2026-04-15' } });
-
-    // Select user
-    fireEvent.click(screen.getByTestId('select-user-10'));
-    fireEvent.click(screen.getByTestId('select-user-20'));
-
-    // Submit
-    fireEvent.click(screen.getByTestId('vacation-activate-btn'));
-
-    expect(mockOnActivate).toHaveBeenCalledWith({
-      absenceStatus: 'vacation',
-      substituteUserIds: [10, 20],
-      vacationStartDate: '2026-04-01',
-      vacationEndDate: '2026-04-15',
+    it('по умолчанию выбирает статус vacation если absent', () => {
+      render(<VacationSettings {...baseProps} isAbsent />);
+      expect(screen.getByTestId('status-vacation')).toHaveClass('active');
+      expect(screen.getByTestId('vacation-start-input')).toBeInTheDocument();
     });
   });
 
-  it('allows deactivating if absent and active tab is selected', () => {
-    render(<VacationSettings {...baseProps} isAbsent={true} />);
-    
-    // Switch to active tab
-    fireEvent.click(screen.getByTestId('tab-active'));
-    expect(screen.getByText(intlMock.formatMessage({ id: 'user-info.vacation.active' }))).toBeInTheDocument();
+  describe('Активация', () => {
+    it('позволяет активировать vacation с датами и заместителями', () => {
+      render(<VacationSettings {...baseProps} />);
 
-    fireEvent.click(screen.getByTestId('vacation-deactivate-btn'));
-    expect(mockOnDeactivate).toHaveBeenCalled();
+      // Переключить на vacation
+      userEvent.click(screen.getByTestId('status-vacation'));
+
+      // Установить даты
+      const startInput = screen.getByTestId('vacation-start-input').querySelector('input')!;
+      const endInput = screen.getByTestId('vacation-end-input').querySelector('input')!;
+      userEvent.clear(startInput);
+      userEvent.type(startInput, '2026-04-01');
+      userEvent.clear(endInput);
+      userEvent.type(endInput, '2026-04-15');
+
+      // Выбрать заместителей
+      userEvent.click(screen.getByTestId('select-user-10'));
+      userEvent.click(screen.getByTestId('select-user-20'));
+
+      // Отправить
+      userEvent.click(screen.getByTestId('vacation-activate-btn'));
+
+      expect(mockOnActivate).toHaveBeenCalledWith({
+        absenceStatus: 'vacation',
+        substituteUserIds: [10, 20],
+        vacationStartDate: '2026-04-01',
+        vacationEndDate: '2026-04-15',
+      });
+    });
+
+    it('не отправляет форму без заместителей', () => {
+      render(<VacationSettings {...baseProps} />);
+
+      userEvent.click(screen.getByTestId('status-vacation'));
+      userEvent.click(screen.getByTestId('vacation-activate-btn'));
+
+      expect(mockOnActivate).not.toHaveBeenCalled();
+    });
   });
 
-  it('removes substitute user properly', () => {
-    render(<VacationSettings {...baseProps} />);
-    fireEvent.click(screen.getByTestId('tab-vacation'));
-    
-    // Add both
-    fireEvent.click(screen.getByTestId('select-user-10'));
-    fireEvent.click(screen.getByTestId('select-user-20'));
-    
-    // Remove one
-    fireEvent.click(screen.getByTestId('remove-user-10'));
-    
-    fireEvent.click(screen.getByTestId('vacation-activate-btn'));
+  describe('Деактивация', () => {
+    it('позволяет деактивировать если absent и выбран active', () => {
+      render(<VacationSettings {...baseProps} isAbsent />);
 
-    expect(mockOnActivate).toHaveBeenCalledWith(expect.objectContaining({ substituteUserIds: [20] }));
+      // Переключить на active
+      userEvent.click(screen.getByTestId('status-active'));
+      expect(screen.getByText(ACTIVE_MSG)).toBeInTheDocument();
+
+      userEvent.click(screen.getByTestId('vacation-deactivate-btn'));
+      expect(mockOnDeactivate).toHaveBeenCalled();
+    });
+  });
+
+  describe('Управление заместителями', () => {
+    it('удаляет заместителя по клику', () => {
+      render(<VacationSettings {...baseProps} />);
+      userEvent.click(screen.getByTestId('status-vacation'));
+
+      // Добавить двоих
+      userEvent.click(screen.getByTestId('select-user-10'));
+      userEvent.click(screen.getByTestId('select-user-20'));
+
+      // Удалить одного
+      userEvent.click(screen.getByTestId('remove-user-10'));
+
+      userEvent.click(screen.getByTestId('vacation-activate-btn'));
+
+      expect(mockOnActivate).toHaveBeenCalledWith(
+        expect.objectContaining({ substituteUserIds: [20] }),
+      );
+    });
   });
 });
