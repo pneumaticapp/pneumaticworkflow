@@ -20,11 +20,12 @@ from src.accounts.permissions import (
     UserIsAdminOrAccountOwner,
 )
 from src.accounts.queries import CountTemplatesByUserQuery
+from src.accounts.messages import MSG_A_0052
 from src.accounts.serializers.user import (
     UserPrivilegesSerializer,
     UserSerializer,
+    VacationActivateSerializer,
 )
-from src.accounts.views.mixins import VacationViewMixin
 from src.accounts.serializers.users import (
     AcceptTransferSerializer,
     ReassignSerializer,
@@ -43,6 +44,9 @@ from src.accounts.services.user import UserService
 from src.accounts.services.user_transfer import (
     UserTransferService,
 )
+from src.accounts.services.vacation import (
+    VacationDelegationService,
+)
 from src.analysis.mixins import BaseIdentifyMixin
 from src.executor import RawSqlExecutor
 from src.generics.filters import PneumaticFilterBackend
@@ -59,7 +63,6 @@ UserModel = get_user_model()
 
 
 class UsersViewSet(
-    VacationViewMixin,
     CustomViewSetMixin,
     RetrieveModelMixin,
     ListModelMixin,
@@ -72,6 +75,7 @@ class UsersViewSet(
     action_serializer_classes = {
         'reassign': ReassignSerializer,
         'privileges': UserPrivilegesSerializer,
+        'activate_vacation': VacationActivateSerializer,
     }
     action_filterset_classes = {
         'list': UsersListFilterSet,
@@ -305,14 +309,42 @@ class UsersViewSet(
 
     @action(
         detail=True,
-        methods=('post', 'delete'),
-        url_path='vacation',
+        methods=('post',),
+        url_path='activate-vacation',
     )
-    def vacation(self, request, pk=None, *args, **kwargs):
+    def activate_vacation(self, request, pk=None, *args, **kwargs):
         user = self.get_object()
-        if request.method == 'POST':
-            return self._activate_vacation(request, user)
-        return self._deactivate_vacation(user)
+        slz = self.get_serializer(
+            data=request.data,
+            extra_fields={
+                'vacation_user': user,
+            },
+        )
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+        service = VacationDelegationService(user=user)
+        service.activate(
+            substitute_user_ids=data['substitute_user_ids'],
+            absence_status=data['absence_status'],
+            vacation_start_date=(data.get('vacation_start_date')),
+            vacation_end_date=(data.get('vacation_end_date')),
+        )
+        user.refresh_from_db()
+        return self.response_ok(UserSerializer(instance=user).data)
+
+    @action(
+        detail=True,
+        methods=('post',),
+        url_path='deactivate-vacation',
+    )
+    def deactivate_vacation(self, request, pk=None, *args, **kwargs):
+        user = self.get_object()
+        if not user.is_absent:
+            raise_validation_error(message=MSG_A_0052)
+        service = VacationDelegationService(user=user)
+        service.deactivate()
+        user.refresh_from_db()
+        return self.response_ok(UserSerializer(instance=user).data)
 
     @action(
         detail=True,

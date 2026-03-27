@@ -19,7 +19,7 @@ pytestmark = pytest.mark.django_db
 
 def test_vacation_activate__ok(api_client, mocker):
 
-    """POST /accounts/user/vacation activates vacation."""
+    """POST /accounts/user/activate-vacation activates vacation."""
 
     # arrange
     account = create_test_account()
@@ -45,7 +45,7 @@ def test_vacation_activate__ok(api_client, mocker):
 
     # act
     response = api_client.post(
-        '/accounts/user/vacation',
+        '/accounts/user/activate-vacation',
         data={
             'substitute_user_ids': [substitute.id],
             'absence_status': AbsenceStatus.VACATION,
@@ -62,7 +62,7 @@ def test_vacation_activate__ok(api_client, mocker):
 
 def test_vacation_deactivate__ok(api_client, mocker):
 
-    """DELETE /accounts/user/vacation deactivates."""
+    """POST /accounts/user/deactivate-vacation deactivates."""
 
     # arrange
     account = create_test_account()
@@ -91,8 +91,8 @@ def test_vacation_deactivate__ok(api_client, mocker):
     api_client.token_authenticate(owner)
 
     # act
-    response = api_client.delete(
-        '/accounts/user/vacation',
+    response = api_client.post(
+        '/accounts/user/deactivate-vacation',
     )
 
     # assert
@@ -104,7 +104,7 @@ def test_vacation_deactivate__ok(api_client, mocker):
 
 def test_vacation_deactivate__not_absent__error(api_client):
 
-    """DELETE when not absent returns validation error."""
+    """POST when not absent returns validation error."""
 
     # arrange
     account = create_test_account()
@@ -112,8 +112,8 @@ def test_vacation_deactivate__not_absent__error(api_client):
     api_client.token_authenticate(owner)
 
     # act
-    response = api_client.delete(
-        '/accounts/user/vacation',
+    response = api_client.post(
+        '/accounts/user/deactivate-vacation',
     )
 
     # assert

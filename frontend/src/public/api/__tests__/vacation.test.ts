@@ -42,7 +42,7 @@ describe('vacation API', () => {
   });
 
   describe('deactivateVacation', () => {
-    it('отправляет DELETE без body', () => {
+    it('отправляет POST без body', () => {
       deactivateVacation();
 
       expect(commonRequest).toHaveBeenCalledTimes(
@@ -51,7 +51,7 @@ describe('vacation API', () => {
       expect(commonRequest).toHaveBeenCalledWith(
         'vacationDeactivate',
         {
-          method: 'DELETE',
+          method: 'POST',
         },
       );
     });

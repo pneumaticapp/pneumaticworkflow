@@ -37,7 +37,7 @@ export function deactivateVacation(userId?: number) {
   return commonRequest<IUserResponse>(
     url,
     {
-      method: 'DELETE',
+      method: 'POST',
     },
   );
 }
