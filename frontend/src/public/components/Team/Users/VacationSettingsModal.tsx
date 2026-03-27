@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 
@@ -12,6 +13,8 @@ import { teamFetchStarted, usersFetchStarted } from '../../../redux/accounts/sli
 import { getAccountsUsers } from '../../../redux/selectors/accounts';
 import { getAuthUser } from '../../../redux/selectors/user';
 import { vacationSuccess } from '../../../redux/auth/actions';
+
+import styles from './VacationSettingsModal.css';
 
 export interface IVacationSettingsModalProps {
   isOpen: boolean;
@@ -90,7 +93,7 @@ export function VacationSettingsModal({ isOpen, onClose, user }: IVacationSettin
       width="lg"
     >
       {user ? (
-        <div style={{ padding: '0 24px 24px' }}>
+        <div className={styles['modal-body']}>
           <VacationSettings
             isAbsent={!!user.isAbsent}
             absenceStatus={user.absenceStatus || 'vacation'}

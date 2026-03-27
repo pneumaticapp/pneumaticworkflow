@@ -10,6 +10,7 @@ import { UsersDropdown } from '../UI/form/UsersDropdown';
 import { UserPerformer, EBgColorTypes } from '../UI/UserPerformer';
 import { TUserListItem } from '../../types/user';
 import { ETaskPerformerType } from '../../types/template';
+import { TUsersDropdownOption } from '../UI/form/UsersDropdown';
 import { formatDateLocal } from '../../utils/formatDateLocal';
 import { useSubstituteUsers } from '../../utils/useSubstituteUsers';
 
@@ -63,7 +64,7 @@ export function VacationSettings({
     handleRemoveUser,
   } = useSubstituteUsers(availableUsers, substituteUserIds || []);
 
-  const handleAddUser = (selected: any) => {
+  const handleAddUser = (selected: TUsersDropdownOption) => {
     rawHandleAddUser(selected);
     if (hasSubmitted) setHasSubmitted(false);
   };
