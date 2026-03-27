@@ -16,7 +16,7 @@ from src.processes.models.templates.fields import (
     FieldTemplate,
 )
 from src.processes.models.workflows.attachment import FileAttachment
-from src.processes.models.workflows.fields import TaskField, FieldSelection
+from src.processes.models.workflows.fields import TaskField
 from src.processes.services.base import BaseWorkflowService
 from src.processes.services.tasks.exceptions import TaskFieldException
 from src.processes.services.tasks.selection import SelectionService
@@ -343,13 +343,7 @@ class TaskFieldService(BaseWorkflowService):
         if self.instance.type == FieldType.FILE and not skip_value:
             self._link_new_attachments(raw_value)
         elif self.instance.type in FieldType.TYPES_WITH_SELECTIONS:
-            if skip_value:
-                self._create_selections(instance_template)
-            else:
-                self._create_selections_with_value(
-                    raw_value=raw_value,
-                    instance_template=instance_template,
-                )
+            self._create_selections(instance_template)
 
     def _link_new_attachments(
         self,
@@ -371,12 +365,6 @@ class TaskFieldService(BaseWorkflowService):
                 )
             )
 
-    def _create_selections(
-        self,
-        instance_template: FieldTemplate,
-    ):
-        pass
-
     def _get_selections_values(
         self,
         raw_value: Union[str, List[str], None],
@@ -388,50 +376,18 @@ class TaskFieldService(BaseWorkflowService):
             value = set(raw_value)
         return value
 
-    def _create_selections_with_value(
+    def _create_selections(
         self,
-        raw_value: Union[str, List[str], None],
         instance_template: FieldTemplate,
     ):
-        """ raw_value - validated FieldTemplateSelection id(s) or None """
 
-        if raw_value not in self.NULL_VALUES:
-            selections_values = self._get_selections_values(raw_value)
-            for selection_template in instance_template.selections.all():
-                if selection_template.value in selections_values:
-                    selection_service = SelectionService(user=self.user)
-                    selection_service.create(
-                        instance_template=selection_template,
-                        field_id=self.instance.id,
-                    )
-
-    def _update_selections(self, raw_value: Union[str, List[str], None]):
-
-        """ raw_value - validated FieldSelection value(s) or None """
-
-        if raw_value in self.NULL_VALUES:
-
-            # Remove all selected values
-            self.instance.selections.all().delete()
-        else:
-            selections_values = self._get_selections_values(raw_value)
-
-            # Delete selections that are no longer selected
-            self.instance.selections.exclude_values(
-                list(selections_values),
-            ).delete()
-
-            # Create new selections for values not yet stored
-            existing_values = set(
-                self.instance.selections.values_list('value', flat=True),
+        selections = instance_template.selections.all().order_by('id')
+        for selection_template in selections:
+            selection_service = SelectionService(user=self.user)
+            selection_service.create(
+                instance_template=selection_template,
+                field_id=self.instance.id,
             )
-            for selection_value in selections_values:
-                if selection_value not in existing_values:
-                    FieldSelection.objects.create(
-                        field=self.instance,
-                        value=selection_value,
-                        api_name=selection_value,
-                    )
 
     def _remove_unused_attachments(
         self,
@@ -485,6 +441,4 @@ class TaskFieldService(BaseWorkflowService):
         )
         if self.instance.type == FieldType.FILE:
             self._link_new_attachments(raw_value)
-        elif self.instance.type in FieldType.TYPES_WITH_SELECTIONS:
-            self._update_selections(raw_value)
         return self.instance

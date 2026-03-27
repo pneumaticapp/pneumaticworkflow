@@ -837,48 +837,33 @@ def test_retrieve__field_url__ok(api_client):
     assert field_data['order'] == field.order
 
 
-def test_retrieve__field_with_selections__ok(api_client):
+@pytest.mark.parametrize('field_type', FieldType.TYPES_WITH_SELECTIONS)
+def test_retrieve__field_with_selections__ok(field_type, api_client):
 
     # arrange
-    user = create_test_user()
-    api_client.token_authenticate(user)
-    template = create_test_template(
-        user=user,
-        is_active=True,
-        tasks_count=1,
-    )
-    template_task = template.tasks.first()
-    field_template = FieldTemplate.objects.create(
-        name='User Field',
-        order=1,
-        type=FieldType.CHECKBOX,
-        is_required=True,
-        task=template_task,
-        template=template,
-        account=user.account,
-    )
-    FieldTemplateSelection.objects.create(
-        field_template=field_template,
-        template=template,
-        value='some value',
-    )
-    response = api_client.post(
-        path=f'/templates/{template.id}/run',
-        data={
-            'name': 'Test name',
-        },
-    )
+    account = create_test_account()
+    user = create_test_owner(account=account)
 
-    workflow = Workflow.objects.get(id=response.data['id'])
+    workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.tasks.get(number=1)
-    field = task.output.first()
-    field.value = 'some value'
-    field.save(update_fields=['value'])
-    FieldSelection.objects.create(
-        field=field,
-        value='some value',
-        api_name='some-value',
+    value = 'some value'
+    field = TaskField.objects.create(
+        type=field_type,
+        name=field_type,
+        task=task,
+        clear_value='don\'t lovely value',
+        markdown_value='don\'t lovely value',
+        workflow=workflow,
+        is_required=True,
+        description='Some description',
+        account=user.account,
+        value=value,
     )
+    selection = FieldSelection.objects.create(
+        field=field,
+        value=value,
+    )
+    api_client.token_authenticate(user)
 
     # act
     response = api_client.get(f'/v2/tasks/{task.id}')
@@ -896,7 +881,7 @@ def test_retrieve__field_with_selections__ok(api_client):
     assert field_data['order'] == field.order
     assert field_data['user_id'] is None
     assert field_data['value'] == 'some value'
-    assert field_data['selections'] == ['some value']
+    assert field_data['selections'] == [selection.value]
 
 
 def test_retrieve__field_with_dataset__ok(api_client):

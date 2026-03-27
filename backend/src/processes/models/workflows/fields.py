@@ -62,6 +62,9 @@ class TaskField(
     )
     objects = BaseSoftDeleteManager.from_queryset(TaskFieldQuerySet)()
 
+    def __str__(self):
+        return f'{self.type}: {self.value}'
+
 
 class FieldSelection(
     SoftDeleteModel,
@@ -81,3 +84,6 @@ class FieldSelection(
     objects = BaseSoftDeleteManager.from_queryset(
         FieldSelectionQuerySet,
     )()
+
+    def __str__(self):
+        return self.value

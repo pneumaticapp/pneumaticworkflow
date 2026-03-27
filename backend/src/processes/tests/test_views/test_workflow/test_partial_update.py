@@ -257,8 +257,8 @@ class TestPartialUpdateWorkflow:
             user=user,
             is_active=True,
         )
-        kickoff_field = FieldTemplate.objects.create(
-            name='User name',
+        string_field = FieldTemplate.objects.create(
+            name='String',
             type=FieldType.STRING,
             is_required=False,
             kickoff=template.kickoff_instance,
@@ -266,8 +266,8 @@ class TestPartialUpdateWorkflow:
             template=template,
             account=user.account,
         )
-        kickoff_field_2 = FieldTemplate.objects.create(
-            name='User url',
+        checkbox_field = FieldTemplate.objects.create(
+            name='Checkbox',
             type=FieldType.CHECKBOX,
             is_required=True,
             kickoff=template.kickoff_instance,
@@ -275,18 +275,19 @@ class TestPartialUpdateWorkflow:
             template=template,
             account=user.account,
         )
-        kickoff_field_2_select_1 = FieldTemplateSelection.objects.create(
-            field_template=kickoff_field_2,
+        checkbox_select_1 = FieldTemplateSelection.objects.create(
+            field_template=checkbox_field,
             value='CHECKBOX 1',
             template=template,
         )
-        FieldTemplateSelection.objects.create(
-            field_template=kickoff_field_2,
+        checkbox_select_2 = FieldTemplateSelection.objects.create(
+            field_template=checkbox_field,
             value='CHECKBOX 2',
             template=template,
         )
-        kickoff_field_3 = FieldTemplate.objects.create(
-            name='User date',
+
+        radio_field = FieldTemplate.objects.create(
+            name='Radio',
             type=FieldType.RADIO,
             is_required=True,
             kickoff=template.kickoff_instance,
@@ -294,17 +295,17 @@ class TestPartialUpdateWorkflow:
             template=template,
             account=user.account,
         )
-        FieldTemplateSelection.objects.create(
-            field_template=kickoff_field_3,
+        radio_select_1 = FieldTemplateSelection.objects.create(
+            field_template=radio_field,
             value='RADIO 1',
             template=template,
         )
-        kickoff_field_3_select_2 = FieldTemplateSelection.objects.create(
-            field_template=kickoff_field_3,
+        radio_select_2 = FieldTemplateSelection.objects.create(
+            field_template=radio_field,
             value='RADIO 2',
             template=template,
         )
-        kickoff_field_4 = FieldTemplate.objects.create(
+        date_field = FieldTemplate.objects.create(
             name='Date field',
             type=FieldType.DATE,
             is_required=False,
@@ -317,70 +318,50 @@ class TestPartialUpdateWorkflow:
         template_task_1.description = (
             '{{ %s }}His name is... {{%s}}{{%s}}!!!' %
             (
-                kickoff_field_2.api_name,
-                kickoff_field.api_name,
-                kickoff_field_3.api_name,
+                checkbox_field.api_name,
+                string_field.api_name,
+                radio_field.api_name,
             )
         )
         template_task_1.save()
+
         template_task_2 = template.tasks.get(number=2)
         template_task_2.description = (
-            'His name is... {{%s}}!!!' % kickoff_field.api_name
+            'His name is... {{%s}}!!!' % string_field.api_name
         )
         template_task_2.save()
+
         api_client.token_authenticate(user)
         response = api_client.post(
             f'/templates/{template.id}/run',
             data={
                 'kickoff': {
-                    kickoff_field.api_name: 'JOHN CENA',
-                    kickoff_field_2.api_name: [
-                        kickoff_field_2_select_1.value,
-                    ],
-                    kickoff_field_3.api_name: (
-                        kickoff_field_3_select_2.value
-                    ),
-                    kickoff_field_4.api_name: 1726012800,
+                    string_field.api_name: 'JOHN CENA',
+                    checkbox_field.api_name: [checkbox_select_1.value],
+                    radio_field.api_name: radio_select_1.value,
+                    date_field.api_name: 1726012800,
                 },
             },
         )
         workflow_id = response.data['id']
-        workflow = Workflow.objects.get(pk=workflow_id)
-        kickoff_output_2 = workflow.kickoff_instance.output.get(
-            type=FieldType.CHECKBOX,
-        )
-        kickoff_output_2_selections = list(
-            kickoff_output_2.selections
-            .all()
-            .values_list('value', flat=True),
-        )
-        kickoff_output_3 = workflow.kickoff_instance.output.get(
-            type=FieldType.RADIO,
-        )
-        kickoff_output_3_selections = list(
-            kickoff_output_3.selections
-            .all()
-            .values_list('value', flat=True),
-        )
 
         # act
         response = api_client.patch(
             f'/workflows/{workflow_id}',
             data={
                 'kickoff': {
-                    kickoff_field.api_name: 'DWAYNE THE ROCK JOHNSON',
-                    kickoff_field_2.api_name: [kickoff_output_2_selections[0]],
-                    kickoff_field_3.api_name: kickoff_output_3_selections[1],
-                    kickoff_field_4.api_name: 1726020000,
+                    string_field.api_name: 'DWAYNE THE ROCK JOHNSON',
+                    checkbox_field.api_name: [checkbox_select_2.value],
+                    radio_field.api_name: radio_select_2.value,
+                    date_field.api_name: 1726020000,
                 },
             },
         )
 
         # assert
         assert response.status_code == 200
-        first_output = response.data['kickoff']['output'][0]
+        assert response.data['kickoff']['output'][0]['value'] == '1726020000'
         fourth_output = response.data['kickoff']['output'][3]
-        assert first_output['value'] == '1726020000'
         assert fourth_output['value'] == 'DWAYNE THE ROCK JOHNSON'
 
     def test_partial_update__field__not_update_completed_task_due_date__ok(
