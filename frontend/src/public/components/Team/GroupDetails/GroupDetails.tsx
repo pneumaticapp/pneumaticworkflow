@@ -33,6 +33,7 @@ import {
   Placeholder,
   ModifyDropdown,
 } from '../../UI';
+import { EModifyDropdownToggle } from '../../UI/ModifyDropdown/types';
 import { UserSelection } from '../UserSelection';
 import { GroupUser } from './GroupUser';
 
@@ -166,6 +167,7 @@ export function GroupDetails({ match }: any) {
         editLabel={formatMessage({ id: 'group.edit-name' })}
         cloneLabel={formatMessage({ id: 'group.clone' })}
         deleteLabel={formatMessage({ id: 'group.delete' })}
+        toggleType={EModifyDropdownToggle.Modify}
       />
     );
   };

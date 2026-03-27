@@ -12,3 +12,19 @@
     gap: 0.8rem;
   }
 }
+
+.list {
+  margin: 0 -1.6rem;
+  padding: 3.2rem 1.6rem;
+  background-color: var(--pneumatic-color-white);
+
+  @media (--desktop) {
+    margin: initial;
+    padding: 3.2rem;
+    border-radius: 2.4rem;
+  }
+}
+
+.placeholder {
+  margin-top: 3.2rem;
+}

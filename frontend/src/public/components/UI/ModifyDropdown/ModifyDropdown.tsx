@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { useIntl } from 'react-intl';
 import classNames from 'classnames';
 
@@ -7,23 +7,15 @@ import {
   PencilIcon,
   UnionIcon,
   SettingsIcon,
+  MoreIcon,
 } from '../../icons';
 
 import { Dropdown , TDropdownOption } from '../Dropdown';
 import { Button } from '../Buttons/Button';
 
+import { IModifyDropdownProps, EModifyDropdownToggle } from './types';
 
 import styles from './ModifyDropdown.css';
-
-export interface IModifyDropdownProps {
-  onEdit: () => void;
-  onClone: () => void;
-  onDelete: () => void;
-  editLabel: string;
-  cloneLabel: string;
-  deleteLabel: string;
-  className?: string;
-}
 
 export function ModifyDropdown({
   onEdit,
@@ -33,6 +25,7 @@ export function ModifyDropdown({
   cloneLabel,
   deleteLabel,
   className,
+  toggleType,
 }: IModifyDropdownProps) {
   const { formatMessage } = useIntl();
   const options: TDropdownOption[] = [
@@ -42,34 +35,42 @@ export function ModifyDropdown({
       Icon: PencilIcon,
       size: 'sm',
     },
-    {
+    ...(cloneLabel ? [{
       label: cloneLabel,
       onClick: onClone,
       Icon: UnionIcon,
-      size: 'sm',
-    },
+      size: 'sm' as const,
+    }] : []),
     {
       label: deleteLabel,
       onClick: onDelete,
       Icon: TrashIcon,
-      color: 'red',
+      color: 'red' as const,
       withUpperline: true,
       withConfirmation: true,
-      size: 'sm',
+      size: 'sm' as const,
     },
   ];
 
+  const renderToggle = () => {
+    if (toggleType === EModifyDropdownToggle.More) {
+      return <MoreIcon className={className} />;
+    }
+
+    return (
+      <Button
+        size="sm"
+        icon={SettingsIcon}
+        label={formatMessage({ id: 'general.modify' })}
+        buttonStyle="transparent-black"
+        className={classNames(styles['toggle-btn'], className)}
+      />
+    );
+  };
+
   return (
     <Dropdown
-      renderToggle={() => (
-        <Button
-          size="sm"
-          icon={SettingsIcon}
-          label={formatMessage({ id: 'general.modify' })}
-          buttonStyle="transparent-black"
-          className={classNames(styles['toggle-btn'], className)}
-        />
-      )}
+      renderToggle={renderToggle}
       options={options}
     />
   );

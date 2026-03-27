@@ -81,6 +81,7 @@ const datasetsSlice = createSlice({
 
     setCurrentDataset: (state, action: PayloadAction<IDataset>) => {
       state.currentDataset = action.payload;
+      state.isCurrentDatasetLoading = false;
     },
 
     setCurrentSearchQuery: (state, action: PayloadAction<string>) => {
@@ -99,8 +100,17 @@ const datasetsSlice = createSlice({
       state.isLoading = true;
     },
     
-    updateDatasetAction: (state, _action: PayloadAction<IUpdateDatasetParams>) => {
-      state.isCurrentDatasetLoading = true;
+    updateDatasetAction: (state, action: PayloadAction<IUpdateDatasetParams>) => {
+      if (state.currentDataset && state.currentDataset.id === action.payload.id) {
+        if (action.payload.name !== undefined) state.currentDataset.name = action.payload.name;
+        if (action.payload.description !== undefined) state.currentDataset.description = action.payload.description;
+        if (action.payload.items) {
+          state.currentDataset.items = action.payload.items.map((item, index) => ({
+            ...item,
+            id: item.id || -(index + 1),
+          })) as any;
+        }
+      }
     },
 
     deleteDatasetAction: (state, _action: PayloadAction<TDeleteDatasetPayload>) => {

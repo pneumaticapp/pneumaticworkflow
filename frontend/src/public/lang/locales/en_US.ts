@@ -1400,6 +1400,11 @@ export const enMessages = {
   'datasets.clone': 'Clone',
   'datasets.delete': 'Delete',
   'datasets.add-row': 'Row',
+  'datasets.empty-list.title': 'No items yet',
+  'datasets.empty-list.description': 'Add items to this dataset using the Row button above',
+  'datasets.row.edit': 'Edit row',
+  'datasets.row.delete': 'Delete',
   'validation.dataset-name-empty': 'Please enter a dataset name',
   'validation.dataset-name-to-long': 'The dataset name is longer than 200 characters',
+  'validation.dataset-row-empty': 'Please enter a value',
 };
