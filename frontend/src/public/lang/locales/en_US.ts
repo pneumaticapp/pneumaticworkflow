@@ -1404,7 +1404,10 @@ export const enMessages = {
   'datasets.empty-list.description': 'Add items to this dataset using the Row button above',
   'datasets.row.edit': 'Edit row',
   'datasets.row.delete': 'Delete',
+  'datasets.search': 'Search',
+  'datasets.all-datasets': 'ALL DATASETS',
   'validation.dataset-name-empty': 'Please enter a dataset name',
   'validation.dataset-name-to-long': 'The dataset name is longer than 200 characters',
   'validation.dataset-row-empty': 'Please enter a value',
+  'validation.dataset-row-exists': 'Item with this value already exists',
 };

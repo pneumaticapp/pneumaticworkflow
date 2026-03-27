@@ -1311,7 +1311,10 @@ export const ruMessages = {
   'datasets.empty-list.description': 'Добавьте элементы в набор данных, используя кнопку Строка выше',
   'datasets.row.edit': 'Редактировать',
   'datasets.row.delete': 'Удалить',
+  'datasets.search': 'Поиск',
+  'datasets.all-datasets': 'ВСЕ НАБОРЫ ДАННЫХ',
   'validation.dataset-name-empty': 'Введите имя датасета',
   'validation.dataset-name-to-long': 'Имя датасета не должно превышать 200 символов',
   'validation.dataset-row-empty': 'Введите значение',
+  'validation.dataset-row-exists': 'Элемент с таким значением уже существует',
 };

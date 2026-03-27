@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -14,13 +14,16 @@ import {
 import { history } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
 
-import { ModifyDropdown, Button, Placeholder } from '../../UI';
+import { ModifyDropdown, Button } from '../../UI';
 import { EModifyDropdownToggle } from '../../UI/ModifyDropdown/types';
 import { BoldPlusIcon } from '../../icons';
 import { DatasetModal } from '../DatasetModal/DatasetModal';
 import { EDatasetModalType } from '../DatasetModal/types';
-import { TasksPlaceholderIcon } from '../../Tasks/TasksPlaceholderIcon';
-import { DatasetRow } from '../DatasetRow/DatasetRow';
+import { EDatasetsSorting } from '../../../types/dataset';
+import { DatasetDetailsSkeleton } from './DatasetDetailsSkeleton';
+import { DatasetItemsList } from './DatasetItemsList';
+
+import { getSortedAndFilteredDatasetItems } from '../../../utils/dataset';
 
 import { getCurrentDataset, isCurrentDatasetLoading } from '../../../redux/selectors/datasets';
 
@@ -34,18 +37,30 @@ const DatasetDetails = ({ match: { params: { id: matchParamId } } }: TDatasetDet
   const dataset = useSelector(getCurrentDataset);
   const isLoading = useSelector(isCurrentDatasetLoading);
   const [isAddingRow, setIsAddingRow] = useState(false);
+  const [editingItemId, setEditingItemId] = useState<number | null>(null);
+  const [searchText, setSearchText] = useState('');
+  const [sorting, setSorting] = useState<EDatasetsSorting>(EDatasetsSorting.DateDesc);
+
+  const sortedItems = useMemo(() => {
+    return getSortedAndFilteredDatasetItems(dataset?.items || [], searchText, sorting);
+  }, [dataset?.items, searchText, sorting]);
+
+  const allItemValues = useMemo(
+    () => dataset?.items.map((i) => i.value) || [],
+    [dataset?.items],
+  );
 
   useEffect(() => {
     dispatch(loadDataset({ id: Number(matchParamId) }));
   }, [matchParamId]);
 
-  // TODO: replace with skeleton — render page layout with skeleton in header and list area
   if (isLoading || !dataset) {
-    return null;
+    return <DatasetDetailsSkeleton />;
   }
 
   const handleAddRow = () => {
     setIsAddingRow(true);
+    setEditingItemId(null);
   };
 
   const handleSaveNewRow = (value: string) => {
@@ -67,6 +82,15 @@ const DatasetDetails = ({ match: { params: { id: matchParamId } } }: TDatasetDet
     setIsAddingRow(false);
   };
 
+  const handleStartEdit = (itemId: number) => {
+    setEditingItemId(itemId);
+    setIsAddingRow(false);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingItemId(null);
+  };
+
   const handleEditRow = (itemId: number, newValue: string) => {
     dispatch(updateDatasetAction({
       id: dataset.id,
@@ -74,6 +98,7 @@ const DatasetDetails = ({ match: { params: { id: matchParamId } } }: TDatasetDet
         item.id === itemId ? { ...item, value: newValue } : item,
       ),
     }));
+    setEditingItemId(null);
   };
 
   // TODO: backend does not return updated items in the PATCH response
@@ -82,45 +107,6 @@ const DatasetDetails = ({ match: { params: { id: matchParamId } } }: TDatasetDet
       id: dataset.id,
       items: dataset.items.filter((item) => item.id !== itemId),
     }));
-  };
-
-  const sortedItems = [...dataset.items].sort((a, b) => b.order - a.order);
-
-  const renderItemList = () => {
-    if (!dataset.items.length && !isAddingRow) {
-      return (
-        <Placeholder
-          title={formatMessage({ id: 'datasets.empty-list.title' })}
-          description={formatMessage({ id: 'datasets.empty-list.description' })}
-          Icon={TasksPlaceholderIcon}
-          mood="neutral"
-          containerClassName={styles['placeholder']}
-        />
-      );
-    }
-
-    return (
-      <>
-        {isAddingRow && (
-          <DatasetRow
-            isEditing
-            onCancel={handleCancelNewRow}
-            onSave={handleSaveNewRow}
-            onDelete={handleCancelNewRow}
-          />
-        )}
-        {sortedItems.map((item) => {
-          return (
-            <DatasetRow
-              key={item.id}
-              value={item.value}
-              onSave={(newValue) => handleEditRow(item.id!, newValue)}
-              onDelete={() => handleDeleteRow(item.id!)}
-            />
-          );
-        })}
-      </>
-    );
   };
 
   return (
@@ -152,9 +138,22 @@ const DatasetDetails = ({ match: { params: { id: matchParamId } } }: TDatasetDet
           />
         </div>
       </header>
-      <div className={styles['list']}>
-        {renderItemList()}
-      </div>
+      <DatasetItemsList
+        sortedItems={sortedItems}
+        allItemValues={allItemValues}
+        isAddingRow={isAddingRow}
+        editingItemId={editingItemId}
+        searchText={searchText}
+        sorting={sorting}
+        onSearchChange={setSearchText}
+        onSortingChange={setSorting}
+        onSaveNewRow={handleSaveNewRow}
+        onCancelNewRow={handleCancelNewRow}
+        onStartEdit={handleStartEdit}
+        onEditRow={handleEditRow}
+        onCancelEdit={handleCancelEdit}
+        onDeleteRow={handleDeleteRow}
+      />
       <DatasetModal type={EDatasetModalType.Edit} />
     </div>
   );

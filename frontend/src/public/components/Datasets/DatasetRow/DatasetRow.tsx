@@ -7,6 +7,7 @@ import { CommentEditDoneIcon } from '../../icons/CommentEditDoneIcon';
 import { ModifyDropdown } from '../../UI/ModifyDropdown/ModifyDropdown';
 import { EDIT_ICON_COLOR } from './constants';
 import { EModifyDropdownToggle } from '../../UI/ModifyDropdown/types';
+import { validateDatasetRow } from '../../../utils/validators';
 
 import { IDatasetRowProps } from './types';
 
@@ -14,20 +15,17 @@ import styles from './DatasetRow.css';
 
 export const DatasetRow = memo(({
   value: initialValue = '',
-  isEditing: isEditingProp = false,
+  isEditing = false,
+  existingItems = [],
+  onEdit,
   onSave,
   onDelete,
   onCancel,
 }: IDatasetRowProps) => {
   const { formatMessage } = useIntl();
-  const [isEditing, setIsEditing] = useState(isEditingProp);
   const [currentValue, setCurrentValue] = useState(initialValue);
-  const [hasError, setHasError] = useState(false);
+  const [errorText, setErrorText] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    setIsEditing(isEditingProp);
-  }, [isEditingProp]);
 
   useEffect(() => {
     setCurrentValue(initialValue);
@@ -40,24 +38,22 @@ export const DatasetRow = memo(({
   }, [isEditing]);
 
   const handleSave = () => {
-    const trimmedValue = currentValue.trim();
-    if (!trimmedValue) {
-      setHasError(true);
+    const error = validateDatasetRow(currentValue, existingItems, initialValue || undefined);
+    if (error) {
+      setErrorText(error);
       inputRef.current?.focus();
-
       return;
     }
 
+    const trimmedValue = currentValue.trim();
     onSave(trimmedValue);
-    setIsEditing(false);
-    setHasError(false);
+    setErrorText('');
   };
 
 
   const handleCancel = () => {
     setCurrentValue(initialValue);
-    setIsEditing(false);
-    setHasError(false);
+    setErrorText('');
     onCancel?.();
   };
 
@@ -89,7 +85,7 @@ export const DatasetRow = memo(({
           value={currentValue}
           onChange={(e) => {
             setCurrentValue(e.target.value);
-            if (hasError) setHasError(false);
+            if (errorText) setErrorText('');
           }}
           onKeyDown={handleKeyDown}
           onBlur={handleBlur}
@@ -118,9 +114,9 @@ export const DatasetRow = memo(({
             <CommentEditDoneIcon fill={EDIT_ICON_COLOR} />
           </button>
         </div>
-        {hasError && (
+        {errorText && (
           <p className={styles['error-text']}>
-            {formatMessage({ id: 'validation.dataset-row-empty' })}
+            {formatMessage({ id: errorText })}
           </p>
         )}
       </div>
@@ -132,9 +128,7 @@ export const DatasetRow = memo(({
       <span className={styles['value']}>{initialValue}</span>
       <div className={styles['actions']}>
         <ModifyDropdown
-          onEdit={() => {
-            setIsEditing(true);
-          }}
+          onEdit={() => onEdit?.()}
           onDelete={onDelete}
           editLabel={formatMessage({ id: 'datasets.row.edit' })}
           deleteLabel={formatMessage({ id: 'datasets.row.delete' })}

@@ -15,6 +15,8 @@ import { history } from '../../utils/history';
 
 import styles from './TemplatesLayout.css';
 
+import { ReturnLink } from '../../components/UI/ReturnLink';
+
 export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
@@ -24,6 +26,8 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
   const handleDatasetsSortingChange = (value: EDatasetsSorting) => {
     dispatch(setDatasetsListSorting(value));
   };
+
+  const isDatasetDetail = /^\/datasets\/\d+\/?$/.test(history.location.pathname);
 
   const activeTab = history.location.pathname.startsWith(ERoutes.Datasets)
     ? ETemplatesTab.Datasets
@@ -49,6 +53,18 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
   };
 
   const renderLeftContent = () => {
+    if (isDatasetDetail) {
+      return (
+        <div className={styles['navbar-left__content']}>
+          <ReturnLink
+            className={styles['return-link']}
+            label={formatMessage({ id: 'datasets.all-datasets' })}
+            route={ERoutes.Datasets}
+          />
+        </div>
+      );
+    }
+
     return (
       <div className={styles['navbar-left__content']}>
           <Tabs

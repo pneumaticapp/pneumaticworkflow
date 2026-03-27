@@ -54,6 +54,8 @@ export interface IDeleteDatasetParams {
   id: number;
 }
 export enum EDatasetsSorting {
+  DateDesc = 'date-desc',
+  DateAsc = 'date-asc',
   NameAsc = 'name-asc',
   NameDesc = 'name-desc',
 }

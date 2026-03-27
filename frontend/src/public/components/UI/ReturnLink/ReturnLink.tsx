@@ -1,4 +1,5 @@
 import * as React from 'react';
+import classnames from 'classnames';
 
 import { ERoutes } from '../../../constants/routes';
 import { ReturnIcon } from '../../icons';
@@ -9,11 +10,12 @@ import styles from './ReturnLink.css';
 interface IReturnLinkProps {
   label: string;
   route: ERoutes;
+  className?: string;
 }
 
-export function ReturnLink({ label, route }: IReturnLinkProps) {
+export function ReturnLink({ label, route, className }: IReturnLinkProps) {
   return (
-    <NavLink to={route} className={styles['back-link']}>
+    <NavLink to={route} className={classnames(styles['back-link'], className)}>
       <ReturnIcon className={styles['icon']} />
       {label}
     </NavLink>

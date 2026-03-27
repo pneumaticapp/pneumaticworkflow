@@ -28,3 +28,39 @@
 .placeholder {
   margin-top: 3.2rem;
 }
+
+.toolbar {
+  padding: 0 0 3.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--pneumatic-color-black16);
+
+  .search__icon {
+    position: absolute;
+    color: var(--pneumatic-color-black72);
+  }
+
+  .search-field__input {
+    padding-left: 2.8rem;
+    height: auto;
+    border: 0;
+  }
+
+  .dataset__sorting-container {
+    padding-right: 0;
+  }
+}
+
+.header-skeleton {
+  background-color: var(--pneumatic-color-skeleton-gray-bg);
+  background-image:
+    linear-gradient(
+      90deg,
+      var(--pneumatic-color-skeleton-gray-bg),
+      var(--pneumatic-color-skeleton-gray-bg-highlight),
+      var(--pneumatic-color-skeleton-gray-bg)
+    );
+  background-repeat: no-repeat;
+  background-size: 200px 100%;
+}

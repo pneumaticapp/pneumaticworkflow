@@ -25,6 +25,12 @@
   }
 }
 
+.return-link {
+  & svg {
+    transform: translateY(-1px);
+  }
+}
+
 .dataset__sorting-toggle-text {
   margin-right: 4px !important;
 }
