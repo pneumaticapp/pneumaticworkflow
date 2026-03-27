@@ -1,4 +1,3 @@
-# ruff: noqa: PLC0415
 import re
 from django.db.models import Q
 from typing import Any, Dict, List, Optional
@@ -27,13 +26,11 @@ from src.processes.serializers.workflows.delay import (
 from src.processes.serializers.workflows.field import (
     TaskFieldSerializer,
 )
-
-
+from src.accounts.enums import UserGroupType
 from src.processes.models.workflows.task import TaskPerformer
 
 
 def get_performers_for_task(instance) -> List[Dict[str, Any]]:
-    from src.accounts.enums import UserGroupType
     if hasattr(instance, 'all_performers'):
         performers = instance.all_performers
     else:
@@ -195,13 +192,13 @@ class TaskSerializer(serializers.ModelSerializer):
             account_id=instance.account_id,
             ancestor_task_id=instance.id,
         )
-        from src.processes.serializers.workflows.workflow import (
+        from src.processes.serializers.workflows.workflow import (  # noqa: PLC0415
             WorkflowListSerializer,
         )
         return WorkflowListSerializer(instance=qst, many=True).data
 
     def get_workflow(self, instance):
-        from src.processes.serializers.workflows.workflow import (
+        from src.processes.serializers.workflows.workflow import (  # noqa: PLC0415
             WorkflowShortInfoSerializer,
         )
         return WorkflowShortInfoSerializer(instance=instance.workflow).data

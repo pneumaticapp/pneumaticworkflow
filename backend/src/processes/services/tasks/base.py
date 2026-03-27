@@ -141,6 +141,11 @@ class BasePerformersService:
             user_key=user_key,
         )
         # If user is on vacation, add substitute group instead
+        # of user performer. Early return is intentional:
+        # the substitute group replaces the absent user entirely.
+        # CREATED (not NO_STATUS) is used because this is an
+        # admin-initiated addition via the API, consistent with
+        # normal performer creation flow below.
         if (
             user.is_absent
             and user.vacation_substitute_group_id

@@ -301,6 +301,7 @@ class VacationActivateSerializer(
     substitute_user_ids = serializers.ListField(
         child=serializers.IntegerField(),
         min_length=1,
+        error_messages={'min_length': MSG_A_0051},
     )
     vacation_start_date = serializers.DateField(
         required=False,
@@ -317,9 +318,7 @@ class VacationActivateSerializer(
     )
 
     def validate_substitute_user_ids(self, value):
-        user = self.context.get(
-            'vacation_user', self.context.get('user'),
-        )
+        user = self.context['vacation_user']
         account_id = user.account_id
 
         if user.id in value:

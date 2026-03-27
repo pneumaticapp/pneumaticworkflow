@@ -1,3 +1,4 @@
+from typing import List, Set
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -16,6 +17,8 @@ from src.processes.models.workflows.task import Task, TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.events import WorkflowEventService
 
+UserModel = get_user_model()
+
 SUBSTITUTE_GROUP_PREFIX = 'Substitutes'
 
 
@@ -30,27 +33,32 @@ class VacationDelegationService:
         groups. If the group becomes empty after removal,
         auto-deactivate vacation for the group owner.
         """
-        personal_groups = UserGroup.objects.filter(
-            type=UserGroupType.PERSONAL,
-            users=user,
+        personal_groups = (
+            UserGroup.objects
+            .filter(
+                type=UserGroupType.PERSONAL,
+                users=user,
+            )
+            .prefetch_related('vacation_owners')
         )
         for group in personal_groups:
             group.users.remove(user)
             if not group.users.exists():
-                for owner in group.vacation_owner.all():
+                for owner in group.vacation_owners.all():
                     cls(owner).deactivate()
 
     def _notify_substitutes(
         self,
-        substitute_user_ids,  # type: List[int]
-        task_ids,  # type: Set[int]
-    ):
-        # type: (...) -> None
+        substitute_user_ids: List[int],
+        task_ids: Set[int],
+    ) -> None:
         """Send delegation notification to each substitute."""
         if not task_ids:
             return
-        substitutes = get_user_model().objects.filter(
-            id__in=substitute_user_ids,
+        substitutes = (
+            UserModel.objects
+            .filter(id__in=substitute_user_ids)
+            .only('id', 'email', 'first_name')
         )
         for sub in substitutes:
             send_vacation_delegation_notification.delay(
@@ -59,19 +67,16 @@ class VacationDelegationService:
                 user_first_name=sub.first_name,
                 account_id=self.user.account_id,
                 tasks_count=len(task_ids),
-                vacation_owner_name=(
-                    self.user.get_full_name()
-                ),
+                vacation_owner_name=self.user.get_full_name(),
             )
 
     def activate(
         self,
-        substitute_user_ids,  # type: List[int]
-        absence_status=AbsenceStatus.VACATION,  # type: str
+        substitute_user_ids: List[int],
+        absence_status: str = AbsenceStatus.VACATION,
         vacation_start_date=None,
         vacation_end_date=None,
-    ):
-        # type: (...) -> None
+    ) -> None:
         """Activate vacation delegation for the user.
 
         Creates a personal substitute group, freezes the user's
@@ -100,12 +105,11 @@ class VacationDelegationService:
 
     def _update_existing(
         self,
-        substitute_user_ids,  # type: List[int]
-        absence_status,  # type: str
+        substitute_user_ids: List[int],
+        absence_status: str,
         vacation_start_date=None,
         vacation_end_date=None,
-    ):
-        # type: (...) -> None
+    ) -> None:
         """Update an already-active vacation delegation."""
         group = self.user.vacation_substitute_group
         group.users.set(substitute_user_ids)
@@ -127,12 +131,8 @@ class VacationDelegationService:
         )
 
         self.user.absence_status = absence_status
-        if vacation_start_date is not None:
-            self.user.vacation_start_date = (
-                vacation_start_date
-            )
-        if vacation_end_date is not None:
-            self.user.vacation_end_date = vacation_end_date
+        self.user.vacation_start_date = vacation_start_date
+        self.user.vacation_end_date = vacation_end_date
 
         self.user.save(update_fields=[
             'absence_status',
@@ -147,17 +147,19 @@ class VacationDelegationService:
 
     def _activate_new(
         self,
-        substitute_user_ids,  # type: List[int]
-        absence_status,  # type: str
+        substitute_user_ids: List[int],
+        absence_status: str,
         vacation_start_date=None,
         vacation_end_date=None,
-    ):
-        # type: (...) -> None
+    ) -> None:
         """First-time activation of vacation delegation."""
 
         # 1. Create substitute group
         group = UserGroup.objects.create(
-            name=f'{SUBSTITUTE_GROUP_PREFIX} {self.user.get_full_name()}',
+            name=(
+                f'{SUBSTITUTE_GROUP_PREFIX}'
+                f' {self.user.get_full_name()}'
+            ),
             type=UserGroupType.PERSONAL,
             account=self.user.account,
         )
@@ -287,12 +289,8 @@ class VacationDelegationService:
         # 6. Update user status
         self.user.absence_status = absence_status
         self.user.vacation_substitute_group = group
-        if vacation_start_date is not None:
-            self.user.vacation_start_date = (
-                vacation_start_date
-            )
-        if vacation_end_date is not None:
-            self.user.vacation_end_date = vacation_end_date
+        self.user.vacation_start_date = vacation_start_date
+        self.user.vacation_end_date = vacation_end_date
 
         self.user.save(update_fields=[
             'absence_status',
@@ -312,8 +310,7 @@ class VacationDelegationService:
             task_ids=task_ids,
         )
 
-    def deactivate(self):
-        # type: () -> None
+    def deactivate(self) -> None:
         """Deactivate vacation delegation for the user.
 
         Unfreezes the user's task performers, cascade-deletes
@@ -329,41 +326,25 @@ class VacationDelegationService:
                 directly_status=DirectlyStatus.NO_STATUS,
             )
 
-            # 2. Delete substitute group (CASCADE)
+            # 2. Delete substitute group performers and group.
+            # UserGroup uses soft-delete, so CASCADE won't remove
+            # TaskPerformers — delete them explicitly first.
             if self.user.vacation_substitute_group:
+                TaskPerformer.objects.filter(
+                    group=self.user.vacation_substitute_group,
+                ).delete()
                 self.user.vacation_substitute_group.delete()
 
             # 3. Restore notifications
-            self.user.notify_about_tasks = (
-                self.user._saved_notify_about_tasks
-                if self.user._saved_notify_about_tasks
-                is not None
-                else True
-            )
-            self.user.is_new_tasks_subscriber = (
-                self.user._saved_is_new_tasks_subscriber
-                if self.user._saved_is_new_tasks_subscriber
-                is not None
-                else True
-            )
-            self.user.is_complete_tasks_subscriber = (
-                self.user._saved_is_complete_tasks_subscriber
-                if (
-                    self.user
-                    ._saved_is_complete_tasks_subscriber
-                )
-                is not None
-                else True
-            )
+            self._restore_notifications()
+
             self.user.absence_status = AbsenceStatus.ACTIVE
             self.user.vacation_start_date = None
             self.user.vacation_end_date = None
             self.user.vacation_substitute_group = None
             self.user._saved_notify_about_tasks = None
             self.user._saved_is_new_tasks_subscriber = None
-            self.user._saved_is_complete_tasks_subscriber = (
-                None
-            )
+            self.user._saved_is_complete_tasks_subscriber = None
             self.user.save(update_fields=[
                 'absence_status',
                 'vacation_start_date',
@@ -377,9 +358,29 @@ class VacationDelegationService:
                 'is_complete_tasks_subscriber',
             ])
 
+    def _restore_notifications(self) -> None:
+        """Restore notification settings from saved values.
+
+        Falls back to True if saved value is None.
+        """
+        saved = self.user._saved_notify_about_tasks
+        self.user.notify_about_tasks = (
+            saved if saved is not None else True
+        )
+        saved = self.user._saved_is_new_tasks_subscriber
+        self.user.is_new_tasks_subscriber = (
+            saved if saved is not None else True
+        )
+        saved = self.user._saved_is_complete_tasks_subscriber
+        self.user.is_complete_tasks_subscriber = (
+            saved if saved is not None else True
+        )
+
     @staticmethod
-    def _add_members_bulk(wf_ids, substitute_user_ids):
-        # type: (Set[int], List[int]) -> None
+    def _add_members_bulk(
+        wf_ids: Set[int],
+        substitute_user_ids: List[int],
+    ) -> None:
         """Bulk-add substitutes to workflow members."""
         members_to_create = [
             Workflow.members.through(

@@ -53,7 +53,7 @@ class Migration(migrations.Migration):
                 blank=True,
                 null=True,
                 on_delete=django.db.models.deletion.SET_NULL,
-                related_name='vacation_owner',
+                related_name='vacation_owners',
                 to='accounts.usergroup',
             ),
         ),
@@ -61,16 +61,16 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='user',
             name='_saved_notify_about_tasks',
-            field=models.NullBooleanField(),
+            field=models.BooleanField(null=True),
         ),
         migrations.AddField(
             model_name='user',
             name='_saved_is_new_tasks_subscriber',
-            field=models.NullBooleanField(),
+            field=models.BooleanField(null=True),
         ),
         migrations.AddField(
             model_name='user',
             name='_saved_is_complete_tasks_subscriber',
-            field=models.NullBooleanField(),
+            field=models.BooleanField(null=True),
         ),
     ]

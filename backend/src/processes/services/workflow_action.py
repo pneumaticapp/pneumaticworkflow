@@ -1098,27 +1098,47 @@ class WorkflowActionService:
             .select_related('user__vacation_substitute_group')
             .prefetch_related('user__vacation_substitute_group__users')
         )
+        performers_to_update = []
+        group_performers_to_create = []
+        all_member_ids = set()
+
         for performer in performers:
             sub_group = performer.user.vacation_substitute_group
 
             # Skip if substitute group is empty
-            if not sub_group.users.exists():
+            sub_user_ids = list(
+                sub_group.users.values_list('id', flat=True),
+            )
+            if not sub_user_ids:
                 continue
             performer.directly_status = DirectlyStatus.DELEGATED
-            performer.save(update_fields=['directly_status'])
-            TaskPerformer.objects.get_or_create(
-                task_id=task.id,
-                type=PerformerType.GROUP,
-                group=sub_group,
+            performers_to_update.append(performer)
+            group_performers_to_create.append(
+                TaskPerformer(
+                    task_id=task.id,
+                    type=PerformerType.GROUP,
+                    group=sub_group,
+                ),
             )
-            task.workflow.members.add(
-                *sub_group.users.all(),
-            )
+            all_member_ids.update(sub_user_ids)
             WorkflowEventService.task_delegation_event(
                 task=task,
                 user=performer.user,
                 substitute_group=sub_group,
             )
+
+        if performers_to_update:
+            TaskPerformer.objects.bulk_update(
+                performers_to_update,
+                fields=['directly_status'],
+            )
+        if group_performers_to_create:
+            TaskPerformer.objects.bulk_create(
+                group_performers_to_create,
+                ignore_conflicts=True,
+            )
+        if all_member_ids:
+            task.workflow.members.add(*all_member_ids)
 
     def return_to(self, revert_to_task: Optional[Task] = None):
 

@@ -158,9 +158,7 @@ class UserViewSet(
         service = VacationDelegationService(user=user)
         try:
             service.activate(
-                substitute_user_ids=(
-                    data['substitute_user_ids']
-                ),
+                substitute_user_ids=data['substitute_user_ids'],
                 absence_status=data['absence_status'],
                 vacation_start_date=(
                     data.get('vacation_start_date')

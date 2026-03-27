@@ -1,4 +1,5 @@
 from pytz import timezone as pytz_tz
+from pytz.exceptions import UnknownTimeZoneError
 from celery import shared_task
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -55,28 +56,53 @@ def process_vacation_schedules():
     user_model = get_user_model()
     now = timezone.now()
 
-    for user in user_model.objects.filter(
-        absence_status=AbsenceStatus.ACTIVE,
-        vacation_start_date__isnull=False,
-        vacation_substitute_group__isnull=False,
-    ):
-        user_now = now.astimezone(pytz_tz(user.timezone))
+    # Auto-start: ACTIVE users past their start date.
+    # Note: ACTIVE + vacation_substitute_group is a valid transient
+    # state — it means the user has configured a future absence
+    # (set start_date and substitutes) but it hasn't started yet.
+    auto_start_users = (
+        user_model.objects
+        .filter(
+            absence_status=AbsenceStatus.ACTIVE,
+            vacation_start_date__isnull=False,
+            vacation_substitute_group__isnull=False,
+        )
+        .select_related('vacation_substitute_group')
+        .prefetch_related(
+            'vacation_substitute_group__users',
+        )
+    )
+    for user in auto_start_users:
+        try:
+            user_now = now.astimezone(pytz_tz(user.timezone))
+        except UnknownTimeZoneError:
+            continue
         if user_now.date() >= user.vacation_start_date:
             sub_ids = list(
                 user.vacation_substitute_group.users
                 .values_list('id', flat=True),
             )
             if sub_ids:
-                VacationDelegationService(user).activate(sub_ids)
+                VacationDelegationService(user).activate(
+                    sub_ids,
+                )
 
     # Auto-stop: users past their end date
-    for user in user_model.objects.filter(
-        absence_status__in=[
-            AbsenceStatus.VACATION,
-            AbsenceStatus.SICK_LEAVE,
-        ],
-        vacation_end_date__isnull=False,
-    ):
-        user_now = now.astimezone(pytz_tz(user.timezone))
+    auto_stop_users = (
+        user_model.objects
+        .filter(
+            absence_status__in=[
+                AbsenceStatus.VACATION,
+                AbsenceStatus.SICK_LEAVE,
+            ],
+            vacation_end_date__isnull=False,
+        )
+        .select_related('vacation_substitute_group')
+    )
+    for user in auto_stop_users:
+        try:
+            user_now = now.astimezone(pytz_tz(user.timezone))
+        except UnknownTimeZoneError:
+            continue
         if user_now.date() > user.vacation_end_date:
             VacationDelegationService(user).deactivate()

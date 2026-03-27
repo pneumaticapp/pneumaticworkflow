@@ -32,6 +32,9 @@ from src.accounts.queries import (
     DeleteUserGroupFromTemplateOwnerQuery,
 )
 from src.accounts.services import exceptions
+from src.accounts.services.vacation import (
+    VacationDelegationService,
+)
 from src.authentication.enums import AuthTokenType
 from src.executor import RawSqlExecutor
 from src.processes.enums import (
@@ -50,10 +53,6 @@ from src.processes.models.workflows.task import TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.queries import UpdateWorkflowOwnersQuery
 from src.processes.tasks.tasks import complete_tasks
-
-from src.accounts.services.vacation import (
-    VacationDelegationService,
-)
 
 UserModel = get_user_model()
 

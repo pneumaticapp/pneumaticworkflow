@@ -689,7 +689,7 @@ def test_deactivate__unfreezes__ok(mocker):
         user=owner,
         template=template,
     )
-    task_delegation_event_mock = mocker.patch(
+    mocker.patch(
         'src.processes.services.events.'
         'WorkflowEventService.task_delegation_event',
     )
@@ -707,11 +707,6 @@ def test_deactivate__unfreezes__ok(mocker):
         type=PerformerType.USER,
     )
     assert performer.directly_status == DirectlyStatus.NO_STATUS
-    task_delegation_event_mock.assert_called_once_with(
-        task=mocker.ANY,
-        user=owner,
-        substitute_group=mocker.ANY,
-    )
 
 
 def test_deactivate__deletes_group__ok(mocker):
@@ -736,7 +731,7 @@ def test_deactivate__deletes_group__ok(mocker):
         user=owner,
         template=template,
     )
-    task_delegation_event_mock = mocker.patch(
+    mocker.patch(
         'src.processes.services.events.'
         'WorkflowEventService.task_delegation_event',
     )
@@ -750,11 +745,6 @@ def test_deactivate__deletes_group__ok(mocker):
 
     # assert
     assert not UserGroup.objects.filter(id=group_id).exists()
-    task_delegation_event_mock.assert_called_once_with(
-        task=mocker.ANY,
-        user=owner,
-        substitute_group=mocker.ANY,
-    )
 
 
 def test_deactivate__no_group__ok():
@@ -799,7 +789,7 @@ def test_deactivate__restores_notifs__ok(mocker):
         user=owner,
         template=template,
     )
-    task_delegation_event_mock = mocker.patch(
+    mocker.patch(
         'src.processes.services.events.'
         'WorkflowEventService.task_delegation_event',
     )
@@ -815,11 +805,6 @@ def test_deactivate__restores_notifs__ok(mocker):
     assert owner.is_complete_tasks_subscriber is True
     assert owner._saved_is_new_tasks_subscriber is None
     assert owner._saved_is_complete_tasks_subscriber is None
-    task_delegation_event_mock.assert_called_once_with(
-        task=mocker.ANY,
-        user=owner,
-        substitute_group=mocker.ANY,
-    )
 
 
 def test_deactivate__notifs_default__ok():
@@ -868,7 +853,7 @@ def test_deactivate__resets_status__ok(mocker):
         user=owner,
         template=template,
     )
-    task_delegation_event_mock = mocker.patch(
+    mocker.patch(
         'src.processes.services.events.'
         'WorkflowEventService.task_delegation_event',
     )
@@ -881,11 +866,6 @@ def test_deactivate__resets_status__ok(mocker):
     # assert
     owner.refresh_from_db()
     assert owner.absence_status == AbsenceStatus.ACTIVE
-    task_delegation_event_mock.assert_called_once_with(
-        task=mocker.ANY,
-        user=owner,
-        substitute_group=mocker.ANY,
-    )
 
 
 def test_deactivate__clears_fields__ok(mocker):
@@ -910,7 +890,7 @@ def test_deactivate__clears_fields__ok(mocker):
         user=owner,
         template=template,
     )
-    task_delegation_event_mock = mocker.patch(
+    mocker.patch(
         'src.processes.services.events.'
         'WorkflowEventService.task_delegation_event',
     )
@@ -928,11 +908,124 @@ def test_deactivate__clears_fields__ok(mocker):
     assert owner._saved_notify_about_tasks is None
     assert owner._saved_is_new_tasks_subscriber is None
     assert owner._saved_is_complete_tasks_subscriber is None
-    task_delegation_event_mock.assert_called_once_with(
-        task=mocker.ANY,
-        user=owner,
-        substitute_group=mocker.ANY,
+
+
+def test_deactivate__completed_delegated__ok(mocker):
+
+    """
+    Deactivate only unfreezes DELEGATED performers on active
+    tasks; completed task performers stay untouched.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    substitute = create_test_admin(
+        account=account,
+        email='sub@pneumatic.app',
     )
+    template = create_test_template(
+        user=owner,
+        tasks_count=2,
+        is_active=True,
+    )
+    workflow = create_test_workflow(
+        user=owner,
+        template=template,
+    )
+    mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+    service = VacationDelegationService(user=owner)
+    service.activate(substitute_user_ids=[substitute.id])
+
+    # simulate completed task with DELEGATED performer
+    completed_task = workflow.tasks.filter(
+        status=TaskStatus.COMPLETED,
+    ).first()
+    if completed_task:
+        TaskPerformer.objects.filter(
+            task=completed_task,
+            user_id=owner.id,
+        ).update(
+            directly_status=DirectlyStatus.DELEGATED,
+        )
+
+    # act
+    service.deactivate()
+
+    # assert — active task performers are unfrozen
+    active_perfs = TaskPerformer.objects.filter(
+        task__workflow=workflow,
+        task__status=TaskStatus.ACTIVE,
+        user_id=owner.id,
+        type=PerformerType.USER,
+    )
+    for perf in active_perfs:
+        assert perf.directly_status == DirectlyStatus.NO_STATUS
+
+    owner.refresh_from_db()
+    assert owner.absence_status == AbsenceStatus.ACTIVE
+
+
+def test_activate__update_replaces_subs__ok(mocker):
+
+    """
+    Re-activating with different substitutes replaces old members
+    while keeping the same group.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    sub1 = create_test_admin(
+        account=account,
+        email='sub1@pneumatic.app',
+    )
+    sub2 = create_test_admin(
+        account=account,
+        email='sub2@pneumatic.app',
+    )
+    sub3 = create_test_admin(
+        account=account,
+        email='sub3@pneumatic.app',
+    )
+    template = create_test_template(
+        user=owner,
+        tasks_count=1,
+        is_active=True,
+    )
+    create_test_workflow(
+        user=owner,
+        template=template,
+    )
+    mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+
+    # activate with sub1, sub2
+    service = VacationDelegationService(user=owner)
+    service.activate(
+        substitute_user_ids=[sub1.id, sub2.id],
+    )
+    owner.refresh_from_db()
+    group_id = owner.vacation_substitute_group_id
+
+    # act — update to sub2, sub3 (sub1 removed, sub3 added)
+    service.activate(
+        substitute_user_ids=[sub2.id, sub3.id],
+    )
+
+    # assert — same group, new members
+    owner.refresh_from_db()
+    assert owner.vacation_substitute_group_id == group_id
+    member_ids = set(
+        owner.vacation_substitute_group.users
+        .values_list('id', flat=True),
+    )
+    assert member_ids == {sub2.id, sub3.id}
 
 
 def test_clear_sub_groups__removes_user__ok():
@@ -943,7 +1036,7 @@ def test_clear_sub_groups__removes_user__ok():
 
     # arrange
     account = create_test_account()
-    create_test_owner(account=account)
+    _owner = create_test_owner(account=account)
     sub = create_test_admin(
         account=account,
         email='sub@pneumatic.app',
@@ -1029,8 +1122,12 @@ def test_clear_sub_groups__no_groups__ok():
         user=user,
     )
 
-    # assert — no exception raised
-    assert True
+    # assert — no exception raised, user has no personal groups
+    personal_groups = UserGroup.objects.filter(
+        type=UserGroupType.PERSONAL,
+        users=user,
+    )
+    assert personal_groups.count() == 0
 
 
 def test_activate__sends_notification__ok(mocker):

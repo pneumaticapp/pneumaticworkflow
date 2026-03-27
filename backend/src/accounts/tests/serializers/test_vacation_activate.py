@@ -1,6 +1,11 @@
 import pytest
 
 from src.accounts.enums import AbsenceStatus
+from src.accounts.messages import (
+    MSG_A_0049,
+    MSG_A_0050,
+    MSG_A_0051,
+)
 from src.accounts.serializers.user import (
     VacationActivateSerializer,
 )
@@ -65,6 +70,9 @@ def test_validate__self_delegation__error():
     # assert
     assert slz.is_valid() is False
     assert 'substitute_user_ids' in slz.errors
+    assert str(MSG_A_0049) in str(
+        slz.errors['substitute_user_ids'],
+    )
 
 
 def test_validate__missing_users__error():
@@ -90,6 +98,9 @@ def test_validate__missing_users__error():
     # assert
     assert slz.is_valid() is False
     assert 'substitute_user_ids' in slz.errors
+    assert str(MSG_A_0050([99999])) in str(
+        slz.errors['substitute_user_ids'],
+    )
 
 
 def test_validate__empty_list__error():
@@ -115,6 +126,9 @@ def test_validate__empty_list__error():
     # assert
     assert slz.is_valid() is False
     assert 'substitute_user_ids' in slz.errors
+    assert str(MSG_A_0051) in str(
+        slz.errors['substitute_user_ids'],
+    )
 
 
 def test_validate__absence_active__error():
@@ -240,3 +254,39 @@ def test_validate__multiple_substitutes__ok():
         sub1.id,
         sub2.id,
     }
+
+
+def test_validate__vacation_dates__ok():
+
+    """
+    vacation_start_date and vacation_end_date pass through.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    substitute = create_test_admin(
+        account=account,
+        email='sub@pneumatic.app',
+    )
+    data = {
+        'substitute_user_ids': [substitute.id],
+        'absence_status': AbsenceStatus.VACATION,
+        'vacation_start_date': '2026-04-01',
+        'vacation_end_date': '2026-04-15',
+    }
+
+    # act
+    slz = VacationActivateSerializer(
+        data=data,
+        context={'vacation_user': owner, 'user': owner},
+    )
+
+    # assert
+    assert slz.is_valid() is True
+    assert str(
+        slz.validated_data['vacation_start_date'],
+    ) == '2026-04-01'
+    assert str(
+        slz.validated_data['vacation_end_date'],
+    ) == '2026-04-15'

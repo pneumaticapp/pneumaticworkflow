@@ -477,7 +477,7 @@ class User(AbstractUser, SoftDeleteModel):
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='vacation_owner',
+        related_name='vacation_owners',
     )
     # Saved notification settings (for restoring after vacation)
     _saved_notify_about_tasks = models.BooleanField(null=True)
