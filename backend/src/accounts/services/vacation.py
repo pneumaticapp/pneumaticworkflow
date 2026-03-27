@@ -1,5 +1,6 @@
 from typing import List, Set
 
+from django.db.models import Count
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
@@ -24,11 +25,13 @@ SUBSTITUTE_GROUP_PREFIX = 'Substitutes'
 
 class VacationDelegationService:
 
-    def __init__(self, user):
+    def __init__(self, user: 'UserModel') -> None:
         self.user = user
 
     @classmethod
-    def clear_substitute_groups(cls, user) -> None:
+    def clear_substitute_groups(
+        cls, user: 'UserModel',
+    ) -> None:
         """Remove user from all personal (vacation substitute)
         groups. If the group becomes empty after removal,
         auto-deactivate vacation for the group owner.
@@ -39,11 +42,13 @@ class VacationDelegationService:
                 type=UserGroupType.PERSONAL,
                 users=user,
             )
+            .annotate(user_count=Count('users'))
             .prefetch_related('vacation_owners')
         )
         for group in personal_groups:
             group.users.remove(user)
-            if not group.users.exists():
+            # user_count includes the user being removed
+            if group.user_count <= 1:
                 for owner in group.vacation_owners.all():
                     cls(owner).deactivate()
 
@@ -318,10 +323,14 @@ class VacationDelegationService:
         and restores notification settings.
         """
         with transaction.atomic():
-            # 1. Unfreeze performers
+            # 1. Unfreeze performers (only on active tasks)
             TaskPerformer.objects.filter(
                 user_id=self.user.id,
                 directly_status=DirectlyStatus.DELEGATED,
+                task__status__in=[
+                    TaskStatus.ACTIVE,
+                    TaskStatus.DELAYED,
+                ],
             ).update(
                 directly_status=DirectlyStatus.NO_STATUS,
             )

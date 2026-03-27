@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 
 from src.accounts.enums import Language
 from src.accounts.models import Account
+from src.accounts.serializers.mixins import VacationSubstituteMixin
 from src.authentication.messages import (
     MSG_AU_0006,
     MSG_AU_0012,
@@ -154,7 +155,10 @@ class ContextAccountSerializer(serializers.ModelSerializer):
         return False
 
 
-class ContextUserSerializer(serializers.ModelSerializer):
+class ContextUserSerializer(
+    VacationSubstituteMixin,
+    serializers.ModelSerializer,
+):
 
     class Meta:
         model = UserModel
@@ -202,14 +206,6 @@ class ContextUserSerializer(serializers.ModelSerializer):
     date_fmt = DateFormatField(read_only=True)
     is_absent = serializers.BooleanField(read_only=True)
     substitute_user_ids = serializers.SerializerMethodField()
-
-    def get_substitute_user_ids(self, instance: UserModel) -> list:
-        if instance.vacation_substitute_group_id:
-            return list(
-                instance.vacation_substitute_group.users
-                .values_list('id', flat=True),
-            )
-        return []
 
     def get_has_workflow_viewer_access(self, obj) -> bool:
         access = self._get_template_access(obj)

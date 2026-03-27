@@ -1,8 +1,8 @@
-from typing import List
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Prefetch, Q
+
 from rest_framework import serializers
 
 from src.accounts.enums import (
@@ -21,6 +21,11 @@ from src.accounts.messages import (
     MSG_A_0049,
     MSG_A_0050,
     MSG_A_0051,
+    MSG_A_0053,
+    MSG_A_0054,
+)
+from src.accounts.serializers.mixins import (
+    VacationSubstituteMixin,
 )
 from src.accounts.serializers.user_invites import (
     UserListInviteSerializer,
@@ -50,6 +55,7 @@ UserModel = get_user_model()
 
 
 class UserSerializer(
+    VacationSubstituteMixin,
     CustomValidationErrorMixin,
     serializers.ModelSerializer,
 ):
@@ -118,14 +124,6 @@ class UserSerializer(
         if instance.status_invited and instance.invite:
             return UserListInviteSerializer(instance.invite).data
         return None
-
-    def get_substitute_user_ids(self, instance: UserModel) -> List[int]:
-        if instance.vacation_substitute_group_id:
-            return list(
-                instance.vacation_substitute_group.users
-                .values_list('id', flat=True),
-            )
-        return []
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -340,6 +338,13 @@ class VacationActivateSerializer(
     def validate_absence_status(self, value):
         if value == AbsenceStatus.ACTIVE:
             raise serializers.ValidationError(
-                MSG_A_0051,
+                MSG_A_0053,
             )
         return value
+
+    def validate(self, attrs):
+        start = attrs.get('vacation_start_date')
+        end = attrs.get('vacation_end_date')
+        if start and end and start > end:
+            raise serializers.ValidationError(MSG_A_0054)
+        return attrs

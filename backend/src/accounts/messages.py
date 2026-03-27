@@ -108,3 +108,5 @@ MSG_A_0050 = lambda missing: format_lazy(
 )
 MSG_A_0051 = _('Please select at least one substitute.')
 MSG_A_0052 = _('Vacation is not active.')
+MSG_A_0053 = _('Cannot activate with status Active.')
+MSG_A_0054 = _('End date must be after start date.')

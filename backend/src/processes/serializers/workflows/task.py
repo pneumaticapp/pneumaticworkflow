@@ -27,6 +27,7 @@ from src.processes.serializers.workflows.field import (
     TaskFieldSerializer,
 )
 from src.accounts.enums import UserGroupType
+from src.processes.enums import PerformerType
 from src.processes.models.workflows.task import TaskPerformer
 
 
@@ -48,10 +49,14 @@ def get_performers_for_task(instance) -> List[Dict[str, Any]]:
                 if p.date_completed else None
             ),
             'type': p.type,
-            'source_id': p.group_id if p.type == 'group' else p.user_id,
+            'source_id': (
+                p.group_id
+                if p.type == PerformerType.GROUP
+                else p.user_id
+            ),
         }
         if (
-            p.type == 'group'
+            p.type == PerformerType.GROUP
             and p.group
             and p.group.type == UserGroupType.PERSONAL
         ):

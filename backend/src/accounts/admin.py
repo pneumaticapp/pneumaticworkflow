@@ -246,6 +246,15 @@ class UsersAdmin(UserAdmin, SignUpMixin):
                 'is_comments_mentions_subscriber',
             )},
         ),
+        (
+            'Vacation',
+            {'fields': (
+                'absence_status',
+                'vacation_start_date',
+                'vacation_end_date',
+                'vacation_substitute_group',
+            )},
+        ),
     )
     list_display = (
         'name',

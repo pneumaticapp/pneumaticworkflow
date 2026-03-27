@@ -27,6 +27,7 @@ from src.accounts.services.exceptions import (
     PreventAccountOwnerDeletion,
 )
 from src.accounts.validators import user_is_last_performer
+from src.accounts.services.vacation import VacationDelegationService
 from src.analysis.mixins import BaseIdentifyMixin
 from src.analysis.services import AnalyticService
 from src.authentication.tokens import PneumaticToken
@@ -288,9 +289,6 @@ class UserService(
     def _deactivate(self):
         user = self.instance
         with transaction.atomic():
-            from src.accounts.services.vacation import (
-                VacationDelegationService,
-            )
             # Remove from personal (vacation substitute) groups
             VacationDelegationService.clear_substitute_groups(user)
             # Also deactivate own vacation if active

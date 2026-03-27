@@ -972,8 +972,15 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
         return self.filter(directly_status=DirectlyStatus.NO_STATUS)
 
     def exclude_directly_deleted(self):
-        """Exclude performers with DELETED or DELEGATED
-        directly_status."""
+        """Exclude performers that should not be visible.
+
+        Filters out performers with directly_status of DELETED
+        (user removed from task) or DELEGATED (user on vacation,
+        tasks temporarily assigned to substitutes).
+
+        Note: despite the name, this also excludes DELEGATED
+        performers. A rename was deferred due to widespread usage.
+        """
         return self.exclude(
             directly_status__in=(
                 DirectlyStatus.DELETED,
