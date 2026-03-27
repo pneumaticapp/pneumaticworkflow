@@ -128,9 +128,6 @@ class UserTransferService(
                 new_user=new_user,
             )
             service.reassign_everywhere()
-        # NOTE: clear_substitute_groups is called inside
-        # UserService.deactivate() → _deactivate(), no need
-        # to call it here separately.
         remove_user_from_draft(
             account_id=self.prev_user.account.id,
             user_id=self.prev_user.id,

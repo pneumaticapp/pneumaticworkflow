@@ -31,6 +31,29 @@ from src.processes.enums import PerformerType
 from src.processes.models.workflows.task import TaskPerformer
 
 
+def _format_performer(p) -> Dict[str, Any]:
+    item = {
+        'is_completed': p.is_completed,
+        'date_completed_tsp': (
+            p.date_completed.timestamp()
+            if p.date_completed else None
+        ),
+        'type': p.type,
+        'source_id': (
+            p.group_id
+            if p.type == PerformerType.GROUP
+            else p.user_id
+        ),
+    }
+    if (
+        p.type == PerformerType.GROUP
+        and p.group
+        and p.group.type == UserGroupType.PERSONAL
+    ):
+        item['label'] = p.group.name
+    return item
+
+
 def get_performers_for_task(instance) -> List[Dict[str, Any]]:
     if hasattr(instance, 'all_performers'):
         performers = instance.all_performers
@@ -38,31 +61,8 @@ def get_performers_for_task(instance) -> List[Dict[str, Any]]:
         performers = (
             instance.exclude_directly_deleted_taskperformer_set()
             .select_related('group')
-            .prefetch_related('group__users')
         )
-    ret = []
-    for p in performers:
-        item = {
-            'is_completed': p.is_completed,
-            'date_completed_tsp': (
-                p.date_completed.timestamp()
-                if p.date_completed else None
-            ),
-            'type': p.type,
-            'source_id': (
-                p.group_id
-                if p.type == PerformerType.GROUP
-                else p.user_id
-            ),
-        }
-        if (
-            p.type == PerformerType.GROUP
-            and p.group
-            and p.group.type == UserGroupType.PERSONAL
-        ):
-            item['label'] = p.group.name
-        ret.append(item)
-    return ret
+    return [_format_performer(p) for p in performers]
 
 
 class TaskShortSerializer(serializers.ModelSerializer):

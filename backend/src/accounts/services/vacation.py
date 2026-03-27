@@ -36,21 +36,25 @@ class VacationDelegationService:
         groups. If the group becomes empty after removal,
         auto-deactivate vacation for the group owner.
         """
-        personal_groups = (
-            UserGroup.objects
-            .filter(
-                type=UserGroupType.PERSONAL,
-                users=user,
+        with transaction.atomic():
+            personal_groups = (
+                UserGroup.objects
+                .filter(
+                    type=UserGroupType.PERSONAL,
+                    users=user,
+                )
+                .annotate(user_count=Count('users'))
+                .prefetch_related('vacation_owners')
             )
-            .annotate(user_count=Count('users'))
-            .prefetch_related('vacation_owners')
-        )
-        for group in personal_groups:
-            group.users.remove(user)
-            # user_count includes the user being removed
-            if group.user_count <= 1:
-                for owner in group.vacation_owners.all():
-                    cls(owner).deactivate()
+            owners_to_deactivate = []
+            for group in personal_groups:
+                group.users.remove(user)
+                if group.user_count <= 1:
+                    owners_to_deactivate.extend(
+                        group.vacation_owners.all(),
+                    )
+            for owner in owners_to_deactivate:
+                cls(owner).deactivate()
 
     def _notify_substitutes(
         self,
@@ -120,15 +124,16 @@ class VacationDelegationService:
         group.users.set(substitute_user_ids)
 
         # Ensure new substitutes have workflow access
-        qs_tasks = TaskPerformer.objects.filter(group=group)
-        task_ids = set(
-            qs_tasks.values_list('task_id', flat=True),
+        pairs = (
+            TaskPerformer.objects
+            .filter(group=group)
+            .values_list('task_id', 'task__workflow_id')
         )
-        wf_ids = set(
-            qs_tasks.values_list(
-                'task__workflow_id', flat=True,
-            ),
-        )
+        task_ids = set()
+        wf_ids = set()
+        for task_id, wf_id in pairs:
+            task_ids.add(task_id)
+            wf_ids.add(wf_id)
 
         self._add_members_bulk(
             wf_ids=wf_ids,
@@ -231,8 +236,11 @@ class VacationDelegationService:
             .filter(type=UserGroupType.REGULAR)
             .values_list('id', flat=True),
         )
+        # 4. Collect workflow_ids from already-loaded data
+        wf_ids = {p.task.workflow_id for p in performers_list}
+
         if user_group_ids:
-            group_performers = (
+            new_task_ids = set(
                 TaskPerformer.objects
                 .filter(
                     group_id__in=user_group_ids,
@@ -245,12 +253,11 @@ class VacationDelegationService:
                 .exclude(
                     directly_status=DirectlyStatus.DELETED,
                 )
+                .exclude(task_id__in=task_ids)
+                .values_list('task_id', flat=True)
+                .distinct(),
             )
-            new_task_ids = set()
-            for gp in group_performers:
-                if gp.task_id not in task_ids:
-                    new_task_ids.add(gp.task_id)
-                    task_ids.add(gp.task_id)
+            task_ids |= new_task_ids
 
             if new_task_ids:
                 grp_perfs = [
@@ -265,13 +272,13 @@ class VacationDelegationService:
                     grp_perfs,
                     ignore_conflicts=True,
                 )
+                # Add workflow_ids from group tasks
+                wf_ids |= set(
+                    Task.objects
+                    .filter(id__in=new_task_ids)
+                    .values_list('workflow_id', flat=True),
+                )
 
-        # 4. Add substitutes to workflow.members
-        wf_ids = set(
-            Task.objects
-            .filter(id__in=task_ids)
-            .values_list('workflow_id', flat=True),
-        )
         self._add_members_bulk(
             wf_ids=wf_ids,
             substitute_user_ids=substitute_user_ids,
