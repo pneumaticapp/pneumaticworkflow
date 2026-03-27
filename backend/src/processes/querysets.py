@@ -622,13 +622,23 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             ),
         ]
         if fields:
-            from src.processes.models.workflows.fields import TaskField
+            from src.processes.models.workflows.fields import (
+                TaskField,
+                FieldSelection,
+            )
             prefetch_args.append(
                 Prefetch(
                     lookup='fields',
                     to_attr='filtered_fields',
                     queryset=(
                         TaskField.objects
+                        .prefetch_related(
+                            Prefetch(
+                                'kickoff__output__selections',
+                                queryset=FieldSelection.objects.only('value'),
+                                to_attr='selections_values',
+                            ),
+                        )
                         .filter(api_name__in=fields)
                         .order_by('kickoff_id', 'task__number', '-order')
                     ),
@@ -781,9 +791,6 @@ class FieldTemplateValuesQuerySet(BaseQuerySet):
     def by_api_names(self, api_names: List[str]):
         return self.filter(api_name__in=api_names)
 
-    def selected(self):
-        return self.filter(is_selected=True)
-
 
 class FieldSelectionQuerySet(BaseQuerySet):
 
@@ -798,9 +805,6 @@ class FieldSelectionQuerySet(BaseQuerySet):
 
     def exclude_values(self, values: List[str]):
         return self.filter(~Q(value__in=values))
-
-    def selected(self):
-        return self.filter(is_selected=True)
 
 
 class SystemTemplateQuerySet(BaseQuerySet):

@@ -371,7 +371,7 @@ def test_retrieve__kickoff_field_with_selections__ok(api_client):
         data={
             'name': 'Workflow',
             'kickoff': {
-                field_template.api_name: [selection_template.api_name],
+                field_template.api_name: [selection_template.value],
             },
         },
     )
@@ -395,11 +395,8 @@ def test_retrieve__kickoff_field_with_selections__ok(api_client):
     assert field_data['order'] == field.order
     assert field_data['user_id'] is None
     assert field_data['value'] == 'some value'
-    selection_data = field_data['selections'][0]
-    assert selection_data['id'] == selection.id
-    assert selection_data['api_name'] == selection.api_name
-    assert selection_data['is_selected'] is True
-    assert selection_data['value'] == selection.value
+    assert len(field_data['selections']) == 1
+    assert field_data['selections'][0] == selection.value
 
 
 def test_retrieve__kickoff_field_with_attachments__ok(api_client):

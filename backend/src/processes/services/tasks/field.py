@@ -1,6 +1,7 @@
 import re
+from django.db.models import QuerySet
 from decimal import Decimal, DecimalException
-from typing import Any, Iterable, List, NamedTuple, Optional, Set, Union
+from typing import Any, List, NamedTuple, Optional, Set, Union
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import (
@@ -13,7 +14,6 @@ from src.processes.enums import FieldType
 from src.processes.messages import workflow as messages
 from src.processes.models.templates.fields import (
     FieldTemplate,
-    FieldTemplateSelection,
 )
 from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.fields import TaskField
@@ -22,6 +22,7 @@ from src.processes.services.tasks.exceptions import TaskFieldException
 from src.processes.services.tasks.selection import SelectionService
 from src.services.markdown import MarkdownService
 from src.utils.dates import date_tsp_to_user_fmt
+
 
 UserModel = get_user_model()
 
@@ -88,7 +89,7 @@ class TaskFieldService(BaseWorkflowService):
     def _get_valid_radio_value(
         self,
         raw_value: str,
-        selections: Iterable[FieldTemplateSelection],
+        selections: QuerySet,
     ) -> FieldData:
 
         """ Selections need for first create selection
@@ -100,7 +101,7 @@ class TaskFieldService(BaseWorkflowService):
                 message=messages.MSG_PW_0028,
             )
         try:
-            selection = selections.get(api_name=raw_value)
+            selection = selections.get(value=raw_value)
         except ObjectDoesNotExist as ex:
             raise TaskFieldException(
                 api_name=self.instance.api_name,
@@ -116,7 +117,7 @@ class TaskFieldService(BaseWorkflowService):
     def _get_valid_checkbox_value(
         self,
         raw_value: List[str],
-        selections: Iterable[FieldTemplateSelection],
+        selections: QuerySet,
     ) -> FieldData:
 
         if not isinstance(raw_value, list):
@@ -133,7 +134,9 @@ class TaskFieldService(BaseWorkflowService):
                 )
 
         selections_values = list(
-            selections.by_api_names(raw_value).values_list('value', flat=True),
+            selections
+            .filter(value__in=raw_value)
+            .values_list('value', flat=True),
         )
         if len(selections_values) < len(raw_value):
             raise TaskFieldException(
@@ -309,6 +312,7 @@ class TaskFieldService(BaseWorkflowService):
             order=instance_template.order,
             workflow_id=kwargs['workflow_id'],
             account_id=instance_template.account_id,
+            dataset=instance_template.dataset,
         )
         if not kwargs.get('skip_value'):
             raw_value = kwargs.get('value')
@@ -339,13 +343,7 @@ class TaskFieldService(BaseWorkflowService):
         if self.instance.type == FieldType.FILE and not skip_value:
             self._link_new_attachments(raw_value)
         elif self.instance.type in FieldType.TYPES_WITH_SELECTIONS:
-            if skip_value:
-                self._create_selections(instance_template)
-            else:
-                self._create_selections_with_value(
-                    raw_value=raw_value,
-                    instance_template=instance_template,
-                )
+            self._create_selections(instance_template)
 
     def _link_new_attachments(
         self,
@@ -367,86 +365,29 @@ class TaskFieldService(BaseWorkflowService):
                 )
             )
 
-    def _create_selections(
-        self,
-        instance_template: FieldTemplate,
-    ):
-
-        for selection_template in instance_template.selections.all():
-            selection_service = SelectionService(user=self.user)
-            selection_service.create(
-                instance_template=selection_template,
-                field_id=self.instance.id,
-                is_selected=False,
-            )
-
     def _get_selections_values(
         self,
         raw_value: Union[str, List[str], None],
     ) -> Set:
 
         if self.instance.type in FieldType.TYPES_WITH_SELECTION:
-            # selection api_name
             value = {raw_value}
         else:
-            value = set()
-            for el in raw_value:
-                # selection api_name
-                value.add(el)
+            value = set(raw_value)
         return value
 
-    def _create_selections_with_value(
+    def _create_selections(
         self,
-        raw_value: Union[str, List[str], None],
         instance_template: FieldTemplate,
     ):
-        """ raw_value - validated FieldTemplateSelection id(s) or None """
 
-        if raw_value in self.NULL_VALUES:
-            for selection_template in instance_template.selections.all():
-                selection_service = SelectionService(user=self.user)
-                selection_service.create(
-                    instance_template=selection_template,
-                    field_id=self.instance.id,
-                    is_selected=False,
-                )
-        else:
-            selections_values = self._get_selections_values(raw_value)
-            for selection_template in instance_template.selections.all():
-                selection_service = SelectionService(user=self.user)
-                selection_service.create(
-                    instance_template=selection_template,
-                    field_id=self.instance.id,
-                    is_selected=(
-                        selection_template.api_name in selections_values
-                    ),
-                )
-
-    def _update_selections(self, raw_value: Union[str, List[str], None]):
-
-        """ raw_value - validated FieldSelection id """
-
-        if raw_value in self.NULL_VALUES:
-            for selection in self.instance.selections.all():
-                selection_service = SelectionService(
-                    instance=selection,
-                    user=self.user,
-                )
-                selection_service.partial_update(
-                    is_selected=False,
-                    force_save=True,
-                )
-        else:
-            selections_values = self._get_selections_values(raw_value)
-            for selection in self.instance.selections.all():
-                selection_service = SelectionService(
-                    instance=selection,
-                    user=self.user,
-                )
-                selection_service.partial_update(
-                    is_selected=selection.api_name in selections_values,
-                    force_save=True,
-                )
+        selections = instance_template.selections.all().order_by('id')
+        for selection_template in selections:
+            selection_service = SelectionService(user=self.user)
+            selection_service.create(
+                instance_template=selection_template,
+                field_id=self.instance.id,
+            )
 
     def _remove_unused_attachments(
         self,
@@ -500,6 +441,4 @@ class TaskFieldService(BaseWorkflowService):
         )
         if self.instance.type == FieldType.FILE:
             self._link_new_attachments(raw_value)
-        elif self.instance.type in FieldType.TYPES_WITH_SELECTIONS:
-            self._update_selections(raw_value)
         return self.instance

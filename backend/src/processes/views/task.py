@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from django.contrib.auth import get_user_model
+from django.db.models import Prefetch
 from rest_framework.decorators import action
 from rest_framework.generics import ListAPIView, get_object_or_404
 from rest_framework.pagination import LimitOffsetPagination
@@ -29,7 +30,9 @@ from src.processes.filters import (
     TaskWebhookFilterSet,
     WorkflowEventFilter,
 )
+from src.processes.models.dataset import DatasetItem
 from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.fields import FieldSelection
 from src.processes.models.workflows.task import (
     Task,
     TaskForList,
@@ -152,8 +155,8 @@ class TaskViewSet(
                 IsAuthenticated(),
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
-                TaskCommentPermission(),
                 GuestTaskPermission(),
+                TaskCommentPermission(),
             )
         if self.action in (
             'create_performer',
@@ -263,8 +266,21 @@ class TaskViewSet(
         if self.action == 'retrieve':
             queryset = queryset.prefetch_related(
                 'checklists__selections',
-                'output__selections',
                 'output__attachments',
+                Prefetch(
+                    'output__selections',
+                    queryset=FieldSelection.objects.only('value'),
+                    to_attr='selections_values',
+                ),
+                Prefetch(
+                    'output__dataset__items',
+                    queryset=(
+                        DatasetItem.objects
+                        .only('value')
+                        .order_by('order')
+                    ),
+                    to_attr='dataset_values',
+                ),
             ).select_related(
                 'workflow',
             )
@@ -498,7 +514,14 @@ class TaskViewSet(
                 api_name=ex.api_name,
             )
         response_slz = TaskSerializer(
-            instance=task,
+            instance=Task.objects.prefetch_related(
+                Prefetch(
+                    'output__selections',
+                    queryset=FieldSelection.objects.only('value'),
+                    to_attr='selections_values',
+                ),
+                'output__attachments',
+            ).get(pk=task.pk),
             context={'user': request.user},
         )
         return self.response_ok(response_slz.data)

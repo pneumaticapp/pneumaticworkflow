@@ -1,5 +1,8 @@
 .dropdown-container {
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  min-width: 0;
 
   /* stylelint-disable selector-pseudo-class-no-unknown, declaration-no-important  */
   :global .react-select__control {
@@ -37,7 +40,20 @@
   :global .react-select__multi-value__label {
     color: #262522 !important;
   }
+
+  :global .react-select__placeholder {
+    display: block;
+    overflow: hidden;
+    max-width: 100%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
   :global .react-select__single-value {
+    overflow: hidden;
+    max-width: 100%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     color: #262522 !important;
   }
   /* stylelint-enable */

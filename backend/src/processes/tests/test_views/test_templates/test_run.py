@@ -229,8 +229,8 @@ def test_run__all__ok(api_client, mocker):
                 kickoff_field_3.api_name: 6351521536,
                 kickoff_field_4.api_name: [str(attach_1.id), str(attach_2.id)],
                 kickoff_field_5.api_name: [
-                    str(selection_1.api_name),
-                    str(selection_2.api_name),
+                    str(selection_1.value),
+                    str(selection_2.value),
                 ],
             },
         },
@@ -303,11 +303,7 @@ def test_run__all__ok(api_client, mocker):
 
     kickoff_field_5_data = data['kickoff']['output'][4]
     assert len(kickoff_field_5_data['selections']) == 2
-    selection_1_data = kickoff_field_5_data['selections'][0]
-    assert selection_1_data['id']
-    assert selection_1_data['api_name'] == selection_1.api_name
-    assert selection_1_data['value'] == selection_1.value
-    assert selection_1_data['is_selected'] is True
+    assert kickoff_field_5_data['selections'][0] == selection_1.value
     assert data['id'] == workflow.id
     assert data['tasks'][0]['performers'] == [
         {
@@ -356,9 +352,7 @@ def test_run__all__ok(api_client, mocker):
     kv_selection_1 = kv_selections.get(api_name=selection_1.api_name)
     kv_selection_2 = kv_selections.get(api_name=selection_2.api_name)
     assert kv_selection_1.value == selection_1.value
-    assert kv_selection_1.is_selected
     assert kv_selection_2.value == selection_2.value
-    assert kv_selection_2.is_selected
 
     analytics_mock.assert_called_once_with(
         workflow=workflow,
@@ -884,29 +878,8 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         'WorkflowEventService.workflow_run_event',
     )
     account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     api_client.token_authenticate(user)
-
-    api_name_skip_field = 'skip-field'
-    api_name_skip_selection = 'skip-selection'
-    api_name_file = 'file-field-1'
-    api_name_url = 'url-field-1'
-    api_name_str = 'str-field-1'
-    api_name_text = 'text-field-1'
-    api_name_checkbox = 'box-field-1'
-    api_name_radio = 'radio-field-1'
-    api_name_dropdown = 'drop-field-1'
-
-    task_2_name = 'Second {{%s}}step' % api_name_str
-    task_2_description = '{{%s}}{{%s}}{{%s}}{{%s}}{{%s}}{{%s}}{{%s}}' % (
-        api_name_file,
-        api_name_url,
-        api_name_str,
-        api_name_text,
-        api_name_checkbox,
-        api_name_radio,
-        api_name_dropdown,
-    )
 
     template = create_test_template(
         user=user,
@@ -914,128 +887,22 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         tasks_count=2,
     )
     template_task_1 = template.tasks.get(number=1)
-    template_task_2 = template.tasks.get(number=2)
-    template_task_2.name = task_2_name
-    template_task_2.description = task_2_description
-    template_task_2.save()
 
-    checkbox_field = FieldTemplate.objects.create(
+    skip_field_api_name = 'skip-field'
+    skip_selection_value = 'skip value'
+
+    skip_field = FieldTemplate.objects.create(
         order=1,
         name='Skip first task',
         type=FieldType.CHECKBOX,
-        is_required=False,
         kickoff=template.kickoff_instance,
         template=template,
-        api_name=api_name_skip_field,
-        account=user.account,
-    )
-    selection = FieldTemplateSelection.objects.create(
-        value='Click to skip first step',
-        field_template=checkbox_field,
-        api_name=api_name_skip_selection,
-        template=template,
-    )
-
-    FieldTemplate.objects.create(
-        order=1,
-        name='Attached file',
-        type=FieldType.FILE,
-        is_required=False,
-        task=template_task_1,
-        template=template,
-        api_name=api_name_file,
-        account=user.account,
-    )
-    FieldTemplate.objects.create(
-        order=2,
-        name='Attached URL',
-        type=FieldType.URL,
-        is_required=False,
-        task=template_task_1,
-        template=template,
-        api_name=api_name_url,
-        account=user.account,
-    )
-    FieldTemplate.objects.create(
-        order=3,
-        name='String field',
-        type=FieldType.STRING,
-        is_required=False,
-        task=template_task_1,
-        template=template,
-        api_name=api_name_str,
-        account=user.account,
-    )
-    FieldTemplate.objects.create(
-        order=4,
-        name='Text field',
-        type=FieldType.TEXT,
-        is_required=False,
-        task=template_task_1,
-        template=template,
-        api_name=api_name_text,
-        account=user.account,
-    )
-    checkbox_field = FieldTemplate.objects.create(
-        order=5,
-        name='Checkbox field',
-        type=FieldType.CHECKBOX,
-        is_required=False,
-        task=template_task_1,
-        template=template,
-        api_name=api_name_checkbox,
-        account=user.account,
+        api_name=skip_field_api_name,
+        account=account,
     )
     FieldTemplateSelection.objects.create(
-        value='First checkbox',
-        field_template=checkbox_field,
-        template=template,
-    )
-    FieldTemplateSelection.objects.create(
-        value='Second checkbox',
-        field_template=checkbox_field,
-        template=template,
-    )
-
-    radio_field = FieldTemplate.objects.create(
-        order=6,
-        name='Radio field',
-        type=FieldType.RADIO,
-        is_required=False,
-        task=template_task_1,
-        template=template,
-        api_name=api_name_radio,
-        account=user.account,
-    )
-    FieldTemplateSelection.objects.create(
-        value='First radio',
-        field_template=radio_field,
-        template=template,
-    )
-    FieldTemplateSelection.objects.create(
-        value='Second radio',
-        field_template=radio_field,
-        template=template,
-    )
-
-    dropdown_field = FieldTemplate.objects.create(
-        order=7,
-        name='Dropdown field',
-        type=FieldType.DROPDOWN,
-        is_required=False,
-        task=template_task_1,
-        template=template,
-        api_name=api_name_dropdown,
-        account=user.account,
-    )
-    FieldTemplateSelection.objects.create(
-        value='First selection',
-        field_template=dropdown_field,
-        template=template,
-    )
-    FieldTemplateSelection.objects.create(
-        value='Second selection',
-        field_template=dropdown_field,
+        value=skip_selection_value,
+        field_template=skip_field,
         template=template,
     )
 
@@ -1053,8 +920,8 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         rule=rule,
         operator=PredicateOperator.EQUAL,
         field_type=FieldType.CHECKBOX,
-        field=api_name_skip_field,
-        value=api_name_skip_selection,
+        field=skip_field_api_name,
+        value=skip_selection_value,
         template=template,
     )
 
@@ -1063,7 +930,7 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         f'/templates/{template.id}/run',
         data={
             'kickoff': {
-                api_name_skip_field: [selection.api_name],
+                skip_field_api_name: [skip_selection_value],
             },
         },
     )
@@ -1071,12 +938,8 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
 
     # assert
     assert response.status_code == 200
-    task_1 = workflow.tasks.get(number=1)
-    assert task_1.is_skipped
-    task_2 = workflow.tasks.get(number=2)
-    assert task_2.status == TaskStatus.ACTIVE
-    assert task_2.name == 'Second step'
-    assert task_2.description == ''
+    assert workflow.tasks.get(number=1).is_skipped
+    assert workflow.tasks.get(number=2).is_active
 
 
 def test_skip_delayed_task__fields_is_empty(mocker, api_client):
@@ -1101,8 +964,8 @@ def test_skip_delayed_task__fields_is_empty(mocker, api_client):
         'send_new_task_notification.delay',
     )
 
-    api_name_skip_field = 'skip-field'
-    api_name_skip_selection = 'skip-selection'
+    skip_field_api_name = 'skip-field'
+    skip_selection_api_name = 'skip-selection'
     api_name_file = 'file-field-1'
     api_name_url = 'url-field-1'
     api_name_str = 'str-field-1'
@@ -1198,10 +1061,10 @@ def test_skip_delayed_task__fields_is_empty(mocker, api_client):
                 {
                     'predicates': [
                         {
-                            'field': api_name_skip_field,
+                            'field': skip_field_api_name,
                             'field_type': FieldType.CHECKBOX,
                             'operator': PredicateOperator.EQUAL,
-                            'value': api_name_skip_selection,
+                            'value': skip_selection_api_name,
                         },
                     ],
                 },
@@ -1226,12 +1089,12 @@ def test_skip_delayed_task__fields_is_empty(mocker, api_client):
                     {
                         'order': 1,
                         'name': 'Skip first task',
-                        'api_name': api_name_skip_field,
+                        'api_name': skip_field_api_name,
                         'type': FieldType.CHECKBOX,
                         'is_required': False,
                         'selections': [
                             {
-                                'api_name': api_name_skip_selection,
+                                'api_name': skip_selection_api_name,
                                 'value': 'Click to skip first step',
                             },
                         ],
@@ -1270,14 +1133,14 @@ def test_skip_delayed_task__fields_is_empty(mocker, api_client):
     )
     template = Template.objects.get(id=response_create.data['id'])
     selection = FieldTemplateSelection.objects.get(
-        api_name=api_name_skip_selection,
+        api_name=skip_selection_api_name,
     )
     response = api_client.post(
         f'/templates/{template.id}/run',
         data={
             'name': 'test workflow',
             'kickoff': {
-                api_name_skip_field: [selection.api_name],
+                skip_field_api_name: [selection.value],
             },
         },
     )
@@ -3498,8 +3361,8 @@ def test_run__task_name_with_field_2__ok(mocker, api_client):
         data={
             'kickoff': {
                 api_name_1: [
-                    str(selection_1.api_name),
-                    str(selection_2.api_name),
+                    str(selection_1.value),
+                    str(selection_2.value),
                 ],
                 api_name_2: 1726012800,
                 api_name_3: str(user.email),

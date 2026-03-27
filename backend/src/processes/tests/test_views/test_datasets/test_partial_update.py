@@ -247,7 +247,10 @@ def test_partial_update__minimal_data__ok(mocker, api_client):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    dataset = create_test_dataset(account=account, name='Old Name')
+    dataset = create_test_dataset(
+        account=account, name='Old Name', items_count=0)
+    new_name = 'New Name'
+    updated_dataset = create_test_dataset(account=account, name=new_name)
     api_client.token_authenticate(user=user)
     data_set_service_init_mock = mocker.patch.object(
         DataSetService,
@@ -256,18 +259,18 @@ def test_partial_update__minimal_data__ok(mocker, api_client):
     )
     partial_update_mock = mocker.patch(
         'src.processes.services.dataset.DataSetService.partial_update',
-        return_value=dataset,
+        return_value=updated_dataset,
     )
 
     # act
     response = api_client.patch(
         path=f'/datasets/{dataset.id}',
-        data={'name': 'New Name'},
+        data={'name': new_name},
     )
 
     # assert
     assert response.status_code == 200
-    assert response.data['id'] == dataset.id
+    assert response.data['name'] == new_name
     data_set_service_init_mock.assert_called_once_with(
         user=user,
         instance=dataset,
@@ -276,7 +279,7 @@ def test_partial_update__minimal_data__ok(mocker, api_client):
     )
     partial_update_mock.assert_called_once_with(
         force_save=True,
-        name='New Name',
+        name=new_name,
     )
 
 

@@ -1,5 +1,3 @@
-
-from django.contrib.auth import get_user_model
 from rest_framework import serializers
 
 from src.processes.models.workflows.fields import (
@@ -10,8 +8,6 @@ from src.processes.serializers.file_attachment import (
     FileAttachmentSerializer,
 )
 
-UserModel = get_user_model()
-
 
 class FieldSelectionListSerializer(serializers.ModelSerializer):
     class Meta:
@@ -19,7 +15,6 @@ class FieldSelectionListSerializer(serializers.ModelSerializer):
         fields = (
             'id',
             'value',
-            'is_selected',
             'api_name',
         )
 
@@ -46,8 +41,16 @@ class TaskFieldSerializer(serializers.ModelSerializer):
             'attachments',
         )
 
-    selections = FieldSelectionListSerializer(many=True, required=False)
+    selections = serializers.SerializerMethodField()
     attachments = FileAttachmentSerializer(many=True)
+
+    def get_selections(self, instance: TaskField) -> list:
+        result = [s.value for s in instance.selections_values]
+        if instance.dataset_id:
+            for i in instance.dataset.dataset_values:
+                result.append(i.value)
+        return result
+        # return [s.value for s in instance.selections.only('value')]
 
 
 class TaskFieldListSerializer(serializers.ModelSerializer):
@@ -71,3 +74,31 @@ class TaskFieldListSerializer(serializers.ModelSerializer):
             'user_id',
             'group_id',
         )
+
+
+class TaskFieldEventSerializer(serializers.ModelSerializer):
+
+    # TODO Replace with TaskFileListSerializer after integrating
+    #  the file service. The only difference is the "attachments" field
+    #  (which will be removed when integrating the file service).
+
+    class Meta:
+        model = TaskField
+        fields = (
+            'id',
+            'order',
+            'type',
+            'is_required',
+            'is_hidden',
+            'description',
+            'api_name',
+            'name',
+            'value',
+            'markdown_value',
+            'clear_value',
+            'user_id',
+            'group_id',
+            'attachments',
+        )
+
+    attachments = FileAttachmentSerializer(many=True)

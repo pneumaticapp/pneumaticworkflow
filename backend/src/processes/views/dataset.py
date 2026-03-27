@@ -127,7 +127,7 @@ class DatasetViewSet(
             auth_type=request.token_type,
         )
         try:
-            service.partial_update(
+            dataset = service.partial_update(
                 force_save=True,
                 **serializer.validated_data,
             )
