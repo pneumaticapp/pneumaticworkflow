@@ -1,5 +1,6 @@
 export const enMessages = {
   'general.attach': 'Attach',
+  'general.modify': 'Modify',
   'general.comment': 'Comment',
   'general.show-more': 'More',
   'general.show-more.template': 'Show more templates',
@@ -1395,6 +1396,10 @@ export const enMessages = {
   'datasets.modal-button-create': 'Create',
   'datasets.modal-button-confirm': 'Confirm',
   'datasets.modal-button-cancel': 'CANCEL',
+  'datasets.edit': 'Edit',
+  'datasets.clone': 'Clone',
+  'datasets.delete': 'Delete',
+  'datasets.add-row': 'Row',
   'validation.dataset-name-empty': 'Please enter a dataset name',
   'validation.dataset-name-to-long': 'The dataset name is longer than 200 characters',
 };

@@ -11,12 +11,22 @@ const Datasets = loadable(
   { fallback: <Loader isLoading /> },
 );
 
+const DatasetDetails = loadable(
+  () => import(/* webpackChunkName: "datasetDetails", webpackPrefetch: true */ '../../components/Datasets/DatasetDetails'),
+  { fallback: <Loader isLoading /> },
+);
+
 export const DatasetsView = () => {
   return (
     <TemplatesLayout>
       <React.Suspense fallback={<div className="loading" />}>
         <Switch>
           <Route
+            path={ERoutes.DatasetDetail}
+            component={DatasetDetails}
+          />
+          <Route
+            exact
             path={ERoutes.Datasets}
             component={Datasets}
           />

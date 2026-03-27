@@ -2,7 +2,10 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { IDatasetsStore } from '../../types/redux';
-import { IDataset, IDatasetListItem, ICreateDatasetParams, IUpdateDatasetParams, EDatasetsSorting } from '../../types/dataset';
+import {
+  IDataset, IDatasetListItem, ICreateDatasetParams,
+  IUpdateDatasetParams, EDatasetsSorting, TDatasetItemsSortOrder,
+} from '../../types/dataset';
 import { TDeleteDatasetPayload } from './types';
 
 export const initialState: IDatasetsStore = {
@@ -84,7 +87,7 @@ const datasetsSlice = createSlice({
       state.currentSearchQuery = action.payload;
     },
 
-    setCurrentSortOrder: (state, action: PayloadAction<'asc' | 'desc'>) => {
+    setCurrentSortOrder: (state, action: PayloadAction<TDatasetItemsSortOrder>) => {
       state.currentSortOrder = action.payload;
     },
 

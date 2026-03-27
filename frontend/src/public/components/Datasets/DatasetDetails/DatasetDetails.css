@@ -1,0 +1,14 @@
+.container {
+  margin: 0 auto;
+  max-width: 108.8rem;
+}
+
+.header {
+  @mixin details-header;
+
+  .header__config {
+    display: flex;
+    align-items: center;
+    gap: 0.8rem;
+  }
+}

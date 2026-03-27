@@ -120,7 +120,6 @@ export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
               <TenantsView />
             </ProtectedRoute>
             <ProtectedRoute
-              exact
               path={ERoutes.Datasets}
               hasAccess={user.isAdmin || user.isAccountOwner}
             >

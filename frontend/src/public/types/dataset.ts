@@ -57,3 +57,5 @@ export enum EDatasetsSorting {
   NameAsc = 'name-asc',
   NameDesc = 'name-desc',
 }
+
+export type TDatasetItemsSortOrder = 'asc' | 'desc';

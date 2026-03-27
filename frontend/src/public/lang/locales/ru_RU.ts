@@ -1,5 +1,6 @@
 export const ruMessages = {
   'general.attach': 'Прикрепить',
+  'general.modify': 'Изменить',
   'general.comment': 'Комментарий',
   'general.show-more': 'Еще',
   'general.show-more.template': 'Еще шаблоны',
@@ -1302,6 +1303,10 @@ export const ruMessages = {
   'datasets.modal-button-create': 'Создать',
   'datasets.modal-button-confirm': 'Подтвердить',
   'datasets.modal-button-cancel': 'ОТМЕНА',
+  'datasets.edit': 'Редактировать',
+  'datasets.clone': 'Копировать',
+  'datasets.delete': 'Удалить',
+  'datasets.add-row': 'Строка',
   'validation.dataset-name-empty': 'Введите имя датасета',
   'validation.dataset-name-to-long': 'Имя датасета не должно превышать 200 символов',
 };

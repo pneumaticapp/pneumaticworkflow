@@ -20,12 +20,8 @@ import { EUserListSorting, TUserListItem } from '../../../types/user';
 
 import {
   IntegrateIcon,
-  TrashIcon,
-  PencilIcon,
-  UnionIcon,
   SearchLargeIcon,
   AddUserIcon,
-  SettingsIcon,
 } from '../../icons';
 import {
   TDropdownOption,
@@ -35,6 +31,7 @@ import {
   Button,
   TDropdownOptionBase,
   Placeholder,
+  ModifyDropdown,
 } from '../../UI';
 import { UserSelection } from '../UserSelection';
 import { GroupUser } from './GroupUser';
@@ -150,16 +147,10 @@ export function GroupDetails({ match }: any) {
   };
 
   const renderModify = () => {
-    const dropdownOptionsModify: TDropdownOption[] = [
-      {
-        label: formatMessage({ id: 'group.edit-name' }),
-        onClick: () => dispatch(editModalOpen(group)),
-        Icon: PencilIcon,
-        size: 'sm',
-      },
-      {
-        label: formatMessage({ id: 'group.clone' }),
-        onClick: () => {
+    return (
+      <ModifyDropdown
+        onEdit={() => dispatch(editModalOpen(group))}
+        onClone={() => {
           dispatch(
             createGroup({
               ...group,
@@ -167,36 +158,14 @@ export function GroupDetails({ match }: any) {
             }),
           );
           history.push(ERoutes.Groups);
-        },
-        Icon: UnionIcon,
-        size: 'sm',
-      },
-      {
-        label: formatMessage({ id: 'group.delete' }),
-        onClick: () => {
+        }}
+        onDelete={() => {
           dispatch(deleteGroup(group.id as unknown as Pick<IGroup, 'id'>));
           history.push(ERoutes.Groups);
-        },
-        Icon: TrashIcon,
-        color: 'red',
-        withUpperline: true,
-        withConfirmation: true,
-        size: 'sm',
-      },
-    ];
-
-    return (
-      <Dropdown
-        renderToggle={(isOpen: boolean) => (
-          <Button
-            size="sm"
-            icon={SettingsIcon}
-            label="Modify"
-            buttonStyle="transparent-black"
-            className={classNames(styles['header__config-btn'], isOpen && styles['is-active'])}
-          />
-        )}
-        options={dropdownOptionsModify}
+        }}
+        editLabel={formatMessage({ id: 'group.edit-name' })}
+        cloneLabel={formatMessage({ id: 'group.clone' })}
+        deleteLabel={formatMessage({ id: 'group.delete' })}
       />
     );
   };
@@ -286,8 +255,8 @@ export function GroupDetails({ match }: any) {
       <header className={styles['header']}>
         <h1 title={group.name}>{group.name}</h1>
         <div className={styles['header__config']}>
-          <div className={styles['header__config-item']}>{renderAddUsers()}</div>
-          <div className={styles['header__config-item']}>{renderModify()}</div>
+          {renderAddUsers()}
+          {renderModify()}
         </div>
       </header>
       <div className={styles['list']}>
