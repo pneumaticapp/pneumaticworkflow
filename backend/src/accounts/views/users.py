@@ -322,18 +322,12 @@ class UsersViewSet(
             slz.is_valid(raise_exception=True)
             data = slz.validated_data
 
-            if 'vacation_start_date' in data:
-                user.vacation_start_date = data['vacation_start_date']
-            if 'vacation_end_date' in data:
-                user.vacation_end_date = data['vacation_end_date']
-            user.save(update_fields=[
-                'vacation_start_date', 'vacation_end_date',
-            ])
-
             service = VacationDelegationService(user=user)
             service.activate(
                 substitute_user_ids=data['substitute_user_ids'],
                 absence_status=data.get('absence_status', 'vacation'),
+                vacation_start_date=data.get('vacation_start_date'),
+                vacation_end_date=data.get('vacation_end_date'),
             )
         else:
             if not user.is_absent:

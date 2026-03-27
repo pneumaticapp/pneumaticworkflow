@@ -6,6 +6,7 @@ from django.db.models import Prefetch, Q
 from rest_framework import serializers
 
 from src.accounts.enums import (
+    AbsenceStatus,
     Language,
     SourceType,
     Timezone,
@@ -14,7 +15,13 @@ from src.accounts.models import Contact
 from src.accounts.serializers.group import (
     GroupNameSerializer,
 )
-from src.accounts.messages import MSG_A_0036, MSG_A_0046
+from src.accounts.messages import (
+    MSG_A_0036,
+    MSG_A_0046,
+    MSG_A_0049,
+    MSG_A_0050,
+    MSG_A_0051,
+)
 from src.accounts.serializers.user_invites import (
     UserListInviteSerializer,
 )
@@ -291,7 +298,6 @@ class VacationActivateSerializer(
     CustomValidationErrorMixin,
     serializers.Serializer,
 ):
-    from src.accounts.enums import AbsenceStatus  # noqa: PLC0415
     substitute_user_ids = serializers.ListField(
         child=serializers.IntegerField(),
         min_length=1,
@@ -311,13 +317,13 @@ class VacationActivateSerializer(
     )
 
     def validate_substitute_user_ids(self, value):
-        user = self.context.get('vacation_user', self.context.get('user'))
+        user = self.context.get(
+            'vacation_user', self.context.get('user'),
+        )
         account_id = user.account_id
 
         if user.id in value:
-            raise serializers.ValidationError(
-                'Cannot delegate to yourself.',
-            )
+            raise serializers.ValidationError(MSG_A_0049)
 
         existing = set(
             UserModel.objects
@@ -328,18 +334,13 @@ class VacationActivateSerializer(
         missing = set(value) - existing
         if missing:
             raise serializers.ValidationError(
-                f'Users not found: {sorted(missing)}',
+                MSG_A_0050(missing=sorted(missing)),
             )
         return value
 
-    def validate(self, attrs):
-        if not attrs.get('substitute_user_ids'):
+    def validate_absence_status(self, value):
+        if value == AbsenceStatus.ACTIVE:
             raise serializers.ValidationError(
-                {
-                    'substitute_user_ids': [
-                        'Please select at least one substitute.',
-                    ],
-                },
+                MSG_A_0051,
             )
-
-        return attrs
+        return value

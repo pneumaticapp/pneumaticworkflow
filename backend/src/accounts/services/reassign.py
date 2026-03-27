@@ -51,7 +51,6 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.queries import UpdateWorkflowOwnersQuery
 from src.processes.tasks.tasks import complete_tasks
 
-from src.accounts.enums import UserGroupType
 from src.accounts.services.vacation import (
     VacationDelegationService,
 )
@@ -488,17 +487,7 @@ class ReassignService:
         """
         if not self.old_user:
             return
-        personal_groups = UserGroup.objects.filter(
-            type=UserGroupType.PERSONAL,
-            users=self.old_user,
-        )
-        for group in personal_groups:
-            group.users.remove(self.old_user)
-            if not group.users.exists():
-                # Auto-deactivate vacation for the owner
-                owners = group.vacation_owner.all()
-                for owner in owners:
-                    VacationDelegationService(owner).deactivate()
+        VacationDelegationService.clear_substitute_groups(self.old_user)
 
     def reassign_everywhere(self):
         with transaction.atomic():

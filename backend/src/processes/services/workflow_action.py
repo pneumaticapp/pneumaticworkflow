@@ -1095,10 +1095,15 @@ class WorkflowActionService:
             .exclude(
                 directly_status=DirectlyStatus.DELETED,
             )
-            .select_related('user')
+            .select_related('user__vacation_substitute_group')
+            .prefetch_related('user__vacation_substitute_group__users')
         )
         for performer in performers:
             sub_group = performer.user.vacation_substitute_group
+
+            # Skip if substitute group is empty
+            if not sub_group.users.exists():
+                continue
             performer.directly_status = DirectlyStatus.DELEGATED
             performer.save(update_fields=['directly_status'])
             TaskPerformer.objects.get_or_create(
@@ -1106,8 +1111,9 @@ class WorkflowActionService:
                 type=PerformerType.GROUP,
                 group=sub_group,
             )
-            for sub_user in sub_group.users.all():
-                task.workflow.members.add(sub_user)
+            task.workflow.members.add(
+                *sub_group.users.all(),
+            )
             WorkflowEventService.task_delegation_event(
                 task=task,
                 user=performer.user,

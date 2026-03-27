@@ -1,18 +1,18 @@
+from pytz import timezone as pytz_tz
 from celery import shared_task
+from django.contrib.auth import get_user_model
 from django.db import transaction
+from django.utils import timezone
 
+from src.accounts.enums import AbsenceStatus
 from src.accounts.models import (
     Notification,
     SystemMessage,
 )
 from src.accounts.queries import CreateSystemNotificationsQuery
+from src.accounts.services.vacation import VacationDelegationService
 from src.executor import RawSqlExecutor
 from src.notifications.enums import NotificationMethod
-from pytz import timezone as pytz_tz
-from django.contrib.auth import get_user_model
-from django.utils import timezone
-from src.accounts.enums import AbsenceStatus
-from src.accounts.services.vacation import VacationDelegationService
 from src.notifications.tasks import _send_notification
 
 
@@ -40,7 +40,11 @@ def send_system_notification():
             )
 
 
-@shared_task(ignore_result=True)
+@shared_task(
+    autoretry_for=(Exception,),
+    retry_backoff=True,
+    max_retries=3,
+)
 def process_vacation_schedules():
     """Auto-start and auto-stop vacation delegations.
 

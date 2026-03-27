@@ -166,6 +166,9 @@ cio_template_ids = {
     EmailType.OVERDUE_TASK: env.get('CIO_TEMPLATE__OVERDUE_TASK'),
     EmailType.MENTION: env.get('CIO_TEMPLATE__MENTION'),
     EmailType.COMPLETE_WORKFLOW: env.get('CIO_TEMPLATE__COMPLETE_WORKFLOW'),
+    EmailType.VACATION_DELEGATION: env.get(
+        'CIO_TEMPLATE__VACATION_DELEGATION',
+    ),
 }
 
 email_titles = {
@@ -190,5 +193,7 @@ email_titles = {
     NotificationMethod.task_reminder: (
         'Reminder: you have unfinished tasks in Pneumatic'
     ),
-    NotificationMethod.vacation_delegation: 'Tasks have been delegated to you',
+    NotificationMethod.vacation_delegation: (
+        'Tasks have been delegated to you'
+    ),
 }

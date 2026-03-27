@@ -480,9 +480,9 @@ class User(AbstractUser, SoftDeleteModel):
         related_name='vacation_owner',
     )
     # Saved notification settings (for restoring after vacation)
-    _saved_notify_about_tasks = models.NullBooleanField(null=True)
-    _saved_is_new_tasks_subscriber = models.NullBooleanField(null=True)
-    _saved_is_complete_tasks_subscriber = models.NullBooleanField(
+    _saved_notify_about_tasks = models.BooleanField(null=True)
+    _saved_is_new_tasks_subscriber = models.BooleanField(null=True)
+    _saved_is_complete_tasks_subscriber = models.BooleanField(
         null=True,
     )
 
@@ -498,7 +498,7 @@ class User(AbstractUser, SoftDeleteModel):
     search_content = SearchVectorField(null=True)
 
     @property
-    def is_absent(self):
+    def is_absent(self) -> bool:
         return self.absence_status != AbsenceStatus.ACTIVE
 
     def get_dynamic_mapping(self) -> Dict[str, str]:

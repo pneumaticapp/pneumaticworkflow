@@ -288,28 +288,13 @@ class UserService(
     def _deactivate(self):
         user = self.instance
         with transaction.atomic():
-            # Remove from personal (vacation substitute) groups
-            from src.accounts.enums import UserGroupType
-            from src.accounts.models import UserGroup
-            personal_groups = UserGroup.objects.filter(
-                type=UserGroupType.PERSONAL,
-                users=user,
+            from src.accounts.services.vacation import (
+                VacationDelegationService,
             )
-            for group in personal_groups:
-                group.users.remove(user)
-                if not group.users.exists():
-                    from src.accounts.services.vacation import (
-                        VacationDelegationService,
-                    )
-                    for owner in group.vacation_owner.all():
-                        VacationDelegationService(
-                            owner,
-                        ).deactivate()
+            # Remove from personal (vacation substitute) groups
+            VacationDelegationService.clear_substitute_groups(user)
             # Also deactivate own vacation if active
             if user.is_absent:
-                from src.accounts.services.vacation import (
-                    VacationDelegationService,
-                )
                 VacationDelegationService(user).deactivate()
             remove_user_from_draft(
                 account_id=user.account_id,

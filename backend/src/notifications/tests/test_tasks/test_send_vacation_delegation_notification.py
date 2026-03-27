@@ -18,12 +18,10 @@ pytestmark = pytest.mark.django_db
 def test_send_vacation_delegation_notification__ok(mocker):
 
     # arrange
-    logo = 'https://best.com/logo.jpg'
-    email = 'substitute@best.com'
-    account = create_test_account(logo_lg=logo)
+    account = create_test_account(logo_lg='https://best.com/logo.jpg')
     user = create_test_owner(
         account=account,
-        email=email,
+        email='substitute@best.com',
         first_name='Sub',
     )
     send_notification_mock = mocker.patch(
@@ -34,12 +32,12 @@ def test_send_vacation_delegation_notification__ok(mocker):
     _send_vacation_delegation_notification(
         logging=account.log_api_requests,
         user_id=user.id,
-        user_email=email,
+        user_email='substitute@best.com',
         user_first_name=user.first_name,
         account_id=account.id,
         tasks_count=15,
         vacation_owner_name='Bob Smith',
-        logo_lg=logo,
+        logo_lg='https://best.com/logo.jpg',
     )
 
     # assert
@@ -47,12 +45,12 @@ def test_send_vacation_delegation_notification__ok(mocker):
         logging=account.log_api_requests,
         method_name=NotificationMethod.vacation_delegation,
         user_id=user.id,
-        user_email=email,
+        user_email='substitute@best.com',
         user_first_name=user.first_name,
         account_id=account.id,
         tasks_count=15,
         vacation_owner_name='Bob Smith',
-        logo_lg=logo,
+        logo_lg='https://best.com/logo.jpg',
         link=f'{settings.FRONTEND_URL}/tasks',
         sync=True,
     )

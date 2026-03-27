@@ -6,6 +6,7 @@ from rest_framework.viewsets import GenericViewSet
 from src.accounts.filters import (
     ContactsFilterSet,
 )
+from src.accounts.messages import MSG_A_0052
 from src.accounts.models import (
     Contact,
 )
@@ -19,9 +20,13 @@ from src.accounts.serializers.user import (
     UserSerializer,
     VacationActivateSerializer,
 )
-from src.accounts.services.exceptions import UserServiceException
+from src.accounts.services.exceptions import (
+    UserServiceException,
+)
 from src.accounts.services.user import UserService
-from src.accounts.services.vacation import VacationDelegationService
+from src.accounts.services.vacation import (
+    VacationDelegationService,
+)
 from src.analysis.mixins import BaseIdentifyMixin
 from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import (
@@ -142,26 +147,30 @@ class UserViewSet(
         user = request.user
         slz = VacationActivateSerializer(
             data=request.data,
-            context={**self.get_serializer_context(), 'vacation_user': user},
+            context={
+                **self.get_serializer_context(),
+                'vacation_user': user,
+            },
         )
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
 
-        # Save dates if provided
-        if 'vacation_start_date' in data:
-            user.vacation_start_date = data['vacation_start_date']
-        if 'vacation_end_date' in data:
-            user.vacation_end_date = data['vacation_end_date']
-        user.save(update_fields=[
-            'vacation_start_date',
-            'vacation_end_date',
-        ])
-
         service = VacationDelegationService(user=user)
-        service.activate(
-            substitute_user_ids=data['substitute_user_ids'],
-            absence_status=data.get('absence_status', 'vacation'),
-        )
+        try:
+            service.activate(
+                substitute_user_ids=(
+                    data['substitute_user_ids']
+                ),
+                absence_status=data['absence_status'],
+                vacation_start_date=(
+                    data.get('vacation_start_date')
+                ),
+                vacation_end_date=(
+                    data.get('vacation_end_date')
+                ),
+            )
+        except UserServiceException as ex:
+            raise_validation_error(message=ex.message)
         user.refresh_from_db()
         return self.response_ok(
             UserSerializer(instance=user).data,
@@ -171,7 +180,7 @@ class UserViewSet(
         user = request.user
         if not user.is_absent:
             raise_validation_error(
-                message='Vacation is not active.',
+                message=MSG_A_0052,
             )
         service = VacationDelegationService(user=user)
         service.deactivate()
