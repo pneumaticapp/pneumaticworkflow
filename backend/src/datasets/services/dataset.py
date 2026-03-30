@@ -115,7 +115,7 @@ class DataSetService(BaseModelService):
                     auth_type=self.auth_type,
                     instance=existing_items[item_id],
                 )
-                service.partial_update(**item_data, force_save=True)
+                service.partial_update(**item_data)
                 items_ids.add(item_id)
             else:
                 service = DataSetItemService(
