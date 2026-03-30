@@ -284,7 +284,6 @@ def test_partial_update__minimal_data__ok(mocker, api_client):
         auth_type=AuthTokenType.USER,
     )
     partial_update_mock.assert_called_once_with(
-        force_save=True,
         name=new_name,
     )
 
@@ -331,7 +330,6 @@ def test_partial_update__full_data__ok(mocker, api_client):
         auth_type=AuthTokenType.USER,
     )
     partial_update_mock.assert_called_once_with(
-        force_save=True,
         name='Updated Name',
         description='Updated description',
         items=items,
@@ -380,6 +378,5 @@ def test_partial_update__service_exception__validation_error(
         auth_type=AuthTokenType.USER,
     )
     partial_update_mock.assert_called_once_with(
-        force_save=True,
         name='Updated Name',
     )

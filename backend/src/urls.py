@@ -26,7 +26,7 @@ from src.processes.views.task import (
     TasksListView,
     TaskViewSet,
 )
-from src.processes.views.dataset import DatasetViewSet
+from src.processes.views.dataset import DatasetViewSet, DatasetItemViewSet
 from src.processes.views.template import (
     TemplateViewSet,
 )
@@ -57,6 +57,7 @@ router.register('payment/stripe', StripeViewSet, basename='stripe')
 router.register('payment/subscription', SubscriptionViewSet, basename='subs')
 router.register('faq', FaqViewSet, basename='faq')
 router.register('datasets', DatasetViewSet, basename='datasets')
+router.register('datasets/items', DatasetItemViewSet, basename='dataset-items')
 
 
 urlpatterns = [

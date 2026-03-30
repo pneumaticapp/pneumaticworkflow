@@ -56,3 +56,6 @@ class DataSetItemService(BaseModelService):
                     message=MSG_PW_0093(value=self.instance.value),
                 ) from ex
         return self.instance
+
+    def delete(self) -> None:
+        self.instance.delete()
