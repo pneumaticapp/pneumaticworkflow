@@ -53,6 +53,16 @@ export function ExtraFieldCheckbox({
   const renderKickoffField = () => {
     const fieldNameClassName = classnames(fieldStyles['kickoff-create-field-name']);
 
+    const customOptionsList = selections && (
+      <ul className={fieldStyles['kickoff-create-field-options']}>{selections?.map(renderKickoffOption)}</ul>
+    );
+
+    const addOptionButton = (
+      <button type="button" className={fieldStyles['kickoff-create-field-add-option']} onClick={handleAddOption}>
+        <IntlMessages id="template.kick-off-add-options" />
+      </button>
+    );
+
     return (
       <div className={fieldStyles['kickoff-create-field-container']}>
         <div className={fieldNameClassName}>
@@ -93,22 +103,10 @@ export function ExtraFieldCheckbox({
           </p>
         )}
 
-        {!isDisabled ? (
-          <DatasetSourceToggle field={field} editField={editField} isDisabled={isDisabled}>
-            {selections && (
-              <ul className={fieldStyles['kickoff-create-field-options']}>{selections?.map(renderKickoffOption)}</ul>
-            )}
-            <button type="button" className={fieldStyles['kickoff-create-field-add-option']} onClick={handleAddOption}>
-              <IntlMessages id="template.kick-off-add-options" />
-            </button>
-          </DatasetSourceToggle>
-        ) : (
-          <>
-            {selections && (
-              <ul className={fieldStyles['kickoff-create-field-options']}>{selections?.map(renderKickoffOption)}</ul>
-            )}
-          </>
-        )}
+        <DatasetSourceToggle field={field} editField={editField} isDisabled={isDisabled}>
+          {customOptionsList}
+          {!isDisabled && addOptionButton}
+        </DatasetSourceToggle>
       </div>
     );
   };

@@ -114,78 +114,89 @@ export function DatasetSourceToggle({ field, editField, isDisabled = false, chil
     }
   };
 
+  const clearButton = (
+    <button
+      type="button"
+      className={styles['dataset-source-toggle__clear-btn']}
+      onClick={handleClearDataset}
+      disabled={!field.dataset}
+    >
+      {intl.formatMessage({ id: 'template.field-dataset-clear' })}
+    </button>
+  );
+
+  const leftPanel = (
+    <div className={styles['dataset-source-toggle__left']}>
+      {currentMode === ESourceMode.Custom && children}
+
+      {currentMode === ESourceMode.Dataset && (
+        <div className={styles['dataset-source-toggle__info']}>
+          <div className={styles['dataset-source-toggle__info-dataset']}>
+            <span className={styles['dataset-source-toggle__info-label']}>
+              {intl.formatMessage({ id: 'template.datasets' })}:
+            </span>
+            {field.dataset && (
+              <TruncatedTooltip 
+                label={selectedDatasetOption?.label}
+                containerClassName={styles['dataset-source-toggle__info-tag-tooltip']}
+              >
+                <span className={classnames(styles['dataset-source-toggle__info-tag'], styles['dataset-source-toggle__option-text'])}>
+                  {selectedDatasetOption?.label}
+                </span>
+              </TruncatedTooltip>
+            )}
+          </div>
+          {!isDisabled && clearButton}
+        </div>
+      )}
+    </div>
+  );
+
+  const rightPanel = (
+    <div className={styles['dataset-source-toggle__right']}>
+      <div className={styles['dataset-source-toggle__tabs']}>
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            disabled={isDisabled}
+            onClick={() => handleToggle(tab.id as ESourceMode)}
+            className={classnames(
+              styles['dataset-source-toggle__tab'],
+              currentMode === tab.id && styles['dataset-source-toggle__tab_active'],
+            )}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      <OutsideClickHandler onOutsideClick={handleOutsideClick}>
+        <div
+          className={styles['dataset-source-toggle__dropdown-popup']}
+          style={{ display: currentMode === ESourceMode.Dataset && isMenuOpen ? 'block' : 'none' }}
+        >
+          <DropdownList
+            controlSize="sm"
+            staticMenu
+            options={datasetOptions}
+            onChange={handleDatasetChange}
+            value={selectedDatasetOption}
+            placeholder={intl.formatMessage({ id: 'template.field-select-dataset' })}
+            isDisabled={isDisabled}
+            isSearchable={false}
+            maxMenuHeight={240}
+            formatOptionLabel={renderDatasetOption}
+          />
+        </div>
+      </OutsideClickHandler>
+    </div>
+  );
+
   return (
     <div className={styles['dataset-source-toggle']}>
-      <div className={styles['dataset-source-toggle__left']}>
-        {currentMode === ESourceMode.Custom && children}
-
-        {currentMode === ESourceMode.Dataset && (
-          <div className={styles['dataset-source-toggle__info']}>
-            <div className={styles['dataset-source-toggle__info-dataset']}>
-              <span className={styles['dataset-source-toggle__info-label']}>
-                {intl.formatMessage({ id: 'template.datasets' })}:
-              </span>
-              {field.dataset && (
-                <TruncatedTooltip 
-                  label={selectedDatasetOption?.label}
-                  containerClassName={styles['dataset-source-toggle__info-tag-tooltip']}
-                >
-                  <span className={classnames(styles['dataset-source-toggle__info-tag'], styles['dataset-source-toggle__option-text'])}>
-                    {selectedDatasetOption?.label}
-                  </span>
-                </TruncatedTooltip>
-              )}
-            </div>
-            <button
-              type="button"
-              className={styles['dataset-source-toggle__clear-btn']}
-              onClick={handleClearDataset}
-              disabled={isDisabled || !field.dataset}
-            >
-              {intl.formatMessage({ id: 'template.field-dataset-clear' })}
-            </button>
-          </div>
-        )}
-      </div>
-
-      <div className={styles['dataset-source-toggle__right']}>
-        <div className={styles['dataset-source-toggle__tabs']}>
-          {tabs.map((tab) => (
-            <button
-              key={tab.id}
-              type="button"
-              disabled={isDisabled}
-              onClick={() => handleToggle(tab.id as ESourceMode)}
-              className={classnames(
-                styles['dataset-source-toggle__tab'],
-                currentMode === tab.id && styles['dataset-source-toggle__tab_active'],
-              )}
-            >
-              {tab.label}
-            </button>
-          ))}
-        </div>
-
-        <OutsideClickHandler onOutsideClick={handleOutsideClick}>
-          <div
-            className={styles['dataset-source-toggle__dropdown-popup']}
-            style={{ display: currentMode === ESourceMode.Dataset && isMenuOpen ? 'block' : 'none' }}
-          >
-            <DropdownList
-              controlSize="sm"
-              staticMenu
-              options={datasetOptions}
-              onChange={handleDatasetChange}
-              value={selectedDatasetOption}
-              placeholder={intl.formatMessage({ id: 'template.field-select-dataset' })}
-              isDisabled={isDisabled}
-              isSearchable={false}
-              maxMenuHeight={240}
-              formatOptionLabel={renderDatasetOption}
-            />
-          </div>
-        </OutsideClickHandler>
-      </div>
+      {leftPanel}
+      {!isDisabled && rightPanel}
     </div>
   );
 }

@@ -101,6 +101,7 @@
 }
 
 .dataset-source-toggle__info-dataset {
+  margin-top: 0.4rem;
   display: flex;
   align-items: center;
   gap: 0.8rem;
