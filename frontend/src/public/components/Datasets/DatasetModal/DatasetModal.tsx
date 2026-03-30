@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, FormEvent, ChangeEvent } from 'react';
+import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { useIntl } from 'react-intl';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -43,11 +43,17 @@ export function DatasetModal({ type }: IDatasetModalProps) {
   const isOpen = useSelector(isModalOpenSelector);
   const currentDataset = useSelector(getCurrentDataset);
 
-  const initialName = type === EDatasetModalType.Edit && currentDataset ? currentDataset.name : '';
-
-  const [inputName, setInputName] = useState(initialName);
+  const [inputName, setInputName] = useState('');
   const [error, setError] = useState('');
   const [hasChanges, setHasChanges] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setInputName(type === EDatasetModalType.Edit && currentDataset ? currentDataset.name : '');
+      setError('');
+      setHasChanges(false);
+    }
+  }, [isOpen, currentDataset, type]);
 
   const validationForm = () => {
     const currentError = validateDatasetName(inputName);

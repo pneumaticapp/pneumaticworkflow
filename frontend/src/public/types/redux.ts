@@ -362,8 +362,14 @@ export type ITenantsStore = {
 
 export type IWebhookStore = Record<EWebhooksTypeEvent, IWebhook>;
 
-export type IDatasetsStore = {
+export interface IDatasetsList {
+  count: number;
+  offset: number;
   items: IDatasetListItem[];
+}
+
+export type IDatasetsStore = {
+  datasetsList: IDatasetsList;
   isLoading: boolean;
   searchQuery: string;                
   datasetsListSorting: EDatasetsSorting;         

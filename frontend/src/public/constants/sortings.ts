@@ -15,3 +15,10 @@ export const workflowLogAttachmentsModes = Object.values(EWorkflowLogAttachments
 export const userListSortingValues = Object.values(EUserListSorting);
 export const groupListSortingValues = Object.values(EGroupsListSorting);
 export const datasetsSortingValues = Object.values(EDatasetsSorting);
+
+export const datasetsOrderingMap: Record<string, string> = {
+  [EDatasetsSorting.NameAsc]: 'name',
+  [EDatasetsSorting.NameDesc]: '-name',
+  [EDatasetsSorting.DateAsc]: 'date',
+  [EDatasetsSorting.DateDesc]: '-date',
+};

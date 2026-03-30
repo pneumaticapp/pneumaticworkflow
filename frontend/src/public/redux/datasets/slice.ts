@@ -1,18 +1,22 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
-import { IDatasetsStore } from '../../types/redux';
+import { IDatasetsStore, IDatasetsList } from '../../types/redux';
 import {
-  IDataset, IDatasetListItem, ICreateDatasetParams,
+  IDataset, ICreateDatasetParams,
   IUpdateDatasetParams, EDatasetsSorting, TDatasetItemsSortOrder,
 } from '../../types/dataset';
 import { TDeleteDatasetPayload } from './types';
 
 export const initialState: IDatasetsStore = {
-  items: [],
+  datasetsList: {
+    count: 0,
+    offset: 0,
+    items: [],
+  },
   isLoading: false,
   searchQuery: '',
-  datasetsListSorting: EDatasetsSorting.NameAsc,
+  datasetsListSorting: EDatasetsSorting.DateDesc,
   isCreateModalOpen: false,
   isEditModalOpen: false,
 
@@ -26,12 +30,12 @@ const datasetsSlice = createSlice({
   name: 'datasets',
   initialState,
   reducers: {
-    loadDatasets: (state) => {
+    loadDatasets: (state, _action: PayloadAction<number>) => {
       state.isLoading = true;
     },
 
-    loadDatasetsSuccess: (state, action: PayloadAction<IDatasetListItem[]>) => {
-      state.items = action.payload;
+    loadDatasetsSuccess: (state, action: PayloadAction<IDatasetsList>) => {
+      state.datasetsList = action.payload;
       state.isLoading = false;
     },
 
@@ -82,6 +86,14 @@ const datasetsSlice = createSlice({
     setCurrentDataset: (state, action: PayloadAction<IDataset>) => {
       state.currentDataset = action.payload;
       state.isCurrentDatasetLoading = false;
+
+      const listIndex = state.datasetsList.items.findIndex(
+        (item) => item.id === action.payload.id
+      );
+      if (listIndex !== -1) {
+        state.datasetsList.items[listIndex].name = action.payload.name;
+        state.datasetsList.items[listIndex].description = action.payload.description;
+      }
     },
 
     setCurrentSearchQuery: (state, action: PayloadAction<string>) => {
@@ -116,6 +128,12 @@ const datasetsSlice = createSlice({
     deleteDatasetAction: (state, _action: PayloadAction<TDeleteDatasetPayload>) => {
       state.isLoading = true;
     },
+
+    removeDatasetFromList: (state, action: PayloadAction<number>) => {
+      state.datasetsList.items = state.datasetsList.items.filter((item) => item.id !== action.payload);
+      state.datasetsList.count -= 1;
+      state.isLoading = false;
+    },
   },
 });
 
@@ -141,6 +159,7 @@ export const {
   cloneDatasetAction,
   updateDatasetAction,
   deleteDatasetAction,
+  removeDatasetFromList,
 } = datasetsSlice.actions;
 
 export default datasetsSlice.reducer;

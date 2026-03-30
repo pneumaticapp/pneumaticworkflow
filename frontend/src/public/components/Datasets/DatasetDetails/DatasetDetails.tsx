@@ -61,6 +61,7 @@ const DatasetDetails = ({ match: { params: { id: matchParamId } } }: TDatasetDet
   const handleAddRow = () => {
     setIsAddingRow(true);
     setEditingItemId(null);
+    setSearchText('');
   };
 
   const handleSaveNewRow = (value: string) => {

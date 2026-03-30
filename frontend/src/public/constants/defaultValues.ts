@@ -181,3 +181,4 @@ export const enum EResponseStatuses {
 
 export const LIMIT_LOAD_TEMPLATES = 30;
 export const LIMIT_LOAD_SYSTEMS_TEMPLATES = 16;
+export const LIMIT_LOAD_DATASETS = 30;

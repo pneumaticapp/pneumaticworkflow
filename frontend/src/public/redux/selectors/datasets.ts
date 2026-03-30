@@ -1,5 +1,13 @@
-import { EDatasetsSorting, IDataset, TDatasetItemsSortOrder } from '../../types/dataset';
-import { IApplicationState } from '../../types/redux';
+import { EDatasetsSorting, IDataset, TDatasetItemsSortOrder, IDatasetListItem } from '../../types/dataset';
+import { IApplicationState, IDatasetsStore, IDatasetsList } from '../../types/redux';
+
+export const getDatasetsStore = (state: IApplicationState): IDatasetsStore => state.datasets;
+
+export const getDatasetsList = (state: IApplicationState): IDatasetListItem[] => state.datasets.datasetsList.items;
+
+export const getDatasetsListSelection = (state: IApplicationState): IDatasetsList => state.datasets.datasetsList;
+
+export const getDatasetsIsLoading = (state: IApplicationState): boolean => state.datasets.isLoading;
 
 export const getDatasetsSorting = (state: IApplicationState): EDatasetsSorting => state.datasets.datasetsListSorting;
 

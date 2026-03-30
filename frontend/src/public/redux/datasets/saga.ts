@@ -1,6 +1,7 @@
-import { all, fork, put, takeEvery, takeLatest } from 'redux-saga/effects';
+import { all, fork, put, takeEvery, takeLatest, select } from 'redux-saga/effects';
 import { PayloadAction } from '@reduxjs/toolkit';
 
+import uniqBy from 'lodash.uniqby';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { logger } from '../../utils/logger';
@@ -10,6 +11,8 @@ import { ERoutes } from '../../constants/routes';
 import { IDataset, IGetDatasetsResponse, ICreateDatasetParams, IUpdateDatasetParams } from '../../types/dataset';
 import { TDeleteDatasetPayload } from './types';
 import { CLONE_SUFFIX } from './constants';
+import { LIMIT_LOAD_DATASETS } from '../../constants/defaultValues';
+import { getDatasetsStore } from '../selectors/datasets';
 import { getDatasets } from '../../api/datasets/getDatasets';
 import { getDataset } from '../../api/datasets/getDataset';
 import { createDataset } from '../../api/datasets/createDataset';
@@ -28,12 +31,26 @@ import {
   cloneDatasetAction,
   updateDatasetAction,
   deleteDatasetAction,
+  removeDatasetFromList,
 } from './slice';
 
-function* loadDatasetsSaga() {
+function* loadDatasetsSaga({ payload: offset = 0 }: ReturnType<typeof loadDatasets>) {
   try {
-    const data: IGetDatasetsResponse = yield getDatasets();
-    yield put(loadDatasetsSuccess(data.results));
+    const datasetsStore: ReturnType<typeof getDatasetsStore> = yield select(getDatasetsStore);
+    const { datasetsList, datasetsListSorting } = datasetsStore;
+
+    const data: IGetDatasetsResponse = yield getDatasets({
+      offset: offset * LIMIT_LOAD_DATASETS,
+      limit: LIMIT_LOAD_DATASETS,
+      ordering: datasetsListSorting,
+    });
+    
+    const results = data.results || [];
+    const count = data.count || 0;
+
+    const items = offset > 0 ? uniqBy([...datasetsList.items, ...results], 'id') : results;
+
+    yield put(loadDatasetsSuccess({ count, offset, items }));
   } catch (error) {
     yield put(loadDatasetsFailed());
     NotificationManager.warning({ message: getErrorMessage(error) });
@@ -97,7 +114,7 @@ function* updateDatasetSaga({ payload }: PayloadAction<IUpdateDatasetParams>) {
 function* deleteDatasetSaga({ payload: { id, onSuccess } }: PayloadAction<TDeleteDatasetPayload>) {
   try {
     yield deleteDataset({ id });
-    yield put(loadDatasets());
+    yield put(removeDatasetFromList(id));
     onSuccess?.();
   } catch (error) {
     yield put(loadDatasetsFailed());
