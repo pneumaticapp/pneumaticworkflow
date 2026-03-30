@@ -7,7 +7,7 @@ from src.accounts.enums import BillingPlanType
 from src.accounts.messages import MSG_A_0035, MSG_A_0037, MSG_A_0041
 from src.authentication.enums import AuthTokenType
 from src.processes.services.exceptions import DataSetServiceException
-from src.processes.services.dataset import DataSetService
+from src.processes.services.datasets.dataset import DataSetService
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_dataset,
@@ -190,7 +190,8 @@ def test_partial_update__name_too_long__validation_error(mocker, api_client):
         return_value=None,
     )
     partial_update_mock = mocker.patch(
-        'src.processes.services.dataset.DataSetService.partial_update',
+        'src.processes.services.datasets.dataset.'
+        'DataSetService.partial_update',
     )
     long_name = 'x' * 201
 
@@ -224,7 +225,8 @@ def test_partial_update__item_value_too_long__validation_error(
         return_value=None,
     )
     partial_update_mock = mocker.patch(
-        'src.processes.services.dataset.DataSetService.partial_update',
+        'src.processes.services.datasets.dataset'
+        '.DataSetService.partial_update',
     )
     data = {'items': [{'value': 'x' * 201}]}
 
@@ -248,7 +250,10 @@ def test_partial_update__minimal_data__ok(mocker, api_client):
     account = create_test_account()
     user = create_test_owner(account=account)
     dataset = create_test_dataset(
-        account=account, name='Old Name', items_count=0)
+        account=account,
+        name='Old Name',
+        items_count=0,
+    )
     new_name = 'New Name'
     updated_dataset = create_test_dataset(account=account, name=new_name)
     api_client.token_authenticate(user=user)
@@ -258,7 +263,8 @@ def test_partial_update__minimal_data__ok(mocker, api_client):
         return_value=None,
     )
     partial_update_mock = mocker.patch(
-        'src.processes.services.dataset.DataSetService.partial_update',
+        'src.processes.services.datasets.'
+        'dataset.DataSetService.partial_update',
         return_value=updated_dataset,
     )
 
@@ -298,7 +304,8 @@ def test_partial_update__full_data__ok(mocker, api_client):
         return_value=None,
     )
     partial_update_mock = mocker.patch(
-        'src.processes.services.dataset.DataSetService.partial_update',
+        'src.processes.services.datasets.dataset.'
+        'DataSetService.partial_update',
         return_value=dataset,
     )
     items = [{'value': 'Updated item', 'order': 0}]
@@ -350,7 +357,8 @@ def test_partial_update__service_exception__validation_error(
         return_value=None,
     )
     partial_update_mock = mocker.patch(
-        'src.processes.services.dataset.DataSetService.partial_update',
+        'src.processes.services.datasets.dataset.'
+        'DataSetService.partial_update',
         side_effect=DataSetServiceException(message=error_message),
     )
     data = {'name': 'Updated Name'}

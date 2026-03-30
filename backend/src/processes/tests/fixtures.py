@@ -799,6 +799,7 @@ def create_test_dataset(
     )
     for i in range(1, items_count + 1):
         DatasetItem.objects.create(
+            account=account,
             dataset=dataset,
             value=f'Item {i}',
             order=i,

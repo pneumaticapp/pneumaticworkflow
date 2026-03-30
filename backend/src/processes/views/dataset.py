@@ -14,12 +14,12 @@ from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import UserIsAuthenticated
 from src.processes.filters import DatasetFilter
 from src.processes.models.dataset import Dataset
-from src.processes.serializers.templates.dataset import (
+from src.processes.serializers.dataset import (
     DatasetListSerializer,
     DatasetSerializer,
 )
 from src.processes.services.exceptions import DataSetServiceException
-from src.processes.services.dataset import DataSetService
+from src.processes.services.datasets.dataset import DataSetService
 from src.utils.validation import raise_validation_error
 
 
@@ -133,6 +133,7 @@ class DatasetViewSet(
             )
         except DataSetServiceException as ex:
             raise_validation_error(message=ex.message)
+        dataset.refresh_from_db()
         response_serializer = DatasetSerializer(dataset)
         return self.response_ok(response_serializer.data)
 

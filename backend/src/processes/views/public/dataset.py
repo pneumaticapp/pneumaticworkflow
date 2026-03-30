@@ -5,7 +5,7 @@ from rest_framework.viewsets import GenericViewSet
 from src.generics.mixins.views import CustomViewSetMixin
 from src.processes.models.dataset import Dataset
 from src.processes.permissions import PublicTemplatePermission
-from src.processes.serializers.templates.dataset import (
+from src.processes.serializers.dataset import (
     DatasetSerializer,
 )
 

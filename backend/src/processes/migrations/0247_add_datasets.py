@@ -36,6 +36,7 @@ class Migration(migrations.Migration):
                 ('value', models.CharField(max_length=200)),
                 ('order', models.IntegerField(default=0)),
                 ('dataset', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='items', to='processes.Dataset')),
+                ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='accounts.Account')),
             ],
             options={
                 'ordering': ['order', 'id'],

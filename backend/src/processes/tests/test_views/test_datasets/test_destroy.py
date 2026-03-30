@@ -7,7 +7,7 @@ from src.accounts.enums import BillingPlanType
 from src.accounts.messages import MSG_A_0035, MSG_A_0037, MSG_A_0041
 from src.authentication.enums import AuthTokenType
 from src.processes.services.exceptions import DataSetServiceException
-from src.processes.services.dataset import DataSetService
+from src.processes.services.datasets.dataset import DataSetService
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_dataset,
@@ -170,7 +170,7 @@ def test_destroy__service_exception__validation_error(mocker, api_client):
         return_value=None,
     )
     delete_mock = mocker.patch(
-        'src.processes.services.dataset.DataSetService.delete',
+        'src.processes.services.datasets.dataset.DataSetService.delete',
         side_effect=DataSetServiceException(
             message=error_message,
         ),
@@ -207,7 +207,7 @@ def test_destroy__ok(mocker, api_client):
         return_value=None,
     )
     delete_mock = mocker.patch(
-        'src.processes.services.dataset.DataSetService.delete',
+        'src.processes.services.datasets.dataset.DataSetService.delete',
     )
 
     # act

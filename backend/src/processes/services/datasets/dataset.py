@@ -9,10 +9,10 @@ from src.notifications.tasks import (
     send_dataset_deleted_notification,
     send_dataset_updated_notification,
 )
-from src.processes.models.dataset import Dataset, DatasetItem
-from src.processes.serializers.templates.dataset import DatasetSerializer
+from src.processes.models.dataset import Dataset
+from src.processes.serializers.dataset import DatasetSerializer
+from src.processes.services.datasets.dataset_item import DataSetItemService
 from src.processes.services.exceptions import (
-    DataSetItemValueNotUniqueException,
     DataSetNameNotUniqueException,
 )
 
@@ -43,7 +43,7 @@ class DataSetService(BaseModelService):
         **kwargs,
     ):
         if items:
-            self._create_items(items_data=items)
+            self.create_items(items_data=items)
 
     def _create_actions(self, **kwargs):
         send_dataset_created_notification.delay(
@@ -54,20 +54,19 @@ class DataSetService(BaseModelService):
 
     def partial_update(
         self,
-        force_save: bool = False,
         **update_kwargs,
     ) -> Dataset:
 
-        items = update_kwargs.pop('items', None)
+        items_data = update_kwargs.pop('items', None)
         try:
             result = super().partial_update(
-                force_save=force_save,
+                force_save=True,
                 **update_kwargs,
             )
         except IntegrityError as ex:
             raise DataSetNameNotUniqueException from ex
-        if items is not None:
-            self._update_items(items_data=items)
+        if items_data is not None:
+            self.update_items(items_data=items_data)
         send_dataset_updated_notification.delay(
             logging=self.account.log_api_requests,
             account_id=self.account.id,
@@ -83,69 +82,53 @@ class DataSetService(BaseModelService):
         )
         self.instance.delete()
 
-    def _create_items(
+    def create_items(
         self,
         items_data: List[Dict[str, Any]],
     ):
-        items_to_create = [
-            DatasetItem(
-                dataset=self.instance,
-                value=item_data['value'],
-                order=item_data.get('order', 0),
+        service = DataSetItemService(
+            user=self.user,
+            is_superuser=self.is_superuser,
+            auth_type=self.auth_type,
+        )
+        for item_data in items_data:
+            service.create(
+                dataset_id=self.instance.id,
+                **item_data,
             )
-            for item_data in items_data
-        ]
-        try:
-            DatasetItem.objects.bulk_create(items_to_create)
-        except IntegrityError as ex:
-            raise DataSetItemValueNotUniqueException from ex
 
-    def _update_items(
+    def update_items(
         self,
         items_data: List[Dict[str, Any]],
     ):
+        """ All dataset items will be updated """
+
         existing_items = {
             item.id: item
             for item in self.instance.items.all()
         }
-        incoming_ids = set()
-        items_to_create = []
-        items_to_update = []
-
+        items_ids = set()
         for item_data in items_data:
-            item_id = item_data.get('id')
+            item_id = item_data.pop('id', None)
             if item_id and item_id in existing_items:
-                # Update existing item
-                incoming_ids.add(item_id)
-                item = existing_items[item_id]
-                item.value = item_data['value']
-                item.order = item_data.get('order', 0)
-                items_to_update.append(item)
+                service = DataSetItemService(
+                    user=self.user,
+                    is_superuser=self.is_superuser,
+                    auth_type=self.auth_type,
+                    instance=existing_items[item_id],
+                )
+                service.partial_update(**item_data, force_save=True)
+                items_ids.add(item_id)
             else:
-                # Create new item
-                items_to_create.append(
-                    DatasetItem(
-                        dataset=self.instance,
-                        value=item_data['value'],
-                        order=item_data.get('order', 0),
-                    ),
+                service = DataSetItemService(
+                    user=self.user,
+                    is_superuser=self.is_superuser,
+                    auth_type=self.auth_type,
                 )
-
-        # Delete items not present in incoming data
-        ids_to_delete = set(existing_items.keys()) - incoming_ids
-        if ids_to_delete:
-            self.instance.items.filter(id__in=ids_to_delete).delete()
-
-        if items_to_update:
-            try:
-                DatasetItem.objects.bulk_update(
-                    items_to_update,
-                    fields=['value', 'order'],
+                dataset_item = service.create(
+                    dataset_id=self.instance.id,
+                    **item_data,
                 )
-            except IntegrityError as ex:
-                raise DataSetItemValueNotUniqueException from ex
-        if items_to_create:
-            try:
-                DatasetItem.objects.bulk_create(items_to_create)
-            except IntegrityError as ex:
-                raise DataSetItemValueNotUniqueException from ex
+                items_ids.add(dataset_item.id)
+
+        self.instance.items.exclude(id__in=items_ids).delete()

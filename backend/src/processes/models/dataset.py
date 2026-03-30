@@ -29,7 +29,7 @@ class Dataset(SoftDeleteModel, AccountBaseMixin):
         return self.name
 
 
-class DatasetItem(SoftDeleteModel):
+class DatasetItem(SoftDeleteModel, AccountBaseMixin):
 
     class Meta:
         ordering = ['order', 'id']

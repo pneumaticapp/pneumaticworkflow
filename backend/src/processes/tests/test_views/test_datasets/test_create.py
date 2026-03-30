@@ -7,7 +7,7 @@ from src.accounts.enums import BillingPlanType
 from src.accounts.messages import MSG_A_0035, MSG_A_0037, MSG_A_0041
 from src.authentication.enums import AuthTokenType
 from src.processes.services.exceptions import DataSetServiceException
-from src.processes.services.dataset import DataSetService
+from src.processes.services.datasets.dataset import DataSetService
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_dataset,
@@ -146,7 +146,7 @@ def test_create__missing_name__validation_error(mocker, api_client):
         return_value=None,
     )
     create_mock = mocker.patch(
-        'src.processes.services.dataset.DataSetService.create',
+        'src.processes.services.datasets.dataset.DataSetService.create',
     )
 
     # act
@@ -175,7 +175,7 @@ def test_create__name_too_long__validation_error(mocker, api_client):
         return_value=None,
     )
     create_mock = mocker.patch(
-        'src.processes.services.dataset.DataSetService.create',
+        'src.processes.services.datasets.dataset.DataSetService.create',
     )
     long_name = 'x' * 201
 
@@ -205,7 +205,7 @@ def test_create__item_value_too_long__validation_error(mocker, api_client):
         return_value=None,
     )
     create_mock = mocker.patch(
-        'src.processes.services.dataset.DataSetService.create',
+        'src.processes.services.datasets.dataset.DataSetService.create',
     )
     data = {
         'name': 'Dataset',
@@ -243,7 +243,7 @@ def test_create__minimal_data__ok(mocker, api_client):
         return_value=None,
     )
     create_mock = mocker.patch(
-        'src.processes.services.dataset.DataSetService.create',
+        'src.processes.services.datasets.dataset.DataSetService.create',
         return_value=dataset,
     )
     data = {'name': 'New Dataset'}
@@ -290,7 +290,7 @@ def test_create__full_data__ok(mocker, api_client):
         return_value=None,
     )
     create_mock = mocker.patch(
-        'src.processes.services.dataset.DataSetService.create',
+        'src.processes.services.datasets.dataset.DataSetService.create',
         return_value=dataset,
     )
     items = [{'value': 'Item 1', 'order': 1}]
@@ -337,7 +337,7 @@ def test_create__service_exception__validation_error(mocker, api_client):
         return_value=None,
     )
     create_mock = mocker.patch(
-        'src.processes.services.dataset.DataSetService.create',
+        'src.processes.services.datasets.dataset.DataSetService.create',
         side_effect=DataSetServiceException(message=error_message),
     )
     data = {'name': 'New Dataset'}
