@@ -9,9 +9,9 @@ import { getEmptySelection } from '../../KickoffRedux/utils/getEmptySelection';
 import { fitInputWidth } from '../utils/fitInputWidth';
 import { getInputNameBackground } from '../utils/getInputNameBackground';
 import { RemoveIcon, ArrowDropdownIcon } from '../../../icons';
-import { isArrayWithItems } from '../../../../utils/helpers';
 import { IntlMessages } from '../../../IntlMessages';
 import { FieldWithName } from '../utils/FieldWithName';
+import { DatasetSourceToggle } from '../utils/DatasetSourceToggle';
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { EExtraFieldMode, IExtraFieldSelection } from '../../../../types/template';
 import { validateCheckboxAndRadioField } from '../../../../utils/validators';
@@ -34,7 +34,6 @@ export interface IDropdownSelection extends IExtraFieldSelection {
 
 export function ExtraFieldCreatable({
   field,
-  field: { isRequired },
   intl,
   descriptionPlaceholder = intl.formatMessage({ id: 'template.kick-off-form-field-description-placeholder' }),
   namePlaceholder = intl.formatMessage({ id: 'template.kick-off-form-field-name-placeholder' }),
@@ -45,6 +44,7 @@ export function ExtraFieldCreatable({
   labelBackgroundColor,
   innerRef,
 }: IWorkflowExtraFieldProps) {
+  const { isRequired } = field;
   const optionInputsRefs = React.useRef<HTMLInputElement[]>([]);
 
   React.useEffect(() => {
@@ -81,14 +81,6 @@ export function ExtraFieldCreatable({
     [editField],
   );
 
-  const handleDeleteField = useCallback(() => {
-    if (!deleteField) {
-      return;
-    }
-
-    deleteField();
-  }, [deleteField]);
-
   const handleChangeDescription = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       editField({ description: e.target.value });
@@ -103,10 +95,7 @@ export function ExtraFieldCreatable({
 
   const handleRemoveOption = (optionIndex: number) => () => {
     const newOptions = selections?.filter((_, index) => index !== optionIndex);
-
-    const isNoOptions = !isArrayWithItems(newOptions);
-
-    isNoOptions ? handleDeleteField() : editField({ selections: newOptions });
+    editField({ selections: newOptions || [] });
   };
 
   const handleChangeOption = (optionIndex: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,7 +135,7 @@ export function ExtraFieldCreatable({
             disabled={isDisabled}
           />
           <span className={inputStyles['measure']} />
-          {isActive && !isDisabled && (
+          {isActive && !isDisabled && (selections?.length || 0) > 1 && (
             <div
               role="button"
               className={inputStyles['kickoff-create-field-option__remove']}
@@ -186,14 +175,21 @@ export function ExtraFieldCreatable({
     <div className={inputStyles['kickoff-create-field-container']}>
       {renderKickoffField()}
 
-      {selections && (
-        <ul className={inputStyles['kickoff-create-field-options']}>{selections?.map(renderKickoffOption)}</ul>
-      )}
-
-      {!isDisabled && (
-        <button type="button" className={inputStyles['kickoff-create-field-add-option']} onClick={handleAddOption}>
-          <IntlMessages id="template.kick-off-add-options" />
-        </button>
+      {!isDisabled ? (
+        <DatasetSourceToggle field={field} editField={editField} isDisabled={isDisabled}>
+          {selections && (
+            <ul className={inputStyles['kickoff-create-field-options']}>{selections?.map(renderKickoffOption)}</ul>
+          )}
+          <button type="button" className={inputStyles['kickoff-create-field-add-option']} onClick={handleAddOption}>
+            <IntlMessages id="template.kick-off-add-options" />
+          </button>
+        </DatasetSourceToggle>
+      ) : (
+        <>
+          {selections && (
+            <ul className={inputStyles['kickoff-create-field-options']}>{selections?.map(renderKickoffOption)}</ul>
+          )}
+        </>
       )}
     </div>
   );

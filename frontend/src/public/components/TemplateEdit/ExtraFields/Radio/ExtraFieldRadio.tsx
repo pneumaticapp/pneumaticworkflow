@@ -11,7 +11,7 @@ import { EExtraFieldMode, IExtraFieldSelection } from '../../../../types/templat
 import { fitInputWidth } from '../utils/fitInputWidth';
 import { PencilSmallIcon, RemoveIcon } from '../../../icons';
 import { RadioButton } from '../../../UI/Fields/RadioButton';
-import { isArrayWithItems } from '../../../../utils/helpers';
+import { DatasetSourceToggle } from '../utils/DatasetSourceToggle';
 
 import { IWorkflowExtraFieldProps } from '..';
 
@@ -22,6 +22,7 @@ const DEFAULT_OPTION_INPUT_WIDTH = 120;
 const DEFAULT_FIELD_INPUT_WIDTH = 120;
 
 export function ExtraFieldRadio({
+  field,
   field: { selections, isRequired = false, name, value: selectedOption },
   intl,
   namePlaceholder = intl.formatMessage({ id: 'template.kick-off-form-field-name-placeholder' }),
@@ -90,14 +91,21 @@ export function ExtraFieldRadio({
           </p>
         )}
 
-        {selections && (
-          <ul className={fieldStyles['kickoff-create-field-options']}>{selections?.map(renderKickoffOption)}</ul>
-        )}
-
-        {!isDisabled && (
-          <button type="button" className={fieldStyles['kickoff-create-field-add-option']} onClick={handleAddOption}>
-            <IntlMessages id="template.kick-off-add-options" />
-          </button>
+        {!isDisabled ? (
+          <DatasetSourceToggle field={field} editField={editField} isDisabled={isDisabled}>
+            {selections && (
+              <ul className={fieldStyles['kickoff-create-field-options']}>{selections?.map(renderKickoffOption)}</ul>
+            )}
+            <button type="button" className={fieldStyles['kickoff-create-field-add-option']} onClick={handleAddOption}>
+              <IntlMessages id="template.kick-off-add-options" />
+            </button>
+          </DatasetSourceToggle>
+        ) : (
+          <>
+            {selections && (
+              <ul className={fieldStyles['kickoff-create-field-options']}>{selections?.map(renderKickoffOption)}</ul>
+            )}
+          </>
         )}
       </div>
     );
@@ -134,7 +142,7 @@ export function ExtraFieldRadio({
             disabled={isDisabled}
           />
           <span className={fieldStyles['measure']} />
-          {isActive && !isDisabled && (
+          {isActive && !isDisabled && (selections?.length || 0) > 1 && (
             <div
               role="button"
               className={fieldStyles['labeled-checkbox__remove-icon']}
@@ -161,14 +169,6 @@ export function ExtraFieldRadio({
     [editField],
   );
 
-  const handleDeleteField = React.useCallback(() => {
-    if (!deleteField) {
-      return;
-    }
-
-    deleteField();
-  }, [deleteField]);
-
   const handleAddOption = () => {
     const newOptions = [...(selections as IExtraFieldSelection[]), getEmptySelection()];
     editField({ selections: newOptions });
@@ -176,9 +176,7 @@ export function ExtraFieldRadio({
 
   const handleRemoveOption = (optionIndex: number) => () => {
     const newOptions = selections?.filter((_, index) => index !== optionIndex);
-    const isNoOptions = !isArrayWithItems(newOptions);
-
-    isNoOptions ? handleDeleteField() : editField({ selections: newOptions });
+    editField({ selections: newOptions || [] });
   };
 
   const handleChangeOption = (optionIndex: number) => (event: React.ChangeEvent<HTMLInputElement>) => {

@@ -116,11 +116,10 @@
     margin: 0 1.2rem -1rem;
     display: inline-flex;
     box-sizing: border-box;
-    width: calc(100% - 2.4rem);
     min-width: 0;
     max-width: calc(100% - 2.4rem);
     background-color: var(--pneumatic-color-white);
-    align-self: stretch;
+    align-self: flex-start;
     align-items: flex-end;
     justify-content: flex-start;
 
@@ -155,7 +154,6 @@
     .kick-off-input__name-textarea {
       box-sizing: border-box;
       flex: 1 1 auto;
-      width: 100%;
       min-width: 0;
       max-width: 100%;
       min-height: 1.6rem;
@@ -377,6 +375,18 @@
   .toggle_active .toggle__icon {
     fill: var(--pneumatic-color-link-hover);
   }
+}
+
+.kick-off-input__dropdown_choices {
+  margin-top: 0.1rem;
+  height: 2rem;
+  align-self: flex-start;
+}
+
+.kick-off-input__dropdown_creatable {
+  align-self: flex-start;
+  margin-top: 0.8rem;
+  height: 5rem;
 }
 
 .dropdown-item__delete-text {

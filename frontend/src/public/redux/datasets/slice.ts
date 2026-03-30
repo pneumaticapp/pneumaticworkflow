@@ -3,7 +3,7 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { IDatasetsStore, IDatasetsList } from '../../types/redux';
 import {
-  IDataset, ICreateDatasetParams,
+  IDataset, ICreateDatasetParams, IDatasetListItem,
   IUpdateDatasetParams, EDatasetsSorting, TDatasetItemsSortOrder,
 } from '../../types/dataset';
 import { TDeleteDatasetPayload } from './types';
@@ -14,6 +14,9 @@ export const initialState: IDatasetsStore = {
     offset: 0,
     items: [],
   },
+  allDatasetsList: [],
+  isAllDatasetsLoading: false,
+  isAllDatasetsLoaded: false,
   isLoading: false,
   searchQuery: '',
   datasetsListSorting: EDatasetsSorting.DateDesc,
@@ -41,6 +44,20 @@ const datasetsSlice = createSlice({
 
     loadDatasetsFailed: (state) => {
       state.isLoading = false;
+    },
+
+    loadAllDatasets: (state) => {
+      state.isAllDatasetsLoading = true;
+    },
+
+    loadAllDatasetsSuccess: (state, action: PayloadAction<IDatasetListItem[]>) => {
+      state.allDatasetsList = action.payload;
+      state.isAllDatasetsLoading = false;
+      state.isAllDatasetsLoaded = true;
+    },
+
+    loadAllDatasetsFailed: (state) => {
+      state.isAllDatasetsLoading = false;
     },
 
     setSearchQuery: (state, action: PayloadAction<string>) => {
@@ -141,6 +158,9 @@ export const {
   loadDatasets,
   loadDatasetsSuccess,
   loadDatasetsFailed,
+  loadAllDatasets,
+  loadAllDatasetsSuccess,
+  loadAllDatasetsFailed,
   setSearchQuery,
   setDatasetsListSorting,
   openCreateModal,

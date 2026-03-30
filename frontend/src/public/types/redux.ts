@@ -370,6 +370,9 @@ export interface IDatasetsList {
 
 export type IDatasetsStore = {
   datasetsList: IDatasetsList;
+  allDatasetsList: IDatasetListItem[];
+  isAllDatasetsLoading: boolean;
+  isAllDatasetsLoaded: boolean;
   isLoading: boolean;
   searchQuery: string;                
   datasetsListSorting: EDatasetsSorting;         

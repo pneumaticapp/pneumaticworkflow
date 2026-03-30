@@ -5,6 +5,12 @@ export const getDatasetsStore = (state: IApplicationState): IDatasetsStore => st
 
 export const getDatasetsList = (state: IApplicationState): IDatasetListItem[] => state.datasets.datasetsList.items;
 
+export const getAllDatasetsList = (state: IApplicationState): IDatasetListItem[] => state.datasets.allDatasetsList;
+
+export const getIsAllDatasetsLoading = (state: IApplicationState): boolean => state.datasets.isAllDatasetsLoading;
+
+export const getIsAllDatasetsLoaded = (state: IApplicationState): boolean => state.datasets.isAllDatasetsLoaded;
+
 export const getDatasetsListSelection = (state: IApplicationState): IDatasetsList => state.datasets.datasetsList;
 
 export const getDatasetsIsLoading = (state: IApplicationState): boolean => state.datasets.isLoading;

@@ -114,11 +114,11 @@
 }
 
 .kickoff-create-field-option__remove {
+  margin-left: 8px;
   cursor: pointer;
 }
 
 .kickoff-create-field-option__input {
-  width: 95px;
   max-width: 100%;
   border: none;
 

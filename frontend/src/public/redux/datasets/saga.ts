@@ -8,7 +8,7 @@ import { logger } from '../../utils/logger';
 import { history } from '../../utils/history';
 import { ERoutes } from '../../constants/routes';
 
-import { IDataset, IGetDatasetsResponse, ICreateDatasetParams, IUpdateDatasetParams } from '../../types/dataset';
+import { IDataset, IGetDatasetsResponse, ICreateDatasetParams, IUpdateDatasetParams, EDatasetsSorting } from '../../types/dataset';
 import { TDeleteDatasetPayload } from './types';
 import { CLONE_SUFFIX } from './constants';
 import { LIMIT_LOAD_DATASETS } from '../../constants/defaultValues';
@@ -23,6 +23,9 @@ import {
   loadDatasets,
   loadDatasetsSuccess,
   loadDatasetsFailed,
+  loadAllDatasets,
+  loadAllDatasetsSuccess,
+  loadAllDatasetsFailed,
   loadDataset,
   loadDatasetSuccess,
   loadDatasetFailed,
@@ -55,6 +58,20 @@ function* loadDatasetsSaga({ payload: offset = 0 }: ReturnType<typeof loadDatase
     yield put(loadDatasetsFailed());
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to load datasets', error);
+  }
+}
+
+function* loadAllDatasetsSaga() {
+  try {
+    const data: IGetDatasetsResponse = yield getDatasets({
+      limit: 9999, 
+      ordering: EDatasetsSorting.NameAsc, 
+    });
+    
+    yield put(loadAllDatasetsSuccess(data.results || []));
+  } catch (error) {
+    yield put(loadAllDatasetsFailed());
+    logger.error('failed to load all datasets', error);
   }
 }
 
@@ -127,6 +144,10 @@ function* watchLoadDatasets() {
   yield takeLatest(loadDatasets.type, loadDatasetsSaga);
 }
 
+function* watchLoadAllDatasets() {
+  yield takeLatest(loadAllDatasets.type, loadAllDatasetsSaga);
+}
+
 function* watchLoadDataset() {
   yield takeLatest(loadDataset.type, loadDatasetSaga);
 }
@@ -150,6 +171,7 @@ function* watchDeleteDataset() {
 export function* rootSaga() {
   yield all([
     fork(watchLoadDatasets),
+    fork(watchLoadAllDatasets),
     fork(watchLoadDataset),
     fork(watchCreateDataset),
     fork(watchCloneDataset),
