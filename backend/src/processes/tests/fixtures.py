@@ -53,7 +53,7 @@ from src.processes.models.templates.preset import (
 )
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
-from src.processes.models.dataset import Dataset, DatasetItem
+from src.datasets.models import Dataset, DatasetItem
 from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.conditions import (
     Condition,

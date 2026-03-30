@@ -3,12 +3,10 @@ from django.db import IntegrityError
 
 from src.generics.base.service import BaseModelService
 
-from src.processes.models.dataset import DatasetItem
-from src.processes.services.exceptions import (
-    DataSetServiceException,
-)
-from src.processes.messages.workflow import (
-    MSG_PW_0093,
+from src.datasets.models import DatasetItem
+from src.datasets.exceptions import DataSetServiceException
+from src.datasets.messages import (
+    MSG_DS_0002,
 )
 
 
@@ -32,7 +30,7 @@ class DataSetItemService(BaseModelService):
             )
         except IntegrityError as ex:
             raise DataSetServiceException(
-                message=MSG_PW_0093(value=value),
+                message=MSG_DS_0002(value=value),
             ) from ex
         return self.instance
 
@@ -41,20 +39,18 @@ class DataSetItemService(BaseModelService):
 
     def partial_update(
         self,
-        force_save=False,
         **update_kwargs,
     ) -> DatasetItem:
 
         self.update_fields.update(update_kwargs.keys())
         for field_name, value in update_kwargs.items():
             setattr(self.instance, field_name, value)
-        if force_save:
-            try:
-                self.save()
-            except IntegrityError as ex:
-                raise DataSetServiceException(
-                    message=MSG_PW_0093(value=self.instance.value),
-                ) from ex
+        try:
+            self.save()
+        except IntegrityError as ex:
+            raise DataSetServiceException(
+                message=MSG_DS_0002(value=self.instance.value),
+            ) from ex
         return self.instance
 
     def delete(self) -> None:

@@ -5,7 +5,7 @@ from rest_framework.serializers import (
 )
 
 from src.generics.fields import TimeStampField
-from src.processes.models.dataset import Dataset, DatasetItem
+from src.datasets.models import Dataset, DatasetItem
 
 
 class DatasetItemSerializer(ModelSerializer):

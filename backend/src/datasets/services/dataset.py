@@ -9,12 +9,10 @@ from src.notifications.tasks import (
     send_dataset_deleted_notification,
     send_dataset_updated_notification,
 )
-from src.processes.models.dataset import Dataset
-from src.processes.serializers.dataset import DatasetSerializer
-from src.processes.services.datasets.dataset_item import DataSetItemService
-from src.processes.services.exceptions import (
-    DataSetNameNotUniqueException,
-)
+from src.datasets.models import Dataset
+from src.datasets.serializers import DatasetSerializer
+from src.datasets.services.dataset_item import DataSetItemService
+from src.datasets.exceptions import DataSetNameNotUniqueException
 
 UserModel = get_user_model()
 

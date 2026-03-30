@@ -13,16 +13,16 @@ from src.accounts.permissions import (
 from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import UserIsAuthenticated
-from src.processes.filters import DatasetFilter
-from src.processes.models.dataset import Dataset, DatasetItem
-from src.processes.serializers.dataset import (
+from src.datasets.filters import DatasetFilter
+from src.datasets.models import Dataset, DatasetItem
+from src.datasets.serializers import (
     DatasetItemSerializer,
     DatasetListSerializer,
     DatasetSerializer,
 )
-from src.processes.services.exceptions import DataSetServiceException
-from src.processes.services.datasets.dataset import DataSetService
-from src.processes.services.datasets.dataset_item import DataSetItemService
+from src.datasets.exceptions import DataSetServiceException
+from src.datasets.services.dataset import DataSetService
+from src.datasets.services.dataset_item import DataSetItemService
 from src.utils.validation import raise_validation_error
 
 

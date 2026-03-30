@@ -30,7 +30,7 @@ from src.processes.filters import (
     TaskWebhookFilterSet,
     WorkflowEventFilter,
 )
-from src.processes.models.dataset import DatasetItem
+from src.datasets.models import DatasetItem
 from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.fields import FieldSelection
 from src.processes.models.workflows.task import (

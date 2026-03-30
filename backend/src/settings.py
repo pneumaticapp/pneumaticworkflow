@@ -139,6 +139,7 @@ class Common(Configuration):
         'src.notifications',
         'src.celery_app',
         'src.processes',
+        'src.datasets',
         'src.reports',
         'src.generics',
         'src.webhooks',

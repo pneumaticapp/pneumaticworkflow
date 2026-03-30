@@ -15,7 +15,8 @@ from src.processes.enums import (
     PredicateOperator,
     PredicateType,
 )
-from src.processes.models.dataset import Dataset
+from src.datasets.models import Dataset
+
 
 UserModel = get_user_model()
 

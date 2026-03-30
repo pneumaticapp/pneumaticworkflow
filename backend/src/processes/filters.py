@@ -14,7 +14,6 @@ from src.generics.filters import (
     TsQuerySearchFilter,
 )
 from src.processes.enums import TaskStatus, WorkflowStatus
-from src.processes.models.dataset import Dataset
 from src.processes.models.templates.system_template import SystemTemplate
 from src.processes.models.templates.template import Template
 from src.processes.models.workflows.event import WorkflowEvent
@@ -151,19 +150,3 @@ class SystemTemplateFilter(FilterSet):
     search = TsQuerySearchFilter(
         field_name='search_content',
     )
-
-
-class DatasetFilter(FilterSet):
-    ordering = DefaultOrderingFilter(
-        fields=(
-            ('name', 'name'),
-            ('date_created', 'date'),
-        ),
-        default=('-date_created',),
-    )
-
-    class Meta:
-        model = Dataset
-        fields = (
-            'ordering',
-        )
