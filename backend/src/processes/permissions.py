@@ -171,7 +171,7 @@ class WorkflowMemberOrViewerPermission(BasePermission):
                 pk=workflow_id,
                 account_id=request.user.account_id,
             )
-            .with_viewer_or_started_by_starter(request.user.id)
+            .with_owner_viewer_or_started_by_starter(request.user.id)
             .exists()
         )
 
@@ -362,7 +362,7 @@ class TaskWorkflowMemberOrViewerPermission(BasePermission):
                 tasks__id=task_id,
                 account_id=request.user.account_id,
             )
-            .with_viewer_or_started_by_starter(request.user.id)
+            .with_owner_viewer_or_started_by_starter(request.user.id)
             .exists()
         )
 
@@ -406,7 +406,11 @@ class TaskCommentPermission(BasePermission):
             return True
 
         # Check template owner, viewer or starter who started workflow
-        return base_qst.with_viewer_or_started_by_starter(user_id).exists()
+        return (
+            base_qst
+            .with_owner_viewer_or_started_by_starter(user_id)
+            .exists()
+        )
 
 
 class WorkflowCommentPermission(BasePermission):
@@ -445,7 +449,11 @@ class WorkflowCommentPermission(BasePermission):
             return True
 
         # Check template owner, viewer or starter who started workflow
-        return base_qst.with_viewer_or_started_by_starter(user_id).exists()
+        return (
+            base_qst
+            .with_owner_viewer_or_started_by_starter(user_id)
+            .exists()
+        )
 
 
 class GuestWorkflowPermission(BasePermission):
@@ -622,7 +630,7 @@ class CommentReactionPermission(BasePermission):
             Workflow.objects
             .by_id(workflow_id)
             .on_account(user.account_id)
-            .with_viewer_or_started_by_starter(user.id)
+            .with_owner_viewer_or_started_by_starter(user.id)
             .exists()
         )
 

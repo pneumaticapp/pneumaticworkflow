@@ -448,7 +448,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             ),
         ).distinct()
 
-    def with_viewer_or_started_by_starter(self, user_id: int):
+    def with_owner_viewer_or_started_by_starter(self, user_id: int):
         base_owner_q = Q(template__owners__is_deleted=False) & (
             Q(
                 template__owners__type=OwnerType.USER,
