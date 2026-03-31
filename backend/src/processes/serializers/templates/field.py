@@ -4,6 +4,7 @@ from rest_framework.serializers import (
     CharField,
     IntegerField,
     ModelSerializer,
+    SerializerMethodField,
 )
 
 from src.generics.fields import AccountPrimaryKeyRelatedField
@@ -25,7 +26,6 @@ from src.processes.serializers.templates.mixins import (
     CustomValidationApiNameMixin,
 )
 from src.processes.serializers.templates.selection import (
-    FieldTemplateSelectionListSerializer,
     FieldTemplateSelectionSerializer,
 )
 
@@ -239,7 +239,14 @@ class FieldTemplateListSerializer(ModelSerializer):
             'order',
         )
 
-    selections = FieldTemplateSelectionListSerializer(many=True)
+    selections = SerializerMethodField()
+
+    def get_selections(self, instance: FieldTemplate) -> list:
+        result = [s.value for s in instance.selections_values]
+        if instance.dataset_id:
+            for i in instance.dataset.dataset_values:
+                result.append(i.value)
+        return result
 
     def to_representation(self, data: Dict[str, Any]):
         data = super().to_representation(data)

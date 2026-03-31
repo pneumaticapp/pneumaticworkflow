@@ -278,8 +278,12 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
         is_active: Optional[bool] = None,
         is_public: Optional[bool] = None,
     ):
-        from src.processes.models.templates.owner import (
-            TemplateOwner,
+        from src.processes.models.templates.owner import TemplateOwner
+        from src.processes.models.templates.fields import FieldTemplate
+        from src.processes.models.templates.kickoff import Kickoff
+        from src.datasets.models import DatasetItem
+        from src.processes.models.templates.fields import (
+            FieldTemplateSelection,
         )
 
         query = TemplateListQuery(
@@ -295,11 +299,42 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
             .prefetch_related(
                 Prefetch(
                     'owners',
-                    queryset=TemplateOwner.objects.order_by('type', 'id'),
+                    queryset=(
+                        TemplateOwner.objects
+                        .order_by('type', 'id')
+                    ),
                 ),
-                'kickoff',
-                'kickoff__fields',
-                'kickoff__fields__selections',
+                Prefetch(
+                    lookup='kickoff',
+                    queryset=(
+                        Kickoff.objects.all().prefetch_related(
+                            Prefetch(
+                                lookup='fields',
+                                queryset=(
+                                    FieldTemplate.objects.prefetch_related(
+                                        Prefetch(
+                                            lookup='selections',
+                                            queryset=(
+                                                FieldTemplateSelection.
+                                                objects.only('value')
+                                            ),
+                                            to_attr='selections_values',
+                                        ),
+                                        Prefetch(
+                                            'dataset__items',
+                                            queryset=(
+                                                DatasetItem.objects
+                                                .only('value')
+                                                .order_by('order')
+                                            ),
+                                            to_attr='dataset_values',
+                                        ),
+                                    ).all().order_by('-order')
+                                ),
+                            ),
+                        )
+                    ),
+                ),
             )
         )
 
@@ -316,10 +351,13 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
         Returns templates where the user is a Template Owner
         (directly or via group membership).
         """
-        from src.processes.models.templates.owner import (
-            TemplateOwner,
+        from src.processes.models.templates.owner import TemplateOwner
+        from src.processes.models.templates.fields import FieldTemplate
+        from src.processes.models.templates.kickoff import Kickoff
+        from src.datasets.models import DatasetItem
+        from src.processes.models.templates.fields import (
+            FieldTemplateSelection,
         )
-
         query = TemplateListByOwnersQuery(
             user_id=user_id,
             account_id=account_id,
@@ -333,11 +371,42 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
             .prefetch_related(
                 Prefetch(
                     'owners',
-                    queryset=TemplateOwner.objects.order_by('type', 'id'),
+                    queryset=(
+                        TemplateOwner.objects
+                        .order_by('type', 'id')
+                    ),
                 ),
-                'kickoff',
-                'kickoff__fields',
-                'kickoff__fields__selections',
+                Prefetch(
+                    lookup='kickoff',
+                    queryset=(
+                        Kickoff.objects.all().prefetch_related(
+                            Prefetch(
+                                lookup='fields',
+                                queryset=(
+                                    FieldTemplate.objects.prefetch_related(
+                                        Prefetch(
+                                            lookup='selections',
+                                            queryset=(
+                                                FieldTemplateSelection
+                                                .objects.only('value')
+                                            ),
+                                            to_attr='selections_values',
+                                        ),
+                                        Prefetch(
+                                            'dataset__items',
+                                            queryset=(
+                                                DatasetItem.objects
+                                                .only('value')
+                                                .order_by('order')
+                                            ),
+                                            to_attr='dataset_values',
+                                        ),
+                                    ).all().order_by('-order')
+                                ),
+                            ),
+                        )
+                    ),
+                ),
             )
         )
 
