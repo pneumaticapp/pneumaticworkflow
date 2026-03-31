@@ -3,9 +3,9 @@ from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.viewsets import GenericViewSet
 
 from src.generics.mixins.views import CustomViewSetMixin
-from src.processes.models.dataset import Dataset
+from src.datasets.models import Dataset
 from src.processes.permissions import PublicTemplatePermission
-from src.processes.serializers.templates.dataset import (
+from src.datasets.serializers import (
     DatasetSerializer,
 )
 

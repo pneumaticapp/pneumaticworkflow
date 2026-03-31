@@ -6,8 +6,8 @@ from django.utils import timezone
 from src.accounts.enums import BillingPlanType
 from src.accounts.messages import MSG_A_0035, MSG_A_0037, MSG_A_0041
 from src.authentication.enums import AuthTokenType
-from src.processes.services.exceptions import DataSetServiceException
-from src.processes.services.dataset import DataSetService
+from src.datasets.exceptions import DataSetServiceException
+from src.datasets.services.dataset import DataSetService
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_dataset,
@@ -19,24 +19,25 @@ from src.utils.validation import ErrorCode
 pytestmark = pytest.mark.django_db
 
 
-def test_create__unauthenticated__unauthorized(api_client):
+def test_partial_update__unauthenticated__unauthorized(api_client):
 
     """Unauthenticated user — 401"""
 
     # arrange
-    data = {'name': 'New Dataset'}
+    account = create_test_account()
+    dataset = create_test_dataset(account=account)
 
     # act
-    response = api_client.post(
-        path='/datasets',
-        data=data,
+    response = api_client.patch(
+        path=f'/datasets/{dataset.id}',
+        data={'name': 'Updated'},
     )
 
     # assert
     assert response.status_code == 401
 
 
-def test_create__expired_subscription__permission_denied(api_client):
+def test_partial_update__expired_subscription__permission_denied(api_client):
 
     """Expired subscription — 403"""
 
@@ -47,13 +48,13 @@ def test_create__expired_subscription__permission_denied(api_client):
         plan_expiration=timezone.now() - timedelta(days=1),
     )
     user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account)
     api_client.token_authenticate(user=user)
-    data = {'name': 'New Dataset'}
 
     # act
-    response = api_client.post(
-        path='/datasets',
-        data=data,
+    response = api_client.patch(
+        path=f'/datasets/{dataset.id}',
+        data={'name': 'Updated'},
     )
 
     # assert
@@ -61,20 +62,20 @@ def test_create__expired_subscription__permission_denied(api_client):
     assert response.data['detail'] == MSG_A_0035
 
 
-def test_create__billing_plan__permission_denied(api_client):
+def test_partial_update__billing_plan__permission_denied(api_client):
 
     """Billing plan restriction — 403"""
 
     # arrange
     account = create_test_account(plan=None)
     user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account)
     api_client.token_authenticate(user=user)
-    data = {'name': 'New Dataset'}
 
     # act
-    response = api_client.post(
-        path='/datasets',
-        data=data,
+    response = api_client.patch(
+        path=f'/datasets/{dataset.id}',
+        data={'name': 'Updated'},
     )
 
     # assert
@@ -82,7 +83,7 @@ def test_create__billing_plan__permission_denied(api_client):
     assert response.data['detail'] == MSG_A_0041
 
 
-def test_create__users_overlimited__permission_denied(api_client):
+def test_partial_update__users_overlimited__permission_denied(api_client):
 
     """Users overlimited — 403"""
 
@@ -98,13 +99,13 @@ def test_create__users_overlimited__permission_denied(api_client):
     )
     account.active_users = 2
     account.save()
+    dataset = create_test_dataset(account=account)
     api_client.token_authenticate(user=user)
-    data = {'name': 'New Dataset'}
 
     # act
-    response = api_client.post(
-        path='/datasets',
-        data=data,
+    response = api_client.patch(
+        path=f'/datasets/{dataset.id}',
+        data={'name': 'Updated'},
     )
 
     # assert
@@ -112,223 +113,240 @@ def test_create__users_overlimited__permission_denied(api_client):
     assert response.data['detail'] == MSG_A_0037
 
 
-def test_create__non_admin__permission_denied(api_client):
+def test_partial_update__non_admin__permission_denied(api_client):
 
     """Non-admin/non-owner user — 403"""
 
     # arrange
     account = create_test_account()
     user = create_test_not_admin(account=account)
+    dataset = create_test_dataset(account=account)
     api_client.token_authenticate(user=user)
-    data = {'name': 'New Dataset'}
 
     # act
-    response = api_client.post(
-        path='/datasets',
-        data=data,
+    response = api_client.patch(
+        path=f'/datasets/{dataset.id}',
+        data={'name': 'Updated'},
     )
 
     # assert
     assert response.status_code == 403
 
 
-def test_create__missing_name__validation_error(mocker, api_client):
+def test_partial_update__not_found__not_found(api_client):
 
-    """Missing required field `name` — 400"""
+    """Non-existent dataset id — 404"""
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
     api_client.token_authenticate(user=user)
-    data_set_service_init_mock = mocker.patch.object(
-        DataSetService,
-        attribute='__init__',
-        return_value=None,
-    )
-    create_mock = mocker.patch(
-        'src.processes.services.dataset.DataSetService.create',
-    )
+    non_existent_id = 999999
 
     # act
-    response = api_client.post(
-        path='/datasets',
-        data={},
+    response = api_client.patch(
+        path=f'/datasets/{non_existent_id}',
+        data={'name': 'Updated'},
     )
 
     # assert
-    assert response.status_code == 400
-    data_set_service_init_mock.assert_not_called()
-    create_mock.assert_not_called()
+    assert response.status_code == 404
 
 
-def test_create__name_too_long__validation_error(mocker, api_client):
+def test_partial_update__another_account__not_found(api_client):
+
+    """Dataset belonging to another account — 404"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user=user)
+
+    another_account = create_test_account(name='Another Company')
+    dataset = create_test_dataset(account=another_account)
+
+    # act
+    response = api_client.patch(
+        path=f'/datasets/{dataset.id}',
+        data={'name': 'Updated'},
+    )
+
+    # assert
+    assert response.status_code == 404
+
+
+def test_partial_update__name_too_long__validation_error(mocker, api_client):
 
     """`name` exceeds max length 200 — 400"""
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account)
     api_client.token_authenticate(user=user)
     data_set_service_init_mock = mocker.patch.object(
         DataSetService,
         attribute='__init__',
         return_value=None,
     )
-    create_mock = mocker.patch(
-        'src.processes.services.dataset.DataSetService.create',
+    partial_update_mock = mocker.patch(
+        'src.datasets.services.dataset.'
+        'DataSetService.partial_update',
     )
     long_name = 'x' * 201
 
     # act
-    response = api_client.post(
-        path='/datasets',
+    response = api_client.patch(
+        path=f'/datasets/{dataset.id}',
         data={'name': long_name},
     )
 
     # assert
     assert response.status_code == 400
     data_set_service_init_mock.assert_not_called()
-    create_mock.assert_not_called()
+    partial_update_mock.assert_not_called()
 
 
-def test_create__item_value_too_long__validation_error(mocker, api_client):
+def test_partial_update__item_value_too_long__validation_error(
+    mocker,
+    api_client,
+):
 
     """`items[].value` exceeds max length 200 — 400"""
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account)
     api_client.token_authenticate(user=user)
     data_set_service_init_mock = mocker.patch.object(
         DataSetService,
         attribute='__init__',
         return_value=None,
     )
-    create_mock = mocker.patch(
-        'src.processes.services.dataset.DataSetService.create',
+    partial_update_mock = mocker.patch(
+        'src.datasets.services.dataset'
+        '.DataSetService.partial_update',
     )
-    data = {
-        'name': 'Dataset',
-        'items': [{'value': 'x' * 201}],
-    }
+    data = {'items': [{'value': 'x' * 201}]}
 
     # act
-    response = api_client.post(
-        path='/datasets',
+    response = api_client.patch(
+        path=f'/datasets/{dataset.id}',
         data=data,
     )
 
     # assert
     assert response.status_code == 400
     data_set_service_init_mock.assert_not_called()
-    create_mock.assert_not_called()
+    partial_update_mock.assert_not_called()
 
 
-def test_create__minimal_data__ok(mocker, api_client):
+def test_partial_update__minimal_data__ok(mocker, api_client):
 
-    """Minimal valid request (only `name`) — 201"""
+    """Minimal valid request (one field) — 200"""
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    api_client.token_authenticate(user=user)
     dataset = create_test_dataset(
         account=account,
-        name='New Dataset',
+        name='Old Name',
         items_count=0,
     )
+    new_name = 'New Name'
+    updated_dataset = create_test_dataset(account=account, name=new_name)
+    api_client.token_authenticate(user=user)
     data_set_service_init_mock = mocker.patch.object(
         DataSetService,
         attribute='__init__',
         return_value=None,
     )
-    create_mock = mocker.patch(
-        'src.processes.services.dataset.DataSetService.create',
-        return_value=dataset,
+    partial_update_mock = mocker.patch(
+        'src.datasets.services.'
+        'dataset.DataSetService.partial_update',
+        return_value=updated_dataset,
     )
-    data = {'name': 'New Dataset'}
 
     # act
-    response = api_client.post(
-        path='/datasets',
-        data=data,
+    response = api_client.patch(
+        path=f'/datasets/{dataset.id}',
+        data={'name': new_name},
     )
 
     # assert
-    assert response.status_code == 201
-    assert response.data['id'] == dataset.id
-    assert response.data['name'] == dataset.name
+    assert response.status_code == 200
+    assert response.data['name'] == new_name
     data_set_service_init_mock.assert_called_once_with(
         user=user,
+        instance=dataset,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    create_mock.assert_called_once_with(
-        name='New Dataset',
-        description='',
-        items=[],
+    partial_update_mock.assert_called_once_with(
+        name=new_name,
     )
 
 
-def test_create__full_data__ok(mocker, api_client):
+def test_partial_update__full_data__ok(mocker, api_client):
 
-    """Full valid request (`name`, `description`, `items`) — 201"""
+    """Full valid request (`name`, `description`, `items`) — 200"""
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account)
     api_client.token_authenticate(user=user)
-    dataset = create_test_dataset(
-        account=account,
-        name='Full Dataset',
-        description='A description',
-        items_count=1,
-    )
     data_set_service_init_mock = mocker.patch.object(
         DataSetService,
         attribute='__init__',
         return_value=None,
     )
-    create_mock = mocker.patch(
-        'src.processes.services.dataset.DataSetService.create',
+    partial_update_mock = mocker.patch(
+        'src.datasets.services.dataset.'
+        'DataSetService.partial_update',
         return_value=dataset,
     )
-    items = [{'value': 'Item 1', 'order': 1}]
+    items = [{'value': 'Updated item', 'order': 0}]
     data = {
-        'name': 'Full Dataset',
-        'description': 'A description',
+        'name': 'Updated Name',
+        'description': 'Updated description',
         'items': items,
     }
 
     # act
-    response = api_client.post(
-        path='/datasets',
+    response = api_client.patch(
+        path=f'/datasets/{dataset.id}',
         data=data,
     )
 
     # assert
-    assert response.status_code == 201
+    assert response.status_code == 200
     assert response.data['id'] == dataset.id
-    assert response.data['name'] == dataset.name
     data_set_service_init_mock.assert_called_once_with(
         user=user,
+        instance=dataset,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    create_mock.assert_called_once_with(
-        name='Full Dataset',
-        description='A description',
+    partial_update_mock.assert_called_once_with(
+        name='Updated Name',
+        description='Updated description',
         items=items,
     )
 
 
-def test_create__service_exception__validation_error(mocker, api_client):
+def test_partial_update__service_exception__validation_error(
+    mocker,
+    api_client,
+):
 
     """`DataSetServiceException` raised — 400"""
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account)
     api_client.token_authenticate(user=user)
     error_message = 'Dataset service error'
     data_set_service_init_mock = mocker.patch.object(
@@ -336,15 +354,16 @@ def test_create__service_exception__validation_error(mocker, api_client):
         attribute='__init__',
         return_value=None,
     )
-    create_mock = mocker.patch(
-        'src.processes.services.dataset.DataSetService.create',
+    partial_update_mock = mocker.patch(
+        'src.datasets.services.dataset.'
+        'DataSetService.partial_update',
         side_effect=DataSetServiceException(message=error_message),
     )
-    data = {'name': 'New Dataset'}
+    data = {'name': 'Updated Name'}
 
     # act
-    response = api_client.post(
-        path='/datasets',
+    response = api_client.patch(
+        path=f'/datasets/{dataset.id}',
         data=data,
     )
 
@@ -354,11 +373,10 @@ def test_create__service_exception__validation_error(mocker, api_client):
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     data_set_service_init_mock.assert_called_once_with(
         user=user,
+        instance=dataset,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    create_mock.assert_called_once_with(
-        name='New Dataset',
-        description='',
-        items=[],
+    partial_update_mock.assert_called_once_with(
+        name='Updated Name',
     )

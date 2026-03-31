@@ -1174,7 +1174,7 @@ def test__kickoff_field_type_user__ok(api_client):
     )
     api_client.token_authenticate(user)
 
-    response = api_client.post(
+    response_run = api_client.post(
         path=f'/templates/{template.id}/run',
         data={
             'name': 'Test name',
@@ -1183,7 +1183,7 @@ def test__kickoff_field_type_user__ok(api_client):
             },
         },
     )
-    workflow = Workflow.objects.get(id=response.data['id'])
+    workflow = Workflow.objects.get(id=response_run.data['id'])
     field = workflow.kickoff_instance.output.first()
     api_client.token_authenticate(user)
 
@@ -1191,6 +1191,7 @@ def test__kickoff_field_type_user__ok(api_client):
     response = api_client.get('/reports/highlights')
 
     # assert
+    assert response_run.status_code == 200
     assert response.status_code == 200
     field_data = response.data[0]['workflow']['kickoff']['output'][0]
     assert field_data['type'] == field.type

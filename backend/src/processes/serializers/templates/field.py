@@ -17,7 +17,7 @@ from src.processes.messages.template import (
     MSG_PT_0006,
     MSG_PT_0050,
 )
-from src.processes.models.dataset import Dataset
+from src.datasets.models import Dataset
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,

@@ -4,12 +4,13 @@ from django.db.models import Q, UniqueConstraint
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
-from src.processes.querysets import DatasetItemQuerySet, DatasetQuerySet
+from src.datasets.querysets import DatasetItemQuerySet, DatasetQuerySet
 
 
 class Dataset(SoftDeleteModel, AccountBaseMixin):
 
     class Meta:
+        app_label = 'datasets'
         ordering = ['-id']
         constraints = [
             UniqueConstraint(
@@ -29,9 +30,10 @@ class Dataset(SoftDeleteModel, AccountBaseMixin):
         return self.name
 
 
-class DatasetItem(SoftDeleteModel):
+class DatasetItem(SoftDeleteModel, AccountBaseMixin):
 
     class Meta:
+        app_label = 'datasets'
         ordering = ['order', 'id']
         constraints = [
             UniqueConstraint(
