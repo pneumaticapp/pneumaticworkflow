@@ -584,7 +584,7 @@ class WorkflowCountsByCPerformerQuery(
 
     def _get_inner_where(self):
         where = f"""
-            WHERE (au.id IS NULL OR au.is_deleted IS FALSE)
+            WHERE au.is_deleted IS FALSE
             AND pw.is_deleted IS FALSE
             AND pw.account_id = %(account_id)s
             AND (
@@ -670,7 +670,22 @@ class WorkflowCountsByCPerformerQuery(
             WHERE au.is_deleted IS FALSE
                 AND pw.is_deleted IS FALSE
                 AND pw.account_id = %(account_id)s
-                AND ptra.user_id = %(user_id)s
+                AND (
+                    ptra.user_id = %(user_id)s
+                    OR {
+                        self._get_template_owner_role_allowed(
+                            OwnerRole.VIEWER
+                        )
+                    }
+                    OR (
+                        pw.workflow_starter_id = %(user_id)s
+                        AND {
+                            self._get_template_owner_role_allowed(
+                                OwnerRole.STARTER
+                            )
+                        }
+                    )
+                )
                 AND ptp.directly_status != '{DirectlyStatus.DELETED}'
                 AND ag.is_deleted IS FALSE
                 AND ptp.group_id IS NOT NULL
@@ -697,7 +712,22 @@ class WorkflowCountsByCPerformerQuery(
             WHERE au.is_deleted IS FALSE
                 AND pw.is_deleted IS FALSE
                 AND pw.account_id = %(account_id)s
-                AND ptra.user_id = %(user_id)s
+                AND (
+                    ptra.user_id = %(user_id)s
+                    OR {
+                        self._get_template_owner_role_allowed(
+                            OwnerRole.VIEWER
+                        )
+                    }
+                    OR (
+                        pw.workflow_starter_id = %(user_id)s
+                        AND {
+                            self._get_template_owner_role_allowed(
+                                OwnerRole.STARTER
+                            )
+                        }
+                    )
+                )
                 AND ptp.directly_status != '{DirectlyStatus.DELETED}'
                 AND ag.is_deleted IS FALSE
                 AND ptp.group_id IS NOT NULL
@@ -1033,11 +1063,7 @@ class TaskListQuery(
         where = f"""
             WHERE pt.is_deleted IS FALSE
             AND pw.account_id = %(account_id)s
-            AND (
-                ptp.user_id = %(assigned_to)s
-                OR aug.user_id IS NOT NULL
-                OR pw.workflow_starter_id = %(assigned_to)s
-            )
+            AND (ptp.user_id = %(assigned_to)s OR aug.user_id IS NOT NULL)
             AND ptp.directly_status != '{DirectlyStatus.DELETED}'
             AND {self.get_is_completed_where()}
         """
