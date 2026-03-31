@@ -1,6 +1,7 @@
 from datetime import timedelta
 
 import pytest
+from rest_framework import status
 from django.utils import timezone
 
 from src.accounts.enums import (
@@ -1993,3 +1994,71 @@ def test_retrieve__workflow_member__ok_read_only(
     # assert
     assert response.status_code == 200
     assert response.data['is_read_only_viewer'] is True
+
+
+def test_task_retrieve__template_starter_own_workflow__ok(api_client):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    workflow = create_test_workflow(template=template, user=starter_user)
+    task = workflow.tasks.order_by('number').first()
+
+    api_client.token_authenticate(starter_user)
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == status.HTTP_200_OK
+    assert response.data['id'] == task.id
+
+
+def test_task_retrieve__template_starter_other_workflow__forbidden(api_client):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    # Workflow started by someone else
+    workflow = create_test_workflow(template=template, user=template_owner)
+    task = workflow.tasks.order_by('number').first()
+
+    api_client.token_authenticate(starter_user)
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}')
+
+    # assert
+    assert response.status_code == status.HTTP_403_FORBIDDEN

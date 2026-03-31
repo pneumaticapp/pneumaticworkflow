@@ -1,5 +1,6 @@
 from datetime import timedelta
-
+from django.urls import reverse
+from rest_framework import status
 import pytest
 from django.utils import timezone
 
@@ -11,6 +12,8 @@ from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
     FieldType,
+    OwnerRole,
+    OwnerType,
     PerformerType,
     PredicateOperator,
     PredicateType,
@@ -26,6 +29,7 @@ from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
 )
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.task import (
@@ -1758,3 +1762,29 @@ def test_events__all_params__ok(api_client):
 
     # assert
     assert response.status_code == 200
+
+
+def test_workflow_events__template_starter_own_workflow__ok(api_client):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+    starter_user = create_test_user(account=account, email='s@test.com')
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+    workflow = create_test_workflow(template=template, user=starter_user)
+
+    api_client.token_authenticate(starter_user)
+    url = reverse('workflows-events', args=[workflow.id])
+
+    # act
+    response = api_client.get(url)
+
+    # assert
+    assert response.status_code == status.HTTP_200_OK

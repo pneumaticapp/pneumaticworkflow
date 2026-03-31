@@ -1,11 +1,14 @@
 from datetime import timedelta
 
 import pytest
+from rest_framework import status
 
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     DirectlyStatus,
     FieldType,
+    OwnerRole,
+    OwnerType,
     PerformerType,
     TaskStatus,
     WorkflowStatus,
@@ -14,6 +17,7 @@ from src.processes.messages import workflow as messages
 from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.services.events import (
     WorkflowEventService,
 )
@@ -2262,3 +2266,74 @@ def test_list__sql_injection_in_search__ok(api_client, injection):
     # assert
     assert response.status_code == 200
     assert len(response.data['results']) == 1
+
+
+def test_task_list__template_starter_own_workflow__includes_task(api_client):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    workflow = create_test_workflow(template=template, user=starter_user)
+    task = workflow.tasks.order_by('number').first()
+
+    api_client.token_authenticate(starter_user)
+
+    # act
+    response = api_client.get('/v3/tasks')
+
+    # assert
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert task.id in [item['id'] for item in data]
+
+
+def test_task_list__template_starter_other_workflow__not_included(api_client):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    # Workflow started by someone else
+    workflow = create_test_workflow(template=template, user=template_owner)
+    task = workflow.tasks.order_by('number').first()
+
+    api_client.token_authenticate(starter_user)
+
+    # act
+    response = api_client.get('/v3/tasks')
+
+    # assert
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert task.id not in [item['id'] for item in data]

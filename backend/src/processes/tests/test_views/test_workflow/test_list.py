@@ -1,4 +1,6 @@
 from datetime import timedelta
+from django.urls import reverse
+from rest_framework import status
 from string import punctuation
 
 import pytest
@@ -3040,3 +3042,103 @@ def test_list__all_params__ok(api_client):
     assert response.status_code == 200
     assert len(response.data['results']) == 1
     assert response.data['results'][0]['id'] == workflow.id
+
+
+def test_workflow_list__template_starter__includes_only_own_workflows(
+    api_client,
+):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(
+        user=template_owner,
+        name='Template',
+    )
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    # Workflow started by starter
+    workflow_own = create_test_workflow(
+        template=template, user=starter_user,
+    )
+    # Workflow started by owner
+    workflow_other = create_test_workflow(
+        template=template, user=template_owner,
+    )
+
+    api_client.token_authenticate(starter_user)
+    url = reverse('workflows-list')
+
+    # act
+    response = api_client.get(url)
+
+    # assert
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+
+    workflow_ids = [item['id'] for item in data['results']]
+    assert workflow_own.id in workflow_ids
+    assert workflow_other.id not in workflow_ids
+
+
+def test_workflow_list__group_template_starter__includes_only_own_workflows(
+    api_client,
+):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(
+        user=template_owner,
+        name='Template',
+    )
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+    group = create_test_group(account=account, name='Starters Group')
+    group.users.add(starter_user)
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.GROUP,
+        group=group,
+        account=account,
+    )
+
+    # Workflow started by starter
+    workflow_own = create_test_workflow(
+        template=template, user=starter_user,
+    )
+    # Workflow started by owner
+    workflow_other = create_test_workflow(
+        template=template, user=template_owner,
+    )
+
+    api_client.token_authenticate(starter_user)
+    url = reverse('workflows-list')
+
+    # act
+    response = api_client.get(url)
+
+    # assert
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+
+    workflow_ids = [item['id'] for item in data['results']]
+    assert workflow_own.id in workflow_ids
+    assert workflow_other.id not in workflow_ids

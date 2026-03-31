@@ -376,3 +376,94 @@ class TestTemplatePresetsListView:
         # assert
         assert response.status_code == 403
         by_presets_mock.assert_not_called()
+
+    def test_presets__template_starter__ok(self, api_client, mocker):
+        # arrange
+        account = create_test_account()
+        template_owner = create_test_admin(account=account)
+        starter_user = create_test_not_admin(
+            account=account,
+            email='starter@test.com',
+        )
+        template = create_test_template(template_owner, is_active=True)
+        TemplateOwner.objects.create(
+            role=OwnerRole.STARTER,
+            template=template,
+            account=account,
+            type=OwnerType.USER,
+            user_id=starter_user.id,
+        )
+
+        preset = create_test_template_preset(
+            template=template,
+            author=template_owner,
+            name='Test Preset',
+            is_default=True,
+            type=PresetType.ACCOUNT,
+        )
+
+        api_client.token_authenticate(starter_user)
+
+        mock_queryset = mocker.MagicMock()
+        mock_queryset.select_related.return_value = mock_queryset
+        mock_queryset.prefetch_related.return_value = [preset]
+        by_presets_mock = mocker.patch(
+            'src.processes.views.template.'
+            'TemplatePreset.objects.by_user',
+            return_value=mock_queryset,
+        )
+
+        # act
+        response = api_client.get(f'/templates/{template.id}/presets')
+
+        # assert
+        assert response.status_code == 200
+        by_presets_mock.assert_called_once_with(starter_user, template.id)
+
+    def test_presets__template_starter_via_group__ok(self, api_client, mocker):
+        # arrange
+        account = create_test_account()
+        template_owner = create_test_admin(account=account)
+        starter_user = create_test_not_admin(
+            account=account,
+            email='starter@test.com',
+        )
+        template = create_test_template(template_owner, is_active=True)
+        group = UserGroup.objects.create(
+            name='Starters Group',
+            account=account,
+        )
+        group.users.add(starter_user)
+        TemplateOwner.objects.create(
+            role=OwnerRole.STARTER,
+            template=template,
+            account=account,
+            type=OwnerType.GROUP,
+            group=group,
+        )
+
+        preset = create_test_template_preset(
+            template=template,
+            author=template_owner,
+            name='Test Preset',
+            is_default=True,
+            type=PresetType.ACCOUNT,
+        )
+
+        api_client.token_authenticate(starter_user)
+
+        mock_queryset = mocker.MagicMock()
+        mock_queryset.select_related.return_value = mock_queryset
+        mock_queryset.prefetch_related.return_value = [preset]
+        by_presets_mock = mocker.patch(
+            'src.processes.views.template.'
+            'TemplatePreset.objects.by_user',
+            return_value=mock_queryset,
+        )
+
+        # act
+        response = api_client.get(f'/templates/{template.id}/presets')
+
+        # assert
+        assert response.status_code == 200
+        by_presets_mock.assert_called_once_with(starter_user, template.id)

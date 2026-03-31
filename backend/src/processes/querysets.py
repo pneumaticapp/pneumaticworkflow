@@ -162,21 +162,6 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
             ),
         ).distinct()
 
-    def with_template_owner_or_viewer(self, user_id: int):
-        return self.filter(
-            Q(
-                owners__role__in=(OwnerRole.OWNER, OwnerRole.VIEWER),
-                owners__type=OwnerType.USER,
-                owners__user_id=user_id,
-                owners__is_deleted=False,
-            ) | Q(
-                owners__role__in=(OwnerRole.OWNER, OwnerRole.VIEWER),
-                owners__type=OwnerType.GROUP,
-                owners__group__users__id=user_id,
-                owners__is_deleted=False,
-            ),
-        ).distinct()
-
     def get_owners_as_users(self):
         user_owners = self.filter(
             owners__role=OwnerRole.OWNER,
@@ -463,24 +448,25 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             ),
         ).distinct()
 
-    def with_template_owner_or_viewer(self, user_id: int):
-        return self.exclude_legacy().filter(
+    def with_viewer_or_started_by_starter(self, user_id: int):
+        base_owner_q = Q(template__owners__is_deleted=False) & (
             Q(
-                template__owners__role__in=(
-                    OwnerRole.OWNER, OwnerRole.VIEWER,
-                ),
                 template__owners__type=OwnerType.USER,
                 template__owners__user_id=user_id,
-                template__owners__is_deleted=False,
-            ) | Q(
-                template__owners__role__in=(
-                    OwnerRole.OWNER, OwnerRole.VIEWER,
-                ),
+            ) |
+            Q(
                 template__owners__type=OwnerType.GROUP,
                 template__owners__group__users__id=user_id,
-                template__owners__is_deleted=False,
-            ),
-        ).distinct()
+            )
+        )
+        access_q = (
+            Q(template__owners__role__in=(OwnerRole.OWNER, OwnerRole.VIEWER)) |
+            Q(
+                template__owners__role=OwnerRole.STARTER,
+                workflow_starter_id=user_id,
+            )
+        )
+        return self.exclude_legacy().filter(base_owner_q & access_q).distinct()
 
     def with_member(self, user_id: int):
         return self.filter(members=user_id)

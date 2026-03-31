@@ -1,4 +1,5 @@
 import pytest
+from rest_framework import status
 
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
@@ -845,3 +846,40 @@ def test_titles__status_invalid_value__validation_error(
     assert response.data['message'] == message
     assert response.data['details']['reason'] == message
     assert response.data['details']['name'] == 'status'
+
+
+def test_template_titles_by_workflows__template_starter__ok(api_client):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    create_test_workflow(template=template, user=starter_user)
+
+    api_client.token_authenticate(starter_user)
+
+    # act
+    response = api_client.get('/templates/titles-by-workflows')
+
+    # assert
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]['id'] == template.id
+    assert data[0]['count'] == 1
