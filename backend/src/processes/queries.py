@@ -2167,6 +2167,7 @@ class TemplateTitlesByEventsQuery(SqlQueryObject):
 
 
 class TemplateTitlesByWorkflowsQuery(
+    TemplateOwnerRoleMixin,
     SqlQueryObject,
     DereferencedPerformersMixin,
     DereferencedOwnersMixin,
@@ -2281,16 +2282,28 @@ class TemplateTitlesByWorkflowsQuery(
             """
 
     def _get_workflows_count(self):
-        result = """
-            SELECT template_id, COUNT(id) AS count
-            FROM processes_workflow
-            WHERE is_deleted IS FALSE
-              AND account_id = %(account_id)s
+        result = f"""
+            SELECT pw.template_id, COUNT(pw.id) AS count
+            FROM processes_workflow pw
+            WHERE pw.is_deleted IS FALSE
+              AND pw.account_id = %(account_id)s
+              AND (
+                  {self._get_template_owner_role_allowed(OwnerRole.OWNER)}
+                  OR {self._get_template_owner_role_allowed(OwnerRole.VIEWER)}
+                  OR (
+                      pw.workflow_starter_id = %(user_id)s
+                      AND {
+                          self._get_template_owner_role_allowed(
+                              OwnerRole.STARTER
+                          )
+                      }
+                  )
+              )
         """
         if self.status is not None:
-            result += "AND status = %(status)s"
+            result += " AND pw.status = %(status)s "
         result += """
-          GROUP BY template_id
+          GROUP BY pw.template_id
         """
         return result
 
