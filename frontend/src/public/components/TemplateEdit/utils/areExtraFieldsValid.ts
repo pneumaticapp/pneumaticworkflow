@@ -2,7 +2,8 @@ import { EExtraFieldType, IExtraField } from '../../../types/template';
 import { validateKickoffFieldName, validateCheckboxAndRadioField } from '../../../utils/validators';
 
 const areSelectionsValid = (field: IExtraField) => {
-  return field?.selections?.every((selection) => !validateCheckboxAndRadioField(selection.value));
+  if (field.dataset) return true;
+  return Boolean(field?.selections?.every((selection) => !validateCheckboxAndRadioField(selection.value)));
 };
 
 const fieldValidateRulesMap = {
