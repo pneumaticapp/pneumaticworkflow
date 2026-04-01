@@ -400,7 +400,6 @@ def test_update_items__existing_id__partial_update_called(mocker):
     partial_update_mock.assert_called_once_with(
         value='Updated',
         order=99,
-        force_save=True,
     )
     create_mock.assert_not_called()
 
@@ -534,7 +533,6 @@ def test_update_items__mixed__creates_updates_deletes(mocker):
     partial_update_mock.assert_called_once_with(
         value='Updated',
         order=10,
-        force_save=True,
     )
     create_mock.assert_called_once_with(
         dataset_id=dataset.id,

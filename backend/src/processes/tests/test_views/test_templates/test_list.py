@@ -987,8 +987,7 @@ def test_list__kickoff_field_selection_type_has_selections(api_client):
     assert field_data['type'] == FieldType.DROPDOWN
     assert 'selections' in field_data
     assert len(field_data['selections']) == 1
-    assert field_data['selections'][0]['value'] == selection.value
-    assert field_data['selections'][0]['api_name'] == selection.api_name
+    assert field_data['selections'][0] == selection.value
 
 
 def test_list__kickoff_field_non_selection_type_no_selections_key(
@@ -996,7 +995,7 @@ def test_list__kickoff_field_non_selection_type_no_selections_key(
 ):
 
     """
-    GET /templates does NOT include 'selections' or 'dataset' keys for
+    GET /templates does NOT include 'selections' keys for
     kickoff fields with a non-selection type (e.g. STRING).
     FieldTemplateListSerializer.to_representation strips these keys.
     """
@@ -1030,22 +1029,16 @@ def test_list__kickoff_field_non_selection_type_no_selections_key(
     field_data = fields[0]
     assert field_data['type'] == FieldType.STRING
     assert 'selections' not in field_data
-    assert 'dataset' not in field_data
 
 
-def test_list__kickoff_field_with_dataset(api_client):
-
-    """
-    GET /templates returns 'dataset' id for a kickoff field of a
-    selection type that references a dataset.
-    FieldTemplateListSerializer includes 'dataset' in the response.
-    """
+def test_list__kickoff_field_with_dataset__ok(api_client):
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
     api_client.token_authenticate(user)
-    dataset = create_test_dataset(account=account)
+    dataset = create_test_dataset(account=account, items_count=1)
+    dataset_item = dataset.items.first()
     template = create_test_template(
         user=user,
         tasks_count=1,
@@ -1072,41 +1065,37 @@ def test_list__kickoff_field_with_dataset(api_client):
     assert len(fields) == 1
     field_data = fields[0]
     assert field_data['type'] == FieldType.DROPDOWN
-    assert 'dataset' in field_data
-    assert field_data['dataset'] == dataset.id
+    assert field_data['selections'][0] == dataset_item.value
 
 
-def test_list__kickoff_field_selection_type_no_dataset(api_client):
-
-    """
-    GET /templates returns dataset=None for a selection type kickoff field
-    that has no dataset set.
-    'dataset' key is present but None when field has selections.
-    """
+def test_list__kickoff_field_with_dataset_and_selections__ok(api_client):
 
     # arrange
-    user = create_test_owner()
+    account = create_test_account()
+    user = create_test_owner(account=account)
     api_client.token_authenticate(user)
+    dataset = create_test_dataset(account=account, items_count=1)
+    dataset_item = dataset.items.first()
     template = create_test_template(
         user=user,
         tasks_count=1,
         is_active=True,
     )
     kickoff = template.kickoff_instance
-    dropdown_field = FieldTemplate.objects.create(
-        name='Dropdown field',
+    field_template = FieldTemplate.objects.create(
+        name='Dropdown',
         type=FieldType.DROPDOWN,
         kickoff=kickoff,
         template=template,
         order=1,
         api_name='dropdown-field-1',
         account=user.account,
+        dataset=dataset,
     )
-    FieldTemplateSelection.objects.create(
-        field_template=dropdown_field,
+    selection = FieldTemplateSelection.objects.create(
+        field_template=field_template,
+        value='Some value',
         template=template,
-        value='Option A',
-        api_name='selection-1',
     )
 
     # act
@@ -1114,12 +1103,10 @@ def test_list__kickoff_field_selection_type_no_dataset(api_client):
 
     # assert
     assert response.status_code == 200
-    fields = response.data[0]['kickoff']['fields']
-    assert len(fields) == 1
-    field_data = fields[0]
-    assert field_data['type'] == FieldType.DROPDOWN
-    assert 'dataset' in field_data
-    assert field_data['dataset'] is None
+    field_data = response.data[0]['kickoff']['fields'][0]
+    assert len(field_data['selections']) == 2
+    assert field_data['selections'][0] == selection.value
+    assert field_data['selections'][1] == dataset_item.value
 
 
 def test_list__kickoff_field_description_none_returns_empty_string(
@@ -1212,11 +1199,6 @@ def test_list__kickoff_field_all_selection_types_include_selections(
     api_client,
 ):
 
-    """
-    GET /templates includes 'selections' and 'dataset' keys for all
-    field types in TYPES_WITH_SELECTIONS (DROPDOWN, CHECKBOX, RADIO).
-    """
-
     # arrange
     user = create_test_owner()
     api_client.token_authenticate(user)
@@ -1251,9 +1233,7 @@ def test_list__kickoff_field_all_selection_types_include_selections(
     assert len(fields) == 1
     field_data = fields[0]
     assert field_data['type'] == field_type
-    assert 'selections' in field_data
-    assert 'dataset' in field_data
-    assert field_data['selections'][0]['value'] == selection.value
+    assert field_data['selections'][0] == selection.value
 
 
 def test_list__kickoff_field_required_fields_present(api_client):
@@ -1328,13 +1308,13 @@ def test_list__kickoff_field_multiple_selections_ordered(api_client):
         api_name='radio-field-1',
         account=user.account,
     )
-    selection_1 = FieldTemplateSelection.objects.create(
+    FieldTemplateSelection.objects.create(
         field_template=field,
         template=template,
         value='First',
         api_name='selection-1',
     )
-    selection_2 = FieldTemplateSelection.objects.create(
+    FieldTemplateSelection.objects.create(
         field_template=field,
         template=template,
         value='Second',
@@ -1350,56 +1330,8 @@ def test_list__kickoff_field_multiple_selections_ordered(api_client):
     assert len(fields) == 1
     field_data = fields[0]
     assert len(field_data['selections']) == 2
-    assert field_data['selections'][0]['api_name'] == selection_1.api_name
-    assert field_data['selections'][0]['value'] == 'First'
-    assert field_data['selections'][1]['api_name'] == selection_2.api_name
-    assert field_data['selections'][1]['value'] == 'Second'
-
-
-def test_list__kickoff_field_non_selection_types_no_dataset_key(
-    api_client,
-):
-
-    """
-    GET /templates does NOT expose 'dataset' in the response for
-    non-selection field types even when the field model has dataset set.
-    FieldTemplateListSerializer.to_representation strips 'dataset'
-    for non-selection types.
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    api_client.token_authenticate(user)
-    dataset = create_test_dataset(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-        is_active=True,
-    )
-    kickoff = template.kickoff_instance
-    FieldTemplate.objects.create(
-        name='Text field',
-        type=FieldType.TEXT,
-        kickoff=kickoff,
-        template=template,
-        order=1,
-        api_name='text-field-1',
-        account=user.account,
-        dataset=dataset,
-    )
-
-    # act
-    response = api_client.get('/templates')
-
-    # assert
-    assert response.status_code == 200
-    fields = response.data[0]['kickoff']['fields']
-    assert len(fields) == 1
-    field_data = fields[0]
-    assert field_data['type'] == FieldType.TEXT
-    assert 'dataset' not in field_data
-    assert 'selections' not in field_data
+    assert field_data['selections'][0] == 'First'
+    assert field_data['selections'][1] == 'Second'
 
 
 def test_list__kickoff_multiple_fields_ordered_by_order_desc(api_client):

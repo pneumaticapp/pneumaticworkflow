@@ -6,9 +6,13 @@ from rest_framework.serializers import (
 
 from src.generics.fields import TimeStampField
 from src.datasets.models import Dataset, DatasetItem
+from src.generics.mixins.serializers import CustomValidationErrorMixin
 
 
-class DatasetItemSerializer(ModelSerializer):
+class DatasetItemSerializer(
+    CustomValidationErrorMixin,
+    ModelSerializer,
+):
 
     class Meta:
         model = DatasetItem
@@ -45,7 +49,10 @@ class DatasetListSerializer(ModelSerializer):
     items_count = IntegerField(read_only=True)
 
 
-class DatasetSerializer(ModelSerializer):
+class DatasetSerializer(
+    CustomValidationErrorMixin,
+    ModelSerializer,
+):
 
     class Meta:
         model = Dataset
