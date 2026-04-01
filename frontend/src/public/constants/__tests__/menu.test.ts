@@ -117,5 +117,25 @@ describe('getUserMenuItems', () => {
 
       expect(teamItem?.isHidden).toBe(false);
     });
+
+    it('should show workflows and highlights if user hasWorkflowStarterAccess', () => {
+      const user = createMockUser({ hasWorkflowStarterAccess: true });
+      const items = getUserMenuItems(user);
+      const workflowsItem = items.find((item) => item.id === 'workflows');
+      const highlightsItem = items.find((item) => item.id === 'highlights');
+
+      expect(workflowsItem?.isHidden).toBe(false);
+      expect(highlightsItem?.isHidden).toBe(false);
+    });
+
+    it('should hide workflows and highlights for normal user', () => {
+      const user = createMockUser({ isAdmin: false, hasWorkflowViewerAccess: false, hasWorkflowStarterAccess: false });
+      const items = getUserMenuItems(user);
+      const workflowsItem = items.find((item) => item.id === 'workflows');
+      const highlightsItem = items.find((item) => item.id === 'highlights');
+
+      expect(workflowsItem?.isHidden).toBe(true);
+      expect(highlightsItem?.isHidden).toBe(true);
+    });
   });
 });

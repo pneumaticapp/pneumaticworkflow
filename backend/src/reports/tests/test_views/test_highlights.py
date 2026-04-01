@@ -123,6 +123,111 @@ def test_highlights__template_owner_not_admin__ok(api_client):
     assert response.data[0]['text'] == 'Comment for template owner'
 
 
+def test_highlights__template_starter_own_workflow__ok(api_client):
+    account = create_test_account()
+    account_owner = create_test_user(
+        account=account,
+        is_account_owner=True,
+    )
+    template = create_test_template(account_owner)
+
+    starter_user_1 = create_test_user(
+        account=account,
+        email='starter1@test.com',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    starter_user_2 = create_test_user(
+        account=account,
+        email='starter2@test.com',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    TemplateOwner.objects.create(
+        role='starter',
+        template=template,
+        account=account,
+        type=OwnerType.USER,
+        user_id=starter_user_1.id,
+    )
+    TemplateOwner.objects.create(
+        role='starter',
+        template=template,
+        account=account,
+        type=OwnerType.USER,
+        user_id=starter_user_2.id,
+    )
+
+    workflow_1 = create_test_workflow(
+        template=template, user=starter_user_1, tasks_count=1,
+    )
+    task_1 = workflow_1.tasks.get(number=1)
+    WorkflowEventService.comment_created_event(
+        text='Comment for Starter 1 workflow',
+        task=task_1,
+        user=starter_user_1,
+        after_create_actions=False,
+    )
+
+    workflow_2 = create_test_workflow(
+        template=template, user=starter_user_2, tasks_count=1,
+    )
+    task_2 = workflow_2.tasks.get(number=1)
+    WorkflowEventService.comment_created_event(
+        text='Comment for Starter 2 workflow',
+        task=task_2,
+        user=starter_user_2,
+        after_create_actions=False,
+    )
+
+    api_client.token_authenticate(starter_user_1)
+
+    # act
+    response = api_client.get('/reports/highlights')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data[0]['text'] == 'Comment for Starter 1 workflow'
+
+
+def test_highlights__admin_template_starter__ok(api_client):
+    account = create_test_account()
+    admin_starter = create_test_user(
+        account=account,
+        email='admin_starter@test.com',
+        is_account_owner=False,
+        is_admin=True,
+    )
+    template = create_test_template(admin_starter)
+    TemplateOwner.objects.create(
+        role='starter',
+        template=template,
+        account=account,
+        type=OwnerType.USER,
+        user_id=admin_starter.id,
+    )
+
+    workflow = create_test_workflow(
+        template=template, user=admin_starter, tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    WorkflowEventService.comment_created_event(
+        text='Comment for Admin starter workflow',
+        task=task,
+        user=admin_starter,
+        after_create_actions=False,
+    )
+
+    api_client.token_authenticate(admin_starter)
+
+    # act
+    response = api_client.get('/reports/highlights')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data[0]['text'] == 'Comment for Admin starter workflow'
+
+
 def test__ordering__ok(api_client):
     account = create_test_account()
     create_test_user(

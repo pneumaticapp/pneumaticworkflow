@@ -12,7 +12,7 @@ import {
 } from '../../redux/actions';
 import { withSyncedQueryString } from '../../HOCs/withSyncedQueryString';
 import { EDashboardTimeRange } from '../../types/dashboard';
-import { getIsUserSubsribed } from '../../redux/selectors/user';
+import { getIsUserSubsribed, getCanAccessWorkflows } from '../../redux/selectors/user';
 
 type TDashboardStoreProps = Pick<IDashboardProps,
 | 'isLoading'
@@ -36,7 +36,7 @@ type TDashboardDispatchProps = Pick<IDashboardProps,
 export function mapStateToProps(state: IApplicationState): TDashboardStoreProps {
   const { authUser, dashboard } = state;
   const isSubscribed = getIsUserSubsribed(state);
-  const canAccessWorkflows = authUser.isAdmin || authUser.hasWorkflowViewerAccess;
+  const canAccessWorkflows = getCanAccessWorkflows(state);
 
   return {
     isLoading: dashboard.isLoading,
