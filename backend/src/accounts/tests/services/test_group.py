@@ -502,6 +502,8 @@ class TestUserGroupService:
                     'photo': user_2.photo,
                     'is_admin': user_2.is_admin,
                     'is_account_owner': user_2.is_account_owner,
+                    'manager_id': user_2.manager_id,
+                    'report_ids': [],
                 }],
             },
         )
@@ -1123,6 +1125,8 @@ class TestUserGroupService:
                     'photo': user.photo,
                     'is_admin': user.is_admin,
                     'is_account_owner': user.is_account_owner,
+                    'manager_id': user.manager_id,
+                    'report_ids': [],
                 }],
             },
         )
@@ -1200,6 +1204,8 @@ class TestUserGroupService:
                     'photo': user.photo,
                     'is_admin': user.is_admin,
                     'is_account_owner': user.is_account_owner,
+                    'manager_id': user.manager_id,
+                    'report_ids': [],
                 }],
             },
         )

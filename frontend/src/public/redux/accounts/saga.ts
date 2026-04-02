@@ -25,6 +25,10 @@ import {
   startTrialSubscriptionAction,
   startFreeSubscriptionAction,
   createUser,
+  loadChangeUserManager,
+  changeUserManager,
+  loadChangeUserReports,
+  changeUserReports,
 } from './slice';
 
 import {
@@ -62,6 +66,8 @@ import { getAccountPlan } from '../selectors/accounts';
 import { getAbsolutePath } from '../../utils/getAbsolutePath';
 import { getTenantsCountStore } from '../selectors/tenants';
 import { createUser as createUserApi } from '../../api/createUser';
+import { editTeamUser } from '../../api/editTeamUser';
+import { updateReports } from '../../api/updateReports';
 
 export function* fetchUsers(
   action: PayloadAction<TUsersFetchPayload> = { type: 'accounts/usersFetchStarted', payload: { showErrorNotification: true } }
@@ -168,6 +174,32 @@ function* saveUserAdmin({ payload: { isAdmin, email, id } }: PayloadAction<IChan
 
     yield put(changeUserAdmin({ isAdmin: !isAdmin, email, id }));
     yield put(teamFetchFailed());
+  }
+}
+
+function* saveUserManagerSaga({ payload: { id, managerId } }: PayloadAction<{ id: number; managerId: number | null }>) {
+  try {
+    yield put(setGeneralLoaderVisibility(true));
+    yield call(editTeamUser, id, { managerId });
+    yield put(changeUserManager({ id, managerId }));
+    NotificationManager.success({ message: 'User manager updated successfully' });
+  } catch (error) {
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+  } finally {
+    yield put(setGeneralLoaderVisibility(false));
+  }
+}
+
+function* saveUserReportsSaga({ payload: { id, reportIds } }: PayloadAction<{ id: number; reportIds: number[] }>) {
+  try {
+    yield put(setGeneralLoaderVisibility(true));
+    yield call(updateReports, id, { reportIds });
+    yield put(changeUserReports({ id, reportIds }));
+    NotificationManager.success({ message: 'User reports updated successfully' });
+  } catch (error) {
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+  } finally {
+    yield put(setGeneralLoaderVisibility(false));
   }
 }
 
@@ -315,6 +347,14 @@ export function* watchChangeAdminUser() {
   yield takeEvery(loadChangeUserAdmin.type, saveUserAdmin);
 }
 
+export function* watchChangeUserManager() {
+  yield takeEvery(loadChangeUserManager.type, saveUserManagerSaga);
+}
+
+export function* watchChangeUserReports() {
+  yield takeEvery(loadChangeUserReports.type, saveUserReportsSaga);
+}
+
 export function* watchOpenDeleteUserModal() {
   yield takeLatest(
     [openDeleteUserModal.type, closeDeleteUserModal.type],
@@ -360,5 +400,7 @@ export function* rootSaga() {
     fork(watchStartTrialSubscription),
     fork(watchStartFreeSubscription),
     fork(watchCreateUser),
+    fork(watchChangeUserManager),
+    fork(watchChangeUserReports),
   ]);
 }

@@ -21,6 +21,8 @@ export interface IUnsavedUser {
   timezone: string;
   dateFmt: string;
   dateFdw: string;
+  managerId?: number | null;
+  reportIds?: number[];
 }
 
 export enum EUserDropdownOptionType {
@@ -30,7 +32,8 @@ export enum EUserDropdownOptionType {
 
 export type TUserListItem = Pick<
   IUnsavedUser,
-  'email' | 'isAdmin' | 'isAccountOwner' | 'firstName' | 'lastName' | 'phone' | 'photo' | 'invite' | 'isAdmin' | 'type'
+  'email' | 'isAdmin' | 'isAccountOwner' | 'firstName' | 'lastName' |
+  'phone' | 'photo' | 'invite' | 'type' | 'managerId' | 'reportIds'
 > & {
   id: number;
   status: EUserStatus;
@@ -113,6 +116,8 @@ export interface ICreateUserRequest {
   dateFmt?: string;
   dateFdw?: number;
   groups?: number[];
+  managerId?: number | null;
+  reportIds?: number[];
 }
 
 export interface IUserResponse {
@@ -140,4 +145,6 @@ export interface IUserResponse {
   dateFdw: number;
   groups: number[];
   invite: UserInvite | null;
+  managerId: number | null;
+  reportIds: number[];
 }

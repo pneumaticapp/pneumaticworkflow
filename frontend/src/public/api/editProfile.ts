@@ -6,6 +6,7 @@ export interface IUpdateUserRequest {
   lastName: string;
   phone: string;
   dateFmt: string;
+  managerId?: number | null;
 }
 
 export type TUpdateUserMappedResponse = IUpdateUserRequest;
@@ -17,11 +18,26 @@ export interface IUpdateUserResponse {
 }
 
 export function editProfile(body: IUpdateUserRequest) {
-
   return commonRequest<IUpdateUserResponse>(
-    'editProfile',
+    '/accounts/user',
     {
       data: mapRequestBody(body),
       method: 'PUT',
     });
+}
+
+export function editProfileManager(managerId: number | null) {
+  if (managerId === null) {
+    return commonRequest<any>(
+      '/accounts/user/remove-manager',
+      { method: 'POST' }
+    );
+  }
+  return commonRequest<any>(
+    '/accounts/user/set-manager',
+    {
+      data: mapRequestBody({ managerId }),
+      method: 'POST',
+    }
+  );
 }

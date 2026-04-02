@@ -12,7 +12,12 @@ from src.accounts.models import Contact
 from src.accounts.serializers.group import (
     GroupNameSerializer,
 )
-from src.accounts.messages import MSG_A_0036, MSG_A_0046
+from src.accounts.messages import (
+    MSG_A_0036,
+    MSG_A_0046,
+    MSG_A_0049,
+    MSG_A_0050,
+)
 from src.accounts.serializers.user_invites import (
     UserListInviteSerializer,
 )
@@ -73,6 +78,8 @@ class UserSerializer(
             'invite',
             'groups',
             'password',
+            'manager_id',
+            'report_ids',
         )
         read_only_fields = (
             'id',
@@ -96,6 +103,15 @@ class UserSerializer(
     date_fmt = DateFormatField(required=False)
     invite = serializers.SerializerMethodField(allow_null=True, read_only=True)
     password = serializers.CharField(write_only=True, required=False)
+    manager_id = serializers.IntegerField(
+        read_only=True,
+        allow_null=True,
+    )
+    report_ids = RelatedListField(
+        source='subordinates',
+        child=serializers.IntegerField(),
+        read_only=True,
+    )
 
     def get_invite(self, instance: UserModel):
         if instance.status_invited and instance.invite:
@@ -240,6 +256,81 @@ class ContactRequestSerializer(
     offset = serializers.IntegerField(required=False)
 
 
+class SetManagerSerializer(
+    CustomValidationErrorMixin,
+    serializers.ModelSerializer,
+):
+    class Meta:
+        model = UserModel
+        fields = ('manager_id',)
+
+    manager_id = serializers.PrimaryKeyRelatedField(
+        queryset=UserModel.objects.all(),
+        required=True,
+        allow_null=False,
+        source='manager',
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['manager_id'].queryset = UserModel.objects.on_account(
+            self.context['account'].id,
+        ).active()
+
+    def validate_manager_id(self, value):
+        if value.id == self.instance.id:
+            raise serializers.ValidationError(MSG_A_0049)
+
+        current_manager = value
+        visited = set()
+        while current_manager:
+            if current_manager.id in visited:
+                break
+            if current_manager.id == self.instance.id:
+                raise serializers.ValidationError(MSG_A_0050)
+            visited.add(current_manager.id)
+            current_manager = current_manager.manager
+
+        return value
+
+
+class SetReportsSerializer(
+    CustomValidationErrorMixin,
+    serializers.Serializer,
+):
+    report_ids = serializers.PrimaryKeyRelatedField(
+        queryset=UserModel.objects.all(),
+        required=True,
+        allow_null=False,
+        many=True,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields[
+            'report_ids'
+        ].child_relation.queryset = UserModel.objects.on_account(
+            self.context['account'].id,
+        ).active()
+
+    def validate_report_ids(self, value):
+        manager_ids = set()
+        current_manager = self.instance
+        while current_manager:
+            if current_manager.id in manager_ids:
+                break
+            manager_ids.add(current_manager.id)
+            current_manager = current_manager.manager
+
+        for report in value:
+            if report.id == self.instance.id:
+                raise serializers.ValidationError(MSG_A_0049)
+            if report.id in manager_ids:
+                raise serializers.ValidationError(MSG_A_0050)
+
+        return value
+
+
 class ContactResponseSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -266,4 +357,12 @@ class UserWebsocketSerializer(serializers.ModelSerializer):
             'photo',
             'is_admin',
             'is_account_owner',
+            'manager_id',
+            'report_ids',
         )
+
+    report_ids = RelatedListField(
+        source='subordinates',
+        child=serializers.IntegerField(),
+        read_only=True,
+    )

@@ -48,6 +48,8 @@ exports[`Team rendered correctly 1`] = `
     className="cards"
   >
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={true}
       isSubscribed={true}
@@ -69,6 +71,8 @@ exports[`Team rendered correctly 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
       isSubscribed={true}
@@ -90,6 +94,8 @@ exports[`Team rendered correctly 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
       isSubscribed={true}
@@ -111,6 +117,8 @@ exports[`Team rendered correctly 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
       isSubscribed={true}
@@ -132,6 +140,8 @@ exports[`Team rendered correctly 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
       isSubscribed={true}
@@ -153,6 +163,8 @@ exports[`Team rendered correctly 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
       isSubscribed={true}
@@ -174,6 +186,8 @@ exports[`Team rendered correctly 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
       isSubscribed={true}
@@ -195,6 +209,8 @@ exports[`Team rendered correctly 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
       isSubscribed={true}
@@ -216,6 +232,8 @@ exports[`Team rendered correctly 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
       isSubscribed={true}
@@ -237,6 +255,8 @@ exports[`Team rendered correctly 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
       isSubscribed={true}
@@ -258,6 +278,8 @@ exports[`Team rendered correctly 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
       isSubscribed={true}
@@ -330,6 +352,8 @@ exports[`Team rendered correctly with descending sorting 1`] = `
     className="cards"
   >
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={true}
       isSubscribed={true}
@@ -351,6 +375,8 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
       isSubscribed={true}
@@ -372,6 +398,8 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
       isSubscribed={true}
@@ -393,6 +421,8 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
       isSubscribed={true}
@@ -414,6 +444,8 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
       isSubscribed={true}
@@ -435,6 +467,8 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
       isSubscribed={true}
@@ -456,6 +490,8 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
       isSubscribed={true}
@@ -477,6 +513,8 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
       isSubscribed={true}
@@ -498,6 +536,8 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
       isSubscribed={true}
@@ -519,6 +559,8 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
       isSubscribed={true}
@@ -540,6 +582,8 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
       isSubscribed={true}

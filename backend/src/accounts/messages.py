@@ -101,3 +101,5 @@ MSG_A_0046 = _(
 )
 MSG_A_0047 = _('You can\'t delete yourself.')
 MSG_A_0048 = _('You can\'t delete the account owner.')
+MSG_A_0049 = _('A user cannot be their own manager.')
+MSG_A_0050 = _('This assignment would create a circular management hierarchy.')

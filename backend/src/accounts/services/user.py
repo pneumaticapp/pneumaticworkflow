@@ -1,6 +1,6 @@
 # ruff: noqa: PLC0415
 import re
-from typing import Optional
+from typing import Optional, List
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -31,8 +31,10 @@ from src.analysis.mixins import BaseIdentifyMixin
 from src.analysis.services import AnalyticService
 from src.authentication.tokens import PneumaticToken
 from src.generics.base.service import BaseModelService
-from src.notifications.tasks import send_user_deleted_notification, \
-    send_user_updated_notification
+from src.notifications.tasks import (
+    send_user_deleted_notification,
+    send_user_updated_notification,
+)
 from src.payment.stripe.exceptions import StripeServiceException
 from src.payment.stripe.service import StripeService
 from src.processes.enums import FieldType
@@ -288,6 +290,22 @@ class UserService(
     def _deactivate(self):
         user = self.instance
         with transaction.atomic():
+            subordinates = list(UserModel.objects.filter(manager=user))
+            UserModel.objects.filter(manager=user).update(manager=None)
+
+            for subordinate in subordinates:
+                subordinate.manager = None
+                ws_data_user = UserWebsocketSerializer(subordinate).data
+
+                def notify(data=ws_data_user):
+                    send_user_updated_notification.delay(
+                        logging=False,
+                        account_id=self.account.id,
+                        user_data=data,
+                    )
+
+                transaction.on_commit(notify)
+
             remove_user_from_draft(
                 account_id=user.account_id,
                 user_id=user.id,
@@ -339,6 +357,12 @@ class UserService(
     ) -> UserModel:
 
         old_name = self.instance.name
+        old_manager = self.instance.manager
+        manager_changed = (
+            'manager' in update_kwargs
+            and update_kwargs['manager'] != old_manager
+        )
+
         with transaction.atomic():
             if raw_password:
                 super().partial_update(
@@ -353,9 +377,62 @@ class UserService(
             self._update_related_user_fields(old_name=old_name)
         self._update_related_stripe_account()
         self._update_analytics(**update_kwargs)
+
+        ws_data = UserWebsocketSerializer(self.instance).data
         send_user_updated_notification.delay(
             logging=self.account.log_api_requests,
             account_id=self.account.id,
-            user_data=UserWebsocketSerializer(self.instance).data,
+            user_data=ws_data,
         )
+
+        if manager_changed:
+            managers_to_notify = {
+                m
+                for m in (old_manager, self.instance.manager)
+                if m is not None
+            }
+            for mgr in managers_to_notify:
+                ws_data_mgr = UserWebsocketSerializer(mgr).data
+                send_user_updated_notification.delay(
+                    logging=False,
+                    account_id=self.account.id,
+                    user_data=ws_data_mgr,
+                )
+
+        return self.instance
+
+    def set_reports(self, reports: List[UserModel]) -> UserModel:
+        current_report_ids = set(
+            self.instance.subordinates.values_list('id', flat=True),
+        )
+        changed_user_ids = current_report_ids ^ {r.id for r in reports}
+
+        with transaction.atomic():
+            self.instance.subordinates.set(reports)
+
+            ws_data = UserWebsocketSerializer(self.instance).data
+            transaction.on_commit(
+                lambda data=ws_data: send_user_updated_notification.delay(
+                    logging=self.account.log_api_requests,
+                    account_id=self.account.id,
+                    user_data=data,
+                ),
+            )
+
+            if changed_user_ids:
+                changed_users = UserModel.objects.filter(
+                    id__in=changed_user_ids,
+                )
+                for user in changed_users:
+                    ws_data_user = UserWebsocketSerializer(user).data
+
+                    def notify(data=ws_data_user):
+                        send_user_updated_notification.delay(
+                            logging=False,
+                            account_id=self.account.id,
+                            user_data=data,
+                        )
+
+                    transaction.on_commit(notify)
+
         return self.instance

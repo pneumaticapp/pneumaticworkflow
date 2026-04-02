@@ -90,6 +90,7 @@ export interface IAuthUser extends IUnsavedUser {
   timezone: string;
   dateFmt: string;
   dateFdw: string;
+  managerId: number | null;
 }
 
 export interface IInvitedUser {
