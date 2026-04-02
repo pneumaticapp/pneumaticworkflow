@@ -188,19 +188,17 @@ def test_list__ordering_by_date_desc_default__ok(api_client):
 
     # assert
     assert response.status_code == 200
-    ids = [item['id'] for item in response.data]
-    assert ids[0] == dataset_second.id
-    assert ids[1] == dataset_first.id
+    assert len(response.data) == 2
+    assert response.data[0]['id'] == dataset_first.id
+    assert response.data[1]['id'] == dataset_second.id
 
 
-def test_list__items_count_annotated__ok(api_client):
-
-    """`items_count` annotation present in response"""
+def test_list__items_count__ok(api_client):
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    dataset = create_test_dataset(account=account, items_count=3)
+    create_test_dataset(account=account, items_count=3)
     api_client.token_authenticate(user=user)
 
     # act
@@ -208,11 +206,24 @@ def test_list__items_count_annotated__ok(api_client):
 
     # assert
     assert response.status_code == 200
-    result = next(
-        item for item in response.data
-        if item['id'] == dataset.id
-    )
-    assert result['items_count'] == 3
+    assert response.data[0]['items_count'] == 3
+
+
+def test_list__items_count_after_delete__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account, items_count=3)
+    dataset.items.get(order=3).delete()
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/datasets')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data[0]['items_count'] == 2
 
 
 def test_list__pagination__ok(api_client):
