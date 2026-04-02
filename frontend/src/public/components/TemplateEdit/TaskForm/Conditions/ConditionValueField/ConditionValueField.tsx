@@ -19,6 +19,7 @@ import { getFormattedDropdownOption } from '../utils/getFormattedDropdownOption'
 import styles from '../Conditions.css';
 import { EStartingType } from '../utils/getDropdownOperators';
 import { IApplicationState } from '../../../../../types/redux';
+import { useLazyDataset } from '../utils/useLazyDataset';
 
 interface IConditionValueFieldProps {
   variable: TTaskVariable | null;
@@ -39,6 +40,8 @@ export function ConditionValueField({
 }: IConditionValueFieldProps) {
   if (!variable || !operator) return null;
   const groups = useSelector((state: IApplicationState) => state.groups.list);
+  const datasetItems = useLazyDataset(variable as TTaskVariable)?.items;
+
   const isNoValueOperator = OPERATORS_WITHOUT_VALUE.includes(operator);
 
   if (isNoValueOperator) return null;
@@ -83,11 +86,23 @@ export function ConditionValueField({
       label: string;
     }
 
-    if (!isArrayWithItems(variable?.selections)) {
+    let dropdownSelections: IDropdownSelection[] = [];
+
+    if (variable?.datasetId) {
+      if (!datasetItems) return null;
+
+      dropdownSelections = datasetItems.map((item) => ({
+        apiName: item.value,
+        value: item.value,
+        label: item.value,
+      }));
+    } else if (isArrayWithItems(variable?.selections)) {
+      dropdownSelections = variable!.selections.map((selection) => ({ ...selection, label: selection.value }));
+    } else {
+
       return null;
     }
 
-    const dropdownSelections = variable!.selections.map((selection) => ({ ...selection, label: selection.value }));
     const selectedSelection = dropdownSelections.find((selection) => selection.apiName === rule.value) || null;
 
     return (

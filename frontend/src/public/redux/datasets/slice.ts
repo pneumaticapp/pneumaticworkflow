@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, PayloadAction, createAction } from '@reduxjs/toolkit';
 
 import { IDatasetsStore, IDatasetsList } from '../../types/redux';
 import {
@@ -27,6 +27,8 @@ export const initialState: IDatasetsStore = {
   isCurrentDatasetLoading: false,
   currentSearchQuery: '',
   currentSortOrder: 'asc',
+  
+  datasetsMap: {},
 };
 
 const datasetsSlice = createSlice({
@@ -84,25 +86,37 @@ const datasetsSlice = createSlice({
       state.isEditModalOpen = false;
     },
 
-    loadDataset: (state, _action: PayloadAction<{ id: number }>) => {
+    loadCurrentDataset: (state, _action: PayloadAction<{ id: number }>) => {
       state.currentDataset = null;
       state.isCurrentDatasetLoading = true;
       state.currentSearchQuery = '';
       state.currentSortOrder = 'asc';
     },
 
-    loadDatasetSuccess: (state, action: PayloadAction<IDataset>) => {
+    loadCurrentDatasetSuccess: (state, action: PayloadAction<IDataset>) => {
       state.currentDataset = action.payload;
+      state.isCurrentDatasetLoading = false;
+      
+      if (state.datasetsMap[action.payload.id]) {
+        state.datasetsMap[action.payload.id] = action.payload;
+      }
+    },
+
+    loadCurrentDatasetFailed: (state) => {
       state.isCurrentDatasetLoading = false;
     },
 
-    loadDatasetFailed: (state) => {
-      state.isCurrentDatasetLoading = false;
+    saveDatasetToMap: (state, action: PayloadAction<IDataset>) => {
+      state.datasetsMap[action.payload.id] = action.payload;
     },
 
     setCurrentDataset: (state, action: PayloadAction<IDataset>) => {
       state.currentDataset = action.payload;
       state.isCurrentDatasetLoading = false;
+      
+      if (state.datasetsMap[action.payload.id]) {
+        state.datasetsMap[action.payload.id] = action.payload;
+      }
 
       const listIndex = state.datasetsList.items.findIndex(
         (item) => item.id === action.payload.id
@@ -139,6 +153,10 @@ const datasetsSlice = createSlice({
             id: item.id || -(index + 1),
           })) as any;
         }
+        
+        if (state.datasetsMap[action.payload.id]) {
+          state.datasetsMap[action.payload.id] = state.currentDataset as IDataset;
+        }
       }
     },
 
@@ -150,6 +168,7 @@ const datasetsSlice = createSlice({
       state.datasetsList.items = state.datasetsList.items.filter((item) => item.id !== action.payload);
       state.datasetsList.count -= 1;
       state.isLoading = false;
+      delete state.datasetsMap[action.payload];
     },
   },
 });
@@ -168,9 +187,9 @@ export const {
   openEditModal,
   closeEditModal,
 
-  loadDataset,
-  loadDatasetSuccess,
-  loadDatasetFailed,
+  loadCurrentDataset,
+  loadCurrentDatasetSuccess,
+  loadCurrentDatasetFailed,
   setCurrentDataset,
   setCurrentSearchQuery,
   setCurrentSortOrder,
@@ -180,6 +199,9 @@ export const {
   updateDatasetAction,
   deleteDatasetAction,
   removeDatasetFromList,
+  saveDatasetToMap,
 } = datasetsSlice.actions;
+
+export const loadDatasetForMap = createAction<number>('datasets/loadDatasetForMap');
 
 export default datasetsSlice.reducer;

@@ -114,6 +114,7 @@ export function getVariableFromField(
     richSubtitle: richSubtitle || subtitle,
     type: field.type,
     selections: field.selections,
+    datasetId: field.dataset,
   };
 }
 

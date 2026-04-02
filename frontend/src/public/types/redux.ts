@@ -383,7 +383,9 @@ export type IDatasetsStore = {
   currentDataset: IDataset | null;    
   isCurrentDatasetLoading: boolean;   
   currentSearchQuery: string;         
-  currentSortOrder: TDatasetItemsSortOrder;  
+  currentSortOrder: TDatasetItemsSortOrder;
+ 
+  datasetsMap: Record<number, IDataset>;
 };
 
 export interface IAction<Type> {

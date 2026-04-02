@@ -8,7 +8,7 @@ import {
   cloneDatasetAction,
   deleteDatasetAction,
   updateDatasetAction,
-  loadDataset,
+  loadCurrentDataset,
 } from '../../../redux/datasets/slice';
 
 import { history } from '../../../utils/history';
@@ -51,7 +51,7 @@ const DatasetDetails = ({ match: { params: { id: matchParamId } } }: TDatasetDet
   );
 
   useEffect(() => {
-    dispatch(loadDataset({ id: Number(matchParamId) }));
+    dispatch(loadCurrentDataset({ id: Number(matchParamId) }));
   }, [matchParamId]);
 
   if (isLoading || !dataset) {

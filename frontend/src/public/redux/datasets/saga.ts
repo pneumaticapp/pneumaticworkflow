@@ -26,15 +26,17 @@ import {
   loadAllDatasets,
   loadAllDatasetsSuccess,
   loadAllDatasetsFailed,
-  loadDataset,
-  loadDatasetSuccess,
-  loadDatasetFailed,
+  loadCurrentDataset,
+  loadCurrentDatasetSuccess,
+  loadCurrentDatasetFailed,
   setCurrentDataset,
   createDatasetAction,
   cloneDatasetAction,
   updateDatasetAction,
   deleteDatasetAction,
   removeDatasetFromList,
+  loadDatasetForMap,
+  saveDatasetToMap,
 } from './slice';
 
 function* loadDatasetsSaga({ payload: offset = 0 }: ReturnType<typeof loadDatasets>) {
@@ -75,21 +77,31 @@ function* loadAllDatasetsSaga() {
   }
 }
 
-function* loadDatasetSaga({ payload: { id } }: PayloadAction<{ id: number }>) {
+
+function* loadDatasetForMapSaga({ payload: id }: PayloadAction<number>) {
+  try {
+    const dataset: IDataset = yield getDataset({ id });
+    yield put(saveDatasetToMap(dataset));
+  } catch (error) {
+    logger.error('failed to load dataset for map', error);
+  }
+}
+
+function* loadCurrentDatasetSaga({ payload: { id } }: PayloadAction<{ id: number }>) {
   try {
     const currentDataset: IDataset = yield getDataset({ id });
-    yield put(loadDatasetSuccess(currentDataset));
+    yield put(loadCurrentDatasetSuccess(currentDataset));
   } catch (error) {
-    yield put(loadDatasetFailed());
+    yield put(loadCurrentDatasetFailed());
     NotificationManager.warning({ message: getErrorMessage(error) });
-    logger.error('failed to load dataset', error);
+    logger.error('failed to load current dataset', error);
   }
 }
 
 function* createDatasetSaga({ payload }: PayloadAction<ICreateDatasetParams>) {
   try {
     const createdDataset: IDataset = yield createDataset(payload);
-    yield put(loadDatasetSuccess(createdDataset));
+    yield put(loadCurrentDatasetSuccess(createdDataset));
     history.push(ERoutes.DatasetDetail.replace(':id', String(createdDataset.id)));
   } catch (error) {
     yield put(loadDatasetsFailed());
@@ -108,7 +120,7 @@ function* cloneDatasetSaga({ payload: { id } }: PayloadAction<{ id: number }>) {
       items: originalDataset.items.map((item) => ({ value: item.value, order: item.order })),
     });
 
-    yield put(loadDatasetSuccess(clonedDataset));
+    yield put(loadCurrentDatasetSuccess(clonedDataset));
     history.push(ERoutes.DatasetDetail.replace(':id', String(clonedDataset.id)));
   } catch (error) {
     yield put(loadDatasetsFailed());
@@ -122,7 +134,7 @@ function* updateDatasetSaga({ payload }: PayloadAction<IUpdateDatasetParams>) {
     const updatedDataset: IDataset = yield updateDataset(payload);
     yield put(setCurrentDataset(updatedDataset));
   } catch (error) {
-    yield put(loadDatasetFailed());
+    yield put(loadCurrentDatasetFailed());
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to update dataset', error);
   }
@@ -148,8 +160,12 @@ function* watchLoadAllDatasets() {
   yield takeLatest(loadAllDatasets.type, loadAllDatasetsSaga);
 }
 
-function* watchLoadDataset() {
-  yield takeLatest(loadDataset.type, loadDatasetSaga);
+function* watchLoadCurrentDataset() {
+  yield takeLatest(loadCurrentDataset.type, loadCurrentDatasetSaga);
+}
+
+function* watchLoadDatasetForMap() {
+  yield takeEvery(loadDatasetForMap.type, loadDatasetForMapSaga);
 }
 
 function* watchCreateDataset() {
@@ -172,7 +188,8 @@ export function* rootSaga() {
   yield all([
     fork(watchLoadDatasets),
     fork(watchLoadAllDatasets),
-    fork(watchLoadDataset),
+    fork(watchLoadCurrentDataset),
+    fork(watchLoadDatasetForMap),
     fork(watchCreateDataset),
     fork(watchCloneDataset),
     fork(watchUpdateDataset),

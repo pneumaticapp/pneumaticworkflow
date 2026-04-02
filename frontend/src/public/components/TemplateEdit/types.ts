@@ -19,6 +19,7 @@ export type TTaskVariable = {
   subtitle?: string;
   richSubtitle?: React.ReactNode;
   selections?: IExtraFieldSelection[];
+  datasetId?: number | null;
 };
 
 export enum ETaskFormParts {
