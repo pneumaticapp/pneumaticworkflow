@@ -137,13 +137,16 @@ const datasetsSlice = createSlice({
 
     createDatasetAction: (state, _action: PayloadAction<ICreateDatasetParams>) => {
       state.isLoading = true;
+      state.isAllDatasetsLoaded = false;
     },
 
     cloneDatasetAction: (state, _action: PayloadAction<{ id: number }>) => {
       state.isLoading = true;
+      state.isAllDatasetsLoaded = false;
     },
     
     updateDatasetAction: (state, action: PayloadAction<IUpdateDatasetParams>) => {
+      state.isAllDatasetsLoaded = false;
       if (state.currentDataset && state.currentDataset.id === action.payload.id) {
         if (action.payload.name !== undefined) state.currentDataset.name = action.payload.name;
         if (action.payload.description !== undefined) state.currentDataset.description = action.payload.description;
@@ -162,6 +165,7 @@ const datasetsSlice = createSlice({
 
     deleteDatasetAction: (state, _action: PayloadAction<TDeleteDatasetPayload>) => {
       state.isLoading = true;
+      state.isAllDatasetsLoaded = false;
     },
 
     removeDatasetFromList: (state, action: PayloadAction<number>) => {

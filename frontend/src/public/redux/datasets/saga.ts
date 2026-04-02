@@ -1,4 +1,4 @@
-import { all, fork, put, takeEvery, takeLatest, select } from 'redux-saga/effects';
+import { all, fork, put, takeEvery, takeLatest, takeLeading, select } from 'redux-saga/effects';
 import { PayloadAction } from '@reduxjs/toolkit';
 
 import uniqBy from 'lodash.uniqby';
@@ -157,7 +157,7 @@ function* watchLoadDatasets() {
 }
 
 function* watchLoadAllDatasets() {
-  yield takeLatest(loadAllDatasets.type, loadAllDatasetsSaga);
+  yield takeLeading(loadAllDatasets.type, loadAllDatasetsSaga);
 }
 
 function* watchLoadCurrentDataset() {

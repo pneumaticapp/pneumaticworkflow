@@ -64,7 +64,7 @@ export function DatasetSourceToggle({ field, editField, isDisabled = false, chil
 
   const handleToggle = (mode: ESourceMode) => {
     if (currentMode === mode && mode === ESourceMode.Dataset) {
-      setIsMenuOpen(true);
+      setIsMenuOpen((prev) => !prev);
       return;
     }
     
@@ -79,16 +79,11 @@ export function DatasetSourceToggle({ field, editField, isDisabled = false, chil
       setIsMenuOpen(false); 
     } else {
       setSavedSelections(field.selections || null);
-      
-      if (savedDataset) {
-        editField({ 
-          dataset: savedDataset,
-          selections: undefined,
-        });
-        setIsMenuOpen(false);
-      } else {
-        setIsMenuOpen(true);
-      }
+      editField({ 
+        dataset: savedDataset,
+        selections: undefined,
+      });
+      setIsMenuOpen(true);
     }
   };
 
@@ -153,25 +148,25 @@ export function DatasetSourceToggle({ field, editField, isDisabled = false, chil
   );
 
   const rightPanel = (
-    <div className={styles['dataset-source-toggle__right']}>
-      <div className={styles['dataset-source-toggle__tabs']}>
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            type="button"
-            disabled={isDisabled}
-            onClick={() => handleToggle(tab.id as ESourceMode)}
-            className={classnames(
-              styles['dataset-source-toggle__tab'],
-              currentMode === tab.id && styles['dataset-source-toggle__tab_active'],
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
+    <OutsideClickHandler onOutsideClick={handleOutsideClick}>
+      <div className={styles['dataset-source-toggle__right']}>
+        <div className={styles['dataset-source-toggle__tabs']}>
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              type="button"
+              disabled={isDisabled}
+              onClick={() => handleToggle(tab.id as ESourceMode)}
+              className={classnames(
+                styles['dataset-source-toggle__tab'],
+                currentMode === tab.id && styles['dataset-source-toggle__tab_active'],
+              )}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
 
-      <OutsideClickHandler onOutsideClick={handleOutsideClick}>
         <div
           className={styles['dataset-source-toggle__dropdown-popup']}
           style={{ display: currentMode === ESourceMode.Dataset && isMenuOpen ? 'block' : 'none' }}
@@ -189,8 +184,8 @@ export function DatasetSourceToggle({ field, editField, isDisabled = false, chil
             formatOptionLabel={renderDatasetOption}
           />
         </div>
-      </OutsideClickHandler>
-    </div>
+      </div>
+    </OutsideClickHandler>
   );
 
   return (

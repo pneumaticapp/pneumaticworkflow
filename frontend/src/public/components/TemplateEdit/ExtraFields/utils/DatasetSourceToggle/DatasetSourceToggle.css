@@ -125,22 +125,7 @@
 }
 
 .dataset-source-toggle__clear-btn {
-  @mixin text-small;
-
-  cursor: pointer;
-  color: var(--pneumatic-color-link-dark);
-  background: transparent;
-  border: none;
-  transition: opacity 0.2s ease-in-out, color 0.2s ease-in-out;
-
-  &:not(:disabled):hover {
-    opacity: 0.8;
-  }
-
-  &:disabled {
-    cursor: not-allowed;
-    opacity: 0.5;
-  }
+  @mixin btn-field-action;
 }
 
 .dataset-source-toggle__option-text {
