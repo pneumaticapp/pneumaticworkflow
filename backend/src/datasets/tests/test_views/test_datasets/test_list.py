@@ -116,8 +116,8 @@ def test_list__ordering_by_name_asc__ok(api_client):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    dataset_a = create_test_dataset(account=account, name='Alpha')
-    dataset_z = create_test_dataset(account=account, name='Zeta')
+    dataset_1 = create_test_dataset(account=account, name='Alpha')
+    dataset_2 = create_test_dataset(account=account, name='Zeta')
     api_client.token_authenticate(user=user)
 
     # act
@@ -125,9 +125,8 @@ def test_list__ordering_by_name_asc__ok(api_client):
 
     # assert
     assert response.status_code == 200
-    ids = [item['id'] for item in response.data]
-    assert ids[0] == dataset_a.id
-    assert ids[1] == dataset_z.id
+    assert response.data[0]['id'] == dataset_1.id
+    assert response.data[1]['id'] == dataset_2.id
 
 
 def test_list__ordering_by_name_desc__ok(api_client):
@@ -137,8 +136,8 @@ def test_list__ordering_by_name_desc__ok(api_client):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    dataset_a = create_test_dataset(account=account, name='Alpha')
-    dataset_z = create_test_dataset(account=account, name='Zeta')
+    dataset_1 = create_test_dataset(account=account, name='Alpha')
+    dataset_2 = create_test_dataset(account=account, name='Zeta')
     api_client.token_authenticate(user=user)
 
     # act
@@ -146,9 +145,8 @@ def test_list__ordering_by_name_desc__ok(api_client):
 
     # assert
     assert response.status_code == 200
-    ids = [item['id'] for item in response.data]
-    assert ids[0] == dataset_z.id
-    assert ids[1] == dataset_a.id
+    assert response.data[0]['id'] == dataset_2.id
+    assert response.data[1]['id'] == dataset_1.id
 
 
 def test_list__ordering_by_date_asc__ok(api_client):
@@ -158,8 +156,8 @@ def test_list__ordering_by_date_asc__ok(api_client):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    dataset_first = create_test_dataset(account=account, name='First')
-    dataset_second = create_test_dataset(account=account, name='Second')
+    dataset_1 = create_test_dataset(account=account, name='First')
+    dataset_2 = create_test_dataset(account=account, name='Second')
     api_client.token_authenticate(user=user)
 
     # act
@@ -167,9 +165,8 @@ def test_list__ordering_by_date_asc__ok(api_client):
 
     # assert
     assert response.status_code == 200
-    ids = [item['id'] for item in response.data]
-    assert ids[0] == dataset_first.id
-    assert ids[1] == dataset_second.id
+    assert response.data[0]['id'] == dataset_1.id
+    assert response.data[1]['id'] == dataset_2.id
 
 
 def test_list__ordering_by_date_desc_default__ok(api_client):
@@ -179,8 +176,8 @@ def test_list__ordering_by_date_desc_default__ok(api_client):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    dataset_first = create_test_dataset(account=account, name='First')
-    dataset_second = create_test_dataset(account=account, name='Second')
+    dataset_1 = create_test_dataset(account=account, name='First')
+    dataset_2 = create_test_dataset(account=account, name='Second')
     api_client.token_authenticate(user=user)
 
     # act
@@ -189,8 +186,8 @@ def test_list__ordering_by_date_desc_default__ok(api_client):
     # assert
     assert response.status_code == 200
     assert len(response.data) == 2
-    assert response.data[0]['id'] == dataset_first.id
-    assert response.data[1]['id'] == dataset_second.id
+    assert response.data[0]['id'] == dataset_2.id
+    assert response.data[1]['id'] == dataset_1.id
 
 
 def test_list__items_count__ok(api_client):

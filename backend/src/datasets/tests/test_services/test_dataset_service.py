@@ -570,23 +570,23 @@ def test__create__duplicate_dataset_name_different_account__ok():
     """Same dataset name is allowed for different accounts"""
 
     # arrange
-    account1 = create_test_account(name='Account 1')
-    account2 = create_test_account(name='Account 2')
-    user2 = create_test_owner(account=account2)
+    account_1 = create_test_account(name='Account 1')
+    account_2 = create_test_account(name='Account 2')
+    user_2 = create_test_owner(account=account_2)
     shared_name = 'My Dataset'
     create_test_dataset(
-        account=account1,
+        account=account_1,
         name=shared_name,
         items_count=0,
     )
-    service = DataSetService(user=user2)
+    service = DataSetService(user=user_2)
 
     # act
     result = service._create_instance(name=shared_name)
 
     # assert
     assert result.name == shared_name
-    assert result.account == account2
+    assert result.account == account_2
 
 
 def test_create_items__duplicate_value_same_dataset__integrity_error():
