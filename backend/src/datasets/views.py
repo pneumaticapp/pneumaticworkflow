@@ -1,5 +1,4 @@
-from typing import Optional, List
-from django.db.models import Count
+from django.db.models import Count, Q
 from rest_framework.decorators import action
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.viewsets import GenericViewSet
@@ -76,22 +75,12 @@ class DatasetViewSet(
         queryset = Dataset.objects.on_account(user.account_id)
         if self.action == 'list':
             queryset = queryset.annotate(
-                items_count=Count('items'),
+                items_count=Count(
+                    'items',
+                    filter=Q(items__is_deleted=False),
+                ),
             )
         return self.prefetch_queryset(queryset)
-
-    def prefetch_queryset(
-        self,
-        queryset,
-        extra_fields: Optional[List[str]] = None,
-    ):
-        extra_fields = [
-            'items',
-        ]
-        return super().prefetch_queryset(
-            queryset=queryset,
-            extra_fields=extra_fields,
-        )
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()

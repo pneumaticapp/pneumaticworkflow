@@ -107,12 +107,12 @@ MSG_PT_0044 = lambda task, operator, field_type: format_lazy(
     operator=operator,
     field_type=field_type,
 )
-MSG_PT_0045 = lambda task, selection_api_name: format_lazy(
+MSG_PT_0045 = lambda task, selection_value: format_lazy(
     _(
-        'Task "{task}": selection "{selection_api_name}" doesn\'t exist '
+        'Task "{task}": selection "{selection_value}" doesn\'t exist '
         'or can\'t be used in this condition.',
     ),
-    selection_api_name=selection_api_name,
+    selection_value=selection_value,
     task=task,
 )
 # Translators: Condition operator not provided
