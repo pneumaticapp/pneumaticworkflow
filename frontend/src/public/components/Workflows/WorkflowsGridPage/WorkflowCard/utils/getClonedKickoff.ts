@@ -1,7 +1,7 @@
 /* eslint-disable */
 /* prettier-ignore */
 import { copyAttachment } from '../../../../../api/copyAttachment';
-import { IExtraField, IKickoff, TExtraFieldValue } from '../../../../../types/template';
+import { IExtraField, IExtraFieldSelection, IKickoff, TExtraFieldValue } from '../../../../../types/template';
 import { IWorkflowDetailsKickoff } from '../../../../../types/workflow';
 import { TUploadedFile } from '../../../../../utils/uploadFiles';
 import { getEditKickoff } from '../../../../../utils/workflows';
@@ -32,9 +32,9 @@ function cloneFieldSelections(field: IExtraField, templateField: IExtraField): I
   }
 
   const selectionIdMap = new Map(
-    field.selections
+    (field.selections as IExtraFieldSelection[])
       .map((selection) => {
-        const templateSelection = templateField.selections?.find(
+        const templateSelection = (templateField.selections as IExtraFieldSelection[])?.find(
           (templateSelection) => templateSelection.apiName === selection.apiName,
         );
         return templateSelection ? ([selection.apiName as string, templateSelection.apiName as string] as const) : null;
@@ -42,7 +42,7 @@ function cloneFieldSelections(field: IExtraField, templateField: IExtraField): I
       .filter(Boolean) as (readonly [string, string])[],
   );
 
-  const normalizedSelections = field.selections.filter((selection) => selectionIdMap.get(selection.apiName as string));
+  const normalizedSelections = (field.selections as IExtraFieldSelection[]).filter((selection) => selectionIdMap.get(selection.apiName as string));
 
   const normalizedValue = Array.isArray(field.value)
     ? (field.value

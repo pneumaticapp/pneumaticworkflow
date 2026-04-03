@@ -54,7 +54,8 @@ export function ExtraFieldCreatable({
 
   const { useCallback, useState, useMemo } = React;
 
-  const { selections, description } = field;
+  const { description } = field;
+  const selections = field.selections as IExtraFieldSelection[];
 
   const dropdownSelections: IDropdownSelection[] = useMemo(
     () => (selections || []).map((selection) => ({ ...selection, label: selection.value })),
@@ -203,7 +204,7 @@ export function ExtraFieldCreatable({
 
   const renderSelectableView = () => {
     const displayValue = {
-      label: field.selections?.find((selection) => selection.apiName === field.value)?.value,
+      label: selections?.find((selection) => selection.apiName === field.value)?.value,
     };
 
     return (

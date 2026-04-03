@@ -3,7 +3,7 @@
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 
-import { IExtraField } from '../../types/template';
+import { IExtraField, IExtraFieldSelection } from '../../types/template';
 
 import styles from './KickoffOutputs.css';
 
@@ -17,7 +17,7 @@ export function CheckboxOutput({
 
   const renderSelections = () => {
     const defaultValue = formatMessage({ id: 'template.kick-off-form-unfilled-value' });
-    const mappedSelections = selections
+    const mappedSelections = (selections as IExtraFieldSelection[])
       ?.filter(({ isSelected }) => isSelected)
       ?.reduce((acc, { value }) => [...acc, value], [])
       ?.join(', ');

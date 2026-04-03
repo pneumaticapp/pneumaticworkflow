@@ -78,7 +78,7 @@ export function DatasetSourceToggle({ field, editField, isDisabled = false, chil
       });
       setIsMenuOpen(false); 
     } else {
-      setSavedSelections(field.selections || null);
+      setSavedSelections(field.selections as IExtraFieldSelection[] || null);
       editField({ 
         dataset: savedDataset,
         selections: undefined,

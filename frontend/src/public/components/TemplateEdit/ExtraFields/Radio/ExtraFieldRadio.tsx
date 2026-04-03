@@ -25,7 +25,7 @@ const DEFAULT_FIELD_INPUT_WIDTH = 120;
 
 export function ExtraFieldRadio({
   field,
-  field: { selections, isRequired = false, name, value: selectedOption },
+  field: { isRequired = false, name, value: selectedOption },
   intl,
   namePlaceholder = intl.formatMessage({ id: 'template.kick-off-form-field-name-placeholder' }),
   mode = EExtraFieldMode.Kickoff,
@@ -33,6 +33,7 @@ export function ExtraFieldRadio({
   editField,
   isDisabled = false,
 }: IWorkflowExtraFieldProps) {
+  const selections = field.selections as IExtraFieldSelection[];
   const fieldNameInputRef = React.useRef<HTMLInputElement | null>(null);
   const optionInputsRefs = React.useRef<HTMLInputElement[]>([]);
   const [isFocused, setIsFocused] = React.useState(false);

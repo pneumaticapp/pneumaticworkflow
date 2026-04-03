@@ -4,7 +4,7 @@ import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { EditIcon } from '../icons';
-import { EExtraFieldType, IExtraField } from '../../types/template';
+import { EExtraFieldType, IExtraField, IExtraFieldSelection } from '../../types/template';
 
 import { CheckboxOutput } from './CheckboxOutput';
 import { RadioOutput } from './RadioOutput';
@@ -80,7 +80,7 @@ export function KickoffOutputs({
       const isEmpty = !(
         value ||
         output.attachments?.length ||
-        output.selections?.findIndex((selection) => selection.isSelected) !== -1
+        (output.selections as IExtraFieldSelection[])?.findIndex((selection) => selection.isSelected) !== -1
       );
 
       return !isEmpty ? <OutputComponent key={index} {...output} /> : null;

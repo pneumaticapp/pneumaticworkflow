@@ -1,5 +1,5 @@
 /* eslint-disable */
-import { EExtraFieldType, IExtraField, TExtraFieldValue } from '../../../../types/template';
+import { EExtraFieldType, IExtraField, IExtraFieldSelection, TExtraFieldValue } from '../../../../types/template';
 import { isArrayWithItems } from '../../../../utils/helpers';
 import { getEndOfDayTsp } from '../../../../utils/dateTime';
 
@@ -110,27 +110,27 @@ export class ExtraFieldsHelper {
       return { ...field, value: this.getFieldValue(field.value, '', field.apiName) };
     },
     [EExtraFieldType.Checkbox]: (field: IExtraField) => {
-      const initialValue = field.selections!.filter(({ isSelected }) => isSelected).map(({ apiName }) => apiName);
+      const initialValue = (field.selections as IExtraFieldSelection[]).filter(({ isSelected }) => isSelected).map(({ apiName }) => apiName);
 
       return { ...field, value: this.getFieldValue(initialValue, [], field.apiName) };
     },
     [EExtraFieldType.Radio]: (field: IExtraField) => {
-      if (!isArrayWithItems(field.selections)) {
+      if (!isArrayWithItems(field.selections as IExtraFieldSelection[])) {
         return null;
       }
 
-      const selectedOption = field.selections.find(({ isSelected }) => isSelected);
+      const selectedOption = (field.selections as IExtraFieldSelection[]).find(({ isSelected }) => isSelected);
       const initialValue = selectedOption ? selectedOption.apiName : null;
 
       return { ...field, value: this.getFieldValue(initialValue, null, field.apiName) };
     },
 
     [EExtraFieldType.Creatable]: (field: IExtraField) => {
-      if (!isArrayWithItems(field.selections)) {
+      if (!isArrayWithItems(field.selections as IExtraFieldSelection[])) {
         return null;
       }
 
-      const selectedOption = field.selections.find(({ isSelected }) => isSelected);
+      const selectedOption = (field.selections as IExtraFieldSelection[]).find(({ isSelected }) => isSelected);
       const initialValue = selectedOption ? selectedOption.apiName : null;
 
       return { ...field, value: this.getFieldValue(initialValue, null, field.apiName) };

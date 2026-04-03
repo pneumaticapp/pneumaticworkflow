@@ -25,7 +25,7 @@ const DEFAULT_FIELD_INPUT_WIDTH = 120;
 
 export function ExtraFieldCheckbox({
   field,
-  field: { selections, isRequired = false, name, value },
+  field: { isRequired = false, name, value },
   intl,
   namePlaceholder = intl.formatMessage({ id: 'template.kick-off-form-field-name-placeholder' }),
   mode = EExtraFieldMode.Kickoff,
@@ -33,6 +33,7 @@ export function ExtraFieldCheckbox({
   editField,
   isDisabled = false,
 }: IWorkflowExtraFieldProps) {
+  const selections = field.selections as IExtraFieldSelection[];
   const selectedOptions = value as TExtraFieldMultipleValue;
 
   const fieldNameInputRef = React.useRef<HTMLInputElement | null>(null);
