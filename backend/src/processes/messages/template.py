@@ -182,8 +182,7 @@ MSG_PT_0053 = lambda name, api_name: format_lazy(
 MSG_PT_0054 = lambda name, field_name, api_name, value: format_lazy(
     _(
         'Task "{name}": Option "{value}" of output field "{field_name}" '
-        'contains a duplicate api_name "{api_name}". '
-        'Change the api_name or recreate the option.',
+        'contains a duplicate value. Change the value.',
     ),
     name=name,
     field_name=field_name,
