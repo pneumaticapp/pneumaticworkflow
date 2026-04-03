@@ -96,6 +96,7 @@ export function ConditionValueField({
         value: item.value,
         label: item.value,
       }));
+
     } else if (isArrayWithItems(variable?.selections)) {
       dropdownSelections = variable!.selections.map((selection) => ({ ...selection, label: selection.value }));
     } else {
@@ -103,7 +104,7 @@ export function ConditionValueField({
       return null;
     }
 
-    const selectedSelection = dropdownSelections.find((selection) => selection.apiName === rule.value) || null;
+    const selectedSelection = dropdownSelections.find((selection) => selection.value === rule.value) || null;
 
     return (
       <DropdownList
@@ -112,7 +113,7 @@ export function ConditionValueField({
         placeholder={formatMessage({ id: 'templates.conditions.value-placeholder' })}
         value={selectedSelection}
         onChange={(option: IDropdownSelection) => {
-          changeRuleValue(option.apiName);
+          changeRuleValue(option.value);
         }}
         isClearable={false}
         options={dropdownSelections}
@@ -120,7 +121,7 @@ export function ConditionValueField({
           context === 'menu'
             ? getFormattedDropdownOption({
                 label: option.label,
-                isSelected: option.apiName === rule.value,
+                isSelected: option.value === rule.value,
                 isTooltip: true,
               })
             : option.label
