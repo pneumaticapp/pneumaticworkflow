@@ -276,6 +276,12 @@ export const validateKickoffFieldDescription = validateFieldCreator(KICKOFF_FIEL
 export const validateRegistrationPassword = validateFieldCreator(REGISTRATION_PASSWORD_RULES);
 export const validateDelayField = validateFieldCreator(DELAY_RULES);
 export const validateCheckboxAndRadioField = validateFieldCreator(CHECKBOX_AND_RADIO_FIELDS_RULUES);
+export const getSelectionDuplicateError = (value: string, allValues: string[]): string => {
+  const trimmedValue = (value || '').trim().toLowerCase();
+  if (!trimmedValue) return '';
+  const count = allValues.filter((item) => item.trim().toLowerCase() === trimmedValue).length;
+  return count > 1 ? 'validation.checkbox-and-radio-value-duplicate' : '';
+};
 export const validateTenantName = validateFieldCreator(TENANT_NAME_RULES);
 export const validateGroupName = validateFieldCreator(GROUP_NAME_RULES);
 export const validateDatasetName = validateFieldCreator(DATASET_NAME_RULES);

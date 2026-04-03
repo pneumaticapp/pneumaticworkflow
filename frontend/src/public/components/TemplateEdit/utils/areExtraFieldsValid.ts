@@ -1,9 +1,15 @@
 import { EExtraFieldType, IExtraField } from '../../../types/template';
-import { validateKickoffFieldName, validateCheckboxAndRadioField } from '../../../utils/validators';
+import { validateCheckboxAndRadioField, getSelectionDuplicateError, validateKickoffFieldName } from '../../../utils/validators';
 
 const areSelectionsValid = (field: IExtraField) => {
   if (field.dataset) return true;
-  return Boolean(field?.selections?.every((selection) => !validateCheckboxAndRadioField(selection.value)));
+  const selections = (field?.selections || []);
+  const values = selections.map((selection) => selection.value);
+
+  return selections.every((selection) => {
+    if (validateCheckboxAndRadioField(selection.value)) return false;
+    return !getSelectionDuplicateError(selection.value, values);
+  });
 };
 
 const fieldValidateRulesMap = {

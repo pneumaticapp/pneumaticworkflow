@@ -6,6 +6,7 @@ import AutosizeInput from 'react-input-autosize';
 
 import { getEmptySelection } from '../../KickoffRedux/utils/getEmptySelection';
 import { validateCheckboxAndRadioField, validateKickoffFieldName } from '../../../../utils/validators';
+import { handleSelectionBlur } from '../utils/handleSelectionBlur';
 import { IntlMessages } from '../../../IntlMessages';
 import { EExtraFieldMode, IExtraFieldSelection, TExtraFieldMultipleValue } from '../../../../types/template';
 import { fitInputWidth } from '../utils/fitInputWidth';
@@ -17,6 +18,7 @@ import { IWorkflowExtraFieldProps } from '..';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
 import fieldStyles from './ExtraFieldCheckbox.css';
+import { useState } from 'react';
 
 const DEFAULT_OPTION_INPUT_WIDTH = 120;
 const DEFAULT_FIELD_INPUT_WIDTH = 120;
@@ -45,7 +47,8 @@ export function ExtraFieldCheckbox({
     fitInputWidth(fieldNameInputRef.current, DEFAULT_FIELD_INPUT_WIDTH);
   }, []);
 
-  const [activeOptionIndex, setActiveOptionIndex] = React.useState<number | null>(null);
+  const [activeOptionIndex, setActiveOptionIndex] = useState<number | null>(null);
+  const [duplicateErrors, setDuplicateErrors] =useState<Record<number, string>>({});
 
   const fieldNameErrorMessage = validateKickoffFieldName(name) || '';
   const isKickoffFieldNameValid = !Boolean(fieldNameErrorMessage);
@@ -115,7 +118,8 @@ export function ExtraFieldCheckbox({
     const { value } = field;
 
     const isActive = optionIndex === activeOptionIndex;
-    const errorMessageIntl = validateCheckboxAndRadioField(value);
+    const standardError = validateCheckboxAndRadioField(value);
+    const errorMessageIntl = standardError || duplicateErrors[optionIndex] || '';
     const shouldShowError = Boolean(errorMessageIntl);
 
     return (
@@ -137,6 +141,7 @@ export function ExtraFieldCheckbox({
             ref={(el) => (optionInputsRefs.current[optionIndex] = el as HTMLInputElement)}
             className={fieldStyles['labeled-checkbox__input']}
             onChange={handleChangeOption(optionIndex)}
+            onBlur={handleBlurOption(optionIndex)}
             placeholder={namePlaceholder}
             type="text"
             value={value}
@@ -171,7 +176,7 @@ export function ExtraFieldCheckbox({
   );
 
   const handleAddOption = () => {
-    const newOptions = [...(selections as IExtraFieldSelection[]), getEmptySelection()];
+    const newOptions = [...(selections || []), getEmptySelection((selections || []).length + 1)];
     editField({ selections: newOptions });
   };
 
@@ -182,6 +187,7 @@ export function ExtraFieldCheckbox({
 
   const handleChangeOption = (optionIndex: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.value;
+    setDuplicateErrors((prev) => ({ ...prev, [optionIndex]: '' }));
 
     const newOptions = selections?.map((option, index) => {
       if (index === optionIndex) {
@@ -193,6 +199,8 @@ export function ExtraFieldCheckbox({
 
     editField({ selections: newOptions });
   };
+
+  const handleBlurOption = handleSelectionBlur(setDuplicateErrors, selections);
 
   const renderProcessRunOption = ({ value, apiName }: IExtraFieldSelection) => {
     const isChecked = selectedOptions && selectedOptions.includes(apiName);

@@ -15,6 +15,7 @@ import { DatasetSourceToggle } from '../utils/DatasetSourceToggle';
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { EExtraFieldMode, IExtraFieldSelection } from '../../../../types/template';
 import { validateCheckboxAndRadioField } from '../../../../utils/validators';
+import { handleSelectionBlur } from '../utils/handleSelectionBlur';
 
 import { IWorkflowExtraFieldProps } from '..';
 
@@ -61,6 +62,7 @@ export function ExtraFieldCreatable({
   );
 
   const [activeOptionIndex, setActiveOptionIndex] = useState<number | null>(null);
+  const [duplicateErrors, setDuplicateErrors] = useState<Record<number, string>>({});
 
   const handleSelectableChange = (inputValue: IDropdownSelection) => {
     editField({
@@ -89,7 +91,7 @@ export function ExtraFieldCreatable({
   );
 
   const handleAddOption = () => {
-    const newOptions = [...(selections as IExtraFieldSelection[]), getEmptySelection()];
+    const newOptions = [...(selections || []), getEmptySelection((selections || []).length + 1)];
     editField({ selections: newOptions });
   };
 
@@ -100,6 +102,7 @@ export function ExtraFieldCreatable({
 
   const handleChangeOption = (optionIndex: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.value;
+    setDuplicateErrors((prev) => ({ ...prev, [optionIndex]: '' }));
 
     const newOptions = selections?.map((option, index) => {
       if (index === optionIndex) {
@@ -112,9 +115,12 @@ export function ExtraFieldCreatable({
     editField({ selections: newOptions });
   };
 
+  const handleBlurOption = handleSelectionBlur(setDuplicateErrors, selections);
+
   const renderKickoffOption = ({ value }: IExtraFieldSelection, optionIndex: number) => {
     const isActive = optionIndex === activeOptionIndex;
-    const errorMessageIntl = validateCheckboxAndRadioField(value);
+    const standardError = validateCheckboxAndRadioField(value);
+    const errorMessageIntl = standardError || duplicateErrors[optionIndex] || '';
     const shouldShowError = Boolean(errorMessageIntl);
 
     return (
@@ -129,6 +135,7 @@ export function ExtraFieldCreatable({
             ref={(el) => (optionInputsRefs.current[optionIndex] = el as HTMLInputElement)}
             className={inputStyles['kickoff-create-field-option__input']}
             onChange={handleChangeOption(optionIndex)}
+            onBlur={handleBlurOption(optionIndex)}
             placeholder={namePlaceholder}
             type="text"
             value={value}

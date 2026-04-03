@@ -3,9 +3,9 @@
 import { IExtraFieldSelection } from '../../../../types/template';
 import { createFieldSelectionApiName } from '../../../../utils/createId';
 
-export function getEmptySelection(): IExtraFieldSelection {
+export function getEmptySelection(counter?: number): IExtraFieldSelection {
   return {
-    value: 'New option',
+    value: counter ? `New option ${counter}` : 'New option',
     apiName: createFieldSelectionApiName(),
   };
 }

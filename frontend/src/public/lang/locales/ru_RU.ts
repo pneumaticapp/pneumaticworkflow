@@ -397,6 +397,7 @@ export const ruMessages = {
   'validation.kickoff-form-url-field-invalid': 'Поле должно содержать действительную ссылку',
   'validation.kickoff-form-field-name-too-long': 'Название поля превышает 120 символов',
   'validation.checkbox-and-radio-value-too-long': 'Название поля превышает 200 символов',
+  'validation.checkbox-and-radio-value-duplicate': 'Опция с таким значением уже существует',
   'validation.used-nonexistent-kickoff-fields':
     'Некоторые поля в описаниях шагов не существуют или используются до присвоения',
   'validation.change-password-field-too-short': 'Пароль должен содержать не менее 6 символов',

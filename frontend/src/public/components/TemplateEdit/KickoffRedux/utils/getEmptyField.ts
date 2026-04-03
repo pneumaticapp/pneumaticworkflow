@@ -38,17 +38,17 @@ export const getEmptyField = (type: EExtraFieldType, formatMessage: IntlShape['f
     },
     [EExtraFieldType.Checkbox]: {
       ...EMPTY_FIELD,
-      selections: [getEmptySelection()],
+      selections: [getEmptySelection(1)],
       name: formatMessage({ id: 'template.kick-off-form-checkbox-field-tooltip-title' }),
     },
     [EExtraFieldType.Radio]: {
       ...EMPTY_FIELD,
-      selections: [getEmptySelection()],
+      selections: [getEmptySelection(1)],
       name: formatMessage({ id: 'template.kick-off-form-radio-field-tooltip-title' }),
     },
     [EExtraFieldType.Creatable]: {
       ...EMPTY_FIELD,
-      selections: [getEmptySelection()],
+      selections: [getEmptySelection(1)],
       name: formatMessage({ id: 'template.kick-off-form-creatable-field-tooltip-title' }),
     },
     [EExtraFieldType.User]: {

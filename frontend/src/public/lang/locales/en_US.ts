@@ -445,6 +445,7 @@ export const enMessages = {
   'validation.kickoff-form-url-field-invalid': 'Field\xA0must\xA0contain\xA0a valid link',
   'validation.kickoff-form-field-name-too-long': 'Field\xA0name\xA0exceeds 120 characters',
   'validation.checkbox-and-radio-value-too-long': 'Field\xA0name\xA0exceeds 200 characters',
+  'validation.checkbox-and-radio-value-duplicate': 'Option with this value already exists',
   'validation.used-nonexistent-kickoff-fields':
     "Some fields in steps' descriptions don't exist or are used before assignment",
   'validation.change-password-field-too-short': 'The passowrd must be at least 6 characters long',
