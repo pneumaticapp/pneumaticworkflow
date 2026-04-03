@@ -24,7 +24,8 @@ import inputStyles from './ExtraFieldCreatable.css';
 
 const DEFAULT_OPTION_INPUT_WIDTH = 120;
 
-export interface IDropdownSelection extends IExtraFieldSelection {
+export interface IDropdownSelection {
+  value: string;
   label: string;
 }
 
@@ -55,24 +56,22 @@ export function ExtraFieldCreatable({
   const { useCallback, useState, useMemo } = React;
 
   const { description } = field;
-  const selections = field.selections as IExtraFieldSelection[];
+  const selectionItems = field.selections as IExtraFieldSelection[];
+  const selectionValues = field.selections as string[];
 
   const dropdownSelections: IDropdownSelection[] = useMemo(
-    () => (selections || []).map((selection) => ({ ...selection, label: selection.value })),
-    [selections],
+    () => (selectionValues || []).map((selectionValue) => ({
+      value: selectionValue,
+      label: selectionValue,
+    } as IDropdownSelection)),
+    [selectionValues],
   );
 
   const [activeOptionIndex, setActiveOptionIndex] = useState<number | null>(null);
   const [duplicateErrors, setDuplicateErrors] = useState<Record<number, string>>({});
 
   const handleSelectableChange = (inputValue: IDropdownSelection) => {
-    editField({
-      value: String(inputValue.apiName),
-      selections: selections?.map((selection) => ({
-        ...selection,
-        isSelected: inputValue.apiName === selection.apiName,
-      })),
-    });
+    editField({ value: inputValue.value });
   };
 
   const fieldNameClassName = classnames(getInputNameBackground(labelBackgroundColor), styles['kick-off-input__name']);
@@ -92,12 +91,12 @@ export function ExtraFieldCreatable({
   );
 
   const handleAddOption = () => {
-    const newOptions = [...(selections || []), getEmptySelection((selections || []).length + 1)];
+    const newOptions = [...(selectionItems || []), getEmptySelection((selectionItems || []).length + 1)];
     editField({ selections: newOptions });
   };
 
   const handleRemoveOption = (optionIndex: number) => () => {
-    const newOptions = selections?.filter((_, index) => index !== optionIndex);
+    const newOptions = selectionItems?.filter((_, index) => index !== optionIndex);
     editField({ selections: newOptions || [] });
   };
 
@@ -105,7 +104,7 @@ export function ExtraFieldCreatable({
     const newValue = event.target.value;
     setDuplicateErrors((prev) => ({ ...prev, [optionIndex]: '' }));
 
-    const newOptions = selections?.map((option, index) => {
+    const newOptions = selectionItems?.map((option, index) => {
       if (index === optionIndex) {
         return { ...option, value: newValue };
       }
@@ -116,7 +115,7 @@ export function ExtraFieldCreatable({
     editField({ selections: newOptions });
   };
 
-  const handleBlurOption = handleSelectionBlur(setDuplicateErrors, selections);
+  const handleBlurOption = handleSelectionBlur(setDuplicateErrors, selectionItems);
 
   const renderKickoffOption = ({ value }: IExtraFieldSelection, optionIndex: number) => {
     const isActive = optionIndex === activeOptionIndex;
@@ -143,7 +142,7 @@ export function ExtraFieldCreatable({
             disabled={isDisabled}
           />
           <span className={inputStyles['measure']} />
-          {isActive && !isDisabled && (selections?.length || 0) > 1 && (
+          {isActive && !isDisabled && (selectionItems?.length || 0) > 1 && (
             <div
               role="button"
               className={inputStyles['kickoff-create-field-option__remove']}
@@ -180,8 +179,8 @@ export function ExtraFieldCreatable({
   );
 
   const renderKickoffView = () => {
-    const customOptionsList = selections && (
-      <ul className={inputStyles['kickoff-create-field-options']}>{selections?.map(renderKickoffOption)}</ul>
+    const customOptionsList = selectionItems && (
+      <ul className={inputStyles['kickoff-create-field-options']}>{selectionItems?.map(renderKickoffOption)}</ul>
     );
 
     const addOptionButton = (
@@ -203,9 +202,7 @@ export function ExtraFieldCreatable({
   };
 
   const renderSelectableView = () => {
-    const displayValue = {
-      label: selections?.find((selection) => selection.apiName === field.value)?.value,
-    };
+    const displayValue = dropdownSelections.find((selection) => selection.value === field.value) || null;
 
     return (
       <div className={inputStyles['dropdown-container']} data-autofocus-first-field={true}>
@@ -219,7 +216,7 @@ export function ExtraFieldCreatable({
           placeholder={description}
           isDisabled={isDisabled}
           isSearchable={false}
-          value={displayValue.label ? displayValue : null}
+          value={displayValue}
         />
       </div>
     );

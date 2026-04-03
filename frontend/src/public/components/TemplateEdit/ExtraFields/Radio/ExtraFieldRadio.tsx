@@ -33,14 +33,15 @@ export function ExtraFieldRadio({
   editField,
   isDisabled = false,
 }: IWorkflowExtraFieldProps) {
-  const selections = field.selections as IExtraFieldSelection[];
+  const selectionItems = field.selections as IExtraFieldSelection[];
+  const selectionValues = field.selections as string[];
   const fieldNameInputRef = React.useRef<HTMLInputElement | null>(null);
   const optionInputsRefs = React.useRef<HTMLInputElement[]>([]);
   const [isFocused, setIsFocused] = React.useState(false);
 
   React.useEffect(() => {
     optionInputsRefs.current.forEach((input) => fitInputWidth(input, DEFAULT_OPTION_INPUT_WIDTH));
-  }, [selections]);
+  }, [selectionItems]);
 
   React.useEffect(() => {
     fitInputWidth(fieldNameInputRef.current, DEFAULT_FIELD_INPUT_WIDTH);
@@ -55,8 +56,8 @@ export function ExtraFieldRadio({
   const renderKickoffField = () => {
     const fieldNameClassName = classnames(fieldStyles['kickoff-create-field-name']);
 
-    const customOptionsList = selections && (
-      <ul className={fieldStyles['kickoff-create-field-options']}>{selections?.map(renderKickoffOption)}</ul>
+    const customOptionsList = selectionItems && (
+      <ul className={fieldStyles['kickoff-create-field-options']}>{selectionItems?.map(renderKickoffOption)}</ul>
     );
 
     const addOptionButton = (
@@ -146,7 +147,7 @@ export function ExtraFieldRadio({
             disabled={isDisabled}
           />
           <span className={fieldStyles['measure']} />
-          {isActive && !isDisabled && (selections?.length || 0) > 1 && (
+          {isActive && !isDisabled && (selectionItems?.length || 0) > 1 && (
             <div
               role="button"
               className={fieldStyles['labeled-checkbox__remove-icon']}
@@ -174,12 +175,12 @@ export function ExtraFieldRadio({
   );
 
   const handleAddOption = () => {
-    const newOptions = [...(selections || []), getEmptySelection((selections || []).length + 1)];
+    const newOptions = [...(selectionItems || []), getEmptySelection((selectionItems || []).length + 1)];
     editField({ selections: newOptions });
   };
 
   const handleRemoveOption = (optionIndex: number) => () => {
-    const newOptions = selections?.filter((_, index) => index !== optionIndex);
+    const newOptions = selectionItems?.filter((_, index) => index !== optionIndex);
     editField({ selections: newOptions || [] });
   };
 
@@ -187,7 +188,7 @@ export function ExtraFieldRadio({
     const newValue = event.target.value;
     setDuplicateErrors((prev) => ({ ...prev, [optionIndex]: '' }));
 
-    const newOptions = selections?.map((option, index) => {
+    const newOptions = selectionItems?.map((option, index) => {
       if (index === optionIndex) {
         return { ...option, value: newValue };
       }
@@ -198,20 +199,20 @@ export function ExtraFieldRadio({
     editField({ selections: newOptions });
   };
 
-  const handleBlurOption = handleSelectionBlur(setDuplicateErrors, selections);
+  const handleBlurOption = handleSelectionBlur(setDuplicateErrors, selectionItems);
 
-  const renderProcessRunOption = ({ value, apiName }: IExtraFieldSelection) => {
-    const isChecked = apiName === selectedOption;
+  const renderProcessRunOption = (selectionValue: string) => {
+    const isChecked = selectionValue === selectedOption;
 
     return (
-      <li key={apiName} className={fieldStyles['kickoff-set-field-option']}>
-        <RadioButton id={apiName} title={value} onChange={handleToggleOption(apiName)} checked={isChecked} />
+      <li key={selectionValue} className={fieldStyles['kickoff-set-field-option']}>
+        <RadioButton id={selectionValue} title={selectionValue} onChange={handleToggleOption(selectionValue)} checked={isChecked} />
       </li>
     );
   };
 
   const renderProcessRunField = () => {
-    if (!selections) return null;
+    if (!selectionValues) return null;
 
     const fieldNameClassName = classnames(fieldStyles['kickoff-set-field-name']);
 
@@ -222,14 +223,14 @@ export function ExtraFieldRadio({
           {isRequired && <span className={styles['kick-off-required-sign']} />}
         </div>
 
-        <ul className={fieldStyles['kickoff-set-field-options']}>{selections.map(renderProcessRunOption)}</ul>
+        <ul className={fieldStyles['kickoff-set-field-options']}>{selectionValues.map(renderProcessRunOption)}</ul>
       </div>
     );
   };
 
-  const handleToggleOption = (apiName: string) => () => {
-    const isSameValue = apiName === selectedOption;
-    const valueToSet = isSameValue ? null : apiName;
+  const handleToggleOption = (selectionValue: string) => () => {
+    const isSameValue = selectionValue === selectedOption;
+    const valueToSet = isSameValue ? null : selectionValue;
 
     editField({ value: valueToSet });
   };

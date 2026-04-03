@@ -5,8 +5,7 @@ import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { DropdownList } from '../../../../UI/DropdownList';
-import { EExtraFieldType, IExtraFieldSelection } from '../../../../../types/template';
-import { isArrayWithItems } from '../../../../../utils/helpers';
+import { EExtraFieldType } from '../../../../../types/template';
 import { Field } from '../../../../Field';
 import { EUserStatus, TUserListItem } from '../../../../../types/user';
 import { TTaskVariable } from '../../../types';
@@ -82,7 +81,8 @@ export function ConditionValueField({
   }
 
   function renderDropdownField() {
-    interface IDropdownSelection extends IExtraFieldSelection {
+    interface IDropdownSelection {
+      value: string;
       label: string;
     }
 
@@ -92,13 +92,12 @@ export function ConditionValueField({
       if (!datasetItems) return null;
 
       dropdownSelections = datasetItems.map((item) => ({
-        apiName: item.value,
         value: item.value,
         label: item.value,
       }));
 
-    } else if (isArrayWithItems(variable?.selections)) {
-      dropdownSelections = variable!.selections.map((selection) => ({ ...selection, label: selection.value }));
+    } else if (variable?.selections?.length) {
+      dropdownSelections = (variable.selections as string[]).map((selectionValue) => ({ value: selectionValue, label: selectionValue }));
     } else {
 
       return null;

@@ -33,7 +33,8 @@ export function ExtraFieldCheckbox({
   editField,
   isDisabled = false,
 }: IWorkflowExtraFieldProps) {
-  const selections = field.selections as IExtraFieldSelection[];
+  const selectionItems = field.selections as IExtraFieldSelection[];
+  const selectionValues = field.selections as string[];
   const selectedOptions = value as TExtraFieldMultipleValue;
 
   const fieldNameInputRef = React.useRef<HTMLInputElement | null>(null);
@@ -42,14 +43,14 @@ export function ExtraFieldCheckbox({
 
   React.useEffect(() => {
     optionInputsRefs.current.forEach((input) => fitInputWidth(input, DEFAULT_OPTION_INPUT_WIDTH));
-  }, [selections]);
+  }, [selectionItems]);
 
   React.useEffect(() => {
     fitInputWidth(fieldNameInputRef.current, DEFAULT_FIELD_INPUT_WIDTH);
   }, []);
 
   const [activeOptionIndex, setActiveOptionIndex] = useState<number | null>(null);
-  const [duplicateErrors, setDuplicateErrors] =useState<Record<number, string>>({});
+  const [duplicateErrors, setDuplicateErrors] = useState<Record<number, string>>({});
 
   const fieldNameErrorMessage = validateKickoffFieldName(name) || '';
   const isKickoffFieldNameValid = !Boolean(fieldNameErrorMessage);
@@ -57,8 +58,8 @@ export function ExtraFieldCheckbox({
   const renderKickoffField = () => {
     const fieldNameClassName = classnames(fieldStyles['kickoff-create-field-name']);
 
-    const customOptionsList = selections && (
-      <ul className={fieldStyles['kickoff-create-field-options']}>{selections?.map(renderKickoffOption)}</ul>
+    const customOptionsList = selectionItems && (
+      <ul className={fieldStyles['kickoff-create-field-options']}>{selectionItems?.map(renderKickoffOption)}</ul>
     );
 
     const addOptionButton = (
@@ -149,7 +150,7 @@ export function ExtraFieldCheckbox({
             disabled={isDisabled}
           />
           <span className={fieldStyles['measure']} />
-          {isActive && !isDisabled && (selections?.length || 0) > 1 && (
+          {isActive && !isDisabled && (selectionItems?.length || 0) > 1 && (
             <div
               role="button"
               className={fieldStyles['labeled-checkbox__remove']}
@@ -177,12 +178,12 @@ export function ExtraFieldCheckbox({
   );
 
   const handleAddOption = () => {
-    const newOptions = [...(selections || []), getEmptySelection((selections || []).length + 1)];
+    const newOptions = [...(selectionItems || []), getEmptySelection((selectionItems || []).length + 1)];
     editField({ selections: newOptions });
   };
 
   const handleRemoveOption = (optionIndex: number) => () => {
-    const newOptions = selections?.filter((_, index) => index !== optionIndex);
+    const newOptions = selectionItems?.filter((_, index) => index !== optionIndex);
     editField({ selections: newOptions || [] });
   };
 
@@ -190,7 +191,7 @@ export function ExtraFieldCheckbox({
     const newValue = event.target.value;
     setDuplicateErrors((prev) => ({ ...prev, [optionIndex]: '' }));
 
-    const newOptions = selections?.map((option, index) => {
+    const newOptions = selectionItems?.map((option, index) => {
       if (index === optionIndex) {
         return { ...option, value: newValue };
       }
@@ -201,20 +202,20 @@ export function ExtraFieldCheckbox({
     editField({ selections: newOptions });
   };
 
-  const handleBlurOption = handleSelectionBlur(setDuplicateErrors, selections);
+  const handleBlurOption = handleSelectionBlur(setDuplicateErrors, selectionItems);
 
-  const renderProcessRunOption = ({ value, apiName }: IExtraFieldSelection) => {
-    const isChecked = selectedOptions && selectedOptions.includes(apiName);
+  const renderProcessRunOption = (selectionValue: string) => {
+    const isChecked = selectedOptions && selectedOptions.includes(selectionValue);
 
     return (
-      <li key={apiName} className={fieldStyles['kickoff-set-field-option']}>
-        <Checkbox id={String(apiName)} title={value} onChange={handleToggleOption(apiName)} checked={isChecked} />
+      <li key={selectionValue} className={fieldStyles['kickoff-set-field-option']}>
+        <Checkbox id={selectionValue} title={selectionValue} onChange={handleToggleOption(selectionValue)} checked={isChecked} />
       </li>
     );
   };
 
   const renderProcessRunField = () => {
-    if (!selections) {
+    if (!selectionValues) {
       return null;
     }
 
@@ -227,17 +228,17 @@ export function ExtraFieldCheckbox({
           {isRequired && <span className={styles['kick-off-required-sign']} />}
         </div>
 
-        <ul className={fieldStyles['kickoff-set-field-options']}>{selections.map(renderProcessRunOption)}</ul>
+        <ul className={fieldStyles['kickoff-set-field-options']}>{selectionValues.map(renderProcessRunOption)}</ul>
       </div>
     );
   };
 
-  const handleToggleOption = (apiName: string) => () => {
-    const isChecked = selectedOptions && !selectedOptions.includes(apiName);
+  const handleToggleOption = (selectionValue: string) => () => {
+    const isChecked = selectedOptions && !selectedOptions.includes(selectionValue);
 
     const newOptions = isChecked
-      ? [...selectedOptions, apiName]
-      : selectedOptions.filter((itemApiName) => itemApiName !== apiName);
+      ? [...selectedOptions, selectionValue]
+      : selectedOptions.filter((item) => item !== selectionValue);
 
     editField({ value: newOptions });
   };

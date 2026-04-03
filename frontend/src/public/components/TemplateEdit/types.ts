@@ -18,7 +18,7 @@ export type TTaskVariable = {
   type: EExtraFieldType | EStartingType;
   subtitle?: string;
   richSubtitle?: React.ReactNode;
-  selections?: IExtraFieldSelection[];
+  selections?: IExtraFieldSelection[] | string[];
   datasetId?: number | null;
 };
 

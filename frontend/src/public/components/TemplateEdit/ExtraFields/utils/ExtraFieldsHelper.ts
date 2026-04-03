@@ -1,6 +1,5 @@
 /* eslint-disable */
-import { EExtraFieldType, IExtraField, IExtraFieldSelection, TExtraFieldValue } from '../../../../types/template';
-import { isArrayWithItems } from '../../../../utils/helpers';
+import { EExtraFieldType, IExtraField, TExtraFieldValue } from '../../../../types/template';
 import { getEndOfDayTsp } from '../../../../utils/dateTime';
 
 type TFieldDispatchRecord = {
@@ -110,30 +109,21 @@ export class ExtraFieldsHelper {
       return { ...field, value: this.getFieldValue(field.value, '', field.apiName) };
     },
     [EExtraFieldType.Checkbox]: (field: IExtraField) => {
-      const initialValue = (field.selections as IExtraFieldSelection[]).filter(({ isSelected }) => isSelected).map(({ apiName }) => apiName);
-
-      return { ...field, value: this.getFieldValue(initialValue, [], field.apiName) };
+      return { ...field, value: this.getFieldValue(field.value, [], field.apiName) };
     },
     [EExtraFieldType.Radio]: (field: IExtraField) => {
-      if (!isArrayWithItems(field.selections as IExtraFieldSelection[])) {
+      if (!field.selections || field.selections.length === 0) {
         return null;
       }
-
-      const selectedOption = (field.selections as IExtraFieldSelection[]).find(({ isSelected }) => isSelected);
-      const initialValue = selectedOption ? selectedOption.apiName : null;
-
-      return { ...field, value: this.getFieldValue(initialValue, null, field.apiName) };
+      return { ...field, value: this.getFieldValue(field.value, null, field.apiName) };
     },
 
     [EExtraFieldType.Creatable]: (field: IExtraField) => {
-      if (!isArrayWithItems(field.selections as IExtraFieldSelection[])) {
+      if (!field.selections || field.selections.length === 0) {
         return null;
       }
 
-      const selectedOption = (field.selections as IExtraFieldSelection[]).find(({ isSelected }) => isSelected);
-      const initialValue = selectedOption ? selectedOption.apiName : null;
-
-      return { ...field, value: this.getFieldValue(initialValue, null, field.apiName) };
+      return { ...field, value: this.getFieldValue(field.value, null, field.apiName) };
     },
 
     [EExtraFieldType.User]: (field: IExtraField) => {
