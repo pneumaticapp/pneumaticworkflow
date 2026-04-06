@@ -14,9 +14,11 @@ type TTemplateToRunWorkflow = Pick<
 import { getDataset } from '../../../api/datasets/getDataset';
 
 function getKickoffDatasetIds(kickoff: IKickoff): number[] {
-  return kickoff.fields
-    .filter((field) => Boolean(field.dataset))
-    .map((field) => field.dataset as number);
+  const ids = new Set<number>();
+  for (const field of kickoff.fields) {
+    if (field.dataset) ids.add(field.dataset);
+  }
+  return [...ids];
 }
 
 export async function loadDatasetsMap(kickoff: IKickoff): Promise<Record<number, string[]>> {
