@@ -70,6 +70,7 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.serializers.templates.template import (
     TemplateSerializer,
 )
+from src.processes.serializers.workflows.events import TaskEventJsonSerializer
 from src.processes.services.tasks.task import TaskService
 from src.utils.salt import get_salt
 from src.webhooks.enums import HookEvent
@@ -663,19 +664,32 @@ def create_test_attachment(
 def create_test_event(
     workflow: Workflow,
     user: UserModel,
-    type_event: Optional[WorkflowEventType] = WorkflowEventType.RUN,
+    type_event: Optional[WorkflowEventType.LITERALS] = WorkflowEventType.RUN,
+    task: Optional[Task] = None,
     data_create: Optional[datetime] = None,
 ) -> WorkflowEvent:
 
     """Creating workflow events."""
 
-    task = workflow.tasks.get(number=1)
+    task = task or workflow.tasks.get(number=1)
+    if (
+        type_event in WorkflowEventType.TASK_EVENTS
+        and type_event != WorkflowEventType.SUB_WORKFLOW_RUN
+    ):
+        task_json = TaskEventJsonSerializer(
+            instance=task,
+            context={'event_type': type_event},
+        ).data
+    else:
+        task_json = None
+
     event = WorkflowEvent.objects.create(
         type=type_event,
         account=workflow.account,
         workflow=workflow,
         user=user,  # For highlights
         task=task,
+        task_json=task_json,
     )
     if data_create:
         event.created = data_create
