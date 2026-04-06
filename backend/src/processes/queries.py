@@ -214,7 +214,7 @@ class WorkflowListQuery(
                     OR {self._get_current_performer_group_ids()}
                 )
                 AND ptp.directly_status NOT IN (
-                    '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+                    '{DirectlyStatus.DELETED}'
                 )
             """
         elif self.current_performer:
@@ -222,7 +222,7 @@ class WorkflowListQuery(
                 {where}
                  AND {self._get_current_performer()}
                   AND ptp.directly_status NOT IN (
-                      '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+                      '{DirectlyStatus.DELETED}'
                   )
             """
         elif self.current_performer_group_ids:
@@ -230,7 +230,7 @@ class WorkflowListQuery(
                 {where}
                 AND {self._get_current_performer_group_ids()}
                 AND ptp.directly_status NOT IN (
-                    '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+                    '{DirectlyStatus.DELETED}'
                 )
             """
 
@@ -441,7 +441,7 @@ class WorkflowCountsByWfStarterQuery(
                     {self._get_current_performer_group_ids()}
                 )
                 AND ptp.directly_status NOT IN (
-                    '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+                    '{DirectlyStatus.DELETED}'
                 )
                 AND pt.is_deleted IS FALSE """
         elif self.current_performer_ids:
@@ -449,7 +449,7 @@ class WorkflowCountsByWfStarterQuery(
                 {where}
                 AND {self._get_current_performer_ids()}
                 AND ptp.directly_status NOT IN (
-                    '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+                    '{DirectlyStatus.DELETED}'
                 )
                 AND pt.is_deleted IS FALSE
             """
@@ -458,7 +458,7 @@ class WorkflowCountsByWfStarterQuery(
                 {where}
                 AND {self._get_current_performer_group_ids()}
                 AND ptp.directly_status NOT IN (
-                    '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+                    '{DirectlyStatus.DELETED}'
                 )
                 AND pt.is_deleted IS FALSE
             """
@@ -578,7 +578,7 @@ class WorkflowCountsByCPerformerQuery(
             AND pw.account_id = %(account_id)s
             AND ptra.user_id = %(user_id)s
             AND ptp.directly_status NOT IN (
-                '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+                '{DirectlyStatus.DELETED}'
             ) """
 
         if self.template_ids:
@@ -654,7 +654,7 @@ class WorkflowCountsByCPerformerQuery(
                 AND pw.account_id = %(account_id)s
                 AND ptra.user_id = %(user_id)s
                 AND ptp.directly_status NOT IN (
-                    '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+                    '{DirectlyStatus.DELETED}'
                 )
                 AND ag.is_deleted IS FALSE
                 AND ptp.group_id IS NOT NULL
@@ -683,7 +683,7 @@ class WorkflowCountsByCPerformerQuery(
                 AND pw.account_id = %(account_id)s
                 AND ptra.user_id = %(user_id)s
                 AND ptp.directly_status NOT IN (
-                    '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+                    '{DirectlyStatus.DELETED}'
                 )
                 AND ag.is_deleted IS FALSE
                 AND ptp.group_id IS NOT NULL
@@ -847,7 +847,7 @@ class WorkflowCountsByTemplateTaskQuery(
             WHERE pw.is_deleted IS FALSE
             AND pw.account_id = %(account_id)s
             AND ptp.directly_status NOT IN (
-                '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+                '{DirectlyStatus.DELETED}'
             ) """
 
         if self.template_ids:
@@ -874,7 +874,7 @@ class WorkflowCountsByTemplateTaskQuery(
                     {self._get_current_performer_group_ids()}
                 )
                 AND ptp.directly_status NOT IN (
-                    '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+                    '{DirectlyStatus.DELETED}'
                 )
                 AND pt.is_deleted IS FALSE
             """
@@ -883,7 +883,7 @@ class WorkflowCountsByTemplateTaskQuery(
                 {where}
                 AND {self._get_current_performer_ids()}
                 AND ptp.directly_status NOT IN (
-                    '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+                    '{DirectlyStatus.DELETED}'
                 )
                 AND pt.is_deleted IS FALSE
             """
@@ -892,7 +892,7 @@ class WorkflowCountsByTemplateTaskQuery(
                 {where}
                 AND {self._get_current_performer_group_ids()}
                 AND ptp.directly_status NOT IN (
-                    '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+                    '{DirectlyStatus.DELETED}'
                 )
                 AND pt.is_deleted IS FALSE
             """
@@ -1029,7 +1029,7 @@ class TaskListQuery(
             AND pw.account_id = %(account_id)s
             AND (ptp.user_id = %(assigned_to)s OR aug.user_id IS NOT NULL)
             AND ptp.directly_status NOT IN (
-                '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+                '{DirectlyStatus.DELETED}'
             )
             AND {self.get_is_completed_where()}
         """
@@ -1720,7 +1720,7 @@ class RunningTaskTemplateQuery(SqlQueryObject):
             ptp.user_id = %(user_id)s AND
             ptp.is_completed IS FALSE AND
             ptp.directly_status NOT IN (
-                '{DirectlyStatus.DELETED}', '{DirectlyStatus.DELEGATED}'
+                '{DirectlyStatus.DELETED}'
             )
           WHERE ptt.is_deleted IS FALSE AND
             ptt.template_id = %(template_id)s AND

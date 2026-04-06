@@ -115,7 +115,7 @@ class InviteUserSerializer(
         return value.lower()
 
     def validate_groups(self, value):
-        groups = UserGroup.objects.filter(
+        groups = UserGroup.objects.exclude_personal().filter(
             account=self.context['account_id'],
             id__in=value,
         )

@@ -616,7 +616,7 @@ export function* handleVacationDeactivate() {
     const result: IUserResponse = yield call(deactivateVacation);
     if (result) {
       yield put(vacationSuccess({
-        absenceStatus: result.absenceStatus || 'vacation',
+        absenceStatus: result.absenceStatus || 'active',
         vacationStartDate: result.vacationStartDate || null,
         vacationEndDate: result.vacationEndDate || null,
         substituteUserIds: result.substituteUserIds || [],

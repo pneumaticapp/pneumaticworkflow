@@ -111,6 +111,7 @@ export function TaskCard({
   accountId,
   users,
   authUser,
+  helpText,
   changeTaskWorkflowLog,
   setCurrentTask,
   setTaskCompleted,
@@ -139,7 +140,7 @@ export function TaskCard({
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
-  const helpText = workflow?.description ?? workflow?.description ?? null;
+  const helpTextLocal = helpText ?? workflow?.description ?? null;
 
   useEffect(() => {
     autoFocusFirstField(wrapperRef.current);
@@ -596,7 +597,7 @@ export function TaskCard({
         onClose={() => setIsReturnModalOpen(false)}
         onConfirm={handleReturnTask}
       />
-      {helpText && <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} helpText={helpText} />}
+      {helpTextLocal && <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} helpText={helpTextLocal} />}
       <div
         ref={wrapperRef}
         className={classnames(styles['container'], viewMode === ETaskCardViewMode.Guest && styles['container_guest'])}
@@ -645,7 +646,7 @@ export function TaskCard({
           styles['complete-form'],
           task.isReadOnlyViewer && styles['complete-form_readonly']
         )}>
-          {helpText && (
+          {helpTextLocal && (
             <button type="button" className={styles['help-trigger']} onClick={() => setIsHelpModalOpen(true)}>
               <span className={styles['help-trigger__label']}>
                 {formatMessage({ id: 'task.help', defaultMessage: 'Help' })}

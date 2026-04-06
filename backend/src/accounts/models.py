@@ -470,22 +470,6 @@ class User(AbstractUser, SoftDeleteModel):
         choices=AbsenceStatus.CHOICES,
         default=AbsenceStatus.ACTIVE,
     )
-    vacation_start_date = models.DateField(null=True, blank=True)
-    vacation_end_date = models.DateField(null=True, blank=True)
-    vacation_substitute_group = models.ForeignKey(
-        'accounts.UserGroup',
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        related_name='vacation_owners',
-    )
-    # Saved notification settings (for restoring after vacation)
-    _saved_notify_about_tasks = models.BooleanField(null=True)
-    _saved_is_new_tasks_subscriber = models.BooleanField(null=True)
-    _saved_is_complete_tasks_subscriber = models.BooleanField(
-        null=True,
-    )
-
     last_digest_send_time = models.DateTimeField(null=True)
     last_tasks_digest_send_time = models.DateTimeField(null=True)
 
@@ -702,3 +686,24 @@ class UserGroup(SoftDeleteModel):
 
     def __str__(self):
         return self.name
+
+
+class UserVacation(models.Model):
+
+    def __str__(self):
+        return f'{self.user.email} vacation'
+
+    user = models.OneToOneField(
+        'accounts.User',
+        on_delete=models.CASCADE,
+        related_name='vacation_schedule',
+    )
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    substitute_group = models.ForeignKey(
+        'accounts.UserGroup',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='vacation_owners',
+    )

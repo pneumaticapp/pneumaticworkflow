@@ -10,7 +10,6 @@ from django.utils import timezone
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
-from src.accounts.enums import AbsenceStatus
 from src.notifications.tasks import (
     send_complete_task_notification,
     send_delayed_workflow_notification,
@@ -23,7 +22,6 @@ from src.notifications.tasks import (
 from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
-    PerformerType,
     TaskStatus,
     WorkflowStatus,
 )
@@ -631,7 +629,6 @@ class WorkflowActionService:
         fields_values = self.workflow.get_fields_markdown_values()
         task_service.insert_fields_values(fields_values=fields_values)
         task.update_performers(restore_performers=True)
-        self._apply_vacation_delegation(task)
         task_performers_exists = (
             TaskPerformer.objects.exclude_directly_deleted().by_task(
                 task.id,
@@ -1070,75 +1067,6 @@ class WorkflowActionService:
                 revert_from_tasks=(revert_from_task,),
                 revert_to_tasks=revert_to_tasks,
             )
-
-    def _apply_vacation_delegation(self, task: Task):
-        """Intercept assignments on vacation users at task start.
-
-        For each USER performer who is currently absent
-        (vacation / sick leave) and has a substitute group:
-        — freeze the performer (DELEGATED)
-        — add the substitute group as a GROUP performer
-        — add substitute users to workflow.members
-        """
-
-        performers = (
-            TaskPerformer.objects
-            .filter(
-                task_id=task.id,
-                type=PerformerType.USER,
-                is_completed=False,
-                user__vacation_substitute_group__isnull=False,
-            )
-            .exclude(
-                user__absence_status=AbsenceStatus.ACTIVE,
-            )
-            .exclude(
-                directly_status=DirectlyStatus.DELETED,
-            )
-            .select_related('user__vacation_substitute_group')
-            .prefetch_related('user__vacation_substitute_group__users')
-        )
-        performers_to_update = []
-        group_performers_to_create = []
-        all_member_ids = set()
-
-        for performer in performers:
-            sub_group = performer.user.vacation_substitute_group
-
-            # Skip if substitute group is empty
-            sub_user_ids = list(
-                sub_group.users.values_list('id', flat=True),
-            )
-            if not sub_user_ids:
-                continue
-            performer.directly_status = DirectlyStatus.DELEGATED
-            performers_to_update.append(performer)
-            group_performers_to_create.append(
-                TaskPerformer(
-                    task_id=task.id,
-                    type=PerformerType.GROUP,
-                    group=sub_group,
-                ),
-            )
-            all_member_ids.update(sub_user_ids)
-            WorkflowEventService.task_delegation_event(
-                task=task,
-                user=performer.user,
-                substitute_group=sub_group,
-            )
-
-        if performers_to_update:
-            TaskPerformer.objects.bulk_update(
-                performers_to_update,
-                fields=['directly_status'],
-            )
-        if group_performers_to_create:
-            TaskPerformer.objects.bulk_create(
-                group_performers_to_create,
-                ignore_conflicts=True,
-            )
-        if all_member_ids:
-            task.workflow.members.add(*all_member_ids)
 
     def return_to(self, revert_to_task: Optional[Task] = None):
 

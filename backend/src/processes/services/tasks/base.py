@@ -140,37 +140,20 @@ class BasePerformersService:
             account_id=request_user.account.id,
             user_key=user_key,
         )
-        # If user is on vacation, add substitute group instead
-        # of user performer. The substitute group replaces
-        # the absent user entirely. CREATED (not NO_STATUS) is
-        # used because this is an admin-initiated addition via
-        # the API, consistent with normal performer creation below.
-        if user.is_absent and user.vacation_substitute_group_id:
-            task_performer, created = (
-                TaskPerformer.objects.get_or_create(
-                    task_id=task.id,
-                    type=PerformerType.GROUP,
-                    group_id=user.vacation_substitute_group_id,
-                    defaults={
-                        'directly_status': DirectlyStatus.CREATED,
-                    },
-                )
+        task_performer, created = (
+            TaskPerformer.objects.get_or_create(
+                task_id=task.id,
+                type=PerformerType.USER,
+                user_id=user.id,
+                defaults={
+                    'directly_status': DirectlyStatus.CREATED,
+                },
             )
-        else:
-            task_performer, created = (
-                TaskPerformer.objects.get_or_create(
-                    task_id=task.id,
-                    type=PerformerType.USER,
-                    user_id=user.id,
-                    defaults={
-                        'directly_status': DirectlyStatus.CREATED,
-                    },
-                )
-            )
-            if task_performer.directly_status == DirectlyStatus.DELETED:
-                task_performer.directly_status = DirectlyStatus.CREATED
-                task_performer.save(update_fields=['directly_status'])
-                created = True
+        )
+        if task_performer.directly_status == DirectlyStatus.DELETED:
+            task_performer.directly_status = DirectlyStatus.CREATED
+            task_performer.save(update_fields=['directly_status'])
+            created = True
         if created and run_actions:
             cls._create_actions(
                 task=task,

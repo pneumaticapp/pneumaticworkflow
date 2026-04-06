@@ -22,7 +22,7 @@ class Migration(migrations.Migration):
                 max_length=20,
             ),
         ),
-        # User vacation fields
+        # User.absence_status
         migrations.AddField(
             model_name='user',
             name='absence_status',
@@ -36,41 +36,15 @@ class Migration(migrations.Migration):
                 max_length=20,
             ),
         ),
-        migrations.AddField(
-            model_name='user',
-            name='vacation_start_date',
-            field=models.DateField(blank=True, null=True),
-        ),
-        migrations.AddField(
-            model_name='user',
-            name='vacation_end_date',
-            field=models.DateField(blank=True, null=True),
-        ),
-        migrations.AddField(
-            model_name='user',
-            name='vacation_substitute_group',
-            field=models.ForeignKey(
-                blank=True,
-                null=True,
-                on_delete=django.db.models.deletion.SET_NULL,
-                related_name='vacation_owners',
-                to='accounts.usergroup',
-            ),
-        ),
-        # Saved notification settings
-        migrations.AddField(
-            model_name='user',
-            name='_saved_notify_about_tasks',
-            field=models.BooleanField(null=True),
-        ),
-        migrations.AddField(
-            model_name='user',
-            name='_saved_is_new_tasks_subscriber',
-            field=models.BooleanField(null=True),
-        ),
-        migrations.AddField(
-            model_name='user',
-            name='_saved_is_complete_tasks_subscriber',
-            field=models.BooleanField(null=True),
+        # UserVacation model (normalized vacation data)
+        migrations.CreateModel(
+            name='UserVacation',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('start_date', models.DateField(blank=True, null=True)),
+                ('end_date', models.DateField(blank=True, null=True)),
+                ('substitute_group', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='vacation_owners', to='accounts.usergroup')),
+                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='vacation_schedule', to='accounts.user')),
+            ],
         ),
     ]

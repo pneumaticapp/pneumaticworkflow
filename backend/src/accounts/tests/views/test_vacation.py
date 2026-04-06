@@ -2,7 +2,7 @@ import pytest
 from datetime import date
 
 from src.accounts.enums import AbsenceStatus, UserGroupType
-from src.accounts.models import UserGroup
+from src.accounts.models import UserGroup, UserVacation
 from src.accounts.services.vacation import VacationDelegationService
 from src.accounts.tasks import process_vacation_schedules
 from src.processes.tests.fixtures import (
@@ -57,7 +57,7 @@ def test_vacation_activate__ok(api_client, mocker):
     owner.refresh_from_db()
     assert owner.is_absent is True
     assert owner.absence_status == AbsenceStatus.VACATION
-    assert owner.vacation_substitute_group is not None
+    assert owner.vacation_schedule.substitute_group is not None
 
 
 def test_vacation_deactivate__ok(api_client, mocker):
@@ -148,21 +148,21 @@ def test_schedule__auto_start__past_date__ok(mocker):
         'WorkflowEventService.task_delegation_event',
     )
 
-    # setup pre-activation state
+    # setup pre-activation state: create UserVacation with
+    # past start_date so process_vacation_schedules auto-starts
     group = UserGroup.objects.create(
         name='Substitutes Test',
         type=UserGroupType.PERSONAL,
         account=account,
     )
     group.users.set([substitute.id])
-    owner.vacation_substitute_group = group
-    owner.vacation_start_date = date(2020, 1, 1)
+    UserVacation.objects.create(
+        user=owner,
+        substitute_group=group,
+        start_date=date(2020, 1, 1),
+    )
     owner.absence_status = AbsenceStatus.ACTIVE
-    owner.save(update_fields=[
-        'vacation_substitute_group',
-        'vacation_start_date',
-        'absence_status',
-    ])
+    owner.save(update_fields=['absence_status'])
 
     # act
     process_vacation_schedules()

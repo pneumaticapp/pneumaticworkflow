@@ -110,13 +110,11 @@ class DirectlyStatus:
     NO_STATUS = 0
     DELETED = 1
     CREATED = 2
-    DELEGATED = 3
 
     CHOICES = (
         (NO_STATUS, 'no status'),
         (DELETED, 'deleted'),
         (CREATED, 'created'),
-        (DELEGATED, 'delegated'),
     )
 
 
@@ -639,7 +637,7 @@ class WorkflowEventType:
         (TASK_PERFORMER_CREATED, 'Performer group added to task'),
         (TASK_PERFORMER_DELETED, 'Performer group deleted from task'),
         (TASK_DELAY, 'Task snoozed from template'),
-        (TASK_DELEGATION, 'Task delegated (vacation)'),
+        (TASK_DELEGATION, 'Task delegated'),
     )
 
 

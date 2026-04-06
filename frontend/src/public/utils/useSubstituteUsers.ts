@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { TUserListItem } from '../types/user';
 import { getUserFullName } from './users';
 import { EOptionTypes, TUsersDropdownOption } from '../components/UI/form/UsersDropdown';
@@ -22,6 +22,10 @@ export function useSubstituteUsers(
   onChangeCallback?: (nextIds: number[]) => void,
 ): ISubstituteUsersResult {
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>(initialIds);
+
+  useEffect(() => {
+    setSelectedUserIds(initialIds);
+  }, [initialIds]);
 
   const mapUserOptions: TUsersDropdownOption[] = availableUsers.map((u) => ({
     ...u,

@@ -1306,6 +1306,6 @@ export const ruMessages = {
   'user-info.vacation.type.active': 'Активен',
   'user-info.vacation.activate': 'Активировать',
   'user-info.vacation.deactivate': 'Вернуться',
-  'user-info.vacation.activated-success': 'Vacation activated',
-  'user-info.vacation.deactivated-success': 'Vacation deactivated',
+  'user-info.vacation.activated-success': 'Отпуск активирован',
+  'user-info.vacation.deactivated-success': 'Отпуск деактивирован',
 };

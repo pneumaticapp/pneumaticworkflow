@@ -30,12 +30,12 @@ class ReassignSerializer(
         allow_null=True,
     )
     old_group = AccountPrimaryKeyRelatedField(
-        queryset=UserGroup.objects,
+        queryset=UserGroup.objects.exclude_personal(),
         required=False,
         allow_null=True,
     )
     new_group = AccountPrimaryKeyRelatedField(
-        queryset=UserGroup.objects,
+        queryset=UserGroup.objects.exclude_personal(),
         required=False,
         allow_null=True,
     )

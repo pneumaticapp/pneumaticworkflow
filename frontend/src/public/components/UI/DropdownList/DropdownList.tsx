@@ -115,6 +115,12 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
         restProps.staticMenu && 'is-static',
       )}
     >
+      {label && (
+        <p className={styles['dropdownlist-lg__label']}>
+          {label}
+          {restProps.isRequired && <span className={styles['is-required']}>*</span>}
+        </p>
+      )}
       <OutsideClickHandler onOutsideClick={() => setIsOpen(false)}>
         <Select
           isMulti={isMulti}
@@ -132,6 +138,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
           {...(restProps.staticMenu && { menuIsOpen: true })}
         />
       </OutsideClickHandler>
+      {restProps.errorMessage && <p className={styles['error-text']}>{restProps.errorMessage}</p>}
     </div>
   );
 }

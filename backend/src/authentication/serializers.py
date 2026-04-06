@@ -206,6 +206,18 @@ class ContextUserSerializer(
     date_fmt = DateFormatField(read_only=True)
     is_absent = serializers.BooleanField(read_only=True)
     substitute_user_ids = serializers.SerializerMethodField()
+    vacation_start_date = serializers.DateField(
+        source='vacation_schedule.start_date',
+        read_only=True,
+        allow_null=True,
+        default=None,
+    )
+    vacation_end_date = serializers.DateField(
+        source='vacation_schedule.end_date',
+        read_only=True,
+        allow_null=True,
+        default=None,
+    )
 
     def get_has_workflow_viewer_access(self, obj) -> bool:
         access = self._get_template_access(obj)

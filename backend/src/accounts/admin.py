@@ -250,9 +250,6 @@ class UsersAdmin(UserAdmin, SignUpMixin):
             'Vacation',
             {'fields': (
                 'absence_status',
-                'vacation_start_date',
-                'vacation_end_date',
-                'vacation_substitute_group',
             )},
         ),
     )

@@ -703,7 +703,6 @@ class TasksQuerySet(TasksBaseQuerySet):
             ) & ~Q(
                 taskperformer__directly_status__in=(
                     DirectlyStatus.DELETED,
-                    DirectlyStatus.DELEGATED,
                 ),
             ),
         )
@@ -730,7 +729,6 @@ class TasksQuerySet(TasksBaseQuerySet):
             ) & ~Q(
                 taskperformer__directly_status__in=(
                     DirectlyStatus.DELETED,
-                    DirectlyStatus.DELEGATED,
                 ),
             ),
         )
@@ -744,12 +742,10 @@ class TasksQuerySet(TasksBaseQuerySet):
         )
 
     def exclude_directly_deleted(self):
-        """Exclude tasks where performer has DELETED or
-        DELEGATED directly_status."""
+        """Exclude tasks where performer has DELETED directly_status."""
         return self.exclude(
             taskperformer__directly_status__in=(
                 DirectlyStatus.DELETED,
-                DirectlyStatus.DELEGATED,
             ),
         )
 
@@ -974,7 +970,6 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
         return self.exclude(
             directly_status__in=(
                 DirectlyStatus.DELETED,
-                DirectlyStatus.DELEGATED,
             ),
         )
 

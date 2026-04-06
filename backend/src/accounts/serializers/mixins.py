@@ -11,9 +11,10 @@ class VacationSubstituteMixin:
     def get_substitute_user_ids(
         self, instance: UserModel,
     ) -> List[int]:
-        if instance.vacation_substitute_group_id:
+        schedule = getattr(instance, 'vacation_schedule', None)
+        if schedule and instance.vacation_schedule.substitute_group_id:
             return list(
-                instance.vacation_substitute_group.users
+                instance.vacation_schedule.substitute_group.users
                 .values_list('id', flat=True),
             )
         return []
