@@ -192,5 +192,43 @@ class Migration(migrations.Migration):
         migrations.RunPython(
             code=migrate_drafts,
             reverse_code=migrations.RunPython.noop
-        )
+        ),
+        migrations.RunSQL("""
+            -- Delete duplicates from a processes_fieldtemplateselection
+            WITH duplicates AS (
+                SELECT
+                    s.id,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY s.field_template_id, s.value
+                        ORDER BY s.id
+                    ) AS rn
+                FROM processes_fieldtemplateselection s
+                INNER JOIN processes_template t ON t.id = s.template_id
+                INNER JOIN accounts_account a ON a.id = t.account_id
+                WHERE s.is_deleted = false
+                  AND a.billing_plan != 'free'
+                  AND a.plan_expiration > NOW()
+            )
+            DELETE FROM processes_fieldtemplateselection
+            WHERE id IN (SELECT id FROM duplicates WHERE rn > 1)
+        """),
+        migrations.RunSQL("""
+            -- Delete all duplicates from a processes_fieldselection
+            WITH duplicates AS (
+                SELECT
+                    s.id,
+                    ROW_NUMBER() OVER (
+                        PARTITION BY s.field_id, s.value
+                        ORDER BY s.id
+                    ) AS rn
+                FROM processes_fieldselection s
+                INNER JOIN processes_taskfield tf ON tf.id = s.field_id
+                INNER JOIN accounts_account a ON a.id = tf.account_id
+                WHERE s.is_deleted = false
+                  AND a.billing_plan != 'free'
+                  AND a.plan_expiration > NOW()
+            )
+            DELETE FROM processes_fieldselection
+            WHERE id IN (SELECT id FROM duplicates WHERE rn > 1)
+        """)
     ]
