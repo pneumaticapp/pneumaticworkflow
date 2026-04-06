@@ -1799,7 +1799,7 @@ def test_invite_users__ok(mocker):
     service.invite_users(data=[invite_data_1, invite_data_2])
 
     # assert
-    invite_user_mock.has_calls(
+    invite_user_mock.assert_has_calls(
         [
             mocker.call(**invite_data_1),
             mocker.call(**invite_data_2),
