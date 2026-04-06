@@ -32,7 +32,10 @@ from src.processes.filters import (
 )
 from src.datasets.models import DatasetItem
 from src.processes.models.workflows.event import WorkflowEvent
-from src.processes.models.workflows.fields import FieldSelection
+from src.processes.models.workflows.fields import (
+    TaskField,
+    FieldSelection,
+)
 from src.processes.models.workflows.task import (
     Task,
     TaskForList,
@@ -516,11 +519,25 @@ class TaskViewSet(
         response_slz = TaskSerializer(
             instance=Task.objects.prefetch_related(
                 Prefetch(
-                    'output__selections',
-                    queryset=FieldSelection.objects.only('value'),
-                    to_attr='selections_values',
+                    lookup='output',
+                    queryset=TaskField.objects.all().prefetch_related(
+                        Prefetch(
+                            lookup='selections',
+                            queryset=FieldSelection.objects.only('value'),
+                            to_attr='selections_values',
+                        ),
+                        Prefetch(
+                            'dataset__items',
+                            queryset=(
+                                DatasetItem.objects
+                                .only('value')
+                                .order_by('order')
+                            ),
+                            to_attr='dataset_values',
+                        ),
+                        'attachments',
+                    ),
                 ),
-                'output__attachments',
             ).get(pk=task.pk),
             context={'user': request.user},
         )
