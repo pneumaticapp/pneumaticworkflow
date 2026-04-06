@@ -35,6 +35,7 @@ from src.processes.models.templates.fields import (
 )
 from src.processes.models.templates.raw_due_date import RawDueDateTemplate
 from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import (
     TaskPerformer,
 )
@@ -49,6 +50,7 @@ from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_template,
     create_test_workflow,
+    create_test_dataset,
 )
 from src.utils.dates import date_format
 from src.utils.validation import ErrorCode
@@ -143,6 +145,46 @@ class TestPartialUpdateWorkflow:
         assert response.data['is_urgent'] == is_urgent
         assert response.data['kickoff']['output'][0]['value'] == field_value
         assert response.data['due_date_tsp'] == due_date.timestamp()
+
+    def test_update__kickoff_field_with_dataset__ok(
+        self,
+        api_client,
+    ):
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        dataset = create_test_dataset(account=account, items_count=1)
+        dataset_item = dataset.items.get(order=1)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        field = TaskField.objects.create(
+            type=FieldType.DROPDOWN,
+            name='dropdown',
+            kickoff=workflow.kickoff_instance,
+            value='',
+            workflow=workflow,
+            account=account,
+            dataset=dataset,
+        )
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.patch(
+            f'/workflows/{workflow.id}',
+            data={
+                'kickoff': {
+                    field.api_name: dataset_item.value,
+                },
+            },
+        )
+
+        # assert
+        assert response.status_code == 200
+        assert response.data['id'] == workflow.id
+        field_data = response.data['kickoff']['output'][0]
+        assert field_data['id'] == field.id
+        assert field_data['type'] == field.type
+        assert field_data['selections'] == [dataset_item.value]
+        assert field_data['value'] == dataset_item.value
 
     def test_update__task_markdown_description__ok(
         self,

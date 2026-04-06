@@ -10,6 +10,7 @@ from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError
 
+from src.datasets.models import DatasetItem
 from src.generics.fields import (
     AccountPrimaryKeyRelatedField,
     TimeStampField,
@@ -410,9 +411,17 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
                             queryset=FieldSelection.objects.only('value'),
                             to_attr='selections_values',
                         ),
+                        Prefetch(
+                            'dataset__items',
+                            queryset=(
+                                DatasetItem.objects
+                                .only('value')
+                                .order_by('order')
+                            ),
+                            to_attr='dataset_values',
+                        ),
                     ),
                 ),
-
             ).first()
         )
         if kickoff:
