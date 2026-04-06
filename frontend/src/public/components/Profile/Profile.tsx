@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
-import { Formik, Form, FormikConfig } from 'formik';
+import { Formik, Form, FormikConfig, useFormikContext } from 'formik';
 import { useDispatch } from 'react-redux';
 
 import {
@@ -54,6 +54,36 @@ export type TProfileFields = {
   timeformat: string;
   dateformat: string;
 };
+
+function ProfileManagerWithFormik({
+  currentUserId,
+  managerId,
+  editCurrentUser,
+}: {
+  currentUserId: number;
+  managerId: number | null;
+  editCurrentUser: (body: IUpdateUserRequest) => void;
+}) {
+  const { values } = useFormikContext<TProfileFields>();
+
+  return (
+    <fieldset className={styles['fields-group']}>
+      <ProfileManager
+        currentUserId={currentUserId}
+        managerId={managerId}
+        onManagerChange={(newManagerId) =>
+          editCurrentUser({
+            firstName: values.firstName,
+            lastName: values.lastName,
+            phone: values.phone,
+            dateFmt: `${values.dateformat} ${values.timeformat}`,
+            managerId: newManagerId,
+          })
+        }
+      />
+    </fieldset>
+  );
+}
 
 export function Profile({ user, editCurrentUser, sendChangePassword, onChangeTab }: IProfileProps) {
   const { formatMessage } = useIntl();
@@ -185,19 +215,11 @@ export function Profile({ user, editCurrentUser, sendChangePassword, onChangeTab
             />
           </fieldset>
 
-          <fieldset className={styles['fields-group']}>
-            <ProfileManager 
-              currentUserId={id} 
-              managerId={user.managerId || (user as any).manager_id || null} 
-              onManagerChange={(managerId) => editCurrentUser({ 
-                firstName,
-                lastName,
-                phone: phone || '',
-                dateFmt,
-                managerId 
-              })} 
-            />
-          </fieldset>
+          <ProfileManagerWithFormik
+            currentUserId={id}
+            managerId={user.managerId || (user as any).manager_id || null}
+            editCurrentUser={editCurrentUser}
+          />
 
           <fieldset className={styles['fields-group']}>
             <ProfileReports 

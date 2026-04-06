@@ -332,7 +332,7 @@ def test_after_transfer_actions__premium__ok(mocker):
     # assert
     identify_mock.assert_called_once_with(service.user)
     assert group_mock.call_count == 2
-    assert group_mock.has_calls(
+    group_mock.assert_has_calls(
         [
             mocker.call(service.prev_user),
             mocker.call(service.user),
@@ -397,7 +397,7 @@ def test_after_transfer_actions__unlimited__ok(mocker):
     # assert
     identify_mock.assert_called_once_with(service.user)
     assert group_mock.call_count == 2
-    assert group_mock.has_calls(
+    group_mock.assert_has_calls(
         [
             mocker.call(service.prev_user),
             mocker.call(service.user),
@@ -462,7 +462,7 @@ def test_after_transfer_actions__disable_billing__ok(mocker, plan):
     # assert
     identify_mock.assert_called_once_with(service.user)
     assert group_mock.call_count == 2
-    assert group_mock.has_calls(
+    group_mock.assert_has_calls(
         [
             mocker.call(service.prev_user),
             mocker.call(service.user),

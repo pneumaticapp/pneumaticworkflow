@@ -289,6 +289,7 @@ class UserService(
 
     def _deactivate(self):
         user = self.instance
+        old_manager = user.manager
         with transaction.atomic():
             subordinates = list(UserModel.objects.filter(manager=user))
             UserModel.objects.filter(manager=user).update(manager=None)
@@ -305,6 +306,10 @@ class UserService(
                     )
 
                 transaction.on_commit(notify)
+
+            if old_manager is not None:
+                user.manager = None
+                user.save(update_fields=('manager',))
 
             remove_user_from_draft(
                 account_id=user.account_id,
@@ -328,6 +333,13 @@ class UserService(
             )
             service.update_users_counts()
             self.identify(user)
+
+        if old_manager is not None:
+            send_user_updated_notification.delay(
+                logging=False,
+                account_id=self.account.id,
+                user_data=UserWebsocketSerializer(old_manager).data,
+            )
 
     def deactivate(self, skip_validation=False):
 
@@ -405,7 +417,21 @@ class UserService(
         current_report_ids = set(
             self.instance.subordinates.values_list('id', flat=True),
         )
-        changed_user_ids = current_report_ids ^ {r.id for r in reports}
+        new_report_ids = {r.id for r in reports}
+        changed_user_ids = current_report_ids ^ new_report_ids
+
+        # Collect old managers of users being reassigned
+        # (users leaving current manager or being added from another)
+        old_manager_ids = set()
+        if changed_user_ids:
+            old_manager_ids = set(
+                UserModel.objects.filter(
+                    id__in=changed_user_ids,
+                    manager__isnull=False,
+                ).exclude(
+                    manager=self.instance,
+                ).values_list('manager_id', flat=True),
+            )
 
         with transaction.atomic():
             self.instance.subordinates.set(reports)
@@ -434,5 +460,21 @@ class UserService(
                         )
 
                     transaction.on_commit(notify)
+
+            if old_manager_ids:
+                old_managers = UserModel.objects.filter(
+                    id__in=old_manager_ids,
+                )
+                for mgr in old_managers:
+                    ws_data_mgr = UserWebsocketSerializer(mgr).data
+
+                    def notify_mgr(data=ws_data_mgr):
+                        send_user_updated_notification.delay(
+                            logging=False,
+                            account_id=self.account.id,
+                            user_data=data,
+                        )
+
+                    transaction.on_commit(notify_mgr)
 
         return self.instance

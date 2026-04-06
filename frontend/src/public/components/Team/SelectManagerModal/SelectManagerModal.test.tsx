@@ -165,11 +165,66 @@ describe('SelectManagerModal', () => {
       dropdownProps.onChange({ value: '3', id: 3, label: 'Another Manager' });
 
       // act
-      userEvent.click(screen.getByTestId('btn-Save'));
+      userEvent.click(screen.getByTestId('btn-task.return-to.confirm'));
 
       // assert
       expect(mockOnConfirm).toHaveBeenCalledWith(3);
       expect(mockOnClose).toHaveBeenCalled();
+    });
+
+    it('кнопка Confirm имеет testid на основе intl id', () => {
+      // arrange & act
+      render(
+        <SelectManagerModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          currentManagerId={null}
+          currentUserId={1}
+        />
+      );
+
+      // assert
+      expect(screen.getByTestId('btn-task.return-to.confirm')).toBeInTheDocument();
+    });
+
+    it('вызывает onConfirm с null, если менеджер не выбран', () => {
+      // arrange
+      render(
+        <SelectManagerModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          currentManagerId={null}
+          currentUserId={1}
+        />
+      );
+
+      // act
+      userEvent.click(screen.getByTestId('btn-task.return-to.confirm'));
+
+      // assert
+      expect(mockOnConfirm).toHaveBeenCalledWith(null);
+      expect(mockOnClose).toHaveBeenCalled();
+    });
+
+    it('вызывает onClose при клике на Remove', () => {
+      // arrange
+      render(
+        <SelectManagerModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          currentManagerId={2}
+          currentUserId={1}
+        />
+      );
+
+      // act
+      userEvent.click(screen.getByTestId('btn-button.remove'));
+
+      // assert
+      expect(mockOnClose).toHaveBeenCalledTimes(1);
     });
   });
 });
