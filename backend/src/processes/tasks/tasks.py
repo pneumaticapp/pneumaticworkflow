@@ -109,17 +109,17 @@ def delegate_vacation_tasks():
                 ),
             )
             wf_ids.add(task.workflow_id)
-            WorkflowEventService.task_delegation_event(
-                task=task,
-                user=user,
-                substitute_group=sub_group,
-            )
-
         if performers_to_create:
             TaskPerformer.objects.bulk_create(
                 performers_to_create,
                 ignore_conflicts=True,
             )
+            for task in tasks:
+                WorkflowEventService.task_delegation_event(
+                    task=task,
+                    user=user,
+                    substitute_group=sub_group,
+                )
             sub_ids = list(
                 sub_group.users.values_list('id', flat=True),
             )

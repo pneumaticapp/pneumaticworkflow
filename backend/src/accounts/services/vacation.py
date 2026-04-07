@@ -90,9 +90,8 @@ class VacationDelegationService:
             )
 
             if (
-                self.user.is_absent
-                and has_vacation
-                and self.user.vacation_schedule.substitute_group
+                has_vacation
+                and self.user.vacation_schedule.substitute_group_id
             ):
                 self._update_existing(
                     substitute_user_ids=substitute_user_ids,
@@ -122,7 +121,15 @@ class VacationDelegationService:
 
         pairs = (
             TaskPerformer.objects
-            .filter(group=group)
+            .filter(
+                group=group,
+                is_completed=False,
+                task__status__in=[
+                    TaskStatus.ACTIVE,
+                    TaskStatus.DELAYED,
+                ],
+            )
+            .exclude_directly_deleted()
             .values_list('task_id', 'task__workflow_id')
         )
         task_ids = set()

@@ -18,6 +18,10 @@ from src.processes.services.tasks.base import (
 )
 from src.processes.services.tasks.exceptions import (
     PerformersServiceException,
+    GroupPerformerServiceException,
+)
+from src.processes.services.tasks.groups import (
+    GroupPerformerService,
 )
 from src.processes.services.workflow_action import (
     WorkflowActionService,
@@ -81,6 +85,24 @@ class TaskPerformersService(BasePerformersService):
             auth_type=auth_type,
             is_superuser=is_superuser,
         )
+
+        schedule = getattr(user, 'vacation_schedule', None)
+        sub_group_id = schedule.substitute_group_id if schedule else None
+        if sub_group_id:
+            try:
+                group_service = GroupPerformerService(
+                    user=request_user,
+                    task=task,
+                    is_superuser=is_superuser,
+                    auth_type=auth_type,
+                )
+                group_service.delete_performer(
+                    group_id=sub_group_id,
+                    run_actions=True,
+                )
+            except GroupPerformerServiceException:
+                pass
+
         if task.can_be_completed():
             first_completed_user = (
                 task.taskperformer_set.completed()

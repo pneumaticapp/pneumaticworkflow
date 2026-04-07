@@ -645,6 +645,119 @@ def test_activate__update_existing__status__ok(mocker):
     assert owner.absence_status == AbsenceStatus.SICK_LEAVE
 
 
+def test_activate__active_user_with_group__ok(mocker):
+
+    """
+    Reuses existing group if user is ACTIVE but has a scheduled vacation
+    (substitute_group_id exists).
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    substitute = create_test_admin(
+        account=account,
+        email='sub1@pneumatic.app',
+    )
+    mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+    service = VacationDelegationService(user=owner)
+
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    UserVacation.objects.create(
+        user=owner,
+        substitute_group=group,
+    )
+    owner.absence_status = AbsenceStatus.ACTIVE
+    owner.save(update_fields=['absence_status'])
+
+    # act
+    service.activate(substitute_user_ids=[substitute.id])
+
+    # assert
+    owner.refresh_from_db()
+
+    assert owner.vacation_schedule.substitute_group_id == group.id
+
+
+def test_activate__update_existing__filters_completed_tasks__ok(mocker):
+
+    """
+    Completed tasks and soft-deleted performers are ignored when updating.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    substitute = create_test_admin(account=account, email='sub1@pneumatic.app')
+
+    template = create_test_template(
+        user=owner,
+        tasks_count=2,
+        is_active=True,
+    )
+    workflow = create_test_workflow(user=owner, template=template)
+
+    task1 = workflow.tasks.order_by('number').first()
+    task2 = workflow.tasks.order_by('number').last()
+
+    task1.status = TaskStatus.COMPLETED
+    task1.save(update_fields=['status'])
+
+    TaskPerformer.objects.filter(task=task1).update(is_completed=True)
+
+    mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+    notify_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'send_vacation_delegation_notification.delay',
+    )
+
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    UserVacation.objects.create(
+        user=owner,
+        substitute_group=group,
+    )
+
+    TaskPerformer.objects.create(
+        task=task1,
+        group=group,
+        type=PerformerType.GROUP,
+        is_completed=True,
+        directly_status=DirectlyStatus.CREATED,
+    )
+    TaskPerformer.objects.create(
+        task=task2,
+        group=group,
+        type=PerformerType.GROUP,
+        is_completed=False,
+        directly_status=DirectlyStatus.DELETED,
+    )
+
+    owner.absence_status = AbsenceStatus.VACATION
+    owner.save(update_fields=['absence_status'])
+
+    service = VacationDelegationService(user=owner)
+
+    # act
+    service.activate(substitute_user_ids=[substitute.id])
+
+    # assert
+    notify_mock.assert_not_called()
+
+
 def test_activate__no_active_tasks__ok(mocker):
 
     """
@@ -772,10 +885,10 @@ def test_deactivate__no_group__ok():
     assert owner.absence_status == AbsenceStatus.ACTIVE
 
 
-def test_deactivate__restores_notifs__ok(mocker):
+def test_deactivate__preserves_notif_settings__ok(mocker):
 
     """
-    Restores notifications from saved values.
+    Preserves existing notification settings through activate/deactivate cycle.
     """
 
     # arrange
