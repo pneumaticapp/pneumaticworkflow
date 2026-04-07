@@ -445,9 +445,12 @@ class UserService(
         """Replace all current subordinates with the given list.
 
         Sends WS notifications to:
-        - self.instance (the manager)
         - Each changed subordinate
         - Each old manager who lost a subordinate
+
+        Does NOT notify self.instance (the manager) — the caller
+        (partial_update) sends that notification after refresh_from_db
+        to avoid duplicates.
 
         Uses transaction.on_commit so Celery tasks fire only after a
         successful commit.  The default-argument capture (data=ws_data)
@@ -474,15 +477,6 @@ class UserService(
 
         with transaction.atomic():
             self.instance.subordinates.set(subordinates)
-
-            ws_data = UserWebsocketSerializer(self.instance).data
-            transaction.on_commit(
-                lambda data=ws_data: send_user_updated_notification.delay(
-                    logging=self.account.log_api_requests,
-                    account_id=self.account.id,
-                    user_data=data,
-                ),
-            )
 
             if changed_user_ids:
                 changed_users = UserModel.objects.filter(

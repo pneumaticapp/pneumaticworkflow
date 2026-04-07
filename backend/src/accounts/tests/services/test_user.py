@@ -2100,8 +2100,8 @@ def test_update_subordinates__changed_users__ok(mocker):
     # assert
     assert result == manager
     assert list(manager.subordinates.all()) == [new_report]
-    # partial_update user notification + _update_subordinates (mgr + 2 changed)
-    assert send_user_updated_notification_delay_mock.call_count == 4
+    # partial_update user notification + _update_subordinates (2 changed)
+    assert send_user_updated_notification_delay_mock.call_count == 3
 
 
 def test_update_subordinates__no_changed_users__ok(mocker):
@@ -2129,8 +2129,8 @@ def test_update_subordinates__no_changed_users__ok(mocker):
     # assert
     assert result == manager
     assert list(manager.subordinates.all()) == [report]
-    # partial_update user notification + _update_subordinates (mgr only)
-    assert send_user_updated_notification_delay_mock.call_count == 2
+    # partial_update user notification only (no changed subordinates)
+    assert send_user_updated_notification_delay_mock.call_count == 1
 
 
 def test_deactivate__manager__subordinates_notified_and_cleared(mocker):
@@ -2395,9 +2395,9 @@ def test_update_subordinates__old_mgr_notified__ok(mocker):
     service.partial_update(subordinates=[report])
 
     # assert
-    # partial_update (new_mgr) + _update_subordinates (new_mgr + report
-    # + old_mgr) = 4
-    assert send_mock.call_count == 4
+    # partial_update (new_mgr) + _update_subordinates (report
+    # + old_mgr) = 3
+    assert send_mock.call_count == 3
     notified_ids = {
         call[1]['user_data']['id']
         for call in send_mock.call_args_list
@@ -2434,8 +2434,8 @@ def test_update_subordinates__no_old_mgr__no_extra_notify(mocker):
     service.partial_update(subordinates=[report])
 
     # assert
-    # partial_update (manager) + _update_subordinates (manager + report) = 3
-    assert send_mock.call_count == 3
+    # partial_update (manager) + _update_subordinates (report) = 2
+    assert send_mock.call_count == 2
     notified_ids = {
         call[1]['user_data']['id']
         for call in send_mock.call_args_list
@@ -2487,9 +2487,9 @@ def test_update_subordinates__report_moved_between_mgrs__old_mgr_notified(
     service.partial_update(subordinates=[report_a])
 
     # assert
-    # partial_update (new_mgr) + _update_subordinates (new_mgr + report_a
-    # + old_mgr) = 4
-    assert send_mock.call_count == 4
+    # partial_update (new_mgr) + _update_subordinates (report_a
+    # + old_mgr) = 3
+    assert send_mock.call_count == 3
     notified_ids = {
         call[1]['user_data']['id']
         for call in send_mock.call_args_list
@@ -2535,9 +2535,9 @@ def test_update_subordinates__same_mgr_report__skip_old_mgr_notify(mocker):
     service.partial_update(subordinates=[report_a, report_b])
 
     # assert
-    # partial_update (manager) + _update_subordinates (manager + report_b) = 3
+    # partial_update (manager) + _update_subordinates (report_b) = 2
     # report_a is not changed, no old_mgr (manager == self.instance)
-    assert send_mock.call_count == 3
+    assert send_mock.call_count == 2
     notified_ids = {
         call[1]['user_data']['id']
         for call in send_mock.call_args_list
@@ -2865,8 +2865,8 @@ def test_update_subs__from_other_mgr__notifies_all(mocker):
     # assert
     sub.refresh_from_db()
     assert sub.manager == new_mgr
-    # new_mgr + sub + old_mgr = 3
-    assert send_ws_mock.call_count == 3
+    # sub + old_mgr = 2 (manager notified by caller)
+    assert send_ws_mock.call_count == 2
 
 
 def test_deactivate__clears_own_manager__ok(mocker):

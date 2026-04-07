@@ -205,15 +205,9 @@ class UserSerializer(
                     break
                 ancestor_ids.add(current.id)
                 current = current.manager
-            sub_ids = {s.id for s in subordinates}
             for sub in subordinates:
                 if sub.id in ancestor_ids:
                     raise serializers.ValidationError(MSG_A_0050)
-            # Also reject a direct cycle: proposed manager listed
-            # as subordinate.
-            manager = attrs.get('manager')
-            if manager and manager.id in sub_ids:
-                raise serializers.ValidationError(MSG_A_0050)
 
         return attrs
 
