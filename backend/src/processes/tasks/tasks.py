@@ -70,6 +70,7 @@ def delegate_vacation_tasks():
             TaskPerformer.objects.filter(
                 user=user,
                 type=PerformerType.USER,
+                is_completed=False,
                 task__status__in=[
                     TaskStatus.ACTIVE,
                     TaskStatus.DELAYED,

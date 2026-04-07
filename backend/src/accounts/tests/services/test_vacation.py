@@ -1462,3 +1462,154 @@ def test_activate__no_tasks__skip_notif__ok(mocker):
 
     # assert
     send_notif_mock.assert_not_called()
+
+
+def test_activate_new__skips_completed_grp_perfs__ok(mocker):
+
+    """
+    _activate_new skips group performers with is_completed=True
+    when building the set of tasks to delegate from regular groups.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    member = create_test_admin(
+        account=account,
+        email='member@pneumatic.app',
+    )
+    substitute = create_test_admin(
+        account=account,
+        email='sub@pneumatic.app',
+    )
+    regular_group = create_test_group(
+        account=account,
+        name='Dev Team',
+        users=[owner, member],
+    )
+    template = create_test_template(
+        user=member,
+        tasks_count=1,
+        is_active=True,
+    )
+    workflow = create_test_workflow(
+        user=member,
+        template=template,
+    )
+    task = workflow.tasks.get(status=TaskStatus.ACTIVE)
+
+    # add completed group performer to task
+    TaskPerformer.objects.create(
+        task=task,
+        type=PerformerType.GROUP,
+        group=regular_group,
+        is_completed=True,
+    )
+
+    # remove USER performer for owner (test group path)
+    TaskPerformer.objects.filter(
+        task=task,
+        user_id=owner.id,
+        type=PerformerType.USER,
+    ).delete()
+
+    event_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+
+    # act
+    service = VacationDelegationService(user=owner)
+    service.activate(substitute_user_ids=[substitute.id])
+
+    # assert
+    owner.refresh_from_db()
+    sub_group = owner.vacation_schedule.substitute_group
+    sub_perf_exists = TaskPerformer.objects.filter(
+        task=task,
+        type=PerformerType.GROUP,
+        group=sub_group,
+    ).exists()
+    assert sub_perf_exists is False
+    event_mock.assert_not_called()
+
+
+def test_update_existing__skips_completed_grp_perfs__ok(
+    mocker,
+):
+
+    """
+    _update_existing skips group performers with
+    is_completed=True when scanning regular groups.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    member = create_test_admin(
+        account=account,
+        email='member@pneumatic.app',
+    )
+    substitute = create_test_admin(
+        account=account,
+        email='sub@pneumatic.app',
+    )
+    regular_group = create_test_group(
+        account=account,
+        name='Dev Team',
+        users=[owner, member],
+    )
+    template = create_test_template(
+        user=member,
+        tasks_count=1,
+        is_active=True,
+    )
+    workflow = create_test_workflow(
+        user=member,
+        template=template,
+    )
+    task = workflow.tasks.get(status=TaskStatus.ACTIVE)
+
+    # add completed group performer to task
+    TaskPerformer.objects.create(
+        task=task,
+        type=PerformerType.GROUP,
+        group=regular_group,
+        is_completed=True,
+    )
+
+    # remove USER performer for owner
+    TaskPerformer.objects.filter(
+        task=task,
+        user_id=owner.id,
+        type=PerformerType.USER,
+    ).delete()
+
+    event_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+
+    # Pre-configure vacation with substitute group
+    sub_group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    UserVacation.objects.create(
+        user=owner,
+        substitute_group=sub_group,
+    )
+
+    # act
+    service = VacationDelegationService(user=owner)
+    service.activate(substitute_user_ids=[substitute.id])
+
+    # assert
+    sub_perf_exists = TaskPerformer.objects.filter(
+        task=task,
+        type=PerformerType.GROUP,
+        group=sub_group,
+    ).exists()
+    assert sub_perf_exists is False
+    event_mock.assert_not_called()

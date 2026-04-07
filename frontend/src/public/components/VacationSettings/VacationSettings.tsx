@@ -6,11 +6,10 @@ import { Button } from '../UI/Buttons/Button';
 import { Header } from '../UI/Typeography/Header';
 import { DropdownList } from '../UI/DropdownList';
 import { DateField } from '../UI/Fields/DateField';
-import { UsersDropdown } from '../UI/form/UsersDropdown';
+import { UsersDropdown, TUsersDropdownOption } from '../UI/form/UsersDropdown';
 import { UserPerformer, EBgColorTypes } from '../UI/UserPerformer';
 import { TUserListItem } from '../../types/user';
 import { ETaskPerformerType } from '../../types/template';
-import { TUsersDropdownOption } from '../UI/form/UsersDropdown';
 import { formatDateLocal } from '../../utils/formatDateLocal';
 import { useSubstituteUsers } from '../../utils/useSubstituteUsers';
 
@@ -166,7 +165,14 @@ export function VacationSettings({
                 inviteLabel=""
                 onClickInvite={NOOP}
                 isRequired
-                errorMessage={hasSubmitted && selectedUserIds.length === 0 ? formatMessage({ id: 'validation.required', defaultMessage: 'Please select at least one substitute.' }) : undefined}
+                errorMessage={
+                  hasSubmitted && selectedUserIds.length === 0
+                    ? formatMessage({
+                      id: 'validation.required',
+                      defaultMessage: 'Please select at least one substitute.',
+                    })
+                    : undefined
+                }
               />
               {selectedUserOptions.length > 0 && (
                 <div className={styles['selected-users']}>

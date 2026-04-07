@@ -362,8 +362,7 @@ export function TaskCard({
     return (
       <>
         {authUser.isAdmin && !task.isReadOnlyViewer && (
-          <>
-            <UsersDropdown
+          <UsersDropdown
               isMulti
               controlSize="sm"
               className={styles['responsible']}
@@ -377,8 +376,6 @@ export function TaskCard({
               inviteLabel={formatMessage({ id: 'template.invite-team-member' })}
               title={formatMessage({ id: 'task.add-performer' })}
             />
-
-          </>
         )}
 
         {viewMode !== ETaskCardViewMode.Guest && !task.isReadOnlyViewer && (

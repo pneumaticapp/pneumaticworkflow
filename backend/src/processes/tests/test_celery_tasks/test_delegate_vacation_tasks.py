@@ -217,3 +217,66 @@ def test_delegate_vacation_tasks__no_active_tasks__ok(mocker):
 
     # assert
     event_mock.assert_not_called()
+
+
+def test_delegate__skips_completed_performers__ok(mocker):
+
+    """
+    Skips user performers with is_completed=True so that
+    tasks where the user already finished are not delegated.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    substitute = create_test_admin(
+        account=account,
+        email='sub1@pneumatic.app',
+    )
+
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group.users.add(substitute)
+    UserVacation.objects.create(
+        user=owner,
+        substitute_group=group,
+    )
+    owner.absence_status = AbsenceStatus.VACATION
+    owner.save(update_fields=['absence_status'])
+
+    template = create_test_template(
+        user=owner,
+        tasks_count=1,
+        is_active=True,
+    )
+    workflow = create_test_workflow(
+        user=owner,
+        template=template,
+    )
+    task = workflow.tasks.first()
+
+    # mark user performer as completed
+    TaskPerformer.objects.filter(
+        task=task,
+        user_id=owner.id,
+        type=PerformerType.USER,
+    ).update(is_completed=True)
+
+    event_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+
+    # act
+    delegate_vacation_tasks()
+
+    # assert
+    assert not TaskPerformer.objects.filter(
+        task=task,
+        group=group,
+        type=PerformerType.GROUP,
+    ).exists()
+    event_mock.assert_not_called()

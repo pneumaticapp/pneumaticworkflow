@@ -189,6 +189,7 @@ class VacationDelegationService:
                 .filter(
                     group_id__in=user_group_ids,
                     type=PerformerType.GROUP,
+                    is_completed=False,
                     task__status__in=[
                         TaskStatus.ACTIVE,
                         TaskStatus.DELAYED,
@@ -315,6 +316,7 @@ class VacationDelegationService:
                 .filter(
                     group_id__in=user_group_ids,
                     type=PerformerType.GROUP,
+                    is_completed=False,
                     task__status__in=[
                         TaskStatus.ACTIVE,
                         TaskStatus.DELAYED,
