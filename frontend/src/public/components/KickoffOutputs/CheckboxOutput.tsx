@@ -17,7 +17,7 @@ export function CheckboxOutput({
 
   const renderSelections = () => {
     const defaultValue = formatMessage({ id: 'template.kick-off-form-unfilled-value' });
-    const displayValue = value || defaultValue;
+    const displayValue = Array.isArray(value) ? value.join(', ') : (value || defaultValue);
 
     return (
       <span className={styles['output__text']}>

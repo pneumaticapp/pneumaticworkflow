@@ -24,7 +24,23 @@ export async function getClonedKickoff(
     fields.filter(Boolean),
   )) as IExtraField[];
 
-  return { ...kickoff, fields: normalizedKickoffFields };
+  const finalFields = normalizedKickoffFields.map((field) => {
+    if (field.type !== EExtraFieldType.Checkbox) {
+      return field;
+    }
+
+    if (Array.isArray(field.value)) {
+      return field;
+    }
+
+    const arrayValue = typeof field.value === 'string' && field.value !== ''
+      ? field.value.split(', ')
+      : [];
+
+    return { ...field, value: arrayValue as TExtraFieldValue };
+  });
+
+  return { ...kickoff, fields: finalFields };
 }
 
 function cloneFieldSelections(field: IExtraField, templateField: IExtraField): IExtraField {
@@ -35,7 +51,9 @@ function cloneFieldSelections(field: IExtraField, templateField: IExtraField): I
   let normalizedValue = field.value;
 
   if (normalizedValue) {
-    const parts = (normalizedValue as string).split(', ');
+    const parts = Array.isArray(normalizedValue)
+      ? normalizedValue
+      : (normalizedValue as string).split(', ');
     const filtered = parts.filter((value) => templateValues.includes(value));
 
     if (field.type === EExtraFieldType.Checkbox) {
@@ -63,7 +81,7 @@ async function cloneAttachments(field: IExtraField): Promise<IExtraField> {
     return { ...attachment, id: attachmentsMap.get(attachment.id) } as TUploadedFile;
   }) as TUploadedFile[];
 
-  const normalizedValue = Array.isArray(field.value)
+  const normalizedValue = (field.type === EExtraFieldType.File && Array.isArray(field.value))
     ? (field.value
         .map((fileId) => {
           const newValue = attachmentsMap.get(Number(fileId));
