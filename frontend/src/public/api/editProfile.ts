@@ -25,19 +25,3 @@ export function editProfile(body: IUpdateUserRequest) {
       method: 'PUT',
     });
 }
-
-export function editProfileManager(managerId: number | null) {
-  if (managerId === null) {
-    return commonRequest<any>(
-      '/accounts/user/remove-manager',
-      { method: 'POST' }
-    );
-  }
-  return commonRequest<any>(
-    '/accounts/user/set-manager',
-    {
-      data: mapRequestBody({ managerId }),
-      method: 'POST',
-    }
-  );
-}

@@ -11,7 +11,7 @@ export interface IAuthenticatedUser {
   is_account_owner: boolean;
   is_admin: boolean;
   manager_id: number | null;
-  report_ids: number[];
+  subordinates: number[];
 }
 
 export interface IAuthenticatedAccount {

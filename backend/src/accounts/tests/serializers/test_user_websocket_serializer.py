@@ -8,7 +8,7 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-def test_user_websocket_serializer__report_ids__ok():
+def test_user_websocket_serializer__subordinates__ok():
     # arrange
     account = create_test_account()
     manager = create_test_not_admin(account=account)
@@ -20,7 +20,7 @@ def test_user_websocket_serializer__report_ids__ok():
     data = serializer.data
 
     # assert
-    assert data['report_ids'] == [report.id]
+    assert data['subordinates'] == [report.id]
     assert data['manager_id'] is None
 
 
@@ -38,4 +38,4 @@ def test_user_websocket_serializer__manager_id__ok():
 
     # assert
     assert data['manager_id'] == manager.id
-    assert data['report_ids'] == []
+    assert data['subordinates'] == []

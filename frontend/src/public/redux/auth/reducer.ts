@@ -59,9 +59,21 @@ const EMPTY_USER: IAuthUser = {
   reportIds: [],
 };
 
+/**
+ * Normalize API response field `subordinates` to internal `reportIds`.
+ * The backend returns `subordinates`, but internal Redux state uses `reportIds`.
+ */
+function normalizeSubordinates(data: Record<string, any>): Record<string, any> {
+  if (data && 'subordinates' in data && !('reportIds' in data)) {
+    const { subordinates, ...rest } = data;
+    return { ...rest, reportIds: subordinates };
+  }
+  return data;
+}
+
 export const INIT_STATE: IAuthUser = {
   ...EMPTY_USER,
-  ...mapToCamelCase(getBrowserConfig().user),
+  ...normalizeSubordinates(mapToCamelCase(getBrowserConfig().user) as Record<string, any>),
 } as IAuthUser;
 
 // eslint-disable-next-line @typescript-eslint/default-param-last
@@ -70,12 +82,12 @@ export const reducer = (state = INIT_STATE, action: TAuthActions | { type: strin
     case EAuthActions.AuthUser:
       return { ...state, loading: true };
     case EAuthActions.AuthUserSuccess:
-      return { ...state, loading: false, loggedState: ELoggedState.LoggedIn, ...action.payload };
+      return { ...state, loading: false, loggedState: ELoggedState.LoggedIn, ...normalizeSubordinates(action.payload as Record<string, any>) };
     case EAuthActions.ChangePasswordSuccess:
     case EAuthActions.EditUserSuccess:
     case EAuthActions.RegisterUserSuccess:
     case EAuthActions.ResetPasswordSuccess:
-      return { ...state, loading: false, ...action.payload };
+      return { ...state, loading: false, ...normalizeSubordinates(action.payload as Record<string, any>) };
     case EAuthActions.EditAccountSuccess:
       return { ...state, loading: false, account: { ...state.account, ...action.payload } };
     case EAuthActions.ChangePassword:

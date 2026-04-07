@@ -1,16 +1,16 @@
 import { commonRequest } from './commonRequest';
 import { mapRequestBody } from '../utils/mappers';
 
-export interface IUpdateReportsRequest {
-  reportIds: number[];
+export interface IUpdateSubordinatesRequest {
+  subordinates: number[];
 }
 
-export function updateReports(id: number, body: IUpdateReportsRequest) {
+export function updateSubordinates(id: number, body: IUpdateSubordinatesRequest) {
   return commonRequest<any>(
-    `/accounts/users/${id}/set-reports`,
+    `/accounts/users/${id}`,
     {
       data: mapRequestBody(body),
-      method: 'POST',
+      method: 'PATCH',
     }
   );
 }

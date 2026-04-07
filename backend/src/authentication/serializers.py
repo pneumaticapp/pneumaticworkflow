@@ -16,7 +16,6 @@ from src.authentication.messages import (
 from src.generics.fields import (
     DateFormatField,
     TimeStampField,
-    RelatedListField,
 )
 from src.generics.mixins.services import EncryptionMixin
 from src.generics.serializers import CustomValidationErrorMixin
@@ -192,7 +191,7 @@ class ContextUserSerializer(serializers.ModelSerializer):
             'has_workflow_viewer_access',
             'has_workflow_starter_access',
             'manager_id',
-            'report_ids',
+            'subordinates',
         )
 
     account = ContextAccountSerializer()
@@ -205,9 +204,8 @@ class ContextUserSerializer(serializers.ModelSerializer):
         read_only=True,
         allow_null=True,
     )
-    report_ids = RelatedListField(
-        source='subordinates',
-        child=serializers.IntegerField(),
+    subordinates = serializers.PrimaryKeyRelatedField(
+        many=True,
         read_only=True,
     )
 

@@ -358,7 +358,7 @@ def test_after_transfer_actions__premium__ok(mocker):
             'is_admin': user.is_admin,
             'is_account_owner': user.is_account_owner,
             'manager_id': None,
-            'report_ids': [],
+            'subordinates': [],
         },
     )
 
@@ -419,7 +419,7 @@ def test_after_transfer_actions__unlimited__ok(mocker):
             'is_admin': user.is_admin,
             'is_account_owner': user.is_account_owner,
             'manager_id': None,
-            'report_ids': [],
+            'subordinates': [],
         },
     )
 
@@ -484,7 +484,7 @@ def test_after_transfer_actions__disable_billing__ok(mocker, plan):
             'is_admin': user.is_admin,
             'is_account_owner': user.is_account_owner,
             'manager_id': None,
-            'report_ids': [],
+            'subordinates': [],
         },
     )
 

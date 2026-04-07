@@ -17,8 +17,6 @@ from src.accounts.serializers.user import (
     ContactRequestSerializer,
     ContactResponseSerializer,
     UserSerializer,
-    SetManagerSerializer,
-    SetReportsSerializer,
 )
 from src.accounts.services.exceptions import UserServiceException
 from src.accounts.services.user import UserService
@@ -51,8 +49,6 @@ class UserViewSet(
     }
     action_serializer_classes = {
         'contacts': ContactResponseSerializer,
-        'set_manager': SetManagerSerializer,
-        'set_reports': SetReportsSerializer,
     }
 
     def get_serializer_context(self, **kwargs):
@@ -111,7 +107,7 @@ class UserViewSet(
 
     def put(self, request, *args, **kwargs):
         user = request.user
-        slz = self.get_serializer(data=request.data)
+        slz = self.get_serializer(instance=user, data=request.data)
         slz.is_valid(raise_exception=True)
         service = UserService(
             user=user,
@@ -127,69 +123,3 @@ class UserViewSet(
         except UserServiceException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok(UserSerializer(instance=user).data)
-
-    @action(detail=False, methods=('post',), url_path='set-manager')
-    def set_manager(self, request, *args, **kwargs):
-        user = request.user
-        slz = self.get_serializer(instance=user, data=request.data)
-        slz.is_valid(raise_exception=True)
-        service = UserService(
-            user=user,
-            instance=user,
-            is_superuser=request.is_superuser,
-            auth_type=request.token_type,
-        )
-        try:
-            user = service.partial_update(
-                **slz.validated_data,
-                force_save=True,
-            )
-        except UserServiceException as ex:
-            raise_validation_error(message=ex.message)
-        return self.response_ok(
-            UserSerializer(
-                instance=user, context=self.get_serializer_context(),
-            ).data,
-        )
-
-    @action(detail=False, methods=('post',), url_path='set-reports')
-    def set_reports(self, request, *args, **kwargs):
-        user = request.user
-        slz = self.get_serializer(instance=user, data=request.data)
-        slz.is_valid(raise_exception=True)
-        service = UserService(
-            user=user,
-            instance=user,
-            is_superuser=request.is_superuser,
-            auth_type=request.token_type,
-        )
-        try:
-            user = service.set_reports(
-                reports=slz.validated_data['report_ids'],
-            )
-        except UserServiceException as ex:
-            raise_validation_error(message=ex.message)
-        return self.response_ok(
-            UserSerializer(
-                instance=user, context=self.get_serializer_context(),
-            ).data,
-        )
-
-    @action(detail=False, methods=('post',), url_path='remove-manager')
-    def remove_manager(self, request, *args, **kwargs):
-        user = request.user
-        service = UserService(
-            user=user,
-            instance=user,
-            is_superuser=request.is_superuser,
-            auth_type=request.token_type,
-        )
-        try:
-            user = service.partial_update(manager=None, force_save=True)
-        except UserServiceException as ex:
-            raise_validation_error(message=ex.message)
-        return self.response_ok(
-            UserSerializer(
-                instance=user, context=self.get_serializer_context(),
-            ).data,
-        )

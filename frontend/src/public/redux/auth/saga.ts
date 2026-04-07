@@ -49,7 +49,7 @@ import { setOAuthRegistrationCompleted } from '../../api/setOAuthRegistrationCom
 import { TUserInvited } from '../../types/user';
 import { getAuthUser, getInvitedUser } from '../selectors/user';
 import { getOAuthId, getOAuthType } from '../../utils/auth';
-import { editProfile, editProfileManager, IUpdateUserRequest, IUpdateUserResponse, TUpdateUserMappedResponse } from '../../api/editProfile';
+import { editProfile, IUpdateUserRequest, IUpdateUserResponse, TUpdateUserMappedResponse } from '../../api/editProfile';
 import { logger } from '../../utils/logger';
 import { mapToCamelCase } from '../../utils/mappers';
 import { resetPassword } from '../../api/resetPassword';
@@ -318,15 +318,9 @@ export const updateUserAsync = (body: IUpdateUserRequest) =>
 
 export function* editCurrentProfile({ payload }: TEditUser) {
   try {
-    const { managerId, ...restPayload } = payload;
-    const result: IUpdateUserResponse | void = yield call(updateUserAsync, restPayload);
+    const result: IUpdateUserResponse | void = yield call(updateUserAsync, payload);
     if (!result) {
       return;
-    }
-
-    if (managerId !== undefined) {
-      yield call(editProfileManager, managerId);
-      (result as any).manager_id = managerId;
     }
 
     NotificationManager.success({

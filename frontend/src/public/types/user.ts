@@ -23,6 +23,7 @@ export interface IUnsavedUser {
   dateFdw: string;
   managerId?: number | null;
   reportIds?: number[];
+  subordinates?: number[];
 }
 
 export enum EUserDropdownOptionType {
@@ -33,7 +34,7 @@ export enum EUserDropdownOptionType {
 export type TUserListItem = Pick<
   IUnsavedUser,
   'email' | 'isAdmin' | 'isAccountOwner' | 'firstName' | 'lastName' |
-  'phone' | 'photo' | 'invite' | 'type' | 'managerId' | 'reportIds'
+  'phone' | 'photo' | 'invite' | 'type' | 'managerId' | 'reportIds' | 'subordinates'
 > & {
   id: number;
   status: EUserStatus;
@@ -118,6 +119,7 @@ export interface ICreateUserRequest {
   groups?: number[];
   managerId?: number | null;
   reportIds?: number[];
+  subordinates?: number[];
 }
 
 export interface IUserResponse {
@@ -147,4 +149,5 @@ export interface IUserResponse {
   invite: UserInvite | null;
   managerId: number | null;
   reportIds: number[];
+  subordinates: number[];
 }

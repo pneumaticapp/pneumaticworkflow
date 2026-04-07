@@ -79,7 +79,7 @@ class UserSerializer(
             'groups',
             'password',
             'manager_id',
-            'report_ids',
+            'subordinates',
         )
         read_only_fields = (
             'id',
@@ -103,14 +103,16 @@ class UserSerializer(
     date_fmt = DateFormatField(required=False)
     invite = serializers.SerializerMethodField(allow_null=True, read_only=True)
     password = serializers.CharField(write_only=True, required=False)
-    manager_id = serializers.IntegerField(
-        read_only=True,
+    manager_id = serializers.PrimaryKeyRelatedField(
+        queryset=UserModel.objects.none(),
+        required=False,
         allow_null=True,
+        source='manager',
     )
-    report_ids = RelatedListField(
-        source='subordinates',
-        child=serializers.IntegerField(),
-        read_only=True,
+    subordinates = serializers.PrimaryKeyRelatedField(
+        many=True,
+        queryset=UserModel.objects.none(),
+        required=False,
     )
 
     def get_invite(self, instance: UserModel):
@@ -124,10 +126,69 @@ class UserSerializer(
             self.fields['language'].choices = Language.CHOICES
         else:
             self.fields['language'].choices = Language.EURO_CHOICES
+        # Restrict manager/subordinates to active users of the same
+        # account.  Context is absent during read-only serialization
+        # (e.g. UserSerializer(instance=user).data) — the default
+        # empty queryset is harmless for reads.
+        if 'account' in self.context:
+            account_id = self.context['account'].id
+            active_qs = UserModel.objects.on_account(account_id).active()
+            self.fields['manager_id'].queryset = active_qs
+            self.fields[
+                'subordinates'
+            ].child_relation.queryset = active_qs
 
     def validate_is_admin(self, value):
         if value is True and not self.context['user'].is_admin:
             raise serializers.ValidationError(MSG_A_0046)
+        return value
+
+    def validate_manager_id(self, value):
+        """Validate the proposed manager assignment.
+
+        1. A user cannot be their own manager (MSG_A_0049).
+        2. Walk **up** the proposed manager's own chain: if we
+           encounter self.instance it means it is already an ancestor
+           of the proposed manager, so assigning them would create a
+           circular hierarchy (MSG_A_0050).
+        """
+        if value is None:
+            return value
+        if self.instance and value.id == self.instance.id:
+            raise serializers.ValidationError(MSG_A_0049)
+        if self.instance:
+            current = value
+            visited = set()
+            while current:
+                if current.id in visited:
+                    break
+                if current.id == self.instance.id:
+                    raise serializers.ValidationError(MSG_A_0050)
+                visited.add(current.id)
+                current = current.manager
+        return value
+
+    def validate_subordinates(self, value):
+        """Validate the proposed subordinates list.
+
+        Collect all ancestors of self.instance (walking up the manager
+        chain).  If any proposed subordinate is an ancestor, assigning
+        them as a subordinate would create a circular hierarchy.
+        """
+        if not self.instance or not value:
+            return value
+        ancestor_ids = set()
+        current = self.instance
+        while current:
+            if current.id in ancestor_ids:
+                break
+            ancestor_ids.add(current.id)
+            current = current.manager
+        for sub in value:
+            if sub.id == self.instance.id:
+                raise serializers.ValidationError(MSG_A_0049)
+            if sub.id in ancestor_ids:
+                raise serializers.ValidationError(MSG_A_0050)
         return value
 
     def validate(self, attrs):
@@ -256,81 +317,6 @@ class ContactRequestSerializer(
     offset = serializers.IntegerField(required=False)
 
 
-class SetManagerSerializer(
-    CustomValidationErrorMixin,
-    serializers.ModelSerializer,
-):
-    class Meta:
-        model = UserModel
-        fields = ('manager_id',)
-
-    manager_id = serializers.PrimaryKeyRelatedField(
-        queryset=UserModel.objects.all(),
-        required=True,
-        allow_null=False,
-        source='manager',
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['manager_id'].queryset = UserModel.objects.on_account(
-            self.context['account'].id,
-        ).active()
-
-    def validate_manager_id(self, value):
-        if value.id == self.instance.id:
-            raise serializers.ValidationError(MSG_A_0049)
-
-        current_manager = value
-        visited = set()
-        while current_manager:
-            if current_manager.id in visited:
-                break
-            if current_manager.id == self.instance.id:
-                raise serializers.ValidationError(MSG_A_0050)
-            visited.add(current_manager.id)
-            current_manager = current_manager.manager
-
-        return value
-
-
-class SetReportsSerializer(
-    CustomValidationErrorMixin,
-    serializers.Serializer,
-):
-    report_ids = serializers.PrimaryKeyRelatedField(
-        queryset=UserModel.objects.all(),
-        required=True,
-        allow_null=False,
-        many=True,
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields[
-            'report_ids'
-        ].child_relation.queryset = UserModel.objects.on_account(
-            self.context['account'].id,
-        ).active()
-
-    def validate_report_ids(self, value):
-        manager_ids = set()
-        current_manager = self.instance
-        while current_manager:
-            if current_manager.id in manager_ids:
-                break
-            manager_ids.add(current_manager.id)
-            current_manager = current_manager.manager
-
-        for report in value:
-            if report.id == self.instance.id:
-                raise serializers.ValidationError(MSG_A_0049)
-            if report.id in manager_ids:
-                raise serializers.ValidationError(MSG_A_0050)
-
-        return value
-
-
 class ContactResponseSerializer(serializers.ModelSerializer):
 
     class Meta:
@@ -358,11 +344,10 @@ class UserWebsocketSerializer(serializers.ModelSerializer):
             'is_admin',
             'is_account_owner',
             'manager_id',
-            'report_ids',
+            'subordinates',
         )
 
-    report_ids = RelatedListField(
-        source='subordinates',
-        child=serializers.IntegerField(),
+    subordinates = serializers.PrimaryKeyRelatedField(
+        many=True,
         read_only=True,
     )

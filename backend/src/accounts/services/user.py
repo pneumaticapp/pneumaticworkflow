@@ -287,25 +287,36 @@ class UserService(
         if user_is_last_performer(self.instance):
             raise UserIsPerformerException
 
+    def _deactivate_subordinates(self):
+        """Clear the manager FK on all subordinates of the deactivated
+        user and schedule WebSocket notifications.
+
+        Uses transaction.on_commit so Celery tasks fire only after a
+        successful commit.  The default-argument capture (data=ws_data)
+        prevents closure-variable rebinding across loop iterations.
+        """
+        user = self.instance
+        subordinates = list(UserModel.objects.filter(manager=user))
+        UserModel.objects.filter(manager=user).update(manager=None)
+
+        for subordinate in subordinates:
+            subordinate.manager = None
+            ws_data = UserWebsocketSerializer(subordinate).data
+
+            def notify(data=ws_data):
+                send_user_updated_notification.delay(
+                    logging=False,
+                    account_id=self.account.id,
+                    user_data=data,
+                )
+
+            transaction.on_commit(notify)
+
     def _deactivate(self):
         user = self.instance
         old_manager = user.manager
         with transaction.atomic():
-            subordinates = list(UserModel.objects.filter(manager=user))
-            UserModel.objects.filter(manager=user).update(manager=None)
-
-            for subordinate in subordinates:
-                subordinate.manager = None
-                ws_data_user = UserWebsocketSerializer(subordinate).data
-
-                def notify(data=ws_data_user):
-                    send_user_updated_notification.delay(
-                        logging=False,
-                        account_id=self.account.id,
-                        user_data=data,
-                    )
-
-                transaction.on_commit(notify)
+            self._deactivate_subordinates()
 
             if old_manager is not None:
                 user.manager = None
@@ -350,6 +361,9 @@ class UserService(
             self._validate_deactivate()
         run_deactivate_actions = self.instance.status == UserStatus.ACTIVE
         self._deactivate()
+        # Refresh to clear stale prefetch cache (e.g. subordinates)
+        # so the WS payload reflects the post-deactivation state.
+        self.instance.refresh_from_db()
         send_user_deleted_notification.delay(
             logging=self.account.log_api_requests,
             account_id=self.account.id,
@@ -360,6 +374,21 @@ class UserService(
         if run_deactivate_actions:
             self._deactivate_actions()
 
+    def _update_managers(self, old_manager, new_manager):
+        """Send WebSocket notifications to old and/or new managers
+        after a manager change on self.instance."""
+        managers_to_notify = {
+            m for m in (old_manager, new_manager)
+            if m is not None
+        }
+        for mgr in managers_to_notify:
+            ws_data_mgr = UserWebsocketSerializer(mgr).data
+            send_user_updated_notification.delay(
+                logging=False,
+                account_id=self.account.id,
+                user_data=ws_data_mgr,
+            )
+
     def partial_update(
         self,
         force_save=False,
@@ -368,6 +397,7 @@ class UserService(
         **update_kwargs,
     ) -> UserModel:
 
+        subordinates = update_kwargs.pop('subordinates', None)
         old_name = self.instance.name
         old_manager = self.instance.manager
         manager_changed = (
@@ -398,27 +428,33 @@ class UserService(
         )
 
         if manager_changed:
-            managers_to_notify = {
-                m
-                for m in (old_manager, self.instance.manager)
-                if m is not None
-            }
-            for mgr in managers_to_notify:
-                ws_data_mgr = UserWebsocketSerializer(mgr).data
-                send_user_updated_notification.delay(
-                    logging=False,
-                    account_id=self.account.id,
-                    user_data=ws_data_mgr,
-                )
+            self._update_managers(old_manager, self.instance.manager)
+
+        if subordinates is not None:
+            self._update_subordinates(subordinates)
 
         return self.instance
 
-    def set_reports(self, reports: List[UserModel]) -> UserModel:
-        current_report_ids = set(
+    def _update_subordinates(
+        self,
+        subordinates: List[UserModel],
+    ):
+        """Replace all current subordinates with the given list.
+
+        Sends WS notifications to:
+        - self.instance (the manager)
+        - Each changed subordinate
+        - Each old manager who lost a subordinate
+
+        Uses transaction.on_commit so Celery tasks fire only after a
+        successful commit.  The default-argument capture (data=ws_data)
+        prevents closure-variable rebinding across loop iterations.
+        """
+        current_ids = set(
             self.instance.subordinates.values_list('id', flat=True),
         )
-        new_report_ids = {r.id for r in reports}
-        changed_user_ids = current_report_ids ^ new_report_ids
+        new_ids = {s.id for s in subordinates}
+        changed_user_ids = current_ids ^ new_ids
 
         # Collect old managers of users being reassigned
         # (users leaving current manager or being added from another)
@@ -434,7 +470,7 @@ class UserService(
             )
 
         with transaction.atomic():
-            self.instance.subordinates.set(reports)
+            self.instance.subordinates.set(subordinates)
 
             ws_data = UserWebsocketSerializer(self.instance).data
             transaction.on_commit(
@@ -476,5 +512,3 @@ class UserService(
                         )
 
                     transaction.on_commit(notify_mgr)
-
-        return self.instance

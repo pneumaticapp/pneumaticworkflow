@@ -67,7 +67,7 @@ import { getAbsolutePath } from '../../utils/getAbsolutePath';
 import { getTenantsCountStore } from '../selectors/tenants';
 import { createUser as createUserApi } from '../../api/createUser';
 import { editTeamUser } from '../../api/editTeamUser';
-import { updateReports } from '../../api/updateReports';
+import { updateSubordinates } from '../../api/updateReports';
 
 export function* fetchUsers(
   action: PayloadAction<TUsersFetchPayload> = { type: 'accounts/usersFetchStarted', payload: { showErrorNotification: true } }
@@ -193,7 +193,7 @@ function* saveUserManagerSaga({ payload: { id, managerId } }: PayloadAction<{ id
 function* saveUserReportsSaga({ payload: { id, reportIds } }: PayloadAction<{ id: number; reportIds: number[] }>) {
   try {
     yield put(setGeneralLoaderVisibility(true));
-    yield call(updateReports, id, { reportIds });
+    yield call(updateSubordinates, id, { subordinates: reportIds });
     yield put(changeUserReports({ id, reportIds }));
     NotificationManager.success({ message: 'User reports updated successfully' });
   } catch (error) {

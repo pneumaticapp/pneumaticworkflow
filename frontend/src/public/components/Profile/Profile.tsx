@@ -224,7 +224,7 @@ export function Profile({ user, editCurrentUser, sendChangePassword, onChangeTab
           <fieldset className={styles['fields-group']}>
             <ProfileReports 
               currentUserId={id} 
-              reportIds={user.reportIds || (user as any).report_ids || []} 
+              reportIds={user.reportIds || user.subordinates || []} 
             />
           </fieldset>
 

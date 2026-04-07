@@ -1160,7 +1160,7 @@ def test_deactivate__ok(mocker):
             'is_admin': deleted_user.is_admin,
             'is_account_owner': deleted_user.is_account_owner,
             'manager_id': None,
-            'report_ids': [],
+            'subordinates': [],
         },
     )
 
@@ -1204,7 +1204,7 @@ def test_deactivate__skip_validation__ok(mocker):
             'is_admin': deleted_user.is_admin,
             'is_account_owner': deleted_user.is_account_owner,
             'manager_id': None,
-            'report_ids': [],
+            'subordinates': [],
         },
     )
 
@@ -1247,7 +1247,7 @@ def test_deactivate__not_call_actions_for_invited_user__ok(mocker):
             'is_admin': invited_user.is_admin,
             'is_account_owner': invited_user.is_account_owner,
             'manager_id': None,
-            'report_ids': [],
+            'subordinates': [],
         },
     )
 
@@ -2074,7 +2074,7 @@ def test_create_instance__photo_url_longer_than_1024_chars__ok(mocker):
     assert len(user.photo) > 1024
 
 
-def test_set_reports__changed_users__ok(mocker):
+def test_update_subordinates__changed_users__ok(mocker):
     # arrange
     account = create_test_account()
     account.log_api_requests = True
@@ -2095,15 +2095,16 @@ def test_set_reports__changed_users__ok(mocker):
     )
 
     # act
-    result = service.set_reports([new_report])
+    result = service.partial_update(subordinates=[new_report])
 
     # assert
     assert result == manager
     assert list(manager.subordinates.all()) == [new_report]
-    assert send_user_updated_notification_delay_mock.call_count == 3
+    # partial_update user notification + _update_subordinates (mgr + 2 changed)
+    assert send_user_updated_notification_delay_mock.call_count == 4
 
 
-def test_set_reports__no_changed_users__ok(mocker):
+def test_update_subordinates__no_changed_users__ok(mocker):
     # arrange
     account = create_test_account()
     account.log_api_requests = True
@@ -2123,12 +2124,13 @@ def test_set_reports__no_changed_users__ok(mocker):
     )
 
     # act
-    result = service.set_reports([report])
+    result = service.partial_update(subordinates=[report])
 
     # assert
     assert result == manager
     assert list(manager.subordinates.all()) == [report]
-    send_user_updated_notification_delay_mock.assert_called_once()
+    # partial_update user notification + _update_subordinates (mgr only)
+    assert send_user_updated_notification_delay_mock.call_count == 2
 
 
 def test_deactivate__manager__subordinates_notified_and_cleared(mocker):
@@ -2357,7 +2359,7 @@ def test_deactivate__has_subs_and_manager__both_notified(mocker):
     assert notified_ids == {sub.id, mgr.id}
 
 
-def test_set_reports__old_mgr_notified__ok(mocker):
+def test_update_subordinates__old_mgr_notified__ok(mocker):
     # arrange
     account = create_test_account()
     account.log_api_requests = True
@@ -2390,11 +2392,12 @@ def test_set_reports__old_mgr_notified__ok(mocker):
     )
 
     # act
-    service.set_reports([report])
+    service.partial_update(subordinates=[report])
 
     # assert
-    # new_mgr + report + old_mgr = 3 notifications
-    assert send_mock.call_count == 3
+    # partial_update (new_mgr) + _update_subordinates (new_mgr + report
+    # + old_mgr) = 4
+    assert send_mock.call_count == 4
     notified_ids = {
         call[1]['user_data']['id']
         for call in send_mock.call_args_list
@@ -2402,7 +2405,7 @@ def test_set_reports__old_mgr_notified__ok(mocker):
     assert notified_ids == {new_mgr.id, report.id, old_mgr.id}
 
 
-def test_set_reports__no_old_mgr__no_extra_notify(mocker):
+def test_update_subordinates__no_old_mgr__no_extra_notify(mocker):
     # arrange
     account = create_test_account()
     account.log_api_requests = True
@@ -2428,11 +2431,11 @@ def test_set_reports__no_old_mgr__no_extra_notify(mocker):
     )
 
     # act
-    service.set_reports([report])
+    service.partial_update(subordinates=[report])
 
     # assert
-    # manager + report = 2 notifications (no old manager)
-    assert send_mock.call_count == 2
+    # partial_update (manager) + _update_subordinates (manager + report) = 3
+    assert send_mock.call_count == 3
     notified_ids = {
         call[1]['user_data']['id']
         for call in send_mock.call_args_list
@@ -2440,7 +2443,7 @@ def test_set_reports__no_old_mgr__no_extra_notify(mocker):
     assert notified_ids == {manager.id, report.id}
 
 
-def test_set_reports__report_moved_between_mgrs__old_mgr_notified(
+def test_update_subordinates__report_moved_between_mgrs__old_mgr_notified(
     mocker,
 ):
     # arrange
@@ -2481,11 +2484,12 @@ def test_set_reports__report_moved_between_mgrs__old_mgr_notified(
     )
 
     # act
-    service.set_reports([report_a])
+    service.partial_update(subordinates=[report_a])
 
     # assert
-    # new_mgr + report_a + old_mgr = 3
-    assert send_mock.call_count == 3
+    # partial_update (new_mgr) + _update_subordinates (new_mgr + report_a
+    # + old_mgr) = 4
+    assert send_mock.call_count == 4
     notified_ids = {
         call[1]['user_data']['id']
         for call in send_mock.call_args_list
@@ -2495,7 +2499,7 @@ def test_set_reports__report_moved_between_mgrs__old_mgr_notified(
     assert report_a.id in notified_ids
 
 
-def test_set_reports__same_mgr_report__skip_old_mgr_notify(mocker):
+def test_update_subordinates__same_mgr_report__skip_old_mgr_notify(mocker):
     # arrange
     account = create_test_account()
     account.log_api_requests = True
@@ -2528,14 +2532,425 @@ def test_set_reports__same_mgr_report__skip_old_mgr_notify(mocker):
     )
 
     # act
-    service.set_reports([report_a, report_b])
+    service.partial_update(subordinates=[report_a, report_b])
 
     # assert
-    # manager + report_b (changed) = 2 notifications
+    # partial_update (manager) + _update_subordinates (manager + report_b) = 3
     # report_a is not changed, no old_mgr (manager == self.instance)
-    assert send_mock.call_count == 2
+    assert send_mock.call_count == 3
     notified_ids = {
         call[1]['user_data']['id']
         for call in send_mock.call_args_list
     }
     assert notified_ids == {manager.id, report_b.id}
+
+
+def test_deactivate_subs__clears_manager__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    manager = create_test_not_admin(account=account)
+    sub1 = create_test_not_admin(
+        account=account,
+        email='sub1@test.test',
+    )
+    sub2 = create_test_not_admin(
+        account=account,
+        email='sub2@test.test',
+    )
+    sub1.manager = manager
+    sub1.save(update_fields=('manager',))
+    sub2.manager = manager
+    sub2.save(update_fields=('manager',))
+    send_ws_mock = mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'django.db.transaction.on_commit',
+        side_effect=lambda func: func(),
+    )
+    service = UserService(
+        user=owner,
+        instance=manager,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service._deactivate_subordinates()
+
+    # assert
+    sub1.refresh_from_db()
+    sub2.refresh_from_db()
+    assert sub1.manager is None
+    assert sub2.manager is None
+    assert send_ws_mock.call_count == 2
+
+
+def test_deactivate_subs__no_subs__no_ws(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    send_ws_mock = mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service._deactivate_subordinates()
+
+    # assert
+    send_ws_mock.assert_not_called()
+
+
+def test_update_managers__both__notifies_both(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    old_mgr = create_test_not_admin(
+        account=account,
+        email='oldmgr@test.test',
+    )
+    new_mgr = create_test_not_admin(
+        account=account,
+        email='newmgr@test.test',
+    )
+    user = create_test_not_admin(
+        account=account,
+        email='target@test.test',
+    )
+    send_ws_mock = mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service._update_managers(
+        old_manager=old_mgr,
+        new_manager=new_mgr,
+    )
+
+    # assert
+    assert send_ws_mock.call_count == 2
+
+
+def test_update_managers__old_none__notifies_new(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    new_mgr = create_test_not_admin(
+        account=account,
+        email='newmgr@test.test',
+    )
+    user = create_test_not_admin(
+        account=account,
+        email='target@test.test',
+    )
+    send_ws_mock = mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service._update_managers(
+        old_manager=None,
+        new_manager=new_mgr,
+    )
+
+    # assert
+    assert send_ws_mock.call_count == 1
+
+
+def test_update_managers__both_none__no_ws(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    send_ws_mock = mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service._update_managers(
+        old_manager=None,
+        new_manager=None,
+    )
+
+    # assert
+    send_ws_mock.assert_not_called()
+
+
+def test_update_subs__sets_new__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    manager = create_test_not_admin(account=account)
+    sub1 = create_test_not_admin(
+        account=account,
+        email='sub1@test.test',
+    )
+    sub2 = create_test_not_admin(
+        account=account,
+        email='sub2@test.test',
+    )
+    send_ws_mock = mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'django.db.transaction.on_commit',
+        side_effect=lambda func: func(),
+    )
+    service = UserService(
+        user=owner,
+        instance=manager,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service._update_subordinates([sub1, sub2])
+
+    # assert
+    sub1.refresh_from_db()
+    sub2.refresh_from_db()
+    assert sub1.manager == manager
+    assert sub2.manager == manager
+    assert send_ws_mock.call_count >= 1
+
+
+def test_update_subs__replaces__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    manager = create_test_not_admin(account=account)
+    old_sub = create_test_not_admin(
+        account=account,
+        email='oldsub@test.test',
+    )
+    new_sub = create_test_not_admin(
+        account=account,
+        email='newsub@test.test',
+    )
+    old_sub.manager = manager
+    old_sub.save(update_fields=('manager',))
+    mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=manager,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service._update_subordinates([new_sub])
+
+    # assert
+    old_sub.refresh_from_db()
+    new_sub.refresh_from_db()
+    assert old_sub.manager is None
+    assert new_sub.manager == manager
+
+
+def test_update_subs__empty__clears_all(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    manager = create_test_not_admin(account=account)
+    sub = create_test_not_admin(
+        account=account,
+        email='sub@test.test',
+    )
+    sub.manager = manager
+    sub.save(update_fields=('manager',))
+    send_ws_mock = mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'django.db.transaction.on_commit',
+        side_effect=lambda func: func(),
+    )
+    service = UserService(
+        user=owner,
+        instance=manager,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service._update_subordinates([])
+
+    # assert
+    sub.refresh_from_db()
+    assert sub.manager is None
+    assert send_ws_mock.call_count >= 1
+
+
+def test_update_subs__from_other_mgr__notifies_all(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    old_mgr = create_test_not_admin(
+        account=account,
+        email='oldmgr@test.test',
+    )
+    new_mgr = create_test_not_admin(
+        account=account,
+        email='newmgr@test.test',
+    )
+    sub = create_test_not_admin(
+        account=account,
+        email='sub@test.test',
+    )
+    sub.manager = old_mgr
+    sub.save(update_fields=('manager',))
+    send_ws_mock = mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'django.db.transaction.on_commit',
+        side_effect=lambda func: func(),
+    )
+    service = UserService(
+        user=owner,
+        instance=new_mgr,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service._update_subordinates([sub])
+
+    # assert
+    sub.refresh_from_db()
+    assert sub.manager == new_mgr
+    # new_mgr + sub + old_mgr = 3
+    assert send_ws_mock.call_count == 3
+
+
+def test_deactivate__clears_own_manager__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    manager = create_test_not_admin(
+        account=account,
+        email='manager@test.test',
+    )
+    user = create_test_not_admin(
+        account=account,
+        email='target@test.test',
+    )
+    user.manager = manager
+    user.save(update_fields=('manager',))
+    mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_deleted_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_deactivated_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user.AnalyticService',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service.deactivate()
+
+    # assert
+    user.refresh_from_db()
+    assert user.manager is None
+
+
+def test_deactivate__clears_subordinates__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    sub = create_test_not_admin(
+        account=account,
+        email='sub@test.test',
+    )
+    sub.manager = user
+    sub.save(update_fields=('manager',))
+    mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_deleted_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_deactivated_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user.AnalyticService',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service.deactivate()
+
+    # assert
+    sub.refresh_from_db()
+    assert sub.manager is None
