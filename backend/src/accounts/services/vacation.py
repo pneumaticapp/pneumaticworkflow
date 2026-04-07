@@ -1,4 +1,4 @@
-from typing import List, Set
+from typing import List, Optional, Set, Tuple
 
 from django.contrib.auth import get_user_model
 from django.db import transaction
@@ -92,53 +92,44 @@ class VacationDelegationService:
             )
 
             if vacation and vacation.substitute_group_id:
-                self._update_existing(
+                task_ids = self._update_existing(
                     vacation=vacation,
                     substitute_user_ids=substitute_user_ids,
                     absence_status=absence_status,
                     vacation_start_date=vacation_start_date,
                     vacation_end_date=vacation_end_date,
                 )
-                return
+            else:
+                task_ids = self._activate_new(
+                    substitute_user_ids=substitute_user_ids,
+                    absence_status=absence_status,
+                    vacation_start_date=vacation_start_date,
+                    vacation_end_date=vacation_end_date,
+                )
 
-            self._activate_new(
-                substitute_user_ids=substitute_user_ids,
-                absence_status=absence_status,
-                vacation_start_date=vacation_start_date,
-                vacation_end_date=vacation_end_date,
-            )
-
-    def _update_existing(
-        self,
-        vacation: 'UserVacation',
-        substitute_user_ids: List[int],
-        absence_status: str,
-        vacation_start_date=None,
-        vacation_end_date=None,
-    ) -> None:
-        group = vacation.substitute_group
-        group.users.set(substitute_user_ids)
-
-        pairs = (
-            TaskPerformer.objects
-            .filter(
-                group=group,
-                is_completed=False,
-                task__status__in=[
-                    TaskStatus.ACTIVE,
-                    TaskStatus.DELAYED,
-                ],
-            )
-            .exclude_directly_deleted()
-            .values_list('task_id', 'task__workflow_id')
+        # Notify after transaction commits successfully.
+        # If the transaction rolls back, the exception propagates
+        # and this code is never reached.
+        self._notify_substitutes(
+            substitute_user_ids=substitute_user_ids,
+            task_ids=task_ids,
         )
-        task_ids = set()
-        wf_ids = set()
-        for task_id, wf_id in pairs:
-            task_ids.add(task_id)
-            wf_ids.add(wf_id)
 
-        # Create missing group performers for user's direct tasks
+    def _delegate_tasks(
+        self,
+        group: 'UserGroup',
+        existing_task_ids: Optional[Set[int]] = None,
+    ) -> Tuple[Set[int], Set[int]]:
+        """Shared delegation logic: create group performers
+        for user's direct tasks and regular group tasks.
+
+        Returns (task_ids, wf_ids) — the full set of
+        delegated task IDs and their workflow IDs.
+        """
+        task_ids = set(existing_task_ids or ())
+        wf_ids: Set[int] = set()
+
+        # 1. Create group performers for user's direct tasks
         user_performers = list(
             TaskPerformer.objects
             .filter(
@@ -176,7 +167,7 @@ class VacationDelegationService:
                     substitute_group=group,
                 )
 
-        # Create missing group performers for user's regular
+        # 2. Create group performers for user's regular
         # group tasks
         user_group_ids = list(
             self.user.user_groups
@@ -228,6 +219,45 @@ class VacationDelegationService:
                         substitute_group=group,
                     )
 
+        return task_ids, wf_ids
+
+    def _update_existing(
+        self,
+        vacation: 'UserVacation',
+        substitute_user_ids: List[int],
+        absence_status: str,
+        vacation_start_date=None,
+        vacation_end_date=None,
+    ) -> Set[int]:
+        group = vacation.substitute_group
+        group.users.set(substitute_user_ids)
+
+        # Collect already-delegated task/workflow IDs
+        pairs = (
+            TaskPerformer.objects
+            .filter(
+                group=group,
+                is_completed=False,
+                task__status__in=[
+                    TaskStatus.ACTIVE,
+                    TaskStatus.DELAYED,
+                ],
+            )
+            .exclude_directly_deleted()
+            .values_list('task_id', 'task__workflow_id')
+        )
+        existing_task_ids = set()
+        existing_wf_ids = set()
+        for task_id, wf_id in pairs:
+            existing_task_ids.add(task_id)
+            existing_wf_ids.add(wf_id)
+
+        task_ids, new_wf_ids = self._delegate_tasks(
+            group=group,
+            existing_task_ids=existing_task_ids,
+        )
+        wf_ids = existing_wf_ids | new_wf_ids
+
         self._add_members_bulk(
             wf_ids=wf_ids,
             substitute_user_ids=substitute_user_ids,
@@ -238,12 +268,16 @@ class VacationDelegationService:
 
         vacation.start_date = vacation_start_date
         vacation.end_date = vacation_end_date
-        vacation.save(update_fields=['start_date', 'end_date'])
-
-        self._notify_substitutes(
-            substitute_user_ids=substitute_user_ids,
-            task_ids=task_ids,
+        vacation.absence_status = absence_status
+        vacation.save(
+            update_fields=[
+                'start_date',
+                'end_date',
+                'absence_status',
+            ],
         )
+
+        return task_ids
 
     def _activate_new(
         self,
@@ -251,7 +285,7 @@ class VacationDelegationService:
         absence_status: str,
         vacation_start_date=None,
         vacation_end_date=None,
-    ) -> None:
+    ) -> Set[int]:
         group = UserGroup.objects.create(
             name=(
                 f'{SUBSTITUTE_GROUP_PREFIX}'
@@ -262,96 +296,7 @@ class VacationDelegationService:
         )
         group.users.set(substitute_user_ids)
 
-        # Do not freeze users (DirectlyStatus.DELEGATED removed).
-        # Just create substitute performers alongside the user's performers
-        user_performers = (
-            TaskPerformer.objects
-            .filter(
-                user_id=self.user.id,
-                type=PerformerType.USER,
-                is_completed=False,
-                task__status__in=[
-                    TaskStatus.ACTIVE,
-                    TaskStatus.DELAYED,
-                ],
-            )
-            .exclude_directly_deleted()
-            .select_related('task')
-        )
-
-        performers_list = list(user_performers)
-        task_ids = {p.task_id for p in performers_list}
-
-        group_performers_to_create = [
-            TaskPerformer(
-                task_id=task_id,
-                type=PerformerType.GROUP,
-                group=group,
-            )
-            for task_id in task_ids
-        ]
-        if group_performers_to_create:
-            TaskPerformer.objects.bulk_create(
-                group_performers_to_create,
-                ignore_conflicts=True,
-            )
-
-        for p in performers_list:
-            WorkflowEventService.task_delegation_event(
-                task=p.task,
-                user=self.user,
-                substitute_group=group,
-            )
-
-        user_group_ids = list(
-            self.user.user_groups
-            .filter(type=UserGroupType.REGULAR)
-            .values_list('id', flat=True),
-        )
-        wf_ids = {p.task.workflow_id for p in performers_list}
-
-        if user_group_ids:
-            new_task_ids = set(
-                TaskPerformer.objects
-                .filter(
-                    group_id__in=user_group_ids,
-                    type=PerformerType.GROUP,
-                    is_completed=False,
-                    task__status__in=[
-                        TaskStatus.ACTIVE,
-                        TaskStatus.DELAYED,
-                    ],
-                )
-                .exclude_directly_deleted()
-                .exclude(task_id__in=task_ids)
-                .values_list('task_id', flat=True)
-                .distinct(),
-            )
-            task_ids |= new_task_ids
-
-            if new_task_ids:
-                grp_perfs = [
-                    TaskPerformer(
-                        task_id=tid,
-                        type=PerformerType.GROUP,
-                        group=group,
-                    )
-                    for tid in new_task_ids
-                ]
-                TaskPerformer.objects.bulk_create(
-                    grp_perfs,
-                    ignore_conflicts=True,
-                )
-                new_tasks = list(
-                    Task.objects.filter(id__in=new_task_ids),
-                )
-                wf_ids |= {t.workflow_id for t in new_tasks}
-                for task in new_tasks:
-                    WorkflowEventService.task_delegation_event(
-                        task=task,
-                        user=self.user,
-                        substitute_group=group,
-                    )
+        task_ids, wf_ids = self._delegate_tasks(group=group)
 
         self._add_members_bulk(
             wf_ids=wf_ids,
@@ -369,13 +314,11 @@ class VacationDelegationService:
                 'substitute_group': group,
                 'start_date': vacation_start_date,
                 'end_date': vacation_end_date,
+                'absence_status': absence_status,
             },
         )
 
-        self._notify_substitutes(
-            substitute_user_ids=substitute_user_ids,
-            task_ids=task_ids,
-        )
+        return task_ids
 
     def deactivate(self) -> None:
         with transaction.atomic():

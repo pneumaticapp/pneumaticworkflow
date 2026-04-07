@@ -700,6 +700,11 @@ class UserVacation(models.Model):
     )
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
+    absence_status = models.CharField(
+        max_length=20,
+        choices=AbsenceStatus.CHOICES,
+        default=AbsenceStatus.VACATION,
+    )
     substitute_group = models.ForeignKey(
         'accounts.UserGroup',
         on_delete=models.SET_NULL,

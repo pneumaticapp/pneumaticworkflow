@@ -82,6 +82,11 @@ def process_vacation_schedules():
             if sub_ids:
                 VacationDelegationService(user).activate(
                     sub_ids,
+                    absence_status=getattr(
+                        user.vacation_schedule,
+                        'absence_status',
+                        AbsenceStatus.VACATION,
+                    ),
                     vacation_start_date=user.vacation_schedule.start_date,
                     vacation_end_date=user.vacation_schedule.end_date,
                 )
