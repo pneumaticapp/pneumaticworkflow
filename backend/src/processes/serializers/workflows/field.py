@@ -45,10 +45,21 @@ class TaskFieldSerializer(serializers.ModelSerializer):
     attachments = FileAttachmentSerializer(many=True)
 
     def get_selections(self, instance: TaskField) -> list:
-        result = [s.value for s in instance.selections_values]
+        if hasattr(instance, 'selections_values'):
+            # Prefetched values
+            result = [s.value for s in instance.selections_values]
+        else:
+            # Called for single fields where prefetch is not needed
+            result = list(instance.selections.values_list('value', flat=True))
         if instance.dataset_id:
-            for i in instance.dataset.dataset_values:
-                result.append(i.value)
+            dataset = instance.dataset
+            if hasattr(dataset, 'dataset_values'):
+                # Prefetched values
+                result.extend([i.value for i in dataset.dataset_values])
+            else:
+                # Called for single fields where prefetch is not needed
+                dataset_values = dataset.items.values_list('value', flat=True)
+                result.extend(list(dataset_values))
         return result
 
 

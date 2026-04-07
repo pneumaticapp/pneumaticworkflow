@@ -10,14 +10,14 @@ from src.processes.enums import (
     PerformerType,
     TaskStatus,
 )
-from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.fields import TaskField, FieldSelection
 from src.processes.models.workflows.task import Delay, TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_group,
     create_test_owner,
     create_test_not_admin,
-    create_test_workflow,
+    create_test_workflow, create_test_dataset,
 )
 
 pytestmark = pytest.mark.django_db
@@ -487,7 +487,7 @@ def test_reset_delay__delay_without_pk__skip():
     assert delay.pk is None
 
 
-def test_webhook_payload__normal__ok(mocker):
+def test_webhook_payload__ok(mocker):
     """
     Returns dict with task data and workflow payload merged
     """
@@ -520,6 +520,48 @@ def test_webhook_payload__normal__ok(mocker):
     task_serializer_mock.assert_called_once_with(instance=task)
     workflow_webhook_payload_mock.assert_called_once_with()
     assert result == {'task': {**task_data, **workflow_payload}}
+
+
+def test_webhook_payload__field_with_dataset_and_selections__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account, items_count=1)
+    dataset_item = dataset.items.get(order=1)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    field = TaskField.objects.create(
+        type=FieldType.DROPDOWN,
+        name='dropdown',
+        task=task,
+        value=dataset_item.value,
+        workflow=workflow,
+        account=account,
+        dataset=dataset,
+    )
+    selection = FieldSelection.objects.create(
+        field=field,
+        value='Selection value',
+    )
+    task = workflow.tasks.get(number=1)
+    workflow_payload = {'workflow_id': workflow.id}
+    workflow_webhook_payload_mock = mocker.patch(
+        'src.processes.models.workflows.workflow'
+        '.Workflow.webhook_payload',
+        return_value=workflow_payload,
+    )
+
+    # act
+    result = task.webhook_payload()
+
+    # assert
+    workflow_webhook_payload_mock.assert_called_once_with()
+    field_data = result['task']['output'][0]
+    assert field_data['id'] == field.id
+    assert field_data['type'] == field.type
+    assert field_data['selections'] == [selection.value, dataset_item.value]
+    assert field_data['value'] == dataset_item.value
 
 
 def test_get_default_performer__workflow_starter_set__ok():
