@@ -37,15 +37,15 @@ export function ConditionValueField({
   isDisabled,
   changeRuleValue,
 }: IConditionValueFieldProps) {
-  if (!variable || !operator) return null;
+  const { formatMessage } = useIntl();
   const groups = useSelector((state: IApplicationState) => state.groups.list);
-  const datasetItems = useLazyDataset(variable as TTaskVariable)?.items;
+  const datasetItems = useLazyDataset(variable)?.items;
 
+  if (!variable || !operator) return null;
   const isNoValueOperator = OPERATORS_WITHOUT_VALUE.includes(operator);
 
   if (isNoValueOperator) return null;
 
-  const { formatMessage } = useIntl();
   const isNumericField = true;
 
   const renderMap: { [key in EExtraFieldType]: () => ReactNode } & {

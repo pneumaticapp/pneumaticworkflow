@@ -7,17 +7,17 @@ import { IDataset } from '../../../../../types/dataset';
 import { TTaskVariable } from '../../../types';
 import { shouldLoadDatasetForVariable } from './shouldLoadDatasetForVariable';
 
-export function useLazyDataset(variable: TTaskVariable): IDataset | undefined {
+export function useLazyDataset(variable: TTaskVariable | null): IDataset | undefined {
   const dispatch = useDispatch();
 
-  const shouldLoad = shouldLoadDatasetForVariable(variable);
-  const {datasetId} = variable;
+  const shouldLoad = variable ? shouldLoadDatasetForVariable(variable) : false;
+  const datasetId = variable?.datasetId ?? null;
 
   const datasetFromMap = useSelector(getDatasetFromMap(datasetId as number));
 
   useEffect(() => {
-    if (shouldLoad && !datasetFromMap) {
-      dispatch(loadDatasetForMap(datasetId!));
+    if (shouldLoad && !datasetFromMap && datasetId) {
+      dispatch(loadDatasetForMap(datasetId));
     }
   }, [shouldLoad, datasetId, datasetFromMap, dispatch]);
 

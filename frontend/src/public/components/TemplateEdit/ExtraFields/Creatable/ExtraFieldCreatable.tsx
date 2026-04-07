@@ -15,7 +15,7 @@ import { DatasetSourceToggle } from '../utils/DatasetSourceToggle';
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { EExtraFieldMode, IExtraFieldSelection } from '../../../../types/template';
 import { validateCheckboxAndRadioField } from '../../../../utils/validators';
-import { handleSelectionBlur } from '../utils/handleSelectionBlur';
+import { handleSelectionBlur, recalculateDuplicateErrors } from '../utils/handleSelectionBlur';
 
 import { IWorkflowExtraFieldProps } from '..';
 
@@ -68,7 +68,9 @@ export function ExtraFieldCreatable({
   );
 
   const [activeOptionIndex, setActiveOptionIndex] = useState<number | null>(null);
-  const [duplicateErrors, setDuplicateErrors] = useState<Record<number, string>>({});
+  const [duplicateErrors, setDuplicateErrors] = useState<Record<string, string>>(
+    () => recalculateDuplicateErrors(selectionItems || []),
+  );
 
   const handleSelectableChange = (inputValue: IDropdownSelection) => {
     editField({ value: inputValue.value });
@@ -91,18 +93,22 @@ export function ExtraFieldCreatable({
   );
 
   const handleAddOption = () => {
-    const newOptions = [...(selectionItems || []), getEmptySelection((selectionItems || []).length + 1)];
+    const newOptions = [...(selectionItems || []), getEmptySelection(selectionItems)];
     editField({ selections: newOptions });
   };
 
   const handleRemoveOption = (optionIndex: number) => () => {
-    const newOptions = selectionItems?.filter((_, index) => index !== optionIndex);
-    editField({ selections: newOptions || [] });
+    const newOptions = selectionItems?.filter((_, index) => index !== optionIndex) || [];
+    editField({ selections: newOptions });
+    setDuplicateErrors(recalculateDuplicateErrors(newOptions));
   };
 
   const handleChangeOption = (optionIndex: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.value;
-    setDuplicateErrors((prev) => ({ ...prev, [optionIndex]: '' }));
+    const apiName = selectionItems?.[optionIndex]?.apiName;
+    if (apiName) {
+      setDuplicateErrors((prev) => ({ ...prev, [apiName]: '' }));
+    }
 
     const newOptions = selectionItems?.map((option, index) => {
       if (index === optionIndex) {
@@ -117,10 +123,10 @@ export function ExtraFieldCreatable({
 
   const handleBlurOption = handleSelectionBlur(setDuplicateErrors, selectionItems);
 
-  const renderKickoffOption = ({ value }: IExtraFieldSelection, optionIndex: number) => {
+  const renderKickoffOption = ({ value, apiName }: IExtraFieldSelection, optionIndex: number) => {
     const isActive = optionIndex === activeOptionIndex;
     const standardError = validateCheckboxAndRadioField(value);
-    const errorMessageIntl = standardError || duplicateErrors[optionIndex] || '';
+    const errorMessageIntl = standardError || duplicateErrors[apiName] || '';
     const shouldShowError = Boolean(errorMessageIntl);
 
     return (
@@ -135,7 +141,7 @@ export function ExtraFieldCreatable({
             ref={(el) => (optionInputsRefs.current[optionIndex] = el as HTMLInputElement)}
             className={inputStyles['kickoff-create-field-option__input']}
             onChange={handleChangeOption(optionIndex)}
-            onBlur={handleBlurOption(optionIndex)}
+            onBlur={handleBlurOption(apiName)}
             placeholder={namePlaceholder}
             type="text"
             value={value}

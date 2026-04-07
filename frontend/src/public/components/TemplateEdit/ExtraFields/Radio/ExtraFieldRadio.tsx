@@ -6,7 +6,7 @@ import AutosizeInput from 'react-input-autosize';
 
 import { getEmptySelection } from '../../KickoffRedux/utils/getEmptySelection';
 import { validateCheckboxAndRadioField, validateKickoffFieldName } from '../../../../utils/validators';
-import { handleSelectionBlur } from '../utils/handleSelectionBlur';
+import { handleSelectionBlur, recalculateDuplicateErrors } from '../utils/handleSelectionBlur';
 import { IntlMessages } from '../../../IntlMessages';
 import { EExtraFieldMode, IExtraFieldSelection } from '../../../../types/template';
 import { fitInputWidth } from '../utils/fitInputWidth';
@@ -48,7 +48,9 @@ export function ExtraFieldRadio({
   }, []);
 
   const [activeOptionIndex, setActiveOptionIndex] = useState<number | null>(null);
-  const [duplicateErrors, setDuplicateErrors] = useState<Record<number, string>>({});
+  const [duplicateErrors, setDuplicateErrors] = useState<Record<string, string>>(
+    () => recalculateDuplicateErrors(selectionItems || []),
+  );
 
   const fieldNameErrorMessage = validateKickoffFieldName(name) || '';
   const isKickoffFieldNameValid = !Boolean(fieldNameErrorMessage);
@@ -119,7 +121,7 @@ export function ExtraFieldRadio({
 
     const isActive = optionIndex === activeOptionIndex;
     const standardError = validateCheckboxAndRadioField(value);
-    const errorMessageIntl = standardError || duplicateErrors[optionIndex] || '';
+    const errorMessageIntl = standardError || duplicateErrors[field.apiName] || '';
     const shouldShowError = Boolean(errorMessageIntl);
 
     return (
@@ -140,7 +142,7 @@ export function ExtraFieldRadio({
             ref={(el) => (optionInputsRefs.current[optionIndex] = el as HTMLInputElement)}
             className={fieldStyles['labeled-checkbox__input']}
             onChange={handleChangeOption(optionIndex)}
-            onBlur={handleBlurOption(optionIndex)}
+            onBlur={handleBlurOption(field.apiName)}
             placeholder={namePlaceholder}
             type="text"
             value={value}
@@ -175,18 +177,22 @@ export function ExtraFieldRadio({
   );
 
   const handleAddOption = () => {
-    const newOptions = [...(selectionItems || []), getEmptySelection((selectionItems || []).length + 1)];
+    const newOptions = [...(selectionItems || []), getEmptySelection(selectionItems)];
     editField({ selections: newOptions });
   };
 
   const handleRemoveOption = (optionIndex: number) => () => {
-    const newOptions = selectionItems?.filter((_, index) => index !== optionIndex);
-    editField({ selections: newOptions || [] });
+    const newOptions = selectionItems?.filter((_, index) => index !== optionIndex) || [];
+    editField({ selections: newOptions });
+    setDuplicateErrors(recalculateDuplicateErrors(newOptions));
   };
 
   const handleChangeOption = (optionIndex: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.value;
-    setDuplicateErrors((prev) => ({ ...prev, [optionIndex]: '' }));
+    const apiName = selectionItems?.[optionIndex]?.apiName;
+    if (apiName) {
+      setDuplicateErrors((prev) => ({ ...prev, [apiName]: '' }));
+    }
 
     const newOptions = selectionItems?.map((option, index) => {
       if (index === optionIndex) {
