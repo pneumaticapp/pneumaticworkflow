@@ -1,5 +1,8 @@
+import logging
+
 from celery import shared_task
 from django.contrib.auth import get_user_model
+from django.db import transaction
 
 from src.accounts.enums import AbsenceStatus
 from src.authentication.enums import AuthTokenType
@@ -62,78 +65,92 @@ def delegate_vacation_tasks():
         vacation_schedule__substitute_group__isnull=False,
     ).select_related('vacation_schedule__substitute_group')
 
+    logger = logging.getLogger(__name__)
+
     for user in vacationing_users:
-        sub_group = user.vacation_schedule.substitute_group
-
-        # Tasks where user is a performer (ACTIVE/DELAYED)
-        user_task_ids = set(
-            TaskPerformer.objects.filter(
-                user=user,
-                type=PerformerType.USER,
-                is_completed=False,
-                task__status__in=[
-                    TaskStatus.ACTIVE,
-                    TaskStatus.DELAYED,
-                ],
-            ).exclude_directly_deleted()
-            .values_list('task_id', flat=True),
-        )
-
-        if not user_task_ids:
-            continue
-
-        # Tasks where substitute group is already assigned
-        already_delegated_task_ids = set(
-            TaskPerformer.objects.filter(
-                group=sub_group,
-                type=PerformerType.GROUP,
-                task_id__in=user_task_ids,
-            ).values_list('task_id', flat=True),
-        )
-
-        tasks_to_delegate = user_task_ids - already_delegated_task_ids
-        if not tasks_to_delegate:
-            continue
-
-        tasks = Task.objects.filter(
-            id__in=tasks_to_delegate,
-        ).select_related('workflow')
-
-        performers_to_create = []
-        wf_ids = set()
-        for task in tasks:
-            performers_to_create.append(
-                TaskPerformer(
-                    task=task,
-                    type=PerformerType.GROUP,
-                    group=sub_group,
-                ),
+        try:
+            with transaction.atomic():
+                _delegate_tasks_for_user(user)
+        except Exception:
+            logger.exception(
+                'Failed to delegate vacation tasks for user %d',
+                user.id,
             )
-            wf_ids.add(task.workflow_id)
-        if performers_to_create:
-            TaskPerformer.objects.bulk_create(
-                performers_to_create,
+            continue
+
+
+def _delegate_tasks_for_user(user):
+    sub_group = user.vacation_schedule.substitute_group
+
+    # Tasks where user is a performer (ACTIVE/DELAYED)
+    user_task_ids = set(
+        TaskPerformer.objects.filter(
+            user=user,
+            type=PerformerType.USER,
+            is_completed=False,
+            task__status__in=[
+                TaskStatus.ACTIVE,
+                TaskStatus.DELAYED,
+            ],
+        ).exclude_directly_deleted()
+        .values_list('task_id', flat=True),
+    )
+
+    if not user_task_ids:
+        return
+
+    # Tasks where substitute group is already assigned
+    already_delegated_task_ids = set(
+        TaskPerformer.objects.filter(
+            group=sub_group,
+            type=PerformerType.GROUP,
+            task_id__in=user_task_ids,
+        ).values_list('task_id', flat=True),
+    )
+
+    tasks_to_delegate = user_task_ids - already_delegated_task_ids
+    if not tasks_to_delegate:
+        return
+
+    tasks = Task.objects.filter(
+        id__in=tasks_to_delegate,
+    ).select_related('workflow')
+
+    performers_to_create = []
+    wf_ids = set()
+    for task in tasks:
+        performers_to_create.append(
+            TaskPerformer(
+                task=task,
+                type=PerformerType.GROUP,
+                group=sub_group,
+            ),
+        )
+        wf_ids.add(task.workflow_id)
+    if performers_to_create:
+        TaskPerformer.objects.bulk_create(
+            performers_to_create,
+            ignore_conflicts=True,
+        )
+        for task in tasks:
+            WorkflowEventService.task_delegation_event(
+                task=task,
+                user=user,
+                substitute_group=sub_group,
+            )
+        sub_ids = list(
+            sub_group.users.values_list('id', flat=True),
+        )
+        if wf_ids and sub_ids:
+            members_to_create = [
+                Workflow.members.through(
+                    workflow_id=wf_id,
+                    user_id=sub_id,
+                )
+                for wf_id in wf_ids
+                for sub_id in sub_ids
+            ]
+            Workflow.members.through.objects.bulk_create(
+                members_to_create,
                 ignore_conflicts=True,
             )
-            for task in tasks:
-                WorkflowEventService.task_delegation_event(
-                    task=task,
-                    user=user,
-                    substitute_group=sub_group,
-                )
-            sub_ids = list(
-                sub_group.users.values_list('id', flat=True),
-            )
-            if wf_ids and sub_ids:
-                members_to_create = [
-                    Workflow.members.through(
-                        workflow_id=wf_id,
-                        user_id=sub_id,
-                    )
-                    for wf_id in wf_ids
-                    for sub_id in sub_ids
-                ]
-                Workflow.members.through.objects.bulk_create(
-                    members_to_create,
-                    ignore_conflicts=True,
-                )

@@ -86,6 +86,7 @@ class GroupPerformerService(BasePerformerService2):
             auth_type=self.auth_type,
             is_superuser=self.is_superuser,
         )
+        self.task.refresh_from_db()
         if self.task.can_be_completed():
             first_completed_user = (
                 self.task.taskperformer_set.completed()

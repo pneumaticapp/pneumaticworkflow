@@ -280,3 +280,159 @@ def test_delegate__skips_completed_performers__ok(mocker):
         type=PerformerType.GROUP,
     ).exists()
     event_mock.assert_not_called()
+
+
+def test_delegate__user_error__continues_next(mocker):
+
+    """
+    When delegation fails for one user, subsequent users
+    are still processed.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner1 = create_test_owner(account=account)
+    owner2 = create_test_admin(
+        account=account,
+        email='owner2@pneumatic.app',
+    )
+    sub1 = create_test_admin(
+        account=account,
+        email='sub1@pneumatic.app',
+    )
+    sub2 = create_test_admin(
+        account=account,
+        email='sub2@pneumatic.app',
+    )
+
+    group1 = UserGroup.objects.create(
+        name='Sub1',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group1.users.add(sub1)
+    group2 = UserGroup.objects.create(
+        name='Sub2',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group2.users.add(sub2)
+
+    UserVacation.objects.create(
+        user=owner1,
+        substitute_group=group1,
+    )
+    UserVacation.objects.create(
+        user=owner2,
+        substitute_group=group2,
+    )
+    owner1.absence_status = AbsenceStatus.VACATION
+    owner1.save(update_fields=['absence_status'])
+    owner2.absence_status = AbsenceStatus.VACATION
+    owner2.save(update_fields=['absence_status'])
+
+    template1 = create_test_template(
+        user=owner1,
+        tasks_count=1,
+        is_active=True,
+    )
+    workflow1 = create_test_workflow(
+        user=owner1,
+        template=template1,
+    )
+    task1 = workflow1.tasks.first()
+
+    template2 = create_test_template(
+        user=owner2,
+        tasks_count=1,
+        is_active=True,
+    )
+    workflow2 = create_test_workflow(
+        user=owner2,
+        template=template2,
+    )
+    task2 = workflow2.tasks.first()
+
+    # make first user's delegation fail
+    event_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+        side_effect=[Exception('boom'), None],
+    )
+
+    # act
+    delegate_vacation_tasks()
+
+    # assert
+    assert not TaskPerformer.objects.filter(
+        task=task1,
+        group=group1,
+        type=PerformerType.GROUP,
+    ).exists()
+
+    assert TaskPerformer.objects.filter(
+        task=task2,
+        group=group2,
+        type=PerformerType.GROUP,
+    ).exists()
+    assert event_mock.call_count == 2
+
+
+def test_delegate__error__rolls_back_user(mocker):
+
+    """
+    When an error occurs mid-processing for a user, the
+    atomic block rolls back all per-user changes (performers,
+    members).
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    substitute = create_test_admin(
+        account=account,
+        email='sub1@pneumatic.app',
+    )
+
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group.users.add(substitute)
+    UserVacation.objects.create(
+        user=owner,
+        substitute_group=group,
+    )
+    owner.absence_status = AbsenceStatus.VACATION
+    owner.save(update_fields=['absence_status'])
+
+    template = create_test_template(
+        user=owner,
+        tasks_count=1,
+        is_active=True,
+    )
+    workflow = create_test_workflow(
+        user=owner,
+        template=template,
+    )
+    task = workflow.tasks.first()
+
+    mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+        side_effect=Exception('event error'),
+    )
+
+    # act
+    delegate_vacation_tasks()
+
+    # assert
+    assert not TaskPerformer.objects.filter(
+        task=task,
+        group=group,
+        type=PerformerType.GROUP,
+    ).exists()
+    assert not workflow.members.filter(
+        id=substitute.id,
+    ).exists()

@@ -100,7 +100,7 @@ class TaskPerformersService(BasePerformersService):
                 )
                 group_service.delete_performer(
                     group_id=sub_group_id,
-                    run_actions=True,
+                    run_actions=False,
                 )
             except GroupPerformerServiceException:
                 pass
