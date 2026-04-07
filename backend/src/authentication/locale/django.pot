@@ -18,71 +18,69 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 msgid "Access token not found for the user."
-msgstr "Jeton d'accès introuvable pour l'utilisateur."
+msgstr ""
 
 #, python-brace-format
 msgid "Your account has not been verified. A new verification link was sent to {email}."
-msgstr "Votre compte n'a pas été vérifié. Un nouveau lien de vérification a été envoyé à {email}."
+msgstr ""
 
 msgid "Invalid login or password."
-msgstr "Connexion ou mot de passe invalide."
+msgstr ""
 
 #. Translators: Microsoft account doesn't contain email
 msgid "Email is not listed in profile."
-msgstr "L'email n'est pas répertorié dans le profil."
+msgstr ""
 
 msgid "Error while retrieving Microsoft profile data."
-msgstr "Erreur lors de la récupération des données du profil Microsoft."
+msgstr ""
 
 msgid "Phone number must be entered in the format: \"+99999999999\". Up to 15 digits allowed."
-msgstr "Le numéro de téléphone doit être saisi au format : \"+99999999999\". Jusqu'à 15 chiffres autorisés."
+msgstr ""
 
 #. Translators: Guest authentication
 msgid "Authorization header contain spaces."
-msgstr "L'en-tête d'autorisation contient des espaces."
+msgstr ""
 
 msgid "Token is invalid."
-msgstr "Le jeton est invalide."
+msgstr ""
 
 msgid "Token is expired."
-msgstr "Le jeton a expiré."
+msgstr ""
 
 #. Translators: Guest authentication
 msgid "Given token not valid for guest token type."
-msgstr "Jeton fourni non valide pour le type de jeton invité."
+msgstr ""
 
 #. Translators: Guest authentication
 msgid "Token contained no recognizable user identification."
-msgstr "Le jeton ne contient aucune identification d'utilisateur reconnaissable."
+msgstr ""
 
 #. Translators: Change password from profile
 msgid "The current password is incorrect."
-msgstr "Le mot de passe actuel est incorrect."
+msgstr ""
 
 msgid "The new password and its confirmation don't match."
-msgstr "Le nouveau mot de passe et sa confirmation ne correspondent pas."
+msgstr ""
 
 #. Translators: Google authorization
-#, fuzzy
-#| msgid "Error while retrieving Microsoft profile data."
 msgid "Error while retrieving Google profile data."
-msgstr "Erreur lors de la récupération des données du profil Microsoft."
+msgstr ""
 
 msgid "The system is configured to use a different SSO provider. Please contact your administrator."
-msgstr "Le système est configuré pour utiliser un autre fournisseur SSO. Veuillez contacter votre administrateur."
+msgstr ""
 
 msgid "This account uses SSO authentication. Please sign in through your organization's SSO portal."
-msgstr "Ce compte utilise l'authentification SSO. Veuillez vous connecter via le portail SSO de votre organisation."
+msgstr ""
 
 msgid "SSO authentication is currently unavailable. Please contact support."
-msgstr "L'authentification SSO n'est pas disponible pour le moment. Veuillez contacter le support."
+msgstr ""
 
 #, python-brace-format
 msgid "No active SSO configuration found for the domain: \"{domain}\"."
-msgstr "Aucune configuration SSO active n'a été trouvée pour le domaine : «{domain}»."
+msgstr ""
 
 msgid "This account does not use SSO authentication. Please contact support."
-msgstr "Ce compte n'utilise pas l'authentification SSO. Veuillez contacter le support."
+msgstr ""
 
 msgid "Format field is required"
 msgstr ""

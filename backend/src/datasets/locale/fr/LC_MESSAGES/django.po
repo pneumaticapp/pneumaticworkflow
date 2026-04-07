@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-04-07 10:44+0000\n"
+"POT-Creation-Date: 2026-04-07 11:48+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,11 +18,9 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 
-#: messages.py:4
 msgid "A dataset with this name already exists."
 msgstr "Un jeu de données portant ce nom existe déjà."
 
-#: messages.py:6
 #, python-brace-format
 msgid "A dataset item with value \"{value}\" already exists."
 msgstr "Un élément du jeu de données avec la valeur \"{value}\" existe déjà."

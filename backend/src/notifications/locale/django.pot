@@ -19,48 +19,46 @@ msgstr ""
 
 #, python-brace-format
 msgid "Reacted {reaction} to your comment"
-msgstr "Reaccionó con {reaction} a tu comentario"
+msgstr ""
 
 msgid "You have a new task"
-msgstr "Tienes una nueva tarea"
+msgstr ""
 
 msgid "Task was returned"
-msgstr "Tarea devuelta"
+msgstr ""
 
 msgid "Your task is overdue"
-msgstr "Tu tarea está atrasada."
+msgstr ""
 
 msgid "You have been mentioned"
-msgstr "Has sido mencionado"
+msgstr ""
 
 msgid "You have a new comment"
-msgstr "Tienes un nuevo comentario"
+msgstr ""
 
 msgid "Workflow was snoozed"
-msgstr "El flujo de trabajo fue pospuesto."
+msgstr ""
 
 msgid "Workflow was resumed"
-msgstr "El flujo de trabajo se reanudó"
+msgstr ""
 
 msgid "Task due date was changed"
-msgstr "Fecha de vencimiento de la tarea fue cambiada."
+msgstr ""
 
 #, python-brace-format
 msgid ""
 "Workflow: {workflow_name}\n"
 "Task: {task_name}"
 msgstr ""
-"Flujo de trabajo: {workflow_name}\n"
-"Tarea: {task_name}"
 
 msgid "Task was completed"
-msgstr "Tarea completada"
+msgstr ""
 
 msgid "You have unread notifications"
-msgstr "Tienes notificaciones sin leer"
+msgstr ""
 
 msgid "Password reset"
-msgstr "Restablecer contraseña"
+msgstr ""
 
 msgid "Profile was deactivated"
 msgstr ""
@@ -80,10 +78,8 @@ msgstr ""
 msgid "Join your team"
 msgstr ""
 
-#, fuzzy
-#| msgid "Workflow was snoozed"
 msgid "Workflow was completed"
-msgstr "El flujo de trabajo fue pospuesto."
+msgstr ""
 
 msgid "Reminder"
 msgstr ""

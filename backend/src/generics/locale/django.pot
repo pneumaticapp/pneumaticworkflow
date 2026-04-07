@@ -19,59 +19,59 @@ msgstr ""
 
 #, python-brace-format
 msgid "'{choice}' is an invalid value for the filter"
-msgstr "'{choice}' недопустимое значение для фильтра."
+msgstr ""
 
 #. Translators: AccountPrimaryKeyRelatedField incorrect init
 msgid "Account or queryset not provided"
-msgstr "Account или queryset не предоставлен."
+msgstr ""
 
 msgid "Value should be a list of integers."
-msgstr "Значение должно быть списком целых чисел."
+msgstr ""
 
 msgid "The \"raise_validation_error\" method should be used only after calling the \"is_valid\" method"
-msgstr "Метод \"raise_validation_error\" следует вызывать только после вызова метода \"is_valid\""
+msgstr ""
 
 msgid "You need to set a \"Meta.fields\" value before using AdditionalValidationMixin"
-msgstr "Перед использованием AdditionalValidationMixin следует задать значение \"Meta.fields\""
+msgstr ""
 
 msgid "Numeric type expected."
-msgstr "Ожидается числовой тип."
+msgstr ""
 
 msgid "Jan"
-msgstr "Янв"
+msgstr ""
 
 msgid "Feb"
-msgstr "Фев"
+msgstr ""
 
 msgid "Mar"
-msgstr "Мар"
+msgstr ""
 
 msgid "Apr"
-msgstr "Апр"
+msgstr ""
 
 msgid "May"
-msgstr "Май"
+msgstr ""
 
 msgid "Jun"
-msgstr "Июн"
+msgstr ""
 
 msgid "Jul"
-msgstr "Июл"
+msgstr ""
 
 msgid "Aug"
-msgstr "Авг"
+msgstr ""
 
 msgid "Sep"
-msgstr "Сен"
+msgstr ""
 
 msgid "Oct"
-msgstr "Окт"
+msgstr ""
 
 msgid "Nov"
-msgstr "Ноя"
+msgstr ""
 
 msgid "Dec"
-msgstr "Дек"
+msgstr ""
 
 msgid "An incorrect value has been passed in; a timestamp format is expected."
-msgstr "Передано некорректное значение, ожидается значение в формате timestamp."
+msgstr ""

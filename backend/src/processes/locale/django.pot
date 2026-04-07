@@ -18,517 +18,508 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 msgid "You can't pass \"snooze\" for the first task."
-msgstr "Vous ne pouvez pas passer \"snooze\" pour la première tâche."
+msgstr ""
 
 msgid "You should set task performers before setting template to active."
-msgstr "Vous devez définir les exécutants de tâches avant de définir le modèle comme actif."
+msgstr ""
 
 msgid "One or more performers are repeated."
-msgstr "Un ou plusieurs artistes sont répétés."
+msgstr ""
 
 #, python-brace-format
 msgid "Some fields referenced in the conditions of task \"{name}\" do not exist."
-msgstr "Некоторые поля, указанные в условиях задачи \"{name}\", не существуют."
+msgstr ""
 
 msgid "You must provide either a \"selections\" or a \"dataset\" for the field."
 msgstr ""
 
 msgid "A field with a type 'User' should be required."
-msgstr "Un champ de type 'Utilisateur' doit être obligatoire."
+msgstr ""
 
 msgid "Workflow template name is empty."
-msgstr "Le nom du modèle de flux de travail est vide."
+msgstr ""
 
 msgid "Some of fields in \"workflow template name\" don't exist."
-msgstr "Certains champs dans \"workflow template name\" n'existent pas."
+msgstr ""
 
 msgid "If a \"workflow template name\" contains only an output fields, at least one of the fields must be required."
 msgstr ""
 
 msgid "Kickoff form data not provided."
-msgstr "Les données du formulaire de lancement ne sont pas fournies."
+msgstr ""
 
 msgid "Kickoff form 'id' has incorrect value."
-msgstr "Le formulaire de démarrage 'id' a une valeur incorrecte."
+msgstr ""
 
 msgid "Kickoff 'id' not provided."
-msgstr "L'identifiant 'id' du coup d'envoi n'est pas fourni."
+msgstr ""
 
 msgid "Tasks data not provided, one task required."
-msgstr "Données des tâches non fournies, une tâche requise."
+msgstr ""
 
 msgid "Incorrect tasks order."
-msgstr "Ordre des tâches incorrect."
+msgstr ""
 
 msgid "You should set 'template owners' value."
-msgstr "Vous devez définir la valeur des 'propriétaires du modèle'."
+msgstr ""
 
 msgid "You cannot remove yourself from template owners."
-msgstr "Vous ne pouvez pas vous retirer des propriétaires de modèles."
+msgstr ""
 
 msgid "One or more template owners are incorrect."
-msgstr "Un ou plusieurs propriétaires de modèles sont incorrects."
+msgstr ""
 
 msgid "\"Public success url\" is an invalid format."
-msgstr "L'expression \"Public success url\" est dans un format invalide."
+msgstr ""
 
 msgid "Filters 'with_tasks_in_progress' and 'workflows_status' cannot be used at the same time."
-msgstr "Filtres 'with_tasks_in_progress' et 'workflows_status' ne peuvent pas être utilisés en même temps."
+msgstr ""
 
 msgid "Permission denied. You are not a template owner."
-msgstr "Permission refusée. Vous n'êtes pas propriétaire du modèle."
+msgstr ""
 
 msgid "Inconsistent permission! Should use only for \"workflow detail\" actions."
-msgstr "Permission incohérente ! Ne doit être utilisé que pour les actions \"détails du flux de travail\"."
+msgstr ""
 
 msgid "The limit for creating a public id has been exceeded."
-msgstr "La limite de création d'un identifiant public a été dépassée."
+msgstr ""
 
 msgid "The limit for creating a embed id has been exceeded."
-msgstr "La limite de création d'un identifiant intégré a été dépassée."
+msgstr ""
 
 #. Translators: Template due date editor
 msgid "Expected date field api_name."
-msgstr "Champ de date prévue api_name."
+msgstr ""
 
 #. Translators: Template due date editor
 msgid "Only existing date fields can be used as a due date."
-msgstr "Seuls les champs de date existants peuvent être utilisés comme date d'échéance."
+msgstr ""
 
 #. Translators: Template due date editor
 msgid "Expected task api_name."
-msgstr "Tâche prévue api_name."
+msgstr ""
 
 msgid "Only previous tasks are allowed in a rule."
-msgstr "Seules les tâches précédentes sont autorisées dans une règle."
+msgstr ""
 
 msgid "Only previous and current tasks are allowed in a rule."
-msgstr "Seules les tâches précédentes et actuelles sont autorisées dans une règle."
+msgstr ""
 
 msgid "You should set the user id for performer with the type \"user\"."
-msgstr "Vous devez définir l'identifiant utilisateur pour l'exécutant avec le type \"utilisateur\"."
+msgstr ""
 
 msgid "Performer \"id\" should be a number."
-msgstr "L'identifiant \"id\" de l'interprète doit être un nombre."
+msgstr ""
 
 msgid "One or more performers are incorrect."
-msgstr "Un ou plusieurs interprètes sont incorrects."
+msgstr ""
 
 msgid "A template with \"Workflow starter\" in the list of performers can not be shared. Please replace the \"workflow starter\" with another team member."
-msgstr "Un modèle contenant \"Initiateur du flux de travail\" dans la liste des exécutants ne peut pas être partagé. Veuillez remplacer l'\"initiateur du flux de travail\" par un autre membre de l'équipe."
+msgstr ""
 
 msgid "You should set the field api_name for performer with the type \"field\"."
-msgstr "Vous devez définir le champ api_name pour le performer avec le type \"field\"."
+msgstr ""
 
 #, python-brace-format
 msgid "Some fields referenced in the description of task \"{name}\" do not exist."
-msgstr "Certains champs référencés dans la description de la tâche \"{name}\" n'existent pas."
+msgstr ""
 
 #, python-brace-format
 msgid "Some fields in task \"{name}\" do not exist."
-msgstr "Certains champs dans la tâche \"{name}\" n'existent pas."
+msgstr ""
 
 #, python-brace-format
 msgid "Task \"{name}\": If the task name contains only output fields, at least one field must be required."
-msgstr "Tâche \"{name}\" : si le nom de la tâche ne contient que des champs de sortie, au moins l'un d'eux doit être obligatoire."
+msgstr ""
 
 msgid "Checklist items not exists or invalid."
-msgstr "Éléments de la liste de contrôle inexistants ou invalides."
+msgstr ""
 
 #, python-brace-format
 msgid "You can't change api_name of an existing object. Old value: \"{old}\", new value: \"{new}\"."
-msgstr "Vous ne pouvez pas modifier api_name d'un objet existant. Ancienne valeur : \"{old}\", nouvelle valeur : \"{new}\"."
+msgstr ""
 
 #, python-brace-format
 msgid "Task \"{task}\": user id \"{user_id}\" doesn't exist or can't be used in this condition."
-msgstr "Tâche \"{task}\" : l'identifiant utilisateur \"{user_id}\" n'existe pas ou ne peut pas être utilisé dans cette condition."
+msgstr ""
 
 #, python-brace-format
 msgid "Task \"{task}\": operator \"{operator}\" can't be use with type of field \"{field_type}\"."
-msgstr "Tâche \"{task}\" : l'opérateur \"{operator}\" ne peut pas être utilisé avec le type de champ \"{field_type}\"."
+msgstr ""
 
-#, fuzzy, python-brace-format
-#| msgid "Task \"{task}\": selection \"{selection_api_name}\" doesn't exist or can't be used in this condition."
+#, python-brace-format
 msgid "Task \"{task}\": selection \"{selection_value}\" doesn't exist or can't be used in this condition."
-msgstr "Tâche \"{task}\" : la sélection \"{selection_api_name}\" n'existe pas ou ne peut pas être utilisée dans cette condition."
+msgstr ""
 
 #, python-brace-format
 msgid "Task \"{task}\": operator \"{operator}\" should have some value."
-msgstr "Tâche \"{task}\" : l'opérateur \"{operator}\" doit avoir une valeur."
+msgstr ""
 
 #, python-brace-format
 msgid "Task \"{name}\": The checklist contains a duplicate api_name \"{api_name}\". Recreate the checklist or change its api_name."
-msgstr "Tâche \"{name}\" : la checklist contient un api_name dupliqué \"{api_name}\". Recréez la checklist ou changez son api_name."
+msgstr ""
 
 #, python-brace-format
 msgid "Task \"{name}\": The checklist item contains a duplicate api_name \"{api_name}\". Recreate the item or change its api_name."
-msgstr "Tâche \"{name}\" : l'élément de checklist contient un api_name dupliqué \"{api_name}\". Recréez l'élément ou changez son api_name."
+msgstr ""
 
 #, python-brace-format
 msgid "Task \"{name}\": The condition contains a duplicate api_name \"{api_name}\". Recreate the condition or change its api_name."
-msgstr "Tâche \"{name}\" : la condition contient un api_name dupliqué \"{api_name}\". Recréez la condition ou changez son api_name."
+msgstr ""
 
 #, python-brace-format
 msgid "Task \"{name}\": Output field \"{field_name}\" contains a duplicate api_name \"{api_name}\". Change the api_name or recreate the output field."
-msgstr "Tâche \"{name}\" : le champ de sortie \"{field_name}\" contient un api_name dupliqué \"{api_name}\". Modifiez l'api_name ou recréez le champ."
+msgstr ""
 
 #, python-brace-format
 msgid "Task \"{name}\": The condition predicate contains a duplicate api_name \"{api_name}\". Recreate the predicate or change its api_name."
-msgstr "Tâche \"{name}\": le prédicat de condition contient un api_name dupliqué \"{api_name}\". Recréez le prédicat ou changez son api_name."
+msgstr ""
 
 #, python-brace-format
 msgid "Task \"{name}\": The due date contains a duplicate api_name \"{api_name}\". Recreate the due date or change its api_name."
-msgstr "Tâche \"{name}\" : la date d'échéance contient un api_name dupliqué \"{api_name}\". Recréez la date ou changez son api_name."
+msgstr ""
 
 #, python-brace-format
 msgid "Task \"{name}\": The condition rule contains a duplicate api_name \"{api_name}\". Recreate the rule or change its api_name."
-msgstr "Tâche \"{name}\" : la règle de condition contient un api_name dupliqué \"{api_name}\". Recréez la règle ou changez son api_name."
+msgstr ""
 
-#, fuzzy, python-brace-format
-#| msgid "Task \"{name}\": Option \"{value}\" of output field \"{field_name}\" contains a duplicate api_name \"{api_name}\". Change the api_name or recreate the option."
+#, python-brace-format
 msgid "Task \"{name}\": The output field \"{field_name}\" contains a duplicate value in option \"{value}\". Please use a unique value."
-msgstr "Tâche \"{name}\" : l'option \"{value}\" du champ de sortie \"{field_name}\" contient un api_name dupliqué \"{api_name}\". Modifiez l'api_name ou recréez l'option."
+msgstr ""
 
 #, python-brace-format
 msgid "Task \"{name}\": Contains a duplicate api_name \"{api_name}\". Recreate the task or change its api_name."
-msgstr "Tâche \"{name}\" : contient un api_name dupliqué \"{api_name}\". Recréez la tâche ou changez son api_name."
+msgstr ""
 
 #, python-brace-format
 msgid "Task \"{name}\": The performer contains a duplicate api_name \"{api_name}\". Recreate the performer or change its api_name."
-msgstr "Tâche \"{name}\" : l'exécutant contient un api_name dupliqué \"{api_name}\". Recréez l'exécutant ou changez son api_name."
+msgstr ""
 
 msgid "Duplicate template owners in the add owners request."
-msgstr "Doublons de propriétaires de modèle dans la requête d’ajout de propriétaires."
+msgstr ""
 
-# #: src/processes/messages/template.py:207
 #, python-brace-format
 msgid "Template \"{name}\": The owners contain a duplicate api_name \"{api_name}\". Change the duplicate api_name or specify different owners."
-msgstr "Modèle \"{name}\" : les propriétaires contiennent un api_name dupliqué \"{api_name}\". Modifiez l'api_name dupliqué ou indiquez d'autres propriétaires."
+msgstr ""
 
 #, python-brace-format
 msgid "Task \"{name}\": The \"Return to\" setting refers to a non-existent task (API name: \"{api_name}\")."
-msgstr "Tâche \"{name}\" : le paramètre \"Retour à\" fait référence à une tâche qui n'existe pas (nom API : \"{api_name}\")."
+msgstr ""
 
 #, python-brace-format
 msgid "Task \"{name}\": Cannot be set to return to itself."
-msgstr "Tâche \"{name}\" : ne peut pas être configurée pour revenir à elle-même."
+msgstr ""
 
 #, python-brace-format
 msgid "Task \"{name}\": Can be returned only to one of its ancestors."
-msgstr "Tâche \"{name}\" : ne peut être renvoyée qu'à l'un de ses ancêtres."
+msgstr ""
 
 #, python-brace-format
 msgid "Task \"{task}\": Group ID \"{group_id}\" does not exist or cannot be used in this condition."
-msgstr "Tâche \"{task}\" : l'ID de groupe \"{group_id}\" n'existe pas ou ne peut pas être utilisé dans cette condition."
+msgstr ""
 
 #. Translators: Number field validation
 msgid "The value must be a number."
-msgstr "La valeur doit être un nombre."
+msgstr ""
 
 #, python-brace-format
 msgid "Task condition \"{name}\": Only the \"completed\" operator is allowed for the \"start_task\" action"
-msgstr "Condition de tâche \"{name}\" : Seul l'opérateur \"completed\" est autorisé pour l'action \"start_task\""
+msgstr ""
 
 #, python-brace-format
 msgid "Task \"{name}\" has a circular dependency. Please change the \"start after\" condition."
-msgstr "La tâche \"{name}\" a une dépendance circulaire. Veuillez modifier la condition \"démarrer après\"."
+msgstr ""
 
 #, python-brace-format
 msgid "Task \"{name}\": the \"start after\" condition points to a non-existent task. Please change the \"start after\" condition."
 msgstr ""
 
-#, fuzzy, python-brace-format
-#| msgid "Task \"{name}\" has a circular dependency. Please change the \"start after\" condition."
+#, python-brace-format
 msgid "Task \"{name}\": the \"check if\" condition points to a non-existent task. Please change the \"check if\" condition."
-msgstr "La tâche \"{name}\" a une dépendance circulaire. Veuillez modifier la condition \"démarrer après\"."
+msgstr ""
 
-#, fuzzy, python-brace-format
-#| msgid "Task \"{name}\" has a circular dependency. Please change the \"start after\" condition."
+#, python-brace-format
 msgid "Task \"{name}\": the \"check if\" condition points to a non ancestor task. Please change the \"check if\" condition."
-msgstr "La tâche \"{name}\" a une dépendance circulaire. Veuillez modifier la condition \"démarrer après\"."
+msgstr ""
 
 msgid "Permission denied. You do not have access to this template."
-msgstr "Accès refusé. Vous n’avez pas accès à ce modèle."
+msgstr ""
 
 msgid "Permission denied. You are not a template owner or viewer."
-msgstr "Accès refusé. Vous n’êtes ni propriétaire ni visualiseur de ce modèle."
+msgstr ""
 
 msgid "Saving files is not available, file storage does't configured. Contact support."
-msgstr "La sauvegarde des fichiers n'est pas disponible, le stockage des fichiers n'est pas configuré. Contactez le support."
+msgstr ""
 
 msgid "Only \"snoozed\" workflows can be resumed."
-msgstr "Seuls les flux de travail \"en veille\" peuvent être repris."
+msgstr ""
 
 msgid "You need to resume the workflow before completing the task."
-msgstr "Vous devez reprendre le flux de travail avant de terminer la tâche."
+msgstr ""
 
 msgid "Task is skipped and cannot be completed."
-msgstr "La tâche est ignorée et ne peut pas être accomplie."
+msgstr ""
 
 msgid "Check off all the items in the checklist before completing the task."
-msgstr "Cochez tous les éléments de la liste de contrôle avant de terminer la tâche."
+msgstr ""
 
 msgid "You have already completed this task."
-msgstr "Vous avez déjà terminé cette tâche."
+msgstr ""
 
 msgid "You have already completed this workflow."
-msgstr "Vous avez déjà terminé ce flux de travail."
+msgstr ""
 
 msgid "You are not allowed to finish this workflow."
-msgstr "Vous n'êtes pas autorisé à terminer ce flux de travail."
+msgstr ""
 
 msgid "Task already completed."
-msgstr "Tâche déjà accomplie."
+msgstr ""
 
 msgid "You don't have permission for complete the task."
-msgstr "Vous n'avez pas la permission de terminer cette tâche."
+msgstr ""
 
 #. Translators: Task return api
 msgid "The supplied task number is incorrect."
-msgstr "Le numéro de tâche fourni est incorrect."
+msgstr ""
 
 #. Translators: Create / delete task performer action
 msgid "The user with the specified credentials not found."
-msgstr "L'utilisateur avec les identifiants spécifiés est introuvable."
+msgstr ""
 
 msgid "You have reached the limit of the number of guest performers."
-msgstr "Vous avez atteint la limite du nombre d'invités."
+msgstr ""
 
 #. Translators: Create / delete task performer action
 msgid "Deleting the last performer is not allowed."
-msgstr "La suppression du dernier interprète n'est pas autorisée."
+msgstr ""
 
 msgid "Completed workflow cannot be changed."
-msgstr "Le flux de travail terminé ne peut pas être modifié."
+msgstr ""
 
 #. Translators: Create / delete task performer or fill checklist actions
 msgid "Available only for the active task."
-msgstr "Disponible uniquement pour la tâche active."
+msgstr ""
 
 msgid "You need to be added to the task as a performer to check off this checklist item."
-msgstr "Vous devez être ajouté à la tâche en tant qu'exécutant pour cocher cet élément de la liste de contrôle."
+msgstr ""
 
 msgid "You need to resume the workflow before check off this checklist item."
-msgstr "Vous devez reprendre le flux de travail avant de cocher cet élément de la liste de contrôle."
+msgstr ""
 
 msgid "Permission denied."
-msgstr "Permission refusée."
+msgstr ""
 
 #. Translators:
 msgid "Please fill in the required fields."
-msgstr "Veuillez remplir les champs obligatoires."
+msgstr ""
 
 #, python-brace-format
 msgid "Wrong argument format: \"{arg}\"."
-msgstr "Format d'argument incorrect : « {arg} »."
+msgstr ""
 
 #. Translators: String field validation
 msgid "Value should be a string."
-msgstr "La valeur doit être une chaîne de caractères."
+msgstr ""
 
 #, python-brace-format
 msgid "The value of the field exceeds the limit of {limit} characters."
-msgstr "La valeur du champ dépasse la limite de {limit} caractères."
+msgstr ""
 
 #. Translators: Dropdown / radio / checkbox selections validation
-#, fuzzy
-#| msgid "Selection with the given id does not exist."
 msgid "Selection with the given value does not exist."
-msgstr "Sélection avec l'identifiant donné n'existe pas."
+msgstr ""
 
 #. Translators: Checkbox selections validation
 msgid "Checkbox value should be a list."
-msgstr "La valeur de la case à cocher doit être une liste."
+msgstr ""
 
 #. Translators: Checkbox selections validation
 msgid "Checkbox value contains invalid selections."
-msgstr "La valeur de la case à cocher contient des sélections invalides."
+msgstr ""
 
 #. Translators: Checkbox selections validation
 msgid "Checkbox value contains non existent selections."
-msgstr "La valeur de la case à cocher contient des sélections inexistantes."
+msgstr ""
 
 msgid "The date value must be an integer or a floating-point number."
-msgstr "La valeur de la date doit être un nombre entier ou à virgule flottante."
+msgstr ""
 
 #. Translators: URL field validation
 msgid "URL field value should be a string."
-msgstr "La valeur du champ URL doit être une chaîne de caractères."
+msgstr ""
 
 #. Translators: URL field validation
 msgid "The URL is invalid."
-msgstr "L'URL est invalide."
+msgstr ""
 
 #. Translators: File field validation
 msgid "File value should be a list of integers."
-msgstr "La valeur du fichier doit être une liste d'entiers."
+msgstr ""
 
 #. Translators: File field validation
 msgid "Attachment not found."
-msgstr "Pièce jointe introuvable."
+msgstr ""
 
 #. Translators: User field validation
 msgid "The value must be the ID of an existing account user."
-msgstr "La valeur doit être l'identifiant d'un utilisateur de compte existant."
+msgstr ""
 
 msgid "Save attachments failed. Service unavailable."
-msgstr "Échec de l'enregistrement des pièces jointes. Service indisponible."
+msgstr ""
 
 msgid "Blob object doesn't exist."
-msgstr "L'objet Blob n'existe pas."
+msgstr ""
 
 msgid "AI service is temporarily unavailable."
-msgstr "Le service d'IA est temporairement indisponible."
+msgstr ""
 
 #. Translators: AI template generation
 msgid "Could not create template from given description."
-msgstr "Impossible de créer un modèle à partir de la description fournie."
+msgstr ""
 
 msgid "You've reached the limit for free AI powered template generation requests, sign up for a premium account to get unlimited access."
-msgstr "Vous avez atteint la limite des demandes de génération de modèles alimentés par l'IA gratuites. Inscrivez-vous à un compte premium pour obtenir un accès illimité."
+msgstr ""
 
 msgid "Something seems to be wrong with your input, please try re phrasing your process name and description."
-msgstr "Il semble y avoir un problème avec votre saisie, veuillez essayer de reformuler le nom et la description de votre processus."
+msgstr ""
 
 msgid "You need to set up a system prompt for template generation. Contact administrator."
-msgstr "Vous devez configurer une invite système pour la génération de modèles. Contactez l'administrateur."
+msgstr ""
 
 #. Translators: Comment create validation
 msgid "You need to specify the comment text or attachments."
-msgstr "Vous devez spécifier le texte du commentaire ou les pièces jointes."
+msgstr ""
 
 msgid "You cannot write a comment on a completed workflow."
-msgstr "Vous ne pouvez pas écrire de commentaire sur un flux de travail terminé."
+msgstr ""
 
 msgid "You cannot change a deleted comment."
-msgstr "Vous ne pouvez pas modifier un commentaire supprimé."
+msgstr ""
 
 #, python-brace-format
 msgid "The size limit for attachments is {mb} Mb."
-msgstr "La taille limite pour les pièces jointes est de {mb} Mo."
+msgstr ""
 
 #. Translators: Set task / workflow due date
 msgid "Due date should be greater than current."
-msgstr "La date d'échéance doit être postérieure à la date actuelle."
+msgstr ""
 
 #. Translators: Starting workflow. Validate user field
 msgid "Field with type \"User\" should be required."
-msgstr "Le champ de type \"Utilisateur\" doit être obligatoire."
+msgstr ""
 
 msgid "The default value for a field with type \"User\" should be an integer."
-msgstr "La valeur par défaut pour un champ de type \"Utilisateur\" doit être un entier."
+msgstr ""
 
 msgid "The user for a field with type \"User\" does not exist."
-msgstr "L'utilisateur pour un champ de type \"Utilisateur\" n'existe pas."
+msgstr ""
 
 #. Translators: Starting workflow. Validate dropdown / radio / checkbox
 msgid "Field selections not provided."
-msgstr "Sélections de champs non fournies."
+msgstr ""
 
 msgid "Checklist element length limit exceeded. Limit 2000 chars."
-msgstr "Limite de longueur de l'élément de la liste de contrôle dépassée. Limite de 2000 caractères."
+msgstr ""
 
 #. Translators: Task list filter by performer
 msgid "Filter by \"assigned_to\" is only allowed for the admin."
-msgstr "Filtrer par \"assigned_to\" est uniquement autorisé pour l'administrateur."
+msgstr ""
 
 msgid "Checklist item with given id not found."
-msgstr "Élément de la liste de vérification avec l'identifiant donné introuvable."
+msgstr ""
 
 #. Translators: System template creation validation
 msgid "You can't pass the `id` field."
-msgstr "Vous ne pouvez pas passer le champ `id`."
+msgstr ""
 
 #. Translators: System template creation validation
 msgid "Radio and checkbox fields must have non-empty selections."
-msgstr "Les champs radio et case à cocher doivent avoir des sélections non vides."
+msgstr ""
 
 #. Translators: System template kickoff creation validation
 msgid "Value should be a object."
-msgstr "La valeur doit être un objet."
+msgstr ""
 
 #. Translators: System template fields creation validation
 msgid "Value should be a list."
-msgstr "La valeur doit être une liste."
+msgstr ""
 
 #. Translators: System template tasks creation validation
 msgid "Incorrect order of tasks."
-msgstr "Ordre des tâches incorrect."
+msgstr ""
 
 #. Translators: System template creation validation
 msgid "You must pass an \"api_name\" into every field you declare."
-msgstr "Vous devez passer un \"api_name\" dans chaque champ que vous déclarez."
+msgstr ""
 
 msgid "Your template is disabled. Please, enable this template before running."
-msgstr "Votre modèle est désactivé. Veuillez activer ce modèle avant de l'exécuter."
+msgstr ""
 
 msgid "Only \"in-progress\" workflows can be filtered by current performer."
-msgstr "Seuls les flux de travail \"en cours\" peuvent être filtrés par l'exécutant actuel."
+msgstr ""
 
 msgid "The task can't be completed until all the embedded workflows are done."
-msgstr "La tâche ne peut pas être terminée tant que tous les flux de travail intégrés ne sont pas achevés."
+msgstr ""
 
 msgid "The task can't be returned until all the embedded workflows are done."
-msgstr "La tâche ne peut pas être renvoyée tant que tous les flux de travail intégrés ne sont pas terminés."
+msgstr ""
 
 msgid "Snoozed workflow cannot be changed."
-msgstr "Flux de travail en veille ne peut pas être modifié."
+msgstr ""
 
 msgid "Completed task cannot be changed."
-msgstr "Tâche terminée ne peut pas être modifiée."
+msgstr ""
 
 msgid "Embedded workflows can be created only for the workflow's active task."
-msgstr "Les workflows imbriqués ne peuvent être créés que pour la tâche active du workflow."
+msgstr ""
 
 msgid "You need to be added to the task as a performer in order to create a embedded workflows."
-msgstr "Vous devez être ajouté à la tâche en tant qu'exécutant afin de créer des flux de travail intégrés."
+msgstr ""
 
 msgid "You need to pass in a \"task_id\", or a \"task api_name\"."
-msgstr "Vous devez renseigner un task \"id\" ou un task \"api_name\"."
+msgstr ""
 
 msgid "The passed in task was not found in the workflow."
-msgstr "La tâche transmise n’a pas été trouvée dans le workflow."
+msgstr ""
 
 msgid "You can't revert from the first task."
-msgstr "Vous ne pouvez pas revenir en arrière à partir de la première tâche."
+msgstr ""
 
 #, python-brace-format
 msgid "Unable return to \"{task_name}\" because it was skipped by a condition."
-msgstr "Impossible de revenir à \"{task_name}\", car elle a été ignorée en raison d’une condition."
+msgstr ""
 
 #, python-brace-format
 msgid "Unable return to \"{task_name}\", because it was skipped by a condition (as were all the tasks before it)."
-msgstr "Impossible de revenir à \"{task_name}\" car elle a été ignorée en raison d’une condition (comme toutes les tâches précédentes)."
+msgstr ""
 
 msgid "A workflow can't return to a later task."
-msgstr "Un workflow ne peut pas revenir à une tâche ultérieure."
+msgstr ""
 
 msgid "There is no group with the specified ID."
-msgstr "Il n'y a aucun groupe avec l'ID spécifié."
+msgstr ""
 
 msgid "You must supply a comment."
-msgstr "Vous devez fournir un commentaire."
+msgstr ""
 
 #. Translators: task actions validation
 msgid "Task not found."
-msgstr "Tâche introuvable."
+msgstr ""
 
-#, fuzzy
-#| msgid "Available only for the active task."
 msgid "Available only for active tasks."
-msgstr "Disponible uniquement pour la tâche active."
+msgstr ""
 
 msgid "You must be added to the task as a performer to complete this action."
-msgstr "Vous devez être ajouté à la tâche en tant qu'exécutant pour effectuer cette action."
+msgstr ""
 
 msgid "Completed task can't be returned."
-msgstr "Une tâche terminée ne peut pas être renvoyée."
+msgstr ""
 
 msgid "You cannot write a comment on a inactive task."
-msgstr "Vous ne pouvez pas écrire un commentaire sur une tâche inactive."
+msgstr ""
 
 msgid "The user or group specified for a \"User\" field does not exist."
-msgstr "L'utilisateur ou le groupe spécifié pour un champ de type \"Utilisateur\" n'existe pas."
+msgstr ""
 
 msgid "Guest"
-msgstr "Invité"
+msgstr ""

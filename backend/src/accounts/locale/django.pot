@@ -18,151 +18,151 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 msgid "Saving files is not available, file storage does't configured. Contact support."
-msgstr "L'enregistrement des fichiers n'est pas disponible, le stockage des fichiers n'est pas configuré. Veuillez contacter le support."
+msgstr ""
 
 #. Translators: Create invite form validation
 msgid "The \"type\" or \"invited_from\" field must be specified."
-msgstr "Le champ \"type\" ou \"invited_from\" doit être spécifié."
+msgstr ""
 
 msgid "Logo change is not allowed for this account."
-msgstr "La modification du logo n'est pas autorisée pour ce compte."
+msgstr ""
 
 msgid "You can't assign workflows to the same user. Please choose another one."
-msgstr "Vous ne pouvez pas attribuer des flux de travail au même utilisateur. Veuillez en choisir un autre."
+msgstr ""
 
 msgid "There is already a registered user with these email."
-msgstr "Il existe déjà un utilisateur enregistré avec cet e-mail."
+msgstr ""
 
 msgid "You have reached limit on invitations. Contact Support to invite more users."
-msgstr "Vous avez atteint la limite d'invitations. Contactez le support pour inviter plus d'utilisateurs."
+msgstr ""
 
 msgid "Invite is already accepted."
-msgstr "L'invitation a déjà été acceptée."
+msgstr ""
 
 msgid "Token is invalid."
-msgstr "Le jeton est invalide."
+msgstr ""
 
 msgid "Token is expired."
-msgstr "Le jeton a expiré."
+msgstr ""
 
 msgid "The user with the specified credentials not found."
-msgstr "L'utilisateur avec les identifiants spécifiés est introuvable."
+msgstr ""
 
 msgid "You can't delete a user without assigning their tasks to a different user."
-msgstr "Vous ne pouvez pas supprimer un utilisateur sans attribuer ses tâches à un autre utilisateur."
+msgstr ""
 
 msgid "Reassign user does not exist."
-msgstr "Réaffecter l'utilisateur n'existe pas."
+msgstr ""
 
 msgid "Token is invalid or expired."
-msgstr "Le jeton est invalide ou a expiré."
+msgstr ""
 
 #. Translators: Unsubscribe from any mailing or digest
 msgid "You have successfully unsubscribed."
-msgstr "Vous vous êtes désabonné avec succès."
+msgstr ""
 
 msgid "Email"
-msgstr "E-mail"
+msgstr ""
 
 msgid "First name"
-msgstr "Prénom"
+msgstr ""
 
 msgid "Password"
-msgstr "Mot de passe"
+msgstr ""
 
 msgid "Password confirmation"
-msgstr "Confirmation du mot de passe"
+msgstr ""
 
 #. Translators: Signup form help text
 msgid "Enter the same password as before, for verification."
-msgstr "Entrez le même mot de passe qu'auparavant, pour vérification."
+msgstr ""
 
 msgid "User info"
-msgstr "Informations utilisateur"
+msgstr ""
 
 msgid "Status"
-msgstr "Statut"
+msgstr ""
 
 msgid "Permissions"
-msgstr "Autorisations"
+msgstr ""
 
 msgid "Important dates"
-msgstr "Dates importantes"
+msgstr ""
 
 msgid "This field is required."
-msgstr "Ce champ est requis."
+msgstr ""
 
 #. Translators: Create tenant from admin
 msgid "\"Master account\" does not exists."
-msgstr "Le message suivant en français serait : \"Le compte principal\" n'existe pas."
+msgstr ""
 
 #. Translators: Create tenant from admin
 msgid "\"Master account\" is not subscribed."
-msgstr "Le \"compte principal\" n'est pas abonné."
+msgstr ""
 
 msgid "Moving tenants between master accounts is not currently supported."
-msgstr "Le déplacement des locataires entre les comptes principaux n'est actuellement pas pris en charge."
+msgstr ""
 
 msgid "\"Master Account\" must be blank for a non-tenant account."
-msgstr "Le champ \"Compte principal\" doit être vide pour un compte non-locataire."
+msgstr ""
 
 msgid "The \"Master account\" required for the lease level \"tenant\"."
-msgstr "Le \"Compte principal\" est requis pour le niveau de location \"locataire\"."
+msgstr ""
 
 #, python-brace-format
 msgid "Converting from \"{prev}\" to \"{new}\" is not currently supported."
-msgstr "Conversion de \"{prev}\" à \"{new}\" n'est actuellement pas prise en charge."
+msgstr ""
 
 #. Translators: Primary account data in the admin
 msgid "Primary"
-msgstr "Primaire"
+msgstr ""
 
 #. Translators: Subscription account data in the admin
 msgid "Subscription"
-msgstr "Abonnement"
+msgstr ""
 
 #. Translators: Account tenants list in the admin
 msgid "Tenants"
-msgstr "Locataires"
+msgstr ""
 
 #. Translators: Aborting to delete account from admin if tenants exists
 msgid "Deletion not allowed while the account contains tenants."
-msgstr "Suppression non autorisée tant que le compte contient des locataires."
+msgstr ""
 
 msgid "Your subscription has already expired. Renew subscription or contact support."
-msgstr "Votre abonnement a expiré. Veuillez le renouveler ou contacter le support."
+msgstr ""
 
 #. Translators: Account owner permission
 msgid "Only the account owner is allowed to perform this action."
-msgstr "Seul le propriétaire du compte est autorisé à effectuer cette action."
+msgstr ""
 
 msgid "The user count is over your plan limit. Please upgrade your plan or delete some users."
-msgstr "Le nombre d'utilisateurs dépasse la limite de votre forfait. Veuillez mettre à niveau votre forfait ou supprimer des utilisateurs."
+msgstr ""
 
 msgid "Granular access control is included in the Premium Plan. Upgrade your plan to access this functionality."
-msgstr "Le contrôle d'accès granulaire est inclus dans le Plan Premium. Mettez à jour votre plan pour accéder à cette fonctionnalité."
+msgstr ""
 
 msgid "The list of group members contains a non-existent group identifier"
-msgstr "La liste des membres du groupe contient un identifiant de groupe inexistant"
+msgstr ""
 
 msgid "The list of groups contains a non-existent group identifier"
-msgstr "La liste des groupes contient un identifiant de groupe inexistant"
+msgstr ""
 
 msgid "Select a plan to complete the signup"
-msgstr "Sélectionnez un plan pour compléter l'inscription"
+msgstr ""
 
 msgid "A group cannot be assigned to the same task more than once. Please choose a different group."
-msgstr "Un groupe ne peut être affecté qu'une fois par tâche. Choisissez un autre groupe."
+msgstr ""
 
 msgid "You need to pass in old_user or old_group"
-msgstr "Vous devez spécifier old_user ou old_group"
+msgstr ""
 
 msgid "You need to pass in new_user or new_group"
-msgstr "Vous devez spécifier new_user ou new_group"
+msgstr ""
 
 #, python-brace-format
 msgid "Group with the name \"{name}\" already exists."
-msgstr "Un groupe portant le nom \"{name}\" existe déjà."
+msgstr ""
 
 msgid "Permission denied. Only an administrator can grant administrator privileges."
 msgstr ""

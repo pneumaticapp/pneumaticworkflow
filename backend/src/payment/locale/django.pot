@@ -18,78 +18,78 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 msgid "Token is expired."
-msgstr "El token ha expirado."
+msgstr ""
 
 msgid "Products list cannot be empty."
-msgstr "La lista de productos no puede estar vacía."
+msgstr ""
 
 #, python-brace-format
 msgid "Price with code(s) {code} not found."
-msgstr "Precio con código(s) {code} no encontrado."
+msgstr ""
 
 msgid "Please, contact our support for a downgrade options."
-msgstr "Por favor, póngase en contacto con nuestro soporte para opciones de degradación."
+msgstr ""
 
 msgid "Subscription not exist."
-msgstr "Suscripción no existe."
+msgstr ""
 
 msgid "Multiple subscriptions not allowed."
-msgstr "Suscripciones múltiples no permitidas."
+msgstr ""
 
 msgid "The request data does not change the subscription state."
-msgstr "Los datos de la solicitud no cambian el estado de la suscripción."
+msgstr ""
 
 msgid "Current payment method is unavailable. Specify a new payment method to complete the action."
-msgstr "El método de pago actual no está disponible. Especifique un nuevo método de pago para completar la acción."
+msgstr ""
 
 msgid "Payment failed. Check your payment method and balance or contact support."
-msgstr "Pago fallido. Verifique su método de pago y saldo o contacte al soporte."
+msgstr ""
 
 msgid "You can only use your subscription's currency to make purchases."
-msgstr "Solo puedes usar la moneda de tu suscripción para realizar compras."
+msgstr ""
 
 #, python-brace-format
 msgid "You cannot purchase more than {quantity} unit(s) of the \"{product}\" subscription."
-msgstr "No puede comprar más de {quantity} unidad(es) de la suscripción \"{product}\"."
+msgstr ""
 
 #, python-brace-format
 msgid "You cannot purchase less than {quantity} unit(s) of the \"{product}\" subscription."
-msgstr "No puede comprar menos de {quantity} unidad(es) de la suscripción \"{product}\"."
+msgstr ""
 
 #, python-brace-format
 msgid "You cannot purchase more than {quantity} unit(s) of the \"{product}\"."
-msgstr "No puede comprar más de {quantity} unidad(es) del \"{product}\"."
+msgstr ""
 
 #, python-brace-format
 msgid "You cannot purchase less than {quantity} unit(s) of the \"{product}\"."
-msgstr "No puede comprar menos de {quantity} unidad(es) del \"{product}\"."
+msgstr ""
 
 msgid "Unsupported subscription plan."
-msgstr "Plan de suscripción no compatible."
+msgstr ""
 
 msgid "Purchase at the archive price is disallowed."
-msgstr "La compra al precio de archivo no está permitida."
+msgstr ""
 
 msgid "No account found for this subscription."
-msgstr "No se encontró ninguna cuenta para esta suscripción."
+msgstr ""
 
 msgid "Billing is disabled, contact support to change the plan."
-msgstr "La facturación está deshabilitada, contacte al soporte para cambiar el plan."
+msgstr ""
 
 msgid "Webhook account not found."
-msgstr "Cuenta de webhook no encontrada."
+msgstr ""
 
 msgid "Webhook account owner not found."
-msgstr "Propietario de la cuenta del webhook no encontrado."
+msgstr ""
 
 msgid "Payments API is disabled in this project."
-msgstr "La API de Pagos está deshabilitada en este proyecto."
+msgstr ""
 
 msgid "Downgrade is not available while there is an active subscription."
-msgstr "La degradación no está disponible mientras haya una suscripción activa."
+msgstr ""
 
 msgid "Account not found."
-msgstr "Cuenta no encontrada."
+msgstr ""
 
 msgid "Master account not found for tenant."
-msgstr "Cuenta maestra no encontrada para el inquilino."
+msgstr ""
