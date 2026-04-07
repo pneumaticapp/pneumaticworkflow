@@ -53,18 +53,23 @@ export const DatasetItemsList = ({
             onDelete={onCancelNewRow}
           />
         )}
-        {sortedItems.map((item) => (
-          <DatasetRow
-            key={item.id}
-            value={item.value}
-            isEditing={editingItemId === item.id}
-            existingItems={allItemValues}
-            onEdit={() => onStartEdit(item.id!)}
-            onSave={(newValue) => onEditRow(item.id!, newValue)}
-            onCancel={onCancelEdit}
-            onDelete={() => onDeleteRow(item.id!)}
-          />
-        ))}
+        {sortedItems.map((item) => {
+          const itemId = item.id;
+          if (itemId === undefined) return null;
+
+          return (
+            <DatasetRow
+              key={itemId}
+              value={item.value}
+              isEditing={editingItemId === itemId}
+              existingItems={allItemValues}
+              onEdit={() => onStartEdit(itemId)}
+              onSave={(newValue) => onEditRow(itemId, newValue)}
+              onCancel={onCancelEdit}
+              onDelete={() => onDeleteRow(itemId)}
+            />
+          );
+        })}
       </>
     );
   };

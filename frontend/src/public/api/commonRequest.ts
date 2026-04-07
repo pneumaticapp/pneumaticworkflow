@@ -114,14 +114,14 @@ export async function commonRequest<T>(
     const config: AxiosRequestConfig = {
       ...params,
       timeout: timeOut,
-      responseType: options.responseType === 'text' ? 'text' : 'json',
+      responseType: options.responseType === 'text' || options.responseType === 'empty' ? 'text' : 'json',
       validateStatus: (status) => successStatusCodes.includes(status),
     };
 
     const response = await axiosInstance(fullUrl, config);
 
-    if (options.responseType === 'text') {
-      return response.data as T;
+    if (options.responseType === 'empty') {
+      return undefined as unknown as T;
     }
 
     return response.data as T;

@@ -106,6 +106,13 @@ const datasetsSlice = createSlice({
       state.isCurrentDatasetLoading = false;
     },
 
+    resetCurrentDataset: (state) => {
+      state.currentDataset = null;
+      state.isCurrentDatasetLoading = false;
+      state.currentSearchQuery = '';
+      state.currentSortOrder = 'asc';
+    },
+
     saveDatasetToMap: (state, action: PayloadAction<IDataset>) => {
       state.datasetsMap[action.payload.id] = action.payload;
     },
@@ -136,12 +143,10 @@ const datasetsSlice = createSlice({
     },
 
     createDatasetAction: (state, _action: PayloadAction<ICreateDatasetParams>) => {
-      state.isLoading = true;
       state.isAllDatasetsLoaded = false;
     },
 
     cloneDatasetAction: (state, _action: PayloadAction<{ id: number }>) => {
-      state.isLoading = true;
       state.isAllDatasetsLoaded = false;
     },
     
@@ -194,6 +199,7 @@ export const {
   loadCurrentDataset,
   loadCurrentDatasetSuccess,
   loadCurrentDatasetFailed,
+  resetCurrentDataset,
   setCurrentDataset,
   setCurrentSearchQuery,
   setCurrentSortOrder,

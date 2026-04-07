@@ -10,7 +10,7 @@ import { ERoutes } from '../../constants/routes';
 
 import { IDataset, IGetDatasetsResponse, ICreateDatasetParams, IUpdateDatasetParams, EDatasetsSorting } from '../../types/dataset';
 import { TDeleteDatasetPayload } from './types';
-import { CLONE_SUFFIX } from './constants';
+import { generateCloneName } from './utils';
 import { LIMIT_LOAD_DATASETS } from '../../constants/defaultValues';
 import { getDatasetsStore } from '../selectors/datasets';
 import { getDatasets } from '../../api/datasets/getDatasets';
@@ -93,6 +93,7 @@ function* loadCurrentDatasetSaga({ payload: { id } }: PayloadAction<{ id: number
     yield put(loadCurrentDatasetSuccess(currentDataset));
   } catch (error) {
     yield put(loadCurrentDatasetFailed());
+    history.push(ERoutes.Datasets);
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to load current dataset', error);
   }
@@ -104,7 +105,6 @@ function* createDatasetSaga({ payload }: PayloadAction<ICreateDatasetParams>) {
     yield put(loadCurrentDatasetSuccess(createdDataset));
     history.push(ERoutes.DatasetDetail.replace(':id', String(createdDataset.id)));
   } catch (error) {
-    yield put(loadDatasetsFailed());
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to create dataset', error);
   }
@@ -113,9 +113,14 @@ function* createDatasetSaga({ payload }: PayloadAction<ICreateDatasetParams>) {
 function* cloneDatasetSaga({ payload: { id } }: PayloadAction<{ id: number }>) {
   try {
     const originalDataset: IDataset = yield getDataset({ id });
+    const baseName = originalDataset.name;
+
+    const allDatasets: IGetDatasetsResponse = yield getDatasets({ limit: 9999 });
+    const existingNames = (allDatasets.results || []).map((dataset) => dataset.name);
+    const cloneName = generateCloneName(baseName, existingNames);
 
     const clonedDataset: IDataset = yield createDataset({
-      name: `${originalDataset.name} ${CLONE_SUFFIX}`,
+      name: cloneName,
       description: originalDataset.description,
       items: originalDataset.items.map((item) => ({ value: item.value, order: item.order })),
     });
@@ -123,7 +128,6 @@ function* cloneDatasetSaga({ payload: { id } }: PayloadAction<{ id: number }>) {
     yield put(loadCurrentDatasetSuccess(clonedDataset));
     history.push(ERoutes.DatasetDetail.replace(':id', String(clonedDataset.id)));
   } catch (error) {
-    yield put(loadDatasetsFailed());
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to clone dataset', error);
   }

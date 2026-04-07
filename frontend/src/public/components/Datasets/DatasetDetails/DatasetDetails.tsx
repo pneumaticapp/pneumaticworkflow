@@ -9,6 +9,7 @@ import {
   deleteDatasetAction,
   updateDatasetAction,
   loadCurrentDataset,
+  resetCurrentDataset,
 } from '../../../redux/datasets/slice';
 
 import { history } from '../../../utils/history';
@@ -51,8 +52,22 @@ const DatasetDetails = ({ match: { params: { id: matchParamId } } }: TDatasetDet
   );
 
   useEffect(() => {
-    dispatch(loadCurrentDataset({ id: Number(matchParamId) }));
+    const id = Number(matchParamId);
+    if (Number.isNaN(id)) {
+      history.push(ERoutes.Datasets);
+
+      return;
+    }
+    if (dataset?.id === id) return;
+
+    dispatch(loadCurrentDataset({ id }));
   }, [matchParamId]);
+
+  useEffect(() => {
+    return () => {
+      dispatch(resetCurrentDataset());
+    };
+  }, []);
 
   if (isLoading || !dataset) {
     return <DatasetDetailsSkeleton />;
@@ -67,7 +82,6 @@ const DatasetDetails = ({ match: { params: { id: matchParamId } } }: TDatasetDet
   const handleSaveNewRow = (value: string) => {
     const maxOrder = dataset.items.reduce((max, item) => Math.max(max, item.order), 0);
 
-    // TODO: backend does not return the added row in the PATCH response
     dispatch(updateDatasetAction({
       id: dataset.id,
       items: [
@@ -102,7 +116,6 @@ const DatasetDetails = ({ match: { params: { id: matchParamId } } }: TDatasetDet
     setEditingItemId(null);
   };
 
-  // TODO: backend does not return updated items in the PATCH response
   const handleDeleteRow = (itemId: number) => {
     dispatch(updateDatasetAction({
       id: dataset.id,
@@ -126,7 +139,6 @@ const DatasetDetails = ({ match: { params: { id: matchParamId } } }: TDatasetDet
             onEdit={() => dispatch(openEditModal())}
             onClone={() => {
               dispatch(cloneDatasetAction({ id: dataset.id }));
-              history.push(ERoutes.Datasets);
             }}
             onDelete={() => {
               dispatch(deleteDatasetAction({ id: dataset.id }));
