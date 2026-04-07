@@ -114,6 +114,7 @@ class UsersViewSet(
             queryset = queryset.prefetch_related(
                 'user_groups',
                 'incoming_invites',
+                'subordinates',
             )
 
         return super().prefetch_queryset(

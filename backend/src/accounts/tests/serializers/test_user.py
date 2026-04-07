@@ -173,3 +173,53 @@ def test_user_serializer__validate_manager_id__null__ok():
 
     # assert
     assert result is None
+
+
+def test_user_serializer__validate_manager_id__deep_chain__error():
+    """Cycle detection works for a 3-level chain (A->B->C->A)."""
+    # arrange
+    account = create_test_account()
+    user_a = create_test_not_admin(
+        account=account, email='a@test.test',
+    )
+    user_b = create_test_not_admin(
+        account=account, email='b@test.test',
+    )
+    user_c = create_test_not_admin(
+        account=account, email='c@test.test',
+    )
+    user_b.manager = user_a
+    user_b.save()
+    user_c.manager = user_b
+    user_c.save()
+
+    serializer = UserSerializer(
+        instance=user_a,
+        context={'account': account, 'user': user_a},
+    )
+
+    # act
+    with pytest.raises(ValidationError) as ex:
+        serializer.validate_manager_id(user_c)
+
+    # assert
+    assert ex.value.detail[0] == MSG_A_0050
+
+
+def test_user_serializer__get_manager_map__cached():
+    """_get_manager_map returns cached dict on second call."""
+    # arrange
+    account = create_test_account()
+    user = create_test_not_admin(account=account)
+
+    serializer = UserSerializer(
+        instance=user,
+        context={'account': account, 'user': user},
+    )
+
+    # act
+    first = serializer._get_manager_map()
+    second = serializer._get_manager_map()
+
+    # assert
+    assert first is second

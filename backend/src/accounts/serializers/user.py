@@ -143,29 +143,44 @@ class UserSerializer(
             raise serializers.ValidationError(MSG_A_0046)
         return value
 
+    def _get_manager_map(self):
+        """Return {user_id: manager_id} dict for the account.
+
+        Cached on the serializer instance so the query runs
+        at most once per validation cycle.
+        """
+        if not hasattr(self, '_manager_map'):
+            self._manager_map = dict(
+                UserModel.objects.filter(
+                    account=self.context['account'],
+                ).values_list('id', 'manager_id'),
+            )
+        return self._manager_map
+
     def validate_manager_id(self, value):
         """Validate the proposed manager assignment.
 
         1. A user cannot be their own manager (MSG_A_0049).
-        2. Walk **up** the proposed manager's own chain: if we
-           encounter self.instance it means it is already an ancestor
-           of the proposed manager, so assigning them would create a
-           circular hierarchy (MSG_A_0050).
+        2. Walk **up** the proposed manager's chain
+           **in-memory** (single query): if we encounter
+           self.instance it means assigning them would create
+           a circular hierarchy (MSG_A_0050).
         """
         if value is None:
             return value
         if self.instance and value.id == self.instance.id:
             raise serializers.ValidationError(MSG_A_0049)
         if self.instance:
-            current = value
+            manager_map = self._get_manager_map()
+            current_id = value.id
             visited = set()
-            while current:
-                if current.id in visited:
+            while current_id is not None:
+                if current_id in visited:
                     break
-                if current.id == self.instance.id:
+                if current_id == self.instance.id:
                     raise serializers.ValidationError(MSG_A_0050)
-                visited.add(current.id)
-                current = current.manager
+                visited.add(current_id)
+                current_id = manager_map.get(current_id)
         return value
 
     def validate_subordinates(self, value):
@@ -197,14 +212,21 @@ class UserSerializer(
         # are validated correctly).
         subordinates = attrs.get('subordinates')
         if self.instance and subordinates:
+            manager_map = self._get_manager_map()
             ancestor_ids = set()
-            proposed_manager = attrs.get('manager', self.instance.manager)
-            current = proposed_manager
-            while current:
-                if current.id in ancestor_ids:
+            proposed_manager = attrs.get(
+                'manager', self.instance.manager,
+            )
+            current_id = (
+                proposed_manager.id
+                if proposed_manager
+                else None
+            )
+            while current_id is not None:
+                if current_id in ancestor_ids:
                     break
-                ancestor_ids.add(current.id)
-                current = current.manager
+                ancestor_ids.add(current_id)
+                current_id = manager_map.get(current_id)
             for sub in subordinates:
                 if sub.id in ancestor_ids:
                     raise serializers.ValidationError(MSG_A_0050)

@@ -6,6 +6,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { Modal, Button } from '../../UI';
 import { UsersDropdownComponent, EOptionTypes, TUsersDropdownOption } from '../../UI/form/UsersDropdown/UsersDropdown';
 import { getUsers } from '../../../redux/selectors/user';
+import { getAccountsTeamList } from '../../../redux/selectors/accounts';
 import { getNotDeletedUsers, getUserFullName } from '../../../utils/users';
 import { openTeamInvitesPopup } from '../../../redux/team/slice';
 import styles from './SelectManagerModal.css';
@@ -28,7 +29,18 @@ export function SelectManagerModal({
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   
-  const allUsers = getNotDeletedUsers(useSelector(getUsers));
+  const storeUsers = useSelector(getUsers);
+  const teamList = useSelector(getAccountsTeamList);
+  const allUsers = useMemo(() => {
+    const merged = getNotDeletedUsers([...storeUsers, ...teamList]);
+    const seen = new Set<number>();
+    return merged.filter(user => {
+      const id = Number(user.id);
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+  }, [storeUsers, teamList]);
   
   // Filter out the current user so they can't be their own manager
   const selectableUsers = useMemo(() => allUsers.filter(user => user.id !== currentUserId), [allUsers, currentUserId]);

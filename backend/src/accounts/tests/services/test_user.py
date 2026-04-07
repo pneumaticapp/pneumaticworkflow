@@ -2954,3 +2954,76 @@ def test_deactivate__clears_subordinates__ok(mocker):
     # assert
     sub.refresh_from_db()
     assert sub.manager is None
+
+
+def test_partial_update__mgr_and_subs__mgr_ws_after_subs(
+    mocker,
+):
+    """When both manager and subordinates change in one
+    partial_update call, manager WS notifications must fire
+    *after* _update_subordinates completes, so their payloads
+    include fresh subordinate data."""
+
+    # arrange
+    account = create_test_account()
+    account.log_api_requests = True
+    account.save()
+    old_mgr = create_test_not_admin(
+        account=account,
+        email='old@test.test',
+    )
+    new_mgr = create_test_not_admin(
+        account=account,
+        email='new@test.test',
+    )
+    user = create_test_not_admin(
+        account=account,
+        email='user@test.test',
+    )
+    user.manager = old_mgr
+    user.save()
+    report = create_test_not_admin(
+        account=account,
+        email='report@test.test',
+    )
+
+    owner = create_test_owner(account=account)
+    service = UserService(instance=user, user=owner)
+
+    call_order = []
+    real_update_subs = service._update_subordinates
+    real_update_mgrs = service._update_managers
+
+    def tracked_update_subs(*a, **kw):
+        call_order.append('subordinates')
+        return real_update_subs(*a, **kw)
+
+    def tracked_update_mgrs(*a, **kw):
+        call_order.append('managers')
+        return real_update_mgrs(*a, **kw)
+
+    mocker.patch.object(
+        service, '_update_subordinates',
+        side_effect=tracked_update_subs,
+    )
+    mocker.patch.object(
+        service, '_update_managers',
+        side_effect=tracked_update_mgrs,
+    )
+    mocker.patch(
+        'src.accounts.services.user.'
+        'send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user.transaction.on_commit',
+        side_effect=lambda f: f(),
+    )
+
+    # act
+    service.partial_update(
+        manager=new_mgr,
+        subordinates=[report],
+    )
+
+    # assert
+    assert call_order == ['subordinates', 'managers']
