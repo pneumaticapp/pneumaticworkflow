@@ -24,6 +24,7 @@ import { rootSaga as webhooksSagas } from './webhooks/saga';
 import { rootSaga as tenantsSagas } from './tenants/saga';
 import { rootSaga as pagesSagas } from './pages/saga';
 import { rootSaga as groupsSagas } from './groups/saga';
+import { rootSaga as datasetsSagas } from './datasets/saga';
 
 export function* rootSaga() {
   while (true) {
@@ -49,6 +50,7 @@ export function* rootSaga() {
       fork(webhooksSagas),
       fork(tenantsSagas),
       fork(pagesSagas),
+      fork(datasetsSagas),
     ]);
 
     yield take(EAuthActions.RedirectToLogin);

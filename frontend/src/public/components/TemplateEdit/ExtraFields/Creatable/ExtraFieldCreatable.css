@@ -114,11 +114,11 @@
 }
 
 .kickoff-create-field-option__remove {
+  margin-left: 8px;
   cursor: pointer;
 }
 
 .kickoff-create-field-option__input {
-  width: 95px;
   max-width: 100%;
   border: none;
 
@@ -133,13 +133,12 @@
 }
 
 .kickoff-create-field-add-option {
+  @mixin btn-field-action;
+
   margin: 0;
   padding: 0;
   overflow: visible;
   width: auto;
-  color: #fec336;
-  background: transparent;
-  border: none;
 }
 
 .kickoff-set-field-container {

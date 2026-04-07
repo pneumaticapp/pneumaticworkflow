@@ -42,7 +42,7 @@ import { isArrayWithItems } from '../../utils/helpers';
 import { getTemplate } from '../../api/getTemplate';
 
 import { openRunWorkflowModal } from '../runWorkflowModal/actions';
-import { getRunnableWorkflow } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
+import { getRunnableWorkflow, loadDatasetsMap } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
 import { ITemplateResponse } from '../../types/template';
 import { getGettingStartedChecklist } from '../../api/getGettingStartedChecklist';
 import { IGettingStartedChecklist } from '../../types/dashboard';
@@ -140,7 +140,10 @@ export function* openRunWorflowSaga({ payload: { templateId, ancestorTaskId } }:
   try {
     yield put(setGeneralLoaderVisibility(true));
     const resData: ITemplateResponse = yield getTemplate(templateId);
-    const templateData = getRunnableWorkflow(resData);
+
+    const datasetsMap: Record<number, string[]> = yield call(loadDatasetsMap, resData.kickoff);
+
+    const templateData = getRunnableWorkflow(resData, datasetsMap);
 
     if (templateData) {
       yield put(openRunWorkflowModal({ ...templateData, ancestorTaskId }));

@@ -3,6 +3,7 @@ import { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 
 import { IKickoff, IExtraField, ITemplateTask, EExtraFieldType } from '../../../../types/template';
+import { normalizeSelections } from '../../utils/getRunnableWorkflow';
 import { TTaskVariable } from '../../types';
 import { IGetLocalizedSystemVariableParams, IGetLocalizedSystemVariableReturn } from './types';
 import { StepName } from '../../../StepName';
@@ -113,7 +114,8 @@ export function getVariableFromField(
     subtitle,
     richSubtitle: richSubtitle || subtitle,
     type: field.type,
-    selections: field.selections,
+    selections: normalizeSelections(field.selections),
+    datasetId: field.dataset,
   };
 }
 

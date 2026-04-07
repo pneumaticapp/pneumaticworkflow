@@ -27,7 +27,6 @@ from src.processes.models.templates.conditions import (
 )
 from src.processes.models.templates.fields import (
     FieldTemplate,
-    FieldTemplateSelection,
 )
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.workflows.attachment import FileAttachment
@@ -1017,78 +1016,9 @@ def test_retrieve__complete_task__field_user__ok(api_client):
     assert field_data['api_name'] == field.api_name
     # TODO Replace in https://my.pneumatic.app/workflows/18137/
     assert field_data['value'] == user.get_full_name()
-    assert field_data['selections'] == []
     assert field_data['attachments'] == []
     assert field_data['order'] == field.order
     assert field_data['user_id'] == user.id
-
-
-def test_retrieve__complete_task__field_with_selections__ok(
-    api_client,
-):
-
-    # arrange
-    user = create_test_user()
-    user2 = create_test_user(email='t@n.t', account=user.account)
-    api_client.token_authenticate(user)
-    template = create_test_template(
-        user=user,
-        is_active=True,
-        tasks_count=1,
-    )
-    template_task = template.tasks.first()
-    template_task.add_raw_performer(
-        performer_type=PerformerType.WORKFLOW_STARTER,
-    )
-    template_task.add_raw_performer(user2)
-    field_template = FieldTemplate.objects.create(
-        name='Selection Field',
-        order=1,
-        type=FieldType.CHECKBOX,
-        is_required=True,
-        task=template_task,
-        template=template,
-        account=user.account,
-    )
-    FieldTemplateSelection.objects.create(
-        field_template=field_template,
-        template=template,
-        value='some value',
-    )
-
-    workflow = create_test_workflow(user=user, template=template)
-    task = workflow.tasks.get(number=1)
-    field = task.output.first()
-    field.value = 'some value'
-    field.save(update_fields=['value'])
-    selection = field.selections.first()
-    selection.is_selected = True
-    selection.save(update_fields=['is_selected'])
-    WorkflowEventService.task_complete_event(task=task, user=user)
-
-    # act
-    response = api_client.get(f'/workflows/{workflow.id}/events')
-
-    # assert
-    assert response.status_code == 200
-    assert len(response.data) == 1
-    assert len(response.data[0]['task']['output']) == 1
-    field_data = response.data[0]['task']['output'][0]
-    assert field_data['id'] == field.id
-    assert field_data['type'] == field.type
-    assert field_data['is_required'] == field.is_required
-    assert field_data['name'] == field.name
-    assert field_data['description'] == field.description
-    assert field_data['api_name'] == field.api_name
-    assert field_data['value'] == selection.value
-    assert field_data['attachments'] == []
-    assert field_data['order'] == field.order
-    assert field_data['user_id'] is None
-    selection_data = field_data['selections'][0]
-    assert selection_data['id'] == selection.id
-    assert selection_data['api_name'] == selection.api_name
-    assert selection_data['is_selected'] is True
-    assert selection_data['value'] == selection.value
 
 
 def test_retrieve__complete_task__field_date__ok(api_client):
@@ -1156,7 +1086,6 @@ def test_retrieve__complete_task__field_date__ok(api_client):
     assert field_data['description'] == field.description
     assert field_data['api_name'] == field.api_name
     assert field_data['value'] == str(6516313)
-    assert field_data['selections'] == []
     assert field_data['attachments'] == []
     assert field_data['order'] == field.order
 
@@ -1220,7 +1149,6 @@ def test_retrieve__complete_task__field_with_attachments__ok(
     assert field_data['description'] == field.description
     assert field_data['api_name'] == field.api_name
     assert field_data['value'] == attachment.url
-    assert field_data['selections'] == []
     assert field_data['order'] == field.order
     assert field_data['user_id'] is None
     attachment_data = field_data['attachments'][0]

@@ -77,11 +77,8 @@ export function KickoffOutputs({
     return outputs?.map((output, index) => {
       const OutputComponent = outputsMap[output.type];
       const value = output.type === EExtraFieldType.User ? output.userId || output.groupId : output.value;
-      const isEmpty = !(
-        value ||
-        output.attachments?.length ||
-        output.selections?.findIndex((selection) => selection.isSelected) !== -1
-      );
+      const hasValue = Array.isArray(value) ? value.length > 0 : Boolean(value);
+      const isEmpty = !(hasValue || output.attachments?.length);
 
       return !isEmpty ? <OutputComponent key={index} {...output} /> : null;
     });

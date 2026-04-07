@@ -1,0 +1,32 @@
+@define-mixin details-header {
+  margin-bottom: 1.4rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  @media (--desktop) {
+    margin-bottom: 1.6rem;
+  }
+
+  h1 {
+    @mixin text-overflow;
+    @mixin h4;
+
+    margin-right: 0.8rem;
+    font-weight: 800;
+  }
+}
+
+@define-mixin details-header-btn {
+  white-space: nowrap;
+
+  @media (--mobile) {
+    span {
+      display: none;
+    }
+
+    svg {
+      margin: 0 !important;
+    }
+  }
+}

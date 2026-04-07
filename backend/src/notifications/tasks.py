@@ -63,6 +63,9 @@ __all__ = [
     'send_comment_notification',
     'send_complete_task_notification',
     'send_completed_workflow_notification',
+    'send_dataset_created_notification',
+    'send_dataset_deleted_notification',
+    'send_dataset_updated_notification',
     'send_delayed_workflow_notification',
     'send_due_date_changed',
     'send_group_created_notification',
@@ -1438,3 +1441,87 @@ def _send_user_deleted_notification(
 @shared_task(base=NotificationTask)
 def send_user_deleted_notification(**kwargs):
     _send_user_deleted_notification(**kwargs)
+
+
+def _send_dataset_created_notification(
+    logging: bool,
+    account_id: int,
+    dataset_data: dict,
+    **kwargs,
+):
+    users = UserModel.objects.filter(
+        account_id=account_id,
+        status=UserStatus.ACTIVE,
+    ).values_list('id', 'email')
+
+    for (user_id, user_email) in users:
+        _send_notification(
+            method_name=NotificationMethod.dataset_created,
+            account_id=account_id,
+            user_id=user_id,
+            user_email=user_email,
+            logging=logging,
+            dataset_data=dataset_data,
+            sync=True,
+        )
+
+
+@shared_task(base=NotificationTask)
+def send_dataset_created_notification(**kwargs):
+    _send_dataset_created_notification(**kwargs)
+
+
+def _send_dataset_updated_notification(
+    logging: bool,
+    account_id: int,
+    dataset_data: dict,
+    **kwargs,
+):
+    users = UserModel.objects.filter(
+        account_id=account_id,
+        status=UserStatus.ACTIVE,
+    ).values_list('id', 'email')
+
+    for (user_id, user_email) in users:
+        _send_notification(
+            method_name=NotificationMethod.dataset_updated,
+            account_id=account_id,
+            user_id=user_id,
+            user_email=user_email,
+            logging=logging,
+            dataset_data=dataset_data,
+            sync=True,
+        )
+
+
+@shared_task(base=NotificationTask)
+def send_dataset_updated_notification(**kwargs):
+    _send_dataset_updated_notification(**kwargs)
+
+
+def _send_dataset_deleted_notification(
+    logging: bool,
+    account_id: int,
+    dataset_data: dict,
+    **kwargs,
+):
+    users = UserModel.objects.filter(
+        account_id=account_id,
+        status=UserStatus.ACTIVE,
+    ).values_list('id', 'email')
+
+    for (user_id, user_email) in users:
+        _send_notification(
+            method_name=NotificationMethod.dataset_deleted,
+            account_id=account_id,
+            user_id=user_id,
+            user_email=user_email,
+            logging=logging,
+            dataset_data=dataset_data,
+            sync=True,
+        )
+
+
+@shared_task(base=NotificationTask)
+def send_dataset_deleted_notification(**kwargs):
+    _send_dataset_deleted_notification(**kwargs)

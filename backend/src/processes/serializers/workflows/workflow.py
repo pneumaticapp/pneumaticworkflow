@@ -5,11 +5,12 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MinValueValidator
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError
 
+from src.datasets.models import DatasetItem
 from src.generics.fields import (
     AccountPrimaryKeyRelatedField,
     TimeStampField,
@@ -28,6 +29,8 @@ from src.processes.enums import (
     WorkflowOrdering,
     WorkflowStatus,
 )
+from src.processes.models.workflows.kickoff import KickoffValue
+from src.processes.models.workflows.fields import FieldSelection, TaskField
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.messages import workflow as messages
 from src.processes.models.workflows.task import Task
@@ -396,7 +399,31 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
     is_read_only_viewer = serializers.SerializerMethodField()
 
     def get_kickoff(self, instance: Workflow):
-        kickoff = instance.kickoff_instance
+        kickoff = (
+            KickoffValue.objects
+            .filter(workflow=self.instance)
+            .prefetch_related(
+                Prefetch(
+                    lookup='output',
+                    queryset=TaskField.objects.all().prefetch_related(
+                        Prefetch(
+                            lookup='selections',
+                            queryset=FieldSelection.objects.only('value'),
+                            to_attr='selections_values',
+                        ),
+                        Prefetch(
+                            'dataset__items',
+                            queryset=(
+                                DatasetItem.objects
+                                .only('value')
+                                .order_by('order')
+                            ),
+                            to_attr='dataset_values',
+                        ),
+                    ),
+                ),
+            ).first()
+        )
         if kickoff:
             return KickoffValueInfoSerializer(kickoff).data
         return None
