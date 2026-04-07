@@ -30,7 +30,7 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_template,
-    create_test_user,
+    create_test_user, create_test_owner, create_test_dataset,
 )
 from src.utils.validation import ErrorCode
 
@@ -232,6 +232,75 @@ class TestRunPublicTemplate:
         assert number_field.api_name == number_field_template.api_name
         assert number_field.value == number_field_value
         assert number_field.is_required is True
+
+    def test_run__field_with_dataset__ok(
+        self,
+        mocker,
+        api_client,
+    ):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        dataset = create_test_dataset(account=account, items_count=1)
+        dataset_item = dataset.items.get(order=1)
+        template = create_test_template(
+            user=user,
+            is_active=True,
+            is_public=True,
+            tasks_count=1,
+        )
+        field_template = FieldTemplate.objects.create(
+            name='Checkbox',
+            type=FieldType.CHECKBOX,
+            kickoff=template.kickoff_instance,
+            template=template,
+            account=account,
+            dataset=dataset,
+        )
+        user_ip = '127.0.0.1'
+        mocker.patch(
+            'src.processes.views.public.template.'
+            'PublicTemplateViewSet.get_user_ip',
+            return_value=user_ip,
+        )
+        auth_header_value = f'Token {template.public_id}'
+        token = PublicToken(template.public_id)
+        mocker.patch(
+            'src.authentication.services.public_auth.'
+            'PublicAuthService.get_token',
+            return_value=token,
+        )
+        mocker.patch(
+            'src.authentication.services.public_auth.'
+            'PublicAuthService.get_template',
+            return_value=template,
+        )
+        settings_mock = mocker.patch(
+            'src.processes.views.public.template.settings',
+        )
+        settings_mock.PROJECT_CONF = {'CAPTCHA': True}
+
+        # act
+        response = api_client.post(
+            path='/templates/public/run',
+            data={
+                'captcha': 'skip',
+                'fields': {
+                    field_template.api_name: [dataset_item.value],
+                },
+            },
+            **{'X-Public-Authorization': auth_header_value},
+        )
+
+        # assert
+        assert response.status_code == 200
+        assert response.data['redirect_url'] is None
+        workflow = Workflow.objects.get(template=template)
+        field = workflow.kickoff_instance.output.get(
+            api_name=field_template.api_name,
+        )
+        assert field.value == dataset_item.value
 
     def test_run__string_abbreviation_after_insert_fields_vars__ok(
         self,

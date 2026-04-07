@@ -206,8 +206,6 @@ class Migration(migrations.Migration):
                 INNER JOIN processes_template t ON t.id = s.template_id
                 INNER JOIN accounts_account a ON a.id = t.account_id
                 WHERE s.is_deleted = false
-                  AND a.billing_plan != 'free'
-                  AND a.plan_expiration > NOW()
             )
             DELETE FROM processes_fieldtemplateselection
             WHERE id IN (SELECT id FROM duplicates WHERE rn > 1)
@@ -225,8 +223,6 @@ class Migration(migrations.Migration):
                 INNER JOIN processes_taskfield tf ON tf.id = s.field_id
                 INNER JOIN accounts_account a ON a.id = tf.account_id
                 WHERE s.is_deleted = false
-                  AND a.billing_plan != 'free'
-                  AND a.plan_expiration > NOW()
             )
             DELETE FROM processes_fieldselection
             WHERE id IN (SELECT id FROM duplicates WHERE rn > 1)

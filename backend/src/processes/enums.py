@@ -637,6 +637,32 @@ class WorkflowEventType:
         (TASK_DELAY, 'Task snoozed from template'),
     )
 
+    LITERALS = Literal[
+        RUN,
+        COMPLETE,
+        ENDED,
+        DELAY,
+        REVERT,
+        ENDED_BY_CONDITION,
+        URGENT,
+        NOT_URGENT,
+        FORCE_RESUME,
+        FORCE_DELAY,
+        TASK_START,
+        TASK_COMPLETE,
+        TASK_REVERT,
+        COMMENT,
+        TASK_SKIP,
+        TASK_SKIP_NO_PERFORMERS,
+        TASK_PERFORMER_CREATED,
+        TASK_PERFORMER_DELETED,
+        DUE_DATE_CHANGED,
+        SUB_WORKFLOW_RUN,
+        TASK_PERFORMER_GROUP_CREATED,
+        TASK_PERFORMER_GROUP_DELETED,
+        TASK_DELAY,
+    ]
+
 
 class WorkflowEventActionType:
 

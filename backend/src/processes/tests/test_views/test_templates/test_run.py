@@ -74,7 +74,7 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
     create_wf_completed_webhook,
-    create_wf_created_webhook, create_test_not_admin,
+    create_wf_created_webhook, create_test_not_admin, create_test_dataset,
 )
 from src.utils.dates import date_format
 from src.utils.validation import ErrorCode
@@ -353,6 +353,82 @@ def test_run__all__ok(api_client, mocker):
     kv_selection_2 = kv_selections.get(api_name=selection_2.api_name)
     assert kv_selection_1.value == selection_1.value
     assert kv_selection_2.value == selection_2.value
+
+    analytics_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+    send_workflow_started_webhook_mock.assert_called_once_with(
+        user_id=user.id,
+        account_id=user.account_id,
+        payload=webhook_payload,
+    )
+
+
+def test_run__field_with_dataset__ok(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    create_wf_created_webhook(user)
+
+    dataset = create_test_dataset(account=account, items_count=1)
+    dataset_item = dataset.items.get(order=1)
+    template = create_test_template(user=user, tasks_count=1, is_active=True)
+    field = FieldTemplate.objects.create(
+        name='Checkbox',
+        type=FieldType.CHECKBOX,
+        kickoff=template.kickoff_instance,
+        template=template,
+        account=account,
+        dataset=dataset,
+    )
+
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    send_workflow_started_webhook_mock = mocker.patch(
+        'src.processes.tasks.webhooks.'
+        'send_workflow_started_webhook.delay',
+    )
+    webhook_payload = mocker.Mock()
+    mocker.patch(
+        'src.processes.models.workflows.workflow.Workflow'
+        '.webhook_payload',
+        return_value=webhook_payload,
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                field.api_name: [dataset_item.value],
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    data = response.data
+    workflow = Workflow.objects.get(id=data['id'])
+    assert data['id'] == workflow.id
+
+    kickoff_field_data = data['kickoff']['output'][0]
+    assert kickoff_field_data['id']
+    assert kickoff_field_data['type'] == FieldType.CHECKBOX
+    assert kickoff_field_data['api_name'] == field.api_name
+    assert kickoff_field_data['name'] == field.name
+    assert kickoff_field_data['value'] == dataset_item.value
+    assert kickoff_field_data['selections'] == [dataset_item.value]
 
     analytics_mock.assert_called_once_with(
         workflow=workflow,
