@@ -298,7 +298,11 @@ def test_activate__group_tasks__ok(mocker):
         group=sub_group,
     ).exists()
     assert sub_perf_exists is True
-    task_delegation_event_mock.assert_not_called()
+    task_delegation_event_mock.assert_called_once_with(
+        task=task,
+        user=owner,
+        substitute_group=sub_group,
+    )
 
 
 def test_activate__no_user_groups__ok(mocker):
@@ -686,6 +690,149 @@ def test_activate__active_user_with_group__ok(mocker):
     assert owner.vacation_schedule.substitute_group_id == group.id
 
 
+def test_activate__update_existing__creates_perfs__ok(mocker):
+
+    """
+    Auto-start: _update_existing creates group performers
+    when none exist yet (first activation with pre-configured
+    group) and emits delegation events for direct tasks.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    substitute = create_test_admin(
+        account=account,
+        email='sub@pneumatic.app',
+    )
+    template = create_test_template(
+        user=owner,
+        tasks_count=1,
+        is_active=True,
+    )
+    workflow = create_test_workflow(
+        user=owner,
+        template=template,
+    )
+    task = workflow.tasks.get(status=TaskStatus.ACTIVE)
+    task_delegation_event_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+
+    # Pre-configure vacation with substitute group (UI setup)
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    UserVacation.objects.create(
+        user=owner,
+        substitute_group=group,
+    )
+
+    # act
+    service = VacationDelegationService(user=owner)
+    service.activate(substitute_user_ids=[substitute.id])
+
+    # assert
+    owner.refresh_from_db()
+    assert owner.absence_status == AbsenceStatus.VACATION
+    group_perf_exists = TaskPerformer.objects.filter(
+        task=task,
+        type=PerformerType.GROUP,
+        group=group,
+    ).exists()
+    assert group_perf_exists is True
+    assert workflow.members.filter(id=substitute.id).exists()
+    task_delegation_event_mock.assert_called_once_with(
+        task=task,
+        user=owner,
+        substitute_group=group,
+    )
+
+
+def test_activate__update_existing__creates_grp_perfs__ok(
+    mocker,
+):
+
+    """
+    Auto-start _update_existing creates group performers
+    for tasks where the user participates via regular group
+    (no direct USER performer).
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    member = create_test_admin(
+        account=account,
+        email='member@pneumatic.app',
+    )
+    substitute = create_test_admin(
+        account=account,
+        email='sub@pneumatic.app',
+    )
+    regular_group = create_test_group(
+        account=account,
+        name='Dev Team',
+        users=[owner, member],
+    )
+    template = create_test_template(
+        user=member,
+        tasks_count=1,
+        is_active=True,
+    )
+    workflow = create_test_workflow(
+        user=member,
+        template=template,
+    )
+    task = workflow.tasks.get(status=TaskStatus.ACTIVE)
+
+    # add group performer to task
+    TaskPerformer.objects.create(
+        task=task,
+        type=PerformerType.GROUP,
+        group=regular_group,
+    )
+
+    # remove any USER performer for owner (test group path)
+    TaskPerformer.objects.filter(
+        task=task,
+        user_id=owner.id,
+        type=PerformerType.USER,
+    ).delete()
+
+    task_delegation_event_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+
+    # Pre-configure vacation with substitute group
+    sub_group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    UserVacation.objects.create(
+        user=owner,
+        substitute_group=sub_group,
+    )
+
+    # act
+    service = VacationDelegationService(user=owner)
+    service.activate(substitute_user_ids=[substitute.id])
+
+    # assert
+    sub_perf_exists = TaskPerformer.objects.filter(
+        task=task,
+        type=PerformerType.GROUP,
+        group=sub_group,
+    ).exists()
+    assert sub_perf_exists is True
+    task_delegation_event_mock.assert_not_called()
+
+
 def test_activate__update_existing__filters_completed_tasks__ok(mocker):
 
     """
@@ -709,6 +856,9 @@ def test_activate__update_existing__filters_completed_tasks__ok(mocker):
 
     task1.status = TaskStatus.COMPLETED
     task1.save(update_fields=['status'])
+
+    task2.status = TaskStatus.ACTIVE
+    task2.save(update_fields=['status'])
 
     TaskPerformer.objects.filter(task=task1).update(is_completed=True)
 
@@ -755,7 +905,14 @@ def test_activate__update_existing__filters_completed_tasks__ok(mocker):
     service.activate(substitute_user_ids=[substitute.id])
 
     # assert
-    notify_mock.assert_not_called()
+    notify_mock.assert_called_once_with(
+        user_id=substitute.id,
+        user_email=substitute.email,
+        user_first_name=substitute.first_name,
+        account_id=owner.account_id,
+        tasks_count=1,
+        vacation_owner_name=owner.get_full_name(),
+    )
 
 
 def test_activate__no_active_tasks__ok(mocker):
@@ -911,6 +1068,10 @@ def test_deactivate__preserves_notif_settings__ok(mocker):
         'src.processes.services.events.'
         'WorkflowEventService.task_delegation_event',
     )
+
+    original_new_tasks = owner.is_new_tasks_subscriber
+    original_complete_tasks = owner.is_complete_tasks_subscriber
+
     service = VacationDelegationService(user=owner)
     service.activate(substitute_user_ids=[substitute.id])
 
@@ -919,8 +1080,8 @@ def test_deactivate__preserves_notif_settings__ok(mocker):
 
     # assert
     owner.refresh_from_db()
-    assert owner.is_new_tasks_subscriber is True
-    assert owner.is_complete_tasks_subscriber is True
+    assert owner.is_new_tasks_subscriber == original_new_tasks
+    assert owner.is_complete_tasks_subscriber == original_complete_tasks
 
 
 def test_deactivate__notifs_default__ok():

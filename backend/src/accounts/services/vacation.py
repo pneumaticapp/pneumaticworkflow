@@ -138,6 +138,86 @@ class VacationDelegationService:
             task_ids.add(task_id)
             wf_ids.add(wf_id)
 
+        # Create missing group performers for user's direct tasks
+        user_performers = list(
+            TaskPerformer.objects
+            .filter(
+                user_id=self.user.id,
+                type=PerformerType.USER,
+                is_completed=False,
+                task__status__in=[
+                    TaskStatus.ACTIVE,
+                    TaskStatus.DELAYED,
+                ],
+            )
+            .exclude_directly_deleted()
+            .exclude(task_id__in=task_ids)
+            .select_related('task'),
+        )
+        new_direct_task_ids = {p.task_id for p in user_performers}
+        if new_direct_task_ids:
+            TaskPerformer.objects.bulk_create(
+                [
+                    TaskPerformer(
+                        task_id=tid,
+                        type=PerformerType.GROUP,
+                        group=group,
+                    )
+                    for tid in new_direct_task_ids
+                ],
+                ignore_conflicts=True,
+            )
+            task_ids |= new_direct_task_ids
+            wf_ids |= {p.task.workflow_id for p in user_performers}
+            for p in user_performers:
+                WorkflowEventService.task_delegation_event(
+                    task=p.task,
+                    user=self.user,
+                    substitute_group=group,
+                )
+
+        # Create missing group performers for user's regular
+        # group tasks
+        user_group_ids = list(
+            self.user.user_groups
+            .filter(type=UserGroupType.REGULAR)
+            .values_list('id', flat=True),
+        )
+        if user_group_ids:
+            new_group_task_ids = set(
+                TaskPerformer.objects
+                .filter(
+                    group_id__in=user_group_ids,
+                    type=PerformerType.GROUP,
+                    task__status__in=[
+                        TaskStatus.ACTIVE,
+                        TaskStatus.DELAYED,
+                    ],
+                )
+                .exclude_directly_deleted()
+                .exclude(task_id__in=task_ids)
+                .values_list('task_id', flat=True)
+                .distinct(),
+            )
+            if new_group_task_ids:
+                TaskPerformer.objects.bulk_create(
+                    [
+                        TaskPerformer(
+                            task_id=tid,
+                            type=PerformerType.GROUP,
+                            group=group,
+                        )
+                        for tid in new_group_task_ids
+                    ],
+                    ignore_conflicts=True,
+                )
+                task_ids |= new_group_task_ids
+                wf_ids |= set(
+                    Task.objects
+                    .filter(id__in=new_group_task_ids)
+                    .values_list('workflow_id', flat=True),
+                )
+
         self._add_members_bulk(
             wf_ids=wf_ids,
             substitute_user_ids=substitute_user_ids,
@@ -251,11 +331,16 @@ class VacationDelegationService:
                     grp_perfs,
                     ignore_conflicts=True,
                 )
-                wf_ids |= set(
-                    Task.objects
-                    .filter(id__in=new_task_ids)
-                    .values_list('workflow_id', flat=True),
+                new_tasks = list(
+                    Task.objects.filter(id__in=new_task_ids),
                 )
+                wf_ids |= {t.workflow_id for t in new_tasks}
+                for task in new_tasks:
+                    WorkflowEventService.task_delegation_event(
+                        task=task,
+                        user=self.user,
+                        substitute_group=group,
+                    )
 
         self._add_members_bulk(
             wf_ids=wf_ids,
