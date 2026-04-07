@@ -200,6 +200,17 @@ class UserSerializer(
             and self.instance != self.context['user']
         ):
             raise serializers.ValidationError(MSG_A_0036)
+
+        # Cross-field validation: if both manager and subordinates are
+        # being updated in the same request, ensure the proposed manager
+        # is not also listed as a subordinate (direct cycle).
+        manager = attrs.get('manager')
+        subordinates = attrs.get('subordinates')
+        if manager and subordinates:
+            sub_ids = {s.id for s in subordinates}
+            if manager.id in sub_ids:
+                raise serializers.ValidationError(MSG_A_0050)
+
         return attrs
 
 

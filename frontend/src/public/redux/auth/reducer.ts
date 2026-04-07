@@ -82,7 +82,10 @@ export const reducer = (state = INIT_STATE, action: TAuthActions | { type: strin
     case EAuthActions.AuthUser:
       return { ...state, loading: true };
     case EAuthActions.AuthUserSuccess:
-      return { ...state, loading: false, loggedState: ELoggedState.LoggedIn, ...normalizeSubordinates(action.payload as Record<string, any>) };
+      return {
+        ...state, loading: false, loggedState: ELoggedState.LoggedIn,
+        ...normalizeSubordinates(action.payload as Record<string, any>),
+      };
     case EAuthActions.ChangePasswordSuccess:
     case EAuthActions.EditUserSuccess:
     case EAuthActions.RegisterUserSuccess:

@@ -67,7 +67,6 @@ import { getAbsolutePath } from '../../utils/getAbsolutePath';
 import { getTenantsCountStore } from '../selectors/tenants';
 import { createUser as createUserApi } from '../../api/createUser';
 import { editTeamUser } from '../../api/editTeamUser';
-import { updateSubordinates } from '../../api/updateReports';
 
 /**
  * The backend API returns `subordinates`, but internal Redux state
@@ -206,7 +205,7 @@ function* saveUserManagerSaga({ payload: { id, managerId } }: PayloadAction<{ id
 function* saveUserReportsSaga({ payload: { id, reportIds } }: PayloadAction<{ id: number; reportIds: number[] }>) {
   try {
     yield put(setGeneralLoaderVisibility(true));
-    yield call(updateSubordinates, id, { subordinates: reportIds });
+    yield call(editTeamUser, id, { subordinates: reportIds });
     yield put(changeUserReports({ id, reportIds }));
     NotificationManager.success({ message: 'User reports updated successfully' });
   } catch (error) {

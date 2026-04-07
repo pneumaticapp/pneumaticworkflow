@@ -219,6 +219,7 @@ const baseAuthUser = {
   isNewslettersSubscriber: false,
   isSpecialOffersSubscriber: false,
   managerId: null,
+  reportIds: [],
 };
 
 const baseProps = {

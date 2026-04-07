@@ -420,18 +420,21 @@ class UserService(
         self._update_related_stripe_account()
         self._update_analytics(**update_kwargs)
 
+        if manager_changed:
+            self._update_managers(old_manager, self.instance.manager)
+
+        if subordinates is not None:
+            self._update_subordinates(subordinates)
+            # Refresh to clear stale prefetch cache so the WS
+            # payload reflects the updated subordinates.
+            self.instance.refresh_from_db()
+
         ws_data = UserWebsocketSerializer(self.instance).data
         send_user_updated_notification.delay(
             logging=self.account.log_api_requests,
             account_id=self.account.id,
             user_data=ws_data,
         )
-
-        if manager_changed:
-            self._update_managers(old_manager, self.instance.manager)
-
-        if subordinates is not None:
-            self._update_subordinates(subordinates)
 
         return self.instance
 

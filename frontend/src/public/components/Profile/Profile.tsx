@@ -217,14 +217,14 @@ export function Profile({ user, editCurrentUser, sendChangePassword, onChangeTab
 
           <ProfileManagerWithFormik
             currentUserId={id}
-            managerId={user.managerId || (user as any).manager_id || null}
+            managerId={user.managerId ?? null}
             editCurrentUser={editCurrentUser}
           />
 
           <fieldset className={styles['fields-group']}>
             <ProfileReports 
               currentUserId={id} 
-              reportIds={user.reportIds || user.subordinates || []} 
+              reportIds={user.reportIds || []} 
             />
           </fieldset>
 

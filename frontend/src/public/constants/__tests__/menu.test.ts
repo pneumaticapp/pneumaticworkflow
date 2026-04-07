@@ -27,6 +27,7 @@ const createMockUser = (overrides: Partial<IAuthUser> = {}): IAuthUser => ({
   isSpecialOffersSubscriber: false,
   loggedState: ELoggedState.LoggedIn,
   managerId: null,
+  reportIds: [],
   language: 'en',
   timezone: 'UTC',
   dateFmt: 'MM/DD/YYYY',

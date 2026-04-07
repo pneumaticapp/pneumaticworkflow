@@ -34,6 +34,7 @@ const createMockAuthUser = (overrides: Partial<IAuthUser> = {}): IAuthUser => ({
   loggedState: ELoggedState.LoggedIn,
   isAdmin: false,
   managerId: null,
+  reportIds: [],
   hasWorkflowViewerAccess: false,
   hasWorkflowStarterAccess: false,
   account: {
