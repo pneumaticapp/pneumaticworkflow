@@ -115,18 +115,20 @@ class BasePerformersService:
         performers = (
             TaskPerformer.objects.by_task(task.id).exclude_directly_deleted()
         )
-        if performers.filter(user_id=user.id).exists():
-            schedule = getattr(user, 'vacation_schedule', None)
-            sub_group_id = schedule.substitute_group_id if schedule else None
-            if sub_group_id:
-                if performers.exclude(
-                    user_id=user.id,
-                ).exclude(
-                    group_id=sub_group_id,
-                ).count() == 0:
-                    raise PerformersServiceException(MSG_PW_0016)
-            elif performers.count() == 1:
+        if not performers.filter(user_id=user.id).exists():
+            return None
+
+        schedule = getattr(user, 'vacation_schedule', None)
+        sub_group_id = schedule.substitute_group_id if schedule else None
+        if sub_group_id:
+            if performers.exclude(
+                user_id=user.id,
+            ).exclude(
+                group_id=sub_group_id,
+            ).count() == 0:
                 raise PerformersServiceException(MSG_PW_0016)
+        elif performers.count() == 1:
+            raise PerformersServiceException(MSG_PW_0016)
 
         return performers.filter(user_id=user.id).first()
 

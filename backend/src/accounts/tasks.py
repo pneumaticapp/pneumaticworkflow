@@ -41,17 +41,15 @@ def send_system_notification():
             )
 
 
-@shared_task(
-    autoretry_for=(Exception, ),
-    retry_backoff=True,
-    max_retries=3,
-)
+@shared_task
 def process_vacation_schedules():
     """Auto-start and auto-stop vacation delegations.
 
     Runs every 15 minutes via Celery beat.
     Checks user timezones to determine if vacation should
     start or end based on local date.
+    Per-user error isolation ensures one failure does not
+    block processing of other users.
     """
     user_model = get_user_model()
     now = timezone.now()
@@ -80,16 +78,23 @@ def process_vacation_schedules():
                 .values_list('id', flat=True),
             )
             if sub_ids:
-                VacationDelegationService(user).activate(
-                    sub_ids,
-                    absence_status=getattr(
-                        user.vacation_schedule,
-                        'absence_status',
-                        AbsenceStatus.VACATION,
-                    ),
-                    vacation_start_date=user.vacation_schedule.start_date,
-                    vacation_end_date=user.vacation_schedule.end_date,
-                )
+                try:
+                    VacationDelegationService(user).activate(
+                        sub_ids,
+                        absence_status=getattr(
+                            user.vacation_schedule,
+                            'absence_status',
+                            AbsenceStatus.VACATION,
+                        ),
+                        vacation_start_date=(
+                            user.vacation_schedule.start_date
+                        ),
+                        vacation_end_date=(
+                            user.vacation_schedule.end_date
+                        ),
+                    )
+                except Exception:  # noqa: BLE001
+                    continue
 
     # Auto-stop: users past their end date
     auto_stop_users = (
@@ -110,4 +115,7 @@ def process_vacation_schedules():
         except UnknownTimeZoneError:
             continue
         if user_now.date() > user.vacation_schedule.end_date:
-            VacationDelegationService(user).deactivate()
+            try:
+                VacationDelegationService(user).deactivate()
+            except Exception:  # noqa: BLE001
+                continue

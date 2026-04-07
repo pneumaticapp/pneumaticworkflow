@@ -96,6 +96,16 @@ class UsersViewSet(
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
             )
+        if self.action in {
+            'activate_vacation',
+            'deactivate_vacation',
+        }:
+            return (
+                UserIsAuthenticated(),
+                BillingPlanPermission(),
+                ExpiredSubscriptionPermission(),
+                UserIsAdminOrAccountOwner(),
+            )
         return (
             UserIsAuthenticated(),
             BillingPlanPermission(),

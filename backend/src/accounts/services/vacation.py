@@ -11,6 +11,7 @@ from src.notifications.tasks import (
 from src.processes.enums import (
     PerformerType,
     TaskStatus,
+    WorkflowStatus,
 )
 from src.processes.models.workflows.task import Task, TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
@@ -140,6 +141,7 @@ class VacationDelegationService:
                     TaskStatus.ACTIVE,
                     TaskStatus.DELAYED,
                 ],
+                task__workflow__status=WorkflowStatus.RUNNING,
             )
             .exclude_directly_deleted()
             .exclude(task_id__in=task_ids)
@@ -185,6 +187,9 @@ class VacationDelegationService:
                         TaskStatus.ACTIVE,
                         TaskStatus.DELAYED,
                     ],
+                    task__workflow__status=(
+                        WorkflowStatus.RUNNING
+                    ),
                 )
                 .exclude_directly_deleted()
                 .exclude(task_id__in=task_ids)

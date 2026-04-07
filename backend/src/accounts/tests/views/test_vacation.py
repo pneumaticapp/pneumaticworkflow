@@ -255,3 +255,123 @@ def test_schedule__future_end__stays_absent__ok(mocker):
     # assert
     owner.refresh_from_db()
     assert owner.is_absent is True
+
+
+def test_schedule__auto_start_error__continues__ok(mocker):
+
+    """
+    When auto-start fails for one user, subsequent
+    users are still processed.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner1 = create_test_owner(account=account)
+    owner2 = create_test_admin(
+        account=account,
+        email='owner2@pneumatic.app',
+    )
+    sub1 = create_test_admin(
+        account=account,
+        email='sub1@pneumatic.app',
+    )
+    sub2 = create_test_admin(
+        account=account,
+        email='sub2@pneumatic.app',
+    )
+
+    group1 = UserGroup.objects.create(
+        name='Sub1',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group1.users.add(sub1)
+    group2 = UserGroup.objects.create(
+        name='Sub2',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group2.users.add(sub2)
+
+    UserVacation.objects.create(
+        user=owner1,
+        substitute_group=group1,
+        start_date=date(2020, 1, 1),
+    )
+    UserVacation.objects.create(
+        user=owner2,
+        substitute_group=group2,
+        start_date=date(2020, 1, 1),
+    )
+    owner1.absence_status = AbsenceStatus.ACTIVE
+    owner1.save(update_fields=['absence_status'])
+    owner2.absence_status = AbsenceStatus.ACTIVE
+    owner2.save(update_fields=['absence_status'])
+
+    mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+    activate_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'VacationDelegationService.activate',
+        side_effect=[Exception('boom'), None],
+    )
+
+    # act
+    process_vacation_schedules()
+
+    # assert
+    assert activate_mock.call_count == 2
+
+
+def test_schedule__auto_stop_error__continues__ok(mocker):
+
+    """
+    When auto-stop fails for one user, subsequent
+    users are still processed.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner1 = create_test_owner(account=account)
+    owner2 = create_test_admin(
+        account=account,
+        email='owner2@pneumatic.app',
+        first_name='Jane',
+    )
+    sub1 = create_test_admin(
+        account=account,
+        email='sub1@pneumatic.app',
+    )
+    sub2 = create_test_admin(
+        account=account,
+        email='sub2@pneumatic.app',
+    )
+
+    mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+    service1 = VacationDelegationService(user=owner1)
+    service1.activate(
+        substitute_user_ids=[sub1.id],
+        vacation_end_date=date(2020, 1, 1),
+    )
+    service2 = VacationDelegationService(user=owner2)
+    service2.activate(
+        substitute_user_ids=[sub2.id],
+        vacation_end_date=date(2020, 1, 1),
+    )
+
+    deactivate_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'VacationDelegationService.deactivate',
+        side_effect=[Exception('boom'), None],
+    )
+
+    # act
+    process_vacation_schedules()
+
+    # assert
+    assert deactivate_mock.call_count == 2
