@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Prefetch
 from rest_framework.generics import ListAPIView
 
 from src.accounts.permissions import (
@@ -12,7 +11,6 @@ from src.generics.permissions import (
     UserIsAuthenticated,
 )
 from src.processes.models.workflows.event import WorkflowEvent
-from src.processes.models.workflows.fields import FieldSelection
 from src.reports.serializers import (
     EventHighlightsSerializer,
     HighlightsFilterSerializer,
@@ -42,11 +40,5 @@ class HighlightsView(
             account_id=self.request.user.account.id,
             user_id=self.request.user.id,
             **filter_serializer.validated_data,
-        ).prefetch_related(
-            Prefetch(
-                'workflow__kickoff__output__selections',
-                queryset=FieldSelection.objects.only('value'),
-                to_attr='selections_values',
-            ),
         )
         return self.prefetch_queryset(queryset)
