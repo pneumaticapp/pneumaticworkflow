@@ -63,7 +63,9 @@ def delegate_vacation_tasks():
         ],
         vacation_schedule__isnull=False,
         vacation_schedule__substitute_group__isnull=False,
-    ).select_related('vacation_schedule__substitute_group')
+    ).select_related(
+        'vacation_schedule__substitute_group',
+    ).order_by('id')
 
     logger = logging.getLogger(__name__)
 
@@ -92,6 +94,7 @@ def _delegate_tasks_for_user(user):
                 TaskStatus.ACTIVE,
                 TaskStatus.DELAYED,
             ],
+            task__workflow__status=WorkflowStatus.RUNNING,
         ).exclude_directly_deleted()
         .values_list('task_id', flat=True),
     )

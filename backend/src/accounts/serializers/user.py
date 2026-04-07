@@ -102,6 +102,7 @@ class UserSerializer(
             'is_account_owner',
             'date_joined_tsp',
             'is_absent',
+            'absence_status',
         )
 
     groups = RelatedListField(

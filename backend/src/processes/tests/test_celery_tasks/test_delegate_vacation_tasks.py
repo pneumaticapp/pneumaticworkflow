@@ -12,6 +12,7 @@ from src.processes.enums import (
     DirectlyStatus,
     PerformerType,
     TaskStatus,
+    WorkflowStatus,
 )
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tasks.tasks import delegate_vacation_tasks
@@ -436,3 +437,62 @@ def test_delegate__error__rolls_back_user(mocker):
     assert not workflow.members.filter(
         id=substitute.id,
     ).exists()
+
+
+def test_delegate__skips_non_running_workflow__ok(mocker):
+
+    """
+    Tasks from completed (non-RUNNING) workflows are not
+    delegated even if the task status is ACTIVE.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    substitute = create_test_admin(
+        account=account,
+        email='sub1@pneumatic.app',
+    )
+
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group.users.add(substitute)
+    UserVacation.objects.create(
+        user=owner,
+        substitute_group=group,
+    )
+    owner.absence_status = AbsenceStatus.VACATION
+    owner.save(update_fields=['absence_status'])
+
+    template = create_test_template(
+        user=owner,
+        tasks_count=1,
+        is_active=True,
+    )
+    workflow = create_test_workflow(
+        user=owner,
+        template=template,
+        status=WorkflowStatus.DONE,
+    )
+    task = workflow.tasks.first()
+    task.status = TaskStatus.ACTIVE
+    task.save(update_fields=['status'])
+
+    event_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+
+    # act
+    delegate_vacation_tasks()
+
+    # assert
+    assert not TaskPerformer.objects.filter(
+        task=task,
+        group=group,
+        type=PerformerType.GROUP,
+    ).exists()
+    event_mock.assert_not_called()
