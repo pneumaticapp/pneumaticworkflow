@@ -326,7 +326,7 @@ msgid "The value of the field exceeds the limit of {limit} characters."
 msgstr ""
 
 #. Translators: Dropdown / radio / checkbox selections validation
-msgid "Selection with the given value does not exist."
+msgid "A selection with the given value does not exist."
 msgstr ""
 
 #. Translators: Checkbox selections validation

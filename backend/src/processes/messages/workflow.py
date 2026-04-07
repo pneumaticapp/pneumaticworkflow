@@ -52,7 +52,7 @@ MSG_PW_0026 = lambda limit: format_lazy(
     limit=limit,
 )
 # Translators: Dropdown / radio / checkbox selections validation
-MSG_PW_0028 = _('Selection with the given value does not exist.')
+MSG_PW_0028 = _('A selection with the given value does not exist.')
 # Translators: Checkbox selections validation
 MSG_PW_0029 = _('Checkbox value should be a list.')
 # Translators: Checkbox selections validation

@@ -165,7 +165,7 @@ msgid "Group with the name \"{name}\" already exists."
 msgstr "Ya existe un grupo con el nombre \"{name}\"."
 
 msgid "Permission denied. Only an administrator can grant administrator privileges."
-msgstr ""
+msgstr "Permiso denegado. Solo un administrador puede otorgar privilegios de administrador."
 
 msgid "You can't delete yourself."
 msgstr ""

@@ -31,7 +31,7 @@ msgid "Some fields referenced in the conditions of task \"{name}\" do not exist.
 msgstr ""
 
 msgid "You must provide either a \"selections\" or a \"dataset\" for the field."
-msgstr ""
+msgstr "Необходимо указать \"опции\" или \"набор данных\" для поля."
 
 msgid "A field with a type 'User' should be required."
 msgstr "Поле с типом \"Пользователь\" должно быть обязательным."
@@ -187,7 +187,7 @@ msgstr "Задача \"{name}\": правило условия содержит 
 #, fuzzy, python-brace-format
 #| msgid "Task \"{name}\": Option \"{value}\" of output field \"{field_name}\" contains a duplicate api_name \"{api_name}\". Change the api_name or recreate the option."
 msgid "Task \"{name}\": The output field \"{field_name}\" contains a duplicate value in option \"{value}\". Please use a unique value."
-msgstr "Задача \"{name}\": вариант \"{value}\" выходного поля \"{field_name}\" содержит дублирующийся api_name \"{api_name}\". Измените api_name или пересоздайте вариант."
+msgstr "Задача \"{name}\": Поле вывода \"{field_name}\" содержит повторяющееся значение в варианте \"{value}\". Пожалуйста, используйте уникальное значение."
 
 #, python-brace-format
 msgid "Task \"{name}\": Contains a duplicate api_name \"{api_name}\". Recreate the task or change its api_name."
@@ -331,8 +331,8 @@ msgstr "Значение поля превысило лимит в {limit} си�
 #. Translators: Dropdown / radio / checkbox selections validation
 #, fuzzy
 #| msgid "Selection with the given id does not exist."
-msgid "Selection with the given value does not exist."
-msgstr "Значение поля с указнным id не существует."
+msgid "A selection with the given value does not exist."
+msgstr "Выбор с указанным значением не существует."
 
 #. Translators: Checkbox selections validation
 msgid "Checkbox value should be a list."
