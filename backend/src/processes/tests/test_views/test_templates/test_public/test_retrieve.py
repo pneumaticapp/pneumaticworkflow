@@ -135,16 +135,10 @@ class TestRetrievePublicTemplate:
         assert field_data['description'] == field_template.description
         assert field_data['is_required'] == field_template.is_required
         assert field_data['is_hidden'] == field_template.is_hidden
-        assert field_data['dataset'] is None
         assert field_data['order'] == field_template.order
         assert field_data['api_name'] == field_template.api_name
         assert field_data['default'] == ''
-        assert field_data['selections'] == [
-            {
-                'value': selection.value,
-                'api_name': selection.api_name,
-            },
-        ]
+        assert field_data['selections'] == [selection.value]
         get_token_mock.assert_called_once()
         get_template_mock.assert_called_once_with(token)
 
@@ -159,7 +153,8 @@ class TestRetrievePublicTemplate:
             is_public=True,
             tasks_count=1,
         )
-        dataset = create_test_dataset(account=account)
+        dataset = create_test_dataset(account=account, items_count=1)
+        dataset_item = dataset.items.get(order=1)
         field_template = FieldTemplate.objects.create(
             order=1,
             name='Text',
@@ -203,11 +198,74 @@ class TestRetrievePublicTemplate:
         assert field_data['description'] == field_template.description
         assert field_data['is_required'] == field_template.is_required
         assert field_data['is_hidden'] == field_template.is_hidden
-        assert field_data['dataset'] == dataset.id
         assert field_data['order'] == field_template.order
         assert field_data['api_name'] == field_template.api_name
         assert field_data['default'] == ''
-        assert field_data['selections'] == []
+        assert field_data['selections'] == [dataset_item.value]
+        get_token_mock.assert_called_once()
+        get_template_mock.assert_called_once_with(token)
+
+    def test_retrieve__field_with_dataset_and_selections__ok(
+        self,
+        api_client,
+        mocker,
+    ):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        template = create_test_template(
+            user=user,
+            is_active=True,
+            is_public=True,
+            tasks_count=1,
+        )
+        dataset = create_test_dataset(account=account, items_count=1)
+        dataset_item = dataset.items.get(order=1)
+        field_template = FieldTemplate.objects.create(
+            order=1,
+            name='Text',
+            type=FieldType.DROPDOWN,
+            kickoff=template.kickoff_instance,
+            template=template,
+            account=account,
+            dataset=dataset,
+        )
+        selection = FieldTemplateSelection.objects.create(
+            field_template=field_template,
+            template=template,
+            value='some value',
+        )
+        auth_header_value = f'Token {template.public_id}'
+        token = PublicToken(template.public_id)
+        get_token_mock = mocker.patch(
+            'src.authentication.services.public_auth.'
+            'PublicAuthService.get_token',
+            return_value=token,
+        )
+        get_template_mock = mocker.patch(
+            'src.authentication.services.public_auth.'
+            'PublicAuthService.get_template',
+            return_value=template,
+        )
+        settings_mock = mocker.patch(
+            'src.processes.views.public.template.settings',
+        )
+        settings_mock.PROJECT_CONF = {'CAPTCHA': True}
+
+        # act
+        response = api_client.get(
+            path='/templates/public',
+            **{'X-Public-Authorization': auth_header_value},
+        )
+
+        # assert
+        assert response.status_code == 200
+        field_data = response.data['kickoff']['fields'][0]
+        assert field_data['selections'] == [
+            selection.value,
+            dataset_item.value,
+        ]
         get_token_mock.assert_called_once()
         get_template_mock.assert_called_once_with(token)
 
