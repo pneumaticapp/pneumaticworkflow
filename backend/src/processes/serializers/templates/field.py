@@ -49,11 +49,15 @@ class PublicFieldTemplateSerializer(ModelSerializer):
 
     order = IntegerField()
     api_name = CharField(required=False, max_length=200)
-    selections = FieldTemplateSelectionSerializer(
-        many=True,
-        required=False,
-    )
-    dataset = AccountPrimaryKeyRelatedField()
+    selections = SerializerMethodField()
+
+    def get_selections(self, instance: FieldTemplate) -> list:
+        result = list(instance.selections.values_list('value', flat=True))
+        if instance.dataset_id:
+            dataset = instance.dataset
+            dataset_values = dataset.items.values_list('value', flat=True)
+            result.extend(list(dataset_values))
+        return result
 
 
 class FieldTemplateSerializer(
