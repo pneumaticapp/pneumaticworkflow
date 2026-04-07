@@ -69,6 +69,18 @@ import { createUser as createUserApi } from '../../api/createUser';
 import { editTeamUser } from '../../api/editTeamUser';
 import { updateSubordinates } from '../../api/updateReports';
 
+/**
+ * The backend API returns `subordinates`, but internal Redux state
+ * and UI components use `reportIds`. This helper copies the value
+ * so that both names are available in the store.
+ */
+function normalizeUserReportIds(user: TUserListItem): TUserListItem {
+  if (user.subordinates && !user.reportIds) {
+    return { ...user, reportIds: user.subordinates };
+  }
+  return user;
+}
+
 export function* fetchUsers(
   action: PayloadAction<TUsersFetchPayload> = { type: 'accounts/usersFetchStarted', payload: { showErrorNotification: true } }
 ) {
@@ -91,7 +103,7 @@ export function* fetchUsers(
         status: EUserStatus.Active,
       };
 
-      return { ...emptyUserData, ...user };
+      return normalizeUserReportIds({ ...emptyUserData, ...user });
     });
 
     const sortedUsers = sortUsersByStatus(sortUsersByNameAsc(normalizedUsers));
@@ -150,10 +162,11 @@ function getSortedUsers(users: TUserListItem[], sorting: EUserListSorting) {
 function* fetchTeam() {
   try {
     const { userListSorting: sorting }: IAccounts = yield select(getAccountsStore);
-    const users: TUserListItem[] = yield getUsers({
+    const rawUsers: TUserListItem[] = yield getUsers({
       type: 'user',
       status: [EUserStatus.Active, EUserStatus.Invited],
     });
+    const users = rawUsers.map(normalizeUserReportIds);
 
     yield put(teamFetchFinished(getSortedUsers(users, sorting)));
   } catch (error) {
