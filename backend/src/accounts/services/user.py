@@ -462,20 +462,20 @@ class UserService(
         new_ids = {s.id for s in subordinates}
         changed_user_ids = current_ids ^ new_ids
 
-        # Collect old managers of users being reassigned
-        # (users leaving current manager or being added from another)
-        old_manager_ids = set()
-        if changed_user_ids:
-            old_manager_ids = set(
-                UserModel.objects.filter(
-                    id__in=changed_user_ids,
-                    manager__isnull=False,
-                ).exclude(
-                    manager=self.instance,
-                ).values_list('manager_id', flat=True),
-            )
-
         with transaction.atomic():
+            # Collect old managers inside the transaction so the
+            # read is consistent with the subsequent set() call.
+            old_manager_ids = set()
+            if changed_user_ids:
+                old_manager_ids = set(
+                    UserModel.objects.filter(
+                        id__in=changed_user_ids,
+                        manager__isnull=False,
+                    ).exclude(
+                        manager=self.instance,
+                    ).values_list('manager_id', flat=True),
+                )
+
             self.instance.subordinates.set(subordinates)
 
             if changed_user_ids:
@@ -483,7 +483,9 @@ class UserService(
                     id__in=changed_user_ids,
                 )
                 for user in changed_users:
-                    ws_data_user = UserWebsocketSerializer(user).data
+                    ws_data_user = (
+                        UserWebsocketSerializer(user).data
+                    )
 
                     def notify(data=ws_data_user):
                         send_user_updated_notification.delay(
@@ -499,7 +501,9 @@ class UserService(
                     id__in=old_manager_ids,
                 )
                 for mgr in old_managers:
-                    ws_data_mgr = UserWebsocketSerializer(mgr).data
+                    ws_data_mgr = (
+                        UserWebsocketSerializer(mgr).data
+                    )
 
                     def notify_mgr(data=ws_data_mgr):
                         send_user_updated_notification.delay(

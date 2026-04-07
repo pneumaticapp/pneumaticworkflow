@@ -2,10 +2,10 @@ import { commonRequest } from './commonRequest';
 import { mapRequestBody } from '../utils/mappers';
 
 export interface IUpdateUserRequest {
-  firstName: string;
-  lastName: string;
-  phone: string;
-  dateFmt: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  dateFmt?: string;
   managerId?: number | null;
 }
 

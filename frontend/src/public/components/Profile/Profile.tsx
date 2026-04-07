@@ -1,6 +1,6 @@
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
-import { Formik, Form, FormikConfig, useFormikContext } from 'formik';
+import { Formik, Form, FormikConfig } from 'formik';
 import { useDispatch } from 'react-redux';
 
 import {
@@ -55,7 +55,7 @@ export type TProfileFields = {
   dateformat: string;
 };
 
-function ProfileManagerWithFormik({
+function ProfileManagerSection({
   currentUserId,
   managerId,
   editCurrentUser,
@@ -64,21 +64,13 @@ function ProfileManagerWithFormik({
   managerId: number | null;
   editCurrentUser: (body: IUpdateUserRequest) => void;
 }) {
-  const { values } = useFormikContext<TProfileFields>();
-
   return (
     <fieldset className={styles['fields-group']}>
       <ProfileManager
         currentUserId={currentUserId}
         managerId={managerId}
         onManagerChange={(newManagerId) =>
-          editCurrentUser({
-            firstName: values.firstName,
-            lastName: values.lastName,
-            phone: values.phone,
-            dateFmt: `${values.dateformat} ${values.timeformat}`,
-            managerId: newManagerId,
-          })
+          editCurrentUser({ managerId: newManagerId })
         }
       />
     </fieldset>
@@ -215,7 +207,7 @@ export function Profile({ user, editCurrentUser, sendChangePassword, onChangeTab
             />
           </fieldset>
 
-          <ProfileManagerWithFormik
+          <ProfileManagerSection
             currentUserId={id}
             managerId={user.managerId ?? null}
             editCurrentUser={editCurrentUser}

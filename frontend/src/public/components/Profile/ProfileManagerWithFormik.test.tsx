@@ -102,7 +102,7 @@ const makeUser = (overrides: Partial<IAuthUser> = {}): IAuthUser => ({
   ...overrides,
 } as IAuthUser);
 
-describe('Profile — ProfileManagerWithFormik', () => {
+describe('Profile — ProfileManagerSection', () => {
   const mockEditCurrentUser = jest.fn();
   const mockSendChangePassword = jest.fn();
   const mockOnChangeTab = jest.fn();
@@ -112,7 +112,7 @@ describe('Profile — ProfileManagerWithFormik', () => {
     (useSelector as jest.Mock).mockReturnValue([]);
   });
 
-  it('передаёт актуальные значения Formik при смене менеджера, а не пропсы', () => {
+  it('sends only managerId when changing manager', () => {
     // arrange
     const user = makeUser();
 
@@ -126,29 +126,15 @@ describe('Profile — ProfileManagerWithFormik', () => {
       />
     );
 
-    // Simulate manager change via mocked ProfileManager
     userEvent.click(screen.getByTestId('change-manager-btn'));
 
     // assert
     expect(mockEditCurrentUser).toHaveBeenCalledTimes(1);
-    const callArgs = mockEditCurrentUser.mock.calls[0][0];
-    // The values should come from Formik initialValues, not props
-    // initialValues.firstName = user.firstName (same as props for initial render)
-    expect(callArgs.firstName).toBe('PropFirst');
-    expect(callArgs.lastName).toBe('PropLast');
-    expect(callArgs.phone).toBe('111-prop');
-    expect(callArgs.managerId).toBe(42);
-    // dateFmt should be constructed from Formik values
-    expect(callArgs.dateFmt).toBeDefined();
+    expect(mockEditCurrentUser).toHaveBeenCalledWith({ managerId: 42 });
   });
 
-  it('не теряет несохранённые данные формы при смене менеджера', async () => {
-    // arrange — This test verifies the fix: previously onManagerChange
-    // used destructured props from user instead of Formik form values.
-    // With the ProfileManagerWithFormik wrapper, it reads from
-    // useFormikContext, so initial values match props (which is correct
-    // when form hasn't been modified). The structural fix is verified
-    // by checking that the wrapper component is rendered inside Formik.
+  it('does not include profile fields in manager change request', () => {
+    // arrange
     const user = makeUser();
 
     // act
@@ -161,18 +147,14 @@ describe('Profile — ProfileManagerWithFormik', () => {
       />
     );
 
-    // Click change manager
     userEvent.click(screen.getByTestId('change-manager-btn'));
 
     // assert
     expect(mockEditCurrentUser).toHaveBeenCalledTimes(1);
     const callArgs = mockEditCurrentUser.mock.calls[0][0];
-    // Verify the call uses form-derived dateFmt (dateformat + timeformat)
-    // Not the raw prop dateFmt
-    expect(callArgs).toHaveProperty('firstName');
-    expect(callArgs).toHaveProperty('lastName');
-    expect(callArgs).toHaveProperty('phone');
-    expect(callArgs).toHaveProperty('dateFmt');
-    expect(callArgs).toHaveProperty('managerId');
+    expect(callArgs).not.toHaveProperty('firstName');
+    expect(callArgs).not.toHaveProperty('lastName');
+    expect(callArgs).not.toHaveProperty('phone');
+    expect(callArgs).not.toHaveProperty('dateFmt');
   });
 });
