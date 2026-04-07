@@ -96,12 +96,12 @@ def _delegate_tasks_for_user(user):
     )
 
     service = VacationDelegationService(user)
-    task_ids, wf_ids = service._delegate_tasks(
+    _, wf_ids = service._delegate_tasks(
         group=sub_group,
         existing_task_ids=already_delegated_task_ids,
     )
 
-    if not task_ids:
+    if not wf_ids:
         return
 
     sub_ids = list(

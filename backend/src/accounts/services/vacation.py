@@ -247,6 +247,9 @@ class VacationDelegationService:
                     TaskStatus.ACTIVE,
                     TaskStatus.DELAYED,
                 ],
+                task__workflow__status=(
+                    WorkflowStatus.RUNNING
+                ),
             )
             .exclude_directly_deleted()
             .values_list('task_id', 'task__workflow_id')

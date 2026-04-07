@@ -496,3 +496,67 @@ def test_delegate__skips_non_running_workflow__ok(mocker):
         type=PerformerType.GROUP,
     ).exists()
     event_mock.assert_not_called()
+
+
+def test_delegate__all_delegated__skips_members(mocker):
+
+    """
+    When all tasks are already delegated, wf_ids is empty
+    and _add_members_bulk is not called (early return).
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    substitute = create_test_admin(
+        account=account,
+        email='sub1@pneumatic.app',
+    )
+
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group.users.add(substitute)
+    UserVacation.objects.create(
+        user=owner,
+        substitute_group=group,
+    )
+    owner.absence_status = AbsenceStatus.VACATION
+    owner.save(update_fields=['absence_status'])
+
+    template = create_test_template(
+        user=owner,
+        tasks_count=1,
+        is_active=True,
+    )
+    workflow = create_test_workflow(
+        user=owner,
+        template=template,
+    )
+    task = workflow.tasks.first()
+
+    # pre-create group performer (already delegated)
+    TaskPerformer.objects.create(
+        task=task,
+        group=group,
+        type=PerformerType.GROUP,
+        directly_status=DirectlyStatus.CREATED,
+    )
+
+    event_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+    add_members_mock = mocker.patch(
+        'src.accounts.services.vacation.'
+        'VacationDelegationService._add_members_bulk',
+    )
+
+    # act
+    delegate_vacation_tasks()
+
+    # assert
+    event_mock.assert_not_called()
+    add_members_mock.assert_not_called()

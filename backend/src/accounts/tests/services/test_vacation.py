@@ -7,6 +7,7 @@ from src.processes.enums import (
     DirectlyStatus,
     PerformerType,
     TaskStatus,
+    WorkflowStatus,
 )
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
@@ -1612,4 +1613,69 @@ def test_update_existing__skips_completed_grp_perfs__ok(
         group=sub_group,
     ).exists()
     assert sub_perf_exists is False
+    event_mock.assert_not_called()
+
+
+def test_update_existing__skips_non_running_wf__ok(mocker):
+
+    """
+    _update_existing does not include workflow IDs from
+    non-RUNNING workflows in existing_wf_ids.
+    Substitutes are not added as members to done workflows.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    substitute = create_test_admin(
+        account=account,
+        email='sub@pneumatic.app',
+    )
+
+    sub_group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    sub_group.users.add(substitute)
+    UserVacation.objects.create(
+        user=owner,
+        substitute_group=sub_group,
+    )
+
+    # Create a DONE workflow with existing substitute
+    # group performer
+    template = create_test_template(
+        user=owner,
+        tasks_count=1,
+        is_active=True,
+    )
+    done_wf = create_test_workflow(
+        user=owner,
+        template=template,
+        status=WorkflowStatus.DONE,
+    )
+    done_task = done_wf.tasks.first()
+    done_task.status = TaskStatus.ACTIVE
+    done_task.save(update_fields=['status'])
+
+    TaskPerformer.objects.create(
+        task=done_task,
+        group=sub_group,
+        type=PerformerType.GROUP,
+    )
+
+    event_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+
+    # act
+    service = VacationDelegationService(user=owner)
+    service.activate(substitute_user_ids=[substitute.id])
+
+    # assert
+    assert not done_wf.members.filter(
+        id=substitute.id,
+    ).exists()
     event_mock.assert_not_called()
