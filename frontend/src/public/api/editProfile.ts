@@ -19,7 +19,7 @@ export interface IUpdateUserResponse {
 
 export function editProfile(body: IUpdateUserRequest) {
   return commonRequest<IUpdateUserResponse>(
-    '/accounts/user',
+    'editProfile',
     {
       data: mapRequestBody(body),
       method: 'PUT',

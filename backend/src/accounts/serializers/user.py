@@ -169,26 +169,16 @@ class UserSerializer(
         return value
 
     def validate_subordinates(self, value):
-        """Validate the proposed subordinates list.
+        """Validate the proposed subordinates list (basic checks).
 
-        Collect all ancestors of self.instance (walking up the manager
-        chain).  If any proposed subordinate is an ancestor, assigning
-        them as a subordinate would create a circular hierarchy.
+        Cycle detection against the manager chain is performed in
+        ``validate()`` where the (possibly updated) manager is available.
         """
         if not self.instance or not value:
             return value
-        ancestor_ids = set()
-        current = self.instance
-        while current:
-            if current.id in ancestor_ids:
-                break
-            ancestor_ids.add(current.id)
-            current = current.manager
         for sub in value:
             if sub.id == self.instance.id:
                 raise serializers.ValidationError(MSG_A_0049)
-            if sub.id in ancestor_ids:
-                raise serializers.ValidationError(MSG_A_0050)
         return value
 
     def validate(self, attrs):
@@ -201,14 +191,28 @@ class UserSerializer(
         ):
             raise serializers.ValidationError(MSG_A_0036)
 
-        # Cross-field validation: if both manager and subordinates are
-        # being updated in the same request, ensure the proposed manager
-        # is not also listed as a subordinate (direct cycle).
-        manager = attrs.get('manager')
+        # Cross-field validation: ensure no proposed subordinate is an
+        # ancestor of the user (using the *proposed* manager when
+        # present so that concurrent manager + subordinates updates
+        # are validated correctly).
         subordinates = attrs.get('subordinates')
-        if manager and subordinates:
+        if self.instance and subordinates:
+            ancestor_ids = set()
+            proposed_manager = attrs.get('manager', self.instance.manager)
+            current = proposed_manager
+            while current:
+                if current.id in ancestor_ids:
+                    break
+                ancestor_ids.add(current.id)
+                current = current.manager
             sub_ids = {s.id for s in subordinates}
-            if manager.id in sub_ids:
+            for sub in subordinates:
+                if sub.id in ancestor_ids:
+                    raise serializers.ValidationError(MSG_A_0050)
+            # Also reject a direct cycle: proposed manager listed
+            # as subordinate.
+            manager = attrs.get('manager')
+            if manager and manager.id in sub_ids:
                 raise serializers.ValidationError(MSG_A_0050)
 
         return attrs
