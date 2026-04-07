@@ -56,8 +56,8 @@ describe('SelectManagerModal', () => {
     ]);
   });
 
-  describe('Рендер', () => {
-    it('не отображает модалку, если isOpen=false', () => {
+  describe('Rendering', () => {
+    it('does not render the modal when isOpen=false', () => {
       // arrange & act
       render(
         <SelectManagerModal
@@ -73,7 +73,7 @@ describe('SelectManagerModal', () => {
       expect(screen.queryByTestId('modal')).not.toBeInTheDocument();
     });
 
-    it('отображает кнопку Remove, если есть currentManagerId', () => {
+    it('shows the Remove button when currentManagerId is set', () => {
       // arrange & act
       render(
         <SelectManagerModal
@@ -89,7 +89,7 @@ describe('SelectManagerModal', () => {
       expect(screen.getByTestId('btn-button.remove')).toBeInTheDocument();
     });
 
-    it('не отображает кнопку Remove, если currentManagerId=null', () => {
+    it('hides the Remove button when currentManagerId is null', () => {
       // arrange & act
       render(
         <SelectManagerModal
@@ -106,8 +106,8 @@ describe('SelectManagerModal', () => {
     });
   });
 
-  describe('Действия', () => {
-    it('вызывает onConfirm с null при клике на Remove', () => {
+  describe('Actions', () => {
+    it('calls onConfirm with null when Remove is clicked', () => {
       // arrange
       render(
         <SelectManagerModal
@@ -127,7 +127,7 @@ describe('SelectManagerModal', () => {
       expect(mockOnClose).toHaveBeenCalled();
     });
 
-    it('фильтрует текущего пользователя из списка доступных менеджеров', () => {
+    it('filters the current user from the available managers list', () => {
       // arrange & act
       render(
         <SelectManagerModal
@@ -148,7 +148,7 @@ describe('SelectManagerModal', () => {
       expect(optionIds).toContain('3');
     });
 
-    it('вызывает onConfirm с ID выбранного менеджера при клике на Save', () => {
+    it('calls onConfirm with the selected manager ID when Save is clicked', () => {
       // arrange
       render(
         <SelectManagerModal
@@ -172,7 +172,7 @@ describe('SelectManagerModal', () => {
       expect(mockOnClose).toHaveBeenCalled();
     });
 
-    it('кнопка Confirm имеет testid на основе intl id', () => {
+    it('confirms button has a testid based on intl id', () => {
       // arrange & act
       render(
         <SelectManagerModal
@@ -188,7 +188,7 @@ describe('SelectManagerModal', () => {
       expect(screen.getByTestId('btn-task.return-to.confirm')).toBeInTheDocument();
     });
 
-    it('вызывает onConfirm с null, если менеджер не выбран', () => {
+    it('calls onConfirm with null when no manager is selected', () => {
       // arrange
       render(
         <SelectManagerModal
@@ -208,7 +208,7 @@ describe('SelectManagerModal', () => {
       expect(mockOnClose).toHaveBeenCalled();
     });
 
-    it('вызывает onClose при клике на Remove', () => {
+    it('calls onClose when Remove is clicked', () => {
       // arrange
       render(
         <SelectManagerModal
@@ -225,6 +225,45 @@ describe('SelectManagerModal', () => {
 
       // assert
       expect(mockOnClose).toHaveBeenCalledTimes(1);
+    });
+
+    it('syncs selectedManager when store data loads after mount', () => {
+      // arrange — first render with empty store
+      (useSelector as jest.Mock).mockReturnValue([]);
+      const { rerender } = render(
+        <SelectManagerModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          currentManagerId={2}
+          currentUserId={1}
+        />
+      );
+
+      // First render: dropdown value should be null (no users loaded)
+      const firstCallProps = (UsersDropdownComponent as jest.Mock).mock.calls[0][0];
+      expect(firstCallProps.value).toBeNull();
+
+      // act — store loads users
+      (useSelector as jest.Mock).mockReturnValue([
+        makeUser({ id: 1, firstName: 'Current', lastName: 'User' }),
+        makeUser({ id: 2, firstName: 'Potential', lastName: 'Manager' }),
+      ]);
+      rerender(
+        <SelectManagerModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          currentManagerId={2}
+          currentUserId={1}
+        />
+      );
+
+      // assert — dropdown should now have the manager selected
+      const lastCall = (UsersDropdownComponent as jest.Mock).mock.calls;
+      const latestProps = lastCall[lastCall.length - 1][0];
+      expect(latestProps.value).not.toBeNull();
+      expect(latestProps.value.id).toBe(2);
     });
   });
 });

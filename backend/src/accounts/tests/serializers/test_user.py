@@ -2,6 +2,7 @@ import pytest
 from rest_framework.exceptions import ValidationError
 
 from src.accounts.serializers.user import UserSerializer
+from src.accounts.enums import UserStatus
 from src.accounts.messages import MSG_A_0049, MSG_A_0050
 from src.processes.tests.fixtures import (
     create_test_account,
@@ -223,3 +224,75 @@ def test_user_serializer__get_manager_map__cached():
 
     # assert
     assert first is second
+
+
+def test_get_manager_map__excludes_inactive__ok():
+    """Inactive users must not appear in the manager map."""
+    # arrange
+    account = create_test_account()
+    active_user = create_test_not_admin(
+        account=account,
+        email='active@test.test',
+    )
+    inactive_user = create_test_not_admin(
+        account=account,
+        email='inactive@test.test',
+    )
+    inactive_user.status = UserStatus.INACTIVE
+    inactive_user.is_active = False
+    inactive_user.save(
+        update_fields=('status', 'is_active'),
+    )
+
+    serializer = UserSerializer(
+        instance=active_user,
+        context={'account': account, 'user': active_user},
+    )
+
+    # act
+    manager_map = serializer._get_manager_map()
+
+    # assert
+    assert active_user.id in manager_map
+    assert inactive_user.id not in manager_map
+
+
+def test_validate_manager_id__inactive_in_chain__ok():
+    """Cycle detection ignores inactive users so stale
+    manager_id on an inactive user doesn't cause a false
+    positive."""
+    # arrange
+    account = create_test_account()
+    user_a = create_test_not_admin(
+        account=account,
+        email='a@test.test',
+    )
+    user_b = create_test_not_admin(
+        account=account,
+        email='b@test.test',
+    )
+    # Create an inactive user whose manager is user_a.
+    # If the map included inactive users, walking B's chain
+    # might erroneously traverse inactive -> A -> cycle.
+    inactive = create_test_not_admin(
+        account=account,
+        email='inactive@test.test',
+    )
+    inactive.manager = user_a
+    inactive.save(update_fields=('manager',))
+    inactive.status = UserStatus.INACTIVE
+    inactive.is_active = False
+    inactive.save(
+        update_fields=('status', 'is_active'),
+    )
+
+    serializer = UserSerializer(
+        instance=user_a,
+        context={'account': account, 'user': user_a},
+    )
+
+    # act
+    result = serializer.validate_manager_id(user_b)
+
+    # assert
+    assert result == user_b

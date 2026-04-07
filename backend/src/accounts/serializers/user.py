@@ -146,14 +146,16 @@ class UserSerializer(
     def _get_manager_map(self):
         """Return {user_id: manager_id} dict for the account.
 
-        Cached on the serializer instance so the query runs
-        at most once per validation cycle.
+        Only includes **active** users so that stale manager_id
+        values on inactive users do not cause false cycle
+        detection.  Cached on the serializer instance so the
+        query runs at most once per validation cycle.
         """
         if not hasattr(self, '_manager_map'):
             self._manager_map = dict(
-                UserModel.objects.filter(
-                    account=self.context['account'],
-                ).values_list('id', 'manager_id'),
+                UserModel.objects.on_account(
+                    self.context['account'].id,
+                ).active().values_list('id', 'manager_id'),
             )
         return self._manager_map
 

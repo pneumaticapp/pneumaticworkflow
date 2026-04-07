@@ -297,7 +297,11 @@ class UserService(
         """
         user = self.instance
         subordinates = list(UserModel.objects.filter(manager=user))
-        UserModel.objects.filter(manager=user).update(manager=None)
+        if subordinates:
+            sub_ids = [s.id for s in subordinates]
+            UserModel.objects.filter(
+                id__in=sub_ids,
+            ).update(manager=None)
 
         for subordinate in subordinates:
             subordinate.manager = None

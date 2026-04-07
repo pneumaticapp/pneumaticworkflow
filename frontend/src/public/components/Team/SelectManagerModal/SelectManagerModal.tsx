@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector, useDispatch } from 'react-redux';
 
@@ -45,20 +45,23 @@ export function SelectManagerModal({
   // Filter out the current user so they can't be their own manager
   const selectableUsers = useMemo(() => allUsers.filter(user => user.id !== currentUserId), [allUsers, currentUserId]);
 
-  const [selectedManager, setSelectedManager] = useState<TUsersDropdownOption | null>(() => {
+  const [selectedManager, setSelectedManager] = useState<TUsersDropdownOption | null>(null);
+
+  useEffect(() => {
     if (currentManagerId) {
       const manager = selectableUsers.find(u => u.id === currentManagerId);
       if (manager) {
-        return {
+        setSelectedManager({
           id: manager.id,
           optionType: EOptionTypes.User,
           label: getUserFullName(manager),
           value: String(manager.id),
-        } as TUsersDropdownOption;
+        } as TUsersDropdownOption);
+        return;
       }
     }
-    return null;
-  });
+    setSelectedManager(null);
+  }, [selectableUsers, currentManagerId]);
 
   const selectionsDropdownOption: TUsersDropdownOption[] = useMemo(() => selectableUsers.map((item) => ({
     ...item,
