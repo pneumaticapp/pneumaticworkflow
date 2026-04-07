@@ -84,16 +84,16 @@ class VacationDelegationService:
         vacation_end_date=None,
     ) -> None:
         with transaction.atomic():
-            has_vacation = (
-                hasattr(self.user, 'vacation_schedule')
-                and self.user.vacation_schedule
+            vacation = (
+                UserVacation.objects
+                .filter(user=self.user)
+                .select_related('substitute_group')
+                .first()
             )
 
-            if (
-                has_vacation
-                and self.user.vacation_schedule.substitute_group_id
-            ):
+            if vacation and vacation.substitute_group_id:
                 self._update_existing(
+                    vacation=vacation,
                     substitute_user_ids=substitute_user_ids,
                     absence_status=absence_status,
                     vacation_start_date=vacation_start_date,
@@ -110,12 +110,12 @@ class VacationDelegationService:
 
     def _update_existing(
         self,
+        vacation: 'UserVacation',
         substitute_user_ids: List[int],
         absence_status: str,
         vacation_start_date=None,
         vacation_end_date=None,
     ) -> None:
-        vacation = self.user.vacation_schedule
         group = vacation.substitute_group
         group.users.set(substitute_user_ids)
 
@@ -212,11 +212,20 @@ class VacationDelegationService:
                     ignore_conflicts=True,
                 )
                 task_ids |= new_group_task_ids
-                wf_ids |= set(
-                    Task.objects
-                    .filter(id__in=new_group_task_ids)
-                    .values_list('workflow_id', flat=True),
+                new_group_tasks = list(
+                    Task.objects.filter(
+                        id__in=new_group_task_ids,
+                    ),
                 )
+                wf_ids |= {
+                    t.workflow_id for t in new_group_tasks
+                }
+                for task in new_group_tasks:
+                    WorkflowEventService.task_delegation_event(
+                        task=task,
+                        user=self.user,
+                        substitute_group=group,
+                    )
 
         self._add_members_bulk(
             wf_ids=wf_ids,
@@ -368,21 +377,22 @@ class VacationDelegationService:
 
     def deactivate(self) -> None:
         with transaction.atomic():
-            has_vacation = (
-                hasattr(self.user, 'vacation_schedule')
-                and self.user.vacation_schedule
+            vacation = (
+                UserVacation.objects
+                .filter(user=self.user)
+                .select_related('substitute_group')
+                .first()
             )
-            if not has_vacation:
+            if not vacation:
                 return
 
-            vacation = self.user.vacation_schedule
-
             # Delete substitute group performers and group.
-            if vacation.substitute_group:
+            substitute_group = vacation.substitute_group
+            if substitute_group:
                 TaskPerformer.objects.filter(
-                    group=vacation.substitute_group,
+                    group=substitute_group,
                 ).delete()
-                vacation.substitute_group.delete()
+                substitute_group.delete()
 
             self.user.absence_status = AbsenceStatus.ACTIVE
             self.user.save(update_fields=['absence_status'])

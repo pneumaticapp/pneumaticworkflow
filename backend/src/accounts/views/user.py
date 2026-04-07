@@ -78,6 +78,15 @@ class UserViewSet(
                 IsAuthenticated(),
                 BillingPlanPermission(),
             )
+        if self.action in {
+            'activate_vacation',
+            'deactivate_vacation',
+        }:
+            return (
+                UserIsAuthenticated(),
+                BillingPlanPermission(),
+                ExpiredSubscriptionPermission(),
+            )
         return (
             UserIsAuthenticated(),
             BillingPlanPermission(),

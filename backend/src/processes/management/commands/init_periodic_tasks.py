@@ -178,7 +178,7 @@ class Command(BaseCommand):
 
     def _ensure_delegate_vacation_tasks(self):
         schedule, _ = CrontabSchedule.objects.get_or_create(
-            minute="*/1",
+            minute="*/5",
             timezone=pytz.timezone("UTC"),
         )
         self._create_or_skip_task(

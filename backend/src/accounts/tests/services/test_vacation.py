@@ -830,7 +830,11 @@ def test_activate__update_existing__creates_grp_perfs__ok(
         group=sub_group,
     ).exists()
     assert sub_perf_exists is True
-    task_delegation_event_mock.assert_not_called()
+    task_delegation_event_mock.assert_called_once_with(
+        task=task,
+        user=owner,
+        substitute_group=sub_group,
+    )
 
 
 def test_activate__update_existing__filters_completed_tasks__ok(mocker):
