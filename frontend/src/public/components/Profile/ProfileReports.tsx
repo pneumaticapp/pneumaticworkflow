@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { useState } from 'react';
 import { useIntl } from 'react-intl';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector } from 'react-redux';
 
 import { getUsers } from '../../redux/selectors/user';
 import { getAccountsTeamList } from '../../redux/selectors/accounts';
@@ -10,18 +10,18 @@ import { SelectReportsModal } from '../Team/SelectReportsModal';
 import { Button, Header } from '../UI';
 import { SectionTitle } from '../UI/Typeography/SectionTitle';
 import { Avatar } from '../UI/Avatar';
-import { loadChangeUserReports } from '../../redux/accounts/slice';
+import { IUpdateUserRequest } from '../../api/editProfile';
 
 import styles from './Profile.css';
 
 interface IProfileReportsProps {
   currentUserId: number;
   reportIds: number[] | undefined;
+  editCurrentUser(body: IUpdateUserRequest): void;
 }
 
-export function ProfileReports({ currentUserId, reportIds = [] }: IProfileReportsProps) {
+export function ProfileReports({ currentUserId, reportIds = [], editCurrentUser }: IProfileReportsProps) {
   const { formatMessage } = useIntl();
-  const dispatch = useDispatch();
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const allUsers = useSelector(getUsers);
@@ -31,7 +31,7 @@ export function ProfileReports({ currentUserId, reportIds = [] }: IProfileReport
   const reports = reportIds.map(id => users.find(u => Number(u.id) === Number(id))).filter(Boolean) as typeof users;
 
   const handleReportsChange = (newReportIds: number[]) => {
-    dispatch(loadChangeUserReports({ id: currentUserId, reportIds: newReportIds }));
+    editCurrentUser({ subordinates: newReportIds });
   };
 
   return (

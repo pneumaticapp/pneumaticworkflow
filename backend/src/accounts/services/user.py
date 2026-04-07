@@ -456,13 +456,13 @@ class UserService(
         successful commit.  The default-argument capture (data=ws_data)
         prevents closure-variable rebinding across loop iterations.
         """
-        current_ids = set(
-            self.instance.subordinates.values_list('id', flat=True),
-        )
         new_ids = {s.id for s in subordinates}
-        changed_user_ids = current_ids ^ new_ids
 
         with transaction.atomic():
+            current_ids = set(
+                self.instance.subordinates.values_list('id', flat=True),
+            )
+            changed_user_ids = current_ids ^ new_ids
             # Collect old managers inside the transaction so the
             # read is consistent with the subsequent set() call.
             old_manager_ids = set()

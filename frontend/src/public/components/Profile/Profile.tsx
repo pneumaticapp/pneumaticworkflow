@@ -217,6 +217,7 @@ export function Profile({ user, editCurrentUser, sendChangePassword, onChangeTab
             <ProfileReports 
               currentUserId={id} 
               reportIds={user.reportIds || []} 
+              editCurrentUser={editCurrentUser}
             />
           </fieldset>
 

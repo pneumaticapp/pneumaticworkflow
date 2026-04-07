@@ -78,6 +78,7 @@ import {
 } from './utils/superuserReturnRoute';
 import { IMakePaymentResponse, makePayment } from '../../api/makePayment';
 import { fetchPlan } from '../accounts/saga';
+import { changeUserReports } from '../accounts/slice';
 import { getAbsolutePath } from '../../utils/getAbsolutePath';
 import { ICardSetupResponse, cardSetup } from '../../api/cardSetup';
 import { confirmPaymentDetailsProvided } from './utils/confirmPaymentDetailsProvided';
@@ -326,7 +327,15 @@ export function* editCurrentProfile({ payload }: TEditUser) {
     NotificationManager.success({
       message: 'user-account.edit-profile-success',
     });
-    yield put(editCurrentUserSuccess(mapToCamelCase(result) as TUpdateUserMappedResponse));
+    const mapped = mapToCamelCase(result) as TUpdateUserMappedResponse;
+    yield put(editCurrentUserSuccess(mapped));
+
+    // Sync accounts store when subordinates were changed so the
+    // Team page reflects the update without a full refetch.
+    if (payload.subordinates) {
+      const { authUser }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
+      yield put(changeUserReports({ id: authUser.id, reportIds: payload.subordinates }));
+    }
   } catch (err) {
     yield put(profileEditFailed());
     NotificationManager.notifyApiError(err, { message: 'user-account.edit-account-fail' });
