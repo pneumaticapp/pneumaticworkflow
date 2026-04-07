@@ -62,6 +62,9 @@ class TaskField(
     )
     objects = BaseSoftDeleteManager.from_queryset(TaskFieldQuerySet)()
 
+    def __str__(self):
+        return f'{self.type}: {self.value}'
+
 
 class FieldSelection(
     SoftDeleteModel,
@@ -76,9 +79,11 @@ class FieldSelection(
         on_delete=models.CASCADE,
         related_name='selections',
     )
-    is_selected = models.BooleanField(default=False)
     value = models.CharField(max_length=200)
 
     objects = BaseSoftDeleteManager.from_queryset(
         FieldSelectionQuerySet,
     )()
+
+    def __str__(self):
+        return self.value

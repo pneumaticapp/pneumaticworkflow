@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-13 13:45+0000\n"
+"POT-Creation-Date: 2026-04-07 11:48+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,20 +18,16 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 
 #. Translators: Call analytics need specify any user id
-#: analytics/messages.py:6
 msgid "You must specify \"user_id\" or \"anonymous_id\""
 msgstr "Debe especificar \"user_id\" o \"anonymous_id\"."
 
-#: analytics/messages.py:8
 #, python-brace-format
 msgid "Missing handler for metric \"{metric}\""
 msgstr "Falta el controlador para la métrica \"{metric}\"."
 
-#: analytics/messages.py:11
 msgid "The user with the specified credentials was not found."
 msgstr "El usuario con las credenciales especificadas no fue encontrado."
 
-#: analytics/messages.py:13
 #, python-brace-format
 msgid "Data format error. Key error: {error}"
 msgstr "Error de formato de datos. Error de clave: {error}"

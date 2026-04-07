@@ -15,11 +15,7 @@ class CheckboxResolver(Resolver):
             Q(kickoff__workflow_id=self._workflow_id),
             api_name=self._predicate.field,
         )
-        selected = list(field.selections.selected().values_list(
-            'api_name',
-            flat=True,
-        ))
-        self.field_value = selected
+        self.field_value = field.value.split(',') if field.value else []
         if self._predicate.operator in {
             PredicateOperator.EQUAL,
             PredicateOperator.NOT_EQUAL,

@@ -47,6 +47,7 @@ class FieldSchemaV1(serializers.ModelSerializer):
             'order',
             'default',
             'selections',
+            'dataset_id',
         )
 
     selections = SelectionSchemaV1(

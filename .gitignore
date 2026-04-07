@@ -8,8 +8,10 @@ nginx/keys
 nginx/config/nginx.conf
 firebase-push.json
 
-.cursorrules
+.vscode/
 .cursor/
+.cursorrules/
+.agents/
 .agent/
 .agents/
 .antigravity/
