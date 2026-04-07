@@ -576,6 +576,10 @@ def test_complete__field_with_dataset__ok(
     # assert
     assert response.status_code == 200
     assert response.data['id'] == task.id
+    field_data = response.data['output'][0]
+    assert field_data['id'] == field.id
+    assert field_data['type'] == FieldType.DROPDOWN
+    assert field_data['selections'] == [dataset_item.value]
     service_init_mock.assert_called_once_with(
         workflow=workflow,
         user=user,
