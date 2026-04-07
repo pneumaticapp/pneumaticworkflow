@@ -66,6 +66,7 @@ def process_vacation_schedules():
         .prefetch_related(
             'vacation_schedule__substitute_group__users',
         )
+        .order_by('id')
     )
     for user in auto_start_users:
         try:
@@ -108,6 +109,7 @@ def process_vacation_schedules():
             vacation_schedule__end_date__isnull=False,
         )
         .select_related('vacation_schedule')
+        .order_by('id')
     )
     for user in auto_stop_users:
         try:
