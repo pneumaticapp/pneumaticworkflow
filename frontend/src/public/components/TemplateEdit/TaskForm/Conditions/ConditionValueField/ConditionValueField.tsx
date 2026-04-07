@@ -97,7 +97,7 @@ export function ConditionValueField({
       }));
 
     } else if (variable?.selections?.length) {
-      dropdownSelections = (variable.selections as string[]).map((selectionValue) => ({ value: selectionValue, label: selectionValue }));
+      dropdownSelections = variable.selections.map((selectionValue) => ({ value: selectionValue, label: selectionValue }));
     } else {
 
       return null;

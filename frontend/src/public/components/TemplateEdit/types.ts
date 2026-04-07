@@ -1,5 +1,5 @@
 import React from 'react';
-import { EExtraFieldType, IExtraFieldSelection } from '../../types/template';
+import { EExtraFieldType } from '../../types/template';
 import { TDropdownOptionBase } from '../UI/DropdownList';
 import { EStartingType } from './TaskForm/Conditions/utils/getDropdownOperators';
 
@@ -18,7 +18,7 @@ export type TTaskVariable = {
   type: EExtraFieldType | EStartingType;
   subtitle?: string;
   richSubtitle?: React.ReactNode;
-  selections?: IExtraFieldSelection[] | string[];
+  selections?: string[];
   datasetId?: number | null;
 };
 

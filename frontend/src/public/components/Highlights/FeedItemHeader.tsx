@@ -5,7 +5,7 @@ import { useIntl } from 'react-intl';
 import { RichText } from '../RichText';
 import { Attachments } from '../Attachments';
 import { EWorkflowLogEvent } from '../../types/workflow';
-import { EExtraFieldType, IExtraField, IExtraFieldSelection } from '../../types/template';
+import { EExtraFieldType, IExtraField } from '../../types/template';
 import { IHighlightsItem } from '../../types/highlights';
 import { isArrayWithItems } from '../../utils/helpers';
 import { EKickoffOutputsViewModes, KickoffOutputs } from '../KickoffOutputs';
@@ -70,8 +70,7 @@ export function FeedItemHeader({
 
     const filteredOutputs = outputs.filter((output) => {
       const value = output.type === EExtraFieldType.User ? output.userId || output.groupId : output.value;
-      return value || output.attachments?.length
-        || (output?.selections as IExtraFieldSelection[])?.some((selection) => selection.isSelected);
+      return value || output.attachments?.length;
     });
 
     return (

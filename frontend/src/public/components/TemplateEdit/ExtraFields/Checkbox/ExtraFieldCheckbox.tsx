@@ -8,7 +8,7 @@ import { getEmptySelection } from '../../KickoffRedux/utils/getEmptySelection';
 import { validateCheckboxAndRadioField, validateKickoffFieldName } from '../../../../utils/validators';
 import { handleSelectionBlur } from '../utils/handleSelectionBlur';
 import { IntlMessages } from '../../../IntlMessages';
-import { EExtraFieldMode, IExtraFieldSelection, TExtraFieldMultipleValue } from '../../../../types/template';
+import { EExtraFieldMode, IExtraFieldSelection } from '../../../../types/template';
 import { fitInputWidth } from '../utils/fitInputWidth';
 import { PencilSmallIcon, RemoveIcon } from '../../../icons';
 import { Checkbox } from '../../../UI/Fields/Checkbox';
@@ -23,6 +23,12 @@ import { useState } from 'react';
 const DEFAULT_OPTION_INPUT_WIDTH = 120;
 const DEFAULT_FIELD_INPUT_WIDTH = 120;
 
+function normalizeCheckboxValue(value: unknown): string[] {
+  if (Array.isArray(value)) return value;
+  if (typeof value === 'string' && value !== '') return value.split(', ');
+  return [];
+}
+
 export function ExtraFieldCheckbox({
   field,
   field: { isRequired = false, name, value },
@@ -35,7 +41,7 @@ export function ExtraFieldCheckbox({
 }: IWorkflowExtraFieldProps) {
   const selectionItems = field.selections as IExtraFieldSelection[];
   const selectionValues = field.selections as string[];
-  const selectedOptions = value as TExtraFieldMultipleValue;
+  const selectedOptions = normalizeCheckboxValue(value);
 
   const fieldNameInputRef = React.useRef<HTMLInputElement | null>(null);
   const optionInputsRefs = React.useRef<HTMLInputElement[]>([]);
