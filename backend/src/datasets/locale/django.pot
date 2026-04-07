@@ -17,17 +17,9 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#. Translators: Call analytics need specify any user id
-msgid "You must specify \"user_id\" or \"anonymous_id\""
-msgstr "Vous devez spécifier \"user_id\" ou \"anonymous_id\"."
+msgid "A dataset with this name already exists."
+msgstr ""
 
 #, python-brace-format
-msgid "Missing handler for metric \"{metric}\""
-msgstr "Gestionnaire manquant pour la métrique \"{metric}\""
-
-msgid "The user with the specified credentials was not found."
-msgstr "L'utilisateur avec les identifiants spécifiés n'a pas été trouvé."
-
-#, python-brace-format
-msgid "Data format error. Key error: {error}"
-msgstr "Erreur de format de données. Erreur de clé : {error}"
+msgid "A dataset item with value \"{value}\" already exists."
+msgstr ""

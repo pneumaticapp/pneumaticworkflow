@@ -11,7 +11,7 @@ MSG_PT_0004 = lambda name: _(
 ).format(name=name)
 
 MSG_PT_0005 = _(
-    'You should provide a "selections" or "dataset" for the field.',
+    'You must provide either a "selections" or a "dataset" for the field.',
 )
 MSG_PT_0006 = _('A field with a type \'User\' should be required.')
 MSG_PT_0007 = _('Workflow template name is empty.')
@@ -181,8 +181,9 @@ MSG_PT_0053 = lambda name, api_name: format_lazy(
 )
 MSG_PT_0054 = lambda name, field_name, api_name, value: format_lazy(
     _(
-        'Task "{name}": Option "{value}" of output field "{field_name}" '
-        'contains a duplicate value. Change the value.',
+        'Task "{name}": The output field "{field_name}" '
+        'contains a duplicate value in option "{value}". '
+        'Please use a unique value.',
     ),
     name=name,
     field_name=field_name,

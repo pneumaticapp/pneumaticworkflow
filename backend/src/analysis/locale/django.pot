@@ -19,15 +19,15 @@ msgstr ""
 
 #. Translators: Call analytics need specify any user id
 msgid "You must specify \"user_id\" or \"anonymous_id\""
-msgstr "Vous devez spécifier \"user_id\" ou \"anonymous_id\"."
+msgstr ""
 
 #, python-brace-format
 msgid "Missing handler for metric \"{metric}\""
-msgstr "Gestionnaire manquant pour la métrique \"{metric}\""
+msgstr ""
 
 msgid "The user with the specified credentials was not found."
-msgstr "L'utilisateur avec les identifiants spécifiés n'a pas été trouvé."
+msgstr ""
 
 #, python-brace-format
 msgid "Data format error. Key error: {error}"
-msgstr "Erreur de format de données. Erreur de clé : {error}"
+msgstr ""
