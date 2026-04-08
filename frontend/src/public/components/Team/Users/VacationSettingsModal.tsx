@@ -70,7 +70,7 @@ export function VacationSettingsModal({ isOpen, onClose, user }: IVacationSettin
 
       if (authUser.id === user.id && result) {
         dispatch(vacationSuccess({
-          absenceStatus: result.absenceStatus || 'vacation',
+          absenceStatus: result.absenceStatus || 'active',
           vacationStartDate: result.vacationStartDate || null,
           vacationEndDate: result.vacationEndDate || null,
           substituteUserIds: result.substituteUserIds || [],

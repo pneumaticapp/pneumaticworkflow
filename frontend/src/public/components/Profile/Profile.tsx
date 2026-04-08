@@ -102,6 +102,14 @@ export function Profile({
   } = user;
   const [monthFmt, yearFmt, timeFmt] = dateFmt.split(',');
 
+  useEffect(() => {
+    document.title = TITLES.Profile;
+  }, []);
+
+  useLayoutEffect(() => {
+    onChangeTab(ESettingsTabs.Profile);
+  }, []);
+
   if (!id) return <div className="loading" />;
 
   const initialValues: TProfileFields = {
@@ -133,14 +141,6 @@ export function Profile({
       };
     });
   };
-
-  useEffect(() => {
-    document.title = TITLES.Profile;
-  }, []);
-
-  useLayoutEffect(() => {
-    onChangeTab(ESettingsTabs.Profile);
-  }, []);
 
   const handleSubmit: FormikConfig<TProfileFields>['onSubmit'] = (values) => {
     const { dateformat, timeformat, absenceStatus, vacationStartDate, vacationEndDate, substituteUserIds, ...userData } = values;
