@@ -194,7 +194,6 @@ class PredicateTemplateSerializer(
         field_type = data['field_type']
         operator = data['operator']
         value = data.get('value')
-        data['field']
         api_name = data.get('api_name')
 
         self._validate_allowed_operators(

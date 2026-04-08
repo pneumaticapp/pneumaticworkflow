@@ -39,18 +39,20 @@ class DataSetItemService(BaseModelService):
 
     def partial_update(
         self,
+        force_save: bool = True,
         **update_kwargs,
     ) -> DatasetItem:
 
         self.update_fields.update(update_kwargs.keys())
         for field_name, value in update_kwargs.items():
             setattr(self.instance, field_name, value)
-        try:
-            self.save()
-        except IntegrityError as ex:
-            raise DataSetServiceException(
-                message=MSG_DS_0002(value=self.instance.value),
-            ) from ex
+        if force_save:
+            try:
+                self.save()
+            except IntegrityError as ex:
+                raise DataSetServiceException(
+                    message=MSG_DS_0002(value=self.instance.value),
+                ) from ex
         return self.instance
 
     def delete(self) -> None:
