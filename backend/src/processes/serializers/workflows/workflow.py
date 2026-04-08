@@ -408,16 +408,12 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
                     queryset=TaskField.objects.all().prefetch_related(
                         Prefetch(
                             lookup='selections',
-                            queryset=FieldSelection.objects.only('value'),
+                            queryset=FieldSelection.objects.order_by('id'),
                             to_attr='selections_values',
                         ),
                         Prefetch(
                             'dataset__items',
-                            queryset=(
-                                DatasetItem.objects
-                                .only('value')
-                                .order_by('order')
-                            ),
+                            queryset=DatasetItem.objects.order_by('order'),
                             to_attr='dataset_values',
                         ),
                     ),
