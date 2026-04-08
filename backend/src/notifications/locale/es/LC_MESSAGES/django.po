@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-13 13:45+0000\n"
+"POT-Creation-Date: 2026-04-07 11:48+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,56 +17,80 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: notifications/messages.py:5
 #, python-brace-format
 msgid "Reacted {reaction} to your comment"
 msgstr "Reaccionó con {reaction} a tu comentario"
 
-#: notifications/messages.py:8
 msgid "You have a new task"
 msgstr "Tienes una nueva tarea"
 
-#: notifications/messages.py:9
 msgid "Task was returned"
 msgstr "Tarea devuelta"
 
-#: notifications/messages.py:10
 msgid "Your task is overdue"
 msgstr "Tu tarea está atrasada."
 
-#: notifications/messages.py:11
 msgid "You have been mentioned"
 msgstr "Has sido mencionado"
 
-#: notifications/messages.py:12
 msgid "You have a new comment"
 msgstr "Tienes un nuevo comentario"
 
-#: notifications/messages.py:13
 msgid "Workflow was snoozed"
 msgstr "El flujo de trabajo fue pospuesto."
 
-#: notifications/messages.py:14
 msgid "Workflow was resumed"
 msgstr "El flujo de trabajo se reanudó"
 
-#: notifications/messages.py:15
 msgid "Task due date was changed"
 msgstr "Fecha de vencimiento de la tarea fue cambiada."
 
-#: notifications/messages.py:17
 #, python-brace-format
-msgid "Workflow: {workflow_name}\nTask: {task_name}"
-msgstr "Flujo de trabajo: {workflow_name}\nTarea: {task_name}"
+msgid ""
+"Workflow: {workflow_name}\n"
+"Task: {task_name}"
+msgstr ""
+"Flujo de trabajo: {workflow_name}\n"
+"Tarea: {task_name}"
 
-#: notifications/messages.py:21
 msgid "Task was completed"
 msgstr "Tarea completada"
 
-#: notifications/messages.py:22
 msgid "You have unread notifications"
 msgstr "Tienes notificaciones sin leer"
 
-#: notifications/messages.py:23
 msgid "Password reset"
 msgstr "Restablecer contraseña"
+
+msgid "Profile was deactivated"
+msgstr ""
+
+msgid "Profile was transfer"
+msgstr ""
+
+msgid "Profile was verify"
+msgstr ""
+
+msgid "Send workflows digest"
+msgstr ""
+
+msgid "Send tasks digest"
+msgstr ""
+
+msgid "Join your team"
+msgstr ""
+
+#, fuzzy
+#| msgid "Workflow was snoozed"
+msgid "Workflow was completed"
+msgstr "El flujo de trabajo fue pospuesto."
+
+msgid "Reminder"
+msgstr ""
+
+msgid "You have unfinished task in Pneumatic"
+msgstr ""
+
+#, python-brace-format
+msgid "You have {count} unfinished tasks in Pneumatic"
+msgstr ""

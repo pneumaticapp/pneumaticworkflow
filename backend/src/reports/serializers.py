@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.db.models import Prefetch
 from rest_framework import serializers
 
 from src.generics.fields import TimeStampField
@@ -12,9 +11,8 @@ from src.processes.models.templates.template import Template
 from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.kickoff import KickoffValue
 from src.processes.models.workflows.workflow import Workflow
-from src.processes.models.workflows.fields import TaskField, FieldSelection
 from src.processes.serializers.workflows.field import (
-    TaskFieldSerializer,
+    TaskFieldEventSerializer,
 )
 
 UserModel = get_user_model()
@@ -49,7 +47,7 @@ class ActivityKickoffValueSerializer(serializers.ModelSerializer):
             'output',
         )
 
-    output = TaskFieldSerializer(many=True)
+    output = TaskFieldEventSerializer(many=True)
 
 
 class ActivityWorkflowSerializer(serializers.ModelSerializer):
@@ -71,23 +69,7 @@ class ActivityWorkflowSerializer(serializers.ModelSerializer):
     kickoff = serializers.SerializerMethodField()
 
     def get_kickoff(self, instance):
-        kickoff = (
-            KickoffValue.objects
-            .filter(workflow=instance)
-            .prefetch_related(
-                Prefetch(
-                    lookup='output',
-                    queryset=TaskField.objects.all().prefetch_related(
-                        Prefetch(
-                            lookup='selections',
-                            queryset=FieldSelection.objects.only('value'),
-                            to_attr='selections_values',
-                        ),
-                    ),
-                ),
-
-            ).first()
-        )
+        kickoff = instance.kickoff_instance
         return (
             ActivityKickoffValueSerializer(kickoff).data if kickoff else None
         )
