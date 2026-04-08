@@ -383,11 +383,8 @@
   color: var(--pneumatic-color-warning);
 }
 
+.without-label,
 .with-label {
-  margin-top: 2.3rem;
-}
-
-.without-label {
   margin-top: 1.6rem;
 }
 
