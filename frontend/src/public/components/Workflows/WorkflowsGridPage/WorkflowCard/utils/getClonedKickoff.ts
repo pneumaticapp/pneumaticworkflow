@@ -5,7 +5,7 @@ import { EExtraFieldType, IExtraField, IKickoff, TExtraFieldValue } from '../../
 import { IWorkflowDetailsKickoff } from '../../../../../types/workflow';
 import { TUploadedFile } from '../../../../../utils/uploadFiles';
 import { getEditKickoff } from '../../../../../utils/workflows';
-import { normalizeSelections } from '../../../../TemplateEdit/utils/getRunnableWorkflow';
+import { normalizeSelections } from '../../../../TemplateEdit/utils/normalizeSelections';
 
 export async function getClonedKickoff(
   workflowKickoff: IWorkflowDetailsKickoff,

@@ -1,8 +1,9 @@
 /* eslint-disable */
 /* prettier-ignore */
-import { ITemplate, ITemplateTask, IExtraFieldSelection, IKickoff } from '../../../types/template';
+import { ITemplate, ITemplateTask, IKickoff } from '../../../types/template';
 import { setPerformersCounts } from '../../../utils/template';
 import { IRunWorkflow } from '../../WorkflowEditPopup/types';
+import { normalizeSelections } from './normalizeSelections';
 
 type TTemplateToRunWorkflow = Pick<
   ITemplate,
@@ -39,11 +40,6 @@ export async function loadDatasetsMap(kickoff: IKickoff): Promise<Record<number,
   return datasetsMap;
 }
 
-export function normalizeSelections(selections?: IExtraFieldSelection[] | string[]): string[] {
-  if (!selections?.length) return [];
-  if (typeof selections[0] === 'string') return selections as string[];
-  return (selections as IExtraFieldSelection[]).map((item) => item.value);
-}
 
 function convertSelectionsToValues(kickoff: IKickoff, datasetsMap: Record<number, string[]>): IKickoff {
   return {
