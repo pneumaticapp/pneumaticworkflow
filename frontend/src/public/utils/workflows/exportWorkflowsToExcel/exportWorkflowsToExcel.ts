@@ -7,6 +7,7 @@ import { getUserById } from '../../../components/UserData/utils/getUserById';
 import { toDateString } from '../../dateTime';
 import { getWorkflowProgress } from '../../../components/Workflows/utils/getWorkflowProgress';
 import { ALL_SYSTEM_FIELD_NAMES } from '../../../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
+import { downloadBlobInBrowser } from '../downloadBlobInBrowser';
 import { IExportWorkflowsToExcelConfig } from './types';
 
 export const WORKFLOWS_XLSX_MIME =
@@ -159,13 +160,5 @@ export function downloadWorkflowsExcel(
   filename = WORKFLOWS_XLSX_DEFAULT_FILENAME,
 ): void {
   const blob = new Blob([buffer], { type: WORKFLOWS_XLSX_MIME });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement('a');
-  link.setAttribute('href', url);
-  link.setAttribute('download', filename);
-  link.style.display = 'none';
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  downloadBlobInBrowser(blob, filename);
 }
