@@ -59,7 +59,6 @@ export function TaskDescriptionEditor({
   return (
     <RichEditor
       ref={editorRef}
-      title={formatMessage({ id: 'tasks.task-description-field' })}
       placeholder={formatMessage({ id: 'template.task-description-placeholder' })}
       defaultValue={value}
       handleChange={handleChange}
