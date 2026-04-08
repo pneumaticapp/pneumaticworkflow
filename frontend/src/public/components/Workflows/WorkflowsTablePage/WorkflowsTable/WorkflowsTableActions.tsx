@@ -124,6 +124,8 @@ export function WorkflowsTableActions({
         {isExportDisabled ? (
           <Tooltip
             content={formatMessage({ id: exportTooltipContentId })}
+            appendTo={() => document.body}
+            zIndex={1040}
             contentClassName={styles['workflow-tune-view-tooltip']}
           >
             <div>{exportControl}</div>
@@ -131,6 +133,8 @@ export function WorkflowsTableActions({
         ) : (
           <Tooltip
             content={formatMessage({ id: 'workflows.export-excel-tooltip-all' })}
+            appendTo={() => document.body}
+            zIndex={1040}
             contentClassName={styles['workflow-tune-view-tooltip']}
           >
             <div>{exportControl}</div>
