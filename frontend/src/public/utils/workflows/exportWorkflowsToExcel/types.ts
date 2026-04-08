@@ -3,6 +3,8 @@ import { ITableViewFields } from '../../../types/template';
 import { TUserListItem } from '../../../types/user';
 import { IGroup } from '../../../redux/team/types';
 
+export type TWorkflowExportFormat = 'xlsx' | 'csv';
+
 export interface IExportWorkflowsToExcelConfig {
   workflows: IWorkflowClient[];
   users: TUserListItem[];
