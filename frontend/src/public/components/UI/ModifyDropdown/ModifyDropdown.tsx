@@ -11,10 +11,10 @@ import {
 } from '../../icons';
 
 import { Dropdown , TDropdownOption } from '../Dropdown';
-import { Button } from '../Buttons/Button';
 
 import { IModifyDropdownProps, EModifyDropdownToggle } from './types';
 
+import buttonStyles from '../Buttons/Button/Button.css';
 import styles from './ModifyDropdown.css';
 
 export function ModifyDropdown({
@@ -58,13 +58,19 @@ export function ModifyDropdown({
     }
 
     return (
-      <Button
-        size="sm"
-        icon={SettingsIcon}
-        label={formatMessage({ id: 'general.modify' })}
-        buttonStyle="transparent-black"
-        className={classNames(styles['toggle-btn'], className)}
-      />
+      <span
+        className={classNames(
+          buttonStyles['button'],
+          buttonStyles['button_sm'],
+          buttonStyles['button_transparent-black'],
+          buttonStyles['button_with-icon'],
+          styles['toggle-btn'],
+          className,
+        )}
+      >
+        <SettingsIcon className={buttonStyles['icon']} />
+        <span>{formatMessage({ id: 'general.modify' })}</span>
+      </span>
     );
   };
 

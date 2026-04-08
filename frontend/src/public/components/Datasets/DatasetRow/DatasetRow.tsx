@@ -94,7 +94,7 @@ export const DatasetRow = memo(({
           <button
             type="button"
             className={styles['action-button']}
-            aria-label={formatMessage({ id: 'general.cancel' })}
+            aria-label={formatMessage({ id: 'datasets.row.cancel' })}
             onMouseDown={(e) => {
               e.preventDefault();
               handleCancel();
@@ -105,7 +105,7 @@ export const DatasetRow = memo(({
           <button
             type="button"
             className={styles['action-button']}
-            aria-label={formatMessage({ id: 'general.save' })}
+            aria-label={formatMessage({ id: 'datasets.row.save' })}
             onMouseDown={(e) => {
               e.preventDefault();
               handleSave();

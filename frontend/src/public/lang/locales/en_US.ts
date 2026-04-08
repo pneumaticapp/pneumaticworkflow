@@ -1410,6 +1410,8 @@ export const enMessages = {
   'datasets.empty-list.description': 'Add items to this dataset using the Row button above',
   'datasets.row.edit': 'Edit row',
   'datasets.row.delete': 'Delete',
+  'datasets.row.cancel': 'Cancel',
+  'datasets.row.save': 'Save',
   'datasets.search': 'Search',
   'datasets.sorting.date-asc': 'Oldest first',
   'datasets.sorting.date-desc': 'Newest first',

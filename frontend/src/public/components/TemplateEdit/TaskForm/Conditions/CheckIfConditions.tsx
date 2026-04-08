@@ -172,7 +172,7 @@ export function CheckIfConditions({
 
             return (
               <Predicate
-                key={rule.ruleApiName}
+                key={`${rule.ruleApiName}-${rule.predicateApiName}`}
                 rule={rule}
                 ruleIndex={ruleIndex}
                 accessConditions={accessConditions}

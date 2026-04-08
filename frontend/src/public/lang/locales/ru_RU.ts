@@ -1317,6 +1317,8 @@ export const ruMessages = {
   'datasets.empty-list.description': 'Добавьте элементы в набор данных, используя кнопку Строка выше',
   'datasets.row.edit': 'Редактировать',
   'datasets.row.delete': 'Удалить',
+  'datasets.row.cancel': 'Отмена',
+  'datasets.row.save': 'Сохранить',
   'datasets.search': 'Поиск',
   'datasets.sorting.date-asc': 'Сначала старые',
   'datasets.sorting.date-desc': 'Сначала новые',

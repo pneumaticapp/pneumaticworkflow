@@ -12,7 +12,7 @@ import { EPageTitle } from '../../constants/defaultValues';
 import { openCreateModal, loadDatasets } from '../../redux/datasets/slice';
 import { getDatasetsListSelection, getDatasetsIsLoading } from '../../redux/selectors/datasets';
 import { AddCardButton } from '../UI';
-import { RoundDocIcon } from '../icons';
+import { AIPlusIcon } from '../icons';
 import { DatasetModal } from './DatasetModal/DatasetModal';
 import { EDatasetModalType } from './DatasetModal/types';
 import { DatasetCard } from './DatasetCard';
@@ -51,7 +51,7 @@ export function Datasets() {
           onClick={handleOpenCreateModal}
           title={formatMessage({ id: 'datasets.new-dataset.title' })}
           caption={formatMessage({ id: 'datasets.new-dataset.caption' })}
-          icon={<RoundDocIcon />}
+          icon={<AIPlusIcon />}
         />
         {datasetsList.map((dataset: IDatasetListItem) => (
           <DatasetCard key={dataset.id} {...dataset} />
