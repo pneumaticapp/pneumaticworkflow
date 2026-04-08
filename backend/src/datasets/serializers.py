@@ -22,7 +22,7 @@ class DatasetItemSerializer(
             'order',
         )
 
-    id = IntegerField(required=False)
+    id = IntegerField(read_only=True)
     value = CharField(max_length=200)
     order = IntegerField(default=0)
 

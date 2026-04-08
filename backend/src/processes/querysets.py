@@ -852,6 +852,10 @@ class KickoffQuerySet(AccountBaseQuerySet):
     pass
 
 
+class KickoffValueQuerySet(AccountBaseQuerySet):
+    pass
+
+
 class FieldTemplateValuesQuerySet(BaseQuerySet):
 
     def by_ids(self, ids: List[int]):

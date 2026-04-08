@@ -164,7 +164,7 @@ class DatasetViewSet(
         response_serializer = self.get_serializer(instance=items, many=True)
         return self.response_ok(response_serializer.data)
 
-    @action(methods=['put'], detail=True, url_path='items')
+    @create_items.mapping.put
     def update_items(self, request, *args, **kwargs):
         dataset = self.get_object()
         serializer = self.get_serializer(data=request.data, many=True)

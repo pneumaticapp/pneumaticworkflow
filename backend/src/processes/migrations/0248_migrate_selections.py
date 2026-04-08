@@ -105,6 +105,7 @@ def migrate_drafts(apps, schema_editor):
             f'selection_api_name: "{selection_api_name}", '
             f'selection_value: "{selection_value}"'
         )
+        return draft
 
     TemplateDraft = apps.get_model('processes', 'TemplateDraft')
     connection = schema_editor.connection
