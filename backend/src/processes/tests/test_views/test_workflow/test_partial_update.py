@@ -1,5 +1,7 @@
 # ruff: noqa: UP031
 from datetime import timedelta
+from django.urls import reverse
+from rest_framework import status
 
 import pytest
 import pytz
@@ -20,6 +22,8 @@ from src.generics.messages import MSG_GE_0007
 from src.processes.enums import (
     DueDateRule,
     FieldType,
+    OwnerRole,
+    OwnerType,
     PerformerType,
     TaskStatus,
     WorkflowEventType,
@@ -42,12 +46,14 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.events import (
     WorkflowEventService,
 )
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
     create_test_not_admin,
     create_test_owner,
     create_test_template,
+    create_test_user,
     create_test_workflow,
 )
 from src.utils.dates import date_format
@@ -2584,3 +2590,37 @@ def test_partial_update__not_found__not_found(api_client):
 
     # assert
     assert response.status_code == 404
+
+
+def test_workflow_update__template_starter_own_workflow__forbidden(api_client):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    workflow = create_test_workflow(template=template, user=starter_user)
+
+    api_client.token_authenticate(starter_user)
+    url = reverse('workflows-detail', args=[workflow.id])
+    data = {'name': 'Updated Name'}
+
+    # act
+    response = api_client.patch(url, data)
+
+    # assert
+    assert response.status_code == status.HTTP_403_FORBIDDEN
