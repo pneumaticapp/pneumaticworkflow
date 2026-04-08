@@ -496,8 +496,6 @@
 }
 
 .kick-off-required-sign {
-  position: relative;
-  left: -0.3rem;
   flex-shrink: 0;
   display: inline-block;
   width: 0.68rem;
@@ -514,11 +512,6 @@
   .kick-off-required-sign {
     background-color: var(--pneumatic-color-beige);
   }
-}
-
-.kick-off-required-sign + .kick-off-edit-name {
-  position: relative;
-  left: -0.3rem;
 }
 
 .workflow-name-field-container {
