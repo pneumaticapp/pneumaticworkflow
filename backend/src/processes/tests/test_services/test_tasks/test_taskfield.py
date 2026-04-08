@@ -1455,7 +1455,7 @@ def test_get_valid_radio_value__ok(mocker):
     task = workflow.tasks.get(number=1)
     task_field = TaskField.objects.create(
         task=task,
-        type=FieldType.CHECKBOX,
+        type=FieldType.RADIO,
         workflow=workflow,
         account=user.account,
     )

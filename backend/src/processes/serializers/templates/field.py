@@ -113,6 +113,7 @@ class FieldTemplateSerializer(
     )
 
     def additional_validate(self, data: Dict[str, Any]):
+        super().additional_validate(data)
 
         if (
             data['type'] in FieldType.TYPES_WITH_SELECTIONS

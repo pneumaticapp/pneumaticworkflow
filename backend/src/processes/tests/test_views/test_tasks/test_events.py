@@ -557,7 +557,7 @@ def test_events__task_complete_with_dataset__ok(api_client):
     user = create_test_owner(account=account)
     dataset = create_test_dataset(account=account, items_count=1)
     dataset_item = dataset.items.get(order=1)
-    workflow = create_test_workflow(user=user, tasks_count=1)
+    workflow = create_test_workflow(user, tasks_count=2, active_task_number=2)
     task = workflow.tasks.get(number=1)
     field = TaskField.objects.create(
         type=FieldType.CHECKBOX,
@@ -568,7 +568,6 @@ def test_events__task_complete_with_dataset__ok(api_client):
         account=account,
         dataset=dataset,
     )
-    workflow = create_test_workflow(user, tasks_count=2, active_task_number=2)
 
     event = create_test_event(
         workflow=workflow,
