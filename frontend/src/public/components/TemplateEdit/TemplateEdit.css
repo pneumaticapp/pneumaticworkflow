@@ -278,6 +278,10 @@
   color: var(--pneumatic-color-black72);
 }
 
+.task_view-description > * {
+  @mixin text-overflow 3;
+}
+
 .task-preview-performers {
   margin: 1.6rem 0;
 }
