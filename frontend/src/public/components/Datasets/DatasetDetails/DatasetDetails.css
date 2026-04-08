@@ -11,6 +11,10 @@
     align-items: center;
     gap: 0.8rem;
   }
+
+  .add-btn {
+    @mixin details-header-btn;
+  }
 }
 
 .list {
@@ -46,9 +50,19 @@
     height: auto;
     border: 0;
   }
+}
 
-  .dataset__sorting-container {
-    padding-right: 0;
+.dataset__sorting-container {
+  padding-right: 0;
+
+  @media (--mobile) {
+    button {
+      justify-content: flex-end;
+
+      svg {
+        margin-left: 0;
+      }
+    }
   }
 }
 

@@ -133,6 +133,7 @@ const DatasetDetails = ({ match: { params: { id: matchParamId } } }: TDatasetDet
             icon={BoldPlusIcon}
             label={formatMessage({ id: 'datasets.add-row' })}
             buttonStyle="transparent-black"
+            className={styles['add-btn']}
             onClick={handleAddRow}
           />
           <ModifyDropdown

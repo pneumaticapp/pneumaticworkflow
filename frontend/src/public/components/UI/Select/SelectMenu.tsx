@@ -23,6 +23,7 @@ export interface ISelectMenuProps<T extends string> {
   Icon?(props: React.SVGAttributes<SVGElement>): JSX.Element;
   isFromCheckIfConditions?: boolean;
   positionFixed?: boolean;
+  activeValueLabelId?: string;
 }
 
 export const SelectMenu = <T extends string>({
@@ -40,6 +41,7 @@ export const SelectMenu = <T extends string>({
   isFromCheckIfConditions,
   withRadio = false,
   positionFixed = false,
+  activeValueLabelId,
 }: ISelectMenuProps<T>) => {
   const [isDropdownOpen, setIsDropdownOpen] = React.useState(false);
   const getIntlId = (value: T) => `sorting.${value}`;
@@ -71,7 +73,7 @@ export const SelectMenu = <T extends string>({
         className={classnames(styles['active-value'], toggleClassName, isDisabled && styles['active-value_disabled'])}
       >
         {Icon && <Icon className={styles['icon']} />}
-        <IntlMessages id={getIntlId(activeValue)}>
+        <IntlMessages id={activeValueLabelId || getIntlId(activeValue)}>
           {(text) => <span className={classnames(styles['active-value__text'], toggleTextClassName)}>{text}</span>}
         </IntlMessages>
 

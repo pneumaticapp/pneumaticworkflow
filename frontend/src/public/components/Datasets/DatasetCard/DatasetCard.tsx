@@ -10,6 +10,7 @@ import { openEditModal, deleteDatasetAction, setCurrentDataset, cloneDatasetActi
 import { history } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
 import { sanitizeText } from '../../../utils/strings';
+import { formatDateTimeAmPm } from '../../../utils/dateTime';
 import { IDatasetCardProps } from './types';
 
 import styles from './DatasetCard.css';
@@ -21,7 +22,7 @@ export function DatasetCard({
   dateCreatedTsp,
   itemsCount,
 }: IDatasetCardProps) {
-  const { formatMessage, formatDate } = useIntl();
+  const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   
   const [isDeleteModalVisible, setIsDeleteModalVisible] = useState(false);
@@ -124,12 +125,7 @@ export function DatasetCard({
               {formatMessage(
                 { id: 'datasets.card.created' },
                 {
-                  date: formatDate(dateCreatedTsp * 1000, {
-                    month: 'short',
-                    day: 'numeric',
-                    hour: 'numeric',
-                    minute: '2-digit',
-                  }),
+                  date: formatDateTimeAmPm(dateCreatedTsp * 1000),
                 }
               )}
             </div>
