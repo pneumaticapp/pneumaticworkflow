@@ -5,6 +5,7 @@ from src.accounts.messages import (
     MSG_A_0049,
     MSG_A_0050,
     MSG_A_0051,
+    MSG_A_0053,
 )
 from src.accounts.serializers.user import (
     VacationActivateSerializer,
@@ -158,6 +159,7 @@ def test_validate__absence_active__error():
     # assert
     assert slz.is_valid() is False
     assert 'absence_status' in slz.errors
+    assert str(MSG_A_0053) in str(slz.errors['absence_status'])
 
 
 def test_validate__sick_leave__ok():

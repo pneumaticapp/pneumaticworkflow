@@ -32,7 +32,7 @@ describe('vacation API', () => {
   });
 
   describe('activateVacation', () => {
-    it('отправляет POST на свой URL без userId', () => {
+    it('sends POST to own URL without userId', () => {
       const body = {
         substituteUserIds: [10, 20],
         vacationStartDate: '2026-04-01',
@@ -51,7 +51,7 @@ describe('vacation API', () => {
       );
     });
 
-    it('отправляет POST на URL другого пользователя с userId', () => {
+    it('sends POST to another user URL with userId', () => {
       const body = {
         substituteUserIds: [10],
         vacationStartDate: '2026-04-01',
@@ -72,7 +72,7 @@ describe('vacation API', () => {
   });
 
   describe('deactivateVacation', () => {
-    it('отправляет POST без body на свой URL', () => {
+    it('sends POST without body to own URL', () => {
       deactivateVacation();
 
       expect(commonRequest).toHaveBeenCalledTimes(1);
@@ -84,7 +84,7 @@ describe('vacation API', () => {
       );
     });
 
-    it('отправляет POST на URL другого пользователя с userId', () => {
+    it('sends POST to another user URL with userId', () => {
       deactivateVacation(42);
 
       expect(commonRequest).toHaveBeenCalledTimes(1);

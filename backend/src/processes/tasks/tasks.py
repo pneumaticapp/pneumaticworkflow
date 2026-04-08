@@ -96,7 +96,7 @@ def _delegate_tasks_for_user(user):
     )
 
     service = VacationDelegationService(user)
-    _, wf_ids = service._delegate_tasks(
+    _, wf_ids = service.delegate_tasks(
         group=sub_group,
         existing_task_ids=already_delegated_task_ids,
     )
@@ -107,7 +107,7 @@ def _delegate_tasks_for_user(user):
     sub_ids = list(
         sub_group.users.values_list('id', flat=True),
     )
-    VacationDelegationService._add_members_bulk(
+    VacationDelegationService.add_members_bulk(
         wf_ids=wf_ids,
         substitute_user_ids=sub_ids,
     )

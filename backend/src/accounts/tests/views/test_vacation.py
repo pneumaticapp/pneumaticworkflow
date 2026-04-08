@@ -118,6 +118,7 @@ def test_vacation_deactivate__not_absent__error(api_client):
 
     # assert
     assert response.status_code == 400
+    assert 'message' in response.data
 
 
 def test_schedule__auto_start__past_date__ok(mocker):

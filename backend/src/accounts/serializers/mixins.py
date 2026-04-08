@@ -12,9 +12,9 @@ class VacationSubstituteMixin:
         self, instance: UserModel,
     ) -> List[int]:
         schedule = getattr(instance, 'vacation_schedule', None)
-        if schedule and instance.vacation_schedule.substitute_group_id:
+        if schedule and schedule.substitute_group_id:
             return list(
-                instance.vacation_schedule.substitute_group.users
+                schedule.substitute_group.users
                 .values_list('id', flat=True),
             )
         return []

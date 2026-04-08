@@ -1,3 +1,4 @@
+from datetime import date
 from typing import List, Optional, Set, Tuple
 
 from django.contrib.auth import get_user_model
@@ -80,9 +81,9 @@ class VacationDelegationService:
     def activate(
         self,
         substitute_user_ids: List[int],
-        absence_status: str = AbsenceStatus.VACATION,
-        vacation_start_date=None,
-        vacation_end_date=None,
+        absence_status: AbsenceStatus.LITERALS = AbsenceStatus.VACATION,
+        vacation_start_date: Optional[date] = None,
+        vacation_end_date: Optional[date] = None,
     ) -> None:
         with transaction.atomic():
             vacation = (
@@ -116,7 +117,7 @@ class VacationDelegationService:
             task_ids=task_ids,
         )
 
-    def _delegate_tasks(
+    def delegate_tasks(
         self,
         group: 'UserGroup',
         existing_task_ids: Optional[Set[int]] = None,
@@ -231,8 +232,8 @@ class VacationDelegationService:
         vacation: 'UserVacation',
         substitute_user_ids: List[int],
         absence_status: str,
-        vacation_start_date=None,
-        vacation_end_date=None,
+        vacation_start_date: Optional[date] = None,
+        vacation_end_date: Optional[date] = None,
     ) -> Set[int]:
         group = vacation.substitute_group
         group.users.set(substitute_user_ids)
@@ -260,13 +261,13 @@ class VacationDelegationService:
             existing_task_ids.add(task_id)
             existing_wf_ids.add(wf_id)
 
-        task_ids, new_wf_ids = self._delegate_tasks(
+        task_ids, new_wf_ids = self.delegate_tasks(
             group=group,
             existing_task_ids=existing_task_ids,
         )
         wf_ids = existing_wf_ids | new_wf_ids
 
-        self._add_members_bulk(
+        self.add_members_bulk(
             wf_ids=wf_ids,
             substitute_user_ids=substitute_user_ids,
         )
@@ -291,8 +292,8 @@ class VacationDelegationService:
         self,
         substitute_user_ids: List[int],
         absence_status: str,
-        vacation_start_date=None,
-        vacation_end_date=None,
+        vacation_start_date: Optional[date] = None,
+        vacation_end_date: Optional[date] = None,
     ) -> Set[int]:
         group = UserGroup.objects.create(
             name=(
@@ -304,9 +305,9 @@ class VacationDelegationService:
         )
         group.users.set(substitute_user_ids)
 
-        task_ids, wf_ids = self._delegate_tasks(group=group)
+        task_ids, wf_ids = self.delegate_tasks(group=group)
 
-        self._add_members_bulk(
+        self.add_members_bulk(
             wf_ids=wf_ids,
             substitute_user_ids=substitute_user_ids,
         )
@@ -352,7 +353,7 @@ class VacationDelegationService:
             vacation.delete()
 
     @staticmethod
-    def _add_members_bulk(
+    def add_members_bulk(
         wf_ids: Set[int],
         substitute_user_ids: List[int],
     ) -> None:

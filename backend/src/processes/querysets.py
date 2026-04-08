@@ -1028,11 +1028,15 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
         return set(direct_users).union(set(group_users))
 
     def group_ids(self):
-        qst = self.filter(type='group').values_list('group_id', flat=True)
+        qst = self.filter(
+            type=PerformerType.GROUP,
+        ).values_list('group_id', flat=True)
         return tuple(elem for elem in qst)
 
     def user_ids(self):
-        qst = self.filter(type='user').values_list('user_id', flat=True)
+        qst = self.filter(
+            type=PerformerType.USER,
+        ).values_list('user_id', flat=True)
         return tuple(elem for elem in qst)
 
     def user_ids_set(self) -> set:

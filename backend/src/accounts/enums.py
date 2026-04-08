@@ -340,3 +340,5 @@ class AbsenceStatus:
         (VACATION, 'On vacation'),
         (SICK_LEAVE, 'Sick leave'),
     )
+
+    LITERALS = Literal[ACTIVE, VACATION, SICK_LEAVE]

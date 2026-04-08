@@ -58,7 +58,7 @@ def test_delegate_vacation_tasks__delegates__ok(mocker):
         is_active=True,
     )
     workflow = create_test_workflow(user=owner, template=template)
-    task = workflow.tasks.first()
+    task = workflow.tasks.get(number=1)
 
     event_mock = mocker.patch(
         'src.processes.services.events.'
@@ -110,7 +110,7 @@ def test_delegate_vacation_tasks__skips_already_delegated__ok(mocker):
         is_active=True,
     )
     workflow = create_test_workflow(user=owner, template=template)
-    task = workflow.tasks.first()
+    task = workflow.tasks.get(number=1)
 
     TaskPerformer.objects.create(
         task=task,
@@ -159,7 +159,7 @@ def test_delegate_vacation_tasks__skips_soft_deleted_delegations__ok(mocker):
         is_active=True,
     )
     workflow = create_test_workflow(user=owner, template=template)
-    task = workflow.tasks.first()
+    task = workflow.tasks.get(number=1)
 
     TaskPerformer.objects.create(
         task=task,
@@ -204,7 +204,7 @@ def test_delegate_vacation_tasks__no_active_tasks__ok(mocker):
         is_active=True,
     )
     workflow = create_test_workflow(user=owner, template=template)
-    task = workflow.tasks.first()
+    task = workflow.tasks.get(number=1)
     task.status = TaskStatus.COMPLETED
     task.save(update_fields=['status'])
 
@@ -257,7 +257,7 @@ def test_delegate__skips_completed_performers__ok(mocker):
         user=owner,
         template=template,
     )
-    task = workflow.tasks.first()
+    task = workflow.tasks.get(number=1)
 
     # mark user performer as completed
     TaskPerformer.objects.filter(
@@ -341,7 +341,7 @@ def test_delegate__user_error__continues_next(mocker):
         user=owner1,
         template=template1,
     )
-    task1 = workflow1.tasks.first()
+    task1 = workflow1.tasks.get(number=1)
 
     template2 = create_test_template(
         user=owner2,
@@ -352,7 +352,7 @@ def test_delegate__user_error__continues_next(mocker):
         user=owner2,
         template=template2,
     )
-    task2 = workflow2.tasks.first()
+    task2 = workflow2.tasks.get(number=1)
 
     # make first user's delegation fail
     event_mock = mocker.patch(
@@ -417,7 +417,7 @@ def test_delegate__error__rolls_back_user(mocker):
         user=owner,
         template=template,
     )
-    task = workflow.tasks.first()
+    task = workflow.tasks.get(number=1)
 
     mocker.patch(
         'src.processes.services.events.'
@@ -477,7 +477,7 @@ def test_delegate__skips_non_running_workflow__ok(mocker):
         template=template,
         status=WorkflowStatus.DONE,
     )
-    task = workflow.tasks.first()
+    task = workflow.tasks.get(number=1)
     task.status = TaskStatus.ACTIVE
     task.save(update_fields=['status'])
 
@@ -502,7 +502,7 @@ def test_delegate__all_delegated__skips_members(mocker):
 
     """
     When all tasks are already delegated, wf_ids is empty
-    and _add_members_bulk is not called (early return).
+    and add_members_bulk is not called (early return).
     """
 
     # arrange
@@ -535,7 +535,7 @@ def test_delegate__all_delegated__skips_members(mocker):
         user=owner,
         template=template,
     )
-    task = workflow.tasks.first()
+    task = workflow.tasks.get(number=1)
 
     # pre-create group performer (already delegated)
     TaskPerformer.objects.create(
@@ -551,7 +551,7 @@ def test_delegate__all_delegated__skips_members(mocker):
     )
     add_members_mock = mocker.patch(
         'src.accounts.services.vacation.'
-        'VacationDelegationService._add_members_bulk',
+        'VacationDelegationService.add_members_bulk',
     )
 
     # act

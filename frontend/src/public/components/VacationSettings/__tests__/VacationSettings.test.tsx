@@ -119,33 +119,33 @@ describe('VacationSettings', () => {
     jest.clearAllMocks();
   });
 
-  describe('Рендер', () => {
-    it('отображает заголовок', () => {
+  describe('Rendering', () => {
+    it('displays the title', () => {
       render(<VacationSettings {...baseProps} />);
       expect(screen.getByTestId('header')).toHaveTextContent(TITLE);
     });
 
-    it('по умолчанию выбирает статус active если не absent', () => {
+    it('selects active status by default when not absent', () => {
       render(<VacationSettings {...baseProps} />);
       expect(screen.getByTestId('status-active')).toHaveClass('active');
       expect(screen.queryByTestId('vacation-start-input')).not.toBeInTheDocument();
     });
 
-    it('по умолчанию выбирает статус vacation если absent', () => {
+    it('selects vacation status by default when absent', () => {
       render(<VacationSettings {...baseProps} isAbsent />);
       expect(screen.getByTestId('status-vacation')).toHaveClass('active');
       expect(screen.getByTestId('vacation-start-input')).toBeInTheDocument();
     });
   });
 
-  describe('Активация', () => {
-    it('позволяет активировать vacation с датами и заместителями', () => {
+  describe('Activation', () => {
+    it('allows activating vacation with dates and substitutes', () => {
       render(<VacationSettings {...baseProps} />);
 
-      // Переключить на vacation
+      // Switch to vacation
       userEvent.click(screen.getByTestId('status-vacation'));
 
-      // Установить даты
+      // Set dates
       const startInput = screen.getByTestId('vacation-start-input').querySelector('input')!;
       const endInput = screen.getByTestId('vacation-end-input').querySelector('input')!;
       userEvent.clear(startInput);
@@ -153,11 +153,11 @@ describe('VacationSettings', () => {
       userEvent.clear(endInput);
       userEvent.type(endInput, '2026-04-15');
 
-      // Выбрать заместителей
+      // Select substitutes
       userEvent.click(screen.getByTestId('select-user-10'));
       userEvent.click(screen.getByTestId('select-user-20'));
 
-      // Отправить
+      // Submit
       userEvent.click(screen.getByTestId('vacation-activate-btn'));
 
       expect(mockOnActivate).toHaveBeenCalledWith({
@@ -168,7 +168,7 @@ describe('VacationSettings', () => {
       });
     });
 
-    it('не отправляет форму без заместителей', () => {
+    it('does not submit the form without substitutes', () => {
       render(<VacationSettings {...baseProps} />);
 
       userEvent.click(screen.getByTestId('status-vacation'));
@@ -178,11 +178,11 @@ describe('VacationSettings', () => {
     });
   });
 
-  describe('Деактивация', () => {
-    it('позволяет деактивировать если absent и выбран active', () => {
+  describe('Deactivation', () => {
+    it('allows deactivating when absent and active is selected', () => {
       render(<VacationSettings {...baseProps} isAbsent />);
 
-      // Переключить на active
+      // Switch to active
       userEvent.click(screen.getByTestId('status-active'));
       expect(screen.getByText(ACTIVE_MSG)).toBeInTheDocument();
 
@@ -191,16 +191,16 @@ describe('VacationSettings', () => {
     });
   });
 
-  describe('Управление заместителями', () => {
-    it('удаляет заместителя по клику', () => {
+  describe('Substitute management', () => {
+    it('removes a substitute on click', () => {
       render(<VacationSettings {...baseProps} />);
       userEvent.click(screen.getByTestId('status-vacation'));
 
-      // Добавить двоих
+      // Add two substitutes
       userEvent.click(screen.getByTestId('select-user-10'));
       userEvent.click(screen.getByTestId('select-user-20'));
 
-      // Удалить одного
+      // Remove one
       userEvent.click(screen.getByTestId('remove-user-10'));
 
       userEvent.click(screen.getByTestId('vacation-activate-btn'));
