@@ -7,6 +7,7 @@ import { TasksPlaceholderIcon } from '../../Tasks/TasksPlaceholderIcon';
 import { DatasetRow } from '../DatasetRow/DatasetRow';
 import { EDatasetsSorting } from '../../../types/dataset';
 import { datasetsSortingValues } from '../../../constants/sortings';
+import { useCheckDevice } from '../../../hooks/useCheckDevice';
 
 import { IDatasetItemsListProps } from './types';
 import styles from './DatasetDetails.css';
@@ -28,6 +29,7 @@ export const DatasetItemsList = ({
   onDeleteRow,
 }: IDatasetItemsListProps) => {
   const { formatMessage } = useIntl();
+  const { isMobile } = useCheckDevice();
 
   const renderItems = () => {
     if (!sortedItems.length && !isAddingRow && !searchText) {
@@ -92,6 +94,7 @@ export const DatasetItemsList = ({
           values={datasetsSortingValues}
           onChange={(val) => onSortingChange(val as EDatasetsSorting)}
           containerClassName={styles['dataset__sorting-container']}
+          {...(isMobile && { activeValueLabelId: `datasets.sorting.${sorting}.mobile` })}
         />
       </div>
       {renderItems()}

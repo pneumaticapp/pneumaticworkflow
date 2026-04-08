@@ -7,6 +7,13 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 1.6rem;
+
+  @media (--mobile) {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    width: calc(100% + 40px);
+    max-width: none;
+  }
 }
 
 .dataset-source-toggle__left {
@@ -17,6 +24,10 @@
 .dataset-source-toggle__right {
   position: relative;
   flex-shrink: 0;
+
+  @media (--mobile) {
+    width: 100%;
+  }
 
   & [class*='react-select__option--is-selected'] {
     cursor: default;
@@ -34,6 +45,13 @@
   height: 2.8rem;
   background: var(--pneumatic-color-black8);
   border-radius: 1.4rem;
+
+  @media (--mobile) {
+    display: flex;
+    width: 100%;
+    height: auto;
+    min-height: 2.8rem;
+  }
 }
 
 .dataset-source-toggle__tab {
@@ -64,6 +82,14 @@
   top: calc(100% + 0.4rem);
   left: 0;
   width: 30.4rem;
+
+  @media (--mobile) {
+    width: 100%;
+  }
+
+  & [class*='react-select__menu'] {
+    max-width: 100%;
+  }
 
   & [class*='react-select__menu-list'] {
     margin: 0;

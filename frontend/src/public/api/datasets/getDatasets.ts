@@ -8,6 +8,7 @@ export function getDatasets(config: IGetDatasetsParams = {}) {
     api: { urls },
   } = getBrowserConfigEnv();
 
+  const { signal } = config;
   const queryString = getDatasetsQueryString(config);
   const url = queryString ? `${urls.datasets}?${queryString}` : urls.datasets;
 
@@ -15,6 +16,7 @@ export function getDatasets(config: IGetDatasetsParams = {}) {
     url,
     {
       method: 'GET',
+      signal,
     },
     {
       shouldThrow: true,

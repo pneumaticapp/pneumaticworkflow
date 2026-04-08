@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
@@ -14,22 +14,13 @@ import { getEmptySelection } from '../../../KickoffRedux/utils/getEmptySelection
 import { ESourceMode, IDatasetOption, IDatasetSourceToggleProps } from './types';
 import { IExtraFieldSelection } from '../../../../../types/template';
 import { TruncatedTooltip } from './TruncatedTooltip';
+import { useCheckDevice } from '../../../../../hooks/useCheckDevice';
 
 import styles from './DatasetSourceToggle.css';
 
-const renderDatasetOption = (option: IDatasetOption) => (
-  <TruncatedTooltip 
-    label={option.label}
-    containerClassName={styles['dataset-source-toggle__tooltip-container']}
-  >
-    <div className={styles['dataset-source-toggle__option-text']}>
-      {option.label}
-    </div>
-  </TruncatedTooltip>
-);
-
 export function DatasetSourceToggle({ field, editField, isDisabled = false, children }: IDatasetSourceToggleProps) {
   const intl = useIntl();
+  const { isMobile } = useCheckDevice();
   const dispatch = useDispatch();
   const datasetsList: IDatasetListItem[] = useSelector(getAllDatasetsList);
   const isLoading: boolean = useSelector(getIsAllDatasetsLoading);
@@ -42,6 +33,29 @@ export function DatasetSourceToggle({ field, editField, isDisabled = false, chil
   
   const [savedSelections, setSavedSelections] = useState<IExtraFieldSelection[] | null>(null);
   const [savedDataset, setSavedDataset] = useState<number | null>(null);
+
+  const renderDatasetOption = useCallback((option: IDatasetOption) => {
+    if (isMobile || !isMenuOpen) {
+      return (
+        <div className={styles['dataset-source-toggle__option-text']}>
+          {option.label}
+        </div>
+      );
+    }
+
+    return (
+      <TruncatedTooltip 
+        label={option.label}
+        containerClassName={styles['dataset-source-toggle__tooltip-container']}
+        trigger="mouseenter"
+        delay={[200, 0]}
+      >
+        <div className={styles['dataset-source-toggle__option-text']}>
+          {option.label}
+        </div>
+      </TruncatedTooltip>
+    );
+  }, [isMobile, isMenuOpen]);
 
   useEffect(() => {
     if (!isLoaded && !isLoading) {
@@ -134,6 +148,7 @@ export function DatasetSourceToggle({ field, editField, isDisabled = false, chil
               <TruncatedTooltip 
                 label={selectedDatasetOption?.label}
                 containerClassName={styles['dataset-source-toggle__info-tag-tooltip']}
+                {...(isMobile ? { trigger: 'click' } : {})}
               >
                 <span className={classnames(styles['dataset-source-toggle__info-tag'], styles['dataset-source-toggle__option-text'])}>
                   {selectedDatasetOption?.label}

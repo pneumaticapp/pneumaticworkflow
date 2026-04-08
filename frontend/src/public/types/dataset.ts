@@ -31,10 +31,12 @@ export interface IGetDatasetsParams {
   ordering?: string;
   limit?: number;
   offset?: number;
+  signal?: AbortSignal;
 }
 
 export interface IGetDatasetParams {
   id: number;
+  signal?: AbortSignal;
 }
 
 export interface ICreateDatasetParams {
@@ -48,6 +50,7 @@ export interface IUpdateDatasetParams {
   name?: string;
   description?: string;
   items?: IDatasetItem[];
+  signal?: AbortSignal;
 }
 
 export interface IDeleteDatasetParams {
