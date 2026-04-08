@@ -9,6 +9,7 @@ import { identifyAppPartOnClient } from '../utils/identifyAppPart/identifyAppPar
 import { getCurrentToken } from '../utils/auth';
 import { envBackendURL } from '../constants/enviroment';
 import { isRequestCanceled } from '../utils/isRequestCanceled';
+import { isUserError } from './isUserError';
 
 export type TRequestType = 'public' | 'local';
 export type TResponseType = 'json' | 'text' | 'empty';
@@ -80,7 +81,11 @@ axiosInstance.interceptors.response.use(
     }
 
     if (error.response) {
-      logger.error('Response Error:', error.response.data);
+      if (isUserError(error.response.status)) {
+        logger.info('Response Error:', error.response.data);
+      } else {
+        logger.error('Response Error:', error.response.data);
+      }
     } else if (error.request) {
       logger.error('Request Error:', error.request);
     } else {
@@ -89,7 +94,7 @@ axiosInstance.interceptors.response.use(
 
     const data = error.response?.data;
     const payload = typeof data === 'string' ? { error: data } : data ?? {};
-    return Promise.reject(Object.assign(new Error(), payload, { status: error.response?.status }));
+    return Promise.reject(Object.assign(new Error(), payload, { status: error.response?.status, loggedByInterceptor: true }));
   },
 );
 
@@ -125,11 +130,13 @@ export async function commonRequest<T>(
     }
 
     return response.data as T;
-  } catch (error) {
+  } catch (error: any) {
     if (shouldThrow) {
       throw error;
     }
-    logger.error(error);
+    if (!error.loggedByInterceptor) {
+      logger.error(error);
+    }
     return undefined as unknown as T;
   }
 }
