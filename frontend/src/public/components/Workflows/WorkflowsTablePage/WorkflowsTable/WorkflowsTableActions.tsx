@@ -81,19 +81,20 @@ export function WorkflowsTableActions({
         ...(isMobile
           ? {
             'aria-label': formatMessage({
-              id: isExporting ? 'workflows.export-loading' : 'workflows.export-menu',
+              id: isExporting ? 'workflows.export-loading' : 'workflows.export-menu-aria',
             }),
           }
           : {}),
       }}
       options={exportDropdownOptions}
       renderToggle={() => (
-        <Button 
-        className={styles['tune-view-button']}
-          buttonStyle="transparent-black" 
-          size="sm" 
-          icon={DownloadIcon} 
+        <Button
+          className={styles['tune-view-button']}
+          buttonStyle="transparent-black"
+          size="sm"
+          icon={DownloadIcon}
           label={exportButtonLabel}
+          disabled={isExportDisabled}
         />
       )}
     />
@@ -101,7 +102,7 @@ export function WorkflowsTableActions({
 
   const exportTooltipContentId = isExporting
     ? 'workflows.export-loading'
-    : 'workflows.export-excel-tooltip';
+    : 'workflows.export-tooltip';
 
   return (
     <div
@@ -124,13 +125,17 @@ export function WorkflowsTableActions({
         {isExportDisabled ? (
           <Tooltip
             content={formatMessage({ id: exportTooltipContentId })}
+            appendTo={() => document.body}
+            zIndex={1040}
             contentClassName={styles['workflow-tune-view-tooltip']}
           >
             <div>{exportControl}</div>
           </Tooltip>
         ) : (
           <Tooltip
-            content={formatMessage({ id: 'workflows.export-excel-tooltip-all' })}
+            content={formatMessage({ id: 'workflows.export-tooltip-all' })}
+            appendTo={() => document.body}
+            zIndex={1040}
             contentClassName={styles['workflow-tune-view-tooltip']}
           >
             <div>{exportControl}</div>
