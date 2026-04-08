@@ -10,7 +10,7 @@ import { IDatasetListItem } from '../../types/dataset';
 import { PageTitle } from '../PageTitle';
 import { EPageTitle } from '../../constants/defaultValues';
 import { openCreateModal, loadDatasets } from '../../redux/datasets/slice';
-import { getDatasetsListSelection, getDatasetsIsLoading } from '../../redux/selectors/datasets';
+import { getDatasetsListSelection, getDatasetsIsLoading, getDatasetsSorting } from '../../redux/selectors/datasets';
 import { AddCardButton } from '../UI';
 import { AIPlusIcon } from '../icons';
 import { DatasetModal } from './DatasetModal/DatasetModal';
@@ -25,10 +25,11 @@ export function Datasets() {
 
   const { items: datasetsList, count, offset } = useSelector(getDatasetsListSelection) || { items: [], count: 0, offset: 0 };
   const isLoading = useSelector(getDatasetsIsLoading);
+  const datasetsSorting = useSelector(getDatasetsSorting);
 
   useEffect(() => {
     dispatch(loadDatasets(0));
-  }, [dispatch]);
+  }, [dispatch, datasetsSorting]);
 
   const handleOpenCreateModal = () => {
     dispatch(openCreateModal());

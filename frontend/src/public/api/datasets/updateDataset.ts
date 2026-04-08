@@ -3,7 +3,7 @@ import { IDataset, IUpdateDatasetParams } from '../../types/dataset';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { mapRequestBody } from '../../utils/mappers';
 
-export function updateDataset({ id, ...data }: IUpdateDatasetParams) {
+export function updateDataset({ id, signal, ...data }: IUpdateDatasetParams) {
   const {
     api: { urls },
   } = getBrowserConfigEnv();
@@ -15,6 +15,7 @@ export function updateDataset({ id, ...data }: IUpdateDatasetParams) {
     {
       method: 'PATCH',
       data: mapRequestBody(data),
+      signal,
     },
     {
       shouldThrow: true,

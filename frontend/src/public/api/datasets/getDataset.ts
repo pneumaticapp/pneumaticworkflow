@@ -2,7 +2,7 @@ import { commonRequest } from '../commonRequest';
 import { IDataset, IGetDatasetParams } from '../../types/dataset';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 
-export function getDataset({ id }: IGetDatasetParams) {
+export function getDataset({ id, signal }: IGetDatasetParams) {
   const {
     api: { urls },
   } = getBrowserConfigEnv();
@@ -13,6 +13,7 @@ export function getDataset({ id }: IGetDatasetParams) {
     url,
     {
       method: 'GET',
+      signal,
     },
     {
       shouldThrow: true,
