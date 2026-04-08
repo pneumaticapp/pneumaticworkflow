@@ -929,8 +929,6 @@ export const enMessages = {
   'workflows.export-tooltip-all': 'Export all workflows matching current filters',
   'workflows.export-excel': 'Export Excel',
   'workflows.export-excel-loading': 'Exporting…',
-  'workflows.export-excel-tooltip': 'Load workflows first to export',
-  'workflows.export-excel-tooltip-all': 'Export all workflows matching current filters to Excel',
   'workflows.export-excel-fail': 'Failed to export workflows',
   'workflows.export-excel-empty-title': 'No workflows to export',
   'workflows.export-excel-empty-message': 'No workflows match the current filters.',

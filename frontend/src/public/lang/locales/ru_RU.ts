@@ -863,8 +863,6 @@ export const ruMessages = {
   'workflows.export-tooltip-all': 'Экспорт всех процессов по текущим фильтрам',
   'workflows.export-excel': 'Экспорт в Excel',
   'workflows.export-excel-loading': 'Экспорт…',
-  'workflows.export-excel-tooltip': 'Загрузите процессы для экспорта',
-  'workflows.export-excel-tooltip-all': 'Экспорт всех процессов по текущим фильтрам в Excel',
   'workflows.export-excel-fail': 'Не удалось экспортировать процессы',
   'workflows.export-excel-empty-title': 'Нет процессов для экспорта',
   'workflows.export-excel-empty-message': 'По текущим фильтрам процессы не найдены.',
