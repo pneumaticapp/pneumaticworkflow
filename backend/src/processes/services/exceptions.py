@@ -1,4 +1,5 @@
 from src.generics.exceptions import BaseServiceException
+from src.processes.messages import fieldset as fs_messages
 from src.processes.messages import template as pt_messages
 from src.processes.messages import workflow as pw_messages
 
@@ -196,3 +197,15 @@ class TemplatePresetServiceException(BaseServiceException):
 class CommentedNotTask(CommentServiceException):
 
     default_message = pw_messages.MSG_PW_0077
+
+
+class FieldsetTemplateRuleServiceException(BaseServiceException):
+
+    pass
+
+
+class FieldsetTemplateRuleNameNotUniqueException(
+    FieldsetTemplateRuleServiceException,
+):
+
+    default_message = fs_messages.MSG_FS_0001

@@ -715,3 +715,14 @@ class SystemVariable:
     WORKFLOW_NAME_VARS = {DATE, TEMPLATE_NAME, WORKFLOW_ID, WORKFLOW_STARTER}
 
     TASK_VARS = {WORKFLOW_STARTER}
+
+
+class FieldSetRuleType:
+
+    SUM_MAX = 'sum_max'
+
+    CHOICES = (
+        (SUM_MAX, 'Sum max'),
+    )
+
+    LITERALS = Literal[SUM_MAX]

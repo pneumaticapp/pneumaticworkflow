@@ -1273,3 +1273,8 @@ class TemplatePresetQuerySet(AccountBaseQuerySet):
 class SearchContentQuerySet(AccountBaseQuerySet):
 
     pass
+
+
+class FieldsetTemplateRuleQuerySet(AccountBaseQuerySet):
+
+    pass
