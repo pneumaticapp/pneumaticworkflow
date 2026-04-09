@@ -5,13 +5,16 @@ from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.services.exceptions import (
     FieldsetTemplateInUseException,
 )
+from src.processes.services.templates.field_template import (
+    FieldTemplateService,
+)
 from src.processes.services.templates.fieldsets.fieldset_rule import \
     FieldsetTemplateRuleService
 
 UserModel = get_user_model()
 
 
-class FieldsetTemplateService(BaseModelService):
+class FieldSetTemplateService(BaseModelService):
 
     def _create_instance(
         self,
@@ -29,10 +32,13 @@ class FieldsetTemplateService(BaseModelService):
     def _create_related(
         self,
         rules: Optional[List[Dict]] = None,
+        fields: Optional[List[Dict]] = None,
         **kwargs,
     ):
         if rules:
             self.create_rules(rules_data=rules)
+        if fields:
+            self.create_fields(fields_data=fields)
 
     def partial_update(
         self,
@@ -40,6 +46,7 @@ class FieldsetTemplateService(BaseModelService):
     ) -> FieldsetTemplate:
 
         rules_data = update_kwargs.pop('rules', None)
+        fields_data = update_kwargs.pop('fields', None)
         result = super().partial_update(
             force_save=True,
             **update_kwargs,
@@ -47,6 +54,8 @@ class FieldsetTemplateService(BaseModelService):
 
         if rules_data is not None:
             self.update_rules(rules_data=rules_data)
+        if fields_data is not None:
+            self.update_fields(fields_data=fields_data)
 
         return result
 
@@ -105,3 +114,54 @@ class FieldsetTemplateService(BaseModelService):
                 rules_ids.add(rule.id)
 
         self.instance.rules.exclude(id__in=rules_ids).delete()
+
+    def create_fields(
+        self,
+        fields_data: List[Dict],
+    ):
+        for field_data in fields_data:
+            service = FieldTemplateService(
+                user=self.user,
+                is_superuser=self.is_superuser,
+                auth_type=self.auth_type,
+            )
+            service.create(
+                fieldset_id=self.instance.id,
+                **field_data,
+            )
+
+    def update_fields(
+        self,
+        fields_data: List[Dict],
+    ):
+        """ All fieldset fields will be updated """
+
+        existing_fields = {
+            field.id: field
+            for field in self.instance.fieldsets.all()
+        }
+        fields_ids = set()
+        for field_data in fields_data:
+            field_id = field_data.pop('id', None)
+            if field_id and field_id in existing_fields:
+                service = FieldTemplateService(
+                    user=self.user,
+                    is_superuser=self.is_superuser,
+                    auth_type=self.auth_type,
+                    instance=existing_fields[field_id],
+                )
+                service.partial_update(**field_data)
+                fields_ids.add(field_id)
+            else:
+                service = FieldTemplateService(
+                    user=self.user,
+                    is_superuser=self.is_superuser,
+                    auth_type=self.auth_type,
+                )
+                field = service.create(
+                    fieldset_id=self.instance.id,
+                    **field_data,
+                )
+                fields_ids.add(field.id)
+
+        self.instance.fieldsets.exclude(id__in=fields_ids).delete()

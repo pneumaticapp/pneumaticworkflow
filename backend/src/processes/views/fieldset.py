@@ -19,7 +19,7 @@ from src.processes.services.exceptions import (
     FieldsetTemplateServiceException,
 )
 from src.processes.services.templates.fieldsets.fieldset import (
-    FieldsetTemplateService,
+    FieldSetTemplateService,
 )
 from src.utils.validation import raise_validation_error
 
@@ -68,7 +68,7 @@ class FieldsetTemplateViewSet(
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        service = FieldsetTemplateService(
+        service = FieldSetTemplateService(
             user=request.user,
             is_superuser=request.is_superuser,
             auth_type=request.token_type,
@@ -93,7 +93,7 @@ class FieldsetTemplateViewSet(
             partial=True,
         )
         serializer.is_valid(raise_exception=True)
-        service = FieldsetTemplateService(
+        service = FieldSetTemplateService(
             user=request.user,
             instance=fieldset,
             is_superuser=request.is_superuser,
@@ -111,7 +111,7 @@ class FieldsetTemplateViewSet(
 
     def destroy(self, request, *args, **kwargs):
         fieldset = self.get_object()
-        service = FieldsetTemplateService(
+        service = FieldSetTemplateService(
             user=request.user,
             instance=fieldset,
             is_superuser=request.is_superuser,

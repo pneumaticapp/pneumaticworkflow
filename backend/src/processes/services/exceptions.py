@@ -214,3 +214,18 @@ class FieldsetTemplateInUseException(
 ):
 
     default_message = fs_messages.MSG_FS_0001
+
+
+class FieldTemplateServiceException(BaseServiceException):
+
+    pass
+
+
+class FieldTemplateSelectionsRequired(FieldTemplateServiceException):
+
+    default_message = pt_messages.MSG_PT_0005
+
+
+class FieldTemplateUserMustBeRequired(FieldTemplateServiceException):
+
+    default_message = pt_messages.MSG_PT_0006

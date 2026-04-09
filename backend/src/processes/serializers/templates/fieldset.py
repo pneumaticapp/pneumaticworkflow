@@ -4,6 +4,7 @@ from rest_framework.serializers import (
 )
 
 from src.generics.mixins.serializers import CustomValidationErrorMixin
+from src.processes.serializers.templates.field import FieldTemplateSerializer
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
     FieldsetTemplateRule,
@@ -38,10 +39,16 @@ class FieldsetTemplateSerializer(
             'name',
             'description',
             'rules',
+            'fields',
         )
 
     id = IntegerField(read_only=True)
     rules = FieldsetTemplateRuleSerializer(
+        many=True,
+        required=False,
+        default=list,
+    )
+    fields = FieldTemplateSerializer(
         many=True,
         required=False,
         default=list,
