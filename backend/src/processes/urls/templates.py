@@ -2,7 +2,7 @@ from django.urls import path
 from rest_framework.routers import DefaultRouter
 
 from src.processes.views.fieldset import (
-    FieldsetTemplateRuleViewSet,
+    FieldsetTemplateViewSet,
 )
 from src.processes.views.public.template import (
     PublicTemplateViewSet,
@@ -15,6 +15,7 @@ from src.processes.views.template import (
     TemplateIntegrationsViewSet,
 )
 from src.processes.views.template_preset import TemplatePresetViewSet
+
 
 router = DefaultRouter(trailing_slash=False)
 router.register(
@@ -38,9 +39,9 @@ router.register(
     basename='presets',
 )
 router.register(
-    prefix='fieldsets/rules',
-    viewset=FieldsetTemplateRuleViewSet,
-    basename='fieldset_template_rules',
+    prefix='fieldsets',
+    viewset=FieldsetTemplateViewSet,
+    basename='fieldset_templates',
 )
 urlpatterns = [
     path('public', PublicTemplateViewSet.as_view({'get': 'retrieve'})),

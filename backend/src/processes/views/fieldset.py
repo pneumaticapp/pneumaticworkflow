@@ -9,24 +9,26 @@ from src.accounts.permissions import (
 )
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import UserIsAuthenticated
-from src.processes.models.templates.fieldset import FieldsetTemplateRule
+from src.processes.models.templates.fieldset import (
+    FieldsetTemplate,
+)
 from src.processes.serializers.templates.fieldset import (
-    FieldsetTemplateRuleSerializer,
+    FieldsetTemplateSerializer,
 )
 from src.processes.services.exceptions import (
-    FieldsetTemplateRuleServiceException,
+    FieldsetTemplateServiceException,
 )
-from src.processes.services.fieldset_template_rule import (
-    FieldsetTemplateRuleService,
+from src.processes.services.templates.fieldsets.fieldset import (
+    FieldsetTemplateService,
 )
 from src.utils.validation import raise_validation_error
 
 
-class FieldsetTemplateRuleViewSet(
+class FieldsetTemplateViewSet(
     CustomViewSetMixin,
     GenericViewSet,
 ):
-    serializer_class = FieldsetTemplateRuleSerializer
+    serializer_class = FieldsetTemplateSerializer
     action_paginator_classes = {
         'list': LimitOffsetPagination,
     }
@@ -57,7 +59,7 @@ class FieldsetTemplateRuleViewSet(
 
     def get_queryset(self):
         user = self.request.user
-        return FieldsetTemplateRule.objects.on_account(user.account_id)
+        return FieldsetTemplate.objects.on_account(user.account_id)
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
@@ -66,57 +68,57 @@ class FieldsetTemplateRuleViewSet(
     def create(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        service = FieldsetTemplateRuleService(
+        service = FieldsetTemplateService(
             user=request.user,
             is_superuser=request.is_superuser,
             auth_type=request.token_type,
         )
         try:
-            rule = service.create(**serializer.validated_data)
-        except FieldsetTemplateRuleServiceException as ex:
+            fieldset = service.create(**serializer.validated_data)
+        except FieldsetTemplateServiceException as ex:
             raise_validation_error(message=ex.message)
-        response_serializer = FieldsetTemplateRuleSerializer(rule)
+        response_serializer = FieldsetTemplateSerializer(fieldset)
         return self.response_created(response_serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
-        rule = self.get_object()
-        serializer = self.get_serializer(rule)
+        fieldset = self.get_object()
+        serializer = self.get_serializer(fieldset)
         return self.response_ok(serializer.data)
 
     def partial_update(self, request, *args, **kwargs):
-        rule = self.get_object()
+        fieldset = self.get_object()
         serializer = self.get_serializer(
-            rule,
+            fieldset,
             data=request.data,
             partial=True,
         )
         serializer.is_valid(raise_exception=True)
-        service = FieldsetTemplateRuleService(
+        service = FieldsetTemplateService(
             user=request.user,
-            instance=rule,
+            instance=fieldset,
             is_superuser=request.is_superuser,
             auth_type=request.token_type,
         )
         try:
-            rule = service.partial_update(
+            fieldset = service.partial_update(
                 **serializer.validated_data,
             )
-        except FieldsetTemplateRuleServiceException as ex:
+        except FieldsetTemplateServiceException as ex:
             raise_validation_error(message=ex.message)
-        rule.refresh_from_db()
-        response_serializer = FieldsetTemplateRuleSerializer(rule)
+        fieldset.refresh_from_db()
+        response_serializer = FieldsetTemplateSerializer(fieldset)
         return self.response_ok(response_serializer.data)
 
     def destroy(self, request, *args, **kwargs):
-        rule = self.get_object()
-        service = FieldsetTemplateRuleService(
+        fieldset = self.get_object()
+        service = FieldsetTemplateService(
             user=request.user,
-            instance=rule,
+            instance=fieldset,
             is_superuser=request.is_superuser,
             auth_type=request.token_type,
         )
         try:
             service.delete()
-        except FieldsetTemplateRuleServiceException as ex:
+        except FieldsetTemplateServiceException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok()

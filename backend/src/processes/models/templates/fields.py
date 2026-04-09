@@ -33,6 +33,8 @@ class FieldTemplate(
     template = models.ForeignKey(
         Template,
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         related_name='fields',
     )
     kickoff = models.ForeignKey(
@@ -46,6 +48,13 @@ class FieldTemplate(
         on_delete=models.CASCADE,
         null=True,
         related_name='fields',
+    )
+    fieldset = models.ForeignKey(
+        'processes.FieldsetTemplate',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='fieldsets',
     )
     date_created = models.DateTimeField(auto_now_add=True)
     default = models.TextField(blank=True)

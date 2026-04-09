@@ -30,7 +30,6 @@ class BaseModelService:
         self.instance = instance
         self.update_fields = set()
 
-    @abstractmethod
     def _create_related(
         self,
         **kwargs,
@@ -78,3 +77,6 @@ class BaseModelService:
         if force_save:
             self.save()
         return self.instance
+
+    def delete(self) -> None:
+        self.instance.delete()

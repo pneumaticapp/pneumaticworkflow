@@ -204,8 +204,13 @@ class FieldsetTemplateRuleServiceException(BaseServiceException):
     pass
 
 
-class FieldsetTemplateRuleNameNotUniqueException(
-    FieldsetTemplateRuleServiceException,
+class FieldsetTemplateServiceException(BaseServiceException):
+
+    pass
+
+
+class FieldsetTemplateInUseException(
+    FieldsetTemplateServiceException,
 ):
 
     default_message = fs_messages.MSG_FS_0001

@@ -23,19 +23,3 @@ class FieldsetTemplateRuleService(BaseModelService):
             value=value,
         )
         return self.instance
-
-    def _create_related(self, **kwargs):
-        pass
-
-    def partial_update(
-        self,
-        **update_kwargs,
-    ) -> FieldsetTemplateRule:
-
-        return super().partial_update(
-            force_save=True,
-            **update_kwargs,
-        )
-
-    def delete(self) -> None:
-        self.instance.delete()

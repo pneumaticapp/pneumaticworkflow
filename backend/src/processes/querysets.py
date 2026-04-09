@@ -1275,6 +1275,11 @@ class SearchContentQuerySet(AccountBaseQuerySet):
     pass
 
 
+class FieldsetTemplateQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
 class FieldsetTemplateRuleQuerySet(AccountBaseQuerySet):
 
     pass
