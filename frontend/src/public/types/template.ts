@@ -321,6 +321,7 @@ export type TAddTemplatePreset = Omit<TTemplatePreset, 'id' | 'author' | 'dateCr
 export enum ETemplatesTab {
   Templates = 'templates',
   Datasets = 'datasets',
+  Fieldsets = 'fieldsets',
 }
 
 export interface ITemplatesLayoutProps {

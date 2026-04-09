@@ -1,0 +1,16 @@
+.fieldset-modal__title {
+  margin-bottom: 1.6rem;
+}
+
+.fieldset-modal__description {
+  margin-bottom: 1.6rem;
+  color: var(--pneumatic-color-black72);
+
+  @mixin text-base;
+}
+
+.fieldset-modal__footer {
+  margin-top: 3.2rem;
+  display: flex;
+  gap: 1.6rem;
+}
