@@ -9,6 +9,10 @@ from src.processes.models.templates.conditions import (
     PredicateTemplate,
     RuleTemplate,
 )
+from src.processes.models.templates.fieldset import (
+    FieldsetTemplate,
+    FieldsetTemplateRule,
+)
 from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
@@ -58,15 +62,51 @@ class FieldSchemaV1(serializers.ModelSerializer):
     )
 
 
+class FieldsetTemplateRuleSchemaV1(serializers.ModelSerializer):
+
+    class Meta:
+        model = FieldsetTemplateRule
+        fields = (
+            'name',
+            'type',
+            'value',
+        )
+
+
+class FieldSetSchemaV1(serializers.ModelSerializer):
+
+    class Meta:
+        model = FieldsetTemplate
+        fields = (
+            'name',
+            'description',
+            'fields',
+            'rules',
+        )
+
+    fields = FieldSchemaV1(many=True, allow_null=True, allow_empty=True)
+    rules = FieldsetTemplateRuleSchemaV1(
+        many=True,
+        allow_null=True,
+        allow_empty=True,
+    )
+
+
 class KickoffSchemaV1(serializers.ModelSerializer):
 
     class Meta:
         model = Kickoff
         fields = (
             'fields',
+            'fieldsets',
         )
 
     fields = FieldSchemaV1(many=True, allow_null=True, allow_empty=True)
+    fieldsets = serializers.PrimaryKeyRelatedField(
+        many=True,
+        read_only=True,
+        allow_empty=True,
+    )
 
 
 class TemplateOwnerSchemaV1(serializers.ModelSerializer):
@@ -192,6 +232,7 @@ class TaskSchemaV1(serializers.ModelSerializer):
             'number',
             'require_completion_by_all',
             'fields',
+            'fieldsets',
             'delay',
             'conditions',
             'raw_performers',
@@ -202,6 +243,11 @@ class TaskSchemaV1(serializers.ModelSerializer):
         )
 
     fields = FieldSchemaV1(many=True, allow_null=True, allow_empty=True)
+    fieldsets = serializers.PrimaryKeyRelatedField(
+        many=True,
+        read_only=True,
+        allow_empty=True,
+    )
     conditions = ConditionSchemaV1(
         many=True,
         allow_null=True,

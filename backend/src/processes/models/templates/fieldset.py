@@ -5,6 +5,8 @@ from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
 from src.processes.enums import FieldSetRuleType
+from src.processes.models.templates.kickoff import Kickoff
+from src.processes.models.templates.task import TaskTemplate
 from src.processes.querysets import (
     FieldsetTemplateQuerySet,
     FieldsetTemplateRuleQuerySet,
@@ -26,6 +28,16 @@ class FieldsetTemplate(SoftDeleteModel, AccountBaseMixin):
     name = models.CharField(max_length=200)
     description = models.TextField(blank=True, default='')
     date_created = models.DateTimeField(auto_now_add=True)
+    tasks = models.ManyToManyField(
+        TaskTemplate,
+        related_name='fieldsets',
+        blank=True,
+    )
+    kickoffs = models.ManyToManyField(
+        Kickoff,
+        related_name='fieldsets',
+        blank=True,
+    )
 
     objects = BaseSoftDeleteManager.from_queryset(
         FieldsetTemplateQuerySet,

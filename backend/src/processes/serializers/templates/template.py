@@ -454,8 +454,12 @@ class TemplateSerializer(
     ) -> dict:
         if isinstance(data, dict):
             data['fields'] = data.get('fields', [])
+            data['fieldsets'] = data.get('fieldsets', [])
         else:
-            data = {'fields': []}
+            data = {
+                'fields': [],
+                'fieldsets': [],
+            }
         return data
 
     def save_as_draft(self) -> Template:

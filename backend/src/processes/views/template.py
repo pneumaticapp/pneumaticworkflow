@@ -243,6 +243,7 @@ class TemplateViewSet(
                 'kickoff',
                 'kickoff__fields',
                 'kickoff__fields__selections',
+                'kickoff__fieldsets',
                 Prefetch('owners', queryset=owners_qs),
                 Prefetch(
                     lookup='tasks',
@@ -252,6 +253,7 @@ class TemplateViewSet(
                         .prefetch_related(
                             'fields',
                             'fields__selections',
+                            'fieldsets',
                             'checklists',
                             'checklists__selections',
                             'conditions',
@@ -276,6 +278,7 @@ class TemplateViewSet(
                                     .order_by('-order')
                                 ),
                             ),
+                            'fieldsets',
                         )
                     ),
                 ),
@@ -292,6 +295,7 @@ class TemplateViewSet(
                                     .order_by('-order')
                                 ),
                             ),
+                            'fieldsets',
                         )
                     ),
                 ),

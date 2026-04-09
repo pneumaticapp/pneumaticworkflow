@@ -41,7 +41,7 @@ router.register(
 router.register(
     prefix='fieldsets',
     viewset=FieldsetTemplateViewSet,
-    basename='fieldset_templates',
+    basename='fieldsets',
 )
 urlpatterns = [
     path('public', PublicTemplateViewSet.as_view({'get': 'retrieve'})),
