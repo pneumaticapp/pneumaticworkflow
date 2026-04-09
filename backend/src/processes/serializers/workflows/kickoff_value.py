@@ -4,6 +4,7 @@ from rest_framework import serializers
 
 from src.generics.serializers import CustomValidationErrorMixin
 from src.processes.models.templates.kickoff import Kickoff
+from src.processes.models.workflows.fieldset import Fieldset
 from src.processes.models.workflows.kickoff import KickoffValue
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.serializers.workflows.field import (
@@ -14,6 +15,10 @@ from src.processes.services.tasks.exceptions import (
 )
 from src.processes.services.tasks.task import (
     TaskFieldService,
+)
+from src.processes.services.workflows.fieldset_instance import (
+    create_kickoff_fieldsets_with_values,
+    validate_fieldsets,
 )
 from src.services.markdown import MarkdownService
 
@@ -69,12 +74,28 @@ class KickoffValueSerializer(
             account_id=validated_data['account_id'],
             clear_description=clear_description,
         )
-        for field_template in kickoff.fields.all():
+        workflow = validated_data['workflow']
+        try:
+            create_kickoff_fieldsets_with_values(
+                kickoff=kickoff,
+                kickoff_value=instance,
+                workflow=workflow,
+                user=self.context['user'],
+                fields_data=fields_data,
+            )
+        except TaskFieldException as ex:
+            self.raise_validation_error(
+                message=ex.message,
+                api_name=ex.api_name,
+            )
+        for field_template in kickoff.fields.exclude(
+            fieldset__in=kickoff.fieldsets.all(),
+        ):
             service = TaskFieldService(user=self.context['user'])
             try:
                 service.create(
                     instance_template=field_template,
-                    workflow_id=validated_data['workflow'].id,
+                    workflow_id=workflow.id,
                     kickoff_id=instance.id,
                     value=fields_data.get(field_template.api_name),
                 )
@@ -83,6 +104,15 @@ class KickoffValueSerializer(
                     message=ex.message,
                     api_name=field_template.api_name,
                 )
+        try:
+            validate_fieldsets(
+                Fieldset.objects.filter(kickoff_value=instance),
+            )
+        except TaskFieldException as ex:
+            self.raise_validation_error(
+                message=ex.message,
+                api_name=ex.api_name,
+            )
         return instance
 
     def update(
@@ -110,4 +140,13 @@ class KickoffValueSerializer(
                         message=ex.message,
                         api_name=task_field.api_name,
                     )
+            try:
+                validate_fieldsets(
+                    Fieldset.objects.filter(kickoff_value=instance),
+                )
+            except TaskFieldException as ex:
+                self.raise_validation_error(
+                    message=ex.message,
+                    api_name=ex.api_name,
+                )
         return instance

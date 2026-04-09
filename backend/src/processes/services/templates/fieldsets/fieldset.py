@@ -52,8 +52,8 @@ class FieldsetTemplateService(BaseModelService):
 
     def delete(self) -> None:
         if (
-            self.instance.kickoff_set.exists()
-            or self.instance.tasktemplate_set.exists()
+            self.instance.kickoffs.exists()
+            or self.instance.tasks.exists()
         ):
             raise FieldsetTemplateInUseException
         self.instance.delete()
@@ -99,7 +99,7 @@ class FieldsetTemplateService(BaseModelService):
                     auth_type=self.auth_type,
                 )
                 rule = service.create(
-                    dataset_id=self.instance.id,
+                    fieldset_id=self.instance.id,
                     **rule_data,
                 )
                 rules_ids.add(rule.id)

@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models import Q, UniqueConstraint
 
+from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.processes.models.base import BaseApiNameModel
 from src.processes.models.mixins import FieldMixin
@@ -15,6 +16,7 @@ from src.processes.querysets import (
 
 class FieldTemplate(
     BaseApiNameModel,
+    AccountBaseMixin,
     FieldMixin,
 ):
 

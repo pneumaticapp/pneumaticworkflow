@@ -7,13 +7,13 @@ from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models.query import QuerySet
 
-from src.accounts.models import UserGroup, AccountBaseMixin
+from src.accounts.models import UserGroup
 from src.processes.enums import (
     ConditionAction,
     FieldType,
     PerformerType,
     PredicateOperator,
-    PredicateType,
+    PredicateType, FieldSetRuleType,
 )
 from src.datasets.models import Dataset
 
@@ -175,7 +175,7 @@ class TaskMixin(models.Model):
     )
 
 
-class FieldMixin(AccountBaseMixin):
+class FieldMixin(models.Model):
 
     class Meta:
         abstract = True
@@ -315,3 +315,24 @@ class ApiNameMixin(models.Model):
         abstract = True
 
     api_name = models.CharField(max_length=200)
+
+
+class BaseFieldSetMixin(models.Model):
+
+    class Meta:
+        abstract = True
+
+    name = models.CharField(max_length=200)
+    description = models.TextField(blank=True, default='')
+
+
+class BaseFieldSetRuleMixin(models.Model):
+
+    class Meta:
+        abstract = True
+
+    type = models.CharField(
+        max_length=50,
+        choices=FieldSetRuleType.CHOICES,
+    )
+    value = models.TextField(blank=True, null=True)

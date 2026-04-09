@@ -1,0 +1,62 @@
+from django.db import models
+
+from src.accounts.models import AccountBaseMixin
+from src.generics.managers import BaseSoftDeleteManager
+from src.processes.models.base import BaseApiNameModel
+from src.processes.models.mixins import (
+    BaseFieldSetMixin,
+    BaseFieldSetRuleMixin,
+)
+from src.processes.models.workflows.kickoff import KickoffValue
+from src.processes.models.workflows.task import Task
+from src.processes.models.workflows.workflow import Workflow
+
+
+class Fieldset(
+    BaseApiNameModel,
+    BaseFieldSetMixin,
+    AccountBaseMixin,
+):
+
+    class Meta:
+        ordering = ['-id']
+
+    workflow = models.ForeignKey(
+        Workflow,
+        on_delete=models.CASCADE,
+        related_name='fieldsets',
+    )
+    kickoff_value = models.ForeignKey(
+        KickoffValue,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='fieldsets',
+    )
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='template_fieldsets',
+    )
+
+    objects = BaseSoftDeleteManager()
+
+
+class FieldSetRule(
+    BaseApiNameModel,
+    BaseFieldSetRuleMixin,
+    AccountBaseMixin,
+):
+
+    class Meta:
+        ordering = ['-id']
+
+    fieldset = models.ForeignKey(
+        Fieldset,
+        on_delete=models.CASCADE,
+        related_name='rules',
+    )
+
+    objects = BaseSoftDeleteManager()

@@ -12,14 +12,15 @@ class FieldsetTemplateRuleService(BaseModelService):
 
     def _create_instance(
         self,
-        name: str,
         type: FieldSetRuleType.LITERALS,  # noqa: A002
         value: Optional[str] = None,
+        fieldset_id: Optional[int] = None,
+        **kwargs,
     ):
         self.instance = FieldsetTemplateRule.objects.create(
             account=self.account,
-            name=name,
             type=type,
             value=value,
+            fieldset_id=fieldset_id,
         )
         return self.instance

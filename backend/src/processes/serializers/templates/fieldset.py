@@ -3,7 +3,6 @@ from rest_framework.serializers import (
     ModelSerializer,
 )
 
-from src.generics.fields import TimeStampField
 from src.generics.mixins.serializers import CustomValidationErrorMixin
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
@@ -20,7 +19,6 @@ class FieldsetTemplateRuleSerializer(
         model = FieldsetTemplateRule
         fields = (
             'id',
-            'name',
             'type',
             'value',
         )
@@ -39,15 +37,10 @@ class FieldsetTemplateSerializer(
             'id',
             'name',
             'description',
-            'date_created_tsp',
             'rules',
         )
 
     id = IntegerField(read_only=True)
-    date_created_tsp = TimeStampField(
-        source='date_created',
-        read_only=True,
-    )
     rules = FieldsetTemplateRuleSerializer(
         many=True,
         required=False,

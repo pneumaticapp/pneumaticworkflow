@@ -3,8 +3,11 @@ from django.db.models import Q, UniqueConstraint
 
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
-from src.generics.models import SoftDeleteModel
-from src.processes.enums import FieldSetRuleType
+from src.processes.models.base import BaseApiNameModel
+from src.processes.models.mixins import (
+    BaseFieldSetMixin,
+    BaseFieldSetRuleMixin,
+)
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.querysets import (
@@ -13,21 +16,24 @@ from src.processes.querysets import (
 )
 
 
-class FieldsetTemplate(SoftDeleteModel, AccountBaseMixin):
+class FieldsetTemplate(
+    BaseApiNameModel,
+    BaseFieldSetMixin,
+    AccountBaseMixin,
+):
 
     class Meta:
         ordering = ['-id']
         constraints = [
             UniqueConstraint(
-                fields=['account', 'name'],
+                fields=['account', 'api_name'],
                 condition=Q(is_deleted=False),
-                name='fieldsettemplate_account_name_unique',
+                name='fieldsettemplate_account_api_name_unique',
             ),
         ]
 
-    name = models.CharField(max_length=200)
-    description = models.TextField(blank=True, default='')
-    date_created = models.DateTimeField(auto_now_add=True)
+    api_name_prefix = 'fieldset'
+
     tasks = models.ManyToManyField(
         TaskTemplate,
         related_name='fieldsets',
@@ -47,19 +53,15 @@ class FieldsetTemplate(SoftDeleteModel, AccountBaseMixin):
         return self.name
 
 
-class FieldsetTemplateRule(SoftDeleteModel, AccountBaseMixin):
+class FieldsetTemplateRule(
+    BaseApiNameModel,
+    BaseFieldSetRuleMixin,
+    AccountBaseMixin,
+):
 
     class Meta:
         ordering = ['-id']
 
-    name = models.CharField(max_length=200)
-    type = models.CharField(
-        max_length=50,
-        choices=FieldSetRuleType.CHOICES,
-        default=FieldSetRuleType.SUM_MAX,
-    )
-    value = models.TextField(blank=True, null=True)
-    date_created = models.DateTimeField(auto_now_add=True)
     fieldset = models.ForeignKey(
         FieldsetTemplate,
         on_delete=models.CASCADE,

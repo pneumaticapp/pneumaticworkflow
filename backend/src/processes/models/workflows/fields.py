@@ -1,6 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.db import models
 
+from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
 from src.processes.models.mixins import (
@@ -9,6 +10,7 @@ from src.processes.models.mixins import (
 )
 from src.processes.models.workflows.kickoff import KickoffValue
 from src.processes.models.workflows.task import Task
+from src.processes.models.workflows.fieldset import Fieldset
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.querysets import (
     FieldSelectionQuerySet,
@@ -20,6 +22,7 @@ UserModel = get_user_model()
 
 class TaskField(
     SoftDeleteModel,
+    AccountBaseMixin,
     FieldMixin,
     ApiNameMixin,
 ):
@@ -54,6 +57,13 @@ class TaskField(
         on_delete=models.CASCADE,
         related_name='output',
         null=True,
+    )
+    fieldset = models.ForeignKey(
+        Fieldset,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='fieldsets',
     )
     workflow = models.ForeignKey(
         Workflow,

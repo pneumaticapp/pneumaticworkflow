@@ -200,7 +200,9 @@ class TaskService(
 
     def create_fields_from_template(self, instance_template: TaskTemplate):
 
-        for field_template in instance_template.fields.all():
+        for field_template in instance_template.fields.exclude(
+            fieldset__in=instance_template.fieldsets.all(),
+        ):
             service = TaskFieldService(user=self.user)
             service.create(
                 instance_template=field_template,

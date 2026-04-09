@@ -43,6 +43,10 @@ from src.processes.services.tasks.field import (
     TaskFieldService,
 )
 from src.processes.services.tasks.task import TaskService
+from src.processes.services.workflows.fieldset_instance import (
+    ensure_task_fieldsets_and_fields,
+    validate_task_fieldsets,
+)
 from src.processes.tasks.webhooks import (
     send_task_completed_webhook,
     send_task_returned_webhook,
@@ -799,6 +803,10 @@ class WorkflowActionService:
 
         fields_values = fields_values or {}
         with transaction.atomic():
+            ensure_task_fieldsets_and_fields(
+                task=task,
+                user=self.user,
+            )
             for task_field in task.output.all():
                 service = TaskFieldService(
                     user=self.user,
@@ -808,6 +816,7 @@ class WorkflowActionService:
                     value=fields_values.get(task_field.api_name),
                     force_save=True,
                 )
+            validate_task_fieldsets(task=task)
             if task_performer:
                 if self._task_can_be_completed(task):
                     self.complete_task(task=task, by_user=True)
