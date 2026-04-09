@@ -75,6 +75,7 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
           {activeTab === ETemplatesTab.Templates && <TemplatesSortingContainer />}
           {activeTab === ETemplatesTab.Datasets && (
             <SelectMenu
+              closeOnSelect
               activeValue={datasetsSorting}
               values={datasetsSortingValues}
               toggleTextClassName={styles['dataset__sorting-toggle-text']}
