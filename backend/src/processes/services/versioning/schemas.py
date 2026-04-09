@@ -67,7 +67,7 @@ class FieldsetTemplateRuleSchemaV1(serializers.ModelSerializer):
     class Meta:
         model = FieldsetTemplateRule
         fields = (
-            'name',
+            'api_name',
             'type',
             'value',
         )
@@ -78,6 +78,7 @@ class FieldSetSchemaV1(serializers.ModelSerializer):
     class Meta:
         model = FieldsetTemplate
         fields = (
+            'api_name',
             'name',
             'description',
             'fields',
@@ -102,10 +103,11 @@ class KickoffSchemaV1(serializers.ModelSerializer):
         )
 
     fields = FieldSchemaV1(many=True, allow_null=True, allow_empty=True)
-    fieldsets = serializers.PrimaryKeyRelatedField(
+    fieldsets = FieldSetSchemaV1(
         many=True,
-        read_only=True,
+        allow_null=True,
         allow_empty=True,
+        required=False,
     )
 
 
@@ -243,10 +245,11 @@ class TaskSchemaV1(serializers.ModelSerializer):
         )
 
     fields = FieldSchemaV1(many=True, allow_null=True, allow_empty=True)
-    fieldsets = serializers.PrimaryKeyRelatedField(
+    fieldsets = FieldSetSchemaV1(
         many=True,
-        read_only=True,
+        allow_null=True,
         allow_empty=True,
+        required=False,
     )
     conditions = ConditionSchemaV1(
         many=True,

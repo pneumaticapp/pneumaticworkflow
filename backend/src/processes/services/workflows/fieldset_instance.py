@@ -77,10 +77,15 @@ def create_kickoff_fieldsets_with_values(
             account_id=workflow.account_id,
             workflow=workflow,
             kickoff_value=kickoff_value,
+            api_name=fs_template.api_name,
+            name=fs_template.name,
+            description=fs_template.description or '',
         )
         for rule_template in fs_template.rules.filter(is_deleted=False):
             FieldSetRule.objects.create(
+                account_id=workflow.account_id,
                 fieldset=fieldset,
+                api_name=rule_template.api_name,
                 type=rule_template.type,
                 value=rule_template.value,
             )
@@ -117,10 +122,15 @@ def ensure_task_fieldsets_and_fields(
             account_id=workflow.account_id,
             workflow=workflow,
             task=task,
+            api_name=fs_template.api_name,
+            name=fs_template.name,
+            description=fs_template.description,
         )
         for rule_template in fs_template.rules.filter(is_deleted=False):
             FieldSetRule.objects.create(
+                account_id=workflow.account_id,
                 fieldset=fieldset,
+                api_name=rule_template.api_name,
                 type=rule_template.type,
                 value=rule_template.value,
             )
