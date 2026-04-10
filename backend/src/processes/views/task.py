@@ -269,14 +269,32 @@ class TaskViewSet(
         if self.action == 'retrieve':
             queryset = queryset.prefetch_related(
                 'checklists__selections',
-                'output__attachments',
                 Prefetch(
-                    'output__selections',
+                    'output',
+                    queryset=TaskField.objects.filter(
+                        fieldset__isnull=True,
+                    ).prefetch_related(
+                        'attachments',
+                        Prefetch(
+                            'selections',
+                            queryset=FieldSelection.objects.order_by('id'),
+                            to_attr='selections_values',
+                        ),
+                        Prefetch(
+                            'dataset__items',
+                            queryset=DatasetItem.objects.order_by('order'),
+                            to_attr='dataset_values',
+                        ),
+                    ),
+                ),
+                'fieldsets__fields__attachments',
+                Prefetch(
+                    'fieldsets__fields__selections',
                     queryset=FieldSelection.objects.order_by('id'),
                     to_attr='selections_values',
                 ),
                 Prefetch(
-                    'output__dataset__items',
+                    'fieldsets__fields__dataset__items',
                     queryset=DatasetItem.objects.order_by('order'),
                     to_attr='dataset_values',
                 ),
@@ -516,7 +534,9 @@ class TaskViewSet(
             instance=Task.objects.prefetch_related(
                 Prefetch(
                     lookup='output',
-                    queryset=TaskField.objects.all().prefetch_related(
+                    queryset=TaskField.objects.filter(
+                        fieldset__isnull=True,
+                    ).prefetch_related(
                         Prefetch(
                             lookup='selections',
                             queryset=FieldSelection.objects.order_by('id'),
@@ -529,6 +549,17 @@ class TaskViewSet(
                         ),
                         'attachments',
                     ),
+                ),
+                'fieldsets__fields__attachments',
+                Prefetch(
+                    'fieldsets__fields__selections',
+                    queryset=FieldSelection.objects.order_by('id'),
+                    to_attr='selections_values',
+                ),
+                Prefetch(
+                    'fieldsets__fields__dataset__items',
+                    queryset=DatasetItem.objects.order_by('order'),
+                    to_attr='dataset_values',
                 ),
             ).get(pk=task.pk),
             context={'user': request.user},

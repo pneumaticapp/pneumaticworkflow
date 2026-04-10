@@ -10,6 +10,9 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.serializers.workflows.field import (
     TaskFieldSerializer,
 )
+from src.processes.serializers.workflows.fieldset import (
+    FieldSetSerializer,
+)
 from src.processes.services.tasks.exceptions import (
     TaskFieldException,
 )
@@ -25,12 +28,14 @@ from src.services.markdown import MarkdownService
 
 class KickoffValueInfoSerializer(serializers.ModelSerializer):
     output = TaskFieldSerializer(many=True)
+    fieldsets = FieldSetSerializer(many=True)
 
     class Meta:
         model = KickoffValue
         fields = (
             'id',
             'output',
+            'fieldsets',
         )
 
 

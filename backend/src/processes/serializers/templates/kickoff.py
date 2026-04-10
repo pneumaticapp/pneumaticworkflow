@@ -16,6 +16,9 @@ from src.processes.serializers.templates.field import (
     FieldTemplateSerializer,
     FieldTemplateShortViewSerializer,
 )
+from src.processes.serializers.templates.fieldset import (
+    FieldsetTemplateSerializer,
+)
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
     CreateOrUpdateRelatedMixin,
@@ -135,6 +138,8 @@ class KickoffListSerializer(ModelSerializer):
         model = Kickoff
         fields = (
             'fields',
+            'fieldsets',
         )
 
     fields = FieldTemplateListSerializer(many=True)
+    fieldsets = FieldsetTemplateSerializer(many=True)

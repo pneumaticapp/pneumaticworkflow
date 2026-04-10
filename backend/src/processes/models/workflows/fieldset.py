@@ -38,7 +38,7 @@ class Fieldset(
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='template_fieldsets',
+        related_name='fieldsets',
     )
 
     objects = BaseSoftDeleteManager()

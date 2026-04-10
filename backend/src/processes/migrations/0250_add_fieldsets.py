@@ -92,7 +92,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='fieldset',
             name='task',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='template_fieldsets', to='processes.Task'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fieldsets', to='processes.Task'),
         ),
         migrations.AddField(
             model_name='fieldset',
@@ -107,7 +107,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='taskfield',
             name='fieldset',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fieldsets', to='processes.Fieldset'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fields', to='processes.Fieldset'),
         ),
         migrations.AddConstraint(
             model_name='fieldsettemplate',

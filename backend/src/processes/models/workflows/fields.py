@@ -63,7 +63,7 @@ class TaskField(
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='fieldsets',
+        related_name='fields',
     )
     workflow = models.ForeignKey(
         Workflow,

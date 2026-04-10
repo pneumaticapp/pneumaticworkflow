@@ -89,8 +89,8 @@ def create_kickoff_fieldsets_with_values(
                 type=rule_template.type,
                 value=rule_template.value,
             )
-        fieldsets = fs_template.fieldsets.all().order_by('-order', 'id')
-        for field_template in fieldsets:
+        fields = fs_template.fields.all().order_by('-order', 'id')
+        for field_template in fields:
             TaskFieldService(user=user).create(
                 instance_template=field_template,
                 workflow_id=workflow.id,
@@ -134,8 +134,8 @@ def ensure_task_fieldsets_and_fields(
                 type=rule_template.type,
                 value=rule_template.value,
             )
-        fieldsets = fs_template.fieldsets.all().order_by('-order', 'id')
-        for field_template in fieldsets:
+        fields = fs_template.fields.all().order_by('-order', 'id')
+        for field_template in fields:
             TaskFieldService(user=user).create(
                 instance_template=field_template,
                 workflow_id=workflow.id,
