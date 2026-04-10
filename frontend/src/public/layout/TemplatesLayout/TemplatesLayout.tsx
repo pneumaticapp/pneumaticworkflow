@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useLocation } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 import { useSelector, useDispatch } from 'react-redux';
 
@@ -20,6 +21,7 @@ import { ReturnLink } from '../../components/UI/ReturnLink';
 export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
+  const { pathname } = useLocation();
 
   const datasetsSorting = useSelector(getDatasetsSorting);
 
@@ -27,9 +29,9 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
     dispatch(setDatasetsListSorting(value));
   };
 
-  const isDatasetDetail = /^\/datasets\/\d+\/?$/.test(history.location.pathname);
+  const isDatasetDetail = /^\/datasets\/\d+\/?$/.test(pathname);
 
-  const activeTab = history.location.pathname.startsWith(ERoutes.Datasets)
+  const activeTab = pathname.startsWith(ERoutes.Datasets)
     ? ETemplatesTab.Datasets
     : ETemplatesTab.Templates;
 
