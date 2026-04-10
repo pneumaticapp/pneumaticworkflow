@@ -13,6 +13,7 @@ import {
 import { ERoutes } from './routes';
 import { HelpIcon } from '../components/icons/HelpIcon';
 import { IAuthUser } from '../types/redux';
+import { getCanAccessWorkflows } from '../redux/selectors/user';
 
 export type TMenuCounter = {
   id: IMenuItem['id'];
@@ -31,6 +32,7 @@ export const getUserMenuItems = (
 ): IMenuItem[] => {
   const { isTemplateOwner } = options || {};
   const canAccessTemplates = user.isAdmin || isTemplateOwner;
+  const canAccessWorkflows = getCanAccessWorkflows({ authUser: user } as any);
 
   const items: IMenuItem[] = [
     {
@@ -50,7 +52,7 @@ export const getUserMenuItems = (
       iconComponent: WorkflowsIcon,
       label: 'menu.workflows',
       to: ERoutes.Workflows,
-      isHidden: !user.isAdmin && !user.hasWorkflowViewerAccess,
+      isHidden: !canAccessWorkflows,
     },
     {
       id: 'templates',
@@ -64,7 +66,7 @@ export const getUserMenuItems = (
       iconComponent: TaskAcivityIcon,
       label: 'menu.highlights',
       to: ERoutes.Highlights,
-      isHidden: !user.isAdmin && !user.hasWorkflowViewerAccess,
+      isHidden: !canAccessWorkflows,
     },
     {
       id: 'team',

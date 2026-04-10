@@ -1,13 +1,17 @@
 import pytest
 
+from rest_framework import status
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
+    OwnerRole,
+    OwnerType,
     PerformerType,
     TaskStatus, FieldType,
 )
 from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.services.workflow_action import (
     WorkflowActionService,
 )
@@ -17,6 +21,7 @@ from src.processes.tests.fixtures import (
     create_test_group,
     create_test_guest,
     create_test_owner,
+    create_test_template,
     create_test_user,
     create_test_workflow, create_test_dataset,
 )
@@ -775,3 +780,37 @@ def test_complete__invalid_output__validation_error(
     service_init_mock.assert_not_called()
     complete_task_by_user_mock.assert_not_called()
     check_delay_workflow_mock.assert_not_called()
+
+
+def test_task_complete__template_starter_own_workflow__forbidden(api_client):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    workflow = create_test_workflow(template=template, user=starter_user)
+    task = workflow.tasks.order_by('number').first()
+
+    api_client.token_authenticate(starter_user)
+
+    # act
+    response = api_client.post(f'/v2/tasks/{task.id}/complete')
+
+    # assert
+    # Starter is not a performer, should be forbidden
+    assert response.status_code == status.HTTP_403_FORBIDDEN

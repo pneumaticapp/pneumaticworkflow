@@ -1,4 +1,6 @@
 from datetime import timedelta
+from django.urls import reverse
+from rest_framework import status
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -311,3 +313,38 @@ def test_destroy__users_overlimited__permission_denied(api_client, mocker):
     # assert
     assert response.status_code == 403
     terminate_mock.assert_not_called()
+
+
+def test_workflow_terminate__template_starter_own_workflow__forbidden(
+    api_client,
+):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    workflow = create_test_workflow(template=template, user=starter_user)
+
+    api_client.token_authenticate(starter_user)
+    url = reverse('workflows-detail', args=[workflow.id])
+
+    # act
+    response = api_client.delete(url)
+
+    # assert
+    assert response.status_code == status.HTTP_403_FORBIDDEN
