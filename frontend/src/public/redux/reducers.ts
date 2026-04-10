@@ -28,6 +28,7 @@ import team from './team/slice';
 import workflows from './workflows/slice';
 import accounts from './accounts/slice';
 import tasks from './tasks/slice';
+import datasets from './datasets/slice';
 
 
 export const reducers = combineReducers({
@@ -53,6 +54,7 @@ export const reducers = combineReducers({
   runWorkflowModal,
   webhooks,
   tenants,
+  datasets,
   pages,
 });
 

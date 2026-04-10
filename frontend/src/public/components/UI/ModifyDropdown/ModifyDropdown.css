@@ -1,0 +1,4 @@
+/* stylelint-disable declaration-no-important */
+.toggle-btn {
+  @mixin details-header-btn;
+}

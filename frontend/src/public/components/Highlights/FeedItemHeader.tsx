@@ -70,7 +70,7 @@ export function FeedItemHeader({
 
     const filteredOutputs = outputs.filter((output) => {
       const value = output.type === EExtraFieldType.User ? output.userId || output.groupId : output.value;
-      return value || output.attachments?.length || output?.selections?.some((selection) => selection.isSelected);
+      return value || output.attachments?.length;
     });
 
     return (

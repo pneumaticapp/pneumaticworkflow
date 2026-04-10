@@ -31,7 +31,7 @@ export function getClonedTask(task: ITemplateTask) {
     return fields.map((field) => ({
       ...omit(field, ['id', 'apiName', 'selections']),
       apiName: createFieldApiName(),
-      selections: cloneSelections(field.selections),
+      selections: cloneSelections(field.selections as IExtraFieldSelection[]),
     }));
   };
 

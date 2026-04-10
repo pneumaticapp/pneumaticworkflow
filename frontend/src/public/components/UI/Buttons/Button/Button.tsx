@@ -31,6 +31,7 @@ export const Button = React.forwardRef(
     const buttonStyleClass = styles[buttonStyleClassMap[buttonStyle]];
 
     return (
+      // @ts-ignore — dynamic wrapper union type
       <Wrapper
         // @ts-ignore
         ref={ref}

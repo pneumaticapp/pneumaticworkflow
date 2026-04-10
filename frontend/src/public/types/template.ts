@@ -212,7 +212,8 @@ export interface IExtraField {
   name: string;
   type: EExtraFieldType;
   value?: TExtraFieldValue;
-  selections?: IExtraFieldSelection[];
+  selections?: IExtraFieldSelection[] | string[];
+  dataset?: number | null;
   attachments?: TUploadedFile[];
   order: number;
   userId: number | null;
@@ -316,3 +317,12 @@ export type TTemplatePreset = {
 };
 
 export type TAddTemplatePreset = Omit<TTemplatePreset, 'id' | 'author' | 'dateCreatedTsp'>;
+
+export enum ETemplatesTab {
+  Templates = 'templates',
+  Datasets = 'datasets',
+}
+
+export interface ITemplatesLayoutProps {
+  children: JSX.Element;
+}
