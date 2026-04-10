@@ -81,3 +81,10 @@
     color: var(--pneumatic-color-link-hover);
   }
 }
+
+.fieldset-output-group {
+  border-left: 3px solid var(--color-primary, #7B68EE);
+  padding-left: 12px;
+  margin-top: 8px;
+}
+

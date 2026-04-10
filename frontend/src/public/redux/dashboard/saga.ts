@@ -42,8 +42,9 @@ import { isArrayWithItems } from '../../utils/helpers';
 import { getTemplate } from '../../api/getTemplate';
 
 import { openRunWorkflowModal } from '../runWorkflowModal/actions';
-import { getRunnableWorkflow, loadDatasetsMap } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
-import { ITemplateResponse } from '../../types/template';
+import { getRunnableWorkflow, loadDatasetsMap, loadFieldsetsData } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
+import { ITemplateResponse, IExtraField } from '../../types/template';
+import { mapFieldsetTemplateToFieldsetData } from '../../utils/mapFieldsetTemplateToFieldsetData';
 import { getGettingStartedChecklist } from '../../api/getGettingStartedChecklist';
 import { IGettingStartedChecklist } from '../../types/dashboard';
 import { loadTemplateIntegrationsStats } from '../actions';
@@ -141,9 +142,12 @@ export function* openRunWorflowSaga({ payload: { templateId, ancestorTaskId } }:
     yield put(setGeneralLoaderVisibility(true));
     const resData: ITemplateResponse = yield getTemplate(templateId);
 
-    const datasetsMap: Record<number, string[]> = yield call(loadDatasetsMap, resData.kickoff);
+    const [datasetsMap, loadedFieldsets]: [Record<number, string[]>, any[]] = yield all([
+      call(loadDatasetsMap, resData.kickoff),
+      call(loadFieldsetsData, resData.kickoff),
+    ]);
 
-    const templateData = getRunnableWorkflow(resData, datasetsMap);
+    const templateData = getRunnableWorkflow(resData, datasetsMap, loadedFieldsets);
 
     if (templateData) {
       yield put(openRunWorkflowModal({ ...templateData, ancestorTaskId }));
@@ -162,7 +166,38 @@ export function* openRunWorflowByTemplateDataSaga({
   try {
     yield put(setGeneralLoaderVisibility(true));
 
-    yield put(openRunWorkflowModal({ ...templateData, ancestorTaskId }));
+    // Map fieldsets from template list API (full objects) to IFieldsetData[]
+    const kickoffFieldsets = templateData.kickoff?.fieldsets || [];
+    const loadedFieldsets = kickoffFieldsets.map(mapFieldsetTemplateToFieldsetData);
+
+    // Map kickoff fields from list API format to IExtraField[]
+    const kickoffFields: IExtraField[] = (templateData.kickoff?.fields || []).map(
+      (f: any, index: number) => ({
+        apiName: f.apiName || f.api_name || '',
+        name: f.name || '',
+        description: f.description || '',
+        type: f.type || 'string',
+        isRequired: f.isRequired ?? f.is_required ?? false,
+        isHidden: f.isHidden ?? f.is_hidden ?? false,
+        order: f.order ?? index,
+        value: f.default || '',
+        selections: f.selections || [],
+        dataset: f.dataset || null,
+        userId: null,
+        groupId: null,
+      }),
+    );
+
+    yield put(openRunWorkflowModal({
+      ...templateData,
+      kickoff: {
+        description: '',
+        fields: kickoffFields,
+        fieldsets: [],
+      },
+      loadedFieldsets,
+      ancestorTaskId,
+    }));
   } catch (error) {
     logger.info('fetch template error : ', error);
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });

@@ -1376,4 +1376,6 @@ export const ruMessages = {
   'tasks.task-fieldsets': 'Наборы полей',
   'template.fieldset-picker.placeholder': 'Выберите наборы полей...',
   'template.fieldset-picker.empty': 'Нет доступных наборов полей. Сначала создайте один.',
+  'fieldset.group-title': 'Набор полей: {name}',
+  'fieldset.validation-error.sum-max': 'Сумма числовых полей в «{name}» не должна превышать {value}.',
 };

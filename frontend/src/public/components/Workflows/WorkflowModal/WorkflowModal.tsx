@@ -273,6 +273,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
           containerClassName="mt-3"
           description={initialKickoff?.description}
           outputs={initialKickoff?.output}
+          fieldsets={initialKickoff?.fieldsets}
           onEdit={canEdit ? () => setIsEditKickoff(true) : undefined}
         />
       );
@@ -295,6 +296,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
         <EditKickoffContainer
           isLoading={isKickoffSaving}
           kickoff={editKickoff}
+          fieldsets={initialKickoff?.fieldsets}
           onEditField={handleEditField}
           onSave={() => this.handleEditProcess({ kickoff: editKickoff })}
           onCancel={handleCancel}

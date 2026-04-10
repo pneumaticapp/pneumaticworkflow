@@ -4,6 +4,7 @@ import { ITask, ITemplateStep, TaskWithTsp } from './tasks';
 import {
   IKickoff,
   IExtraField,
+  IFieldsetData,
   ITemplateTitle,
   ETemplateOwnerType,
   RawPerformer,
@@ -87,6 +88,7 @@ export interface IWorkflowDetailsKickoff {
   id: number;
   description: string | null;
   output: IExtraField[];
+  fieldsets?: IFieldsetData[];
 }
 
 export interface IWorkflowLogItem {

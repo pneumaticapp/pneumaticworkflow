@@ -1,0 +1,11 @@
+.fieldset-group {
+  border-left: 3px solid var(--color-primary, #7B68EE);
+  padding-left: 16px;
+  margin-bottom: 16px;
+}
+
+.fieldset-group__error {
+  color: var(--color-error, #e74c3c);
+  font-size: 13px;
+  margin-top: 4px;
+}

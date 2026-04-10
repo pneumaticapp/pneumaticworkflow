@@ -21,7 +21,7 @@ import {
   TPatchTemplatePayload,
   discardTemplateChanges,
 } from '../../../redux/actions';
-import { getRunnableWorkflow, loadDatasetsMap } from '../utils/getRunnableWorkflow';
+import { getRunnableWorkflow, loadDatasetsMap, loadFieldsetsData } from '../utils/getRunnableWorkflow';
 import { ETemplateStatus } from '../../../types/redux';
 import { IRunWorkflow } from '../../WorkflowEditPopup/types';
 import { WarningPopup } from '../../UI/WarningPopup';
@@ -103,8 +103,11 @@ export function TemplateControlls({
   const isSavedTemplate = React.useMemo(() => Boolean(templateId), [templateId]);
 
   const handleRunProcess = async () => {
-    const datasetsMap = await loadDatasetsMap(template.kickoff);
-    const runnableWorkflow = getRunnableWorkflow(template, datasetsMap);
+    const [datasetsMap, loadedFieldsets] = await Promise.all([
+      loadDatasetsMap(template.kickoff),
+      loadFieldsetsData(template.kickoff),
+    ]);
+    const runnableWorkflow = getRunnableWorkflow(template, datasetsMap, loadedFieldsets);
     if (runnableWorkflow) {
       openRunWorkflowModal(runnableWorkflow);
     }

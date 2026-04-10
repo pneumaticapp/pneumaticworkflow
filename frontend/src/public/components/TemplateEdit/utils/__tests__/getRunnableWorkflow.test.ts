@@ -185,11 +185,13 @@ const stringifyReturn = {
   kickoff: {
     description: '',
     fields: [],
+    fieldsets: [],
   },
   description: '12346789',
   performersCount: 1,
   tasksCount: 5,
   wfNameTemplate: null,
+  loadedFieldsets: [],
 };
 
 describe('getRunnableWorkflow.', () => {

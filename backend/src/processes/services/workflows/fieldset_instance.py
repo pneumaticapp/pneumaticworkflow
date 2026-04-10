@@ -23,7 +23,7 @@ def _sum_max_violation(fieldset: Fieldset) -> bool:
         type=FieldSetRuleType.SUM_MAX,
     )
     if not rules.exists():
-        return False
+        return None
     number_fields = list(
         fieldset.fields.filter(is_deleted=False, type=FieldType.NUMBER),
     )
@@ -42,13 +42,14 @@ def _sum_max_violation(fieldset: Fieldset) -> bool:
         except (InvalidOperation, TypeError, ValueError):
             continue
         if total > threshold:
-            return True
-    return False
+            return rule.value
+    return None
 
 
 def validate_fieldsets(fieldsets_qs):
     for fieldset in fieldsets_qs.filter(is_deleted=False):
-        if _sum_max_violation(fieldset):
+        max_value = _sum_max_violation(fieldset)
+        if max_value is not None:
             first = (
                 fieldset.fields.filter(
                     is_deleted=False,
@@ -59,7 +60,7 @@ def validate_fieldsets(fieldsets_qs):
             )
             raise TaskFieldException(
                 api_name=first.api_name if first else '',
-                message=MSG_FS_0002,
+                message=MSG_FS_0002(max_value),
             )
 
 

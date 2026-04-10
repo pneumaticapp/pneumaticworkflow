@@ -127,7 +127,7 @@ import { handleLoadTemplateVariables } from '../templates/saga';
 
 import { deleteWorkflow } from '../../api/deleteWorkflow';
 import { getTemplate } from '../../api/getTemplate';
-import { getRunnableWorkflow, loadDatasetsMap } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
+import { getRunnableWorkflow, loadDatasetsMap, loadFieldsetsData } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
 import { getClonedKickoff } from '../../components/Workflows/WorkflowsGridPage/WorkflowCard/utils/getClonedKickoff';
 import { getWorkflowsCurrentPerformerCounters } from '../../api/getWorkflowsCurrentPerformerCounters';
 import { getWorkflowsStartersCounters } from '../../api/getWorkflowsStartersCounters';
@@ -628,9 +628,12 @@ export function* cloneWorkflowSaga({
       throw new Error('failed to prepare runnable workflow object');
     }
 
-    const datasetsMap: Record<number, string[]> = yield call(loadDatasetsMap, template.kickoff);
+    const [datasetsMap, loadedFieldsets]: [Record<number, string[]>, any[]] = yield all([
+      call(loadDatasetsMap, template.kickoff),
+      call(loadFieldsetsData, template.kickoff),
+    ]);
 
-    const runnableWorkflow = getRunnableWorkflow(template, datasetsMap);
+    const runnableWorkflow = getRunnableWorkflow(template, datasetsMap, loadedFieldsets);
     if (!runnableWorkflow) {
       return;
     }

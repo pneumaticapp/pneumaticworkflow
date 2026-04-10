@@ -7,7 +7,7 @@ import { debounce } from 'throttle-debounce';
 import { useSelector } from 'react-redux';
 
 import { autoFocusFirstField } from '../../utils/autoFocusFirstField';
-import { EExtraFieldMode, ETaskPerformerType, ETemplateOwnerType, IExtraField } from '../../types/template';
+import { EExtraFieldMode, ETaskPerformerType, ETemplateOwnerType, IExtraField, IFieldsetData } from '../../types/template';
 import { sanitizeText } from '../../utils/strings';
 import { ITask } from '../../types/tasks';
 import {
@@ -30,6 +30,7 @@ import { Header } from '../UI/Typeography/Header';
 import { RichText } from '../RichText';
 import { getUserFullName } from '../../utils/users';
 import { ExtraFieldIntl } from '../TemplateEdit/ExtraFields';
+import { FieldsetFieldGroup } from '../FieldsetFieldGroup';
 import { isArrayWithItems, isEmptyArray } from '../../utils/helpers';
 import { useCheckDevice } from '../../hooks/useCheckDevice';
 import { history } from '../../utils/history';
@@ -136,6 +137,7 @@ export function TaskCard({
   const wrapperRef = useRef(null);
   const workflowLinkRef = useRef(null);
   const [outputValues, setOutputValues] = useState([] as IExtraField[]);
+  const [fieldsetOutputValues, setFieldsetOutputValues] = useState<IFieldsetData[]>(task.fieldsets || []);
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
@@ -377,10 +379,19 @@ export function TaskCard({
     });
   };
 
+  const handleEditFieldsetField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
+    setFieldsetOutputValues((prevFieldsets) =>
+      prevFieldsets.map((fs) => ({
+        ...fs,
+        fields: getEditedFields(fs.fields, apiName, changedProps),
+      })),
+    );
+  };
+
   const renderOutputFields = () => {
     const visibleOutputs = outputValues?.filter((field) => !field.isHidden);
 
-    if (!isArrayWithItems(visibleOutputs) || status === ETaskStatus.Completed) {
+    if ((!isArrayWithItems(visibleOutputs) && !isArrayWithItems(fieldsetOutputValues)) || status === ETaskStatus.Completed) {
       return null;
     }
 
@@ -404,6 +415,17 @@ export function TaskCard({
               accountId={accountId}
             />
           ))}
+        {fieldsetOutputValues.map((fs) => (
+          <FieldsetFieldGroup
+            key={fs.id}
+            fields={fs.fields}
+            onEditField={handleEditFieldsetField}
+            mode={EExtraFieldMode.ProcessRun}
+            labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
+            accountId={accountId}
+            fieldClassName={styles['task-output__field']}
+          />
+        ))}
       </div>
     );
   };
@@ -443,6 +465,9 @@ export function TaskCard({
     }
 
     const renderCompleteButton = (isDisabled: boolean) => {
+      const allFieldsetFields = fieldsetOutputValues.flatMap((fs) => fs.fields);
+      const mergedOutput = [...outputValues, ...allFieldsetFields];
+
       return (
         <Button
           isLoading={status === ETaskStatus.Completing}
@@ -450,7 +475,7 @@ export function TaskCard({
             setTaskCompleted({
               taskId,
               viewMode,
-              output: outputValues,
+              output: mergedOutput,
             })
           }
           label={formatMessage({ id: 'processes.complete-task' })}
