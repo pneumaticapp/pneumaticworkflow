@@ -26,7 +26,9 @@ class FieldsetTemplateRuleService(BaseModelService):
         return super().partial_update(**update_kwargs)
 
     def _validate(self, **kwargs):
-        rule_type = kwargs.get('type', self.instance.type)
+        rule_type = kwargs.get('type') or (
+            self.instance.type if self.instance else None
+        )
         validator = getattr(self, f'_validate_{rule_type}', None)
         validator(**kwargs)
 

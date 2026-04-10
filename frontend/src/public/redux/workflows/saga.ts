@@ -628,10 +628,8 @@ export function* cloneWorkflowSaga({
       throw new Error('failed to prepare runnable workflow object');
     }
 
-    const [datasetsMap, loadedFieldsets]: [Record<number, string[]>, any[]] = yield all([
-      call(loadDatasetsMap, template.kickoff),
-      call(loadFieldsetsData, template.kickoff),
-    ]);
+    const loadedFieldsets: any[] = yield call(loadFieldsetsData, template.kickoff);
+    const datasetsMap: Record<number, string[]> = yield call(loadDatasetsMap, template.kickoff, loadedFieldsets);
 
     const runnableWorkflow = getRunnableWorkflow(template, datasetsMap, loadedFieldsets);
     if (!runnableWorkflow) {

@@ -1,3 +1,4 @@
+from rest_framework.fields import CharField
 from rest_framework.serializers import (
     IntegerField,
     ModelSerializer,
@@ -26,6 +27,7 @@ class FieldsetTemplateRuleSerializer(
         )
 
     id = IntegerField(read_only=True)
+    api_name = CharField(required=False, max_length=200)
 
 
 class FieldsetTemplateSerializer(
@@ -45,6 +47,7 @@ class FieldsetTemplateSerializer(
         )
 
     id = IntegerField(read_only=True)
+    api_name = CharField(required=False, max_length=200)
     rules = FieldsetTemplateRuleSerializer(
         many=True,
         required=False,

@@ -75,7 +75,8 @@ from src.processes.services.events import (
 )
 from src.processes.services.exceptions import (
     CommentServiceException,
-    WorkflowActionServiceException, FieldsetRuleServiceException,
+    WorkflowActionServiceException,
+    FieldsetServiceException,
 )
 from src.processes.services.tasks.exceptions import (
     GroupPerformerServiceException,
@@ -525,7 +526,7 @@ class TaskViewSet(
             service.check_delay_workflow()
         except (
             WorkflowActionServiceException,
-            FieldsetRuleServiceException,
+            FieldsetServiceException,
         ) as ex:
             raise_validation_error(message=ex.message)
         except TaskFieldException as ex:

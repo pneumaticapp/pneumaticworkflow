@@ -142,10 +142,8 @@ export function* openRunWorflowSaga({ payload: { templateId, ancestorTaskId } }:
     yield put(setGeneralLoaderVisibility(true));
     const resData: ITemplateResponse = yield getTemplate(templateId);
 
-    const [datasetsMap, loadedFieldsets]: [Record<number, string[]>, any[]] = yield all([
-      call(loadDatasetsMap, resData.kickoff),
-      call(loadFieldsetsData, resData.kickoff),
-    ]);
+    const loadedFieldsets: any[] = yield call(loadFieldsetsData, resData.kickoff);
+    const datasetsMap: Record<number, string[]> = yield call(loadDatasetsMap, resData.kickoff, loadedFieldsets);
 
     const templateData = getRunnableWorkflow(resData, datasetsMap, loadedFieldsets);
 
@@ -188,14 +186,35 @@ export function* openRunWorflowByTemplateDataSaga({
       }),
     );
 
+    const kickoff = {
+      description: '',
+      fields: kickoffFields,
+      fieldsets: [] as number[],
+    };
+
+    // Load datasets for both kickoff fields and fieldset fields
+    const datasetsMap: Record<number, string[]> = yield call(loadDatasetsMap, kickoff, loadedFieldsets);
+
     yield put(openRunWorkflowModal({
       ...templateData,
       kickoff: {
-        description: '',
-        fields: kickoffFields,
-        fieldsets: [],
+        ...kickoff,
+        fields: kickoffFields.map((field) => ({
+          ...field,
+          selections: field.dataset
+            ? datasetsMap[field.dataset] || []
+            : field.selections,
+        })),
       },
-      loadedFieldsets,
+      loadedFieldsets: loadedFieldsets.map((fs) => ({
+        ...fs,
+        fields: fs.fields.map((field) => ({
+          ...field,
+          selections: field.dataset
+            ? datasetsMap[field.dataset] || []
+            : field.selections,
+        })),
+      })),
       ancestorTaskId,
     }));
   } catch (error) {

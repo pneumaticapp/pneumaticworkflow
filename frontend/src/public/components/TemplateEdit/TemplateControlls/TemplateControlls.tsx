@@ -103,10 +103,8 @@ export function TemplateControlls({
   const isSavedTemplate = React.useMemo(() => Boolean(templateId), [templateId]);
 
   const handleRunProcess = async () => {
-    const [datasetsMap, loadedFieldsets] = await Promise.all([
-      loadDatasetsMap(template.kickoff),
-      loadFieldsetsData(template.kickoff),
-    ]);
+    const loadedFieldsets = await loadFieldsetsData(template.kickoff);
+    const datasetsMap = await loadDatasetsMap(template.kickoff, loadedFieldsets);
     const runnableWorkflow = getRunnableWorkflow(template, datasetsMap, loadedFieldsets);
     if (runnableWorkflow) {
       openRunWorkflowModal(runnableWorkflow);

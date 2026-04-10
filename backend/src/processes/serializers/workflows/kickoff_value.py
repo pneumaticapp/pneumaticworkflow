@@ -14,6 +14,7 @@ from src.processes.serializers.workflows.field import (
 from src.processes.serializers.workflows.fieldset import (
     FieldSetSerializer,
 )
+from src.processes.services.exceptions import FieldsetServiceException
 from src.processes.services.tasks.exceptions import (
     TaskFieldException,
 )
@@ -97,6 +98,10 @@ class KickoffValueSerializer(
                     kickoff_id=instance.id,
                     fields_data=fields_data,
                 )
+                try:
+                    service.validate_rules()
+                except FieldsetServiceException as ex:
+                    self.raise_validation_error(message=ex.message)
             for field_template in kickoff.fields.filter(fieldset__isnull=True):
                 service = TaskFieldService(user=self.context['user'])
                 service.create(
@@ -105,7 +110,7 @@ class KickoffValueSerializer(
                     kickoff_id=instance.id,
                     value=fields_data.get(field_template.api_name),
                 )
-        except TaskFieldException as ex:
+        except (TaskFieldException, FieldsetServiceException) as ex:
             self.raise_validation_error(
                 message=ex.message,
                 api_name=ex.api_name,
@@ -147,10 +152,13 @@ class KickoffValueSerializer(
                     )
             if fieldsets_ids:
                 fieldsets = FieldSet.objects.filter(id__in=fieldsets_ids)
-                for fieldset in fieldsets:
-                    service = FieldSetService(
-                        user=self.context['user'],
-                        instance=fieldset,
-                    )
-                    service.validate_rules()
+                try:
+                    for fieldset in fieldsets:
+                        service = FieldSetService(
+                            user=self.context['user'],
+                            instance=fieldset,
+                        )
+                        service.validate_rules()
+                except FieldsetServiceException as ex:
+                    self.raise_validation_error(message=ex.message)
         return instance

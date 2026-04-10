@@ -21,6 +21,7 @@ export interface IEditKickoffProps {
   isLoading?: boolean;
   accountId: number;
   onEditField(apiName: string): (changedProps: Partial<IExtraField>) => void;
+  onEditFieldsetField?(apiName: string): (changedProps: Partial<IExtraField>) => void;
   onSave?(): void;
   onCancel?(): void;
 }
@@ -31,6 +32,7 @@ export function EditKickoff({
   isLoading = false,
   accountId,
   onEditField,
+  onEditFieldsetField,
   onSave,
   onCancel,
 }: IEditKickoffProps) {
@@ -95,7 +97,7 @@ export function EditKickoff({
             <FieldsetFieldGroup
               key={fs.id}
               fields={fs.fields}
-              onEditField={onEditField}
+              onEditField={onEditFieldsetField || onEditField}
               mode={EExtraFieldMode.ProcessRun}
               labelBackgroundColor={EInputNameBackgroundColor.White}
               accountId={accountId}

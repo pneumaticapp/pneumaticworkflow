@@ -62,6 +62,8 @@ class FieldsetTemplateRule(
     class Meta:
         ordering = ['-id']
 
+    api_name_prefix = 'fieldsetrule'
+
     fieldset = models.ForeignKey(
         FieldsetTemplate,
         on_delete=models.CASCADE,

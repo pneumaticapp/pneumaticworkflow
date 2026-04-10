@@ -32,8 +32,9 @@ class FieldSetService(BaseModelService):
     def _create_fields(
         self,
         instance_template: FieldsetTemplate,
-        fields_data: Optional[List[Dict]],
+        fields_data: Optional[List[Dict]] = None,
         skip_value: bool = False,
+        **kwargs,
     ):
         fields_data = fields_data or {}
         for field_template in instance_template.fields.all():
@@ -44,8 +45,8 @@ class FieldSetService(BaseModelService):
             )
             field_service.create(
                 instance_template=field_template,
-                workflow=self.instance.workflow,
-                fieldset=self.instance,
+                workflow_id=self.instance.workflow_id,
+                fieldset_id=self.instance.id,
                 skip_value=skip_value,
                 value=fields_data.get(field_template.api_name, ''),
             )

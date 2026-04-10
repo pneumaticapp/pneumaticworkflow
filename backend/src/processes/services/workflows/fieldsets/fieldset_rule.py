@@ -2,7 +2,7 @@ from django.contrib.auth import get_user_model
 from src.processes.messages.fieldset import MSG_FS_0002
 from src.processes.models.workflows.fieldset import FieldSetRule
 from src.processes.services.base import BaseModelService
-from src.processes.services.exceptions import FieldsetRuleServiceException
+from src.processes.services.exceptions import FieldsetServiceException
 
 
 UserModel = get_user_model()
@@ -10,8 +10,10 @@ UserModel = get_user_model()
 
 class FieldSetRuleService(BaseModelService):
 
+    NULL_VALUES = (None, '', [])
+
     def create(self, **kwargs) -> FieldSetRule:
-        if not kwargs.get('skip_validation'):
+        if kwargs.get('skip_validation') is False:
             self.validate(**kwargs)
         return super().create(**kwargs)
 
@@ -32,9 +34,10 @@ class FieldSetRuleService(BaseModelService):
         threshold = float(kwargs.get('value', self.instance.value))
         total = 0
         for field in fieldset.fields.all():
-            total += float(field.value)
+            if field.value not in self.NULL_VALUES:
+                total += float(field.value)
         if total > threshold:
-            raise FieldsetRuleServiceException(MSG_FS_0002(threshold))
+            raise FieldsetServiceException(MSG_FS_0002(threshold))
 
     def _create_instance(self, instance_template, **kwargs):
         self.instance = FieldSetRule.objects.create(

@@ -248,8 +248,3 @@ class FieldTemplateUserMustBeRequired(FieldTemplateServiceException):
 class FieldsetServiceException(BaseServiceException):
 
     pass
-
-
-class FieldsetRuleServiceException(BaseServiceException):
-
-    pass

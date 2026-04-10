@@ -1,6 +1,6 @@
 /* eslint-disable */
 /* prettier-ignore */
-import { ITemplate, ITemplateTask, IKickoff, IFieldsetData } from '../../../types/template';
+import { ITemplate, ITemplateTask, IKickoff, IFieldsetData, IExtraField } from '../../../types/template';
 import { setPerformersCounts } from '../../../utils/template';
 import { IRunWorkflow } from '../../WorkflowEditPopup/types';
 import { normalizeSelections } from './normalizeSelections';
@@ -16,16 +16,21 @@ import { getDataset } from '../../../api/datasets/getDataset';
 import { getFieldset } from '../../../api/fieldsets/getFieldset';
 import { mapFieldsetTemplateToFieldsetData } from '../../../utils/mapFieldsetTemplateToFieldsetData';
 
-function getKickoffDatasetIds(kickoff: IKickoff): number[] {
+function getKickoffDatasetIds(kickoff: IKickoff, fieldsets: IFieldsetData[] = []): number[] {
   const ids = new Set<number>();
   for (const field of kickoff.fields) {
     if (field.dataset) ids.add(field.dataset);
   }
+  for (const fs of fieldsets) {
+    for (const field of fs.fields) {
+      if (field.dataset) ids.add(field.dataset);
+    }
+  }
   return [...ids];
 }
 
-export async function loadDatasetsMap(kickoff: IKickoff): Promise<Record<number, string[]>> {
-  const datasetIds = getKickoffDatasetIds(kickoff);
+export async function loadDatasetsMap(kickoff: IKickoff, fieldsets: IFieldsetData[] = []): Promise<Record<number, string[]>> {
+  const datasetIds = getKickoffDatasetIds(kickoff, fieldsets);
   if (datasetIds.length === 0) {
     return {};
   }
@@ -61,15 +66,19 @@ export async function loadFieldsetsData(kickoff: IKickoff): Promise<IFieldsetDat
 }
 
 
+function applyDatasetsToFields(fields: IExtraField[], datasetsMap: Record<number, string[]>): IExtraField[] {
+  return fields.map((field) => ({
+    ...field,
+    selections: field.dataset
+      ? datasetsMap[field.dataset] || []
+      : normalizeSelections(field.selections),
+  }));
+}
+
 function convertSelectionsToValues(kickoff: IKickoff, datasetsMap: Record<number, string[]>): IKickoff {
   return {
     ...kickoff,
-    fields: kickoff.fields.map((field) => ({
-      ...field,
-      selections: field.dataset
-        ? datasetsMap[field.dataset] || []
-        : normalizeSelections(field.selections),
-    })),
+    fields: applyDatasetsToFields(kickoff.fields, datasetsMap),
   };
 }
 
@@ -92,7 +101,10 @@ export const getRunnableWorkflow = (
     performersCount,
     tasksCount: tasks.length,
     wfNameTemplate,
-    loadedFieldsets,
+    loadedFieldsets: loadedFieldsets.map((fs) => ({
+      ...fs,
+      fields: applyDatasetsToFields(fs.fields, datasetsMap),
+    })),
   };
 };
 
