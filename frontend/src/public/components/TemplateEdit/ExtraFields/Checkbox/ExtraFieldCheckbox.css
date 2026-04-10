@@ -19,8 +19,7 @@
 }
 
 .kickoff-create-field-name-input {
-  padding: 0 4px 0 0;
-  max-width: calc(100% - 5px);
+  padding: 0;
   line-height: 20px;
   border: none;
 
@@ -89,6 +88,8 @@
 }
 
 .kickoff-create-field-add-option {
+  @mixin text-small;
+
   margin: 0;
   padding: 0;
   overflow: visible;
