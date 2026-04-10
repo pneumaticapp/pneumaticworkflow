@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import Switch from 'rc-switch';
 import { Link } from 'react-router-dom';
 import classnames from 'classnames';
@@ -38,6 +38,8 @@ import { checkShowDraftTemplateWarning } from '../../Templates';
 import styles from './TemplateControlls.css';
 import { getSubscriptionPlan } from '../../../redux/selectors/user';
 import { ESubscriptionPlan } from '../../../types/account';
+import { setExtraFieldLabelsBesideForTemplate } from '../../../redux/template/actions';
+import { useExtraFieldLabelsBesideForTemplate } from '../../../hooks/useExtraFieldLabelsBesideForTemplate';
 
 export interface ITemplateControllsProps {
   template: ITemplate;
@@ -63,6 +65,18 @@ export function TemplateControlls({
   const intl = useIntl();
   const { formatMessage } = intl;
   const dispatch = useDispatch();
+  const labelsBeside = useExtraFieldLabelsBesideForTemplate(template.id);
+
+  const handleLabelsBesideChange = useCallback(
+    (value: boolean) => {
+      if (template.id === undefined) {
+        return;
+      }
+
+      dispatch(setExtraFieldLabelsBesideForTemplate({ templateId: template.id, value }));
+    },
+    [dispatch, template.id],
+  );
   const billingPlan = useSelector(getSubscriptionPlan);
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
   const accessConditions = isSubscribed || isFreePlan;
@@ -334,6 +348,23 @@ export function TemplateControlls({
       </div>
 
       <div className={styles['info-controls-switch']}>
+        {templateId && (
+          <div className={styles['info-control']}>
+            <div className={styles['switch-label']}>
+              {formatMessage({ id: 'template.kick-off-form-labels-beside' })}
+            </div>
+            <Switch
+              className={classnames(
+                'custom-switch custom-switch-primary custom-switch-small ml-auto',
+                styles['info-control_switch'],
+              )}
+              checked={labelsBeside}
+              checkedChildren={null}
+              unCheckedChildren={null}
+              onChange={handleLabelsBesideChange}
+            />
+          </div>
+        )}
         <div className={styles['info-control']}>
           <div className={styles['switch-label']}>
             <IntlMessages id="templates.enable-to-complete-workflow" />

@@ -18,6 +18,7 @@ export interface IEditKickoffProps {
   kickoff: IKickoff | null;
   isLoading?: boolean;
   accountId: number;
+  templateId?: number;
   onEditField(apiName: string): (changedProps: Partial<IExtraField>) => void;
   onSave?(): void;
   onCancel?(): void;
@@ -27,6 +28,7 @@ export function EditKickoff({
   kickoff,
   isLoading = false,
   accountId,
+  templateId,
   onEditField,
   onSave,
   onCancel,
@@ -86,6 +88,7 @@ export function EditKickoff({
               descriptionPlaceholder={field.description}
               wrapperClassName={styles['kickoff__field']}
               accountId={accountId}
+              templateId={templateId}
             />
           ))}
         </div>

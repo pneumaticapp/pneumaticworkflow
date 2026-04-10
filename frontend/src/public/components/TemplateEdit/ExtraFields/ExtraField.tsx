@@ -36,6 +36,8 @@ export interface IWorkflowExtraFieldProps {
   isDisabled?: boolean;
   innerRef?: Ref<HTMLInputElement>;
   accountId: number;
+  /** Template this field belongs to; drives per-template label layout preference. */
+  templateId?: number;
 }
 
 interface IExtraFieldProps extends IWorkflowExtraFieldProps {

@@ -286,6 +286,7 @@ function WorkflowEditPopupComponent({
                         descriptionPlaceholder={field.description}
                         wrapperClassName={styles['kickoff-extra-field']}
                         accountId={accountId}
+                        templateId={workflow.id}
                       />
                   ))}
                 </div>

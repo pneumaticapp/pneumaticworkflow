@@ -402,6 +402,7 @@ export function TaskCard({
               descriptionPlaceholder={field.description}
               wrapperClassName={styles['task-output__field']}
               accountId={accountId}
+              templateId={workflow?.template?.id}
             />
           ))}
       </div>

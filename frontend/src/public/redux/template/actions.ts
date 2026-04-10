@@ -26,6 +26,7 @@ export const enum ETemplateActions {
   StopAITemplateGeneration = 'STOP_AI_TEMPLATE_GENERATION',
   ApplyAITemplate = 'APPLY_AI_TEMPLATE',
   DiscardChanges = 'DISCARD_TEMPLATE_CHANGES',
+  SetExtraFieldLabelsBesideForTemplate = 'SET_EXTRA_FIELD_LABELS_BESIDE_FOR_TEMPLATE',
 }
 
 export type TLoadTemplate = ITypedReduxAction<ETemplateActions.Load, number>;
@@ -191,6 +192,18 @@ export const discardTemplateChanges: (payload: TDiscardChangesPayload) => TDisca
   TDiscardChangesPayload
 >(ETemplateActions.DiscardChanges);
 
+export type TSetExtraFieldLabelsBesideForTemplatePayload = { templateId: number; value: boolean };
+export type TSetExtraFieldLabelsBesideForTemplate = ITypedReduxAction<
+  ETemplateActions.SetExtraFieldLabelsBesideForTemplate,
+  TSetExtraFieldLabelsBesideForTemplatePayload
+>;
+export const setExtraFieldLabelsBesideForTemplate: (
+  payload: TSetExtraFieldLabelsBesideForTemplatePayload,
+) => TSetExtraFieldLabelsBesideForTemplate = actionGenerator<
+  ETemplateActions.SetExtraFieldLabelsBesideForTemplate,
+  TSetExtraFieldLabelsBesideForTemplatePayload
+>(ETemplateActions.SetExtraFieldLabelsBesideForTemplate);
+
 export type TTemplateActions =
   | TLoadTemplate
   | TSetTemplate
@@ -212,4 +225,5 @@ export type TTemplateActions =
   | TStopAITemplateGeneration
   | TLoadFromSystemSuccess
   | TApplyAITemplate
-  | TDiscardChanges;
+  | TDiscardChanges
+  | TSetExtraFieldLabelsBesideForTemplate;

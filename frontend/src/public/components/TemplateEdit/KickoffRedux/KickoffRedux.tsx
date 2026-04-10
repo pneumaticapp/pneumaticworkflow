@@ -35,11 +35,12 @@ export interface IKickoffReduxProps {
 }
 
 export function KickoffRedux({
-  template: { kickoff, wfNameTemplate },
+  template,
   intl: { formatMessage },
   setKickoff,
   accountId,
 }: IKickoffReduxProps) {
+  const { kickoff, wfNameTemplate, id: templateId } = template;
   const dispatch = useDispatch();
   const [isOpen, setIsOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
@@ -158,6 +159,7 @@ export function KickoffRedux({
                 moveFieldDown={() => handleMoveField(index, EMoveDirections.Down)}
                 editField={handleEditField(field.apiName)}
                 accountId={accountId}
+                templateId={templateId}
               />
             ))}
           </div>

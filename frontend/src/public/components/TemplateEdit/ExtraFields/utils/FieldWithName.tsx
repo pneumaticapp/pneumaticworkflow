@@ -41,6 +41,7 @@ interface IKickoffFormFieldWithNameProps {
   onClick?(): void;
   onNumericKeyDown?(event: KeyboardEvent<HTMLInputElement>): void;
   isNumericField?: boolean;
+  isNameLabelOnTheLeft?: boolean;
 }
 
 const assignInputRef = (
@@ -78,6 +79,7 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
       accountId,
       onNumericKeyDown,
       isNumericField,
+      isNameLabelOnTheLeft = false,
     },
     ref,
   ) => {
@@ -159,8 +161,17 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
       [onClick, handleDescriptionWrapperKeyDown],
     );
 
+    const fieldLayoutClassName = useMemo(
+      () =>
+        classnames(
+          styles['kick-off-input__field'],
+          isNameLabelOnTheLeft && styles['kick-off-input__field_name-left'],
+        ),
+      [isNameLabelOnTheLeft],
+    );
+
     return (
-      <div className={styles['kick-off-input__field']} data-autofocus-first-field>
+      <div className={fieldLayoutClassName} data-autofocus-first-field>
         <div className={fieldNameClassName}>
           {isKickoffEditorMode ? (
             <>

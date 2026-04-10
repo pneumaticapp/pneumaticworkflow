@@ -2,6 +2,7 @@ import * as React from 'react';
 
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { EExtraFieldMode } from '../../../../types/template';
+import { useExtraFieldLabelsBesideForTemplate } from '../../../../hooks/useExtraFieldLabelsBesideForTemplate';
 import { EFieldTagName } from '../../../Field';
 import { FieldWithName } from '../utils/FieldWithName';
 
@@ -18,7 +19,10 @@ export const ExtraFieldText = ({
   labelBackgroundColor,
   innerRef,
   accountId,
+  templateId,
 }: IWorkflowExtraFieldProps) => {
+  const isNameLabelOnTheLeft = useExtraFieldLabelsBesideForTemplate(templateId);
+
   const handleChangeName = React.useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       editField({ name: e.target.value });
@@ -51,6 +55,7 @@ export const ExtraFieldText = ({
       validate={getFieldValidator(field, mode)}
       isDisabled={isDisabled}
       accountId={accountId}
+      isNameLabelOnTheLeft={isNameLabelOnTheLeft}
     />
   );
 };

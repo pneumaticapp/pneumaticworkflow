@@ -295,6 +295,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
         <EditKickoffContainer
           isLoading={isKickoffSaving}
           kickoff={editKickoff}
+          templateId={workflow?.template?.id}
           onEditField={handleEditField}
           onSave={() => this.handleEditProcess({ kickoff: editKickoff })}
           onCancel={handleCancel}

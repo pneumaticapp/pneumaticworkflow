@@ -15,6 +15,4 @@ export const changeLocaleSettings = (locale: ELocale) => {
   return changeLocale(locale);
 };
 
-export type TSettingsActions =
-  TChangeLocale
-;
+export type TSettingsActions = TChangeLocale;

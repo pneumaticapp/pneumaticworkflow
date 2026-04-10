@@ -684,6 +684,7 @@ export const enMessages = {
   'template.kick-off-form-copy-link': 'Copy Link',
   'template.kick-off-form-unfilled-value': '(Unfilled)',
   'template.kick-off-form-input-title': 'Click the icon to add a new Field to the form',
+  'template.kick-off-form-labels-beside': 'Labels beside fields',
   'template.kick-off-form-share.paid-feature': 'Template Kick-off forms can be shared only in the Premium plan.',
   'template.enable-access': 'Enable access',
   'template.share-kick-off-form-title': 'Share the Kick-Off form',

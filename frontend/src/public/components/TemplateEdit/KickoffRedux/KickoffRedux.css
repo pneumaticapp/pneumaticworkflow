@@ -95,6 +95,47 @@
     min-width: 0;
   }
 
+  .kick-off-input__field_name-left {
+    flex-direction: row;
+    align-items: center;
+    column-gap: 1.6rem;
+
+    @media (--mobile) {
+      flex-direction: column;
+      align-items: stretch;
+      column-gap: 0;
+    }
+
+    .kick-off-input__name {
+      margin: 0;
+      box-sizing: border-box;
+      flex: 0 0 25%;
+      width: 25%;
+      min-width: 0;
+      max-width: 25%;
+      align-items: center;
+
+      @media (--mobile) {
+        margin: 0 1.2rem -1rem;
+        flex: none;
+        width: calc(100% - 2.4rem);
+        max-width: none;
+        align-items: flex-end;
+      }
+    }
+
+    .kick-off-input__description {
+      display: flex;
+      flex: 1 1 auto;
+      align-items: center;
+      min-width: 0;
+
+      @media (--mobile) {
+        align-items: stretch;
+      }
+    }
+  }
+
   svg {
     margin-bottom: 0.2rem;
   }

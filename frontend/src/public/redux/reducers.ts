@@ -29,7 +29,6 @@ import workflows from './workflows/slice';
 import accounts from './accounts/slice';
 import tasks from './tasks/slice';
 
-
 export const reducers = combineReducers({
   general,
   accounts,

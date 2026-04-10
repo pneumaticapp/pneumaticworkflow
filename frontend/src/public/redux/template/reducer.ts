@@ -36,6 +36,7 @@ export const initialTemplate: ITemplateStore = {
     generationStatus: 'initial',
     generatedData: null,
   },
+  extraFieldLabelsBesideByTemplateId: {},
 };
 
 export const reducer = (state = initialTemplate, action: TTemplateActions): ITemplateStore => {
@@ -73,7 +74,10 @@ export const reducer = (state = initialTemplate, action: TTemplateActions): ITem
         draftState.data = action.payload;
       });
     case ETemplateActions.ResetTemplateStore:
-      return initialTemplate;
+      return {
+        ...initialTemplate,
+        extraFieldLabelsBesideByTemplateId: state.extraFieldLabelsBesideByTemplateId,
+      };
     case ETemplateActions.SetTemplateStatus:
       return produce(state, (draftState) => {
         draftState.status = action.payload;
@@ -89,6 +93,16 @@ export const reducer = (state = initialTemplate, action: TTemplateActions): ITem
     case ETemplateActions.SetAITemplateData:
       return produce(state, (draftState) => {
         draftState.AITemplate.generatedData = action.payload.template;
+      });
+
+    case ETemplateActions.SetExtraFieldLabelsBesideForTemplate:
+      return produce(state, (draftState) => {
+        const { templateId, value } = action.payload;
+        if (value) {
+          draftState.extraFieldLabelsBesideByTemplateId[templateId] = true;
+        } else {
+          delete draftState.extraFieldLabelsBesideByTemplateId[templateId];
+        }
       });
 
     default:

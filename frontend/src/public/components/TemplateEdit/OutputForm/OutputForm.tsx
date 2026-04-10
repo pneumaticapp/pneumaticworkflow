@@ -24,10 +24,19 @@ export interface IOutputFormOwnProps {
   show?: boolean;
   isDisabled: boolean;
   accountId: number;
+  templateId?: number;
   onOutputChange(value: IExtraField[]): void;
 }
 
-export function OutputForm({ fields, onOutputChange, intl, isDisabled, show, accountId }: IOutputFormOwnProps) {
+export function OutputForm({
+  fields,
+  onOutputChange,
+  intl,
+  isDisabled,
+  show,
+  accountId,
+  templateId,
+}: IOutputFormOwnProps) {
   const outputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
@@ -101,6 +110,7 @@ export function OutputForm({ fields, onOutputChange, intl, isDisabled, show, acc
               isDisabled={isDisabled}
               innerRef={outputRef}
               accountId={accountId}
+              templateId={templateId}
             />
           ))}
         </div>

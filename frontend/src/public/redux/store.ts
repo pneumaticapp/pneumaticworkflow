@@ -24,12 +24,15 @@ export const initialState = {} as IApplicationState;
 export function configureStore(state: IApplicationState = initialState) {
   const saveDashboardModeFilter = createFilter<IApplicationState, {}>('dashboard', ['mode']);
   const saveTasksSortingFilter = createFilter<IApplicationState, {}>('tasks', ['tasksSettings.sorting']);
+  const saveTemplateFieldLayoutFilter = createFilter<IApplicationState, {}>('template', [
+    'extraFieldLabelsBesideByTemplateId',
+  ]);
 
   const persistConfig: PersistConfig<IApplicationState> = {
     key: 'primary',
     storage: localStorage,
-    transforms: [saveDashboardModeFilter, saveTasksSortingFilter],
-    whitelist: ['dashboard', 'tasks'],
+    transforms: [saveDashboardModeFilter, saveTasksSortingFilter, saveTemplateFieldLayoutFilter],
+    whitelist: ['dashboard', 'tasks', 'template'],
     stateReconciler: (inbound, original) => {
       const reconcilationResult = merge(original, inbound);
 

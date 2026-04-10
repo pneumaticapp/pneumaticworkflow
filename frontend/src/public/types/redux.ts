@@ -304,6 +304,8 @@ export interface ITemplateStore {
     generationStatus: TAITemplateGenerationStatus;
     generatedData: ITemplate | null;
   };
+  /** Client-only UI map: template id -> true when labels are beside the field; omitted id means stacked (default). */
+  extraFieldLabelsBesideByTemplateId: Record<number, boolean>;
 }
 
 export interface ITemplatesList {

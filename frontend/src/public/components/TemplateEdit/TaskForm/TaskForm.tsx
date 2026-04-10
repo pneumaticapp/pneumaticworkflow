@@ -39,6 +39,7 @@ export interface ITaskFormProps {
   isTeamInvitesModalOpen: boolean;
   tasks: ITemplateTask[];
   kickoff: IKickoff;
+  templateId: number | undefined;
   patchTask(args: TPatchTaskPayload): void;
 }
 
@@ -55,7 +56,7 @@ export function TaskForm({
   kickoff,
   patchTask,
   templateId,
-}: ITaskFormProps & { templateId: number | undefined }) {
+}: ITaskFormProps) {
   if (!task) return null;
   const { formatMessage } = useIntl();
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -170,6 +171,7 @@ export function TaskForm({
           isDisabled={false}
           show={ETaskFormParts.Fields === scrollTarget}
           accountId={accountId}
+          templateId={templateId}
         />
       ),
       widget: createWidget(TaskRenderExtraFieldsInfo, { task }),

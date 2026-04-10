@@ -630,6 +630,7 @@ export const ruMessages = {
   'template.kick-off-form-copy-link': 'Скопировать ссылку',
   'template.kick-off-form-unfilled-value': '(Не заполнено)',
   'template.kick-off-form-input-title': 'Нажмите на иконку, чтобы добавить новое Поле в форму',
+  'template.kick-off-form-labels-beside': 'Подписи сбоку',
   'template.kick-off-form-share.paid-feature': 'Шаблоны стартовых форм могут быть поделены только в Премиум-плане.',
   'template.enable-access': 'Включить доступ',
   'template.share-kick-off-form-title': 'Поделитесь формой запуска процесса',
