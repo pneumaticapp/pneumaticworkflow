@@ -1,4 +1,5 @@
 import pytest
+from rest_framework import status
 
 from src.accounts.enums import BillingPlanType
 from src.processes.enums import (
@@ -1764,3 +1765,38 @@ class TestWorkflowCountsByTemplateTask:
             template_task_2.api_name
         )
         assert response.data[1]['workflows_count'] == 0
+
+
+def test_workflow_counts__template_starter__includes_own_workflows(api_client):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    create_test_workflow(template=template, user=starter_user)
+
+    api_client.token_authenticate(starter_user)
+
+    # act
+    response = api_client.get('/workflows/count/by-workflow-starter')
+
+    # assert
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    starter_counts = next(x for x in data if x['source_id'] == starter_user.id)
+    assert starter_counts['workflows_count'] == 1

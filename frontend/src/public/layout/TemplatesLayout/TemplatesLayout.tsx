@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useLocation } from 'react-router-dom';
 import { useIntl } from 'react-intl';
 import { useSelector, useDispatch } from 'react-redux';
 
@@ -23,6 +24,7 @@ import { ReturnLink } from '../../components/UI/ReturnLink';
 export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
+  const { pathname } = useLocation();
 
   const datasetsSorting = useSelector(getDatasetsSorting);
   const fieldsetsSorting = useSelector(getFieldsetsSorting);
@@ -31,6 +33,7 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
     dispatch(setDatasetsListSorting(value));
   };
 
+<<<<<<< HEAD
   const handleFieldsetsSortingChange = (value: EFieldsetsSorting) => {
     dispatch(setFieldsetsListSorting(value));
   };
@@ -41,6 +44,11 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
   const activeTab = history.location.pathname.startsWith(ERoutes.Fieldsets)
     ? ETemplatesTab.Fieldsets
     : history.location.pathname.startsWith(ERoutes.Datasets)
+=======
+  const isDatasetDetail = /^\/datasets\/\d+\/?$/.test(pathname);
+
+  const activeTab = pathname.startsWith(ERoutes.Datasets)
+>>>>>>> 7c27e20a347976deeb02ede3e10bef1c8ceb3189
     ? ETemplatesTab.Datasets
     : ETemplatesTab.Templates;
 
@@ -104,6 +112,7 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
           {activeTab === ETemplatesTab.Templates && <TemplatesSortingContainer />}
           {activeTab === ETemplatesTab.Datasets && (
             <SelectMenu
+              closeOnSelect
               activeValue={datasetsSorting}
               values={datasetsSortingValues}
               toggleTextClassName={styles['dataset__sorting-toggle-text']}

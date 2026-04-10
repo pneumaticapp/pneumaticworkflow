@@ -33,7 +33,6 @@ from src.processes.models.templates.owner import TemplateOwner
 from src.processes.permissions import (
     TemplateAccessPermission,
     TemplateAdminOwnerPermission,
-    TemplateOwnerOrViewerPermission,
     TemplateFieldsPermission,
 )
 from src.processes.queries import (
@@ -152,7 +151,7 @@ class TemplateViewSet(
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
                 UsersOverlimitedPermission(),
-                TemplateOwnerOrViewerPermission(),
+                TemplateAccessPermission(),
             )
         if self.action == 'retrieve':
             return (

@@ -27,6 +27,7 @@ import { ELoggedState, IAuthUser } from '../../types/redux';
 import { CollectPaymentDetails } from '../CollectPaymentDetails';
 import { AfterPaymentDetailsProvided } from '../AfterPaymentDetailsProvided';
 import { getTemplatesStore } from '../../redux/selectors/templates';
+import { getCanAccessWorkflows } from '../../redux/selectors/user';
 
 export interface IAppRoutesProps {
   user: IAuthUser;
@@ -47,6 +48,7 @@ const REDIRECT_FORBIDDEN_ROUTES = [
 
 export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
   const { isTemplateOwner } = useSelector(getTemplatesStore);
+  const canAccessWorkflowsObj = useSelector(getCanAccessWorkflows);
   const redirectUrl = sessionStorage.getItem(REDIRECT_URL_STORAGE_KEY);
 
   const shouldRedirectToUrl = redirectUrl && !checkSomeRouteIsActive(...REDIRECT_FORBIDDEN_ROUTES);
@@ -75,20 +77,20 @@ export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
             <Route path={ERoutes.Settings} component={Settings} />
             <ProtectedRoute
               path={ERoutes.Workflows}
-              hasAccess={user.isAdmin || user.hasWorkflowViewerAccess}
+              hasAccess={canAccessWorkflowsObj}
             >
               <WorkflowsView />
             </ProtectedRoute>
             <ProtectedRoute
               path={ERoutes.WorkflowDetail}
-              hasAccess={user.isAdmin || user.hasWorkflowViewerAccess}
+              hasAccess={canAccessWorkflowsObj}
             >
               <WorkflowsView />
             </ProtectedRoute>
             <ProtectedRoute path={ERoutes.TemplatesCreate} hasAccess={user.isAdmin}>
               <TemplateView />
             </ProtectedRoute>
-            <ProtectedRoute path={ERoutes.TemplateView} hasAccess={canAccessTemplates || user.hasWorkflowViewerAccess}>
+            <ProtectedRoute path={ERoutes.TemplateView} hasAccess={canAccessTemplates || canAccessWorkflowsObj}>
               <TemplateView />
             </ProtectedRoute>
             <ProtectedRoute path={ERoutes.TemplatesEdit} hasAccess={user.isAdmin}>
@@ -100,7 +102,7 @@ export function AppRoutes({ containerClassnames, user }: IAppRoutesProps) {
             <Route path={ERoutes.Tasks} component={TasksView} />
             <ProtectedRoute
               path={ERoutes.Highlights}
-              hasAccess={user.isAdmin || user.hasWorkflowViewerAccess}
+              hasAccess={canAccessWorkflowsObj}
             >
               <HighlightsView />
             </ProtectedRoute>

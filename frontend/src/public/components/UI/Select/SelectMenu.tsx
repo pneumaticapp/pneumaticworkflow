@@ -19,6 +19,7 @@ export interface ISelectMenuProps<T extends string> {
   containerClassName?: string;
   isDisabled?: boolean;
   hideSelectedOption?: boolean;
+  closeOnSelect?: boolean;
   onChange(value: T): void;
   Icon?(props: React.SVGAttributes<SVGElement>): JSX.Element;
   isFromCheckIfConditions?: boolean;
@@ -36,6 +37,7 @@ export const SelectMenu = <T extends string>({
   menuClassName,
   hideSelectedOption,
   containerClassName,
+  closeOnSelect,
   onChange,
   Icon,
   isFromCheckIfConditions,
@@ -49,6 +51,9 @@ export const SelectMenu = <T extends string>({
   const handleClickItem = (value: T) => () => {
     if (value !== activeValue) {
       onChange(value);
+    }
+    if (closeOnSelect) {
+      setIsDropdownOpen(false);
     }
   };
 
