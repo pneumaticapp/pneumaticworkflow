@@ -7,6 +7,7 @@ from src.accounts.permissions import (
     UserIsAdminOrAccountOwner,
     UsersOverlimitedPermission,
 )
+from src.generics.exceptions import BaseServiceException
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import UserIsAuthenticated
 from src.processes.models.templates.fieldset import (
@@ -14,9 +15,6 @@ from src.processes.models.templates.fieldset import (
 )
 from src.processes.serializers.templates.fieldset import (
     FieldsetTemplateSerializer,
-)
-from src.processes.services.exceptions import (
-    FieldsetTemplateServiceException,
 )
 from src.processes.services.templates.fieldsets.fieldset import (
     FieldSetTemplateService,
@@ -75,7 +73,7 @@ class FieldsetTemplateViewSet(
         )
         try:
             fieldset = service.create(**serializer.validated_data)
-        except FieldsetTemplateServiceException as ex:
+        except BaseServiceException as ex:
             raise_validation_error(message=ex.message)
         response_serializer = FieldsetTemplateSerializer(fieldset)
         return self.response_created(response_serializer.data)
@@ -103,7 +101,7 @@ class FieldsetTemplateViewSet(
             fieldset = service.partial_update(
                 **serializer.validated_data,
             )
-        except FieldsetTemplateServiceException as ex:
+        except BaseServiceException as ex:
             raise_validation_error(message=ex.message)
         fieldset.refresh_from_db()
         response_serializer = FieldsetTemplateSerializer(fieldset)
@@ -119,6 +117,6 @@ class FieldsetTemplateViewSet(
         )
         try:
             service.delete()
-        except FieldsetTemplateServiceException as ex:
+        except BaseServiceException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok()

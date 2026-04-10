@@ -1,5 +1,7 @@
 from typing import List, Optional, Dict
 from django.contrib.auth import get_user_model
+from django.db import transaction
+
 from src.generics.base.service import BaseModelService
 from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.services.exceptions import (
@@ -45,19 +47,30 @@ class FieldSetTemplateService(BaseModelService):
         **update_kwargs,
     ) -> FieldsetTemplate:
 
-        rules_data = update_kwargs.pop('rules', None)
-        fields_data = update_kwargs.pop('fields', None)
-        result = super().partial_update(
-            force_save=True,
-            **update_kwargs,
-        )
+        with transaction.atomic():
+            rules_data = update_kwargs.pop('rules', None)
+            fields_data = update_kwargs.pop('fields', None)
+            result = super().partial_update(
+                force_save=True,
+                **update_kwargs,
+            )
 
-        if rules_data is not None:
-            self.update_rules(rules_data=rules_data)
-        if fields_data is not None:
-            self._update_fields(fields_data=fields_data)
+            if rules_data is not None:
+                self.update_rules(rules_data=rules_data)
+            if fields_data is not None:
+                self._update_fields(fields_data=fields_data)
+            self._validate_rules()
+            return result
 
-        return result
+    def _validate_rules(self):
+        for rule in self.instance.rules.all():
+            service = FieldsetTemplateRuleService(
+                user=self.user,
+                is_superuser=self.is_superuser,
+                auth_type=self.auth_type,
+                instance=rule,
+            )
+            service._validate()
 
     def delete(self) -> None:
         if (

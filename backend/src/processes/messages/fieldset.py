@@ -4,3 +4,9 @@ MSG_FS_0001 = _('Cannot delete a fieldset template that is used in templates.')
 MSG_FS_0002 = _(
     'The sum of number fields in this fieldset exceeds the allowed maximum.',
 )
+MSG_FS_0003 = _(
+    'Rule "sum_max" requires all fieldset fields to be of type "number".',
+)
+MSG_FS_0004 = _(
+    'Rule "sum_max" value must be a number.',
+)
