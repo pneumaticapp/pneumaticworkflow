@@ -21,7 +21,7 @@ class FieldTemplateService(BaseModelService):
 
         if (
             field_type in FieldType.TYPES_WITH_SELECTIONS
-            and not (kwargs.get('selections') or kwargs.get('dataset_id'))
+            and not (kwargs.get('selections') or kwargs.get('dataset'))
         ):
             raise FieldTemplateSelectionsRequired
 
@@ -49,10 +49,13 @@ class FieldTemplateService(BaseModelService):
         kickoff_id: Optional[int] = None,
         task_id: Optional[int] = None,
         fieldset_id: Optional[int] = None,
+        dataset=None,
         dataset_id: Optional[int] = None,
         api_name: Optional[str] = None,
         **kwargs,
     ):
+        if dataset is not None and dataset_id is None:
+            dataset_id = dataset.pk if hasattr(dataset, 'pk') else dataset
         params = {
             'account': self.account,
             'name': name,

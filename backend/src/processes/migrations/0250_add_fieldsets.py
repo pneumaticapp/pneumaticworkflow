@@ -84,6 +84,11 @@ class Migration(migrations.Migration):
             name='template',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fields', to='processes.Template'),
         ),
+        migrations.AlterField(
+            model_name='fieldtemplateselection',
+            name='template',
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='selections', to='processes.Template'),
+        ),
         migrations.AddField(
             model_name='fieldset',
             name='task',
@@ -97,7 +102,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='fieldtemplate',
             name='fieldset',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fieldsets', to='processes.FieldsetTemplate'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fields', to='processes.FieldsetTemplate'),
         ),
         migrations.AddField(
             model_name='taskfield',

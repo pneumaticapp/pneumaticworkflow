@@ -56,7 +56,7 @@ class FieldTemplate(
         on_delete=models.CASCADE,
         null=True,
         blank=True,
-        related_name='fieldsets',
+        related_name='fields',
     )
     date_created = models.DateTimeField(auto_now_add=True)
     default = models.TextField(blank=True)

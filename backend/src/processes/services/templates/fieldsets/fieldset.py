@@ -38,7 +38,7 @@ class FieldSetTemplateService(BaseModelService):
         if rules:
             self.create_rules(rules_data=rules)
         if fields:
-            self.create_fields(fields_data=fields)
+            self._create_fields(fields_data=fields)
 
     def partial_update(
         self,
@@ -55,7 +55,7 @@ class FieldSetTemplateService(BaseModelService):
         if rules_data is not None:
             self.update_rules(rules_data=rules_data)
         if fields_data is not None:
-            self.update_fields(fields_data=fields_data)
+            self._update_fields(fields_data=fields_data)
 
         return result
 
@@ -115,7 +115,7 @@ class FieldSetTemplateService(BaseModelService):
 
         self.instance.rules.exclude(id__in=rules_ids).delete()
 
-    def create_fields(
+    def _create_fields(
         self,
         fields_data: List[Dict],
     ):
@@ -130,7 +130,7 @@ class FieldSetTemplateService(BaseModelService):
                 **field_data,
             )
 
-    def update_fields(
+    def _update_fields(
         self,
         fields_data: List[Dict],
     ):
@@ -138,7 +138,7 @@ class FieldSetTemplateService(BaseModelService):
 
         existing_fields = {
             field.id: field
-            for field in self.instance.fieldsets.all()
+            for field in self.instance.fields.all()
         }
         fields_ids = set()
         for field_data in fields_data:
@@ -164,4 +164,4 @@ class FieldSetTemplateService(BaseModelService):
                 )
                 fields_ids.add(field.id)
 
-        self.instance.fieldsets.exclude(id__in=fields_ids).delete()
+        self.instance.fields.exclude(id__in=fields_ids).delete()
