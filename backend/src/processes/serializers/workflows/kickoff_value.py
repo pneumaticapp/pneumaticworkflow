@@ -113,7 +113,7 @@ class KickoffValueSerializer(
         except (TaskFieldException, FieldsetServiceException) as ex:
             self.raise_validation_error(
                 message=ex.message,
-                api_name=ex.api_name,
+                api_name=getattr(ex, 'api_name', None),
             )
         return instance
 
