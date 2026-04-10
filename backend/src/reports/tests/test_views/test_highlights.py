@@ -18,6 +18,7 @@ from src.processes.enums import (
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import Delay
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.events import (
@@ -32,7 +33,8 @@ from src.processes.tests.fixtures import (
     create_test_group,
     create_test_template,
     create_test_user,
-    create_test_workflow,
+    create_test_workflow, create_test_owner, create_test_dataset,
+    create_test_event,
 )
 from src.utils.validation import ErrorCode
 
@@ -1279,7 +1281,7 @@ def test__kickoff_field_type_user__ok(api_client):
     )
     api_client.token_authenticate(user)
 
-    response = api_client.post(
+    response_run = api_client.post(
         path=f'/templates/{template.id}/run',
         data={
             'name': 'Test name',
@@ -1288,7 +1290,7 @@ def test__kickoff_field_type_user__ok(api_client):
             },
         },
     )
-    workflow = Workflow.objects.get(id=response.data['id'])
+    workflow = Workflow.objects.get(id=response_run.data['id'])
     field = workflow.kickoff_instance.output.first()
     api_client.token_authenticate(user)
 
@@ -1296,6 +1298,7 @@ def test__kickoff_field_type_user__ok(api_client):
     response = api_client.get('/reports/highlights')
 
     # assert
+    assert response_run.status_code == 200
     assert response.status_code == 200
     field_data = response.data[0]['workflow']['kickoff']['output'][0]
     assert field_data['type'] == field.type
@@ -1305,7 +1308,6 @@ def test__kickoff_field_type_user__ok(api_client):
     assert field_data['api_name'] == field.api_name
     # TODO Replace in https://my.pneumatic.app/workflows/18137/
     assert field_data['value'] == user.get_full_name()
-    assert field_data['selections'] == []
     assert field_data['attachments'] == []
     assert field_data['user_id'] == user.id
 
@@ -1473,3 +1475,82 @@ def test__sub_workflow_run__ok(api_client):
     assert data['workflow']['id'] == workflow.id
     assert data['workflow']['template']['id'] == workflow.template.id
     assert data['workflow']['template']['name'] == workflow.template.name
+
+
+def test_complete_task_event__task_field_with_dataset__ok(api_client):
+
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account, items_count=1)
+    dataset_item = dataset.items.get(order=1)
+    workflow = create_test_workflow(user, tasks_count=2, active_task_number=2)
+    task = workflow.tasks.get(number=1)
+    field = TaskField.objects.create(
+        type=FieldType.DROPDOWN,
+        name='dropdown',
+        task=task,
+        value=dataset_item.value,
+        workflow=workflow,
+        account=account,
+        dataset=dataset,
+    )
+    event = create_test_event(
+        workflow=workflow,
+        task=task,
+        type_event=WorkflowEventType.TASK_COMPLETE,
+        user=user,
+    )
+
+    api_client.token_authenticate(user)
+    response = api_client.get('/reports/highlights')
+
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert len(response.data) == 1
+    event_data = response.data[0]
+    assert event_data['id'] == event.id
+    assert event_data['type'] == WorkflowEventType.TASK_COMPLETE
+    field_data = event_data['task']['output'][0]
+    assert field_data['id'] == field.id
+    assert field_data['type'] == FieldType.DROPDOWN
+    assert field_data['value'] == dataset_item.value
+    assert 'selections' not in field_data
+
+
+def test_complete_task_event__kickoff_field_with_dataset__ok(api_client):
+
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account, items_count=1)
+    dataset_item = dataset.items.get(order=1)
+    workflow = create_test_workflow(user, tasks_count=2, active_task_number=2)
+    task = workflow.tasks.get(number=1)
+    field = TaskField.objects.create(
+        type=FieldType.DROPDOWN,
+        name='dropdown',
+        kickoff=workflow.kickoff_instance,
+        value=dataset_item.value,
+        workflow=workflow,
+        account=account,
+        dataset=dataset,
+    )
+    event = create_test_event(
+        workflow=workflow,
+        task=task,
+        type_event=WorkflowEventType.TASK_COMPLETE,
+        user=user,
+    )
+
+    api_client.token_authenticate(user)
+    response = api_client.get('/reports/highlights')
+
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    event_data = response.data[0]
+    assert event_data['id'] == event.id
+    assert event_data['type'] == WorkflowEventType.TASK_COMPLETE
+    field_data = event_data['workflow']['kickoff']['output'][0]
+    assert field_data['id'] == field.id
+    assert field_data['type'] == FieldType.DROPDOWN
+    assert field_data['value'] == dataset_item.value
+    assert 'selections' not in field_data

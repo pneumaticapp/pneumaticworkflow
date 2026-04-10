@@ -27,6 +27,7 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
                 'order': template['order'],
                 'workflow': self.instance.workflow,
                 'account': self.instance.account,
+                'dataset_id': template['dataset_id'],
             },
         )
 

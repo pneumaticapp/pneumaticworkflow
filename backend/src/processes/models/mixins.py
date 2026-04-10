@@ -15,6 +15,8 @@ from src.processes.enums import (
     PredicateOperator,
     PredicateType,
 )
+from src.datasets.models import Dataset
+
 
 UserModel = get_user_model()
 
@@ -187,6 +189,12 @@ class FieldMixin(AccountBaseMixin):
     is_required = models.BooleanField(default=False)
     order = models.IntegerField(default=0)
     is_hidden = models.BooleanField(default=False)
+    dataset = models.ForeignKey(
+        Dataset,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
 
 
 class ConditionMixin(models.Model):

@@ -1,8 +1,12 @@
 # ruff: noqa: UP031
 import pytest
+from datetime import timedelta
+
+from django.utils import timezone
 from django.conf import settings
 
 from src.accounts.enums import BillingPlanType, UserStatus
+from src.accounts.messages import MSG_A_0035, MSG_A_0037, MSG_A_0041
 from src.accounts.models import (
     UserInvite,
 )
@@ -38,6 +42,7 @@ from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
     create_test_group,
+    create_test_not_admin,
     create_test_owner,
     create_test_template,
     create_test_user,
@@ -3596,3 +3601,232 @@ def test_create__wf_name_template__workflow_id_with_other_sys_vars__ok(
     assert template.wf_name_template == wf_name_template
     template_create_mock.assert_called_once()
     kickoff_create_mock.assert_called_once()
+
+
+def test_create__unauthenticated__unauthorized(api_client):
+
+    """Unauthenticated user → 401"""
+
+    # arrange
+    request_data = {
+        'name': 'Template',
+        'is_active': False,
+        'kickoff': {},
+        'tasks': [],
+    }
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 401
+
+
+def test_create__expired_subscription__permission_denied(api_client):
+
+    """Expired subscription → 403"""
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.PREMIUM,
+        plan_expiration=timezone.now() - timedelta(days=1),
+    )
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user=user)
+    request_data = {
+        'name': 'Template',
+        'is_active': False,
+        'kickoff': {},
+        'tasks': [],
+    }
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == MSG_A_0035
+
+
+def test_create__billing_plan_limit__permission_denied(api_client):
+
+    """Billing plan limit exceeded → 403"""
+
+    # arrange
+    account = create_test_account(plan=None)
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user=user)
+    request_data = {
+        'name': 'Template',
+        'is_active': False,
+        'kickoff': {},
+        'tasks': [],
+    }
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == MSG_A_0041
+
+
+def test_create__users_overlimited__permission_denied(api_client):
+
+    """Users over limit → 403"""
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.PREMIUM,
+        max_users=1,
+    )
+    user = create_test_owner(account=account)
+    create_test_not_admin(
+        account=account,
+        email='extra@pneumatic.app',
+    )
+    account.active_users = 2
+    account.save()
+    api_client.token_authenticate(user=user)
+    request_data = {
+        'name': 'Template',
+        'is_active': False,
+        'kickoff': {},
+        'tasks': [],
+    }
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == MSG_A_0037
+
+
+def test_create__not_admin__permission_denied(api_client):
+
+    """User is not admin or account owner → 403"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_not_admin(account=account)
+    api_client.token_authenticate(user=user)
+    request_data = {
+        'name': 'Template',
+        'is_active': False,
+        'kickoff': {},
+        'tasks': [],
+    }
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_create__missing_tasks__validation_error(mocker, api_client):
+
+    """Missing required field `tasks` → 400"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user=user)
+    templates_kickoff_created_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    templates_created_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    request_data = {
+        'name': 'Template',
+        'is_active': True,
+        'kickoff': {},
+    }
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 400
+    templates_kickoff_created_mock.assert_not_called()
+    templates_created_mock.assert_not_called()
+
+
+def test_create__invalid_wf_name_template__validation_error(
+    mocker,
+    api_client,
+):
+
+    """Invalid `wf_name_template` references unknown field api_name → 400"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user=user)
+    templates_kickoff_created_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    templates_created_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    request_data = {
+        'name': 'Template',
+        'is_active': True,
+        'wf_name_template': '{{non-existent-field}}',
+        'kickoff': {},
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'First step',
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id,
+                'role': OwnerRole.OWNER,
+            },
+        ],
+    }
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['message'] == str(messages.MSG_PT_0008)
+    templates_kickoff_created_mock.assert_not_called()
+    templates_created_mock.assert_not_called()

@@ -90,13 +90,3 @@ class FieldTemplateSelectionSerializer(
                 value=value,
             ),
         )
-
-
-class FieldTemplateSelectionListSerializer(ModelSerializer):
-
-    class Meta:
-        model = FieldTemplateSelection
-        fields = (
-            'api_name',
-            'value',
-        )
