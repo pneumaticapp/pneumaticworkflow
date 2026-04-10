@@ -1372,4 +1372,8 @@ export const ruMessages = {
   'fieldsets.unsaved-rule-changes': 'Есть несохранённые изменения правил',
   'validation.fieldset-name-empty': 'Введите название набора полей',
   'validation.fieldset-name-to-long': 'Название набора полей не должно превышать 200 символов',
+  'template.kick-off-fieldsets': 'Наборы полей',
+  'tasks.task-fieldsets': 'Наборы полей',
+  'template.fieldset-picker.placeholder': 'Выберите наборы полей...',
+  'template.fieldset-picker.empty': 'Нет доступных наборов полей. Сначала создайте один.',
 };

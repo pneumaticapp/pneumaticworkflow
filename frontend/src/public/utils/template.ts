@@ -47,6 +47,7 @@ export function getEmptyKickoff(): IKickoff {
   return {
     description: '',
     fields: [],
+    fieldsets: [],
   };
 }
 
@@ -56,7 +57,10 @@ export const getNormalizedTemplate = (
   users: TUserListItem[],
   billingPlan: ESubscriptionPlan,
 ): ITemplate => {
-  const normalizedKickoff = template.kickoff || getEmptyKickoff();
+  const normalizedKickoff = {
+    ...getEmptyKickoff(),
+    ...(template.kickoff || {}),
+  };
   const normalizedTasks = [...template.tasks]
     .sort((a, b) => a.number - b.number)
     .map((task, index, tasks) => getNormalizedTask(task, isSubscribed, tasks[index - 1]));

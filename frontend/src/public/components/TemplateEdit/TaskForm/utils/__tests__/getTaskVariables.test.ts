@@ -27,6 +27,7 @@ const mockKikoff: IKickoff = {
       groupId: null,
     },
   ],
+  fieldsets: [],
 };
 
 const mockTask1: ITemplateTask = {
@@ -57,6 +58,7 @@ const mockTask1: ITemplateTask = {
   checklists: [],
   revertTask: null,
   ancestors: [],
+  fieldsets: [],
 };
 
 const mockTask2: ITemplateTask = {
@@ -87,6 +89,7 @@ const mockTask2: ITemplateTask = {
   checklists: [],
   revertTask: null,
   ancestors: ['task-1'],
+  fieldsets: [],
 };
 
 describe('getTaskVariables', () => {

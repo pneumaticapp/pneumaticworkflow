@@ -63,6 +63,7 @@ export interface ITemplateTask {
   requireCompletionByAll: boolean;
   rawPerformers: ITemplateTaskPerformer[];
   fields: IExtraField[];
+  fieldsets: number[];
   uuid: string;
   conditions: ICondition[];
   checklists: TOutputChecklist[];
@@ -178,6 +179,7 @@ export type TConditionRulePredicateResponse = {
 export interface IKickoff {
   description: string;
   fields: IExtraField[];
+  fieldsets: number[];
 }
 
 export interface ITemplateListItem {

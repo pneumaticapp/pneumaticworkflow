@@ -194,6 +194,7 @@ export function TemplateEdit({
       name: 'New Step',
       number: 1,
       fields: [],
+      fieldsets: [],
       rawPerformers: [
         {
           apiName: createPerformerApiName(),

@@ -34,6 +34,7 @@ const templateResponseMock: ITemplateResponse = {
       checklists: [],
       revertTask: null,
       ancestors: [],
+      fieldsets: [],
     },
     {
       id: 14703,
@@ -69,6 +70,7 @@ const templateResponseMock: ITemplateResponse = {
       checklists: [],
       revertTask: null,
       ancestors: ['task-059819'],
+      fieldsets: [],
     },
     {
       id: 14707,
@@ -92,6 +94,7 @@ const templateResponseMock: ITemplateResponse = {
       checklists: [],
       revertTask: null,
       ancestors: ['task-059819', 'task-4e99a7'],
+      fieldsets: [],
     },
     {
       id: 14708,
@@ -115,6 +118,7 @@ const templateResponseMock: ITemplateResponse = {
       checklists: [],
       revertTask: null,
       ancestors: ['task-059819', 'task-4e99a7', 'task-a889d4'],
+      fieldsets: [],
     },
     {
       id: 14709,
@@ -139,11 +143,13 @@ const templateResponseMock: ITemplateResponse = {
       checklists: [],
       revertTask: null,
       ancestors: ['task-059819', 'task-4e99a7', 'task-a889d4', 'task-1e9ba6'],
+      fieldsets: [],
     },
   ],
   kickoff: {
     description: '',
     fields: [],
+    fieldsets: [],
   },
   owners: [
     {

@@ -5,6 +5,7 @@ import { useDispatch } from 'react-redux';
 import { getEmptyField } from './utils/getEmptyField';
 import { KickoffShareForm } from './KickoffShareForm';
 import { isKickoffCleared } from './utils/isKickoffCleared';
+import { FieldsetPicker } from '../FieldsetPicker';
 
 import { KickoffMenu } from './KickoffMenu';
 import { IntlMessages } from '../../IntlMessages';
@@ -162,6 +163,18 @@ export function KickoffRedux({
             ))}
           </div>
         )}
+
+        <div className={styles['fieldsets-section']}>
+          <p className={styles['section-title']}>
+            {formatMessage({ id: 'template.kick-off-fieldsets' })}
+          </p>
+          <FieldsetPicker
+            selectedFieldsetIds={kickoff.fieldsets || []}
+            onChange={(fieldsetIds) => {
+              handleChangeKickoff({ ...kickoff, fieldsets: fieldsetIds });
+            }}
+          />
+        </div>
 
         <KickoffShareForm className={styles['share-form']} />
       </>

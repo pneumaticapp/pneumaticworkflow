@@ -1465,4 +1465,8 @@ export const enMessages = {
   'fieldsets.unsaved-rule-changes': 'You have unsaved rule changes',
   'validation.fieldset-name-empty': 'Please enter a fieldset name',
   'validation.fieldset-name-to-long': 'The fieldset name is longer than 200 characters',
+  'template.kick-off-fieldsets': 'Fieldsets',
+  'tasks.task-fieldsets': 'Fieldsets',
+  'template.fieldset-picker.placeholder': 'Select fieldsets...',
+  'template.fieldset-picker.empty': 'No fieldsets available. Create one first.',
 };

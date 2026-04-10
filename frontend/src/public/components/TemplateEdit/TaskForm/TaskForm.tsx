@@ -16,6 +16,7 @@ import { TPatchTaskPayload } from '../../../redux/actions';
 
 import { ReturnTo } from './ReturnTo';
 import { DueDate } from './DueDate';
+import { FieldsetPicker } from '../FieldsetPicker';
 import { getSingleLineVariables, getSystemVariables } from './utils/getTaskVariables';
 
 import styles from '../TemplateEdit.css';
@@ -68,6 +69,7 @@ export function TaskForm({
     [ETaskFormParts.AssignPerformers]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.DueIn]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.Fields]: useRef<HTMLDivElement>(null),
+    [ETaskFormParts.Fieldsets]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.StartsAfter]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.CheckIf]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.ReturnTo]: useRef<HTMLDivElement>(null),
@@ -173,6 +175,19 @@ export function TaskForm({
         />
       ),
       widget: createWidget(TaskRenderExtraFieldsInfo, { task }),
+    },
+    {
+      formPartId: ETaskFormParts.Fieldsets,
+      title: 'tasks.task-fieldsets',
+      component: (
+        <FieldsetPicker
+          selectedFieldsetIds={task.fieldsets || []}
+          onChange={(fieldsetIds) => {
+            setCurrentTask({ fieldsets: fieldsetIds });
+          }}
+        />
+      ),
+      widget: undefined,
     },
     {
       formPartId: ETaskFormParts.StartsAfter,
