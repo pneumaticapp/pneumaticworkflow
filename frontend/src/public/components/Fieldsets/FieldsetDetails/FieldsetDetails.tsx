@@ -25,6 +25,7 @@ import { getAccountId } from '../../../redux/selectors/user';
 
 import { EExtraFieldType, IExtraField } from '../../../types/template';
 import { EInputNameBackgroundColor, EMoveDirections } from '../../../types/workflow';
+import { IFieldsetTemplateRule } from '../../../types/fieldset';
 import { ExtraFieldsMap } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldsMap';
 import { ExtraFieldIcon } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldIcon';
 import { ExtraFieldIntl } from '../../TemplateEdit/ExtraFields';
@@ -32,13 +33,14 @@ import { getEmptyField } from '../../TemplateEdit/KickoffRedux/utils/getEmptyFie
 import { getEditedFields } from '../../TemplateEdit/ExtraFields/utils/getEditedFields';
 import { getNormalizeFieldsOrders, moveWorkflowField } from '../../../utils/workflows';
 
-import {
-  mapFieldsetFieldsToExtraFields,
-  mapExtraFieldsToFieldsetFields,
-} from './fieldsetFieldMappers';
+import { normalizeFieldsForUI } from './fieldsetFieldMappers';
 
 import { TFieldsetDetailsProps } from './types';
 import styles from './FieldsetDetails.css';
+
+const RULE_TYPES = [
+  { value: 'sum_max', labelKey: 'fieldsets.rule-type-sum_max' },
+] as const;
 
 const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetDetailsProps) => {
   const { formatMessage } = useIntl();
@@ -50,6 +52,9 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
 
   const [localFields, setLocalFields] = useState<IExtraField[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  const [localRules, setLocalRules] = useState<IFieldsetTemplateRule[]>([]);
+  const [hasUnsavedRuleChanges, setHasUnsavedRuleChanges] = useState(false);
 
   useEffect(() => {
     const id = Number(matchParamId);
@@ -72,10 +77,18 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
   // Sync local fields when fieldset loads/updates from server
   useEffect(() => {
     if (fieldset?.fields) {
-      setLocalFields(mapFieldsetFieldsToExtraFields(fieldset.fields));
+      setLocalFields(normalizeFieldsForUI(fieldset.fields as unknown as IExtraField[]));
       setHasUnsavedChanges(false);
     }
   }, [fieldset?.fields]);
+
+  // Sync local rules when fieldset loads/updates from server
+  useEffect(() => {
+    if (fieldset?.rules) {
+      setLocalRules(fieldset.rules);
+      setHasUnsavedRuleChanges(false);
+    }
+  }, [fieldset?.rules]);
 
   const getSortedFields = useCallback(() => {
     return [...localFields].sort((a, b) => b.order - a.order);
@@ -112,9 +125,55 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
     if (!fieldset) return;
     dispatch(updateFieldsetAction({
       id: fieldset.id,
-      fields: mapExtraFieldsToFieldsetFields(localFields),
+      fields: localFields as any,
     }));
     setHasUnsavedChanges(false);
+  };
+
+  // Rules handlers
+  const handleAddRule = () => {
+    const newRule: IFieldsetTemplateRule = {
+      id: -(Date.now()),  // temporary negative id for new rules
+      type: RULE_TYPES[0].value,
+      value: '',
+    };
+    setLocalRules([...localRules, newRule]);
+    setHasUnsavedRuleChanges(true);
+  };
+
+  const handleEditRuleValue = (index: number, value: string) => {
+    const updated = localRules.map((rule, i) =>
+      i === index ? { ...rule, value } : rule,
+    );
+    setLocalRules(updated);
+    setHasUnsavedRuleChanges(true);
+  };
+
+  const handleEditRuleType = (index: number, type: string) => {
+    const updated = localRules.map((rule, i) =>
+      i === index ? { ...rule, type } : rule,
+    );
+    setLocalRules(updated);
+    setHasUnsavedRuleChanges(true);
+  };
+
+  const handleDeleteRule = (index: number) => {
+    setLocalRules(localRules.filter((_, i) => i !== index));
+    setHasUnsavedRuleChanges(true);
+  };
+
+  const handleSaveRules = () => {
+    if (!fieldset) return;
+    // Strip temporary negative ids for new rules so the backend creates them
+    const rulesPayload = localRules.map((rule) => ({
+      ...rule,
+      id: rule.id > 0 ? rule.id : undefined,
+    }));
+    dispatch(updateFieldsetAction({
+      id: fieldset.id,
+      rules: rulesPayload as IFieldsetTemplateRule[],
+    }));
+    setHasUnsavedRuleChanges(false);
   };
 
   if (isLoading || !fieldset) {
@@ -198,27 +257,66 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
         <h2 className={styles['section-title']}>
           {formatMessage({ id: 'fieldsets.rules-section' })}
         </h2>
-        {fieldset.rules.length === 0 ? (
+
+        {localRules.length === 0 && !hasUnsavedRuleChanges && (
           <p className={styles['empty-text']}>
             {formatMessage({ id: 'fieldsets.no-rules' })}
           </p>
-        ) : (
-          <table className={styles['fields-table']}>
-            <thead>
-              <tr>
-                <th>Type</th>
-                <th>Value</th>
-              </tr>
-            </thead>
-            <tbody>
-              {fieldset.rules.map((rule) => (
-                <tr key={rule.id}>
-                  <td>{rule.type}</td>
-                  <td>{rule.value}</td>
-                </tr>
+        )}
+
+        {localRules.map((rule, index) => (
+          <div key={rule.id} className={styles['rule-row']}>
+            <select
+              value={rule.type}
+              onChange={(e) => handleEditRuleType(index, e.target.value)}
+              className={styles['rule-value-input']}
+              style={{ flex: 'none', minWidth: '10rem' }}
+            >
+              {RULE_TYPES.map((rt) => (
+                <option key={rt.value} value={rt.value}>
+                  {formatMessage({ id: rt.labelKey })}
+                </option>
               ))}
-            </tbody>
-          </table>
+            </select>
+
+            <input
+              type="text"
+              className={styles['rule-value-input']}
+              value={rule.value}
+              placeholder={formatMessage({ id: 'fieldsets.rule-value-placeholder' })}
+              onChange={(e) => handleEditRuleValue(index, e.target.value)}
+            />
+
+            <button
+              type="button"
+              className={styles['rule-delete-btn']}
+              onClick={() => handleDeleteRule(index)}
+            >
+              {formatMessage({ id: 'fieldsets.rule-delete' })}
+            </button>
+          </div>
+        ))}
+
+        <button
+          type="button"
+          className={styles['add-rule-btn']}
+          onClick={handleAddRule}
+        >
+          + {formatMessage({ id: 'fieldsets.add-rule' })}
+        </button>
+
+        {hasUnsavedRuleChanges && (
+          <div className={styles['save-bar']}>
+            <Button
+              label={formatMessage({ id: 'fieldsets.save-rules' })}
+              buttonStyle="yellow"
+              size="md"
+              onClick={handleSaveRules}
+            />
+            <span className={styles['save-bar__hint']}>
+              {formatMessage({ id: 'fieldsets.unsaved-rule-changes' })}
+            </span>
+          </div>
         )}
       </div>
 
@@ -228,3 +326,4 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
 };
 
 export default FieldsetDetails;
+

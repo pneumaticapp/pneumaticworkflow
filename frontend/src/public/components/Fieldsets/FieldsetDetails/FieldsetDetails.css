@@ -109,6 +109,76 @@
   background-color: var(--pneumatic-color-black4);
 }
 
+.rule-row {
+  display: flex;
+  align-items: center;
+  gap: 1.2rem;
+  padding: 1.2rem 0;
+  border-bottom: 1px solid var(--pneumatic-color-black16);
+}
+
+.rule-row:last-child {
+  border-bottom: none;
+}
+
+.rule-type-label {
+  min-width: 10rem;
+  font-weight: 600;
+
+  @mixin text-base;
+}
+
+.rule-value-input {
+  flex: 1;
+  padding: 0.8rem 1.2rem;
+  border: 1px solid var(--pneumatic-color-black16);
+  border-radius: 0.8rem;
+  outline: none;
+  transition: border-color 0.2s;
+
+  @mixin text-base;
+
+  &:focus {
+    border-color: var(--pneumatic-color-blue);
+  }
+}
+
+.rule-delete-btn {
+  padding: 0.6rem 1.2rem;
+  background: none;
+  border: 1px solid var(--pneumatic-color-black16);
+  border-radius: 0.8rem;
+  color: var(--pneumatic-color-black48);
+  cursor: pointer;
+  transition: all 0.2s;
+
+  @mixin text-small;
+
+  &:hover {
+    color: var(--pneumatic-color-red);
+    border-color: var(--pneumatic-color-red);
+  }
+}
+
+.add-rule-btn {
+  margin-top: 1.6rem;
+  padding: 0.8rem 1.6rem;
+  background: none;
+  border: 1px dashed var(--pneumatic-color-black16);
+  border-radius: 0.8rem;
+  color: var(--pneumatic-color-blue);
+  cursor: pointer;
+  font-weight: 600;
+  transition: all 0.2s;
+
+  @mixin text-base;
+
+  &:hover {
+    border-color: var(--pneumatic-color-blue);
+    background-color: var(--pneumatic-color-blue-light);
+  }
+}
+
 .header-skeleton {
   background-color: var(--pneumatic-color-skeleton-gray-bg);
   background-image:
