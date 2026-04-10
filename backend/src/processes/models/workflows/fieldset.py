@@ -12,7 +12,7 @@ from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
 
 
-class Fieldset(
+class FieldSet(
     BaseApiNameModel,
     BaseFieldSetMixin,
     AccountBaseMixin,
@@ -26,7 +26,7 @@ class Fieldset(
         on_delete=models.CASCADE,
         related_name='fieldsets',
     )
-    kickoff_value = models.ForeignKey(
+    kickoff = models.ForeignKey(
         KickoffValue,
         on_delete=models.CASCADE,
         null=True,
@@ -54,7 +54,7 @@ class FieldSetRule(
         ordering = ['-id']
 
     fieldset = models.ForeignKey(
-        Fieldset,
+        FieldSet,
         on_delete=models.CASCADE,
         related_name='rules',
     )

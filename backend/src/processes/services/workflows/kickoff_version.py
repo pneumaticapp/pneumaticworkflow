@@ -1,7 +1,7 @@
 from typing import Dict, List, Optional
 
 from src.processes.models.workflows.fieldset import (
-    Fieldset,
+    FieldSet,
     FieldSetRule,
 )
 from src.processes.models.workflows.fields import (
@@ -19,7 +19,7 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
         self,
         template: dict,
         *,
-        fieldset: Optional[Fieldset] = None,
+        fieldset: Optional[FieldSet] = None,
     ):
 
         # TODO Move to TaskFieldService
@@ -78,7 +78,7 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
 
     def _update_fieldset_rules(
         self,
-        fieldset: Fieldset,
+        fieldset: FieldSet,
         rules_data: Optional[List[Dict]],
     ) -> None:
 
@@ -99,7 +99,7 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
 
     def _update_fieldset_fields(
         self,
-        fieldset: Fieldset,
+        fieldset: FieldSet,
         fields_data: Optional[List[Dict]],
     ) -> None:
 
@@ -118,9 +118,9 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
 
         fs_api_names = set()
         for fs_data in data or []:
-            fieldset, _ = Fieldset.objects.update_or_create(
+            fieldset, _ = FieldSet.objects.update_or_create(
                 workflow=self.instance.workflow,
-                kickoff_value=self.instance,
+                kickoff=self.instance,
                 api_name=fs_data['api_name'],
                 defaults={
                     'account_id': self.instance.account_id,
@@ -137,8 +137,8 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
                 fields_data=fs_data.get('fields'),
             )
             fs_api_names.add(fs_data['api_name'])
-        Fieldset.objects.filter(
-            kickoff_value=self.instance,
+        FieldSet.objects.filter(
+            kickoff=self.instance,
             is_deleted=False,
         ).exclude(api_name__in=fs_api_names).delete()
 

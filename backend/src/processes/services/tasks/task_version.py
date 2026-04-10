@@ -17,7 +17,7 @@ from src.processes.models.workflows.conditions import (
     Rule,
 )
 from src.processes.models.workflows.fieldset import (
-    Fieldset,
+    FieldSet,
     FieldSetRule,
 )
 from src.processes.models.workflows.fields import (
@@ -170,7 +170,7 @@ class TaskUpdateVersionService(
         self,
         template: Dict,
         *,
-        fieldset: Optional[Fieldset] = None,
+        fieldset: Optional[FieldSet] = None,
     ):
 
         # TODO Move to TaskFieldService
@@ -194,7 +194,7 @@ class TaskUpdateVersionService(
 
     def _update_fieldset_rules(
         self,
-        fieldset: Fieldset,
+        fieldset: FieldSet,
         rules_data: Optional[List[Dict]],
     ) -> None:
 
@@ -215,7 +215,7 @@ class TaskUpdateVersionService(
 
     def _update_fieldset_fields(
         self,
-        fieldset: Fieldset,
+        fieldset: FieldSet,
         fields_data: Optional[List[Dict]],
     ) -> None:
 
@@ -234,7 +234,7 @@ class TaskUpdateVersionService(
 
         fs_api_names = set()
         for fs_data in data or []:
-            fieldset, _ = Fieldset.objects.update_or_create(
+            fieldset, _ = FieldSet.objects.update_or_create(
                 workflow=self.instance.workflow,
                 task=self.instance,
                 api_name=fs_data['api_name'],
@@ -253,7 +253,7 @@ class TaskUpdateVersionService(
                 fields_data=fs_data.get('fields'),
             )
             fs_api_names.add(fs_data['api_name'])
-        Fieldset.objects.filter(
+        FieldSet.objects.filter(
             task=self.instance,
             is_deleted=False,
         ).exclude(api_name__in=fs_api_names).delete()

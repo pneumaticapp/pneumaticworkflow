@@ -26,11 +26,13 @@ from src.processes.enums import (
     WorkflowStatus,
 )
 from src.processes.messages import workflow as messages
+from src.processes.models.workflows.fieldset import FieldSet
 from src.processes.models.workflows.task import (
     Delay,
     Task,
     TaskPerformer,
 )
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.services import exceptions
 from src.processes.services.condition_check.service import (
@@ -43,10 +45,7 @@ from src.processes.services.tasks.field import (
     TaskFieldService,
 )
 from src.processes.services.tasks.task import TaskService
-from src.processes.services.workflows.fieldset_instance import (
-    ensure_task_fieldsets_and_fields,
-    validate_task_fieldsets,
-)
+from src.processes.services.workflows.fieldsets.fieldset import FieldSetService
 from src.processes.tasks.webhooks import (
     send_task_completed_webhook,
     send_task_returned_webhook,
@@ -803,20 +802,37 @@ class WorkflowActionService:
 
         fields_values = fields_values or {}
         with transaction.atomic():
-            ensure_task_fieldsets_and_fields(
-                task=task,
-                user=self.user,
+            fields = (
+                TaskField.objects
+                .filter(
+                    Q(fieldset__task=task) | Q(task=task),
+                    api_name__in=fields_values,
+                )
             )
-            for task_field in task.output.all():
+            fieldsets_ids = set()
+            for field in fields:
+                if field.fieldset_id:
+                    fieldsets_ids.add(field.fieldset_id)
                 service = TaskFieldService(
                     user=self.user,
-                    instance=task_field,
+                    instance=field,
+                    is_superuser=self.is_superuser,
+                    auth_type=self.auth_type,
                 )
                 service.partial_update(
-                    value=fields_values.get(task_field.api_name),
+                    value=fields_values[field.api_name],
                     force_save=True,
                 )
-            validate_task_fieldsets(task=task)
+            if fieldsets_ids:
+                fieldsets = FieldSet.objects.filter(id__in=fieldsets_ids)
+                for fieldset in fieldsets:
+                    service = FieldSetService(
+                        user=self.user,
+                        instance=fieldset,
+                        is_superuser=self.is_superuser,
+                        auth_type=self.auth_type,
+                    )
+                    service.validate_rules()
             if task_performer:
                 if self._task_can_be_completed(task):
                     self.complete_task(task=task, by_user=True)

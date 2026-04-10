@@ -22,6 +22,7 @@ class FieldsetTemplateRuleSerializer(
             'id',
             'type',
             'value',
+            'api_name',
         )
 
     id = IntegerField(read_only=True)
@@ -40,6 +41,7 @@ class FieldsetTemplateSerializer(
             'description',
             'rules',
             'fields',
+            'api_name',
         )
 
     id = IntegerField(read_only=True)

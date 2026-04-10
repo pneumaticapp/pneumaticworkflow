@@ -1,6 +1,5 @@
 from typing import Optional
 from django.contrib.auth import get_user_model
-from django.db.models import Model
 
 from src.generics.base.service import BaseModelService
 from src.processes.enums import FieldSetRuleType, FieldType
@@ -18,18 +17,16 @@ UserModel = get_user_model()
 
 class FieldsetTemplateRuleService(BaseModelService):
 
-    def create(self, **kwargs) -> Model:
+    def create(self, **kwargs) -> FieldsetTemplateRule:
         self._validate(**kwargs)
         return super().create(**kwargs)
 
-    def partial_update(self, **update_kwargs) -> Model:
+    def partial_update(self, **update_kwargs) -> FieldsetTemplateRule:
         self._validate(**update_kwargs)
         return super().partial_update(**update_kwargs)
 
     def _validate(self, **kwargs):
-        rule_type = kwargs.get('type') or (
-            self.instance.type if self.instance else None
-        )
+        rule_type = kwargs.get('type', self.instance.type)
         validator = getattr(self, f'_validate_{rule_type}', None)
         validator(**kwargs)
 

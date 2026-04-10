@@ -10,7 +10,7 @@ from src.processes.models.mixins import (
 )
 from src.processes.models.workflows.kickoff import KickoffValue
 from src.processes.models.workflows.task import Task
-from src.processes.models.workflows.fieldset import Fieldset
+from src.processes.models.workflows.fieldset import FieldSet
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.querysets import (
     FieldSelectionQuerySet,
@@ -59,7 +59,7 @@ class TaskField(
         null=True,
     )
     fieldset = models.ForeignKey(
-        Fieldset,
+        FieldSet,
         on_delete=models.CASCADE,
         null=True,
         blank=True,

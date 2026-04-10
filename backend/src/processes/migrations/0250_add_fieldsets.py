@@ -15,7 +15,7 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Fieldset',
+            name='FieldSet',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('is_deleted', models.BooleanField(default=False)),
@@ -23,7 +23,7 @@ class Migration(migrations.Migration):
                 ('name', models.CharField(max_length=200)),
                 ('description', models.TextField(blank=True, default='')),
                 ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='accounts.Account')),
-                ('kickoff_value', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fieldsets', to='processes.KickoffValue')),
+                ('kickoff', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fieldsets', to='processes.KickoffValue')),
             ],
             options={
                 'ordering': ['-id'],
@@ -39,7 +39,7 @@ class Migration(migrations.Migration):
                 ('type', models.CharField(choices=[('sum_max', 'Sum max')], max_length=50)),
                 ('value', models.TextField(blank=True, null=True)),
                 ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='accounts.Account')),
-                ('fieldset', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='rules', to='processes.Fieldset')),
+                ('fieldset', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='rules', to='processes.FieldSet')),
             ],
             options={
                 'ordering': ['-id'],
@@ -107,7 +107,7 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='taskfield',
             name='fieldset',
-            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fields', to='processes.Fieldset'),
+            field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fields', to='processes.FieldSet'),
         ),
         migrations.AddConstraint(
             model_name='fieldsettemplate',

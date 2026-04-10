@@ -243,3 +243,13 @@ class FieldTemplateSelectionsRequired(FieldTemplateServiceException):
 class FieldTemplateUserMustBeRequired(FieldTemplateServiceException):
 
     default_message = pt_messages.MSG_PT_0006
+
+
+class FieldsetServiceException(BaseServiceException):
+
+    pass
+
+
+class FieldsetRuleServiceException(BaseServiceException):
+
+    pass

@@ -1,13 +1,13 @@
 from rest_framework import serializers
 
-from src.processes.models.workflows.fieldset import Fieldset
+from src.processes.models.workflows.fieldset import FieldSet
 from src.processes.serializers.workflows.field import TaskFieldSerializer
 
 
 class FieldSetSerializer(serializers.ModelSerializer):
 
     class Meta:
-        model = Fieldset
+        model = FieldSet
         fields = (
             'id',
             'api_name',
