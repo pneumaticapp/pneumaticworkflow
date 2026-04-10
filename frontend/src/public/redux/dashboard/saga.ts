@@ -206,15 +206,9 @@ export function* openRunWorflowByTemplateDataSaga({
             : field.selections,
         })),
       },
-<<<<<<< Updated upstream
-      loadedFieldsets: loadedFieldsets.map((fs) => ({
-        ...fs,
-        fields: fs.fields.map((field) => ({
-=======
       loadedFieldsets: loadedFieldsets.map((fs: IFieldsetData) => ({
         ...fs,
         fields: fs.fields.map((field: IExtraField) => ({
->>>>>>> Stashed changes
           ...field,
           selections: field.dataset
             ? datasetsMap[field.dataset] || []

@@ -219,6 +219,7 @@ describe('getRunnableWorkflow.', () => {
             selections: [],
           },
         ],
+        fieldsets: [],
       },
     };
 
@@ -244,6 +245,7 @@ describe('getRunnableWorkflow.', () => {
             selections: [{ value: 'A', apiName: 'sel-1' }, { value: 'B', apiName: 'sel-2' }],
           },
         ],
+        fieldsets: [],
       },
     };
 
@@ -268,6 +270,7 @@ describe('getRunnableWorkflow.', () => {
             selections: ['A', 'B'],
           },
         ],
+        fieldsets: [],
       },
     };
 
@@ -293,6 +296,7 @@ describe('getRunnableWorkflow.', () => {
             selections: [],
           },
         ],
+        fieldsets: [],
       },
     };
 
