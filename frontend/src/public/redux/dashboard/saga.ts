@@ -43,7 +43,7 @@ import { getTemplate } from '../../api/getTemplate';
 
 import { openRunWorkflowModal } from '../runWorkflowModal/actions';
 import { getRunnableWorkflow, loadDatasetsMap, loadFieldsetsData } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
-import { ITemplateResponse, IExtraField } from '../../types/template';
+import { ITemplateResponse, IExtraField, IFieldsetData } from '../../types/template';
 import { mapFieldsetTemplateToFieldsetData } from '../../utils/mapFieldsetTemplateToFieldsetData';
 import { getGettingStartedChecklist } from '../../api/getGettingStartedChecklist';
 import { IGettingStartedChecklist } from '../../types/dashboard';
@@ -206,9 +206,15 @@ export function* openRunWorflowByTemplateDataSaga({
             : field.selections,
         })),
       },
+<<<<<<< Updated upstream
       loadedFieldsets: loadedFieldsets.map((fs) => ({
         ...fs,
         fields: fs.fields.map((field) => ({
+=======
+      loadedFieldsets: loadedFieldsets.map((fs: IFieldsetData) => ({
+        ...fs,
+        fields: fs.fields.map((field: IExtraField) => ({
+>>>>>>> Stashed changes
           ...field,
           selections: field.dataset
             ? datasetsMap[field.dataset] || []
