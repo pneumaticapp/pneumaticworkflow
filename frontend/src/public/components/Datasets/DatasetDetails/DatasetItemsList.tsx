@@ -90,6 +90,7 @@ export const DatasetItemsList = ({
           />
         </div>
         <SelectMenu
+          closeOnSelect
           activeValue={sorting}
           values={datasetsSortingValues}
           onChange={(val) => onSortingChange(val as EDatasetsSorting)}

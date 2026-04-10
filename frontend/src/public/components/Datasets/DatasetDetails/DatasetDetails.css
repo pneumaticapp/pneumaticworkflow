@@ -50,20 +50,22 @@
     height: auto;
     border: 0;
   }
-}
 
-.dataset__sorting-container {
-  padding-right: 0;
+  /* stylelint-disable max-nesting-depth, selector-max-compound-selectors */
+  .dataset__sorting-container {
+    padding-right: 0;
 
-  @media (--mobile) {
-    button {
-      justify-content: flex-end;
+    @media (--mobile) {
+      button {
+        justify-content: flex-end;
 
-      svg {
-        margin-left: 0;
+        svg {
+          margin-left: 0;
+        }
       }
     }
   }
+  /* stylelint-enable max-nesting-depth, selector-max-compound-selectors */
 }
 
 .header-skeleton {
