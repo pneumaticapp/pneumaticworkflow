@@ -18,6 +18,9 @@ export function FieldsetCard({
   id,
   name,
   description,
+  label_position,
+  layout,
+  order,
   rules,
   fields,
 }: IFieldsetCardProps) {
@@ -38,6 +41,9 @@ export function FieldsetCard({
       id,
       name,
       description,
+      label_position,
+      layout,
+      order,
       rules,
       fields,
     }));

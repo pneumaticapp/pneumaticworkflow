@@ -17,10 +17,16 @@ export interface IFieldsetField {
   dataset?: number | null;
 }
 
+export type TFieldLabelPosition = 'top' | 'left';
+export type TFieldSetLayout = 'horizontal' | 'vertical';
+
 export interface IFieldsetTemplate {
   id: number;
   name: string;
   description: string;
+  label_position: TFieldLabelPosition;
+  layout: TFieldSetLayout;
+  order: number;
   rules: IFieldsetTemplateRule[];
   fields: IFieldsetField[];
 }
@@ -29,6 +35,9 @@ export interface IFieldsetListItem {
   id: number;
   name: string;
   description: string;
+  label_position: TFieldLabelPosition;
+  layout: TFieldSetLayout;
+  order: number;
   rules: IFieldsetTemplateRule[];
   fields: IFieldsetField[];
 }
@@ -63,6 +72,8 @@ export interface IUpdateFieldsetParams {
   id: number;
   name?: string;
   description?: string;
+  label_position?: TFieldLabelPosition;
+  layout?: TFieldSetLayout;
   rules?: IFieldsetTemplateRule[];
   fields?: IFieldsetField[];
   signal?: AbortSignal;

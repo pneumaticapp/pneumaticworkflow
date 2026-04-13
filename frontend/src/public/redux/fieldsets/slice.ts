@@ -106,6 +106,8 @@ const fieldsetsSlice = createSlice({
       if (state.currentFieldset && state.currentFieldset.id === action.payload.id) {
         if (action.payload.name !== undefined) state.currentFieldset.name = action.payload.name;
         if (action.payload.description !== undefined) state.currentFieldset.description = action.payload.description;
+        if (action.payload.label_position !== undefined) state.currentFieldset.label_position = action.payload.label_position;
+        if (action.payload.layout !== undefined) state.currentFieldset.layout = action.payload.layout;
         if (action.payload.rules) state.currentFieldset.rules = action.payload.rules;
         if (action.payload.fields) state.currentFieldset.fields = action.payload.fields as any;
       }

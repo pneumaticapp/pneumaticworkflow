@@ -35,12 +35,23 @@ import { getNormalizeFieldsOrders, moveWorkflowField } from '../../../utils/work
 
 import { normalizeFieldsForUI } from './fieldsetFieldMappers';
 
+import { TFieldLabelPosition, TFieldSetLayout } from '../../../types/fieldset';
 import { TFieldsetDetailsProps } from './types';
 import styles from './FieldsetDetails.css';
 
 const RULE_TYPES = [
   { value: 'sum_max', labelKey: 'fieldsets.rule-type-sum_max' },
 ] as const;
+
+const LABEL_POSITION_OPTIONS: { value: TFieldLabelPosition; labelKey: string }[] = [
+  { value: 'top', labelKey: 'fieldsets.settings.label-position.top' },
+  { value: 'left', labelKey: 'fieldsets.settings.label-position.left' },
+];
+
+const LAYOUT_OPTIONS: { value: TFieldSetLayout; labelKey: string }[] = [
+  { value: 'vertical', labelKey: 'fieldsets.settings.layout.vertical' },
+  { value: 'horizontal', labelKey: 'fieldsets.settings.layout.horizontal' },
+];
 
 const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetDetailsProps) => {
   const { formatMessage } = useIntl();
@@ -55,6 +66,12 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
 
   const [localRules, setLocalRules] = useState<IFieldsetTemplateRule[]>([]);
   const [hasUnsavedRuleChanges, setHasUnsavedRuleChanges] = useState(false);
+
+  // Settings local state
+  const [localDescription, setLocalDescription] = useState('');
+  const [localLabelPosition, setLocalLabelPosition] = useState<TFieldLabelPosition>('top');
+  const [localLayout, setLocalLayout] = useState<TFieldSetLayout>('vertical');
+  const [hasUnsavedSettingsChanges, setHasUnsavedSettingsChanges] = useState(false);
 
   useEffect(() => {
     const id = Number(matchParamId);
@@ -89,6 +106,42 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
       setHasUnsavedRuleChanges(false);
     }
   }, [fieldset?.rules]);
+
+  // Sync settings when fieldset loads/updates from server
+  useEffect(() => {
+    if (fieldset) {
+      setLocalDescription(fieldset.description || '');
+      setLocalLabelPosition(fieldset.label_position || 'top');
+      setLocalLayout(fieldset.layout || 'vertical');
+      setHasUnsavedSettingsChanges(false);
+    }
+  }, [fieldset?.id, fieldset?.description, fieldset?.label_position, fieldset?.layout]);
+
+  const handleSettingsDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setLocalDescription(e.target.value);
+    setHasUnsavedSettingsChanges(true);
+  };
+
+  const handleSettingsLabelPositionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setLocalLabelPosition(e.target.value as TFieldLabelPosition);
+    setHasUnsavedSettingsChanges(true);
+  };
+
+  const handleSettingsLayoutChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setLocalLayout(e.target.value as TFieldSetLayout);
+    setHasUnsavedSettingsChanges(true);
+  };
+
+  const handleSaveSettings = () => {
+    if (!fieldset) return;
+    dispatch(updateFieldsetAction({
+      id: fieldset.id,
+      description: localDescription,
+      label_position: localLabelPosition,
+      layout: localLayout,
+    }));
+    setHasUnsavedSettingsChanges(false);
+  };
 
   const getSortedFields = useCallback(() => {
     return [...localFields].sort((a, b) => b.order - a.order);
@@ -198,9 +251,73 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
         </div>
       </header>
 
-      {fieldset.description && (
-        <p className={styles['description']}>{fieldset.description}</p>
-      )}
+      <div className={styles['list']}>
+        <h2 className={styles['section-title']}>
+          {formatMessage({ id: 'fieldsets.settings-section' })}
+        </h2>
+
+        <div className={styles['settings-form']}>
+          <div className={styles['settings-field']}>
+            <label className={styles['settings-label']}>
+              {formatMessage({ id: 'fieldsets.settings.description' })}
+            </label>
+            <textarea
+              className={styles['settings-textarea']}
+              value={localDescription}
+              placeholder={formatMessage({ id: 'fieldsets.settings.description-placeholder' })}
+              onChange={handleSettingsDescriptionChange}
+            />
+          </div>
+
+          <div className={styles['settings-field']}>
+            <label className={styles['settings-label']}>
+              {formatMessage({ id: 'fieldsets.settings.label-position' })}
+            </label>
+            <select
+              className={styles['settings-select']}
+              value={localLabelPosition}
+              onChange={handleSettingsLabelPositionChange}
+            >
+              {LABEL_POSITION_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {formatMessage({ id: opt.labelKey })}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className={styles['settings-field']}>
+            <label className={styles['settings-label']}>
+              {formatMessage({ id: 'fieldsets.settings.layout' })}
+            </label>
+            <select
+              className={styles['settings-select']}
+              value={localLayout}
+              onChange={handleSettingsLayoutChange}
+            >
+              {LAYOUT_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {formatMessage({ id: opt.labelKey })}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {hasUnsavedSettingsChanges && (
+          <div className={styles['save-bar']}>
+            <Button
+              label={formatMessage({ id: 'fieldsets.save-settings' })}
+              buttonStyle="yellow"
+              size="md"
+              onClick={handleSaveSettings}
+            />
+            <span className={styles['save-bar__hint']}>
+              {formatMessage({ id: 'fieldsets.unsaved-settings-changes' })}
+            </span>
+          </div>
+        )}
+      </div>
 
       <div className={styles['list']}>
         <h2 className={styles['section-title']}>
