@@ -22,6 +22,8 @@ import { ExtraFieldsLabels } from '../ExtraFields/utils/ExtraFieldsLabels';
 import { getEmptyKickoff } from '../../../utils/template';
 import { useHashLink } from '../../../hooks/useHashLink';
 import { useWorkflowNameVariables } from '../TaskForm/utils/getTaskVariables';
+import { useTemplateEditFieldsets } from '../TemplateEditFieldsetsContext';
+import { FieldsetOutputsPreview } from '../FieldsetOutputsPreview/FieldsetOutputsPreview';
 
 import styles from './KickoffRedux.css';
 import { patchTemplate } from '../../../redux/actions';
@@ -42,9 +44,10 @@ export function KickoffRedux({
   accountId,
 }: IKickoffReduxProps) {
   const dispatch = useDispatch();
+  const { fieldsetsById } = useTemplateEditFieldsets();
   const [isOpen, setIsOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
-  const variables = useWorkflowNameVariables(kickoff);
+  const variables = useWorkflowNameVariables(kickoff, fieldsetsById);
 
   const editTemplate = (templateFields: Partial<ITemplate>) => {
     dispatch(patchTemplate({ changedFields: templateFields }));
@@ -174,6 +177,7 @@ export function KickoffRedux({
               handleChangeKickoff({ ...kickoff, fieldsets: fieldsetIds });
             }}
           />
+          <FieldsetOutputsPreview fieldsetIds={kickoff.fieldsets || []} fieldsetsById={fieldsetsById} />
         </div>
 
         <KickoffShareForm className={styles['share-form']} />
@@ -182,9 +186,12 @@ export function KickoffRedux({
   };
 
   const renderKickoffLabels = () => {
-    const { fields } = kickoff;
+    const { fields, fieldsets } = kickoff;
+    const hasFieldsetChips = (fieldsets || []).some(
+      (id) => isArrayWithItems(fieldsetsById.get(id)?.fields ?? []),
+    );
 
-    if (!isArrayWithItems(fields)) {
+    if (!isArrayWithItems(fields) && !hasFieldsetChips) {
       return null;
     }
 
@@ -201,7 +208,8 @@ export function KickoffRedux({
         role="button"
         aria-label="Toggle expand"
       >
-        <ExtraFieldsLabels extraFields={fields} />
+        {isArrayWithItems(fields) && <ExtraFieldsLabels extraFields={fields} />}
+        <FieldsetOutputsPreview fieldsetIds={fieldsets || []} fieldsetsById={fieldsetsById} />
       </div>
     );
   };
