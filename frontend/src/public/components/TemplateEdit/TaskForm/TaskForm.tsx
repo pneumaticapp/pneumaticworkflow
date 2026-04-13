@@ -17,7 +17,9 @@ import { TPatchTaskPayload } from '../../../redux/actions';
 import { ReturnTo } from './ReturnTo';
 import { DueDate } from './DueDate';
 import { FieldsetPicker } from '../FieldsetPicker';
-import { getSingleLineVariables, getSystemVariables } from './utils/getTaskVariables';
+import { FieldsetOutputsPreview } from '../FieldsetOutputsPreview/FieldsetOutputsPreview';
+import { useTemplateEditFieldsets } from '../TemplateEditFieldsetsContext';
+import { getSingleLineVariables, getSystemVariables, getTaskVariables, getVariables } from './utils/getTaskVariables';
 
 import styles from '../TemplateEdit.css';
 
@@ -30,8 +32,6 @@ import { TaskRenderReturnInfo } from '../TaskRenderReturnInfo';
 import { StepName } from '../../StepName';
 
 export interface ITaskFormProps {
-  listVariables: TTaskVariable[];
-  templateVariables: TTaskVariable[];
   task: ITemplateTask;
   users: TUserListItem[];
   isSubscribed: boolean;
@@ -44,8 +44,6 @@ export interface ITaskFormProps {
 }
 
 export function TaskForm({
-  listVariables,
-  templateVariables,
   task,
   users,
   isSubscribed,
@@ -59,8 +57,17 @@ export function TaskForm({
 }: ITaskFormProps & { templateId: number | undefined }) {
   if (!task) return null;
   const { formatMessage } = useIntl();
+  const { fieldsetsById } = useTemplateEditFieldsets();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const taskName = task.name || '';
+  const listVariables = useMemo(
+    () => getTaskVariables(kickoff, tasks, task, templateId, fieldsetsById),
+    [fieldsetsById, kickoff, task, tasks, templateId],
+  );
+  const templateVariables = useMemo(
+    () => getVariables({ kickoff, tasks, templateId, fieldsetsById }),
+    [fieldsetsById, kickoff, tasks, templateId],
+  );
   const listSystemVariables = useMemo(() => [
     ...getSystemVariables(),
     ...listVariables,
@@ -166,13 +173,19 @@ export function TaskForm({
       formPartId: ETaskFormParts.Fields,
       title: 'tasks.task-outputs-create-help',
       component: (
-        <OutputFormIntl
-          fields={task.fields}
-          onOutputChange={handleTaskFieldChange('fields')}
-          isDisabled={false}
-          show={ETaskFormParts.Fields === scrollTarget}
-          accountId={accountId}
-        />
+        <div className={styles['task-fields-wrapper']}>
+          <OutputFormIntl
+            fields={task.fields}
+            onOutputChange={handleTaskFieldChange('fields')}
+            isDisabled={false}
+            show={ETaskFormParts.Fields === scrollTarget}
+            accountId={accountId}
+          />
+          <FieldsetOutputsPreview
+            fieldsetIds={task.fieldsets || []}
+            fieldsetsById={fieldsetsById}
+          />
+        </div>
       ),
       widget: createWidget(TaskRenderExtraFieldsInfo, { task }),
     },

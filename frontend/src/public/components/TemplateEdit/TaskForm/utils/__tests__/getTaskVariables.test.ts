@@ -1,7 +1,8 @@
-import { EExtraFieldType, IKickoff, ITemplateTask } from '../../../../../types/template';
+import { EExtraFieldType, IFieldsetData, IKickoff, ITemplateTask } from '../../../../../types/template';
 import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
 import { TTaskVariable } from '../../../types';
 import {
+  getKickoffVariables,
   getTaskVariables,
   getSystemVariables,
   getVariables,
@@ -92,6 +93,39 @@ const mockTask2: ITemplateTask = {
   fieldsets: [],
 };
 
+const mockFieldsetData: IFieldsetData = {
+  id: 99,
+  apiName: 'fs-99',
+  name: 'Extra Set',
+  description: '',
+  fields: [
+    {
+      name: 'Assignee',
+      type: EExtraFieldType.User,
+      isRequired: false,
+      description: '',
+      apiName: 'assignee-fs',
+      selections: [],
+      order: 0,
+      userId: null,
+      groupId: null,
+    },
+    {
+      name: 'Kickoff date',
+      type: EExtraFieldType.Date,
+      isRequired: false,
+      description: '',
+      apiName: 'kickoff-date-fs',
+      selections: [],
+      order: 1,
+      userId: null,
+      groupId: null,
+    },
+  ],
+};
+
+const mockFieldsetsById = new Map<number, IFieldsetData>([[mockFieldsetData.id, mockFieldsetData]]);
+
 describe('getTaskVariables', () => {
   it("correctly gets 1st task's variables", () => {
     const tasks: ITemplateTask[] = [mockTask1, mockTask2];
@@ -137,6 +171,44 @@ describe('getTaskVariables', () => {
     const expectedResult = expectedSecondTaskVariables;
 
     expect(actualResult).toStrictEqual(expectedResult);
+  });
+
+  it('appends variables from selected task fieldsets with combined subtitles', () => {
+    const taskWithFieldset: ITemplateTask = {
+      ...mockTask1,
+      fieldsets: [mockFieldsetData.id],
+    };
+    const tasks: ITemplateTask[] = [taskWithFieldset, mockTask2];
+    const actualResult = getTaskVariables(mockKikoff, tasks, mockTask2, undefined, mockFieldsetsById);
+
+    expect(actualResult.map((v) => v.apiName)).toEqual([
+      'client-name-3967',
+      'large-text-field-8622',
+      'assignee-fs',
+      'kickoff-date-fs',
+    ]);
+    expect(actualResult.find((v) => v.apiName === 'assignee-fs')).toMatchObject({
+      title: 'Assignee',
+      subtitle: 'Task 1 · Extra Set',
+      type: EExtraFieldType.User,
+    });
+  });
+});
+
+describe('getKickoffVariables with fieldsets', () => {
+  it('adds kickoff fieldset fields after regular kickoff fields', () => {
+    const kickoff: IKickoff = {
+      ...mockKikoff,
+      fieldsets: [mockFieldsetData.id],
+    };
+    const vars = getKickoffVariables(kickoff, mockFieldsetsById);
+
+    expect(vars.map((v) => v.apiName)).toEqual(['client-name-3967', 'assignee-fs', 'kickoff-date-fs']);
+    expect(vars[1]).toMatchObject({
+      subtitle: 'Kick-off form · Extra Set',
+      title: 'Assignee',
+      type: EExtraFieldType.User,
+    });
   });
 });
 
