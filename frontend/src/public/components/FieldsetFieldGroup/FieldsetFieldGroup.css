@@ -1,5 +1,5 @@
 .fieldset-group {
-  border-left: 3px solid var(--color-primary, #7B68EE);
+  border-left: 3px solid var(--pneumatic-color-link);
   padding-left: 16px;
   margin-top: 16px;
   margin-bottom: 16px;
