@@ -63,6 +63,7 @@ def test_fields__active_template__ok(api_client):
     data = response.data
     assert data['id'] == template.id
     assert len(data['kickoff']['fields']) == 1
+    assert data['kickoff']['fieldsets'] == []
 
     field_1_data = data['kickoff']['fields'][0]
     assert field_1_data['name'] == kickoff_field.name
@@ -78,6 +79,7 @@ def test_fields__active_template__ok(api_client):
     assert task_data['number'] == task.number
     assert task_data['api_name'] == task.api_name
     assert len(task_data['fields']) == 1
+    assert task_data['fieldsets'] == []
 
     field_2_data = task_data['fields'][0]
     assert field_2_data['name'] == task_field.name

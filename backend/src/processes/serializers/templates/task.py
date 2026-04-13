@@ -9,6 +9,7 @@ from rest_framework.serializers import (
     ModelSerializer,
     ReadOnlyField,
     Serializer,
+    SerializerMethodField,
 )
 
 from src.analysis.services import AnalyticService
@@ -616,6 +617,7 @@ class TemplateTaskOnlyFieldsSerializer(ModelSerializer):
             'number',
             'api_name',
             'fields',
+            'fieldsets',
         )
 
     fields = FieldTemplateShortViewSerializer(
@@ -623,6 +625,10 @@ class TemplateTaskOnlyFieldsSerializer(ModelSerializer):
         required=False,
         read_only=True,
     )
+    fieldsets = SerializerMethodField()
+
+    def get_fieldsets(self, instance: TaskTemplate) -> list:
+        return list(instance.fieldsets.values_list('id', flat=True))
 
 
 class TaskTemplatePrivilegesSerializer(ModelSerializer):

@@ -2,6 +2,7 @@ from typing import Any, Dict
 
 from rest_framework.serializers import (
     ModelSerializer,
+    SerializerMethodField,
 )
 
 from src.generics.fields import AccountPrimaryKeyRelatedField
@@ -123,6 +124,7 @@ class KickoffOnlyFieldsSerializer(ModelSerializer):
         model = Kickoff
         fields = (
             'fields',
+            'fieldsets',
         )
 
     fields = FieldTemplateShortViewSerializer(
@@ -130,6 +132,10 @@ class KickoffOnlyFieldsSerializer(ModelSerializer):
         required=False,
         read_only=True,
     )
+    fieldsets = SerializerMethodField()
+
+    def get_fieldsets(self, instance: Kickoff) -> list:
+        return list(instance.fieldsets.values_list('id', flat=True))
 
 
 class KickoffListSerializer(ModelSerializer):
