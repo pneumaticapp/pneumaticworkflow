@@ -644,6 +644,7 @@ class WorkflowActionService:
                 self._start_next_tasks(parent_task=task)
         elif (
             task.skip_for_starter
+            and self.workflow.workflow_starter_id
             and TaskPerformer.objects
             .exclude_directly_deleted()
             .by_task(task.id)

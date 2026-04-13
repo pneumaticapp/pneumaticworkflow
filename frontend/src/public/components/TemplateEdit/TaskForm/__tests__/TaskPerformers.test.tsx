@@ -87,7 +87,7 @@ describe('TaskPerformers', () => {
   const getSkipCheckboxCall = () => {
     const calls = (Checkbox as jest.Mock).mock.calls;
     return calls.find(
-      (c: any[]) => c[0].id === 'skipForStarter',
+      (c: any[]) => c[0].checkboxId === 'skipForStarter',
     );
   };
 
