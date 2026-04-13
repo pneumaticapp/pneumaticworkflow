@@ -71,6 +71,7 @@ export function ConfirmableDropdownItem({
     }}>
       <DropdownItem
         {...dropdownItemProps}
+        tag={dropdownItemState === "confirmation" ? "div" : "button"}
         onClick={() => setDropdownItemState("confirmation")}
       >
         {renderContent()}

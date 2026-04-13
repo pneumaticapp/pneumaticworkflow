@@ -68,6 +68,14 @@ class FieldTemplateSelection(
                     '_template_api_name_unique'
                 ),
             ),
+            UniqueConstraint(
+                fields=['field_template', 'value'],
+                condition=Q(is_deleted=False),
+                name=(
+                    'processes_fieldtemplateselection'
+                    '_field_template_value_unique'
+                ),
+            ),
         ]
 
     api_name_prefix = 'selection'

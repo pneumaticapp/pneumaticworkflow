@@ -150,6 +150,8 @@
       "tenantsCount": "/tenants/count",
       "tenants": "/tenants",
       "tenantToken": "/tenants/:id/token",
+      "datasets": "/datasets",
+      "dataset": "/datasets/:id",
       "getFaq": "/faq",
       "vacationActivate": "/accounts/user/activate-vacation",
       "vacationDeactivate": "/accounts/user/deactivate-vacation",

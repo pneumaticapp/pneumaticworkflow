@@ -1,0 +1,95 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-07 11:48+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Token is expired."
+msgstr ""
+
+msgid "Products list cannot be empty."
+msgstr ""
+
+#, python-brace-format
+msgid "Price with code(s) {code} not found."
+msgstr ""
+
+msgid "Please, contact our support for a downgrade options."
+msgstr ""
+
+msgid "Subscription not exist."
+msgstr ""
+
+msgid "Multiple subscriptions not allowed."
+msgstr ""
+
+msgid "The request data does not change the subscription state."
+msgstr ""
+
+msgid "Current payment method is unavailable. Specify a new payment method to complete the action."
+msgstr ""
+
+msgid "Payment failed. Check your payment method and balance or contact support."
+msgstr ""
+
+msgid "You can only use your subscription's currency to make purchases."
+msgstr ""
+
+#, python-brace-format
+msgid "You cannot purchase more than {quantity} unit(s) of the \"{product}\" subscription."
+msgstr ""
+
+#, python-brace-format
+msgid "You cannot purchase less than {quantity} unit(s) of the \"{product}\" subscription."
+msgstr ""
+
+#, python-brace-format
+msgid "You cannot purchase more than {quantity} unit(s) of the \"{product}\"."
+msgstr ""
+
+#, python-brace-format
+msgid "You cannot purchase less than {quantity} unit(s) of the \"{product}\"."
+msgstr ""
+
+msgid "Unsupported subscription plan."
+msgstr ""
+
+msgid "Purchase at the archive price is disallowed."
+msgstr ""
+
+msgid "No account found for this subscription."
+msgstr ""
+
+msgid "Billing is disabled, contact support to change the plan."
+msgstr ""
+
+msgid "Webhook account not found."
+msgstr ""
+
+msgid "Webhook account owner not found."
+msgstr ""
+
+msgid "Payments API is disabled in this project."
+msgstr ""
+
+msgid "Downgrade is not available while there is an active subscription."
+msgstr ""
+
+msgid "Account not found."
+msgstr ""
+
+msgid "Master account not found for tenant."
+msgstr ""

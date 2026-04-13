@@ -149,12 +149,20 @@ function ExtraField(props: IExtraFieldProps) {
     return isRequiredDisabledMap[field.type];
   };
 
+  const getDropdownClassName = () => {
+    return classnames(
+      styles['kick-off-input__dropdown'],
+      (field.type === EExtraFieldType.Checkbox || field.type === EExtraFieldType.Radio) && styles['kick-off-input__dropdown_choices'],
+      field.type === EExtraFieldType.Creatable && styles['kick-off-input__dropdown_creatable']
+    );
+  };
+
   return (
     <div className={getFieldClassName()}>
       {renderField()}
 
       {showDropdown && !isDisabled && (
-        <div className={styles['kick-off-input__dropdown']}>
+        <div className={getDropdownClassName()}>
           <ExtraFieldDropdown
             isFirstItem={isFirstItem}
             isLastItem={isLastItem}

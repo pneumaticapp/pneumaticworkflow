@@ -11,18 +11,13 @@ export interface ICheckboxOutputProps extends IExtraField {}
 
 export function CheckboxOutput({
   name,
-  selections,
+  value,
 }: IExtraField) {
   const { formatMessage } = useIntl();
 
   const renderSelections = () => {
     const defaultValue = formatMessage({ id: 'template.kick-off-form-unfilled-value' });
-    const mappedSelections = selections
-      ?.filter(({ isSelected }) => isSelected)
-      ?.reduce((acc, { value }) => [...acc, value], [])
-      ?.join(', ');
-
-    const displayValue = mappedSelections ? mappedSelections : defaultValue;
+    const displayValue = Array.isArray(value) ? value.join(', ') : (value || defaultValue);
 
     return (
       <span className={styles['output__text']}>

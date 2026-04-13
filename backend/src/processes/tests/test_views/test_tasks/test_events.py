@@ -2,7 +2,8 @@ import pytest
 from django.contrib.auth import get_user_model
 
 from src.authentication.services.guest_auth import GuestJWTAuthService
-from src.processes.enums import WorkflowEventType
+from src.processes.enums import WorkflowEventType, FieldType
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import TaskPerformer
 from src.processes.services.events import (
     WorkflowEventService,
@@ -15,7 +16,7 @@ from src.processes.tests.fixtures import (
     create_test_guest,
     create_test_owner,
     create_test_user,
-    create_test_workflow,
+    create_test_workflow, create_test_dataset,
 )
 
 UserModel = get_user_model()
@@ -547,3 +548,54 @@ def test_events__user_is_not_member_in_deleted_task__not_found(api_client):
 
     # assert
     assert response.status_code == 404
+
+
+def test_events__task_complete_with_dataset__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account, items_count=1)
+    dataset_item = dataset.items.get(order=1)
+    workflow = create_test_workflow(user, tasks_count=2, active_task_number=2)
+    task = workflow.tasks.get(number=1)
+    field = TaskField.objects.create(
+        type=FieldType.CHECKBOX,
+        name='checkbox',
+        task=task,
+        value=dataset_item.value,
+        workflow=workflow,
+        account=account,
+        dataset=dataset,
+    )
+
+    event = create_test_event(
+        workflow=workflow,
+        task=task,
+        user=user,
+        type_event=WorkflowEventType.TASK_COMPLETE,
+    )
+
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/v2/tasks/{task.id}/events')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    event_data = response.data[0]
+
+    assert event_data['id'] == event.id
+    assert event_data['type'] == WorkflowEventType.TASK_COMPLETE
+    task_data = event_data['task']
+    assert len(task_data['output']) == 1
+    field_data = task_data['output'][0]
+    assert field_data['id'] == field.id
+    assert field_data['type'] == field.type
+    assert field_data['is_required'] == field.is_required
+    assert field_data['name'] == field.name
+    assert field_data['description'] == field.description
+    assert field_data['api_name'] == field.api_name
+    assert field_data['value'] == dataset_item.value
+    assert field_data['order'] == field.order

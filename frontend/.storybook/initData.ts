@@ -144,6 +144,8 @@ window['__pneumaticConfig'] = {
         tenantsCount: '/tenants/count',
         tenants: '/tenants',
         tenantToken: '/tenants/:id/token',
+        datasets: '/datasets',
+        dataset: '/datasets/:id',
         getFaq: '/faq',
         wsNotifications: '/ws/notifications',
         wsNewTask: '/ws/workflows/new-task',

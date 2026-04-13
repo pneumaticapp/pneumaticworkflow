@@ -1,5 +1,7 @@
 # ruff: noqa: UP031
 from datetime import timedelta
+from django.urls import reverse
+from rest_framework import status
 
 import pytest
 import pytz
@@ -20,6 +22,8 @@ from src.generics.messages import MSG_GE_0007
 from src.processes.enums import (
     DueDateRule,
     FieldType,
+    OwnerRole,
+    OwnerType,
     PerformerType,
     TaskStatus,
     WorkflowEventType,
@@ -35,6 +39,7 @@ from src.processes.models.templates.fields import (
 )
 from src.processes.models.templates.raw_due_date import RawDueDateTemplate
 from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import (
     TaskPerformer,
 )
@@ -42,13 +47,16 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.events import (
     WorkflowEventService,
 )
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
     create_test_not_admin,
     create_test_owner,
     create_test_template,
+    create_test_user,
     create_test_workflow,
+    create_test_dataset,
 )
 from src.utils.dates import date_format
 from src.utils.validation import ErrorCode
@@ -143,6 +151,46 @@ class TestPartialUpdateWorkflow:
         assert response.data['is_urgent'] == is_urgent
         assert response.data['kickoff']['output'][0]['value'] == field_value
         assert response.data['due_date_tsp'] == due_date.timestamp()
+
+    def test_update__kickoff_field_with_dataset__ok(
+        self,
+        api_client,
+    ):
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        dataset = create_test_dataset(account=account, items_count=1)
+        dataset_item = dataset.items.get(order=1)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        field = TaskField.objects.create(
+            type=FieldType.DROPDOWN,
+            name='dropdown',
+            kickoff=workflow.kickoff_instance,
+            value='',
+            workflow=workflow,
+            account=account,
+            dataset=dataset,
+        )
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.patch(
+            f'/workflows/{workflow.id}',
+            data={
+                'kickoff': {
+                    field.api_name: dataset_item.value,
+                },
+            },
+        )
+
+        # assert
+        assert response.status_code == 200
+        assert response.data['id'] == workflow.id
+        field_data = response.data['kickoff']['output'][0]
+        assert field_data['id'] == field.id
+        assert field_data['type'] == field.type
+        assert field_data['selections'] == [dataset_item.value]
+        assert field_data['value'] == dataset_item.value
 
     def test_update__task_markdown_description__ok(
         self,
@@ -257,8 +305,8 @@ class TestPartialUpdateWorkflow:
             user=user,
             is_active=True,
         )
-        kickoff_field = FieldTemplate.objects.create(
-            name='User name',
+        string_field = FieldTemplate.objects.create(
+            name='String',
             type=FieldType.STRING,
             is_required=False,
             kickoff=template.kickoff_instance,
@@ -266,8 +314,8 @@ class TestPartialUpdateWorkflow:
             template=template,
             account=user.account,
         )
-        kickoff_field_2 = FieldTemplate.objects.create(
-            name='User url',
+        checkbox_field = FieldTemplate.objects.create(
+            name='Checkbox',
             type=FieldType.CHECKBOX,
             is_required=True,
             kickoff=template.kickoff_instance,
@@ -275,18 +323,19 @@ class TestPartialUpdateWorkflow:
             template=template,
             account=user.account,
         )
-        kickoff_field_2_select_1 = FieldTemplateSelection.objects.create(
-            field_template=kickoff_field_2,
+        checkbox_select_1 = FieldTemplateSelection.objects.create(
+            field_template=checkbox_field,
             value='CHECKBOX 1',
             template=template,
         )
-        FieldTemplateSelection.objects.create(
-            field_template=kickoff_field_2,
+        checkbox_select_2 = FieldTemplateSelection.objects.create(
+            field_template=checkbox_field,
             value='CHECKBOX 2',
             template=template,
         )
-        kickoff_field_3 = FieldTemplate.objects.create(
-            name='User date',
+
+        radio_field = FieldTemplate.objects.create(
+            name='Radio',
             type=FieldType.RADIO,
             is_required=True,
             kickoff=template.kickoff_instance,
@@ -294,17 +343,17 @@ class TestPartialUpdateWorkflow:
             template=template,
             account=user.account,
         )
-        FieldTemplateSelection.objects.create(
-            field_template=kickoff_field_3,
+        radio_select_1 = FieldTemplateSelection.objects.create(
+            field_template=radio_field,
             value='RADIO 1',
             template=template,
         )
-        kickoff_field_3_select_2 = FieldTemplateSelection.objects.create(
-            field_template=kickoff_field_3,
+        radio_select_2 = FieldTemplateSelection.objects.create(
+            field_template=radio_field,
             value='RADIO 2',
             template=template,
         )
-        kickoff_field_4 = FieldTemplate.objects.create(
+        date_field = FieldTemplate.objects.create(
             name='Date field',
             type=FieldType.DATE,
             is_required=False,
@@ -317,76 +366,50 @@ class TestPartialUpdateWorkflow:
         template_task_1.description = (
             '{{ %s }}His name is... {{%s}}{{%s}}!!!' %
             (
-                kickoff_field_2.api_name,
-                kickoff_field.api_name,
-                kickoff_field_3.api_name,
+                checkbox_field.api_name,
+                string_field.api_name,
+                radio_field.api_name,
             )
         )
         template_task_1.save()
+
         template_task_2 = template.tasks.get(number=2)
         template_task_2.description = (
-            'His name is... {{%s}}!!!' % kickoff_field.api_name
+            'His name is... {{%s}}!!!' % string_field.api_name
         )
         template_task_2.save()
+
         api_client.token_authenticate(user)
         response = api_client.post(
             f'/templates/{template.id}/run',
             data={
                 'kickoff': {
-                    kickoff_field.api_name: 'JOHN CENA',
-                    kickoff_field_2.api_name: [
-                        kickoff_field_2_select_1.api_name,
-                    ],
-                    kickoff_field_3.api_name: (
-                        kickoff_field_3_select_2.api_name
-                    ),
-                    kickoff_field_4.api_name: 1726012800,
+                    string_field.api_name: 'JOHN CENA',
+                    checkbox_field.api_name: [checkbox_select_1.value],
+                    radio_field.api_name: radio_select_1.value,
+                    date_field.api_name: 1726012800,
                 },
             },
         )
         workflow_id = response.data['id']
-        workflow = Workflow.objects.get(pk=workflow_id)
-        kickoff_output_2 = workflow.kickoff_instance.output.get(
-            type=FieldType.CHECKBOX,
-        )
-        kickoff_output_2_selections = list(
-            kickoff_output_2.selections
-            .all()
-            .values_list('api_name', flat=True),
-        )
-        kickoff_output_3 = workflow.kickoff_instance.output.get(
-            type=FieldType.RADIO,
-        )
-        kickoff_output_3_selections = list(
-            kickoff_output_3.selections
-            .all()
-            .values_list('api_name', flat=True),
-        )
 
         # act
         response = api_client.patch(
             f'/workflows/{workflow_id}',
             data={
                 'kickoff': {
-                    kickoff_field.api_name: 'DWAYNE THE ROCK JOHNSON',
-                    kickoff_field_2.api_name: [kickoff_output_2_selections[0]],
-                    kickoff_field_3.api_name: kickoff_output_3_selections[1],
-                    kickoff_field_4.api_name: 1726020000,
+                    string_field.api_name: 'DWAYNE THE ROCK JOHNSON',
+                    checkbox_field.api_name: [checkbox_select_2.value],
+                    radio_field.api_name: radio_select_2.value,
+                    date_field.api_name: 1726020000,
                 },
             },
         )
 
         # assert
         assert response.status_code == 200
-        first_output = response.data['kickoff']['output'][0]
-        second_output = response.data['kickoff']['output'][1]
-        third_output = response.data['kickoff']['output'][2]
+        assert response.data['kickoff']['output'][0]['value'] == '1726020000'
         fourth_output = response.data['kickoff']['output'][3]
-        assert first_output['value'] == '1726020000'
-        assert second_output['selections'][0]['is_selected'] is False
-        assert second_output['selections'][1]['is_selected'] is True
-        assert third_output['selections'][0]['is_selected'] is True
-        assert third_output['selections'][1]['is_selected'] is False
         assert fourth_output['value'] == 'DWAYNE THE ROCK JOHNSON'
 
     def test_partial_update__field__not_update_completed_task_due_date__ok(
@@ -856,10 +879,10 @@ class TestPartialUpdateWorkflow:
                 'kickoff': {
                     kickoff_field.api_name: 'JOHN CENA',
                     kickoff_field_2.api_name: [
-                        kickoff_field_2_select_1.api_name,
+                        kickoff_field_2_select_1.value,
                     ],
                     kickoff_field_3.api_name: (
-                        kickoff_field_3_select_2.api_name
+                        kickoff_field_3_select_2.value
                     ),
                 },
             },
@@ -884,7 +907,7 @@ class TestPartialUpdateWorkflow:
         kickoff_output_2_selections = list(
             kickoff_output_2.selections
             .all()
-            .values_list('api_name', flat=True),
+            .values_list('value', flat=True),
         )
         kickoff_output_3 = workflow.kickoff_instance.output.get(
             type=FieldType.RADIO,
@@ -892,7 +915,7 @@ class TestPartialUpdateWorkflow:
         kickoff_output_3_selections = list(
             kickoff_output_3.selections
             .all()
-            .values_list('api_name', flat=True),
+            .values_list('value', flat=True),
         )
 
         # act
@@ -910,13 +933,7 @@ class TestPartialUpdateWorkflow:
 
         # assert
         assert response.status_code == 200
-        first_output = response.data['kickoff']['output'][0]
-        second_output = response.data['kickoff']['output'][1]
         third_output = response.data['kickoff']['output'][2]
-        assert first_output['selections'][0]['is_selected'] is False
-        assert first_output['selections'][1]['is_selected'] is True
-        assert second_output['selections'][0]['is_selected'] is True
-        assert second_output['selections'][1]['is_selected'] is False
         assert third_output['value'] == 'DWAYNE THE ROCK JOHNSON'
         assert response.data['name'] == 'Edited Name'
         task_2 = workflow.tasks.get(number=2)
@@ -2584,3 +2601,37 @@ def test_partial_update__not_found__not_found(api_client):
 
     # assert
     assert response.status_code == 404
+
+
+def test_workflow_update__template_starter_own_workflow__forbidden(api_client):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    workflow = create_test_workflow(template=template, user=starter_user)
+
+    api_client.token_authenticate(starter_user)
+    url = reverse('workflows-detail', args=[workflow.id])
+    data = {'name': 'Updated Name'}
+
+    # act
+    response = api_client.patch(url, data)
+
+    # assert
+    assert response.status_code == status.HTTP_403_FORBIDDEN
