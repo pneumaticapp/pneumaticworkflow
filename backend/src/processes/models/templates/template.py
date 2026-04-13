@@ -146,16 +146,25 @@ class Template(
 
         """ Return the output fields from kickoff """
 
-        try:
-            result = self.kickoff.get().fields.all()
-            if fields_filter_kwargs:
-                result = result.filter(**fields_filter_kwargs)
+        from src.processes.models.templates.fields import FieldTemplate
 
+        try:
+            kickoff = self.kickoff.get()
         except ObjectDoesNotExist:
-            from src.processes.models.templates\
-                .fields import FieldTemplate
-            result = FieldTemplate.objects.none()
-        return result
+            return FieldTemplate.objects.none()
+
+        direct = kickoff.fields.all()
+        if fields_filter_kwargs:
+            direct = direct.filter(**fields_filter_kwargs)
+
+        fieldset_fields = FieldTemplate.objects.filter(
+            account_id=self.account_id,
+            fieldset__in=kickoff.fieldsets.all(),
+        )
+        if fields_filter_kwargs:
+            fieldset_fields = fieldset_fields.filter(**fields_filter_kwargs)
+
+        return direct.union(fieldset_fields)
 
     def get_tasks_output_fields(
         self,
@@ -184,7 +193,22 @@ class Template(
 
         if tasks_exclude_kwargs:
             qst = qst.exclude(**tasks_exclude_kwargs)
-        return qst
+
+        fieldset_qs = FieldTemplate.objects.filter(
+            account_id=self.account_id,
+            fieldset__tasks__template_id=self.id,
+            fieldset__tasks__account_id=self.account_id,
+        )
+        if fields_filter_kwargs:
+            fieldset_qs = fieldset_qs.filter(**fields_filter_kwargs)
+        if tasks_exclude_kwargs:
+            excluded_task_api = tasks_exclude_kwargs.get('task__api_name')
+            if excluded_task_api is not None:
+                fieldset_qs = fieldset_qs.exclude(
+                    fieldset__tasks__api_name=excluded_task_api,
+                )
+
+        return qst.union(fieldset_qs)
 
     def get_tasks(self, performer_id: int):
         from src.processes.models.templates.task import TaskTemplate

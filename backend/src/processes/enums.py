@@ -714,7 +714,9 @@ class SystemVariable:
 
     WORKFLOW_NAME_VARS = {DATE, TEMPLATE_NAME, WORKFLOW_ID, WORKFLOW_STARTER}
 
-    TASK_VARS = {WORKFLOW_STARTER}
+    # Allowed in task name / description without matching a FieldTemplate
+    # (same as workflow name template — date, template-name, workflow-id, starter).
+    TASK_VARS = WORKFLOW_NAME_VARS
 
 
 class LabelPosition:
