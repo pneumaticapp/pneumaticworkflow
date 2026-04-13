@@ -11,6 +11,9 @@ class OpenAiPromptQueryset(QuerySet):
     def target_steps(self):
         return self.filter(target=OpenAIPromptTarget.GET_STEPS)
 
+    def target_template(self):
+        return self.filter(target=OpenAIPromptTarget.GET_TEMPLATE)
+
     def by_target(self, target: str):
         return self.filter(target=target)
 

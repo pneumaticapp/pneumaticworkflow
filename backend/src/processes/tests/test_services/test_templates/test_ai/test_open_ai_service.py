@@ -1,53 +1,44 @@
-import openai.error
+import json
+
 import pytest
 from django.contrib.auth import get_user_model
 
 from src.ai.enums import (
+    OpenAIPromptTarget,
     OpenAIRole,
 )
 from src.ai.tests.fixtures import create_test_prompt
-from src.authentication.enums import (
-    AuthTokenType,
-)
-from src.processes.enums import (
-    OwnerRole,
-    ConditionAction,
-    OwnerType,
-    PerformerType,
-    PredicateOperator,
-    PredicateType,
-)
-from src.processes.messages import workflow as messages
-from src.processes.models.templates.task import TaskTemplate
+from src.authentication.enums import AuthTokenType
+from src.processes.enums import PerformerType
 from src.processes.services.exceptions import (
     OpenAiLimitTemplateGenerations,
-    OpenAiServiceFailed,
     OpenAiServiceUnavailable,
-    OpenAiStepsPromptNotExist,
     OpenAiTemplateStepsNotExist,
 )
 from src.processes.services.templates.ai import (
     OpenAiService,
 )
 from src.processes.tests.fixtures import (
+    create_test_account,
+    create_test_owner,
     create_test_user,
 )
+from src.utils.logging import SentryLogLevel
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
 
 
-def test_get_response__ci_configuration__return_test_response(mocker):
+# === _get_response (legacy text-based) ===
+
+
+def test_get_response__no_api_key__raise_exception(mocker):
 
     # arrange
     description = 'some description'
     prompt = create_test_prompt()
     mocker.patch(
         'src.processes.services.templates.ai.settings.OPENAI_API_KEY',
-        None,
-    )
-    mocker.patch(
-        'src.processes.services.templates.ai.settings.OPENAI_API_ORG',
         None,
     )
     user = create_test_user()
@@ -57,22 +48,12 @@ def test_get_response__ci_configuration__return_test_response(mocker):
         auth_type=AuthTokenType.USER,
     )
 
-    test_response = mocker.Mock()
-    test_response_mock = mocker.patch(
-        'src.processes.services.templates.'
-        'ai.OpenAiService._test_response',
-        return_value=test_response,
-    )
-
     # act
-    response = service._get_response(
-        user_description=description,
-        prompt=prompt,
-    )
-
-    # assert
-    test_response_mock.assert_called_once()
-    assert response == test_response
+    with pytest.raises(OpenAiServiceUnavailable):
+        service._get_response(
+            user_description=description,
+            prompt=prompt,
+        )
 
 
 def test_get_response__ok(mocker):
@@ -100,20 +81,10 @@ def test_get_response__ok(mocker):
         auth_type=AuthTokenType.USER,
     )
     ai_response = 'some ai response'
-    message_mock = mocker.Mock(
-        content=ai_response,
-        finish_reason=None,
-    )
-    choice_mock = mocker.Mock(
-        message=message_mock,
-    )
-    completion_mock = mocker.Mock(
-        choices=[choice_mock],
-    )
-    create_completion_mock = mocker.patch(
+    call_api_mock = mocker.patch(
         'src.processes.services.templates.'
-        'ai.openai.ChatCompletion.create',
-        return_value=completion_mock,
+        'ai.BaseAiService._call_responses_api',
+        return_value=ai_response,
     )
 
     # act
@@ -124,27 +95,10 @@ def test_get_response__ok(mocker):
 
     # assert
     assert response == ai_response
-    create_completion_mock.assert_called_once_with(
-        model=prompt.model,
-        temperature=prompt.temperature,
-        top_p=prompt.top_p,
-        presence_penalty=prompt.presence_penalty,
-        frequency_penalty=prompt.frequency_penalty,
-        user=f'u{user.id}',
-        messages=[
-            {
-                "role": OpenAIRole.USER,
-                "content": f'Some {description} text',
-            },
-            {
-                "role": message_2.role,
-                "content": message_2.content,
-            },
-        ],
-    )
+    call_api_mock.assert_called_once()
 
 
-def test_get_response__openai_error__raise_exception(mocker):
+def test_get_response__api_error__raise_exception(mocker):
 
     # arrange
     description = 'some description'
@@ -167,48 +121,62 @@ def test_get_response__openai_error__raise_exception(mocker):
         'src.processes.services.templates.'
         'ai.OpenAiService._log_exception',
     )
-    error = openai.error.RateLimitError()
-    create_completion_mock = mocker.patch(
+    mocker.patch(
         'src.processes.services.templates.'
-        'ai.openai.ChatCompletion.create',
-        side_effect=error,
+        'ai.BaseAiService._call_responses_api',
+        side_effect=OpenAiServiceUnavailable(),
     )
 
     # act
-    with pytest.raises(OpenAiServiceUnavailable) as ex:
+    with pytest.raises(OpenAiServiceUnavailable):
         service._get_response(
             user_description=description,
             prompt=prompt,
         )
 
     # assert
-    create_completion_mock.assert_called_once_with(
-        model=prompt.model,
-        temperature=prompt.temperature,
-        top_p=prompt.top_p,
-        presence_penalty=prompt.presence_penalty,
-        frequency_penalty=prompt.frequency_penalty,
-        user=f'u{user.id}',
-        messages=[
-            {
-                "role": OpenAIRole.USER,
-                "content": f'Some {description} text',
-            },
-        ],
-    )
-    log_exception_mock.assert_called_once_with(
-        ex=error,
-        user_description=description,
-        prompt=prompt,
-    )
-    assert ex.value.message == messages.MSG_PW_0042
+    log_exception_mock.assert_called_once()
 
 
-def test_get_response__not_completion_choices__raise_exception(mocker):
+# === _get_json_response ===
+
+
+def test_get_json_response__no_api_key__return_test_response(mocker):
 
     # arrange
     description = 'some description'
-    prompt = create_test_prompt()
+    mocker.patch(
+        'src.processes.services.templates.ai.settings.OPENAI_API_KEY',
+        None,
+    )
+    user = create_test_user()
+    service = OpenAiService(
+        ident=user.id,
+        user=user,
+        auth_type=AuthTokenType.USER,
+    )
+
+    test_response = mocker.Mock()
+    test_response_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'ai.OpenAiService._test_response',
+        return_value=test_response,
+    )
+
+    # act
+    response = service._get_json_response(
+        user_description=description,
+    )
+
+    # assert
+    test_response_mock.assert_called_once()
+    assert response == test_response
+
+
+def test_get_json_response__ok__uses_responses_api(mocker):
+
+    # arrange
+    description = 'some description'
     mocker.patch(
         'src.processes.services.templates.ai.settings.OPENAI_API_KEY',
         'some_key',
@@ -223,48 +191,34 @@ def test_get_response__not_completion_choices__raise_exception(mocker):
         user=user,
         auth_type=AuthTokenType.USER,
     )
-    log_mock = mocker.patch(
+    ai_response = '{"name": "Test", "tasks": []}'
+    call_api_mock = mocker.patch(
         'src.processes.services.templates.'
-        'ai.OpenAiService._log',
-    )
-    completion_mock = mocker.Mock(
-        choices=[],
-    )
-    create_completion_mock = mocker.patch(
-        'src.processes.services.templates.'
-        'ai.openai.ChatCompletion.create',
-        return_value=completion_mock,
+        'ai.BaseAiService._call_responses_api',
+        return_value=ai_response,
     )
 
     # act
-    with pytest.raises(OpenAiServiceFailed) as ex:
-        service._get_response(
-            user_description=description,
-            prompt=prompt,
-        )
+    response = service._get_json_response(
+        user_description=description,
+    )
 
     # assert
-    create_completion_mock.assert_called_once()
-    log_mock.assert_called_once_with(
-        message='Response has no choices',
-        user_description=description,
-        prompt=prompt,
-    )
-    assert ex.value.message == messages.MSG_PW_0043
+    assert response == ai_response
+    call_api_mock.assert_called_once()
+    payload = call_api_mock.call_args[0][0]
+    assert payload['model'] == 'gpt-4.1-mini'
+    assert 'instructions' in payload
+    assert payload['input'] == description
 
 
-def test_get_response__finish_reason__raise_exception(mocker):
+def test_get_json_response__api_error__raise_exception(mocker):
 
     # arrange
     description = 'some description'
-    prompt = create_test_prompt()
     mocker.patch(
         'src.processes.services.templates.ai.settings.OPENAI_API_KEY',
         'some_key',
-    )
-    mocker.patch(
-        'src.processes.services.templates.ai.settings.OPENAI_API_ORG',
-        'some_org',
     )
     user = create_test_user()
     service = OpenAiService(
@@ -272,42 +226,20 @@ def test_get_response__finish_reason__raise_exception(mocker):
         user=user,
         auth_type=AuthTokenType.USER,
     )
-    log_mock = mocker.patch(
+    mocker.patch(
         'src.processes.services.templates.'
-        'ai.OpenAiService._log',
-    )
-    finish_reason = 'Some finish'
-    message_mock = mocker.Mock(
-        finish_reason=finish_reason,
-    )
-    choice_mock = mocker.Mock(
-        message=message_mock,
-    )
-    completion_mock = mocker.Mock(
-        choices=[choice_mock],
-    )
-    create_completion_mock = mocker.patch(
-        'src.processes.services.templates.'
-        'ai.openai.ChatCompletion.create',
-        return_value=completion_mock,
+        'ai.BaseAiService._call_responses_api',
+        side_effect=OpenAiServiceUnavailable(),
     )
 
     # act
-    with pytest.raises(OpenAiServiceFailed) as ex:
-        service._get_response(
+    with pytest.raises(OpenAiServiceUnavailable):
+        service._get_json_response(
             user_description=description,
-            prompt=prompt,
         )
 
-    # assert
-    create_completion_mock.assert_called_once()
-    log_mock.assert_called_once_with(
-        message='Response has finish reason',
-        response_text=finish_reason,
-        user_description=description,
-        prompt=prompt,
-    )
-    assert ex.value.message == messages.MSG_PW_0043
+
+# === _get_steps_data_from_text (legacy text parsing) ===
 
 
 def test_get_steps_data_from_text__ok(mocker):
@@ -357,110 +289,255 @@ def test_get_steps_data_from_text__ok(mocker):
     ]
 
 
-def test_get_steps_data_from_text__limit_task_name__ok(mocker):
+# === OpenAiService._log_exception (3.9) ===
+
+
+def test_oa_log_exception__ok__calls_sentry(mocker):
+
+    """Calls capture_sentry_message with data"""
 
     # arrange
-    user = create_test_user()
-    mocker.patch(
-        'src.processes.services.templates.ai.settings.OPENAI_API_KEY',
-        'some_key',
-    )
-    mocker.patch(
-        'src.processes.services.templates.ai.settings.OPENAI_API_ORG',
-        'some_org',
-    )
-    limit = TaskTemplate.NAME_MAX_LENGTH
-    task_name = 'o' * (limit + 1)
-    text = f'{task_name} | desc'
-
+    user = create_test_owner()
     service = OpenAiService(
         ident=user.id,
         user=user,
         auth_type=AuthTokenType.USER,
+    )
+    prompt = create_test_prompt()
+    description = 'some description'
+    exception = Exception('some error')
+    sentry_mock = mocker.patch(
+        'src.processes.services.templates.ai.'
+        'capture_sentry_message',
     )
 
     # act
-    result = service._get_steps_data_from_text(text=text)
+    service._log_exception(
+        prompt=prompt,
+        user_description=description,
+        ex=exception,
+    )
 
     # assert
-    assert len(result[0]['name']) == limit
+    sentry_mock.assert_called_once_with(
+        message=(
+            f'Error AI generating template '
+            f'({user.account.id})'
+        ),
+        data={
+            'user_id': user.id,
+            'user_email': user.email,
+            'account_id': user.account.id,
+            'ex': {
+                'error': str(exception),
+            },
+            'request': {
+                'user_description': description,
+                'prompt': prompt.as_dict(),
+            },
+        },
+        level=SentryLogLevel.INFO,
+    )
 
 
-def test_get_steps_data_from_text__not_delimiter__skip(mocker):
+# === OpenAiService._log (3.10) ===
+
+
+def test_oa_log__ok__calls_sentry(mocker):
+
+    """Calls capture_sentry_message with data"""
 
     # arrange
-    mocker.patch(
-        'src.processes.services.templates.ai.settings.OPENAI_API_KEY',
-        'some_key',
-    )
-    mocker.patch(
-        'src.processes.services.templates.ai.settings.OPENAI_API_ORG',
-        'some_org',
-    )
-    user = create_test_user()
+    user = create_test_owner()
     service = OpenAiService(
         ident=user.id,
         user=user,
         auth_type=AuthTokenType.USER,
     )
-    text = 'Title desc'
+    prompt = create_test_prompt()
+    description = 'some description'
+    message = 'some message'
+    response_text = 'some response'
+    sentry_mock = mocker.patch(
+        'src.processes.services.templates.ai.'
+        'capture_sentry_message',
+    )
 
     # act
-    result = service._get_steps_data_from_text(text=text)
+    service._log(
+        prompt=prompt,
+        user_description=description,
+        message=message,
+        response_text=response_text,
+    )
 
     # assert
-    assert len(result) == 0
+    sentry_mock.assert_called_once_with(
+        message=(
+            f'Error AI generating template '
+            f'({user.account.id})'
+        ),
+        data={
+            'user_id': user.id,
+            'user_email': user.email,
+            'account_id': user.account.id,
+            'message': message,
+            'response': {
+                'text': response_text,
+            },
+            'request': {
+                'user_description': description,
+                'prompt': prompt.as_dict(),
+            },
+        },
+        level=SentryLogLevel.INFO,
+    )
 
 
-def test_get_post_template_generation_actions__ok(mocker):
+def test_oa_log__no_resp_text__ok(mocker):
+
+    """response_text=None included in data"""
 
     # arrange
-    description = 'text'
-    inc_template_generations_count_mock = mocker.patch(
-        'src.processes.services.templates.'
-        'ai.AccountService.inc_template_generations_count',
-    )
-    user = create_test_user()
+    user = create_test_owner()
     service = OpenAiService(
         ident=user.id,
         user=user,
         auth_type=AuthTokenType.USER,
+    )
+    prompt = create_test_prompt()
+    description = 'some description'
+    message = 'some message'
+    sentry_mock = mocker.patch(
+        'src.processes.services.templates.ai.'
+        'capture_sentry_message',
+    )
+
+    # act
+    service._log(
+        prompt=prompt,
+        user_description=description,
+        message=message,
+    )
+
+    # assert
+    sentry_mock.assert_called_once_with(
+        message=(
+            f'Error AI generating template '
+            f'({user.account.id})'
+        ),
+        data={
+            'user_id': user.id,
+            'user_email': user.email,
+            'account_id': user.account.id,
+            'message': message,
+            'response': {
+                'text': None,
+            },
+            'request': {
+                'user_description': description,
+                'prompt': prompt.as_dict(),
+            },
+        },
+        level=SentryLogLevel.INFO,
+    )
+
+
+# === OpenAiService._get_step_data_from_text (3.11) ===
+
+
+def test_oa_get_step_data__ok__has_performer(mocker):
+
+    """Returns dict with performer and condition"""
+
+    # arrange
+    user = create_test_owner()
+    service = OpenAiService(
+        ident=user.id,
+        user=user,
+        auth_type=AuthTokenType.USER,
+    )
+    api_name = 'task-abc-123'
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'create_api_name',
+        return_value=api_name,
+    )
+
+    # act
+    result = service._get_step_data_from_text(
+        number=1,
+        name='Step name',
+        description='Step desc',
+        prev_task_api_name=None,
+    )
+
+    # assert
+    assert result['number'] == 1
+    assert result['name'] == 'Step name'
+    assert result['api_name'] == api_name
+    assert result['description'] == 'Step desc'
+    assert result['raw_performers'] == [
+        {
+            'type': PerformerType.USER,
+            'source_id': user.id,
+            'label': user.name,
+        },
+    ]
+    assert len(result['conditions']) == 1
+
+
+# === _post_template_generation_actions (3.13) ===
+
+
+def test_post_tmpl_gen_actions__ok__increments(mocker):
+
+    """Calls inc_template_generations_count"""
+
+    # arrange
+    user = create_test_owner()
+    service = OpenAiService(
+        ident=user.id,
+        user=user,
+        auth_type=AuthTokenType.USER,
+    )
+    mocker.patch.object(
+        target=(
+            __import__(
+                'src.accounts.services.account',
+                fromlist=['AccountService'],
+            ).AccountService
+        ),
+        attribute='__init__',
+        return_value=None,
+    )
+    inc_mock = mocker.patch(
+        'src.processes.services.templates.ai.'
+        'AccountService.inc_template_generations_count',
     )
 
     # act
     service._post_template_generation_actions(
-        user_description=description,
+        user_description='some description',
     )
 
     # assert
-    inc_template_generations_count_mock.assert_called_once()
+    inc_mock.assert_called_once_with()
 
 
-def test_get_template_data__ok(mocker):
+# === _get_template_data (3.15) ===
+
+
+def test_get_tmpl_data__limit__raises(mocker):
+
+    """Limit exceeded raises exception"""
 
     # arrange
-    user = create_test_user()
-    prompt = create_test_prompt()
-    description = 'My lovely business process'
-    ai_response = (
-        '1. Hive inspection|Inspect the beehives to determine which ones '
-        'are ready for honey collection.\n'
-        '2. Smoke the hive | Use a smoker to calm the bees and make them '
-        'less aggressive.'
-    )
-    get_response_mock = mocker.patch(
-        'src.processes.services.templates.'
-        'ai.OpenAiService._get_response',
-        return_value=ai_response,
-    )
-    post_template_generation_actions_mock = mocker.patch(
-        'src.processes.services.templates.'
-        'ai.OpenAiService._post_template_generation_actions',
-    )
-    template_generation_init_mock = mocker.patch(
-        'src.processes.services.templates.'
-        'ai.AnalyticService.template_generation_init',
-    )
+    account = create_test_account()
+    account.max_ai_templates_generations = 0
+    account.ai_templates_generations = 1
+    account.save()
+    user = create_test_owner(account=account)
     service = OpenAiService(
         ident=user.id,
         user=user,
@@ -468,272 +545,647 @@ def test_get_template_data__ok(mocker):
     )
 
     # act
-    template_data = service.get_template_data(user_description=description)
-
-    # assert
-    get_response_mock.assert_called_once_with(
-        user_description=description,
-        prompt=prompt,
-    )
-    post_template_generation_actions_mock.assert_called_once_with(
-        description,
-    )
-    template_generation_init_mock.assert_called_once_with(
-        user=user,
-        auth_type=AuthTokenType.USER,
-        is_superuser=False,
-        description=description,
-        success=True,
-    )
-
-    assert template_data['name'] == description
-    assert template_data['wf_name_template'] is None
-    assert template_data['description'] == ''
-    assert template_data['is_active'] is False
-    assert template_data['finalizable'] is True
-    assert template_data['is_public'] is False
-    assert template_data['owners'] == [
-        {
-            'type': OwnerType.USER,
-            'source_id': str(user.id),
-            'role': OwnerRole.OWNER,
-        },
-    ]
-    assert template_data['kickoff'] == {
-        'description': '',
-        'fields': [],
-    }
-    task_1_data = template_data['tasks'][0]
-    assert task_1_data['number'] == 1
-    assert task_1_data['name'] == '1. Hive inspection'
-    assert task_1_data['api_name']
-    assert task_1_data['description'] == (
-        'Inspect the beehives to determine which ones '
-        'are ready for honey collection.'
-    )
-    assert task_1_data['raw_performers'] == [
-        {
-            'type': PerformerType.USER,
-            'source_id': user.id,
-            'label': user.name,
-        },
-    ]
-    assert len(task_1_data['conditions']) == 1
-    task_1_condition = task_1_data['conditions'][0]
-    assert task_1_condition['order'] == 1
-    assert task_1_condition['action'] == ConditionAction.START_TASK
-    assert task_1_condition['api_name']
-    assert len(task_1_condition['rules']) == 1
-    assert task_1_condition['rules'][0]['api_name']
-    assert len(task_1_condition['rules'][0]['predicates']) == 1
-    task_1_predicate = task_1_condition['rules'][0]['predicates'][0]
-    assert task_1_predicate['field_type'] == PredicateType.KICKOFF
-    assert task_1_predicate['operator'] == PredicateOperator.COMPLETED
-    assert task_1_predicate['api_name']
-    assert task_1_predicate['field'] is None
-    assert task_1_predicate['value'] is None
-
-    task_2_data = template_data['tasks'][1]
-    assert task_2_data['number'] == 2
-    assert task_2_data['name'] == '2. Smoke the hive'
-    assert task_2_data['api_name']
-    assert task_2_data['description'] == (
-        'Use a smoker to calm the bees and '
-        'make them less aggressive.'
-    )
-    assert task_2_data['raw_performers'] == [
-        {
-            'type': PerformerType.USER,
-            'source_id': user.id,
-            'label': user.name,
-        },
-    ]
-    assert len(task_2_data['conditions']) == 1
-    task_2_condition = task_2_data['conditions'][0]
-    assert task_2_condition['order'] == 1
-    assert task_2_condition['action'] == ConditionAction.START_TASK
-    assert task_2_condition['api_name']
-    assert len(task_2_condition['rules']) == 1
-    assert task_2_condition['rules'][0]['api_name']
-    assert len(task_2_condition['rules'][0]['predicates']) == 1
-    task_2_predicate = task_2_condition['rules'][0]['predicates'][0]
-    assert task_2_predicate['field_type'] == PredicateType.TASK
-    assert task_2_predicate['operator'] == PredicateOperator.COMPLETED
-    assert task_2_predicate['api_name']
-    assert task_2_predicate['field'] == task_1_data['api_name']
-    assert task_2_predicate['value'] is None
+    with pytest.raises(OpenAiLimitTemplateGenerations):
+        service._get_template_data(
+            user_description='some description',
+        )
 
 
-def test_get_template_data__limit_exceeded__raise_exception(mocker):
+def test_get_tmpl_data__tmpl_prompt__ok(mocker):
+
+    """Template prompt exists, JSON path OK"""
 
     # arrange
-    user = create_test_user()
-    account = user.account
-    account.ai_templates_generations = 10
-    account.max_ai_templates_generations = 10
-    account.save(
-        update_fields=[
-            'ai_templates_generations',
-            'max_ai_templates_generations',
+    user = create_test_owner()
+    service = OpenAiService(
+        ident=user.id,
+        user=user,
+        auth_type=AuthTokenType.USER,
+    )
+    create_test_prompt(
+        target=OpenAIPromptTarget.GET_TEMPLATE,
+    )
+    response_text = json.dumps({
+        'name': 'Test',
+        'description': 'desc',
+        'tasks': [
+            {
+                'name': 'Task 1',
+                'description': 'do something',
+            },
         ],
+        'kickoff': {'fields': []},
+    })
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._get_json_response',
+        return_value=response_text,
+    )
+    filled_data = {'name': 'Test', 'tasks': []}
+    mocker.patch.object(
+        target=(
+            __import__(
+                'src.processes.services.templates.template',
+                fromlist=['TemplateService'],
+            ).TemplateService
+        ),
+        attribute='__init__',
+        return_value=None,
+    )
+    fill_mock = mocker.patch(
+        'src.processes.services.templates.ai.'
+        'TemplateService.fill_template_data',
+        return_value=filled_data,
+    )
+    post_mock = mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._post_template_generation_actions',
     )
 
-    description = 'My lovely business process'
-    get_response_mock = mocker.patch(
-        'src.processes.services.templates.'
-        'ai.OpenAiService._get_response',
-    )
-    template_generation_init_mock = mocker.patch(
-        'src.processes.services.templates.'
-        'ai.AnalyticService.template_generation_init',
+    # act
+    result = service._get_template_data(
+        user_description='some description',
     )
 
+    # assert
+    assert result == filled_data
+    fill_mock.assert_called_once()
+    post_mock.assert_called_once_with(
+        'some description',
+    )
+
+
+def test_get_tmpl_data__no_prompts__defaults(mocker):
+
+    """No prompts, JSON path with defaults"""
+
+    # arrange
+    user = create_test_owner()
     service = OpenAiService(
         ident=user.id,
         user=user,
         auth_type=AuthTokenType.USER,
     )
+    response_text = json.dumps({
+        'name': 'Test',
+        'description': 'desc',
+        'tasks': [
+            {
+                'name': 'Task 1',
+                'description': 'do something',
+            },
+        ],
+        'kickoff': {'fields': []},
+    })
+    get_json_mock = mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._get_json_response',
+        return_value=response_text,
+    )
+    filled_data = {'name': 'Test', 'tasks': []}
+    mocker.patch.object(
+        target=(
+            __import__(
+                'src.processes.services.templates.template',
+                fromlist=['TemplateService'],
+            ).TemplateService
+        ),
+        attribute='__init__',
+        return_value=None,
+    )
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'TemplateService.fill_template_data',
+        return_value=filled_data,
+    )
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._post_template_generation_actions',
+    )
 
     # act
-    with pytest.raises(OpenAiLimitTemplateGenerations) as ex:
-        service.get_template_data(user_description=description)
+    service._get_template_data(
+        user_description='some description',
+    )
 
     # assert
-    get_response_mock.assert_not_called()
-    assert ex.value.message == messages.MSG_PW_0044
-    template_generation_init_mock.assert_called_once_with(
-        user=user,
-        auth_type=AuthTokenType.USER,
-        is_superuser=False,
-        description=description,
-        success=False,
+    get_json_mock.assert_called_once_with(
+        user_description='some description',
+        prompt=None,
     )
 
 
-def test_get_template_data__not_prompt__raise_exception(mocker):
+def test_get_tmpl_data__json_err_prompt__logs(mocker):
+
+    """JSON parse error with prompt logs + raises"""
 
     # arrange
-    user = create_test_user()
-    description = 'My lovely business process'
-    get_response_mock = mocker.patch(
-        'src.processes.services.templates.'
-        'ai.OpenAiService._get_response',
-    )
-    template_generation_init_mock = mocker.patch(
-        'src.processes.services.templates.'
-        'ai.AnalyticService.template_generation_init',
-    )
+    user = create_test_owner()
     service = OpenAiService(
         ident=user.id,
         user=user,
         auth_type=AuthTokenType.USER,
     )
+    template_prompt = create_test_prompt(
+        target=OpenAIPromptTarget.GET_TEMPLATE,
+    )
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._get_json_response',
+        return_value='not valid json',
+    )
+    log_mock = mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._log',
+    )
 
     # act
-    with pytest.raises(OpenAiStepsPromptNotExist) as ex:
-        service.get_template_data(user_description=description)
+    with pytest.raises(OpenAiTemplateStepsNotExist):
+        service._get_template_data(
+            user_description='some description',
+        )
 
     # assert
-    get_response_mock.assert_not_called()
-    assert ex.value.message == messages.MSG_PW_0046
-    template_generation_init_mock.assert_called_once_with(
-        user=user,
-        auth_type=AuthTokenType.USER,
-        is_superuser=False,
-        description=description,
-        success=False,
+    log_mock.assert_called_once_with(
+        prompt=template_prompt,
+        user_description='some description',
+        message='Failed to parse JSON template response',
+        response_text='not valid json',
     )
 
 
-def test_get_template_data__not_prompt_message__raise_exception(mocker):
+def test_get_tmpl_data__json_err_no_prompt__raises(mocker):
+
+    """JSON parse error no prompt raises no log"""
 
     # arrange
-    user = create_test_user()
-    description = 'My lovely business process'
-    create_test_prompt(messages_count=0)
-    get_response_mock = mocker.patch(
-        'src.processes.services.templates.'
-        'ai.OpenAiService._get_response',
-    )
-    template_generation_init_mock = mocker.patch(
-        'src.processes.services.templates.'
-        'ai.AnalyticService.template_generation_init',
-    )
+    user = create_test_owner()
     service = OpenAiService(
         ident=user.id,
         user=user,
         auth_type=AuthTokenType.USER,
     )
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._get_json_response',
+        return_value='not valid json',
+    )
+    log_mock = mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._log',
+    )
 
     # act
-    with pytest.raises(OpenAiStepsPromptNotExist) as ex:
-        service.get_template_data(user_description=description)
+    with pytest.raises(OpenAiTemplateStepsNotExist):
+        service._get_template_data(
+            user_description='some description',
+        )
 
     # assert
-    get_response_mock.assert_not_called()
-    assert ex.value.message == messages.MSG_PW_0046
-    template_generation_init_mock.assert_called_once_with(
-        user=user,
-        auth_type=AuthTokenType.USER,
-        is_superuser=False,
-        description=description,
-        success=False,
-    )
+    assert log_mock.call_count == 0
 
 
-def test_get_template_data__not_steps__raise_exception(mocker):
+def test_get_tmpl_data__no_tasks_prompt__logs(mocker):
+
+    """Empty tasks with prompt logs + raises"""
 
     # arrange
-    user = create_test_user()
-    description = 'My lovely business process'
-    prompt = create_test_prompt()
-    response_mock = 'Some response'
-    get_response_mock = mocker.patch(
-        'src.processes.services.templates.'
-        'ai.OpenAiService._get_response',
-        return_value=response_mock,
+    user = create_test_owner()
+    service = OpenAiService(
+        ident=user.id,
+        user=user,
+        auth_type=AuthTokenType.USER,
     )
-    get_tasks_data_from_text_mock = mocker.patch(
-        'src.processes.services.templates.'
-        'ai.OpenAiService._get_steps_data_from_text',
+    template_prompt = create_test_prompt(
+        target=OpenAIPromptTarget.GET_TEMPLATE,
+    )
+    response_text = json.dumps({
+        'name': 'Test',
+        'tasks': [],
+        'kickoff': {'fields': []},
+    })
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._get_json_response',
+        return_value=response_text,
+    )
+    log_mock = mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._log',
+    )
+
+    # act
+    with pytest.raises(OpenAiTemplateStepsNotExist):
+        service._get_template_data(
+            user_description='some description',
+        )
+
+    # assert
+    log_mock.assert_called_once_with(
+        prompt=template_prompt,
+        user_description='some description',
+        message='Template tasks not found',
+        response_text=response_text,
+    )
+
+
+def test_get_tmpl_data__no_tasks_no_prompt__raises(mocker):
+
+    """Empty tasks no prompt raises no log"""
+
+    # arrange
+    user = create_test_owner()
+    service = OpenAiService(
+        ident=user.id,
+        user=user,
+        auth_type=AuthTokenType.USER,
+    )
+    response_text = json.dumps({
+        'name': 'Test',
+        'tasks': [],
+        'kickoff': {'fields': []},
+    })
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._get_json_response',
+        return_value=response_text,
+    )
+    log_mock = mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._log',
+    )
+
+    # act
+    with pytest.raises(OpenAiTemplateStepsNotExist):
+        service._get_template_data(
+            user_description='some description',
+        )
+
+    # assert
+    assert log_mock.call_count == 0
+
+
+def test_get_tmpl_data__steps_prompt__ok(mocker):
+
+    """Steps prompt path OK"""
+
+    # arrange
+    user = create_test_owner()
+    service = OpenAiService(
+        ident=user.id,
+        user=user,
+        auth_type=AuthTokenType.USER,
+    )
+    create_test_prompt(
+        target=OpenAIPromptTarget.GET_STEPS,
+    )
+    tasks_data = [
+        {
+            'number': 1,
+            'name': 'Step 1',
+            'api_name': 'task-1',
+            'description': 'desc 1',
+        },
+    ]
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._get_response',
+        return_value='Step 1|desc 1',
+    )
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._get_steps_data_from_text',
+        return_value=tasks_data,
+    )
+    filled_data = {'name': 'Test', 'tasks': tasks_data}
+    mocker.patch.object(
+        target=(
+            __import__(
+                'src.processes.services.templates.template',
+                fromlist=['TemplateService'],
+            ).TemplateService
+        ),
+        attribute='__init__',
+        return_value=None,
+    )
+    fill_mock = mocker.patch(
+        'src.processes.services.templates.ai.'
+        'TemplateService.fill_template_data',
+        return_value=filled_data,
+    )
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._post_template_generation_actions',
+    )
+
+    # act
+    result = service._get_template_data(
+        user_description='some description',
+    )
+
+    # assert
+    assert result == filled_data
+    fill_mock.assert_called_once()
+
+
+def test_get_tmpl_data__steps_empty__logs(mocker):
+
+    """Steps prompt empty steps logs + raises"""
+
+    # arrange
+    user = create_test_owner()
+    service = OpenAiService(
+        ident=user.id,
+        user=user,
+        auth_type=AuthTokenType.USER,
+    )
+    steps_prompt = create_test_prompt(
+        target=OpenAIPromptTarget.GET_STEPS,
+    )
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._get_response',
+        return_value='no steps here',
+    )
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._get_steps_data_from_text',
         return_value=[],
     )
     log_mock = mocker.patch(
-        'src.processes.services.templates.'
-        'ai.OpenAiService._log',
-    )
-    template_generation_init_mock = mocker.patch(
-        'src.processes.services.templates.'
-        'ai.AnalyticService.template_generation_init',
+        'src.processes.services.templates.ai.'
+        'OpenAiService._log',
     )
 
+    # act
+    with pytest.raises(OpenAiTemplateStepsNotExist):
+        service._get_template_data(
+            user_description='some description',
+        )
+
+    # assert
+    log_mock.assert_called_once_with(
+        prompt=steps_prompt,
+        user_description='some description',
+        message='Template steps not found',
+        response_text='no steps here',
+    )
+
+
+def test_get_tmpl_data__no_steps_prompt__raises(mocker):
+
+    """No active prompts takes JSON path, empty tasks raises"""
+
+    # arrange
+    user = create_test_owner()
     service = OpenAiService(
         ident=user.id,
         user=user,
         auth_type=AuthTokenType.USER,
     )
+    response_text = json.dumps({
+        'name': 'Test',
+        'tasks': [],
+        'kickoff': {'fields': []},
+    })
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._get_json_response',
+        return_value=response_text,
+    )
 
     # act
-    with pytest.raises(OpenAiTemplateStepsNotExist) as ex:
-        service.get_template_data(user_description=description)
+    with pytest.raises(OpenAiTemplateStepsNotExist):
+        service._get_template_data(
+            user_description='some description',
+        )
+
+
+def test_get_tmpl_data__empty_name__defaults(mocker):
+
+    """Empty name defaults to user_description"""
+
+    # arrange
+    user = create_test_owner()
+    service = OpenAiService(
+        ident=user.id,
+        user=user,
+        auth_type=AuthTokenType.USER,
+    )
+    response_text = json.dumps({
+        'name': '',
+        'description': 'desc',
+        'tasks': [
+            {
+                'name': 'Task 1',
+                'description': 'do something',
+            },
+        ],
+        'kickoff': {'fields': []},
+    })
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._get_json_response',
+        return_value=response_text,
+    )
+    mocker.patch.object(
+        target=(
+            __import__(
+                'src.processes.services.templates.template',
+                fromlist=['TemplateService'],
+            ).TemplateService
+        ),
+        attribute='__init__',
+        return_value=None,
+    )
+    captured = {}
+
+    def capture_fill(data):
+        captured['data'] = data
+        return {'name': 'desc', 'tasks': []}
+
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'TemplateService.fill_template_data',
+        side_effect=capture_fill,
+    )
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._post_template_generation_actions',
+    )
+    description = 'my workflow description'
+
+    # act
+    service._get_template_data(
+        user_description=description,
+    )
 
     # assert
-    get_response_mock.assert_called_once_with(
-        user_description=description,
-        prompt=prompt,
+    assert captured['data']['name'] == description[:200]
+
+
+def test_get_tmpl_data__ok__fills_and_posts(mocker):
+
+    """Calls fill_template_data and post actions"""
+
+    # arrange
+    user = create_test_owner()
+    service = OpenAiService(
+        ident=user.id,
+        user=user,
+        auth_type=AuthTokenType.USER,
     )
-    get_tasks_data_from_text_mock.assert_called_once_with(response_mock)
-    assert ex.value.message == messages.MSG_PW_0045
-    log_mock.assert_called_once_with(
-        message='Template steps not found',
-        user_description=description,
-        prompt=prompt,
-        response_text=response_mock,
+    response_text = json.dumps({
+        'name': 'Test',
+        'description': 'desc',
+        'tasks': [
+            {
+                'name': 'Task 1',
+                'description': 'do something',
+            },
+        ],
+        'kickoff': {'fields': []},
+    })
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._get_json_response',
+        return_value=response_text,
     )
-    template_generation_init_mock.assert_called_once_with(
+    filled_data = {'name': 'Test', 'tasks': []}
+    mocker.patch.object(
+        target=(
+            __import__(
+                'src.processes.services.templates.template',
+                fromlist=['TemplateService'],
+            ).TemplateService
+        ),
+        attribute='__init__',
+        return_value=None,
+    )
+    fill_mock = mocker.patch(
+        'src.processes.services.templates.ai.'
+        'TemplateService.fill_template_data',
+        return_value=filled_data,
+    )
+    post_mock = mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._post_template_generation_actions',
+    )
+
+    # act
+    result = service._get_template_data(
+        user_description='some description',
+    )
+
+    # assert
+    assert result == filled_data
+    fill_mock.assert_called_once()
+    post_mock.assert_called_once_with(
+        'some description',
+    )
+
+
+# === get_template_data (3.16) ===
+
+
+def test_get_template_data__ok__tracks_analytics(mocker):
+
+    """Success returns data and tracks analytics"""
+
+    # arrange
+    user = create_test_owner()
+    service = OpenAiService(
+        ident=user.id,
+        user=user,
+        auth_type=AuthTokenType.USER,
+    )
+    template_data = {'name': 'Test', 'tasks': []}
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._get_template_data',
+        return_value=template_data,
+    )
+    analytics_mock = mocker.patch(
+        'src.processes.services.templates.ai.'
+        'AnalyticService.template_generation_init',
+    )
+
+    # act
+    result = service.get_template_data(
+        user_description='some description',
+    )
+
+    # assert
+    assert result == template_data
+    analytics_mock.assert_called_once_with(
         user=user,
         auth_type=AuthTokenType.USER,
         is_superuser=False,
-        description=description,
+        description='some description',
+        success=True,
+    )
+
+
+def test_get_template_data__err__tracks_fail(mocker):
+
+    """Exception tracks analytics with success=False"""
+
+    # arrange
+    user = create_test_owner()
+    service = OpenAiService(
+        ident=user.id,
+        user=user,
+        auth_type=AuthTokenType.USER,
+    )
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._get_template_data',
+        side_effect=OpenAiServiceUnavailable(),
+    )
+    analytics_mock = mocker.patch(
+        'src.processes.services.templates.ai.'
+        'AnalyticService.template_generation_init',
+    )
+
+    # act
+    with pytest.raises(OpenAiServiceUnavailable):
+        service.get_template_data(
+            user_description='some description',
+        )
+
+    # assert
+    analytics_mock.assert_called_once_with(
+        user=user,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        description='some description',
         success=False,
     )
+
+
+def test_get_template_data__err__reraises(mocker):
+
+    """Exception re-raised after analytics"""
+
+    # arrange
+    user = create_test_owner()
+    service = OpenAiService(
+        ident=user.id,
+        user=user,
+        auth_type=AuthTokenType.USER,
+    )
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'OpenAiService._get_template_data',
+        side_effect=OpenAiTemplateStepsNotExist(),
+    )
+    mocker.patch(
+        'src.processes.services.templates.ai.'
+        'AnalyticService.template_generation_init',
+    )
+
+    # act
+    with pytest.raises(OpenAiTemplateStepsNotExist):
+        service.get_template_data(
+            user_description='some description',
+        )
