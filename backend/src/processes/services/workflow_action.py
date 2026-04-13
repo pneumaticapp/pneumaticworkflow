@@ -642,6 +642,15 @@ class WorkflowActionService:
                 self._start_prev_tasks(task)
             else:
                 self._start_next_tasks(parent_task=task)
+        elif (
+            task.skip_for_starter
+            and TaskPerformer.objects
+            .exclude_directly_deleted()
+            .by_task(task.id)
+            .by_user_or_group(self.workflow.workflow_starter_id)
+            .exists()
+        ):
+            self.skip_task(task=task, is_returned=is_returned)
         else:  # noqa: PLR5501
             if is_returned:
                 self.continue_workflow(task=task, is_returned=is_returned)

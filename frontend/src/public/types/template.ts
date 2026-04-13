@@ -61,6 +61,7 @@ export interface ITemplateTask {
   delay: string | null;
   rawDueDate: IDueDate;
   requireCompletionByAll: boolean;
+  skipForStarter: boolean;
   rawPerformers: ITemplateTaskPerformer[];
   fields: IExtraField[];
   uuid: string;

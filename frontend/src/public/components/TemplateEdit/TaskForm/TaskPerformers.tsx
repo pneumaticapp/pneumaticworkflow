@@ -120,6 +120,14 @@ export function TaskPerformers({ task, users, variables, setCurrentTask }: ITask
         />
       </div>
       <div className="mb-3">
+        <Checkbox
+          id="skipForStarter"
+          title={formatMessage({ id: 'templates.task-skip-for-starter' })}
+          checked={task.skipForStarter}
+          onChange={(e) => setCurrentTask({ skipForStarter: e.currentTarget.checked })}
+        />
+      </div>
+      <div className="mb-3">
         <UsersDropdown
           isMulti
           className={styles['responsible']}
