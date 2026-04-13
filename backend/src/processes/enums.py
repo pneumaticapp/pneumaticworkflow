@@ -717,6 +717,30 @@ class SystemVariable:
     TASK_VARS = {WORKFLOW_STARTER}
 
 
+class LabelPosition:
+
+    TOP = 'top'
+    LEFT = 'left'
+
+    CHOICES = (
+        (TOP, 'Top'),
+        (LEFT, 'Left'),
+    )
+    LITERALS = Literal[TOP, LEFT]
+
+
+class FieldSetLayout:
+
+    HORIZONTAL = 'horizontal'
+    VERTICAL = 'vertical'
+
+    CHOICES = (
+        (HORIZONTAL, 'Horizontal'),
+        (VERTICAL, 'Vertical'),
+    )
+    LITERALS = Literal[HORIZONTAL, VERTICAL]
+
+
 class FieldSetRuleType:
 
     SUM_MAX = 'sum_max'

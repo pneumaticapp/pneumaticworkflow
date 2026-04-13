@@ -13,6 +13,9 @@ class FieldSetSerializer(serializers.ModelSerializer):
             'api_name',
             'name',
             'description',
+            'order',
+            'label_position',
+            'layout',
             'fields',
         )
 

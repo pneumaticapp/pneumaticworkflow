@@ -11,6 +11,8 @@ from src.accounts.models import UserGroup
 from src.processes.enums import (
     ConditionAction,
     FieldType,
+    LabelPosition,
+    FieldSetLayout,
     PerformerType,
     PredicateOperator,
     PredicateType, FieldSetRuleType,
@@ -317,13 +319,31 @@ class ApiNameMixin(models.Model):
     api_name = models.CharField(max_length=200)
 
 
-class BaseFieldSetMixin(models.Model):
+class FieldMetaMixin(models.Model):
 
     class Meta:
         abstract = True
 
-    name = models.CharField(max_length=200)
+    label_position = models.CharField(
+        max_length=20,
+        choices=LabelPosition.CHOICES,
+        default=LabelPosition.TOP,
+    )
+
+
+class BaseFieldSetMixin(FieldMetaMixin):
+
+    class Meta:
+        abstract = True
+
+    name = models.TextField(max_length=1000)
     description = models.TextField(blank=True, default='')
+    order = models.IntegerField(default=0)
+    layout = models.CharField(
+        max_length=200,
+        choices=FieldSetLayout.CHOICES,
+        default=FieldSetLayout.VERTICAL,
+    )
 
 
 class BaseFieldSetRuleMixin(models.Model):

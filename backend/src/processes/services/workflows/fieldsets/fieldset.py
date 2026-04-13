@@ -27,6 +27,9 @@ class FieldSetService(BaseModelService):
             api_name=instance_template.api_name,
             name=instance_template.name,
             description=instance_template.description,
+            order=instance_template.order,
+            label_position=instance_template.label_position,
+            layout=instance_template.layout,
         )
 
     def _create_fields(

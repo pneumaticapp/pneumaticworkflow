@@ -9,6 +9,7 @@ from src.processes.models.mixins import (
     BaseFieldSetRuleMixin,
 )
 from src.processes.models.templates.kickoff import Kickoff
+from src.processes.models.templates.template import Template
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.querysets import (
     FieldsetTemplateQuerySet,
@@ -34,6 +35,13 @@ class FieldsetTemplate(
 
     api_name_prefix = 'fieldset'
 
+    template = models.ForeignKey(
+        Template,
+        on_delete=models.CASCADE,
+        related_name='fieldsets',
+        null=True,
+        blank=True,
+    )
     tasks = models.ManyToManyField(
         TaskTemplate,
         related_name='fieldsets',

@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 from django.db import transaction
 
 from src.generics.base.service import BaseModelService
+from src.processes.enums import LabelPosition, FieldSetLayout
 from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.services.exceptions import (
     FieldsetTemplateInUseException,
@@ -21,13 +22,19 @@ class FieldSetTemplateService(BaseModelService):
     def _create_instance(
         self,
         name: str,
+        order: int,
         description: str = '',
+        label_position: LabelPosition.LITERALS = LabelPosition.TOP,
+        layout: FieldSetLayout.LITERALS = FieldSetLayout.VERTICAL,
         **kwargs,
     ):
         self.instance = FieldsetTemplate.objects.create(
             account=self.account,
             name=name,
             description=description,
+            order=order,
+            label_position=label_position,
+            layout=layout,
         )
         return self.instance
 

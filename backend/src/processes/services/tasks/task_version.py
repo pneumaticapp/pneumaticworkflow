@@ -242,6 +242,9 @@ class TaskUpdateVersionService(
                     'account_id': self.instance.account_id,
                     'name': fs_data['name'],
                     'description': fs_data['description'],
+                    'order': fs_data['order'],
+                    'label_position': fs_data['label_position'],
+                    'layout': fs_data['layout'],
                 },
             )
             self._update_fieldset_rules(
