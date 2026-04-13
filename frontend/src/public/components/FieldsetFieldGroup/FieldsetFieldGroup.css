@@ -1,7 +1,25 @@
 .fieldset-group {
   border-left: 3px solid var(--color-primary, #7B68EE);
   padding-left: 16px;
+  margin-top: 16px;
   margin-bottom: 16px;
+}
+
+.fieldset-group__title {
+  margin: 0 0 4px;
+  font-family: Nunito, sans-serif;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 20px;
+  color: #262522;
+}
+
+.fieldset-group__description {
+  margin: 0 0 8px;
+  font-family: Nunito, sans-serif;
+  font-size: 13px;
+  line-height: 18px;
+  color: #79756d;
 }
 
 .fieldset-group__error {

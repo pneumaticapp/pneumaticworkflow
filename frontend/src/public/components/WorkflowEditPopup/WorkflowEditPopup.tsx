@@ -307,6 +307,8 @@ function WorkflowEditPopupComponent({
                   {fieldsetStates.map((fs) => (
                     <FieldsetFieldGroup
                       key={fs.id}
+                      title={fs.name}
+                      description={fs.description}
                       fields={fs.fields}
                       onEditField={handleEditFieldsetField}
                       mode={EExtraFieldMode.ProcessRun}

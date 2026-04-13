@@ -88,6 +88,8 @@ export function KickoffOutputs({
         })}
         {fieldsets?.map((fs) => (
           <div key={fs.id} className={styles['fieldset-output-group']}>
+            {fs.name && <p className={styles['fieldset-output-group__title']}>{fs.name}</p>}
+            {fs.description && <p className={styles['fieldset-output-group__description']}>{fs.description}</p>}
             {fs.fields.map((output, index) => {
               const OutputComponent = outputsMap[output.type];
               const value = output.type === EExtraFieldType.User

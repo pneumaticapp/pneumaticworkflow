@@ -7,6 +7,8 @@ import styles from './FieldsetFieldGroup.css';
 
 export interface IFieldsetFieldGroupProps {
   fields: IExtraField[];
+  title?: string;
+  description?: string;
   onEditField: (apiName: string) => (changedProps: Partial<IExtraField>) => void;
   mode: EExtraFieldMode;
   labelBackgroundColor: EInputNameBackgroundColor;
@@ -17,6 +19,8 @@ export interface IFieldsetFieldGroupProps {
 
 export function FieldsetFieldGroup({
   fields,
+  title,
+  description,
   onEditField,
   mode,
   labelBackgroundColor,
@@ -26,6 +30,8 @@ export function FieldsetFieldGroup({
 }: IFieldsetFieldGroupProps) {
   return (
     <div className={styles['fieldset-group']}>
+      {title && <p className={styles['fieldset-group__title']}>{title}</p>}
+      {description && <p className={styles['fieldset-group__description']}>{description}</p>}
       {fields.map((field) => (
         <ExtraFieldIntl
           key={field.apiName}
