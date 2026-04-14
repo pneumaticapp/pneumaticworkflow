@@ -1,4 +1,3 @@
-from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.viewsets import GenericViewSet
 
 from src.accounts.permissions import (
@@ -27,9 +26,6 @@ class FieldsetTemplateViewSet(
     GenericViewSet,
 ):
     serializer_class = FieldsetTemplateSerializer
-    action_paginator_classes = {
-        'list': LimitOffsetPagination,
-    }
 
     def get_serializer_context(self, **kwargs):
         context = super().get_serializer_context(**kwargs)
@@ -40,13 +36,6 @@ class FieldsetTemplateViewSet(
         return context
 
     def get_permissions(self):
-        if self.action in ('list', 'retrieve'):
-            return (
-                UserIsAuthenticated(),
-                ExpiredSubscriptionPermission(),
-                BillingPlanPermission(),
-                UsersOverlimitedPermission(),
-            )
         return (
             UserIsAuthenticated(),
             ExpiredSubscriptionPermission(),
@@ -58,25 +47,6 @@ class FieldsetTemplateViewSet(
     def get_queryset(self):
         user = self.request.user
         return FieldsetTemplate.objects.on_account(user.account_id)
-
-    def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset()
-        return self.paginated_response(queryset)
-
-    def create(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        service = FieldSetTemplateService(
-            user=request.user,
-            is_superuser=request.is_superuser,
-            auth_type=request.token_type,
-        )
-        try:
-            fieldset = service.create(**serializer.validated_data)
-        except BaseServiceException as ex:
-            raise_validation_error(message=ex.message)
-        response_serializer = FieldsetTemplateSerializer(fieldset)
-        return self.response_created(response_serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
         fieldset = self.get_object()

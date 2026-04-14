@@ -78,6 +78,14 @@ from src.processes.services.exceptions import (
     TemplateServiceException,
     WorkflowServiceException,
 )
+from src.generics.exceptions import BaseServiceException
+from src.processes.serializers.templates.fieldset import (
+    FieldsetTemplateSerializer,
+)
+from src.processes.models.templates.fieldset import FieldsetTemplate
+from src.processes.services.templates.fieldsets.fieldset import (
+    FieldSetTemplateService,
+)
 from src.processes.services.templates.ai import (
     OpenAiService,
 )
@@ -127,6 +135,8 @@ class TemplateViewSet(
         'fields': TemplateOnlyFieldsSerializer,
         'presets': TemplatePresetSerializer,
         'preset': TemplatePresetSerializer,
+        'list_fieldsets': FieldsetTemplateSerializer,
+        'create_fieldset': FieldsetTemplateSerializer,
     }
 
     def get_permissions(self):
@@ -136,6 +146,7 @@ class TemplateViewSet(
             'destroy',
             'discard_changes',
             'preset',
+            'create_fieldset',
         ):
             return (
                 UserIsAuthenticated(),
@@ -153,7 +164,7 @@ class TemplateViewSet(
                 UsersOverlimitedPermission(),
                 TemplateAccessPermission(),
             )
-        if self.action == 'retrieve':
+        if self.action in ('retrieve', 'list_fieldsets'):
             return (
                 UserIsAuthenticated(),
                 ExpiredSubscriptionPermission(),
@@ -746,6 +757,34 @@ class TemplateViewSet(
             raise_validation_error(message=ex.message)
 
         return self.response_ok(self.get_serializer(preset).data)
+
+    @action(methods=['GET'], detail=True, url_path='fieldsets')
+    def list_fieldsets(self, request, *args, **kwargs):
+        template = self.get_object()
+        queryset = FieldsetTemplate.objects.on_account(
+            request.user.account_id,
+        ).filter(template_id=template.id)
+        return self.paginated_response(queryset)
+
+    @list_fieldsets.mapping.post
+    def create_fieldset(self, request, *args, **kwargs):
+        template = self.get_object()
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        service = FieldSetTemplateService(
+            user=request.user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        try:
+            fieldset = service.create(
+                template_id=template.id,
+                **serializer.validated_data,
+            )
+        except BaseServiceException as ex:
+            raise_validation_error(message=ex.message)
+        response_serializer = FieldsetTemplateSerializer(fieldset)
+        return self.response_created(response_serializer.data)
 
 
 class TemplateIntegrationsViewSet(

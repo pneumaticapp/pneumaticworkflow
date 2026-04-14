@@ -23,12 +23,14 @@ class FieldSetTemplateService(BaseModelService):
         self,
         name: str,
         order: int,
+        template_id: int,
         description: str = '',
         label_position: LabelPosition.LITERALS = LabelPosition.TOP,
         layout: FieldSetLayout.LITERALS = FieldSetLayout.VERTICAL,
         **kwargs,
     ):
         self.instance = FieldsetTemplate.objects.create(
+            template_id=template_id,
             account=self.account,
             name=name,
             description=description,
