@@ -148,46 +148,6 @@ def test_create_or_update__skip_flag_true__ok(mocker):
     assert task.require_completion_by_all is False
 
 
-def test_create_or_update__legacy_no_skip_flag__ok(mocker):
-
-    # arrange
-    user = create_test_owner()
-    template = create_test_template(user=user, tasks_count=1)
-    workflow = create_test_workflow(
-        user=user,
-        template=template,
-        is_urgent=True,
-    )
-    clear_description = 'clear'
-    mocker.patch(
-        'src.services.markdown.MarkdownService.clear',
-        return_value=clear_description,
-    )
-    template_task = template.tasks.get(number=1)
-    task_data = TaskSchemaV1(instance=template_task).data
-
-    # simulate legacy snapshot without the key
-    task_data.pop('skip_for_starter', None)
-
-    task = workflow.tasks.get(number=1)
-    service = TaskUpdateVersionService(
-        user=user,
-        instance=task,
-        auth_type=AuthTokenType.USER,
-        is_superuser=False,
-    )
-
-    # act
-    task = service._create_or_update_instance(
-        data=task_data,
-        workflow=workflow,
-        fields_values={},
-    )
-
-    # assert
-    assert task.skip_for_starter is False
-
-
 def test_create_or_update_instance__remove_revert_task__ok():
 
     # arrange

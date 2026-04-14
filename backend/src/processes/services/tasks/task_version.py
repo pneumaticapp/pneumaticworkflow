@@ -241,10 +241,7 @@ class TaskUpdateVersionService(
             'require_completion_by_all': data[
                 'require_completion_by_all'
             ],
-            'skip_for_starter': data.get(
-                'skip_for_starter',
-                False,
-            ),
+            'skip_for_starter': data['skip_for_starter'],
             'name_template': data['name'],
             'name': insert_fields_values_to_text(
                 text=data['name'],

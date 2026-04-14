@@ -464,6 +464,20 @@ class WorkflowActionService:
             .by_workflow(self.workflow.id).with_tasks_after(task)
             .update(is_completed=False, date_completed=None)
         )
+        if task.skip_for_starter and task.require_completion_by_all:
+            starter = self.workflow.workflow_starter
+            if starter:
+                (
+                    TaskPerformer.objects
+                    .by_task(task.id)
+                    .exclude_directly_deleted()
+                    .by_user_or_group(starter.id)
+                    .update(
+                        is_completed=True,
+                        date_completed=timezone.now(),
+                    )
+                )
+
         # if task force snoozed then start task event already exists
         # but if task returned then
         if not task_start_event_already_exist:
@@ -479,6 +493,7 @@ class WorkflowActionService:
                 TaskPerformer.objects
                 .by_task(task.id)
                 .exclude_directly_deleted()
+                .not_completed()
                 .get_user_ids_emails_subscriber_set()
             )
 
@@ -615,6 +630,21 @@ class WorkflowActionService:
             delay=delay,
         )
 
+    def _skip_task_for_starter(
+        self,
+        task: Task,
+        is_returned: bool,
+    ):
+        WorkflowEventService.task_skip_event(task)
+        if is_returned and task.parents:
+            task.status = TaskStatus.PENDING
+            task.save(update_fields=['status'])
+            self._start_prev_tasks(task)
+        else:
+            task.status = TaskStatus.SKIPPED
+            task.save(update_fields=['status'])
+            self._start_next_tasks(parent_task=task)
+
     def start_task(
         self,
         task: Task,
@@ -642,34 +672,41 @@ class WorkflowActionService:
                 self._start_prev_tasks(task)
             else:
                 self._start_next_tasks(parent_task=task)
-        elif (
-            task.skip_for_starter
-            and self.workflow.workflow_starter_id
-            and TaskPerformer.objects
-            .exclude_directly_deleted()
-            .by_task(task.id)
-            .by_user_or_group(self.workflow.workflow_starter_id)
-            .exists()
-        ):
-            WorkflowEventService.task_skip_event(task)
-            if is_returned and task.parents:
-                task.status = TaskStatus.PENDING
-                task.save(update_fields=['status'])
-                self._start_prev_tasks(task)
+            return
+        if task.skip_for_starter and not self.workflow.is_external:
+            starter = self.workflow.workflow_starter
+            starter_perf = (
+                TaskPerformer.objects
+                .by_task(task.id)
+                .exclude_directly_deleted()
+                .by_user_or_group(starter.id)
+                .first()
+            )
+            if starter_perf:
+                if not task.require_completion_by_all:
+                    self._skip_task_for_starter(task, is_returned)
+                    return
+
+                has_other_performers = (
+                    TaskPerformer.objects
+                    .by_task(task.id)
+                    .exclude_directly_deleted()
+                    .exclude(pk=starter_perf.pk)
+                    .exists()
+                )
+                if not has_other_performers:
+                    self._skip_task_for_starter(task, is_returned)
+                    return
+
+        if is_returned:
+            self.continue_workflow(task=task, is_returned=is_returned)
+        else:
+            delay = task.get_active_delay()
+            if delay:
+                self.delay_task(task=task, delay=delay)
+                self._start_next_tasks()
             else:
-                task.status = TaskStatus.SKIPPED
-                task.save(update_fields=['status'])
-                self._start_next_tasks(parent_task=task)
-        else:  # noqa: PLR5501
-            if is_returned:
                 self.continue_workflow(task=task, is_returned=is_returned)
-            else:
-                delay = task.get_active_delay()
-                if delay:
-                    self.delay_task(task=task, delay=delay)
-                    self._start_next_tasks()
-                else:
-                    self.continue_workflow(task=task, is_returned=is_returned)
 
     def complete_task(self, task: Task, by_user: bool = False):
 
