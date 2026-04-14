@@ -305,7 +305,7 @@ class VacationDelegationService:
         vacation_start_date: Optional[date] = None,
         vacation_end_date: Optional[date] = None,
     ) -> Set[int]:
-        group = UserGroup.objects.create(
+        group = UserGroup.include_personal.create(
             name=(
                 f'{SUBSTITUTE_GROUP_PREFIX}'
                 f' {self.user.get_full_name()}'

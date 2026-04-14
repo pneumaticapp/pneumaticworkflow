@@ -113,9 +113,7 @@ class UserSerializer(
     date_fmt = DateFormatField(required=False)
     invite = serializers.SerializerMethodField(allow_null=True, read_only=True)
     password = serializers.CharField(write_only=True, required=False)
-    vacation = VacationSerializer(
-        read_only=True, allow_null=True, default=None,
-    )
+    vacation = VacationSerializer(read_only=True)
 
     def get_invite(self, instance: UserModel):
         if instance.status_invited and instance.invite:

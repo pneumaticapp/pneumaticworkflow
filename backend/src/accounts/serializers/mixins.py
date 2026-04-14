@@ -1,6 +1,7 @@
 from typing import List
 
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
 from src.accounts.models import UserVacation
@@ -12,6 +13,12 @@ class VacationSerializer(serializers.ModelSerializer):
     """Nested serializer for the UserVacation object."""
 
     substitute_user_ids = serializers.SerializerMethodField()
+
+    def get_attribute(self, instance):
+        try:
+            return super().get_attribute(instance)
+        except ObjectDoesNotExist:
+            return None
 
     class Meta:
         model = UserVacation

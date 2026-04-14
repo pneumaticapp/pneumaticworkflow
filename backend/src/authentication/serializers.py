@@ -200,9 +200,7 @@ class ContextUserSerializer(
     has_workflow_starter_access = serializers.SerializerMethodField()
     date_joined_tsp = TimeStampField(source='date_joined', read_only=True)
     date_fmt = DateFormatField(read_only=True)
-    vacation = VacationSerializer(
-        read_only=True, allow_null=True, default=None,
-    )
+    vacation = VacationSerializer(read_only=True)
 
     def get_has_workflow_viewer_access(self, obj) -> bool:
         access = self._get_template_access(obj)
