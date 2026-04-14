@@ -122,7 +122,7 @@ class FieldSetTemplateService(BaseModelService):
                     auth_type=self.auth_type,
                     instance=existing_rules[rule_id],
                 )
-                service.partial_update(**rule_data)
+                service.partial_update(force_save=True, **rule_data)
                 rules_ids.add(rule_id)
             else:
                 service = FieldsetTemplateRuleService(
@@ -161,21 +161,21 @@ class FieldSetTemplateService(BaseModelService):
         """ All fieldset fields will be updated """
 
         existing_fields = {
-            field.id: field
+            field.api_name: field
             for field in self.instance.fields.all()
         }
-        fields_ids = set()
+        fields_api_names = set()
         for field_data in fields_data:
-            field_id = field_data.pop('id', None)
-            if field_id and field_id in existing_fields:
+            field_api_name = field_data.pop('api_name', None)
+            if field_api_name and field_api_name in existing_fields:
                 service = FieldTemplateService(
                     user=self.user,
                     is_superuser=self.is_superuser,
                     auth_type=self.auth_type,
-                    instance=existing_fields[field_id],
+                    instance=existing_fields[field_api_name],
                 )
-                service.partial_update(**field_data)
-                fields_ids.add(field_id)
+                service.partial_update(force_save=True, **field_data)
+                fields_api_names.add(field_api_name)
             else:
                 service = FieldTemplateService(
                     user=self.user,
@@ -187,6 +187,6 @@ class FieldSetTemplateService(BaseModelService):
                     template_id=self.instance.template_id,
                     **field_data,
                 )
-                fields_ids.add(field.id)
+                fields_api_names.add(field.api_name)
 
-        self.instance.fields.exclude(id__in=fields_ids).delete()
+        self.instance.fields.exclude(api_name__in=fields_api_names).delete()

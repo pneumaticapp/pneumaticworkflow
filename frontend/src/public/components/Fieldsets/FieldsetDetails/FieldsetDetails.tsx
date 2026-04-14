@@ -250,9 +250,10 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
 
   const handleSaveFields = () => {
     if (!fieldset) return;
+    const fieldsPayload = localFields.map(({ id: _id, ...rest }) => rest);
     dispatch(updateFieldsetAction({
       id: fieldset.id,
-      fields: localFields as any,
+      fields: fieldsPayload as any,
     }));
     setHasUnsavedChanges(false);
   };

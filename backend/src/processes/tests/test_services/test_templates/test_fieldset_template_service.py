@@ -26,7 +26,7 @@ from src.processes.services.templates.fieldsets.fieldset_rule import (
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_owner,
-    create_test_template,
+    create_test_template, create_test_fieldset,
 )
 
 pytestmark = pytest.mark.django_db
@@ -456,7 +456,7 @@ def test__update_fields__existing_field__ok(mocker):
         auth_type=AuthTokenType.USER,
         instance=fieldset,
     )
-    fields_data = [{'id': field_1.id, 'name': 'Updated Field 1'}]
+    fields_data = [{'api_name': field_1.api_name, 'name': 'Updated Field 1'}]
 
     # mock
     field_template_service_init_mock = mocker.patch.object(
@@ -485,6 +485,7 @@ def test__update_fields__existing_field__ok(mocker):
     )
     field_template_service_partial_update_mock.assert_called_once_with(
         name='Updated Field 1',
+        force_save=True,
     )
     field_template_service_create_mock.assert_not_called()
 
@@ -499,11 +500,11 @@ def test__update_fields__new_field__ok(mocker):
     account = create_test_account()
     user = create_test_owner(account=account)
     template = create_test_template(user=user, tasks_count=1)
-    fieldset = FieldsetTemplate.objects.create(
-        template=template,
+
+    fieldset = create_test_fieldset(
         account=account,
-        name='Fieldset',
-        order=1,
+        template=template,
+        kickoff=template.kickoff_instance,
     )
     service = FieldSetTemplateService(
         user=user,
@@ -517,7 +518,7 @@ def test__update_fields__new_field__ok(mocker):
 
     # mock
     create_return = mocker.Mock()
-    create_return.id = 999
+    create_return.api_name = 'field_api_name'
     field_template_service_init_mock = mocker.patch.object(
         FieldTemplateService,
         attribute='__init__',
@@ -588,7 +589,7 @@ def test__update_fields__orphan_fields__deleted(mocker):
         auth_type=AuthTokenType.USER,
         instance=fieldset,
     )
-    fields_data = [{'id': field_1.id, 'name': 'Updated Field 1'}]
+    fields_data = [{'api_name': field_1.api_name, 'name': 'Updated Field 1'}]
 
     # mock
     field_template_service_init_mock = mocker.patch.object(
@@ -732,6 +733,7 @@ def test_update_rules__existing_rule__ok(mocker):
     )
     fs_rule_update_mock.assert_called_once_with(
         value='200',
+        force_save=True,
     )
     fieldset_template_rule_service_create_mock.assert_not_called()
 
