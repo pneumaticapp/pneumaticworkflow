@@ -124,7 +124,6 @@ class UsersViewSet(
             extra_fields = (
                 'user_groups',
                 'incoming_invites',
-                'vacation__substitute_group__users',
             )
         elif self.action == 'privileges':
             queryset = queryset.prefetch_related(

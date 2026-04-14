@@ -1,6 +1,6 @@
 import uuid
 from datetime import timedelta
-from typing import Dict, Set
+from typing import Dict, Optional, Set
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
@@ -478,10 +478,14 @@ class User(AbstractUser, SoftDeleteModel):
     search_content = SearchVectorField(null=True)
 
     @property
+    def vacation(self) -> Optional['UserVacation']:
+        """Returns the active (non-deleted) vacation, or None."""
+        return UserVacation.objects.filter(user=self).first()
+
+    @property
     def is_absent(self) -> bool:
-        try:
-            vacation = UserVacation.objects.get(user=self)
-        except UserVacation.DoesNotExist:
+        vacation = self.vacation
+        if not vacation:
             return False
         return vacation.absence_status != AbsenceStatus.ACTIVE
 
@@ -694,13 +698,10 @@ class UserVacation(
     AccountBaseMixin,
 ):
 
-    def __str__(self):
-        return f'{self.user.email} vacation'
-
-    user = models.OneToOneField(
+    user = models.ForeignKey(
         'accounts.User',
         on_delete=models.CASCADE,
-        related_name='vacation',
+        related_name='vacations',
     )
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
@@ -718,3 +719,15 @@ class UserVacation(
     )
 
     objects = BaseSoftDeleteManager.from_queryset(VacationQuerySet)()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user'],
+                condition=models.Q(is_deleted=False),
+                name='unique_active_vacation_per_user',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.user.email} vacation'

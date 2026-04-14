@@ -57,15 +57,11 @@ def process_vacations():
     auto_start_users = (
         user_model.objects
         .filter(
-            vacation__isnull=False,
-            vacation__is_deleted=False,
-            vacation__absence_status=AbsenceStatus.ACTIVE,
-            vacation__start_date__isnull=False,
-            vacation__substitute_group__isnull=False,
-        )
-        .select_related('vacation__substitute_group')
-        .prefetch_related(
-            'vacation__substitute_group__users',
+            vacations__isnull=False,
+            vacations__is_deleted=False,
+            vacations__absence_status=AbsenceStatus.ACTIVE,
+            vacations__start_date__isnull=False,
+            vacations__substitute_group__isnull=False,
         )
         .order_by('id')
     )
@@ -74,9 +70,12 @@ def process_vacations():
             user_now = now.astimezone(pytz_tz(user.timezone))
         except UnknownTimeZoneError:
             continue
-        if user_now.date() >= user.vacation.start_date:
+        vacation = user.vacation
+        if not vacation:
+            continue
+        if user_now.date() >= vacation.start_date:
             sub_ids = list(
-                user.vacation.substitute_group.users
+                vacation.substitute_group.users
                 .values_list('id', flat=True),
             )
             if sub_ids:
@@ -85,10 +84,10 @@ def process_vacations():
                         sub_ids,
                         absence_status=AbsenceStatus.VACATION,
                         vacation_start_date=(
-                            user.vacation.start_date
+                            vacation.start_date
                         ),
                         vacation_end_date=(
-                            user.vacation.end_date
+                            vacation.end_date
                         ),
                     )
                 except Exception:  # noqa: BLE001
@@ -98,15 +97,14 @@ def process_vacations():
     auto_stop_users = (
         user_model.objects
         .filter(
-            vacation__isnull=False,
-            vacation__is_deleted=False,
-            vacation__absence_status__in=[
+            vacations__isnull=False,
+            vacations__is_deleted=False,
+            vacations__absence_status__in=[
                 AbsenceStatus.VACATION,
                 AbsenceStatus.SICK_LEAVE,
             ],
-            vacation__end_date__isnull=False,
+            vacations__end_date__isnull=False,
         )
-        .select_related('vacation')
         .order_by('id')
     )
     for user in auto_stop_users:
@@ -114,7 +112,8 @@ def process_vacations():
             user_now = now.astimezone(pytz_tz(user.timezone))
         except UnknownTimeZoneError:
             continue
-        if user_now.date() > user.vacation.end_date:
+        vacation = user.vacation
+        if vacation and user_now.date() > vacation.end_date:
             try:
                 VacationDelegationService(user).deactivate()
             except Exception:  # noqa: BLE001

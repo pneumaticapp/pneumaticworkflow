@@ -33,7 +33,16 @@ class Migration(migrations.Migration):
                 ('end_date', models.DateField(blank=True, null=True)),
                 ('absence_status', models.CharField(choices=[('active', 'Active'), ('vacation', 'On vacation'), ('sick_leave', 'Sick leave')], default='vacation', max_length=20)),
                 ('substitute_group', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='vacation_owners', to='accounts.usergroup')),
-                ('user', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, related_name='vacation', to='accounts.user')),
+                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='vacations', to='accounts.user')),
             ],
         ),
+        migrations.AddConstraint(
+            model_name='uservacation',
+            constraint=models.UniqueConstraint(
+                condition=models.Q(is_deleted=False),
+                fields=['user'],
+                name='unique_active_vacation_per_user',
+            ),
+        ),
     ]
+

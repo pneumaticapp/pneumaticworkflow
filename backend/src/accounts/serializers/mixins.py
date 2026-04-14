@@ -1,35 +1,23 @@
-from typing import List
+from typing import TYPE_CHECKING, List
 
-from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
-from src.accounts.models import UserVacation
+if TYPE_CHECKING:
+    from src.accounts.models import UserVacation
 
-UserModel = get_user_model()
 
-
-class VacationSerializer(serializers.ModelSerializer):
+class VacationSerializer(serializers.Serializer):
     """Nested serializer for the UserVacation object."""
 
+    start_date = serializers.DateField(read_only=True)
+    end_date = serializers.DateField(read_only=True)
+    absence_status = serializers.CharField(read_only=True)
     substitute_user_ids = serializers.SerializerMethodField()
 
-    def get_attribute(self, instance):
-        try:
-            return super().get_attribute(instance)
-        except ObjectDoesNotExist:
-            return None
-
-    class Meta:
-        model = UserVacation
-        fields = (
-            'start_date',
-            'end_date',
-            'absence_status',
-            'substitute_user_ids',
-        )
-
-    def get_substitute_user_ids(self, instance) -> List[int]:
+    def get_substitute_user_ids(
+        self,
+        instance: 'UserVacation',
+    ) -> List[int]:
         if instance.substitute_group_id:
             return list(
                 instance.substitute_group.users

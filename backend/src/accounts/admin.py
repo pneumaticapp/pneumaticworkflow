@@ -31,6 +31,7 @@ from src.accounts.models import (
     User,
     UserGroup,
     UserInvite,
+    UserVacation,
 )
 from src.accounts.services.account import AccountService
 from src.accounts.services.convert_account import (
@@ -811,3 +812,21 @@ admin.site.register(Contact, ContactAdmin)
 
 admin.site.site_header = 'Pneumatic admin'
 admin.site.index_title = 'Apps'
+
+
+class UserVacationAdmin(admin.ModelAdmin):
+    list_display = (
+        'user',
+        'account',
+        'start_date',
+        'end_date',
+        'absence_status',
+        'substitute_group',
+        'is_deleted',
+    )
+    list_filter = ('absence_status', 'is_deleted')
+    search_fields = ('user__email',)
+    raw_id_fields = ('user', 'substitute_group')
+
+
+admin.site.register(UserVacation, UserVacationAdmin)

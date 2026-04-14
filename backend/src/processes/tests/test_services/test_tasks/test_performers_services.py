@@ -2066,13 +2066,6 @@ class TestTaskPerformersService:
             substitute_group=sub_group,
         )
 
-        # refetch so vacation is loaded
-        deleted_performer = (
-            UserModel.include_inactive.select_related(
-                'vacation',
-            ).get(id=deleted_performer.id)
-        )
-
         workflow = create_test_workflow(request_user)
         task = workflow.tasks.get(number=1)
 

@@ -117,14 +117,6 @@ class VacationDelegationService:
             task_ids=task_ids,
         )
 
-        # Reload vacation with relations for the serializer
-        self.user.vacation = (
-            UserVacation.objects
-            .filter(user=self.user)
-            .select_related('substitute_group')
-            .prefetch_related('substitute_group__users')
-            .first()
-        )
         return self.user
 
     def delegate_tasks(
@@ -353,8 +345,6 @@ class VacationDelegationService:
 
             vacation.delete()
 
-        # Clear cached vacation relation
-        self.user.vacation = None
         return self.user
 
     @staticmethod
