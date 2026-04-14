@@ -25,7 +25,9 @@ from src.authentication.enums import AuthTokenType
 from src.payment.enums import BillingPeriod
 from src.processes.enums import (
     ConditionAction,
+    FieldSetLayout,
     FieldType,
+    LabelPosition,
     OwnerRole,
     OwnerType,
     PerformerType,
@@ -45,6 +47,8 @@ from src.processes.models.templates.conditions import (
     PredicateTemplate,
     RuleTemplate,
 )
+from src.processes.models.templates.fieldset import FieldsetTemplate
+from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.preset import (
@@ -819,3 +823,40 @@ def create_test_dataset(
             order=i,
         )
     return dataset
+
+
+def create_test_fieldset(
+    account: Account,
+    template: Optional[Template] = None,
+    kickoff: Optional[Kickoff] = None,
+    task: Optional[TaskTemplate] = None,
+    name: str = 'Test Fieldset',
+    description: str = '',
+    order: int = 0,
+    label_position: LabelPosition.LITERALS = LabelPosition.TOP,
+    layout: FieldSetLayout.LITERALS = FieldSetLayout.VERTICAL,
+) -> FieldsetTemplate:
+
+    """Creating fieldset templates."""
+
+    fieldset = FieldsetTemplate.objects.create(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        task=task,
+        name=name,
+        description=description,
+        order=order,
+        label_position=label_position,
+        layout=layout,
+    )
+    FieldTemplate.objects.create(
+        name='Fieldset field',
+        type=FieldType.STRING,
+        fieldset=fieldset,
+        template=template,
+        order=1,
+        api_name=f'{fieldset.api_name}-field-1',
+        account=account,
+    )
+    return fieldset

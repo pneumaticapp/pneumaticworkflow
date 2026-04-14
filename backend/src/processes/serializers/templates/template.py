@@ -1,4 +1,3 @@
-# ruff: noqa: PLC0415
 import re
 from typing import Any, Dict, List, Optional, Set
 
@@ -41,6 +40,7 @@ from src.processes.enums import (
     WorkflowApiStatus, TaskStatus,
 )
 from src.processes.messages import template as messages
+from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.template import (
@@ -168,67 +168,46 @@ class TemplateSerializer(
                     'is_required': bool
                 }
             ]
-            Includes kickoff.fields from the payload and FieldTemplate rows
-            for kickoff.fieldsets (fieldset ids),
-            same as template.get_fields().
         """
-        result: List[dict] = []
-        seen_api_names: Set[str] = set()
-
-        kickoff_data = data.get('kickoff')
-        if not isinstance(kickoff_data, dict):
+        result = []
+        try:
+            kickoff_data = data['kickoff']
+        except KeyError:
             return result
 
-        fields = kickoff_data.get('fields')
-        if isinstance(fields, list):
-            for field in fields:
-                try:
-                    api_name = field.get('api_name')
-                    name = field.get('name')
-                    is_required = field.get('is_required', False)
-                    if api_name and name:
-                        seen_api_names.add(api_name)
-                        result.append({
-                            'name': name,
-                            'api_name': api_name,
-                            'is_required': is_required,
-                        })
-                except (TypeError, AttributeError):
-                    continue
-
+        fields_data = kickoff_data.get('fields') or []
+        for field in fields_data:
+            try:
+                api_name = field.get('api_name')
+                name = field.get('name')
+                is_required = field.get('is_required', False)
+                if api_name and name:
+                    result.append({
+                        'name': name,
+                        'api_name': api_name,
+                        'is_required': is_required,
+                    })
+            except (TypeError, AttributeError):
+                continue
         fieldset_ids = kickoff_data.get('fieldsets') or []
-        account = self.context.get('account')
-        if (
-            fieldset_ids
-            and isinstance(fieldset_ids, (list, tuple))
-            and account is not None
-        ):
-            from src.processes.models.templates.fields import FieldTemplate
-
-            normalized_fieldset_pks: List[int] = []
-            for raw in fieldset_ids:
-                pk = getattr(raw, 'pk', raw)
-                try:
-                    normalized_fieldset_pks.append(int(pk))
-                except (TypeError, ValueError):
-                    continue
-
-            if not normalized_fieldset_pks:
-                return result
-
-            for ft in FieldTemplate.objects.filter(
-                fieldset_id__in=normalized_fieldset_pks,
+        normalized_fieldset_ids = []
+        for elem in fieldset_ids:
+            try:
+                normalized_fieldset_ids.append(int(elem))
+            except (TypeError, ValueError):
+                continue
+        if normalized_fieldset_ids:
+            account = self.context.get('account')
+            fieldset_fields = FieldTemplate.objects.filter(
+                fieldset_id__in=normalized_fieldset_ids,
                 account_id=account.id,
-            ):
-                if ft.api_name in seen_api_names:
-                    continue
-                seen_api_names.add(ft.api_name)
+            )
+            for field_template in fieldset_fields:
                 result.append({
-                    'name': ft.name,
-                    'api_name': ft.api_name,
-                    'is_required': ft.is_required,
+                    'name': field_template.name,
+                    'api_name': field_template.api_name,
+                    'is_required': field_template.is_required,
                 })
-
         return result
 
     def _get_template_performers_ids(self, data: Dict[str, Any]) -> Set[int]:

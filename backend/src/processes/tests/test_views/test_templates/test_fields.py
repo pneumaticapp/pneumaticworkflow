@@ -20,7 +20,7 @@ from src.processes.tests.fixtures import (
     create_test_not_admin,
     create_test_owner,
     create_test_template,
-    create_test_workflow,
+    create_test_workflow, create_test_fieldset,
 )
 
 pytestmark = pytest.mark.django_db
@@ -522,3 +522,50 @@ def test_fields__ordering__ok(api_client):
     assert data['tasks'][1]['fields'][0]['order'] == 2
     assert data['tasks'][1]['fields'][1]['api_name'] == task_2_field_1.api_name
     assert data['tasks'][1]['fields'][1]['order'] == 1
+
+
+def test_fields__kickoff_fieldset__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user, tasks_count=1, is_active=True)
+    kickoff = template.kickoff_instance
+    fieldset = create_test_fieldset(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}/fields')
+
+    # assert
+    assert response.status_code == 200
+    data = response.data
+    assert data['id'] == template.id
+    assert data['kickoff']['fieldsets'] == [fieldset.id]
+
+
+def test_fields__task_fieldset__ok(api_client):
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user, tasks_count=1, is_active=True)
+    task = template.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        account=account,
+        template=template,
+        task=task,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}/fields')
+
+    # assert
+    assert response.status_code == 200
+    data = response.data
+    assert data['id'] == template.id
+    assert data['tasks'][0]['fieldsets'] == [fieldset.id]
