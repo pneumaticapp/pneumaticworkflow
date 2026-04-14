@@ -74,7 +74,7 @@ class GroupViewSet(
         account_id = self.request.user.account_id
         return UserGroup.objects.on_account(
             account_id,
-        ).exclude_personal().prefetch_related(
+        ).prefetch_related(
             Prefetch(
                 'users',
                 queryset=(

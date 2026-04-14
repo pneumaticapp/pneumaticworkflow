@@ -56,7 +56,7 @@ class GroupSerializer(
 
     def validate_name(self, value):
         account = self.context['account']
-        queryset = UserGroup.objects.exclude_personal().filter(
+        queryset = UserGroup.objects.filter(
             name=value,
             account=account,
         )

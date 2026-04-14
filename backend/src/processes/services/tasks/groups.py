@@ -31,7 +31,7 @@ class GroupPerformerService(BasePerformerService2):
         group_id: int,
     ) -> UserModel:
         try:
-            return UserGroup.objects.get(
+            return UserGroup.include_personal.get(
                 account_id=self.user.account_id,
                 id=group_id,
             )

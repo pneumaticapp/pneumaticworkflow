@@ -59,6 +59,7 @@ def process_vacations():
         .filter(
             absence_status=AbsenceStatus.ACTIVE,
             vacation__isnull=False,
+            vacation__is_deleted=False,
             vacation__start_date__isnull=False,
             vacation__substitute_group__isnull=False,
         )
@@ -106,6 +107,7 @@ def process_vacations():
                 AbsenceStatus.SICK_LEAVE,
             ],
             vacation__isnull=False,
+            vacation__is_deleted=False,
             vacation__end_date__isnull=False,
         )
         .select_related('vacation')
