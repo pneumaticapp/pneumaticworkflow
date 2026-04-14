@@ -39,8 +39,6 @@ class FieldsetTemplate(
         Template,
         on_delete=models.CASCADE,
         related_name='fieldsets',
-        null=True,
-        blank=True,
     )
     task = models.ForeignKey(
         TaskTemplate,

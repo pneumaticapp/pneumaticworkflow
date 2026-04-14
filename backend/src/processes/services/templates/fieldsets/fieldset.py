@@ -22,8 +22,8 @@ class FieldSetTemplateService(BaseModelService):
     def _create_instance(
         self,
         name: str,
-        order: int,
         template_id: int,
+        order: int = 0,
         description: str = '',
         label_position: LabelPosition.LITERALS = LabelPosition.TOP,
         layout: FieldSetLayout.LITERALS = FieldSetLayout.VERTICAL,
@@ -150,6 +150,7 @@ class FieldSetTemplateService(BaseModelService):
             )
             service.create(
                 fieldset_id=self.instance.id,
+                template_id=self.instance.template_id,
                 **field_data,
             )
 
@@ -183,6 +184,7 @@ class FieldSetTemplateService(BaseModelService):
                 )
                 field = service.create(
                     fieldset_id=self.instance.id,
+                    template_id=self.instance.template_id,
                     **field_data,
                 )
                 fields_ids.add(field.id)

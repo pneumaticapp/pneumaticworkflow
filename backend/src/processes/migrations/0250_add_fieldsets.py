@@ -63,7 +63,7 @@ class Migration(migrations.Migration):
                 ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='accounts.Account')),
                 ('kickoff', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='fieldsets', to='processes.Kickoff')),
                 ('task', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='fieldsets', to='processes.TaskTemplate')),
-                ('template', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fieldsets', to='processes.Template')),
+                ('template', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='fieldsets', to='processes.Template')),
             ],
             options={
                 'ordering': ['-id'],

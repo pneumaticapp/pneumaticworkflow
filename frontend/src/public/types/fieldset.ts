@@ -24,9 +24,11 @@ export interface IFieldsetTemplate {
   id: number;
   name: string;
   description: string;
-  label_position: TFieldLabelPosition;
+  labelPosition: TFieldLabelPosition;
   layout: TFieldSetLayout;
   order: number;
+  kickoffId: number | null;
+  taskId: number | null;
   rules: IFieldsetTemplateRule[];
   fields: IFieldsetField[];
 }
@@ -35,9 +37,11 @@ export interface IFieldsetListItem {
   id: number;
   name: string;
   description: string;
-  label_position: TFieldLabelPosition;
+  labelPosition: TFieldLabelPosition;
   layout: TFieldSetLayout;
   order: number;
+  kickoffId: number | null;
+  taskId: number | null;
   rules: IFieldsetTemplateRule[];
   fields: IFieldsetField[];
 }
@@ -74,6 +78,9 @@ export interface IUpdateFieldsetParams {
   id: number;
   name?: string;
   description?: string;
+  order?: number;
+  kickoff_id?: number | null;
+  task_id?: number | null;
   label_position?: TFieldLabelPosition;
   layout?: TFieldSetLayout;
   rules?: IFieldsetTemplateRule[];

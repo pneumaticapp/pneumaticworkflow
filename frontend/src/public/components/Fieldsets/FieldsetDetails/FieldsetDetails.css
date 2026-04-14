@@ -104,6 +104,22 @@
   }
 }
 
+.settings-input {
+  width: fit-content;
+  min-width: 20rem;
+  padding: 0.8rem 1.2rem;
+  border: 1px solid var(--pneumatic-color-black16);
+  border-radius: 0.8rem;
+  outline: none;
+  transition: border-color 0.2s;
+
+  @mixin text-base;
+
+  &:focus {
+    border-color: var(--pneumatic-color-blue);
+  }
+}
+
 .empty-text {
   color: var(--pneumatic-color-black48);
 

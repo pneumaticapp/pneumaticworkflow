@@ -11,6 +11,7 @@ import {
   updateFieldsetAction,
   setTemplateId,
 } from '../../../redux/fieldsets/slice';
+import { loadTemplate } from '../../../redux/template/actions';
 
 import { history } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
@@ -23,8 +24,9 @@ import { FieldsetDetailsSkeleton } from './FieldsetDetailsSkeleton';
 
 import { getCurrentFieldset, isCurrentFieldsetLoading } from '../../../redux/selectors/fieldsets';
 import { getAccountId } from '../../../redux/selectors/user';
+import { getTemplateData } from '../../../redux/selectors/template';
 
-import { EExtraFieldType, IExtraField } from '../../../types/template';
+import { EExtraFieldType, IExtraField, ITemplateTask } from '../../../types/template';
 import { EInputNameBackgroundColor, EMoveDirections } from '../../../types/workflow';
 import { IFieldsetTemplateRule } from '../../../types/fieldset';
 import { ExtraFieldsMap } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldsMap';
@@ -57,10 +59,12 @@ const LAYOUT_OPTIONS: { value: TFieldSetLayout; labelKey: string }[] = [
 const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matchTemplateId } } }: TFieldsetDetailsProps) => {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
+  const templateId = Number(matchTemplateId);
 
   const fieldset = useSelector(getCurrentFieldset);
   const isLoading = useSelector(isCurrentFieldsetLoading);
   const accountId = useSelector(getAccountId);
+  const template = useSelector(getTemplateData);
 
   const [localFields, setLocalFields] = useState<IExtraField[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -70,11 +74,37 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
 
   // Settings local state
   const [localDescription, setLocalDescription] = useState('');
+  const [localOrder, setLocalOrder] = useState(0);
+  const [localBindingSource, setLocalBindingSource] = useState('kickoff');
+  const [knownKickoffId, setKnownKickoffId] = useState<number | null>(null);
   const [localLabelPosition, setLocalLabelPosition] = useState<TFieldLabelPosition>('top');
   const [localLayout, setLocalLayout] = useState<TFieldSetLayout>('vertical');
   const [hasUnsavedSettingsChanges, setHasUnsavedSettingsChanges] = useState(false);
 
   const fieldsetListRoute = ERoutes.TemplateFieldsets.replace(':templateId', matchTemplateId);
+  const templateKickoff = template?.kickoff as { id?: number } | undefined;
+  const templateKickoffId = templateKickoff?.id ?? null;
+  const isTemplateLoaded = template?.id === templateId;
+  const templateTasks = isTemplateLoaded ? template.tasks : [];
+
+  const bindingOptions = useMemo(() => {
+    const kickoffOption = {
+      value: 'kickoff',
+      label: formatMessage({ id: 'fieldsets.settings.binding.kickoff-option' }),
+    };
+
+    const taskOptions = templateTasks
+      .filter((task: ITemplateTask) => Boolean(task.id))
+      .map((task: ITemplateTask, index) => ({
+        value: `task:${task.id}`,
+        label: task.name || formatMessage(
+          { id: 'fieldsets.settings.binding.task-option-fallback' },
+          { number: index + 1 },
+        ),
+      }));
+
+    return [kickoffOption, ...taskOptions];
+  }, [templateTasks, formatMessage]);
 
   useEffect(() => {
     const id = Number(matchParamId);
@@ -88,6 +118,12 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
     dispatch(setTemplateId(Number(matchTemplateId)));
     dispatch(loadCurrentFieldset({ id }));
   }, [matchParamId]);
+
+  useEffect(() => {
+    if (!Number.isInteger(templateId)) return;
+    if (template.id === templateId) return;
+    dispatch(loadTemplate(templateId));
+  }, [dispatch, templateId, template.id]);
 
   useEffect(() => {
     return () => {
@@ -115,11 +151,25 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
   useEffect(() => {
     if (fieldset) {
       setLocalDescription(fieldset.description || '');
-      setLocalLabelPosition(fieldset.label_position || 'top');
+      setLocalOrder(fieldset.order ?? 0);
+      const detectedKickoffId = fieldset.kickoffId ?? templateKickoffId;
+      if (detectedKickoffId !== null) {
+        setKnownKickoffId(detectedKickoffId);
+      }
+      setLocalBindingSource(fieldset.taskId !== null ? `task:${fieldset.taskId}` : 'kickoff');
+      setLocalLabelPosition(fieldset.labelPosition || 'top');
       setLocalLayout(fieldset.layout || 'vertical');
       setHasUnsavedSettingsChanges(false);
     }
-  }, [fieldset?.id, fieldset?.description, fieldset?.label_position, fieldset?.layout]);
+  }, [
+    fieldset?.id,
+    fieldset?.description,
+    fieldset?.order,
+    fieldset?.taskId,
+    fieldset?.kickoffId,
+    fieldset?.labelPosition,
+    fieldset?.layout,
+  ]);
 
   const handleSettingsDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     setLocalDescription(e.target.value);
@@ -131,6 +181,17 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
     setHasUnsavedSettingsChanges(true);
   };
 
+  const handleSettingsBindingSourceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setLocalBindingSource(e.target.value);
+    setHasUnsavedSettingsChanges(true);
+  };
+
+  const handleSettingsOrderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const nextOrder = Number(e.target.value);
+    setLocalOrder(Number.isNaN(nextOrder) ? 0 : nextOrder);
+    setHasUnsavedSettingsChanges(true);
+  };
+
   const handleSettingsLayoutChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setLocalLayout(e.target.value as TFieldSetLayout);
     setHasUnsavedSettingsChanges(true);
@@ -138,9 +199,18 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
 
   const handleSaveSettings = () => {
     if (!fieldset) return;
+    const selectedTaskId = localBindingSource.startsWith('task:')
+      ? Number(localBindingSource.replace('task:', ''))
+      : null;
+    const fallbackKickoffId = fieldset.kickoffId ?? templateKickoffId ?? knownKickoffId;
+    const nextKickoffId = localBindingSource === 'kickoff' ? fallbackKickoffId : null;
+
     dispatch(updateFieldsetAction({
       id: fieldset.id,
       description: localDescription,
+      order: localOrder,
+      kickoff_id: nextKickoffId,
+      task_id: Number.isNaN(selectedTaskId) ? null : selectedTaskId,
       label_position: localLabelPosition,
       layout: localLayout,
     }));
@@ -288,6 +358,36 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className={styles['settings-field']}>
+            <label className={styles['settings-label']}>
+              {formatMessage({ id: 'fieldsets.settings.binding' })}
+            </label>
+            <select
+              className={styles['settings-select']}
+              value={localBindingSource}
+              onChange={handleSettingsBindingSourceChange}
+            >
+              {bindingOptions.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className={styles['settings-field']}>
+            <label className={styles['settings-label']}>
+              {formatMessage({ id: 'fieldsets.settings.order' })}
+            </label>
+            <input
+              type="number"
+              className={styles['settings-input']}
+              value={localOrder}
+              onChange={handleSettingsOrderChange}
+              placeholder={formatMessage({ id: 'fieldsets.settings.order-placeholder' })}
+            />
           </div>
 
           <div className={styles['settings-field']}>

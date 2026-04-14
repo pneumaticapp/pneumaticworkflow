@@ -212,12 +212,14 @@ def test__create_fields__with_data__ok(mocker):
         [
             mocker.call(
                 fieldset_id=fieldset.id,
+                template_id=template.id,
                 name='Field 1',
                 type='string',
                 order=1,
             ),
             mocker.call(
                 fieldset_id=fieldset.id,
+                template_id=template.id,
                 name='Field 2',
                 type='number',
                 order=2,
@@ -542,6 +544,7 @@ def test__update_fields__new_field__ok(mocker):
     )
     field_template_service_create_mock.assert_called_once_with(
         fieldset_id=fieldset.id,
+        template_id=template.id,
         name='New Field',
         type='number',
         order=1,

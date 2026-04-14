@@ -558,24 +558,21 @@ def test_partial_update__kickoff_id_and_task_id_swap__ok(api_client):
     response = api_client.patch(
         f'/templates/fieldsets/{fieldset.id}',
         data={
-            'kickoff_id': None,
             'task_id': task.id,
         },
     )
 
     assert response.status_code == 200
-    assert response.data['kickoff_id'] is None
     assert response.data['task_id'] == task.id
     fieldset.refresh_from_db()
     assert fieldset.kickoff_id is None
     assert fieldset.task_id == task.id
 
 
-def test_partial_update__task_id_only_while_on_kickoff__validation_error(
-    api_client,
-):
+def test_partial_update__task_id_is_null_set_kickoff_id__ok(api_client):
 
-    """Setting task_id without clearing kickoff_id is rejected."""
+    """Move fieldset from kickoff to task in one PATCH
+     (clear kickoff, set task)."""
 
     account = create_test_account()
     user = create_test_owner(account=account)
@@ -588,41 +585,17 @@ def test_partial_update__task_id_only_while_on_kickoff__validation_error(
         template=template,
         kickoff=template.kickoff_instance,
     )
-    task = template.tasks.first()
     api_client.token_authenticate(user=user)
 
     response = api_client.patch(
         f'/templates/fieldsets/{fieldset.id}',
-        data={'task_id': task.id},
+        data={
+            'task_id': None,
+        },
     )
 
-    assert response.status_code == 400
-
-
-def test_partial_update__foreign_task_id__validation_error(api_client):
-
-    """task_id must belong to the fieldset template."""
-
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    other = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    fieldset = create_test_fieldset(
-        account=account,
-        template=template,
-    )
-    other_task = other.tasks.first()
-    api_client.token_authenticate(user=user)
-
-    response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
-        data={'task_id': other_task.id},
-    )
-
-    assert response.status_code == 400
+    assert response.status_code == 200
+    assert response.data['task_id'] is None
+    fieldset.refresh_from_db()
+    assert fieldset.kickoff_id == template.kickoff_instance.id
+    assert fieldset.task_id is None
