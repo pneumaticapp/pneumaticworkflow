@@ -111,6 +111,56 @@ def test__create_instance__all_params__ok(mocker):
     assert service.instance.layout == layout
 
 
+def test__create_instance__with_kickoff_id__ok():
+
+    """Persist kickoff_id when creating a fieldset template."""
+
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    kickoff = template.kickoff_instance
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    service._create_instance(
+        name='Kickoff fieldset',
+        order=1,
+        template_id=template.id,
+        kickoff_id=kickoff.id,
+    )
+
+    assert service.instance.kickoff_id == kickoff.id
+    assert service.instance.task_id is None
+
+
+def test__create_instance__with_task_id__ok():
+
+    """Persist task_id when creating a fieldset template."""
+
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    task = template.tasks.first()
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    service._create_instance(
+        name='Task fieldset',
+        order=1,
+        template_id=template.id,
+        task_id=task.id,
+    )
+
+    assert service.instance.task_id == task.id
+    assert service.instance.kickoff_id is None
+
+
 # FieldSetTemplateService._create_fields
 
 

@@ -769,7 +769,10 @@ class TemplateViewSet(
     @list_fieldsets.mapping.post
     def create_fieldset(self, request, *args, **kwargs):
         template = self.get_object()
-        serializer = self.get_serializer(data=request.data)
+        serializer = self.get_serializer(
+            data=request.data,
+            extra_fields={'template': template},
+        )
         serializer.is_valid(raise_exception=True)
         service = FieldSetTemplateService(
             user=request.user,

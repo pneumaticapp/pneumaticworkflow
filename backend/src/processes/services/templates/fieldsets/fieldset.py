@@ -1,4 +1,4 @@
-from typing import List, Optional, Dict
+from typing import Dict, List, Optional
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
@@ -27,6 +27,8 @@ class FieldSetTemplateService(BaseModelService):
         description: str = '',
         label_position: LabelPosition.LITERALS = LabelPosition.TOP,
         layout: FieldSetLayout.LITERALS = FieldSetLayout.VERTICAL,
+        kickoff_id: Optional[int] = None,
+        task_id: Optional[int] = None,
         **kwargs,
     ):
         self.instance = FieldsetTemplate.objects.create(
@@ -37,6 +39,8 @@ class FieldSetTemplateService(BaseModelService):
             order=order,
             label_position=label_position,
             layout=layout,
+            kickoff_id=kickoff_id,
+            task_id=task_id,
         )
         return self.instance
 

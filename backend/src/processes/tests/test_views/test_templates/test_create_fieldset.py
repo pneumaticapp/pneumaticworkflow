@@ -550,3 +550,119 @@ def test_create_fieldset__not_existing_tpl__not_found(api_client):
 
     # assert
     assert response.status_code == 404
+
+
+def test_create_fieldset__with_kickoff_id__ok(api_client):
+
+    """Create fieldset linked to template kickoff via kickoff_id."""
+
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+    kickoff = template.kickoff_instance
+    data = {
+        'name': 'Kickoff Fieldset',
+        'order': 1,
+        'kickoff_id': kickoff.id,
+    }
+
+    response = api_client.post(
+        f'/templates/{template.id}/fieldsets',
+        data=data,
+    )
+
+    assert response.status_code == 201
+    assert response.data['kickoff_id'] == kickoff.id
+    assert response.data['task_id'] is None
+
+
+def test_create_fieldset__with_task_id__ok(api_client):
+
+    """Create fieldset linked to a template task via task_id."""
+
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+    task = template.tasks.first()
+    data = {
+        'name': 'Task Fieldset',
+        'order': 1,
+        'task_id': task.id,
+    }
+
+    response = api_client.post(
+        f'/templates/{template.id}/fieldsets',
+        data=data,
+    )
+
+    assert response.status_code == 201
+    assert response.data['task_id'] == task.id
+    assert response.data['kickoff_id'] is None
+
+
+def test_create_fieldset__both_kickoff_id_and_task_id__validation_error(
+    api_client,
+):
+
+    """kickoff_id and task_id cannot both be set."""
+
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+    kickoff = template.kickoff_instance
+    task = template.tasks.first()
+    data = {
+        'name': 'Invalid Fieldset',
+        'order': 1,
+        'kickoff_id': kickoff.id,
+        'task_id': task.id,
+    }
+
+    response = api_client.post(
+        f'/templates/{template.id}/fieldsets',
+        data=data,
+    )
+
+    assert response.status_code == 400
+
+
+def test_create_fieldset__foreign_kickoff_id__validation_error(api_client):
+
+    """kickoff_id must belong to the same template."""
+
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    other_template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+    other_kickoff = other_template.kickoff_instance
+    data = {
+        'name': 'Wrong kickoff',
+        'order': 1,
+        'kickoff_id': other_kickoff.id,
+    }
+
+    response = api_client.post(
+        f'/templates/{template.id}/fieldsets',
+        data=data,
+    )
+
+    assert response.status_code == 400
