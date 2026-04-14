@@ -15,7 +15,7 @@ import {
 } from '../../types/fieldset';
 import { TDeleteFieldsetPayload } from './types';
 import { LIMIT_LOAD_FIELDSETS } from '../../constants/defaultValues';
-import { getFieldsetsStore } from '../selectors/fieldsets';
+import { getFieldsetsStore, getFieldsetsTemplateId } from '../selectors/fieldsets';
 import { getFieldsets } from '../../api/fieldsets/getFieldsets';
 import { getFieldset } from '../../api/fieldsets/getFieldset';
 import { createFieldset } from '../../api/fieldsets/createFieldset';
@@ -36,14 +36,28 @@ import {
   removeFieldsetFromList,
 } from './slice';
 
-function* loadFieldsetsSaga({ payload: offset = 0 }: ReturnType<typeof loadFieldsets>) {
+function getFieldsetsRoute(templateId: number | null): string {
+  if (!templateId) return ERoutes.Templates;
+  return ERoutes.TemplateFieldsets.replace(':templateId', String(templateId));
+}
+
+function getFieldsetDetailRoute(templateId: number | null, fieldsetId: number): string {
+  if (!templateId) return ERoutes.Templates;
+  return ERoutes.TemplateFieldsetDetail
+    .replace(':templateId', String(templateId))
+    .replace(':id', String(fieldsetId));
+}
+
+function* loadFieldsetsSaga({ payload }: ReturnType<typeof loadFieldsets>) {
   const abortController = new AbortController();
+  const { offset, templateId } = payload;
 
   try {
     const fieldsetsStore: ReturnType<typeof getFieldsetsStore> = yield select(getFieldsetsStore);
     const { fieldsetsList, fieldsetsListSorting } = fieldsetsStore;
 
     const data: IGetFieldsetsResponse = yield call(getFieldsets, {
+      templateId,
       offset: offset * LIMIT_LOAD_FIELDSETS,
       limit: LIMIT_LOAD_FIELDSETS,
       ordering: fieldsetsListSorting,
@@ -75,7 +89,8 @@ function* loadCurrentFieldsetSaga({ payload: { id } }: PayloadAction<{ id: numbe
   } catch (error) {
     if (isRequestCanceled(error)) return;
     yield put(loadCurrentFieldsetFailed());
-    history.push(ERoutes.Fieldsets);
+    const templateId: number | null = yield select(getFieldsetsTemplateId);
+    history.push(getFieldsetsRoute(templateId));
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to load current fieldset', error);
   } finally {
@@ -87,7 +102,8 @@ function* createFieldsetSaga({ payload }: PayloadAction<ICreateFieldsetParams>) 
   try {
     const createdFieldset: IFieldsetTemplate = yield createFieldset(payload);
     yield put(loadCurrentFieldsetSuccess(createdFieldset));
-    history.push(ERoutes.FieldsetDetail.replace(':id', String(createdFieldset.id)));
+    const templateId: number | null = yield select(getFieldsetsTemplateId);
+    history.push(getFieldsetDetailRoute(templateId, createdFieldset.id));
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to create fieldset', error);

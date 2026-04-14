@@ -5,4 +5,5 @@ export enum EFieldsetModalType {
 
 export interface IFieldsetModalProps {
   type: EFieldsetModalType;
+  templateId?: number;
 }

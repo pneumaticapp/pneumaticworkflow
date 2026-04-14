@@ -605,6 +605,7 @@ export const enMessages = {
   'template.more': 'More options',
   'template.more-show-workflows': 'Show workflows',
   'template.more-show-activity': 'Show activity',
+  'template.more-show-fieldsets': 'Fieldsets',
   'template.more-clone-template': 'Clone template',
   'template.more-integrate-template': 'Integrate',
   'template.more-delete-template': 'Delete template',

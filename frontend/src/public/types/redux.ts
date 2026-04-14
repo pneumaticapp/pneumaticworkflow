@@ -397,6 +397,7 @@ export interface IFieldsetsList {
 }
 
 export type IFieldsetsStore = {
+  templateId: number | null;
   fieldsetsList: IFieldsetsList;
   isLoading: boolean;
   searchQuery: string;

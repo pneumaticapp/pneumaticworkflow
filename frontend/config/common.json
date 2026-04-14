@@ -152,6 +152,7 @@
       "tenantToken": "/tenants/:id/token",
       "datasets": "/datasets",
       "dataset": "/datasets/:id",
+      "templateFieldsets": "/templates/:id/fieldsets",
       "fieldsets": "/templates/fieldsets",
       "fieldset": "/templates/fieldsets/:id",
       "getFaq": "/faq",

@@ -9,15 +9,20 @@ export interface IUseTemplateEditFieldsetsCatalogResult {
   isLoading: boolean;
 }
 
-export function useTemplateEditFieldsetsCatalog(): IUseTemplateEditFieldsetsCatalogResult {
+export function useTemplateEditFieldsetsCatalog(templateId: number | undefined): IUseTemplateEditFieldsetsCatalogResult {
   const [fieldsetsById, setFieldsetsById] = useState<ReadonlyMap<number, IFieldsetData>>(() => new Map());
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    if (!templateId) {
+      setIsLoading(false);
+      return;
+    }
+
     const abortController = new AbortController();
 
     setIsLoading(true);
-    getFieldsets({ limit: 1000, signal: abortController.signal })
+    getFieldsets({ templateId, limit: 1000, signal: abortController.signal })
       .then((response) => {
         const nextMap = new Map<number, IFieldsetData>();
         response.results.forEach((item) => {
@@ -33,7 +38,8 @@ export function useTemplateEditFieldsetsCatalog(): IUseTemplateEditFieldsetsCata
       });
 
     return () => abortController.abort();
-  }, []);
+  }, [templateId]);
 
   return { fieldsetsById, isLoading };
 }
+

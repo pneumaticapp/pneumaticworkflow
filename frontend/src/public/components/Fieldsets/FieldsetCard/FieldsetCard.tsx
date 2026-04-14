@@ -23,6 +23,7 @@ export function FieldsetCard({
   order,
   rules,
   fields,
+  templateId,
 }: IFieldsetCardProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
@@ -51,7 +52,11 @@ export function FieldsetCard({
   };
 
   const handleCardClick = () => {
-    history.push(ERoutes.FieldsetDetail.replace(':id', id.toString()));
+    history.push(
+      ERoutes.TemplateFieldsetDetail
+        .replace(':templateId', templateId.toString())
+        .replace(':id', id.toString()),
+    );
   };
 
   const dropdownOptions: TDropdownOption[] = [

@@ -10,6 +10,7 @@ import {
 import { TDeleteFieldsetPayload } from './types';
 
 export const initialState: IFieldsetsStore = {
+  templateId: null,
   fieldsetsList: {
     count: 0,
     offset: 0,
@@ -29,7 +30,11 @@ const fieldsetsSlice = createSlice({
   name: 'fieldsets',
   initialState,
   reducers: {
-    loadFieldsets: (state, _action: PayloadAction<number>) => {
+    setTemplateId: (state, action: PayloadAction<number>) => {
+      state.templateId = action.payload;
+    },
+
+    loadFieldsets: (state, _action: PayloadAction<{ offset: number; templateId: number }>) => {
       state.isLoading = true;
     },
 
@@ -126,6 +131,7 @@ const fieldsetsSlice = createSlice({
 });
 
 export const {
+  setTemplateId,
   loadFieldsets,
   loadFieldsetsSuccess,
   loadFieldsetsFailed,

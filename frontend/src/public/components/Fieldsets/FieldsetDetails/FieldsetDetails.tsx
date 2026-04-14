@@ -9,6 +9,7 @@ import {
   loadCurrentFieldset,
   resetCurrentFieldset,
   updateFieldsetAction,
+  setTemplateId,
 } from '../../../redux/fieldsets/slice';
 
 import { history } from '../../../utils/history';
@@ -53,7 +54,7 @@ const LAYOUT_OPTIONS: { value: TFieldSetLayout; labelKey: string }[] = [
   { value: 'horizontal', labelKey: 'fieldsets.settings.layout.horizontal' },
 ];
 
-const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetDetailsProps) => {
+const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matchTemplateId } } }: TFieldsetDetailsProps) => {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
@@ -73,15 +74,18 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
   const [localLayout, setLocalLayout] = useState<TFieldSetLayout>('vertical');
   const [hasUnsavedSettingsChanges, setHasUnsavedSettingsChanges] = useState(false);
 
+  const fieldsetListRoute = ERoutes.TemplateFieldsets.replace(':templateId', matchTemplateId);
+
   useEffect(() => {
     const id = Number(matchParamId);
     if (Number.isNaN(id)) {
-      history.push(ERoutes.Fieldsets);
+      history.push(fieldsetListRoute);
 
       return;
     }
     if (fieldset?.id === id) return;
 
+    dispatch(setTemplateId(Number(matchTemplateId)));
     dispatch(loadCurrentFieldset({ id }));
   }, [matchParamId]);
 
@@ -242,7 +246,7 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
             onEdit={() => dispatch(openEditModal())}
             onDelete={() => {
               dispatch(deleteFieldsetAction({ id: fieldset.id }));
-              history.push(ERoutes.Fieldsets);
+              history.push(fieldsetListRoute);
             }}
             editLabel={formatMessage({ id: 'fieldsets.edit' })}
             deleteLabel={formatMessage({ id: 'fieldsets.delete' })}

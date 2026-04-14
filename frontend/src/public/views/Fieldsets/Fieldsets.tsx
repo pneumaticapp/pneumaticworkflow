@@ -4,7 +4,6 @@ import loadable from '@loadable/component';
 
 import { ERoutes } from '../../constants/routes';
 import { Loader } from '../../components/UI';
-import { TemplatesLayout } from '../../layout';
 
 const Fieldsets = loadable(
   () => import(/* webpackChunkName: "fieldsets", webpackPrefetch: true */ '../../components/Fieldsets'),
@@ -18,21 +17,19 @@ const FieldsetDetails = loadable(
 
 export const FieldsetsView = () => {
   return (
-    <TemplatesLayout>
-      <React.Suspense fallback={<div className="loading" />}>
-        <Switch>
-          <Route
-            path={ERoutes.FieldsetDetail}
-            component={FieldsetDetails}
-          />
-          <Route
-            exact
-            path={ERoutes.Fieldsets}
-            component={Fieldsets}
-          />
-          <Redirect to={ERoutes.Error} />
-        </Switch>
-      </React.Suspense>
-    </TemplatesLayout>
+    <React.Suspense fallback={<div className="loading" />}>
+      <Switch>
+        <Route
+          path={ERoutes.TemplateFieldsetDetail}
+          component={FieldsetDetails}
+        />
+        <Route
+          exact
+          path={ERoutes.TemplateFieldsets}
+          component={Fieldsets}
+        />
+        <Redirect to={ERoutes.Error} />
+      </Switch>
+    </React.Suspense>
   );
 };

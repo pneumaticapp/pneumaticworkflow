@@ -1,9 +1,11 @@
 import * as React from 'react';
 import { useEffect, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
 
 import { getFieldsets } from '../../../api/fieldsets/getFieldsets';
 import { IFieldsetListItem } from '../../../types/fieldset';
+import { getTemplateData } from '../../../redux/selectors/template';
 
 import styles from './FieldsetPicker.css';
 
@@ -14,16 +16,19 @@ export interface IFieldsetPickerProps {
 
 export function FieldsetPicker({ selectedFieldsetIds, onChange }: IFieldsetPickerProps) {
   const { formatMessage } = useIntl();
+  const template = useSelector(getTemplateData);
   const [isOpen, setIsOpen] = useState(false);
   const [fieldsets, setFieldsets] = useState<IFieldsetListItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+    if (!template?.id) return;
+
     const abortCtrl = new AbortController();
 
     setIsLoading(true);
-    getFieldsets({ limit: 1000, signal: abortCtrl.signal })
+    getFieldsets({ templateId: template.id, limit: 1000, signal: abortCtrl.signal })
       .then((response) => {
         setFieldsets(response.results);
       })
@@ -35,7 +40,7 @@ export function FieldsetPicker({ selectedFieldsetIds, onChange }: IFieldsetPicke
       });
 
     return () => abortCtrl.abort();
-  }, []);
+  }, [template?.id]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {

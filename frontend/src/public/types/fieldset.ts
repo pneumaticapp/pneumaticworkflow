@@ -50,6 +50,7 @@ export interface IGetFieldsetsResponse {
 }
 
 export interface IGetFieldsetsParams {
+  templateId: number;
   ordering?: string;
   limit?: number;
   offset?: number;
@@ -62,6 +63,7 @@ export interface IGetFieldsetParams {
 }
 
 export interface ICreateFieldsetParams {
+  templateId: number;
   name: string;
   description?: string;
   rules?: Omit<IFieldsetTemplateRule, 'id'>[];

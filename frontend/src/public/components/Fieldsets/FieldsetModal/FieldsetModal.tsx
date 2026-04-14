@@ -39,7 +39,7 @@ const CONFIG = {
   },
 };
 
-export function FieldsetModal({ type }: IFieldsetModalProps) {
+export function FieldsetModal({ type, templateId }: IFieldsetModalProps) {
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
 
@@ -88,7 +88,7 @@ export function FieldsetModal({ type }: IFieldsetModalProps) {
     if (!validationForm()) return;
 
     if (type === EFieldsetModalType.Create) {
-      dispatch(createFieldsetAction({ name: inputName }));
+      dispatch(createFieldsetAction({ name: inputName, templateId: templateId! }));
     } else if (currentFieldset) {
       dispatch(updateFieldsetAction({ id: currentFieldset.id, name: inputName }));
     }

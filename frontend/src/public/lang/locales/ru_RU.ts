@@ -545,6 +545,7 @@ export const ruMessages = {
   'template.more': 'Еще опции',
   'template.more-show-workflows': 'Процессы',
   'template.more-show-activity': 'События',
+  'template.more-show-fieldsets': 'Наборы полей',
   'template.more-clone-template': 'Копировать',
   'template.more-integrate-template': 'Интегрировать',
   'template.more-delete-template': 'Удалить шаблон',

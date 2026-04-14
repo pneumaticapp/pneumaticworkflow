@@ -3,6 +3,8 @@ import { IApplicationState, IFieldsetsStore, IFieldsetsList } from '../../types/
 
 export const getFieldsetsStore = (state: IApplicationState): IFieldsetsStore => state.fieldsets;
 
+export const getFieldsetsTemplateId = (state: IApplicationState): number | null => state.fieldsets.templateId;
+
 export const getFieldsetsList = (state: IApplicationState): IFieldsetListItem[] => state.fieldsets.fieldsetsList.items;
 
 export const getFieldsetsListSelection = (state: IApplicationState): IFieldsetsList => state.fieldsets.fieldsetsList;
@@ -18,3 +20,4 @@ export const isEditModalOpen = (state: IApplicationState): boolean => state.fiel
 export const getCurrentFieldset = (state: IApplicationState): IFieldsetTemplate | null => state.fieldsets.currentFieldset;
 
 export const isCurrentFieldsetLoading = (state: IApplicationState): boolean => state.fieldsets.isCurrentFieldsetLoading;
+

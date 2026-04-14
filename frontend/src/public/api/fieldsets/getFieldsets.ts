@@ -3,14 +3,15 @@ import { IGetFieldsetsResponse, IGetFieldsetsParams } from '../../types/fieldset
 import { fieldsetsOrderingMap } from '../../constants/sortings';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 
-export function getFieldsets(config: IGetFieldsetsParams = {}) {
+export function getFieldsets(config: IGetFieldsetsParams) {
   const {
     api: { urls },
   } = getBrowserConfigEnv();
 
-  const { signal } = config;
+  const { signal, templateId } = config;
   const queryString = getFieldsetsQueryString(config);
-  const url = queryString ? `${urls.fieldsets}?${queryString}` : urls.fieldsets;
+  const baseUrl = urls.templateFieldsets.replace(':id', String(templateId));
+  const url = queryString ? `${baseUrl}?${queryString}` : baseUrl;
 
   return commonRequest<IGetFieldsetsResponse>(
     url,

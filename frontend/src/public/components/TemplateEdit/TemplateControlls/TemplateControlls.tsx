@@ -8,7 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { TemplateOwners } from '../TemplateOwners';
 import { TemplateViewers } from '../TemplateViewers';
 import { TemplateStarters } from '../TemplateStarters';
-import { ActivityIcon, BoxesIcon, EnableIcon, TrashIcon, UnionIcon, WarningIcon } from '../../icons';
+import { ActivityIcon, BoxesIcon, EnableIcon, NotesIcon, TrashIcon, UnionIcon, WarningIcon } from '../../icons';
 import { IntlMessages } from '../../IntlMessages';
 import { ShowMore } from '../../UI/ShowMore';
 import { getLinkToWorkflows } from '../../../utils/routes/getLinkToWorkflows';
@@ -323,6 +323,13 @@ export function TemplateControlls({
               <Link to={getLinkToHighlightsByTemplate(templateId)} className={styles['more-setting']}>
                 <ActivityIcon className={styles['more-setting__icon']} />
                 <p className={styles['more-setting__text']}>{formatMessage({ id: 'template.more-show-activity' })}</p>
+              </Link>
+              <Link
+                to={ERoutes.TemplateFieldsets.replace(':templateId', String(templateId))}
+                className={styles['more-setting']}
+              >
+                <NotesIcon className={styles['more-setting__icon']} />
+                <p className={styles['more-setting__text']}>{formatMessage({ id: 'template.more-show-fieldsets' })}</p>
               </Link>
               <button type="button" onClick={() => cloneTemplate({ templateId })} className={styles['more-setting']}>
                 <UnionIcon className={styles['more-setting__icon']} />

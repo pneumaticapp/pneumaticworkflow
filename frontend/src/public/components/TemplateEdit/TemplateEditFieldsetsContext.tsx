@@ -1,8 +1,10 @@
 import * as React from 'react';
 import { useMemo } from 'react';
+import { useSelector } from 'react-redux';
 
 import { useTemplateEditFieldsetsCatalog } from '../../hooks/useTemplateEditFieldsetsCatalog';
 import { IFieldsetData } from '../../types/template';
+import { getTemplateData } from '../../redux/selectors/template';
 
 export interface ITemplateEditFieldsetsContextValue {
   fieldsetsById: ReadonlyMap<number, IFieldsetData>;
@@ -21,7 +23,8 @@ export function useTemplateEditFieldsets(): ITemplateEditFieldsetsContextValue {
 }
 
 export function TemplateEditFieldsetsProvider({ children }: { children: React.ReactNode }) {
-  const { fieldsetsById, isLoading } = useTemplateEditFieldsetsCatalog();
+  const template = useSelector(getTemplateData);
+  const { fieldsetsById, isLoading } = useTemplateEditFieldsetsCatalog(template?.id);
   const value = useMemo(
     () => ({
       fieldsetsById,
@@ -34,3 +37,4 @@ export function TemplateEditFieldsetsProvider({ children }: { children: React.Re
     <TemplateEditFieldsetsContext.Provider value={value}>{children}</TemplateEditFieldsetsContext.Provider>
   );
 }
+
