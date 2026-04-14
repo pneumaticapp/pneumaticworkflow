@@ -997,9 +997,9 @@ def test_delete__used_by_kickoff__raise_exception(mocker):
         template=template,
         account=account,
         name='Fieldset',
+        kickoff=kickoff,
         order=1,
     )
-    fieldset.kickoffs.add(kickoff)
     service = FieldSetTemplateService(
         user=user,
         is_superuser=False,
@@ -1030,10 +1030,10 @@ def test_delete__used_by_task__raise_exception(mocker):
     fieldset = FieldsetTemplate.objects.create(
         template=template,
         account=account,
+        task=task_template,
         name='Fieldset',
         order=1,
     )
-    fieldset.tasks.add(task_template)
     service = FieldSetTemplateService(
         user=user,
         is_superuser=False,

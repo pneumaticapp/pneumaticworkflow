@@ -82,10 +82,7 @@ class FieldSetTemplateService(BaseModelService):
             service._validate()
 
     def delete(self) -> None:
-        if (
-            self.instance.kickoff.exists()
-            or self.instance.tasks.exists()
-        ):
+        if self.instance.kickoff or self.instance.task:
             raise FieldsetTemplateInUseException
         self.instance.delete()
 
