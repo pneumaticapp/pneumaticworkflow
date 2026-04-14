@@ -1,4 +1,4 @@
-import { IUnsavedUser, TUserInvited } from '../../types/user';
+import { IUnsavedUser, IUserVacation, TUserInvited } from '../../types/user';
 import { actionGenerator } from '../../utils/redux';
 import { IAuthUser, ITypedReduxAction } from '../../types/redux';
 import { IUpdateUserRequest, TUpdateUserMappedResponse } from '../../api/editProfile';
@@ -423,10 +423,7 @@ export const vacationDeactivate: (payload?: void) => TVacationDeactivate = actio
 
 export type TVacationSuccessPayload = {
   absenceStatus: string;
-  vacationStartDate: string | null;
-  vacationEndDate: string | null;
-  substituteUserIds: number[];
-  isAbsent: boolean;
+  vacation: IUserVacation | null;
 };
 export type TVacationSuccess = ITypedReduxAction<EAuthActions.VacationSuccess, TVacationSuccessPayload>;
 export const vacationSuccess: (payload: TVacationSuccessPayload) => TVacationSuccess = actionGenerator<

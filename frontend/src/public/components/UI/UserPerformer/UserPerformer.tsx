@@ -3,7 +3,7 @@ import classnames from 'classnames';
 
 import { Avatar } from "..";
 import { DeleteRoundIcon } from '../../icons';
-import { TUserListItem } from '../../../types/user';
+import { TUserListItem, isUserAbsent } from '../../../types/user';
 import { getUserById } from '../../UserData/utils/getUserById';
 import { ETaskPerformerType } from '../../../types/template';
 
@@ -54,7 +54,7 @@ export const UserPerformerComponent = ({
       )}
       <p className={styles['user-performer__name']}>
         {user.label}
-        {currentUser?.isAbsent && (
+        {currentUser && isUserAbsent(currentUser) && (
           <span className={styles['user-performer__badge']}>
             {currentUser.absenceStatus === 'sick_leave' ? ' 🏥' : ' ✈️'}
           </span>

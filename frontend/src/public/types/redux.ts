@@ -1,4 +1,4 @@
-import { EGroupsListSorting, EUserListSorting, EUserStatus, IUnsavedUser, TUserListItem } from './user';
+import { EGroupsListSorting, EUserListSorting, EUserStatus, IUnsavedUser, IUserVacation, TUserListItem } from './user';
 import { TNotificationsListItem } from './notifications';
 import { IAccountGenericTemplate } from './genericTemplates';
 import {
@@ -93,10 +93,7 @@ export interface IAuthUser extends IUnsavedUser {
   dateFmt: string;
   dateFdw: string;
   absenceStatus?: string;
-  vacationStartDate?: string | null;
-  vacationEndDate?: string | null;
-  substituteUserIds?: number[];
-  isAbsent?: boolean;
+  vacation?: IUserVacation | null;
 }
 
 export interface IInvitedUser {

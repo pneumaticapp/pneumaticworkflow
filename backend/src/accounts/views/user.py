@@ -159,13 +159,12 @@ class UserViewSet(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
         service = VacationDelegationService(user=user)
-        service.activate(
+        user = service.activate(
             substitute_user_ids=data['substitute_user_ids'],
             absence_status=data['absence_status'],
             vacation_start_date=(data.get('vacation_start_date')),
             vacation_end_date=(data.get('vacation_end_date')),
         )
-        user.refresh_from_db()
         return self.response_ok(UserSerializer(instance=user).data)
 
     @action(
@@ -180,6 +179,5 @@ class UserViewSet(
                 message=MSG_A_0052,
             )
         service = VacationDelegationService(user=user)
-        service.deactivate()
-        user.refresh_from_db()
+        user = service.deactivate()
         return self.response_ok(UserSerializer(instance=user).data)

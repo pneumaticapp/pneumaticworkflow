@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('processes', '0246_alter_field_name_to_text'),
+        ('processes', '0249_auto_20260403_1221'),
     ]
 
     operations = [

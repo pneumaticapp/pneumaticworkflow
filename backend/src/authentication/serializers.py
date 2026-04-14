@@ -7,7 +7,7 @@ from typing import Any, Dict, Optional
 
 from src.accounts.enums import Language
 from src.accounts.models import Account
-from src.accounts.serializers.mixins import VacationSubstituteMixin
+from src.accounts.serializers.mixins import VacationSerializer
 from src.authentication.messages import (
     MSG_AU_0006,
     MSG_AU_0012,
@@ -156,7 +156,6 @@ class ContextAccountSerializer(serializers.ModelSerializer):
 
 
 class ContextUserSerializer(
-    VacationSubstituteMixin,
     serializers.ModelSerializer,
 ):
 
@@ -192,10 +191,7 @@ class ContextUserSerializer(
             'has_workflow_viewer_access',
             'has_workflow_starter_access',
             'absence_status',
-            'vacation_start_date',
-            'vacation_end_date',
-            'is_absent',
-            'substitute_user_ids',
+            'vacation',
         )
 
     account = ContextAccountSerializer()
@@ -204,19 +200,8 @@ class ContextUserSerializer(
     has_workflow_starter_access = serializers.SerializerMethodField()
     date_joined_tsp = TimeStampField(source='date_joined', read_only=True)
     date_fmt = DateFormatField(read_only=True)
-    is_absent = serializers.BooleanField(read_only=True)
-    substitute_user_ids = serializers.SerializerMethodField()
-    vacation_start_date = serializers.DateField(
-        source='vacation_schedule.start_date',
-        read_only=True,
-        allow_null=True,
-        default=None,
-    )
-    vacation_end_date = serializers.DateField(
-        source='vacation_schedule.end_date',
-        read_only=True,
-        allow_null=True,
-        default=None,
+    vacation = VacationSerializer(
+        read_only=True, allow_null=True, default=None,
     )
 
     def get_has_workflow_viewer_access(self, obj) -> bool:

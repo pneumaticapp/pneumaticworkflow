@@ -32,7 +32,7 @@ class Command(BaseCommand):
             self._ensure_weekly_digest,
             self._ensure_continue_delayed_processes,
             self._ensure_reminder_task_notification,
-            self._ensure_process_vacation_schedules,
+            self._ensure_process_vacations,
             self._ensure_delegate_vacation_tasks,
         )
 
@@ -162,7 +162,7 @@ class Command(BaseCommand):
             schedule_obj=schedule,
         )
 
-    def _ensure_process_vacation_schedules(self):
+    def _ensure_process_vacations(self):
         schedule, _ = CrontabSchedule.objects.get_or_create(
             minute="*/15",
             timezone=pytz.timezone("UTC"),
@@ -170,7 +170,7 @@ class Command(BaseCommand):
         self._create_or_skip_task(
             name="Process vacation schedules",
             task_path=(
-                "src.accounts.tasks.process_vacation_schedules"
+                "src.accounts.tasks.process_vacations"
             ),
             schedule_obj=schedule,
             schedule_field="crontab",

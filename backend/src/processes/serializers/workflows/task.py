@@ -26,43 +26,10 @@ from src.processes.serializers.workflows.delay import (
 from src.processes.serializers.workflows.field import (
     TaskFieldSerializer,
 )
-from src.accounts.enums import UserGroupType
-from src.processes.enums import PerformerType
+from src.processes.serializers.workflows.task_performer import (
+    TaskUserGroupPerformerSerializer,
+)
 from src.processes.models.workflows.task import TaskPerformer
-
-
-def _format_performer(p) -> Dict[str, Any]:
-    item = {
-        'is_completed': p.is_completed,
-        'date_completed_tsp': (
-            p.date_completed.timestamp()
-            if p.date_completed else None
-        ),
-        'type': p.type,
-        'source_id': (
-            p.group_id
-            if p.type == PerformerType.GROUP
-            else p.user_id
-        ),
-    }
-    if (
-        p.type == PerformerType.GROUP
-        and p.group
-        and p.group.type == UserGroupType.PERSONAL
-    ):
-        item['label'] = p.group.name
-    return item
-
-
-def get_performers_for_task(instance) -> List[Dict[str, Any]]:
-    if hasattr(instance, 'all_performers'):
-        performers = instance.all_performers
-    else:
-        performers = (
-            instance.exclude_directly_deleted_taskperformer_set()
-            .select_related('group')
-        )
-    return [_format_performer(p) for p in performers]
 
 
 class TaskShortSerializer(serializers.ModelSerializer):
@@ -116,7 +83,11 @@ class WorkflowCurrentTaskSerializer(serializers.ModelSerializer):
         return None
 
     def get_performers(self, instance) -> List[Dict[str, Any]]:
-        return get_performers_for_task(instance)
+        if hasattr(instance, 'all_performers'):
+            performers = instance.all_performers
+        else:
+            performers = instance.exclude_directly_deleted_taskperformer_set()
+        return TaskUserGroupPerformerSerializer(performers, many=True).data
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -166,7 +137,11 @@ class TaskSerializer(serializers.ModelSerializer):
     is_read_only_viewer = serializers.SerializerMethodField()
 
     def get_performers(self, instance) -> List[Dict[str, Any]]:
-        return get_performers_for_task(instance)
+        if hasattr(instance, 'all_performers'):
+            performers = instance.all_performers
+        else:
+            performers = instance.exclude_directly_deleted_taskperformer_set()
+        return TaskUserGroupPerformerSerializer(performers, many=True).data
 
     def get_is_completed(self, instance):
         #  TODO Remove in 41258

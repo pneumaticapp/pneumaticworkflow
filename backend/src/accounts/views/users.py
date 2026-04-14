@@ -124,7 +124,7 @@ class UsersViewSet(
             extra_fields = (
                 'user_groups',
                 'incoming_invites',
-                'vacation_schedule__substitute_group__users',
+                'vacation__substitute_group__users',
             )
         elif self.action == 'privileges':
             queryset = queryset.prefetch_related(
@@ -333,13 +333,12 @@ class UsersViewSet(
         slz.is_valid(raise_exception=True)
         data = slz.validated_data
         service = VacationDelegationService(user=user)
-        service.activate(
+        user = service.activate(
             substitute_user_ids=data['substitute_user_ids'],
             absence_status=data['absence_status'],
             vacation_start_date=(data.get('vacation_start_date')),
             vacation_end_date=(data.get('vacation_end_date')),
         )
-        user.refresh_from_db()
         return self.response_ok(UserSerializer(instance=user).data)
 
     @action(
@@ -352,8 +351,7 @@ class UsersViewSet(
         if not user.is_absent:
             raise_validation_error(message=MSG_A_0052)
         service = VacationDelegationService(user=user)
-        service.deactivate()
-        user.refresh_from_db()
+        user = service.deactivate()
         return self.response_ok(UserSerializer(instance=user).data)
 
     @action(

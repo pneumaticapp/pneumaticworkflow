@@ -42,7 +42,7 @@ def send_system_notification():
 
 
 @shared_task
-def process_vacation_schedules():
+def process_vacations():
     """Auto-start and auto-stop vacation delegations.
 
     Runs every 15 minutes via Celery beat.
@@ -58,13 +58,13 @@ def process_vacation_schedules():
         user_model.objects
         .filter(
             absence_status=AbsenceStatus.ACTIVE,
-            vacation_schedule__isnull=False,
-            vacation_schedule__start_date__isnull=False,
-            vacation_schedule__substitute_group__isnull=False,
+            vacation__isnull=False,
+            vacation__start_date__isnull=False,
+            vacation__substitute_group__isnull=False,
         )
-        .select_related('vacation_schedule__substitute_group')
+        .select_related('vacation__substitute_group')
         .prefetch_related(
-            'vacation_schedule__substitute_group__users',
+            'vacation__substitute_group__users',
         )
         .order_by('id')
     )
@@ -73,9 +73,9 @@ def process_vacation_schedules():
             user_now = now.astimezone(pytz_tz(user.timezone))
         except UnknownTimeZoneError:
             continue
-        if user_now.date() >= user.vacation_schedule.start_date:
+        if user_now.date() >= user.vacation.start_date:
             sub_ids = list(
-                user.vacation_schedule.substitute_group.users
+                user.vacation.substitute_group.users
                 .values_list('id', flat=True),
             )
             if sub_ids:
@@ -83,15 +83,15 @@ def process_vacation_schedules():
                     VacationDelegationService(user).activate(
                         sub_ids,
                         absence_status=getattr(
-                            user.vacation_schedule,
+                            user.vacation,
                             'absence_status',
                             AbsenceStatus.VACATION,
                         ),
                         vacation_start_date=(
-                            user.vacation_schedule.start_date
+                            user.vacation.start_date
                         ),
                         vacation_end_date=(
-                            user.vacation_schedule.end_date
+                            user.vacation.end_date
                         ),
                     )
                 except Exception:  # noqa: BLE001
@@ -105,10 +105,10 @@ def process_vacation_schedules():
                 AbsenceStatus.VACATION,
                 AbsenceStatus.SICK_LEAVE,
             ],
-            vacation_schedule__isnull=False,
-            vacation_schedule__end_date__isnull=False,
+            vacation__isnull=False,
+            vacation__end_date__isnull=False,
         )
-        .select_related('vacation_schedule')
+        .select_related('vacation')
         .order_by('id')
     )
     for user in auto_stop_users:
@@ -116,7 +116,7 @@ def process_vacation_schedules():
             user_now = now.astimezone(pytz_tz(user.timezone))
         except UnknownTimeZoneError:
             continue
-        if user_now.date() > user.vacation_schedule.end_date:
+        if user_now.date() > user.vacation.end_date:
             try:
                 VacationDelegationService(user).deactivate()
             except Exception:  # noqa: BLE001

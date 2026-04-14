@@ -38,10 +38,10 @@ class VacationDelegationService:
         """
         with transaction.atomic():
             personal_groups = (
-                user.user_groups
+                UserGroup.include_personal
                 .filter(
+                    users=user,
                     type=UserGroupType.PERSONAL,
-                    is_deleted=False,
                 )
                 .prefetch_related('vacation_owners')
             )
@@ -84,7 +84,7 @@ class VacationDelegationService:
         absence_status: AbsenceStatus.LITERALS = AbsenceStatus.VACATION,
         vacation_start_date: Optional[date] = None,
         vacation_end_date: Optional[date] = None,
-    ) -> None:
+    ) -> 'UserModel':
         with transaction.atomic():
             vacation = (
                 UserVacation.objects
@@ -116,6 +116,16 @@ class VacationDelegationService:
             substitute_user_ids=substitute_user_ids,
             task_ids=task_ids,
         )
+
+        # Reload vacation with relations for the serializer
+        self.user.vacation = (
+            UserVacation.objects
+            .filter(user=self.user)
+            .select_related('substitute_group')
+            .prefetch_related('substitute_group__users')
+            .first()
+        )
+        return self.user
 
     def delegate_tasks(
         self,
@@ -320,6 +330,7 @@ class VacationDelegationService:
         UserVacation.objects.update_or_create(
             user=self.user,
             defaults={
+                'account': self.user.account,
                 'substitute_group': group,
                 'start_date': vacation_start_date,
                 'end_date': vacation_end_date,
@@ -329,7 +340,7 @@ class VacationDelegationService:
 
         return task_ids
 
-    def deactivate(self) -> None:
+    def deactivate(self) -> 'UserModel':
         with transaction.atomic():
             vacation = (
                 UserVacation.objects
@@ -338,7 +349,7 @@ class VacationDelegationService:
                 .first()
             )
             if not vacation:
-                return
+                return self.user
 
             # Delete substitute group performers and group.
             substitute_group = vacation.substitute_group
@@ -351,6 +362,10 @@ class VacationDelegationService:
             self.user.absence_status = AbsenceStatus.ACTIVE
             self.user.save(update_fields=['absence_status'])
             vacation.delete()
+
+        # Clear cached vacation relation
+        self.user.vacation = None
+        return self.user
 
     @staticmethod
     def add_members_bulk(

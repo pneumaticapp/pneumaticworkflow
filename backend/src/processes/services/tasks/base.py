@@ -118,7 +118,7 @@ class BasePerformersService:
         if not performers.filter(user_id=user.id).exists():
             return None
 
-        schedule = getattr(user, 'vacation_schedule', None)
+        schedule = getattr(user, 'vacation', None)
         sub_group_id = schedule.substitute_group_id if schedule else None
         if sub_group_id:
             if performers.exclude(

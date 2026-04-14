@@ -47,6 +47,7 @@ def test_delegate_vacation_tasks__delegates__ok(mocker):
     group.users.add(substitute)
     UserVacation.objects.create(
         user=owner,
+        account=account,
         substitute_group=group,
     )
     owner.absence_status = AbsenceStatus.VACATION
@@ -100,7 +101,11 @@ def test_delegate_vacation_tasks__skips_already_delegated__ok(mocker):
         account=account,
     )
     group.users.add(substitute)
-    UserVacation.objects.create(user=owner, substitute_group=group)
+    UserVacation.objects.create(
+        user=owner,
+        account=account,
+        substitute_group=group,
+    )
     owner.absence_status = AbsenceStatus.VACATION
     owner.save(update_fields=['absence_status'])
 
@@ -149,7 +154,11 @@ def test_delegate_vacation_tasks__skips_soft_deleted_delegations__ok(mocker):
         type=UserGroupType.PERSONAL,
         account=account,
     )
-    UserVacation.objects.create(user=owner, substitute_group=group)
+    UserVacation.objects.create(
+        user=owner,
+        account=account,
+        substitute_group=group,
+    )
     owner.absence_status = AbsenceStatus.VACATION
     owner.save(update_fields=['absence_status'])
 
@@ -194,7 +203,11 @@ def test_delegate_vacation_tasks__no_active_tasks__ok(mocker):
         type=UserGroupType.PERSONAL,
         account=account,
     )
-    UserVacation.objects.create(user=owner, substitute_group=group)
+    UserVacation.objects.create(
+        user=owner,
+        account=account,
+        substitute_group=group,
+    )
     owner.absence_status = AbsenceStatus.VACATION
     owner.save(update_fields=['absence_status'])
 
@@ -243,6 +256,7 @@ def test_delegate__skips_completed_performers__ok(mocker):
     group.users.add(substitute)
     UserVacation.objects.create(
         user=owner,
+        account=account,
         substitute_group=group,
     )
     owner.absence_status = AbsenceStatus.VACATION
@@ -321,10 +335,12 @@ def test_delegate__user_error__continues_next(mocker):
 
     UserVacation.objects.create(
         user=owner1,
+        account=account,
         substitute_group=group1,
     )
     UserVacation.objects.create(
         user=owner2,
+        account=account,
         substitute_group=group2,
     )
     owner1.absence_status = AbsenceStatus.VACATION
@@ -403,6 +419,7 @@ def test_delegate__error__rolls_back_user(mocker):
     group.users.add(substitute)
     UserVacation.objects.create(
         user=owner,
+        account=account,
         substitute_group=group,
     )
     owner.absence_status = AbsenceStatus.VACATION
@@ -462,6 +479,7 @@ def test_delegate__skips_non_running_workflow__ok(mocker):
     group.users.add(substitute)
     UserVacation.objects.create(
         user=owner,
+        account=account,
         substitute_group=group,
     )
     owner.absence_status = AbsenceStatus.VACATION
@@ -521,6 +539,7 @@ def test_delegate__all_delegated__skips_members(mocker):
     group.users.add(substitute)
     UserVacation.objects.create(
         user=owner,
+        account=account,
         substitute_group=group,
     )
     owner.absence_status = AbsenceStatus.VACATION

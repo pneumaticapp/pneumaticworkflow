@@ -2062,13 +2062,14 @@ class TestTaskPerformersService:
         )
         UserVacation.objects.create(
             user=deleted_performer,
+            account=account,
             substitute_group=sub_group,
         )
 
-        # refetch so vacation_schedule is loaded
+        # refetch so vacation is loaded
         deleted_performer = (
             UserModel.include_inactive.select_related(
-                'vacation_schedule',
+                'vacation',
             ).get(id=deleted_performer.id)
         )
 

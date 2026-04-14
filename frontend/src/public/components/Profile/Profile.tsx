@@ -20,7 +20,7 @@ import { getErrorsObject } from '../../utils/formik/getErrorsObject';
 import { Header } from '../UI/Typeography/Header';
 import { SectionTitle } from '../UI/Typeography/SectionTitle';
 import { IAuthUser } from '../../types/redux';
-import { TUserListItem } from '../../types/user';
+import { TUserListItem, isUserAbsent } from '../../types/user';
 import { FormikCheckbox } from '../UI/Fields/Checkbox';
 import { AvatarController } from './AvatarController';
 import { FormikDropdownList } from '../UI';
@@ -127,10 +127,10 @@ export function Profile({
     dateFdw: String(dateFdw),
     timeformat: timeFmt.trim(),
     dateformat: `${monthFmt},${yearFmt},`,
-    absenceStatus: user.isAbsent ? (user.absenceStatus || 'vacation') : 'active',
-    vacationStartDate: user.vacationStartDate || null,
-    vacationEndDate: user.vacationEndDate || null,
-    substituteUserIds: user.substituteUserIds || [],
+    absenceStatus: isUserAbsent(user) ? (user.absenceStatus || 'vacation') : 'active',
+    vacationStartDate: user.vacation?.startDate || null,
+    vacationEndDate: user.vacation?.endDate || null,
+    substituteUserIds: user.vacation?.substituteUserIds || [],
   };
 
   const mapToFormatMessageOptions = (options: any) => {
@@ -146,16 +146,16 @@ export function Profile({
     const { dateformat, timeformat, absenceStatus, vacationStartDate, vacationEndDate, substituteUserIds, ...userData } = values;
     editCurrentUser({ ...userData, dateFmt: `${dateformat} ${timeformat}` });
 
-    const prevIsAbsent = user.isAbsent || false;
+    const prevIsAbsent = isUserAbsent(user);
     const nextIsAbsent = absenceStatus !== 'active';
     
     // Determine if any vacation fields have changed
-    const prevAbsenceStatus = user.isAbsent ? (user.absenceStatus || 'vacation') : 'active';
+    const prevAbsenceStatus = isUserAbsent(user) ? (user.absenceStatus || 'vacation') : 'active';
     const vacationSettingsChanged =
       absenceStatus !== prevAbsenceStatus ||
-      vacationStartDate !== (user.vacationStartDate || null) ||
-      vacationEndDate !== (user.vacationEndDate || null) ||
-      !arraysEqual(substituteUserIds, user.substituteUserIds || []);
+      vacationStartDate !== (user.vacation?.startDate || null) ||
+      vacationEndDate !== (user.vacation?.endDate || null) ||
+      !arraysEqual(substituteUserIds, user.vacation?.substituteUserIds || []);
       
     if (vacationSettingsChanged) {
       if (nextIsAbsent) {

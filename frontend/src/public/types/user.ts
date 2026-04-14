@@ -43,10 +43,7 @@ export type TUserListItem = Pick<
   id: number;
   status: EUserStatus;
   absenceStatus?: EAbsenceStatus;
-  vacationStartDate?: string | null;
-  vacationEndDate?: string | null;
-  substituteUserIds?: number[];
-  isAbsent?: boolean;
+  vacation?: IUserVacation | null;
 };
 
 export type TAccountLeaseLevel = 'standard' | 'partner' | 'tenant';
@@ -95,6 +92,18 @@ export const enum EAbsenceStatus {
   Active = 'active',
   Vacation = 'vacation',
   SickLeave = 'sick_leave',
+}
+
+export interface IUserVacation {
+  startDate: string | null;
+  endDate: string | null;
+  absenceStatus: string;
+  substituteUserIds: number[];
+}
+
+export function isUserAbsent(user: { vacation?: IUserVacation | null }): boolean {
+  if (!user.vacation) return false;
+  return user.vacation.absenceStatus !== EAbsenceStatus.Active;
 }
 
 export type TUserId = {
@@ -160,8 +169,5 @@ export interface IUserResponse {
   groups: number[];
   invite: UserInvite | null;
   absenceStatus?: EAbsenceStatus;
-  vacationStartDate?: string | null;
-  vacationEndDate?: string | null;
-  substituteUserIds?: number[];
-  isAbsent?: boolean;
+  vacation?: IUserVacation | null;
 }

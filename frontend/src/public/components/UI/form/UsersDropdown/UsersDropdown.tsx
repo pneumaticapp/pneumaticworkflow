@@ -3,7 +3,7 @@ import { useIntl } from 'react-intl';
 import { ActionMeta, FormatOptionLabelMeta } from 'react-select';
 
 import { TDropdownOptionBase, IDropdownListProps, DropdownList, Checkbox, Avatar, TAvatarUser } from '../..';
-import { TUserListItem } from '../../../../types/user';
+import { TUserListItem, isUserAbsent } from '../../../../types/user';
 import { BoldPlusIcon } from '../../../icons';
 import { ETaskPerformerType } from '../../../../types/template';
 import { getUserById } from '../../../UserData/utils/getUserById';
@@ -166,7 +166,7 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
           )}
           <p className={styles['user-option__label']}>
             {option.label}
-            {(currentUser as TUserListItem)?.isAbsent && (
+            {isUserAbsent(currentUser as TUserListItem) && (
               <span className={styles['user-option__badge']}>
                 {(currentUser as TUserListItem)?.absenceStatus === 'sick_leave' ? ' 🏥' : ' ✈️'}
               </span>

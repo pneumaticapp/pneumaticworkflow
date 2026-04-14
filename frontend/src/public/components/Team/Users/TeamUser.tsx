@@ -4,7 +4,7 @@ import Switch from 'rc-switch';
 import { debounce } from 'throttle-debounce';
 import { useIntl } from 'react-intl';
 
-import { EUserStatus, TUserListItem } from '../../../types/user';
+import { EUserStatus, TUserListItem, isUserAbsent } from '../../../types/user';
 import { IntlMessages } from '../../IntlMessages';
 import { Avatar } from '../../UI/Avatar';
 import { getUserFullName } from '../../../utils/users';
@@ -71,7 +71,7 @@ export function TeamUser(props: ITeamUserProps) {
         <>
           <Header size="6" tag="p" className={styles['card-header']}>
             {getUserFullName(user)}
-            {user.isAbsent && (
+            {isUserAbsent(user) && (
               <span className={styles['card-absent-badge']} data-testid="absent-badge">
                 {formatMessage({ id: 'team.card-absent-badge' })}
               </span>

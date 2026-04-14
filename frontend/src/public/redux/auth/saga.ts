@@ -599,10 +599,7 @@ export function* handleVacationActivate({ payload }: TVacationActivate) {
     if (result) {
       yield put(vacationSuccess({
         absenceStatus: result.absenceStatus || 'vacation',
-        vacationStartDate: result.vacationStartDate || null,
-        vacationEndDate: result.vacationEndDate || null,
-        substituteUserIds: result.substituteUserIds || [],
-        isAbsent: !!result.isAbsent,
+        vacation: result.vacation || null,
       }));
       NotificationManager.success({ message: 'user-info.vacation.activated-success' });
     }
@@ -618,10 +615,7 @@ export function* handleVacationDeactivate() {
     if (result) {
       yield put(vacationSuccess({
         absenceStatus: result.absenceStatus || 'active',
-        vacationStartDate: result.vacationStartDate || null,
-        vacationEndDate: result.vacationEndDate || null,
-        substituteUserIds: result.substituteUserIds || [],
-        isAbsent: !!result.isAbsent,
+        vacation: result.vacation || null,
       }));
       NotificationManager.success({ message: 'user-info.vacation.deactivated-success' });
     }

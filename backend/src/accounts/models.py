@@ -32,6 +32,7 @@ from src.accounts.fields import (
 )
 from src.accounts.managers import (
     SoftDeleteGuestManager,
+    SoftDeleteGroupManager,
     SoftDeleteUserManager,
 )
 from src.accounts.querysets import (
@@ -46,6 +47,7 @@ from src.accounts.querysets import (
     SystemMessageQuerySet,
     UserInviteQuerySet,
     UserQuerySet,
+    VacationQuerySet,
 )
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
@@ -682,13 +684,17 @@ class UserGroup(SoftDeleteModel):
         choices=UserGroupType.CHOICES,
         default=UserGroupType.REGULAR,
     )
-    objects = BaseSoftDeleteManager.from_queryset(GroupQuerySet)()
+    objects = SoftDeleteGroupManager.from_queryset(GroupQuerySet)()
+    include_personal = BaseSoftDeleteManager.from_queryset(GroupQuerySet)()
 
     def __str__(self):
         return self.name
 
 
-class UserVacation(models.Model):
+class UserVacation(
+    SoftDeleteModel,
+    AccountBaseMixin,
+):
 
     def __str__(self):
         return f'{self.user.email} vacation'
@@ -696,7 +702,7 @@ class UserVacation(models.Model):
     user = models.OneToOneField(
         'accounts.User',
         on_delete=models.CASCADE,
-        related_name='vacation_schedule',
+        related_name='vacation',
     )
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
@@ -712,3 +718,5 @@ class UserVacation(models.Model):
         blank=True,
         related_name='vacation_owners',
     )
+
+    objects = BaseSoftDeleteManager.from_queryset(VacationQuerySet)()

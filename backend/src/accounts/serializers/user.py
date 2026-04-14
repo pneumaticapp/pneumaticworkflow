@@ -25,7 +25,7 @@ from src.accounts.messages import (
     MSG_A_0054,
 )
 from src.accounts.serializers.mixins import (
-    VacationSubstituteMixin,
+    VacationSerializer,
 )
 from src.accounts.serializers.user_invites import (
     UserListInviteSerializer,
@@ -55,7 +55,6 @@ UserModel = get_user_model()
 
 
 class UserSerializer(
-    VacationSubstituteMixin,
     CustomValidationErrorMixin,
     serializers.ModelSerializer,
 ):
@@ -89,10 +88,7 @@ class UserSerializer(
             'groups',
             'password',
             'absence_status',
-            'vacation_start_date',
-            'vacation_end_date',
-            'is_absent',
-            'substitute_user_ids',
+            'vacation',
         )
         read_only_fields = (
             'id',
@@ -101,7 +97,6 @@ class UserSerializer(
             'status',
             'is_account_owner',
             'date_joined_tsp',
-            'is_absent',
             'absence_status',
         )
 
@@ -118,19 +113,8 @@ class UserSerializer(
     date_fmt = DateFormatField(required=False)
     invite = serializers.SerializerMethodField(allow_null=True, read_only=True)
     password = serializers.CharField(write_only=True, required=False)
-    is_absent = serializers.BooleanField(read_only=True)
-    substitute_user_ids = serializers.SerializerMethodField()
-    vacation_start_date = serializers.DateField(
-        source='vacation_schedule.start_date',
-        read_only=True,
-        allow_null=True,
-        default=None,
-    )
-    vacation_end_date = serializers.DateField(
-        source='vacation_schedule.end_date',
-        read_only=True,
-        allow_null=True,
-        default=None,
+    vacation = VacationSerializer(
+        read_only=True, allow_null=True, default=None,
     )
 
     def get_invite(self, instance: UserModel):
@@ -358,6 +342,6 @@ class VacationActivateSerializer(
     def validate(self, attrs):
         start = attrs.get('vacation_start_date')
         end = attrs.get('vacation_end_date')
-        if start and end and start > end:
+        if start and end and start >= end:
             raise serializers.ValidationError(MSG_A_0054)
         return attrs

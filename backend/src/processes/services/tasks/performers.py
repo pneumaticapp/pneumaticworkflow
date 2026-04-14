@@ -61,7 +61,7 @@ class TaskPerformersService(BasePerformersService):
             return UserModel.include_inactive.on_account(
                 account_id,
             ).type_user().by_id(user_key).select_related(
-                'vacation_schedule',
+                'vacation',
             ).get()
         except UserModel.DoesNotExist as ex:
             raise PerformersServiceException(MSG_PW_0014) from ex
@@ -88,7 +88,7 @@ class TaskPerformersService(BasePerformersService):
             is_superuser=is_superuser,
         )
 
-        schedule = getattr(user, 'vacation_schedule', None)
+        schedule = getattr(user, 'vacation', None)
         sub_group_id = schedule.substitute_group_id if schedule else None
         if sub_group_id:
             try:

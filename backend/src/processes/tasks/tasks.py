@@ -64,10 +64,10 @@ def delegate_vacation_tasks():
             AbsenceStatus.VACATION,
             AbsenceStatus.SICK_LEAVE,
         ],
-        vacation_schedule__isnull=False,
-        vacation_schedule__substitute_group__isnull=False,
+        vacation__isnull=False,
+        vacation__substitute_group__isnull=False,
     ).select_related(
-        'vacation_schedule__substitute_group',
+        'vacation__substitute_group',
     ).order_by('id')
 
     logger = logging.getLogger(__name__)
@@ -85,7 +85,7 @@ def delegate_vacation_tasks():
 
 
 def _delegate_tasks_for_user(user):
-    sub_group = user.vacation_schedule.substitute_group
+    sub_group = user.vacation.substitute_group
 
     # Already-delegated tasks (including soft-deleted)
     already_delegated_task_ids = set(

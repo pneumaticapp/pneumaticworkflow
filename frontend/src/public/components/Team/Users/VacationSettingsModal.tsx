@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 
-import { TUserListItem } from '../../../types/user';
+import { TUserListItem, isUserAbsent } from '../../../types/user';
 import { IVacationActivateRequest, activateVacation, deactivateVacation } from '../../../api/vacation';
 import { VacationSettings } from '../../VacationSettings';
 import { Modal } from '../../UI/Modal';
@@ -44,10 +44,7 @@ export function VacationSettingsModal({ isOpen, onClose, user }: IVacationSettin
       if (authUser.id === user.id && result) {
         dispatch(vacationSuccess({
           absenceStatus: result.absenceStatus || 'vacation',
-          vacationStartDate: result.vacationStartDate || null,
-          vacationEndDate: result.vacationEndDate || null,
-          substituteUserIds: result.substituteUserIds || [],
-          isAbsent: !!result.isAbsent,
+          vacation: result.vacation || null,
         }));
       }
 
@@ -71,10 +68,7 @@ export function VacationSettingsModal({ isOpen, onClose, user }: IVacationSettin
       if (authUser.id === user.id && result) {
         dispatch(vacationSuccess({
           absenceStatus: result.absenceStatus || 'active',
-          vacationStartDate: result.vacationStartDate || null,
-          vacationEndDate: result.vacationEndDate || null,
-          substituteUserIds: result.substituteUserIds || [],
-          isAbsent: !!result.isAbsent,
+          vacation: result.vacation || null,
         }));
       }
 
@@ -95,11 +89,11 @@ export function VacationSettingsModal({ isOpen, onClose, user }: IVacationSettin
       {user ? (
         <div className={styles['modal-body']}>
           <VacationSettings
-            isAbsent={!!user.isAbsent}
+            isAbsent={isUserAbsent(user)}
             absenceStatus={user.absenceStatus || 'vacation'}
-            vacationStartDate={user.vacationStartDate || null}
-            vacationEndDate={user.vacationEndDate || null}
-            substituteUserIds={user.substituteUserIds || []}
+            vacationStartDate={user.vacation?.startDate || null}
+            vacationEndDate={user.vacation?.endDate || null}
+            substituteUserIds={user.vacation?.substituteUserIds || []}
             availableUsers={availableUsers}
             onActivate={handleActivate}
             onDeactivate={handleDeactivate}
