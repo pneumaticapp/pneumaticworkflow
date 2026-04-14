@@ -73,6 +73,7 @@ class FieldTemplateSerializer(
         model = FieldTemplate
         api_primary_field = 'api_name'
         fields = (
+            'id',
             'type',
             'name',
             'description',
@@ -100,6 +101,7 @@ class FieldTemplateSerializer(
             'dataset',
         }
 
+    id = IntegerField(read_only=True)
     order = IntegerField()
     api_name = CharField(required=False, max_length=200)
     dataset = AccountPrimaryKeyRelatedField(
