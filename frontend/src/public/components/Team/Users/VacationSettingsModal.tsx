@@ -43,7 +43,6 @@ export function VacationSettingsModal({ isOpen, onClose, user }: IVacationSettin
       
       if (authUser.id === user.id && result) {
         dispatch(vacationSuccess({
-          absenceStatus: result.absenceStatus || 'vacation',
           vacation: result.vacation || null,
         }));
       }
@@ -67,7 +66,6 @@ export function VacationSettingsModal({ isOpen, onClose, user }: IVacationSettin
 
       if (authUser.id === user.id && result) {
         dispatch(vacationSuccess({
-          absenceStatus: result.absenceStatus || 'active',
           vacation: result.vacation || null,
         }));
       }
@@ -90,7 +88,7 @@ export function VacationSettingsModal({ isOpen, onClose, user }: IVacationSettin
         <div className={styles['modal-body']}>
           <VacationSettings
             isAbsent={isUserAbsent(user)}
-            absenceStatus={user.absenceStatus || 'vacation'}
+            absenceStatus={user.vacation?.absenceStatus || 'vacation'}
             vacationStartDate={user.vacation?.startDate || null}
             vacationEndDate={user.vacation?.endDate || null}
             substituteUserIds={user.vacation?.substituteUserIds || []}

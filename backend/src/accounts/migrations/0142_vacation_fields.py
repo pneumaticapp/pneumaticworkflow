@@ -22,20 +22,6 @@ class Migration(migrations.Migration):
                 max_length=20,
             ),
         ),
-        # User.absence_status
-        migrations.AddField(
-            model_name='user',
-            name='absence_status',
-            field=models.CharField(
-                choices=[
-                    ('active', 'Active'),
-                    ('vacation', 'On vacation'),
-                    ('sick_leave', 'Sick leave'),
-                ],
-                default='active',
-                max_length=20,
-            ),
-        ),
         # UserVacation model (normalized vacation data)
         migrations.CreateModel(
             name='UserVacation',

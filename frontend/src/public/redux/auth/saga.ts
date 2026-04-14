@@ -598,7 +598,6 @@ export function* handleVacationActivate({ payload }: TVacationActivate) {
     const result: IUserResponse = yield call(activateVacation, payload);
     if (result) {
       yield put(vacationSuccess({
-        absenceStatus: result.absenceStatus || 'vacation',
         vacation: result.vacation || null,
       }));
       NotificationManager.success({ message: 'user-info.vacation.activated-success' });
@@ -614,7 +613,6 @@ export function* handleVacationDeactivate() {
     const result: IUserResponse = yield call(deactivateVacation);
     if (result) {
       yield put(vacationSuccess({
-        absenceStatus: result.absenceStatus || 'active',
         vacation: result.vacation || null,
       }));
       NotificationManager.success({ message: 'user-info.vacation.deactivated-success' });

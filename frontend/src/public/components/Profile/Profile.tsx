@@ -127,7 +127,7 @@ export function Profile({
     dateFdw: String(dateFdw),
     timeformat: timeFmt.trim(),
     dateformat: `${monthFmt},${yearFmt},`,
-    absenceStatus: isUserAbsent(user) ? (user.absenceStatus || 'vacation') : 'active',
+    absenceStatus: isUserAbsent(user) ? (user.vacation?.absenceStatus || 'vacation') : 'active',
     vacationStartDate: user.vacation?.startDate || null,
     vacationEndDate: user.vacation?.endDate || null,
     substituteUserIds: user.vacation?.substituteUserIds || [],
@@ -150,7 +150,7 @@ export function Profile({
     const nextIsAbsent = absenceStatus !== 'active';
     
     // Determine if any vacation fields have changed
-    const prevAbsenceStatus = isUserAbsent(user) ? (user.absenceStatus || 'vacation') : 'active';
+    const prevAbsenceStatus = isUserAbsent(user) ? (user.vacation?.absenceStatus || 'vacation') : 'active';
     const vacationSettingsChanged =
       absenceStatus !== prevAbsenceStatus ||
       vacationStartDate !== (user.vacation?.startDate || null) ||

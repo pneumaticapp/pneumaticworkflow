@@ -332,14 +332,15 @@ def test_activate__no_user_groups__ok(mocker):
         'src.processes.services.events.'
         'WorkflowEventService.task_delegation_event',
     )
+    service = VacationDelegationService(user=owner)
 
     # act
-    service = VacationDelegationService(user=owner)
     service.activate(substitute_user_ids=[substitute.id])
 
     # assert
     owner.refresh_from_db()
-    assert owner.absence_status == AbsenceStatus.VACATION
+    user = UserVacation.objects.get(user=owner)
+    assert user.absence_status == AbsenceStatus.VACATION
     task_delegation_event_mock.assert_called_once_with(
         task=mocker.ANY,
         user=owner,
@@ -462,7 +463,8 @@ def test_activate__sets_status__ok(mocker):
 
     # assert
     owner.refresh_from_db()
-    assert owner.absence_status == AbsenceStatus.VACATION
+    user = UserVacation.objects.get(user=owner)
+    assert user.absence_status == AbsenceStatus.VACATION
     task_delegation_event_mock.assert_called_once_with(
         task=mocker.ANY,
         user=owner,
@@ -506,7 +508,8 @@ def test_activate__sets_sick_leave__ok(mocker):
 
     # assert
     owner.refresh_from_db()
-    assert owner.absence_status == AbsenceStatus.SICK_LEAVE
+    user = UserVacation.objects.get(user=owner)
+    assert user.absence_status == AbsenceStatus.SICK_LEAVE
 
 
 def test_activate__sets_sub_group__ok(mocker):
@@ -647,7 +650,8 @@ def test_activate__update_existing__status__ok(mocker):
 
     # assert
     owner.refresh_from_db()
-    assert owner.absence_status == AbsenceStatus.SICK_LEAVE
+    user = UserVacation.objects.get(user=owner)
+    assert user.absence_status == AbsenceStatus.SICK_LEAVE
 
 
 def test_activate__active_user_with_group__ok(mocker):
@@ -680,8 +684,9 @@ def test_activate__active_user_with_group__ok(mocker):
         account=account,
         substitute_group=group,
     )
-    owner.absence_status = AbsenceStatus.ACTIVE
-    owner.save(update_fields=['absence_status'])
+    vacation = UserVacation.objects.get(user=owner)
+    vacation.absence_status = AbsenceStatus.ACTIVE
+    vacation.save(update_fields=['absence_status'])
 
     # act
     service.activate(substitute_user_ids=[substitute.id])
@@ -740,7 +745,8 @@ def test_activate__update_existing__creates_perfs__ok(mocker):
 
     # assert
     owner.refresh_from_db()
-    assert owner.absence_status == AbsenceStatus.VACATION
+    user = UserVacation.objects.get(user=owner)
+    assert user.absence_status == AbsenceStatus.VACATION
     group_perf_exists = TaskPerformer.objects.filter(
         task=task,
         type=PerformerType.GROUP,
@@ -905,8 +911,9 @@ def test_activate__update_existing__filters_completed_tasks__ok(mocker):
         directly_status=DirectlyStatus.DELETED,
     )
 
-    owner.absence_status = AbsenceStatus.VACATION
-    owner.save(update_fields=['absence_status'])
+    vacation = UserVacation.objects.get(user=owner)
+    vacation.absence_status = AbsenceStatus.VACATION
+    vacation.save(update_fields=['absence_status'])
 
     service = VacationDelegationService(user=owner)
 
@@ -948,7 +955,8 @@ def test_activate__no_active_tasks__ok(mocker):
 
     # assert
     owner.refresh_from_db()
-    assert owner.absence_status == AbsenceStatus.VACATION
+    user = UserVacation.objects.get(user=owner)
+    assert user.absence_status == AbsenceStatus.VACATION
     assert owner.vacation.substitute_group is not None
 
 
@@ -1048,7 +1056,7 @@ def test_deactivate__no_group__ok():
 
     # assert
     owner.refresh_from_db()
-    assert owner.absence_status == AbsenceStatus.ACTIVE
+    assert not UserVacation.objects.filter(user=owner).exists()
 
 
 def test_deactivate__preserves_notif_settings__ok(mocker):
@@ -1148,7 +1156,7 @@ def test_deactivate__resets_status__ok(mocker):
 
     # assert
     owner.refresh_from_db()
-    assert owner.absence_status == AbsenceStatus.ACTIVE
+    assert not UserVacation.objects.filter(user=owner).exists()
 
 
 def test_deactivate__clears_fields__ok(mocker):
@@ -1229,7 +1237,7 @@ def test_deactivate__cleans_group_performers__ok(mocker):
     assert group_perfs.count() == 0
 
     owner.refresh_from_db()
-    assert owner.absence_status == AbsenceStatus.ACTIVE
+    assert not UserVacation.objects.filter(user=owner).exists()
 
 
 def test_activate__update_replaces_subs__ok(mocker):
@@ -1363,7 +1371,6 @@ def test_clear_sub_groups__empty__deactivates(mocker):
 
     # assert
     owner.refresh_from_db()
-    assert owner.absence_status == AbsenceStatus.ACTIVE
     assert not UserVacation.objects.filter(user=owner).exists()
 
 

@@ -190,7 +190,6 @@ class ContextUserSerializer(
             'date_fdw',
             'has_workflow_viewer_access',
             'has_workflow_starter_access',
-            'absence_status',
             'vacation',
         )
 

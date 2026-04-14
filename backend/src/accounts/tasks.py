@@ -57,9 +57,9 @@ def process_vacations():
     auto_start_users = (
         user_model.objects
         .filter(
-            absence_status=AbsenceStatus.ACTIVE,
             vacation__isnull=False,
             vacation__is_deleted=False,
+            vacation__absence_status=AbsenceStatus.ACTIVE,
             vacation__start_date__isnull=False,
             vacation__substitute_group__isnull=False,
         )
@@ -83,11 +83,7 @@ def process_vacations():
                 try:
                     VacationDelegationService(user).activate(
                         sub_ids,
-                        absence_status=getattr(
-                            user.vacation,
-                            'absence_status',
-                            AbsenceStatus.VACATION,
-                        ),
+                        absence_status=AbsenceStatus.VACATION,
                         vacation_start_date=(
                             user.vacation.start_date
                         ),
@@ -102,12 +98,12 @@ def process_vacations():
     auto_stop_users = (
         user_model.objects
         .filter(
-            absence_status__in=[
+            vacation__isnull=False,
+            vacation__is_deleted=False,
+            vacation__absence_status__in=[
                 AbsenceStatus.VACATION,
                 AbsenceStatus.SICK_LEAVE,
             ],
-            vacation__isnull=False,
-            vacation__is_deleted=False,
             vacation__end_date__isnull=False,
         )
         .select_related('vacation')

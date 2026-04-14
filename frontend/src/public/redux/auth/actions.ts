@@ -422,7 +422,6 @@ export const vacationDeactivate: (payload?: void) => TVacationDeactivate = actio
 >(EAuthActions.VacationDeactivate);
 
 export type TVacationSuccessPayload = {
-  absenceStatus: string;
   vacation: IUserVacation | null;
 };
 export type TVacationSuccess = ITypedReduxAction<EAuthActions.VacationSuccess, TVacationSuccessPayload>;

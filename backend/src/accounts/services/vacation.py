@@ -282,9 +282,6 @@ class VacationDelegationService:
             substitute_user_ids=substitute_user_ids,
         )
 
-        self.user.absence_status = absence_status
-        self.user.save(update_fields=['absence_status'])
-
         vacation.start_date = vacation_start_date
         vacation.end_date = vacation_end_date
         vacation.absence_status = absence_status
@@ -322,11 +319,6 @@ class VacationDelegationService:
             substitute_user_ids=substitute_user_ids,
         )
 
-        self.user.absence_status = absence_status
-        self.user.save(update_fields=[
-            'absence_status',
-        ])
-
         UserVacation.objects.update_or_create(
             user=self.user,
             defaults={
@@ -359,8 +351,6 @@ class VacationDelegationService:
                 ).delete()
                 substitute_group.delete()
 
-            self.user.absence_status = AbsenceStatus.ACTIVE
-            self.user.save(update_fields=['absence_status'])
             vacation.delete()
 
         # Clear cached vacation relation

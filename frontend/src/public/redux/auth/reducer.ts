@@ -115,7 +115,6 @@ export const reducer = (state = INIT_STATE, action: TAuthActions | ReturnType<ty
     case EAuthActions.VacationSuccess:
       return {
         ...state,
-        absenceStatus: action.payload.absenceStatus,
         vacation: action.payload.vacation,
       };
 

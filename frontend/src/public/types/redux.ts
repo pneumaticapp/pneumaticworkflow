@@ -92,7 +92,6 @@ export interface IAuthUser extends IUnsavedUser {
   timezone: string;
   dateFmt: string;
   dateFdw: string;
-  absenceStatus?: string;
   vacation?: IUserVacation | null;
 }
 

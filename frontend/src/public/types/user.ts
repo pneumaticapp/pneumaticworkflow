@@ -42,7 +42,6 @@ export type TUserListItem = Pick<
 > & {
   id: number;
   status: EUserStatus;
-  absenceStatus?: EAbsenceStatus;
   vacation?: IUserVacation | null;
 };
 
@@ -168,6 +167,5 @@ export interface IUserResponse {
   dateFdw: number;
   groups: number[];
   invite: UserInvite | null;
-  absenceStatus?: EAbsenceStatus;
   vacation?: IUserVacation | null;
 }

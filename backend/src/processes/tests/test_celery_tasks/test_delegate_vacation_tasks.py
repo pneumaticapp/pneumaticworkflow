@@ -50,8 +50,9 @@ def test_delegate_vacation_tasks__delegates__ok(mocker):
         account=account,
         substitute_group=group,
     )
-    owner.absence_status = AbsenceStatus.VACATION
-    owner.save(update_fields=['absence_status'])
+    vacation = UserVacation.objects.get(user=owner)
+    vacation.absence_status = AbsenceStatus.VACATION
+    vacation.save(update_fields=['absence_status'])
 
     template = create_test_template(
         user=owner,
@@ -106,8 +107,9 @@ def test_delegate_vacation_tasks__skips_already_delegated__ok(mocker):
         account=account,
         substitute_group=group,
     )
-    owner.absence_status = AbsenceStatus.VACATION
-    owner.save(update_fields=['absence_status'])
+    vacation = UserVacation.objects.get(user=owner)
+    vacation.absence_status = AbsenceStatus.VACATION
+    vacation.save(update_fields=['absence_status'])
 
     template = create_test_template(
         user=owner,
@@ -159,8 +161,9 @@ def test_delegate_vacation_tasks__skips_soft_deleted_delegations__ok(mocker):
         account=account,
         substitute_group=group,
     )
-    owner.absence_status = AbsenceStatus.VACATION
-    owner.save(update_fields=['absence_status'])
+    vacation = UserVacation.objects.get(user=owner)
+    vacation.absence_status = AbsenceStatus.VACATION
+    vacation.save(update_fields=['absence_status'])
 
     template = create_test_template(
         user=owner,
@@ -208,8 +211,9 @@ def test_delegate_vacation_tasks__no_active_tasks__ok(mocker):
         account=account,
         substitute_group=group,
     )
-    owner.absence_status = AbsenceStatus.VACATION
-    owner.save(update_fields=['absence_status'])
+    vacation = UserVacation.objects.get(user=owner)
+    vacation.absence_status = AbsenceStatus.VACATION
+    vacation.save(update_fields=['absence_status'])
 
     template = create_test_template(
         user=owner,
@@ -259,8 +263,9 @@ def test_delegate__skips_completed_performers__ok(mocker):
         account=account,
         substitute_group=group,
     )
-    owner.absence_status = AbsenceStatus.VACATION
-    owner.save(update_fields=['absence_status'])
+    vacation = UserVacation.objects.get(user=owner)
+    vacation.absence_status = AbsenceStatus.VACATION
+    vacation.save(update_fields=['absence_status'])
 
     template = create_test_template(
         user=owner,
@@ -343,10 +348,12 @@ def test_delegate__user_error__continues_next(mocker):
         account=account,
         substitute_group=group2,
     )
-    owner1.absence_status = AbsenceStatus.VACATION
-    owner1.save(update_fields=['absence_status'])
-    owner2.absence_status = AbsenceStatus.VACATION
-    owner2.save(update_fields=['absence_status'])
+    vacation1 = UserVacation.objects.get(user=owner1)
+    vacation1.absence_status = AbsenceStatus.VACATION
+    vacation1.save(update_fields=['absence_status'])
+    vacation2 = UserVacation.objects.get(user=owner2)
+    vacation2.absence_status = AbsenceStatus.VACATION
+    vacation2.save(update_fields=['absence_status'])
 
     template1 = create_test_template(
         user=owner1,
@@ -422,8 +429,9 @@ def test_delegate__error__rolls_back_user(mocker):
         account=account,
         substitute_group=group,
     )
-    owner.absence_status = AbsenceStatus.VACATION
-    owner.save(update_fields=['absence_status'])
+    vacation = UserVacation.objects.get(user=owner)
+    vacation.absence_status = AbsenceStatus.VACATION
+    vacation.save(update_fields=['absence_status'])
 
     template = create_test_template(
         user=owner,
@@ -482,8 +490,9 @@ def test_delegate__skips_non_running_workflow__ok(mocker):
         account=account,
         substitute_group=group,
     )
-    owner.absence_status = AbsenceStatus.VACATION
-    owner.save(update_fields=['absence_status'])
+    vacation = UserVacation.objects.get(user=owner)
+    vacation.absence_status = AbsenceStatus.VACATION
+    vacation.save(update_fields=['absence_status'])
 
     template = create_test_template(
         user=owner,
@@ -542,8 +551,9 @@ def test_delegate__all_delegated__skips_members(mocker):
         account=account,
         substitute_group=group,
     )
-    owner.absence_status = AbsenceStatus.VACATION
-    owner.save(update_fields=['absence_status'])
+    vacation = UserVacation.objects.get(user=owner)
+    vacation.absence_status = AbsenceStatus.VACATION
+    vacation.save(update_fields=['absence_status'])
 
     template = create_test_template(
         user=owner,

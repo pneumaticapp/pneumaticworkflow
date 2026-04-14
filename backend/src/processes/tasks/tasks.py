@@ -60,11 +60,11 @@ def delegate_vacation_tasks():
     add their substitute group as performer asynchronously.
     """
     vacationing_users = UserModel.objects.filter(
-        absence_status__in=[
+        vacation__isnull=False,
+        vacation__absence_status__in=[
             AbsenceStatus.VACATION,
             AbsenceStatus.SICK_LEAVE,
         ],
-        vacation__isnull=False,
         vacation__substitute_group__isnull=False,
     ).select_related(
         'vacation__substitute_group',

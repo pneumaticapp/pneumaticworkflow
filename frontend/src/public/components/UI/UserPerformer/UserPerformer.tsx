@@ -56,7 +56,7 @@ export const UserPerformerComponent = ({
         {user.label}
         {currentUser && isUserAbsent(currentUser) && (
           <span className={styles['user-performer__badge']}>
-            {currentUser.absenceStatus === 'sick_leave' ? ' 🏥' : ' ✈️'}
+            {currentUser.vacation?.absenceStatus === 'sick_leave' ? ' 🏥' : ' ✈️'}
           </span>
         )}
       </p>

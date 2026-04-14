@@ -56,7 +56,8 @@ def test_vacation_activate__ok(api_client, mocker):
     assert response.status_code == 200
     owner.refresh_from_db()
     assert owner.is_absent is True
-    assert owner.absence_status == AbsenceStatus.VACATION
+    user = UserVacation.objects.get(user=owner)
+    assert user.absence_status == AbsenceStatus.VACATION
     assert owner.vacation.substitute_group is not None
 
 
@@ -99,7 +100,7 @@ def test_vacation_deactivate__ok(api_client, mocker):
     assert response.status_code == 200
     owner.refresh_from_db()
     assert owner.is_absent is False
-    assert owner.absence_status == AbsenceStatus.ACTIVE
+    assert not UserVacation.objects.filter(user=owner).exists()
 
 
 def test_vacation_deactivate__not_absent__error(api_client):
@@ -163,8 +164,9 @@ def test_schedule__auto_start__past_date__ok(mocker):
         substitute_group=group,
         start_date=date(2020, 1, 1),
     )
-    owner.absence_status = AbsenceStatus.ACTIVE
-    owner.save(update_fields=['absence_status'])
+    vacation = UserVacation.objects.get(user=owner)
+    vacation.absence_status = AbsenceStatus.ACTIVE
+    vacation.save(update_fields=['absence_status'])
 
     # act
     process_vacations()
@@ -214,7 +216,7 @@ def test_schedule__auto_stop__past_date__ok(mocker):
     # assert
     owner.refresh_from_db()
     assert owner.is_absent is False
-    assert owner.absence_status == AbsenceStatus.ACTIVE
+    assert not UserVacation.objects.filter(user=owner).exists()
 
 
 def test_schedule__future_end__stays_absent__ok(mocker):
@@ -307,10 +309,12 @@ def test_schedule__auto_start_error__continues__ok(mocker):
         substitute_group=group2,
         start_date=date(2020, 1, 1),
     )
-    owner1.absence_status = AbsenceStatus.ACTIVE
-    owner1.save(update_fields=['absence_status'])
-    owner2.absence_status = AbsenceStatus.ACTIVE
-    owner2.save(update_fields=['absence_status'])
+    v1 = UserVacation.objects.get(user=owner1)
+    v1.absence_status = AbsenceStatus.ACTIVE
+    v1.save(update_fields=['absence_status'])
+    v2 = UserVacation.objects.get(user=owner2)
+    v2.absence_status = AbsenceStatus.ACTIVE
+    v2.save(update_fields=['absence_status'])
 
     mocker.patch(
         'src.processes.services.events.'

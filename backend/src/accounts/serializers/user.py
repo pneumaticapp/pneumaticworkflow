@@ -87,7 +87,6 @@ class UserSerializer(
             'invite',
             'groups',
             'password',
-            'absence_status',
             'vacation',
         )
         read_only_fields = (
@@ -97,7 +96,6 @@ class UserSerializer(
             'status',
             'is_account_owner',
             'date_joined_tsp',
-            'absence_status',
         )
 
     groups = RelatedListField(

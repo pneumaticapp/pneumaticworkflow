@@ -466,12 +466,6 @@ class User(AbstractUser, SoftDeleteModel):
     is_complete_tasks_subscriber = models.BooleanField(default=True)
     is_comments_mentions_subscriber = models.BooleanField(default=True)
 
-    # Vacation / Out of Office
-    absence_status = models.CharField(
-        max_length=20,
-        choices=AbsenceStatus.CHOICES,
-        default=AbsenceStatus.ACTIVE,
-    )
     last_digest_send_time = models.DateTimeField(null=True)
     last_tasks_digest_send_time = models.DateTimeField(null=True)
 
@@ -485,7 +479,11 @@ class User(AbstractUser, SoftDeleteModel):
 
     @property
     def is_absent(self) -> bool:
-        return self.absence_status != AbsenceStatus.ACTIVE
+        try:
+            vacation = UserVacation.objects.get(user=self)
+        except UserVacation.DoesNotExist:
+            return False
+        return vacation.absence_status != AbsenceStatus.ACTIVE
 
     def get_dynamic_mapping(self) -> Dict[str, str]:
         return {
