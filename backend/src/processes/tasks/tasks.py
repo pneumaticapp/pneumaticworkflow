@@ -61,6 +61,7 @@ def delegate_vacation_tasks():
     """
     vacationing_users = UserModel.objects.filter(
         vacations__isnull=False,
+        vacations__is_deleted=False,
         vacations__absence_status__in=[
             AbsenceStatus.VACATION,
             AbsenceStatus.SICK_LEAVE,

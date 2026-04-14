@@ -1692,3 +1692,51 @@ def test_update_existing__skips_non_running_wf__ok(mocker):
         id=substitute.id,
     ).exists()
     event_mock.assert_not_called()
+
+
+def test_get_unique_group_name__no_collision__ok():
+
+    """
+    Returns base name when no collision exists.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    service = VacationDelegationService(user=owner)
+    base_name = 'Substitutes Test User'
+
+    # act
+    result = service._get_unique_group_name(
+        base_name=base_name,
+    )
+
+    # assert
+    assert result == base_name
+
+
+def test_get_unique_group_name__collision__ok():
+
+    """
+    Appends (2) suffix when base name collides.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    service = VacationDelegationService(user=owner)
+    base_name = 'Substitutes Test User'
+
+    UserGroup.include_personal.create(
+        name=base_name,
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+
+    # act
+    result = service._get_unique_group_name(
+        base_name=base_name,
+    )
+
+    # assert
+    assert result == f'{base_name} (2)'

@@ -142,10 +142,11 @@ def test_delegate_vacation_tasks__skips_already_delegated__ok(mocker):
     ).count() == 1
 
 
-def test_delegate_vacation_tasks__skips_soft_deleted_delegations__ok(mocker):
+def test_delegate__skips_directly_deleted_perf__ok(mocker):
 
     """
-    Soft-deleted group performers are considered already delegated and skipped.
+    Performers with directly_status=DELETED are still found
+    in the already-delegated check and not re-created.
     """
 
     # arrange
@@ -589,3 +590,55 @@ def test_delegate__all_delegated__skips_members(mocker):
     # assert
     event_mock.assert_not_called()
     add_members_mock.assert_not_called()
+
+
+def test_delegate__skips_soft_deleted_vacation__ok(mocker):
+
+    """
+    Soft-deleted vacations are excluded from the periodic
+    delegation query.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    substitute = create_test_admin(
+        account=account,
+        email='sub1@pneumatic.app',
+    )
+
+    group = UserGroup.objects.create(
+        name='Substitutes',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group.users.add(substitute)
+    UserVacation.objects.create(
+        user=owner,
+        account=account,
+        substitute_group=group,
+    )
+    vacation = UserVacation.objects.get(user=owner)
+    vacation.absence_status = AbsenceStatus.VACATION
+    vacation.save(update_fields=['absence_status'])
+
+    # soft-delete the vacation
+    vacation.delete()
+
+    template = create_test_template(
+        user=owner,
+        tasks_count=1,
+        is_active=True,
+    )
+    create_test_workflow(user=owner, template=template)
+
+    event_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+
+    # act
+    delegate_vacation_tasks()
+
+    # assert
+    event_mock.assert_not_called()

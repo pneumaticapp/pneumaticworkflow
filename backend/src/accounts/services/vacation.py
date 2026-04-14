@@ -287,6 +287,30 @@ class VacationDelegationService:
 
         return task_ids
 
+    def _get_unique_group_name(
+        self,
+        base_name: str,
+    ) -> str:
+        """Return a unique group name, appending (N)
+        on collision."""
+        existing = set(
+            UserGroup.include_personal.filter(
+                account=self.user.account,
+                name__startswith=base_name,
+                type=UserGroupType.PERSONAL,
+            ).values_list('name', flat=True),
+        )
+        if base_name not in existing:
+            return base_name
+        for suffix in range(2, 100):
+            candidate = f'{base_name} ({suffix})'
+            if candidate not in existing:
+                return candidate
+        raise ValueError(
+            'Cannot generate unique group name '
+            f'for "{base_name}"',
+        )
+
     def _activate_new(
         self,
         substitute_user_ids: List[int],
@@ -294,11 +318,12 @@ class VacationDelegationService:
         vacation_start_date: Optional[date] = None,
         vacation_end_date: Optional[date] = None,
     ) -> Set[int]:
+        base_name = (
+            f'{SUBSTITUTE_GROUP_PREFIX}'
+            f' {self.user.get_full_name()}'
+        )
         group = UserGroup.include_personal.create(
-            name=(
-                f'{SUBSTITUTE_GROUP_PREFIX}'
-                f' {self.user.get_full_name()}'
-            ),
+            name=self._get_unique_group_name(base_name),
             type=UserGroupType.PERSONAL,
             account=self.user.account,
         )
