@@ -651,7 +651,15 @@ class WorkflowActionService:
             .by_user_or_group(self.workflow.workflow_starter_id)
             .exists()
         ):
-            self.skip_task(task=task, is_returned=is_returned)
+            WorkflowEventService.task_skip_event(task)
+            if is_returned and task.parents:
+                task.status = TaskStatus.PENDING
+                task.save(update_fields=['status'])
+                self._start_prev_tasks(task)
+            else:
+                task.status = TaskStatus.SKIPPED
+                task.save(update_fields=['status'])
+                self._start_next_tasks(parent_task=task)
         else:  # noqa: PLR5501
             if is_returned:
                 self.continue_workflow(task=task, is_returned=is_returned)
