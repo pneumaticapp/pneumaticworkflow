@@ -53,13 +53,13 @@ def test__create_instance__default_params__ok(mocker):
 
     # act
     service._create_instance(
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         fieldset_id=fieldset.id,
     )
 
     # assert
     assert service.instance is not None
-    assert service.instance.type == FieldSetRuleType.SUM_MAX
+    assert service.instance.type == FieldSetRuleType.SUM_EQUAL
     assert service.instance.value is None
     assert service.instance.fieldset_id == fieldset.id
     assert service.instance.account_id == account.id
@@ -89,23 +89,23 @@ def test__create_instance__all_params__ok(mocker):
 
     # act
     service._create_instance(
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
         fieldset_id=fieldset.id,
     )
 
     # assert
     assert service.instance is not None
-    assert service.instance.type == FieldSetRuleType.SUM_MAX
+    assert service.instance.type == FieldSetRuleType.SUM_EQUAL
     assert service.instance.value == '100'
     assert service.instance.fieldset_id == fieldset.id
     assert service.instance.account_id == account.id
 
 
-# FieldsetTemplateRuleService._validate_sum_max
+# FieldsetTemplateRuleService._validate_sum_equal
 
 
-def test__validate_sum_max__valid__ok(mocker):
+def test__validate_sum_equal__valid__ok(mocker):
 
     """
     Valid value, all number fields
@@ -135,7 +135,7 @@ def test__validate_sum_max__valid__ok(mocker):
     )
 
     # act
-    service._validate_sum_max(
+    service._validate_sum_equal(
         value='100',
         fieldset_id=fieldset.id,
     )
@@ -143,7 +143,7 @@ def test__validate_sum_max__valid__ok(mocker):
     # assert - no exception raised
 
 
-def test__validate_sum_max__empty_value__raise_exception(mocker):
+def test__validate_sum_equal__empty_value__raise_exception(mocker):
 
     """
     Value is empty → exception
@@ -160,13 +160,13 @@ def test__validate_sum_max__empty_value__raise_exception(mocker):
 
     # act
     with pytest.raises(FieldsetTemplateRuleSumMaxInvalidValue) as ex:
-        service._validate_sum_max(value='')
+        service._validate_sum_equal(value='')
 
     # assert
     assert ex.value.message == fs_messages.MSG_FS_0004
 
 
-def test__validate_sum_max__non_numeric__raise_exception(mocker):
+def test__validate_sum_equal__non_numeric__raise_exception(mocker):
 
     """
     Value is non-numeric → exception
@@ -183,7 +183,7 @@ def test__validate_sum_max__non_numeric__raise_exception(mocker):
 
     # act
     with pytest.raises(FieldsetTemplateRuleSumMaxInvalidValue) as ex:
-        service._validate_sum_max(
+        service._validate_sum_equal(
             value='not_a_number',
         )
 
@@ -191,7 +191,7 @@ def test__validate_sum_max__non_numeric__raise_exception(mocker):
     assert ex.value.message == fs_messages.MSG_FS_0004
 
 
-def test__validate_sum_max__non_num_fields__raise_exception(mocker):
+def test__validate_sum_equal__non_num_fields__raise_exception(mocker):
 
     """
     Non-number fields exist → exception
@@ -222,7 +222,7 @@ def test__validate_sum_max__non_num_fields__raise_exception(mocker):
 
     # act
     with pytest.raises(FieldsetTemplateRuleSumMaxFieldsNotNumber) as ex:
-        service._validate_sum_max(
+        service._validate_sum_equal(
             value='100',
             fieldset_id=fieldset.id,
         )
@@ -231,7 +231,7 @@ def test__validate_sum_max__non_num_fields__raise_exception(mocker):
     assert ex.value.message == fs_messages.MSG_FS_0003
 
 
-def test__validate_sum_max__value_from_kwargs__ok(mocker):
+def test__validate_sum_equal__value_from_kwargs__ok(mocker):
 
     """
     Value from kwargs
@@ -261,7 +261,7 @@ def test__validate_sum_max__value_from_kwargs__ok(mocker):
     )
 
     # act
-    service._validate_sum_max(
+    service._validate_sum_equal(
         value='50',
         fieldset_id=fieldset.id,
     )
@@ -269,7 +269,7 @@ def test__validate_sum_max__value_from_kwargs__ok(mocker):
     # assert - no exception raised
 
 
-def test__validate_sum_max__value_from_instance__ok(mocker):
+def test__validate_sum_equal__value_from_instance__ok(mocker):
 
     """
     Value from instance
@@ -295,7 +295,7 @@ def test__validate_sum_max__value_from_instance__ok(mocker):
     rule = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     )
     service = FieldsetTemplateRuleService(
@@ -306,14 +306,14 @@ def test__validate_sum_max__value_from_instance__ok(mocker):
     )
 
     # act
-    service._validate_sum_max(
+    service._validate_sum_equal(
         fieldset_id=fieldset.id,
     )
 
     # assert - no exception raised
 
 
-def test__validate_sum_max__fset_id_from_kwargs__ok(mocker):
+def test__validate_sum_equal__fset_id_from_kwargs__ok(mocker):
 
     """
     fieldset_id from kwargs
@@ -343,7 +343,7 @@ def test__validate_sum_max__fset_id_from_kwargs__ok(mocker):
     )
 
     # act
-    service._validate_sum_max(
+    service._validate_sum_equal(
         value='100',
         fieldset_id=fieldset.id,
     )
@@ -351,7 +351,7 @@ def test__validate_sum_max__fset_id_from_kwargs__ok(mocker):
     # assert - no exception raised
 
 
-def test__validate_sum_max__fset_id_from_instance__ok(mocker):
+def test__validate_sum_equal__fset_id_from_instance__ok(mocker):
 
     """
     fieldset_id from instance
@@ -377,7 +377,7 @@ def test__validate_sum_max__fset_id_from_instance__ok(mocker):
     rule = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     )
     service = FieldsetTemplateRuleService(
@@ -388,7 +388,7 @@ def test__validate_sum_max__fset_id_from_instance__ok(mocker):
     )
 
     # act
-    service._validate_sum_max(
+    service._validate_sum_equal(
         value='100',
     )
 
@@ -414,17 +414,17 @@ def test__validate__type_from_kwargs__ok(mocker):
     )
 
     # mock
-    validate_sum_max_mock = mocker.patch(
+    validate_sum_equal_mock = mocker.patch(
         'src.processes.services.templates.fieldsets.fieldset_rule.'
-        'FieldsetTemplateRuleService._validate_sum_max',
+        'FieldsetTemplateRuleService._validate_sum_equal',
     )
 
     # act
-    service._validate(type=FieldSetRuleType.SUM_MAX, value='100')
+    service._validate(type=FieldSetRuleType.SUM_EQUAL, value='100')
 
     # assert
-    validate_sum_max_mock.assert_called_once_with(
-        type=FieldSetRuleType.SUM_MAX,
+    validate_sum_equal_mock.assert_called_once_with(
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     )
 
@@ -448,7 +448,7 @@ def test__validate__type_from_instance__ok(mocker):
     rule = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     )
     service = FieldsetTemplateRuleService(
@@ -459,16 +459,16 @@ def test__validate__type_from_instance__ok(mocker):
     )
 
     # mock
-    validate_sum_max_mock = mocker.patch(
+    validate_sum_equal_mock = mocker.patch(
         'src.processes.services.templates.fieldsets.fieldset_rule.'
-        'FieldsetTemplateRuleService._validate_sum_max',
+        'FieldsetTemplateRuleService._validate_sum_equal',
     )
 
     # act
     service._validate(value='200')
 
     # assert
-    validate_sum_max_mock.assert_called_once_with(
+    validate_sum_equal_mock.assert_called_once_with(
         value='200',
     )
 
@@ -513,17 +513,17 @@ def test_create__valid_data__ok(mocker):
 
     # act
     result = service.create(
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
         fieldset_id=fieldset.id,
     )
 
     # assert
-    assert result.type == FieldSetRuleType.SUM_MAX
+    assert result.type == FieldSetRuleType.SUM_EQUAL
     assert result.value == '100'
     assert result.fieldset_id == fieldset.id
     validate_mock.assert_called_once_with(
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
         fieldset_id=fieldset.id,
     )
@@ -551,7 +551,7 @@ def test_partial_update__valid_data__ok(mocker):
     rule = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     )
     service = FieldsetTemplateRuleService(

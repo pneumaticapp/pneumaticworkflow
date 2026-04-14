@@ -383,7 +383,7 @@ def test__create_rules__with_template__ok(mocker):
     rule_template = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset_template,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     )
     fieldset = FieldSet.objects.create(
@@ -494,7 +494,7 @@ def test_validate_rules__with_rules__ok(mocker):
     rule = FieldSetRule.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     )
     service = FieldSetService(

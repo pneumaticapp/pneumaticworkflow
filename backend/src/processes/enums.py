@@ -746,10 +746,10 @@ class FieldSetLayout:
 
 class FieldSetRuleType:
 
-    SUM_MAX = 'sum_max'
+    SUM_EQUAL = 'sum_equal'
 
     CHOICES = (
-        (SUM_MAX, 'Sum max'),
+        (SUM_EQUAL, 'The sum is equal'),
     )
 
-    LITERALS = Literal[SUM_MAX]
+    LITERALS = Literal[SUM_EQUAL]

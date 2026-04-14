@@ -2291,7 +2291,7 @@ def test__update_fieldset_rules__rules_data_none__skip():
     existing_rule = FieldSetRule.objects.create(
         fieldset=fieldset,
         account_id=user.account_id,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
         api_name='rule-1',
     )
@@ -2326,7 +2326,7 @@ def test__update_fieldset_rules__rules_data_empty__skip():
     existing_rule = FieldSetRule.objects.create(
         fieldset=fieldset,
         account_id=user.account_id,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
         api_name='rule-1',
     )
@@ -2361,7 +2361,7 @@ def test__update_fieldset_rules__rules_data_provided__ok():
     old_rule = FieldSetRule.objects.create(
         fieldset=fieldset,
         account_id=user.account_id,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='50',
         api_name='old-rule-1',
     )
@@ -2374,7 +2374,7 @@ def test__update_fieldset_rules__rules_data_provided__ok():
     rules_data = [
         {
             'api_name': 'rule-1',
-            'type': FieldSetRuleType.SUM_MAX,
+            'type': FieldSetRuleType.SUM_EQUAL,
             'value': '100',
         },
     ]
@@ -2387,7 +2387,7 @@ def test__update_fieldset_rules__rules_data_provided__ok():
     assert FieldSetRule.objects.filter(
         fieldset=fieldset,
         api_name='rule-1',
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     ).exists()
 
@@ -2671,7 +2671,7 @@ def test__update_fieldsets__data_provided__ok(mocker):
             'rules': [
                 {
                     'api_name': 'rule-1',
-                    'type': FieldSetRuleType.SUM_MAX,
+                    'type': FieldSetRuleType.SUM_EQUAL,
                     'value': '100',
                 },
             ],

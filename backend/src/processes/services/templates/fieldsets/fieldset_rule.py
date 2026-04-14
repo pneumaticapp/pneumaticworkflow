@@ -32,7 +32,7 @@ class FieldsetTemplateRuleService(BaseModelService):
         validator = getattr(self, f'_validate_{rule_type}', None)
         validator(**kwargs)
 
-    def _validate_sum_max(self, **kwargs):
+    def _validate_sum_equal(self, **kwargs):
         value = kwargs.get('value') if 'value' in kwargs else (
             self.instance.value if self.instance else None
         )

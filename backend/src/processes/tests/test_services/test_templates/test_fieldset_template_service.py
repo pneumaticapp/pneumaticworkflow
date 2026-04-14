@@ -256,7 +256,7 @@ def test_create_rules__with_data__ok(mocker):
         instance=fieldset,
     )
     rules_data = [
-        {'type': FieldSetRuleType.SUM_MAX, 'value': '100'},
+        {'type': FieldSetRuleType.SUM_EQUAL, 'value': '100'},
     ]
 
     # mock
@@ -281,7 +281,7 @@ def test_create_rules__with_data__ok(mocker):
     )
     fieldset_template_rule_service_create_mock.assert_called_once_with(
         fieldset_id=fieldset.id,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     )
 
@@ -336,7 +336,7 @@ def test__create_related__rules_provided__ok(mocker):
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    rules = [{'type': FieldSetRuleType.SUM_MAX, 'value': '100'}]
+    rules = [{'type': FieldSetRuleType.SUM_EQUAL, 'value': '100'}]
 
     # mock
     create_rules_mock = mocker.patch(
@@ -404,7 +404,7 @@ def test__create_related__both_provided__ok(mocker):
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    rules = [{'type': FieldSetRuleType.SUM_MAX, 'value': '100'}]
+    rules = [{'type': FieldSetRuleType.SUM_EQUAL, 'value': '100'}]
     fields = [{'name': 'Field 1', 'type': 'string', 'order': 1}]
 
     # mock
@@ -637,7 +637,7 @@ def test__validate_rules__with_rules__ok(mocker):
     rule_1 = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     )
     service = FieldSetTemplateService(
@@ -693,7 +693,7 @@ def test_update_rules__existing_rule__ok(mocker):
     rule_1 = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     )
     service = FieldSetTemplateService(
@@ -762,7 +762,7 @@ def test_update_rules__new_rule__ok(mocker):
         instance=fieldset,
     )
     rules_data = [
-        {'type': FieldSetRuleType.SUM_MAX, 'value': '100'},
+        {'type': FieldSetRuleType.SUM_EQUAL, 'value': '100'},
     ]
 
     # mock
@@ -794,7 +794,7 @@ def test_update_rules__new_rule__ok(mocker):
     )
     fs_rule_create_mock.assert_called_once_with(
         fieldset_id=fieldset.id,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     )
     fs_rule_update_mock.assert_not_called()
@@ -819,13 +819,13 @@ def test_update_rules__orphan_rules__deleted(mocker):
     rule_1 = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     )
     rule_2 = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='200',
     )
     service = FieldSetTemplateService(
@@ -933,7 +933,7 @@ def test_partial_update__rules_data__ok(mocker):
         auth_type=AuthTokenType.USER,
         instance=fieldset,
     )
-    rules = [{'type': FieldSetRuleType.SUM_MAX, 'value': '100'}]
+    rules = [{'type': FieldSetRuleType.SUM_EQUAL, 'value': '100'}]
 
     # mock
     update_rules_mock = mocker.patch(

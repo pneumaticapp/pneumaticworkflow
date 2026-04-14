@@ -24,10 +24,10 @@ msgstr ""
 msgid "The sum of fields in this fieldset exceeds the allowed maximum: \"{value}\"."
 msgstr ""
 
-msgid "Rule \"sum_max\" requires all fieldset fields to be of type \"number\"."
+msgid "Rule \"sum_equal\" requires all fieldset fields to be of type \"number\"."
 msgstr ""
 
-msgid "Rule \"sum_max\" value must be a number."
+msgid "Rule \"sum_equal\" value must be a number."
 msgstr ""
 
 msgid "You can't pass \"snooze\" for the first task."

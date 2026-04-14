@@ -1,6 +1,6 @@
 from django.contrib.auth import get_user_model
 from src.processes.messages.fieldset import MSG_FS_0002
-from src.processes.models.workflows.fieldset import FieldSetRule
+from src.processes.models.workflows.fieldset import FieldSetRule, FieldSet
 from src.processes.services.base import BaseModelService
 from src.processes.services.exceptions import FieldsetServiceException
 
@@ -25,19 +25,24 @@ class FieldSetRuleService(BaseModelService):
         rule_type = kwargs.get('type') or (
             self.instance.type if self.instance else None
         )
-        validator = getattr(self, f'_validate_{rule_type}', None)
-        if validator:
-            validator(**kwargs)
+        fieldset = kwargs.get('fieldset') or (
+            self.instance.fieldset if self.instance else None
+        )
+        value = kwargs.get('value') or (
+            self.instance.value if self.instance else None
+        )
+        validator = getattr(self, f'_validate_{rule_type}')
+        validator(fieldset=fieldset, value=value)
 
-    def _validate_sum_max(self, **kwargs):
-        fieldset = kwargs.get('fieldset', self.instance.fieldset)
-        threshold = float(kwargs.get('value', self.instance.value))
+    def _validate_sum_equal(self, fieldset: FieldSet, value: str):
+
         total = 0
         for field in fieldset.fields.all():
             if field.value not in self.NULL_VALUES:
                 total += float(field.value)
-        if total > threshold:
-            raise FieldsetServiceException(MSG_FS_0002(threshold))
+        if total != float(value):
+            raise FieldsetServiceException(MSG_FS_0002(value))
+        return True
 
     def _create_instance(self, instance_template, **kwargs):
         self.instance = FieldSetRule.objects.create(

@@ -10,7 +10,6 @@ from src.processes.models.templates.fieldset import (
     FieldsetTemplateRule,
 )
 from src.processes.models.workflows.fieldset import (
-    FieldSet,
     FieldSetRule,
 )
 from src.processes.models.workflows.fields import TaskField
@@ -23,6 +22,7 @@ from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_template,
     create_test_workflow,
+    create_test_fieldset,
 )
 
 pytestmark = pytest.mark.django_db
@@ -42,8 +42,7 @@ def test__create_instance__with_template__ok(mocker):
     user = create_test_owner(account=account)
     template = create_test_template(user=user, tasks_count=1)
     workflow = create_test_workflow(user=user, template=template)
-    fieldset = FieldSet.objects.create(
-        account=account,
+    fieldset = create_test_fieldset(
         workflow=workflow,
         name='Fieldset',
         order=1,
@@ -57,7 +56,7 @@ def test__create_instance__with_template__ok(mocker):
     rule_template = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset_template,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     )
     service = FieldSetRuleService(
@@ -75,16 +74,16 @@ def test__create_instance__with_template__ok(mocker):
     # assert
     assert service.instance is not None
     assert service.instance.fieldset_id == fieldset.id
-    assert service.instance.type == FieldSetRuleType.SUM_MAX
+    assert service.instance.type == FieldSetRuleType.SUM_EQUAL
     assert service.instance.value == '100'
     assert service.instance.api_name == rule_template.api_name
     assert service.instance.account_id == account.id
 
 
-# FieldSetRuleService._validate_sum_max
+# FieldSetRuleService._validate_sum_equal
 
 
-def test__validate_sum_max__within_threshold__ok(mocker):
+def test__validate_sum_equal__within_threshold__ok(mocker):
 
     """
     Total within threshold
@@ -95,8 +94,7 @@ def test__validate_sum_max__within_threshold__ok(mocker):
     user = create_test_owner(account=account)
     template = create_test_template(user=user, tasks_count=1)
     workflow = create_test_workflow(user=user, template=template)
-    fieldset = FieldSet.objects.create(
-        account=account,
+    fieldset = create_test_fieldset(
         workflow=workflow,
         name='Fieldset',
         order=1,
@@ -116,13 +114,13 @@ def test__validate_sum_max__within_threshold__ok(mocker):
         fieldset=fieldset,
         name='Field 2',
         type=FieldType.NUMBER,
-        value='20',
+        value='70',
         order=2,
     )
     rule = FieldSetRule.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     )
     service = FieldSetRuleService(
@@ -133,15 +131,73 @@ def test__validate_sum_max__within_threshold__ok(mocker):
     )
 
     # act
-    service._validate_sum_max(
+    result = service._validate_sum_equal(
         fieldset=fieldset,
         value='100',
     )
 
-    # assert - no exception raised
+    # assert
+    assert result is True
 
 
-def test__validate_sum_max__exceeds__raise_exception(mocker):
+def test__validate_sum_equal__negative_value__ok(mocker):
+
+    """
+    Total within threshold
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    workflow = create_test_workflow(user=user, template=template)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        name='Fieldset',
+        order=1,
+    )
+    TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+        name='Field 1',
+        type=FieldType.NUMBER,
+        value='30',
+        order=1,
+    )
+    TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+        name='Field 2',
+        type=FieldType.NUMBER,
+        value='-30',
+        order=2,
+    )
+    rule = FieldSetRule.objects.create(
+        account=account,
+        fieldset=fieldset,
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='30',
+    )
+    service = FieldSetRuleService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=rule,
+    )
+
+    # act
+    result = service._validate_sum_equal(
+        fieldset=fieldset,
+        value='0',
+    )
+
+    # assert
+    assert result is True
+
+
+def test__validate_sum_equal__exceeds__raise_exception(mocker):
 
     """
     Total exceeds threshold → exception
@@ -152,8 +208,7 @@ def test__validate_sum_max__exceeds__raise_exception(mocker):
     user = create_test_owner(account=account)
     template = create_test_template(user=user, tasks_count=1)
     workflow = create_test_workflow(user=user, template=template)
-    fieldset = FieldSet.objects.create(
-        account=account,
+    fieldset = create_test_fieldset(
         workflow=workflow,
         name='Fieldset',
         order=1,
@@ -179,7 +234,7 @@ def test__validate_sum_max__exceeds__raise_exception(mocker):
     rule = FieldSetRule.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     )
     service = FieldSetRuleService(
@@ -191,16 +246,16 @@ def test__validate_sum_max__exceeds__raise_exception(mocker):
 
     # act
     with pytest.raises(FieldsetServiceException) as ex:
-        service._validate_sum_max(
+        service._validate_sum_equal(
             fieldset=fieldset,
             value='100',
         )
 
     # assert
-    assert ex.value.message == fs_messages.MSG_FS_0002(100.0)
+    assert ex.value.message == fs_messages.MSG_FS_0002(100)
 
 
-def test__validate_sum_max__null_values__skip(mocker):
+def test__validate_sum_equal__null_values__skip(mocker):
 
     """
     Fields with null values skipped
@@ -211,8 +266,7 @@ def test__validate_sum_max__null_values__skip(mocker):
     user = create_test_owner(account=account)
     template = create_test_template(user=user, tasks_count=1)
     workflow = create_test_workflow(user=user, template=template)
-    fieldset = FieldSet.objects.create(
-        account=account,
+    fieldset = create_test_fieldset(
         workflow=workflow,
         name='Fieldset',
         order=1,
@@ -223,7 +277,7 @@ def test__validate_sum_max__null_values__skip(mocker):
         fieldset=fieldset,
         name='Field 1',
         type=FieldType.NUMBER,
-        value='30',
+        value='100',
         order=1,
     )
     TaskField.objects.create(
@@ -235,19 +289,10 @@ def test__validate_sum_max__null_values__skip(mocker):
         value='',
         order=2,
     )
-    TaskField.objects.create(
-        account=account,
-        workflow=workflow,
-        fieldset=fieldset,
-        name='Field 3',
-        type=FieldType.NUMBER,
-        value='',
-        order=3,
-    )
     rule = FieldSetRule.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     )
     service = FieldSetRuleService(
@@ -258,18 +303,19 @@ def test__validate_sum_max__null_values__skip(mocker):
     )
 
     # act
-    service._validate_sum_max(
+    result = service._validate_sum_equal(
         fieldset=fieldset,
         value='100',
     )
 
     # assert - no exception raised, null/empty fields are skipped
+    assert result is True
 
 
 # FieldSetRuleService.validate
 
 
-def test_validate__known_type__ok(mocker):
+def test_validate__ok(mocker):
 
     """
     Known type, validator exists
@@ -278,6 +324,11 @@ def test_validate__known_type__ok(mocker):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
+    workflow = create_test_workflow(user, tasks_count=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        kickoff=workflow.kickoff_instance,
+    )
     service = FieldSetRuleService(
         user=user,
         is_superuser=False,
@@ -285,46 +336,23 @@ def test_validate__known_type__ok(mocker):
     )
 
     # mock
-    validate_sum_max_mock = mocker.patch(
+    validate_sum_equal_mock = mocker.patch(
         'src.processes.services.workflows.fieldsets.fieldset_rule.'
-        'FieldSetRuleService._validate_sum_max',
+        'FieldSetRuleService._validate_sum_equal',
     )
 
     # act
-    service.validate(type=FieldSetRuleType.SUM_MAX)
+    service.validate(
+        type=FieldSetRuleType.SUM_EQUAL,
+        fieldset=fieldset,
+        value='10',
+    )
 
     # assert
-    validate_sum_max_mock.assert_called_once_with(
-        type=FieldSetRuleType.SUM_MAX,
+    validate_sum_equal_mock.assert_called_once_with(
+        fieldset=fieldset,
+        value='10',
     )
-
-
-def test_validate__unknown_type__skip(mocker):
-
-    """
-    Unknown type, no validator
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    service = FieldSetRuleService(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-    )
-
-    # mock
-    validate_sum_max_mock = mocker.patch(
-        'src.processes.services.workflows.fieldsets.fieldset_rule.'
-        'FieldSetRuleService._validate_sum_max',
-    )
-
-    # act
-    service.validate(type='unknown_type')
-
-    # assert
-    validate_sum_max_mock.assert_not_called()
 
 
 # FieldSetRuleService.create
@@ -341,8 +369,7 @@ def test_create__skip_val_false__ok(mocker):
     user = create_test_owner(account=account)
     template = create_test_template(user=user, tasks_count=1)
     workflow = create_test_workflow(user=user, template=template)
-    fieldset = FieldSet.objects.create(
-        account=account,
+    fieldset = create_test_fieldset(
         workflow=workflow,
         name='Fieldset',
         order=1,
@@ -356,7 +383,7 @@ def test_create__skip_val_false__ok(mocker):
     rule_template = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset_template,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     )
     service = FieldSetRuleService(
@@ -379,7 +406,7 @@ def test_create__skip_val_false__ok(mocker):
     )
 
     # assert
-    assert result.type == FieldSetRuleType.SUM_MAX
+    assert result.type == FieldSetRuleType.SUM_EQUAL
     assert result.value == '100'
     assert result.fieldset_id == fieldset.id
     validate_mock.assert_called_once_with(
@@ -400,8 +427,7 @@ def test_create__skip_val_not_false__ok(mocker):
     user = create_test_owner(account=account)
     template = create_test_template(user=user, tasks_count=1)
     workflow = create_test_workflow(user=user, template=template)
-    fieldset = FieldSet.objects.create(
-        account=account,
+    fieldset = create_test_fieldset(
         workflow=workflow,
         name='Fieldset',
         order=1,
@@ -415,7 +441,7 @@ def test_create__skip_val_not_false__ok(mocker):
     rule_template = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset_template,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     )
     service = FieldSetRuleService(
@@ -438,7 +464,7 @@ def test_create__skip_val_not_false__ok(mocker):
     )
 
     # assert
-    assert result.type == FieldSetRuleType.SUM_MAX
+    assert result.type == FieldSetRuleType.SUM_EQUAL
     assert result.fieldset_id == fieldset.id
     validate_mock.assert_not_called()
 
@@ -457,8 +483,7 @@ def test_partial_update__valid_data__ok(mocker):
     user = create_test_owner(account=account)
     template = create_test_template(user=user, tasks_count=1)
     workflow = create_test_workflow(user=user, template=template)
-    fieldset = FieldSet.objects.create(
-        account=account,
+    fieldset = create_test_fieldset(
         workflow=workflow,
         name='Fieldset',
         order=1,
@@ -466,7 +491,7 @@ def test_partial_update__valid_data__ok(mocker):
     rule = FieldSetRule.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.SUM_MAX,
+        type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     )
     service = FieldSetRuleService(
