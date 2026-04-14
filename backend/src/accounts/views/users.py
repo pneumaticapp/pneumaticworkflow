@@ -124,11 +124,15 @@ class UsersViewSet(
             extra_fields = (
                 'user_groups',
                 'incoming_invites',
+                'vacations',
+                'vacations__substitute_group__users',
             )
         elif self.action == 'privileges':
             queryset = queryset.prefetch_related(
                 'user_groups',
                 'incoming_invites',
+                'vacations',
+                'vacations__substitute_group__users',
             )
 
         return super().prefetch_queryset(
@@ -347,7 +351,7 @@ class UsersViewSet(
     )
     def deactivate_vacation(self, request, pk=None, *args, **kwargs):
         user = self.get_object()
-        if not user.is_absent:
+        if not user.vacation:
             raise_validation_error(message=MSG_A_0052)
         service = VacationDelegationService(user=user)
         user = service.deactivate()

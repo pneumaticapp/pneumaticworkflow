@@ -122,6 +122,56 @@ def test_vacation_deactivate__not_absent__error(api_client):
     assert 'message' in response.data
 
 
+def test_vacation_deactivate__pre_scheduled__ok(
+    api_client,
+    mocker,
+):
+
+    """Pre-scheduled vacation (absence_status=ACTIVE)
+    can be deactivated."""
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    substitute = create_test_admin(
+        account=account,
+        email='sub@pneumatic.app',
+    )
+    event_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowEventService.task_delegation_event',
+    )
+    group = UserGroup.objects.create(
+        name='Substitutes Test',
+        type=UserGroupType.PERSONAL,
+        account=account,
+    )
+    group.users.set([substitute.id])
+    UserVacation.objects.create(
+        user=owner,
+        account=account,
+        substitute_group=group,
+        start_date=date(2099, 1, 1),
+        absence_status=AbsenceStatus.ACTIVE,
+    )
+    owner.refresh_from_db()
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        '/accounts/user/deactivate-vacation',
+    )
+
+    # assert
+    assert response.status_code == 200
+    owner.refresh_from_db()
+    assert owner.vacation is None
+    assert not UserVacation.objects.filter(
+        user=owner,
+    ).exists()
+    event_mock.assert_not_called()
+
+
 def test_schedule__auto_start__past_date__ok(mocker):
 
     """

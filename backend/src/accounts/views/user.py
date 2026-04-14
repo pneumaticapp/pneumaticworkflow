@@ -174,7 +174,7 @@ class UserViewSet(
     )
     def deactivate_vacation(self, request, *args, **kwargs):
         user = request.user
-        if not user.is_absent:
+        if not user.vacation:
             raise_validation_error(
                 message=MSG_A_0052,
             )

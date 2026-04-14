@@ -191,6 +191,10 @@ def test_delegate__skips_directly_deleted_perf__ok(mocker):
 
     # assert
     event_mock.assert_not_called()
+    assert TaskPerformer.objects.filter(
+        task=task,
+        group=group,
+    ).count() == 1
 
 
 def test_delegate_vacation_tasks__no_active_tasks__ok(mocker):

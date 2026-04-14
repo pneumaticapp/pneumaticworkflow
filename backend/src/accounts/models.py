@@ -480,17 +480,8 @@ class User(AbstractUser, SoftDeleteModel):
     @property
     def vacation(self) -> Optional['UserVacation']:
         """Returns the active (non-deleted) vacation, or None."""
-        cache = getattr(
-            self, '_prefetched_objects_cache', {},
-        )
-        if 'vacations' in cache:
-            items = cache['vacations']
-            return items[0] if items else None
-        return (
-            UserVacation.objects
-            .filter(user=self)
-            .first()
-        )
+        vacations = self.vacations.all()
+        return vacations[0] if vacations else None
 
     @property
     def is_absent(self) -> bool:
