@@ -26,7 +26,8 @@ from src.processes.services.templates.fieldsets.fieldset_rule import (
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_owner,
-    create_test_template, create_test_fieldset,
+    create_test_template,
+    create_test_fieldset_template,
 )
 
 pytestmark = pytest.mark.django_db
@@ -501,7 +502,7 @@ def test__update_fields__new_field__ok(mocker):
     user = create_test_owner(account=account)
     template = create_test_template(user=user, tasks_count=1)
 
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,

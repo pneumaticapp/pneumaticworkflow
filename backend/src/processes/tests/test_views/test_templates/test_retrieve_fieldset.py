@@ -12,7 +12,7 @@ from src.processes.enums import (
 )
 from src.processes.tests.fixtures import (
     create_test_account,
-    create_test_fieldset,
+    create_test_fieldset_template,
     create_test_not_admin,
     create_test_owner,
     create_test_template,
@@ -36,7 +36,7 @@ def test_retrieve__unauthenticated__unauthorized(api_client):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -67,7 +67,7 @@ def test_retrieve__expired_sub__permission_denied(api_client):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -97,7 +97,7 @@ def test_retrieve__billing_plan__permission_denied(api_client):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -136,7 +136,7 @@ def test_retrieve__users_overlimit__permission_denied(api_client):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -166,7 +166,7 @@ def test_retrieve__non_admin__permission_denied(api_client):
         user=owner,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -196,7 +196,7 @@ def test_retrieve__ok(api_client):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -261,7 +261,7 @@ def test_retrieve__another_account__not_found(api_client):
         user=owner_1,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account_1,
         template=template_1,
         kickoff=template_1.kickoff_instance,

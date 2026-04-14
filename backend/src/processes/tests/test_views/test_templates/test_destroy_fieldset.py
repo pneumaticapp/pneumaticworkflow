@@ -11,7 +11,7 @@ from src.processes.services.templates.fieldsets.fieldset import (
 )
 from src.processes.tests.fixtures import (
     create_test_account,
-    create_test_fieldset,
+    create_test_fieldset_template,
     create_test_not_admin,
     create_test_owner,
     create_test_template,
@@ -35,7 +35,7 @@ def test_destroy__unauthenticated__unauthorized(api_client):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -68,7 +68,7 @@ def test_destroy__expired_sub__permission_denied(api_client):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -100,7 +100,7 @@ def test_destroy__billing_plan__permission_denied(api_client):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -141,7 +141,7 @@ def test_destroy__users_overlimit__permission_denied(api_client):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -173,7 +173,7 @@ def test_destroy__non_admin__permission_denied(api_client):
         user=owner,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -205,7 +205,7 @@ def test_destroy__ok(api_client, mocker):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -253,7 +253,7 @@ def test_destroy__service_exception__validation_error(api_client, mocker):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,

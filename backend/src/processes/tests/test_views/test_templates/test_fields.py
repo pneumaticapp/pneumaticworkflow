@@ -20,7 +20,8 @@ from src.processes.tests.fixtures import (
     create_test_not_admin,
     create_test_owner,
     create_test_template,
-    create_test_workflow, create_test_fieldset,
+    create_test_workflow,
+    create_test_fieldset_template,
 )
 
 pytestmark = pytest.mark.django_db
@@ -531,7 +532,7 @@ def test_fields__kickoff_fieldset__ok(api_client):
     user = create_test_owner(account=account)
     template = create_test_template(user, tasks_count=1, is_active=True)
     kickoff = template.kickoff_instance
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=kickoff,
@@ -554,7 +555,7 @@ def test_fields__task_fieldset__ok(api_client):
     user = create_test_owner(account=account)
     template = create_test_template(user, tasks_count=1, is_active=True)
     task = template.tasks.get(number=1)
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         task=task,

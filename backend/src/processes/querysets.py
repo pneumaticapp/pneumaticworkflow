@@ -1273,3 +1273,13 @@ class FieldsetTemplateQuerySet(AccountBaseQuerySet):
 class FieldsetTemplateRuleQuerySet(AccountBaseQuerySet):
 
     pass
+
+
+class FieldSetQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldSetRuleQuerySet(AccountBaseQuerySet):
+
+    pass

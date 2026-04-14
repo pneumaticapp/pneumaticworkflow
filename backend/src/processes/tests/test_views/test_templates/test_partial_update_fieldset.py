@@ -15,7 +15,7 @@ from src.processes.services.templates.fieldsets.fieldset import (
 )
 from src.processes.tests.fixtures import (
     create_test_account,
-    create_test_fieldset,
+    create_test_fieldset_template,
     create_test_not_admin,
     create_test_owner,
     create_test_template,
@@ -39,7 +39,7 @@ def test_partial_update__unauthenticated__unauthorized(api_client):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -76,7 +76,7 @@ def test_partial_update__expired_sub__permission_denied(api_client):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -112,7 +112,7 @@ def test_partial_update__billing_plan__permission_denied(api_client):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -157,7 +157,7 @@ def test_partial_update__users_overlimit__permission_denied(api_client):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -193,7 +193,7 @@ def test_partial_update__non_admin__permission_denied(api_client):
         user=owner,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -229,7 +229,7 @@ def test_partial_update__min_data__ok(api_client, mocker):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -291,7 +291,7 @@ def test_partial_update__full_data__ok(api_client, mocker):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -356,7 +356,7 @@ def test_partial_update__invalid_name__validation_error(api_client):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -392,7 +392,7 @@ def test_partial_update__invalid_layout__validation_error(api_client):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -428,7 +428,7 @@ def test_partial_update__invalid_label_pos__validation_error(api_client):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -467,7 +467,7 @@ def test_partial_update__service_exception__validation_error(
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -547,7 +547,7 @@ def test_partial_update__kickoff_id_and_task_id_swap__ok(api_client):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,
@@ -580,7 +580,7 @@ def test_partial_update__task_id_is_null_set_kickoff_id__ok(api_client):
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset(
+    fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=template.kickoff_instance,

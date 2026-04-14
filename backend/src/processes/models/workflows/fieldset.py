@@ -10,6 +10,7 @@ from src.processes.models.mixins import (
 from src.processes.models.workflows.kickoff import KickoffValue
 from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
+from src.processes.querysets import FieldSetQuerySet, FieldSetRuleQuerySet
 
 
 class FieldSet(
@@ -41,7 +42,7 @@ class FieldSet(
         related_name='fieldsets',
     )
 
-    objects = BaseSoftDeleteManager()
+    objects = BaseSoftDeleteManager.from_queryset(FieldSetQuerySet)()
 
 
 class FieldSetRule(
@@ -59,4 +60,4 @@ class FieldSetRule(
         related_name='rules',
     )
 
-    objects = BaseSoftDeleteManager()
+    objects = BaseSoftDeleteManager.from_queryset(FieldSetRuleQuerySet)()

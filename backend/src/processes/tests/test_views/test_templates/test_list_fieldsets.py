@@ -14,7 +14,7 @@ from src.processes.messages import template as messages
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
-    create_test_fieldset,
+    create_test_fieldset_template,
     create_test_not_admin,
     create_test_owner,
     create_test_template,
@@ -200,7 +200,7 @@ def test_list_fieldsets__ok(api_client):
         tasks_count=1,
     )
     kickoff = template.kickoff_instance
-    fieldset_1 = create_test_fieldset(
+    fieldset_1 = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=kickoff,
@@ -208,7 +208,7 @@ def test_list_fieldsets__ok(api_client):
         order=1,
     )
     task = template.tasks.first()
-    fieldset_2 = create_test_fieldset(
+    fieldset_2 = create_test_fieldset_template(
         account=account,
         template=template,
         task=task,
@@ -266,7 +266,7 @@ def test_list_fieldsets__filter_by_account__ok(api_client):
         user=user_1,
         tasks_count=1,
     )
-    fieldset_1 = create_test_fieldset(
+    fieldset_1 = create_test_fieldset_template(
         account=account_1,
         template=template_1,
         kickoff=template_1.kickoff_instance,
@@ -282,7 +282,7 @@ def test_list_fieldsets__filter_by_account__ok(api_client):
         user=user_2,
         tasks_count=1,
     )
-    create_test_fieldset(
+    create_test_fieldset_template(
         account=account_2,
         template=template_2,
         kickoff=template_2.kickoff_instance,
@@ -319,7 +319,7 @@ def test_list_fieldsets__filter_by_template__ok(api_client):
         tasks_count=1,
         name='Template 1',
     )
-    fieldset_1 = create_test_fieldset(
+    fieldset_1 = create_test_fieldset_template(
         account=account,
         template=template_1,
         kickoff=template_1.kickoff_instance,
@@ -330,7 +330,7 @@ def test_list_fieldsets__filter_by_template__ok(api_client):
         tasks_count=1,
         name='Template 2',
     )
-    create_test_fieldset(
+    create_test_fieldset_template(
         account=account,
         template=template_2,
         kickoff=template_2.kickoff_instance,

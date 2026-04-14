@@ -91,9 +91,7 @@ class TaskUpdateVersionService(
                 field, _ = self._update_field(field_data, fieldset=None)
                 field_ids.append(field.id)
                 self._update_field_selections(field, field_data)
-        self.instance.output.filter(
-            fieldset__isnull=True,
-        ).exclude(id__in=field_ids).delete()
+        self.instance.output.exclude(id__in=field_ids).delete()
 
     def _update_delay(self, new_duration: Optional[str] = None):
 
@@ -168,8 +166,7 @@ class TaskUpdateVersionService(
 
     def _update_field(
         self,
-        template: Dict,
-        *,
+        field_data: Dict,
         fieldset: Optional[FieldSet] = None,
     ):
 
@@ -177,18 +174,18 @@ class TaskUpdateVersionService(
 
         return TaskField.objects.update_or_create(
             task=self.instance,
-            api_name=template['api_name'],
+            api_name=field_data['api_name'],
             fieldset=fieldset,
             defaults={
-                'name': template['name'],
-                'description': template['description'],
-                'type': template['type'],
-                'is_required': template['is_required'],
-                'is_hidden': template['is_hidden'],
-                'order': template['order'],
+                'name': field_data['name'],
+                'description': field_data['description'],
+                'type': field_data['type'],
+                'is_required': field_data['is_required'],
+                'is_hidden': field_data['is_hidden'],
+                'order': field_data['order'],
                 'workflow': self.instance.workflow,
                 'account': self.instance.account,
-                'dataset_id': template['dataset_id'],
+                'dataset_id': field_data['dataset_id'],
             },
         )
 
@@ -225,41 +222,37 @@ class TaskUpdateVersionService(
             field, _ = self._update_field(field_data, fieldset=fieldset)
             field_ids.append(field.id)
             self._update_field_selections(field, field_data)
-        TaskField.objects.filter(
-            task=self.instance,
-            fieldset=fieldset,
-        ).exclude(id__in=field_ids).delete()
+        fieldset.fields.exclude(id__in=field_ids).delete()
 
     def _update_fieldsets(self, data: Optional[List]) -> None:
 
-        fs_api_names = set()
-        for fs_data in data or []:
+        fieldset_api_names = set()
+        for fieldset_data in data or []:
             fieldset, _ = FieldSet.objects.update_or_create(
                 workflow=self.instance.workflow,
                 task=self.instance,
-                api_name=fs_data['api_name'],
+                api_name=fieldset_data['api_name'],
                 defaults={
                     'account_id': self.instance.account_id,
-                    'name': fs_data['name'],
-                    'description': fs_data['description'],
-                    'order': fs_data['order'],
-                    'label_position': fs_data['label_position'],
-                    'layout': fs_data['layout'],
+                    'name': fieldset_data['name'],
+                    'description': fieldset_data['description'],
+                    'order': fieldset_data['order'],
+                    'label_position': fieldset_data['label_position'],
+                    'layout': fieldset_data['layout'],
                 },
             )
             self._update_fieldset_rules(
                 fieldset=fieldset,
-                rules_data=fs_data.get('rules'),
+                rules_data=fieldset_data.get('rules'),
             )
             self._update_fieldset_fields(
                 fieldset=fieldset,
-                fields_data=fs_data.get('fields'),
+                fields_data=fieldset_data.get('fields'),
             )
-            fs_api_names.add(fs_data['api_name'])
+            fieldset_api_names.add(fieldset.api_name)
         FieldSet.objects.filter(
             task=self.instance,
-            is_deleted=False,
-        ).exclude(api_name__in=fs_api_names).delete()
+        ).exclude(api_name__in=fieldset_api_names).delete()
 
     def _update_checklists(
         self,
