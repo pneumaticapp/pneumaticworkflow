@@ -2,7 +2,6 @@
 from typing import Dict, Optional
 
 from django.contrib.auth import get_user_model
-from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.db.models import Q
 from django.utils import timezone
@@ -127,14 +126,8 @@ class Workflow(
 
         """ Return the output fields from kickoff """
 
-        from src.processes.models.workflows \
-            .fields import TaskField
-
-        try:
-            kickoff = self.kickoff.get()
-        except ObjectDoesNotExist:
-            return TaskField.objects.none()
-
+        from src.processes.models.workflows.fields import TaskField
+        kickoff = self.kickoff.get()
         qst = TaskField.objects.filter(
             Q(
                 Q(kickoff_id=kickoff.id) |

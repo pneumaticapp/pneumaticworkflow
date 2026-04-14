@@ -734,7 +734,6 @@ class WorkflowActionService:
                 task=task,
                 user=self.user,
             )
-        self._refresh_active_tasks_text_from_fields()
         self._start_next_tasks(parent_task=task)
         if (
             WebHook.objects
@@ -746,26 +745,6 @@ class WorkflowActionService:
                 account_id=self.account.id,
                 payload=task.webhook_payload(),
             )
-
-    def _refresh_active_tasks_text_from_fields(self) -> None:
-        """Reapply {{field}} substitution on tasks that stay active.
-
-        Parallel root tasks (or other concurrently active steps) only ran
-        insert_fields_values at start. When another task saves output —
-        including fieldset fields — placeholders must be refreshed without
-        waiting for the next start_task call.
-        """
-
-        fields_values = self.workflow.get_fields_markdown_values()
-        owner = self.user or self.workflow.account.get_owner()
-        active_tasks = self.workflow.tasks.filter(
-            status__in=(TaskStatus.ACTIVE, TaskStatus.DELAYED),
-        ).order_by('id')
-        for open_task in active_tasks:
-            TaskService(
-                instance=open_task,
-                user=owner,
-            ).insert_fields_values(fields_values=fields_values)
 
     def _task_can_be_completed(self, task: Task) -> bool:
 
@@ -854,8 +833,7 @@ class WorkflowActionService:
                         auth_type=self.auth_type,
                     )
                     service.validate_rules()
-            if fields_values:
-                self._refresh_active_tasks_text_from_fields()
+
             if task_performer:
                 if self._task_can_be_completed(task):
                     self.complete_task(task=task, by_user=True)

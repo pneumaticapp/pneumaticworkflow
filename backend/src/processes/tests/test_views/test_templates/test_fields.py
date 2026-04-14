@@ -158,7 +158,7 @@ def test_fields__draft_template__return_from_db(api_client):
 
     # assert
     assert response.status_code == 200
-    assert response.data['kickoff'] == {'fields': []}
+    assert response.data['kickoff'] == {'fields': [], 'fieldsets': []}
     assert response.data['tasks'] == []
 
 

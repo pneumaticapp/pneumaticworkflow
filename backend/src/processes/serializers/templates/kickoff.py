@@ -134,6 +134,15 @@ class KickoffOnlyFieldsSerializer(ModelSerializer):
     )
     fieldsets = SerializerMethodField()
 
+    def to_representation(self, instance):
+        # TODO Delete when the Template <-> Kickoff relation becomes o2o
+        from django.db import models  # noqa : PLC0415
+        if isinstance(instance, models.Manager):
+            instance = instance.first()
+        if instance is None:
+            return {'fields': [], 'fieldsets': []}
+        return super().to_representation(instance)
+
     def get_fieldsets(self, instance: Kickoff) -> list:
         return list(instance.fieldsets.values_list('id', flat=True))
 

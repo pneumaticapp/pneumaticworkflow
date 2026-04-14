@@ -8,6 +8,7 @@ from django.core.exceptions import (
     ObjectDoesNotExist,
 )
 from django.db import models, transaction
+from django.db.models import Q
 
 from src.accounts.models import (
     AccountBaseMixin,
@@ -147,24 +148,16 @@ class Template(
         """ Return the output fields from kickoff """
 
         from src.processes.models.templates.fields import FieldTemplate
-
-        try:
-            kickoff = self.kickoff.get()
-        except ObjectDoesNotExist:
-            return FieldTemplate.objects.none()
-
-        direct = kickoff.fields.all()
-        if fields_filter_kwargs:
-            direct = direct.filter(**fields_filter_kwargs)
-
-        fieldset_fields = FieldTemplate.objects.filter(
-            account_id=self.account_id,
-            fieldset__in=kickoff.fieldsets.all(),
+        kickoff = self.kickoff.get()
+        qst = FieldTemplate.objects.filter(
+            Q(
+                Q(kickoff_id=kickoff.id) |
+                Q(fieldset__kickoff_id=kickoff.id),
+            ),
         )
         if fields_filter_kwargs:
-            fieldset_fields = fieldset_fields.filter(**fields_filter_kwargs)
-
-        return direct.union(fieldset_fields)
+            qst = qst.filter(**fields_filter_kwargs)
+        return qst
 
     def get_tasks_output_fields(
         self,
@@ -175,40 +168,34 @@ class Template(
 
         """ Return the output fields from tasks """
 
-        from src.processes.models.templates \
-            .fields import FieldTemplate
+        from src.processes.models.templates.fields import FieldTemplate
 
-        if tasks_filter_kwargs is None:
-            tasks_filter_kwargs = {
-                'task__template_id': self.id,
-                'task__account_id': self.account_id,
+        tasks_filter_kwargs = tasks_filter_kwargs or {}
+        tasks_exclude_kwargs = tasks_exclude_kwargs or {}
+        fields_filter_kwargs = fields_filter_kwargs or {}
+
+        tasks_filter = {'task__template_id': self.id, **tasks_filter_kwargs}
+        fieldset_filter = {
+            f'fieldset__{key}': value
+            for key, value in tasks_filter.items()
+        }
+        tasks_q = Q(**tasks_filter)
+        fieldset_q = Q(**fieldset_filter)
+
+        if tasks_exclude_kwargs:
+            fieldset_exclude_kwargs = {
+                f'fieldset__{key}': value
+                for key, value in tasks_exclude_kwargs.items()
             }
-        else:
-            tasks_filter_kwargs['task__template_id'] = self.id
-            tasks_filter_kwargs['task__account_id'] = self.account_id
-        qst = FieldTemplate.objects.filter(**tasks_filter_kwargs)
+            tasks_q = Q(tasks_q, ~Q(**tasks_exclude_kwargs))
+            fieldset_q = Q(fieldset_q, ~Q(**fieldset_exclude_kwargs))
+
+        qst = FieldTemplate.objects.filter(tasks_q | fieldset_q)
 
         if fields_filter_kwargs:
             qst = qst.filter(**fields_filter_kwargs)
 
-        if tasks_exclude_kwargs:
-            qst = qst.exclude(**tasks_exclude_kwargs)
-
-        fieldset_qs = FieldTemplate.objects.filter(
-            account_id=self.account_id,
-            fieldset__tasks__template_id=self.id,
-            fieldset__tasks__account_id=self.account_id,
-        )
-        if fields_filter_kwargs:
-            fieldset_qs = fieldset_qs.filter(**fields_filter_kwargs)
-        if tasks_exclude_kwargs:
-            excluded_task_api = tasks_exclude_kwargs.get('task__api_name')
-            if excluded_task_api is not None:
-                fieldset_qs = fieldset_qs.exclude(
-                    fieldset__tasks__api_name=excluded_task_api,
-                )
-
-        return qst.union(fieldset_qs)
+        return qst
 
     def get_tasks(self, performer_id: int):
         from src.processes.models.templates.task import TaskTemplate

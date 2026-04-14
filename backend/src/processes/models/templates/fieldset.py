@@ -42,14 +42,18 @@ class FieldsetTemplate(
         null=True,
         blank=True,
     )
-    tasks = models.ManyToManyField(
+    task = models.ForeignKey(
         TaskTemplate,
+        on_delete=models.SET_NULL,
         related_name='fieldsets',
+        null=True,
         blank=True,
     )
-    kickoffs = models.ManyToManyField(
+    kickoff = models.ForeignKey(
         Kickoff,
+        on_delete=models.SET_NULL,
         related_name='fieldsets',
+        null=True,
         blank=True,
     )
 

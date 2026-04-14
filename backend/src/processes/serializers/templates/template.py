@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0415
 import re
 from typing import Any, Dict, List, Optional, Set
 
@@ -168,7 +169,8 @@ class TemplateSerializer(
                 }
             ]
             Includes kickoff.fields from the payload and FieldTemplate rows
-            for kickoff.fieldsets (fieldset ids), same as template.get_fields().
+            for kickoff.fieldsets (fieldset ids),
+            same as template.get_fields().
         """
         result: List[dict] = []
         seen_api_names: Set[str] = set()
