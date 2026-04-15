@@ -1346,6 +1346,7 @@ export const ruMessages = {
   'templates.tab-fieldsets': 'Наборы полей',
   'fieldsets.title': 'Наборы полей',
   'fieldsets.title.tooltip': 'Переиспользуемые наборы полей с правилами валидации',
+  'fieldsets.back-to-template': 'К шаблону',
   'fieldsets.new-fieldset.title': 'Новый набор полей',
   'fieldsets.new-fieldset.caption': 'Создать новый набор полей',
   'fieldsets.new-fieldset.description': 'После создания набора полей вы сможете добавить в него поля и правила.',

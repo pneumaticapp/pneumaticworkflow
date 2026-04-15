@@ -1439,6 +1439,7 @@ export const enMessages = {
   'templates.tab-fieldsets': 'Fieldsets',
   'fieldsets.title': 'Fieldsets',
   'fieldsets.title.tooltip': 'Reusable sets of fields with validation rules',
+  'fieldsets.back-to-template': 'Back to template',
   'fieldsets.new-fieldset.title': 'New Fieldset',
   'fieldsets.new-fieldset.caption': 'Create a new fieldset',
   'fieldsets.new-fieldset.description': 'Once a new fieldset has been created, you can add fields and rules to it.',
