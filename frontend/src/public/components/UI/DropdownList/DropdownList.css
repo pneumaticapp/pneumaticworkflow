@@ -87,7 +87,7 @@
 }
 
 .is-required {
-  margin-left: 2px;
+  margin-left: 0.2rem;
   color: var(--pneumatic-color-warning);
 }
 
@@ -96,8 +96,8 @@
 }
 
 .error-text {
-  margin: 4px 0 0;
-  font-size: 13px;
-  line-height: 16px;
+  margin: 0.4rem 0 0;
+  font-size: 1.3rem;
+  line-height: 1.6rem;
   color: var(--pneumatic-color-warning);
 }
