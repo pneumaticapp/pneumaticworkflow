@@ -21,6 +21,7 @@ import {
 import { getActiveUsers } from '../../utils/users';
 import { getIsUserSubsribed } from '../../redux/selectors/user';
 import { IWorkflowsFiltersProps } from './types';
+import { getRegularGroupsList } from '../../redux/selectors/groups';
 
 export type TWorkflowsFiltersStoreProps = Pick<
   IWorkflowsFiltersProps,
@@ -82,7 +83,6 @@ export function mapStateToProps(state: IApplicationState): TWorkflowsFiltersStor
         counters: { performersCounters, workflowStartersCounters },
       },
     },
-    groups,
     accounts: { users, isLoading: areUsersLoading },
   } = state;
   const isSubscribed = getIsUserSubsribed(state);
@@ -97,7 +97,7 @@ export function mapStateToProps(state: IApplicationState): TWorkflowsFiltersStor
     performersIdsFilter,
     performersGroupIdsFilter,
     workflowStartersIdsFilter,
-    groups: groups.list.filter((g) => g.type !== 'personal'),
+    groups: getRegularGroupsList(state),
     users: getActiveUsers(users),
     areFilterTemplatesLoading: templateList.isLoading,
     areUsersLoading,
