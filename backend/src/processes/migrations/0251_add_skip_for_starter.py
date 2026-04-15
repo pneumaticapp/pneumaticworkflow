@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('processes', '0249_auto_20260403_1221'),
+        ('processes', '0250_workflowevent_type_add_task_delegated'),
     ]
 
     operations = [
