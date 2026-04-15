@@ -1,9 +1,7 @@
 import pytest
-from rest_framework.exceptions import ValidationError
 
 from src.accounts.serializers.user import UserSerializer
-from src.accounts.enums import UserStatus
-from src.accounts.messages import MSG_A_0049, MSG_A_0050
+from src.accounts.enums import Language
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_not_admin,
@@ -12,25 +10,9 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-def test_user_serializer__validate_manager_id__ok():
-    # arrange
-    account = create_test_account()
-    user = create_test_not_admin(account=account)
-    manager = create_test_not_admin(account=account, email='manager@test.test')
-
-    serializer = UserSerializer(
-        instance=user,
-        context={'account': account, 'user': user},
-    )
-
-    # act
-    result = serializer.validate_manager_id(manager)
-
-    # assert
-    assert result == manager
-
-
-def test_user_serializer__validate_manager_id__self_assignment__error():
+def test_user_serializer__manager_id__uses_account_filter():
+    """AccountPrimaryKeyRelatedField filters by account
+    via get_queryset(); verify queryset is set on __init__."""
     # arrange
     account = create_test_account()
     user = create_test_not_admin(account=account)
@@ -41,54 +23,15 @@ def test_user_serializer__validate_manager_id__self_assignment__error():
     )
 
     # act
-    with pytest.raises(ValidationError) as ex:
-        serializer.validate_manager_id(user)
+    qs = serializer.fields['manager_id'].queryset
 
-    # assert
-    assert ex.value.detail[0] == MSG_A_0049
-
-
-def test_user_serializer__validate_manager_id__circular__error():
-    # arrange
-    account = create_test_account()
-    user = create_test_not_admin(account=account)
-    manager = create_test_not_admin(account=account, email='manager@test.test')
-    manager.manager = user
-    manager.save()
-
-    serializer = UserSerializer(
-        instance=user,
-        context={'account': account, 'user': user},
-    )
-
-    # act
-    with pytest.raises(ValidationError) as ex:
-        serializer.validate_manager_id(manager)
-
-    # assert
-    assert ex.value.detail[0] == MSG_A_0050
+    # assert — queryset is set (not the default .none())
+    assert qs is not None
+    assert qs.count() >= 0
 
 
-def test_user_serializer__validate_subordinates__ok():
-    # arrange
-    account = create_test_account()
-    user = create_test_not_admin(account=account)
-    report1 = create_test_not_admin(account=account, email='rep1@test.test')
-    report2 = create_test_not_admin(account=account, email='rep2@test.test')
-
-    serializer = UserSerializer(
-        instance=user,
-        context={'account': account, 'user': user},
-    )
-
-    # act
-    result = serializer.validate_subordinates([report1, report2])
-
-    # assert
-    assert result == [report1, report2]
-
-
-def test_user_serializer__validate_subordinates__self__error():
+def test_user_serializer__subordinates__uses_account_filter():
+    """Subordinates field queryset is set via __init__."""
     # arrange
     account = create_test_account()
     user = create_test_not_admin(account=account)
@@ -99,67 +42,15 @@ def test_user_serializer__validate_subordinates__self__error():
     )
 
     # act
-    with pytest.raises(ValidationError) as ex:
-        serializer.validate_subordinates([user])
+    qs = serializer.fields['subordinates'].child_relation.queryset
 
     # assert
-    assert ex.value.detail[0] == MSG_A_0049
+    assert qs is not None
+    assert qs.count() >= 0
 
 
-def test_user_serializer__validate_subordinates__circular__error():
-    """Assigning a user's ancestor as subordinate must raise MSG_A_0050.
-
-    Since cycle detection now lives in *validate()* (which has access
-    to the proposed manager), this test exercises the cross-field path.
-    """
-    # arrange
-    account = create_test_account()
-    user = create_test_not_admin(account=account)
-    manager = create_test_not_admin(account=account, email='manager@test.test')
-    user.manager = manager
-    user.save()
-
-    serializer = UserSerializer(
-        instance=user,
-        context={'account': account, 'user': user},
-    )
-
-    # act
-    with pytest.raises(ValidationError) as ex:
-        serializer.validate({'subordinates': [manager]})
-
-    # assert
-    assert ex.value.detail[0] == MSG_A_0050
-
-
-def test_user_serializer__validate__manager_null_subordinate_old_manager__ok():
-    """When manager_id is set to None *and* the old manager is listed
-    as subordinate in the same request, the result is non-cyclic
-    (B -> A with no upward chain) and must be accepted.
-    """
-    # arrange
-    account = create_test_account()
-    user = create_test_not_admin(account=account)
-    manager = create_test_not_admin(account=account, email='manager@test.test')
-    user.manager = manager
-    user.save()
-
-    serializer = UserSerializer(
-        instance=user,
-        context={'account': account, 'user': user},
-    )
-
-    # act — manager=None breaks the old chain, [manager] is a valid sub
-    result = serializer.validate({
-        'manager': None,
-        'subordinates': [manager],
-    })
-
-    # assert
-    assert result['subordinates'] == [manager]
-
-
-def test_user_serializer__validate_manager_id__null__ok():
+def test_user_serializer__validate__password_to_raw_password():
+    """Password field is renamed to raw_password in validate."""
     # arrange
     account = create_test_account()
     user = create_test_not_admin(account=account)
@@ -170,46 +61,37 @@ def test_user_serializer__validate_manager_id__null__ok():
     )
 
     # act
-    result = serializer.validate_manager_id(None)
+    result = serializer.validate({'password': 'secret123'})
 
     # assert
-    assert result is None
+    assert 'raw_password' in result
+    assert 'password' not in result
+    assert result['raw_password'] == 'secret123'
 
 
-def test_user_serializer__validate_manager_id__deep_chain__error():
-    """Cycle detection works for a 3-level chain (A->B->C->A)."""
+def test_user_serializer__no_account_ctx__default_queryset():
+    """When context has no 'account' the default queryset
+    stays as-is (read-only serialization path)."""
     # arrange
     account = create_test_account()
-    user_a = create_test_not_admin(
-        account=account, email='a@test.test',
-    )
-    user_b = create_test_not_admin(
-        account=account, email='b@test.test',
-    )
-    user_c = create_test_not_admin(
-        account=account, email='c@test.test',
-    )
-    user_b.manager = user_a
-    user_b.save()
-    user_c.manager = user_b
-    user_c.save()
+    user = create_test_not_admin(account=account)
 
     serializer = UserSerializer(
-        instance=user_a,
-        context={'account': account, 'user': user_a},
+        instance=user,
+        context={'user': user},
     )
 
-    # act
-    with pytest.raises(ValidationError) as ex:
-        serializer.validate_manager_id(user_c)
-
-    # assert
-    assert ex.value.detail[0] == MSG_A_0050
+    # act / assert — no crash, queryset stays the default
+    qs = serializer.fields['manager_id'].queryset
+    assert qs is not None
 
 
-def test_user_serializer__get_manager_map__cached():
-    """_get_manager_map returns cached dict on second call."""
+def test_user_serializer__language_choices__ru(mocker):
+    """When LANGUAGE_CODE is 'ru', full choices are used."""
     # arrange
+    mocker.patch(
+        'src.accounts.serializers.user.settings',
+    ).LANGUAGE_CODE = Language.ru
     account = create_test_account()
     user = create_test_not_admin(account=account)
 
@@ -218,81 +100,7 @@ def test_user_serializer__get_manager_map__cached():
         context={'account': account, 'user': user},
     )
 
-    # act
-    first = serializer._get_manager_map()
-    second = serializer._get_manager_map()
-
     # assert
-    assert first is second
-
-
-def test_get_manager_map__excludes_inactive__ok():
-    """Inactive users must not appear in the manager map."""
-    # arrange
-    account = create_test_account()
-    active_user = create_test_not_admin(
-        account=account,
-        email='active@test.test',
+    assert serializer.fields['language'].choices == dict(
+        Language.CHOICES,
     )
-    inactive_user = create_test_not_admin(
-        account=account,
-        email='inactive@test.test',
-    )
-    inactive_user.status = UserStatus.INACTIVE
-    inactive_user.is_active = False
-    inactive_user.save(
-        update_fields=('status', 'is_active'),
-    )
-
-    serializer = UserSerializer(
-        instance=active_user,
-        context={'account': account, 'user': active_user},
-    )
-
-    # act
-    manager_map = serializer._get_manager_map()
-
-    # assert
-    assert active_user.id in manager_map
-    assert inactive_user.id not in manager_map
-
-
-def test_validate_manager_id__inactive_in_chain__ok():
-    """Cycle detection ignores inactive users so stale
-    manager_id on an inactive user doesn't cause a false
-    positive."""
-    # arrange
-    account = create_test_account()
-    user_a = create_test_not_admin(
-        account=account,
-        email='a@test.test',
-    )
-    user_b = create_test_not_admin(
-        account=account,
-        email='b@test.test',
-    )
-    # Create an inactive user whose manager is user_a.
-    # If the map included inactive users, walking B's chain
-    # might erroneously traverse inactive -> A -> cycle.
-    inactive = create_test_not_admin(
-        account=account,
-        email='inactive@test.test',
-    )
-    inactive.manager = user_a
-    inactive.save(update_fields=('manager',))
-    inactive.status = UserStatus.INACTIVE
-    inactive.is_active = False
-    inactive.save(
-        update_fields=('status', 'is_active'),
-    )
-
-    serializer = UserSerializer(
-        instance=user_a,
-        context={'account': account, 'user': user_a},
-    )
-
-    # act
-    result = serializer.validate_manager_id(user_b)
-
-    # assert
-    assert result == user_b

@@ -3027,3 +3027,212 @@ def test_partial_update__mgr_and_subs__mgr_ws_after_subs(
 
     # assert
     assert call_order == ['subordinates', 'managers']
+
+
+def test_validate_manager__ok():
+    """Valid manager assignment does not raise."""
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    manager = create_test_not_admin(
+        account=account, email='mgr@test.test',
+    )
+    service = UserService(instance=user, user=owner)
+
+    # act / assert — no exception
+    service._validate_manager(manager)
+
+
+def test_validate_manager__self_assignment__error():
+    """A user cannot be their own manager."""
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    service = UserService(instance=user, user=owner)
+
+    # act
+    with pytest.raises(UserServiceException) as ex:
+        service._validate_manager(user)
+
+    # assert
+    assert ex.value.message == str(messages.MSG_A_0049)
+
+
+def test_validate_manager__circular__error():
+    """Direct cycle: manager.manager = user → assigning
+    user.manager = manager creates a loop."""
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    manager = create_test_not_admin(
+        account=account, email='mgr@test.test',
+    )
+    manager.manager = user
+    manager.save(update_fields=('manager',))
+    service = UserService(instance=user, user=owner)
+
+    # act
+    with pytest.raises(UserServiceException) as ex:
+        service._validate_manager(manager)
+
+    # assert
+    assert ex.value.message == str(messages.MSG_A_0050)
+
+
+def test_validate_manager__deep_chain__error():
+    """Cycle detection works for a 3-level chain
+    (A->B->C, assigning C as A's manager)."""
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user_a = create_test_not_admin(
+        account=account, email='a@test.test',
+    )
+    user_b = create_test_not_admin(
+        account=account, email='b@test.test',
+    )
+    user_c = create_test_not_admin(
+        account=account, email='c@test.test',
+    )
+    user_b.manager = user_a
+    user_b.save(update_fields=('manager',))
+    user_c.manager = user_b
+    user_c.save(update_fields=('manager',))
+    service = UserService(instance=user_a, user=owner)
+
+    # act
+    with pytest.raises(UserServiceException) as ex:
+        service._validate_manager(user_c)
+
+    # assert
+    assert ex.value.message == str(messages.MSG_A_0050)
+
+
+def test_validate_manager__inactive_in_chain__ok():
+    """Inactive users are excluded from the manager map,
+    so stale manager_id on an inactive user does not cause
+    a false-positive cycle."""
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user_a = create_test_not_admin(
+        account=account, email='a@test.test',
+    )
+    user_b = create_test_not_admin(
+        account=account, email='b@test.test',
+    )
+    inactive = create_test_not_admin(
+        account=account, email='inactive@test.test',
+    )
+    inactive.manager = user_a
+    inactive.save(update_fields=('manager',))
+    inactive.status = UserStatus.INACTIVE
+    inactive.is_active = False
+    inactive.save(update_fields=('status', 'is_active'))
+    service = UserService(instance=user_a, user=owner)
+
+    # act / assert — no exception
+    service._validate_manager(user_b)
+
+
+def test_validate_subordinates__ok():
+    """Valid subordinate list does not raise."""
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    sub = create_test_not_admin(
+        account=account, email='sub@test.test',
+    )
+    service = UserService(instance=user, user=owner)
+
+    # act / assert — no exception
+    service._validate_subordinates([sub])
+
+
+def test_validate_subordinates__self__error():
+    """A user cannot be their own subordinate."""
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    service = UserService(instance=user, user=owner)
+
+    # act
+    with pytest.raises(UserServiceException) as ex:
+        service._validate_subordinates([user])
+
+    # assert
+    assert ex.value.message == str(messages.MSG_A_0049)
+
+
+def test_validate_subordinates__ancestor__error():
+    """Assigning an ancestor as subordinate → cycle error."""
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    ancestor = create_test_not_admin(
+        account=account, email='anc@test.test',
+    )
+    user = create_test_not_admin(account=account)
+    user.manager = ancestor
+    user.save(update_fields=('manager',))
+    service = UserService(instance=user, user=owner)
+
+    # act
+    with pytest.raises(UserServiceException) as ex:
+        service._validate_subordinates(
+            [ancestor], user.manager,
+        )
+
+    # assert
+    assert ex.value.message == str(messages.MSG_A_0050)
+
+
+def test_validate_subordinates__proposed_mgr_none__ok():
+    """When proposed manager is None and old manager is
+    assigned as subordinate, the result is non-cyclic and
+    must be accepted."""
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    ancestor = create_test_not_admin(
+        account=account, email='anc@test.test',
+    )
+    user = create_test_not_admin(account=account)
+    user.manager = ancestor
+    user.save(update_fields=('manager',))
+    service = UserService(instance=user, user=owner)
+
+    # act / assert — manager=None breaks the old chain,
+    # so [ancestor] is a valid subordinate
+    service._validate_subordinates(
+        [ancestor], None,
+    )
+
+
+def test_validate_subordinates__proposed_mgr_fresh_map():
+    """_validate_subordinates uses proposed_manager to patch
+    the in-memory map, fixing the stale-cache problem."""
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    new_mgr = create_test_not_admin(
+        account=account, email='newmgr@test.test',
+    )
+    # new_mgr has no higher ancestors, so assigning it as
+    # manager and its former subordinate as user's sub is
+    # safe.
+    sub = create_test_not_admin(
+        account=account, email='sub@test.test',
+    )
+    service = UserService(instance=user, user=owner)
+
+    # act / assert — no exception
+    service._validate_subordinates(
+        [sub], new_mgr,
+    )

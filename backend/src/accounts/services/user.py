@@ -18,6 +18,10 @@ from src.accounts.models import (
     APIKey,
     Contact,
 )
+from src.accounts.messages import (
+    MSG_A_0049,
+    MSG_A_0050,
+)
 from src.accounts.serializers.user import UserWebsocketSerializer
 from src.accounts.services.exceptions import (
     AlreadyRegisteredException,
@@ -307,6 +311,9 @@ class UserService(
             subordinate.manager = None
             ws_data = UserWebsocketSerializer(subordinate).data
 
+            # Capture ws_data via default argument so each
+            # iteration gets its own snapshot; without it the
+            # closure would reference the rebinding loop variable.
             def notify(data=ws_data):
                 send_user_updated_notification.delay(
                     logging=False,
@@ -393,6 +400,87 @@ class UserService(
                 user_data=ws_data_mgr,
             )
 
+    def _validate_manager(self, manager):
+        """Validate that assigning *manager* to self.instance
+        does not create a circular hierarchy.
+
+        1. A user cannot be their own manager (MSG_A_0049).
+        2. Walk up from *manager* through the chain; if we
+           encounter self.instance the assignment would
+           create a cycle (MSG_A_0050).
+
+        Builds an in-memory {user_id: manager_id} map from
+        active users so the check runs in a single DB query.
+        """
+        if manager.id == self.instance.id:
+            raise UserServiceException(
+                message=str(MSG_A_0049),
+            )
+        manager_map = dict(
+            UserModel.objects.on_account(
+                self.account.id,
+            ).active().values_list('id', 'manager_id'),
+        )
+        current_id = manager.id
+        visited = set()
+        while current_id is not None:
+            if current_id in visited:
+                break
+            if current_id == self.instance.id:
+                raise UserServiceException(
+                    message=str(MSG_A_0050),
+                )
+            visited.add(current_id)
+            current_id = manager_map.get(current_id)
+
+    def _validate_subordinates(
+        self,
+        subordinates: List[UserModel],
+        proposed_manager=None,
+    ):
+        """Validate the proposed subordinate list.
+
+        1. A user cannot be their own subordinate (MSG_A_0049).
+        2. No proposed subordinate may be an ancestor of the
+           user in the *future* hierarchy (MSG_A_0050).
+
+        The *future* hierarchy is computed by patching the
+        in-memory manager map with *proposed_manager*,
+        which fixes the stale-cache problem that occurs when
+        manager and subordinates are updated simultaneously.
+        """
+        for sub in subordinates:
+            if sub.id == self.instance.id:
+                raise UserServiceException(
+                    message=str(MSG_A_0049),
+                )
+
+        manager_map = dict(
+            UserModel.objects.on_account(
+                self.account.id,
+            ).active().values_list('id', 'manager_id'),
+        )
+        # Patch the map with the proposed manager so the
+        # ancestor walk reflects the future state.
+        if proposed_manager is not None:
+            manager_map[self.instance.id] = proposed_manager.id
+        else:
+            manager_map[self.instance.id] = None
+
+        ancestor_ids = set()
+        current_id = manager_map.get(self.instance.id)
+        while current_id is not None:
+            if current_id in ancestor_ids:
+                break
+            ancestor_ids.add(current_id)
+            current_id = manager_map.get(current_id)
+
+        for sub in subordinates:
+            if sub.id in ancestor_ids:
+                raise UserServiceException(
+                    message=str(MSG_A_0050),
+                )
+
     def partial_update(
         self,
         force_save=False,
@@ -409,6 +497,20 @@ class UserService(
             and update_kwargs['manager'] != old_manager
         )
 
+        # Validate hierarchy constraints before any DB mutation.
+        new_manager = update_kwargs.get('manager')
+        if 'manager' in update_kwargs and new_manager is not None:
+            self._validate_manager(new_manager)
+        if subordinates is not None:
+            proposed_manager = update_kwargs.get(
+                'manager', self.instance.manager,
+            )
+            self._validate_subordinates(
+                subordinates, proposed_manager,
+            )
+
+        # Single transaction wrapping both the user save and
+        # subordinates update so partial state is never committed.
         with transaction.atomic():
             if raw_password:
                 super().partial_update(
@@ -421,13 +523,16 @@ class UserService(
             if user_groups is not None:
                 self.instance.user_groups.set(user_groups)
             self._update_related_user_fields(old_name=old_name)
+
+            if subordinates is not None:
+                self._update_subordinates(subordinates)
+
         self._update_related_stripe_account()
         self._update_analytics(**update_kwargs)
 
+        # Refresh to clear stale prefetch cache so the WS
+        # payload reflects the updated state.
         if subordinates is not None:
-            self._update_subordinates(subordinates)
-            # Refresh to clear stale prefetch cache so the WS
-            # payload reflects the updated subordinates.
             self.instance.refresh_from_db()
 
         if manager_changed:
@@ -491,6 +596,10 @@ class UserService(
                         UserWebsocketSerializer(user).data
                     )
 
+                    # Capture ws_data_user via default argument
+                    # so each iteration gets its own snapshot;
+                    # without it the closure would reference the
+                    # rebinding loop variable.
                     def notify(data=ws_data_user):
                         send_user_updated_notification.delay(
                             logging=False,
@@ -509,6 +618,8 @@ class UserService(
                         UserWebsocketSerializer(mgr).data
                     )
 
+                    # Same default-argument capture pattern
+                    # as notify() above.
                     def notify_mgr(data=ws_data_mgr):
                         send_user_updated_notification.delay(
                             logging=False,

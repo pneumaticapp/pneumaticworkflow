@@ -15,13 +15,12 @@ from src.accounts.serializers.group import (
 from src.accounts.messages import (
     MSG_A_0036,
     MSG_A_0046,
-    MSG_A_0049,
-    MSG_A_0050,
 )
 from src.accounts.serializers.user_invites import (
     UserListInviteSerializer,
 )
 from src.generics.fields import (
+    AccountPrimaryKeyRelatedField,
     CommaSeparatedListField,
     DateFormatField,
     RelatedListField,
@@ -103,15 +102,15 @@ class UserSerializer(
     date_fmt = DateFormatField(required=False)
     invite = serializers.SerializerMethodField(allow_null=True, read_only=True)
     password = serializers.CharField(write_only=True, required=False)
-    manager_id = serializers.PrimaryKeyRelatedField(
-        queryset=UserModel.objects.none(),
+    manager_id = AccountPrimaryKeyRelatedField(
+        queryset=UserModel.objects,
         required=False,
         allow_null=True,
         source='manager',
     )
-    subordinates = serializers.PrimaryKeyRelatedField(
+    subordinates = AccountPrimaryKeyRelatedField(
         many=True,
-        queryset=UserModel.objects.none(),
+        queryset=UserModel.objects,
         required=False,
     )
 
@@ -126,13 +125,15 @@ class UserSerializer(
             self.fields['language'].choices = Language.CHOICES
         else:
             self.fields['language'].choices = Language.EURO_CHOICES
-        # Restrict manager/subordinates to active users of the same
-        # account.  Context is absent during read-only serialization
-        # (e.g. UserSerializer(instance=user).data) — the default
-        # empty queryset is harmless for reads.
+        # AccountPrimaryKeyRelatedField already filters by account
+        # (via context).  Here we additionally restrict to active
+        # users so that DRF rejects inactive/invited users at the
+        # deserialization stage before the data reaches the service.
+        # Context is absent during read-only serialization
+        # (e.g. UserSerializer(instance=user).data); in that case
+        # get_queryset() is never called, so no guard is needed.
         if 'account' in self.context:
-            account_id = self.context['account'].id
-            active_qs = UserModel.objects.on_account(account_id).active()
+            active_qs = UserModel.objects.active()
             self.fields['manager_id'].queryset = active_qs
             self.fields[
                 'subordinates'
@@ -141,61 +142,6 @@ class UserSerializer(
     def validate_is_admin(self, value):
         if value is True and not self.context['user'].is_admin:
             raise serializers.ValidationError(MSG_A_0046)
-        return value
-
-    def _get_manager_map(self):
-        """Return {user_id: manager_id} dict for the account.
-
-        Only includes **active** users so that stale manager_id
-        values on inactive users do not cause false cycle
-        detection.  Cached on the serializer instance so the
-        query runs at most once per validation cycle.
-        """
-        if not hasattr(self, '_manager_map'):
-            self._manager_map = dict(
-                UserModel.objects.on_account(
-                    self.context['account'].id,
-                ).active().values_list('id', 'manager_id'),
-            )
-        return self._manager_map
-
-    def validate_manager_id(self, value):
-        """Validate the proposed manager assignment.
-
-        1. A user cannot be their own manager (MSG_A_0049).
-        2. Walk **up** the proposed manager's chain
-           **in-memory** (single query): if we encounter
-           self.instance it means assigning them would create
-           a circular hierarchy (MSG_A_0050).
-        """
-        if value is None:
-            return value
-        if self.instance and value.id == self.instance.id:
-            raise serializers.ValidationError(MSG_A_0049)
-        if self.instance:
-            manager_map = self._get_manager_map()
-            current_id = value.id
-            visited = set()
-            while current_id is not None:
-                if current_id in visited:
-                    break
-                if current_id == self.instance.id:
-                    raise serializers.ValidationError(MSG_A_0050)
-                visited.add(current_id)
-                current_id = manager_map.get(current_id)
-        return value
-
-    def validate_subordinates(self, value):
-        """Validate the proposed subordinates list (basic checks).
-
-        Cycle detection against the manager chain is performed in
-        ``validate()`` where the (possibly updated) manager is available.
-        """
-        if not self.instance or not value:
-            return value
-        for sub in value:
-            if sub.id == self.instance.id:
-                raise serializers.ValidationError(MSG_A_0049)
         return value
 
     def validate(self, attrs):
@@ -207,32 +153,6 @@ class UserSerializer(
             and self.instance != self.context['user']
         ):
             raise serializers.ValidationError(MSG_A_0036)
-
-        # Cross-field validation: ensure no proposed subordinate is an
-        # ancestor of the user (using the *proposed* manager when
-        # present so that concurrent manager + subordinates updates
-        # are validated correctly).
-        subordinates = attrs.get('subordinates')
-        if self.instance and subordinates:
-            manager_map = self._get_manager_map()
-            ancestor_ids = set()
-            proposed_manager = attrs.get(
-                'manager', self.instance.manager,
-            )
-            current_id = (
-                proposed_manager.id
-                if proposed_manager
-                else None
-            )
-            while current_id is not None:
-                if current_id in ancestor_ids:
-                    break
-                ancestor_ids.add(current_id)
-                current_id = manager_map.get(current_id)
-            for sub in subordinates:
-                if sub.id in ancestor_ids:
-                    raise serializers.ValidationError(MSG_A_0050)
-
         return attrs
 
 

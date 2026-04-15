@@ -207,3 +207,11 @@ msgstr "Debe indicar new_user o new_group"
 #: accounts/messages.py:95
 msgid "Group with the name \"{name}\" already exists."
 msgstr "Ya existe un grupo con el nombre \"{name}\"."
+
+#: accounts/messages.py:104
+msgid "A user cannot be their own manager."
+msgstr "Un usuario no puede ser su propio responsable."
+
+#: accounts/messages.py:105
+msgid "This assignment would create a circular management hierarchy."
+msgstr "Esta asignación crearía una jerarquía de gestión circular."
