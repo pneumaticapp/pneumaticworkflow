@@ -1,0 +1,174 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-07 11:48+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Saving files is not available, file storage does't configured. Contact support."
+msgstr ""
+
+#. Translators: Create invite form validation
+msgid "The \"type\" or \"invited_from\" field must be specified."
+msgstr ""
+
+msgid "Logo change is not allowed for this account."
+msgstr ""
+
+msgid "You can't assign workflows to the same user. Please choose another one."
+msgstr ""
+
+msgid "There is already a registered user with these email."
+msgstr ""
+
+msgid "You have reached limit on invitations. Contact Support to invite more users."
+msgstr ""
+
+msgid "Invite is already accepted."
+msgstr ""
+
+msgid "Token is invalid."
+msgstr ""
+
+msgid "Token is expired."
+msgstr ""
+
+msgid "The user with the specified credentials not found."
+msgstr ""
+
+msgid "You can't delete a user without assigning their tasks to a different user."
+msgstr ""
+
+msgid "Reassign user does not exist."
+msgstr ""
+
+msgid "Token is invalid or expired."
+msgstr ""
+
+#. Translators: Unsubscribe from any mailing or digest
+msgid "You have successfully unsubscribed."
+msgstr ""
+
+msgid "Email"
+msgstr ""
+
+msgid "First name"
+msgstr ""
+
+msgid "Password"
+msgstr ""
+
+msgid "Password confirmation"
+msgstr ""
+
+#. Translators: Signup form help text
+msgid "Enter the same password as before, for verification."
+msgstr ""
+
+msgid "User info"
+msgstr ""
+
+msgid "Status"
+msgstr ""
+
+msgid "Permissions"
+msgstr ""
+
+msgid "Important dates"
+msgstr ""
+
+msgid "This field is required."
+msgstr ""
+
+#. Translators: Create tenant from admin
+msgid "\"Master account\" does not exists."
+msgstr ""
+
+#. Translators: Create tenant from admin
+msgid "\"Master account\" is not subscribed."
+msgstr ""
+
+msgid "Moving tenants between master accounts is not currently supported."
+msgstr ""
+
+msgid "\"Master Account\" must be blank for a non-tenant account."
+msgstr ""
+
+msgid "The \"Master account\" required for the lease level \"tenant\"."
+msgstr ""
+
+#, python-brace-format
+msgid "Converting from \"{prev}\" to \"{new}\" is not currently supported."
+msgstr ""
+
+#. Translators: Primary account data in the admin
+msgid "Primary"
+msgstr ""
+
+#. Translators: Subscription account data in the admin
+msgid "Subscription"
+msgstr ""
+
+#. Translators: Account tenants list in the admin
+msgid "Tenants"
+msgstr ""
+
+#. Translators: Aborting to delete account from admin if tenants exists
+msgid "Deletion not allowed while the account contains tenants."
+msgstr ""
+
+msgid "Your subscription has already expired. Renew subscription or contact support."
+msgstr ""
+
+#. Translators: Account owner permission
+msgid "Only the account owner is allowed to perform this action."
+msgstr ""
+
+msgid "The user count is over your plan limit. Please upgrade your plan or delete some users."
+msgstr ""
+
+msgid "Granular access control is included in the Premium Plan. Upgrade your plan to access this functionality."
+msgstr ""
+
+msgid "The list of group members contains a non-existent group identifier"
+msgstr ""
+
+msgid "The list of groups contains a non-existent group identifier"
+msgstr ""
+
+msgid "Select a plan to complete the signup"
+msgstr ""
+
+msgid "A group cannot be assigned to the same task more than once. Please choose a different group."
+msgstr ""
+
+msgid "You need to pass in old_user or old_group"
+msgstr ""
+
+msgid "You need to pass in new_user or new_group"
+msgstr ""
+
+#, python-brace-format
+msgid "Group with the name \"{name}\" already exists."
+msgstr ""
+
+msgid "Permission denied. Only an administrator can grant administrator privileges."
+msgstr ""
+
+msgid "You can't delete yourself."
+msgstr ""
+
+msgid "You can't delete the account owner."
+msgstr ""

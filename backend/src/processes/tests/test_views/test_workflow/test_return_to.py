@@ -1,4 +1,6 @@
 from datetime import timedelta
+from django.urls import reverse
+from rest_framework import status
 
 import pytest
 from django.utils import timezone
@@ -8,6 +10,8 @@ from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     ConditionAction,
     FieldType,
+    OwnerRole,
+    OwnerType,
     PredicateOperator,
     WorkflowStatus,
 )
@@ -21,6 +25,7 @@ from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
 )
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.workflows.task import Delay
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.exceptions import (
@@ -698,7 +703,7 @@ def test_return_to__task_skipped_by_kickoff_field__update_status_to_pending(
         operator=PredicateOperator.EQUAL,
         field_type=field_template.type,
         field=field_template.api_name,
-        value=selection_template.api_name,
+        value=selection_template.value,
         template=template,
     )
 
@@ -710,7 +715,7 @@ def test_return_to__task_skipped_by_kickoff_field__update_status_to_pending(
         data={
             'name': 'Test name',
             'kickoff': {
-                field_template.api_name: [selection_template.api_name],
+                field_template.api_name: [selection_template.value],
             },
         },
     )
@@ -1015,3 +1020,40 @@ def test_return_to__not_found__not_found(api_client):
 
     # assert
     assert response.status_code == 404
+
+
+def test_workflow_return_to__template_starter_own_workflow__forbidden(
+    api_client,
+):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    workflow = create_test_workflow(template=template, user=starter_user)
+    task = workflow.tasks.order_by('number').first()
+
+    api_client.token_authenticate(starter_user)
+    url = reverse('workflows-return-to', args=[workflow.id])
+    data = {'task_api_name': task.api_name}
+
+    # act
+    response = api_client.post(url, data)
+
+    # assert
+    assert response.status_code == status.HTTP_403_FORBIDDEN

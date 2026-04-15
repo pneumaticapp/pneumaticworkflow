@@ -9,7 +9,7 @@ from src.processes.serializers.file_attachment import (
     FileAttachmentSerializer,
 )
 from src.processes.serializers.workflows.field import (
-    TaskFieldSerializer,
+    TaskFieldEventSerializer,
 )
 from src.processes.serializers.workflows.task_performer import (
     TaskUserGroupPerformerSerializer,
@@ -81,7 +81,7 @@ class TaskEventJsonSerializer(serializers.ModelSerializer):
 
     def get_output(self, instance):
         if self.context['event_type'] == WorkflowEventType.TASK_COMPLETE:
-            return TaskFieldSerializer(
+            return TaskFieldEventSerializer(
                 instance=instance.output.all(),
                 many=True,
             ).data

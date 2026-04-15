@@ -93,11 +93,23 @@ axiosInstance.interceptors.response.use(
   },
 );
 
+export async function commonRequest(
+  rawUrl: string,
+  params: Partial<AxiosRequestConfig>,
+  options: Partial<ICommonRequestOptions> & { responseType: 'empty' },
+): Promise<void>;
+export async function commonRequest<T>(
+  rawUrl: string,
+  params?: Partial<AxiosRequestConfig>,
+  options?: Partial<ICommonRequestOptions>,
+): Promise<T>;
+
+/* eslint-disable consistent-return */
 export async function commonRequest<T>(
   rawUrl: string,
   params: Partial<AxiosRequestConfig> = {},
   options: Partial<ICommonRequestOptions> = {},
-): Promise<T> {
+): Promise<T | void> {
   const {
     api: { publicUrl, urls },
   } = getBrowserConfigEnv();
@@ -114,14 +126,14 @@ export async function commonRequest<T>(
     const config: AxiosRequestConfig = {
       ...params,
       timeout: timeOut,
-      responseType: options.responseType === 'text' ? 'text' : 'json',
+      responseType: options.responseType === 'text' || options.responseType === 'empty' ? 'text' : 'json',
       validateStatus: (status) => successStatusCodes.includes(status),
     };
 
     const response = await axiosInstance(fullUrl, config);
 
-    if (options.responseType === 'text') {
-      return response.data as T;
+    if (options.responseType === 'empty') {
+      return;
     }
 
     return response.data as T;
@@ -130,6 +142,7 @@ export async function commonRequest<T>(
       throw error;
     }
     logger.error(error);
-    return undefined as unknown as T;
+    
   }
 }
+/* eslint-enable consistent-return */

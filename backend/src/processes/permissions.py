@@ -78,30 +78,6 @@ class TemplateAccessPermission(BasePermission):
         return template_access_qst.exists()
 
 
-class TemplateOwnerOrViewerPermission(BasePermission):
-
-    """ Allow access for template owners or template viewers (read-only) """
-
-    message = MSG_PT_0070
-
-    def has_permission(self, request, view):
-        try:
-            template_id = int(view.kwargs.get('pk'))
-        except (ValueError, TypeError):
-            return False
-
-        if request.user.is_account_owner:
-            return True
-
-        return (
-            Template.objects
-            .by_id(template_id)
-            .on_account(request.user.account_id)
-            .with_template_owner_or_viewer(request.user.id)
-            .exists()
-        )
-
-
 class TemplateFieldsPermission(BasePermission):
 
     """ Allow access for template owners, viewers or workflow members """
@@ -140,10 +116,9 @@ class TemplateFieldsPermission(BasePermission):
 
 class UserCanAccessHighlightsPermission(BasePermission):
 
-    """ Allow admin, account owner, template owners or template viewers
-        (of any template on account) to access Highlights and Reports.
-        Template starters are NOT allowed — they only have access
-        to Dashboard and My Tasks sections. """
+    """ Allow admin, account owner, template owners, viewers
+        or template starters (of any template on account) to
+        access Highlights. """
 
     def has_permission(self, request, view):
         if request.user.is_admin or request.user.is_account_owner:
@@ -151,7 +126,7 @@ class UserCanAccessHighlightsPermission(BasePermission):
         return (
             Template.objects
             .on_account(request.user.account_id)
-            .with_template_owner_or_viewer(request.user.id)
+            .with_template_access(request.user.id)
             .exists()
         )
 
@@ -196,7 +171,7 @@ class WorkflowMemberOrViewerPermission(BasePermission):
                 pk=workflow_id,
                 account_id=request.user.account_id,
             )
-            .with_template_owner_or_viewer(request.user.id)
+            .with_owner_viewer_or_started_by_starter(request.user.id)
             .exists()
         )
 
@@ -387,7 +362,7 @@ class TaskWorkflowMemberOrViewerPermission(BasePermission):
                 tasks__id=task_id,
                 account_id=request.user.account_id,
             )
-            .with_template_owner_or_viewer(request.user.id)
+            .with_owner_viewer_or_started_by_starter(request.user.id)
             .exists()
         )
 
@@ -430,8 +405,12 @@ class TaskCommentPermission(BasePermission):
         if is_workflow_member:
             return True
 
-        # Check template owner or viewer
-        return base_qst.with_template_owner_or_viewer(user_id).exists()
+        # Check template owner, viewer or starter who started workflow
+        return (
+            base_qst
+            .with_owner_viewer_or_started_by_starter(user_id)
+            .exists()
+        )
 
 
 class WorkflowCommentPermission(BasePermission):
@@ -469,8 +448,12 @@ class WorkflowCommentPermission(BasePermission):
         if is_workflow_member:
             return True
 
-        # Check template owner or viewer
-        return base_qst.with_template_owner_or_viewer(user_id).exists()
+        # Check template owner, viewer or starter who started workflow
+        return (
+            base_qst
+            .with_owner_viewer_or_started_by_starter(user_id)
+            .exists()
+        )
 
 
 class GuestWorkflowPermission(BasePermission):
@@ -647,7 +630,7 @@ class CommentReactionPermission(BasePermission):
             Workflow.objects
             .by_id(workflow_id)
             .on_account(user.account_id)
-            .with_template_owner_or_viewer(user.id)
+            .with_owner_viewer_or_started_by_starter(user.id)
             .exists()
         )
 

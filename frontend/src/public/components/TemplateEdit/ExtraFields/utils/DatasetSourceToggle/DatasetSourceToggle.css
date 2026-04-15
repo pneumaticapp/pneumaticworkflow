@@ -1,0 +1,178 @@
+.dataset-source-toggle {
+  position: relative;
+  margin-top: 1.6rem;
+  display: flex;
+  box-sizing: border-box;
+  max-width: 100%;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.6rem;
+
+  @media (--mobile) {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    width: calc(100% + 40px);
+    max-width: none;
+  }
+}
+
+.dataset-source-toggle__left {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.dataset-source-toggle__right {
+  position: relative;
+  flex-shrink: 0;
+
+  @media (--mobile) {
+    width: 100%;
+  }
+
+  & [class*='react-select__option--is-selected'] {
+    cursor: default;
+    color: var(--pneumatic-color-black32);
+    background-color: transparent;
+
+    & .dataset-source-toggle__option-text {
+      color: var(--pneumatic-color-black32);
+    }
+  }
+}
+
+.dataset-source-toggle__tabs {
+  display: inline-flex;
+  height: 2.8rem;
+  background: var(--pneumatic-color-black8);
+  border-radius: 1.4rem;
+
+  @media (--mobile) {
+    display: flex;
+    width: 100%;
+    height: auto;
+    min-height: 2.8rem;
+  }
+}
+
+.dataset-source-toggle__tab {
+  all: unset;
+  padding: 0.6rem 1.2rem;
+  text-align: center;
+  white-space: nowrap;
+  cursor: pointer;
+  border-radius: 1.4rem;
+  transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out;
+  flex-grow: 1;
+
+  @mixin text-small bold;
+
+  &:not(.dataset-source-toggle__tab_active):hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}
+
+.dataset-source-toggle__tab_active {
+  color: var(--pneumatic-color-white);
+  background: var(--pneumatic-color-link-hover);
+}
+
+.dataset-source-toggle__dropdown-popup {
+  position: absolute;
+  z-index: 10;
+  top: calc(100% + 0.4rem);
+  left: 0;
+  width: 30.4rem;
+
+  @media (--mobile) {
+    width: 100%;
+  }
+
+  & [class*='react-select__menu'] {
+    max-width: 100%;
+  }
+
+  & [class*='react-select__menu-list'] {
+    margin: 0;
+    padding: 0;
+    color: var(--pneumatic-color-black100);
+    background: var(--pneumatic-color-white);
+    border-radius: 0.8rem;
+    box-shadow: 0 0.8rem 1.6rem 0 var(--pneumatic-color-black95);
+
+    @mixin text-base;
+  }
+
+  & [class*='react-select__placeholder'] {
+    display: block;
+    max-width: 100%;
+
+    @mixin text-overflow;
+  }
+
+  & [class*='react-select__single-value'] {
+    max-width: 100%;
+    color: var(--pneumatic-color-black100);
+
+    @mixin text-overflow;
+  }
+}
+
+.dataset-source-toggle__info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dataset-source-toggle__info-dataset {
+  margin-top: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dataset-source-toggle__info-label {
+  @mixin text-base;
+
+  color: var(--pneumatic-color-black100);
+}
+
+.dataset-source-toggle__info-tag {
+  padding: 0.1rem 0.8rem;
+  color: var(--pneumatic-color-black100);
+  background-color: var(--pneumatic-color-selection);
+  border-radius: 0.4rem;
+
+  @mixin text-small;
+}
+
+.dataset-source-toggle__clear-btn {
+  @mixin btn-field-action;
+}
+
+.dataset-source-toggle__option-text {
+  display: block;
+
+  @mixin text-overflow;
+}
+
+.dataset-source-toggle__tooltip-container {
+  display: inline-block;
+  max-width: 100%;
+}
+
+.dataset-source-toggle__info-tag-tooltip {
+  display: block;
+  overflow: hidden;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.dataset-source-toggle__tooltip-box {
+  padding: 0.4rem 0.8rem;
+  text-align: center;
+}

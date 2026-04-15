@@ -225,6 +225,32 @@ export const GROUP_NAME_RULES: IRule[] = [
   },
 ];
 
+export const DATASET_NAME_RULES: IRule[] = [
+  {
+    message: 'validation.dataset-name-empty',
+    isInvalid: isEmpty,
+  },
+  {
+    message: 'validation.dataset-name-to-long',
+    isInvalid: (value) => value.length > 200,
+  },
+];
+
+export const getDatasetRowRules = (existingItems: string[]): IRule[] => [
+  {
+    message: 'validation.dataset-row-empty',
+    isInvalid: isEmpty,
+  },
+  {
+    message: 'validation.dataset-row-exists',
+    isInvalid: (value: string) => {
+      const trimmedValue = (value || '').trim().toLowerCase();
+      if (!trimmedValue) return false; 
+      return existingItems.some((item) => item.trim().toLowerCase() === trimmedValue);
+    },
+  },
+];
+
 export const validateFieldCreator =
   (rules: IRule[]) =>
   (value: any): string => {
@@ -250,5 +276,19 @@ export const validateKickoffFieldDescription = validateFieldCreator(KICKOFF_FIEL
 export const validateRegistrationPassword = validateFieldCreator(REGISTRATION_PASSWORD_RULES);
 export const validateDelayField = validateFieldCreator(DELAY_RULES);
 export const validateCheckboxAndRadioField = validateFieldCreator(CHECKBOX_AND_RADIO_FIELDS_RULUES);
+export const getSelectionDuplicateError = (value: string, allValues: string[]): string => {
+  const trimmedValue = (value || '').trim().toLowerCase();
+  if (!trimmedValue) return '';
+  const count = allValues.filter((item) => item.trim().toLowerCase() === trimmedValue).length;
+  return count > 1 ? 'validation.checkbox-and-radio-value-duplicate' : '';
+};
 export const validateTenantName = validateFieldCreator(TENANT_NAME_RULES);
 export const validateGroupName = validateFieldCreator(GROUP_NAME_RULES);
+export const validateDatasetName = validateFieldCreator(DATASET_NAME_RULES);
+export const validateDatasetRow = (value: string, existingItems: string[], excludeValue?: string) => {
+  const filtered = excludeValue
+    ? existingItems.filter((item) => item.trim().toLowerCase() !== excludeValue.trim().toLowerCase())
+    : existingItems;
+
+  return validateFieldCreator(getDatasetRowRules(filtered))(value);
+};

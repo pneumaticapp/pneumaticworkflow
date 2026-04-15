@@ -58,12 +58,19 @@ class SendTasksDigest(SendDigest):
         task_name: str,
         template: TemplateForTasksDigest,
     ):
-        api_name = VAR_PATTERN.findall(task_name)
-        if api_name:
-            task_name = insert_fields_values_to_text(
-                text=task_name,
-                fields_values={api_name[0]: template.fields[api_name[0]]},
-            )
+        api_names = VAR_PATTERN.findall(task_name)
+        if api_names:
+            fields_values = {}
+            for api_name in api_names:
+                if api_name in template.fields:
+                    fields_values[api_name] = template.fields[api_name]
+                elif api_name == 'template-name':
+                    fields_values[api_name] = template.template_name
+            if fields_values:
+                task_name = insert_fields_values_to_text(
+                    text=task_name,
+                    fields_values=fields_values,
+                )
         return task_name
 
     def _add_template_data(

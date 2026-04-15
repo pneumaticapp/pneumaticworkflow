@@ -25,6 +25,7 @@ export type TOptionBase<IdKey extends string, LabelKey extends string> = {
   subTitle?: string;
   searchByText?: string;
   isTitle?: boolean;
+  type?: string;
 };
 
 interface IFilterSelectCommonProps<
@@ -304,7 +305,7 @@ export function FilterSelect<
 
           return (
             <DropdownItem
-              key={typeof option !== 'string' ? option[optionIdKey] : option}
+              key={typeof option !== 'string' ? `${option.type || ''}-${option[optionIdKey]}` : option}
               className={classnames('dropdown-item-sm', styles['value-item'])}
               onClick={typeof option !== 'string' ? handleChange(option) : () => {}}
               toggle={!isMultiple}

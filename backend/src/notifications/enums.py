@@ -32,6 +32,9 @@ class NotificationMethod:
     user_created = 'user_created'
     user_updated = 'user_updated'
     user_deleted = 'user_deleted'
+    dataset_created = 'dataset_created'
+    dataset_updated = 'dataset_updated'
+    dataset_deleted = 'dataset_deleted'
     workflows_digest = 'workflows_digest'
     tasks_digest = 'tasks_digest'
     user_deactivated = 'user_deactivated'
@@ -67,6 +70,9 @@ class NotificationMethod:
         user_created,
         user_updated,
         user_deleted,
+        dataset_created,
+        dataset_updated,
+        dataset_deleted,
         workflows_digest,
         tasks_digest,
         user_deactivated,

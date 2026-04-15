@@ -15,6 +15,7 @@ from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_guest,
+    create_test_template,
     create_test_user,
     create_test_workflow,
 )
@@ -705,3 +706,57 @@ def test_create_reaction__value_invalid_type__validation_error(
     assert response.data['message'] == 'Not a valid string.'
     service_init_mock.assert_not_called()
     create_reaction_mock.assert_not_called()
+
+
+def test_create_reaction__template_starter_own_workflow__ok(
+    api_client,
+    mocker,
+):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    workflow = create_test_workflow(template=template, user=template_owner)
+    # The starter started THIS workflow
+    workflow.workflow_starter_id = starter_user.id
+    workflow.save(update_fields=['workflow_starter_id'])
+
+    comment = WorkflowEventService.comment_created_event(
+        text='Owner comment',
+        task=workflow.tasks.first(),
+        user=template_owner,
+        after_create_actions=False,
+    )
+
+    reaction = mocker.Mock(id=1, value='likes', user_id=starter_user.id)
+    mocker.patch(
+        'src.processes.services.events.'
+        'CommentService.create_reaction',
+        return_value=reaction,
+    )
+
+    api_client.token_authenticate(starter_user)
+
+    # act
+    response = api_client.post(
+        f'/workflows/comments/{comment.id}/create-reaction',
+        data={'value': 'likes'},
+    )
+
+    # assert
+    assert response.status_code == 204

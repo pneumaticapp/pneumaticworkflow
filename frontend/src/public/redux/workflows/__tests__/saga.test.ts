@@ -15,7 +15,7 @@ import { cloneWorkflowAction, deleteWorkflowAction, returnWorkflowToTaskAction, 
 describe('workflows saga', () => {
   it('deleteWorkflowSaga work', () => {
     const saga = deleteWorkflowSaga({ type: deleteWorkflowAction.type, payload: { workflowId: 1 } });
-    const deleteApiMock = jest.spyOn(deleteApi, 'deleteWorkflow').mockImplementation(() => Promise.resolve(null));
+    const deleteApiMock = jest.spyOn(deleteApi, 'deleteWorkflow').mockImplementation(() => Promise.resolve());
     const notificationManagerSuccessMock = jest.spyOn(NotificationManager, 'success');
     saga.next();
     saga.next();
@@ -33,7 +33,7 @@ describe('workflows saga', () => {
     });
     const finishWorkflowApiMock = jest
       .spyOn(finishWorkflowApi, 'finishWorkflow')
-      .mockImplementation(() => Promise.resolve(null));
+      .mockImplementation(() => Promise.resolve());
     const notificationManagerSuccessMock = jest.spyOn(NotificationManager, 'success');
     saga.next();
     saga.next();

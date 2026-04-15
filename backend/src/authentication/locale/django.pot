@@ -1,0 +1,86 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+#, fuzzy
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-04-07 11:48+0000\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"Language: \n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+msgid "Access token not found for the user."
+msgstr ""
+
+#, python-brace-format
+msgid "Your account has not been verified. A new verification link was sent to {email}."
+msgstr ""
+
+msgid "Invalid login or password."
+msgstr ""
+
+#. Translators: Microsoft account doesn't contain email
+msgid "Email is not listed in profile."
+msgstr ""
+
+msgid "Error while retrieving Microsoft profile data."
+msgstr ""
+
+msgid "Phone number must be entered in the format: \"+99999999999\". Up to 15 digits allowed."
+msgstr ""
+
+#. Translators: Guest authentication
+msgid "Authorization header contain spaces."
+msgstr ""
+
+msgid "Token is invalid."
+msgstr ""
+
+msgid "Token is expired."
+msgstr ""
+
+#. Translators: Guest authentication
+msgid "Given token not valid for guest token type."
+msgstr ""
+
+#. Translators: Guest authentication
+msgid "Token contained no recognizable user identification."
+msgstr ""
+
+#. Translators: Change password from profile
+msgid "The current password is incorrect."
+msgstr ""
+
+msgid "The new password and its confirmation don't match."
+msgstr ""
+
+#. Translators: Google authorization
+msgid "Error while retrieving Google profile data."
+msgstr ""
+
+msgid "The system is configured to use a different SSO provider. Please contact your administrator."
+msgstr ""
+
+msgid "This account uses SSO authentication. Please sign in through your organization's SSO portal."
+msgstr ""
+
+msgid "SSO authentication is currently unavailable. Please contact support."
+msgstr ""
+
+#, python-brace-format
+msgid "No active SSO configuration found for the domain: \"{domain}\"."
+msgstr ""
+
+msgid "This account does not use SSO authentication. Please contact support."
+msgstr ""
+
+msgid "Format field is required"
+msgstr ""
