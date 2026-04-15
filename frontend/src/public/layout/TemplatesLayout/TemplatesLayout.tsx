@@ -37,9 +37,9 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
     dispatch(setDatasetsListSorting(value));
   };
 
-  const isDatasetDetail = /^\/datasets\/\d+\/?$/.test(pathname);
+  const isDatasetDetail = /^\/datasets\/\d+\/?$/.test(history.location.pathname);
 
-  const activeTab = pathname.startsWith(ERoutes.Datasets)
+  const activeTab = history.location.pathname.startsWith(ERoutes.Datasets)
     ? ETemplatesTab.Datasets
     : ETemplatesTab.Templates;
 
