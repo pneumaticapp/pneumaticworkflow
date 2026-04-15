@@ -125,19 +125,6 @@ class UserSerializer(
             self.fields['language'].choices = Language.CHOICES
         else:
             self.fields['language'].choices = Language.EURO_CHOICES
-        # AccountPrimaryKeyRelatedField already filters by account
-        # (via context).  Here we additionally restrict to active
-        # users so that DRF rejects inactive/invited users at the
-        # deserialization stage before the data reaches the service.
-        # Context is absent during read-only serialization
-        # (e.g. UserSerializer(instance=user).data); in that case
-        # get_queryset() is never called, so no guard is needed.
-        if 'account' in self.context:
-            active_qs = UserModel.objects.active()
-            self.fields['manager_id'].queryset = active_qs
-            self.fields[
-                'subordinates'
-            ].child_relation.queryset = active_qs
 
     def validate_is_admin(self, value):
         if value is True and not self.context['user'].is_admin:

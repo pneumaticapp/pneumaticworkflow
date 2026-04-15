@@ -311,9 +311,6 @@ class UserService(
             subordinate.manager = None
             ws_data = UserWebsocketSerializer(subordinate).data
 
-            # Capture ws_data via default argument so each
-            # iteration gets its own snapshot; without it the
-            # closure would reference the rebinding loop variable.
             def notify(data=ws_data):
                 send_user_updated_notification.delay(
                     logging=False,
@@ -596,10 +593,6 @@ class UserService(
                         UserWebsocketSerializer(user).data
                     )
 
-                    # Capture ws_data_user via default argument
-                    # so each iteration gets its own snapshot;
-                    # without it the closure would reference the
-                    # rebinding loop variable.
                     def notify(data=ws_data_user):
                         send_user_updated_notification.delay(
                             logging=False,
@@ -618,8 +611,6 @@ class UserService(
                         UserWebsocketSerializer(mgr).data
                     )
 
-                    # Same default-argument capture pattern
-                    # as notify() above.
                     def notify_mgr(data=ws_data_mgr):
                         send_user_updated_notification.delay(
                             logging=False,

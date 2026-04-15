@@ -10,9 +10,9 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-def test_user_serializer__manager_id__uses_account_filter():
-    """AccountPrimaryKeyRelatedField filters by account
-    via get_queryset(); verify queryset is set on __init__."""
+def test_user_serializer__manager_id__is_account_field():
+    """manager_id is an AccountPrimaryKeyRelatedField
+    (queryset filtering happens in get_queryset())."""
     # arrange
     account = create_test_account()
     user = create_test_not_admin(account=account)
@@ -22,16 +22,14 @@ def test_user_serializer__manager_id__uses_account_filter():
         context={'account': account, 'user': user},
     )
 
-    # act
-    qs = serializer.fields['manager_id'].queryset
-
-    # assert — queryset is set (not the default .none())
-    assert qs is not None
-    assert qs.count() >= 0
+    # assert — field exists and has a base queryset
+    field = serializer.fields['manager_id']
+    assert field.source == 'manager'
+    assert field.queryset is not None
 
 
-def test_user_serializer__subordinates__uses_account_filter():
-    """Subordinates field queryset is set via __init__."""
+def test_user_serializer__subordinates__is_account_field():
+    """subordinates is an AccountPrimaryKeyRelatedField(many=True)."""
     # arrange
     account = create_test_account()
     user = create_test_not_admin(account=account)
@@ -40,13 +38,10 @@ def test_user_serializer__subordinates__uses_account_filter():
         instance=user,
         context={'account': account, 'user': user},
     )
-
-    # act
-    qs = serializer.fields['subordinates'].child_relation.queryset
 
     # assert
-    assert qs is not None
-    assert qs.count() >= 0
+    field = serializer.fields['subordinates']
+    assert field.child_relation.queryset is not None
 
 
 def test_user_serializer__validate__password_to_raw_password():
@@ -67,23 +62,6 @@ def test_user_serializer__validate__password_to_raw_password():
     assert 'raw_password' in result
     assert 'password' not in result
     assert result['raw_password'] == 'secret123'
-
-
-def test_user_serializer__no_account_ctx__default_queryset():
-    """When context has no 'account' the default queryset
-    stays as-is (read-only serialization path)."""
-    # arrange
-    account = create_test_account()
-    user = create_test_not_admin(account=account)
-
-    serializer = UserSerializer(
-        instance=user,
-        context={'user': user},
-    )
-
-    # act / assert — no crash, queryset stays the default
-    qs = serializer.fields['manager_id'].queryset
-    assert qs is not None
 
 
 def test_user_serializer__language_choices__ru(mocker):
