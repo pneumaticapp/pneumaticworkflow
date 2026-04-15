@@ -191,6 +191,7 @@ class TaskSchemaV1(serializers.ModelSerializer):
             'clear_description',
             'number',
             'require_completion_by_all',
+            'skip_for_starter',
             'fields',
             'delay',
             'conditions',
