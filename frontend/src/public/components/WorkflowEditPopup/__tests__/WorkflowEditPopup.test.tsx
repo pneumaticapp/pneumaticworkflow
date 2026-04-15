@@ -55,6 +55,7 @@ const baseWorkflow = {
   kickoff: {
     description: '',
     fields: [],
+    fieldsets: [],
   },
 };
 
@@ -91,6 +92,7 @@ describe('WorkflowEditPopup', () => {
             makeField({ apiName: 'f2', isHidden: false }),
             makeField({ apiName: 'f3' }),
           ],
+          fieldsets: [],
         },
       };
 

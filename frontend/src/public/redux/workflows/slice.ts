@@ -64,7 +64,7 @@ export const initialWorkflowsFilters: IWorkflowsSettings['values'] = {
 const initialWorkflowEdit = {
   workflow: {
     name: '',
-    kickoff: { description: '', fields: [] } as IKickoff,
+    kickoff: { description: '', fields: [], fieldsets: [] } as IKickoff,
   },
   isWorkflowNameEditing: false,
   isKickoffEditing: false,

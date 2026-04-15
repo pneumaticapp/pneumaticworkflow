@@ -1,6 +1,6 @@
+import pytest
 from datetime import timedelta
 
-import pytest
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
@@ -13,7 +13,8 @@ from src.processes.enums import (
     PredicateOperator,
     WorkflowStatus, TaskStatus,
 )
-from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.fieldset import FieldSet, FieldSetRule
+from src.processes.models.workflows.fields import FieldSelection, TaskField
 from src.processes.models.workflows.raw_due_date import RawDueDate
 from src.processes.models.workflows.task import (
     Delay,
@@ -35,8 +36,15 @@ from src.processes.tests.fixtures import (
     create_test_not_admin,
     create_test_owner,
     create_test_template,
-    create_test_workflow,
+    create_test_workflow, create_test_fieldset,
 )
+
+from src.processes.enums import (
+    FieldSetLayout,
+    FieldSetRuleType,
+    LabelPosition,
+)
+
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -2097,3 +2105,659 @@ def test_update_performers__removed_group_user_already_performer__not_sent(
     send_new_task_notification_mock.assert_not_called()
     send_new_task_websocket_mock.assert_not_called()
     send_removed_task_notification_mock.assert_not_called()
+
+
+def test__update_field__fieldset_none__ok():
+
+    """
+    Call with default `fieldset=None`
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    field_data = {
+        'api_name': 'field-1',
+        'name': 'Test Field',
+        'description': 'Test description',
+        'type': FieldType.STRING,
+        'is_required': False,
+        'is_hidden': False,
+        'order': 1,
+        'dataset_id': None,
+    }
+
+    # act
+    field, created = service._update_field(field_data=field_data)
+
+    # assert
+    assert created is True
+    assert field.api_name == 'field-1'
+    assert field.name == 'Test Field'
+    assert field.description == 'Test description'
+    assert field.type == FieldType.STRING
+    assert field.is_required is False
+    assert field.is_hidden is False
+    assert field.order == 1
+    assert field.fieldset is None
+    assert field.task == task
+    assert field.workflow == workflow
+    assert field.account == user.account
+
+
+def test__update_field__fieldset_provided__ok():
+
+    """
+    Call with an explicit `fieldset` instance
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+    )
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    field_data = {
+        'api_name': 'field-1',
+        'name': 'Test Field',
+        'description': 'Test description',
+        'type': FieldType.STRING,
+        'is_required': False,
+        'is_hidden': False,
+        'order': 1,
+        'dataset_id': None,
+    }
+
+    # act
+    field, created = service._update_field(
+        field_data=field_data,
+        fieldset=fieldset,
+    )
+
+    # assert
+    assert created is True
+    assert field.api_name == 'field-1'
+    assert field.fieldset == fieldset
+    assert field.task == task
+    assert field.workflow == workflow
+    assert field.account == user.account
+
+
+def test__update_field_selections__no_selections_key__skip():
+
+    """
+    `field_data` has no `selections` key — `if` block is skipped
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        workflow=workflow,
+        account=user.account,
+        type=FieldType.DROPDOWN,
+        name='Test Field',
+        api_name='field-1',
+        order=0,
+    )
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    field_data = {}
+
+    # act
+    service._update_field_selections(field=task_field, field_data=field_data)
+
+    # assert
+    assert FieldSelection.objects.filter(field=task_field).count() == 0
+
+
+def test__update_field_selections__selections_empty__skip():
+
+    """
+    `field_data['selections']` is an empty list — `if` block is skipped
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        workflow=workflow,
+        account=user.account,
+        type=FieldType.DROPDOWN,
+        name='Test Field',
+        api_name='field-1',
+        order=0,
+    )
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    field_data = {'selections': []}
+
+    # act
+    service._update_field_selections(field=task_field, field_data=field_data)
+
+    # assert
+    assert FieldSelection.objects.filter(field=task_field).count() == 0
+
+
+def test__update_field_selections__selections_exist__ok():
+
+    """
+    `field_data['selections']` has items — `if` block executes
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        workflow=workflow,
+        account=user.account,
+        type=FieldType.DROPDOWN,
+        name='Test Field',
+        api_name='field-1',
+        order=0,
+    )
+    old_selection = FieldSelection.objects.create(
+        field=task_field,
+        api_name='old-selection-1',
+        value='Old Value',
+    )
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    field_data = {
+        'selections': [
+            {
+                'api_name': 'selection-1',
+                'value': 'New Value',
+            },
+        ],
+    }
+
+    # act
+    service._update_field_selections(field=task_field, field_data=field_data)
+
+    # assert
+    assert not FieldSelection.objects.filter(id=old_selection.id).exists()
+    assert FieldSelection.objects.filter(
+        field=task_field,
+        api_name='selection-1',
+        value='New Value',
+    ).exists()
+
+
+def test__update_fieldset_rules__rules_data_none__skip():
+
+    """
+    `rules_data=None` — treated as empty list, loop does not execute
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+    )
+    existing_rule = FieldSetRule.objects.create(
+        fieldset=fieldset,
+        account_id=user.account_id,
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='100',
+        api_name='rule-1',
+    )
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+
+    # act
+    service._update_fieldset_rules(fieldset=fieldset, rules_data=None)
+
+    # assert
+    assert not FieldSetRule.objects.filter(id=existing_rule.id).exists()
+
+
+def test__update_fieldset_rules__rules_data_empty__skip():
+
+    """
+    `rules_data` is an empty list — loop does not execute
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+    )
+    existing_rule = FieldSetRule.objects.create(
+        fieldset=fieldset,
+        account_id=user.account_id,
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='100',
+        api_name='rule-1',
+    )
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+
+    # act
+    service._update_fieldset_rules(fieldset=fieldset, rules_data=[])
+
+    # assert
+    assert not FieldSetRule.objects.filter(id=existing_rule.id).exists()
+
+
+def test__update_fieldset_rules__rules_data_provided__ok():
+
+    """
+    `rules_data` has items — loop executes for each rule
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+    )
+    old_rule = FieldSetRule.objects.create(
+        fieldset=fieldset,
+        account_id=user.account_id,
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='50',
+        api_name='old-rule-1',
+    )
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    rules_data = [
+        {
+            'api_name': 'rule-1',
+            'type': FieldSetRuleType.SUM_EQUAL,
+            'value': '100',
+        },
+    ]
+
+    # act
+    service._update_fieldset_rules(fieldset=fieldset, rules_data=rules_data)
+
+    # assert
+    assert not FieldSetRule.objects.filter(id=old_rule.id).exists()
+    assert FieldSetRule.objects.filter(
+        fieldset=fieldset,
+        api_name='rule-1',
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='100',
+    ).exists()
+
+
+def test__update_fieldset_fields__fields_data_none__skip(mocker):
+
+    """
+    `fields_data=None` — treated as empty list, loop does not execute
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+    )
+    old_field = TaskField.objects.create(
+        workflow=workflow,
+        account=user.account,
+        type=FieldType.STRING,
+        name='Old Field',
+        api_name='old-field-1',
+        fieldset=fieldset,
+        order=0,
+    )
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    _update_field_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_field',
+    )
+    _update_field_selections_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_field_selections',
+    )
+
+    # act
+    service._update_fieldset_fields(fieldset=fieldset, fields_data=None)
+
+    # assert
+    assert not TaskField.objects.filter(id=old_field.id).exists()
+    _update_field_mock.assert_not_called()
+    _update_field_selections_mock.assert_not_called()
+
+
+def test__update_fieldset_fields__fields_data_empty__skip(mocker):
+
+    """
+    `fields_data` is an empty list — loop does not execute
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+    )
+    old_field = TaskField.objects.create(
+        workflow=workflow,
+        account=user.account,
+        type=FieldType.STRING,
+        name='Old Field',
+        api_name='old-field-1',
+        fieldset=fieldset,
+        order=0,
+    )
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    _update_field_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_field',
+    )
+    _update_field_selections_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_field_selections',
+    )
+
+    # act
+    service._update_fieldset_fields(fieldset=fieldset, fields_data=[])
+
+    # assert
+    assert not TaskField.objects.filter(id=old_field.id).exists()
+    _update_field_mock.assert_not_called()
+    _update_field_selections_mock.assert_not_called()
+
+
+def test__update_fieldset_fields__fields_data_provided__ok(mocker):
+
+    """
+    `fields_data` has items — loop executes for each field
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+    )
+    old_field = TaskField.objects.create(
+        workflow=workflow,
+        account=user.account,
+        type=FieldType.STRING,
+        name='Old Field',
+        api_name='old-field-1',
+        fieldset=fieldset,
+        order=0,
+    )
+    new_field = TaskField.objects.create(
+        task=task,
+        workflow=workflow,
+        account=user.account,
+        type=FieldType.STRING,
+        name='New Field',
+        api_name='new-field-1',
+        fieldset=fieldset,
+        order=1,
+    )
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    fields_data = [
+        {
+            'api_name': 'new-field-1',
+            'name': 'New Field',
+            'description': '',
+            'type': FieldType.STRING,
+            'is_required': False,
+            'is_hidden': False,
+            'order': 1,
+            'dataset_id': None,
+        },
+    ]
+    _update_field_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_field',
+        return_value=(new_field, False),
+    )
+    _update_field_selections_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_field_selections',
+    )
+
+    # act
+    service._update_fieldset_fields(fieldset=fieldset, fields_data=fields_data)
+
+    # assert
+    assert not TaskField.objects.filter(id=old_field.id).exists()
+    assert TaskField.objects.filter(id=new_field.id).exists()
+    _update_field_mock.assert_called_once_with(
+        fields_data[0],
+        fieldset=fieldset,
+    )
+    _update_field_selections_mock.assert_called_once_with(
+        new_field,
+        fields_data[0],
+    )
+
+
+def test__update_fieldsets__data_none__ok(mocker):
+
+    """
+    `data=None` — loop does not execute, all task fieldsets are deleted
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    old_fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+    )
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    _update_fieldset_rules_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_fieldset_rules',
+    )
+    _update_fieldset_fields_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_fieldset_fields',
+    )
+
+    # act
+    service._update_fieldsets(data=None)
+
+    # assert
+    assert not FieldSet.objects.filter(id=old_fieldset.id).exists()
+    _update_fieldset_rules_mock.assert_not_called()
+    _update_fieldset_fields_mock.assert_not_called()
+
+
+def test__update_fieldsets__data_empty__ok(mocker):
+
+    """
+    `data` is an empty list — loop does not execute,
+    all task fieldsets are deleted
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    old_fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+    )
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    _update_fieldset_rules_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_fieldset_rules',
+    )
+    _update_fieldset_fields_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_fieldset_fields',
+    )
+
+    # act
+    service._update_fieldsets(data=[])
+
+    # assert
+    assert not FieldSet.objects.filter(id=old_fieldset.id).exists()
+    _update_fieldset_rules_mock.assert_not_called()
+    _update_fieldset_fields_mock.assert_not_called()
+
+
+def test__update_fieldsets__data_provided__ok(mocker):
+
+    """
+    `data` has items — loop executes for each fieldset
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    old_fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+    )
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    data = [
+        {
+            'api_name': 'fieldset-1',
+            'name': 'New Fieldset',
+            'description': 'Test description',
+            'order': 1,
+            'label_position': LabelPosition.TOP,
+            'layout': FieldSetLayout.VERTICAL,
+            'rules': [
+                {
+                    'api_name': 'rule-1',
+                    'type': FieldSetRuleType.SUM_EQUAL,
+                    'value': '100',
+                },
+            ],
+            'fields': [
+                {
+                    'api_name': 'field-1',
+                    'name': 'Test Field',
+                    'description': '',
+                    'type': FieldType.STRING,
+                    'is_required': False,
+                    'is_hidden': False,
+                    'order': 1,
+                    'dataset_id': None,
+                },
+            ],
+        },
+    ]
+    _update_fieldset_rules_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_fieldset_rules',
+    )
+    _update_fieldset_fields_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_fieldset_fields',
+    )
+
+    # act
+    service._update_fieldsets(data=data)
+
+    # assert
+    assert not FieldSet.objects.filter(id=old_fieldset.id).exists()
+    new_fieldset = FieldSet.objects.get(
+        api_name='fieldset-1',
+        task=task,
+    )
+    assert new_fieldset.name == 'New Fieldset'
+    assert new_fieldset.description == 'Test description'
+    assert new_fieldset.order == 1
+    _update_fieldset_rules_mock.assert_called_once_with(
+        fieldset=new_fieldset,
+        rules_data=data[0]['rules'],
+    )
+    _update_fieldset_fields_mock.assert_called_once_with(
+        fieldset=new_fieldset,
+        fields_data=data[0]['fields'],
+    )

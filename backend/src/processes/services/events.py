@@ -603,9 +603,6 @@ class WorkflowEventService:
 
 class CommentService(BaseModelService):
 
-    def _create_related(self, **kwargs):
-        pass
-
     def _create_instance(self, **kwargs):
         pass
 

@@ -9,6 +9,10 @@ from src.processes.models.templates.conditions import (
     PredicateTemplate,
     RuleTemplate,
 )
+from src.processes.models.templates.fieldset import (
+    FieldsetTemplate,
+    FieldsetTemplateRule,
+)
 from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
@@ -58,15 +62,56 @@ class FieldSchemaV1(serializers.ModelSerializer):
     )
 
 
+class FieldsetTemplateRuleSchemaV1(serializers.ModelSerializer):
+
+    class Meta:
+        model = FieldsetTemplateRule
+        fields = (
+            'api_name',
+            'type',
+            'value',
+        )
+
+
+class FieldSetSchemaV1(serializers.ModelSerializer):
+
+    class Meta:
+        model = FieldsetTemplate
+        fields = (
+            'api_name',
+            'name',
+            'description',
+            'order',
+            'label_position',
+            'layout',
+            'fields',
+            'rules',
+        )
+
+    fields = FieldSchemaV1(many=True, allow_null=True, allow_empty=True)
+    rules = FieldsetTemplateRuleSchemaV1(
+        many=True,
+        allow_null=True,
+        allow_empty=True,
+    )
+
+
 class KickoffSchemaV1(serializers.ModelSerializer):
 
     class Meta:
         model = Kickoff
         fields = (
             'fields',
+            'fieldsets',
         )
 
     fields = FieldSchemaV1(many=True, allow_null=True, allow_empty=True)
+    fieldsets = FieldSetSchemaV1(
+        many=True,
+        allow_null=True,
+        allow_empty=True,
+        required=False,
+    )
 
 
 class TemplateOwnerSchemaV1(serializers.ModelSerializer):
@@ -193,6 +238,7 @@ class TaskSchemaV1(serializers.ModelSerializer):
             'require_completion_by_all',
             'skip_for_starter',
             'fields',
+            'fieldsets',
             'delay',
             'conditions',
             'raw_performers',
@@ -203,6 +249,12 @@ class TaskSchemaV1(serializers.ModelSerializer):
         )
 
     fields = FieldSchemaV1(many=True, allow_null=True, allow_empty=True)
+    fieldsets = FieldSetSchemaV1(
+        many=True,
+        allow_null=True,
+        allow_empty=True,
+        required=False,
+    )
     conditions = ConditionSchemaV1(
         many=True,
         allow_null=True,

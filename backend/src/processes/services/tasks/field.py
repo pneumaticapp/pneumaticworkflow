@@ -287,6 +287,7 @@ class TaskFieldService(BaseWorkflowService):
         self.instance = TaskField(
             kickoff_id=kwargs.get('kickoff_id'),
             task_id=kwargs.get('task_id'),
+            fieldset_id=kwargs.get('fieldset_id'),
             type=instance_template.type,
             is_required=instance_template.is_required,
             is_hidden=instance_template.is_hidden,

@@ -64,6 +64,7 @@ export interface ITemplateTask {
   skipForStarter: boolean;
   rawPerformers: ITemplateTaskPerformer[];
   fields: IExtraField[];
+  fieldsets: number[];
   uuid: string;
   conditions: ICondition[];
   checklists: TOutputChecklist[];
@@ -176,9 +177,59 @@ export type TConditionRulePredicateResponse = {
   operator: EConditionOperators;
 } & TConditionPredicateValue;
 
+/** Fieldset instance from runtime API response (kickoff / task) */
+export interface IFieldsetData {
+  id: number;
+  apiName: string;
+  name: string;
+  description: string;
+  fields: IExtraField[];
+  order?: number;
+  labelPosition?: 'top' | 'left';
+  /** From template list API; used for catalog UI (e.g. fieldset picker meta). */
+  rulesCount?: number;
+}
+
+/** Fieldset template object from list API response (camelCased by commonRequest) */
+export interface IFieldsetTemplateData {
+  id: number;
+  name: string;
+  description: string;
+  rules: { id: number; type: string; value: string }[];
+  fields: {
+    type: string;
+    name: string;
+    description?: string;
+    isRequired?: boolean;
+    isHidden?: boolean;
+    selections?: string[];
+    dataset?: number | null;
+    order: number;
+    apiName: string;
+    default?: string;
+  }[];
+}
+
 export interface IKickoff {
   description: string;
   fields: IExtraField[];
+  fieldsets: number[];
+}
+
+/** Kickoff shape from template list APIs (GET /templates/, GET /templates/titles-by-owners) */
+export interface IKickoffList {
+  fields: {
+    name: string;
+    type: string;
+    isRequired?: boolean;
+    isHidden?: boolean;
+    description?: string;
+    apiName: string;
+    selections?: string[];
+    dataset?: number | null;
+    order: number;
+  }[];
+  fieldsets: IFieldsetTemplateData[];
 }
 
 export interface ITemplateListItem {
@@ -191,7 +242,7 @@ export interface ITemplateListItem {
   tasksCount: number;
   performersCount: number;
   owners: number[];
-  kickoff: IKickoff | null;
+  kickoff: IKickoffList | null;
   isEditable: boolean;
 }
 

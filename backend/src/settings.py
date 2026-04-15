@@ -383,10 +383,10 @@ class Common(Configuration):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': env.get('POSTGRES_DB', 'pneumatic'),
-            'USER': env.get('POSTGRES_USER', 'pneumatic'),
-            'PASSWORD': env.get('POSTGRES_PASSWORD', 'pneumatic'),
-            'HOST': env.get('POSTGRES_HOST', 'localhost'),
+            'NAME': env.get('POSTGRES_DB'),
+            'USER': env.get('POSTGRES_USER'),
+            'PASSWORD': env.get('POSTGRES_PASSWORD'),
+            'HOST': env.get('POSTGRES_HOST'),
             'PORT': env.get('POSTGRES_PORT', '5432'),
         },
     }
@@ -533,18 +533,18 @@ class Staging(Development):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': env.get('POSTGRES_DB', 'pneumatic'),
-            'USER': env.get('POSTGRES_USER', 'pneumatic'),
-            'PASSWORD': env.get('POSTGRES_PASSWORD', 'pneumatic'),
-            'HOST': env.get('POSTGRES_HOST', 'localhost'),
+            'NAME': env.get('POSTGRES_DB'),
+            'USER': env.get('POSTGRES_USER'),
+            'PASSWORD': env.get('POSTGRES_PASSWORD'),
+            'HOST': env.get('POSTGRES_HOST'),
             'PORT': env.get('POSTGRES_PORT', '5432'),
         },
         'replica': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
-            'NAME': env.get('POSTGRES_REPLICA_DB', 'pneumatic'),
-            'USER': env.get('POSTGRES_REPLICA_USER', 'pneumatic'),
-            'PASSWORD': env.get('POSTGRES_REPLICA_PASSWORD', 'pneumatic'),
-            'HOST': env.get('POSTGRES_REPLICA_HOST', 'localhost'),
+            'NAME': env.get('POSTGRES_REPLICA_DB'),
+            'USER': env.get('POSTGRES_REPLICA_USER'),
+            'PASSWORD': env.get('POSTGRES_REPLICA_PASSWORD'),
+            'HOST': env.get('POSTGRES_REPLICA_HOST'),
             'PORT': env.get('POSTGRES_REPLICA_PORT', '5432'),
         },
     }

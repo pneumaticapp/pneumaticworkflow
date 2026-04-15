@@ -12,6 +12,7 @@ from rest_framework.serializers import (
 )
 
 from src.analysis.services import AnalyticService
+from src.generics.fields import AccountPrimaryKeyRelatedField
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
@@ -22,6 +23,7 @@ from src.processes.enums import (
     SystemVariable,
 )
 from src.processes.messages import template as messages
+from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.serializers.templates.checklist import (
@@ -74,6 +76,7 @@ class TaskTemplateSerializer(
             'skip_for_starter',
             'delay',
             'fields',
+            'fieldsets',
             'conditions',
             'api_name',
             'raw_performers',
@@ -101,6 +104,13 @@ class TaskTemplateSerializer(
     number = IntegerField()
     api_name = CharField(max_length=200, required=False)
     fields = FieldTemplateSerializer(many=True, required=False)
+    fieldsets = AccountPrimaryKeyRelatedField(
+        many=True,
+        queryset=FieldsetTemplate.objects.all(),
+        required=False,
+        allow_empty=True,
+        default=list,
+    )
     checklists = ChecklistTemplateSerializer(many=True, required=False)
     conditions = ConditionTemplateSerializer(many=True, required=False)
     raw_performers = RawPerformerSerializer(
@@ -380,6 +390,7 @@ class TaskTemplateSerializer(
         api_name = validated_data['api_name']
         parents = self.context['parents_by_tasks'][api_name]
         ancestors = list(self.context['ancestors_by_tasks'][api_name])
+        fieldsets = validated_data.pop('fieldsets', None) or []
         instance = self.create_or_update_instance(
             validated_data={
                 'template': self.context['template'],
@@ -389,6 +400,7 @@ class TaskTemplateSerializer(
                 **validated_data,
             },
         )
+        instance.fieldsets.set(fieldsets)
         template = self.context['template']
         if template.is_active and validated_data.get('raw_due_date'):
             AnalyticService.templates_task_due_date_created(
@@ -489,6 +501,7 @@ class TaskTemplateSerializer(
             and not hasattr(self.instance, 'raw_due_date')
             and validated_data.get('raw_due_date')
         )
+        fieldsets = validated_data.pop('fieldsets', None) or []
         instance = self.create_or_update_instance(
             instance=instance,
             validated_data={
@@ -499,6 +512,8 @@ class TaskTemplateSerializer(
                 **validated_data,
             },
         )
+        if fieldsets is not None:
+            instance.fieldsets.set(fieldsets)
         if raw_due_date_created:
             AnalyticService.templates_task_due_date_created(
                 user=self.context['user'],
@@ -603,6 +618,7 @@ class TemplateTaskOnlyFieldsSerializer(ModelSerializer):
             'number',
             'api_name',
             'fields',
+            'fieldsets',
         )
 
     fields = FieldTemplateShortViewSerializer(

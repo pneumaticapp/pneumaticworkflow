@@ -399,23 +399,32 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
     is_read_only_viewer = serializers.SerializerMethodField()
 
     def get_kickoff(self, instance: Workflow):
+        field_prefetches = [
+            Prefetch(
+                lookup='selections',
+                queryset=FieldSelection.objects.order_by('id'),
+                to_attr='selections_values',
+            ),
+            Prefetch(
+                'dataset__items',
+                queryset=DatasetItem.objects.order_by('order'),
+                to_attr='dataset_values',
+            ),
+        ]
         kickoff = (
             KickoffValue.objects
             .filter(workflow=self.instance)
             .prefetch_related(
                 Prefetch(
                     lookup='output',
-                    queryset=TaskField.objects.all().prefetch_related(
-                        Prefetch(
-                            lookup='selections',
-                            queryset=FieldSelection.objects.order_by('id'),
-                            to_attr='selections_values',
-                        ),
-                        Prefetch(
-                            'dataset__items',
-                            queryset=DatasetItem.objects.order_by('order'),
-                            to_attr='dataset_values',
-                        ),
+                    queryset=TaskField.objects.filter(
+                        fieldset__isnull=True,
+                    ).prefetch_related(*field_prefetches),
+                ),
+                Prefetch(
+                    lookup='fieldsets__fields',
+                    queryset=TaskField.objects.prefetch_related(
+                        *field_prefetches,
                     ),
                 ),
             ).first()

@@ -44,6 +44,7 @@ const createMockTemplateResponse = (
   kickoff: {
     description: '',
     fields: [],
+    fieldsets: [],
   },
   tasks: [
     {
@@ -68,6 +69,7 @@ const createMockTemplateResponse = (
       checklists: [],
       revertTask: null,
       ancestors: [],
+      fieldsets: [],
     },
   ],
   isPublic: false,
@@ -130,6 +132,7 @@ const createMockTemplate = (overrides: Partial<ITemplate> = {}): ITemplate => ({
       checklists: [],
       revertTask: null,
       ancestors: [],
+      fieldsets: [],
     },
   ],
   isPublic: false,
@@ -153,6 +156,7 @@ describe('template utilities', () => {
       expect(kickoff).toEqual({
         description: '',
         fields: [],
+        fieldsets: [],
       });
     });
   });

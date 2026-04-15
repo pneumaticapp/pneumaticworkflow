@@ -42,6 +42,9 @@ from src.processes.services.tasks.field import (
 from src.processes.services.tasks.mixins import (
     ConditionMixin,
 )
+from src.processes.services.workflows.fieldsets.fieldset import (
+    FieldSetService,
+)
 from src.processes.utils.common import (
     insert_fields_values_to_text,
 )
@@ -101,6 +104,7 @@ class TaskService(
             redefined_performer=kwargs.get('redefined_performer'),
         )
         self.create_fields_from_template(instance_template)
+        self.create_fieldsets_from_template(instance_template)
         self.create_conditions_from_template(instance_template)
         self.create_checklists_from_template(instance_template)
         self.create_raw_due_date_from_template(instance_template)
@@ -201,11 +205,28 @@ class TaskService(
 
     def create_fields_from_template(self, instance_template: TaskTemplate):
 
-        for field_template in instance_template.fields.all():
+        for field_template in instance_template.fields.exclude(
+            fieldset__in=instance_template.fieldsets.all(),
+        ):
             service = TaskFieldService(user=self.user)
             service.create(
                 instance_template=field_template,
                 workflow_id=self.instance.workflow_id,
+                task_id=self.instance.id,
+                skip_value=True,
+            )
+
+    def create_fieldsets_from_template(
+        self,
+        instance_template: TaskTemplate,
+    ):
+        for fs_template in instance_template.fieldsets.all().order_by('id'):
+            service = FieldSetService(user=self.user)
+            service.create(
+                instance_template=fs_template,
+                account_id=self.instance.workflow.account_id,
+                workflow=self.instance.workflow,
+                task=self.instance,
                 task_id=self.instance.id,
                 skip_value=True,
             )

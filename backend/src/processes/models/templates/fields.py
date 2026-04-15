@@ -1,6 +1,7 @@
 from django.db import models
 from django.db.models import Q, UniqueConstraint
 
+from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.processes.models.base import BaseApiNameModel
 from src.processes.models.mixins import FieldMixin
@@ -15,6 +16,7 @@ from src.processes.querysets import (
 
 class FieldTemplate(
     BaseApiNameModel,
+    AccountBaseMixin,
     FieldMixin,
 ):
 
@@ -33,6 +35,8 @@ class FieldTemplate(
     template = models.ForeignKey(
         Template,
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         related_name='fields',
     )
     kickoff = models.ForeignKey(
@@ -45,6 +49,13 @@ class FieldTemplate(
         TaskTemplate,
         on_delete=models.CASCADE,
         null=True,
+        related_name='fields',
+    )
+    fieldset = models.ForeignKey(
+        'processes.FieldsetTemplate',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         related_name='fields',
     )
     date_created = models.DateTimeField(auto_now_add=True)

@@ -35,6 +35,7 @@ import { IMenuItem } from './menu';
 import { EWebhooksTypeEvent, IWebhook } from './webhooks';
 import { ETenantsSorting, ITenant } from './tenants';
 import { IDataset, IDatasetListItem, EDatasetsSorting, TDatasetItemsSortOrder } from './dataset';
+import { IFieldsetTemplate, IFieldsetListItem, EFieldsetsSorting } from './fieldset';
 import { IPagesStore } from '../redux/pages/types';
 import { TeamPages, IGroup, UserInvite } from '../redux/team/types';
 
@@ -63,7 +64,8 @@ export interface IApplicationState {
   team: ITeamStore;
   groups: IGroupsStore;
   tenants: ITenantsStore;
-  datasets: IDatasetsStore; 
+  datasets: IDatasetsStore;
+  fieldsets: IFieldsetsStore;
 }
 
 export enum ELoggedState {
@@ -387,6 +389,26 @@ export type IDatasetsStore = {
   currentSortOrder: TDatasetItemsSortOrder;
  
   datasetsMap: Record<number, IDataset>;
+};
+
+export interface IFieldsetsList {
+  count: number;
+  offset: number;
+  items: IFieldsetListItem[];
+}
+
+export type IFieldsetsStore = {
+  templateId: number | null;
+  fieldsetsList: IFieldsetsList;
+  isLoading: boolean;
+  searchQuery: string;
+  fieldsetsListSorting: EFieldsetsSorting;
+
+  isCreateModalOpen: boolean;
+  isEditModalOpen: boolean;
+
+  currentFieldset: IFieldsetTemplate | null;
+  isCurrentFieldsetLoading: boolean;
 };
 
 export interface IAction<Type> {
