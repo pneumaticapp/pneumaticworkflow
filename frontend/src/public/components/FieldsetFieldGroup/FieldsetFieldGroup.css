@@ -1,15 +1,15 @@
 .fieldset-group {
-  border-left: 3px solid var(--pneumatic-color-link);
-  padding-left: 16px;
   margin-top: 16px;
   margin-bottom: 16px;
+  padding-left: 16px;
+  border-left: 3px solid var(--pneumatic-color-link);
 }
 
 .fieldset-group__title {
   margin: 0 0 4px;
   font-family: Nunito, sans-serif;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: bold;
   line-height: 20px;
   color: #262522;
 }
@@ -23,7 +23,7 @@
 }
 
 .fieldset-group__error {
-  color: var(--color-error, #e74c3c);
-  font-size: 13px;
   margin-top: 4px;
+  font-size: 13px;
+  color: var(--color-error, #e74c3c);
 }

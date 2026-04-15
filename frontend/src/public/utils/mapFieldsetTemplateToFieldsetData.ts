@@ -27,11 +27,18 @@ export function mapFieldsetTemplateToFieldsetData(
     }),
   );
 
+  const labelPosition = fieldsetTemplate.labelPosition ?? fieldsetTemplate.label_position;
+  const rules = fieldsetTemplate.rules;
+  const rulesCount = Array.isArray(rules) ? rules.length : 0;
+
   return {
     id: fieldsetTemplate.id,
     apiName: fieldsetTemplate.apiName || fieldsetTemplate.api_name || `fieldset-${fieldsetTemplate.id}`,
     name: fieldsetTemplate.name || '',
     description: fieldsetTemplate.description || '',
     fields,
+    order: fieldsetTemplate.order ?? 0,
+    labelPosition: labelPosition === 'left' ? 'left' : 'top',
+    rulesCount,
   };
 }

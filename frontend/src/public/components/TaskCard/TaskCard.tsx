@@ -31,6 +31,7 @@ import { RichText } from '../RichText';
 import { getUserFullName } from '../../utils/users';
 import { ExtraFieldIntl } from '../TemplateEdit/ExtraFields';
 import { FieldsetFieldGroup } from '../FieldsetFieldGroup';
+import { buildRuntimeMergedOutputParts } from '../TemplateEdit/TaskOutputFlow/mergeTaskOutputFlow';
 import { isArrayWithItems, isEmptyArray } from '../../utils/helpers';
 import { useCheckDevice } from '../../hooks/useCheckDevice';
 import { history } from '../../utils/history';
@@ -163,6 +164,10 @@ export function TaskCard({
 
     setOutputValues(outputFieldsWithValues);
   }, [task.id]);
+
+  useEffect(() => {
+    setFieldsetOutputValues(task.fieldsets || []);
+  }, [task.id, task.fieldsets]);
 
   const handleOpenWorkflowPopup = (workflowId: number | null) => (e: MouseEvent) => {
     e.preventDefault();
@@ -395,39 +400,41 @@ export function TaskCard({
       return null;
     }
 
+    const mergedOutputParts = buildRuntimeMergedOutputParts(visibleOutputs || [], fieldsetOutputValues);
+
     return (
       <div className={styles['task-output']}>
         <p className={styles['task-output__title']}>
           <IntlMessages id="tasks.task-outputs-fill-help" />
         </p>
-        {visibleOutputs
-          .map((field) => (
+        {mergedOutputParts.map((part) =>
+          part.kind === 'field' ? (
             <ExtraFieldIntl
-              key={field.apiName}
-              field={field}
-              editField={handleEditField(field.apiName)}
+              key={part.field.apiName}
+              field={part.field}
+              editField={handleEditField(part.field.apiName)}
               showDropdown={false}
               mode={EExtraFieldMode.ProcessRun}
               labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
-              namePlaceholder={field.name}
-              descriptionPlaceholder={field.description}
+              namePlaceholder={part.field.name}
+              descriptionPlaceholder={part.field.description}
               wrapperClassName={styles['task-output__field']}
               accountId={accountId}
             />
-          ))}
-        {fieldsetOutputValues.map((fs) => (
-          <FieldsetFieldGroup
-            key={fs.id}
-            title={fs.name}
-            description={fs.description}
-            fields={fs.fields}
-            onEditField={handleEditFieldsetField}
-            mode={EExtraFieldMode.ProcessRun}
-            labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
-            accountId={accountId}
-            fieldClassName={styles['task-output__field']}
-          />
-        ))}
+          ) : (
+            <FieldsetFieldGroup
+              key={part.data.id}
+              title={part.data.name}
+              description={part.data.description}
+              fields={part.data.fields}
+              onEditField={handleEditFieldsetField}
+              mode={EExtraFieldMode.ProcessRun}
+              labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
+              accountId={accountId}
+              fieldClassName={styles['task-output__field']}
+            />
+          ),
+        )}
       </div>
     );
   };

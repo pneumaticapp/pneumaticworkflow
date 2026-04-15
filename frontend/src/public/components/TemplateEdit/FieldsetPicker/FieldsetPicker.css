@@ -9,20 +9,20 @@
 }
 
 .fieldset-picker__toggle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   padding: 1rem 1.6rem;
+  display: flex;
   width: 100%;
   font-family: Nunito, sans-serif;
   font-size: 1.4rem;
   line-height: 2rem;
+  cursor: pointer;
   color: var(--pneumatic-color-black72);
   background: var(--pneumatic-color-white);
   border: 0.1rem solid var(--pneumatic-color-black16);
   border-radius: 0.8rem;
-  cursor: pointer;
   transition: border-color 0.15s ease-in;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .fieldset-picker__toggle:hover {
@@ -47,9 +47,9 @@
   z-index: 10;
   top: calc(100% + 0.4rem);
   left: 0;
+  overflow-y: auto;
   width: 100%;
   max-height: 24rem;
-  overflow-y: auto;
   background: var(--pneumatic-color-white);
   border: 0.1rem solid var(--pneumatic-color-black16);
   border-radius: 0.8rem;
@@ -57,19 +57,19 @@
 }
 
 .fieldset-picker__option {
-  display: flex;
-  align-items: center;
   padding: 0.8rem 1.6rem;
+  display: flex;
   width: 100%;
   font-family: Nunito, sans-serif;
   font-size: 1.4rem;
   line-height: 2rem;
+  text-align: left;
+  cursor: pointer;
   color: var(--pneumatic-color-black100);
   background: none;
   border: none;
-  cursor: pointer;
   transition: background-color 0.1s ease;
-  text-align: left;
+  align-items: center;
 }
 
 .fieldset-picker__option:hover {
@@ -91,16 +91,16 @@
 }
 
 .fieldset-picker__option-name {
-  font-weight: 600;
   overflow: hidden;
-  text-overflow: ellipsis;
+  font-weight: 600;
   white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
 .fieldset-picker__option-meta {
   font-size: 1.2rem;
-  color: var(--pneumatic-color-black48);
   line-height: 1.6rem;
+  color: var(--pneumatic-color-black48);
 }
 
 .fieldset-picker__empty {
@@ -108,8 +108,8 @@
   font-family: Nunito, sans-serif;
   font-size: 1.3rem;
   line-height: 2rem;
-  color: var(--pneumatic-color-black48);
   text-align: center;
+  color: var(--pneumatic-color-black48);
 }
 
 .fieldset-picker__tags {
@@ -119,33 +119,33 @@
 }
 
 .fieldset-picker__tag {
-  display: inline-flex;
-  align-items: center;
   padding: 0.4rem 0.8rem 0.4rem 1.2rem;
+  display: inline-flex;
   font-family: Nunito, sans-serif;
   font-size: 1.3rem;
   line-height: 1.6rem;
   color: var(--pneumatic-color-black100);
   background: var(--pneumatic-color-beige);
   border-radius: 1.6rem;
+  align-items: center;
 }
 
 .fieldset-picker__tag-remove {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
   margin-left: 0.4rem;
   padding: 0;
+  display: inline-flex;
   width: 1.6rem;
   height: 1.6rem;
   font-size: 1.4rem;
   line-height: 1;
+  cursor: pointer;
   color: var(--pneumatic-color-black48);
   background: none;
   border: none;
   border-radius: 50%;
-  cursor: pointer;
   transition: color 0.1s ease, background-color 0.1s ease;
+  align-items: center;
+  justify-content: center;
 }
 
 .fieldset-picker__tag-remove:hover {
@@ -157,6 +157,6 @@
   padding: 1.6rem;
   font-family: Nunito, sans-serif;
   font-size: 1.3rem;
-  color: var(--pneumatic-color-black48);
   text-align: center;
+  color: var(--pneumatic-color-black48);
 }

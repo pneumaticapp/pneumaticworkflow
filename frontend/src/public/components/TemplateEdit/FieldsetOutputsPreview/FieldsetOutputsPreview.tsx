@@ -1,10 +1,13 @@
 import * as React from 'react';
+import { useIntl } from 'react-intl';
+import classNames from 'classnames';
 
 import { IExtraField, IFieldsetData } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
-import { ExtraFieldsLabels } from '../ExtraFields/utils/ExtraFieldsLabels';
 
 import styles from './FieldsetOutputsPreview.css';
+
+
 
 export interface IFieldsetOutputsPreviewProps {
   fieldsetIds: number[];
@@ -13,6 +16,8 @@ export interface IFieldsetOutputsPreviewProps {
 }
 
 export function FieldsetOutputsPreview({ fieldsetIds, fieldsetsById, onGroupClick }: IFieldsetOutputsPreviewProps) {
+  const { formatMessage } = useIntl();
+
   if (!fieldsetIds.length) {
     return null;
   }
@@ -34,11 +39,10 @@ export function FieldsetOutputsPreview({ fieldsetIds, fieldsetsById, onGroupClic
 
   return (
     <div className={styles['fieldset-outputs-preview']}>
-      {groups.map(({ id, fieldset, fields }) => (
-        <div className={styles['fieldset-outputs-preview__group']} key={id}>
-          <p className={styles['fieldset-outputs-preview__title']}>{fieldset.name}</p>
-          <ExtraFieldsLabels extraFields={fields} onClick={onGroupClick} />
-        </div>
+      {groups.map(({ id, fieldset }) => (
+        <button type="button" className={classNames( styles['fieldset-outputs-preview__group'])} key={id} onClick={onGroupClick}>
+          <span className={styles['fieldset-outputs-preview__title']}>{ formatMessage({ id: 'fieldsets.title' }) }: { fieldset.name}</span>
+        </button>
       ))}
     </div>
   );

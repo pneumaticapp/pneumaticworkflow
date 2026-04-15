@@ -7,7 +7,7 @@ import { scrollToElement } from '../../../utils/helpers';
 import { TUserListItem } from '../../../types/user';
 import { IKickoff, ITemplateTask } from '../../../types/template';
 import { TTaskVariable, TTaskFormPart, ETaskFormParts } from '../types';
-import { OutputFormIntl } from '../OutputForm';
+import { OutputFormIntl } from '../OutputForm/OutputForm';
 import { ShowMore } from '../../UI/ShowMore';
 import { TaskPerformers } from './TaskPerformers';
 import { CheckIfConditions, ICondition, removeDeletedTasks, StartAfterCondition } from './Conditions';
@@ -16,8 +16,6 @@ import { TPatchTaskPayload } from '../../../redux/actions';
 
 import { ReturnTo } from './ReturnTo';
 import { DueDate } from './DueDate';
-import { FieldsetPicker } from '../FieldsetPicker';
-import { FieldsetOutputsPreview } from '../FieldsetOutputsPreview/FieldsetOutputsPreview';
 import { useTemplateEditFieldsets } from '../TemplateEditFieldsetsContext';
 import { getSingleLineVariables, getSystemVariables, getTaskVariables, getVariables } from './utils/getTaskVariables';
 
@@ -57,7 +55,7 @@ export function TaskForm({
 }: ITaskFormProps & { templateId: number | undefined }) {
   if (!task) return null;
   const { formatMessage } = useIntl();
-  const { fieldsetsById } = useTemplateEditFieldsets();
+  const { fieldsetsById, isLoading: fieldsetsCatalogLoading } = useTemplateEditFieldsets();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const taskName = task.name || '';
   const listVariables = useMemo(
@@ -111,7 +109,9 @@ export function TaskForm({
   }, [startingOrder, task.conditions, onEdit]);
 
   useLayoutEffect(() => {
-    const scrollTo = (scrollTarget && taskFormPartsRefs[scrollTarget]?.current) || wrapperRef.current;
+    const scrollKey =
+      scrollTarget === ETaskFormParts.Fieldsets ? ETaskFormParts.Fields : scrollTarget;
+    const scrollTo = (scrollKey && taskFormPartsRefs[scrollKey]?.current) || wrapperRef.current;
 
     if (scrollTo) scrollToElement(scrollTo);
   }, []);
@@ -175,32 +175,18 @@ export function TaskForm({
       component: (
         <div className={styles['task-fields-wrapper']}>
           <OutputFormIntl
-            fields={task.fields}
-            onOutputChange={handleTaskFieldChange('fields')}
-            isDisabled={false}
-            show={ETaskFormParts.Fields === scrollTarget}
-            accountId={accountId}
-          />
-          <FieldsetOutputsPreview
-            fieldsetIds={task.fieldsets || []}
+            mode="taskMerged"
+            task={task}
             fieldsetsById={fieldsetsById}
+            fieldsetsCatalogLoading={fieldsetsCatalogLoading}
+            templateId={templateId}
+            accountId={accountId}
+            show={ETaskFormParts.Fields === scrollTarget || ETaskFormParts.Fieldsets === scrollTarget}
+            patchTask={patchTask}
           />
         </div>
       ),
-      widget: createWidget(TaskRenderExtraFieldsInfo, { task }),
-    },
-    {
-      formPartId: ETaskFormParts.Fieldsets,
-      title: 'tasks.task-fieldsets',
-      component: (
-        <FieldsetPicker
-          selectedFieldsetIds={task.fieldsets || []}
-          onChange={(fieldsetIds) => {
-            setCurrentTask({ fieldsets: fieldsetIds });
-          }}
-        />
-      ),
-      widget: undefined,
+      widget: createWidget(TaskRenderExtraFieldsInfo, { task })
     },
     {
       formPartId: ETaskFormParts.StartsAfter,

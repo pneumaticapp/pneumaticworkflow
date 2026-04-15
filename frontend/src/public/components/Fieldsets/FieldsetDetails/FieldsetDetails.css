@@ -22,8 +22,8 @@
 
 .section-title {
   margin-bottom: 1.6rem;
-  font-weight: 700;
   font-size: 1.8rem;
+  font-weight: bold;
 
   @mixin text-base;
 }
@@ -68,15 +68,15 @@
 }
 
 .settings-textarea {
+  padding: 1.2rem 1.6rem;
   width: 100%;
   min-height: 8rem;
-  padding: 1.2rem 1.6rem;
+  font-family: inherit;
+  resize: vertical;
   border: 1px solid var(--pneumatic-color-black16);
   border-radius: 0.8rem;
   outline: none;
-  resize: vertical;
   transition: border-color 0.2s;
-  font-family: inherit;
 
   @mixin text-base;
 
@@ -86,14 +86,14 @@
 }
 
 .settings-select {
+  padding: 0.8rem 1.2rem;
   width: fit-content;
   min-width: 20rem;
-  padding: 0.8rem 1.2rem;
+  cursor: pointer;
+  background-color: var(--pneumatic-color-white);
   border: 1px solid var(--pneumatic-color-black16);
   border-radius: 0.8rem;
   outline: none;
-  background-color: var(--pneumatic-color-white);
-  cursor: pointer;
   transition: border-color 0.2s;
   appearance: auto;
 
@@ -105,9 +105,9 @@
 }
 
 .settings-input {
+  padding: 0.8rem 1.2rem;
   width: fit-content;
   min-width: 20rem;
-  padding: 0.8rem 1.2rem;
   border: 1px solid var(--pneumatic-color-black16);
   border-radius: 0.8rem;
   outline: none;
@@ -161,11 +161,11 @@
 }
 
 .fields-table th {
-  text-align: left;
   padding: 0.8rem 1.6rem;
-  border-bottom: 2px solid var(--pneumatic-color-black16);
-  color: var(--pneumatic-color-black48);
   font-weight: 600;
+  text-align: left;
+  color: var(--pneumatic-color-black48);
+  border-bottom: 2px solid var(--pneumatic-color-black16);
 
   @mixin text-small;
 }
@@ -182,11 +182,11 @@
 }
 
 .rule-row {
+  padding: 1.2rem 0;
   display: flex;
+  border-bottom: 1px solid var(--pneumatic-color-black16);
   align-items: center;
   gap: 1.2rem;
-  padding: 1.2rem 0;
-  border-bottom: 1px solid var(--pneumatic-color-black16);
 }
 
 .rule-row:last-child {
@@ -217,11 +217,11 @@
 
 .rule-delete-btn {
   padding: 0.6rem 1.2rem;
+  cursor: pointer;
+  color: var(--pneumatic-color-black48);
   background: none;
   border: 1px solid var(--pneumatic-color-black16);
   border-radius: 0.8rem;
-  color: var(--pneumatic-color-black48);
-  cursor: pointer;
   transition: all 0.2s;
 
   @mixin text-small;
@@ -235,19 +235,19 @@
 .add-rule-btn {
   margin-top: 1.6rem;
   padding: 0.8rem 1.6rem;
+  font-weight: 600;
+  cursor: pointer;
+  color: var(--pneumatic-color-blue);
   background: none;
   border: 1px dashed var(--pneumatic-color-black16);
   border-radius: 0.8rem;
-  color: var(--pneumatic-color-blue);
-  cursor: pointer;
-  font-weight: 600;
   transition: all 0.2s;
 
   @mixin text-base;
 
   &:hover {
-    border-color: var(--pneumatic-color-blue);
     background-color: var(--pneumatic-color-blue-light);
+    border-color: var(--pneumatic-color-blue);
   }
 }
 
