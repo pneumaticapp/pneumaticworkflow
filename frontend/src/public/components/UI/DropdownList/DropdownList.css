@@ -85,3 +85,19 @@
     background-color: var(--pneumatic-color-white);
   }
 }
+
+.is-required {
+  margin-left: 2px;
+  color: var(--pneumatic-color-warning);
+}
+
+.has-error :global(.react-select__control) {
+  border-color: var(--pneumatic-color-warning) !important;
+}
+
+.error-text {
+  margin: 4px 0 0;
+  font-size: 13px;
+  line-height: 16px;
+  color: var(--pneumatic-color-warning);
+}

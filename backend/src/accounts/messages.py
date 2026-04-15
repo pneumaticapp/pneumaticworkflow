@@ -101,3 +101,12 @@ MSG_A_0046 = _(
 )
 MSG_A_0047 = _('You can\'t delete yourself.')
 MSG_A_0048 = _('You can\'t delete the account owner.')
+MSG_A_0049 = _('Cannot delegate to yourself.')
+MSG_A_0050 = lambda missing: format_lazy(
+    _('Users not found: {missing}'),
+    missing=missing,
+)
+MSG_A_0051 = _('Please select at least one substitute.')
+MSG_A_0052 = _('Vacation is not active.')
+MSG_A_0053 = _('Cannot activate with status Active.')
+MSG_A_0054 = _('End date must be after start date.')

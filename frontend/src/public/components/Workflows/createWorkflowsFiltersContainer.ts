@@ -97,7 +97,7 @@ export function mapStateToProps(state: IApplicationState): TWorkflowsFiltersStor
     performersIdsFilter,
     performersGroupIdsFilter,
     workflowStartersIdsFilter,
-    groups: groups.list,
+    groups: groups.list.filter((g) => g.type !== 'personal'),
     users: getActiveUsers(users),
     areFilterTemplatesLoading: templateList.isLoading,
     areUsersLoading,

@@ -1,9 +1,10 @@
-import { IUnsavedUser, TUserInvited } from '../../types/user';
+import { IUnsavedUser, IUserVacation, TUserInvited } from '../../types/user';
 import { actionGenerator } from '../../utils/redux';
 import { IAuthUser, ITypedReduxAction } from '../../types/redux';
 import { IUpdateUserRequest, TUpdateUserMappedResponse } from '../../api/editProfile';
 import { IUpdateAccountRequest, IUpdatedAccount } from '../../api/editAccount';
 import { TPlanCode } from '../../types/account';
+import { IVacationActivateRequest } from '../../api/vacation';
 
 export const enum EAuthActions {
   AuthUser = 'AUTH_USER',
@@ -46,6 +47,9 @@ export const enum EAuthActions {
   MakeStripePayment = 'MAKE_STRIPE_PAYMENT',
   OnAfterPaymentDetailsProvided = 'AFTER_PAYMENT_DEATILS_PROVIDED',
   RedirectToCustomerPortal = 'REDIRECT_TO_CUSTOMER_PORTAL',
+  VacationActivate = 'VACATION_ACTIVATE',
+  VacationDeactivate = 'VACATION_DEACTIVATE',
+  VacationSuccess = 'VACATION_SUCCESS',
 }
 
 export interface IUserCredentials {
@@ -400,4 +404,28 @@ export type TAuthActions =
   | TChangePaymentDetails
   | TMakeStripePayment
   | TOnAfterPaymentDetailsProvided
-  | TRedirectToCustomerPortal;
+  | TRedirectToCustomerPortal
+  | TVacationActivate
+  | TVacationDeactivate
+  | TVacationSuccess;
+
+export type TVacationActivate = ITypedReduxAction<EAuthActions.VacationActivate, IVacationActivateRequest>;
+export const vacationActivate: (payload: IVacationActivateRequest) => TVacationActivate = actionGenerator<
+  EAuthActions.VacationActivate,
+  IVacationActivateRequest
+>(EAuthActions.VacationActivate);
+
+export type TVacationDeactivate = ITypedReduxAction<EAuthActions.VacationDeactivate, void>;
+export const vacationDeactivate: (payload?: void) => TVacationDeactivate = actionGenerator<
+  EAuthActions.VacationDeactivate,
+  void
+>(EAuthActions.VacationDeactivate);
+
+export type TVacationSuccessPayload = {
+  vacation: IUserVacation | null;
+};
+export type TVacationSuccess = ITypedReduxAction<EAuthActions.VacationSuccess, TVacationSuccessPayload>;
+export const vacationSuccess: (payload: TVacationSuccessPayload) => TVacationSuccess = actionGenerator<
+  EAuthActions.VacationSuccess,
+  TVacationSuccessPayload
+>(EAuthActions.VacationSuccess);

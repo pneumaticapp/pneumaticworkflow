@@ -12,7 +12,7 @@ import { TUsersDropdownOption, UsersDropdown } from '../../UI/form/UsersDropdown
 import { getUserFullName } from '../../../utils/users';
 import { getPerformersForDropdown } from './utils/getPerformersForDropdown';
 import { EBgColorTypes, UserPerformer } from '../../UI/UserPerformer';
-import { IApplicationState } from '../../../types/redux';
+import { getRegularGroupsList } from '../../../redux/selectors/groups';
 
 import styles from '../TemplateEdit.css';
 import stylesTaskForm from './TaskForm.css';
@@ -28,7 +28,7 @@ export interface ITaskPerformersProps {
 
 export function TaskPerformers({ task, users, variables, setCurrentTask }: ITaskPerformersProps) {
   const { formatMessage } = useIntl();
-  const groups = useSelector((state: IApplicationState) => state.groups.list);
+  const groups = useSelector(getRegularGroupsList);
 
   const { rawPerformers = [] } = task;
 

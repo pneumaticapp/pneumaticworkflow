@@ -298,6 +298,7 @@ export type TTemplateWithTasksOnly = Pick<ITemplate, 'name'> & {
 export interface RawPerformer {
   type: ETemplateOwnerType;
   sourceId: number;
+  label?: string;
 }
 
 export type TOrderedFields = {
