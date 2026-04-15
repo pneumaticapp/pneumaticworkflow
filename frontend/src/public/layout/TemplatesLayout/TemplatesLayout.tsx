@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { useState, useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector, useDispatch } from 'react-redux';
 
@@ -20,12 +21,14 @@ import { ReturnLink } from '../../components/UI/ReturnLink';
 export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const [pathname, setPathname] = React.useState(history.location.pathname);
 
-  React.useEffect(() => {
-    return history.listen((location) => {
+  const [pathname, setPathname] = useState(history.location.pathname);
+  useEffect(() => {
+    const unlisten = history.listen((location) => {
       setPathname(location.pathname);
     });
+
+    return unlisten;
   }, []);
 
   const datasetsSorting = useSelector(getDatasetsSorting);
