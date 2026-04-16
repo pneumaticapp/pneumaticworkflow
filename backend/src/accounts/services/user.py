@@ -291,13 +291,39 @@ class UserService(
         if user_is_last_performer(self.instance):
             raise UserIsPerformerException
 
+    def _get_manager_map(self):
+        """Return {user_id: manager_id} for all active users
+        on the account.  Used by hierarchy validators."""
+        return dict(
+            UserModel.objects.on_account(
+                self.account.id,
+            ).active().values_list('id', 'manager_id'),
+        )
+
+    def _schedule_ws_notification(self, user):
+        """Serialize *user* and schedule a WS update notification
+        via transaction.on_commit.
+
+        Each call creates its own closure scope, so calling this
+        from a loop is safe — no default-argument capture needed.
+        """
+        ws_data = UserWebsocketSerializer(user).data
+
+        def notify():
+            send_user_updated_notification.delay(
+                logging=False,
+                account_id=self.account.id,
+                user_data=ws_data,
+            )
+
+        transaction.on_commit(notify)
+
     def _deactivate_subordinates(self):
         """Clear the manager FK on all subordinates of the deactivated
         user and schedule WebSocket notifications.
 
         Uses transaction.on_commit so Celery tasks fire only after a
-        successful commit.  The default-argument capture (data=ws_data)
-        prevents closure-variable rebinding across loop iterations.
+        successful commit.
         """
         user = self.instance
         subordinates = list(UserModel.objects.filter(manager=user))
@@ -309,16 +335,7 @@ class UserService(
 
         for subordinate in subordinates:
             subordinate.manager = None
-            ws_data = UserWebsocketSerializer(subordinate).data
-
-            def notify(data=ws_data):
-                send_user_updated_notification.delay(
-                    logging=False,
-                    account_id=self.account.id,
-                    user_data=data,
-                )
-
-            transaction.on_commit(notify)
+            self._schedule_ws_notification(subordinate)
 
     def _deactivate(self):
         user = self.instance
@@ -326,18 +343,19 @@ class UserService(
         with transaction.atomic():
             self._deactivate_subordinates()
 
-            if old_manager is not None:
-                user.manager = None
-                user.save(update_fields=('manager',))
-
             remove_user_from_draft(
                 account_id=user.account_id,
                 user_id=user.id,
             )
             user.incoming_invites.delete()
+            if old_manager is not None:
+                user.manager = None
             user.status = UserStatus.INACTIVE
             user.is_active = False  # need for django admin
-            user.save(update_fields=('status', 'is_active'))
+            update_fields = ['status', 'is_active']
+            if old_manager is not None:
+                update_fields.append('manager')
+            user.save(update_fields=update_fields)
             Contact.objects.filter(
                 account=self.account,
                 email=user.email,
@@ -397,7 +415,7 @@ class UserService(
                 user_data=ws_data_mgr,
             )
 
-    def _validate_manager(self, manager):
+    def _validate_manager(self, manager, manager_map=None):
         """Validate that assigning *manager* to self.instance
         does not create a circular hierarchy.
 
@@ -406,18 +424,16 @@ class UserService(
            encounter self.instance the assignment would
            create a cycle (MSG_A_0050).
 
-        Builds an in-memory {user_id: manager_id} map from
-        active users so the check runs in a single DB query.
+        Accepts an optional pre-built *manager_map* to avoid
+        a duplicate DB query when called together with
+        _validate_subordinates.
         """
         if manager.id == self.instance.id:
             raise UserServiceException(
                 message=str(MSG_A_0049),
             )
-        manager_map = dict(
-            UserModel.objects.on_account(
-                self.account.id,
-            ).active().values_list('id', 'manager_id'),
-        )
+        if manager_map is None:
+            manager_map = self._get_manager_map()
         current_id = manager.id
         visited = set()
         while current_id is not None:
@@ -434,6 +450,7 @@ class UserService(
         self,
         subordinates: List[UserModel],
         proposed_manager=None,
+        manager_map=None,
     ):
         """Validate the proposed subordinate list.
 
@@ -445,6 +462,10 @@ class UserService(
         in-memory manager map with *proposed_manager*,
         which fixes the stale-cache problem that occurs when
         manager and subordinates are updated simultaneously.
+
+        Accepts an optional pre-built *manager_map* to avoid
+        a duplicate DB query when called together with
+        _validate_manager.
         """
         for sub in subordinates:
             if sub.id == self.instance.id:
@@ -452,11 +473,12 @@ class UserService(
                     message=str(MSG_A_0049),
                 )
 
-        manager_map = dict(
-            UserModel.objects.on_account(
-                self.account.id,
-            ).active().values_list('id', 'manager_id'),
-        )
+        if manager_map is None:
+            manager_map = self._get_manager_map()
+        else:
+            # Work on a copy so patching below doesn't mutate
+            # the caller's map.
+            manager_map = dict(manager_map)
         # Patch the map with the proposed manager so the
         # ancestor walk reflects the future state.
         if proposed_manager is not None:
@@ -495,15 +517,25 @@ class UserService(
         )
 
         # Validate hierarchy constraints before any DB mutation.
+        # Build the manager map once and share it between both
+        # validators to avoid a duplicate DB query.
         new_manager = update_kwargs.get('manager')
+        need_manager_map = (
+            ('manager' in update_kwargs and new_manager is not None)
+            or subordinates is not None
+        )
+        manager_map = (
+            self._get_manager_map() if need_manager_map else None
+        )
         if 'manager' in update_kwargs and new_manager is not None:
-            self._validate_manager(new_manager)
+            self._validate_manager(new_manager, manager_map=manager_map)
         if subordinates is not None:
             proposed_manager = update_kwargs.get(
                 'manager', self.instance.manager,
             )
             self._validate_subordinates(
                 subordinates, proposed_manager,
+                manager_map=manager_map,
             )
 
         # Single transaction wrapping both the user save and
@@ -557,10 +589,6 @@ class UserService(
         Does NOT notify self.instance (the manager) — the caller
         (partial_update) sends that notification after refresh_from_db
         to avoid duplicates.
-
-        Uses transaction.on_commit so Celery tasks fire only after a
-        successful commit.  The default-argument capture (data=ws_data)
-        prevents closure-variable rebinding across loop iterations.
         """
         new_ids = {s.id for s in subordinates}
 
@@ -589,33 +617,11 @@ class UserService(
                     id__in=changed_user_ids,
                 )
                 for user in changed_users:
-                    ws_data_user = (
-                        UserWebsocketSerializer(user).data
-                    )
-
-                    def notify(data=ws_data_user):
-                        send_user_updated_notification.delay(
-                            logging=False,
-                            account_id=self.account.id,
-                            user_data=data,
-                        )
-
-                    transaction.on_commit(notify)
+                    self._schedule_ws_notification(user)
 
             if old_manager_ids:
                 old_managers = UserModel.objects.filter(
                     id__in=old_manager_ids,
                 )
                 for mgr in old_managers:
-                    ws_data_mgr = (
-                        UserWebsocketSerializer(mgr).data
-                    )
-
-                    def notify_mgr(data=ws_data_mgr):
-                        send_user_updated_notification.delay(
-                            logging=False,
-                            account_id=self.account.id,
-                            user_data=data,
-                        )
-
-                    transaction.on_commit(notify_mgr)
+                    self._schedule_ws_notification(mgr)
