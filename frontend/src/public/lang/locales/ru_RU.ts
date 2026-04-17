@@ -505,7 +505,7 @@ export const ruMessages = {
   'templates.title-system': 'Изучите примеры шаблонов',
   'templates.title-system.tooltip': 'Выберите шаблон из нашей библиотеки',
   'templates.task-require-completion-by-all': 'Требуется выполнение всеми',
-  'templates.task-skip-for-starter': 'Пропустить задачи инициатора',
+  'templates.task-skip-for-starter': 'Пропустить, если назначен инициатору',
   'templates.assign-perfomers-to-the-following-steps': 'Пожалуйста, назначьте пользователей на следующие шаги:',
   'template.no-run-allowers': 'Пожалуйста, добавьте хотя бы одного владельца шаблона',
   'template.no-tasks': 'Пожалуйста, добавьте хотя бы одну задачу.',
