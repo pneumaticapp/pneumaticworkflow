@@ -376,7 +376,7 @@ class TestCreateTemplateTask:
         # assert
         assert response.status_code == 200
 
-    def test_create__another_template_api_name_in_desc__validation_error(
+    def test_create__another_template_api_name_in_desc__auto_cleaned(
         self,
         api_client,
     ):
@@ -435,13 +435,9 @@ class TestCreateTemplateTask:
         )
 
         # assert
-        message = messages.MSG_PT_0037(1)
-        assert response.status_code == 400
-        assert response.data['message'] == message
-        assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-        assert response.data['details']['api_name'] == task_api_name
-        assert response.data['details']['reason'] == message
-        assert 'name' not in response.data['details']
+        assert response.status_code == 200
+        task_data = response.json()['tasks'][0]
+        assert '{{%s}}' % field_api_name not in task_data['description']
 
     def test_create__insert_valid_api_name_to_task_name__ok(
         self,
@@ -692,7 +688,7 @@ class TestCreateTemplateTask:
         # assert
         assert response.status_code == 200
 
-    def test_create__not_existent_field_in_task_name__validation_error(
+    def test_create__not_existent_field_in_task_name__auto_cleaned(
         self,
         api_client,
     ):
@@ -734,15 +730,12 @@ class TestCreateTemplateTask:
         )
 
         # assert
-        message = messages.MSG_PT_0038(task_name)
-        assert response.status_code == 400
-        assert response.data['message'] == message
-        assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-        assert response.data['details']['api_name'] == task_api_name
-        assert response.data['details']['reason'] == message
-        assert 'name' not in response.data['details']
+        assert response.status_code == 200
+        task_data = response.json()['tasks'][0]
+        assert '{{string-field-1}}' not in task_data['name']
+        assert task_data['name'] == 'title'
 
-    def test_create__another_template_field_in_task_name__validation_error(
+    def test_create__another_template_field_in_task_name__auto_cleaned(
         self,
         api_client,
     ):
@@ -798,15 +791,11 @@ class TestCreateTemplateTask:
         )
 
         # assert
-        message = messages.MSG_PT_0037(1)
-        assert response.status_code == 400
-        assert response.data['message'] == message
-        assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-        assert response.data['details']['api_name'] == task_api_name
-        assert response.data['details']['reason'] == message
-        assert 'name' not in response.data['details']
+        assert response.status_code == 200
+        task_data = response.json()['tasks'][0]
+        assert '{{%s}}' % field_api_name not in task_data['description']
 
-    def test_create__next_task_field_in_task_name__validation_error(
+    def test_create__next_task_field_in_task_name__auto_cleaned(
         self,
         api_client,
     ):
@@ -868,13 +857,10 @@ class TestCreateTemplateTask:
         )
 
         # assert
-        message = messages.MSG_PT_0038(task_name)
-        assert response.status_code == 400
-        assert response.data['message'] == message
-        assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-        assert response.data['details']['api_name'] == task_api_name
-        assert response.data['details']['reason'] == message
-        assert 'name' not in response.data['details']
+        assert response.status_code == 200
+        task_data = response.json()['tasks'][0]
+        assert '{{%s}}' % field_api_name not in task_data['name']
+        assert task_data['name'] == 'title'
 
     def test_create__name_not_required_field__validation_error(
         self,
@@ -2043,8 +2029,8 @@ class TestCreateTemplateRawPerformer:
         # assert
         assert response.status_code == 400
         assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-        assert response.data['message'] == messages.MSG_PT_0036
-        assert response.data['details']['reason'] == messages.MSG_PT_0036
+        assert response.data['message'] == messages.MSG_PT_0002
+        assert response.data['details']['reason'] == messages.MSG_PT_0002
         assert response.data['details']['api_name'] == 'task-66'
 
     def test_create__type_field_not_existing_value__validation_error(
@@ -2090,10 +2076,9 @@ class TestCreateTemplateRawPerformer:
 
         # assert
         assert response.status_code == 400
-        message = 'One or more performers are incorrect.'
         assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-        assert response.data['message'] == message
-        assert response.data['details']['reason'] == message
+        assert response.data['message'] == messages.MSG_PT_0002
+        assert response.data['details']['reason'] == messages.MSG_PT_0002
         assert response.data['details']['api_name'] == 'task-66'
 
     def test_create__type_field_from_another_account__validation_error(
@@ -2153,10 +2138,9 @@ class TestCreateTemplateRawPerformer:
 
         # assert
         assert response.status_code == 400
-        message = 'One or more performers are incorrect.'
         assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-        assert response.data['message'] == message
-        assert response.data['details']['reason'] == message
+        assert response.data['message'] == messages.MSG_PT_0002
+        assert response.data['details']['reason'] == messages.MSG_PT_0002
         assert response.data['details']['api_name'] == 'task-66'
 
     def test_create__type_field_from_future_task__validation_error(
@@ -2223,10 +2207,9 @@ class TestCreateTemplateRawPerformer:
 
         # assert
         assert response.status_code == 400
-        message = 'One or more performers are incorrect.'
         assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-        assert response.data['message'] == message
-        assert response.data['details']['reason'] == message
+        assert response.data['message'] == messages.MSG_PT_0002
+        assert response.data['details']['reason'] == messages.MSG_PT_0002
         assert response.data['details']['api_name'] == 'task-66'
 
     def test_create__type_field_duplicate__validation_error(
@@ -3061,3 +3044,765 @@ class TestCreateTemplateRawPerformer:
 
         # assert
         assert response.status_code == 200
+
+
+# ──────────────────────────────────────────────────────────
+# Description auto-cleanup
+# ──────────────────────────────────────────────────────────
+
+def test_create__broken_ref_in_description__auto_cleaned(
+    mocker,
+    api_client,
+):
+    """Description with {{deleted-field}} → ref removed."""
+
+    # arrange
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'api_name': 'task-1',
+                    'description': (
+                        'Please fill {{deleted-field}} carefully'
+                    ),
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    task_data = response.json()['tasks'][0]
+    assert '{{deleted-field}}' not in task_data['description']
+    assert task_data['description'] == 'Please fill  carefully'
+    task = TaskTemplate.objects.get(
+        api_name=task_data['api_name'],
+    )
+    assert '{{deleted-field}}' not in (task.description or '')
+
+
+def test_create__valid_refs_preserved_after_cleanup(
+    mocker,
+    api_client,
+):
+    """Only broken refs removed; valid ones preserved."""
+
+    # arrange
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'fields': [
+                    {
+                        'type': FieldType.STRING,
+                        'name': 'Valid Field',
+                        'is_required': True,
+                        'order': 1,
+                        'api_name': 'valid-field',
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'api_name': 'task-1',
+                    'description': (
+                        '{{valid-field}} and {{broken-ref}}'
+                    ),
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    task_data = response.json()['tasks'][0]
+    assert '{{valid-field}}' in task_data['description']
+    assert '{{broken-ref}}' not in task_data['description']
+
+
+def test_create__system_vars_preserved_after_cleanup(
+    mocker,
+    api_client,
+):
+    """System variables are never removed."""
+
+    # arrange
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'api_name': 'task-1',
+                    'description': (
+                        '{{workflow-starter}} and {{broken}}'
+                    ),
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    desc = response.json()['tasks'][0]['description']
+    assert '{{workflow-starter}}' in desc
+    assert '{{broken}}' not in desc
+
+
+def test_create__similar_api_names_not_affected(
+    mocker,
+    api_client,
+):
+    """Cleanup of 'field-1' must NOT touch 'field-10'."""
+
+    # arrange
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'fields': [
+                    {
+                        'type': FieldType.STRING,
+                        'name': 'Field 10',
+                        'is_required': True,
+                        'order': 1,
+                        'api_name': 'field-10',
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'api_name': 'task-1',
+                    'description': (
+                        '{{field-1}} and {{field-10}}'
+                    ),
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    desc = response.json()['tasks'][0]['description']
+    assert '{{field-1}}' not in desc
+    assert '{{field-10}}' in desc
+
+
+def test_create__multiple_broken_refs_in_description(
+    mocker,
+    api_client,
+):
+    """Multiple broken refs — all removed."""
+
+    # arrange
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'api_name': 'task-1',
+                    'description': (
+                        '{{broken-1}} text {{broken-2}}'
+                        ' more {{broken-1}}'
+                    ),
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    desc = response.json()['tasks'][0]['description']
+    assert '{{broken-1}}' not in desc
+    assert '{{broken-2}}' not in desc
+    assert desc == ' text  more '
+
+
+def test_create__broken_ref_across_multiple_tasks(
+    mocker,
+    api_client,
+):
+    """Broken ref in tasks 1 and 2 — cleaned in both."""
+
+    # arrange
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'Step 1',
+                    'api_name': 'task-1',
+                    'description': '{{deleted-field}}',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+                {
+                    'number': 2,
+                    'name': 'Step 2',
+                    'api_name': 'task-2',
+                    'description': 'Also {{deleted-field}}',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    for task_data in response.json()['tasks']:
+        assert '{{deleted-field}}' not in (
+            task_data['description']
+        )
+
+
+# ──────────────────────────────────────────────────────────
+# Name auto-cleanup
+# ──────────────────────────────────────────────────────────
+
+def test_create__broken_ref_in_name__auto_cleaned(
+    mocker,
+    api_client,
+):
+    """Name with {{deleted-field}} → ref removed."""
+
+    # arrange
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'Process {{deleted-field}} task',
+                    'api_name': 'task-1',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    task_data = response.json()['tasks'][0]
+    assert '{{deleted-field}}' not in task_data['name']
+    assert task_data['name'] == 'Process  task'
+
+
+def test_create__name_only_ref__replaced_with_step_n(
+    mocker,
+    api_client,
+):
+    """Name = '{{deleted}}' → becomes 'Step 1'."""
+
+    # arrange
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': '{{deleted-field}}',
+                    'api_name': 'task-1',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    task_data = response.json()['tasks'][0]
+    assert task_data['name'] == 'Step 1'
+    task = TaskTemplate.objects.get(
+        api_name=task_data['api_name'],
+    )
+    assert task.name == 'Step 1'
+
+
+def test_create__name_only_ref__step_n_correct_number(
+    mocker,
+    api_client,
+):
+    """Task number=3, name='{{deleted}}' → 'Step 3'."""
+
+    # arrange
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'Normal',
+                    'api_name': 'task-1',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+                {
+                    'number': 2,
+                    'name': 'Also Normal',
+                    'api_name': 'task-2',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+                {
+                    'number': 3,
+                    'name': '{{deleted-field}}',
+                    'api_name': 'task-3',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    task_3 = response.json()['tasks'][2]
+    assert task_3['name'] == 'Step 3'
+
+
+# ──────────────────────────────────────────────────────────
+# Performers auto-cleanup
+# ──────────────────────────────────────────────────────────
+
+def test_create__broken_field_performer__removed(
+    mocker,
+    api_client,
+):
+    """Field-performer with broken source_id → removed."""
+
+    # arrange
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'fields': [
+                    {
+                        'type': FieldType.USER,
+                        'name': 'Valid User',
+                        'is_required': True,
+                        'order': 1,
+                        'api_name': 'valid-user-field',
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'api_name': 'task-1',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                        {
+                            'type': PerformerType.FIELD,
+                            'source_id': 'deleted-user-field',
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    performers = response.json()['tasks'][0]['raw_performers']
+    assert len(performers) == 1
+    assert performers[0]['type'] == PerformerType.USER
+
+
+def test_create__last_performer_broken_field__error(
+    mocker,
+    api_client,
+):
+    """Only performer is broken field → 400."""
+
+    # arrange
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'api_name': 'task-1',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.FIELD,
+                            'source_id': 'deleted-user-field',
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+
+
+def test_create__performer_type_user__not_affected(
+    mocker,
+    api_client,
+):
+    """User-type performers are never touched by cleanup."""
+
+    # arrange
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'api_name': 'task-1',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    performers = response.json()['tasks'][0]['raw_performers']
+    assert len(performers) == 1
+    assert performers[0]['type'] == PerformerType.USER

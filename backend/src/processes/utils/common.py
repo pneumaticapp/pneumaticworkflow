@@ -29,6 +29,20 @@ VAR_PATTERN_FIELD = re.compile(
 VAR_PATTERN_WORKFLOW_ID = re.compile(r'\{\{\s*workflow-id\s*\}\}')
 
 
+def remove_field_references(
+    text: str,
+    api_names: Set[str],
+) -> str:
+    """Remove {{ api_name }} references from text."""
+    for api_name in api_names:
+        text = re.sub(
+            r'{{\s*' + re.escape(api_name) + r'\s*}}',
+            '',
+            text,
+        )
+    return text
+
+
 def is_tasks_ordering_correct(tasks: List[int]) -> bool:
     tasks_set = set(tasks)
     if len(tasks) > len(tasks_set):

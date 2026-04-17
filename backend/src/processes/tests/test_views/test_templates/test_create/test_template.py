@@ -3285,7 +3285,7 @@ def test_create__wf_name_template__only_fields__not_required__validation_error(
     kickoff_create_mock.assert_not_called()
 
 
-def test_create__wf_name_template__not_existent_field__validation_error(
+def test_create__wf_name_template__not_existent_field__auto_cleaned(
     mocker,
     api_client,
 ):
@@ -3346,13 +3346,11 @@ def test_create__wf_name_template__not_existent_field__validation_error(
     )
 
     # assert
-    assert response.status_code == 400
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == messages.MSG_PT_0008
-    assert response.data['details']['name'] == 'wf_name_template'
-    assert response.data['details']['reason'] == messages.MSG_PT_0008
-    template_create_mock.assert_not_called()
-    kickoff_create_mock.assert_not_called()
+    assert response.status_code == 200
+    template = Template.objects.get(id=response.json()['id'])
+    assert template.wf_name_template == 'Workflow'
+    template_create_mock.assert_called_once()
+    kickoff_create_mock.assert_called_once()
 
 
 @pytest.mark.parametrize('wf_name_template', ('', None))
@@ -3774,22 +3772,22 @@ def test_create__missing_tasks__validation_error(mocker, api_client):
     templates_created_mock.assert_not_called()
 
 
-def test_create__invalid_wf_name_template__validation_error(
+def test_create__invalid_wf_name_template__auto_cleaned(
     mocker,
     api_client,
 ):
 
-    """Invalid `wf_name_template` references unknown field api_name → 400"""
+    """Invalid `wf_name_template` references unknown field → auto-cleaned"""
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
     api_client.token_authenticate(user=user)
-    templates_kickoff_created_mock = mocker.patch(
+    mocker.patch(
         'src.processes.views.template.'
         'AnalyticService.templates_kickoff_created',
     )
-    templates_created_mock = mocker.patch(
+    mocker.patch(
         'src.processes.views.template.'
         'AnalyticService.templates_created',
     )
@@ -3826,7 +3824,140 @@ def test_create__invalid_wf_name_template__validation_error(
     )
 
     # assert
-    assert response.status_code == 400
-    assert response.data['message'] == str(messages.MSG_PT_0008)
-    templates_kickoff_created_mock.assert_not_called()
-    templates_created_mock.assert_not_called()
+    assert response.status_code == 200
+    template = Template.objects.get(id=response.json()['id'])
+    assert template.wf_name_template is None
+
+
+# ──────────────────────────────────────────────────────────
+# wf_name_template auto-cleanup
+# ──────────────────────────────────────────────────────────
+
+def test_create__broken_ref_in_wf_name__auto_cleaned(
+    mocker,
+    api_client,
+):
+    """wf_name_template with broken ref → ref removed."""
+
+    # arrange
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'wf_name_template': (
+                'Workflow {{deleted-field}} process'
+            ),
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'fields': [
+                    {
+                        'type': FieldType.STRING,
+                        'name': 'Some Field',
+                        'is_required': True,
+                        'order': 1,
+                        'api_name': 'some-field',
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'api_name': 'task-1',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    resp_data = response.json()
+    assert '{{deleted-field}}' not in (
+        resp_data['wf_name_template'] or ''
+    )
+    template = Template.objects.get(id=resp_data['id'])
+    assert '{{deleted-field}}' not in (
+        template.wf_name_template or ''
+    )
+
+
+def test_create__wf_name_only_ref__set_to_null(
+    mocker,
+    api_client,
+):
+    """wf_name_template = '{{deleted}}' → becomes None."""
+
+    # arrange
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    user = create_test_user()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'wf_name_template': '{{deleted-field}}',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'First step',
+                    'api_name': 'task-1',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    template = Template.objects.get(
+        id=response.json()['id'],
+    )
+    assert template.wf_name_template is None

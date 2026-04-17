@@ -56,7 +56,6 @@ import { NotificationManager } from '../../components/UI/Notifications';
 import { updateTemplate } from '../../api/updateTemplate';
 import { getNormalizedTemplate, mapTemplateRequest } from '../../utils/template';
 import { getErrorMessage, isPaidFeatureError } from '../../utils/getErrorMessage';
-import { insertId } from '../../utils/templates/insertId';
 import { ETemplateStatus } from '../../types/redux';
 import { TUserListItem } from '../../types/user';
 import { loadTemplateIntegrationsStats, loadTemplates } from '../actions';
@@ -213,20 +212,16 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void) {
 
   const isTemplateCreated = !templateRequest.id;
 
+  const localTaskMap = new Map(
+    lastTemplateState.tasks.map((t) => [t.apiName, t]),
+  );
+
   const newTemplateState: ITemplate = {
-    ...insertId(lastTemplateState, savedTemplate),
-    updatedBy: savedTemplate.updatedBy,
-    dateUpdated: savedTemplate.dateUpdated,
-    publicUrl: savedTemplate.publicUrl,
-    embedUrl: savedTemplate.embedUrl,
-    owners: savedTemplate.owners ?? lastTemplateState.owners,
-    tasks: (() => {
-      const savedTasksMap = new Map(savedTemplate.tasks.map((task) => [task.apiName, task]));
-      return lastTemplateState.tasks.map((task) => ({
-        ...task,
-        ancestors: savedTasksMap.get(task.apiName)?.ancestors || [],
-      }));
-    })(),
+    ...savedTemplate,
+    tasks: savedTemplate.tasks.map((savedTask) => ({
+      ...savedTask,
+      uuid: localTaskMap.get(savedTask.apiName)?.uuid || savedTask.uuid,
+    })),
   };
 
   yield put(setTemplate(newTemplateState));
