@@ -1,3 +1,4 @@
+
 import pytest
 from datetime import timedelta
 
@@ -333,6 +334,56 @@ def test_partial_update__full_data__ok(mocker, api_client):
         name='Updated Name',
         description='Updated description',
         items=items,
+    )
+
+
+def test_partial_update__update_and_create_items__ok(mocker, api_client):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(
+        account=account,
+        name='Old Name',
+        items_count=1,
+    )
+    item = dataset.items.all().first()
+    data_set_service_init_mock = mocker.patch.object(
+        DataSetService,
+        attribute='__init__',
+        return_value=None,
+    )
+    partial_update_mock = mocker.patch(
+        'src.datasets.services.'
+        'dataset.DataSetService.partial_update',
+        return_value=dataset,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.patch(
+        path=f'/datasets/{dataset.id}',
+        data={
+            'items': [
+                {'id': item.id, 'value': item.value, 'order': item.order},
+                {'value': 2, 'order': 2},
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    data_set_service_init_mock.assert_called_once_with(
+        user=user,
+        instance=dataset,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    partial_update_mock.assert_called_once_with(
+        items=[
+            {'id': item.id, 'value': item.value, 'order': item.order},
+            {'value': '2', 'order': 2},
+        ],
     )
 
 
