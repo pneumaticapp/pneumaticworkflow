@@ -8,7 +8,7 @@ from src.accounts.messages import MSG_A_0035, MSG_A_0037, MSG_A_0041
 from src.generics.exceptions import BaseServiceException
 from src.processes.enums import (
     FieldSetLayout,
-    LabelPosition,
+    LabelPosition, FieldSetRuleType,
 )
 from src.processes.services.templates.fieldsets.fieldset import (
     FieldSetTemplateService,
@@ -22,6 +22,211 @@ from src.processes.tests.fixtures import (
 )
 
 pytestmark = pytest.mark.django_db
+
+
+def test_partial_update__name__ok(api_client, mocker):
+
+    """
+
+    Partial update with minimal request data
+
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+    )
+    api_client.token_authenticate(user=user)
+    data = {
+        'name': 'Updated Name',
+    }
+
+    # mock FieldSetTemplateService
+    field_set_template_service_init_mock = mocker.patch.object(
+        FieldSetTemplateService,
+        attribute='__init__',
+        return_value=None,
+    )
+    field_set_template_service_partial_update_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.partial_update',
+        return_value=fieldset,
+    )
+
+    # act
+    response = api_client.patch(
+        f'/templates/fieldsets/{fieldset.id}',
+        data=data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == fieldset.id
+
+    field_set_template_service_init_mock.assert_called_once_with(
+        user=user,
+        instance=fieldset,
+        is_superuser=False,
+        auth_type=mocker.ANY,
+    )
+    field_set_template_service_partial_update_mock.assert_called_once_with(
+        name='Updated Name',
+    )
+
+
+def test_partial_update__all_fields__ok(api_client, mocker):
+
+    """
+
+    Partial update with full request data
+
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+    )
+    api_client.token_authenticate(user=user)
+    data = {
+        'name': 'Full Updated Fieldset',
+        'description': 'Updated description',
+        'order': 10,
+        'layout': FieldSetLayout.HORIZONTAL,
+        'label_position': LabelPosition.LEFT,
+        'fields': [
+            {
+                'name': 'Field 1',
+                'type': 'text',
+                'order': 1,
+                'api_name': 'f1',
+            },
+        ],
+        'rules': [
+            {
+                'id': 123,
+                'type': FieldSetRuleType.SUM_EQUAL,
+                'value': 'val',
+                'api_name': 'r1',
+            },
+        ],
+    }
+
+    # mock FieldSetTemplateService
+    field_set_template_service_init_mock = mocker.patch.object(
+        FieldSetTemplateService,
+        attribute='__init__',
+        return_value=None,
+    )
+    field_set_template_service_partial_update_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.partial_update',
+        return_value=fieldset,
+    )
+
+    # act
+    response = api_client.patch(
+        f'/templates/fieldsets/{fieldset.id}',
+        data=data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == fieldset.id
+    assert response.data['api_name'] == fieldset.api_name
+    field_set_template_service_init_mock.assert_called_once_with(
+        user=user,
+        instance=fieldset,
+        is_superuser=False,
+        auth_type=mocker.ANY,
+    )
+    field_set_template_service_partial_update_mock.assert_called_once_with(
+        name='Full Updated Fieldset',
+        description='Updated description',
+        order=10,
+        layout=FieldSetLayout.HORIZONTAL,
+        label_position=LabelPosition.LEFT,
+        rules=data['rules'],
+        fields=data['fields'],
+    )
+
+
+def test_partial_update__kickoff_id_and_task_id_swap__ok(api_client):
+
+    """Move fieldset from kickoff to task in one PATCH
+     (clear kickoff, set task)."""
+
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+    )
+    task = template.tasks.first()
+    api_client.token_authenticate(user=user)
+
+    response = api_client.patch(
+        f'/templates/fieldsets/{fieldset.id}',
+        data={
+            'task_id': task.id,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.data['task_id'] == task.id
+    fieldset.refresh_from_db()
+    assert fieldset.kickoff_id is None
+    assert fieldset.task_id == task.id
+
+
+def test_partial_update__task_id_is_null_set_kickoff_id__ok(api_client):
+
+    """Move fieldset from kickoff to task in one PATCH
+     (clear kickoff, set task)."""
+
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+    )
+    api_client.token_authenticate(user=user)
+
+    response = api_client.patch(
+        f'/templates/fieldsets/{fieldset.id}',
+        data={
+            'task_id': None,
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.data['task_id'] is None
+    fieldset.refresh_from_db()
+    assert fieldset.kickoff_id == template.kickoff_instance.id
+    assert fieldset.task_id is None
 
 
 def test_partial_update__unauthenticated__unauthorized(api_client):
@@ -212,133 +417,6 @@ def test_partial_update__non_admin__permission_denied(api_client):
 
     # assert
     assert response.status_code == 403
-
-
-def test_partial_update__min_data__ok(api_client, mocker):
-
-    """
-
-    Partial update with minimal request data
-
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    fieldset = create_test_fieldset_template(
-        account=account,
-        template=template,
-        kickoff=template.kickoff_instance,
-    )
-    api_client.token_authenticate(user=user)
-    data = {
-        'name': 'Updated Name',
-    }
-
-    # mock FieldSetTemplateService
-    field_set_template_service_init_mock = mocker.patch.object(
-        FieldSetTemplateService,
-        attribute='__init__',
-        return_value=None,
-    )
-    field_set_template_service_partial_update_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.partial_update',
-        return_value=fieldset,
-    )
-
-    # act
-    response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
-        data=data,
-    )
-
-    # assert
-    assert response.status_code == 200
-    assert response.data['id'] == fieldset.id
-    assert response.data['name'] == 'Test Fieldset'
-    assert response.data['description'] == ''
-    assert response.data['order'] == 0
-    assert response.data['layout'] == FieldSetLayout.VERTICAL
-    assert response.data['label_position'] == LabelPosition.TOP
-    assert response.data['api_name'] == fieldset.api_name
-    field_set_template_service_init_mock.assert_called_once_with(
-        user=user,
-        instance=fieldset,
-        is_superuser=False,
-        auth_type=mocker.ANY,
-    )
-    field_set_template_service_partial_update_mock.assert_called_once_with(
-        name='Updated Name',
-    )
-
-
-def test_partial_update__full_data__ok(api_client, mocker):
-
-    """
-
-    Partial update with full request data
-
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    fieldset = create_test_fieldset_template(
-        account=account,
-        template=template,
-        kickoff=template.kickoff_instance,
-    )
-    api_client.token_authenticate(user=user)
-    data = {
-        'name': 'Full Updated Fieldset',
-        'description': 'Updated description',
-        'order': 10,
-        'layout': FieldSetLayout.HORIZONTAL,
-        'label_position': LabelPosition.LEFT,
-    }
-
-    # mock FieldSetTemplateService
-    field_set_template_service_init_mock = mocker.patch.object(
-        FieldSetTemplateService,
-        attribute='__init__',
-        return_value=None,
-    )
-    field_set_template_service_partial_update_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.partial_update',
-        return_value=fieldset,
-    )
-
-    # act
-    response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
-        data=data,
-    )
-
-    # assert
-    assert response.status_code == 200
-    assert response.data['id'] == fieldset.id
-    assert response.data['api_name'] == fieldset.api_name
-    field_set_template_service_init_mock.assert_called_once_with(
-        user=user,
-        instance=fieldset,
-        is_superuser=False,
-        auth_type=mocker.ANY,
-    )
-    field_set_template_service_partial_update_mock.assert_called_once_with(
-        name='Full Updated Fieldset',
-        description='Updated description',
-        order=10,
-        layout=FieldSetLayout.HORIZONTAL,
-        label_position=LabelPosition.LEFT,
-    )
 
 
 def test_partial_update__invalid_name__validation_error(api_client):
@@ -534,68 +612,3 @@ def test_partial_update__not_existing__not_found(api_client):
 
     # assert
     assert response.status_code == 404
-
-
-def test_partial_update__kickoff_id_and_task_id_swap__ok(api_client):
-
-    """Move fieldset from kickoff to task in one PATCH
-     (clear kickoff, set task)."""
-
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    fieldset = create_test_fieldset_template(
-        account=account,
-        template=template,
-        kickoff=template.kickoff_instance,
-    )
-    task = template.tasks.first()
-    api_client.token_authenticate(user=user)
-
-    response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
-        data={
-            'task_id': task.id,
-        },
-    )
-
-    assert response.status_code == 200
-    assert response.data['task_id'] == task.id
-    fieldset.refresh_from_db()
-    assert fieldset.kickoff_id is None
-    assert fieldset.task_id == task.id
-
-
-def test_partial_update__task_id_is_null_set_kickoff_id__ok(api_client):
-
-    """Move fieldset from kickoff to task in one PATCH
-     (clear kickoff, set task)."""
-
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    fieldset = create_test_fieldset_template(
-        account=account,
-        template=template,
-        kickoff=template.kickoff_instance,
-    )
-    api_client.token_authenticate(user=user)
-
-    response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
-        data={
-            'task_id': None,
-        },
-    )
-
-    assert response.status_code == 200
-    assert response.data['task_id'] is None
-    fieldset.refresh_from_db()
-    assert fieldset.kickoff_id == template.kickoff_instance.id
-    assert fieldset.task_id is None

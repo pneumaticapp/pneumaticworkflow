@@ -36,7 +36,7 @@ from src.processes.enums import (
     TaskStatus,
     TemplateType,
     WorkflowEventType,
-    WorkflowStatus,
+    WorkflowStatus, FieldSetRuleType,
 )
 from src.processes.models.templates.checklist import (
     ChecklistTemplate,
@@ -48,7 +48,7 @@ from src.processes.models.templates.conditions import (
     RuleTemplate,
 )
 from src.processes.models.templates.fieldset import (
-    FieldsetTemplate,
+    FieldsetTemplate, FieldsetTemplateRule,
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.kickoff import Kickoff
@@ -838,6 +838,8 @@ def create_test_fieldset_template(
     order: int = 0,
     label_position: LabelPosition.LITERALS = LabelPosition.TOP,
     layout: FieldSetLayout.LITERALS = FieldSetLayout.VERTICAL,
+    rule_type: Optional[FieldSetRuleType.LITERALS] = None,
+    rule_value: Optional[str] = None,
 ) -> FieldsetTemplate:
 
     """Creating fieldset templates."""
@@ -853,6 +855,14 @@ def create_test_fieldset_template(
         label_position=label_position,
         layout=layout,
     )
+    if rule_type:
+        FieldsetTemplateRule.objects.create(
+            fieldset=fieldset,
+            account=account,
+            api_name=f'{fieldset.api_name}-rule-1',
+            type=rule_type,
+            value=rule_value,
+        )
     FieldTemplate.objects.create(
         name='Fieldset field',
         type=FieldType.STRING,

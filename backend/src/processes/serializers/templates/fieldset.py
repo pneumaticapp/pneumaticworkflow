@@ -30,7 +30,7 @@ class FieldsetTemplateRuleSerializer(
             'api_name',
         )
 
-    id = IntegerField(read_only=True)
+    id = IntegerField(required=False)
     api_name = CharField(required=False, max_length=200)
 
 
@@ -54,7 +54,7 @@ class FieldsetTemplateSerializer(
             'api_name',
         )
 
-    id = IntegerField(read_only=True)
+    id = IntegerField(required=False)
     task_id = IntegerField(allow_null=True, required=False)
     api_name = CharField(required=False, max_length=200)
     rules = FieldsetTemplateRuleSerializer(

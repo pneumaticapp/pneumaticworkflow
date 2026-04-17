@@ -20,6 +20,54 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
+def test_destroy__ok(api_client, mocker):
+
+    """
+
+    Delete existing fieldset
+
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+    )
+    api_client.token_authenticate(user=user)
+
+    # mock FieldSetTemplateService
+    field_set_template_service_init_mock = mocker.patch.object(
+        FieldSetTemplateService,
+        attribute='__init__',
+        return_value=None,
+    )
+    field_set_template_service_delete_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.delete',
+    )
+
+    # act
+    response = api_client.delete(
+        f'/templates/fieldsets/{fieldset.id}',
+    )
+
+    # assert
+    assert response.status_code == 204
+    field_set_template_service_init_mock.assert_called_once_with(
+        user=user,
+        instance=fieldset,
+        is_superuser=False,
+        auth_type=mocker.ANY,
+    )
+    field_set_template_service_delete_mock.assert_called_once_with()
+
+
 def test_destroy__unauthenticated__unauthorized(api_client):
 
     """
@@ -188,54 +236,6 @@ def test_destroy__non_admin__permission_denied(api_client):
 
     # assert
     assert response.status_code == 403
-
-
-def test_destroy__ok(api_client, mocker):
-
-    """
-
-    Delete existing fieldset
-
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    fieldset = create_test_fieldset_template(
-        account=account,
-        template=template,
-        kickoff=template.kickoff_instance,
-    )
-    api_client.token_authenticate(user=user)
-
-    # mock FieldSetTemplateService
-    field_set_template_service_init_mock = mocker.patch.object(
-        FieldSetTemplateService,
-        attribute='__init__',
-        return_value=None,
-    )
-    field_set_template_service_delete_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.delete',
-    )
-
-    # act
-    response = api_client.delete(
-        f'/templates/fieldsets/{fieldset.id}',
-    )
-
-    # assert
-    assert response.status_code == 204
-    field_set_template_service_init_mock.assert_called_once_with(
-        user=user,
-        instance=fieldset,
-        is_superuser=False,
-        auth_type=mocker.ANY,
-    )
-    field_set_template_service_delete_mock.assert_called_once_with()
 
 
 def test_destroy__service_exception__validation_error(api_client, mocker):
