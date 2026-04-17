@@ -22,7 +22,7 @@ class DatasetItemSerializer(
             'order',
         )
 
-    id = IntegerField(read_only=True)
+    id = IntegerField(required=False)
     value = CharField(max_length=200)
     order = IntegerField(default=0)
 
@@ -64,7 +64,7 @@ class DatasetSerializer(
             'items',
         )
 
-    id = IntegerField(read_only=True)
+    id = IntegerField(required=False)
     name = CharField(max_length=200)
     description = CharField(allow_blank=True, default='')
     date_created_tsp = TimeStampField(
