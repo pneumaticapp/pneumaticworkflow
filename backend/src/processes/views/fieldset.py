@@ -46,7 +46,11 @@ class FieldsetTemplateViewSet(
 
     def get_queryset(self):
         user = self.request.user
-        return FieldsetTemplate.objects.on_account(user.account_id)
+        return (
+            FieldsetTemplate.objects
+            .select_related('template')
+            .on_account(user.account_id)
+        )
 
     def retrieve(self, request, *args, **kwargs):
         fieldset = self.get_object()
@@ -59,6 +63,7 @@ class FieldsetTemplateViewSet(
             fieldset,
             data=request.data,
             partial=True,
+            extra_fields={'template': fieldset.template},
         )
         serializer.is_valid(raise_exception=True)
         service = FieldSetTemplateService(

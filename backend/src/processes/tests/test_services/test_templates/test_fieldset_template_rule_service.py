@@ -11,6 +11,7 @@ from src.processes.models.templates.fieldset import (
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.services.exceptions import (
+    FieldsetTemplateRuleServiceException,
     FieldsetTemplateRuleSumMaxFieldsNotNumber,
     FieldsetTemplateRuleSumMaxInvalidValue,
 )
@@ -26,10 +27,7 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-# FieldsetTemplateRuleService._create_instance
-
-
-def test__create_instance__default_params__ok(mocker):
+def test__create_instance__default_params__ok():
 
     """
     Call with default parameters
@@ -52,20 +50,21 @@ def test__create_instance__default_params__ok(mocker):
     )
 
     # act
-    service._create_instance(
+    result = service._create_instance(
         type=FieldSetRuleType.SUM_EQUAL,
         fieldset_id=fieldset.id,
     )
 
     # assert
     assert service.instance is not None
+    assert result is service.instance
     assert service.instance.type == FieldSetRuleType.SUM_EQUAL
     assert service.instance.value is None
     assert service.instance.fieldset_id == fieldset.id
     assert service.instance.account_id == account.id
 
 
-def test__create_instance__all_params__ok(mocker):
+def test__create_instance__all_params__ok():
 
     """
     Call with all parameters
@@ -102,13 +101,10 @@ def test__create_instance__all_params__ok(mocker):
     assert service.instance.account_id == account.id
 
 
-# FieldsetTemplateRuleService._validate_sum_equal
-
-
-def test__validate_sum_equal__valid__ok(mocker):
+def test__validate_sum_equal__valid__ok():
 
     """
-    Valid value, all number fields
+    Value from kwargs, valid number, all NUMBER fields → ok
     """
 
     # arrange
@@ -121,80 +117,39 @@ def test__validate_sum_equal__valid__ok(mocker):
         name='Fieldset',
         order=1,
     )
-    FieldTemplate.objects.create(
+    field = FieldTemplate.objects.create(
         account=account,
         fieldset=fieldset,
         name='Number field',
         type=FieldType.NUMBER,
+        api_name='num',
         order=1,
     )
+    rule = FieldsetTemplateRule.objects.create(
+        account=account,
+        fieldset=fieldset,
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='100.5',
+    )
+    rule.fields.add(field)
     service = FieldsetTemplateRuleService(
         user=user,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
+        instance=rule,
     )
 
     # act
-    service._validate_sum_equal(
-        value='100',
-        fieldset_id=fieldset.id,
-    )
-
-    # assert - no exception raised
-
-
-def test__validate_sum_equal__empty_value__raise_exception(mocker):
-
-    """
-    Value is empty → exception
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    service = FieldsetTemplateRuleService(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-    )
-
-    # act
-    with pytest.raises(FieldsetTemplateRuleSumMaxInvalidValue) as ex:
-        service._validate_sum_equal(value='')
+    result = service._validate_sum_equal()
 
     # assert
-    assert ex.value.message == fs_messages.MSG_FS_0004
+    assert result == 100.5
 
 
-def test__validate_sum_equal__non_numeric__raise_exception(mocker):
-
-    """
-    Value is non-numeric → exception
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    service = FieldsetTemplateRuleService(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-    )
-
-    # act
-    with pytest.raises(FieldsetTemplateRuleSumMaxInvalidValue) as ex:
-        service._validate_sum_equal(
-            value='not_a_number',
-        )
-
-    # assert
-    assert ex.value.message == fs_messages.MSG_FS_0004
-
-
-def test__validate_sum_equal__non_num_fields__raise_exception(mocker):
+def test__validate_sum_equal__empty_value__raise_exception():
 
     """
-    Non-number fields exist → exception
+    Value is empty → raises SumMaxInvalidValue
     """
 
     # arrange
@@ -207,35 +162,125 @@ def test__validate_sum_equal__non_num_fields__raise_exception(mocker):
         name='Fieldset',
         order=1,
     )
-    FieldTemplate.objects.create(
+    rule = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
-        name='String field',
-        type=FieldType.STRING,
-        order=1,
+        type=FieldSetRuleType.SUM_EQUAL,
+        value=None,
     )
     service = FieldsetTemplateRuleService(
         user=user,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
+        instance=rule,
+    )
+
+    # act
+    with pytest.raises(FieldsetTemplateRuleSumMaxInvalidValue) as ex:
+        service._validate_sum_equal()
+
+    # assert
+    assert ex.value.message == fs_messages.MSG_FS_0004
+
+
+def test__validate_sum_equal__non_numeric__raise_exception():
+
+    """
+    Value is non-numeric → raises SumMaxInvalidValue
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+        order=1,
+    )
+    rule = FieldsetTemplateRule.objects.create(
+        account=account,
+        fieldset=fieldset,
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='abc',
+    )
+    service = FieldsetTemplateRuleService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=rule,
+    )
+
+    # act
+    with pytest.raises(FieldsetTemplateRuleSumMaxInvalidValue) as ex:
+        service._validate_sum_equal()
+
+    # assert
+    assert ex.value.message == fs_messages.MSG_FS_0004
+
+
+@pytest.mark.parametrize(
+    'field_type',
+    (
+        FieldType.STRING,
+        FieldType.TEXT,
+        FieldType.RADIO,
+        FieldType.CHECKBOX,
+        FieldType.DATE,
+        FieldType.URL,
+        FieldType.DROPDOWN,
+        FieldType.FILE,
+        FieldType.USER,
+    ),
+)
+def test__validate_sum_equal__non_number_type__raise_exception(field_type):
+
+    """
+    Non-NUMBER field exists → raises SumMaxFieldsNotNumber
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+        order=1,
+    )
+    field = FieldTemplate.objects.create(
+        account=account,
+        fieldset=fieldset,
+        name='String field',
+        type=field_type,
+        api_name='str_field',
+        order=1,
+    )
+    rule = FieldsetTemplateRule.objects.create(
+        account=account,
+        fieldset=fieldset,
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='100',
+    )
+    rule.fields.add(field)
+    service = FieldsetTemplateRuleService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=rule,
     )
 
     # act
     with pytest.raises(FieldsetTemplateRuleSumMaxFieldsNotNumber) as ex:
-        service._validate_sum_equal(
-            value='100',
-            fieldset_id=fieldset.id,
-        )
+        service._validate_sum_equal()
 
     # assert
     assert ex.value.message == fs_messages.MSG_FS_0003
 
 
-def test__validate_sum_equal__value_from_kwargs__ok(mocker):
-
-    """
-    Value from kwargs
-    """
+def test__validate__call_method_by_type__ok(mocker):
 
     # arrange
     account = create_test_account()
@@ -245,51 +290,6 @@ def test__validate_sum_equal__value_from_kwargs__ok(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
-    )
-    FieldTemplate.objects.create(
-        account=account,
-        fieldset=fieldset,
-        name='Number field',
-        type=FieldType.NUMBER,
-        order=1,
-    )
-    service = FieldsetTemplateRuleService(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-    )
-
-    # act
-    service._validate_sum_equal(
-        value='50',
-        fieldset_id=fieldset.id,
-    )
-
-    # assert - no exception raised
-
-
-def test__validate_sum_equal__value_from_instance__ok(mocker):
-
-    """
-    Value from instance
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(user=user, tasks_count=1)
-    fieldset = FieldsetTemplate.objects.create(
-        template=template,
-        account=account,
-        name='Fieldset',
-        order=1,
-    )
-    FieldTemplate.objects.create(
-        account=account,
-        fieldset=fieldset,
-        name='Number field',
-        type=FieldType.NUMBER,
         order=1,
     )
     rule = FieldsetTemplateRule.objects.create(
@@ -304,135 +304,23 @@ def test__validate_sum_equal__value_from_instance__ok(mocker):
         auth_type=AuthTokenType.USER,
         instance=rule,
     )
-
-    # act
-    service._validate_sum_equal(
-        fieldset_id=fieldset.id,
-    )
-
-    # assert - no exception raised
-
-
-def test__validate_sum_equal__fset_id_from_kwargs__ok(mocker):
-
-    """
-    fieldset_id from kwargs
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(user=user, tasks_count=1)
-    fieldset = FieldsetTemplate.objects.create(
-        template=template,
-        account=account,
-        name='Fieldset',
-        order=1,
-    )
-    FieldTemplate.objects.create(
-        account=account,
-        fieldset=fieldset,
-        name='Number field',
-        type=FieldType.NUMBER,
-        order=1,
-    )
-    service = FieldsetTemplateRuleService(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-    )
-
-    # act
-    service._validate_sum_equal(
-        value='100',
-        fieldset_id=fieldset.id,
-    )
-
-    # assert - no exception raised
-
-
-def test__validate_sum_equal__fset_id_from_instance__ok(mocker):
-
-    """
-    fieldset_id from instance
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(user=user, tasks_count=1)
-    fieldset = FieldsetTemplate.objects.create(
-        template=template,
-        account=account,
-        name='Fieldset',
-        order=1,
-    )
-    FieldTemplate.objects.create(
-        account=account,
-        fieldset=fieldset,
-        name='Number field',
-        type=FieldType.NUMBER,
-        order=1,
-    )
-    rule = FieldsetTemplateRule.objects.create(
-        account=account,
-        fieldset=fieldset,
-        type=FieldSetRuleType.SUM_EQUAL,
-        value='100',
-    )
-    service = FieldsetTemplateRuleService(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-        instance=rule,
-    )
-
-    # act
-    service._validate_sum_equal(
-        value='100',
-    )
-
-    # assert - no exception raised
-
-
-# FieldsetTemplateRuleService._validate
-
-
-def test__validate__type_from_kwargs__ok(mocker):
-
-    """
-    Type from kwargs
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    service = FieldsetTemplateRuleService(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-    )
-
-    # mock
     validate_sum_equal_mock = mocker.patch(
         'src.processes.services.templates.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleService._validate_sum_equal',
     )
+    kwargs = {'type': FieldSetRuleType.SUM_EQUAL}
 
     # act
-    service._validate(type=FieldSetRuleType.SUM_EQUAL, value='100')
+    service._validate(**kwargs)
 
     # assert
-    validate_sum_equal_mock.assert_called_once_with(
-        type=FieldSetRuleType.SUM_EQUAL,
-        value='100',
-    )
+    validate_sum_equal_mock.assert_called_once_with(**kwargs)
 
 
-def test__validate__type_from_instance__ok(mocker):
+def test_get_valid_fields__all_found__ok():
 
     """
-    Type from instance
+    All fields found → returns list
     """
 
     # arrange
@@ -445,41 +333,411 @@ def test__validate__type_from_instance__ok(mocker):
         name='Fieldset',
         order=1,
     )
-    rule = FieldsetTemplateRule.objects.create(
+    field_1_api_name = 'field_1'
+    field1 = FieldTemplate.objects.create(
         account=account,
         fieldset=fieldset,
-        type=FieldSetRuleType.SUM_EQUAL,
-        value='100',
+        name='Field 1',
+        type=FieldType.STRING,
+        api_name=field_1_api_name,
+        order=1,
+    )
+    field_2_api_name = 'field_2'
+    field2 = FieldTemplate.objects.create(
+        account=account,
+        fieldset=fieldset,
+        name='Field 2',
+        type=FieldType.NUMBER,
+        api_name=field_2_api_name,
+        order=2,
     )
     service = FieldsetTemplateRuleService(
         user=user,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
-        instance=rule,
     )
-
-    # mock
-    validate_sum_equal_mock = mocker.patch(
-        'src.processes.services.templates.fieldsets.fieldset_rule.'
-        'FieldsetTemplateRuleService._validate_sum_equal',
+    service.instance = FieldsetTemplateRule.objects.create(
+        account=account,
+        fieldset=fieldset,
+        type=FieldSetRuleType.SUM_EQUAL,
     )
 
     # act
-    service._validate(value='200')
+    result = service._get_valid_fields([field_1_api_name, field_2_api_name])
 
     # assert
-    validate_sum_equal_mock.assert_called_once_with(
-        value='200',
+    assert len(result) == 2
+    assert field1 in result
+    assert field2 in result
+
+
+def test_get_valid_fields__type_from_kwargs__ok():
+
+    """
+    rule_type from kwargs
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+        order=1,
+    )
+    field_api_name = 'field_1'
+    field = FieldTemplate.objects.create(
+        account=account,
+        fieldset=fieldset,
+        name='Number field',
+        type=FieldType.NUMBER,
+        api_name=field_api_name,
+        order=1,
+    )
+    service = FieldsetTemplateRuleService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    service.instance = FieldsetTemplateRule.objects.create(
+        account=account,
+        fieldset=fieldset,
+        type=FieldSetRuleType.SUM_EQUAL,
+    )
+
+    # act
+    result = service._get_valid_fields(
+        fields_api_names=[field_api_name],
+        type=FieldSetRuleType.SUM_EQUAL,
+    )
+
+    # assert
+    assert result == [field]
+
+
+def test_get_valid_fields__type_from_instance__ok():
+
+    """
+    rule_type from instance
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+        order=1,
+    )
+    field_api_name = 'field_1'
+    field = FieldTemplate.objects.create(
+        account=account,
+        fieldset=fieldset,
+        name='Number field',
+        type=FieldType.NUMBER,
+        api_name=field_api_name,
+        order=1,
+    )
+    service = FieldsetTemplateRuleService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    service.instance = FieldsetTemplateRule.objects.create(
+        account=account,
+        fieldset=fieldset,
+        type=FieldSetRuleType.SUM_EQUAL,
+    )
+
+    # act
+    result = service._get_valid_fields(
+        fields_api_names=[field_api_name],
+    )
+
+    # assert
+    assert result == [field]
+
+
+def test_get_valid_fields__one_failed__raise_exception():
+
+    """
+    failed_api_names has 1 element → raises exception
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+        order=1,
+    )
+    FieldTemplate.objects.create(
+        account=account,
+        fieldset=fieldset,
+        name='Number field',
+        type=FieldType.NUMBER,
+        api_name='num',
+        order=1,
+    )
+    service = FieldsetTemplateRuleService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    service.instance = FieldsetTemplateRule.objects.create(
+        account=account,
+        fieldset=fieldset,
+        type=FieldSetRuleType.SUM_EQUAL,
+    )
+
+    # act
+    with pytest.raises(FieldsetTemplateRuleServiceException) as ex:
+        service._get_valid_fields(['missing'])
+
+    # assert
+    assert ex.value.message == fs_messages.MSG_FS_0005(
+        rule=FieldSetRuleType.SUM_EQUAL,
+        field='missing',
     )
 
 
-# FieldsetTemplateRuleService.create
+def test_get_valid_fields__two_failed__raise_exception():
+
+    """
+    failed_api_names has 2 elements → raises exception
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+        order=1,
+    )
+    service = FieldsetTemplateRuleService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    service.instance = FieldsetTemplateRule.objects.create(
+        account=account,
+        fieldset=fieldset,
+        type=FieldSetRuleType.SUM_EQUAL,
+    )
+
+    # act
+    with pytest.raises(FieldsetTemplateRuleServiceException) as ex:
+        service._get_valid_fields(['missing1', 'missing2'])
+
+    # assert
+    assert ex.value.message == (
+        fs_messages.MSG_FS_0005(
+            rule=FieldSetRuleType.SUM_EQUAL,
+            field='missing1',
+        ) or fs_messages.MSG_FS_0005(
+            rule=FieldSetRuleType.SUM_EQUAL,
+            field='missing2',
+        )
+    )
+
+
+def test_set_fields__fields_provided__set_fields(mocker):
+
+    """
+    Non-empty list → fields are set
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+        order=1,
+    )
+    field_api_name = 'num'
+    field = FieldTemplate.objects.create(
+        account=account,
+        fieldset=fieldset,
+        name='Number field',
+        type=FieldType.NUMBER,
+        api_name=field_api_name,
+        order=1,
+    )
+    service = FieldsetTemplateRuleService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    rule = FieldsetTemplateRule.objects.create(
+        account=account,
+        fieldset=fieldset,
+        type=FieldSetRuleType.SUM_EQUAL,
+    )
+    service.instance = rule
+    get_valid_fields_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets'
+        '.fieldset_rule.FieldsetTemplateRuleService'
+        '._get_valid_fields',
+        return_value=[field],
+    )
+
+    # act
+    service._set_fields([field_api_name])
+
+    # assert
+    get_valid_fields_mock.assert_called_once_with(['num'])
+    assert list(rule.fields.all()) == [field]
+
+
+def test_set_fields__fields_not_provided__clear_fields(mocker):
+
+    """
+    Empty list → fields are cleared
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+        order=1,
+    )
+    field = FieldTemplate.objects.create(
+        account=account,
+        fieldset=fieldset,
+        name='Number field',
+        type=FieldType.NUMBER,
+        api_name='num',
+        order=1,
+    )
+    rule = FieldsetTemplateRule.objects.create(
+        account=account,
+        fieldset=fieldset,
+        type=FieldSetRuleType.SUM_EQUAL,
+    )
+    rule.fields.add(field)
+    service = FieldsetTemplateRuleService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    service.instance = rule
+    get_valid_fields_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets'
+        '.fieldset_rule.FieldsetTemplateRuleService'
+        '._get_valid_fields',
+    )
+
+    # act
+    service._set_fields([])
+
+    # assert
+    get_valid_fields_mock.assert_not_called()
+    assert rule.fields.count() == 0
+
+
+def test_create_related__fields_provided__ok(mocker):
+
+    """
+    fields present in kwargs
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldsetTemplateRuleService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    set_fields_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets'
+        '.fieldset_rule.FieldsetTemplateRuleService'
+        '._set_fields',
+    )
+    fields = ['num']
+
+    # act
+    service._create_related(fields=fields)
+
+    # assert
+    set_fields_mock.assert_called_once_with(fields)
+
+
+def test_create_related__fields_provided_empty_list__ok(mocker):
+
+    """
+    fields not in kwargs → no-op
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldsetTemplateRuleService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    set_fields_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets'
+        '.fieldset_rule.FieldsetTemplateRuleService'
+        '._set_fields',
+    )
+
+    # act
+    service._create_related(fields=[])
+
+    # assert
+    set_fields_mock.assert_called_once_with([])
+
+
+def test_create_related__fields_not_provided__skip(mocker):
+
+    """
+    fields not in kwargs → no-op
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldsetTemplateRuleService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    set_fields_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets'
+        '.fieldset_rule.FieldsetTemplateRuleService'
+        '._set_fields',
+    )
+
+    # act
+    service._create_related()
+
+    # assert
+    set_fields_mock.assert_not_called()
 
 
 def test_create__valid_data__ok(mocker):
 
     """
-    Call with valid data
+    Call with valid data → returns instance
     """
 
     # arrange
@@ -492,50 +750,57 @@ def test_create__valid_data__ok(mocker):
         name='Fieldset',
         order=1,
     )
-    FieldTemplate.objects.create(
+    rule = FieldsetTemplateRule.objects.create(
         account=account,
         fieldset=fieldset,
-        name='Number field',
-        type=FieldType.NUMBER,
-        order=1,
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='100',
     )
     service = FieldsetTemplateRuleService(
         user=user,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-
-    # mock
+    service.instance = rule
+    create_instance_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset_rule.'
+        'FieldsetTemplateRuleService._create_instance',
+    )
+    create_related_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset_rule.'
+        'FieldsetTemplateRuleService._create_related',
+    )
+    create_actions_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset_rule.'
+        'FieldsetTemplateRuleService._create_actions',
+    )
     validate_mock = mocker.patch(
         'src.processes.services.templates.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleService._validate',
     )
 
+    kwargs = {
+        'fields': ['num'],
+        'value': '100',
+        'type': FieldSetRuleType.SUM_EQUAL,
+        'fieldset_id': fieldset.id,
+    }
+
     # act
-    result = service.create(
-        type=FieldSetRuleType.SUM_EQUAL,
-        value='100',
-        fieldset_id=fieldset.id,
-    )
+    result = service.create(**kwargs)
 
     # assert
-    assert result.type == FieldSetRuleType.SUM_EQUAL
-    assert result.value == '100'
-    assert result.fieldset_id == fieldset.id
-    validate_mock.assert_called_once_with(
-        type=FieldSetRuleType.SUM_EQUAL,
-        value='100',
-        fieldset_id=fieldset.id,
-    )
+    assert result == rule
+    create_instance_mock.assert_called_once_with(**kwargs)
+    create_related_mock.assert_called_once_with(**kwargs)
+    create_actions_mock.assert_called_once_with(**kwargs)
+    validate_mock.assert_called_once_with(**kwargs)
 
 
-# FieldsetTemplateRuleService.partial_update
-
-
-def test_partial_update__valid_data__ok(mocker):
+def test_partial_update__with_fields__ok(mocker):
 
     """
-    Call with valid data
+    fields in update_kwargs → branch taken
     """
 
     # arrange
@@ -560,18 +825,81 @@ def test_partial_update__valid_data__ok(mocker):
         auth_type=AuthTokenType.USER,
         instance=rule,
     )
-
-    # mock
-    validate_mock = mocker.patch(
-        'src.processes.services.templates.fieldsets.fieldset_rule.'
-        'FieldsetTemplateRuleService._validate',
+    set_fields_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets'
+        '.fieldset_rule.FieldsetTemplateRuleService'
+        '._set_fields',
     )
+    validate_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets'
+        '.fieldset_rule.FieldsetTemplateRuleService'
+        '._validate',
+    )
+    value = '200'
+    fields = ['num']
 
     # act
-    result = service.partial_update(value='200')
+    result = service.partial_update(value=value, fields=fields)
 
     # assert
-    assert result.value == '200'
-    validate_mock.assert_called_once_with(
-        value='200',
+    set_fields_mock.assert_called_once_with(fields)
+    validate_mock.assert_called_once_with(value=value)
+    assert result == rule
+    rule.refresh_from_db()
+    assert rule.value == value
+
+
+def test_partial_update__without_fields__ok(mocker):
+
+    """
+    fields not in update_kwargs → branch skipped
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+        order=1,
     )
+    rule = FieldsetTemplateRule.objects.create(
+        account=account,
+        fieldset=fieldset,
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='100',
+    )
+    service = FieldsetTemplateRuleService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=rule,
+    )
+    set_fields_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets'
+        '.fieldset_rule.FieldsetTemplateRuleService'
+        '._set_fields',
+    )
+    validate_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets'
+        '.fieldset_rule.FieldsetTemplateRuleService'
+        '._validate',
+    )
+    super_partial_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets'
+        '.fieldset_rule.BaseModelService'
+        '.partial_update',
+        return_value=rule,
+    )
+    value = '200'
+
+    # act
+    result = service.partial_update(value=value)
+
+    # assert
+    super_partial_mock.assert_called_once_with(value=value, force_save=True)
+    set_fields_mock.assert_not_called()
+    validate_mock.assert_called_once_with(value=value)
+    assert result == rule

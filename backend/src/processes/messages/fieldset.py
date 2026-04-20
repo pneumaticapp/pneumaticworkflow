@@ -9,6 +9,14 @@ MSG_FS_0002 = lambda value: format_lazy(
     value=value,
 )
 MSG_FS_0003 = _(
-    'Rule "Sum equal" requires all fieldset fields to be of type "number".',
+    'Rule "Sum equal" requires all fields to be of type "number".',
 )
 MSG_FS_0004 = _('Rule "Sum equal" value must be a number.')
+MSG_FS_0005 = lambda rule, field: format_lazy(
+    _('field "{field}" not found in rule "{rule}".'),
+    field=field,
+    rule=rule,
+)
+MSG_FS_0006 = _(
+    'The task with the specified "api_name" was not found in the template',
+)

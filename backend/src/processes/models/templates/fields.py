@@ -58,6 +58,11 @@ class FieldTemplate(
         blank=True,
         related_name='fields',
     )
+    rules = models.ManyToManyField(
+        'processes.FieldsetTemplateRule',
+        blank=True,
+        related_name='fields',
+    )
     date_created = models.DateTimeField(auto_now_add=True)
     default = models.TextField(blank=True)
 

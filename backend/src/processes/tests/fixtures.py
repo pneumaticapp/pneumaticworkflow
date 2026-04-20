@@ -840,6 +840,7 @@ def create_test_fieldset_template(
     layout: FieldSetLayout.LITERALS = FieldSetLayout.VERTICAL,
     rule_type: Optional[FieldSetRuleType.LITERALS] = None,
     rule_value: Optional[str] = None,
+    api_name: Optional[str] = None,
 ) -> FieldsetTemplate:
 
     """Creating fieldset templates."""
@@ -854,6 +855,7 @@ def create_test_fieldset_template(
         order=order,
         label_position=label_position,
         layout=layout,
+        api_name=api_name,
     )
     if rule_type:
         FieldsetTemplateRule.objects.create(

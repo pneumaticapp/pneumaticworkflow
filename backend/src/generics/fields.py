@@ -11,6 +11,7 @@ from src.accounts.enums import (
     UserDateFormat,
 )
 from src.accounts.models import Account
+from src.processes.models.templates.template import Template
 from src.generics.messages import (
     MSG_GE_0002,
     MSG_GE_0007,
@@ -18,7 +19,7 @@ from src.generics.messages import (
 )
 
 
-class AccountPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
+class AccountQstMixin:
 
     def _get_account(self) -> Account:
         account = self.context.get('account')
@@ -28,14 +29,31 @@ class AccountPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
                 account = request.user.account
         if not account:
             raise Exception(
-                'Account not provided for AccountPrimaryKeyRelatedField',
+                'Account not provided for AccountQstMixin',
             )
         return account
+
+
+class TemplateQstMixin:
+
+    def _get_template(self) -> Template:
+        template = self.context.get('template')
+        if not template:
+            raise Exception(
+                'Template not provided for TemplateQstMixin',
+            )
+        return template
+
+
+class AccountPrimaryKeyRelatedField(
+    AccountQstMixin,
+    serializers.PrimaryKeyRelatedField,
+):
 
     def get_queryset(self):
         queryset = super().get_queryset()
         account = self._get_account()
-        if account is None or queryset is None:
+        if queryset is None:
             raise Exception(MSG_GE_0002)
         return queryset.filter(account=account)
 
@@ -53,6 +71,30 @@ class AccountPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
         return super().to_internal_value(data)
 
 
+class RelatedApiNameField(
+    AccountQstMixin,
+    TemplateQstMixin,
+    serializers.SlugRelatedField,
+):
+
+    def __init__(self, **kwargs):
+        super().__init__(slug_field='api_name', **kwargs)
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        account = self._get_account()
+        template = self._get_template()
+        if queryset is None:
+            raise Exception(MSG_GE_0002)
+        return queryset.filter(account=account, template=template)
+
+    def to_internal_value(self, data):
+
+        """Convert api_name -> to object before saving """
+
+        return super().to_internal_value(data)
+
+
 class AnyField(serializers.Field):
 
     def to_internal_value(self, data):
@@ -65,13 +107,26 @@ class AnyField(serializers.Field):
 class RelatedListField(serializers.ListField):
 
     def to_representation(self, objects):
-        """
-        List of objects -> List of objects ids.
-        """
+
+        """ List of objects -> List of objects ids """
+
         return [
             self.child.to_representation(item.id)
             for item in objects.all()
         ]
+
+
+class RelatedApiNameListField(serializers.ListField):
+
+    child = serializers.CharField()
+
+    def to_representation(self, data):
+
+        """ List of objects -> List of objects api_name's """
+
+        if hasattr(data, 'all'):
+            return [field.api_name for field in data.all()]
+        return [field.api_name for field in data if hasattr(field, 'api_name')]
 
 
 class CommaSeparatedListField(serializers.ListField):

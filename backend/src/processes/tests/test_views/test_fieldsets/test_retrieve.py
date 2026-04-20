@@ -22,8 +22,7 @@ pytestmark = pytest.mark.django_db
 
 
 def test_retrieve__fieldset_all_data__ok(api_client):
-
-    """ Retrieve existing fieldset """
+    """Retrieve existing fieldset"""
 
     # arrange
     account = create_test_account()
@@ -63,7 +62,7 @@ def test_retrieve__fieldset_all_data__ok(api_client):
     assert response.data['order'] == 3
     assert response.data['layout'] == FieldSetLayout.HORIZONTAL
     assert response.data['label_position'] == LabelPosition.LEFT
-    assert response.data['task_id'] is None
+    assert response.data['task'] is None
 
     assert len(response.data['rules']) == 1
     rules_data = response.data['rules']
@@ -115,16 +114,47 @@ def test_retrieve__task_fieldset__ok(api_client):
     # assert
     assert response.status_code == 200
     assert response.data['id'] == fieldset.id
-    assert response.data['task_id'] == template_task.id
+    assert response.data['task'] == template_task.api_name
+
+
+def test_retrieve__fieldset_rule_with_fields__ok(api_client):
+    """Retrieve existing fieldset returning rule mapping fields"""
+
+    # arrange
+    account_1 = create_test_account(name='Account 1')
+    user_1 = create_test_owner(account=account_1)
+    template_1 = create_test_template(
+        user=user_1,
+        tasks_count=1,
+    )
+    fieldset = create_test_fieldset_template(
+        account=account_1,
+        template=template_1,
+        kickoff=template_1.kickoff_instance,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='10',
+    )
+    field = fieldset.fields.get()
+    rule = fieldset.rules.get()
+    rule.fields.add(field)
+
+    api_client.token_authenticate(user=user_1)
+
+    # act
+    response = api_client.get(f'/templates/fieldsets/{fieldset.id}')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == fieldset.id
+
+    assert len(response.data['rules']) == 1
+    rules_data = response.data['rules']
+    assert rules_data[0]['id'] == rule.id
+    assert rules_data[0]['fields'] == [field.api_name]
 
 
 def test_retrieve__unauthenticated__unauthorized(api_client):
-
-    """
-
-    Unauthenticated request returns 401
-
-    """
+    """Unauthenticated request returns 401"""
 
     # arrange
     account = create_test_account()
@@ -147,12 +177,7 @@ def test_retrieve__unauthenticated__unauthorized(api_client):
 
 
 def test_retrieve__expired_sub__permission_denied(api_client):
-
-    """
-
-    Expired subscription returns 403
-
-    """
+    """Expired subscription returns 403"""
 
     # arrange
     account = create_test_account(
@@ -169,6 +194,7 @@ def test_retrieve__expired_sub__permission_denied(api_client):
         template=template,
         kickoff=template.kickoff_instance,
     )
+
     api_client.token_authenticate(user=user)
 
     # act
@@ -180,12 +206,7 @@ def test_retrieve__expired_sub__permission_denied(api_client):
 
 
 def test_retrieve__billing_plan__permission_denied(api_client):
-
-    """
-
-    Billing plan permission denied returns 403
-
-    """
+    """Billing plan permission denied returns 403"""
 
     # arrange
     account = create_test_account(plan=None)
@@ -199,6 +220,7 @@ def test_retrieve__billing_plan__permission_denied(api_client):
         template=template,
         kickoff=template.kickoff_instance,
     )
+
     api_client.token_authenticate(user=user)
 
     # act
@@ -210,12 +232,7 @@ def test_retrieve__billing_plan__permission_denied(api_client):
 
 
 def test_retrieve__users_overlimit__permission_denied(api_client):
-
-    """
-
-    Users overlimited returns 403
-
-    """
+    """Users overlimited returns 403"""
 
     # arrange
     account = create_test_account(
@@ -238,6 +255,7 @@ def test_retrieve__users_overlimit__permission_denied(api_client):
         template=template,
         kickoff=template.kickoff_instance,
     )
+
     api_client.token_authenticate(user=user)
 
     # act
@@ -249,12 +267,7 @@ def test_retrieve__users_overlimit__permission_denied(api_client):
 
 
 def test_retrieve__non_admin__permission_denied(api_client):
-
-    """
-
-    Non-admin non-owner user returns 403
-
-    """
+    """Non-admin non-owner user returns 403"""
 
     # arrange
     account = create_test_account()
@@ -269,6 +282,7 @@ def test_retrieve__non_admin__permission_denied(api_client):
         kickoff=template.kickoff_instance,
     )
     user = create_test_not_admin(account=account)
+
     api_client.token_authenticate(user=user)
 
     # act
@@ -279,18 +293,14 @@ def test_retrieve__non_admin__permission_denied(api_client):
 
 
 def test_retrieve__not_existing__not_found(api_client):
-
-    """
-
-    Non-existent fieldset returns 404
-
-    """
+    """Non-existent fieldset returns 404"""
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    api_client.token_authenticate(user=user)
     nonexistent_id = 999999
+
+    api_client.token_authenticate(user=user)
 
     # act
     response = api_client.get(f'/templates/fieldsets/{nonexistent_id}')
@@ -300,12 +310,7 @@ def test_retrieve__not_existing__not_found(api_client):
 
 
 def test_retrieve__another_account__not_found(api_client):
-
-    """
-
-    Fieldset from another account returns 404
-
-    """
+    """Fieldset from another account returns 404"""
 
     # arrange
     account_1 = create_test_account(name='Account 1')
@@ -325,6 +330,7 @@ def test_retrieve__another_account__not_found(api_client):
         account=account_2,
         email='owner2@pneumatic.app',
     )
+
     api_client.token_authenticate(user=user_2)
 
     # act
