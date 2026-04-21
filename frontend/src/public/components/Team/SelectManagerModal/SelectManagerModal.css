@@ -1,0 +1,33 @@
+.select-manager-modal {
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  width: 480px;
+  max-width: 90vw;
+  background-color: var(--white);
+  border-radius: 4px;
+}
+
+.select-manager-modal__title {
+  margin-bottom: 24px;
+  font-family: var(--font-primary);
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 32px;
+  color: var(--grey-800);
+}
+
+.select-manager-modal__content {
+  margin-bottom: 32px;
+}
+
+.select-manager-modal__buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+}
+
+.select-manager-modal__button-remove {
+  margin-left: auto;
+}

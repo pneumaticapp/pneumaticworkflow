@@ -409,6 +409,7 @@ export const ruMessages = {
   'validation.login-invalid-email-or-password': 'Неверный адрес электронной почты или пароль',
   'validation.tenant-name-empty': 'Пожалуйста, введите имя подразделения',
   'validation.tenant-name-to-long': 'Имя подразделения длиннее 255 символов.',
+  'button.remove': 'Удалить',
   'Unknown Error': 'Ой, похоже, что-то пошло не так... Наша инженерная команда уже была уведомлена.',
   'Something Went Wrong': 'Ой, похоже, что-то пошло не так... Наша инженерная команда уже уведомлена.',
   'top-notifications.none': 'Вы обновились до последней версии',

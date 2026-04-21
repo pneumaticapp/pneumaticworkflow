@@ -13,6 +13,7 @@ from src.accounts.enums import (
 )
 from src.accounts.services.exceptions import UserServiceException
 from src.accounts.services.user import UserService
+from src.accounts.serializers.user import UserWebsocketSerializer
 from src.accounts import messages
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
@@ -995,4 +996,197 @@ def test_put__sql_like_input_in_field__no_execution(api_client, mocker):
     partial_update_mock.assert_called_once_with(
         first_name=sql_like,
         force_save=True,
+    )
+
+
+def test_put__manager_id_circular__validation_error(api_client):
+    """PUT /accounts/user with manager_id that creates a cycle → 400.
+
+    Scenario: manager.manager = user → setting user.manager = manager
+    would create: user → manager → user (circular).
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    manager = create_test_not_admin(account=account)
+    manager.manager = user
+    manager.save(update_fields=('manager',))
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        '/accounts/user',
+        {'manager_id': manager.id},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == str(messages.MSG_A_0056)
+
+
+def test_put__manager_id_self__validation_error(api_client):
+    """PUT /accounts/user with manager_id pointing to self → 400."""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        '/accounts/user',
+        {'manager_id': user.id},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == str(messages.MSG_A_0055)
+
+
+def test_put__subordinates_circular__validation_error(api_client):
+    """PUT /accounts/user with a subordinate that is an ancestor → 400.
+
+    Scenario: user.manager = ancestor → assigning ancestor as
+    subordinate of user would create a cycle.
+    """
+
+    # arrange
+    account = create_test_account()
+    ancestor = create_test_not_admin(account=account, email='anc@test.test')
+    user = create_test_owner(account=account)
+    user.manager = ancestor
+    user.save(update_fields=('manager',))
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        '/accounts/user',
+        {'subordinates_ids': [ancestor.id]},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == str(messages.MSG_A_0056)
+
+
+def test_put__manager_id_valid__ok(api_client, mocker):
+    """PUT /accounts/user with a valid (non-circular) manager_id → 200."""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    manager = create_test_not_admin(account=account)
+    user_service_init_mock = mocker.patch.object(
+        UserService,
+        attribute='__init__',
+        return_value=None,
+    )
+    partial_update_mock = mocker.patch(
+        'src.accounts.views.user.UserService.partial_update',
+        return_value=user,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        '/accounts/user',
+        {'manager_id': manager.id},
+    )
+
+    # assert
+    assert response.status_code == 200
+    user_service_init_mock.assert_called_once_with(
+        user=user,
+        instance=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    partial_update_mock.assert_called_once_with(
+        manager=manager,
+        force_save=True,
+    )
+
+
+def test_put__remove_manager_id__ok(api_client, mocker):
+    """PUT /accounts/user with manager_id: null removes the manager."""
+
+    # arrange
+    account = create_test_account()
+    manager = create_test_not_admin(account=account)
+    user = create_test_not_admin(
+        account=account,
+        email='target_to_remove@test.test',
+    )
+    user.manager = manager
+    user.save(update_fields=('manager',))
+
+    ws_mock = mocker.patch(
+        'src.accounts.services.user.send_user_updated_notification.delay',
+    )
+
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        '/accounts/user',
+        {'manager_id': None},
+    )
+
+    # assert
+    assert response.status_code == 200
+    user.refresh_from_db()
+    manager.refresh_from_db()
+    assert user.manager is None
+
+    assert ws_mock.call_count == 2
+    ws_mock.assert_any_call(
+        logging=False,
+        account_id=account.id,
+        user_data=UserWebsocketSerializer(manager).data,
+    )
+    ws_mock.assert_any_call(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        user_data=UserWebsocketSerializer(user).data,
+    )
+
+
+def test_put__without_manager_id_preserves_manager__ok(api_client, mocker):
+    """PUT /accounts/user without manager_id preserves the manager."""
+
+    # arrange
+    account = create_test_account()
+    manager = create_test_not_admin(account=account)
+    user = create_test_not_admin(
+        account=account,
+        email='target_to_preserve@test.test',
+    )
+    user.manager = manager
+    user.save(update_fields=('manager',))
+
+    ws_mock = mocker.patch(
+        'src.accounts.services.user.send_user_updated_notification.delay',
+    )
+
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        '/accounts/user',
+        {'first_name': 'NewName'},
+    )
+
+    # assert
+    assert response.status_code == 200
+    user.refresh_from_db()
+    assert user.manager == manager
+    assert user.first_name == 'NewName'
+    ws_mock.assert_called_once_with(
+        logging=account.log_api_requests,
+        account_id=account.id,
+        user_data=UserWebsocketSerializer(user).data,
     )

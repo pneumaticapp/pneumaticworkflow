@@ -218,6 +218,8 @@ const baseAuthUser = {
   isNewTasksSubscriber: false,
   isNewslettersSubscriber: false,
   isSpecialOffersSubscriber: false,
+  managerId: null,
+  reportIds: [],
 };
 
 const baseProps = {

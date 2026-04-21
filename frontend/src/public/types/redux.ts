@@ -93,6 +93,8 @@ export interface IAuthUser extends IUnsavedUser {
   dateFmt: string;
   dateFdw: string;
   vacation?: IUserVacation | null;
+  managerId: number | null;
+  reportIds: number[];
 }
 
 export interface IInvitedUser {

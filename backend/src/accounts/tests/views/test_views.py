@@ -541,6 +541,8 @@ class TestUserNotifications:
             account=user.account,
             type=NotificationType.SYSTEM,
         )
+        notification.datetime = timezone.now() + timedelta(seconds=1)
+        notification.save()
 
         # act
         response = api_client.get(

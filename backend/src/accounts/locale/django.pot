@@ -191,3 +191,9 @@ msgstr ""
 
 msgid "The end date must be after the start date."
 msgstr ""
+
+msgid "A user cannot be their own manager."
+msgstr ""
+
+msgid "This assignment would create a circular management hierarchy."
+msgstr ""
