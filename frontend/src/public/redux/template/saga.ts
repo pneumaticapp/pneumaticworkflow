@@ -54,7 +54,7 @@ import { ITemplate, ITemplateRequest, ITemplateResponse } from '../../types/temp
 import { logger } from '../../utils/logger';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { updateTemplate } from '../../api/updateTemplate';
-import { getNormalizedTemplate, mapTemplateRequest } from '../../utils/template';
+import { cleanTemplateReferences, getNormalizedTemplate, mapTemplateRequest } from '../../utils/template';
 import { getErrorMessage, isPaidFeatureError } from '../../utils/getErrorMessage';
 import { insertId } from '../../utils/templates/insertId';
 import { ETemplateStatus } from '../../types/redux';
@@ -112,11 +112,14 @@ function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed } }:
       changedFields.kickoff?.description === template.kickoff.description ? shouldDeactivateTemplate : false;
   }
 
-  const newTemplate: ITemplate = {
+  const mergedTemplate: ITemplate = {
     ...template,
     ...changedFields,
     ...(shouldDeactivateTemplate && { isActive: false }),
   };
+
+  const needsCleanup = changedFields.hasOwnProperty('tasks') || changedFields.hasOwnProperty('kickoff');
+  const newTemplate = needsCleanup ? cleanTemplateReferences(mergedTemplate) : mergedTemplate;
 
   yield put(setTemplate(newTemplate));
   yield delay(350);

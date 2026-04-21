@@ -131,8 +131,96 @@ export const getNormalizedTask = (
   };
 };
 
+export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
+  // System variables that the backend recognizes and skips during validation.
+  // Must stay in sync with backend/src/processes/enums.py :: SystemVariable
+  const TASK_SYSTEM_VARS = new Set(['workflow-starter']);
+  const WF_NAME_SYSTEM_VARS = new Set(['date', 'template-name', 'workflow-id', 'workflow-starter']);
+
+  const validApiNames = new Set<string>();
+
+  template.kickoff?.fields?.forEach((f) => {
+    if (f.apiName) validApiNames.add(f.apiName);
+  });
+
+  const removeInvalidReferences = (
+    text: string | null | undefined,
+    validApis: Set<string>,
+    systemVars: Set<string>,
+  ): string => {
+    if (!text) return text || '';
+    return text
+      .replace(/\{\{\s*([\w-]+)\s*\}\}/g, (match, apiName) => {
+        if (validApis.has(apiName) || systemVars.has(apiName)) {
+          return match;
+        }
+        return '';
+      })
+      .trim();
+  };
+
+  const tasks = [...(template.tasks || [])].sort((a, b) => a.number - b.number);
+
+  const cleanedTasks = tasks.map((task) => {
+    const name = removeInvalidReferences(task.name, validApiNames, TASK_SYSTEM_VARS) || `Step ${task.number}`;
+    const description = removeInvalidReferences(task.description, validApiNames, TASK_SYSTEM_VARS);
+
+    const conditions = (task.conditions || []).map((condition) => {
+      const rules = condition.rules.filter(
+        (rule) => rule.field === undefined || rule.field === null || validApiNames.has(rule.field)
+      );
+      return { ...condition, rules };
+    });
+
+    const rawPerformers = (task.rawPerformers || []).filter((p) => {
+      if (p.type === 'field') {
+        return !!p.sourceId && validApiNames.has(p.sourceId);
+      }
+      return true;
+    });
+
+    let rawDueDate = task.rawDueDate;
+    if (rawDueDate && rawDueDate.ruleTarget === 'field') {
+      if (rawDueDate.sourceId && !validApiNames.has(rawDueDate.sourceId)) {
+        rawDueDate = {
+          ...rawDueDate,
+          duration: null,
+          durationMonths: null,
+          sourceId: null,
+          ruleTarget: 'task started',
+        };
+      }
+    }
+
+    (task.fields || []).forEach((f) => {
+      if (f.apiName) validApiNames.add(f.apiName);
+    });
+
+    return {
+      ...task,
+      name,
+      description,
+      conditions,
+      rawPerformers,
+      rawDueDate,
+    };
+  });
+
+  const validKickoffApiNames = new Set<string>();
+  template.kickoff?.fields?.forEach((f) => {
+    if (f.apiName) validKickoffApiNames.add(f.apiName);
+  });
+
+  return {
+    ...template,
+    wfNameTemplate: removeInvalidReferences(template.wfNameTemplate, validKickoffApiNames, WF_NAME_SYSTEM_VARS),
+    tasks: cleanedTasks,
+  };
+};
+
 export const mapTemplateRequest = (template: ITemplate): ITemplateRequest => {
-  const { tasks } = template;
+  const cleanedTemplate = cleanTemplateReferences(template);
+  const { tasks } = cleanedTemplate;
 
   const normilizedTasks: ITemplateTaskRequest[] = tasks?.map((task) => {
     const normalizeDuration = (duration: string | null) => {
@@ -148,9 +236,9 @@ export const mapTemplateRequest = (template: ITemplate): ITemplateRequest => {
   });
 
   return {
-    ...template,
-    name: template.name || DEFAULT_TEMPLATE_NAME,
+    ...cleanedTemplate,
+    name: cleanedTemplate.name || DEFAULT_TEMPLATE_NAME,
     tasks: normilizedTasks,
-    publicSuccessUrl: template.publicSuccessUrl || null,
+    publicSuccessUrl: cleanedTemplate.publicSuccessUrl || null,
   };
 };

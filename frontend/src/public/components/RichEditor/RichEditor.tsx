@@ -190,6 +190,15 @@ export const RichEditor = forwardRef<
     });
   }, []);
 
+  const replaceContent = useCallback((markdown: string): void => {
+    const editor = editorRef.current;
+    if (!editor) return;
+    applyMarkdownToEditor(editor, markdown, {
+      tag: 'history-merge',
+      templateVariables: templateVariablesRef.current,
+    });
+  }, []);
+
   useImperativeHandle(
     ref,
     () => ({
@@ -204,8 +213,9 @@ export const RichEditor = forwardRef<
         return editorRef.current ?? undefined;
       },
       clearContent,
+      replaceContent,
     }),
-    [insertVariableToEditor, clearContent],
+    [insertVariableToEditor, clearContent, replaceContent],
   );
 
 
