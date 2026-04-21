@@ -1,5 +1,5 @@
 # ruff: noqa: PLC0415
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 from django.contrib.auth import get_user_model
 from rest_framework.serializers import (
@@ -17,8 +17,6 @@ from src.generics.mixins.serializers import (
     CustomValidationErrorMixin,
 )
 from src.processes.enums import (
-    DueDateRule,
-    FieldType,
     PerformerType,
     PredicateType,
     SystemVariable,
@@ -50,7 +48,6 @@ from src.processes.serializers.templates.raw_performer import (
 from src.processes.utils.common import (
     VAR_PATTERN,
     create_api_name,
-    remove_field_references,
 )
 
 UserModel = get_user_model()
@@ -161,47 +158,36 @@ class TaskTemplateSerializer(
         self,
         value: str,
         data: Dict[str, Any],
-    ) -> None:
+        **kwargs,
+    ):
 
         """ Validates variables {{ ... }} in task name.
             1. Each variable must reference an existing field
                from previous steps, OR be a known system variable.
-               Variables referencing deleted fields are auto-cleaned.
             2. If the name consists ONLY of variables,
                at least one field must be required
                (so the name won't be empty at runtime).
                System variables always have a value,
                so this check is skipped when they're present. """
 
-        all_vars = {
+        api_names_in_name = {
             api_name.strip()
             for api_name in VAR_PATTERN.findall(value)
         }
-        if not all_vars:
+        if not api_names_in_name:
             return
 
-        sys_vars_is_used = bool(all_vars & SystemVariable.TASK_VARS)
-        api_names_in_name = all_vars - SystemVariable.TASK_VARS
+        sys_vars_is_used = bool(api_names_in_name & SystemVariable.TASK_VARS)
+        api_names_in_name -= SystemVariable.TASK_VARS
 
         available_fields = self._get_task_available_fields()
         available_api_names = {field.api_name for field in available_fields}
         failed_api_names = api_names_in_name - available_api_names
         if failed_api_names:
-            cleaned = remove_field_references(
-                value, failed_api_names,
-            ).strip()
-            if not cleaned:
-                cleaned = f"Step {data['number']}"
-            data['name'] = cleaned
-            value = cleaned
-            all_vars = {
-                a.strip()
-                for a in VAR_PATTERN.findall(value)
-            }
-            sys_vars_is_used = bool(
-                all_vars & SystemVariable.TASK_VARS,
+            self.raise_validation_error(
+                message=messages.MSG_PT_0038(data['name']),
+                api_name=data.get('api_name'),
             )
-            api_names_in_name = all_vars - SystemVariable.TASK_VARS
 
         contains_only_api_names = VAR_PATTERN.sub('', value).strip() == ''
         if contains_only_api_names and not sys_vars_is_used:
@@ -220,69 +206,49 @@ class TaskTemplateSerializer(
         self,
         value: Optional[str],
         data: Dict[str, Any],
-    ) -> None:
+    ):
 
         """ Validates variables {{ ... }} in task description.
             Each variable must reference an existing field
-            from previous steps, OR be a known system variable.
-            Variables referencing deleted fields are auto-cleaned. """
+            from previous steps, OR be a known system variable. """
 
         if not value:
-            return
+            return None
 
         api_names_in_description = {
             api_name.strip()
             for api_name in VAR_PATTERN.findall(value)
         }
         if not api_names_in_description:
-            return
+            return True
 
         api_names_in_description -= SystemVariable.TASK_VARS
 
-        available_api_names = {
-            field.api_name
-            for field in self._get_task_available_fields()
+        available_api_names_for_description = {
+            field.api_name for field in self._get_task_available_fields()
         }
 
-        failed_api_names = (
-            api_names_in_description - available_api_names
+        failed_api_names_exist = (
+            api_names_in_description - available_api_names_for_description
         )
-        if failed_api_names:
-            data['description'] = remove_field_references(
-                value, failed_api_names,
+        if failed_api_names_exist:
+            self.raise_validation_error(
+                message=messages.MSG_PT_0037(data['number']),
+                api_name=data.get('api_name'),
             )
+        return None
 
     def additional_validate_raw_performers(
         self,
         value: List[Dict[str, str]],
         data: Dict[str, Any],
-    ) -> None:
+    ):
 
         if not value:
             self.raise_validation_error(
                 message=messages.MSG_PT_0002,
                 api_name=data.get('api_name'),
             )
-
-        # Auto-clean: remove field-type performers referencing
-        # deleted fields.
-        available_user_field_api_names = {
-            f.api_name for f in self._get_task_available_fields()
-            if f.type == FieldType.USER
-        }
-        cleaned = [
-            p for p in value
-            if p.get('type') != PerformerType.FIELD
-            or p.get('source_id') in available_user_field_api_names
-        ]
-        if not cleaned:
-            self.raise_validation_error(
-                message=messages.MSG_PT_0002,
-                api_name=data.get('api_name'),
-            )
-        if len(cleaned) < len(value):
-            data['raw_performers'] = cleaned
-            value = cleaned
 
         unique_performers = {
             (elem.get('type'), elem.get('source_id'))
@@ -294,77 +260,36 @@ class TaskTemplateSerializer(
                 api_name=data.get('api_name'),
             )
 
-    @staticmethod
-    def _is_valid_predicate(
-        predicate: Dict[str, Any],
-        available_api_names: Set[str],
-    ) -> bool:
-        if predicate.get('field_type') not in PredicateType.FIELD_TYPES:
-            return True
-        return predicate.get('field') in available_api_names
-
     def additional_validate_conditions(
         self,
         value: Optional[List[Dict[str, Any]]],
         data: Dict[str, Any],
-    ) -> None:
+    ):
 
-        if not isinstance(value, list):
-            return
+        if isinstance(value, list):
+            # TODO move validation to PredicateTemplateSerializer
+            #  add task api_names validation
+            #  https://my.pneumatic.app/workflows/35698/
+            api_names_in_conditions = {
+                predicate['field']
+                for condition in value
+                for rule in condition['rules']
+                for predicate in rule['predicates']
+                if predicate['field_type'] in PredicateType.FIELD_TYPES
+            }
+            available_api_names_for_conditions = {
+                field.api_name
+                for field in self._get_task_available_fields()
+            }
 
-        # Auto-clean: remove predicates referencing deleted fields,
-        # then remove empty rules and empty conditions.
-        available_api_names = {
-            field.api_name
-            for field in self._get_task_available_fields()
-        }
-
-        cleaned_conditions = []
-        for condition in value:
-            cleaned_rules = []
-            for rule in condition.get('rules', []):
-                cleaned_predicates = [
-                    p for p in rule.get('predicates', [])
-                    if self._is_valid_predicate(
-                        p, available_api_names,
-                    )
-                ]
-                if cleaned_predicates:
-                    cleaned_rules.append({
-                        **rule,
-                        'predicates': cleaned_predicates,
-                    })
-            if cleaned_rules:
-                cleaned_conditions.append({
-                    **condition,
-                    'rules': cleaned_rules,
-                })
-        data['conditions'] = cleaned_conditions
-
-    def additional_validate_raw_due_date(
-        self,
-        value: Optional[Dict[str, Any]],
-        data: Dict[str, Any],
-    ) -> None:
-        """ Auto-clean due dates referencing deleted date fields.
-            If the due date rule is a field rule and the source_id
-            references a non-existent date field, reset the due date
-            to None. """
-
-        if not value:
-            return
-        rule = value.get('rule', '')
-        if rule not in DueDateRule.FIELD_RULES:
-            return
-        source_id = value.get('source_id')
-        if not source_id:
-            return
-        available_date_fields = {
-            f.api_name for f in self._get_task_available_fields()
-            if f.type == FieldType.DATE
-        }
-        if source_id not in available_date_fields:
-            data['raw_due_date'] = None
+            failed_api_names_exist = (
+                api_names_in_conditions - available_api_names_for_conditions
+            )
+            if failed_api_names_exist:
+                self.raise_validation_error(
+                    message=messages.MSG_PT_0004(data.get('name')),
+                    api_name=data.get('api_name'),
+                )
 
     def additional_validate_revert_task(
         self,

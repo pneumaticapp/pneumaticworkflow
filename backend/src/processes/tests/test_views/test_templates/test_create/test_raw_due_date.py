@@ -763,12 +763,13 @@ def test_create__after_field__source_id_is_null__validation_error(
     assert response.data['details']['reason'] == messages.MSG_PT_0027
 
 
-def test_create__after_field__active_task_field__auto_cleaned(
+def test_create__after_field__active_task_field__validation_error(
     api_client,
 ):
 
     # arrange
     user = create_test_user()
+    api_name = 'raw-due-date-1'
     raw_due_date_data = {
         'api_name': 'raw-due-date-1',
         'duration': '01:00:00',
@@ -818,16 +819,20 @@ def test_create__after_field__active_task_field__auto_cleaned(
     )
 
     # assert
-    assert response.status_code == 200
-    assert response.json()['tasks'][0]['raw_due_date'] is None
+    assert response.status_code == 400
+    assert response.data['message'] == messages.MSG_PT_0028
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['details']['api_name'] == api_name
+    assert response.data['details']['reason'] == messages.MSG_PT_0028
 
 
-def test_create__after_field__next_task_field__auto_cleaned(
+def test_create__after_field__next_task_field__validation_error(
     api_client,
 ):
 
     # arrange
     user = create_test_user()
+    api_name = 'raw-due-date-1'
     raw_due_date_data = {
         'api_name': 'raw-due-date-1',
         'duration': '01:00:00',
@@ -887,16 +892,20 @@ def test_create__after_field__next_task_field__auto_cleaned(
     )
 
     # assert
-    assert response.status_code == 200
-    assert response.json()['tasks'][0]['raw_due_date'] is None
+    assert response.status_code == 400
+    assert response.data['message'] == messages.MSG_PT_0028
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['details']['api_name'] == api_name
+    assert response.data['details']['reason'] == messages.MSG_PT_0028
 
 
-def test_create__after_field__not_existent_field__auto_cleaned(
+def test_create__after_field__not_existent_field__validation_error(
     api_client,
 ):
 
     # arrange
     user = create_test_user()
+    api_name = 'raw-due-date-1'
     raw_due_date_data = {
         'api_name': 'raw-due-date-1',
         'duration': '01:00:00',
@@ -938,16 +947,20 @@ def test_create__after_field__not_existent_field__auto_cleaned(
     )
 
     # assert
-    assert response.status_code == 200
-    assert response.json()['tasks'][0]['raw_due_date'] is None
+    assert response.status_code == 400
+    assert response.data['message'] == messages.MSG_PT_0028
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['details']['api_name'] == api_name
+    assert response.data['details']['reason'] == messages.MSG_PT_0028
 
 
-def test_create__after_field__field_type_is_not_date__auto_cleaned(
+def test_create__after_field__field_type_is_not_date__validation_error(
     api_client,
 ):
 
     # arrange
     user = create_test_user()
+    api_name = 'raw-due-date-1'
     raw_due_date_data = {
         'api_name': 'raw-due-date-1',
         'duration': '01:00:00',
@@ -998,8 +1011,11 @@ def test_create__after_field__field_type_is_not_date__auto_cleaned(
     )
 
     # assert
-    assert response.status_code == 200
-    assert response.json()['tasks'][0]['raw_due_date'] is None
+    assert response.status_code == 400
+    assert response.data['message'] == messages.MSG_PT_0028
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['details']['api_name'] == api_name
+    assert response.data['details']['reason'] == messages.MSG_PT_0028
 
 
 @pytest.mark.parametrize('is_required', (True, False))
@@ -1181,12 +1197,13 @@ def test_create__before_field__active_task_field__validation_error(
     assert response.data['details']['reason'] == messages.MSG_PT_0027
 
 
-def test_create__before_field__next_task_field__auto_cleaned(
+def test_create__before_field__next_task_field__validation_error(
     api_client,
 ):
 
     # arrange
     user = create_test_user()
+    api_name = 'raw-due-date-1'
     raw_due_date_data = {
         'api_name': 'raw-due-date-1',
         'duration': '01:00:00',
@@ -1246,16 +1263,20 @@ def test_create__before_field__next_task_field__auto_cleaned(
     )
 
     # assert
-    assert response.status_code == 200
-    assert response.json()['tasks'][0]['raw_due_date'] is None
+    assert response.status_code == 400
+    assert response.data['message'] == messages.MSG_PT_0028
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['details']['api_name'] == api_name
+    assert response.data['details']['reason'] == messages.MSG_PT_0028
 
 
-def test_create__before_field__not_existent_field__auto_cleaned(
+def test_create__before_field__not_existent_field__validation_error(
     api_client,
 ):
 
     # arrange
     user = create_test_user()
+    api_name = 'raw-due-date-1'
     raw_due_date_data = {
         'api_name': 'raw-due-date-1',
         'duration': '01:00:00',
@@ -1297,16 +1318,20 @@ def test_create__before_field__not_existent_field__auto_cleaned(
     )
 
     # assert
-    assert response.status_code == 200
-    assert response.json()['tasks'][0]['raw_due_date'] is None
+    assert response.status_code == 400
+    assert response.data['message'] == messages.MSG_PT_0028
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['details']['api_name'] == api_name
+    assert response.data['details']['reason'] == messages.MSG_PT_0028
 
 
-def test_create__before_field__field_is_not_date__auto_cleaned(
+def test_create__before_field__field_is_not_date__validation_error(
     api_client,
 ):
 
     # arrange
     user = create_test_user()
+    api_name = 'raw-due-date-1'
     raw_due_date_data = {
         'api_name': 'raw-due-date-1',
         'duration': '01:00:00',
@@ -1357,8 +1382,11 @@ def test_create__before_field__field_is_not_date__auto_cleaned(
     )
 
     # assert
-    assert response.status_code == 200
-    assert response.json()['tasks'][0]['raw_due_date'] is None
+    assert response.status_code == 400
+    assert response.data['message'] == messages.MSG_PT_0028
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['details']['api_name'] == api_name
+    assert response.data['details']['reason'] == messages.MSG_PT_0028
 
 
 def test_create__non_existent_rule__validation_error(
@@ -1657,68 +1685,3 @@ def test_create__equal_api_names__validation_error(api_client):
     assert response.data['message'] == message
     assert response.data['details']['reason'] == message
     assert response.data['details']['api_name'] == due_date_api_name
-
-
-# ──────────────────────────────────────────────────────────
-# Due date auto-cleanup
-# ──────────────────────────────────────────────────────────
-
-def test_create__due_date_broken_field__reset(
-    mocker,
-    api_client,
-):
-    """Due date with broken field source → reset to None."""
-
-    # arrange
-    mocker.patch(
-        'src.processes.views.template.'
-        'AnalyticService.templates_created',
-    )
-    mocker.patch(
-        'src.processes.views.template.'
-        'AnalyticService.templates_kickoff_created',
-    )
-    user = create_test_user()
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.post(
-        path='/templates',
-        data={
-            'name': 'Template',
-            'is_active': True,
-            'owners': [
-                {
-                    'type': OwnerType.USER,
-                    'source_id': user.id,
-                    'role': OwnerRole.OWNER,
-                },
-            ],
-            'kickoff': {},
-            'tasks': [
-                {
-                    'number': 1,
-                    'name': 'First step',
-                    'api_name': 'task-1',
-                    'raw_performers': [
-                        {
-                            'type': PerformerType.USER,
-                            'source_id': user.id,
-                        },
-                    ],
-                    'raw_due_date': {
-                        'api_name': 'due-1',
-                        'duration': 'P1D',
-                        'duration_months': 0,
-                        'rule': DueDateRule.AFTER_FIELD,
-                        'source_id': 'deleted-date-field',
-                    },
-                },
-            ],
-        },
-    )
-
-    # assert
-    assert response.status_code == 200
-    task_data = response.json()['tasks'][0]
-    assert task_data['raw_due_date'] is None

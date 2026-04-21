@@ -79,7 +79,6 @@ from src.processes.utils.common import (
     get_tasks_ancestors,
     get_tasks_parents,
     is_tasks_ordering_correct,
-    remove_field_references,
     string_abbreviation,
 )
 
@@ -292,7 +291,6 @@ class TemplateSerializer(
         """ Checks three cases:
             1. If api-name is in wf_name_template, this field is available
             (created in previous steps).
-            Variables referencing deleted fields are auto-cleaned.
             2. If only api-names is in wf_name_template name, at least one
             field must be required. """
 
@@ -312,18 +310,10 @@ class TemplateSerializer(
         available_api_names = {f['api_name'] for f in available_fields}
         failed_api_names = api_names_in_name - available_api_names
         if failed_api_names:
-            cleaned = remove_field_references(value, failed_api_names).strip()
-            if not cleaned:
-                data['wf_name_template'] = None
-                return
-            data['wf_name_template'] = cleaned
-            value = cleaned
-            all_vars = {
-                a.strip()
-                for a in VAR_PATTERN.findall(value)
-            }
-            sys_vars_is_used = bool(all_vars & sys_vars)
-            api_names_in_name = all_vars - sys_vars
+            self.raise_validation_error(
+                message=messages.MSG_PT_0008,
+                name='wf_name_template',
+            )
 
         contains_only_api_names = VAR_PATTERN.sub('', value).strip() == ''
         if contains_only_api_names and not sys_vars_is_used:
