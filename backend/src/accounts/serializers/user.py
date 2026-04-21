@@ -307,6 +307,7 @@ class UserWebsocketSerializer(serializers.ModelSerializer):
         source='subordinates',
     )
 
+
 class VacationActivateSerializer(
     CustomValidationErrorMixin,
     serializers.Serializer,
