@@ -191,7 +191,7 @@ class ContextUserSerializer(serializers.ModelSerializer):
             'has_workflow_viewer_access',
             'has_workflow_starter_access',
             'manager_id',
-            'subordinates',
+            'subordinates_ids',
         )
 
     account = ContextAccountSerializer()
@@ -204,9 +204,10 @@ class ContextUserSerializer(serializers.ModelSerializer):
         read_only=True,
         allow_null=True,
     )
-    subordinates = serializers.PrimaryKeyRelatedField(
+    subordinates_ids = serializers.PrimaryKeyRelatedField(
         many=True,
         read_only=True,
+        source='subordinates',
     )
 
     def get_has_workflow_viewer_access(self, obj) -> bool:

@@ -69,13 +69,13 @@ import { createUser as createUserApi } from '../../api/createUser';
 import { editTeamUser } from '../../api/editTeamUser';
 
 /**
- * The backend API returns `subordinates`, but internal Redux state
- * and UI components use `reportIds`. This helper copies the value
- * so that both names are available in the store.
+ * The backend API returns `subordinates_ids` (camelCased to `subordinatesIds`),
+ * but internal Redux state and UI components use `reportIds`. This helper
+ * copies the value so that both names are available in the store.
  */
 function normalizeUserReportIds(user: TUserListItem): TUserListItem {
-  if (user.subordinates && !user.reportIds) {
-    return { ...user, reportIds: user.subordinates };
+  if (user.subordinatesIds && !user.reportIds) {
+    return { ...user, reportIds: user.subordinatesIds };
   }
   return user;
 }
@@ -205,7 +205,7 @@ function* saveUserManagerSaga({ payload: { id, managerId } }: PayloadAction<{ id
 function* saveUserReportsSaga({ payload: { id, reportIds } }: PayloadAction<{ id: number; reportIds: number[] }>) {
   try {
     yield put(setGeneralLoaderVisibility(true));
-    yield call(editTeamUser, id, { subordinates: reportIds });
+    yield call(editTeamUser, id, { subordinatesIds: reportIds });
     yield put(changeUserReports({ id, reportIds }));
     NotificationManager.success({ message: 'User reports updated successfully' });
   } catch (error) {

@@ -78,7 +78,7 @@ class UserSerializer(
             'groups',
             'password',
             'manager_id',
-            'subordinates',
+            'subordinates_ids',
         )
         read_only_fields = (
             'id',
@@ -108,10 +108,11 @@ class UserSerializer(
         allow_null=True,
         source='manager',
     )
-    subordinates = AccountPrimaryKeyRelatedField(
+    subordinates_ids = AccountPrimaryKeyRelatedField(
         many=True,
         queryset=UserModel.objects,
         required=False,
+        source='subordinates',
     )
 
     def get_invite(self, instance: UserModel):
@@ -284,10 +285,11 @@ class UserWebsocketSerializer(serializers.ModelSerializer):
             'is_admin',
             'is_account_owner',
             'manager_id',
-            'subordinates',
+            'subordinates_ids',
         )
 
-    subordinates = serializers.PrimaryKeyRelatedField(
+    subordinates_ids = serializers.PrimaryKeyRelatedField(
         many=True,
         read_only=True,
+        source='subordinates',
     )

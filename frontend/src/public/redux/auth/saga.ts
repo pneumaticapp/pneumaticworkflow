@@ -330,11 +330,11 @@ export function* editCurrentProfile({ payload }: TEditUser) {
     const mapped = mapToCamelCase(result) as TUpdateUserMappedResponse;
     yield put(editCurrentUserSuccess(mapped));
 
-    // Sync accounts store when subordinates were changed so the
+    // Sync accounts store when subordinatesIds were changed so the
     // Team page reflects the update without a full refetch.
-    if (payload.subordinates) {
+    if (payload.subordinatesIds) {
       const { authUser }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
-      yield put(changeUserReports({ id: authUser.id, reportIds: payload.subordinates }));
+      yield put(changeUserReports({ id: authUser.id, reportIds: payload.subordinatesIds }));
     }
   } catch (err) {
     yield put(profileEditFailed());

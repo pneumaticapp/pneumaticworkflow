@@ -60,13 +60,14 @@ const EMPTY_USER: IAuthUser = {
 };
 
 /**
- * Normalize API response field `subordinates` to internal `reportIds`.
- * The backend returns `subordinates`, but internal Redux state uses `reportIds`.
+ * Normalize API response field `subordinatesIds` to internal `reportIds`.
+ * The backend returns `subordinates_ids` (camelCased to `subordinatesIds`),
+ * but internal Redux state uses `reportIds`.
  */
 function normalizeSubordinates(data: Record<string, any>): Record<string, any> {
-  if (data && 'subordinates' in data && !('reportIds' in data)) {
-    const { subordinates, ...rest } = data;
-    return { ...rest, reportIds: subordinates };
+  if (data && 'subordinatesIds' in data && !('reportIds' in data)) {
+    const { subordinatesIds, ...rest } = data;
+    return { ...rest, reportIds: subordinatesIds };
   }
   return data;
 }

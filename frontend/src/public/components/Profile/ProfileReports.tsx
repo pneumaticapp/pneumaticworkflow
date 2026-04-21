@@ -31,7 +31,7 @@ export function ProfileReports({ currentUserId, reportIds = [], editCurrentUser 
   const reports = reportIds.map(id => users.find(u => Number(u.id) === Number(id))).filter(Boolean) as typeof users;
 
   const handleReportsChange = (newReportIds: number[]) => {
-    editCurrentUser({ subordinates: newReportIds });
+    editCurrentUser({ subordinatesIds: newReportIds });
   };
 
   return (

@@ -414,7 +414,7 @@ def test_user_create_actions__premium__ok(mocker, plan):
             'is_admin': invited_user.is_admin,
             'is_account_owner': invited_user.is_account_owner,
             'manager_id': None,
-            'subordinates': [],
+            'subordinates_ids': [],
         },
     )
 
@@ -469,7 +469,7 @@ def test_user_create_actions__freemium__ok(mocker):
             'is_admin': invited_user.is_admin,
             'is_account_owner': invited_user.is_account_owner,
             'manager_id': None,
-            'subordinates': [],
+            'subordinates_ids': [],
         },
     )
 
@@ -1916,7 +1916,7 @@ def test__accept__all_fields__ok(identify_mock, group_mock, mocker):
             'is_admin': invited_user.is_admin,
             'is_account_owner': invited_user.is_account_owner,
             'manager_id': None,
-            'subordinates': [],
+            'subordinates_ids': [],
         },
     )
 
@@ -2023,6 +2023,6 @@ def test__accept__only_required_fields__ok(identify_mock, group_mock, mocker):
             'is_admin': invited_user.is_admin,
             'is_account_owner': invited_user.is_account_owner,
             'manager_id': None,
-            'subordinates': [],
+            'subordinates_ids': [],
         },
     )

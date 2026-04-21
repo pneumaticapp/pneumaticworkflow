@@ -3,7 +3,7 @@ import { mapRequestBody } from '../utils/mappers';
 
 export interface IEditTeamUserRequest {
   managerId?: number | null;
-  subordinates?: number[];
+  subordinatesIds?: number[];
 }
 
 export function editTeamUser(id: number, body: IEditTeamUserRequest) {

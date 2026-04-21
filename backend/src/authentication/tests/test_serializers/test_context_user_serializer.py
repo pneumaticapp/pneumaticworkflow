@@ -20,7 +20,7 @@ def test_context_user_serializer__subordinates__ok():
     data = serializer.data
 
     # assert
-    assert data['subordinates'] == [report.id]
+    assert data['subordinates_ids'] == [report.id]
     assert data['manager_id'] is None
 
 
@@ -38,4 +38,4 @@ def test_context_user_serializer__manager_id__ok():
 
     # assert
     assert data['manager_id'] == manager.id
-    assert data['subordinates'] == []
+    assert data['subordinates_ids'] == []

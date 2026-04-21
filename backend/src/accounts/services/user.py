@@ -519,16 +519,17 @@ class UserService(
         # Validate hierarchy constraints before any DB mutation.
         # Build the manager map once and share it between both
         # validators to avoid a duplicate DB query.
-        new_manager = update_kwargs.get('manager')
-        need_manager_map = (
-            ('manager' in update_kwargs and new_manager is not None)
-            or subordinates is not None
+        has_manager = (
+            'manager' in update_kwargs
+            and update_kwargs['manager'] is not None
         )
-        manager_map = (
-            self._get_manager_map() if need_manager_map else None
-        )
-        if 'manager' in update_kwargs and new_manager is not None:
-            self._validate_manager(new_manager, manager_map=manager_map)
+        need_manager_map = has_manager or subordinates is not None
+        manager_map = self._get_manager_map() if need_manager_map else None
+        if has_manager:
+            self._validate_manager(
+                update_kwargs['manager'],
+                manager_map=manager_map,
+            )
         if subordinates is not None:
             proposed_manager = update_kwargs.get(
                 'manager', self.instance.manager,
@@ -553,8 +554,8 @@ class UserService(
                 self.instance.user_groups.set(user_groups)
             self._update_related_user_fields(old_name=old_name)
 
-            if subordinates is not None:
-                self._update_subordinates(subordinates)
+        if subordinates is not None:
+            self._update_subordinates(subordinates)
 
         self._update_related_stripe_account()
         self._update_analytics(**update_kwargs)

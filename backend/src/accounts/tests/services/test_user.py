@@ -1160,7 +1160,7 @@ def test_deactivate__ok(mocker):
             'is_admin': deleted_user.is_admin,
             'is_account_owner': deleted_user.is_account_owner,
             'manager_id': None,
-            'subordinates': [],
+            'subordinates_ids': [],
         },
     )
 
@@ -1204,7 +1204,7 @@ def test_deactivate__skip_validation__ok(mocker):
             'is_admin': deleted_user.is_admin,
             'is_account_owner': deleted_user.is_account_owner,
             'manager_id': None,
-            'subordinates': [],
+            'subordinates_ids': [],
         },
     )
 
@@ -1247,7 +1247,7 @@ def test_deactivate__not_call_actions_for_invited_user__ok(mocker):
             'is_admin': invited_user.is_admin,
             'is_account_owner': invited_user.is_account_owner,
             'manager_id': None,
-            'subordinates': [],
+            'subordinates_ids': [],
         },
     )
 

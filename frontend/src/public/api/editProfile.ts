@@ -7,7 +7,7 @@ export interface IUpdateUserRequest {
   phone?: string;
   dateFmt?: string;
   managerId?: number | null;
-  subordinates?: number[];
+  subordinatesIds?: number[];
 }
 
 export type TUpdateUserMappedResponse = IUpdateUserRequest;
