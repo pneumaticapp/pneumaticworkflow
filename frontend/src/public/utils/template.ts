@@ -182,7 +182,13 @@ export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
     let rawDueDate = task.rawDueDate;
     if (rawDueDate && rawDueDate.ruleTarget === 'field') {
       if (rawDueDate.sourceId && !validApiNames.has(rawDueDate.sourceId)) {
-        rawDueDate = { ...rawDueDate, duration: null, durationMonths: null };
+        rawDueDate = {
+          ...rawDueDate,
+          duration: null,
+          durationMonths: null,
+          sourceId: null,
+          ruleTarget: 'task started',
+        };
       }
     }
 

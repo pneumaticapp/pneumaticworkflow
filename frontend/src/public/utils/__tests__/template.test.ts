@@ -495,8 +495,11 @@ describe('template utilities', () => {
       });
       const cleaned = cleanTemplateReferences(template);
       expect(cleaned.tasks[0].rawDueDate?.sourceId).toBe('valid-date-field');
+      expect(cleaned.tasks[0].rawDueDate?.ruleTarget).toBe('field');
       expect(cleaned.tasks[1].rawDueDate?.duration).toBeNull();
       expect(cleaned.tasks[1].rawDueDate?.durationMonths).toBeNull();
+      expect(cleaned.tasks[1].rawDueDate?.sourceId).toBeNull();
+      expect(cleaned.tasks[1].rawDueDate?.ruleTarget).toBe('task started');
     });
   });
 });
