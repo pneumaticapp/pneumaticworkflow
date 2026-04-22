@@ -191,3 +191,9 @@ msgstr "No se puede activar: el estado ya está activo."
 
 msgid "The end date must be after the start date."
 msgstr "La fecha de fin debe ser posterior a la fecha de inicio."
+
+msgid "A user cannot be their own manager."
+msgstr "Un usuario no puede ser su propio responsable."
+
+msgid "This assignment would create a circular management hierarchy."
+msgstr "Esta asignación crearía una jerarquía de gestión circular."

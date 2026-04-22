@@ -28,7 +28,7 @@ import { getTemplateData } from '../../../redux/selectors/template';
 
 import { EExtraFieldType, IExtraField, ITemplateTask } from '../../../types/template';
 import { EInputNameBackgroundColor, EMoveDirections } from '../../../types/workflow';
-import { IFieldsetTemplateRule } from '../../../types/fieldset';
+import { IFieldsetTemplateRule, TFieldLabelPosition, TFieldSetLayout } from '../../../types/fieldset';
 import { ExtraFieldsMap } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldsMap';
 import { ExtraFieldIcon } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldIcon';
 import { ExtraFieldIntl } from '../../TemplateEdit/ExtraFields';
@@ -38,7 +38,6 @@ import { getNormalizeFieldsOrders, moveWorkflowField } from '../../../utils/work
 
 import { normalizeFieldsForUI } from './fieldsetFieldMappers';
 
-import { TFieldLabelPosition, TFieldSetLayout } from '../../../types/fieldset';
 import { TFieldsetDetailsProps } from './types';
 import styles from './FieldsetDetails.css';
 
@@ -333,10 +332,11 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
 
         <div className={styles['settings-form']}>
           <div className={styles['settings-field']}>
-            <label className={styles['settings-label']}>
+            <label className={styles['settings-label']} htmlFor="settings-description">
               {formatMessage({ id: 'fieldsets.settings.description' })}
             </label>
             <textarea
+              id="settings-description"
               className={styles['settings-textarea']}
               value={localDescription}
               placeholder={formatMessage({ id: 'fieldsets.settings.description-placeholder' })}
@@ -345,10 +345,11 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
           </div>
 
           <div className={styles['settings-field']}>
-            <label className={styles['settings-label']}>
+            <label className={styles['settings-label']} htmlFor="settings-label-position">
               {formatMessage({ id: 'fieldsets.settings.label-position' })}
             </label>
             <select
+              id="settings-label-position"
               className={styles['settings-select']}
               value={localLabelPosition}
               onChange={handleSettingsLabelPositionChange}
@@ -362,10 +363,11 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
           </div>
 
           <div className={styles['settings-field']}>
-            <label className={styles['settings-label']}>
+            <label className={styles['settings-label']} htmlFor="settings-binding">
               {formatMessage({ id: 'fieldsets.settings.binding' })}
             </label>
             <select
+              id="settings-binding"
               className={styles['settings-select']}
               value={localBindingSource}
               onChange={handleSettingsBindingSourceChange}
@@ -379,10 +381,11 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
           </div>
 
           <div className={styles['settings-field']}>
-            <label className={styles['settings-label']}>
+            <label className={styles['settings-label']} htmlFor="settings-order">
               {formatMessage({ id: 'fieldsets.settings.order' })}
             </label>
             <input
+              id="settings-order"
               type="number"
               className={styles['settings-input']}
               value={localOrder}
@@ -392,10 +395,11 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
           </div>
 
           <div className={styles['settings-field']}>
-            <label className={styles['settings-label']}>
+            <label className={styles['settings-label']} htmlFor="settings-layout">
               {formatMessage({ id: 'fieldsets.settings.layout' })}
             </label>
             <select
+              id="settings-layout"
               className={styles['settings-select']}
               value={localLayout}
               onChange={handleSettingsLayoutChange}

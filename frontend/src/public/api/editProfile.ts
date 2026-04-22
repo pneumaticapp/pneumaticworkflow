@@ -2,10 +2,12 @@ import { commonRequest } from './commonRequest';
 import { mapRequestBody } from '../utils/mappers';
 
 export interface IUpdateUserRequest {
-  firstName: string;
-  lastName: string;
-  phone: string;
-  dateFmt: string;
+  firstName?: string;
+  lastName?: string;
+  phone?: string;
+  dateFmt?: string;
+  managerId?: number | null;
+  subordinatesIds?: number[];
 }
 
 export type TUpdateUserMappedResponse = IUpdateUserRequest;
@@ -17,7 +19,6 @@ export interface IUpdateUserResponse {
 }
 
 export function editProfile(body: IUpdateUserRequest) {
-
   return commonRequest<IUpdateUserResponse>(
     'editProfile',
     {

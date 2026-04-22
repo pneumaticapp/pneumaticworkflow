@@ -1,0 +1,40 @@
+
+> pneumatic-frontend@0.0.1 test
+> jest src/public/components/Workflows/WorkflowsGridPage/WorkflowCard/utils/__tests__/getClonedKickoff.test.ts
+
+FAIL src/public/components/Workflows/WorkflowsGridPage/WorkflowCard/utils/__tests__/getClonedKickoff.test.ts (5.453 s)
+  getClonedKickoff.
+    × should work (11 ms)
+
+  ● getClonedKickoff. › should work
+
+    expect(received).toStrictEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+    @@ -99,6 +99,7 @@
+            "type": "radio",
+            "userId": null,
+            "value": null,
+          },
+        ],
+    +   "fieldsets": Array [],
+      }
+
+      312 |     const clonedKickoff = await getClonedKickoff(mockWorkflowDetailKickoff, templateKickoffMock);
+      313 |
+    > 314 |     expect(clonedKickoff).toStrictEqual(expectedKickoff);
+          |                           ^
+      315 |   });
+      316 | });
+      317 |
+
+      at src/public/components/Workflows/WorkflowsGridPage/WorkflowCard/utils/__tests__/getClonedKickoff.test.ts:314:27
+      at fulfilled (src/public/components/Workflows/WorkflowsGridPage/WorkflowCard/utils/__tests__/getClonedKickoff.test.ts:5:58)
+
+Test Suites: 1 failed, 1 total
+Tests:       1 failed, 1 total
+Snapshots:   0 total
+Time:        6.441 s, estimated 7 s
+Ran all test suites matching /src\\public\\components\\Workflows\\WorkflowsGridPage\\WorkflowCard\\utils\\__tests__\\getClonedKickoff.test.ts/i.

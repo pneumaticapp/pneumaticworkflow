@@ -16,7 +16,7 @@ export function useTemplateEditFieldsetsCatalog(templateId: number | undefined):
   useEffect(() => {
     if (!templateId) {
       setIsLoading(false);
-      return;
+      return undefined;
     }
 
     const abortController = new AbortController();

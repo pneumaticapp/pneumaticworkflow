@@ -168,10 +168,10 @@ msgid "Permission denied. Only an administrator can grant administrator privileg
 msgstr "Autorisation refusée. Seul un administrateur peut accorder des privilèges d'administrateur."
 
 msgid "You can't delete yourself."
-msgstr ""
+msgstr "Vous ne pouvez pas vous supprimer vous-même."
 
 msgid "You can't delete the account owner."
-msgstr ""
+msgstr "Vous ne pouvez pas supprimer le propriétaire du compte."
 
 msgid "You cannot delegate to yourself."
 msgstr "Vous ne pouvez pas déléguer à vous-même."
@@ -191,3 +191,9 @@ msgstr "Impossible d'activer : le statut est déjà actif."
 
 msgid "The end date must be after the start date."
 msgstr "La date de fin doit être postérieure à la date de début."
+
+msgid "A user cannot be their own manager."
+msgstr "Un utilisateur ne peut pas être son propre responsable."
+
+msgid "This assignment would create a circular management hierarchy."
+msgstr "Cette affectation créerait une hiérarchie de gestion circulaire."

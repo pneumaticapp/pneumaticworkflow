@@ -1,0 +1,32 @@
+
+> pneumatic-frontend@0.0.1 eslint
+> npx eslint . --ext .ts,.tsx src
+
+
+D:\Dev\Pneumatic\pneumaticworkflow\frontend\src\public\components\Fieldsets\FieldsetDetails\FieldsetDetails.tsx
+   31:39  error  'D:\Dev\Pneumatic\pneumaticworkflow\frontend\src\public\types\fieldset.ts' imported multiple times  import/no-duplicates
+   41:54  error  'D:\Dev\Pneumatic\pneumaticworkflow\frontend\src\public\types\fieldset.ts' imported multiple times  import/no-duplicates
+  336:13  error  A form label must be associated with a control                                                      jsx-a11y/label-has-associated-control
+  348:13  error  A form label must be associated with a control                                                      jsx-a11y/label-has-associated-control
+  365:13  error  A form label must be associated with a control                                                      jsx-a11y/label-has-associated-control
+  382:13  error  A form label must be associated with a control                                                      jsx-a11y/label-has-associated-control
+  395:13  error  A form label must be associated with a control                                                      jsx-a11y/label-has-associated-control
+
+D:\Dev\Pneumatic\pneumaticworkflow\frontend\src\public\components\Fieldsets\FieldsetDetails\FieldsetDetailsSkeleton.tsx
+  12:1  error  This line has a length of 146. Maximum allowed is 140  max-len
+
+D:\Dev\Pneumatic\pneumaticworkflow\frontend\src\public\components\TemplateEdit\FieldsetPicker\FieldsetPicker.tsx
+  42:5  error  Arrow function expected no return value  consistent-return
+
+D:\Dev\Pneumatic\pneumaticworkflow\frontend\src\public\components\Workflows\WorkflowModal\WorkflowModal.tsx
+   95:3   error  Expected 'this' to be used by class method 'getFieldsetsFromProps'  class-methods-use-this
+   95:3   error  getFieldsetsFromProps should be placed after componentDidUpdate     react/sort-comp
+  312:33  error  Must use destructuring state assignment                             react/destructuring-assignment
+  331:22  error  Must use destructuring state assignment                             react/destructuring-assignment
+
+D:\Dev\Pneumatic\pneumaticworkflow\frontend\src\public\hooks\useTemplateEditFieldsetsCatalog.ts
+  40:5  error  Arrow function expected no return value  consistent-return
+
+✖ 14 problems (14 errors, 0 warnings)
+  1 error and 0 warnings potentially fixable with the `--fix` option.
+

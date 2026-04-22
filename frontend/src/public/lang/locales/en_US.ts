@@ -481,6 +481,7 @@ export const enMessages = {
 
   'validation.group-name-to-long': 'The group name is longer than 255 character',
 
+  'button.remove': 'Remove',
   'Unknown Error': 'Oops, looks like something went wrong... Our engineering team has already been notified',
   'Something Went Wrong': 'Oops, looks like something went wrong... Our engineering team has already been notified',
 

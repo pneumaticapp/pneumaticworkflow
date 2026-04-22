@@ -30,7 +30,7 @@ from src.processes.serializers.workflows.fieldset import (
     FieldSetSerializer,
 )
 from src.processes.serializers.workflows.task_performer import (
-    TaskUserGroupPerformerSerializer,
+    get_performers_for_task,
 )
 from src.processes.models.workflows.task import TaskPerformer
 
@@ -86,11 +86,7 @@ class WorkflowCurrentTaskSerializer(serializers.ModelSerializer):
         return None
 
     def get_performers(self, instance) -> List[Dict[str, Any]]:
-        if hasattr(instance, 'all_performers'):
-            performers = instance.all_performers
-        else:
-            performers = instance.exclude_directly_deleted_taskperformer_set()
-        return TaskUserGroupPerformerSerializer(performers, many=True).data
+        return get_performers_for_task(instance)
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -142,11 +138,7 @@ class TaskSerializer(serializers.ModelSerializer):
     fieldsets = FieldSetSerializer(many=True)
 
     def get_performers(self, instance) -> List[Dict[str, Any]]:
-        if hasattr(instance, 'all_performers'):
-            performers = instance.all_performers
-        else:
-            performers = instance.exclude_directly_deleted_taskperformer_set()
-        return TaskUserGroupPerformerSerializer(performers, many=True).data
+        return get_performers_for_task(instance)
 
     def get_is_completed(self, instance):
         #  TODO Remove in 41258
@@ -289,7 +281,7 @@ class TaskListFilterSerializer(
     def validate_search(self, value: str) -> Optional[str]:
         removed_chars_regex = r'\s\s+'
         clear_text = re.sub(removed_chars_regex, '', value).strip()
-        return clear_text if clear_text else None
+        return clear_text or None
 
     def validate_assigned_to(self, value):
         if not self.context['user'].is_admin:

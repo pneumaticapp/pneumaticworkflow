@@ -10,6 +10,8 @@ export interface IAuthenticatedUser {
   date_joined: string;
   is_account_owner: boolean;
   is_admin: boolean;
+  manager_id: number | null;
+  subordinates_ids: number[];
 }
 
 export interface IAuthenticatedAccount {

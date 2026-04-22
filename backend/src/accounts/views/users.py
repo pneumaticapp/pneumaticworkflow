@@ -126,6 +126,7 @@ class UsersViewSet(
                 'incoming_invites',
                 'vacations',
                 'vacations__substitute_group__users',
+                'subordinates',
             )
         elif self.action == 'privileges':
             queryset = queryset.prefetch_related(
@@ -133,6 +134,7 @@ class UsersViewSet(
                 'incoming_invites',
                 'vacations',
                 'vacations__substitute_group__users',
+                'subordinates',
             )
 
         return super().prefetch_queryset(

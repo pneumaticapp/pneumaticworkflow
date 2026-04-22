@@ -305,6 +305,7 @@ const expectedKickoff = {
       groupId: null,
     },
   ],
+  fieldsets: [],
 };
 
 describe('getClonedKickoff.', () => {

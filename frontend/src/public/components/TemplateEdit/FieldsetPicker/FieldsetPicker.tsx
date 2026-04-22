@@ -23,23 +23,24 @@ export function FieldsetPicker({ selectedFieldsetIds, onChange }: IFieldsetPicke
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!template?.id) return;
+    if (template?.id) {
+      const abortCtrl = new AbortController();
 
-    const abortCtrl = new AbortController();
+      setIsLoading(true);
+      getFieldsets({ templateId: template.id, limit: 1000, signal: abortCtrl.signal })
+        .then((response) => {
+          setFieldsets(response.results);
+        })
+        .catch(() => {
+          // silently ignore aborted requests
+        })
+        .finally(() => {
+          setIsLoading(false);
+        });
 
-    setIsLoading(true);
-    getFieldsets({ templateId: template.id, limit: 1000, signal: abortCtrl.signal })
-      .then((response) => {
-        setFieldsets(response.results);
-      })
-      .catch(() => {
-        // silently ignore aborted requests
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-
-    return () => abortCtrl.abort();
+      return () => abortCtrl.abort();
+    }
+    return undefined;
   }, [template?.id]);
 
   useEffect(() => {

@@ -191,3 +191,9 @@ msgstr "Aktivierung nicht möglich: Der Status ist bereits aktiv."
 
 msgid "The end date must be after the start date."
 msgstr "Das Enddatum muss nach dem Startdatum liegen."
+
+msgid "A user cannot be their own manager."
+msgstr "Ein Benutzer kann nicht sein eigener Vorgesetzter sein."
+
+msgid "This assignment would create a circular management hierarchy."
+msgstr "Diese Zuweisung würde eine zirkuläre Managementhierarchie erzeugen."
