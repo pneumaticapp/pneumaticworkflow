@@ -2429,6 +2429,10 @@ def test__update_fieldset_fields__fields_data_none__skip(mocker):
         'src.processes.services.tasks.task_version.'
         'TaskUpdateVersionService._update_field_selections',
     )
+    _update_field_rules_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_field_rules',
+    )
 
     # act
     service._update_fieldset_fields(fieldset=fieldset, fields_data=None)
@@ -2437,6 +2441,7 @@ def test__update_fieldset_fields__fields_data_none__skip(mocker):
     assert not TaskField.objects.filter(id=old_field.id).exists()
     _update_field_mock.assert_not_called()
     _update_field_selections_mock.assert_not_called()
+    _update_field_rules_mock.assert_not_called()
 
 
 def test__update_fieldset_fields__fields_data_empty__skip(mocker):
@@ -2476,6 +2481,10 @@ def test__update_fieldset_fields__fields_data_empty__skip(mocker):
         'src.processes.services.tasks.task_version.'
         'TaskUpdateVersionService._update_field_selections',
     )
+    _update_field_rules_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_field_rules',
+    )
 
     # act
     service._update_fieldset_fields(fieldset=fieldset, fields_data=[])
@@ -2484,6 +2493,7 @@ def test__update_fieldset_fields__fields_data_empty__skip(mocker):
     assert not TaskField.objects.filter(id=old_field.id).exists()
     _update_field_mock.assert_not_called()
     _update_field_selections_mock.assert_not_called()
+    _update_field_rules_mock.assert_not_called()
 
 
 def test__update_fieldset_fields__fields_data_provided__ok(mocker):
@@ -2546,6 +2556,10 @@ def test__update_fieldset_fields__fields_data_provided__ok(mocker):
         'src.processes.services.tasks.task_version.'
         'TaskUpdateVersionService._update_field_selections',
     )
+    _update_field_rules_mock = mocker.patch(
+        'src.processes.services.tasks.task_version.'
+        'TaskUpdateVersionService._update_field_rules',
+    )
 
     # act
     service._update_fieldset_fields(fieldset=fieldset, fields_data=fields_data)
@@ -2560,6 +2574,11 @@ def test__update_fieldset_fields__fields_data_provided__ok(mocker):
     _update_field_selections_mock.assert_called_once_with(
         new_field,
         fields_data[0],
+    )
+    _update_field_rules_mock.assert_called_once_with(
+        new_field,
+        fields_data[0],
+        fieldset,
     )
 
 
@@ -2718,3 +2737,240 @@ def test__update_fieldsets__data_provided__ok(mocker):
         fieldset=new_fieldset,
         fields_data=data[0]['fields'],
     )
+
+
+def test__update_field_rules__rules_provided__ok():
+
+    """
+    `field_data` contains a non-empty `rules` list —
+    matching FieldSetRule is linked to the field via M2M.
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='fs-1',
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='100',
+    )
+    rule = fieldset.rules.first()
+    field = fieldset.fields.first()
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    field_data = {
+        'rules': [
+            {'api_name': 'fs-1-rule-1'},
+        ],
+    }
+
+    # act
+    service._update_field_rules(field, field_data, fieldset)
+
+    # assert
+    assert field.rules.count() == 1
+    assert field.rules.filter(id=rule.id).exists()
+
+
+def test__update_field_rules__rules_empty_list__clear():
+
+    """
+    `field_data['rules']` is an empty list —
+    existing M2M relations are cleared.
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='fs-1',
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='100',
+    )
+    rule = fieldset.rules.get(api_name='fs-1-rule-1')
+    field = fieldset.fields.get(api_name='fs-1-field-1')
+    field.rules.add(rule)
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    field_data = {'rules': []}
+
+    # act
+    service._update_field_rules(field, field_data, fieldset)
+
+    # assert
+    assert field.rules.count() == 0
+
+
+def test__update_field_rules__rules_key_missing__clear():
+
+    """
+    `field_data` does not contain `rules` key —
+    `.get('rules', [])` returns `[]`, M2M is cleared.
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='fs-1',
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='100',
+    )
+    rule = fieldset.rules.get(api_name='fs-1-rule-1')
+    field = fieldset.fields.get(api_name='fs-1-field-1')
+    field.rules.add(rule)
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    field_data = {}
+
+    # act
+    service._update_field_rules(field, field_data, fieldset)
+
+    # assert
+    assert field.rules.count() == 0
+
+
+def test__update_field_rules__multiple_rules__ok():
+
+    """
+    `field_data` contains multiple rules —
+    all matching FieldSetRule instances are linked.
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='fs-1',
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='100',
+    )
+    rule_1 = fieldset.rules.get(api_name='fs-1-rule-1')
+    rule_2 = FieldSetRule.objects.create(
+        fieldset=fieldset,
+        account_id=user.account_id,
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='200',
+        api_name='fs-1-rule-2',
+    )
+    field = fieldset.fields.get(api_name='fs-1-field-1')
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    field_data = {
+        'rules': [
+            {'api_name': 'fs-1-rule-1'},
+            {'api_name': 'fs-1-rule-2'},
+        ],
+    }
+
+    # act
+    service._update_field_rules(field, field_data, fieldset)
+
+    # assert
+    assert field.rules.count() == 2
+    assert field.rules.filter(id=rule_1.id).exists()
+    assert field.rules.filter(id=rule_2.id).exists()
+
+
+def test__update_field_rules__replaces_existing_rules__ok():
+
+    """
+    Field already has a linked rule — it is replaced by the new one.
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='fs-1',
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='50',
+    )
+    old_rule = fieldset.rules.get(api_name='fs-1-rule-1')
+    new_rule = FieldSetRule.objects.create(
+        fieldset=fieldset,
+        account_id=user.account_id,
+        type=FieldSetRuleType.SUM_EQUAL,
+        value='100',
+        api_name='new-rule',
+    )
+    field = fieldset.fields.get(api_name='fs-1-field-1')
+    field.rules.add(old_rule)
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    field_data = {'rules': [{'api_name': 'new-rule'}]}
+
+    # act
+    service._update_field_rules(field, field_data, fieldset)
+
+    # assert
+    assert field.rules.count() == 1
+    assert field.rules.filter(id=new_rule.id).exists()
+    assert not field.rules.filter(id=old_rule.id).exists()
+
+
+def test__update_field_rules__nonexistent_api_name__skip():
+
+    """
+    `api_name` in `field_data` does not match any FieldSetRule —
+    no rules are found, M2M is set to empty.
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        task=task,
+        api_name='fs-1',
+    )
+    field = fieldset.fields.get(api_name='fs-1-field-1')
+    service = TaskUpdateVersionService(
+        user=user,
+        instance=task,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    field_data = {'rules': [{'api_name': 'nonexistent-rule'}]}
+
+    # act
+    service._update_field_rules(field, field_data, fieldset)
+
+    # assert
+    assert field.rules.count() == 0

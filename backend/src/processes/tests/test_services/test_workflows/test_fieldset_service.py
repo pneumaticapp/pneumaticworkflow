@@ -30,9 +30,6 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-# FieldSetService._create_instance
-
-
 def test__create_instance__with_kickoff__ok(mocker):
 
     """
@@ -148,9 +145,6 @@ def test__create_instance__no_kickoff_no_task__ok(mocker):
     assert service.instance.workflow_id == workflow.id
     assert service.instance.kickoff is None
     assert service.instance.task is None
-
-
-# FieldSetService._create_fields
 
 
 def test__create_fields__default_params__ok(mocker):
@@ -360,9 +354,6 @@ def test__create_fields__skip_value_true__ok(mocker):
     )
 
 
-# FieldSetService._create_rules
-
-
 def test__create_rules__with_template__ok(mocker):
 
     """
@@ -424,9 +415,6 @@ def test__create_rules__with_template__ok(mocker):
     )
 
 
-# FieldSetService._create_related
-
-
 def test__create_related__with_template__ok(mocker):
 
     """
@@ -469,9 +457,6 @@ def test__create_related__with_template__ok(mocker):
     create_rules_mock.assert_called_once_with(
         fieldset_template,
     )
-
-
-# FieldSetService.validate_rules
 
 
 def test_validate_rules__with_rules__ok(mocker):

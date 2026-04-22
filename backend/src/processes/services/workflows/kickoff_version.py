@@ -79,7 +79,7 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
     def _update_fieldset_rules(
         self,
         fieldset: FieldSet,
-        rules_data: Optional[List[Dict]],
+        rules_data: Optional[List[Dict]] = None,
     ) -> None:
 
         rule_ids = []

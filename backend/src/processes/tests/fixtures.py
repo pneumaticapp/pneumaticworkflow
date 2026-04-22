@@ -70,7 +70,7 @@ from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.fields import (
     TaskField,
 )
-from src.processes.models.workflows.fieldset import FieldSet
+from src.processes.models.workflows.fieldset import FieldSet, FieldSetRule
 from src.processes.models.workflows.kickoff import KickoffValue
 from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
@@ -865,9 +865,14 @@ def create_test_fieldset_template(
             type=rule_type,
             value=rule_value,
         )
+    if rule_type == FieldSetRuleType.SUM_EQUAL:
+        field_type = FieldType.NUMBER
+    else:
+        field_type = FieldType.STRING
+
     FieldTemplate.objects.create(
         name='Fieldset field',
-        type=FieldType.STRING,
+        type=field_type,
         fieldset=fieldset,
         template=template,
         order=1,
@@ -886,6 +891,9 @@ def create_test_fieldset(
     order: int = 0,
     label_position: LabelPosition.LITERALS = LabelPosition.TOP,
     layout: FieldSetLayout.LITERALS = FieldSetLayout.VERTICAL,
+    rule_type: Optional[FieldSetRuleType.LITERALS] = None,
+    rule_value: Optional[str] = None,
+    api_name: Optional[str] = None,
 ) -> FieldSet:
 
     """Creating a workflow FieldSet with one TaskField."""
@@ -900,14 +908,27 @@ def create_test_fieldset(
         order=order,
         label_position=label_position,
         layout=layout,
+        api_name=api_name,
     )
+    if rule_type:
+        FieldSetRule.objects.create(
+            fieldset=fieldset,
+            account=workflow.account,
+            api_name=f'{fieldset.api_name}-rule-1',
+            type=rule_type,
+            value=rule_value,
+        )
+    if rule_type == FieldSetRuleType.SUM_EQUAL:
+        field_type = FieldType.NUMBER
+    else:
+        field_type = FieldType.STRING
     TaskField.objects.create(
         account=workflow.account,
         workflow=workflow,
         fieldset=fieldset,
         task=task,
         name='Fieldset field',
-        type=FieldType.STRING,
+        type=field_type,
         order=1,
         api_name=f'{fieldset.api_name}-field-1',
     )
