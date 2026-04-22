@@ -89,17 +89,18 @@ class FieldSetTemplateService(BaseModelService):
                 update_kwargs['kickoff_id'] = None
 
         with transaction.atomic():
-            result = super().partial_update(
-                force_save=True,
-                **update_kwargs,
-            )
+            if update_kwargs:
+                self.instance = super().partial_update(
+                    force_save=True,
+                    **update_kwargs,
+                )
 
             if fields_data is not None:
                 self._update_fields(fields_data=fields_data)
             if rules_data is not None:
                 self.update_rules(rules_data=rules_data)
             self._validate_rules()
-            return result
+            return self.instance
 
     def _validate_rules(self):
         for rule in self.instance.rules.all():
