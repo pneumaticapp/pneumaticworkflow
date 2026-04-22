@@ -121,6 +121,11 @@ class Migration(migrations.Migration):
             name='fieldset',
             field=models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.CASCADE, related_name='fields', to='processes.FieldSet'),
         ),
+        migrations.AddField(
+            model_name='taskfield',
+            name='rules',
+            field=models.ManyToManyField(blank=True, related_name='fields', to='processes.FieldSetRule'),
+        ),
         migrations.AddConstraint(
             model_name='fieldsettemplate',
             constraint=models.UniqueConstraint(condition=models.Q(is_deleted=False), fields=('account', 'api_name'), name='fieldsettemplate_account_api_name_unique'),

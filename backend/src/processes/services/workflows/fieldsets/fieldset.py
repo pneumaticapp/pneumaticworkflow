@@ -64,8 +64,8 @@ class FieldSetService(BaseModelService):
             )
 
     def _create_related(self, instance_template, **kwargs):
-        self._create_fields(instance_template, **kwargs)
         self._create_rules(instance_template, **kwargs)
+        self._create_fields(instance_template, **kwargs)
 
     def validate_rules(self):
         for rule in self.instance.rules.all():
