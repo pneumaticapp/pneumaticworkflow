@@ -123,6 +123,9 @@ describe('Profile — ProfileManagerSection', () => {
         editCurrentUser={mockEditCurrentUser}
         sendChangePassword={mockSendChangePassword}
         onChangeTab={mockOnChangeTab}
+        onVacationActivate={jest.fn()}
+        onVacationDeactivate={jest.fn()}
+        availableUsers={[]}
       />
     );
 
@@ -144,6 +147,9 @@ describe('Profile — ProfileManagerSection', () => {
         editCurrentUser={mockEditCurrentUser}
         sendChangePassword={mockSendChangePassword}
         onChangeTab={mockOnChangeTab}
+        onVacationActivate={jest.fn()}
+        onVacationDeactivate={jest.fn()}
+        availableUsers={[]}
       />
     );
 
