@@ -920,8 +920,10 @@ def create_test_fieldset(
         )
     if rule_type == FieldSetRuleType.SUM_EQUAL:
         field_type = FieldType.NUMBER
+        field_value = '10'
     else:
         field_type = FieldType.STRING
+        field_value = 'Some value'
     TaskField.objects.create(
         account=workflow.account,
         workflow=workflow,
@@ -931,5 +933,6 @@ def create_test_fieldset(
         type=field_type,
         order=1,
         api_name=f'{fieldset.api_name}-field-1',
+        value=field_value,
     )
     return fieldset
