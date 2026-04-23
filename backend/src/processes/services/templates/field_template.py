@@ -34,7 +34,12 @@ class FieldTemplateService(BaseModelService):
 
     def partial_update(self, **update_kwargs) -> Model:
         self._validate(**update_kwargs)
-        return super().partial_update(**update_kwargs)
+        selections_data = update_kwargs.pop('selections', None)
+        result = super().partial_update(**update_kwargs)
+        if selections_data is not None:
+            self.instance.selections.all().delete()
+            self.create_selections(selections_data=selections_data)
+        return result
 
     def _create_instance(
         self,

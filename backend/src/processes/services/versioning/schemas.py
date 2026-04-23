@@ -36,6 +36,17 @@ class SelectionSchemaV1(serializers.ModelSerializer):
         )
 
 
+class FieldsetTemplateRuleSchemaV1(serializers.ModelSerializer):
+
+    class Meta:
+        model = FieldsetTemplateRule
+        fields = (
+            'api_name',
+            'type',
+            'value',
+        )
+
+
 class FieldSchemaV1(serializers.ModelSerializer):
 
     class Meta:
@@ -52,6 +63,7 @@ class FieldSchemaV1(serializers.ModelSerializer):
             'default',
             'selections',
             'dataset_id',
+            'rules',
         )
 
     selections = SelectionSchemaV1(
@@ -60,17 +72,11 @@ class FieldSchemaV1(serializers.ModelSerializer):
         allow_empty=True,
         required=False,
     )
-
-
-class FieldsetTemplateRuleSchemaV1(serializers.ModelSerializer):
-
-    class Meta:
-        model = FieldsetTemplateRule
-        fields = (
-            'api_name',
-            'type',
-            'value',
-        )
+    rules = FieldsetTemplateRuleSchemaV1(
+        many=True,
+        allow_null=True,
+        allow_empty=True,
+    )
 
 
 class FieldSetSchemaV1(serializers.ModelSerializer):

@@ -1,12 +1,13 @@
-from django.utils.translation import ugettext_lazy as _
-
-from rest_framework.exceptions import ValidationError
 from rest_framework.fields import CharField
 from rest_framework.serializers import (
     IntegerField,
     ModelSerializer,
 )
 
+from src.generics.fields import (
+    RelatedApiNameField,
+    RelatedApiNameListField,
+)
 from src.generics.mixins.serializers import CustomValidationErrorMixin
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
@@ -28,10 +29,16 @@ class FieldsetTemplateRuleSerializer(
             'type',
             'value',
             'api_name',
+            'fields',
         )
 
-    id = IntegerField(read_only=True)
+    id = IntegerField(required=False)
     api_name = CharField(required=False, max_length=200)
+    fields = RelatedApiNameListField(
+        required=False,
+        allow_empty=True,
+        default=list,
+    )
 
 
 class FieldsetTemplateSerializer(
@@ -46,7 +53,7 @@ class FieldsetTemplateSerializer(
             'name',
             'description',
             'order',
-            'task_id',
+            'task',
             'label_position',
             'layout',
             'rules',
@@ -54,8 +61,12 @@ class FieldsetTemplateSerializer(
             'api_name',
         )
 
-    id = IntegerField(read_only=True)
-    task_id = IntegerField(allow_null=True, required=False)
+    id = IntegerField(required=False)
+    task = RelatedApiNameField(
+        queryset=TaskTemplate.objects.all(),
+        required=False,
+        allow_null=True,
+    )
     api_name = CharField(required=False, max_length=200)
     rules = FieldsetTemplateRuleSerializer(
         many=True,
@@ -69,27 +80,7 @@ class FieldsetTemplateSerializer(
     )
 
     def validate(self, attrs):
-
-        if self.instance:
-            account = self.instance.account
-            template = self.instance.template
-        else:
-            account = self.context.get('account')
-            template = self.context.get('template')
-
-        task_id = attrs.get('task_id')
-
-        if task_id:
-            if task_id is None:
-                attrs['kickoff_id'] = template.kickoff_instance.id
-            else:
-                attrs['kickoff_id'] = None
-                if not TaskTemplate.objects.filter(
-                    pk=task_id,
-                    template_id=template.id,
-                    account_id=account.id,
-                ).exists():
-                    raise ValidationError(
-                        {'task_id': _('Invalid task_id for this fieldset.')},
-                    )
+        if 'task' in attrs and attrs['task'] is not None:
+            task = attrs.pop('task')
+            attrs['task_id'] = task.id
         return attrs

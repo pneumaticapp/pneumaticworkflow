@@ -65,6 +65,11 @@ class TaskField(
         blank=True,
         related_name='fields',
     )
+    rules = models.ManyToManyField(
+        'processes.FieldsetRule',
+        blank=True,
+        related_name='fields',
+    )
     workflow = models.ForeignKey(
         Workflow,
         on_delete=models.CASCADE,

@@ -20,13 +20,8 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-def test_destroy__unauthenticated__unauthorized(api_client):
-
-    """
-
-    Unauthenticated request returns 401
-
-    """
+def test_destroy__ok(api_client, mocker):
+    """Delete existing fieldset"""
 
     # arrange
     account = create_test_account()
@@ -41,6 +36,58 @@ def test_destroy__unauthenticated__unauthorized(api_client):
         kickoff=template.kickoff_instance,
     )
 
+    # mock FieldSetTemplateService
+    field_set_template_service_init_mock = mocker.patch.object(
+        FieldSetTemplateService,
+        attribute='__init__',
+        return_value=None,
+    )
+    field_set_template_service_delete_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.delete',
+    )
+
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.delete(
+        f'/templates/fieldsets/{fieldset.id}',
+    )
+
+    # assert
+    assert response.status_code == 204
+    field_set_template_service_init_mock.assert_called_once_with(
+        user=user,
+        instance=fieldset,
+        is_superuser=False,
+        auth_type=mocker.ANY,
+    )
+    field_set_template_service_delete_mock.assert_called_once_with()
+
+
+def test_destroy__unauthenticated__unauthorized(api_client, mocker):
+    """Unauthenticated request returns 401"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=template.kickoff_instance,
+    )
+
+    field_set_template_service_init_mock = mocker.patch.object(
+        FieldSetTemplateService,
+        attribute='__init__',
+        return_value=None,
+    )
+    field_set_template_service_delete_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.delete',
+    )
     # act
     response = api_client.delete(
         f'/templates/fieldsets/{fieldset.id}',
@@ -48,15 +95,12 @@ def test_destroy__unauthenticated__unauthorized(api_client):
 
     # assert
     assert response.status_code == 401
+    field_set_template_service_init_mock.assert_not_called()
+    field_set_template_service_delete_mock.assert_not_called()
 
 
-def test_destroy__expired_sub__permission_denied(api_client):
-
-    """
-
-    Expired subscription returns 403
-
-    """
+def test_destroy__expired_sub__permission_denied(api_client, mocker):
+    """Expired subscription returns 403"""
 
     # arrange
     account = create_test_account(
@@ -73,8 +117,17 @@ def test_destroy__expired_sub__permission_denied(api_client):
         template=template,
         kickoff=template.kickoff_instance,
     )
+
     api_client.token_authenticate(user=user)
 
+    field_set_template_service_init_mock = mocker.patch.object(
+        FieldSetTemplateService,
+        attribute='__init__',
+        return_value=None,
+    )
+    field_set_template_service_delete_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.delete',
+    )
     # act
     response = api_client.delete(
         f'/templates/fieldsets/{fieldset.id}',
@@ -83,15 +136,12 @@ def test_destroy__expired_sub__permission_denied(api_client):
     # assert
     assert response.status_code == 403
     assert response.data['detail'] == MSG_A_0035
+    field_set_template_service_init_mock.assert_not_called()
+    field_set_template_service_delete_mock.assert_not_called()
 
 
-def test_destroy__billing_plan__permission_denied(api_client):
-
-    """
-
-    Billing plan permission denied returns 403
-
-    """
+def test_destroy__billing_plan__permission_denied(api_client, mocker):
+    """Billing plan permission denied returns 403"""
 
     # arrange
     account = create_test_account(plan=None)
@@ -105,8 +155,17 @@ def test_destroy__billing_plan__permission_denied(api_client):
         template=template,
         kickoff=template.kickoff_instance,
     )
+
     api_client.token_authenticate(user=user)
 
+    field_set_template_service_init_mock = mocker.patch.object(
+        FieldSetTemplateService,
+        attribute='__init__',
+        return_value=None,
+    )
+    field_set_template_service_delete_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.delete',
+    )
     # act
     response = api_client.delete(
         f'/templates/fieldsets/{fieldset.id}',
@@ -115,15 +174,12 @@ def test_destroy__billing_plan__permission_denied(api_client):
     # assert
     assert response.status_code == 403
     assert response.data['detail'] == MSG_A_0041
+    field_set_template_service_init_mock.assert_not_called()
+    field_set_template_service_delete_mock.assert_not_called()
 
 
-def test_destroy__users_overlimit__permission_denied(api_client):
-
-    """
-
-    Users overlimited returns 403
-
-    """
+def test_destroy__users_overlimit__permission_denied(api_client, mocker):
+    """Users overlimited returns 403"""
 
     # arrange
     account = create_test_account(
@@ -146,8 +202,17 @@ def test_destroy__users_overlimit__permission_denied(api_client):
         template=template,
         kickoff=template.kickoff_instance,
     )
+
     api_client.token_authenticate(user=user)
 
+    field_set_template_service_init_mock = mocker.patch.object(
+        FieldSetTemplateService,
+        attribute='__init__',
+        return_value=None,
+    )
+    field_set_template_service_delete_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.delete',
+    )
     # act
     response = api_client.delete(
         f'/templates/fieldsets/{fieldset.id}',
@@ -156,15 +221,12 @@ def test_destroy__users_overlimit__permission_denied(api_client):
     # assert
     assert response.status_code == 403
     assert response.data['detail'] == MSG_A_0037
+    field_set_template_service_init_mock.assert_not_called()
+    field_set_template_service_delete_mock.assert_not_called()
 
 
-def test_destroy__non_admin__permission_denied(api_client):
-
-    """
-
-    Non-admin non-owner user returns 403
-
-    """
+def test_destroy__non_admin__permission_denied(api_client, mocker):
+    """Non-admin non-owner user returns 403"""
 
     # arrange
     account = create_test_account()
@@ -179,40 +241,9 @@ def test_destroy__non_admin__permission_denied(api_client):
         kickoff=template.kickoff_instance,
     )
     user = create_test_not_admin(account=account)
+
     api_client.token_authenticate(user=user)
 
-    # act
-    response = api_client.delete(
-        f'/templates/fieldsets/{fieldset.id}',
-    )
-
-    # assert
-    assert response.status_code == 403
-
-
-def test_destroy__ok(api_client, mocker):
-
-    """
-
-    Delete existing fieldset
-
-    """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    fieldset = create_test_fieldset_template(
-        account=account,
-        template=template,
-        kickoff=template.kickoff_instance,
-    )
-    api_client.token_authenticate(user=user)
-
-    # mock FieldSetTemplateService
     field_set_template_service_init_mock = mocker.patch.object(
         FieldSetTemplateService,
         attribute='__init__',
@@ -221,30 +252,19 @@ def test_destroy__ok(api_client, mocker):
     field_set_template_service_delete_mock = mocker.patch(
         'src.processes.views.fieldset.FieldSetTemplateService.delete',
     )
-
     # act
     response = api_client.delete(
         f'/templates/fieldsets/{fieldset.id}',
     )
 
     # assert
-    assert response.status_code == 204
-    field_set_template_service_init_mock.assert_called_once_with(
-        user=user,
-        instance=fieldset,
-        is_superuser=False,
-        auth_type=mocker.ANY,
-    )
-    field_set_template_service_delete_mock.assert_called_once_with()
+    assert response.status_code == 403
+    field_set_template_service_init_mock.assert_not_called()
+    field_set_template_service_delete_mock.assert_not_called()
 
 
 def test_destroy__service_exception__validation_error(api_client, mocker):
-
-    """
-
-    Service raises BaseServiceException returns validation error
-
-    """
+    """Service raises BaseServiceException returns validation error"""
 
     # arrange
     account = create_test_account()
@@ -258,7 +278,6 @@ def test_destroy__service_exception__validation_error(api_client, mocker):
         template=template,
         kickoff=template.kickoff_instance,
     )
-    api_client.token_authenticate(user=user)
     error_message = 'Service error occurred'
 
     # mock FieldSetTemplateService
@@ -271,6 +290,8 @@ def test_destroy__service_exception__validation_error(api_client, mocker):
         'src.processes.views.fieldset.FieldSetTemplateService.delete',
         side_effect=BaseServiceException(message=error_message),
     )
+
+    api_client.token_authenticate(user=user)
 
     # act
     response = api_client.delete(
@@ -289,20 +310,25 @@ def test_destroy__service_exception__validation_error(api_client, mocker):
     field_set_template_service_delete_mock.assert_called_once_with()
 
 
-def test_destroy__not_existing__not_found(api_client):
-
-    """
-
-    Non-existent fieldset returns 404
-
-    """
+def test_destroy__not_existing__not_found(api_client, mocker):
+    """Non-existent fieldset returns 404"""
 
     # arrange
+    mocker.Mock(id=1, api_name="dummy")
     account = create_test_account()
     user = create_test_owner(account=account)
-    api_client.token_authenticate(user=user)
     nonexistent_id = 999999
 
+    api_client.token_authenticate(user=user)
+
+    field_set_template_service_init_mock = mocker.patch.object(
+        FieldSetTemplateService,
+        attribute='__init__',
+        return_value=None,
+    )
+    field_set_template_service_delete_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.delete',
+    )
     # act
     response = api_client.delete(
         f'/templates/fieldsets/{nonexistent_id}',
@@ -310,3 +336,6 @@ def test_destroy__not_existing__not_found(api_client):
 
     # assert
     assert response.status_code == 404
+
+    field_set_template_service_init_mock.assert_not_called()
+    field_set_template_service_delete_mock.assert_not_called()

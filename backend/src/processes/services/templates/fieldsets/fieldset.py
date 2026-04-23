@@ -5,6 +5,7 @@ from django.db import transaction
 from src.generics.base.service import BaseModelService
 from src.processes.enums import LabelPosition, FieldSetLayout
 from src.processes.models.templates.fieldset import FieldsetTemplate
+from src.processes.models.templates.kickoff import Kickoff
 from src.processes.services.exceptions import (
     FieldsetTemplateInUseException,
 )
@@ -50,30 +51,56 @@ class FieldSetTemplateService(BaseModelService):
         fields: Optional[List[Dict]] = None,
         **kwargs,
     ):
-        if rules:
-            self.create_rules(rules_data=rules)
         if fields:
             self._create_fields(fields_data=fields)
+        if rules:
+            self.create_rules(rules_data=rules)
+
+    def create(
+        self,
+        **kwargs,
+    ) -> FieldsetTemplate:
+
+        template_id = kwargs['template_id']
+        if kwargs.get('task_id') is None:
+            # Bind fieldset to the kickoff if task_id is not provided
+            kwargs['kickoff_id'] = (
+                Kickoff.objects.get(template_id=template_id).id
+            )
+        super().create(**kwargs)
+        return self.instance
 
     def partial_update(
         self,
         **update_kwargs,
     ) -> FieldsetTemplate:
 
-        with transaction.atomic():
-            rules_data = update_kwargs.pop('rules', None)
-            fields_data = update_kwargs.pop('fields', None)
-            result = super().partial_update(
-                force_save=True,
-                **update_kwargs,
-            )
+        rules_data = update_kwargs.pop('rules', None)
+        fields_data = update_kwargs.pop('fields', None)
+        if 'task_id' in update_kwargs:
+            if update_kwargs['task_id'] is None:
+                # Unbind fieldset from the task and bind to the kickoff
+                template_id = self.instance.template_id
+                update_kwargs['kickoff_id'] = (
+                    Kickoff.objects.get(template_id=template_id).id
+                )
+            else:
+                # Unbind fieldset from the kickoff and bind to the task
+                update_kwargs['kickoff_id'] = None
 
-            if rules_data is not None:
-                self.update_rules(rules_data=rules_data)
+        with transaction.atomic():
+            if update_kwargs:
+                self.instance = super().partial_update(
+                    force_save=True,
+                    **update_kwargs,
+                )
+
             if fields_data is not None:
                 self._update_fields(fields_data=fields_data)
+            if rules_data is not None:
+                self.update_rules(rules_data=rules_data)
             self._validate_rules()
-            return result
+            return self.instance
 
     def _validate_rules(self):
         for rule in self.instance.rules.all():
@@ -122,7 +149,7 @@ class FieldSetTemplateService(BaseModelService):
                     auth_type=self.auth_type,
                     instance=existing_rules[rule_id],
                 )
-                service.partial_update(force_save=True, **rule_data)
+                service.partial_update(**rule_data)
                 rules_ids.add(rule_id)
             else:
                 service = FieldsetTemplateRuleService(

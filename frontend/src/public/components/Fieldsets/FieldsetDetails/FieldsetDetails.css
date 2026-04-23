@@ -187,10 +187,31 @@
   border-bottom: 1px solid var(--pneumatic-color-black16);
   align-items: center;
   gap: 1.2rem;
+  flex-wrap: wrap;
 }
 
 .rule-row:last-child {
   border-bottom: none;
+}
+
+.rule-fields-selector {
+  flex-basis: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.rule-fields-label {
+  font-weight: 600;
+  color: var(--pneumatic-color-black72);
+  white-space: nowrap;
+
+  @mixin text-small;
+}
+
+.rule-fields-select {
+  flex: 1;
+  min-width: 0;
 }
 
 .rule-type-label {

@@ -79,7 +79,7 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
     def _update_fieldset_rules(
         self,
         fieldset: FieldSet,
-        rules_data: Optional[List[Dict]],
+        rules_data: Optional[List[Dict]] = None,
     ) -> None:
 
         rule_ids = []
@@ -97,6 +97,24 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
             rule_ids.append(rule.id)
         fieldset.rules.exclude(id__in=rule_ids).delete()
 
+    def _update_field_rules(
+        self,
+        field: TaskField,
+        field_data: Dict,
+        fieldset: FieldSet,
+    ) -> None:
+
+        rules = field_data.get('rules', [])
+        if rules:
+            rules_api_names = [e['api_name'] for e in rules]
+            rules = FieldSetRule.objects.filter(
+                fieldset=fieldset,
+                api_name__in=rules_api_names,
+            )
+            field.rules.set(rules)
+        else:
+            field.rules.clear()
+
     def _update_fieldset_fields(
         self,
         fieldset: FieldSet,
@@ -109,6 +127,7 @@ class KickoffUpdateVersionService(BaseUpdateVersionService):
             field, _ = self._update_field(field_data, fieldset=fieldset)
             field_ids.append(field.id)
             self._update_field_selections(field, field_data)
+            self._update_field_rules(field, field_data, fieldset)
         TaskField.objects.filter(
             kickoff=self.instance,
             fieldset=fieldset,
