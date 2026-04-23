@@ -136,6 +136,7 @@ describe('runWorkflowModal reducer', () => {
           groupId: null,
         },
       ],
+      fieldsets: [],
     };
 
     const action = openRunWorkflowModal({

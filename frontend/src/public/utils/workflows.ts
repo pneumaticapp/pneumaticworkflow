@@ -68,7 +68,7 @@ export const getEditKickoff = (kickoff: IWorkflowDetailsKickoff): IKickoff => {
   const kickoffFields = new ExtraFieldsHelper(kickoff.output).getFieldsWithValues();
   const kickoffDescritpiton = kickoff.description || '';
 
-  return { description: kickoffDescritpiton, fields: kickoffFields };
+  return { description: kickoffDescritpiton, fields: kickoffFields, fieldsets: [] };
 };
 
 export const getNormalizeFieldsOrders = (fields?: IExtraField[]): IExtraField[] => {

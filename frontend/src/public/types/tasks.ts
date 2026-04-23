@@ -1,5 +1,5 @@
 import { IWorkflow, IWorkflowClient, WorkflowWithTsp } from './workflow';
-import { IExtraField, ITemplateTitleBaseWithCount, RawPerformer } from './template';
+import { IExtraField, IFieldsetData, ITemplateTitleBaseWithCount, RawPerformer } from './template';
 
 export type TTaskWorkflow = Pick<IWorkflow, 'id' | 'name' | 'status' | 'dateCompleted'> & {
   templateName: string;
@@ -45,6 +45,7 @@ export interface ITask {
   id: number;
   name: string;
   output: IExtraField[];
+  fieldsets?: IFieldsetData[];
   description: string | null;
   workflow: TTaskWorkflow;
   performers: RawPerformer[];

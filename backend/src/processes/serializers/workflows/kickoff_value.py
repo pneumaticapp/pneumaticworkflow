@@ -1,31 +1,43 @@
 from typing import Any, Dict
-
+from django.db.models import Q
 from rest_framework import serializers
 
 from src.generics.serializers import CustomValidationErrorMixin
 from src.processes.models.templates.kickoff import Kickoff
+from src.processes.models.workflows.fieldset import FieldSet
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.kickoff import KickoffValue
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.serializers.workflows.field import (
     TaskFieldSerializer,
 )
+from src.processes.serializers.workflows.fieldset import (
+    FieldSetSerializer,
+)
+from src.processes.services.exceptions import FieldsetServiceException
 from src.processes.services.tasks.exceptions import (
     TaskFieldException,
 )
 from src.processes.services.tasks.task import (
     TaskFieldService,
 )
+from src.processes.services.workflows.fieldsets.fieldset import (
+    FieldSetService,
+)
+
 from src.services.markdown import MarkdownService
 
 
 class KickoffValueInfoSerializer(serializers.ModelSerializer):
     output = TaskFieldSerializer(many=True)
+    fieldsets = FieldSetSerializer(many=True)
 
     class Meta:
         model = KickoffValue
         fields = (
             'id',
             'output',
+            'fieldsets',
         )
 
 
@@ -69,20 +81,40 @@ class KickoffValueSerializer(
             account_id=validated_data['account_id'],
             clear_description=clear_description,
         )
-        for field_template in kickoff.fields.all():
-            service = TaskFieldService(user=self.context['user'])
-            try:
+        workflow = validated_data['workflow']
+        fieldset_templates = (
+            kickoff.fieldsets
+            .prefetch_related('rules', 'fields')
+            .order_by('id')
+        )
+        try:
+            for fieldset_template in fieldset_templates:
+                service = FieldSetService(user=self.context['user'])
+                service.create(
+                    instance_template=fieldset_template,
+                    account_id=workflow.account_id,
+                    workflow=workflow,
+                    kickoff=instance,
+                    kickoff_id=instance.id,
+                    fields_data=fields_data,
+                )
+                try:
+                    service.validate_rules()
+                except FieldsetServiceException as ex:
+                    self.raise_validation_error(message=ex.message)
+            for field_template in kickoff.fields.filter(fieldset__isnull=True):
+                service = TaskFieldService(user=self.context['user'])
                 service.create(
                     instance_template=field_template,
-                    workflow_id=validated_data['workflow'].id,
+                    workflow_id=workflow.id,
                     kickoff_id=instance.id,
                     value=fields_data.get(field_template.api_name),
                 )
-            except TaskFieldException as ex:
-                self.raise_validation_error(
-                    message=ex.message,
-                    api_name=field_template.api_name,
-                )
+        except (TaskFieldException, FieldsetServiceException) as ex:
+            self.raise_validation_error(
+                message=ex.message,
+                api_name=ex.api_name,
+            )
         return instance
 
     def update(
@@ -90,24 +122,43 @@ class KickoffValueSerializer(
         instance: KickoffValue,
         validated_data: Dict[str, Any],
     ):
-        fields_data: dict = validated_data.pop('fields_data', {})
+        fields_values: dict = validated_data.pop('fields_data', {})
         instance = super().update(instance, validated_data)
-        if fields_data:
-            for task_field in self.instance.output.filter(
-                api_name__in=fields_data.keys(),
-            ):
+        if fields_values:
+            fields = (
+                TaskField.objects
+                .filter(
+                    Q(fieldset__kickoff=instance) | Q(kickoff=instance),
+                    api_name__in=fields_values,
+                )
+            )
+            fieldsets_ids = set()
+            for field in fields:
+                if field.fieldset_id:
+                    fieldsets_ids.add(field.fieldset_id)
                 service = TaskFieldService(
                     user=self.context['user'],
-                    instance=task_field,
+                    instance=field,
                 )
                 try:
                     service.partial_update(
-                        value=fields_data[task_field.api_name],
+                        value=fields_values[field.api_name],
                         force_save=True,
                     )
                 except TaskFieldException as ex:
                     self.raise_validation_error(
                         message=ex.message,
-                        api_name=task_field.api_name,
+                        api_name=field.api_name,
                     )
+            if fieldsets_ids:
+                fieldsets = FieldSet.objects.filter(id__in=fieldsets_ids)
+                try:
+                    for fieldset in fieldsets:
+                        service = FieldSetService(
+                            user=self.context['user'],
+                            instance=fieldset,
+                        )
+                        service.validate_rules()
+                except FieldsetServiceException as ex:
+                    self.raise_validation_error(message=ex.message)
         return instance

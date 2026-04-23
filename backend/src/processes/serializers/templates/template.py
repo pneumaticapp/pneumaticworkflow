@@ -40,6 +40,7 @@ from src.processes.enums import (
     WorkflowApiStatus, TaskStatus,
 )
 from src.processes.messages import template as messages
+from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.template import (
@@ -170,26 +171,43 @@ class TemplateSerializer(
         """
         result = []
         try:
-            fields = data['kickoff']['fields']
+            kickoff_data = data['kickoff']
         except KeyError:
-            pass
-        else:
+            return result
+
+        fields_data = kickoff_data.get('fields') or []
+        for field in fields_data:
             try:
-                for field in fields:
-                    try:
-                        api_name = field.get('api_name')
-                        name = field.get('name')
-                        is_required = field.get('is_required', False)
-                        if api_name and name:
-                            result.append({
-                                'name': name,
-                                'api_name': api_name,
-                                'is_required': is_required,
-                            })
-                    except TypeError:
-                        continue
-            except TypeError:
-                pass
+                api_name = field.get('api_name')
+                name = field.get('name')
+                is_required = field.get('is_required', False)
+                if api_name and name:
+                    result.append({
+                        'name': name,
+                        'api_name': api_name,
+                        'is_required': is_required,
+                    })
+            except (TypeError, AttributeError):
+                continue
+        fieldset_ids = kickoff_data.get('fieldsets') or []
+        normalized_fieldset_ids = []
+        for elem in fieldset_ids:
+            try:
+                normalized_fieldset_ids.append(int(elem))
+            except (TypeError, ValueError):
+                continue
+        if normalized_fieldset_ids:
+            account = self.context.get('account')
+            fieldset_fields = FieldTemplate.objects.filter(
+                fieldset_id__in=normalized_fieldset_ids,
+                account_id=account.id,
+            )
+            for field_template in fieldset_fields:
+                result.append({
+                    'name': field_template.name,
+                    'api_name': field_template.api_name,
+                    'is_required': field_template.is_required,
+                })
         return result
 
     def _get_template_performers_ids(self, data: Dict[str, Any]) -> Set[int]:
@@ -454,8 +472,12 @@ class TemplateSerializer(
     ) -> dict:
         if isinstance(data, dict):
             data['fields'] = data.get('fields', [])
+            data['fieldsets'] = data.get('fieldsets', [])
         else:
-            data = {'fields': []}
+            data = {
+                'fields': [],
+                'fieldsets': [],
+            }
         return data
 
     def save_as_draft(self) -> Template:

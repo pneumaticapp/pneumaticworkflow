@@ -160,7 +160,7 @@ class TestWorkflowUpdateVersionService:
             instance=workflow.kickoff_instance,
         )
         kickoff_service_update_mock.assert_called_once_with(
-            data={'fields': []},
+            data={'fields': [], 'fieldsets': []},
             version=template_version.version,
         )
         workflow_service_init_mock.assert_called_once_with(
