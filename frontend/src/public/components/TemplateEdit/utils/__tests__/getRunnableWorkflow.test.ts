@@ -35,6 +35,7 @@ const templateResponseMock: ITemplateResponse = {
       checklists: [],
       revertTask: null,
       ancestors: [],
+      fieldsets: [],
     },
     {
       id: 14703,
@@ -70,6 +71,7 @@ const templateResponseMock: ITemplateResponse = {
       checklists: [],
       revertTask: null,
       ancestors: ['task-059819'],
+      fieldsets: [],
     },
     {
       id: 14707,
@@ -93,6 +95,7 @@ const templateResponseMock: ITemplateResponse = {
       checklists: [],
       revertTask: null,
       ancestors: ['task-059819', 'task-4e99a7'],
+      fieldsets: [],
     },
     {
       id: 14708,
@@ -116,6 +119,7 @@ const templateResponseMock: ITemplateResponse = {
       checklists: [],
       revertTask: null,
       ancestors: ['task-059819', 'task-4e99a7', 'task-a889d4'],
+      fieldsets: [],
     },
     {
       id: 14709,
@@ -140,11 +144,13 @@ const templateResponseMock: ITemplateResponse = {
       checklists: [],
       revertTask: null,
       ancestors: ['task-059819', 'task-4e99a7', 'task-a889d4', 'task-1e9ba6'],
+      fieldsets: [],
     },
   ],
   kickoff: {
     description: '',
     fields: [],
+    fieldsets: [],
   },
   owners: [
     {
@@ -180,11 +186,13 @@ const stringifyReturn = {
   kickoff: {
     description: '',
     fields: [],
+    fieldsets: [],
   },
   description: '12346789',
   performersCount: 1,
   tasksCount: 5,
   wfNameTemplate: null,
+  loadedFieldsets: [],
 };
 
 describe('getRunnableWorkflow.', () => {
@@ -211,6 +219,7 @@ describe('getRunnableWorkflow.', () => {
             selections: [],
           },
         ],
+        fieldsets: [],
       },
     };
 
@@ -236,6 +245,7 @@ describe('getRunnableWorkflow.', () => {
             selections: [{ value: 'A', apiName: 'sel-1' }, { value: 'B', apiName: 'sel-2' }],
           },
         ],
+        fieldsets: [],
       },
     };
 
@@ -260,6 +270,7 @@ describe('getRunnableWorkflow.', () => {
             selections: ['A', 'B'],
           },
         ],
+        fieldsets: [],
       },
     };
 
@@ -285,6 +296,7 @@ describe('getRunnableWorkflow.', () => {
             selections: [],
           },
         ],
+        fieldsets: [],
       },
     };
 

@@ -82,6 +82,7 @@ describe('getClonedTask', () => {
       checklists: [],
       revertTask: null,
       ancestors: [],
+      fieldsets: [],
     };
 
     const clonedTask = getClonedTask(mockTask);

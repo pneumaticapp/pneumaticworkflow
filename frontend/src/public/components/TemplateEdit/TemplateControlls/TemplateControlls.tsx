@@ -21,7 +21,7 @@ import {
   TPatchTemplatePayload,
   discardTemplateChanges,
 } from '../../../redux/actions';
-import { getRunnableWorkflow, loadDatasetsMap } from '../utils/getRunnableWorkflow';
+import { getRunnableWorkflow, loadDatasetsMap, loadFieldsetsData } from '../utils/getRunnableWorkflow';
 import { ETemplateStatus } from '../../../types/redux';
 import { IRunWorkflow } from '../../WorkflowEditPopup/types';
 import { WarningPopup } from '../../UI/WarningPopup';
@@ -103,8 +103,9 @@ export function TemplateControlls({
   const isSavedTemplate = React.useMemo(() => Boolean(templateId), [templateId]);
 
   const handleRunProcess = async () => {
-    const datasetsMap = await loadDatasetsMap(template.kickoff);
-    const runnableWorkflow = getRunnableWorkflow(template, datasetsMap);
+    const loadedFieldsets = await loadFieldsetsData(template.kickoff);
+    const datasetsMap = await loadDatasetsMap(template.kickoff, loadedFieldsets);
+    const runnableWorkflow = getRunnableWorkflow(template, datasetsMap, loadedFieldsets);
     if (runnableWorkflow) {
       openRunWorkflowModal(runnableWorkflow);
     }
@@ -267,6 +268,17 @@ export function TemplateControlls({
       {renderDeleteTemplateModal()}
       {templateId && renderLeavingGuard()}
 
+      {templateId && (
+        <div className={styles['settings-block']}>
+          <Link
+            to={ERoutes.TemplateFieldsets.replace(':templateId', String(templateId))}
+            className={styles['switch-label']}
+          >
+            {formatMessage({ id: 'template.more-show-fieldsets' })}
+          </Link>
+        </div>
+      )}
+
       <div className={styles['settings-block']}>
         <ShowMore label={formatMessage({ id: 'template.owners' })} isInitiallyVisible={isCreateTemplate()}>
           <TemplateOwners
@@ -323,6 +335,7 @@ export function TemplateControlls({
                 <ActivityIcon className={styles['more-setting__icon']} />
                 <p className={styles['more-setting__text']}>{formatMessage({ id: 'template.more-show-activity' })}</p>
               </Link>
+
               <button type="button" onClick={() => cloneTemplate({ templateId })} className={styles['more-setting']}>
                 <UnionIcon className={styles['more-setting__icon']} />
                 <p className={styles['more-setting__text']}>{formatMessage({ id: 'template.more-clone-template' })}</p>
@@ -387,6 +400,7 @@ export function TemplateControlls({
           />
         </div>
       </div>
+
 
       {showDraftWarning && (
         <div className={styles['external-links-warning']}>
