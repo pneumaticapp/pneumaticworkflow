@@ -27,6 +27,9 @@ from src.processes.serializers.workflows.delay import (
 from src.processes.serializers.workflows.field import (
     TaskFieldSerializer,
 )
+from src.processes.serializers.workflows.fieldset import (
+    FieldSetSerializer,
+)
 from src.processes.serializers.workflows.task_performer import (
     TaskUserGroupPerformerSerializer,
 )
@@ -118,6 +121,7 @@ class TaskSerializer(serializers.ModelSerializer):
             'status',
             'revert_tasks',
             'is_read_only_viewer',
+            'fieldsets',
         )
 
     date_started_tsp = TimeStampField(source='date_started')
@@ -139,6 +143,7 @@ class TaskSerializer(serializers.ModelSerializer):
     sub_workflows = serializers.SerializerMethodField()
     revert_tasks = TaskShortSerializer(many=True, source='get_revert_tasks')
     is_read_only_viewer = serializers.SerializerMethodField()
+    fieldsets = FieldSetSerializer(many=True)
 
     def get_is_completed(self, instance):
         #  TODO Remove in 41258
