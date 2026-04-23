@@ -11,12 +11,12 @@ import {
   updateFieldsetAction,
   setTemplateId,
 } from '../../../redux/fieldsets/slice';
-import { loadTemplate } from '../../../redux/template/actions';
+
 
 import { history } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
 
-import { ModifyDropdown, Button } from '../../UI';
+import { ModifyDropdown, Button, FilterSelect } from '../../UI';
 import { EModifyDropdownToggle } from '../../UI/ModifyDropdown/types';
 import { FieldsetModal } from '../FieldsetModal/FieldsetModal';
 import { EFieldsetModalType } from '../FieldsetModal/types';
@@ -24,9 +24,9 @@ import { FieldsetDetailsSkeleton } from './FieldsetDetailsSkeleton';
 
 import { getCurrentFieldset, isCurrentFieldsetLoading } from '../../../redux/selectors/fieldsets';
 import { getAccountId } from '../../../redux/selectors/user';
-import { getTemplateData } from '../../../redux/selectors/template';
 
-import { EExtraFieldType, IExtraField, ITemplateTask } from '../../../types/template';
+
+import { EExtraFieldType, IExtraField } from '../../../types/template';
 import { EInputNameBackgroundColor, EMoveDirections } from '../../../types/workflow';
 import { IFieldsetTemplateRule } from '../../../types/fieldset';
 import { ExtraFieldsMap } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldsMap';
@@ -38,12 +38,12 @@ import { getNormalizeFieldsOrders, moveWorkflowField } from '../../../utils/work
 
 import { normalizeFieldsForUI } from './fieldsetFieldMappers';
 
-import { TFieldLabelPosition, TFieldSetLayout } from '../../../types/fieldset';
+import { TFieldLabelPosition } from '../../../types/fieldset';
 import { TFieldsetDetailsProps } from './types';
 import styles from './FieldsetDetails.css';
 
 const RULE_TYPES = [
-  { value: 'sum_max', labelKey: 'fieldsets.rule-type-sum_max' },
+  { value: 'sum_equal', labelKey: 'fieldsets.rule-type-sum_equal' },
 ] as const;
 
 const LABEL_POSITION_OPTIONS: { value: TFieldLabelPosition; labelKey: string }[] = [
@@ -51,20 +51,15 @@ const LABEL_POSITION_OPTIONS: { value: TFieldLabelPosition; labelKey: string }[]
   { value: 'left', labelKey: 'fieldsets.settings.label-position.left' },
 ];
 
-const LAYOUT_OPTIONS: { value: TFieldSetLayout; labelKey: string }[] = [
-  { value: 'vertical', labelKey: 'fieldsets.settings.layout.vertical' },
-  { value: 'horizontal', labelKey: 'fieldsets.settings.layout.horizontal' },
-];
+
 
 const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matchTemplateId } } }: TFieldsetDetailsProps) => {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const templateId = Number(matchTemplateId);
-
   const fieldset = useSelector(getCurrentFieldset);
   const isLoading = useSelector(isCurrentFieldsetLoading);
   const accountId = useSelector(getAccountId);
-  const template = useSelector(getTemplateData);
+
 
   const [localFields, setLocalFields] = useState<IExtraField[]>([]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -74,37 +69,14 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
 
   // Settings local state
   const [localDescription, setLocalDescription] = useState('');
-  const [localOrder, setLocalOrder] = useState(0);
-  const [localBindingSource, setLocalBindingSource] = useState('kickoff');
-  const [knownKickoffId, setKnownKickoffId] = useState<number | null>(null);
   const [localLabelPosition, setLocalLabelPosition] = useState<TFieldLabelPosition>('top');
-  const [localLayout, setLocalLayout] = useState<TFieldSetLayout>('vertical');
+
   const [hasUnsavedSettingsChanges, setHasUnsavedSettingsChanges] = useState(false);
 
   const fieldsetListRoute = ERoutes.TemplateFieldsets.replace(':templateId', matchTemplateId);
-  const templateKickoff = template?.kickoff as { id?: number } | undefined;
-  const templateKickoffId = templateKickoff?.id ?? null;
-  const isTemplateLoaded = template?.id === templateId;
-  const templateTasks = isTemplateLoaded ? template.tasks : [];
 
-  const bindingOptions = useMemo(() => {
-    const kickoffOption = {
-      value: 'kickoff',
-      label: formatMessage({ id: 'fieldsets.settings.binding.kickoff-option' }),
-    };
 
-    const taskOptions = templateTasks
-      .filter((task: ITemplateTask) => Boolean(task.id))
-      .map((task: ITemplateTask, index) => ({
-        value: `task:${task.id}`,
-        label: task.name || formatMessage(
-          { id: 'fieldsets.settings.binding.task-option-fallback' },
-          { number: index + 1 },
-        ),
-      }));
 
-    return [kickoffOption, ...taskOptions];
-  }, [templateTasks, formatMessage]);
 
   useEffect(() => {
     const id = Number(matchParamId);
@@ -119,11 +91,7 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
     dispatch(loadCurrentFieldset({ id }));
   }, [matchParamId]);
 
-  useEffect(() => {
-    if (!Number.isInteger(templateId)) return;
-    if (template.id === templateId) return;
-    dispatch(loadTemplate(templateId));
-  }, [dispatch, templateId, template.id]);
+
 
   useEffect(() => {
     return () => {
@@ -151,24 +119,13 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
   useEffect(() => {
     if (fieldset) {
       setLocalDescription(fieldset.description || '');
-      setLocalOrder(fieldset.order ?? 0);
-      const detectedKickoffId = fieldset.kickoffId ?? templateKickoffId;
-      if (detectedKickoffId !== null) {
-        setKnownKickoffId(detectedKickoffId);
-      }
-      setLocalBindingSource(fieldset.taskId !== null ? `task:${fieldset.taskId}` : 'kickoff');
       setLocalLabelPosition(fieldset.labelPosition || 'top');
-      setLocalLayout(fieldset.layout || 'vertical');
       setHasUnsavedSettingsChanges(false);
     }
   }, [
     fieldset?.id,
     fieldset?.description,
-    fieldset?.order,
-    fieldset?.taskId,
-    fieldset?.kickoffId,
     fieldset?.labelPosition,
-    fieldset?.layout,
   ]);
 
   const handleSettingsDescriptionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -181,38 +138,14 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
     setHasUnsavedSettingsChanges(true);
   };
 
-  const handleSettingsBindingSourceChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setLocalBindingSource(e.target.value);
-    setHasUnsavedSettingsChanges(true);
-  };
 
-  const handleSettingsOrderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const nextOrder = Number(e.target.value);
-    setLocalOrder(Number.isNaN(nextOrder) ? 0 : nextOrder);
-    setHasUnsavedSettingsChanges(true);
-  };
-
-  const handleSettingsLayoutChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setLocalLayout(e.target.value as TFieldSetLayout);
-    setHasUnsavedSettingsChanges(true);
-  };
 
   const handleSaveSettings = () => {
     if (!fieldset) return;
-    const selectedTaskId = localBindingSource.startsWith('task:')
-      ? Number(localBindingSource.replace('task:', ''))
-      : null;
-    const fallbackKickoffId = fieldset.kickoffId ?? templateKickoffId ?? knownKickoffId;
-    const nextKickoffId = localBindingSource === 'kickoff' ? fallbackKickoffId : null;
-
     dispatch(updateFieldsetAction({
       id: fieldset.id,
       description: localDescription,
-      order: localOrder,
-      kickoff_id: nextKickoffId,
-      task_id: Number.isNaN(selectedTaskId) ? null : selectedTaskId,
       label_position: localLabelPosition,
-      layout: localLayout,
     }));
     setHasUnsavedSettingsChanges(false);
   };
@@ -264,6 +197,7 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
       id: -(Date.now()),  // temporary negative id for new rules
       type: RULE_TYPES[0].value,
       value: '',
+      fields: [],
     };
     setLocalRules([...localRules, newRule]);
     setHasUnsavedRuleChanges(true);
@@ -280,6 +214,14 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
   const handleEditRuleType = (index: number, type: string) => {
     const updated = localRules.map((rule, i) =>
       i === index ? { ...rule, type } : rule,
+    );
+    setLocalRules(updated);
+    setHasUnsavedRuleChanges(true);
+  };
+
+  const handleEditRuleFields = (index: number, fieldApiNames: (string | number | null)[]) => {
+    const updated = localRules.map((rule, i) =>
+      i === index ? { ...rule, fields: fieldApiNames.filter((n): n is string => typeof n === 'string') } : rule,
     );
     setLocalRules(updated);
     setHasUnsavedRuleChanges(true);
@@ -361,52 +303,7 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
             </select>
           </div>
 
-          <div className={styles['settings-field']}>
-            <label className={styles['settings-label']}>
-              {formatMessage({ id: 'fieldsets.settings.binding' })}
-            </label>
-            <select
-              className={styles['settings-select']}
-              value={localBindingSource}
-              onChange={handleSettingsBindingSourceChange}
-            >
-              {bindingOptions.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {opt.label}
-                </option>
-              ))}
-            </select>
-          </div>
 
-          <div className={styles['settings-field']}>
-            <label className={styles['settings-label']}>
-              {formatMessage({ id: 'fieldsets.settings.order' })}
-            </label>
-            <input
-              type="number"
-              className={styles['settings-input']}
-              value={localOrder}
-              onChange={handleSettingsOrderChange}
-              placeholder={formatMessage({ id: 'fieldsets.settings.order-placeholder' })}
-            />
-          </div>
-
-          <div className={styles['settings-field']}>
-            <label className={styles['settings-label']}>
-              {formatMessage({ id: 'fieldsets.settings.layout' })}
-            </label>
-            <select
-              className={styles['settings-select']}
-              value={localLayout}
-              onChange={handleSettingsLayoutChange}
-            >
-              {LAYOUT_OPTIONS.map((opt) => (
-                <option key={opt.value} value={opt.value}>
-                  {formatMessage({ id: opt.labelKey })}
-                </option>
-              ))}
-            </select>
-          </div>
         </div>
 
         {hasUnsavedSettingsChanges && (
@@ -516,6 +413,33 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
             >
               {formatMessage({ id: 'fieldsets.rule-delete' })}
             </button>
+
+            <div className={styles['rule-fields-selector']}>
+              <span className={styles['rule-fields-label']}>
+                {formatMessage({ id: 'fieldsets.rule-fields' })}
+              </span>
+              <div className={styles['rule-fields-select']}>
+                <FilterSelect<'apiName', 'name', { apiName: string; name: string }>
+                  isMultiple
+                  optionIdKey="apiName"
+                  optionLabelKey="name"
+                  options={localFields.map((f) => ({ apiName: f.apiName, name: f.name }))}
+                  selectedOptions={rule.fields || []}
+                  placeholderText={formatMessage({ id: 'fieldsets.rule-fields-placeholder' })}
+                  selectAllLabel={formatMessage({ id: 'fieldsets.rule-fields-all' })}
+                  onChange={(fieldApiNames) => handleEditRuleFields(index, fieldApiNames)}
+                  resetFilter={() => handleEditRuleFields(index, [])}
+                  renderPlaceholder={(opts) => {
+                    const selected = (rule.fields || []).length;
+                    if (selected === 0) return formatMessage({ id: 'fieldsets.rule-fields-placeholder' });
+                    const selectedNames = opts
+                      .filter((o) => (rule.fields || []).includes(o.apiName))
+                      .map((o) => o.name);
+                    return selectedNames.join(', ');
+                  }}
+                />
+              </div>
+            </div>
           </div>
         ))}
 

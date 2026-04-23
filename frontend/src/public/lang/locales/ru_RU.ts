@@ -1373,7 +1373,7 @@ export const ruMessages = {
   'fieldsets.rule-type': 'Тип',
   'fieldsets.rule-value': 'Значение',
   'fieldsets.rule-value-placeholder': 'Введите значение',
-  'fieldsets.rule-type-sum_max': 'Максимальная сумма',
+  'fieldsets.rule-type-sum_equal': 'Сумма равна',
   'fieldsets.rule-delete': 'Удалить',
   'fieldsets.save-rules': 'Сохранить',
   'fieldsets.unsaved-rule-changes': 'Есть несохранённые изменения правил',

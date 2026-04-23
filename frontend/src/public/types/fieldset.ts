@@ -2,6 +2,7 @@ export interface IFieldsetTemplateRule {
   id: number;
   type: string;
   value: string;
+  fields: string[];
 }
 
 export interface IFieldsetField {

@@ -149,7 +149,7 @@ class FieldSetTemplateService(BaseModelService):
                     auth_type=self.auth_type,
                     instance=existing_rules[rule_id],
                 )
-                service.partial_update(force_save=True, **rule_data)
+                service.partial_update(**rule_data)
                 rules_ids.add(rule_id)
             else:
                 service = FieldsetTemplateRuleService(
