@@ -167,7 +167,9 @@ export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
 
     const conditions = (task.conditions || []).map((condition) => {
       const rules = condition.rules.filter(
-        (rule) => rule.field === undefined || rule.field === null || validApiNames.has(rule.field)
+        (rule) => !rule.field
+          || rule.fieldType === 'task' || rule.fieldType === 'kickoff'
+          || validApiNames.has(rule.field)
       );
       return { ...condition, rules };
     });
