@@ -207,6 +207,7 @@ const templateKickoffMock: IKickoff = {
       groupId: null,
     },
   ],
+  fieldsets: [],
 };
 
 const expectedKickoff = {

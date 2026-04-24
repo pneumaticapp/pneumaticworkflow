@@ -17,6 +17,7 @@ const tooltipTextMap: { [key in EPageTitle]: string } = {
   [EPageTitle.Integrations]: 'integrations.title.tooltip',
   [EPageTitle.Team]: 'team.title.tooltip',
   [EPageTitle.Datasets]: 'datasets.title.tooltip', 
+  [EPageTitle.Fieldsets]: 'fieldsets.title.tooltip',
 };
 
 const learnMoreLinkMap: { [key in EPageTitle]: ELearnMoreLinks } = {
@@ -28,6 +29,7 @@ const learnMoreLinkMap: { [key in EPageTitle]: ELearnMoreLinks } = {
   [EPageTitle.Integrations]: ELearnMoreLinks.Integrations,
   [EPageTitle.Team]: ELearnMoreLinks.Team,
   [EPageTitle.Datasets]: ELearnMoreLinks.Datasets,
+  [EPageTitle.Fieldsets]: ELearnMoreLinks.Fieldsets,
 };
 
 export interface IPageTitleProps {

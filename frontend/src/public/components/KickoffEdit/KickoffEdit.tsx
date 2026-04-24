@@ -1,11 +1,12 @@
 import React, { useEffect } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
-import { IExtraField, EExtraFieldMode, IKickoff } from '../../types/template';
+import { IExtraField, EExtraFieldMode, IKickoff, IFieldsetData } from '../../types/template';
 import { EInputNameBackgroundColor } from '../../types/workflow';
 import { isArrayWithItems } from '../../utils/helpers';
 import { IntlMessages } from '../IntlMessages';
 import { ExtraFieldIntl } from '../TemplateEdit/ExtraFields';
+import { FieldsetFieldGroup } from '../FieldsetFieldGroup';
 import { checkExtraFieldsAreValid } from '../WorkflowEditPopup/utils/areKickoffFieldsValid';
 import { Loader } from '../UI/Loader';
 import { autoFocusFirstField } from '../../utils/autoFocusFirstField';
@@ -16,22 +17,26 @@ import styles from './KickoffEdit.css';
 
 export interface IEditKickoffProps {
   kickoff: IKickoff | null;
+  fieldsets?: IFieldsetData[];
   isLoading?: boolean;
   accountId: number;
   onEditField(apiName: string): (changedProps: Partial<IExtraField>) => void;
+  onEditFieldsetField?(apiName: string): (changedProps: Partial<IExtraField>) => void;
   onSave?(): void;
   onCancel?(): void;
 }
 
 export function EditKickoff({
   kickoff,
+  fieldsets = [],
   isLoading = false,
   accountId,
   onEditField,
+  onEditFieldsetField,
   onSave,
   onCancel,
 }: IEditKickoffProps) {
-  if (!kickoff || !isArrayWithItems(kickoff.fields)) return null;
+  if (!kickoff || (!isArrayWithItems(kickoff.fields) && !isArrayWithItems(fieldsets))) return null;
 
   const { formatMessage } = useIntl();
   const wrapperRef = React.useRef<HTMLFormElement>(null);
@@ -88,6 +93,19 @@ export function EditKickoff({
               accountId={accountId}
             />
           ))}
+          {fieldsets.map((fs) => (
+            <FieldsetFieldGroup
+              key={fs.id}
+              title={fs.name}
+              description={fs.description}
+              fields={fs.fields}
+              onEditField={onEditFieldsetField || onEditField}
+              mode={EExtraFieldMode.ProcessRun}
+              labelBackgroundColor={EInputNameBackgroundColor.White}
+              accountId={accountId}
+              fieldClassName={styles['kickoff__field']}
+            />
+          ))}
         </div>
 
         {renderButtons()}
@@ -110,3 +128,4 @@ export function EditKickoff({
     <div className={styles['container']}>{renderKickoffFields()}</div>
   );
 }
+

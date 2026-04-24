@@ -1,4 +1,4 @@
-import { ITemplate } from '../../types/template';
+import { ITemplate, IFieldsetData } from '../../types/template';
 
 export interface IRunWorkflow extends Pick<ITemplate, 'wfNameTemplate' | 'name' | 'kickoff' | 'description'> {
   id: number;
@@ -7,4 +7,5 @@ export interface IRunWorkflow extends Pick<ITemplate, 'wfNameTemplate' | 'name' 
   isUrgent?: boolean;
   ancestorTaskId?: number;
   dueDate?: string;
+  loadedFieldsets?: IFieldsetData[];
 }
