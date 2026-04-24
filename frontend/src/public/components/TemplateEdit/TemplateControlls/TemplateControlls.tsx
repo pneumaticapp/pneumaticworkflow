@@ -6,20 +6,22 @@ import { useIntl } from 'react-intl';
 
 import { useDispatch, useSelector } from 'react-redux';
 import { TemplateOwners } from '../TemplateOwners';
+import { TemplateViewers } from '../TemplateViewers';
+import { TemplateStarters } from '../TemplateStarters';
 import { ActivityIcon, BoxesIcon, EnableIcon, TrashIcon, UnionIcon, WarningIcon } from '../../icons';
 import { IntlMessages } from '../../IntlMessages';
 import { ShowMore } from '../../UI/ShowMore';
 import { getLinkToWorkflows } from '../../../utils/routes/getLinkToWorkflows';
 import { getLinkToHighlightsByTemplate } from '../../../utils/routes/getLinkToHighlightsByTemplate';
 import { Button } from '../../UI/Buttons/Button';
-import { ITemplate } from '../../../types/template';
+import { ETemplateOwnerRole, ITemplateOwner, ITemplate } from '../../../types/template';
 import {
   TCloneTemplatePayload,
   TDeleteTemplatePayload,
   TPatchTemplatePayload,
   discardTemplateChanges,
 } from '../../../redux/actions';
-import { getRunnableWorkflow } from '../utils/getRunnableWorkflow';
+import { getRunnableWorkflow, loadDatasetsMap } from '../utils/getRunnableWorkflow';
 import { ETemplateStatus } from '../../../types/redux';
 import { IRunWorkflow } from '../../WorkflowEditPopup/types';
 import { WarningPopup } from '../../UI/WarningPopup';
@@ -90,10 +92,23 @@ export function TemplateControlls({
     owners,
     isActive: isTemplateActive,
     finalizable: isTemplateFinalizable,
+    completionNotification: isCompletionNotification,
+    reminderNotification: isReminderNotification,
   } = template;
 
-  const runnableWorkflow = getRunnableWorkflow(template);
+  const viewers = owners.filter((o: ITemplateOwner) => o.role === ETemplateOwnerRole.Viewer);
+  const starters = owners.filter((o: ITemplateOwner) => o.role === ETemplateOwnerRole.Starter);
+  const pureOwners = owners.filter((o: ITemplateOwner) => o.role === ETemplateOwnerRole.Owner);
+
   const isSavedTemplate = React.useMemo(() => Boolean(templateId), [templateId]);
+
+  const handleRunProcess = async () => {
+    const datasetsMap = await loadDatasetsMap(template.kickoff);
+    const runnableWorkflow = getRunnableWorkflow(template, datasetsMap);
+    if (runnableWorkflow) {
+      openRunWorkflowModal(runnableWorkflow);
+    }
+  };
 
   const handleChangeIsActive = (value: ITemplate['isActive'], redirectUrl?: string) => {
     if (!value) {
@@ -237,8 +252,8 @@ export function TemplateControlls({
               showEnableTemplateButton && styles['run-button_non-active'],
             )}
             type="button"
-            onClick={() => runnableWorkflow && openRunWorkflowModal(runnableWorkflow)}
-            disabled={templateStatus !== ETemplateStatus.Saved || !runnableWorkflow}
+            onClick={handleRunProcess}
+            disabled={templateStatus !== ETemplateStatus.Saved || !isTemplateActive}
             label={formatMessage({ id: 'templates.run-workflow' })}
             buttonStyle="transparent-black"
           />
@@ -255,9 +270,31 @@ export function TemplateControlls({
       <div className={styles['settings-block']}>
         <ShowMore label={formatMessage({ id: 'template.owners' })} isInitiallyVisible={isCreateTemplate()}>
           <TemplateOwners
-            templateOwners={owners}
+            templateOwners={pureOwners}
             onChangeTemplateOwners={(newTemplateOwners) =>
-              patchTemplate({ changedFields: { owners: newTemplateOwners } })
+              patchTemplate({ changedFields: { owners: [...newTemplateOwners, ...viewers, ...starters] } })
+            }
+          />
+        </ShowMore>
+      </div>
+
+      <div className={styles['settings-block']}>
+        <ShowMore label={formatMessage({ id: 'template.viewers' })}>
+          <TemplateViewers
+            templateViewers={viewers}
+            onChangeTemplateViewers={(newViewers) =>
+              patchTemplate({ changedFields: { owners: [...pureOwners, ...newViewers, ...starters] } })
+            }
+          />
+        </ShowMore>
+      </div>
+
+      <div className={styles['settings-block']}>
+        <ShowMore label={formatMessage({ id: 'template.starters' })}>
+          <TemplateStarters
+            templateStarters={starters}
+            onChangeTemplateStarters={(newStarters) =>
+              patchTemplate({ changedFields: { owners: [...pureOwners, ...viewers, ...newStarters] } })
             }
           />
         </ShowMore>
@@ -317,6 +354,36 @@ export function TemplateControlls({
             checkedChildren={null}
             unCheckedChildren={null}
             onChange={(value) => patchTemplate({ changedFields: { finalizable: value } })}
+          />
+        </div>
+        <div className={styles['info-control']}>
+          <div className={styles['switch-label']}>
+            <IntlMessages id="templates.notify-on-completion" />
+          </div>
+          <Switch
+            className={classnames(
+              'custom-switch custom-switch-primary custom-switch-small ml-auto',
+              styles['info-control_switch'],
+            )}
+            checked={isCompletionNotification}
+            checkedChildren={null}
+            unCheckedChildren={null}
+            onChange={(value) => patchTemplate({ changedFields: { completionNotification: value } })}
+          />
+        </div>
+        <div className={styles['info-control']}>
+          <div className={styles['switch-label']}>
+            <IntlMessages id="templates.daily-reminder" />
+          </div>
+          <Switch
+            className={classnames(
+              'custom-switch custom-switch-primary custom-switch-small ml-auto',
+              styles['info-control_switch'],
+            )}
+            checked={isReminderNotification}
+            checkedChildren={null}
+            unCheckedChildren={null}
+            onChange={(value) => patchTemplate({ changedFields: { reminderNotification: value } })}
           />
         </div>
       </div>

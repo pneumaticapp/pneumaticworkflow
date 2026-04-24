@@ -1,12 +1,16 @@
 import pytest
 
+from rest_framework import status
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
     CommentStatus,
+    OwnerRole,
+    OwnerType,
 )
 from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.services.events import (
     CommentService,
     WorkflowEventService,
@@ -19,6 +23,8 @@ from src.processes.tests.fixtures import (
     create_test_admin,
     create_test_guest,
     create_test_owner,
+    create_test_template,
+    create_test_user,
     create_test_workflow,
 )
 from src.utils.validation import ErrorCode
@@ -439,7 +445,7 @@ def test_create__not_authenticated__permission_denied(
     comment_create_mock.assert_not_called()
 
 
-def test_create__non_existent_task__not_found(api_client):
+def test_create__non_existent_task__permission_denied(api_client):
     # arrange
     user = create_test_owner()
     non_task = 991651
@@ -452,7 +458,7 @@ def test_create__non_existent_task__not_found(api_client):
     )
 
     # assert
-    assert response.status_code == 404
+    assert response.status_code == 403
 
 
 def test_create__user_is_member_in_deleted_task__not_found(api_client):
@@ -476,7 +482,9 @@ def test_create__user_is_member_in_deleted_task__not_found(api_client):
     assert response.status_code == 404
 
 
-def test_create__user_is_not_member_in_deleted_task__not_found(api_client):
+def test_create__user_is_not_member_in_deleted_task__permission_denied(
+    api_client,
+):
 
     # arrange
     user = create_test_owner()
@@ -493,4 +501,68 @@ def test_create__user_is_not_member_in_deleted_task__not_found(api_client):
     )
 
     # assert
-    assert response.status_code == 404
+    assert response.status_code == 403
+
+
+def test_task_comment__template_starter_own_workflow__ok(api_client, mocker):
+    # arrange
+
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    workflow = create_test_workflow(template=template, user=starter_user)
+    task = workflow.tasks.order_by('number').first()
+
+    event = WorkflowEventService.comment_created_event(
+        text='Task comment',
+        task=task,
+        user=starter_user,
+        after_create_actions=False,
+    )
+
+    service_init_mock = mocker.patch.object(
+        CommentService,
+        attribute='__init__',
+        return_value=None,
+    )
+    comment_create_mock = mocker.patch(
+        'src.processes.services.events.'
+        'CommentService.create',
+        return_value=event,
+    )
+
+    api_client.token_authenticate(starter_user)
+
+    # act
+    response = api_client.post(
+        f'/v2/tasks/{task.id}/comment',
+        data={'text': event.text},
+    )
+
+    # assert
+    assert response.status_code == status.HTTP_200_OK
+    service_init_mock.assert_called_once_with(
+        user=starter_user,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    comment_create_mock.assert_called_once_with(
+        task=task,
+        text=event.text,
+    )

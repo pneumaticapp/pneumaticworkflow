@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { useIntl } from 'react-intl';
 
-import { RichEditorContainer } from '../../../RichEditor';
+import { RichEditor, type IRichEditorHandle } from '../../../RichEditor';
+import { type TMentionData } from '../../../RichEditor/types';
 import { Avatar } from '../../../UI/Avatar';
 import { IAuthUser } from '../../../../types/redux';
 import { TUploadedFile } from '../../../../utils/uploadFiles';
@@ -13,14 +14,16 @@ import styles from './PopupCommentField.css';
 
 export interface IPopupCommentFieldProps {
   user: IAuthUser;
+  mentions: TMentionData[];
   sendComment({ text, attachments, taskId }: ISendWorkflowLogComment): void;
   taskId?: number;
 }
 
 export type TPopupCommentFieldProps = IPopupCommentFieldProps;
 
-export function PopupCommentField({ user, sendComment, taskId }: TPopupCommentFieldProps) {
+export function PopupCommentField({ user, mentions, sendComment, taskId }: TPopupCommentFieldProps) {
   const { formatMessage } = useIntl();
+  const editorRef = React.useRef<IRichEditorHandle>(null);
 
   const [commentText, setCommentText] = useStatePromise('');
   const [filesToUpload, setFilesToUpload] = useStatePromise<TUploadedFile[]>([]);
@@ -35,6 +38,7 @@ export function PopupCommentField({ user, sendComment, taskId }: TPopupCommentFi
     sendComment({ text: commentText, attachments: filesToUpload, taskId });
     setFilesToUpload([]);
     setCommentText('');
+    editorRef.current?.clearContent?.();
   };
 
   const placeholder = formatMessage({ id: 'workflows.log-comment-field-placeholder' });
@@ -47,12 +51,14 @@ export function PopupCommentField({ user, sendComment, taskId }: TPopupCommentFi
         containerClassName={styles['comment-field__avatar-container']}
       />
       <div className={styles['comment-field__workarea']}>
-        <RichEditorContainer
+        <RichEditor
+          ref={editorRef}
           placeholder={placeholder}
           handleChange={setCommentText}
           onSubmit={handleSendComment}
           className={styles['editor']}
           accountId={user.id}
+          mentions={mentions}
         />
       </div>
     </div>

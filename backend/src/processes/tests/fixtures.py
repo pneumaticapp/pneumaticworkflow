@@ -26,6 +26,7 @@ from src.payment.enums import BillingPeriod
 from src.processes.enums import (
     ConditionAction,
     FieldType,
+    OwnerRole,
     OwnerType,
     PerformerType,
     PredicateOperator,
@@ -52,6 +53,7 @@ from src.processes.models.templates.preset import (
 )
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
+from src.datasets.models import Dataset, DatasetItem
 from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.conditions import (
     Condition,
@@ -68,6 +70,7 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.serializers.templates.template import (
     TemplateSerializer,
 )
+from src.processes.serializers.workflows.events import TaskEventJsonSerializer
 from src.processes.services.tasks.task import TaskService
 from src.utils.salt import get_salt
 from src.webhooks.enums import HookEvent
@@ -95,7 +98,10 @@ def create_test_account(
     is_verified: bool = True,
     billing_sync: bool = True,
     log_api_requests: bool = False,
-):
+) -> Account:
+
+    """Creating test accounts with billing/plan config."""
+
     plan_expiration = plan_expiration or (
         None if plan == BillingPlanType.FREEMIUM
         else timezone.now() + timedelta(days=1)
@@ -161,10 +167,14 @@ def create_test_user(
     date_fdw: int = UserFirstDayWeek.SUNDAY,
 ) -> UserModel:
 
-    """ Instead of this method use:
+    """
+        TODO Do not call directly!
+        Creating users with custom configuration.
+        Instead of this method use:
         - create_test_owner
         - create_test_admin
-        - create_test_not_admin """
+        - create_test_not_admin
+    """
 
     account = account or create_test_account()
     return UserModel.objects.create(
@@ -188,6 +198,9 @@ def create_test_user(
 
 
 def create_test_owner(**kwargs) -> UserModel:
+
+    """Creating account owner users."""
+
     kwargs['is_account_owner'] = True
     kwargs['is_admin'] = True
     kwargs['email'] = kwargs.get('email', 'owner@pneumatic.app')
@@ -195,6 +208,9 @@ def create_test_owner(**kwargs) -> UserModel:
 
 
 def create_test_admin(*args, **kwargs) -> UserModel:
+
+    """Creating admin users (non-owners)."""
+
     kwargs['is_account_owner'] = False
     kwargs['is_admin'] = True
     kwargs['email'] = kwargs.get('email', 'admin@pneumatic.app')
@@ -202,6 +218,9 @@ def create_test_admin(*args, **kwargs) -> UserModel:
 
 
 def create_test_not_admin(*args, **kwargs) -> UserModel:
+
+    """Creating regular users (non-admin)."""
+
     kwargs['is_account_owner'] = False
     kwargs['is_admin'] = False
     kwargs['email'] = kwargs.get('email', 'not_admin@pneumatic.app')
@@ -211,7 +230,10 @@ def create_test_not_admin(*args, **kwargs) -> UserModel:
 def create_test_guest(
     email: str = 'guest@pneumatic.app',
     account: Optional[Account] = None,
-):
+) -> UserModel:
+
+    """Creating guest users."""
+
     account = account or create_test_account()
     return GuestService.create(
         email=email,
@@ -226,7 +248,10 @@ def create_invited_user(
     first_name='',
     last_name='',
     status: UserStatus = UserStatus.INVITED,
-):
+) -> UserModel:
+
+    """Testing user invitations."""
+
     invited_user = UserModel.objects.create(
         account=user.account,
         email=email,
@@ -255,6 +280,9 @@ def create_checklist_template(
     selections_count: int = 1,
     api_name_prefix: Optional[str] = None,
 ) -> ChecklistTemplate:
+
+    """Creating checklist templates."""
+
     if api_name_prefix is None:
         api_name_prefix = ''
     checklist_template = ChecklistTemplate.objects.create(
@@ -284,17 +312,25 @@ def create_test_template(
     name: str = 'Test workflow',
     type_: str = TemplateType.CUSTOM,
     wf_name_template: Optional[str] = None,
+    description: str = 'Test desc',
+    reminder_notification: bool = False,
+    completion_notification: bool = False,
 ) -> Template:
+
+    """Creating workflow templates."""
+
     account = user.account
     template = Template.objects.create(
         name=name,
         finalizable=finalizable,
         account=account,
-        description='Test desc',
+        description=description,
         is_public=is_public,
         is_embedded=is_embedded,
         type=type_,
         wf_name_template=wf_name_template,
+        reminder_notification=reminder_notification,
+        completion_notification=completion_notification,
     )
     if kickoff is None:
         Kickoff.objects.create(
@@ -305,6 +341,7 @@ def create_test_template(
         kickoff.template = template
         kickoff.save()
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account,
         type=OwnerType.USER,
@@ -377,6 +414,9 @@ def create_test_workflow(
     ancestor_task: Optional[Task] = None,
     description: Optional[str] = None,
 ) -> Workflow:
+
+    """Creating workflow instances."""
+
     custom_template = template is not None
     if not custom_template:
         template = create_test_template(
@@ -407,6 +447,8 @@ def create_test_workflow(
         finalizable=template.finalizable,
         due_date=due_date,
         ancestor_task=ancestor_task,
+        reminder_notification=template.reminder_notification,
+        completion_notification=template.completion_notification,
     )
     if custom_template:
         template_owners_ids = Template.objects.filter(
@@ -491,12 +533,16 @@ def create_test_workflow(
 
 
 def get_workflow_create_data(user):
+
+    """Testing workflow creation APIs/serializers."""
+
     return {
         'name': 'Test workflow',
         'owners': [
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'description': 'Test workflow description',
@@ -591,7 +637,10 @@ def create_test_attachment(
     field: Optional[TaskField] = None,
     name: str = 'file.jpg',
     size: int = 215678,
-):
+) -> FileAttachment:
+
+    """Creating file attachments."""
+
     filename = f'{get_salt(30)}_{name}'
     thumb_filename = f'thumb_{filename}'
     attachment = FileAttachment(
@@ -615,16 +664,32 @@ def create_test_attachment(
 def create_test_event(
     workflow: Workflow,
     user: UserModel,
-    type_event: Optional[WorkflowEventType] = WorkflowEventType.RUN,
+    type_event: Optional[WorkflowEventType.LITERALS] = WorkflowEventType.RUN,
+    task: Optional[Task] = None,
     data_create: Optional[datetime] = None,
-):
-    task = workflow.tasks.get(number=1)
+) -> WorkflowEvent:
+
+    """Creating workflow events."""
+
+    task = task or workflow.tasks.get(number=1)
+    if (
+        type_event in WorkflowEventType.TASK_EVENTS
+        and type_event != WorkflowEventType.SUB_WORKFLOW_RUN
+    ):
+        task_json = TaskEventJsonSerializer(
+            instance=task,
+            context={'event_type': type_event},
+        ).data
+    else:
+        task_json = None
+
     event = WorkflowEvent.objects.create(
         type=type_event,
         account=workflow.account,
         workflow=workflow,
         user=user,  # For highlights
         task=task,
+        task_json=task_json,
     )
     if data_create:
         event.created = data_create
@@ -637,7 +702,10 @@ def create_test_group(
     name: str = 'Group_test',
     photo: Optional[str] = None,
     users: Optional[List[UserModel]] = None,
-):
+) -> UserGroup:
+
+    """Creating user groups."""
+
     group = UserGroup.objects.create(
         name=name,
         photo=photo,
@@ -649,7 +717,10 @@ def create_test_group(
     return group
 
 
-def create_wf_created_webhook(user: UserModel):
+def create_wf_created_webhook(user: UserModel) -> WebHook:
+
+    """Testing workflow started webhooks."""
+
     return WebHook.objects.create(
         user_id=user.id,
         event=HookEvent.WORKFLOW_STARTED,
@@ -658,7 +729,10 @@ def create_wf_created_webhook(user: UserModel):
     )
 
 
-def create_wf_completed_webhook(user: UserModel):
+def create_wf_completed_webhook(user: UserModel) -> WebHook:
+
+    """Testing workflow completed webhooks."""
+
     return WebHook.objects.create(
         user_id=user.id,
         event=HookEvent.WORKFLOW_COMPLETED,
@@ -667,7 +741,10 @@ def create_wf_completed_webhook(user: UserModel):
     )
 
 
-def create_task_completed_webhook(user: UserModel):
+def create_task_completed_webhook(user: UserModel) -> WebHook:
+
+    """Testing task completed webhooks."""
+
     return WebHook.objects.create(
         user_id=user.id,
         event=HookEvent.TASK_COMPLETED,
@@ -676,7 +753,10 @@ def create_task_completed_webhook(user: UserModel):
     )
 
 
-def create_task_returned_webhook(user: UserModel):
+def create_task_returned_webhook(user: UserModel) -> WebHook:
+
+    """Testing task returned webhooks."""
+
     return WebHook.objects.create(
         user_id=user.id,
         event=HookEvent.TASK_RETURNED,
@@ -692,7 +772,10 @@ def create_test_template_preset(
     is_default: bool = False,
     type: str = 'personal',  # noqa: A002
     fields: Optional[List[dict]] = None,
-):
+) -> TemplatePreset:
+
+    """Creating template presets."""
+
     preset = TemplatePreset.objects.create(
         template=template,
         author=author,
@@ -712,3 +795,27 @@ def create_test_template_preset(
             )
 
     return preset
+
+
+def create_test_dataset(
+    account: Account,
+    name: str = 'Test Dataset',
+    description: str = '',
+    items_count: int = 2,
+) -> Dataset:
+
+    """Creating datasets with a given number of items."""
+
+    dataset = Dataset.objects.create(
+        account=account,
+        name=name,
+        description=description,
+    )
+    for i in range(1, items_count + 1):
+        DatasetItem.objects.create(
+            account=account,
+            dataset=dataset,
+            value=f'Item {i}',
+            order=i,
+        )
+    return dataset

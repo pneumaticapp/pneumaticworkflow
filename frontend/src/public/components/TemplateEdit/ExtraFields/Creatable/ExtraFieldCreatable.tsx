@@ -2,7 +2,6 @@
 /* prettier-ignore */
 import * as React from 'react';
 import classnames from 'classnames';
-import AutosizeInput from 'react-input-autosize';
 
 import { DropdownList } from '../../../UI/DropdownList';
 
@@ -10,12 +9,13 @@ import { getEmptySelection } from '../../KickoffRedux/utils/getEmptySelection';
 import { fitInputWidth } from '../utils/fitInputWidth';
 import { getInputNameBackground } from '../utils/getInputNameBackground';
 import { RemoveIcon, ArrowDropdownIcon } from '../../../icons';
-import { isArrayWithItems } from '../../../../utils/helpers';
 import { IntlMessages } from '../../../IntlMessages';
 import { FieldWithName } from '../utils/FieldWithName';
+import { DatasetSourceToggle } from '../utils/DatasetSourceToggle';
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { EExtraFieldMode, IExtraFieldSelection } from '../../../../types/template';
 import { validateCheckboxAndRadioField } from '../../../../utils/validators';
+import { handleSelectionBlur, recalculateDuplicateErrors } from '../utils/handleSelectionBlur';
 
 import { IWorkflowExtraFieldProps } from '..';
 
@@ -23,9 +23,9 @@ import styles from '../../KickoffRedux/KickoffRedux.css';
 import inputStyles from './ExtraFieldCreatable.css';
 
 const DEFAULT_OPTION_INPUT_WIDTH = 120;
-const DEFAULT_FIELD_INPUT_WIDTH = 120;
 
-export interface IDropdownSelection extends IExtraFieldSelection {
+export interface IDropdownSelection {
+  value: string;
   label: string;
 }
 
@@ -36,7 +36,6 @@ export interface IDropdownSelection extends IExtraFieldSelection {
 
 export function ExtraFieldCreatable({
   field,
-  field: { isRequired },
   intl,
   descriptionPlaceholder = intl.formatMessage({ id: 'template.kick-off-form-field-description-placeholder' }),
   namePlaceholder = intl.formatMessage({ id: 'template.kick-off-form-field-name-placeholder' }),
@@ -47,55 +46,44 @@ export function ExtraFieldCreatable({
   labelBackgroundColor,
   innerRef,
 }: IWorkflowExtraFieldProps) {
-  const fieldNameInputRef = React.useRef<HTMLInputElement | null>(null);
+  const { isRequired } = field;
   const optionInputsRefs = React.useRef<HTMLInputElement[]>([]);
 
   React.useEffect(() => {
     optionInputsRefs.current.forEach((input) => fitInputWidth(input, DEFAULT_OPTION_INPUT_WIDTH));
   }, [field.selections]);
 
-  React.useEffect(() => {
-    fitInputWidth(fieldNameInputRef.current, DEFAULT_FIELD_INPUT_WIDTH);
-  }, []);
-
   const { useCallback, useState, useMemo } = React;
 
-  const { selections, description } = field;
+  const { description } = field;
+  const selectionItems = field.selections as IExtraFieldSelection[];
+  const selectionValues = field.selections as string[];
 
   const dropdownSelections: IDropdownSelection[] = useMemo(
-    () => (selections || []).map((selection) => ({ ...selection, label: selection.value })),
-    [selections],
+    () => (selectionValues || []).map((selectionValue) => ({
+      value: selectionValue,
+      label: selectionValue,
+    } as IDropdownSelection)),
+    [selectionValues],
   );
 
   const [activeOptionIndex, setActiveOptionIndex] = useState<number | null>(null);
+  const [duplicateErrors, setDuplicateErrors] = useState<Record<string, string>>(
+    () => recalculateDuplicateErrors(selectionItems || []),
+  );
 
   const handleSelectableChange = (inputValue: IDropdownSelection) => {
-    editField({
-      value: String(inputValue.apiName),
-      selections: selections?.map((selection) => ({
-        ...selection,
-        isSelected: inputValue.apiName === selection.apiName,
-      })),
-    });
+    editField({ value: inputValue.value });
   };
 
   const fieldNameClassName = classnames(getInputNameBackground(labelBackgroundColor), styles['kick-off-input__name']);
 
   const handleChangeName = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      fitInputWidth(e.target, DEFAULT_FIELD_INPUT_WIDTH);
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       editField({ name: e.target.value });
     },
     [editField],
   );
-
-  const handleDeleteField = useCallback(() => {
-    if (!deleteField) {
-      return;
-    }
-
-    deleteField();
-  }, [deleteField]);
 
   const handleChangeDescription = useCallback(
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -105,22 +93,24 @@ export function ExtraFieldCreatable({
   );
 
   const handleAddOption = () => {
-    const newOptions = [...(selections as IExtraFieldSelection[]), getEmptySelection()];
+    const newOptions = [...(selectionItems || []), getEmptySelection(selectionItems)];
     editField({ selections: newOptions });
   };
 
   const handleRemoveOption = (optionIndex: number) => () => {
-    const newOptions = selections?.filter((_, index) => index !== optionIndex);
-
-    const isNoOptions = !isArrayWithItems(newOptions);
-
-    isNoOptions ? handleDeleteField() : editField({ selections: newOptions });
+    const newOptions = selectionItems?.filter((_, index) => index !== optionIndex) || [];
+    editField({ selections: newOptions });
+    setDuplicateErrors(recalculateDuplicateErrors(newOptions));
   };
 
   const handleChangeOption = (optionIndex: number) => (event: React.ChangeEvent<HTMLInputElement>) => {
     const newValue = event.target.value;
+    const apiName = selectionItems?.[optionIndex]?.apiName;
+    if (apiName) {
+      setDuplicateErrors((prev) => ({ ...prev, [apiName]: '' }));
+    }
 
-    const newOptions = selections?.map((option, index) => {
+    const newOptions = selectionItems?.map((option, index) => {
       if (index === optionIndex) {
         return { ...option, value: newValue };
       }
@@ -131,9 +121,12 @@ export function ExtraFieldCreatable({
     editField({ selections: newOptions });
   };
 
-  const renderKickoffOption = ({ value }: IExtraFieldSelection, optionIndex: number) => {
+  const handleBlurOption = handleSelectionBlur(setDuplicateErrors, selectionItems);
+
+  const renderKickoffOption = ({ value, apiName }: IExtraFieldSelection, optionIndex: number) => {
     const isActive = optionIndex === activeOptionIndex;
-    const errorMessageIntl = validateCheckboxAndRadioField(value);
+    const standardError = validateCheckboxAndRadioField(value);
+    const errorMessageIntl = standardError || duplicateErrors[apiName] || '';
     const shouldShowError = Boolean(errorMessageIntl);
 
     return (
@@ -148,13 +141,14 @@ export function ExtraFieldCreatable({
             ref={(el) => (optionInputsRefs.current[optionIndex] = el as HTMLInputElement)}
             className={inputStyles['kickoff-create-field-option__input']}
             onChange={handleChangeOption(optionIndex)}
+            onBlur={handleBlurOption(apiName)}
             placeholder={namePlaceholder}
             type="text"
             value={value}
             disabled={isDisabled}
           />
           <span className={inputStyles['measure']} />
-          {isActive && !isDisabled && (
+          {isActive && !isDisabled && (selectionItems?.length || 0) > 1 && (
             <div
               role="button"
               className={inputStyles['kickoff-create-field-option__remove']}
@@ -190,52 +184,46 @@ export function ExtraFieldCreatable({
     />
   );
 
-  const renderKickoffView = () => (
-    <div className={inputStyles['kickoff-create-field-container']}>
-      {renderKickoffField()}
+  const renderKickoffView = () => {
+    const customOptionsList = selectionItems && (
+      <ul className={inputStyles['kickoff-create-field-options']}>{selectionItems?.map(renderKickoffOption)}</ul>
+    );
 
-      {selections && (
-        <ul className={inputStyles['kickoff-create-field-options']}>{selections?.map(renderKickoffOption)}</ul>
-      )}
-
-      {!isDisabled && (
-        <button type="button" className={inputStyles['kickoff-create-field-add-option']} onClick={handleAddOption}>
-          <IntlMessages id="template.kick-off-add-options" />
-        </button>
-      )}
-    </div>
-  );
-
-  const renderSelectableView = () => {
-    const displayValue = {
-      label: field.selections?.find((selection) => selection.apiName === field.value)?.value,
-    };
+    const addOptionButton = (
+      <button type="button" className={inputStyles['kickoff-create-field-add-option']} onClick={handleAddOption}>
+        <IntlMessages id="template.kick-off-add-options" />
+      </button>
+    );
 
     return (
-      <div
-        className={classnames('has-float-label', inputStyles['dropdown-container'])}
-        data-autofocus-first-field={true}
-      >
+      <div className={inputStyles['kickoff-create-field-container']}>
+        {renderKickoffField()}
+
+        <DatasetSourceToggle field={field} editField={editField} isDisabled={isDisabled}>
+          {customOptionsList}
+          {!isDisabled && addOptionButton}
+        </DatasetSourceToggle>
+      </div>
+    );
+  };
+
+  const renderSelectableView = () => {
+    const displayValue = dropdownSelections.find((selection) => selection.value === field.value) || null;
+
+    return (
+      <div className={inputStyles['dropdown-container']} data-autofocus-first-field={true}>
+        <div className={fieldNameClassName}>
+          <div className={styles['kick-off-input__name-readonly']}>{field.name}</div>
+          {isRequired && <span className={styles['kick-off-required-sign']} />}
+        </div>
         <DropdownList
           options={dropdownSelections}
           onChange={handleSelectableChange}
           placeholder={description}
           isDisabled={isDisabled}
           isSearchable={false}
-          value={displayValue.label ? displayValue : null}
+          value={displayValue}
         />
-        <div className={fieldNameClassName}>
-          <AutosizeInput
-            inputRef={(ref) => (fieldNameInputRef.current = ref)}
-            inputClassName={inputStyles['kickoff-create-field-name-input']}
-            disabled={mode !== EExtraFieldMode.Kickoff || isDisabled}
-            onChange={handleChangeName}
-            placeholder={namePlaceholder}
-            type="text"
-            value={field.name}
-          />
-          {isRequired && <span className={styles['kick-off-required-sign']} />}
-        </div>
       </div>
     );
   };

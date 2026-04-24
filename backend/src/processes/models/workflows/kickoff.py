@@ -1,7 +1,3 @@
-# ruff: noqa: PLC0415
-from typing import Any, Dict
-
-from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 from django.db.models import Q, UniqueConstraint
 
@@ -9,6 +5,7 @@ from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
 from src.processes.models.workflows.workflow import Workflow
+from src.processes.querysets import KickoffValueQuerySet
 
 
 class KickoffValue(
@@ -35,23 +32,4 @@ class KickoffValue(
         blank=True,
         help_text='Does not contains markdown',
     )
-    search_content = SearchVectorField(null=True)
-    objects = BaseSoftDeleteManager()
-
-    def _update_field(self, template: Dict[str, Any]):
-        from src.processes.models.workflows\
-            .fields import TaskField
-
-        return TaskField.objects.update_or_create(
-            kickoff=self,
-            template_id=template['id'],
-            defaults={
-                'name': template['name'],
-                'description': template['description'],
-                'type': template['type'],
-                'is_required': template['is_required'],
-                'api_name': template['api_name'],
-                'order': template['order'],
-                'workflow': self.workflow,
-            },
-        )
+    objects = BaseSoftDeleteManager.from_queryset(KickoffValueQuerySet)()

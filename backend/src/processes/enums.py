@@ -94,6 +94,17 @@ class OwnerType:
     )
 
 
+class OwnerRole:
+    OWNER = 'owner'
+    VIEWER = 'viewer'
+    STARTER = 'starter'
+    choices = (
+        (OWNER, OWNER),
+        (VIEWER, VIEWER),
+        (STARTER, STARTER),
+    )
+
+
 class DirectlyStatus:
 
     NO_STATUS = 0
@@ -626,6 +637,32 @@ class WorkflowEventType:
         (TASK_DELAY, 'Task snoozed from template'),
     )
 
+    LITERALS = Literal[
+        RUN,
+        COMPLETE,
+        ENDED,
+        DELAY,
+        REVERT,
+        ENDED_BY_CONDITION,
+        URGENT,
+        NOT_URGENT,
+        FORCE_RESUME,
+        FORCE_DELAY,
+        TASK_START,
+        TASK_COMPLETE,
+        TASK_REVERT,
+        COMMENT,
+        TASK_SKIP,
+        TASK_SKIP_NO_PERFORMERS,
+        TASK_PERFORMER_CREATED,
+        TASK_PERFORMER_DELETED,
+        DUE_DATE_CHANGED,
+        SUB_WORKFLOW_RUN,
+        TASK_PERFORMER_GROUP_CREATED,
+        TASK_PERFORMER_GROUP_DELETED,
+        TASK_DELAY,
+    ]
+
 
 class WorkflowEventActionType:
 
@@ -645,3 +682,36 @@ class PresetType:
         (PERSONAL, 'Personal'),
         (ACCOUNT, 'Account'),
     )
+
+
+class SearchContentType:
+
+    WORKFLOW = 'workflow'
+    KICKOFF_FIELD = 'kickoff_field'
+    TASK_FIELD = 'task_field'
+    TASK = 'task'
+    TEMPLATE = 'template'
+    EVENT = 'event'
+    TASK_TEMPLATE = 'task_template'
+
+    CHOICES = (
+        (WORKFLOW, WORKFLOW),
+        (KICKOFF_FIELD, KICKOFF_FIELD),
+        (TASK_FIELD, TASK_FIELD),
+        (TASK, TASK),
+        (TEMPLATE, TEMPLATE),
+        (EVENT, EVENT),
+        (TASK_TEMPLATE, TASK_TEMPLATE),
+    )
+
+
+class SystemVariable:
+
+    DATE = 'date'
+    TEMPLATE_NAME = 'template-name'
+    WORKFLOW_ID = 'workflow-id'
+    WORKFLOW_STARTER = 'workflow-starter'
+
+    WORKFLOW_NAME_VARS = {DATE, TEMPLATE_NAME, WORKFLOW_ID, WORKFLOW_STARTER}
+
+    TASK_VARS = {WORKFLOW_STARTER}

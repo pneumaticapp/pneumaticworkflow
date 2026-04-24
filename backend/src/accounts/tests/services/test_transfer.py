@@ -7,12 +7,14 @@ from src.accounts.enums import (
 )
 from src.accounts.services import exceptions
 from src.accounts.services.account import AccountService
+from src.accounts.services.user import UserService
 from src.accounts.services.user_invite import UserInviteService
 from src.accounts.services.user_transfer import UserTransferService
 from src.accounts.tokens import TransferToken
 from src.authentication.enums import AuthTokenType
 from src.payment.stripe.service import StripeService
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     PerformerType,
 )
@@ -533,6 +535,11 @@ def test_deactivate_prev_user__ok(mocker):
         'src.payment.stripe.service.'
         'StripeService.cancel_subscription',
     )
+    user_service_init_mock = mocker.patch.object(
+        UserService,
+        attribute='__init__',
+        return_value=None,
+    )
     deactivate_mock = mocker.patch(
         'src.accounts.services.user.UserService.deactivate',
     )
@@ -552,10 +559,11 @@ def test_deactivate_prev_user__ok(mocker):
     )
     delete_pending_invites_mock.assert_called_once()
     cancel_subscription_mock.assert_not_called()
-    deactivate_mock.assert_called_once_with(
-        prev_user,
-        skip_validation=True,
+    user_service_init_mock.assert_called_once_with(
+        user=prev_user,
+        instance=prev_user,
     )
+    deactivate_mock.assert_called_once_with(skip_validation=True)
 
 
 def test_deactivate_prev_user__cancel_subscription__ok(mocker):
@@ -597,6 +605,11 @@ def test_deactivate_prev_user__cancel_subscription__ok(mocker):
         'src.payment.stripe.service.'
         'StripeService.cancel_subscription',
     )
+    user_service_init_mock = mocker.patch.object(
+        UserService,
+        attribute='__init__',
+        return_value=None,
+    )
     deactivate_mock = mocker.patch(
         'src.accounts.services.user.UserService.deactivate',
     )
@@ -621,10 +634,11 @@ def test_deactivate_prev_user__cancel_subscription__ok(mocker):
         auth_type=AuthTokenType.USER,
     )
     cancel_subscription_mock.assert_called_once()
-    deactivate_mock.assert_called_once_with(
-        prev_user,
-        skip_validation=True,
+    user_service_init_mock.assert_called_once_with(
+        user=prev_user,
+        instance=prev_user,
     )
+    deactivate_mock.assert_called_once_with(skip_validation=True)
 
 
 @pytest.mark.parametrize('plan', BillingPlanType.PAYMENT_PLANS)
@@ -665,6 +679,11 @@ def test_deactivate_prev_user__disable_billing__ok(plan, mocker):
         'src.payment.stripe.service.'
         'StripeService.cancel_subscription',
     )
+    user_service_init_mock = mocker.patch.object(
+        UserService,
+        attribute='__init__',
+        return_value=None,
+    )
     deactivate_mock = mocker.patch(
         'src.accounts.services.user.UserService.deactivate',
     )
@@ -684,10 +703,11 @@ def test_deactivate_prev_user__disable_billing__ok(plan, mocker):
     )
     delete_pending_invites_mock.assert_called_once()
     cancel_subscription_mock.assert_not_called()
-    deactivate_mock.assert_called_once_with(
-        prev_user,
-        skip_validation=True,
+    user_service_init_mock.assert_called_once_with(
+        user=prev_user,
+        instance=prev_user,
     )
+    deactivate_mock.assert_called_once_with(skip_validation=True)
 
 
 def test_accept_transfer__template_owner_in_template__ok(
@@ -729,10 +749,12 @@ def test_accept_transfer__template_owner_in_template__ok(
     token['new_user_id'] = account_2_new_user.id
     request_template_owners = [
         {
+            'role': OwnerRole.OWNER,
             'type': OwnerType.USER,
             'source_id': f'{account_2_owner.id}',
         },
         {
+            'role': OwnerRole.OWNER,
             'type': OwnerType.USER,
             'source_id': account_2_new_user.id,
         },

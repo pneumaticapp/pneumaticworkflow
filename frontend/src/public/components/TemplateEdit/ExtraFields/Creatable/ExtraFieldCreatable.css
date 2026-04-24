@@ -1,5 +1,8 @@
 .dropdown-container {
+  display: flex;
+  flex-direction: column;
   width: 100%;
+  min-width: 0;
 
   /* stylelint-disable selector-pseudo-class-no-unknown, declaration-no-important  */
   :global .react-select__control {
@@ -37,7 +40,20 @@
   :global .react-select__multi-value__label {
     color: #262522 !important;
   }
+
+  :global .react-select__placeholder {
+    display: block;
+    overflow: hidden;
+    max-width: 100%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+
   :global .react-select__single-value {
+    overflow: hidden;
+    max-width: 100%;
+    white-space: nowrap;
+    text-overflow: ellipsis;
     color: #262522 !important;
   }
   /* stylelint-enable */
@@ -53,6 +69,7 @@
     font-family: Nunito, sans-serif;
     font-size: 15.04px;
     line-height: 16px;
+    white-space: pre;
   }
 }
 
@@ -98,11 +115,11 @@
 }
 
 .kickoff-create-field-option__remove {
+  margin-left: 8px;
   cursor: pointer;
 }
 
 .kickoff-create-field-option__input {
-  width: 95px;
   max-width: 100%;
   border: none;
 
@@ -117,13 +134,12 @@
 }
 
 .kickoff-create-field-add-option {
+  @mixin btn-field-action;
+
   margin: 0;
   padding: 0;
   overflow: visible;
   width: auto;
-  color: #fec336;
-  background: transparent;
-  border: none;
 }
 
 .kickoff-set-field-container {

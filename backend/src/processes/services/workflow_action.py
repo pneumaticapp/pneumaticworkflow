@@ -1,4 +1,5 @@
 from datetime import datetime
+from copy import copy
 from typing import Callable, Iterable, Optional, Tuple
 
 from django.contrib.auth import get_user_model
@@ -16,6 +17,7 @@ from src.notifications.tasks import (
     send_new_task_websocket,
     send_removed_task_notification,
     send_resumed_workflow_notification,
+    send_completed_workflow_notification,
 )
 from src.processes.enums import (
     ConditionAction,
@@ -242,6 +244,12 @@ class WorkflowActionService:
         self.workflow.status = WorkflowStatus.DONE
         self.workflow.date_completed = timezone.now()
         self.workflow.save(update_fields=update_fields)
+        if self.workflow.completion_notification:
+            send_completed_workflow_notification.delay(
+                logging=self.account.log_api_requests,
+                workflow_id=self.workflow.id,
+                logo_lg=self.account.logo_lg,
+            )
         if WebHook.objects.on_account(self.account.id).wf_completed().exists():
             send_workflow_completed_webhook.delay(
                 user_id=self.user.id,
@@ -309,11 +317,7 @@ class WorkflowActionService:
             instance=task,
             user=self.user or self.workflow.account.get_owner(),
         )
-        fields_values = self.workflow.get_fields_markdown_values(
-            tasks_filter_kwargs={'task__status__in': (
-                TaskStatus.COMPLETED, TaskStatus.SKIPPED,
-            )},
-        )
+        fields_values = self.workflow.get_fields_markdown_values()
         task_service.insert_fields_values(fields_values=fields_values)
 
         WorkflowEventService.task_skip_event(task)
@@ -395,6 +399,7 @@ class WorkflowActionService:
         for task in tasks:
             task_service = TaskService(instance=task, user=self.user)
             fields_values = self.workflow.get_kickoff_fields_markdown_values()
+
             task_service.insert_fields_values(fields_values=fields_values)
 
         WorkflowEventService.workflow_run_event(
@@ -464,38 +469,37 @@ class WorkflowActionService:
         if not task_start_event_already_exist:
             WorkflowEventService.task_started_event(task)
 
-        if not self.workflow.template.is_onboarding:
-            recipients_qst = (
+        # Skip any "onboarding" workflow with a template
+        skip_sending_notification = (
+            not self.workflow.is_legacy_template
+            and self.workflow.template.is_onboarding
+        )
+        if not skip_sending_notification:
+            recipients_set = (
                 TaskPerformer.objects
                 .by_task(task.id)
                 .exclude_directly_deleted()
-                .new_task_recipients()
-            ).order_by('id')
+                .get_user_ids_emails_subscriber_set()
+            )
 
             wf_starter = self.workflow.workflow_starter
-            ws_recipients = None
-            recipients = []
-            # Sent only websocket
-            # to the workflow starter performer on first tasks
+            recipients = [
+                (user_id, email, is_subscribed)
+                for user_id, email, is_subscribed in recipients_set
+            ]
+            # For tests to work stably, ordering by "user_id" is necessary
+            recipients.sort(key=lambda e: e[0])
+            ws_recipients = copy(recipients)
             if (
                 len(task.parents) == 0
                 and not is_returned
                 and not self.workflow.is_external
+                and (wf_starter.id, wf_starter.email, True) in recipients
             ):
-                for el in recipients_qst:
-                    if el.user_id == wf_starter.id:
-                        ws_recipients = (
-                            (el.user_id, el.email, el.is_subscribed),
-                        )
-                    else:
-                        recipients.append(
-                            (el.user_id, el.email, el.is_subscribed),
-                        )
-            else:
-                recipients = [
-                    (el.user_id, el.email, el.is_subscribed)
-                    for el in recipients_qst
-                ]
+                # Don't sent email and push for a workflow starter
+                # on first tasks
+                recipients.remove((wf_starter.id, wf_starter.email, True))
+
             task_data = None
             if recipients:
                 task_data = task.get_data_for_list()
@@ -622,11 +626,7 @@ class WorkflowActionService:
             instance=task,
             user=self.user or self.workflow.account.get_owner(),
         )
-        fields_values = self.workflow.get_fields_markdown_values(
-            tasks_filter_kwargs={'task__status__in': (
-                TaskStatus.COMPLETED, TaskStatus.SKIPPED,
-            )},
-        )
+        fields_values = self.workflow.get_fields_markdown_values()
         task_service.insert_fields_values(fields_values=fields_values)
         task.update_performers(restore_performers=True)
         task_performers_exists = (
@@ -1043,7 +1043,7 @@ class WorkflowActionService:
         elif not self.user.is_account_owner:
             raise exceptions.UserNotPerformer
 
-        revert_to_tasks = revert_from_task.get_revert_tasks()
+        revert_to_tasks = list(revert_from_task.get_revert_tasks())
         self._validate_revert_is_possible(revert_to_tasks)
 
         with transaction.atomic():
@@ -1083,7 +1083,7 @@ class WorkflowActionService:
             )
 
         # validate revert from tasks
-        revert_from_tasks = self.workflow.tasks.active_or_delayed()
+        revert_from_tasks = list(self.workflow.tasks.active_or_delayed())
         if self.workflow.is_running:
             for revert_from_task in revert_from_tasks:
                 if revert_from_task.sub_workflows.running().exists():
@@ -1092,19 +1092,8 @@ class WorkflowActionService:
         with transaction.atomic():
             # Need run after update revert_to_task task (and performers)
             # and before start prev task
-            if self.workflow.is_completed:
-                # TODO Remove "task" parameter from
-                #  WorkflowEventService.workflow_revert_event
-                event_task = (
-                    self.workflow.tasks
-                    .completed()
-                    .order_by('-date_completed')
-                    .first()
-                )
-            else:
-                event_task = revert_from_tasks[0]
             WorkflowEventService.workflow_revert_event(
-                task=event_task,
+                task=revert_to_task,
                 user=self.user,
             )
             AnalyticService.workflow_returned(

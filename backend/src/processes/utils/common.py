@@ -12,6 +12,7 @@ from typing import (
 from django.contrib.auth import get_user_model
 from rest_framework.serializers import ListSerializer, ModelSerializer
 
+from src.processes.messages.workflow import MSG_PW_0091
 from src.processes.enums import (
     ConditionAction,
     PredicateOperator,
@@ -22,7 +23,8 @@ from src.utils.salt import get_salt
 VAR_PATTERN = re.compile(r'{{\s*([^\{\}\s]+)\s*}}')
 VAR_PATTERN_TEMPLATE = r'\{\{(\s*?)%s(\s*?)\}\}'
 VAR_PATTERN_FIELD = re.compile(
-    r'\{\{(\s*?)((?!date|template-name|workflow-id).)+(\s*?)\}\}',
+    r'\{\{(\s*?)((?!date|template-name|'
+    r'workflow-id|workflow-starter).)+(\s*?)\}\}',
 )
 VAR_PATTERN_WORKFLOW_ID = re.compile(r'\{\{\s*workflow-id\s*\}\}')
 
@@ -121,9 +123,9 @@ def insert_fields_values_to_text(
 
     if contains_vars(text):
         for api_name, raw_value in fields_values.items():
-            value = '' if raw_value is None else raw_value
+            value = '' if raw_value is None else str(raw_value)
             field_variable_pattern = VAR_PATTERN_TEMPLATE % api_name
-            text = re.sub(field_variable_pattern, value, text)
+            text = re.sub(field_variable_pattern, lambda m, v=value: v, text)
     return text
 
 
@@ -210,3 +212,10 @@ def get_tasks_ancestors(data: Dict[str, set]) -> Dict[str, set]:
     if new_ancestors_found:
         return get_tasks_ancestors(ancestors_by_tasks)
     return ancestors_by_tasks
+
+
+def get_workflow_starter_name(workflow_starter) -> str:
+    """Return display name of the workflow starter, or guest fallback."""
+    if workflow_starter:
+        return workflow_starter.name
+    return str(MSG_PW_0091)

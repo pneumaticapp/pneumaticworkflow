@@ -1,4 +1,5 @@
-import { ETaskPerformerType, EExtraFieldType, ITemplateResponse, ETemplateOwnerType } from '../../../../types/template';
+// <reference types="jest" />
+import { ETaskPerformerType, EExtraFieldType, ITemplateResponse, ETemplateOwnerType, ETemplateOwnerRole } from '../../../../types/template';
 import { getRunnableWorkflow } from '../getRunnableWorkflow';
 
 const templateResponseMock: ITemplateResponse = {
@@ -150,11 +151,13 @@ const templateResponseMock: ITemplateResponse = {
       sourceId: '306',
       type: ETemplateOwnerType.User,
       apiName: 'owner-024t43',
+      role: ETemplateOwnerRole.Owner,
     },
     {
       sourceId: '1896',
       type: ETemplateOwnerType.User,
       apiName: 'owner-024t12',
+      role: ETemplateOwnerRole.Owner,
     },
   ],
   isActive: true,
@@ -164,6 +167,8 @@ const templateResponseMock: ITemplateResponse = {
   embedUrl: null,
   isEmbedded: false,
   finalizable: true,
+  completionNotification: false,
+  reminderNotification: false,
   updatedBy: 306,
   dateUpdated: '2021-10-13T14:24:43.980066Z',
   wfNameTemplate: null,
@@ -187,5 +192,116 @@ describe('getRunnableWorkflow.', () => {
     const runnableWorkflow = getRunnableWorkflow(templateResponseMock);
 
     expect(runnableWorkflow).toStrictEqual(stringifyReturn);
+  });
+
+  it('populates selections from datasetsMap when field has dataset', () => {
+    const template = {
+      ...templateResponseMock,
+      kickoff: {
+        description: '',
+        fields: [
+          {
+            apiName: 'field-ds',
+            name: 'DS Field',
+            type: EExtraFieldType.Checkbox,
+            order: 0,
+            userId: null,
+            groupId: null,
+            dataset: 5,
+            selections: [],
+          },
+        ],
+      },
+    };
+
+    const datasetsMap = { 5: ['A', 'B'] };
+    const result = getRunnableWorkflow(template, datasetsMap);
+
+    expect(result!.kickoff.fields[0].selections).toEqual(['A', 'B']);
+  });
+
+  it('normalizes object selections into string[] when field has no dataset', () => {
+    const template = {
+      ...templateResponseMock,
+      kickoff: {
+        description: '',
+        fields: [
+          {
+            apiName: 'field-obj',
+            name: 'Obj Field',
+            type: EExtraFieldType.Checkbox,
+            order: 0,
+            userId: null,
+            groupId: null,
+            selections: [{ value: 'A', apiName: 'sel-1' }, { value: 'B', apiName: 'sel-2' }],
+          },
+        ],
+      },
+    };
+
+    const result = getRunnableWorkflow(template);
+
+    expect(result!.kickoff.fields[0].selections).toEqual(['A', 'B']);
+  });
+
+  it('passes string selections as-is when field has no dataset', () => {
+    const template = {
+      ...templateResponseMock,
+      kickoff: {
+        description: '',
+        fields: [
+          {
+            apiName: 'field-str',
+            name: 'Str Field',
+            type: EExtraFieldType.Checkbox,
+            order: 0,
+            userId: null,
+            groupId: null,
+            selections: ['A', 'B'],
+          },
+        ],
+      },
+    };
+
+    const result = getRunnableWorkflow(template);
+
+    expect(result!.kickoff.fields[0].selections).toEqual(['A', 'B']);
+  });
+
+  it('falls back to empty array when datasetsMap does not contain the dataset id', () => {
+    const template = {
+      ...templateResponseMock,
+      kickoff: {
+        description: '',
+        fields: [
+          {
+            apiName: 'field-miss',
+            name: 'Missing DS',
+            type: EExtraFieldType.Checkbox,
+            order: 0,
+            userId: null,
+            groupId: null,
+            dataset: 99,
+            selections: [],
+          },
+        ],
+      },
+    };
+
+    const datasetsMap = { 5: ['X'] };
+    const result = getRunnableWorkflow(template, datasetsMap);
+
+    expect(result!.kickoff.fields[0].selections).toEqual([]);
+  });
+
+  it('returns null when isActive is false', () => {
+    const template = {
+      ...templateResponseMock,
+      isActive: false,
+    };
+
+    const result = getRunnableWorkflow(template);
+
+    expect(result).toBeNull();
   });
 });

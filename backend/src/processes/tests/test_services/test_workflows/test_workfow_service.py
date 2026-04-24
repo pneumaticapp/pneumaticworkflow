@@ -6,6 +6,7 @@ from django.utils import timezone
 
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import FieldType
+from src.processes.messages.workflow import MSG_PW_0091
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.services.tasks.task import TaskService
 from src.processes.services.workflows.workflow import WorkflowService
@@ -95,6 +96,8 @@ def test_create_instance__all_fields__ok(mocker):
         is_active=True,
         tasks_count=1,
         finalizable=True,
+        reminder_notification=True,
+        completion_notification=True,
     )
     create_workflow_name_mock = mocker.patch(
         'src.processes.services.workflows.workflow.'
@@ -151,6 +154,8 @@ def test_create_instance__all_fields__ok(mocker):
     assert workflow.is_urgent == is_urgent
     assert workflow.due_date == due_date
     assert workflow.ancestor_task == ancestor_task
+    assert workflow.reminder_notification is True
+    assert workflow.completion_notification is True
 
 
 def test_create_instance__external_workflow__ok(mocker):
@@ -237,6 +242,7 @@ def test_create_instance__insert_kickoff_fields__ok(mocker):
         kickoff=template.kickoff_instance,
         template=template,
         api_name=field_api_name,
+        account=owner.account,
     )
     service = WorkflowService(
         user=owner,
@@ -322,3 +328,57 @@ def test_create_related__ok(mocker):
         redefined_performer=None,
     )
     update_owners_mock.assert_called_once()
+
+
+def test_create_workflow_name__with_workflow_starter_variable__ok():
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=owner,
+        is_active=True,
+        tasks_count=1,
+        wf_name_template='WF by {{ workflow-starter }}',
+    )
+    service = WorkflowService(
+        user=owner,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    result = service._create_workflow_name(
+        template=template,
+        workflow_starter=owner,
+    )
+
+    # assert
+    assert result == 'WF by John Doe'
+
+
+def test_create_workflow_name__without_user__guest_name():
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    template = create_test_template(
+        user=owner,
+        is_active=True,
+        tasks_count=1,
+        wf_name_template='WF by {{ workflow-starter }}',
+    )
+    service = WorkflowService(
+        user=owner,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    result = service._create_workflow_name(
+        template=template,
+        workflow_starter=None,
+    )
+
+    # assert
+    assert result == f'WF by {MSG_PW_0091}'

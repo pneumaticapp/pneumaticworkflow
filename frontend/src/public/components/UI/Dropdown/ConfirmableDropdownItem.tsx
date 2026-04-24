@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import { DropdownItemProps, DropdownItem } from 'reactstrap';
 import { useIntl } from 'react-intl';
 import OutsideClickHandler from 'react-outside-click-handler';
@@ -70,6 +71,7 @@ export function ConfirmableDropdownItem({
     }}>
       <DropdownItem
         {...dropdownItemProps}
+        tag={dropdownItemState === "confirmation" ? "div" : "button"}
         onClick={() => setDropdownItemState("confirmation")}
       >
         {renderContent()}

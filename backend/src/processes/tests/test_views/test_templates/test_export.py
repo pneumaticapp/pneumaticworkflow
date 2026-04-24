@@ -61,6 +61,7 @@ def test_export__response_format__ok(api_client):
         kickoff=kickoff,
         template=template,
         description='description',
+        account=account_owner.account,
     )
     task = TaskTemplate.objects.create(
         name='Task №{number}',
@@ -87,6 +88,7 @@ def test_export__response_format__ok(api_client):
         name='Checkbox field',
         template=template,
         api_name='api-name-1',
+        account=account_owner.account,
     )
     selection_template = FieldTemplateSelection.objects.create(
         value='first',

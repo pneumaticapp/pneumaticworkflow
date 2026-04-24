@@ -14,6 +14,8 @@ export interface IUnsavedUser {
   status?: EUserStatus;
   invite?: UserInvite;
   isAdmin?: boolean;
+  hasWorkflowViewerAccess?: boolean;
+  hasWorkflowStarterAccess?: boolean;
   type: TUserType;
   language: string;
   timezone: string;
@@ -89,4 +91,53 @@ export enum EUserListSorting {
 export enum EGroupsListSorting {
   NameAsc = 'group-name-asc',
   NameDesc = 'group-name-desc',
+}
+
+export interface ICreateUserRequest {
+  email: string;
+  password?: string;
+  phone?: string;
+  photo?: string;
+  firstName?: string;
+  lastName?: string;
+  isAdmin?: boolean;
+  isTasksDigestSubscriber?: boolean;
+  isDigestSubscriber?: boolean;
+  isNewslettersSubscriber?: boolean;
+  isSpecialOffersSubscriber?: boolean;
+  isNewTasksSubscriber?: boolean;
+  isCompleteTasksSubscriber?: boolean;
+  isCommentsMentionsSubscriber?: boolean;
+  language?: string;
+  timezone?: string;
+  dateFmt?: string;
+  dateFdw?: number;
+  groups?: number[];
+}
+
+export interface IUserResponse {
+  id: number;
+  email: string;
+  phone: string;
+  photo: string;
+  firstName: string;
+  lastName: string;
+  type: TUserType;
+  dateJoined: string;
+  dateJoinedTsp: number;
+  isAdmin: boolean;
+  isAccountOwner: boolean;
+  isTasksDigestSubscriber: boolean;
+  isDigestSubscriber: boolean;
+  isNewslettersSubscriber: boolean;
+  isSpecialOffersSubscriber: boolean;
+  isNewTasksSubscriber: boolean;
+  isCompleteTasksSubscriber: boolean;
+  isCommentsMentionsSubscriber: boolean;
+  language: string;
+  timezone: string;
+  dateFmt: string;
+  dateFdw: number;
+  groups: number[];
+  invite: UserInvite | null;
 }

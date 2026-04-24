@@ -1,11 +1,14 @@
 # ruff: noqa: UP031
 from datetime import timedelta
+from django.urls import reverse
+from rest_framework import status
 
 import pytest
 import pytz
 from django.utils import timezone
 
 from src.accounts.enums import (
+    BillingPlanType,
     NotificationType,
     SourceType,
 )
@@ -19,6 +22,8 @@ from src.generics.messages import MSG_GE_0007
 from src.processes.enums import (
     DueDateRule,
     FieldType,
+    OwnerRole,
+    OwnerType,
     PerformerType,
     TaskStatus,
     WorkflowEventType,
@@ -34,6 +39,7 @@ from src.processes.models.templates.fields import (
 )
 from src.processes.models.templates.raw_due_date import RawDueDateTemplate
 from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import (
     TaskPerformer,
 )
@@ -41,12 +47,16 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.events import (
     WorkflowEventService,
 )
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
+    create_test_not_admin,
     create_test_owner,
     create_test_template,
+    create_test_user,
     create_test_workflow,
+    create_test_dataset,
 )
 from src.utils.dates import date_format
 from src.utils.validation import ErrorCode
@@ -101,6 +111,7 @@ class TestPartialUpdateWorkflow:
             is_required=False,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
 
         response = api_client.post(
@@ -141,6 +152,46 @@ class TestPartialUpdateWorkflow:
         assert response.data['kickoff']['output'][0]['value'] == field_value
         assert response.data['due_date_tsp'] == due_date.timestamp()
 
+    def test_update__kickoff_field_with_dataset__ok(
+        self,
+        api_client,
+    ):
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        dataset = create_test_dataset(account=account, items_count=1)
+        dataset_item = dataset.items.get(order=1)
+        workflow = create_test_workflow(user=user, tasks_count=1)
+        field = TaskField.objects.create(
+            type=FieldType.DROPDOWN,
+            name='dropdown',
+            kickoff=workflow.kickoff_instance,
+            value='',
+            workflow=workflow,
+            account=account,
+            dataset=dataset,
+        )
+        api_client.token_authenticate(user)
+
+        # act
+        response = api_client.patch(
+            f'/workflows/{workflow.id}',
+            data={
+                'kickoff': {
+                    field.api_name: dataset_item.value,
+                },
+            },
+        )
+
+        # assert
+        assert response.status_code == 200
+        assert response.data['id'] == workflow.id
+        field_data = response.data['kickoff']['output'][0]
+        assert field_data['id'] == field.id
+        assert field_data['type'] == field.type
+        assert field_data['selections'] == [dataset_item.value]
+        assert field_data['value'] == dataset_item.value
+
     def test_update__task_markdown_description__ok(
         self,
         api_client,
@@ -156,6 +207,7 @@ class TestPartialUpdateWorkflow:
             is_required=False,
             kickoff=kickoff_template,
             template=template,
+            account=user.account,
         )
         template_task = template.tasks.get(number=1)
         template_task.description = '**Bold {{ %s }} text**' % (field.api_name)
@@ -211,6 +263,7 @@ class TestPartialUpdateWorkflow:
             is_required=False,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
 
         due_date = timezone.now() + timedelta(days=1)
@@ -252,132 +305,111 @@ class TestPartialUpdateWorkflow:
             user=user,
             is_active=True,
         )
-        kickoff_field = FieldTemplate.objects.create(
-            name='User name',
+        string_field = FieldTemplate.objects.create(
+            name='String',
             type=FieldType.STRING,
             is_required=False,
             kickoff=template.kickoff_instance,
             order=0,
             template=template,
+            account=user.account,
         )
-        kickoff_field_2 = FieldTemplate.objects.create(
-            name='User url',
+        checkbox_field = FieldTemplate.objects.create(
+            name='Checkbox',
             type=FieldType.CHECKBOX,
             is_required=True,
             kickoff=template.kickoff_instance,
             order=4,
             template=template,
+            account=user.account,
         )
-        kickoff_field_2_select_1 = FieldTemplateSelection.objects.create(
-            field_template=kickoff_field_2,
+        checkbox_select_1 = FieldTemplateSelection.objects.create(
+            field_template=checkbox_field,
             value='CHECKBOX 1',
             template=template,
         )
-        FieldTemplateSelection.objects.create(
-            field_template=kickoff_field_2,
+        checkbox_select_2 = FieldTemplateSelection.objects.create(
+            field_template=checkbox_field,
             value='CHECKBOX 2',
             template=template,
         )
-        kickoff_field_3 = FieldTemplate.objects.create(
-            name='User date',
+
+        radio_field = FieldTemplate.objects.create(
+            name='Radio',
             type=FieldType.RADIO,
             is_required=True,
             kickoff=template.kickoff_instance,
             order=5,
             template=template,
+            account=user.account,
         )
-        FieldTemplateSelection.objects.create(
-            field_template=kickoff_field_3,
+        radio_select_1 = FieldTemplateSelection.objects.create(
+            field_template=radio_field,
             value='RADIO 1',
             template=template,
         )
-        kickoff_field_3_select_2 = FieldTemplateSelection.objects.create(
-            field_template=kickoff_field_3,
+        radio_select_2 = FieldTemplateSelection.objects.create(
+            field_template=radio_field,
             value='RADIO 2',
             template=template,
         )
-        kickoff_field_4 = FieldTemplate.objects.create(
+        date_field = FieldTemplate.objects.create(
             name='Date field',
             type=FieldType.DATE,
             is_required=False,
             kickoff=template.kickoff_instance,
             order=9,
             template=template,
+            account=user.account,
         )
         template_task_1 = template.tasks.get(number=1)
         template_task_1.description = (
             '{{ %s }}His name is... {{%s}}{{%s}}!!!' %
             (
-                kickoff_field_2.api_name,
-                kickoff_field.api_name,
-                kickoff_field_3.api_name,
+                checkbox_field.api_name,
+                string_field.api_name,
+                radio_field.api_name,
             )
         )
         template_task_1.save()
+
         template_task_2 = template.tasks.get(number=2)
         template_task_2.description = (
-            'His name is... {{%s}}!!!' % kickoff_field.api_name
+            'His name is... {{%s}}!!!' % string_field.api_name
         )
         template_task_2.save()
+
         api_client.token_authenticate(user)
         response = api_client.post(
             f'/templates/{template.id}/run',
             data={
                 'kickoff': {
-                    kickoff_field.api_name: 'JOHN CENA',
-                    kickoff_field_2.api_name: [
-                        kickoff_field_2_select_1.api_name,
-                    ],
-                    kickoff_field_3.api_name: (
-                        kickoff_field_3_select_2.api_name
-                    ),
-                    kickoff_field_4.api_name: 1726012800,
+                    string_field.api_name: 'JOHN CENA',
+                    checkbox_field.api_name: [checkbox_select_1.value],
+                    radio_field.api_name: radio_select_1.value,
+                    date_field.api_name: 1726012800,
                 },
             },
         )
         workflow_id = response.data['id']
-        workflow = Workflow.objects.get(pk=workflow_id)
-        kickoff_output_2 = workflow.kickoff_instance.output.get(
-            type=FieldType.CHECKBOX,
-        )
-        kickoff_output_2_selections = list(
-            kickoff_output_2.selections
-            .all()
-            .values_list('api_name', flat=True),
-        )
-        kickoff_output_3 = workflow.kickoff_instance.output.get(
-            type=FieldType.RADIO,
-        )
-        kickoff_output_3_selections = list(
-            kickoff_output_3.selections
-            .all()
-            .values_list('api_name', flat=True),
-        )
 
         # act
         response = api_client.patch(
             f'/workflows/{workflow_id}',
             data={
                 'kickoff': {
-                    kickoff_field.api_name: 'DWAYNE THE ROCK JOHNSON',
-                    kickoff_field_2.api_name: [kickoff_output_2_selections[0]],
-                    kickoff_field_3.api_name: kickoff_output_3_selections[1],
-                    kickoff_field_4.api_name: 1726020000,
+                    string_field.api_name: 'DWAYNE THE ROCK JOHNSON',
+                    checkbox_field.api_name: [checkbox_select_2.value],
+                    radio_field.api_name: radio_select_2.value,
+                    date_field.api_name: 1726020000,
                 },
             },
         )
 
         # assert
         assert response.status_code == 200
-        first_output = response.data['kickoff']['output'][0]
-        second_output = response.data['kickoff']['output'][1]
-        third_output = response.data['kickoff']['output'][2]
+        assert response.data['kickoff']['output'][0]['value'] == '1726020000'
         fourth_output = response.data['kickoff']['output'][3]
-        assert first_output['value'] == '1726020000'
-        assert second_output['selections'][0]['is_selected'] is False
-        assert second_output['selections'][1]['is_selected'] is True
-        assert third_output['selections'][0]['is_selected'] is True
-        assert third_output['selections'][1]['is_selected'] is False
         assert fourth_output['value'] == 'DWAYNE THE ROCK JOHNSON'
 
     def test_partial_update__field__not_update_completed_task_due_date__ok(
@@ -407,6 +439,7 @@ class TestPartialUpdateWorkflow:
             kickoff=template.kickoff_instance,
             template=template,
             api_name='api-name-2',
+            account=user.account,
         )
         template_task = template.tasks.get(number=1)
         duration = timedelta(hours=1, milliseconds=1)
@@ -475,6 +508,7 @@ class TestPartialUpdateWorkflow:
             kickoff=template.kickoff_instance,
             order=9,
             template=template,
+            account=user.account,
         )
 
         api_client.token_authenticate(user)
@@ -521,6 +555,7 @@ class TestPartialUpdateWorkflow:
             is_required=False,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
         required_field = FieldTemplate.objects.create(
             name='User',
@@ -528,6 +563,7 @@ class TestPartialUpdateWorkflow:
             is_required=True,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
 
         api_client.token_authenticate(user)
@@ -575,6 +611,7 @@ class TestPartialUpdateWorkflow:
             kickoff=template.kickoff_instance,
             order=0,
             template=template,
+            account=user.account,
         )
 
         template_task_1 = template.tasks.get(number=1)
@@ -666,6 +703,7 @@ class TestPartialUpdateWorkflow:
             kickoff=template.kickoff_instance,
             order=0,
             template=template,
+            account=user.account,
         )
 
         template_task_1 = template.tasks.get(number=1)
@@ -766,6 +804,7 @@ class TestPartialUpdateWorkflow:
             is_required=False,
             task=template_task_1,
             template=template,
+            account=user.account,
         )
         kickoff_field = FieldTemplate.objects.create(
             name='User name',
@@ -774,6 +813,7 @@ class TestPartialUpdateWorkflow:
             kickoff=kickoff,
             order=0,
             template=template,
+            account=user.account,
         )
         kickoff_field_2 = FieldTemplate.objects.create(
             name='User url',
@@ -782,6 +822,7 @@ class TestPartialUpdateWorkflow:
             kickoff=kickoff,
             order=4,
             template=template,
+            account=user.account,
         )
         kickoff_field_2_select_1 = FieldTemplateSelection.objects.create(
             field_template=kickoff_field_2,
@@ -800,6 +841,7 @@ class TestPartialUpdateWorkflow:
             kickoff=kickoff,
             order=5,
             template=template,
+            account=user.account,
         )
         FieldTemplateSelection.objects.create(
             field_template=kickoff_field_3,
@@ -837,10 +879,10 @@ class TestPartialUpdateWorkflow:
                 'kickoff': {
                     kickoff_field.api_name: 'JOHN CENA',
                     kickoff_field_2.api_name: [
-                        kickoff_field_2_select_1.api_name,
+                        kickoff_field_2_select_1.value,
                     ],
                     kickoff_field_3.api_name: (
-                        kickoff_field_3_select_2.api_name
+                        kickoff_field_3_select_2.value
                     ),
                 },
             },
@@ -865,7 +907,7 @@ class TestPartialUpdateWorkflow:
         kickoff_output_2_selections = list(
             kickoff_output_2.selections
             .all()
-            .values_list('api_name', flat=True),
+            .values_list('value', flat=True),
         )
         kickoff_output_3 = workflow.kickoff_instance.output.get(
             type=FieldType.RADIO,
@@ -873,7 +915,7 @@ class TestPartialUpdateWorkflow:
         kickoff_output_3_selections = list(
             kickoff_output_3.selections
             .all()
-            .values_list('api_name', flat=True),
+            .values_list('value', flat=True),
         )
 
         # act
@@ -891,13 +933,7 @@ class TestPartialUpdateWorkflow:
 
         # assert
         assert response.status_code == 200
-        first_output = response.data['kickoff']['output'][0]
-        second_output = response.data['kickoff']['output'][1]
         third_output = response.data['kickoff']['output'][2]
-        assert first_output['selections'][0]['is_selected'] is False
-        assert first_output['selections'][1]['is_selected'] is True
-        assert second_output['selections'][0]['is_selected'] is True
-        assert second_output['selections'][1]['is_selected'] is False
         assert third_output['value'] == 'DWAYNE THE ROCK JOHNSON'
         assert response.data['name'] == 'Edited Name'
         task_2 = workflow.tasks.get(number=2)
@@ -1525,6 +1561,7 @@ class TestPartialUpdateWorkflow:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name,
+            account=user.account,
         )
         wf_name_template = (
             'Feedback from {{%s}} {{ date }} {{ workflow-id }}'
@@ -1599,6 +1636,7 @@ class TestPartialUpdateWorkflow:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name_1,
+            account=user.account,
         )
         FieldTemplate.objects.create(
             name='User',
@@ -1607,6 +1645,7 @@ class TestPartialUpdateWorkflow:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name_2,
+            account=user.account,
         )
         FieldTemplate.objects.create(
             name='Url',
@@ -1615,6 +1654,7 @@ class TestPartialUpdateWorkflow:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name_3,
+            account=user.account,
         )
         wf_name_template = 'Feedback: {{%s}} from {{ %s }} Url: {{%s}}' % (
             field_api_name_1,
@@ -1692,6 +1732,7 @@ class TestUpdatePerformer:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name,
+            account=user.account,
         )
         template_task_1 = template.tasks.get(number=1)
         template_task_1.raw_performers.all().delete()
@@ -1801,6 +1842,7 @@ class TestUpdatePerformer:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name,
+            account=user.account,
         )
         template_task_1 = template.tasks.get(number=1)
         template_task_1.raw_performers.all().delete()
@@ -1893,6 +1935,7 @@ class TestUpdatePerformer:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name,
+            account=user.account,
         )
         template_task_1 = template.tasks.get(number=1)
         template_task_1.raw_performers.all().delete()
@@ -1975,6 +2018,7 @@ class TestUpdatePerformer:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name,
+            account=account_1_owner.account,
         )
         template_task_1 = template.tasks.get(number=1)
         template_task_1.raw_performers.all().delete()
@@ -2022,3 +2066,572 @@ class TestUpdatePerformer:
             user_id=account_1_new_user.id,
             task_id=task.id,
         ).exclude_directly_deleted().exists()
+
+
+def test_partial_update__name__analytic_called__ok(
+    mocker,
+    api_client,
+):
+    """PATCH workflow name: 200, name updated in DB, analytics notified."""
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user)
+    api_client.token_authenticate(user=user)
+    new_name = 'Updated workflow name'
+
+    workflows_updated_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_updated',
+    )
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={'name': new_name},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['name'] == new_name
+
+    workflow.refresh_from_db()
+    assert workflow.name == new_name
+
+    workflows_updated_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+
+
+def test_partial_update__is_urgent_changed__urgent_service_called__ok(
+    mocker,
+    api_client,
+):
+    """
+    PATCH is_urgent False→True: 200, is_urgent updated,
+    analytics and urgent service notified.
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, is_urgent=False)
+    api_client.token_authenticate(user=user)
+
+    workflows_updated_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_updated',
+    )
+    workflows_urgent_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_urgent',
+    )
+    urgent_service_resolve_mock = mocker.patch(
+        'src.processes.services.urgent.UrgentService.resolve',
+    )
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={'is_urgent': True},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['is_urgent'] is True
+
+    workflow.refresh_from_db()
+    assert workflow.is_urgent is True
+
+    workflows_updated_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+    workflows_urgent_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+        action=WorkflowActions.marked,
+    )
+    urgent_service_resolve_mock.assert_called_once_with(
+        workflow=workflow,
+        user=user,
+    )
+
+
+def test_partial_update__is_urgent_not_changed__only_updated_analytic__ok(
+    mocker,
+    api_client,
+):
+    """
+    PATCH is_urgent same value: 200, urgent analytics
+    and service not triggered.
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, is_urgent=False)
+    api_client.token_authenticate(user=user)
+
+    workflows_updated_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_updated',
+    )
+    workflows_urgent_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_urgent',
+    )
+    urgent_service_resolve_mock = mocker.patch(
+        'src.processes.services.urgent.UrgentService.resolve',
+    )
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={'is_urgent': False},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['is_urgent'] is False
+
+    workflows_updated_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+    workflows_urgent_mock.assert_not_called()
+    urgent_service_resolve_mock.assert_not_called()
+
+
+def test_partial_update__kickoff_without_name_vars__task_services_called__ok(
+    mocker,
+    api_client,
+):
+    """
+    PATCH kickoff without name vars: 200, kickoff updated,
+    task due dates and performers recalculated.
+    """
+
+    # arrange
+    user = create_test_owner()
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    kickoff_field = FieldTemplate.objects.create(
+        name='Text field',
+        type=FieldType.TEXT,
+        is_required=False,
+        kickoff=template.kickoff_instance,
+        order=0,
+        template=template,
+        account=user.account,
+    )
+    workflow = create_test_workflow(user=user, template=template)
+    api_client.token_authenticate(user=user)
+
+    workflows_updated_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_updated',
+    )
+    insert_fields_values_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.insert_fields_values',
+    )
+    set_due_date_from_template_mock = mocker.patch(
+        'src.processes.services.tasks.task'
+        '.TaskService.set_due_date_from_template',
+    )
+    update_performers_mock = mocker.patch(
+        'src.processes.models.workflows.task.Task.update_performers',
+    )
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={
+            'kickoff': {
+                kickoff_field.api_name: 'new value',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+
+    workflows_updated_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+    assert insert_fields_values_mock.call_count == 1
+    assert set_due_date_from_template_mock.call_count == 1
+    assert update_performers_mock.call_count >= 1
+
+
+def test_partial_update__kickoff_with_name_vars__name_updated__ok(
+    mocker,
+    api_client,
+):
+    """
+    PATCH kickoff with name vars: 200, workflow name
+    interpolated, task data recalculated.
+    """
+
+    # arrange
+    user = create_test_owner()
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    kickoff_field = FieldTemplate.objects.create(
+        name='Text field',
+        type=FieldType.TEXT,
+        is_required=False,
+        kickoff=template.kickoff_instance,
+        order=0,
+        template=template,
+        account=user.account,
+    )
+    name_template = 'Workflow {{ %s }}' % kickoff_field.api_name
+    workflow = create_test_workflow(
+        user=user,
+        template=template,
+        name_template=name_template,
+    )
+    updated_name = 'Workflow updated name'
+    api_client.token_authenticate(user=user)
+
+    workflows_updated_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_updated',
+    )
+    contains_fields_vars_mock = mocker.patch(
+        'src.processes.serializers.workflows.workflow.contains_fields_vars',
+        return_value=True,
+    )
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.processes.serializers.workflows.workflow'
+        '.insert_fields_values_to_text',
+        return_value=updated_name,
+    )
+    insert_fields_values_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.insert_fields_values',
+    )
+    set_due_date_from_template_mock = mocker.patch(
+        'src.processes.services.tasks.task'
+        '.TaskService.set_due_date_from_template',
+    )
+    update_performers_mock = mocker.patch(
+        'src.processes.models.workflows.task.Task.update_performers',
+    )
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={
+            'kickoff': {
+                kickoff_field.api_name: 'some value',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['name'] == updated_name
+
+    workflow.refresh_from_db()
+    assert workflow.name == updated_name
+
+    workflows_updated_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+    contains_fields_vars_mock.assert_called_once_with(name_template)
+    insert_fields_values_to_text_mock.assert_called_once_with(
+        text=name_template,
+        fields_values=mocker.ANY,
+    )
+    assert insert_fields_values_mock.call_count == 1
+    assert set_due_date_from_template_mock.call_count == 1
+    assert update_performers_mock.call_count >= 1
+
+
+def test_partial_update__kickoff_and_is_urgent__all_task_services_called__ok(
+    mocker,
+    api_client,
+):
+    """
+    PATCH kickoff + is_urgent False→True: 200, urgency and
+    kickoff applied, task data recalculated.
+    """
+
+    # arrange
+    user = create_test_owner()
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    kickoff_field = FieldTemplate.objects.create(
+        name='Text field',
+        type=FieldType.TEXT,
+        is_required=False,
+        kickoff=template.kickoff_instance,
+        order=0,
+        template=template,
+        account=user.account,
+    )
+    workflow = create_test_workflow(
+        user=user,
+        template=template,
+        is_urgent=False,
+    )
+    api_client.token_authenticate(user=user)
+
+    workflows_updated_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_updated',
+    )
+    workflows_urgent_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_urgent',
+    )
+    urgent_service_resolve_mock = mocker.patch(
+        'src.processes.services.urgent.UrgentService.resolve',
+    )
+    task_partial_update_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.partial_update',
+    )
+    insert_fields_values_mock = mocker.patch(
+        'src.processes.services.tasks.task.TaskService.insert_fields_values',
+    )
+    set_due_date_from_template_mock = mocker.patch(
+        'src.processes.services.tasks.task'
+        '.TaskService.set_due_date_from_template',
+    )
+    update_performers_mock = mocker.patch(
+        'src.processes.models.workflows.task.Task.update_performers',
+    )
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={
+            'is_urgent': True,
+            'kickoff': {
+                kickoff_field.api_name: 'new kickoff value',
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['is_urgent'] is True
+
+    workflow.refresh_from_db()
+    assert workflow.is_urgent is True
+
+    workflows_updated_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+    workflows_urgent_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+        action=WorkflowActions.marked,
+    )
+    urgent_service_resolve_mock.assert_called_once_with(
+        workflow=workflow,
+        user=user,
+    )
+    assert task_partial_update_mock.call_count == 1
+    task_partial_update_mock.assert_has_calls(
+        [mocker.call(is_urgent=True)],
+        any_order=True,
+    )
+    assert insert_fields_values_mock.call_count == 1
+    assert set_due_date_from_template_mock.call_count == 1
+    assert update_performers_mock.call_count >= 1
+
+
+def test_partial_update__due_date_tsp__analytic_called__ok(
+    mocker,
+    api_client,
+):
+    """
+    PATCH due_date_tsp: 200, due_date updated in DB,
+    urgent analytics not triggered.
+    """
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user)
+    api_client.token_authenticate(user=user)
+    due_date = timezone.now() + timedelta(days=3)
+
+    workflows_updated_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_updated',
+    )
+    workflows_urgent_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.workflows_urgent',
+    )
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={'due_date_tsp': due_date.timestamp()},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['due_date_tsp'] == due_date.timestamp()
+
+    workflow.refresh_from_db()
+    assert workflow.due_date == due_date
+
+    workflows_updated_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+    workflows_urgent_mock.assert_not_called()
+
+
+def test_partial_update__not_authenticated__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={'name': 'New name'},
+    )
+
+    # assert
+    assert response.status_code == 401
+
+
+def test_partial_update__expired_subscription__permission_denied(
+    api_client,
+):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.UNLIMITED,
+        plan_expiration=timezone.now() - timedelta(hours=1),
+    )
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={'name': 'New name'},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_partial_update__billing_plan__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(plan=None)
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={'name': 'New name'},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_partial_update__users_overlimited__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.PREMIUM,
+        max_users=1,
+    )
+    owner = create_test_owner(account=account)
+    create_test_not_admin(account=account)
+    account.active_users = 2
+    account.save()
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.patch(
+        f'/workflows/{workflow.id}',
+        data={'name': 'New name'},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_partial_update__not_found__not_found(api_client):
+
+    # arrange
+    user = create_test_owner()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.patch(
+        '/workflows/99999999',
+        data={'name': 'New name'},
+    )
+
+    # assert
+    assert response.status_code == 404
+
+
+def test_workflow_update__template_starter_own_workflow__forbidden(api_client):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    workflow = create_test_workflow(template=template, user=starter_user)
+
+    api_client.token_authenticate(starter_user)
+    url = reverse('workflows-detail', args=[workflow.id])
+    data = {'name': 'Updated Name'}
+
+    # act
+    response = api_client.patch(url, data)
+
+    # assert
+    assert response.status_code == status.HTTP_403_FORBIDDEN

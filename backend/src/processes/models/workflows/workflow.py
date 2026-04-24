@@ -2,7 +2,6 @@
 from typing import Dict, Optional
 
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.search import SearchVectorField
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import models
 from django.utils import timezone
@@ -17,6 +16,7 @@ from src.processes.querysets import (
     TaskFieldQuerySet,
     WorkflowQuerySet,
 )
+from src.processes.utils.common import get_workflow_starter_name
 
 UserModel = get_user_model()
 
@@ -76,8 +76,6 @@ class Workflow(
     )
 
     objects = BaseSoftDeleteManager.from_queryset(WorkflowQuerySet)()
-
-    search_content = SearchVectorField(null=True)
 
     def webhook_payload(self):
         from src.processes.serializers.workflows.workflow import (
@@ -188,3 +186,39 @@ class Workflow(
     @property
     def is_completed(self):
         return self.status == WorkflowStatus.DONE
+
+    def get_kickoff_fields_markdown_values(
+        self,
+        fields_filter_kwargs: Optional[Dict] = None,
+    ) -> Dict[str, str]:
+        """Extends parent method by adding the workflow-starter
+            system variable to the substitution dictionary."""
+
+        fields_values = super().get_kickoff_fields_markdown_values(
+            fields_filter_kwargs=fields_filter_kwargs,
+        )
+
+        fields_values['workflow-starter'] = get_workflow_starter_name(
+            self.workflow_starter,
+        )
+        return fields_values
+
+    def get_fields_markdown_values(
+        self,
+        tasks_filter_kwargs: Optional[Dict] = None,
+        tasks_exclude_kwargs: Optional[Dict] = None,
+        fields_filter_kwargs: Optional[Dict] = None,
+    ) -> Dict[str, str]:
+        """Extends parent method by adding the workflow-starter
+            system variable to the substitution dictionary."""
+
+        fields_values = super().get_fields_markdown_values(
+            tasks_filter_kwargs=tasks_filter_kwargs,
+            tasks_exclude_kwargs=tasks_exclude_kwargs,
+            fields_filter_kwargs=fields_filter_kwargs,
+        )
+
+        fields_values['workflow-starter'] = get_workflow_starter_name(
+            self.workflow_starter,
+        )
+        return fields_values

@@ -6,7 +6,8 @@ export interface IDueInProps {
   containerClassName?: string;
   view?: 'timeLeft' | 'dueDate';
   withTime?: boolean;
-  onSave(date: string): void;
-  onRemove(): void;
+  readOnly?: boolean;
+  onSave?(date: string): void;
+  onRemove?(): void;
   dateCompleted: string | null;
 }

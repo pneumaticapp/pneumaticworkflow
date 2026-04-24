@@ -1,6 +1,5 @@
-/* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
+import { useState, useCallback, FormEvent, MouseEvent } from 'react';
 import classnames from 'classnames';
 import Truncate from 'react-truncate';
 import { Form, Modal, ModalBody, ModalHeader } from 'reactstrap';
@@ -72,18 +71,26 @@ function WorkflowEditPopupComponent({
 
   const descriptionLinesCount = 5;
 
-  const [workflowName, changeWorkflowName] = React.useState(
+  const [workflowName, changeWorkflowName] = useState(
     workflow.wfNameTemplate || `${reactElementToText(<DateFormat />)} — ${workflow.name}`,
   );
-  const [kickoffState, setKickoffState] = React.useState(getInitialKickoff(workflow.kickoff));
+  const [kickoffState, setKickoffState] = useState(getInitialKickoff(workflow.kickoff));
 
-  const [isUrgent, setIsUrgent] = React.useState(false);
+  const [isUrgent, setIsUrgent] = useState(false);
 
-  const [textExpaned, setTextExpanded] = React.useState(false);
-  const expandText = React.useCallback(() => setTextExpanded(!textExpaned), [textExpaned]);
+  const [textExpaned, setTextExpanded] = useState(false);
+  const expandText = useCallback(() => setTextExpanded(!textExpaned), [textExpaned]);
 
   const ellispis = (
-    <a onClick={expandText} className={styles['description_more']}>
+    // eslint-disable-next-line jsx-a11y/anchor-is-valid
+    <a
+      href="#"
+      role="button"
+      tabIndex={0}
+      onClick={(e) => { e.preventDefault(); expandText(); }}
+      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') expandText(); }}
+      className={styles['description_more']}
+    >
       <span className={styles['more_delimeter']}>{ELLIPSIS_CHAR}</span>
       <IntlMessages id="templates.description-more" />
     </a>
@@ -132,7 +139,7 @@ function WorkflowEditPopupComponent({
         </div>
         <div className={styles['popup-title']}>
           {isUrgent ? (
-            <div className={'urgent-badge'}>
+            <div className="urgent-badge">
               <IntlMessages id="workflows.card-urgent" />
             </div>
           ) : null}
@@ -140,15 +147,17 @@ function WorkflowEditPopupComponent({
         </div>
         {workflow.description && (
           <div className={styles['popup-description']}>
-            <Truncate lines={!textExpaned && descriptionLinesCount} ellipsis={ellispis} trimWhitespace={true}>
+            <Truncate lines={!textExpaned && descriptionLinesCount} ellipsis={ellispis} trimWhitespace>
+              {/* eslint-disable react/no-array-index-key */}
               {workflow.description.split('\n').map((el, i, arr) => {
                 const line = <span key={i}>{el}</span>;
                 if (i === arr.length - 1) {
                   return line;
-                } else {
-                  return [line, <br key={`${i}br`} />];
                 }
+
+                return [line, <br key={`${i}br`} />];
               })}
+              {/* eslint-enable react/no-array-index-key */}
             </Truncate>
           </div>
         )}
@@ -190,7 +199,7 @@ function WorkflowEditPopupComponent({
   };
 
   const renderTemplateEditButton = () => {
-    const redirectToWorkflowEdit = (e: React.MouseEvent) => {
+    const redirectToWorkflowEdit = (e: MouseEvent) => {
       e.preventDefault();
       const redirectUrl = ERoutes.TemplatesEdit.replace(':id', String(workflow.id));
 
@@ -212,7 +221,7 @@ function WorkflowEditPopupComponent({
     );
   };
 
-  const handleRunWorkflow = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleRunWorkflow = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     onRunWorkflow({
       ...workflow,
@@ -222,6 +231,8 @@ function WorkflowEditPopupComponent({
       dueDate: undefined,
     });
   };
+
+  const visibleKickoffFields = kickoffState?.fields.filter((field) => !field.isHidden);
 
   return (
     <div className={styles['popup']}>
@@ -250,9 +261,8 @@ function WorkflowEditPopupComponent({
               className={styles['workflow-name-field']}
               toolipText={formatMessage({ id: 'kickoff.workflow-name-tooltip' })}
               foregroundColor="beige"
-              size="xl"
             />
-            {kickoffState && isArrayWithItems(kickoffState.fields) && (
+            {kickoffState && isArrayWithItems(visibleKickoffFields) && (
               <div className={styles['popup__kickoff']}>
                 <SectionTitle className={styles['section-title']}>
                   {formatMessage({ id: 'template.kick-off-form-title' })}
@@ -264,19 +274,19 @@ function WorkflowEditPopupComponent({
                   </span>
                 )}
                 <div className={styles['kickoff__inputs']}>
-                  {kickoffState.fields.map((field) => (
-                    <ExtraFieldIntl
-                      key={field.apiName}
-                      field={{ ...field }}
-                      editField={handleEditField(field.apiName)}
-                      showDropdown={false}
-                      mode={EExtraFieldMode.ProcessRun}
-                      labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
-                      namePlaceholder={field.name}
-                      descriptionPlaceholder={field.description}
-                      wrapperClassName={styles['kickoff-extra-field']}
-                      accountId={accountId}
-                    />
+                  {visibleKickoffFields.map((field) => (
+                      <ExtraFieldIntl
+                        key={field.apiName}
+                        field={{ ...field }}
+                        editField={handleEditField(field.apiName)}
+                        showDropdown={false}
+                        mode={EExtraFieldMode.ProcessRun}
+                        labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
+                        namePlaceholder={field.name}
+                        descriptionPlaceholder={field.description}
+                        wrapperClassName={styles['kickoff-extra-field']}
+                        accountId={accountId}
+                      />
                   ))}
                 </div>
               </div>

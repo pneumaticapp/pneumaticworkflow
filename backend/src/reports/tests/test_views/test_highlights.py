@@ -12,10 +12,13 @@ from src.generics.messages import (
 )
 from src.processes.enums import (
     FieldType,
+    OwnerType,
     WorkflowEventType,
 )
 from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import Delay
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.events import (
@@ -30,12 +33,201 @@ from src.processes.tests.fixtures import (
     create_test_group,
     create_test_template,
     create_test_user,
-    create_test_workflow,
+    create_test_workflow, create_test_owner, create_test_dataset,
+    create_test_event,
 )
 from src.utils.validation import ErrorCode
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
+
+
+def test_highlights__template_viewer__ok(api_client):
+    # arrange: non-admin viewer sees events from template they can view
+    account = create_test_account()
+    template_owner = create_test_user(
+        account=account,
+        is_account_owner=True,
+    )
+    template = create_test_template(template_owner)
+    workflow = create_test_workflow(
+        template=template, user=template_owner, tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    viewer_user = create_test_user(
+        account=account,
+        email='viewer@test.com',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    TemplateOwner.objects.create(
+        role='viewer',
+        template=template,
+        type=OwnerType.USER,
+        user=viewer_user,
+        account=account,
+    )
+    WorkflowEventService.comment_created_event(
+        text='Comment for viewer',
+        task=task,
+        user=template_owner,
+        after_create_actions=False,
+    )
+    api_client.token_authenticate(viewer_user)
+
+    # act
+    response = api_client.get('/reports/highlights')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['text'] == 'Comment for viewer'
+
+
+def test_highlights__template_owner_not_admin__ok(api_client):
+    # arrange: template owner (not admin, not account owner) can access
+    account = create_test_account()
+    account_owner = create_test_user(
+        account=account,
+        is_account_owner=True,
+    )
+    template = create_test_template(account_owner)
+    template_owner_user = create_test_user(
+        account=account,
+        email='templateowner@test.com',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    TemplateOwner.objects.create(
+        template=template,
+        account=account,
+        type=OwnerType.USER,
+        user_id=template_owner_user.id,
+    )
+    workflow = create_test_workflow(
+        template=template, user=account_owner, tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    WorkflowEventService.comment_created_event(
+        text='Comment for template owner',
+        task=task,
+        user=account_owner,
+        after_create_actions=False,
+    )
+    api_client.token_authenticate(template_owner_user)
+
+    # act
+    response = api_client.get('/reports/highlights')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['text'] == 'Comment for template owner'
+
+
+def test_highlights__template_starter_own_workflow__ok(api_client):
+    account = create_test_account()
+    account_owner = create_test_user(
+        account=account,
+        is_account_owner=True,
+    )
+    template = create_test_template(account_owner)
+
+    starter_user_1 = create_test_user(
+        account=account,
+        email='starter1@test.com',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    starter_user_2 = create_test_user(
+        account=account,
+        email='starter2@test.com',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    TemplateOwner.objects.create(
+        role='starter',
+        template=template,
+        account=account,
+        type=OwnerType.USER,
+        user_id=starter_user_1.id,
+    )
+    TemplateOwner.objects.create(
+        role='starter',
+        template=template,
+        account=account,
+        type=OwnerType.USER,
+        user_id=starter_user_2.id,
+    )
+
+    workflow_1 = create_test_workflow(
+        template=template, user=starter_user_1, tasks_count=1,
+    )
+    task_1 = workflow_1.tasks.get(number=1)
+    WorkflowEventService.comment_created_event(
+        text='Comment for Starter 1 workflow',
+        task=task_1,
+        user=starter_user_1,
+        after_create_actions=False,
+    )
+
+    workflow_2 = create_test_workflow(
+        template=template, user=starter_user_2, tasks_count=1,
+    )
+    task_2 = workflow_2.tasks.get(number=1)
+    WorkflowEventService.comment_created_event(
+        text='Comment for Starter 2 workflow',
+        task=task_2,
+        user=starter_user_2,
+        after_create_actions=False,
+    )
+
+    api_client.token_authenticate(starter_user_1)
+
+    # act
+    response = api_client.get('/reports/highlights')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data[0]['text'] == 'Comment for Starter 1 workflow'
+
+
+def test_highlights__admin_template_starter__ok(api_client):
+    account = create_test_account()
+    admin_starter = create_test_user(
+        account=account,
+        email='admin_starter@test.com',
+        is_account_owner=False,
+        is_admin=True,
+    )
+    template = create_test_template(admin_starter)
+    TemplateOwner.objects.create(
+        role='starter',
+        template=template,
+        account=account,
+        type=OwnerType.USER,
+        user_id=admin_starter.id,
+    )
+
+    workflow = create_test_workflow(
+        template=template, user=admin_starter, tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+    WorkflowEventService.comment_created_event(
+        text='Comment for Admin starter workflow',
+        task=task,
+        user=admin_starter,
+        after_create_actions=False,
+    )
+
+    api_client.token_authenticate(admin_starter)
+
+    # act
+    response = api_client.get('/reports/highlights')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data[0]['text'] == 'Comment for Admin starter workflow'
 
 
 def test__ordering__ok(api_client):
@@ -1085,10 +1277,11 @@ def test__kickoff_field_type_user__ok(api_client):
         is_required=True,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     api_client.token_authenticate(user)
 
-    response = api_client.post(
+    response_run = api_client.post(
         path=f'/templates/{template.id}/run',
         data={
             'name': 'Test name',
@@ -1097,7 +1290,7 @@ def test__kickoff_field_type_user__ok(api_client):
             },
         },
     )
-    workflow = Workflow.objects.get(id=response.data['id'])
+    workflow = Workflow.objects.get(id=response_run.data['id'])
     field = workflow.kickoff_instance.output.first()
     api_client.token_authenticate(user)
 
@@ -1105,6 +1298,7 @@ def test__kickoff_field_type_user__ok(api_client):
     response = api_client.get('/reports/highlights')
 
     # assert
+    assert response_run.status_code == 200
     assert response.status_code == 200
     field_data = response.data[0]['workflow']['kickoff']['output'][0]
     assert field_data['type'] == field.type
@@ -1114,7 +1308,6 @@ def test__kickoff_field_type_user__ok(api_client):
     assert field_data['api_name'] == field.api_name
     # TODO Replace in https://my.pneumatic.app/workflows/18137/
     assert field_data['value'] == user.get_full_name()
-    assert field_data['selections'] == []
     assert field_data['attachments'] == []
     assert field_data['user_id'] == user.id
 
@@ -1282,3 +1475,82 @@ def test__sub_workflow_run__ok(api_client):
     assert data['workflow']['id'] == workflow.id
     assert data['workflow']['template']['id'] == workflow.template.id
     assert data['workflow']['template']['name'] == workflow.template.name
+
+
+def test_complete_task_event__task_field_with_dataset__ok(api_client):
+
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account, items_count=1)
+    dataset_item = dataset.items.get(order=1)
+    workflow = create_test_workflow(user, tasks_count=2, active_task_number=2)
+    task = workflow.tasks.get(number=1)
+    field = TaskField.objects.create(
+        type=FieldType.DROPDOWN,
+        name='dropdown',
+        task=task,
+        value=dataset_item.value,
+        workflow=workflow,
+        account=account,
+        dataset=dataset,
+    )
+    event = create_test_event(
+        workflow=workflow,
+        task=task,
+        type_event=WorkflowEventType.TASK_COMPLETE,
+        user=user,
+    )
+
+    api_client.token_authenticate(user)
+    response = api_client.get('/reports/highlights')
+
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert len(response.data) == 1
+    event_data = response.data[0]
+    assert event_data['id'] == event.id
+    assert event_data['type'] == WorkflowEventType.TASK_COMPLETE
+    field_data = event_data['task']['output'][0]
+    assert field_data['id'] == field.id
+    assert field_data['type'] == FieldType.DROPDOWN
+    assert field_data['value'] == dataset_item.value
+    assert 'selections' not in field_data
+
+
+def test_complete_task_event__kickoff_field_with_dataset__ok(api_client):
+
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account, items_count=1)
+    dataset_item = dataset.items.get(order=1)
+    workflow = create_test_workflow(user, tasks_count=2, active_task_number=2)
+    task = workflow.tasks.get(number=1)
+    field = TaskField.objects.create(
+        type=FieldType.DROPDOWN,
+        name='dropdown',
+        kickoff=workflow.kickoff_instance,
+        value=dataset_item.value,
+        workflow=workflow,
+        account=account,
+        dataset=dataset,
+    )
+    event = create_test_event(
+        workflow=workflow,
+        task=task,
+        type_event=WorkflowEventType.TASK_COMPLETE,
+        user=user,
+    )
+
+    api_client.token_authenticate(user)
+    response = api_client.get('/reports/highlights')
+
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    event_data = response.data[0]
+    assert event_data['id'] == event.id
+    assert event_data['type'] == WorkflowEventType.TASK_COMPLETE
+    field_data = event_data['workflow']['kickoff']['output'][0]
+    assert field_data['id'] == field.id
+    assert field_data['type'] == FieldType.DROPDOWN
+    assert field_data['value'] == dataset_item.value
+    assert 'selections' not in field_data

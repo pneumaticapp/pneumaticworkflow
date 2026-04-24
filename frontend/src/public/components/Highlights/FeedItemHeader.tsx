@@ -70,7 +70,7 @@ export function FeedItemHeader({
 
     const filteredOutputs = outputs.filter((output) => {
       const value = output.type === EExtraFieldType.User ? output.userId || output.groupId : output.value;
-      return value || output.attachments?.length || output?.selections?.some((selection) => selection.isSelected);
+      return value || output.attachments?.length;
     });
 
     return (
@@ -111,7 +111,7 @@ export function FeedItemHeader({
           <div className={styles['header__comment']}>
             <span className={styles['comment__title']}>
               {type === EWorkflowLogEvent.TaskRevert
-                ? messages['workflow-highlights.return-to.returned-task']
+                ? formatMessage({ id: 'task.log-returned' }, { taskName: task?.name })
                 : messages['general.comment']}
             </span>
             <span

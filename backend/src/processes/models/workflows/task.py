@@ -3,7 +3,6 @@ from collections import defaultdict
 from typing import List, Optional, Set, Tuple
 
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 from django.utils import timezone
 
@@ -88,8 +87,6 @@ class Task(
         blank=True,
         help_text='Does not contains markdown',
     )
-
-    search_content = SearchVectorField(null=True)
 
     objects = BaseSoftDeleteManager.from_queryset(TasksQuerySet)()
 
@@ -226,7 +223,6 @@ class Task(
                 api_names.add(raw_performer_template['field']['api_name'])
         if api_names:
             fields_dict = self.workflow.get_fields_as_dict(
-                tasks_filter_kwargs={'task__number__lt': self.number},
                 fields_filter_kwargs={
                     'type': FieldType.USER,
                     'api_name__in': api_names,
@@ -371,7 +367,6 @@ class Task(
 
         if api_names:
             user_fields = self.workflow.get_fields(
-                tasks_filter_kwargs={'task__number__lt': self.number},
                 fields_filter_kwargs={
                     'type': FieldType.USER,
                     'api_name__in': api_names.keys(),

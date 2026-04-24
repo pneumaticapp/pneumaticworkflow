@@ -157,6 +157,8 @@
 .extra-field-file__input--template {
   position: relative;
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
   max-width: 100%;
 }
 

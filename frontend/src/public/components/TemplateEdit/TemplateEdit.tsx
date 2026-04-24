@@ -22,7 +22,7 @@ import { NotificationManager } from '../UI/Notifications';
 import { isArrayWithItems } from '../../utils/helpers';
 import { createOwnerApiName, createPerformerApiName, createTaskApiName, createUUID } from '../../utils/createId';
 import { EMoveDirections } from '../../types/workflow';
-import { ETaskPerformerType, ETemplateOwnerType, ITemplate, ITemplateTask } from '../../types/template';
+import { ETaskPerformerType, ETemplateOwnerRole, ETemplateOwnerType, ITemplate, ITemplateTask } from '../../types/template';
 import { TLoadTemplateVariablesSuccessPayload } from '../../redux/actions';
 import { ETemplateStatus, IAuthUser } from '../../types/redux';
 import { getKickoffConditions } from './TaskForm/Conditions/utils/getKickoffConditions';
@@ -127,10 +127,12 @@ export function TemplateEdit({
     const isCurrentPathIsEdit = checkSomeRouteIsActive(ERoutes.TemplatesEdit);
     const isCreateScenario = isPreviousPathIsCreate && isCurrentPathIsEdit;
     const isLocationChanged = pathName !== prevPathName;
-    const isFirstRender = !prevLocation && !prevTemplate && !prevUsers;
 
-    if (!isCreateScenario && isLocationChanged && !isFirstRender) {
-      initPage();
+    const isFirstRender = !prevLocation && !prevTemplate && !prevUsers;
+    if (!isCreateScenario && isLocationChanged) {
+      if (!isFirstRender) {
+        initPage();
+      }
       return;
     }
 
@@ -225,12 +227,22 @@ export function TemplateEdit({
       ],
       isActive: false,
       finalizable: false,
+      dateUpdated: null,
+      updatedBy: null,
+      isPublic: false,
+      publicUrl: null,
+      publicSuccessUrl: null,
+      isEmbedded: false,
+      embedUrl: null,
+      tasksCount: 1,
+      performersCount: 0,
       owners: getNormalizedTemplateOwners(
         [
           {
             sourceId: String(authUser.id),
             type: ETemplateOwnerType.User,
             apiName: createOwnerApiName(),
+            role: ETemplateOwnerRole.Owner,
           },
         ],
         accessConditions,

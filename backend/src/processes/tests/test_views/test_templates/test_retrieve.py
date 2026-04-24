@@ -1,6 +1,10 @@
 import pytest
+from datetime import timedelta
+
+from django.utils import timezone
 
 from src.accounts.enums import BillingPlanType
+from src.accounts.messages import MSG_A_0035, MSG_A_0037, MSG_A_0041
 from src.accounts.services.user_transfer import (
     UserTransferService,
 )
@@ -9,6 +13,7 @@ from src.accounts.tokens import (
 )
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
+    OwnerRole,
     DueDateRule,
     FieldType,
     OwnerType,
@@ -23,6 +28,8 @@ from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
     create_test_group,
+    create_test_not_admin,
+    create_test_owner,
     create_test_template,
     create_test_user,
 )
@@ -46,10 +53,12 @@ class TestRetrieveTemplate:
             {
                 'type': OwnerType.USER,
                 'source_id': str(user.id),
+                'role': OwnerRole.OWNER,
             },
             {
                 'type': OwnerType.USER,
                 'source_id': str(user2.id),
+                'role': OwnerRole.OWNER,
             },
         ]
         request_data = {
@@ -263,6 +272,7 @@ class TestRetrieveTemplate:
                 'type': OwnerType.USER,
                 'source_id': str(user.id),
                 'api_name': 'owner-xcbjag',
+                'role': OwnerRole.OWNER,
             },
         ]
         request_data = {
@@ -465,11 +475,13 @@ class TestRetrieveTemplate:
                         'type': OwnerType.USER,
                         'source_id': account_1_owner.id,
                         'api_name': 'user-1',
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user_to_transfer.id,
                         'api_name': 'user-2',
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': False,
@@ -595,10 +607,12 @@ class TestRetrieveTemplate:
             {
                 'type': OwnerType.USER,
                 'source_id': str(user.id),
+                'role': OwnerRole.OWNER,
             },
             {
                 'type': OwnerType.USER,
                 'source_id': str(user2.id),
+                'role': OwnerRole.OWNER,
             },
         ]
         request_data = {
@@ -638,3 +652,114 @@ class TestRetrieveTemplate:
         assert len(raw_performers_data) == 1
         assert raw_performers_data[0]['type'] == PerformerType.GROUP
         assert raw_performers_data[0]['source_id'] == str(group.id)
+
+
+def test_retrieve__unauthenticated__unauthorized(api_client):
+
+    """Unauthenticated user → 401"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+
+    # act
+    response = api_client.get(f'/templates/{template.id}')
+
+    # assert
+    assert response.status_code == 401
+
+
+def test_retrieve__expired_subscription__permission_denied(api_client):
+
+    """Expired subscription → 403"""
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.PREMIUM,
+        plan_expiration=timezone.now() - timedelta(days=1),
+    )
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}')
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == MSG_A_0035
+
+
+def test_retrieve__billing_plan_limit__permission_denied(api_client):
+
+    """Billing plan limit exceeded → 403"""
+
+    # arrange
+    account = create_test_account(plan=None)
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}')
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == MSG_A_0041
+
+
+def test_retrieve__users_overlimited__permission_denied(api_client):
+
+    """Users over limit → 403"""
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.PREMIUM,
+        max_users=1,
+    )
+    user = create_test_owner(account=account)
+    create_test_not_admin(
+        account=account,
+        email='extra@pneumatic.app',
+    )
+    account.active_users = 2
+    account.save()
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(f'/templates/{template.id}')
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == MSG_A_0037
+
+
+def test_retrieve__not_found__not_found(api_client):
+
+    """Template not found → 404"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user=user)
+    nonexistent_id = 999999
+
+    # act
+    response = api_client.get(f'/templates/{nonexistent_id}')
+
+    # assert
+    assert response.status_code == 404

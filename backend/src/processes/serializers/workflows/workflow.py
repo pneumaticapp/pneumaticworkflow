@@ -5,11 +5,12 @@ from django.contrib.auth import get_user_model
 from django.core.exceptions import ObjectDoesNotExist
 from django.core.validators import MinValueValidator
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import Q, Prefetch
 from django.utils import timezone
 from rest_framework import serializers
 from rest_framework.serializers import ValidationError
 
+from src.datasets.models import DatasetItem
 from src.generics.fields import (
     AccountPrimaryKeyRelatedField,
     TimeStampField,
@@ -21,11 +22,16 @@ from src.generics.mixins.serializers import (
 )
 from src.generics.paginations import DefaultPagination
 from src.processes.enums import (
+    OwnerRole,
+    OwnerType,
     TaskStatus,
     WorkflowApiStatus,
     WorkflowOrdering,
     WorkflowStatus,
 )
+from src.processes.models.workflows.kickoff import KickoffValue
+from src.processes.models.workflows.fields import FieldSelection, TaskField
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.messages import workflow as messages
 from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
@@ -213,11 +219,6 @@ class WorkflowUpdateSerializer(
     is_urgent = serializers.BooleanField(required=False)
     due_date_tsp = TimeStampField(required=False, allow_null=True)
 
-    def validate_due_date(self, value):
-        if value and value <= timezone.now():
-            raise ValidationError(messages.MSG_PW_0051)
-        return value
-
     def validate_due_date_tsp(self, value):
         if value and value <= timezone.now():
             raise ValidationError(messages.MSG_PW_0051)
@@ -305,7 +306,7 @@ class WorkflowTaskCompleteSerializer(
             Q(id=task_id) | Q(api_name=task_api_name),
         ).first()
         if task is None:
-            raise ValidationError(messages.MSG_PW_0076)
+            raise ValidationError(messages.MSG_PW_0077)
         if not task.is_active:
             raise ValidationError(messages.MSG_PW_0086)
 
@@ -379,6 +380,7 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
             'tasks',
             'kickoff',
             'due_date_tsp',
+            'is_read_only_viewer',
         )
 
     template = TemplateDetailsSerializer()
@@ -394,9 +396,30 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
         source='date_completed',
         read_only=True,
     )
+    is_read_only_viewer = serializers.SerializerMethodField()
 
     def get_kickoff(self, instance: Workflow):
-        kickoff = instance.kickoff_instance
+        kickoff = (
+            KickoffValue.objects
+            .filter(workflow=self.instance)
+            .prefetch_related(
+                Prefetch(
+                    lookup='output',
+                    queryset=TaskField.objects.all().prefetch_related(
+                        Prefetch(
+                            lookup='selections',
+                            queryset=FieldSelection.objects.order_by('id'),
+                            to_attr='selections_values',
+                        ),
+                        Prefetch(
+                            'dataset__items',
+                            queryset=DatasetItem.objects.order_by('order'),
+                            to_attr='dataset_values',
+                        ),
+                    ),
+                ),
+            ).first()
+        )
         if kickoff:
             return KickoffValueInfoSerializer(kickoff).data
         return None
@@ -404,6 +427,65 @@ class WorkflowDetailsSerializer(serializers.ModelSerializer):
     def get_tasks(self, instance: Workflow):
         tasks = instance.tasks.exclude(status=TaskStatus.SKIPPED)
         return WorkflowCurrentTaskSerializer(instance=tasks, many=True).data
+
+    def get_is_read_only_viewer(self, instance: Workflow):
+        """
+        Determine if user has only read-only access.
+        Read-only access applies to:
+        - Template viewers (regardless of admin status)
+        - Template starters
+        - Non-admin template owners
+        - Workflow owners who are no longer template owners (were removed)
+
+        Full access only for:
+        - Account owners
+        - Admin users who are CURRENTLY template owners
+        - Workflow members (performers on tasks)
+        """
+        user = self.context.get('user')
+        if not user:
+            return False
+
+        template = instance.template
+
+        # Account owners always have full access
+        if user.is_account_owner:
+            return False
+
+        # Check if user is actual performer on any task in this workflow
+        # (not just workflow.members which includes template owners)
+        is_performer = TaskPerformer.objects.filter(
+            task__workflow=instance,
+            task__account_id=user.account_id,
+        ).filter(
+            Q(user_id=user.id) |
+            Q(group__users__id=user.id),
+        ).exists()
+        if is_performer:
+            return False
+
+        if not template:
+            return True
+
+        # Check CURRENT template owner status (not workflow.owners)
+        is_template_owner = template.owners.filter(
+            Q(
+                type=OwnerType.USER,
+                user_id=user.id,
+                role=OwnerRole.OWNER,
+                is_deleted=False,
+            )
+            | Q(
+                type=OwnerType.GROUP,
+                group__users__id=user.id,
+                role=OwnerRole.OWNER,
+                is_deleted=False,
+            ),
+        ).exists()
+
+        # Only admin template owners have full access.
+        # All other cases: read-only (non-admin owners, viewers, starters).
+        return not (is_template_owner and user.is_admin)
 
 
 class WorkflowNotificationSerializer(serializers.ModelSerializer):

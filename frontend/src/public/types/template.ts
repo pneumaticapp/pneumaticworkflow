@@ -14,6 +14,8 @@ export interface ITemplate {
   description: string;
   isActive: boolean;
   finalizable: boolean;
+  completionNotification: boolean;
+  reminderNotification: boolean;
   dateUpdated: string | null;
   updatedBy: number | null;
   owners: ITemplateOwner[];
@@ -29,11 +31,21 @@ export interface ITemplate {
   performersCount: number;
 }
 
+export enum ETemplateOwnerRole {
+  Owner = 'owner',
+  Viewer = 'viewer',
+  Starter = 'starter',
+}
+
 export interface ITemplateOwner {
   apiName: string;
   sourceId: string;
   type: ETemplateOwnerType;
+  role: ETemplateOwnerRole;
 }
+
+export type ITemplateViewer = ITemplateOwner;
+export type ITemplateStarter = ITemplateOwner;
 
 export type TTransformedTask =
   | { apiName: string; name: string; needSteName: null; fields: TSystemField[] }
@@ -97,6 +109,12 @@ export enum ETemplateOwnerType {
   User = 'user',
   UserGroup = 'group',
 }
+
+export const TemplateViewerType = ETemplateOwnerType;
+export type TTemplateViewerType = ETemplateOwnerType;
+
+export const TemplateStarterType = ETemplateOwnerType;
+export type TTemplateStarterType = ETemplateOwnerType;
 
 export enum ETaskPerformerType {
   User = 'user',
@@ -173,6 +191,7 @@ export interface ITemplateListItem {
   performersCount: number;
   owners: number[];
   kickoff: IKickoff | null;
+  isEditable: boolean;
 }
 
 export interface ITableViewFields extends IExtraField {
@@ -189,10 +208,12 @@ export interface IExtraField {
   apiName: string;
   description?: string;
   isRequired?: boolean;
+  isHidden?: boolean;
   name: string;
   type: EExtraFieldType;
   value?: TExtraFieldValue;
-  selections?: IExtraFieldSelection[];
+  selections?: IExtraFieldSelection[] | string[];
+  dataset?: number | null;
   attachments?: TUploadedFile[];
   order: number;
   userId: number | null;
@@ -296,3 +317,12 @@ export type TTemplatePreset = {
 };
 
 export type TAddTemplatePreset = Omit<TTemplatePreset, 'id' | 'author' | 'dateCreatedTsp'>;
+
+export enum ETemplatesTab {
+  Templates = 'templates',
+  Datasets = 'datasets',
+}
+
+export interface ITemplatesLayoutProps {
+  children: JSX.Element;
+}

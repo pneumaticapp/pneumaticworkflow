@@ -10,7 +10,9 @@ MSG_PT_0004 = lambda name: _(
     'Some fields referenced in the conditions of task "{name}" do not exist.',
 ).format(name=name)
 
-MSG_PT_0005 = _('Selections can\'t be empty on radio or checkbox fields.')
+MSG_PT_0005 = _(
+    'You must provide either a "selections" or a "dataset" for the field.',
+)
 MSG_PT_0006 = _('A field with a type \'User\' should be required.')
 MSG_PT_0007 = _('Workflow template name is empty.')
 MSG_PT_0008 = _('Some of fields in "workflow template name" don\'t exist.')
@@ -105,12 +107,12 @@ MSG_PT_0044 = lambda task, operator, field_type: format_lazy(
     operator=operator,
     field_type=field_type,
 )
-MSG_PT_0045 = lambda task, selection_api_name: format_lazy(
+MSG_PT_0045 = lambda task, selection_value: format_lazy(
     _(
-        'Task "{task}": selection "{selection_api_name}" doesn\'t exist '
+        'Task "{task}": selection "{selection_value}" doesn\'t exist '
         'or can\'t be used in this condition.',
     ),
-    selection_api_name=selection_api_name,
+    selection_value=selection_value,
     task=task,
 )
 # Translators: Condition operator not provided
@@ -179,9 +181,9 @@ MSG_PT_0053 = lambda name, api_name: format_lazy(
 )
 MSG_PT_0054 = lambda name, field_name, api_name, value: format_lazy(
     _(
-        'Task "{name}": Option "{value}" of output field "{field_name}" '
-        'contains a duplicate api_name "{api_name}". '
-        'Change the api_name or recreate the option.',
+        'Task "{name}": The output field "{field_name}" '
+        'contains a duplicate value in option "{value}". '
+        'Please use a unique value.',
     ),
     name=name,
     field_name=field_name,
@@ -277,4 +279,8 @@ MSG_PT_0068 = lambda name: format_lazy(
         'Please change the "check if" condition.',
     ),
     name=name,
+)
+MSG_PT_0069 = _('Permission denied. You do not have access to this template.')
+MSG_PT_0070 = _(
+    'Permission denied. You are not a template owner or viewer.',
 )

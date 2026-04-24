@@ -12,6 +12,7 @@ export const templatesList: ITemplateListItem[] = [
     kickoff: null,
     isActive: true,
     isPublic: false,
+    isEditable: true,
   },
   {
     id: 2,
@@ -22,6 +23,7 @@ export const templatesList: ITemplateListItem[] = [
     kickoff: null,
     isActive: true,
     isPublic: false,
+    isEditable: true,
   },
   {
     id: 3,
@@ -32,6 +34,7 @@ export const templatesList: ITemplateListItem[] = [
     kickoff: null,
     isActive: true,
     isPublic: false,
+    isEditable: true,
   },
   {
     id: 4,
@@ -42,6 +45,7 @@ export const templatesList: ITemplateListItem[] = [
     kickoff: null,
     isActive: true,
     isPublic: false,
+    isEditable: true,
   },
   {
     id: 5,
@@ -52,6 +56,7 @@ export const templatesList: ITemplateListItem[] = [
     kickoff: null,
     isActive: true,
     isPublic: false,
+    isEditable: true,
   },
   {
     id: 6,
@@ -62,6 +67,7 @@ export const templatesList: ITemplateListItem[] = [
     kickoff: null,
     isActive: true,
     isPublic: false,
+    isEditable: true,
   },
 ];
 
@@ -70,6 +76,8 @@ const DEFAULT_TEMPLATE: ITemplate = {
   name: 'Customer study process',
   description: '',
   finalizable: true,
+  completionNotification: false,
+  reminderNotification: false,
   isActive: true,
   owners: [],
   tasks: [],

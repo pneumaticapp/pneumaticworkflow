@@ -1,12 +1,17 @@
 from datetime import timedelta
+from django.urls import reverse
+from rest_framework import status
 
 import pytest
 from django.utils import timezone
 
+from src.accounts.enums import BillingPlanType
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     ConditionAction,
     FieldType,
+    OwnerRole,
+    OwnerType,
     PredicateOperator,
     WorkflowStatus,
 )
@@ -20,6 +25,7 @@ from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
 )
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.workflows.task import Delay
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.exceptions import (
@@ -32,6 +38,7 @@ from src.processes.tests.fixtures import (
     create_task_returned_webhook,
     create_test_account,
     create_test_admin,
+    create_test_not_admin,
     create_test_owner,
     create_test_template,
     create_test_user,
@@ -337,7 +344,7 @@ def test_return_to__ok(mocker, api_client):
     task_3 = workflow.tasks.get(number=3)
     assert task_3.is_pending
     revert_workflow_event_mock.assert_called_once_with(
-        task=task_3,
+        task=task_1,
         user=user,
     )
     start_workflow_event_mock.assert_called_once_with(task_1)
@@ -424,6 +431,7 @@ def test_return_to__skip_condition__validation_error(
         type=FieldType.USER,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     template_task_1 = template.tasks.get(number=1)
     template_task_2 = template.tasks.get(number=2)
@@ -673,6 +681,7 @@ def test_return_to__task_skipped_by_kickoff_field__update_status_to_pending(
         type=FieldType.CHECKBOX,
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     selection_template = FieldTemplateSelection.objects.create(
         field_template=field_template,
@@ -694,7 +703,7 @@ def test_return_to__task_skipped_by_kickoff_field__update_status_to_pending(
         operator=PredicateOperator.EQUAL,
         field_type=field_template.type,
         field=field_template.api_name,
-        value=selection_template.api_name,
+        value=selection_template.value,
         template=template,
     )
 
@@ -706,7 +715,7 @@ def test_return_to__task_skipped_by_kickoff_field__update_status_to_pending(
         data={
             'name': 'Test name',
             'kickoff': {
-                field_template.api_name: [selection_template.api_name],
+                field_template.api_name: [selection_template.value],
             },
         },
     )
@@ -796,7 +805,7 @@ def test_return_to__completed_workflow__ok(
     send_removed_task_notification_mock.assert_not_called()
     send_new_task_notification_mock.assert_called_once()
     delete_task_guest_cache_mock.assert_not_called()
-    revert_task_webhook_mock.assert_called_once()
+    revert_task_webhook_mock.assert_not_called()
 
 
 @pytest.mark.parametrize('status', WorkflowStatus.RUNNING_STATUSES)
@@ -868,3 +877,183 @@ def test_return_to__sub_workflow_completed__ok(api_client):
     assert task_1.is_active
     task_2.refresh_from_db()
     assert task_2.is_pending
+
+
+def test_return_to__not_authenticated__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task = workflow.tasks.get(number=1)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/return-to',
+        data={'task_api_name': task.api_name},
+    )
+
+    # assert
+    assert response.status_code == 401
+
+
+def test_return_to__expired_subscription__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.UNLIMITED,
+        plan_expiration=timezone.now() - timedelta(hours=1),
+    )
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task = workflow.tasks.get(number=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/return-to',
+        data={'task_api_name': task.api_name},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_return_to__billing_plan__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(plan=None)
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task = workflow.tasks.get(number=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/return-to',
+        data={'task_api_name': task.api_name},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_return_to__not_admin__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    not_admin = create_test_not_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task = workflow.tasks.get(number=1)
+    api_client.token_authenticate(not_admin)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/return-to',
+        data={'task_api_name': task.api_name},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_return_to__not_owner__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    admin = create_test_admin(
+        account=account,
+        email='admin@test.test',
+    )
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task = workflow.tasks.get(number=1)
+    api_client.token_authenticate(admin)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/return-to',
+        data={'task_api_name': task.api_name},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_return_to__users_overlimited__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.PREMIUM,
+        max_users=1,
+    )
+    owner = create_test_owner(account=account)
+    create_test_not_admin(account=account)
+    account.active_users = 2
+    account.save()
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task = workflow.tasks.get(number=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/return-to',
+        data={'task_api_name': task.api_name},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_return_to__not_found__not_found(api_client):
+
+    # arrange
+    user = create_test_owner()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        '/workflows/99999999/return-to',
+        data={'task_api_name': 'some-task'},
+    )
+
+    # assert
+    assert response.status_code == 404
+
+
+def test_workflow_return_to__template_starter_own_workflow__forbidden(
+    api_client,
+):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    workflow = create_test_workflow(template=template, user=starter_user)
+    task = workflow.tasks.order_by('number').first()
+
+    api_client.token_authenticate(starter_user)
+    url = reverse('workflows-return-to', args=[workflow.id])
+    data = {'task_api_name': task.api_name}
+
+    # act
+    response = api_client.post(url, data)
+
+    # assert
+    assert response.status_code == status.HTTP_403_FORBIDDEN

@@ -1,4 +1,5 @@
 import pytest
+from django.conf import settings
 
 from src.notifications.enums import (
     NotificationMethod,
@@ -31,9 +32,13 @@ def test_send_reset_password_notification__call_all_services__ok(mocker):
         attribute='__init__',
         return_value=None,
     )
+    token = 'some_token'
+    get_token_mock = mocker.patch(
+        'src.accounts.tokens.ResetPasswordToken.for_user_id',
+        return_value=token,
+    )
     email_service_mock = mocker.patch(
-        'src.notifications.services.email.'
-        'EmailService.send_reset_password',
+        'src.notifications.services.email.EmailService.send_reset_password',
     )
 
     # act
@@ -46,12 +51,15 @@ def test_send_reset_password_notification__call_all_services__ok(mocker):
     )
 
     # assert
+    get_token_mock.assert_called_once_with(user.id)
     email_service_init_mock.assert_called_once_with(
         logo_lg=account.logo_lg,
         account_id=account.id,
         logging=account.log_api_requests,
     )
     email_service_mock.assert_called_once_with(
+        link=f'{settings.FRONTEND_URL}/auth/reset-password/?token={token}',
+        token=token,
         user_id=user.id,
         user_email=email,
         sync=True,
@@ -68,6 +76,11 @@ def test_send_reset_password_notification__ok(mocker):
     send_notification_mock = mocker.patch(
         'src.notifications.tasks._send_notification',
     )
+    token = 'some_token'
+    get_token_mock = mocker.patch(
+        'src.accounts.tokens.ResetPasswordToken.for_user_id',
+        return_value=token,
+    )
 
     # act
     _send_reset_password_notification(
@@ -79,6 +92,7 @@ def test_send_reset_password_notification__ok(mocker):
     )
 
     # assert
+    get_token_mock.assert_called_once_with(user.id)
     send_notification_mock.assert_called_once_with(
         logging=account.log_api_requests,
         method_name=NotificationMethod.reset_password,
@@ -86,5 +100,7 @@ def test_send_reset_password_notification__ok(mocker):
         user_email=email,
         logo_lg=logo,
         account_id=account.id,
+        link=f'{settings.FRONTEND_URL}/auth/reset-password/?token={token}',
+        token=token,
         sync=True,
     )

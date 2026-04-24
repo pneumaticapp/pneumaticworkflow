@@ -1,4 +1,5 @@
-import React, { Ref, useCallback, useMemo } from 'react';
+import * as React from 'react';
+import { Ref, useCallback, useMemo } from 'react';
 import classnames from 'classnames';
 import { injectIntl, IntlShape } from 'react-intl';
 
@@ -46,7 +47,7 @@ interface IExtraFieldProps extends IWorkflowExtraFieldProps {
 function ExtraField(props: IExtraFieldProps) {
   const {
     field,
-    field: { apiName, isRequired = false },
+    field: { apiName, isRequired = false, isHidden = false },
     fieldsCount,
     showDropdown = true,
     deleteField,
@@ -148,18 +149,27 @@ function ExtraField(props: IExtraFieldProps) {
     return isRequiredDisabledMap[field.type];
   };
 
+  const getDropdownClassName = () => {
+    return classnames(
+      styles['kick-off-input__dropdown'],
+      (field.type === EExtraFieldType.Checkbox || field.type === EExtraFieldType.Radio) && styles['kick-off-input__dropdown_choices'],
+      field.type === EExtraFieldType.Creatable && styles['kick-off-input__dropdown_creatable']
+    );
+  };
+
   return (
     <div className={getFieldClassName()}>
       {renderField()}
 
       {showDropdown && !isDisabled && (
-        <div className={styles['kick-off-input__dropdown']}>
+        <div className={getDropdownClassName()}>
           <ExtraFieldDropdown
             isFirstItem={isFirstItem}
             isLastItem={isLastItem}
             apiName={apiName}
             isRequired={isRequired}
             isRequiredDisabled={getIsRequiredDisabled()}
+            isHidden={isHidden}
             onEditField={editField}
             onMoveFieldUp={handleMoveFieldUp}
             onMoveFieldDown={handleMoveFieldDown}

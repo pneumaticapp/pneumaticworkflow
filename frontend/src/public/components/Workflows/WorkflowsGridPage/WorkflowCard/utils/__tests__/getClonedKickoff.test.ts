@@ -278,16 +278,8 @@ const expectedKickoff = {
       apiName: 'checkboxes-989',
       value: [],
       selections: [
-        {
-          value: 'value1',
-          isSelected: false,
-          apiName: 'selection-vin9ak',
-        },
-        {
-          value: 'value2',
-          isSelected: false,
-          apiName: 'selection-6r2pcy',
-        },
+        'value1',
+        'value2',
       ],
       attachments: [],
       order: 3,
@@ -303,16 +295,8 @@ const expectedKickoff = {
       apiName: 'radios-990',
       value: null,
       selections: [
-        {
-          value: '1',
-          isSelected: false,
-          apiName: 'selection-33cchr',
-        },
-        {
-          value: '2',
-          isSelected: false,
-          apiName: 'selection-709cjo',
-        },
+        '1',
+        '2',
       ],
       attachments: [],
       order: 2,

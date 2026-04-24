@@ -6,6 +6,7 @@ from django.core.exceptions import (
     ValidationError as ValidationCoreError,
 )
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 from rest_framework.serializers import (
     BooleanField,
@@ -30,8 +31,10 @@ from src.generics.mixins.serializers import (
 from src.generics.validators import NoSchemaURLValidator
 from src.processes.consts import TEMPLATE_NAME_LENGTH
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     PerformerType,
+    SystemVariable,
     TemplateOrdering,
     TemplateType,
     WorkflowApiStatus, TaskStatus,
@@ -120,6 +123,8 @@ class TemplateSerializer(
             'updated_by',
             'date_updated',
             'date_updated_tsp',
+            'reminder_notification',
+            'completion_notification',
         )
         create_or_update_fields = {
             'name',
@@ -136,12 +141,14 @@ class TemplateSerializer(
             'type',
             'generic_name',
             'account',
+            'reminder_notification',
+            'completion_notification',
         }
 
     name = CharField(required=True, max_length=TEMPLATE_NAME_LENGTH)
     description = CharField(allow_blank=True, default='')
     updated_by = IntegerField(read_only=True, source='updated_by_id')
-    date_updated = DateTimeField(read_only=True)
+    date_updated = DateTimeField(read_only=True)  # TODO Deprecated
     owners = TemplateOwnerSerializer(many=True, required=False)
     kickoff = KickoffSerializer(required=False)
     tasks = TaskTemplateSerializer(many=True, required=False)
@@ -296,7 +303,7 @@ class TemplateSerializer(
         if not api_names_in_name:
             return
 
-        sys_vars = {'template-name', 'date', 'workflow-id'}
+        sys_vars = SystemVariable.WORKFLOW_NAME_VARS
         sys_vars_is_used = bool(api_names_in_name & sys_vars)
         api_names_in_name -= sys_vars
         available_fields = self._get_raw_fields_from_kickoff(data)
@@ -368,16 +375,27 @@ class TemplateSerializer(
                 name='owners',
             )
 
-        count_new_owners_ids = (
-            len(self.new_users_owners_ids) + len(self.new_groups_owners_ids)
+        # A duplicate is the same entity in the same role twice.
+        # A user/group legitimately appearing in multiple different roles
+        # produces multiple entries in owners_data but unique (id, role) pairs.
+        count_unique_owner_role_pairs = (
+            len(self.new_users_owner_role_pairs)
+            + len(self.new_groups_owner_role_pairs)
         )
-        if len(self.owners_data) != count_new_owners_ids:
+        if len(self.owners_data) != count_unique_owner_role_pairs:
             self.raise_validation_error(
                 message=messages.MSG_PT_0057,
                 name='owners',
             )
-        all_users = self.new_users_owners_ids | self.users_in_groups_owners_ids
-        if self.context['user'].id not in all_users:
+
+        # Verify the current user appears as an actual owner (role='owner'),
+        # NOT merely as a viewer or starter. Using role-scoped id sets prevents
+        # a request that lists the current user only as viewer/starter from
+        # passing, which would leave the template with zero real owners.
+        actual_owner_users = (
+            self.new_users_owner_ids | self.users_in_groups_owner_ids
+        )
+        if self.context['user'].id not in actual_owner_users:
             self.raise_validation_error(
                 message=messages.MSG_PT_0018,
                 name='owners',
@@ -507,6 +525,8 @@ class TemplateSerializer(
 
     def _set_constances(self, data: Dict[str, Any]):
         self.owners_data = data.get('owners', [])
+        # Unique user ids (regardless of role) — used for account membership
+        # checks and for verifying that the current user is among owners.
         self.new_users_owners_ids = {
             int(owner.get('source_id'))
             for owner in self.owners_data
@@ -519,9 +539,39 @@ class TemplateSerializer(
             if owner.get('type') == OwnerType.GROUP
             and owner.get('source_id') is not None
         }
-        self.users_in_groups_owners_ids = (
+        # Unique (source_id, role) pairs per type — used for duplicate
+        # detection. A user/group may appear in multiple roles, but the
+        # same (entity, role) combination is a duplicate.
+        self.new_users_owner_role_pairs = {
+            (int(owner.get('source_id')), owner.get('role'))
+            for owner in self.owners_data
+            if owner.get('type') == OwnerType.USER
+            and owner.get('source_id') is not None
+        }
+        self.new_groups_owner_role_pairs = {
+            (int(owner.get('source_id')), owner.get('role'))
+            for owner in self.owners_data
+            if owner.get('type') == OwnerType.GROUP
+            and owner.get('source_id') is not None
+        }
+        self.new_users_owner_ids = {
+            int(owner.get('source_id'))
+            for owner in self.owners_data
+            if owner.get('type') == OwnerType.USER
+            and owner.get('source_id') is not None
+            and owner.get('role') == OwnerRole.OWNER
+        }
+        self.new_groups_owner_ids = {
+            int(owner.get('source_id'))
+            for owner in self.owners_data
+            if owner.get('type') == OwnerType.GROUP
+            and owner.get('source_id') is not None
+            and owner.get('role') == OwnerRole.OWNER
+        }
+        # Users that belong specifically to groups with role='owner'
+        self.users_in_groups_owner_ids = (
             UserModel.objects
-            .get_users_in_groups(group_ids=self.new_groups_owners_ids)
+            .get_users_in_groups(group_ids=self.new_groups_owner_ids)
             .user_ids_set()
         )
         self.in_account_user_ids = set(
@@ -661,6 +711,9 @@ class TemplateSerializer(
         )
 
         if instance.is_active:
+            instance.refresh_from_db()
+            if getattr(instance, '_prefetched_objects_cache', None):
+                instance._prefetched_objects_cache = {}
             version_service = TemplateVersioningService(
                 schema=TemplateSchemaV1,
             )
@@ -748,18 +801,48 @@ class TemplateListSerializer(ModelSerializer):
             'is_embedded',
             'description',
             'kickoff',
+            'is_editable',
         )
 
     owners = SerializerMethodField()
     kickoff = SerializerMethodField()
     tasks_count = IntegerField(read_only=True)
     workflows_count = IntegerField(read_only=True)
+    is_editable = SerializerMethodField()
 
     def get_owners(self, instance: Template):
         return TemplateOwnerSerializer(instance.owners, many=True).data
 
     def get_kickoff(self, instance: Template):
         return KickoffListSerializer(instance.kickoff, many=True).data[0]
+
+    def get_is_editable(self, instance: Template) -> bool:
+        """
+        Check if current user can edit this template.
+        Only admin users who are template owners can edit.
+        Non-admin owners have viewer-level access only.
+        """
+        user = self.context.get('user')
+        if not user:
+            return False
+        if user.is_account_owner:
+            return True
+        if not user.is_admin:
+            return False
+        return instance.owners.filter(
+            Q(
+                role=OwnerRole.OWNER,
+                type=OwnerType.USER,
+                user_id=user.id,
+                is_deleted=False,
+            )
+            | Q(
+                role=OwnerRole.OWNER,
+                type=OwnerType.GROUP,
+                group__users__id=user.id,
+                is_deleted=False,
+            ),
+        ).exists()
 
 
 class TemplateOnlyFieldsSerializer(ModelSerializer):

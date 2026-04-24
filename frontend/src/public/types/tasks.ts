@@ -62,6 +62,8 @@ export interface ITask {
   checklists: TTaskChecklists;
   status?: ETaskStatus;
   revertTasks: ITaskRevertTask[];
+  helpText?: string | null;
+  isReadOnlyViewer?: boolean;
 }
 
 export type TTaskChecklists = {

@@ -30,7 +30,7 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_template,
-    create_test_user,
+    create_test_user, create_test_owner, create_test_dataset,
 )
 from src.utils.validation import ErrorCode
 
@@ -60,6 +60,7 @@ class TestRunPublicTemplate:
             kickoff=template.kickoff_instance,
             is_required=True,
             template=template,
+            account=user.account,
         )
         user_field_template = FieldTemplate.objects.create(
             order=2,
@@ -68,6 +69,7 @@ class TestRunPublicTemplate:
             kickoff=template.kickoff_instance,
             is_required=True,
             template=template,
+            account=user.account,
         )
         date_field_template = FieldTemplate.objects.create(
             order=3,
@@ -76,6 +78,7 @@ class TestRunPublicTemplate:
             kickoff=template.kickoff_instance,
             is_required=True,
             template=template,
+            account=user.account,
         )
         user_ip = '127.0.0.1'
         mocker.patch(
@@ -180,6 +183,7 @@ class TestRunPublicTemplate:
             kickoff=template.kickoff_instance,
             is_required=True,
             template=template,
+            account=user.account,
         )
         user_ip = '127.0.0.1'
         mocker.patch(
@@ -229,6 +233,75 @@ class TestRunPublicTemplate:
         assert number_field.value == number_field_value
         assert number_field.is_required is True
 
+    def test_run__field_with_dataset__ok(
+        self,
+        mocker,
+        api_client,
+    ):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_owner(account=account)
+        dataset = create_test_dataset(account=account, items_count=1)
+        dataset_item = dataset.items.get(order=1)
+        template = create_test_template(
+            user=user,
+            is_active=True,
+            is_public=True,
+            tasks_count=1,
+        )
+        field_template = FieldTemplate.objects.create(
+            name='Checkbox',
+            type=FieldType.CHECKBOX,
+            kickoff=template.kickoff_instance,
+            template=template,
+            account=account,
+            dataset=dataset,
+        )
+        user_ip = '127.0.0.1'
+        mocker.patch(
+            'src.processes.views.public.template.'
+            'PublicTemplateViewSet.get_user_ip',
+            return_value=user_ip,
+        )
+        auth_header_value = f'Token {template.public_id}'
+        token = PublicToken(template.public_id)
+        mocker.patch(
+            'src.authentication.services.public_auth.'
+            'PublicAuthService.get_token',
+            return_value=token,
+        )
+        mocker.patch(
+            'src.authentication.services.public_auth.'
+            'PublicAuthService.get_template',
+            return_value=template,
+        )
+        settings_mock = mocker.patch(
+            'src.processes.views.public.template.settings',
+        )
+        settings_mock.PROJECT_CONF = {'CAPTCHA': True}
+
+        # act
+        response = api_client.post(
+            path='/templates/public/run',
+            data={
+                'captcha': 'skip',
+                'fields': {
+                    field_template.api_name: [dataset_item.value],
+                },
+            },
+            **{'X-Public-Authorization': auth_header_value},
+        )
+
+        # assert
+        assert response.status_code == 200
+        assert response.data['redirect_url'] is None
+        workflow = Workflow.objects.get(template=template)
+        field = workflow.kickoff_instance.output.get(
+            api_name=field_template.api_name,
+        )
+        assert field.value == dataset_item.value
+
     def test_run__string_abbreviation_after_insert_fields_vars__ok(
         self,
         mocker,
@@ -250,6 +323,7 @@ class TestRunPublicTemplate:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name,
+            account=user.account,
         )
         wf_name_template = 'a' * (WORKFLOW_NAME_LENGTH - 4)
         wf_name_template += '{{%s}}' % field_api_name
@@ -331,6 +405,7 @@ class TestRunPublicTemplate:
             task=template_task,
             is_required=True,
             template=template,
+            account=user.account,
         )
         user_field_template = FieldTemplate.objects.create(
             order=2,
@@ -339,6 +414,7 @@ class TestRunPublicTemplate:
             task=template_task,
             is_required=True,
             template=template,
+            account=user.account,
         )
         user_ip = '127.0.0.1'
         mocker.patch(
@@ -706,6 +782,7 @@ class TestRunPublicTemplate:
             is_required=False,
             api_name='text-field-1',
             template=template,
+            account=user.account,
         )
         auth_header_value = f'Token {template.public_id}'
         token = PublicToken(template.public_id)
@@ -780,6 +857,7 @@ class TestRunPublicTemplate:
             kickoff=template.kickoff_instance,
             is_required=True,
             template=template,
+            account=user.account,
         )
         auth_header_value = f'Token {template.public_id}'
         token = PublicToken(template.public_id)
@@ -840,6 +918,7 @@ class TestRunPublicTemplate:
             is_required=True,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
 
         condition_template = ConditionTemplate.objects.create(
@@ -925,6 +1004,7 @@ class TestRunPublicTemplate:
             is_required=True,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
 
         condition_template = ConditionTemplate.objects.create(
@@ -1144,6 +1224,7 @@ class TestRunPublicTemplate:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name,
+            account=user.account,
         )
         wf_name_template = 'Feedback from {{%s}} {{ date }}' % field_api_name
         template.wf_name_template = wf_name_template
@@ -1236,6 +1317,7 @@ class TestRunPublicTemplate:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name_1,
+            account=user.account,
         )
         FieldTemplate.objects.create(
             name='User',
@@ -1244,6 +1326,7 @@ class TestRunPublicTemplate:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name_2,
+            account=user.account,
         )
         FieldTemplate.objects.create(
             name='Url',
@@ -1252,6 +1335,7 @@ class TestRunPublicTemplate:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name_3,
+            account=user.account,
         )
         wf_name_template = 'Feedback: {{%s}} from {{ %s }} Url: {{%s}}' % (
             field_api_name_1,
@@ -1335,6 +1419,7 @@ class TestRunPublicTemplate:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name,
+            account=user.account,
         )
         wf_name_template = None
         template.wf_name_template = wf_name_template
@@ -1550,6 +1635,7 @@ class TestRunEmbedTemplate:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name,
+            account=user.account,
         )
         wf_name_template = 'a' * (WORKFLOW_NAME_LENGTH - 4)
         wf_name_template += '{{%s}}' % field_api_name
@@ -1799,6 +1885,7 @@ class TestRunEmbedTemplate:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name,
+            account=user.account,
         )
         wf_name_template = 'Feedback from {{%s}} {{ date }}' % field_api_name
         template.wf_name_template = wf_name_template
@@ -1892,6 +1979,7 @@ class TestRunEmbedTemplate:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name_1,
+            account=user.account,
         )
         FieldTemplate.objects.create(
             name='User',
@@ -1900,6 +1988,7 @@ class TestRunEmbedTemplate:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name_2,
+            account=user.account,
         )
         FieldTemplate.objects.create(
             name='Url',
@@ -1908,6 +1997,7 @@ class TestRunEmbedTemplate:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name_3,
+            account=user.account,
         )
         wf_name_template = 'Feedback: {{%s}} from {{ %s }} Url: {{%s}}' % (
             field_api_name_1,
@@ -1992,6 +2082,7 @@ class TestRunEmbedTemplate:
             kickoff=template.kickoff_instance,
             template=template,
             api_name=field_api_name,
+            account=user.account,
         )
         date = timezone.datetime(
             year=2024,

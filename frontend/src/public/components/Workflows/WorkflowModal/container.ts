@@ -8,6 +8,7 @@ import {
   setWorkflowEdit,
   sendWorkflowLogComments,
   editWorkflow,
+  toggleSkippedTasksVisibility,
 } from '../../../redux/workflows/slice';
 
 import { IApplicationState } from '../../../types/redux';
@@ -23,6 +24,7 @@ export type TStoreProps = Pick<
   | 'sorting'
   | 'isCommentsShown'
   | 'isOnlyAttachmentsShown'
+  | 'isSkippedTasksShown'
   | 'isLogLoading'
   | 'workflow'
   | 'items'
@@ -38,6 +40,7 @@ export type TStoreProps = Pick<
 export type TDispatchProps = Pick<
   IWorkflowModalProps,
   | 'changeWorkflowLogViewSettings'
+  | 'toggleSkippedTasksVisibility'
   | 'sendWorkflowLogComments'
   | 'setIsEditWorkflowName'
   | 'setIsEditKickoff'
@@ -47,12 +50,13 @@ export type TDispatchProps = Pick<
 >;
 
 export function mapStateToProps({
-  authUser: { id: currentUserId, isAccountOwner, timezone, dateFmt, language },
+  authUser: { id: currentUserId, isAccountOwner, isAdmin, timezone, dateFmt, language },
   workflows: {
     workflowLog: {
       workflowId,
       isCommentsShown,
       isOnlyAttachmentsShown,
+      isSkippedTasksShown,
       isOpen,
       items,
       sorting,
@@ -67,9 +71,8 @@ export function mapStateToProps({
     fullscreenImage: { isOpen: isFullscreenImageOpen },
   },
 }: IApplicationState): TStoreProps {
-  const isTemplateOwner = workflow?.owners?.some((id) => id === currentUserId);
-
-  const canEdit = [isAccountOwner, isTemplateOwner].some(Boolean);
+  const isWorkflowOwner = workflow?.owners?.some((id) => id === currentUserId) ?? false;
+  const canEdit = Boolean(isAccountOwner) || (isWorkflowOwner && Boolean(isAdmin));
 
   return {
     dateFmt,
@@ -82,6 +85,7 @@ export function mapStateToProps({
     isCommentsShown,
     isLogLoading,
     isOnlyAttachmentsShown,
+    isSkippedTasksShown,
     isLoading: isWorkflowLoading,
     isOpen,
     items,
@@ -94,6 +98,7 @@ export function mapStateToProps({
 
 export const mapDispatchToProps: TDispatchProps = {
   changeWorkflowLogViewSettings,
+  toggleSkippedTasksVisibility,
   sendWorkflowLogComments,
   setIsEditWorkflowName,
   setIsEditKickoff,

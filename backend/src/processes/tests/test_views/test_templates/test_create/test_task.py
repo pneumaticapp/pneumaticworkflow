@@ -3,15 +3,16 @@ from datetime import timedelta
 
 import pytest
 
+from src.accounts.enums import UserStatus
 from src.accounts.models import (
     UserInvite,
 )
-from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     ConditionAction,
     DueDateRule,
     FieldType,
+    OwnerRole,
     OwnerType,
     PerformerType,
     PredicateOperator,
@@ -65,6 +66,7 @@ class TestCreateTemplateTask:
                 'name': 'Template',
                 'owners': [
                     {
+                        'role': OwnerRole.OWNER,
                         'type': OwnerType.USER,
                         'source_id': user.id,
                     },
@@ -154,6 +156,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -224,6 +227,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -257,6 +261,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -314,6 +319,7 @@ class TestCreateTemplateTask:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'description': 'Test description',
@@ -393,6 +399,7 @@ class TestCreateTemplateTask:
             api_name=field_api_name,
             kickoff=another_template.kickoff_instance,
             template=another_template,
+            account=user.account,
         )
 
         # act
@@ -405,6 +412,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'description': '',
@@ -454,6 +462,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -506,6 +515,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -579,6 +589,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -642,6 +653,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -701,6 +713,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -750,6 +763,7 @@ class TestCreateTemplateTask:
             is_required=True,
             api_name=field_api_name,
             template=another_template,
+            account=user.account,
         )
 
         # act
@@ -762,6 +776,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -813,6 +828,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -882,6 +898,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -943,6 +960,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -1013,6 +1031,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -1055,6 +1074,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -1141,6 +1161,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -1204,6 +1225,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -1257,6 +1279,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -1357,6 +1380,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -1437,6 +1461,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -1499,6 +1524,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -1604,6 +1630,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -1671,6 +1698,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -1724,6 +1752,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -1818,6 +1847,7 @@ class TestCreateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -1854,6 +1884,7 @@ class TestCreateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -1909,6 +1940,7 @@ class TestCreateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -1975,6 +2007,7 @@ class TestCreateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -2032,6 +2065,7 @@ class TestCreateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -2078,6 +2112,7 @@ class TestCreateTemplateRawPerformer:
             is_required=True,
             kickoff=another_template.kickoff_instance,
             template=another_template,
+            account=another_user.account,
         )
 
         user = create_test_user()
@@ -2093,6 +2128,7 @@ class TestCreateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -2141,6 +2177,7 @@ class TestCreateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -2212,6 +2249,7 @@ class TestCreateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -2274,6 +2312,7 @@ class TestCreateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -2332,10 +2371,12 @@ class TestCreateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': invited.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': is_active,
@@ -2377,8 +2418,8 @@ class TestCreateTemplateRawPerformer:
         inactive_user = create_test_user(
             email='inactive@pneumatic.app',
             account=user.account,
+            status=UserStatus.INACTIVE,
         )
-        UserService.deactivate(inactive_user)
         api_client.token_authenticate(user)
         api_name_raw_performer = 'raw-performer-1'
 
@@ -2391,6 +2432,7 @@ class TestCreateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -2438,6 +2480,7 @@ class TestCreateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -2486,6 +2529,7 @@ class TestCreateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -2535,6 +2579,7 @@ class TestCreateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -2585,6 +2630,7 @@ class TestCreateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -2634,6 +2680,7 @@ class TestCreateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -2686,6 +2733,7 @@ class TestCreateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -2740,6 +2788,7 @@ class TestCreateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -2793,6 +2842,7 @@ class TestCreateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -2844,6 +2894,7 @@ class TestCreateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -2921,10 +2972,12 @@ class TestCreateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': invited_user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -2989,6 +3042,7 @@ class TestCreateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': False,

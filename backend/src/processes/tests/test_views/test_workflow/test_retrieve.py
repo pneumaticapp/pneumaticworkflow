@@ -1,11 +1,16 @@
 # ruff: noqa: UP031
 from datetime import timedelta
+from django.urls import reverse
+from rest_framework import status
 
 import pytest
 from django.utils import timezone
 
+from src.accounts.enums import BillingPlanType
 from src.processes.enums import (
     FieldType,
+    OwnerRole,
+    OwnerType,
     PerformerType,
     TaskStatus,
     WorkflowStatus,
@@ -14,18 +19,23 @@ from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
 )
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.workflows.attachment import FileAttachment
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import (
     Delay,
     TaskPerformer,
 )
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.tests.fixtures import (
+    create_test_account,
     create_test_admin,
     create_test_group,
+    create_test_not_admin,
+    create_test_owner,
     create_test_template,
     create_test_user,
-    create_test_workflow,
+    create_test_workflow, create_test_dataset,
 )
 
 pytestmark = pytest.mark.django_db
@@ -252,6 +262,7 @@ def test_retrieve__kickoff_field_user__ok(api_client):
         kickoff=template.kickoff_instance,
         order=1,
         template=template,
+        account=user.account,
     )
 
     response = api_client.post(
@@ -303,6 +314,7 @@ def test_retrieve__kickoff_field_date__ok(api_client):
         kickoff=template.kickoff_instance,
         order=1,
         template=template,
+        account=user.account,
     )
 
     response = api_client.post(
@@ -352,6 +364,7 @@ def test_retrieve__kickoff_field_with_selections__ok(api_client):
         kickoff=template.kickoff_instance,
         order=1,
         template=template,
+        account=user.account,
     )
     selection_template = FieldTemplateSelection.objects.create(
         field_template=field_template,
@@ -364,7 +377,7 @@ def test_retrieve__kickoff_field_with_selections__ok(api_client):
         data={
             'name': 'Workflow',
             'kickoff': {
-                field_template.api_name: [selection_template.api_name],
+                field_template.api_name: [selection_template.value],
             },
         },
     )
@@ -388,11 +401,8 @@ def test_retrieve__kickoff_field_with_selections__ok(api_client):
     assert field_data['order'] == field.order
     assert field_data['user_id'] is None
     assert field_data['value'] == 'some value'
-    selection_data = field_data['selections'][0]
-    assert selection_data['id'] == selection.id
-    assert selection_data['api_name'] == selection.api_name
-    assert selection_data['is_selected'] is True
-    assert selection_data['value'] == selection.value
+    assert len(field_data['selections']) == 1
+    assert field_data['selections'][0] == selection.value
 
 
 def test_retrieve__kickoff_field_with_attachments__ok(api_client):
@@ -412,6 +422,7 @@ def test_retrieve__kickoff_field_with_attachments__ok(api_client):
         kickoff=template.kickoff_instance,
         order=1,
         template=template,
+        account=user.account,
     )
     attachment = FileAttachment.objects.create(
         name='john.cena',
@@ -454,6 +465,38 @@ def test_retrieve__kickoff_field_with_attachments__ok(api_client):
     assert attachment_data['url'] == attachment.url
 
 
+def test_retrieve__kickoff_field_with_dataset__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account, items_count=1)
+    dataset_item = dataset.items.get(order=1)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    field = TaskField.objects.create(
+        type=FieldType.DROPDOWN,
+        name='dropdown',
+        kickoff=workflow.kickoff_instance,
+        value=dataset_item.value,
+        workflow=workflow,
+        account=account,
+        dataset=dataset,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get(f'/workflows/{workflow.id}')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == workflow.id
+    field_data = response.data['kickoff']['output'][0]
+    assert field_data['id'] == field.id
+    assert field_data['type'] == field.type
+    assert field_data['selections'] == [dataset_item.value]
+    assert field_data['value'] == dataset_item.value
+
+
 def test_retrieve__not_admin_user_workflow_member__ok(api_client):
     # arrange
     user = create_test_user()
@@ -490,6 +533,7 @@ def test_retrieve__with_kickoff(api_client):
         kickoff=template.kickoff_instance,
         order=1,
         template=template,
+        account=user.account,
     )
     kickoff_field_2 = FieldTemplate.objects.create(
         name='User url',
@@ -498,6 +542,7 @@ def test_retrieve__with_kickoff(api_client):
         kickoff=template.kickoff_instance,
         order=2,
         template=template,
+        account=user.account,
     )
     kickoff_field_3 = FieldTemplate.objects.create(
         name='User date',
@@ -506,6 +551,7 @@ def test_retrieve__with_kickoff(api_client):
         kickoff=template.kickoff_instance,
         order=3,
         template=template,
+        account=user.account,
     )
     task = template.tasks.order_by('number').first()
     task.description = (
@@ -523,6 +569,7 @@ def test_retrieve__with_kickoff(api_client):
         description='Last description',
         task=task,
         template=template,
+        account=user.account,
     )
     second_task = template.tasks.order_by('number')[1]
     second_task.description = (
@@ -656,3 +703,185 @@ def test_retrieve__user_in_group_task_performer__ok(api_client):
     # assert
     assert response.status_code == 200
     assert response.data['id'] == workflow.id
+
+
+def test_retrieve__not_authenticated__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+
+    # act
+    response = api_client.get(f'/workflows/{workflow.id}')
+
+    # assert
+    assert response.status_code == 401
+
+
+def test_retrieve__expired_subscription__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.UNLIMITED,
+        plan_expiration=timezone.now() - timedelta(hours=1),
+    )
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(f'/workflows/{workflow.id}')
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_retrieve__billing_plan__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(plan=None)
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(f'/workflows/{workflow.id}')
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_retrieve__not_member__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    not_admin = create_test_not_admin(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(not_admin)
+
+    # act
+    response = api_client.get(f'/workflows/{workflow.id}')
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_retrieve__not_found__not_found(api_client):
+
+    # arrange
+    user = create_test_user()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/workflows/99999999')
+
+    # assert
+    assert response.status_code == 404
+
+
+def test_workflow_retrieve__template_starter_own_workflow__ok(api_client):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    workflow = create_test_workflow(template=template, user=starter_user)
+
+    api_client.token_authenticate(starter_user)
+    url = reverse('workflows-detail', args=[workflow.id])
+
+    # act
+    response = api_client.get(url)
+
+    # assert
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data['id'] == workflow.id
+
+
+def test_workflow_retrieve__template_starter_other_workflow__forbidden(
+    api_client,
+):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    # Workflow started by someone else
+    workflow = create_test_workflow(template=template, user=template_owner)
+
+    api_client.token_authenticate(starter_user)
+    url = reverse('workflows-detail', args=[workflow.id])
+
+    # act
+    response = api_client.get(url)
+
+    # assert
+    assert response.status_code == status.HTTP_403_FORBIDDEN
+
+
+def test_workflow_retrieve__template_starter__is_read_only_viewer_true(
+    api_client,
+):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    workflow = create_test_workflow(template=template, user=starter_user)
+
+    api_client.token_authenticate(starter_user)
+    url = reverse('workflows-detail', args=[workflow.id])
+
+    # act
+    response = api_client.get(url)
+
+    # assert
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data['is_read_only_viewer'] is True

@@ -2,9 +2,7 @@ import { RootStateOrAny } from 'react-redux';
 import { combineReducers } from 'redux';
 
 import { IApplicationState } from '../types/redux';
-
 import { general } from './general';
-import { accounts } from './accounts';
 import { authUser } from './auth';
 import { dashboard } from './dashboard';
 import { genericTemplates } from './genericTemplates';
@@ -28,7 +26,10 @@ import { groups } from './groups';
 import pages from './pages/slice';
 import team from './team/slice';
 import workflows from './workflows/slice';
+import accounts from './accounts/slice';
 import tasks from './tasks/slice';
+import datasets from './datasets/slice';
+
 
 export const reducers = combineReducers({
   general,
@@ -53,6 +54,7 @@ export const reducers = combineReducers({
   runWorkflowModal,
   webhooks,
   tenants,
+  datasets,
   pages,
 });
 

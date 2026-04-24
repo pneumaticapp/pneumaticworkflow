@@ -52,7 +52,7 @@ MSG_PW_0026 = lambda limit: format_lazy(
     limit=limit,
 )
 # Translators: Dropdown / radio / checkbox selections validation
-MSG_PW_0028 = _('Selection with the given id does not exist.')
+MSG_PW_0028 = _('A selection with the given value does not exist.')
 # Translators: Checkbox selections validation
 MSG_PW_0029 = _('Checkbox value should be a list.')
 # Translators: Checkbox selections validation
@@ -179,3 +179,4 @@ MSG_PW_0089 = _('You cannot write a comment on a inactive task.')
 MSG_PW_0090 = _(
     'The user or group specified for a "User" field does not exist.',
 )
+MSG_PW_0091 = _('Guest')
