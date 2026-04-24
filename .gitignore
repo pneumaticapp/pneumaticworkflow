@@ -7,3 +7,12 @@ nginx/logs
 nginx/keys
 nginx/config/nginx.conf
 firebase-push.json
+
+# Agent & IDE tools
+.agents
+.antigravity
+
+# Playwright / E2E
+frontend/e2e
+frontend/playwright-report
+frontend/test-results
