@@ -74,6 +74,7 @@ export function TemplateControlls({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isTemplateActivating, setIsTemplateActivating] = useState(false);
   const [isTemplateDeleted, setIsTemplateDeleted] = useState(false);
+  const [isDiscarding, setIsDiscarding] = useState(false);
 
   useEffect(() => {
     // sets warning only when integrations are initially loaded
@@ -101,6 +102,23 @@ export function TemplateControlls({
   const pureOwners = owners.filter((o: ITemplateOwner) => o.role === ETemplateOwnerRole.Owner);
 
   const isSavedTemplate = React.useMemo(() => Boolean(templateId), [templateId]);
+
+  const handleFieldsetsClick = () => {
+    if (templateId) {
+      history.push(ERoutes.TemplateFieldsets.replace(':templateId', String(templateId)));
+      return;
+    }
+
+    patchTemplate({
+      changedFields: {},
+      onSuccess: () => {
+        const match = window.location.pathname.match(/\/templates\/edit\/(\d+)/);
+        if (match) {
+          history.push(ERoutes.TemplateFieldsets.replace(':templateId', match[1]));
+        }
+      },
+    });
+  };
 
   const handleRunProcess = async () => {
     const loadedFieldsets = await loadFieldsetsData(template.kickoff);
@@ -182,7 +200,13 @@ export function TemplateControlls({
           handleChangeIsActive(true, path);
         }}
         onReject={(path) => {
-          history.push(path);
+          if (isDiscarding && path.includes('/fieldsets')) {
+            setIsDiscarding(false);
+            history.push(ERoutes.Templates);
+          } else {
+            setIsDiscarding(false);
+            history.push(path);
+          }
         }}
         shouldBlockNavigation={(location) => {
           return !checkSomeRouteMatchesLocation(location.pathname, [
@@ -213,7 +237,10 @@ export function TemplateControlls({
                 <button
                   type="button"
                   className={classnames('cancel-button', styles['keep-draf-button'])}
-                  onClick={() => dispatch(discardTemplateChanges({ templateId, onSuccess: reject }))}
+                  onClick={() => {
+                    setIsDiscarding(true);
+                    dispatch(discardTemplateChanges({ templateId, onSuccess: reject }));
+                  }}
                 >
                   {formatMessage({ id: 'templates.discard-changes' })}
                 </button>
@@ -267,17 +294,15 @@ export function TemplateControlls({
     <>
       {renderDeleteTemplateModal()}
       {templateId && renderLeavingGuard()}
-
-      {templateId && (
-        <div className={styles['settings-block']}>
-          <Link
-            to={ERoutes.TemplateFieldsets.replace(':templateId', String(templateId))}
-            className={styles['switch-label']}
-          >
-            {formatMessage({ id: 'template.more-show-fieldsets' })}
-          </Link>
-        </div>
-      )}
+      <div className={styles['settings-block']}>
+        <button
+          type="button"
+          onClick={handleFieldsetsClick}
+          className={styles['switch-label']}
+        >
+          {formatMessage({ id: 'template.more-show-fieldsets' })}
+        </button>
+      </div>
 
       <div className={styles['settings-block']}>
         <ShowMore label={formatMessage({ id: 'template.owners' })} isInitiallyVisible={isCreateTemplate()}>
