@@ -32,6 +32,7 @@ export function ExtraFieldRadio({
   deleteField,
   editField,
   isDisabled = false,
+  datasetName,
 }: IWorkflowExtraFieldProps) {
   const selectionItems = field.selections as IExtraFieldSelection[];
   const selectionValues = field.selections as string[];
@@ -108,7 +109,7 @@ export function ExtraFieldRadio({
           </p>
         )}
 
-        <DatasetSourceToggle field={field} editField={editField} isDisabled={isDisabled}>
+        <DatasetSourceToggle field={field} editField={editField} isDisabled={isDisabled} datasetName={datasetName}>
           {customOptionsList}
           {!isDisabled && addOptionButton}
         </DatasetSourceToggle>

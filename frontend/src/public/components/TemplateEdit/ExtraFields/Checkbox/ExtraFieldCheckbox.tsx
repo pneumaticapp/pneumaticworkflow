@@ -38,6 +38,7 @@ export function ExtraFieldCheckbox({
   deleteField,
   editField,
   isDisabled = false,
+  datasetName,
 }: IWorkflowExtraFieldProps) {
   const selectionItems = field.selections as IExtraFieldSelection[];
   const selectionValues = field.selections as string[];
@@ -116,7 +117,7 @@ export function ExtraFieldCheckbox({
           </p>
         )}
 
-        <DatasetSourceToggle field={field} editField={editField} isDisabled={isDisabled}>
+        <DatasetSourceToggle field={field} editField={editField} isDisabled={isDisabled} datasetName={datasetName}>
           {customOptionsList}
           {!isDisabled && addOptionButton}
         </DatasetSourceToggle>

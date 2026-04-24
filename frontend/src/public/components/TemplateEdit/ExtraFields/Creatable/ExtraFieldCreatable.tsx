@@ -45,6 +45,7 @@ export function ExtraFieldCreatable({
   isDisabled = false,
   labelBackgroundColor,
   innerRef,
+  datasetName,
 }: IWorkflowExtraFieldProps) {
   const { isRequired } = field;
   const optionInputsRefs = React.useRef<HTMLInputElement[]>([]);
@@ -199,7 +200,7 @@ export function ExtraFieldCreatable({
       <div className={inputStyles['kickoff-create-field-container']}>
         {renderKickoffField()}
 
-        <DatasetSourceToggle field={field} editField={editField} isDisabled={isDisabled}>
+        <DatasetSourceToggle field={field} editField={editField} isDisabled={isDisabled} datasetName={datasetName}>
           {customOptionsList}
           {!isDisabled && addOptionButton}
         </DatasetSourceToggle>

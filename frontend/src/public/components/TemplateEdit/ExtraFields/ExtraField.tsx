@@ -1,7 +1,8 @@
 import * as React from 'react';
-import { Ref, useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import classnames from 'classnames';
-import { injectIntl, IntlShape } from 'react-intl';
+import { injectIntl} from 'react-intl';
 
 import { ExtraFieldString } from './String';
 import { ExtraFieldText } from './Text';
@@ -14,35 +15,16 @@ import { ExtraFieldFile } from './File';
 import { ExtraFieldUser } from './User';
 import { ExtraFieldNumber } from './Number';
 
-import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../types/template';
-import { EInputNameBackgroundColor } from '../../../types/workflow';
+import { EExtraFieldType } from '../../../types/template';
 import { ExtraFieldDropdown } from './utils/ExtraFieldDropdown';
 import { getInputNameBackground } from './utils/getInputNameBackground';
+import { getAllDatasetsList, getIsAllDatasetsLoading, getIsAllDatasetsLoaded } from '../../../redux/selectors/datasets';
+import { loadAllDatasets } from '../../../redux/datasets/slice';
+import { IExtraFieldProps } from './types';
 
 import styles from '../KickoffRedux/KickoffRedux.css';
 
-export interface IWorkflowExtraFieldProps {
-  field: IExtraField;
-  intl: IntlShape;
-  showDropdown?: boolean;
-  mode?: EExtraFieldMode;
-  namePlaceholder?: string;
-  descriptionPlaceholder?: string;
-  labelBackgroundColor?: EInputNameBackgroundColor;
-  deleteField?(): void;
-  moveFieldUp?(): void;
-  moveFieldDown?(): void;
-  editField(changedProps: Partial<IExtraField>): void;
-  isDisabled?: boolean;
-  innerRef?: Ref<HTMLInputElement>;
-  accountId: number;
-}
-
-interface IExtraFieldProps extends IWorkflowExtraFieldProps {
-  wrapperClassName?: string;
-  fieldsCount?: number;
-  id?: number;
-}
+const DATASET_FIELD_TYPES = [EExtraFieldType.Checkbox, EExtraFieldType.Radio, EExtraFieldType.Creatable];
 
 function ExtraField(props: IExtraFieldProps) {
   const {
@@ -60,6 +42,37 @@ function ExtraField(props: IExtraFieldProps) {
     labelBackgroundColor,
     innerRef,
   } = props;
+
+  const dispatch = useDispatch();
+
+  const isDatasetField = DATASET_FIELD_TYPES.includes(field.type);
+
+  const datasetsList = useSelector(getAllDatasetsList);
+  const isDatasetsLoading = useSelector(getIsAllDatasetsLoading);
+  const isDatasetsLoaded = useSelector(getIsAllDatasetsLoaded);
+
+  useEffect(() => {
+    if (isDatasetField && !isDatasetsLoaded && !isDatasetsLoading) {
+      dispatch(loadAllDatasets());
+    }
+  }, [isDatasetField, isDatasetsLoaded, isDatasetsLoading, dispatch]);
+
+  const datasetOptions = useMemo(
+    () => datasetsList.map((dataset) => ({ label: dataset.name, value: String(dataset.id) })),
+    [datasetsList],
+  );
+
+  const datasetName = useMemo(
+    () => datasetOptions.find((option) => option.value === String(field.dataset))?.label,
+    [datasetOptions, field.dataset],
+  );
+
+  const handleDatasetSelect = useCallback(
+    (datasetId: number) => {
+      editField({ dataset: datasetId, selections: undefined });
+    },
+    [editField],
+  );
 
   const handleDeleteField = useCallback(() => {
     if (!deleteField) {
@@ -101,7 +114,7 @@ function ExtraField(props: IExtraFieldProps) {
 
     const Field = fieldsMap[field.type];
 
-    return <Field {...props} innerRef={innerRef} />;
+    return <Field {...props} innerRef={innerRef} {...(isDatasetField && { datasetName })} />;
   };
 
   const isFirstItem = useMemo(() => id === 0 && id !== undefined, [id]);
@@ -174,6 +187,10 @@ function ExtraField(props: IExtraFieldProps) {
             onMoveFieldUp={handleMoveFieldUp}
             onMoveFieldDown={handleMoveFieldDown}
             onDeleteField={handleDeleteField}
+            showDatasetOption={isDatasetField}
+            datasetOptions={datasetOptions}
+            {...(field.dataset && { selectedDatasetId: field.dataset })}
+            onDatasetSelect={handleDatasetSelect}
           />
         </div>
       )}

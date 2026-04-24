@@ -124,8 +124,12 @@ export function Dropdown({
 
       if (customSubOption || (subOptions && Array.isArray(subOptions) && isArrayWithItems(subOptions))) {
         return (
-          <UncontrolledDropdown key={`submenu-${typeof label === 'string' ? label : mapKey}`} direction="right">
-            <DropdownToggle tag="button" className={styles['dropdown-item']}>
+          <UncontrolledDropdown
+            key={`submenu-${typeof label === 'string' ? label : mapKey}`}
+            direction="right"
+            className={optionClassName}
+          >
+            <DropdownToggle tag="button" className={classnames(styles['dropdown-item'], getDropdownItemColorClass(color))}>
               <span className={styles['label']}>{label}</span>
               <ArrowRightIcon className={styles['dropdown-item-icon']} />
             </DropdownToggle>
@@ -179,7 +183,7 @@ export function Dropdown({
         level={level}
         direction={direction}
         className={menuClassName}
-        renderMenuContent={renderMenuContent}
+        {...(level === 0 && { renderMenuContent })}
       />
     );
   };
