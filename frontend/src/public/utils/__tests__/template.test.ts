@@ -507,6 +507,38 @@ describe('template utilities', () => {
       expect(cleaned.tasks[1].rawDueDate?.sourceId).toBeNull();
       expect(cleaned.tasks[1].rawDueDate?.ruleTarget).toBe('task started');
     });
+    it('preserves Start After condition rules and handles empty fields', () => {
+      const template = createMockTemplate({
+        tasks: [
+          {
+            ...createMockTemplate().tasks[0],
+            conditions: [
+              {
+                apiName: 'cond-1',
+                order: 1,
+                action: EConditionAction.StartTask,
+                rules: [
+                  { field: 'task-123', fieldType: 'task', operator: EConditionOperators.Equal, logicOperation: EConditionLogicOperations.And, predicateApiName: '1' } as unknown as TConditionRule,
+                  { field: '', operator: EConditionOperators.Equal, logicOperation: EConditionLogicOperations.And, predicateApiName: '2' } as unknown as TConditionRule,
+                  { field: undefined, operator: EConditionOperators.Equal, logicOperation: EConditionLogicOperations.And, predicateApiName: '3' } as unknown as TConditionRule,
+                  { field: null, operator: EConditionOperators.Equal, logicOperation: EConditionLogicOperations.And, predicateApiName: '4' } as unknown as TConditionRule,
+                  { field: 'invalid-field', fieldType: 'field', operator: EConditionOperators.Equal, logicOperation: EConditionLogicOperations.And, predicateApiName: '5' } as unknown as TConditionRule,
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      const cleaned = cleanTemplateReferences(template);
+      const rules = cleaned.tasks[0].conditions[0].rules;
+      
+      expect(rules).toHaveLength(4);
+      expect(rules[0].field).toBe('task-123');
+      expect(rules[1].field).toBe('');
+      expect(rules[2].field).toBeUndefined();
+      expect(rules[3].field).toBeNull();
+    });
   });
 });
 });
