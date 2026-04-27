@@ -19,7 +19,9 @@ from src.accounts.serializers.user import UserWebsocketSerializer
 from src.accounts.services.exceptions import (
     AlreadyRegisteredException,
     UserIsPerformerException,
-    UserServiceException, PreventSelfDeletion, PreventAccountOwnerDeletion,
+    UserServiceException,
+    PreventSelfDeletion,
+    PreventAccountOwnerDeletion,
 )
 from src.accounts.services.user import UserService
 from src.authentication.enums import AuthTokenType
@@ -34,6 +36,7 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_owner,
     create_test_admin,
+    create_test_not_admin,
     create_test_workflow,
     create_test_group,
 )
@@ -42,7 +45,6 @@ pytestmark = pytest.mark.django_db
 
 
 def test_create_instance__all_fields__ok(mocker):
-
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -105,7 +107,6 @@ def test_create_instance__all_fields__ok(mocker):
 
 
 def test_create_instance__only_required_fields__set_defaults(mocker):
-
     # arrange
     language = Language.fr
     tz = 'Atlantic/Faeroe'
@@ -123,8 +124,7 @@ def test_create_instance__only_required_fields__set_defaults(mocker):
     email = 'test@test.test'
     random_password = '12123'
     random_password_mock = mocker.patch(
-        'src.accounts.services.user.UserModel.'
-        'objects.make_random_password',
+        'src.accounts.services.user.UserModel.objects.make_random_password',
         return_value=random_password,
     )
     safe_password = 'some safe password'
@@ -160,14 +160,12 @@ def test_create_instance__only_required_fields__set_defaults(mocker):
 
 
 def test_create_instance__first_account_owner__is_superuser(mocker):
-
     # arrange
     account = create_test_account()
     email = 'test@test.com'
     random_password = '12123'
     random_password_mock = mocker.patch(
-        'src.accounts.services.user.UserModel.'
-        'objects.make_random_password',
+        'src.accounts.services.user.UserModel.objects.make_random_password',
         return_value=random_password,
     )
     safe_password = 'some safe password'
@@ -194,15 +192,13 @@ def test_create_instance__first_account_owner__is_superuser(mocker):
 
 
 def test_create_instance__not_first_account_owner__is_not_superuser(mocker):
-
     # arrange
     account = create_test_account()
     create_test_owner(account=account)
     email = 'test@test.com'
     random_password = '12123'
     random_password_mock = mocker.patch(
-        'src.accounts.services.user.UserModel.'
-        'objects.make_random_password',
+        'src.accounts.services.user.UserModel.objects.make_random_password',
         return_value=random_password,
     )
     safe_password = 'some safe password'
@@ -228,15 +224,13 @@ def test_create_instance__not_first_account_owner__is_not_superuser(mocker):
 
 
 def test_create_instance__not_first_db_user__is_not_superuser(mocker):
-
     # arrange
     account = create_test_account()
     create_test_owner()
     email = 'test@test.com'
     random_password = '12123'
     random_password_mock = mocker.patch(
-        'src.accounts.services.user.UserModel.'
-        'objects.make_random_password',
+        'src.accounts.services.user.UserModel.objects.make_random_password',
         return_value=random_password,
     )
     safe_password = 'some safe password'
@@ -263,7 +257,6 @@ def test_create_instance__not_first_db_user__is_not_superuser(mocker):
 
 
 def test_create_instance__not_account_owner___ok(mocker):
-
     # arrange
     account = create_test_account()
     language_owner = Language.fr
@@ -328,15 +321,13 @@ def test_create_instance__not_account_owner___ok(mocker):
 
 
 def test_create_instance__password_provided__ok(mocker):
-
     # arrange
     account = create_test_account()
     create_test_user(account=account, is_account_owner=True)
     email = 'test@test.test'
     password = '12112323'
     random_password_mock = mocker.patch(
-        'src.accounts.services.user.UserModel.'
-        'objects.make_random_password',
+        'src.accounts.services.user.UserModel.objects.make_random_password',
     )
     make_password_mock = mocker.patch(
         'src.accounts.services.user.make_password',
@@ -357,15 +348,13 @@ def test_create_instance__password_provided__ok(mocker):
 
 
 def test_create_instance__email_already_exists__raise_exception(mocker):
-
     # arrange
     account = create_test_account()
     create_test_user(account=account, is_account_owner=True)
     email = 'test@test.test'
     password = '12112323'
     mocker.patch(
-        'src.accounts.services.user.UserModel.'
-        'objects.make_random_password',
+        'src.accounts.services.user.UserModel.objects.make_random_password',
     )
     mocker.patch(
         'src.accounts.services.user.make_password',
@@ -389,15 +378,13 @@ def test_create_instance__email_already_exists__raise_exception(mocker):
 
 
 def test_create_instance__invited_email_exists__ok(mocker):
-
     # arrange
     account = create_test_account()
     create_test_user(account=account, is_account_owner=True)
     email = 'test@test.test'
     password = '12112323'
     mocker.patch(
-        'src.accounts.services.user.UserModel.'
-        'objects.make_random_password',
+        'src.accounts.services.user.UserModel.objects.make_random_password',
     )
     mocker.patch(
         'src.accounts.services.user.make_password',
@@ -420,15 +407,13 @@ def test_create_instance__invited_email_exists__ok(mocker):
 
 
 def test_create_instance__inactive_email_exists__ok(mocker):
-
     # arrange
     account = create_test_account()
     create_test_user(account=account, is_account_owner=True)
     email = 'test@test.test'
     password = '12112323'
     mocker.patch(
-        'src.accounts.services.user.UserModel.'
-        'objects.make_random_password',
+        'src.accounts.services.user.UserModel.objects.make_random_password',
     )
     mocker.patch(
         'src.accounts.services.user.make_password',
@@ -451,15 +436,13 @@ def test_create_instance__inactive_email_exists__ok(mocker):
 
 
 def test_create_instance__deleted_email_exists__ok(mocker):
-
     # arrange
     account = create_test_account()
     create_test_user(account=account, is_account_owner=True)
     email = 'test@test.test'
     password = '12112323'
     mocker.patch(
-        'src.accounts.services.user.UserModel.'
-        'objects.make_random_password',
+        'src.accounts.services.user.UserModel.objects.make_random_password',
     )
     mocker.patch(
         'src.accounts.services.user.make_password',
@@ -480,7 +463,6 @@ def test_create_instance__deleted_email_exists__ok(mocker):
 
 
 def test_create_instance__guest_email_exists__ok(mocker):
-
     # arrange
     account = create_test_account()
     create_test_user(
@@ -491,8 +473,7 @@ def test_create_instance__guest_email_exists__ok(mocker):
     email = 'test@test.test'
     password = '12112323'
     mocker.patch(
-        'src.accounts.services.user.UserModel.'
-        'objects.make_random_password',
+        'src.accounts.services.user.UserModel.objects.make_random_password',
     )
     mocker.patch(
         'src.accounts.services.user.make_password',
@@ -515,14 +496,13 @@ def test_create_instance__guest_email_exists__ok(mocker):
 
 
 def test_create_instance__owner__set_default_language(mocker):
-
     # arrange
     account = create_test_account()
     email = 'test@test.test'
     password = '12123'
     service = UserService()
     settings_mock = mocker.patch(
-       'src.accounts.services.user.settings',
+        'src.accounts.services.user.settings',
     )
     language = Language.fr
     settings_mock.LANGUAGE_CODE = language
@@ -543,7 +523,6 @@ def test_create_instance__owner__set_default_language(mocker):
 
 
 def test_create_instance__not_owner__inherit_owner_language():
-
     # arrange
     account = create_test_account()
     language = Language.fr
@@ -571,14 +550,13 @@ def test_create_instance__not_owner__inherit_owner_language():
 
 
 def test_create_instance__owner__set_default_timezone(mocker):
-
     # arrange
     account = create_test_account()
     email = 'test@test.test'
     password = '12123'
     service = UserService()
     settings_mock = mocker.patch(
-       'src.accounts.services.user.settings',
+        'src.accounts.services.user.settings',
     )
     tz = 'Atlantic/Faeroe'
     settings_mock.LANGUAGE_CODE = Language.fr
@@ -599,7 +577,6 @@ def test_create_instance__owner__set_default_timezone(mocker):
 
 
 def test_create_instance__not_owner__inherit_owner_timezone():
-
     # arrange
     account = create_test_account()
     tz = 'Atlantic/Faeroe'
@@ -627,7 +604,6 @@ def test_create_instance__not_owner__inherit_owner_timezone():
 
 
 def test_create_related__no_groups__ok(mocker):
-
     # arrange
     user = create_test_user()
     user.account.accountsignupdata_set.get().delete()
@@ -656,7 +632,6 @@ def test_create_related__no_groups__ok(mocker):
 
 
 def test_create_related__groups__ok(mocker):
-
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -696,7 +671,6 @@ def test_create_actions__account_owner__ok(
     identify_mock,
     group_mock,
 ):
-
     # arrange
     account = create_test_account()
     account.is_verified = True
@@ -711,12 +685,10 @@ def test_create_actions__account_owner__ok(
     is_superuser = True
     auth_type = AuthTokenType.API
     account_created_mock = mocker.patch(
-        'src.accounts.services.user'
-        '.AnalyticService.account_created',
+        'src.accounts.services.user.AnalyticService.account_created',
     )
     account_verified_mock = mocker.patch(
-        'src.accounts.services.user'
-        '.AnalyticService.account_verified',
+        'src.accounts.services.user.AnalyticService.account_verified',
     )
 
     service = UserService(
@@ -749,7 +721,6 @@ def test_create_actions__account_owner__not_verified__ok(
     identify_mock,
     group_mock,
 ):
-
     # arrange
     account = create_test_account()
     account.is_verified = False
@@ -758,12 +729,10 @@ def test_create_actions__account_owner__not_verified__ok(
     is_superuser = True
     auth_type = AuthTokenType.API
     account_created_mock = mocker.patch(
-        'src.accounts.services.user'
-        '.AnalyticService.account_created',
+        'src.accounts.services.user.AnalyticService.account_created',
     )
     account_verified_mock = mocker.patch(
-        'src.accounts.services.user'
-        '.AnalyticService.account_verified',
+        'src.accounts.services.user.AnalyticService.account_verified',
     )
 
     service = UserService(
@@ -785,7 +754,6 @@ def test_create_actions__account_owner__not_verified__ok(
 
 
 def test_get_free_email__free__ok():
-
     # arrange
     user = create_test_user()
     local = 'admin'
@@ -805,7 +773,6 @@ def test_get_free_email__free__ok():
 
 
 def test_get_free_email__active_user_already_exist__increment_number():
-
     # arrange
     local = 'admin'
     number = 1
@@ -821,11 +788,10 @@ def test_get_free_email__active_user_already_exist__increment_number():
     )
 
     # assert
-    assert email == f'{local}+{number+1}@{domain}'
+    assert email == f'{local}+{number + 1}@{domain}'
 
 
 def test_get_free_email__invited_user_already_exist__increment_number():
-
     # arrange
     local = 'admin'
     number = 1
@@ -849,7 +815,6 @@ def test_get_free_email__invited_user_already_exist__increment_number():
 
 
 def test_get_free_email__multiple_objects_returned__increment_number():
-
     # arrange
     local = 'admin'
     number = 1
@@ -877,7 +842,6 @@ def test_get_free_email__multiple_objects_returned__increment_number():
 
 
 def test_get_free_email__inactive_user_already_exist__increment_number():
-
     # arrange
     local = 'admin'
     number = 1
@@ -901,7 +865,6 @@ def test_get_free_email__inactive_user_already_exist__increment_number():
 
 
 def test_get_free_email__deleted_user_already_exist__not_increment_number():
-
     # arrange
     local = 'admin'
     number = 1
@@ -925,7 +888,6 @@ def test_get_free_email__deleted_user_already_exist__not_increment_number():
 
 
 def test_get_free_email__guest_already_exist__increment_number():
-
     # arrange
     local = 'admin'
     number = 1
@@ -949,7 +911,6 @@ def test_get_free_email__guest_already_exist__increment_number():
 
 
 def test_get_incremented_email__free__ok(mocker):
-
     # arrange
     local = 'local'
     number = 1
@@ -958,8 +919,7 @@ def test_get_incremented_email__free__ok(mocker):
     incremented_email = f'{local}+{number}@{domain}'
     user = create_test_user(email=email)
     get_free_email_mock = mocker.patch(
-        'src.accounts.services.user'
-        '.UserService._get_free_email',
+        'src.accounts.services.user.UserService._get_free_email',
         return_value=incremented_email,
     )
 
@@ -978,7 +938,6 @@ def test_get_incremented_email__free__ok(mocker):
 
 
 def test_get_incremented_email__already_incremented__ok(mocker):
-
     # arrange
     local = 'local'
     number = 2
@@ -987,8 +946,7 @@ def test_get_incremented_email__already_incremented__ok(mocker):
     incremented_email = f'{local}+{number}@{domain}'
     user = create_test_user(email=email)
     get_free_email_mock = mocker.patch(
-        'src.accounts.services.user'
-        '.UserService._get_free_email',
+        'src.accounts.services.user.UserService._get_free_email',
         return_value=incremented_email,
     )
 
@@ -1007,7 +965,6 @@ def test_get_incremented_email__already_incremented__ok(mocker):
 
 
 def test_get_incremented_email__email_format__ok(mocker):
-
     # arrange
     local = 'local.n_a+m-e+'
     number = 2
@@ -1016,8 +973,7 @@ def test_get_incremented_email__email_format__ok(mocker):
     incremented_email = f'{local}+{number}@{domain}'
     user = create_test_user(email=email)
     get_free_email_mock = mocker.patch(
-        'src.accounts.services.user'
-        '.UserService._get_free_email',
+        'src.accounts.services.user.UserService._get_free_email',
         return_value=incremented_email,
     )
 
@@ -1036,7 +992,6 @@ def test_get_incremented_email__email_format__ok(mocker):
 
 
 def test_create_tenant_account_owner__ok(mocker):
-
     # arrange
     first_name = 'some first name'
     last_name = 'some last name'
@@ -1054,14 +1009,12 @@ def test_create_tenant_account_owner__ok(mocker):
     )
     tenant_account_owner = mocker.Mock()
     create_mock = mocker.patch(
-        'src.accounts.services.user'
-        '.UserService.create',
+        'src.accounts.services.user.UserService.create',
         return_value=tenant_account_owner,
     )
     incremented_email = 'test+1@test.com'
     get_incremented_email_mock = mocker.patch(
-        'src.accounts.services.user'
-        '.UserService._get_incremented_email',
+        'src.accounts.services.user.UserService._get_incremented_email',
         return_value=incremented_email,
     )
     service = UserService()
@@ -1090,7 +1043,6 @@ def test_create_tenant_account_owner__ok(mocker):
 
 
 def test_validate_deactivate__user_is_performer__raise_exception(mocker):
-
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -1110,7 +1062,6 @@ def test_validate_deactivate__user_is_performer__raise_exception(mocker):
 
 
 def test_validate_deactivate__user_is_not_performer__ok(mocker):
-
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -1129,7 +1080,6 @@ def test_validate_deactivate__user_is_not_performer__ok(mocker):
 
 
 def test_validate_deactivate__delete_yourself_raise_exception(mocker):
-
     # arrange
     account = create_test_account()
     create_test_owner(account=account)
@@ -1151,7 +1101,6 @@ def test_validate_deactivate__delete_yourself_raise_exception(mocker):
 
 
 def test_validate_deactivate__delete_account_owner_raise_exception(mocker):
-
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -1173,27 +1122,22 @@ def test_validate_deactivate__delete_account_owner_raise_exception(mocker):
 
 
 def test_deactivate__ok(mocker):
-
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
     deleted_user = create_test_admin(account=account)
 
     deactivate_mock = mocker.patch(
-        'src.accounts.services.user.UserService.'
-        '_deactivate',
+        'src.accounts.services.user.UserService._deactivate',
     )
     deactivate_actions_mock = mocker.patch(
-        'src.accounts.services.user.UserService'
-        '._deactivate_actions',
+        'src.accounts.services.user.UserService._deactivate_actions',
     )
     validate_deactivate_mock = mocker.patch(
-        'src.accounts.services.user.UserService'
-        '._validate_deactivate',
+        'src.accounts.services.user.UserService._validate_deactivate',
     )
     send_user_deleted_mock = mocker.patch(
-        'src.notifications.tasks.'
-        'send_user_deleted_notification.delay',
+        'src.notifications.tasks.send_user_deleted_notification.delay',
     )
     service = UserService(instance=deleted_user, user=owner)
 
@@ -1215,32 +1159,29 @@ def test_deactivate__ok(mocker):
             'photo': deleted_user.photo,
             'is_admin': deleted_user.is_admin,
             'is_account_owner': deleted_user.is_account_owner,
+            'manager_id': None,
+            'subordinates_ids': [],
         },
     )
 
 
 def test_deactivate__skip_validation__ok(mocker):
-
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
     deleted_user = create_test_admin(account=account)
 
     deactivate_mock = mocker.patch(
-        'src.accounts.services.user.UserService.'
-        '_deactivate',
+        'src.accounts.services.user.UserService._deactivate',
     )
     deactivate_actions_mock = mocker.patch(
-        'src.accounts.services.user.UserService'
-        '._deactivate_actions',
+        'src.accounts.services.user.UserService._deactivate_actions',
     )
     validate_deactivate_mock = mocker.patch(
-        'src.accounts.services.user.UserService'
-        '._validate_deactivate',
+        'src.accounts.services.user.UserService._validate_deactivate',
     )
     send_user_deleted_mock = mocker.patch(
-        'src.notifications.tasks.'
-        'send_user_deleted_notification.delay',
+        'src.notifications.tasks.send_user_deleted_notification.delay',
     )
     service = UserService(instance=deleted_user, user=owner)
 
@@ -1262,31 +1203,28 @@ def test_deactivate__skip_validation__ok(mocker):
             'photo': deleted_user.photo,
             'is_admin': deleted_user.is_admin,
             'is_account_owner': deleted_user.is_account_owner,
+            'manager_id': None,
+            'subordinates_ids': [],
         },
     )
 
 
 def test_deactivate__not_call_actions_for_invited_user__ok(mocker):
-
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
     invited_user = create_invited_user(owner)
     validate_deactivate_mock = mocker.patch(
-        'src.accounts.services.user.UserService'
-        '._validate_deactivate',
+        'src.accounts.services.user.UserService._validate_deactivate',
     )
     deactivate_mock = mocker.patch(
-        'src.accounts.services.user.UserService.'
-        '_deactivate',
+        'src.accounts.services.user.UserService._deactivate',
     )
     deactivate_actions_mock = mocker.patch(
-        'src.accounts.services.user.UserService'
-        '._deactivate_actions',
+        'src.accounts.services.user.UserService._deactivate_actions',
     )
     send_user_deleted_mock = mocker.patch(
-        'src.notifications.tasks.'
-        'send_user_deleted_notification.delay',
+        'src.notifications.tasks.send_user_deleted_notification.delay',
     )
     service = UserService(instance=invited_user, user=owner)
 
@@ -1308,27 +1246,25 @@ def test_deactivate__not_call_actions_for_invited_user__ok(mocker):
             'photo': invited_user.photo,
             'is_admin': invited_user.is_admin,
             'is_account_owner': invited_user.is_account_owner,
+            'manager_id': None,
+            'subordinates_ids': [],
         },
     )
 
 
 def test_private_deactivate__ok(mocker):
-
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
     deleted_user = create_test_admin(account=account)
     remove_user_from_draft_mock = mocker.patch(
-        'src.accounts.services.user.'
-        'remove_user_from_draft',
+        'src.accounts.services.user.remove_user_from_draft',
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.account.AccountService.'
-        'update_users_counts',
+        'src.accounts.services.account.AccountService.update_users_counts',
     )
     identify_mock = mocker.patch(
-        'src.accounts.services.user.UserService.'
-        'identify',
+        'src.accounts.services.user.UserService.identify',
     )
     service = UserService(instance=deleted_user, user=owner)
 
@@ -1349,7 +1285,6 @@ def test_private_deactivate__ok(mocker):
 
 
 def test_private_deactivate__activate_contacts__ok(mocker):
-
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -1359,12 +1294,10 @@ def test_private_deactivate__activate_contacts__ok(mocker):
         email='anotheraccount@email.com',
     )
     mocker.patch(
-        'src.accounts.services.user.'
-        'remove_user_from_draft',
+        'src.accounts.services.user.remove_user_from_draft',
     )
     mocker.patch(
-        'src.accounts.services.account.AccountService.'
-        'update_users_counts',
+        'src.accounts.services.account.AccountService.update_users_counts',
     )
     mocker.patch(
         'src.accounts.services.user.UserService.identify',
@@ -1422,7 +1355,6 @@ def test_private_deactivate__activate_contacts__ok(mocker):
 
 
 def test_deactivate_actions__ok(mocker):
-
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -1445,7 +1377,6 @@ def test_deactivate_actions__ok(mocker):
 
 
 def test_change_password__ok():
-
     # arrange
     user = create_test_user()
     new_password = '<PASSWORD>'
@@ -1461,7 +1392,6 @@ def test_change_password__ok():
 
 
 def test_update_related_user_fields__name_changed__ok():
-
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -1489,7 +1419,6 @@ def test_update_related_user_fields__name_changed__ok():
 
 
 def test_update_related_user_fields__name_changed__qst_updated(mocker):
-
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -1515,7 +1444,6 @@ def test_update_related_user_fields__name_changed__qst_updated(mocker):
 
 
 def test_update_related_user_fields__name_not_changed__skip_update(mocker):
-
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -1538,7 +1466,6 @@ def test_update_related_user_fields__name_not_changed__skip_update(mocker):
 
 
 def test_update_related_user_fields__another_account_field__not_changed():
-
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -1567,7 +1494,6 @@ def test_update_related_user_fields__another_account_field__not_changed():
 
 
 def test_update_related_stripe_account__account_owner__ok(mocker):
-
     # arrange
     account = create_test_account(
         lease_level=LeaseLevel.STANDARD,
@@ -1580,8 +1506,7 @@ def test_update_related_stripe_account__account_owner__ok(mocker):
         return_value=None,
     )
     update_customer_mock = mocker.patch(
-        'src.payment.stripe.service.StripeService.'
-        'update_customer',
+        'src.payment.stripe.service.StripeService.update_customer',
     )
     is_superuser = False
     auth_type = AuthTokenType.API
@@ -1606,7 +1531,6 @@ def test_update_related_stripe_account__account_owner__ok(mocker):
 
 
 def test_update_related_stripe_account__stripe_raises__raise_exception(mocker):
-
     # arrange
     account = create_test_account(
         lease_level=LeaseLevel.STANDARD,
@@ -1620,8 +1544,7 @@ def test_update_related_stripe_account__stripe_raises__raise_exception(mocker):
     )
     message = 'Stripe error'
     update_customer_mock = mocker.patch(
-        'src.payment.stripe.service.StripeService.'
-        'update_customer',
+        'src.payment.stripe.service.StripeService.update_customer',
         side_effect=StripeServiceException(message=message),
     )
     is_superuser = False
@@ -1648,7 +1571,6 @@ def test_update_related_stripe_account__stripe_raises__raise_exception(mocker):
 
 
 def test_update_related_stripe_account__tenant_account__skip(mocker):
-
     # arrange
     account = create_test_account(
         lease_level=LeaseLevel.TENANT,
@@ -1661,8 +1583,7 @@ def test_update_related_stripe_account__tenant_account__skip(mocker):
         return_value=None,
     )
     update_customer_mock = mocker.patch(
-        'src.payment.stripe.service.StripeService.'
-        'update_customer',
+        'src.payment.stripe.service.StripeService.update_customer',
     )
     is_superuser = False
     auth_type = AuthTokenType.API
@@ -1682,7 +1603,6 @@ def test_update_related_stripe_account__tenant_account__skip(mocker):
 
 
 def test_update_related_stripe_account__not_owner__skip(mocker):
-
     # arrange
     account = create_test_account(
         lease_level=LeaseLevel.STANDARD,
@@ -1696,8 +1616,7 @@ def test_update_related_stripe_account__not_owner__skip(mocker):
         return_value=None,
     )
     update_customer_mock = mocker.patch(
-        'src.payment.stripe.service.StripeService.'
-        'update_customer',
+        'src.payment.stripe.service.StripeService.update_customer',
     )
     is_superuser = False
     auth_type = AuthTokenType.API
@@ -1717,7 +1636,6 @@ def test_update_related_stripe_account__not_owner__skip(mocker):
 
 
 def test_update_related_stripe_account__billing_sync_off__skip(mocker):
-
     # arrange
     account = create_test_account(
         lease_level=LeaseLevel.STANDARD,
@@ -1730,8 +1648,7 @@ def test_update_related_stripe_account__billing_sync_off__skip(mocker):
         return_value=None,
     )
     update_customer_mock = mocker.patch(
-        'src.payment.stripe.service.StripeService.'
-        'update_customer',
+        'src.payment.stripe.service.StripeService.update_customer',
     )
     is_superuser = False
     auth_type = AuthTokenType.API
@@ -1754,7 +1671,6 @@ def test_update_analytics__disable_digest_subscriber__sent_analytics(
     mocker,
     identify_mock,
 ):
-
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -1790,7 +1706,6 @@ def test_update_analytics__enable_digest_subscriber__not_sent_analytics(
     mocker,
     identify_mock,
 ):
-
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -1822,7 +1737,6 @@ def test_update_analytics__digest_subscriber_not_changed__not_sent_analytics(
     mocker,
     identify_mock,
 ):
-
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
@@ -1896,16 +1810,14 @@ def test_partial_update__all_fields_end_to_end__ok(
         return_value=safe_password,
     )
     update_related_user_fields_mock = mocker.patch(
-        'src.accounts.services.user.UserService.'
-        '_update_related_user_fields',
+        'src.accounts.services.user.UserService._update_related_user_fields',
     )
     update_related_stripe_account_mock = mocker.patch(
         'src.accounts.services.user.UserService.'
         '_update_related_stripe_account',
     )
     update_analytics_mock = mocker.patch(
-        'src.accounts.services.user.UserService.'
-        '_update_analytics',
+        'src.accounts.services.user.UserService._update_analytics',
     )
     send_user_updated_notification_mock = mocker.patch(
         'src.notifications.tasks.send_user_updated_notification.delay',
@@ -1943,9 +1855,7 @@ def test_partial_update__all_fields_end_to_end__ok(
     assert user_data['is_tasks_digest_subscriber'] == (
         user.is_tasks_digest_subscriber
     )
-    assert user_data['is_digest_subscriber'] == (
-        user.is_digest_subscriber
-    )
+    assert user_data['is_digest_subscriber'] == (user.is_digest_subscriber)
     assert user_data['is_newsletters_subscriber'] == (
         user.is_newsletters_subscriber
     )
@@ -1985,16 +1895,14 @@ def test_partial_update__default_force_save__ok(
         'src.generics.base.service.BaseModelService.partial_update',
     )
     update_related_user_fields_mock = mocker.patch(
-        'src.accounts.services.user.UserService.'
-        '_update_related_user_fields',
+        'src.accounts.services.user.UserService._update_related_user_fields',
     )
     update_related_stripe_account_mock = mocker.patch(
         'src.accounts.services.user.UserService.'
         '_update_related_stripe_account',
     )
     update_analytics_mock = mocker.patch(
-        'src.accounts.services.user.UserService.'
-        '_update_analytics',
+        'src.accounts.services.user.UserService._update_analytics',
     )
     send_user_updated_notification_mock = mocker.patch(
         'src.notifications.tasks.send_user_updated_notification.delay',
@@ -2040,16 +1948,14 @@ def test_partial_update__force_save_true__ok(
         'src.generics.base.service.BaseModelService.partial_update',
     )
     update_related_user_fields_mock = mocker.patch(
-        'src.accounts.services.user.UserService.'
-        '_update_related_user_fields',
+        'src.accounts.services.user.UserService._update_related_user_fields',
     )
     update_related_stripe_account_mock = mocker.patch(
         'src.accounts.services.user.UserService.'
         '_update_related_stripe_account',
     )
     update_analytics_mock = mocker.patch(
-        'src.accounts.services.user.UserService.'
-        '_update_analytics',
+        'src.accounts.services.user.UserService._update_analytics',
     )
     send_user_updated_notification_mock = mocker.patch(
         'src.notifications.tasks.send_user_updated_notification.delay',
@@ -2095,16 +2001,14 @@ def test_partial_update__remove_all_groups__ok(
         'src.generics.base.service.BaseModelService.partial_update',
     )
     update_related_user_fields_mock = mocker.patch(
-        'src.accounts.services.user.UserService.'
-        '_update_related_user_fields',
+        'src.accounts.services.user.UserService._update_related_user_fields',
     )
     update_related_stripe_account_mock = mocker.patch(
         'src.accounts.services.user.UserService.'
         '_update_related_stripe_account',
     )
     update_analytics_mock = mocker.patch(
-        'src.accounts.services.user.UserService.'
-        '_update_analytics',
+        'src.accounts.services.user.UserService._update_analytics',
     )
     send_user_updated_notification_mock = mocker.patch(
         'src.notifications.tasks.send_user_updated_notification.delay',
@@ -2135,7 +2039,6 @@ def test_partial_update__remove_all_groups__ok(
 
 
 def test_create_instance__photo_url_longer_than_1024_chars__ok(mocker):
-
     # arrange
     account = create_test_account()
     create_test_owner(account=account)
@@ -2150,9 +2053,7 @@ def test_create_instance__photo_url_longer_than_1024_chars__ok(mocker):
         'SDSIaINGOeQmFP5U_WfEFaZ-wT8kADHm2kirRNGIstCh0uKTHOnQCKmzKCx_D'
         'Xfsco_ADXd8KyVOA-S7jmpsp3-e_rfp93JTi8hOQvnYB2OPA0t7G-NFbfFEeA'
         'o5HWW9Hzf3psxtmkrds3Qix0lDh-tfUchtp4NdVAkXut0vI-axgVAgiuM7F2W'
-        'dzijaTVw6Ecwz7Nb7m_O4' +
-        'X' * 800 +
-        '=s96-c'
+        'dzijaTVw6Ecwz7Nb7m_O4' + 'X' * 800 + '=s96-c'
     )
     mocker.patch(
         'src.accounts.services.user.make_password',
@@ -2171,3 +2072,1167 @@ def test_create_instance__photo_url_longer_than_1024_chars__ok(mocker):
     # assert
     assert user.photo == long_photo_url
     assert len(user.photo) > 1024
+
+
+def test_update_subordinates__changed_users__ok(mocker):
+    # arrange
+    account = create_test_account()
+    account.log_api_requests = True
+    account.save()
+    manager = create_test_not_admin(account=account)
+    old_report = create_test_not_admin(account=account, email='old@test.test')
+    new_report = create_test_not_admin(account=account, email='new@test.test')
+    manager.subordinates.set([old_report])
+
+    owner = create_test_owner(account=account)
+    service = UserService(instance=manager, user=owner)
+    send_user_updated_notification_delay_mock = mocker.patch(
+        'src.accounts.services.user.send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user.transaction.on_commit',
+        side_effect=lambda f: f(),
+    )
+
+    # act
+    result = service.partial_update(subordinates=[new_report])
+
+    # assert
+    assert result == manager
+    assert list(manager.subordinates.all()) == [new_report]
+    # partial_update user notification + _update_subordinates (2 changed)
+    assert send_user_updated_notification_delay_mock.call_count == 3
+
+
+def test_update_subordinates__no_changed_users__ok(mocker):
+    # arrange
+    account = create_test_account()
+    account.log_api_requests = True
+    account.save()
+    manager = create_test_not_admin(account=account)
+    report = create_test_not_admin(account=account, email='rep@test.test')
+    manager.subordinates.set([report])
+
+    owner = create_test_owner(account=account)
+    service = UserService(instance=manager, user=owner)
+    send_user_updated_notification_delay_mock = mocker.patch(
+        'src.accounts.services.user.send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user.transaction.on_commit',
+        side_effect=lambda f: f(),
+    )
+
+    # act
+    result = service.partial_update(subordinates=[report])
+
+    # assert
+    assert result == manager
+    assert list(manager.subordinates.all()) == [report]
+    # partial_update user notification only (no changed subordinates)
+    assert send_user_updated_notification_delay_mock.call_count == 1
+
+
+def test_deactivate__manager__subordinates_notified_and_cleared(mocker):
+    # arrange
+    account = create_test_account()
+    account.log_api_requests = True
+    account.save()
+    manager = create_test_not_admin(account=account)
+    report = create_test_not_admin(account=account, email='rep@test.test')
+    manager.subordinates.set([report])
+
+    owner = create_test_owner(account=account)
+    service = UserService(instance=manager, user=owner)
+    send_updated_mock = mocker.patch(
+        'src.accounts.services.user.send_user_updated_notification.delay',
+    )
+    send_deleted_mock = mocker.patch(
+        'src.accounts.services.user.send_user_deleted_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user.transaction.on_commit',
+        side_effect=lambda f: f(),
+    )
+    mocker.patch(
+        'src.accounts.services.user.send_user_deactivated_notification.delay',
+    )
+
+    # act
+    service.deactivate()
+
+    # assert
+    report.refresh_from_db()
+    assert report.manager is None
+    send_updated_mock.assert_called_once()
+    send_deleted_mock.assert_called_once()
+    assert send_updated_mock.call_args[1]['user_data']['id'] == report.id
+
+
+def test_partial_update__manager_changed__managers_notified(mocker):
+    # arrange
+    account = create_test_account()
+    old_manager = create_test_not_admin(account=account, email='old@test.test')
+    new_manager = create_test_not_admin(account=account, email='new@test.test')
+    user = create_test_not_admin(account=account, email='user@test.test')
+    user.manager = old_manager
+    user.save()
+
+    owner = create_test_owner(account=account)
+    service = UserService(instance=user, user=owner)
+    send_mock = mocker.patch(
+        'src.accounts.services.user.send_user_updated_notification.delay',
+    )
+
+    # act
+    service.partial_update(manager=new_manager)
+
+    # assert
+    # Notifies user + old_manager + new_manager = 3 times
+    assert send_mock.call_count == 3
+    notified_ids = {
+        call[1]['user_data']['id'] for call in send_mock.call_args_list
+    }
+    assert notified_ids == {user.id, old_manager.id, new_manager.id}
+
+
+def test_partial_update__manager_not_changed__only_user_notified(mocker):
+    # arrange
+    account = create_test_account()
+    old_manager = create_test_not_admin(account=account, email='old@test.test')
+    user = create_test_not_admin(account=account, email='user@test.test')
+    user.manager = old_manager
+    user.save()
+
+    owner = create_test_owner(account=account)
+    service = UserService(instance=user, user=owner)
+    send_mock = mocker.patch(
+        'src.accounts.services.user.send_user_updated_notification.delay',
+    )
+
+    # act
+    service.partial_update(manager=old_manager, first_name='Test')
+
+    # assert
+    # Notifies only user since manager hasn't actually changed
+    send_mock.assert_called_once()
+    assert send_mock.call_args[1]['user_data']['id'] == user.id
+
+
+def test_deactivate__has_manager__clears_mgr_and_notifies(mocker):
+    # arrange
+    account = create_test_account()
+    account.log_api_requests = True
+    account.save()
+    mgr = create_test_not_admin(
+        account=account,
+        email='mgr@test.test',
+    )
+    user = create_test_not_admin(
+        account=account,
+        email='user@test.test',
+    )
+    user.manager = mgr
+    user.save()
+
+    owner = create_test_owner(account=account)
+    service = UserService(instance=user, user=owner)
+    send_updated_mock = mocker.patch(
+        'src.accounts.services.user.'
+        'send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user.'
+        'send_user_deleted_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user.transaction.on_commit',
+        side_effect=lambda f: f(),
+    )
+    mocker.patch(
+        'src.accounts.services.user.'
+        'send_user_deactivated_notification.delay',
+    )
+
+    # act
+    service.deactivate()
+
+    # assert
+    user.refresh_from_db()
+    assert user.manager is None
+    send_updated_mock.assert_called_once()
+    assert send_updated_mock.call_args[1][
+        'user_data'
+    ]['id'] == mgr.id
+
+
+def test_deactivate__no_manager__skip_mgr_notification(mocker):
+    # arrange
+    account = create_test_account()
+    user = create_test_not_admin(
+        account=account,
+        email='user@test.test',
+    )
+
+    owner = create_test_owner(account=account)
+    service = UserService(instance=user, user=owner)
+    send_updated_mock = mocker.patch(
+        'src.accounts.services.user.'
+        'send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user.'
+        'send_user_deleted_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user.transaction.on_commit',
+        side_effect=lambda f: f(),
+    )
+    mocker.patch(
+        'src.accounts.services.user.'
+        'send_user_deactivated_notification.delay',
+    )
+
+    # act
+    service.deactivate()
+
+    # assert
+    user.refresh_from_db()
+    assert user.manager is None
+    send_updated_mock.assert_not_called()
+
+
+def test_deactivate__has_subs_and_manager__both_notified(mocker):
+    # arrange
+    account = create_test_account()
+    account.log_api_requests = True
+    account.save()
+    mgr = create_test_not_admin(
+        account=account,
+        email='mgr@test.test',
+    )
+    user = create_test_not_admin(
+        account=account,
+        email='user@test.test',
+    )
+    user.manager = mgr
+    user.save()
+    sub = create_test_not_admin(
+        account=account,
+        email='sub@test.test',
+    )
+    user.subordinates.set([sub])
+
+    owner = create_test_owner(account=account)
+    service = UserService(instance=user, user=owner)
+    send_updated_mock = mocker.patch(
+        'src.accounts.services.user.'
+        'send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user.'
+        'send_user_deleted_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user.transaction.on_commit',
+        side_effect=lambda f: f(),
+    )
+    mocker.patch(
+        'src.accounts.services.user.'
+        'send_user_deactivated_notification.delay',
+    )
+
+    # act
+    service.deactivate()
+
+    # assert
+    user.refresh_from_db()
+    sub.refresh_from_db()
+    assert user.manager is None
+    assert sub.manager is None
+    # sub notified + manager notified = 2
+    assert send_updated_mock.call_count == 2
+    notified_ids = {
+        call[1]['user_data']['id']
+        for call in send_updated_mock.call_args_list
+    }
+    assert notified_ids == {sub.id, mgr.id}
+
+
+def test_update_subordinates__old_mgr_notified__ok(mocker):
+    # arrange
+    account = create_test_account()
+    account.log_api_requests = True
+    account.save()
+    old_mgr = create_test_not_admin(
+        account=account,
+        email='old_mgr@test.test',
+    )
+    new_mgr = create_test_not_admin(
+        account=account,
+        email='new_mgr@test.test',
+    )
+    report = create_test_not_admin(
+        account=account,
+        email='report@test.test',
+    )
+    report.manager = old_mgr
+    report.save()
+    old_mgr.subordinates.set([report])
+
+    owner = create_test_owner(account=account)
+    service = UserService(instance=new_mgr, user=owner)
+    send_mock = mocker.patch(
+        'src.accounts.services.user.'
+        'send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user.transaction.on_commit',
+        side_effect=lambda f: f(),
+    )
+
+    # act
+    service.partial_update(subordinates=[report])
+
+    # assert
+    # partial_update (new_mgr) + _update_subordinates (report
+    # + old_mgr) = 3
+    assert send_mock.call_count == 3
+    notified_ids = {
+        call[1]['user_data']['id']
+        for call in send_mock.call_args_list
+    }
+    assert notified_ids == {new_mgr.id, report.id, old_mgr.id}
+
+
+def test_update_subordinates__no_old_mgr__no_extra_notify(mocker):
+    # arrange
+    account = create_test_account()
+    account.log_api_requests = True
+    account.save()
+    manager = create_test_not_admin(
+        account=account,
+        email='mgr@test.test',
+    )
+    report = create_test_not_admin(
+        account=account,
+        email='report@test.test',
+    )
+
+    owner = create_test_owner(account=account)
+    service = UserService(instance=manager, user=owner)
+    send_mock = mocker.patch(
+        'src.accounts.services.user.'
+        'send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user.transaction.on_commit',
+        side_effect=lambda f: f(),
+    )
+
+    # act
+    service.partial_update(subordinates=[report])
+
+    # assert
+    # partial_update (manager) + _update_subordinates (report) = 2
+    assert send_mock.call_count == 2
+    notified_ids = {
+        call[1]['user_data']['id']
+        for call in send_mock.call_args_list
+    }
+    assert notified_ids == {manager.id, report.id}
+
+
+def test_update_subordinates__report_moved_between_mgrs__old_mgr_notified(
+    mocker,
+):
+    # arrange
+    account = create_test_account()
+    account.log_api_requests = True
+    account.save()
+    old_mgr = create_test_not_admin(
+        account=account,
+        email='old@test.test',
+    )
+    new_mgr = create_test_not_admin(
+        account=account,
+        email='new@test.test',
+    )
+    report_a = create_test_not_admin(
+        account=account,
+        email='a@test.test',
+    )
+    report_b = create_test_not_admin(
+        account=account,
+        email='b@test.test',
+    )
+    report_a.manager = old_mgr
+    report_a.save()
+    report_b.manager = old_mgr
+    report_b.save()
+    old_mgr.subordinates.set([report_a, report_b])
+
+    owner = create_test_owner(account=account)
+    service = UserService(instance=new_mgr, user=owner)
+    send_mock = mocker.patch(
+        'src.accounts.services.user.'
+        'send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user.transaction.on_commit',
+        side_effect=lambda f: f(),
+    )
+
+    # act
+    service.partial_update(subordinates=[report_a])
+
+    # assert
+    # partial_update (new_mgr) + _update_subordinates (report_a
+    # + old_mgr) = 3
+    assert send_mock.call_count == 3
+    notified_ids = {
+        call[1]['user_data']['id']
+        for call in send_mock.call_args_list
+    }
+    assert old_mgr.id in notified_ids
+    assert new_mgr.id in notified_ids
+    assert report_a.id in notified_ids
+
+
+def test_update_subordinates__same_mgr_report__skip_old_mgr_notify(mocker):
+    # arrange
+    account = create_test_account()
+    account.log_api_requests = True
+    account.save()
+    manager = create_test_not_admin(
+        account=account,
+        email='mgr@test.test',
+    )
+    report_a = create_test_not_admin(
+        account=account,
+        email='a@test.test',
+    )
+    report_b = create_test_not_admin(
+        account=account,
+        email='b@test.test',
+    )
+    report_a.manager = manager
+    report_a.save()
+    manager.subordinates.set([report_a])
+
+    owner = create_test_owner(account=account)
+    service = UserService(instance=manager, user=owner)
+    send_mock = mocker.patch(
+        'src.accounts.services.user.'
+        'send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user.transaction.on_commit',
+        side_effect=lambda f: f(),
+    )
+
+    # act
+    service.partial_update(subordinates=[report_a, report_b])
+
+    # assert
+    # partial_update (manager) + _update_subordinates (report_b) = 2
+    # report_a is not changed, no old_mgr (manager == self.instance)
+    assert send_mock.call_count == 2
+    notified_ids = {
+        call[1]['user_data']['id']
+        for call in send_mock.call_args_list
+    }
+    assert notified_ids == {manager.id, report_b.id}
+
+
+def test_deactivate_subs__clears_manager__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    manager = create_test_not_admin(account=account)
+    sub1 = create_test_not_admin(
+        account=account,
+        email='sub1@test.test',
+    )
+    sub2 = create_test_not_admin(
+        account=account,
+        email='sub2@test.test',
+    )
+    sub1.manager = manager
+    sub1.save(update_fields=('manager',))
+    sub2.manager = manager
+    sub2.save(update_fields=('manager',))
+    send_ws_mock = mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'django.db.transaction.on_commit',
+        side_effect=lambda func: func(),
+    )
+    service = UserService(
+        user=owner,
+        instance=manager,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service._deactivate_subordinates()
+
+    # assert
+    sub1.refresh_from_db()
+    sub2.refresh_from_db()
+    assert sub1.manager is None
+    assert sub2.manager is None
+    assert send_ws_mock.call_count == 2
+
+
+def test_deactivate_subs__no_subs__no_ws(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    send_ws_mock = mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service._deactivate_subordinates()
+
+    # assert
+    send_ws_mock.assert_not_called()
+
+
+def test_update_managers__both__notifies_both(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    old_mgr = create_test_not_admin(
+        account=account,
+        email='oldmgr@test.test',
+    )
+    new_mgr = create_test_not_admin(
+        account=account,
+        email='newmgr@test.test',
+    )
+    user = create_test_not_admin(
+        account=account,
+        email='target@test.test',
+    )
+    send_ws_mock = mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service._update_managers(
+        old_manager=old_mgr,
+        new_manager=new_mgr,
+    )
+
+    # assert
+    assert send_ws_mock.call_count == 2
+
+
+def test_update_managers__old_none__notifies_new(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    new_mgr = create_test_not_admin(
+        account=account,
+        email='newmgr@test.test',
+    )
+    user = create_test_not_admin(
+        account=account,
+        email='target@test.test',
+    )
+    send_ws_mock = mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service._update_managers(
+        old_manager=None,
+        new_manager=new_mgr,
+    )
+
+    # assert
+    assert send_ws_mock.call_count == 1
+
+
+def test_update_managers__both_none__no_ws(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    send_ws_mock = mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service._update_managers(
+        old_manager=None,
+        new_manager=None,
+    )
+
+    # assert
+    send_ws_mock.assert_not_called()
+
+
+def test_update_subs__sets_new__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    manager = create_test_not_admin(account=account)
+    sub1 = create_test_not_admin(
+        account=account,
+        email='sub1@test.test',
+    )
+    sub2 = create_test_not_admin(
+        account=account,
+        email='sub2@test.test',
+    )
+    send_ws_mock = mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'django.db.transaction.on_commit',
+        side_effect=lambda func: func(),
+    )
+    service = UserService(
+        user=owner,
+        instance=manager,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service._update_subordinates([sub1, sub2])
+
+    # assert
+    sub1.refresh_from_db()
+    sub2.refresh_from_db()
+    assert sub1.manager == manager
+    assert sub2.manager == manager
+    assert send_ws_mock.call_count >= 1
+
+
+def test_update_subs__replaces__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    manager = create_test_not_admin(account=account)
+    old_sub = create_test_not_admin(
+        account=account,
+        email='oldsub@test.test',
+    )
+    new_sub = create_test_not_admin(
+        account=account,
+        email='newsub@test.test',
+    )
+    old_sub.manager = manager
+    old_sub.save(update_fields=('manager',))
+    mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    service = UserService(
+        user=owner,
+        instance=manager,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service._update_subordinates([new_sub])
+
+    # assert
+    old_sub.refresh_from_db()
+    new_sub.refresh_from_db()
+    assert old_sub.manager is None
+    assert new_sub.manager == manager
+
+
+def test_update_subs__empty__clears_all(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    manager = create_test_not_admin(account=account)
+    sub = create_test_not_admin(
+        account=account,
+        email='sub@test.test',
+    )
+    sub.manager = manager
+    sub.save(update_fields=('manager',))
+    send_ws_mock = mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'django.db.transaction.on_commit',
+        side_effect=lambda func: func(),
+    )
+    service = UserService(
+        user=owner,
+        instance=manager,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service._update_subordinates([])
+
+    # assert
+    sub.refresh_from_db()
+    assert sub.manager is None
+    assert send_ws_mock.call_count >= 1
+
+
+def test_update_subs__from_other_mgr__notifies_all(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    old_mgr = create_test_not_admin(
+        account=account,
+        email='oldmgr@test.test',
+    )
+    new_mgr = create_test_not_admin(
+        account=account,
+        email='newmgr@test.test',
+    )
+    sub = create_test_not_admin(
+        account=account,
+        email='sub@test.test',
+    )
+    sub.manager = old_mgr
+    sub.save(update_fields=('manager',))
+    send_ws_mock = mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'django.db.transaction.on_commit',
+        side_effect=lambda func: func(),
+    )
+    service = UserService(
+        user=owner,
+        instance=new_mgr,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service._update_subordinates([sub])
+
+    # assert
+    sub.refresh_from_db()
+    assert sub.manager == new_mgr
+    # sub + old_mgr = 2 (manager notified by caller)
+    assert send_ws_mock.call_count == 2
+
+
+def test_deactivate__clears_own_manager__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    manager = create_test_not_admin(
+        account=account,
+        email='manager@test.test',
+    )
+    user = create_test_not_admin(
+        account=account,
+        email='target@test.test',
+    )
+    user.manager = manager
+    user.save(update_fields=('manager',))
+    mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_deleted_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_deactivated_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user.AnalyticService',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service.deactivate()
+
+    # assert
+    user.refresh_from_db()
+    assert user.manager is None
+
+
+def test_deactivate__clears_subordinates__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    sub = create_test_not_admin(
+        account=account,
+        email='sub@test.test',
+    )
+    sub.manager = user
+    sub.save(update_fields=('manager',))
+    mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_deleted_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user'
+        '.send_user_deactivated_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user.AnalyticService',
+    )
+    service = UserService(
+        user=owner,
+        instance=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    service.deactivate()
+
+    # assert
+    sub.refresh_from_db()
+    assert sub.manager is None
+
+
+def test_partial_update__mgr_and_subs__mgr_ws_after_subs(
+    mocker,
+):
+    """When both manager and subordinates change in one
+    partial_update call, manager WS notifications must fire
+    *after* _update_subordinates completes, so their payloads
+    include fresh subordinate data."""
+
+    # arrange
+    account = create_test_account()
+    account.log_api_requests = True
+    account.save()
+    old_mgr = create_test_not_admin(
+        account=account,
+        email='old@test.test',
+    )
+    new_mgr = create_test_not_admin(
+        account=account,
+        email='new@test.test',
+    )
+    user = create_test_not_admin(
+        account=account,
+        email='user@test.test',
+    )
+    user.manager = old_mgr
+    user.save()
+    report = create_test_not_admin(
+        account=account,
+        email='report@test.test',
+    )
+
+    owner = create_test_owner(account=account)
+    service = UserService(instance=user, user=owner)
+
+    call_order = []
+    real_update_subs = service._update_subordinates
+    real_update_mgrs = service._update_managers
+
+    def tracked_update_subs(*a, **kw):
+        call_order.append('subordinates')
+        return real_update_subs(*a, **kw)
+
+    def tracked_update_mgrs(*a, **kw):
+        call_order.append('managers')
+        return real_update_mgrs(*a, **kw)
+
+    mocker.patch.object(
+        service, '_update_subordinates',
+        side_effect=tracked_update_subs,
+    )
+    mocker.patch.object(
+        service, '_update_managers',
+        side_effect=tracked_update_mgrs,
+    )
+    mocker.patch(
+        'src.accounts.services.user.'
+        'send_user_updated_notification.delay',
+    )
+    mocker.patch(
+        'src.accounts.services.user.transaction.on_commit',
+        side_effect=lambda f: f(),
+    )
+
+    # act
+    service.partial_update(
+        manager=new_mgr,
+        subordinates=[report],
+    )
+
+    # assert
+    assert call_order == ['subordinates', 'managers']
+
+
+def test_validate_manager__ok():
+    """Valid manager assignment does not raise."""
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    manager = create_test_not_admin(
+        account=account, email='mgr@test.test',
+    )
+    service = UserService(instance=user, user=owner)
+
+    # act / assert — no exception
+    service._validate_manager(manager)
+
+
+def test_validate_manager__self_assignment__error():
+    """A user cannot be their own manager."""
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    service = UserService(instance=user, user=owner)
+
+    # act
+    with pytest.raises(UserServiceException) as ex:
+        service._validate_manager(user)
+
+    # assert
+    assert ex.value.message == str(messages.MSG_A_0055)
+
+
+def test_validate_manager__circular__error():
+    """Direct cycle: manager.manager = user → assigning
+    user.manager = manager creates a loop."""
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    manager = create_test_not_admin(
+        account=account, email='mgr@test.test',
+    )
+    manager.manager = user
+    manager.save(update_fields=('manager',))
+    service = UserService(instance=user, user=owner)
+
+    # act
+    with pytest.raises(UserServiceException) as ex:
+        service._validate_manager(manager)
+
+    # assert
+    assert ex.value.message == str(messages.MSG_A_0056)
+
+
+def test_validate_manager__deep_chain__error():
+    """Cycle detection works for a 3-level chain
+    (A->B->C, assigning C as A's manager)."""
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user_a = create_test_not_admin(
+        account=account, email='a@test.test',
+    )
+    user_b = create_test_not_admin(
+        account=account, email='b@test.test',
+    )
+    user_c = create_test_not_admin(
+        account=account, email='c@test.test',
+    )
+    user_b.manager = user_a
+    user_b.save(update_fields=('manager',))
+    user_c.manager = user_b
+    user_c.save(update_fields=('manager',))
+    service = UserService(instance=user_a, user=owner)
+
+    # act
+    with pytest.raises(UserServiceException) as ex:
+        service._validate_manager(user_c)
+
+    # assert
+    assert ex.value.message == str(messages.MSG_A_0056)
+
+
+def test_validate_manager__inactive_in_chain__ok():
+    """Inactive users are excluded from the manager map,
+    so stale manager_id on an inactive user does not cause
+    a false-positive cycle."""
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user_a = create_test_not_admin(
+        account=account, email='a@test.test',
+    )
+    user_b = create_test_not_admin(
+        account=account, email='b@test.test',
+    )
+    inactive = create_test_not_admin(
+        account=account, email='inactive@test.test',
+    )
+    inactive.manager = user_a
+    inactive.save(update_fields=('manager',))
+    inactive.status = UserStatus.INACTIVE
+    inactive.is_active = False
+    inactive.save(update_fields=('status', 'is_active'))
+    service = UserService(instance=user_a, user=owner)
+
+    # act / assert — no exception
+    service._validate_manager(user_b)
+
+
+def test_validate_subordinates__ok():
+    """Valid subordinate list does not raise."""
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    sub = create_test_not_admin(
+        account=account, email='sub@test.test',
+    )
+    service = UserService(instance=user, user=owner)
+
+    # act / assert — no exception
+    service._validate_subordinates([sub])
+
+
+def test_validate_subordinates__self__error():
+    """A user cannot be their own subordinate."""
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    service = UserService(instance=user, user=owner)
+
+    # act
+    with pytest.raises(UserServiceException) as ex:
+        service._validate_subordinates([user])
+
+    # assert
+    assert ex.value.message == str(messages.MSG_A_0055)
+
+
+def test_validate_subordinates__ancestor__error():
+    """Assigning an ancestor as subordinate → cycle error."""
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    ancestor = create_test_not_admin(
+        account=account, email='anc@test.test',
+    )
+    user = create_test_not_admin(account=account)
+    user.manager = ancestor
+    user.save(update_fields=('manager',))
+    service = UserService(instance=user, user=owner)
+
+    # act
+    with pytest.raises(UserServiceException) as ex:
+        service._validate_subordinates(
+            [ancestor], user.manager,
+        )
+
+    # assert
+    assert ex.value.message == str(messages.MSG_A_0056)
+
+
+def test_validate_subordinates__proposed_mgr_none__ok():
+    """When proposed manager is None and old manager is
+    assigned as subordinate, the result is non-cyclic and
+    must be accepted."""
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    ancestor = create_test_not_admin(
+        account=account, email='anc@test.test',
+    )
+    user = create_test_not_admin(account=account)
+    user.manager = ancestor
+    user.save(update_fields=('manager',))
+    service = UserService(instance=user, user=owner)
+
+    # act / assert — manager=None breaks the old chain,
+    # so [ancestor] is a valid subordinate
+    service._validate_subordinates(
+        [ancestor], None,
+    )
+
+
+def test_validate_subordinates__proposed_mgr_fresh_map():
+    """_validate_subordinates uses proposed_manager to patch
+    the in-memory map, fixing the stale-cache problem."""
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    new_mgr = create_test_not_admin(
+        account=account, email='newmgr@test.test',
+    )
+    # new_mgr has no higher ancestors, so assigning it as
+    # manager and its former subordinate as user's sub is
+    # safe.
+    sub = create_test_not_admin(
+        account=account, email='sub@test.test',
+    )
+    service = UserService(instance=user, user=owner)
+
+    # act / assert — no exception
+    service._validate_subordinates(
+        [sub], new_mgr,
+    )

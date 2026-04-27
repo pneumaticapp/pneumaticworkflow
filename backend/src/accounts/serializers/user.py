@@ -31,6 +31,7 @@ from src.accounts.serializers.user_invites import (
     UserListInviteSerializer,
 )
 from src.generics.fields import (
+    AccountPrimaryKeyRelatedField,
     CommaSeparatedListField,
     DateFormatField,
     RelatedListField,
@@ -88,6 +89,8 @@ class UserSerializer(
             'groups',
             'password',
             'vacation',
+            'manager_id',
+            'subordinates_ids',
         )
         read_only_fields = (
             'id',
@@ -112,6 +115,18 @@ class UserSerializer(
     invite = serializers.SerializerMethodField(allow_null=True, read_only=True)
     password = serializers.CharField(write_only=True, required=False)
     vacation = VacationSerializer(read_only=True)
+    manager_id = AccountPrimaryKeyRelatedField(
+        queryset=UserModel.objects,
+        required=False,
+        allow_null=True,
+        source='manager',
+    )
+    subordinates_ids = AccountPrimaryKeyRelatedField(
+        many=True,
+        queryset=UserModel.objects,
+        required=False,
+        source='subordinates',
+    )
 
     def get_invite(self, instance: UserModel):
         if instance.status_invited and instance.invite:
@@ -282,7 +297,15 @@ class UserWebsocketSerializer(serializers.ModelSerializer):
             'photo',
             'is_admin',
             'is_account_owner',
+            'manager_id',
+            'subordinates_ids',
         )
+
+    subordinates_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        read_only=True,
+        source='subordinates',
+    )
 
 
 class VacationActivateSerializer(

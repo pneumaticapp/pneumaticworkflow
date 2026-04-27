@@ -8,6 +8,8 @@ import {
   teamFetchStarted,
   loadChangeUserAdmin,
   openDeleteUserModal,
+  loadChangeUserManager,
+  loadChangeUserReports,
   userListSortingChanged as changeUserListSorting
 } from '../../../redux/accounts/slice';
 import { openTeamInvitesPopup, loadInvitesUsers } from '../../../redux/team/slice';
@@ -32,7 +34,10 @@ type TTeamDispatchProps = Pick<
   | 'openModal'
   | 'openTeamInvitesPopup'
   | 'setGeneralLoaderVisibility'
+  | 'setGeneralLoaderVisibility'
   | 'loadInvitesUsers'
+  | 'loadChangeUserManager'
+  | 'loadChangeUserReports'
 >;
 
 export function mapStateToProps(state: IApplicationState): TTeamProps {
@@ -65,6 +70,8 @@ export const mapDispatchToProps: TTeamDispatchProps = {
   openTeamInvitesPopup,
   setGeneralLoaderVisibility,
   loadInvitesUsers,
+  loadChangeUserManager,
+  loadChangeUserReports,
 };
 
 const SyncedUsers = withSyncedQueryString<TTeamProps>([
