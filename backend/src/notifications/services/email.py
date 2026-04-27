@@ -68,6 +68,7 @@ class EmailService(NotificationService):
         NotificationMethod.invite,
         NotificationMethod.complete_workflow,
         NotificationMethod.task_reminder,
+        NotificationMethod.vacation_delegation,
     }
 
     def _send_email_to_console(
@@ -757,5 +758,39 @@ class EmailService(NotificationService):
             user_email=user_email,
             template_code=EmailType.TASK_REMINDER,
             method_name=NotificationMethod.task_reminder,
+            data=data,
+        )
+
+    def send_vacation_delegation(
+        self,
+        link: str,
+        user_id: int,
+        user_email: str,
+        user_first_name: str,
+        tasks_count: int,
+        vacation_owner_name: str,
+        **kwargs,
+    ):
+        content = (
+            f'Hi {user_first_name}, \n\n'
+            f'{vacation_owner_name} has gone on vacation or sick leave and '
+            f'designated you as a substitute. '
+            f'As a result, {tasks_count} active task(s) have been delegated '
+            f'to you.\n\n'
+            f'Please check your tasks list to see the newly assigned work.'
+        )
+        data = {
+            'title': str(email_titles[NotificationMethod.vacation_delegation]),
+            'link': link,
+            'logo_lg': self.logo_lg,
+            'content': content,
+            'button_text': 'View Tasks',
+        }
+        self._send(
+            title=str(messages.MSG_NF_0025),
+            user_id=user_id,
+            user_email=user_email,
+            template_code=EmailType.VACATION_DELEGATION,
+            method_name=NotificationMethod.vacation_delegation,
             data=data,
         )

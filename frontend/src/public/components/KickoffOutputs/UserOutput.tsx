@@ -7,12 +7,12 @@ import { IExtraField } from '../../types/template';
 import { getUserFullName } from '../../utils/users';
 
 import styles from './KickoffOutputs.css';
-import { IApplicationState } from '../../types/redux';
+import { getRegularGroupsList } from '../../redux/selectors/groups';
 
 export function UserOutput({ groupId, userId, name }: IExtraField) {
   const { formatMessage } = useIntl();
   const users: ReturnType<typeof getUsers> = useSelector(getUsers);
-  const groups = useSelector((state: IApplicationState) => state.groups.list);
+  const groups = useSelector(getRegularGroupsList);
 
   const defaultValue = formatMessage({ id: 'template.kick-off-form-unfilled-value' });
   let displayValue = '';

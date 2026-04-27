@@ -2077,3 +2077,67 @@ def test_send_reminder_task(mocker):
             'logo_lg': logo_lg,
         },
     )
+
+
+def test_send_vacation_delegation__ok(mocker):
+
+    # arrange
+    fixed_now = timezone.now()
+    mocker.patch(
+        'src.notifications.services.email.timezone.now',
+        return_value=fixed_now,
+    )
+    send_mock = mocker.patch(
+        'src.notifications.services.email.'
+        'EmailService._send',
+    )
+    user_id = 12
+    user_email = 'john@cena.com'
+    user_first_name = 'John'
+    tasks_count = 15
+    vacation_owner_name = 'Bob Smith'
+    logo_lg = 'https://site.com/logo-lg.jpg'
+    logging = False
+    account_id = 123
+    link = 'https://site.com/tasks'
+
+    service = EmailService(
+        logo_lg=logo_lg,
+        logging=logging,
+        account_id=account_id,
+    )
+
+    content = (
+        f'Hi {user_first_name}, \n\n'
+        f'{vacation_owner_name} has gone on vacation or sick leave and '
+        f'designated you as a substitute. '
+        f'As a result, {tasks_count} active task(s) have been delegated '
+        f'to you.\n\n'
+        f'Please check your tasks list to see the newly assigned work.'
+    )
+
+    # act
+    service.send_vacation_delegation(
+        link=link,
+        user_id=user_id,
+        user_email=user_email,
+        user_first_name=user_first_name,
+        tasks_count=tasks_count,
+        vacation_owner_name=vacation_owner_name,
+    )
+
+    # assert
+    send_mock.assert_called_once_with(
+        title=str(messages.MSG_NF_0025),
+        user_id=user_id,
+        user_email=user_email,
+        template_code=EmailType.VACATION_DELEGATION,
+        method_name=NotificationMethod.vacation_delegation,
+        data={
+            'title': email_titles[NotificationMethod.vacation_delegation],
+            'link': link,
+            'logo_lg': logo_lg,
+            'content': content,
+            'button_text': 'View Tasks',
+        },
+    )

@@ -72,7 +72,9 @@ class GroupViewSet(
 
     def get_queryset(self):
         account_id = self.request.user.account_id
-        return UserGroup.objects.on_account(account_id).prefetch_related(
+        return UserGroup.include_personal.on_account(
+            account_id,
+        ).prefetch_related(
             Prefetch(
                 'users',
                 queryset=(

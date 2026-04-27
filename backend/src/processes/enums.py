@@ -587,6 +587,7 @@ class WorkflowEventType:
     TASK_PERFORMER_GROUP_CREATED = 20
     TASK_PERFORMER_GROUP_DELETED = 21
     TASK_DELAY = 22
+    TASK_DELEGATION = 23
 
     URGENT_TYPES = (
         URGENT,
@@ -607,6 +608,7 @@ class WorkflowEventType:
         NOT_URGENT,
         SUB_WORKFLOW_RUN,
         TASK_DELAY,
+        TASK_DELEGATION,
     )
 
     CHOICES = (
@@ -635,6 +637,7 @@ class WorkflowEventType:
         (TASK_PERFORMER_CREATED, 'Performer group added to task'),
         (TASK_PERFORMER_DELETED, 'Performer group deleted from task'),
         (TASK_DELAY, 'Task snoozed from template'),
+        (TASK_DELEGATION, 'Task delegated'),
     )
 
     LITERALS = Literal[
