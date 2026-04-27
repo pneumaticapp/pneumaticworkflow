@@ -173,18 +173,16 @@ export function TaskForm({
       formPartId: ETaskFormParts.Fields,
       title: 'tasks.task-outputs-create-help',
       component: (
-        <div className={styles['task-fields-wrapper']}>
-          <OutputFormIntl
-            mode="taskMerged"
-            task={task}
-            fieldsetsById={fieldsetsById}
-            fieldsetsCatalogLoading={fieldsetsCatalogLoading}
-            templateId={templateId}
-            accountId={accountId}
-            show={ETaskFormParts.Fields === scrollTarget || ETaskFormParts.Fieldsets === scrollTarget}
-            patchTask={patchTask}
-          />
-        </div>
+        <OutputFormIntl
+          mode="taskMerged"
+          task={task}
+          fieldsetsById={fieldsetsById}
+          fieldsetsCatalogLoading={fieldsetsCatalogLoading}
+          templateId={templateId}
+          accountId={accountId}
+          show={ETaskFormParts.Fields === scrollTarget || ETaskFormParts.Fieldsets === scrollTarget}
+          patchTask={patchTask}
+        />
       ),
       widget: createWidget(TaskRenderExtraFieldsInfo, { task })
     },
