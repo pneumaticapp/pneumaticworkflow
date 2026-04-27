@@ -52,7 +52,6 @@ def test_create_fieldset__all_fields__ok(api_client, mocker):
     data = {
         'name': 'All Fields Fieldset',
         'description': 'Description',
-        'order': 2,
         'task': task.api_name,
         'label_position': LabelPosition.LEFT,
         'layout': FieldSetLayout.HORIZONTAL,
@@ -81,7 +80,6 @@ def test_create_fieldset__all_fields__ok(api_client, mocker):
         task=task,
         name=data['name'],
         description=data['description'],
-        order=data['order'],
         label_position=data['label_position'],
         layout=data['layout'],
         api_name=data['api_name'],
@@ -128,7 +126,6 @@ def test_create_fieldset__all_fields__ok(api_client, mocker):
     assert response.data['id'] == fieldset.id
     assert response.data['name'] == data['name']
     assert response.data['description'] == data['description']
-    assert response.data['order'] == data['order']
     assert response.data['task'] == task.api_name
     assert response.data['label_position'] == data['label_position']
     assert response.data['layout'] == data['layout']
@@ -150,7 +147,6 @@ def test_create_fieldset__all_fields__ok(api_client, mocker):
     fieldset_service_create_mock.assert_called_once_with(
         template_id=template.id,
         name=data['name'],
-        order=data['order'],
         description=data['description'],
         layout=data['layout'],
         label_position=data['label_position'],
@@ -174,7 +170,6 @@ def test_create_fieldset__with_kickoff_id__ok(api_client, mocker):
     )
     data = {
         'name': 'Kickoff Fieldset',
-        'order': 1,
     }
 
     fieldset = FieldsetTemplate.objects.create(
@@ -182,7 +177,6 @@ def test_create_fieldset__with_kickoff_id__ok(api_client, mocker):
         template=template,
         kickoff=template.kickoff_instance,
         name=data['name'],
-        order=data['order'],
     )
 
     fieldset_service_init_mock = mocker.patch.object(
@@ -214,7 +208,6 @@ def test_create_fieldset__with_kickoff_id__ok(api_client, mocker):
     fieldset_service_create_mock.assert_called_once_with(
         template_id=template.id,
         name=data['name'],
-        order=data['order'],
         rules=[],
         fields=[],
     )
@@ -233,7 +226,6 @@ def test_create_fieldset__with_task__ok(api_client, mocker):
     task = template.tasks.first()
     data = {
         'name': 'Task Fieldset',
-        'order': 1,
         'task': task.api_name,
     }
 
@@ -242,7 +234,6 @@ def test_create_fieldset__with_task__ok(api_client, mocker):
         template=template,
         task=task,
         name=data['name'],
-        order=data['order'],
     )
     fieldset_service_init_mock = mocker.patch.object(
         FieldSetTemplateService,
@@ -278,7 +269,6 @@ def test_create_fieldset__with_task__ok(api_client, mocker):
         template_id=template.id,
         task_id=task.id,
         name=data['name'],
-        order=data['order'],
         rules=[],
         fields=[],
     )
@@ -297,7 +287,6 @@ def test_create_fieldset__min_data__ok(api_client, mocker):
     )
     data = {
         'name': 'Minimal Fieldset',
-        'order': 1,
     }
 
     # mock FieldSetTemplateService
@@ -310,7 +299,6 @@ def test_create_fieldset__min_data__ok(api_client, mocker):
         account=account,
         template=template,
         name='Minimal Fieldset',
-        order=1,
     )
     fieldset_service_create_mock = mocker.patch(
         'src.processes.views.template.FieldSetTemplateService.create',
@@ -335,7 +323,6 @@ def test_create_fieldset__min_data__ok(api_client, mocker):
     fieldset_service_create_mock.assert_called_once_with(
         template_id=template.id,
         name='Minimal Fieldset',
-        order=1,
         rules=[],
         fields=[],
     )
@@ -352,7 +339,6 @@ def test_create_fieldset__set_api_name__ok(api_client, mocker):
     )
     data = {
         'name': 'Minimal Fieldset',
-        'order': 1,
         'api_name': 'fs1',
     }
 
@@ -366,7 +352,6 @@ def test_create_fieldset__set_api_name__ok(api_client, mocker):
         account=account,
         template=template,
         name='Minimal Fieldset',
-        order=1,
     )
     fieldset_service_create_mock = mocker.patch(
         'src.processes.views.template.FieldSetTemplateService.create',
@@ -392,7 +377,6 @@ def test_create_fieldset__set_api_name__ok(api_client, mocker):
         template_id=template.id,
         name=data['name'],
         api_name=data['api_name'],
-        order=data['order'],
         rules=[],
         fields=[],
     )
@@ -415,7 +399,6 @@ def test_create_fieldset__rule_with_one_field__ok(api_client, mocker):
     field_api_name = 'f1'
     data = {
         'name': 'All Fields Fieldset',
-        'order': 1,
         'task': task.api_name,
         'fields': [
             {
@@ -452,7 +435,6 @@ def test_create_fieldset__rule_with_one_field__ok(api_client, mocker):
         template=template,
         task=task,
         name=data['name'],
-        order=data['order'],
     )
     field = FieldTemplate.objects.create(
         account=account,
@@ -496,7 +478,6 @@ def test_create_fieldset__rule_with_one_field__ok(api_client, mocker):
         template_id=template.id,
         task_id=task.id,
         name=data['name'],
-        order=data['order'],
         rules=data['rules'],
         fields=data['fields'],
     )
@@ -520,7 +501,6 @@ def test_create_fieldset__rule_with_two_fields__ok(api_client, mocker):
     field_2_api_name = 'f2'
     data = {
         'name': 'All Fields Fieldset',
-        'order': 1,
         'fields': [
             {
                 'name': 'Field 1',
@@ -556,7 +536,6 @@ def test_create_fieldset__rule_with_two_fields__ok(api_client, mocker):
         template=template,
         kickoff=kickoff,
         name=data['name'],
-        order=data['order'],
     )
     field_1 = FieldTemplate.objects.create(
         account=account,
@@ -608,7 +587,6 @@ def test_create_fieldset__rule_with_two_fields__ok(api_client, mocker):
     fieldset_service_create_mock.assert_called_once_with(
         template_id=template.id,
         name=data['name'],
-        order=data['order'],
         rules=data['rules'],
         fields=data['fields'],
     )
@@ -634,7 +612,6 @@ def test_create_fieldset_another_template_task__validation_error(
     another_template_task = another_template.tasks.get(number=1)
     data = {
         'name': 'Task Fieldset',
-        'order': 1,
         'task': another_template_task.api_name,
     }
     fieldset_service_init_mock = mocker.patch.object(
@@ -678,7 +655,6 @@ def test_create_fieldset__unauthenticated__unauthorized(api_client, mocker):
     )
     data = {
         'name': 'New Fieldset',
-        'order': 1,
     }
 
     fieldset_service_init_mock = mocker.patch.object(
@@ -718,7 +694,6 @@ def test_create_fieldset__expired_sub__permission_denied(api_client, mocker):
     )
     data = {
         'name': 'New Fieldset',
-        'order': 1,
     }
 
     fieldset_service_init_mock = mocker.patch.object(
@@ -758,7 +733,6 @@ def test_create_fieldset__billing_plan__permission_denied(api_client, mocker):
     )
     data = {
         'name': 'New Fieldset',
-        'order': 1,
     }
     fieldset_service_init_mock = mocker.patch.object(
         FieldSetTemplateService,
@@ -805,7 +779,6 @@ def test_create_fieldset__users_limit__permission_denied(api_client, mocker):
     )
     data = {
         'name': 'New Fieldset',
-        'order': 1,
     }
 
     fieldset_service_init_mock = mocker.patch.object(
@@ -846,7 +819,6 @@ def test_create_fieldset__non_admin__permission_denied(api_client, mocker):
     user = create_test_not_admin(account=account)
     data = {
         'name': 'New Fieldset',
-        'order': 1,
     }
     fieldset_service_init_mock = mocker.patch.object(
         FieldSetTemplateService,
@@ -885,7 +857,6 @@ def test_create_fieldset__not_tpl_owner__permission_denied(api_client, mocker):
     user = create_test_admin(account=account)
     data = {
         'name': 'New Fieldset',
-        'order': 1,
     }
     fieldset_service_init_mock = mocker.patch.object(
         FieldSetTemplateService,
@@ -911,7 +882,7 @@ def test_create_fieldset__not_tpl_owner__permission_denied(api_client, mocker):
     fieldset_service_create_mock.assert_not_called()
 
 
-def test_create_fieldset__invalid_name__validation_error(api_client, mocker):
+def test_create_fieldset__blank_name__validation_error(api_client, mocker):
 
     """ Invalid name field returns validation error """
 
@@ -923,7 +894,6 @@ def test_create_fieldset__invalid_name__validation_error(api_client, mocker):
         tasks_count=1,
     )
     data = {
-        'order': 1,
     }
 
     fieldset = mocker.Mock(id=1, api_name='dummy')
@@ -968,7 +938,6 @@ def test_create_fieldset__invalid_layout__validation_error(api_client, mocker):
     )
     data = {
         'name': 'Test Fieldset',
-        'order': 1,
         'layout': 'invalid_layout',
     }
     fieldset_service_init_mock = mocker.patch.object(
@@ -1013,7 +982,6 @@ def test_create_fieldset__invalid_label_position__validation_error(
     )
     data = {
         'name': 'Test Fieldset',
-        'order': 1,
         'label_position': 'invalid_position',
     }
     fieldset_service_init_mock = mocker.patch.object(
@@ -1057,7 +1025,6 @@ def test_create_fieldset__service_exception__validation_error(
     )
     data = {
         'name': 'Test Fieldset',
-        'order': 1,
     }
     error_message = 'Service error occurred'
 
@@ -1091,7 +1058,6 @@ def test_create_fieldset__service_exception__validation_error(
     fieldset_service_create_mock.assert_called_once_with(
         template_id=template.id,
         name='Test Fieldset',
-        order=1,
         rules=[],
         fields=[],
     )
@@ -1107,7 +1073,6 @@ def test_create_fieldset__not_existing_tpl__not_found(api_client, mocker):
     nonexistent_id = 999999
     data = {
         'name': 'New Fieldset',
-        'order': 1,
     }
     fieldset_service_init_mock = mocker.patch.object(
         FieldSetTemplateService,

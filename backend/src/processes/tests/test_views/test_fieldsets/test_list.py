@@ -42,7 +42,6 @@ def test_list_fieldsets__all_data__ok(api_client):
         template=template,
         kickoff=kickoff,
         name='Kickoff Fieldset',
-        order=1,
         rule_type=rule_type,
         rule_value=rule_value,
     )
@@ -64,14 +63,12 @@ def test_list_fieldsets__all_data__ok(api_client):
     assert item_1['api_name'] == fieldset.api_name
     assert item_1['name'] == fieldset.name
     assert item_1['description'] == ''
-    assert item_1['order'] == fieldset.order
     assert item_1['layout'] == fieldset.layout
     assert item_1['label_position'] == fieldset.label_position
     assert item_1['task'] is None
 
     assert len(item_1['rules']) == 1
     rules_data = item_1['rules']
-    assert rules_data[0]['id'] == rule.id
     assert rules_data[0]['type'] == rule_type
     assert rules_data[0]['value'] == rule_value
     assert rules_data[0]['api_name'] == rule.api_name
@@ -80,7 +77,6 @@ def test_list_fieldsets__all_data__ok(api_client):
     fields_data = item_1['fields']
     assert fields_data[0]['name'] == field.name
     assert fields_data[0]['type'] == field.type
-    assert fields_data[0]['order'] == 1
     assert fields_data[0]['api_name'] == field.api_name
     assert fields_data[0]['description'] == ''
     assert fields_data[0]['is_required'] is False
@@ -88,54 +84,6 @@ def test_list_fieldsets__all_data__ok(api_client):
     assert fields_data[0]['default'] == ''
     assert 'dataset' not in fields_data[0]
     assert 'selections' not in fields_data[0]
-
-
-def test_list_fieldsets__two_fieldsets__ok(api_client):
-    """List fieldsets for existing template"""
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    kickoff = template.kickoff_instance
-    fieldset_1 = create_test_fieldset_template(
-        account=account,
-        template=template,
-        kickoff=kickoff,
-        order=1,
-    )
-    template_task = template.tasks.first()
-    fieldset_2 = create_test_fieldset_template(
-        account=account,
-        template=template,
-        task=template_task,
-        order=2,
-    )
-
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
-    )
-
-    # assert
-    assert response.status_code == 200
-    assert len(response.data) == 2
-
-    # ordered by -id (newest first)
-    item_1 = response.data[0]
-    assert item_1['id'] == fieldset_2.id
-    assert item_1['task'] == template_task.api_name
-    assert item_1['order'] == 2
-
-    item_2 = response.data[1]
-    assert item_2['id'] == fieldset_1.id
-    assert item_2['task'] is None
-    assert item_2['order'] == 1
 
 
 def test_list_fieldsets__pagination__ok(api_client):
@@ -153,19 +101,16 @@ def test_list_fieldsets__pagination__ok(api_client):
         account=account,
         template=template,
         task=template_task,
-        order=3,
     )
     fieldset_2 = create_test_fieldset_template(
         account=account,
         template=template,
         task=template_task,
-        order=2,
     )
     create_test_fieldset_template(
         account=account,
         template=template,
         task=template_task,
-        order=1,
     )
 
     api_client.token_authenticate(user=user)
@@ -184,12 +129,10 @@ def test_list_fieldsets__pagination__ok(api_client):
     item_1 = response.data['results'][0]
     assert item_1['id'] == fieldset_2.id
     assert item_1['task'] == template_task.api_name
-    assert item_1['order'] == 2
 
     item_2 = response.data['results'][1]
     assert item_2['id'] == fieldset_1.id
     assert item_2['task'] == template_task.api_name
-    assert item_2['order'] == 3
 
 
 def test_list_fieldsets__different_accounts__ok(api_client):
@@ -293,7 +236,6 @@ def test_list_fieldsets__rule_with_fields__ok(api_client):
         template=template,
         kickoff=kickoff,
         name='Kickoff Fieldset',
-        order=1,
         rule_type=rule_type,
         rule_value=rule_value,
     )
@@ -315,7 +257,6 @@ def test_list_fieldsets__rule_with_fields__ok(api_client):
 
     assert len(item_1['rules']) == 1
     rules_data = item_1['rules']
-    assert rules_data[0]['id'] == rule.id
     assert rules_data[0]['fields'] == [field.api_name]
 
 
