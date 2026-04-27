@@ -106,6 +106,8 @@ describe('Profile — ProfileManagerSection', () => {
   const mockEditCurrentUser = jest.fn();
   const mockSendChangePassword = jest.fn();
   const mockOnChangeTab = jest.fn();
+  const mockOnVacationActivate = jest.fn();
+  const mockOnVacationDeactivate = jest.fn();
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -123,6 +125,9 @@ describe('Profile — ProfileManagerSection', () => {
         editCurrentUser={mockEditCurrentUser}
         sendChangePassword={mockSendChangePassword}
         onChangeTab={mockOnChangeTab}
+        onVacationActivate={mockOnVacationActivate}
+        onVacationDeactivate={mockOnVacationDeactivate}
+        availableUsers={[]}
       />
     );
 
@@ -144,6 +149,9 @@ describe('Profile — ProfileManagerSection', () => {
         editCurrentUser={mockEditCurrentUser}
         sendChangePassword={mockSendChangePassword}
         onChangeTab={mockOnChangeTab}
+        onVacationActivate={mockOnVacationActivate}
+        onVacationDeactivate={mockOnVacationDeactivate}
+        availableUsers={[]}
       />
     );
 
