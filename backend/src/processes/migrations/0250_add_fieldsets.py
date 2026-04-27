@@ -64,6 +64,7 @@ class Migration(migrations.Migration):
                 ('kickoff', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='fieldsets', to='processes.Kickoff')),
                 ('task', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, related_name='fieldsets', to='processes.TaskTemplate')),
                 ('template', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, related_name='fieldsets', to='processes.Template')),
+                ('date_created', models.DateTimeField(auto_now_add=True, default=django.utils.timezone.now))
             ],
             options={
                 'ordering': ['-id'],
