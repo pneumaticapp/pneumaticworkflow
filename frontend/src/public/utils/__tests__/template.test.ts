@@ -4,10 +4,13 @@ import {
   ETaskPerformerType,
   ITemplateResponse,
   ITemplate,
+  EExtraFieldType,
+  IExtraField,
 } from '../../types/template';
 import { ESubscriptionPlan } from '../../types/account';
 import { TUserListItem, EUserStatus } from '../../types/user';
-import { getNormalizedTemplate, mapTemplateRequest, getEmptyKickoff } from '../template';
+import { getNormalizedTemplate, mapTemplateRequest, getEmptyKickoff, cleanTemplateReferences } from '../template';
+import { EConditionAction, EConditionOperators, EConditionLogicOperations, TConditionRule } from '../../components/TemplateEdit/TaskForm/Conditions/types';
 
 const createMockUser = (overrides: Partial<TUserListItem> = {}): TUserListItem => ({
   id: 1,
@@ -367,5 +370,171 @@ describe('template utilities', () => {
 
       expect(result.publicSuccessUrl).toBeNull();
     });
+  describe('cleanTemplateReferences', () => {
+    it('removes invalid field references from template and task text fields but preserves system vars', () => {
+      const template = createMockTemplate({
+        wfNameTemplate: 'Name: {{valid-field}} and {{invalid-field}} and {{template-name}}',
+        kickoff: {
+          ...getEmptyKickoff(),
+          fields: [{ apiName: 'valid-field', type: EExtraFieldType.Text, name: 'Valid Field', order: 1 } as unknown as IExtraField],
+        },
+        tasks: [
+          {
+            ...createMockTemplate().tasks[0],
+            name: 'Task {{invalid-field}} and {{valid-field}}',
+            description: 'Desc {{workflow-starter}} and {{invalid-field}}',
+            number: 1,
+            fields: [{ apiName: 'valid-task-field', type: EExtraFieldType.Text, name: 'Valid Task Field', order: 1 } as unknown as IExtraField],
+          },
+          {
+            ...createMockTemplate().tasks[0],
+            name: 'Task 2 {{valid-field}} and {{valid-task-field}} and {{broken}}',
+            description: 'Desc',
+            number: 2,
+          },
+        ],
+      });
+
+      const cleaned = cleanTemplateReferences(template);
+
+      // wfNameTemplate: {{template-name}} is a WF_NAME system var, preserved; {{invalid-field}} removed
+      expect(cleaned.wfNameTemplate).toBe('Name: {{valid-field}} and  and {{template-name}}');
+      expect(cleaned.tasks[0].name).toBe('Task  and {{valid-field}}');
+      // {{workflow-starter}} is a TASK system var, preserved; {{invalid-field}} removed
+      expect(cleaned.tasks[0].description).toBe('Desc {{workflow-starter}} and');
+      // Task 2 variables should successfully retain valid fields from kickoff and task 1
+      expect(cleaned.tasks[1].name).toBe('Task 2 {{valid-field}} and {{valid-task-field}} and');
+    });
+
+    it('removes invalid field references from conditions', () => {
+      const template = createMockTemplate({
+        tasks: [
+          {
+            ...createMockTemplate().tasks[0],
+            conditions: [
+              {
+                apiName: 'cond-1',
+                order: 1,
+                action: EConditionAction.StartTask,
+                rules: [
+                  { field: 'valid-field', operator: EConditionOperators.Equal, logicOperation: EConditionLogicOperations.And, predicateApiName: '1' } as unknown as TConditionRule,
+                  { field: 'invalid-field', operator: EConditionOperators.Equal, logicOperation: EConditionLogicOperations.And, predicateApiName: '2' } as unknown as TConditionRule,
+                ],
+              },
+            ],
+          },
+        ],
+        kickoff: {
+          ...getEmptyKickoff(),
+          fields: [{ apiName: 'valid-field', type: EExtraFieldType.Text, name: 'Valid', order: 1 } as unknown as IExtraField],
+        },
+      });
+
+      const cleaned = cleanTemplateReferences(template);
+      const rules = cleaned.tasks[0].conditions[0].rules;
+      expect(rules).toHaveLength(1);
+      expect(rules[0].field).toBe('valid-field');
+    });
+
+    it('falls back to Step N if task name becomes empty', () => {
+      const template = createMockTemplate({
+        tasks: [
+          {
+            ...createMockTemplate().tasks[0],
+            number: 2,
+            name: '{{invalid-field}}',
+          },
+        ],
+      });
+      const cleaned = cleanTemplateReferences(template);
+      expect(cleaned.tasks[0].name).toBe('Step 2');
+    });
+
+    it('safely handles empty rawPerformers array or invalid field performers and preserves valid members', () => {
+      const template = createMockTemplate({
+        kickoff: {
+          ...getEmptyKickoff(),
+          fields: [{ apiName: 'valid-user-field', type: EExtraFieldType.User, name: 'Valid User', order: 1 } as unknown as IExtraField],
+        },
+        tasks: [
+          {
+            ...createMockTemplate().tasks[0],
+            rawPerformers: [
+              { type: ETaskPerformerType.OutputUser, sourceId: 'invalid-field', label: 'Broken', apiName: '1' },
+              { type: ETaskPerformerType.OutputUser, sourceId: 'valid-user-field', label: 'Valid User', apiName: '2' },
+              { type: ETaskPerformerType.User, sourceId: '1', label: 'Regular User', apiName: '3' },
+            ],
+          },
+        ],
+      });
+      const cleaned = cleanTemplateReferences(template);
+      expect(cleaned.tasks[0].rawPerformers).toHaveLength(2);
+      expect(cleaned.tasks[0].rawPerformers.map((p) => p.apiName)).toEqual(['2', '3']);
+    });
+
+    it('removes invalid field references from rawDueDate', () => {
+      const template = createMockTemplate({
+        kickoff: {
+          ...getEmptyKickoff(),
+          fields: [{ apiName: 'valid-date-field', type: EExtraFieldType.Date, name: 'Valid Date', order: 1 } as unknown as IExtraField],
+        },
+        tasks: [
+          {
+            ...createMockTemplate().tasks[0],
+            number: 1,
+            rawDueDate: {
+              apiName: 'due-1', duration: null, durationMonths: null, rulePreposition: 'after', ruleTarget: 'field', sourceId: 'valid-date-field',
+            },
+          },
+          {
+            ...createMockTemplate().tasks[0],
+            number: 2,
+            rawDueDate: {
+              apiName: 'due-2', duration: null, durationMonths: null, rulePreposition: 'after', ruleTarget: 'field', sourceId: 'invalid-field',
+            },
+          },
+        ]
+      });
+      const cleaned = cleanTemplateReferences(template);
+      expect(cleaned.tasks[0].rawDueDate?.sourceId).toBe('valid-date-field');
+      expect(cleaned.tasks[0].rawDueDate?.ruleTarget).toBe('field');
+      expect(cleaned.tasks[1].rawDueDate?.duration).toBeNull();
+      expect(cleaned.tasks[1].rawDueDate?.durationMonths).toBeNull();
+      expect(cleaned.tasks[1].rawDueDate?.sourceId).toBeNull();
+      expect(cleaned.tasks[1].rawDueDate?.ruleTarget).toBe('task started');
+    });
+    it('preserves Start After condition rules and handles empty fields', () => {
+      const template = createMockTemplate({
+        tasks: [
+          {
+            ...createMockTemplate().tasks[0],
+            conditions: [
+              {
+                apiName: 'cond-1',
+                order: 1,
+                action: EConditionAction.StartTask,
+                rules: [
+                  { field: 'task-123', fieldType: 'task', operator: EConditionOperators.Equal, logicOperation: EConditionLogicOperations.And, predicateApiName: '1' } as unknown as TConditionRule,
+                  { field: '', operator: EConditionOperators.Equal, logicOperation: EConditionLogicOperations.And, predicateApiName: '2' } as unknown as TConditionRule,
+                  { field: undefined, operator: EConditionOperators.Equal, logicOperation: EConditionLogicOperations.And, predicateApiName: '3' } as unknown as TConditionRule,
+                  { field: null, operator: EConditionOperators.Equal, logicOperation: EConditionLogicOperations.And, predicateApiName: '4' } as unknown as TConditionRule,
+                  { field: 'invalid-field', fieldType: 'field', operator: EConditionOperators.Equal, logicOperation: EConditionLogicOperations.And, predicateApiName: '5' } as unknown as TConditionRule,
+                ],
+              },
+            ],
+          },
+        ],
+      });
+
+      const cleaned = cleanTemplateReferences(template);
+      const rules = cleaned.tasks[0].conditions[0].rules;
+      
+      expect(rules).toHaveLength(4);
+      expect(rules[0].field).toBe('task-123');
+      expect(rules[1].field).toBe('');
+      expect(rules[2].field).toBeUndefined();
+      expect(rules[3].field).toBeNull();
+    });
   });
+});
 });
