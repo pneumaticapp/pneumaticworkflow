@@ -155,14 +155,13 @@ export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
           return match;
         }
         return '';
-      })
-      .trim();
+      });
   };
 
   const tasks = [...(template.tasks || [])].sort((a, b) => a.number - b.number);
 
   const cleanedTasks = tasks.map((task) => {
-    const name = removeInvalidReferences(task.name, validApiNames, TASK_SYSTEM_VARS) || `Step ${task.number}`;
+    const name = removeInvalidReferences(task.name, validApiNames, TASK_SYSTEM_VARS);
     const description = removeInvalidReferences(task.description, validApiNames, TASK_SYSTEM_VARS);
 
     const conditions = (task.conditions || []).map((condition) => {
