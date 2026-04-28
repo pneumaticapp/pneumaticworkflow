@@ -39,7 +39,6 @@ def test_retrieve__fieldset_all_data__ok(api_client):
         kickoff=template.kickoff_instance,
         name='My Fieldset',
         description='Fieldset description',
-        order=3,
         layout=FieldSetLayout.HORIZONTAL,
         label_position=LabelPosition.LEFT,
         rule_type=rule_type,
@@ -59,14 +58,12 @@ def test_retrieve__fieldset_all_data__ok(api_client):
     assert response.data['api_name'] == fieldset.api_name
     assert response.data['name'] == 'My Fieldset'
     assert response.data['description'] == 'Fieldset description'
-    assert response.data['order'] == 3
     assert response.data['layout'] == FieldSetLayout.HORIZONTAL
     assert response.data['label_position'] == LabelPosition.LEFT
     assert response.data['task'] is None
 
     assert len(response.data['rules']) == 1
     rules_data = response.data['rules']
-    assert rules_data[0]['id'] == rule.id
     assert rules_data[0]['type'] == rule_type
     assert rules_data[0]['value'] == rule_value
     assert rules_data[0]['api_name'] == rule.api_name
@@ -75,7 +72,6 @@ def test_retrieve__fieldset_all_data__ok(api_client):
     fields_data = response.data['fields']
     assert fields_data[0]['name'] == field.name
     assert fields_data[0]['type'] == field.type
-    assert fields_data[0]['order'] == 1
     assert fields_data[0]['api_name'] == field.api_name
     assert fields_data[0]['description'] == ''
     assert fields_data[0]['is_required'] is False
@@ -149,7 +145,6 @@ def test_retrieve__fieldset_rule_with_fields__ok(api_client):
 
     assert len(response.data['rules']) == 1
     rules_data = response.data['rules']
-    assert rules_data[0]['id'] == rule.id
     assert rules_data[0]['fields'] == [field.api_name]
 
 

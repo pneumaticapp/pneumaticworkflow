@@ -1060,3 +1060,22 @@ class TemplateTitlesSerializer(Serializer):
     id = IntegerField(read_only=True)
     name = CharField(read_only=True)
     count = IntegerField(read_only=True)
+
+
+class FieldsetTemplateFilterSerializer(
+    CustomValidationErrorMixin,
+    AdditionalValidationMixin,
+    Serializer,
+):
+
+    ordering = ChoiceField(
+        required=False,
+        choices=(
+            ('name', 'name'),
+            ('-name', '-name'),
+            ('date', 'date'),
+            ('-date', '-date'),
+        ),
+    )
+    limit = IntegerField(min_value=0, required=False)
+    offset = IntegerField(min_value=0, required=False)

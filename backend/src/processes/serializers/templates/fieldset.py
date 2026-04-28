@@ -25,14 +25,12 @@ class FieldsetTemplateRuleSerializer(
     class Meta:
         model = FieldsetTemplateRule
         fields = (
-            'id',
             'type',
             'value',
             'api_name',
             'fields',
         )
 
-    id = IntegerField(required=False)
     api_name = CharField(required=False, max_length=200)
     fields = RelatedApiNameListField(
         required=False,
@@ -52,7 +50,6 @@ class FieldsetTemplateSerializer(
             'id',
             'name',
             'description',
-            'order',
             'task',
             'label_position',
             'layout',

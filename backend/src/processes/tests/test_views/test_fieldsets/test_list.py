@@ -1,3 +1,4 @@
+
 import pytest
 from datetime import timedelta
 
@@ -17,6 +18,8 @@ from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_template,
 )
+from src.processes.models.templates.fieldset import FieldsetTemplate
+from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
 
@@ -39,7 +42,6 @@ def test_list_fieldsets__all_data__ok(api_client):
         template=template,
         kickoff=kickoff,
         name='Kickoff Fieldset',
-        order=1,
         rule_type=rule_type,
         rule_value=rule_value,
     )
@@ -61,14 +63,12 @@ def test_list_fieldsets__all_data__ok(api_client):
     assert item_1['api_name'] == fieldset.api_name
     assert item_1['name'] == fieldset.name
     assert item_1['description'] == ''
-    assert item_1['order'] == fieldset.order
     assert item_1['layout'] == fieldset.layout
     assert item_1['label_position'] == fieldset.label_position
     assert item_1['task'] is None
 
     assert len(item_1['rules']) == 1
     rules_data = item_1['rules']
-    assert rules_data[0]['id'] == rule.id
     assert rules_data[0]['type'] == rule_type
     assert rules_data[0]['value'] == rule_value
     assert rules_data[0]['api_name'] == rule.api_name
@@ -77,7 +77,6 @@ def test_list_fieldsets__all_data__ok(api_client):
     fields_data = item_1['fields']
     assert fields_data[0]['name'] == field.name
     assert fields_data[0]['type'] == field.type
-    assert fields_data[0]['order'] == 1
     assert fields_data[0]['api_name'] == field.api_name
     assert fields_data[0]['description'] == ''
     assert fields_data[0]['is_required'] is False
@@ -85,54 +84,6 @@ def test_list_fieldsets__all_data__ok(api_client):
     assert fields_data[0]['default'] == ''
     assert 'dataset' not in fields_data[0]
     assert 'selections' not in fields_data[0]
-
-
-def test_list_fieldsets__two_fieldsets__ok(api_client):
-    """List fieldsets for existing template"""
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    kickoff = template.kickoff_instance
-    fieldset_1 = create_test_fieldset_template(
-        account=account,
-        template=template,
-        kickoff=kickoff,
-        order=1,
-    )
-    template_task = template.tasks.first()
-    fieldset_2 = create_test_fieldset_template(
-        account=account,
-        template=template,
-        task=template_task,
-        order=2,
-    )
-
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
-    )
-
-    # assert
-    assert response.status_code == 200
-    assert len(response.data) == 2
-
-    # ordered by -id (newest first)
-    item_1 = response.data[0]
-    assert item_1['id'] == fieldset_2.id
-    assert item_1['task'] == template_task.api_name
-    assert item_1['order'] == 2
-
-    item_2 = response.data[1]
-    assert item_2['id'] == fieldset_1.id
-    assert item_2['task'] is None
-    assert item_2['order'] == 1
 
 
 def test_list_fieldsets__pagination__ok(api_client):
@@ -150,19 +101,16 @@ def test_list_fieldsets__pagination__ok(api_client):
         account=account,
         template=template,
         task=template_task,
-        order=3,
     )
     fieldset_2 = create_test_fieldset_template(
         account=account,
         template=template,
         task=template_task,
-        order=2,
     )
     create_test_fieldset_template(
         account=account,
         template=template,
         task=template_task,
-        order=1,
     )
 
     api_client.token_authenticate(user=user)
@@ -181,12 +129,10 @@ def test_list_fieldsets__pagination__ok(api_client):
     item_1 = response.data['results'][0]
     assert item_1['id'] == fieldset_2.id
     assert item_1['task'] == template_task.api_name
-    assert item_1['order'] == 2
 
     item_2 = response.data['results'][1]
     assert item_2['id'] == fieldset_1.id
     assert item_2['task'] == template_task.api_name
-    assert item_2['order'] == 3
 
 
 def test_list_fieldsets__different_accounts__ok(api_client):
@@ -290,7 +236,6 @@ def test_list_fieldsets__rule_with_fields__ok(api_client):
         template=template,
         kickoff=kickoff,
         name='Kickoff Fieldset',
-        order=1,
         rule_type=rule_type,
         rule_value=rule_value,
     )
@@ -312,7 +257,6 @@ def test_list_fieldsets__rule_with_fields__ok(api_client):
 
     assert len(item_1['rules']) == 1
     rules_data = item_1['rules']
-    assert rules_data[0]['id'] == rule.id
     assert rules_data[0]['fields'] == [field.api_name]
 
 
@@ -467,3 +411,438 @@ def test_list_fieldsets__not_existing_tpl__not_found(api_client):
 
     # assert
     assert response.status_code == 404
+
+
+def test_list_fieldsets__no_ordering__ok(api_client):
+
+    """ No ordering param — default -date_created """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    kickoff = template.kickoff_instance
+    now = timezone.now()
+    fieldset_1 = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='Oldest',
+    )
+    FieldsetTemplate.objects.filter(id=fieldset_1.id).update(
+        date_created=now - timedelta(days=2),
+    )
+    fieldset_2 = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='Middle',
+    )
+    FieldsetTemplate.objects.filter(id=fieldset_2.id).update(
+        date_created=now - timedelta(days=1),
+    )
+    fieldset_3 = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='Newest',
+    )
+    FieldsetTemplate.objects.filter(id=fieldset_3.id).update(
+        date_created=now,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/fieldsets',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 3
+    item_1 = response.data[0]
+    assert item_1['id'] == fieldset_3.id
+    item_2 = response.data[1]
+    assert item_2['id'] == fieldset_2.id
+    item_3 = response.data[2]
+    assert item_3['id'] == fieldset_1.id
+
+
+def test_list_fieldsets__ordering_name_asc__ok(api_client):
+
+    """ ordering=name — ascending by name """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    kickoff = template.kickoff_instance
+    fieldset_1 = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='Alpha',
+    )
+    fieldset_2 = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='Beta',
+    )
+    fieldset_3 = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='Gamma',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/fieldsets',
+        data={'ordering': 'name'},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 3
+    item_1 = response.data[0]
+    assert item_1['id'] == fieldset_1.id
+    assert item_1['name'] == 'Alpha'
+    item_2 = response.data[1]
+    assert item_2['id'] == fieldset_2.id
+    assert item_2['name'] == 'Beta'
+    item_3 = response.data[2]
+    assert item_3['id'] == fieldset_3.id
+    assert item_3['name'] == 'Gamma'
+
+
+def test_list_fieldsets__ordering_name_desc__ok(api_client):
+
+    """ ordering=-name — descending by name """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    kickoff = template.kickoff_instance
+    fieldset_1 = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='Alpha',
+    )
+    fieldset_2 = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='Beta',
+    )
+    fieldset_3 = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='Gamma',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/fieldsets',
+        data={'ordering': '-name'},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 3
+    item_1 = response.data[0]
+    assert item_1['id'] == fieldset_3.id
+    assert item_1['name'] == 'Gamma'
+    item_2 = response.data[1]
+    assert item_2['id'] == fieldset_2.id
+    assert item_2['name'] == 'Beta'
+    item_3 = response.data[2]
+    assert item_3['id'] == fieldset_1.id
+    assert item_3['name'] == 'Alpha'
+
+
+def test_list_fieldsets__ordering_date_asc__ok(api_client):
+
+    """ ordering=date — ascending by date_created """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    kickoff = template.kickoff_instance
+    now = timezone.now()
+    fieldset_1 = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='Oldest',
+    )
+    FieldsetTemplate.objects.filter(id=fieldset_1.id).update(
+        date_created=now - timedelta(days=2),
+    )
+    fieldset_2 = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='Middle',
+    )
+    FieldsetTemplate.objects.filter(id=fieldset_2.id).update(
+        date_created=now - timedelta(days=1),
+    )
+    fieldset_3 = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='Newest',
+    )
+    FieldsetTemplate.objects.filter(id=fieldset_3.id).update(
+        date_created=now,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/fieldsets',
+        data={'ordering': 'date'},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 3
+    item_1 = response.data[0]
+    assert item_1['id'] == fieldset_1.id
+    item_2 = response.data[1]
+    assert item_2['id'] == fieldset_2.id
+    item_3 = response.data[2]
+    assert item_3['id'] == fieldset_3.id
+
+
+def test_list_fieldsets__ordering_date_desc__ok(api_client):
+
+    """ ordering=-date — descending by date_created """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    kickoff = template.kickoff_instance
+    now = timezone.now()
+    fieldset_1 = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='Oldest',
+    )
+    FieldsetTemplate.objects.filter(id=fieldset_1.id).update(
+        date_created=now - timedelta(days=2),
+    )
+    fieldset_2 = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='Middle',
+    )
+    FieldsetTemplate.objects.filter(id=fieldset_2.id).update(
+        date_created=now - timedelta(days=1),
+    )
+    fieldset_3 = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='Newest',
+    )
+    FieldsetTemplate.objects.filter(id=fieldset_3.id).update(
+        date_created=now,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/fieldsets',
+        data={'ordering': '-date'},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 3
+    item_1 = response.data[0]
+    assert item_1['id'] == fieldset_3.id
+    item_2 = response.data[1]
+    assert item_2['id'] == fieldset_2.id
+    item_3 = response.data[2]
+    assert item_3['id'] == fieldset_1.id
+
+
+def test_list_fieldsets__no_pagination__ok(api_client):
+
+    """ No pagination params — flat list response """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    kickoff = template.kickoff_instance
+    create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='First',
+    )
+    create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='Second',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/fieldsets',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert isinstance(response.data, list)
+    assert len(response.data) == 2
+
+
+def test_list_fieldsets__ordering_invalid__validation_error(
+    api_client,
+):
+
+    """ Invalid ordering value returns validation error """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    kickoff = template.kickoff_instance
+    create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='First',
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/fieldsets',
+        data={'ordering': 'foobar'},
+    )
+
+    # assert
+    assert response.status_code == 400
+    message = '"foobar" is not a valid choice.'
+    assert response.data['message'] == message
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+
+
+def test_list_fieldsets__ordering_empty__ok(api_client):
+
+    """ Empty ordering value falls back to default """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    kickoff = template.kickoff_instance
+    now = timezone.now()
+    fieldset_1 = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='First',
+    )
+    FieldsetTemplate.objects.filter(id=fieldset_1.id).update(
+        date_created=now - timedelta(days=1),
+    )
+    fieldset_2 = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='Second',
+    )
+    FieldsetTemplate.objects.filter(id=fieldset_2.id).update(
+        date_created=now,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/fieldsets',
+        data={'ordering': ''},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 2
+
+    # default ordering is -date_created (newest first)
+    item_1 = response.data[0]
+    assert item_1['id'] == fieldset_2.id
+    item_2 = response.data[1]
+    assert item_2['id'] == fieldset_1.id
+
+
+def test_list_fieldsets__soft_deleted__ok(api_client):
+
+    """ Soft-deleted fieldsets are excluded """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    kickoff = template.kickoff_instance
+    fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='Deleted Fieldset',
+    )
+    FieldsetTemplate.objects.filter(id=fieldset.id).update(
+        is_deleted=True,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/fieldsets',
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0

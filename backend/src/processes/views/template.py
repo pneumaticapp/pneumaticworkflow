@@ -22,7 +22,9 @@ from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
 from src.generics.permissions import UserIsAuthenticated
-from src.processes.filters import TemplateFilter
+from src.processes.filters import (
+    FieldSetFilter,
+)
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.preset import TemplatePreset
@@ -64,6 +66,7 @@ from src.processes.serializers.templates.template import (
     TemplateTitlesByTasksSerializer,
     TemplateTitlesByWorkflowsSerializer,
     TemplateTitlesSerializer,
+    FieldsetTemplateFilterSerializer,
 )
 from src.processes.serializers.workflows.workflow import (
     WorkflowCreateSerializer,
@@ -118,8 +121,6 @@ class TemplateViewSet(
     GenericViewSet,
 ):
     pagination_class = LimitOffsetPagination
-    filter_backends = (PneumaticFilterBackend,)
-    filterset_class = TemplateFilter
     serializer_class = TemplateSerializer
     action_serializer_classes = {
         'list': TemplateListSerializer,
@@ -137,6 +138,9 @@ class TemplateViewSet(
         'preset': TemplatePresetSerializer,
         'list_fieldsets': FieldsetTemplateSerializer,
         'create_fieldset': FieldsetTemplateSerializer,
+    }
+    action_filterset_classes = {
+        'list_fieldsets': FieldSetFilter,
     }
 
     def get_permissions(self):
@@ -436,6 +440,7 @@ class TemplateViewSet(
 
             SQL pagination (by LIMIT, OFFSET) is not possible because
             it is impossible to calculate response 'count' value """
+
         filter_slz = TemplateListFilterSerializer(data=request.GET)
         filter_slz.is_valid(raise_exception=True)
 
@@ -761,9 +766,18 @@ class TemplateViewSet(
     @action(methods=['GET'], detail=True, url_path='fieldsets')
     def list_fieldsets(self, request, *args, **kwargs):
         template = self.get_object()
-        queryset = FieldsetTemplate.objects.on_account(
-            request.user.account_id,
-        ).filter(template_id=template.id)
+        filter_slz = FieldsetTemplateFilterSerializer(data=request.GET)
+        filter_slz.is_valid(raise_exception=True)
+        queryset = (
+            FieldsetTemplate.objects
+            .on_account(request.user.account_id)
+            .filter(template_id=template.id)
+        )
+        queryset = PneumaticFilterBackend().filter_queryset(
+            queryset=queryset,
+            request=request,
+            view=self,
+        )
         return self.paginated_response(queryset)
 
     @list_fieldsets.mapping.post

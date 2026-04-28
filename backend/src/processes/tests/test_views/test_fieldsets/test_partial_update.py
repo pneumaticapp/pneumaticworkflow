@@ -46,7 +46,6 @@ def test_partial_update__all_fields__ok(api_client, mocker):
         'name': 'Full Updated Fieldset',
         'description': 'Updated description',
         'api_name': fieldset_api_name,
-        'order': 10,
         'layout': FieldSetLayout.HORIZONTAL,
         'label_position': LabelPosition.LEFT,
         'fields': [
@@ -59,7 +58,6 @@ def test_partial_update__all_fields__ok(api_client, mocker):
         ],
         'rules': [
             {
-                'id': 123,
                 'type': FieldSetRuleType.SUM_EQUAL,
                 'value': '10',
                 'api_name': 'r1',
@@ -72,7 +70,6 @@ def test_partial_update__all_fields__ok(api_client, mocker):
         template=template,
         name=data['name'],
         description=data['description'],
-        order=data['order'],
         label_position=data['label_position'],
         layout=data['layout'],
         kickoff=template.kickoff_instance,
@@ -105,7 +102,6 @@ def test_partial_update__all_fields__ok(api_client, mocker):
     assert response.data['id'] == fieldset.id
     assert response.data['name'] == data['name']
     assert response.data['description'] == data['description']
-    assert response.data['order'] == data['order']
     assert response.data['task'] is None
     assert response.data['label_position'] == data['label_position']
     assert response.data['layout'] == data['layout']
@@ -130,7 +126,6 @@ def test_partial_update__all_fields__ok(api_client, mocker):
         name='Full Updated Fieldset',
         api_name=fieldset_api_name,
         description='Updated description',
-        order=10,
         layout=FieldSetLayout.HORIZONTAL,
         label_position=LabelPosition.LEFT,
         rules=data['rules'],
@@ -320,7 +315,6 @@ def test_partial_update__with_rule_fields__ok(api_client, mocker):
         ],
         'rules': [
             {
-                'id': 123,
                 'type': FieldSetRuleType.SUM_EQUAL,
                 'value': '10',
                 'api_name': 'r1',
@@ -399,7 +393,6 @@ def test_partial_update__clear_fields__ok(api_client, mocker):
         'name': 'Updated Fieldset',
         'rules': [
             {
-                'id': 123,
                 'type': FieldSetRuleType.SUM_EQUAL,
                 'value': '10',
                 'api_name': 'r1',

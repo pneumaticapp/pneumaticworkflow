@@ -35,6 +35,9 @@ class FieldsetTemplate(
 
     api_name_prefix = 'fieldset'
 
+    date_created = models.DateTimeField(
+        auto_now_add=True,
+    )
     template = models.ForeignKey(
         Template,
         on_delete=models.CASCADE,
