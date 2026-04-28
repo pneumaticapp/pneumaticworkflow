@@ -23,9 +23,11 @@ export function useSubstituteUsers(
 ): ISubstituteUsersResult {
   const [selectedUserIds, setSelectedUserIds] = useState<number[]>(initialIds);
 
+  const initialIdsString = JSON.stringify(initialIds);
+
   useEffect(() => {
     setSelectedUserIds(initialIds);
-  }, [initialIds]);
+  }, [initialIdsString]);
 
   const mapUserOptions: TUsersDropdownOption[] = availableUsers.map((u) => ({
     ...u,
