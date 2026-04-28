@@ -3,12 +3,15 @@ import * as React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
+import moment from 'moment-timezone';
+import { useSelector } from 'react-redux';
+
 import { DateIcon } from '../../../icons';
 import { TForegroundColor } from '../common/types';
 import { getForegroundClass } from '../common/utils/getForegroundClass';
 import { DatePickerCustom } from '../../form/DatePicker';
 import { IDatePickerProps } from '../../form/DatePicker/types';
-import { toDate } from '../../../../utils/dateTime';
+import { IApplicationState } from '../../../../types/redux';
 
 import styles from './DateField.css';
 import commonStyles from '../common/styles.css';
@@ -58,6 +61,7 @@ export function DateField({
   ...props
 }: TDateFieldProps) {
   const { messages } = useIntl();
+  const { timezone } = useSelector((state: IApplicationState) => state.authUser);
   const normalizedErrorMessage = errorMessage && (messages[errorMessage] || errorMessage);
 
   const renderInput = () => {
@@ -72,9 +76,10 @@ export function DateField({
       <div className={styles['input-with-rigt-content-wrapper']}>
         <div className={inputClassName}>
           <DatePickerCustom
-            onChange={(date) => onChange(date as Date)}
+            onChange={(date) => onChange(date && new Date(moment(date).tz(timezone).format('YYYY/MM/DD')))}
             placeholderText={placeholder}
-            selected={toDate(value)}
+            selected={value && moment.tz(value, 'YYYY-MM-DD', timezone).toDate()}
+            value={value ? moment(value, 'YYYY-MM-DD').format('MMM DD, YYYY') : ''}
             {...props}
           />
         </div>
