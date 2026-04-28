@@ -336,6 +336,34 @@
       }
     }
   }
+
+  .dataset-submenu > .dropdown-menu {
+    position: absolute;
+    top: 0;
+    right: 100%;
+    left: auto;
+    padding: 0.5rem 0;
+    width: 304px;
+    background: var(--pneumatic-color-white) !important;
+    border-radius: 0.8rem;
+  }
+}
+.dataset-option {
+  @mixin text-truncate;
+}
+
+.dataset-disabled {
+  pointer-events: none;
+
+  span,
+  svg {
+    color: var(--pneumatic-color-black32);
+    fill: var(--pneumatic-color-black32);
+  }
+}
+
+.dataset-option-selected span {
+  color: var(--pneumatic-color-black32);
 }
 
 .kick-off-input__dropdown {
