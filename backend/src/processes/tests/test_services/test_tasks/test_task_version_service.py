@@ -2667,15 +2667,16 @@ def test__update_fieldsets__data_provided__ok(mocker):
 
     # arrange
     user = create_test_owner()
-    workflow = create_test_workflow(user=user, tasks_count=1)
-    task = workflow.tasks.get(number=1)
+    workflow = create_test_workflow(user=user, tasks_count=2)
+    task_1 = workflow.tasks.get(number=1)
+    task_2 = workflow.tasks.get(number=2)
     old_fieldset = create_test_fieldset(
         workflow=workflow,
-        task=task,
+        task=task_1,
     )
     service = TaskUpdateVersionService(
         user=user,
-        instance=task,
+        instance=task_1,
         auth_type=AuthTokenType.USER,
         is_superuser=False,
     )
@@ -2684,7 +2685,16 @@ def test__update_fieldsets__data_provided__ok(mocker):
             'api_name': 'fieldset-1',
             'name': 'New Fieldset',
             'description': 'Test description',
-            'order': 1,
+            'task_links': [
+                {
+                    'task_api_name': task_1.api_name,
+                    'order': 2,
+                },
+                {
+                    'task_api_name': task_2.api_name,
+                    'order': 1,
+                },
+            ],
             'label_position': LabelPosition.TOP,
             'layout': FieldSetLayout.VERTICAL,
             'rules': [
@@ -2724,11 +2734,11 @@ def test__update_fieldsets__data_provided__ok(mocker):
     assert not FieldSet.objects.filter(id=old_fieldset.id).exists()
     new_fieldset = FieldSet.objects.get(
         api_name='fieldset-1',
-        task=task,
+        task=task_1,
     )
     assert new_fieldset.name == 'New Fieldset'
     assert new_fieldset.description == 'Test description'
-    assert new_fieldset.order == 1
+    assert new_fieldset.order == 2
     _update_fieldset_rules_mock.assert_called_once_with(
         fieldset=new_fieldset,
         rules_data=data[0]['rules'],

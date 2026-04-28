@@ -11,7 +11,9 @@ from src.processes.models.templates.conditions import (
 )
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
+    FieldsetTemplateKickoff,
     FieldsetTemplateRule,
+    FieldsetTemplateTaskTemplate,
 )
 from src.processes.models.templates.fields import (
     FieldTemplate,
@@ -79,6 +81,25 @@ class FieldSchemaV1(serializers.ModelSerializer):
     )
 
 
+class FieldsetTemplateTaskTemplateSchemaV1(serializers.ModelSerializer):
+
+    class Meta:
+        model = FieldsetTemplateTaskTemplate
+        fields = (
+            'task_api_name',
+            'order',
+        )
+
+    task_api_name = serializers.CharField(source='task.api_name')
+
+
+class FieldsetTemplateKickoffSchemaV1(serializers.ModelSerializer):
+
+    class Meta:
+        model = FieldsetTemplateKickoff
+        fields = ('order',)
+
+
 class FieldSetSchemaV1(serializers.ModelSerializer):
 
     class Meta:
@@ -87,11 +108,12 @@ class FieldSetSchemaV1(serializers.ModelSerializer):
             'api_name',
             'name',
             'description',
-            'order',
             'label_position',
             'layout',
             'fields',
             'rules',
+            'task_links',
+            'kickoff_links',
         )
 
     fields = FieldSchemaV1(many=True, allow_null=True, allow_empty=True)
@@ -99,6 +121,16 @@ class FieldSetSchemaV1(serializers.ModelSerializer):
         many=True,
         allow_null=True,
         allow_empty=True,
+    )
+    task_links = FieldsetTemplateTaskTemplateSchemaV1(
+        source='fieldsettemplatetasktemplate_set',
+        many=True,
+        required=False,
+    )
+    kickoff_links = FieldsetTemplateKickoffSchemaV1(
+        source='fieldsettemplatekickoff_set',
+        many=True,
+        required=False,
     )
 
 
