@@ -661,7 +661,6 @@ export const enMessages = {
   'template.datasets': 'Dataset',
   'template.field-datasets-menu': 'Datasets',
   'template.field-dataset-clear': 'Clear dataset',
-  'template.field-dataset-selected': 'Selected dataset',
   'template.kick-off-form-delete-component': 'Delete',
   'template.kick-off-form-workflow-name': 'Workflow name:',
   'template.kick-off-form-field-description-placeholder': 'Enter a hint (optional)',

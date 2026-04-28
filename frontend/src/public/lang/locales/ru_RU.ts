@@ -601,7 +601,6 @@ export const ruMessages = {
   'template.datasets': 'Набор данных',
   'template.field-datasets-menu': 'Наборы данных',
   'template.field-dataset-clear': 'Очистить набор данных',
-  'template.field-dataset-selected': 'Выбранный набор данных',
   'template.kick-off-form-delete-component': 'Удалить',
   'template.kick-off-form-workflow-name': 'Название процесса:',
   'templates.conditions.completed': 'Завершено',

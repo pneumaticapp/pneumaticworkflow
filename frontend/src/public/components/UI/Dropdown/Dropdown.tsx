@@ -176,6 +176,7 @@ export function Dropdown({
     const isWide = items.every((item) => item.size === 'lg');
     const Menu = CustomDropdownMenu || DefaultDropdownMenu;
 
+    // Only pass renderMenuContent to the top-level menu to prevent submenus from inheriting the parent's custom header
     return (
       <Menu
         renderedOptions={renderedOptions}
