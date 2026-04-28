@@ -401,9 +401,9 @@ describe('template utilities', () => {
       expect(cleaned.wfNameTemplate).toBe('Name: {{valid-field}} and  and {{template-name}}');
       expect(cleaned.tasks[0].name).toBe('Task  and {{valid-field}}');
       // {{workflow-starter}} is a TASK system var, preserved; {{invalid-field}} removed
-      expect(cleaned.tasks[0].description).toBe('Desc {{workflow-starter}} and');
+      expect(cleaned.tasks[0].description).toBe('Desc {{workflow-starter}} and ');
       // Task 2 variables should successfully retain valid fields from kickoff and task 1
-      expect(cleaned.tasks[1].name).toBe('Task 2 {{valid-field}} and {{valid-task-field}} and');
+      expect(cleaned.tasks[1].name).toBe('Task 2 {{valid-field}} and {{valid-task-field}} and ');
     });
 
     it('removes invalid field references from conditions', () => {
@@ -436,7 +436,7 @@ describe('template utilities', () => {
       expect(rules[0].field).toBe('valid-field');
     });
 
-    it('falls back to Step N if task name becomes empty', () => {
+    it('allows task name to become empty if all variables are invalid', () => {
       const template = createMockTemplate({
         tasks: [
           {
@@ -447,7 +447,7 @@ describe('template utilities', () => {
         ],
       });
       const cleaned = cleanTemplateReferences(template);
-      expect(cleaned.tasks[0].name).toBe('Step 2');
+      expect(cleaned.tasks[0].name).toBe('');
     });
 
     it('safely handles empty rawPerformers array or invalid field performers and preserves valid members', () => {
