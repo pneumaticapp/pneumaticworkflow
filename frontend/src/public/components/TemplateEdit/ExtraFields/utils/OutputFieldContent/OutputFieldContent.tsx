@@ -3,21 +3,21 @@ import { useEffect, useState } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
-import { IDatasetSourceToggleProps } from './types';
+import { IOutputFieldContentProps } from './types';
 import { IExtraFieldSelection } from '../../../../../types/template';
 import { TruncatedTooltip } from './TruncatedTooltip';
 import { useCheckDevice } from '../../../../../hooks/useCheckDevice';
 import { getEmptySelection } from '../../../KickoffRedux/utils/getEmptySelection';
 
-import styles from './DatasetSourceToggle.css';
+import styles from './OutputFieldContent.css';
 
-export function DatasetSourceToggle({
+export function OutputFieldContent({
   field,
   editField,
   isDisabled = false,
   datasetName,
   children,
-}: IDatasetSourceToggleProps) {
+}: IOutputFieldContentProps) {
   const { dataset, selections } = field;
   const intl = useIntl();
   const { isMobile } = useCheckDevice();
@@ -37,7 +37,7 @@ export function DatasetSourceToggle({
   const clearButton = (
     <button
       type="button"
-      className={styles['dataset-source-toggle__clear-btn']}
+      className={styles['output-field-content__clear-btn']}
       onClick={handleClearDataset}
     >
       {intl.formatMessage({ id: 'template.field-dataset-clear' })}
@@ -45,18 +45,18 @@ export function DatasetSourceToggle({
   );
 
   const content = dataset ? (
-    <div className={styles['dataset-source-toggle__content']}>
-      <div className={styles['dataset-source-toggle__info']}>
-        <div className={styles['dataset-source-toggle__info-dataset']}>
-          <span className={styles['dataset-source-toggle__info-label']}>
+    <div className={styles['output-field-content__content']}>
+      <div className={styles['output-field-content__info']}>
+        <div className={styles['output-field-content__info-dataset']}>
+          <span className={styles['output-field-content__info-label']}>
             {intl.formatMessage({ id: 'template.datasets' })}:
           </span>
           <TruncatedTooltip
             label={datasetName}
-            containerClassName={styles['dataset-source-toggle__info-tag-tooltip']}
+            containerClassName={styles['output-field-content__info-tag-tooltip']}
             {...(isMobile ? { trigger: 'click' } : {})}
           >
-            <span className={classnames(styles['dataset-source-toggle__info-tag'], styles['dataset-source-toggle__option-text'])}>
+            <span className={classnames(styles['output-field-content__info-tag'], styles['output-field-content__option-text'])}>
               {datasetName}
             </span>
           </TruncatedTooltip>
@@ -65,13 +65,13 @@ export function DatasetSourceToggle({
       </div>
     </div>
   ) : (
-    <div className={styles['dataset-source-toggle__content']}>
+    <div className={styles['output-field-content__content']}>
       {children}
     </div>
   );
 
   return (
-    <div className={styles['dataset-source-toggle']}>
+    <div className={styles['output-field-content']}>
       {content}
     </div>
   );

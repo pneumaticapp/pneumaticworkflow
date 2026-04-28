@@ -3,8 +3,8 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { DatasetSourceToggle } from '../DatasetSourceToggle';
-import { IDatasetSourceToggleProps } from '../types';
+import { OutputFieldContent } from '../OutputFieldContent';
+import { IOutputFieldContentProps } from '../types';
 import { intlMock } from '../../../../../../__stubs__/intlMock';
 import { getEmptySelection } from '../../../../KickoffRedux/utils/getEmptySelection';
 
@@ -20,7 +20,7 @@ jest.mock('../../../../KickoffRedux/utils/getEmptySelection', () => ({
   getEmptySelection: jest.fn(() => ({ id: 'empty', value: '', isSelected: false })),
 }));
 
-describe('DatasetSourceToggle', () => {
+describe('OutputFieldContent', () => {
   const mockEditField = jest.fn();
   const formatMsg = (id: string) => intlMock.formatMessage({ id });
 
@@ -36,7 +36,7 @@ describe('DatasetSourceToggle', () => {
     selections: undefined,
   };
 
-  const baseProps: IDatasetSourceToggleProps = {
+  const baseProps: IOutputFieldContentProps = {
     field: customField as any,
     editField: mockEditField,
     isDisabled: false,
@@ -48,7 +48,7 @@ describe('DatasetSourceToggle', () => {
 
   it('shows children when dataset is not set', () => {
     const childText = 'Custom Options Here';
-    render(React.createElement(DatasetSourceToggle, baseProps,
+    render(React.createElement(OutputFieldContent, baseProps,
       React.createElement('div', { 'data-testid': 'children' }, childText),
     ));
 
@@ -57,7 +57,7 @@ describe('DatasetSourceToggle', () => {
   });
 
   it('shows dataset name when dataset is set', () => {
-    render(React.createElement(DatasetSourceToggle, {
+    render(React.createElement(OutputFieldContent, {
       ...baseProps,
       field: datasetField as any,
       datasetName: 'My Dataset',
@@ -68,9 +68,9 @@ describe('DatasetSourceToggle', () => {
   });
 
   it('calls editField with saved selections on Clear button click', () => {
-    const { rerender } = render(React.createElement(DatasetSourceToggle, baseProps));
+    const { rerender } = render(React.createElement(OutputFieldContent, baseProps));
 
-    rerender(React.createElement(DatasetSourceToggle, {
+    rerender(React.createElement(OutputFieldContent, {
       ...baseProps,
       field: datasetField as any,
       datasetName: 'My Dataset',
@@ -86,7 +86,7 @@ describe('DatasetSourceToggle', () => {
   });
 
   it('does not show Clear button when isDisabled=true', () => {
-    render(React.createElement(DatasetSourceToggle, {
+    render(React.createElement(OutputFieldContent, {
       ...baseProps,
       field: datasetField as any,
       datasetName: 'My Dataset',
@@ -97,7 +97,7 @@ describe('DatasetSourceToggle', () => {
   });
 
   it('calls editField with empty selection when no selections were saved', () => {
-    render(React.createElement(DatasetSourceToggle, {
+    render(React.createElement(OutputFieldContent, {
       ...baseProps,
       field: datasetField as any,
       datasetName: 'My Dataset',

@@ -12,7 +12,7 @@ import { EExtraFieldMode, IExtraFieldSelection } from '../../../../types/templat
 import { fitInputWidth } from '../utils/fitInputWidth';
 import { PencilSmallIcon, RemoveIcon } from '../../../icons';
 import { RadioButton } from '../../../UI/Fields/RadioButton';
-import { DatasetSourceToggle } from '../utils/DatasetSourceToggle';
+import { OutputFieldContent } from '../utils/OutputFieldContent';
 
 import { IWorkflowExtraFieldProps } from '..';
 
@@ -109,10 +109,10 @@ export function ExtraFieldRadio({
           </p>
         )}
 
-        <DatasetSourceToggle field={field} editField={editField} isDisabled={isDisabled} datasetName={datasetName}>
+        <OutputFieldContent field={field} editField={editField} isDisabled={isDisabled} datasetName={datasetName}>
           {customOptionsList}
           {!isDisabled && addOptionButton}
-        </DatasetSourceToggle>
+        </OutputFieldContent>
       </div>
     );
   };

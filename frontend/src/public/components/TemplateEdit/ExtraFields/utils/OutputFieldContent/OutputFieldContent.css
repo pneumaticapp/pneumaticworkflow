@@ -1,4 +1,4 @@
-.dataset-source-toggle {
+.output-field-content {
   position: relative;
   margin-top: 1.6rem;
   display: flex;
@@ -16,12 +16,12 @@
   }
 }
 
-.dataset-source-toggle__content {
+.output-field-content__content {
   flex: 1 1 auto;
   min-width: 0;
 }
 
-.dataset-source-toggle__info {
+.output-field-content__info {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -30,7 +30,7 @@
   max-width: 100%;
 }
 
-.dataset-source-toggle__info-dataset {
+.output-field-content__info-dataset {
   margin-top: 0.4rem;
   display: flex;
   align-items: center;
@@ -39,13 +39,13 @@
   max-width: 100%;
 }
 
-.dataset-source-toggle__info-label {
+.output-field-content__info-label {
   @mixin text-base;
 
   color: var(--pneumatic-color-black100);
 }
 
-.dataset-source-toggle__info-tag {
+.output-field-content__info-tag {
   padding: 0.1rem 0.8rem;
   color: var(--pneumatic-color-black100);
   background-color: var(--pneumatic-color-selection);
@@ -54,24 +54,24 @@
   @mixin text-small;
 }
 
-.dataset-source-toggle__clear-btn {
+.output-field-content__clear-btn {
   @mixin btn-field-action;
 }
 
-.dataset-source-toggle__option-text {
+.output-field-content__option-text {
   display: block;
 
   @mixin text-overflow;
 }
 
-.dataset-source-toggle__info-tag-tooltip {
+.output-field-content__info-tag-tooltip {
   display: block;
   overflow: hidden;
   min-width: 0;
   max-width: 100%;
 }
 
-.dataset-source-toggle__tooltip-box {
+.output-field-content__tooltip-box {
   padding: 0.4rem 0.8rem;
   text-align: center;
 }

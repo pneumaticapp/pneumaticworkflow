@@ -2,7 +2,7 @@ import * as React from 'react';
 import { ReactElement, ReactNode } from 'react';
 import { IExtraField } from '../../../../../types/template';
 
-export interface IDatasetSourceToggleProps {
+export interface IOutputFieldContentProps {
   field: IExtraField;
   editField: (changedProps: Partial<IExtraField>) => void;
   isDisabled?: boolean;
