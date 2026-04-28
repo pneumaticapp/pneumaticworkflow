@@ -44,7 +44,7 @@ export function OutputFieldContent({
     </button>
   );
 
-  const content = dataset ? (
+  const content = dataset && datasetName ? (
     <div className={styles['output-field-content__content']}>
       <div className={styles['output-field-content__info']}>
         <div className={styles['output-field-content__info-dataset']}>

@@ -1,6 +1,5 @@
 import * as React from 'react';
-import { useCallback, useEffect, useMemo } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useCallback, useMemo } from 'react';
 import classnames from 'classnames';
 import { injectIntl} from 'react-intl';
 
@@ -18,13 +17,11 @@ import { ExtraFieldNumber } from './Number';
 import { EExtraFieldType } from '../../../types/template';
 import { ExtraFieldDropdown } from './utils/ExtraFieldDropdown';
 import { getInputNameBackground } from './utils/getInputNameBackground';
-import { getAllDatasetsList, getIsAllDatasetsLoading, getIsAllDatasetsLoaded } from '../../../redux/selectors/datasets';
-import { loadAllDatasets } from '../../../redux/datasets/slice';
 import { IExtraFieldProps } from './types';
 
 import styles from '../KickoffRedux/KickoffRedux.css';
 
-const DATASET_FIELD_TYPES = [EExtraFieldType.Checkbox, EExtraFieldType.Radio, EExtraFieldType.Creatable];
+import { DATASET_FIELD_TYPES } from './constants';
 
 function ExtraField(props: IExtraFieldProps) {
   const {
@@ -41,29 +38,13 @@ function ExtraField(props: IExtraFieldProps) {
     wrapperClassName,
     labelBackgroundColor,
     innerRef,
+    datasetOptions,
   } = props;
-
-  const dispatch = useDispatch();
 
   const isDatasetField = DATASET_FIELD_TYPES.includes(field.type);
 
-  const datasetsList = useSelector(getAllDatasetsList);
-  const isDatasetsLoading = useSelector(getIsAllDatasetsLoading);
-  const isDatasetsLoaded = useSelector(getIsAllDatasetsLoaded);
-
-  useEffect(() => {
-    if (isDatasetField && !isDatasetsLoaded && !isDatasetsLoading) {
-      dispatch(loadAllDatasets());
-    }
-  }, [isDatasetField, isDatasetsLoaded, isDatasetsLoading, dispatch]);
-
-  const datasetOptions = useMemo(
-    () => datasetsList.map((dataset) => ({ label: dataset.name, value: String(dataset.id) })),
-    [datasetsList],
-  );
-
   const datasetName = useMemo(
-    () => datasetOptions.find((option) => option.value === String(field.dataset))?.label,
+    () => datasetOptions?.find((option) => option.value === String(field.dataset))?.label,
     [datasetOptions, field.dataset],
   );
 

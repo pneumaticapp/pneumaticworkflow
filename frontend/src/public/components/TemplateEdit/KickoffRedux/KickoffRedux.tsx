@@ -9,7 +9,7 @@ import { isKickoffCleared } from './utils/isKickoffCleared';
 import { KickoffMenu } from './KickoffMenu';
 import { IntlMessages } from '../../IntlMessages';
 import { EMoveDirections, EInputNameBackgroundColor } from '../../../types/workflow';
-import { EExtraFieldType, IKickoff, IExtraField, ITemplate, ETemplateParts } from '../../../types/template';
+import { EExtraFieldMode, EExtraFieldType, IKickoff, IExtraField, ITemplate, ETemplateParts } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { getNormalizeFieldsOrders, moveWorkflowField } from '../../../utils/workflows';
 import { ExtraFieldsMap } from '../ExtraFields/utils/ExtraFieldsMap';
@@ -25,6 +25,7 @@ import { useWorkflowNameVariables } from '../TaskForm/utils/getTaskVariables';
 import styles from './KickoffRedux.css';
 import { patchTemplate } from '../../../redux/actions';
 import { InputWithVariables } from '../InputWithVariables';
+import { useDatasetOptions } from '../ExtraFields/utils/useDatasetOptions';
 
 export interface IKickoffReduxProps {
   template: ITemplate;
@@ -44,6 +45,7 @@ export function KickoffRedux({
   const [isOpen, setIsOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const variables = useWorkflowNameVariables(kickoff);
+  const datasetOptions = useDatasetOptions(kickoff.fields);
 
   const editTemplate = (templateFields: Partial<ITemplate>) => {
     dispatch(patchTemplate({ changedFields: templateFields }));
@@ -157,6 +159,8 @@ export function KickoffRedux({
                 moveFieldUp={() => handleMoveField(index, EMoveDirections.Up)}
                 moveFieldDown={() => handleMoveField(index, EMoveDirections.Down)}
                 editField={handleEditField(field.apiName)}
+                mode={EExtraFieldMode.Kickoff}
+                datasetOptions={datasetOptions}
                 accountId={accountId}
               />
             ))}

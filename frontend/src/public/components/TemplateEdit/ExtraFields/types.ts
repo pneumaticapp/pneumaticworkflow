@@ -8,7 +8,7 @@ export interface IWorkflowExtraFieldProps {
   field: IExtraField;
   intl: IntlShape;
   showDropdown?: boolean;
-  mode?: EExtraFieldMode;
+  mode: EExtraFieldMode;
   namePlaceholder?: string;
   descriptionPlaceholder?: string;
   labelBackgroundColor?: EInputNameBackgroundColor;
@@ -26,4 +26,5 @@ export interface IExtraFieldProps extends IWorkflowExtraFieldProps {
   wrapperClassName?: string;
   fieldsCount?: number;
   id?: number;
+  datasetOptions?: { label: string; value: string }[];
 }
