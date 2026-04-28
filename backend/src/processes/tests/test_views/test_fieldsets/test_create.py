@@ -52,7 +52,6 @@ def test_create_fieldset__all_fields__ok(api_client, mocker):
     data = {
         'name': 'All Fields Fieldset',
         'description': 'Description',
-        'task': task.api_name,
         'label_position': LabelPosition.LEFT,
         'layout': FieldSetLayout.HORIZONTAL,
         'api_name': 'fieldset_api_name',
@@ -77,7 +76,6 @@ def test_create_fieldset__all_fields__ok(api_client, mocker):
     fieldset = FieldsetTemplate.objects.create(
         account=account,
         template=template,
-        task=task,
         name=data['name'],
         description=data['description'],
         label_position=data['label_position'],
@@ -126,7 +124,7 @@ def test_create_fieldset__all_fields__ok(api_client, mocker):
     assert response.data['id'] == fieldset.id
     assert response.data['name'] == data['name']
     assert response.data['description'] == data['description']
-    assert response.data['task'] == task.api_name
+    assert response.data['tasks'] == []
     assert response.data['label_position'] == data['label_position']
     assert response.data['layout'] == data['layout']
     assert response.data['api_name'] == data['api_name']
@@ -151,126 +149,8 @@ def test_create_fieldset__all_fields__ok(api_client, mocker):
         layout=data['layout'],
         label_position=data['label_position'],
         api_name=data['api_name'],
-        task_id=task.id,
         rules=data['rules'],
         fields=data['fields'],
-    )
-
-
-def test_create_fieldset__with_kickoff_id__ok(api_client, mocker):
-
-    """Create fieldset linked to template kickoff via kickoff_id."""
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    data = {
-        'name': 'Kickoff Fieldset',
-    }
-
-    fieldset = FieldsetTemplate.objects.create(
-        account=account,
-        template=template,
-        kickoff=template.kickoff_instance,
-        name=data['name'],
-    )
-
-    fieldset_service_init_mock = mocker.patch.object(
-        FieldSetTemplateService,
-        attribute='__init__',
-        return_value=None,
-    )
-
-    fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.template.FieldSetTemplateService.create',
-        return_value=fieldset,
-    )
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.post(
-        f'/templates/{template.id}/fieldsets',
-        data=data,
-    )
-
-    # assert
-    assert response.status_code == 201
-    assert response.data['task'] is None
-    fieldset_service_init_mock.assert_called_once_with(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-    )
-    fieldset_service_create_mock.assert_called_once_with(
-        template_id=template.id,
-        name=data['name'],
-        rules=[],
-        fields=[],
-    )
-
-
-def test_create_fieldset__with_task__ok(api_client, mocker):
-    """Create fieldset linked to a template task via task_id."""
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    task = template.tasks.first()
-    data = {
-        'name': 'Task Fieldset',
-        'task': task.api_name,
-    }
-
-    fieldset = FieldsetTemplate.objects.create(
-        account=account,
-        template=template,
-        task=task,
-        name=data['name'],
-    )
-    fieldset_service_init_mock = mocker.patch.object(
-        FieldSetTemplateService,
-        attribute='__init__',
-        return_value=None,
-    )
-    fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.template.FieldSetTemplateService.create',
-        return_value=fieldset,
-    )
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.post(
-        f'/templates/{template.id}/fieldsets',
-        data=data,
-    )
-
-    # assert
-    assert response.status_code == 201
-    assert response.data['task'] == task.api_name
-    api_name = response.data['api_name']
-    assert FieldsetTemplate.objects.get(
-        api_name=api_name,
-        task=task,
-    )
-    fieldset_service_init_mock.assert_called_once_with(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-    )
-    fieldset_service_create_mock.assert_called_once_with(
-        template_id=template.id,
-        task_id=task.id,
-        name=data['name'],
-        rules=[],
-        fields=[],
     )
 
 
@@ -395,11 +275,10 @@ def test_create_fieldset__rule_with_one_field__ok(api_client, mocker):
         user=user,
         tasks_count=1,
     )
-    task = template.tasks.first()
+    template.tasks.first()
     field_api_name = 'f1'
     data = {
         'name': 'All Fields Fieldset',
-        'task': task.api_name,
         'fields': [
             {
                 'name': 'Field 1',
@@ -433,7 +312,6 @@ def test_create_fieldset__rule_with_one_field__ok(api_client, mocker):
     fieldset = FieldsetTemplate.objects.create(
         account=account,
         template=template,
-        task=task,
         name=data['name'],
     )
     field = FieldTemplate.objects.create(
@@ -476,7 +354,6 @@ def test_create_fieldset__rule_with_one_field__ok(api_client, mocker):
     )
     fieldset_service_create_mock.assert_called_once_with(
         template_id=template.id,
-        task_id=task.id,
         name=data['name'],
         rules=data['rules'],
         fields=data['fields'],
@@ -496,7 +373,6 @@ def test_create_fieldset__rule_with_two_fields__ok(api_client, mocker):
         user=user,
         tasks_count=1,
     )
-    kickoff = template.kickoff_instance
     field_1_api_name = 'f1'
     field_2_api_name = 'f2'
     data = {
@@ -534,7 +410,6 @@ def test_create_fieldset__rule_with_two_fields__ok(api_client, mocker):
     fieldset = FieldsetTemplate.objects.create(
         account=account,
         template=template,
-        kickoff=kickoff,
         name=data['name'],
     )
     field_1 = FieldTemplate.objects.create(
@@ -590,56 +465,6 @@ def test_create_fieldset__rule_with_two_fields__ok(api_client, mocker):
         rules=data['rules'],
         fields=data['fields'],
     )
-
-
-def test_create_fieldset_another_template_task__validation_error(
-    api_client,
-    mocker,
-):
-    """Create fieldset linked to a template task via task_id."""
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    another_template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    another_template_task = another_template.tasks.get(number=1)
-    data = {
-        'name': 'Task Fieldset',
-        'task': another_template_task.api_name,
-    }
-    fieldset_service_init_mock = mocker.patch.object(
-        FieldSetTemplateService,
-        attribute='__init__',
-        return_value=None,
-    )
-    fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.template.FieldSetTemplateService.create',
-    )
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.post(
-        f'/templates/{template.id}/fieldsets',
-        data=data,
-    )
-
-    # assert
-    assert response.status_code == 400
-    message = (
-        f'Object with api_name={another_template_task.api_name} '
-        f'does not exist.'
-    )
-    assert response.data['message'] == message
-    assert response.data['details']['name'] == 'task'
-    fieldset_service_init_mock.assert_not_called()
-    fieldset_service_create_mock.assert_not_called()
 
 
 def test_create_fieldset__unauthenticated__unauthorized(api_client, mocker):

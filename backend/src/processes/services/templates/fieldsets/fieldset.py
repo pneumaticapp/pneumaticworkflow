@@ -5,7 +5,6 @@ from django.db import transaction
 from src.generics.base.service import BaseModelService
 from src.processes.enums import LabelPosition, FieldSetLayout
 from src.processes.models.templates.fieldset import FieldsetTemplate
-from src.processes.models.templates.kickoff import Kickoff
 from src.processes.services.exceptions import (
     FieldsetTemplateInUseException,
 )
@@ -24,12 +23,9 @@ class FieldSetTemplateService(BaseModelService):
         self,
         name: str,
         template_id: int,
-        order: int = 0,
         description: str = '',
         label_position: LabelPosition.LITERALS = LabelPosition.TOP,
         layout: FieldSetLayout.LITERALS = FieldSetLayout.VERTICAL,
-        kickoff_id: Optional[int] = None,
-        task_id: Optional[int] = None,
         **kwargs,
     ):
         self.instance = FieldsetTemplate.objects.create(
@@ -37,11 +33,8 @@ class FieldSetTemplateService(BaseModelService):
             account=self.account,
             name=name,
             description=description,
-            order=order,
             label_position=label_position,
             layout=layout,
-            kickoff_id=kickoff_id,
-            task_id=task_id,
         )
         return self.instance
 
@@ -56,20 +49,6 @@ class FieldSetTemplateService(BaseModelService):
         if rules:
             self.create_rules(rules_data=rules)
 
-    def create(
-        self,
-        **kwargs,
-    ) -> FieldsetTemplate:
-
-        template_id = kwargs['template_id']
-        if kwargs.get('task_id') is None:
-            # Bind fieldset to the kickoff if task_id is not provided
-            kwargs['kickoff_id'] = (
-                Kickoff.objects.get(template_id=template_id).id
-            )
-        super().create(**kwargs)
-        return self.instance
-
     def partial_update(
         self,
         **update_kwargs,
@@ -77,17 +56,6 @@ class FieldSetTemplateService(BaseModelService):
 
         rules_data = update_kwargs.pop('rules', None)
         fields_data = update_kwargs.pop('fields', None)
-        if 'task_id' in update_kwargs:
-            if update_kwargs['task_id'] is None:
-                # Unbind fieldset from the task and bind to the kickoff
-                template_id = self.instance.template_id
-                update_kwargs['kickoff_id'] = (
-                    Kickoff.objects.get(template_id=template_id).id
-                )
-            else:
-                # Unbind fieldset from the kickoff and bind to the task
-                update_kwargs['kickoff_id'] = None
-
         with transaction.atomic():
             if update_kwargs:
                 self.instance = super().partial_update(
@@ -113,7 +81,7 @@ class FieldSetTemplateService(BaseModelService):
             service._validate()
 
     def delete(self) -> None:
-        if self.instance.kickoff or self.instance.task:
+        if self.instance.kickoffs.exists() or self.instance.tasks.exists():
             raise FieldsetTemplateInUseException
         self.instance.delete()
 

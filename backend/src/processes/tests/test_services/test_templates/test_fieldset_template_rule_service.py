@@ -41,7 +41,6 @@ def test__create_instance__default_params__ok():
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     service = FieldsetTemplateRuleService(
         user=user,
@@ -78,7 +77,6 @@ def test__create_instance__all_params__ok():
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     service = FieldsetTemplateRuleService(
         user=user,
@@ -115,7 +113,6 @@ def test__validate_sum_equal__valid__ok():
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     field = FieldTemplate.objects.create(
         account=account,
@@ -160,7 +157,6 @@ def test__validate_sum_equal__empty_value__raise_exception():
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     rule = FieldsetTemplateRule.objects.create(
         account=account,
@@ -197,7 +193,6 @@ def test__validate_sum_equal__non_numeric__raise_exception():
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     rule = FieldsetTemplateRule.objects.create(
         account=account,
@@ -248,7 +243,6 @@ def test__validate_sum_equal__non_number_type__raise_exception(field_type):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     field = FieldTemplate.objects.create(
         account=account,
@@ -290,7 +284,6 @@ def test__validate__call_method_by_type__ok(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     rule = FieldsetTemplateRule.objects.create(
         account=account,
@@ -331,7 +324,6 @@ def test_get_valid_fields__all_found__ok():
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     field_1_api_name = 'field_1'
     field1 = FieldTemplate.objects.create(
@@ -385,7 +377,6 @@ def test_get_valid_fields__type_from_kwargs__ok():
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     field_api_name = 'field_1'
     field = FieldTemplate.objects.create(
@@ -431,7 +422,6 @@ def test_get_valid_fields__type_from_instance__ok():
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     field_api_name = 'field_1'
     field = FieldTemplate.objects.create(
@@ -476,7 +466,6 @@ def test_get_valid_fields__one_failed__raise_exception():
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     FieldTemplate.objects.create(
         account=account,
@@ -522,7 +511,6 @@ def test_get_valid_fields__two_failed__raise_exception():
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     service = FieldsetTemplateRuleService(
         user=user,
@@ -540,15 +528,15 @@ def test_get_valid_fields__two_failed__raise_exception():
         service._get_valid_fields(['missing1', 'missing2'])
 
     # assert
-    assert ex.value.message == (
+    assert ex.value.message in {
         fs_messages.MSG_FS_0005(
             rule=FieldSetRuleType.SUM_EQUAL,
             field='missing1',
-        ) or fs_messages.MSG_FS_0005(
+        ), fs_messages.MSG_FS_0005(
             rule=FieldSetRuleType.SUM_EQUAL,
             field='missing2',
-        )
-    )
+        ),
+    }
 
 
 def test_set_fields__fields_provided__set_fields(mocker):
@@ -565,7 +553,6 @@ def test_set_fields__fields_provided__set_fields(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     field_api_name = 'num'
     field = FieldTemplate.objects.create(
@@ -616,7 +603,6 @@ def test_set_fields__fields_not_provided__clear_fields(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     field = FieldTemplate.objects.create(
         account=account,
@@ -748,7 +734,6 @@ def test_create__valid_data__ok(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     rule = FieldsetTemplateRule.objects.create(
         account=account,
@@ -811,7 +796,6 @@ def test_partial_update__with_fields__ok(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     rule = FieldsetTemplateRule.objects.create(
         account=account,
@@ -863,7 +847,6 @@ def test_partial_update__without_fields__ok(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     rule = FieldsetTemplateRule.objects.create(
         account=account,

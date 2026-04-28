@@ -2,8 +2,10 @@ from typing import List, Optional, Dict
 from django.contrib.auth import get_user_model
 
 from src.generics.base.service import BaseModelService
+from src.processes.messages.fieldset import MSG_FS_0007
 from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.models.workflows.fieldset import FieldSet
+from src.processes.services.exceptions import FieldsetServiceException
 from src.processes.services.tasks.field import TaskFieldService
 from src.processes.services.workflows.fieldsets.fieldset_rule import (
     FieldSetRuleService,
@@ -19,15 +21,20 @@ class FieldSetService(BaseModelService):
         instance_template: FieldsetTemplate,
         **kwargs,
     ):
+        task = kwargs.get('task')
+        kickoff = kwargs.get('kickoff')
+        if not (task or kickoff):
+            raise FieldsetServiceException(MSG_FS_0007)
+
         self.instance = FieldSet.objects.create(
             account=self.account,
             workflow=kwargs['workflow'],
-            kickoff=kwargs.get('kickoff'),
-            task=kwargs.get('task'),
+            kickoff=kickoff,
+            task=task,
             api_name=instance_template.api_name,
             name=instance_template.name,
             description=instance_template.description,
-            order=instance_template.order,
+            order=kwargs['order'],
             label_position=instance_template.label_position,
             layout=instance_template.layout,
         )

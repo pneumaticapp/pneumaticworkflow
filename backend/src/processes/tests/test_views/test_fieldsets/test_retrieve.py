@@ -36,7 +36,6 @@ def test_retrieve__fieldset_all_data__ok(api_client):
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=template.kickoff_instance,
         name='My Fieldset',
         description='Fieldset description',
         layout=FieldSetLayout.HORIZONTAL,
@@ -60,7 +59,8 @@ def test_retrieve__fieldset_all_data__ok(api_client):
     assert response.data['description'] == 'Fieldset description'
     assert response.data['layout'] == FieldSetLayout.HORIZONTAL
     assert response.data['label_position'] == LabelPosition.LEFT
-    assert response.data['task'] is None
+    assert response.data['kickoff'] is None
+    assert response.data['tasks'] == []
 
     assert len(response.data['rules']) == 1
     rules_data = response.data['rules']
@@ -79,6 +79,35 @@ def test_retrieve__fieldset_all_data__ok(api_client):
     assert fields_data[0]['default'] == ''
     assert 'dataset' not in fields_data[0]
     assert 'selections' not in fields_data[0]
+
+
+def test_retrieve__kickoff_fieldset__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    kickoff = template.kickoff_instance
+    template_task = template.tasks.get(number=1)
+    fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=template_task,
+        kickoff=kickoff,
+    )
+
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(f'/templates/fieldsets/{fieldset.id}')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == fieldset.id
+    assert response.data['kickoff'] == kickoff.id
 
 
 def test_retrieve__task_fieldset__ok(api_client):
@@ -110,7 +139,56 @@ def test_retrieve__task_fieldset__ok(api_client):
     # assert
     assert response.status_code == 200
     assert response.data['id'] == fieldset.id
-    assert response.data['task'] == template_task.api_name
+    assert response.data['tasks'] == [
+        {
+            'number': template_task.number,
+            'name': template_task.name,
+            'api_name': template_task.api_name,
+        },
+    ]
+
+
+def test_retrieve__tasks_and_kickoff_fieldset__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=2,
+    )
+    kickoff = template.kickoff_instance
+    template_task_1 = template.tasks.get(number=1)
+    template_task_2 = template.tasks.get(number=2)
+    fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=template_task_1,
+        kickoff=kickoff,
+    )
+    fieldset.tasks.add(template_task_2)
+
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(f'/templates/fieldsets/{fieldset.id}')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == fieldset.id
+    assert response.data['kickoff'] == kickoff.id
+    assert response.data['tasks'] == [
+        {
+            'number': template_task_1.number,
+            'name': template_task_1.name,
+            'api_name': template_task_1.api_name,
+        },
+        {
+            'number': template_task_2.number,
+            'name': template_task_2.name,
+            'api_name': template_task_2.api_name,
+        },
+    ]
 
 
 def test_retrieve__fieldset_rule_with_fields__ok(api_client):
@@ -126,7 +204,6 @@ def test_retrieve__fieldset_rule_with_fields__ok(api_client):
     fieldset = create_test_fieldset_template(
         account=account_1,
         template=template_1,
-        kickoff=template_1.kickoff_instance,
         rule_type=FieldSetRuleType.SUM_EQUAL,
         rule_value='10',
     )
@@ -161,7 +238,6 @@ def test_retrieve__unauthenticated__unauthorized(api_client):
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=template.kickoff_instance,
     )
 
     # act
@@ -187,7 +263,6 @@ def test_retrieve__expired_sub__permission_denied(api_client):
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=template.kickoff_instance,
     )
 
     api_client.token_authenticate(user=user)
@@ -213,7 +288,6 @@ def test_retrieve__billing_plan__permission_denied(api_client):
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=template.kickoff_instance,
     )
 
     api_client.token_authenticate(user=user)
@@ -248,7 +322,6 @@ def test_retrieve__users_overlimit__permission_denied(api_client):
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=template.kickoff_instance,
     )
 
     api_client.token_authenticate(user=user)
@@ -274,7 +347,6 @@ def test_retrieve__non_admin__permission_denied(api_client):
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=template.kickoff_instance,
     )
     user = create_test_not_admin(account=account)
 
@@ -305,6 +377,7 @@ def test_retrieve__not_existing__not_found(api_client):
 
 
 def test_retrieve__another_account__not_found(api_client):
+
     """Fieldset from another account returns 404"""
 
     # arrange
@@ -317,7 +390,6 @@ def test_retrieve__another_account__not_found(api_client):
     fieldset = create_test_fieldset_template(
         account=account_1,
         template=template_1,
-        kickoff=template_1.kickoff_instance,
     )
 
     account_2 = create_test_account(name='Account 2')

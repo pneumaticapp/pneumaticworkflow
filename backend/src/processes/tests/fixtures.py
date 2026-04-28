@@ -48,7 +48,9 @@ from src.processes.models.templates.conditions import (
     RuleTemplate,
 )
 from src.processes.models.templates.fieldset import (
-    FieldsetTemplate, FieldsetTemplateRule,
+    FieldsetTemplate,
+    FieldsetTemplateRule,
+    FieldsetTemplateTaskTemplate, FieldsetTemplateKickoff,
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.kickoff import Kickoff
@@ -848,15 +850,24 @@ def create_test_fieldset_template(
     fieldset = FieldsetTemplate.objects.create(
         account=account,
         template=template,
-        kickoff=kickoff,
-        task=task,
         name=name,
         description=description,
-        order=order,
         label_position=label_position,
         layout=layout,
         api_name=api_name,
     )
+    if task:
+        FieldsetTemplateTaskTemplate.objects.create(
+            fieldset=fieldset,
+            task=task,
+            order=order,
+        )
+    if kickoff:
+        FieldsetTemplateKickoff.objects.create(
+            fieldset=fieldset,
+            kickoff=kickoff,
+            order=order,
+        )
     if rule_type:
         FieldsetTemplateRule.objects.create(
             fieldset=fieldset,

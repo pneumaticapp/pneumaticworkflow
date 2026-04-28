@@ -1270,6 +1270,16 @@ class FieldsetTemplateQuerySet(AccountBaseQuerySet):
     pass
 
 
+class FieldsetTemplateTaskTemplateQuerySet(BaseQuerySet):
+
+    pass
+
+
+class FieldsetTemplateKickoffQuerySet(BaseQuerySet):
+
+    pass
+
+
 class FieldsetTemplateRuleQuerySet(AccountBaseQuerySet):
 
     pass

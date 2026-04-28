@@ -46,7 +46,6 @@ def test__create_instance__with_template__ok():
         template=template,
         account=account,
         name='Fieldset tmpl',
-        order=1,
     )
     rule_template = FieldsetTemplateRule.objects.create(
         account=account,

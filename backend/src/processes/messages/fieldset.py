@@ -20,3 +20,6 @@ MSG_FS_0005 = lambda rule, field: format_lazy(
 MSG_FS_0006 = _(
     'The task with the specified "api_name" was not found in the template',
 )
+MSG_FS_0007 = _(
+    'Either "task" or "kickoff" must be provided to create a fieldset.',
+)

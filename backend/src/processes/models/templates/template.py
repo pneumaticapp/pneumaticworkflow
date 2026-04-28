@@ -152,7 +152,7 @@ class Template(
         qst = FieldTemplate.objects.filter(
             Q(
                 Q(kickoff_id=kickoff.id) |
-                Q(fieldset__kickoff_id=kickoff.id),
+                Q(fieldset__kickoffs__id=kickoff.id),
             ),
         )
         if fields_filter_kwargs:
@@ -166,7 +166,13 @@ class Template(
         fields_filter_kwargs: Optional[Dict] = None,
     ) -> FieldTemplateQuerySet:
 
-        """ Return the output fields from tasks """
+        """Return output FieldTemplates for this template's tasks,
+        with optional task/field-level filtering and exclusion.
+
+        Fields are collected from two sources:
+        - directly attached to tasks (task FK)
+        - indirectly via fieldsets linked to tasks through M2M
+        """
 
         from src.processes.models.templates.fields import FieldTemplate
 
@@ -175,18 +181,18 @@ class Template(
         fields_filter_kwargs = fields_filter_kwargs or {}
 
         tasks_filter = {'task__template_id': self.id, **tasks_filter_kwargs}
-        fieldset_filter = {
-            f'fieldset__{key}': value
-            for key, value in tasks_filter.items()
-        }
+        fieldset_filter = {'fieldset__tasks__template_id': self.id}
+        for key, value in tasks_filter_kwargs.items():
+            _key = key.replace('task', 'tasks')
+            fieldset_filter[f'fieldset__{_key}'] = value
         tasks_q = Q(**tasks_filter)
         fieldset_q = Q(**fieldset_filter)
 
         if tasks_exclude_kwargs:
-            fieldset_exclude_kwargs = {
-                f'fieldset__{key}': value
-                for key, value in tasks_exclude_kwargs.items()
-            }
+            fieldset_exclude_kwargs = {}
+            for key, value in tasks_exclude_kwargs.items():
+                _key = key.replace('task', 'tasks')
+                fieldset_exclude_kwargs[f'fieldset__{_key}'] = value
             tasks_q = Q(tasks_q, ~Q(**tasks_exclude_kwargs))
             fieldset_q = Q(fieldset_q, ~Q(**fieldset_exclude_kwargs))
 
