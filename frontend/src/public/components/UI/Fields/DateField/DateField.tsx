@@ -8,6 +8,7 @@ import { TForegroundColor } from '../common/types';
 import { getForegroundClass } from '../common/utils/getForegroundClass';
 import { DatePickerCustom } from '../../form/DatePicker';
 import { IDatePickerProps } from '../../form/DatePicker/types';
+import { toDate } from '../../../../utils/dateTime';
 
 import styles from './DateField.css';
 import commonStyles from '../common/styles.css';
@@ -73,7 +74,7 @@ export function DateField({
           <DatePickerCustom
             onChange={(date) => onChange(date as Date)}
             placeholderText={placeholder}
-            selected={value ? new Date(value) : null}
+            selected={toDate(value)}
             {...props}
           />
         </div>
