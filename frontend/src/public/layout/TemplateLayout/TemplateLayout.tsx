@@ -1,17 +1,19 @@
 import * as React from 'react';
 import { useIntl } from 'react-intl';
+import { matchPath } from 'react-router-dom';
 
 import { TopNavContainer } from '../../components/TopNav';
 import { ReturnLink } from '../../components/UI';
 import { ERoutes } from '../../constants/routes';
 import { history } from '../../utils/history';
 import { getLinkToTemplate } from '../../utils/routes/getLinkToTemplate';
+import { getLinkToFieldsets } from '../../utils/routes/getLinkToFieldsets';
+
+import styles from './TemplateLayout.css';
 
 interface ITemplateLayoutProps {
   children: React.ReactNode;
 }
-
-const FIELDSETS_TEMPLATE_PATH = /^\/templates\/(\d+)\/fieldsets(?:\/|$)/;
 
 export function TemplateLayout({ children }: ITemplateLayoutProps) {
   const { formatMessage } = useIntl();
@@ -26,17 +28,32 @@ export function TemplateLayout({ children }: ITemplateLayoutProps) {
   }, []);
 
   const renderLeftContent = () => {
-    const fieldsetsMatch = FIELDSETS_TEMPLATE_PATH.exec(pathname);
-    if (fieldsetsMatch) {
-      const templateId = Number(fieldsetsMatch[1]);
-      if (!Number.isNaN(templateId)) {
-        return (
+    const detailMatch = matchPath<{ templateId: string }>(pathname, { path: ERoutes.TemplateFieldsetDetail });
+    const listMatch = matchPath<{ templateId: string }>(pathname, { path: ERoutes.TemplateFieldsets });
+    const templateId = Number((detailMatch || listMatch)?.params.templateId);
+
+    if (detailMatch) {
+      return (
+        <div className={styles['breadcrumb-nav']}>
           <ReturnLink
-            label={formatMessage({ id: 'fieldsets.back-to-template' })}
+            label={formatMessage({ id: 'fieldsets.breadcrumb.template' })}
             route={getLinkToTemplate({ templateId })}
           />
-        );
-      }
+          <ReturnLink
+            label={formatMessage({ id: 'fieldsets.breadcrumb.fieldsets' })}
+            route={getLinkToFieldsets(templateId)}
+          />
+        </div>
+      );
+    }
+
+    if (listMatch) {
+      return (
+        <ReturnLink
+          label={formatMessage({ id: 'fieldsets.back-to-template' })}
+          route={getLinkToTemplate({ templateId })}
+        />
+      );
     }
 
     return (
@@ -58,3 +75,4 @@ export function TemplateLayout({ children }: ITemplateLayoutProps) {
     </>
   );
 }
+

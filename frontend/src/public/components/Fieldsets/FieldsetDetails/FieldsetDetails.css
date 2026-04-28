@@ -203,8 +203,8 @@
 
 .rule-fields-label {
   font-weight: 600;
-  color: var(--pneumatic-color-black72);
   white-space: nowrap;
+  color: var(--pneumatic-color-black72);
 
   @mixin text-small;
 }
