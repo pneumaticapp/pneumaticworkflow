@@ -21,9 +21,11 @@ import { ReturnLink } from '../../components/UI/ReturnLink';
 export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
-  const [pathname, setPathname] = useState(history.location.pathname);
-  useEffect(() => {
-    const unlisten = history.listen((location) => {
+
+  const [pathname, setPathname] = React.useState(history.location.pathname);
+
+  React.useEffect(() => {
+    return history.listen((location) => {
       setPathname(location.pathname);
     });
 
