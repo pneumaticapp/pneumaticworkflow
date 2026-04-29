@@ -3,7 +3,7 @@ import classnames from 'classnames';
 
 import { Avatar } from "..";
 import { DeleteRoundIcon } from '../../icons';
-import { TUserListItem } from '../../../types/user';
+import { TUserListItem, isUserAbsent } from '../../../types/user';
 import { getUserById } from '../../UserData/utils/getUserById';
 import { ETaskPerformerType } from '../../../types/template';
 
@@ -36,7 +36,10 @@ export const UserPerformerComponent = ({
 
   const isTypeUser = user.type === ETaskPerformerType.User;
   const isTypeGroup = user.type === ETaskPerformerType.UserGroup;
-  const currentUser: any = isTypeUser && user.sourceId ? getUserById(users, +user.sourceId) : user;
+  let currentUser: any = user;
+  if (isTypeUser && user.sourceId) {
+    currentUser = users ? getUserById(users, +user.sourceId) : user;
+  }
 
   return (
     <div className={classnames(styles['user-performer'], bgColorClassNameMap[bgColor])}>
@@ -49,7 +52,14 @@ export const UserPerformerComponent = ({
           showInitials={false}
         />
       )}
-      <p className={styles['user-performer__name']}>{user.label}</p>
+      <p className={styles['user-performer__name']}>
+        {user.label}
+        {currentUser && isUserAbsent(currentUser) && (
+          <span className={styles['user-performer__badge']}>
+            {currentUser.vacation?.absenceStatus === 'sick_leave' ? ' 🏥' : ' ✈️'}
+          </span>
+        )}
+      </p>
       {onClick && (
         <button
           onClick={onClick}

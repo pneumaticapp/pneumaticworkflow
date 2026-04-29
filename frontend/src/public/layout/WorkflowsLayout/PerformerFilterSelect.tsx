@@ -19,7 +19,7 @@ import {
   getWorkflowPerformersIdsFilter,
   getWorkflowsStatus,
 } from '../../redux/selectors/workflows';
-import { getGroupsList } from '../../redux/selectors/groups';
+import { getRegularGroupsList } from '../../redux/selectors/groups';
 import { getAccountsUsers } from '../../redux/selectors/accounts';
 
 import { getActiveUsers, getUserFullName } from '../../utils/users';
@@ -40,7 +40,7 @@ export function PerformerFilterSelect() {
   const performersIdsFilter = useSelector(getWorkflowPerformersIdsFilter);
   const performersCounters = useSelector(getWorkflowPerformersCounters);
   const statusFilter = useSelector(getWorkflowsStatus);
-  const groups: IGroup[] = useSelector(getGroupsList);
+  const groups: IGroup[] = useSelector(getRegularGroupsList);
   const users: TUserListItem[] = useSelector(getAccountsUsers);
 
   const mustDisableFilter = statusFilter === EWorkflowsStatus.Snoozed || statusFilter === EWorkflowsStatus.Completed;

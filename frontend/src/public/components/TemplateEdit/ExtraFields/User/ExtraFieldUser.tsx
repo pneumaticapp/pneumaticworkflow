@@ -15,7 +15,7 @@ import { EExtraFieldMode, ETaskPerformerType } from '../../../../types/template'
 import { isArrayWithItems } from '../../../../utils/helpers';
 import { IWorkflowExtraFieldProps } from '..';
 import { getNotDeletedUsers, getUserFullName } from '../../../../utils/users';
-import { getGroupsList } from '../../../../redux/selectors/groups';
+import { getRegularGroupsList } from '../../../../redux/selectors/groups';
 import { IGroupDropdownOption } from '../../../../redux/team/types';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
@@ -40,7 +40,7 @@ export function ExtraFieldUser({
   const { formatMessage } = useIntl();
 
   const users: ReturnType<typeof getUsers> = getNotDeletedUsers(useSelector(getUsers));
-  const groups = useSelector(getGroupsList);
+  const groups = useSelector(getRegularGroupsList);
 
   const { description } = field;
 
