@@ -3,7 +3,7 @@ import { injectIntl, IntlShape } from 'react-intl';
 import classNames from 'classnames';
 
 import { EMoveDirections, EInputNameBackgroundColor } from '../../../types/workflow';
-import { EExtraFieldType, IExtraField } from '../../../types/template';
+import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { getNormalizeFieldsOrders, moveWorkflowField } from '../../../utils/workflows';
 
@@ -17,6 +17,7 @@ import { OutputFormTaskMerged, IOutputFormTaskMergedOwnProps } from './OutputFor
 
 import styles from './OutputForm.css';
 import stylesTaskForm from '../TaskForm/TaskForm.css';
+import { useDatasetOptions } from '../ExtraFields/utils/useDatasetOptions';
 
 export interface IOutputFormSimpleOwnProps {
   mode?: 'simple';
@@ -54,6 +55,7 @@ function OutputFormSimple({
   }, [show]);
 
   const sortedFields = [...fields].sort((a, b) => b.order - a.order);
+  const datasetOptions = useDatasetOptions(fields);
 
   const isFormEmpty = !isArrayWithItems(fields);
 
@@ -115,6 +117,8 @@ function OutputFormSimple({
               moveFieldUp={() => handleMoveField(index, EMoveDirections.Up)}
               moveFieldDown={() => handleMoveField(index, EMoveDirections.Down)}
               editField={handleEditField(field.apiName)}
+              mode={EExtraFieldMode.Kickoff}
+              datasetOptions={datasetOptions}
               isDisabled={isDisabled}
               innerRef={outputRef}
               accountId={accountId}
