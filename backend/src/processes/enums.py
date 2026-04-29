@@ -711,7 +711,8 @@ class SystemVariable:
     TEMPLATE_NAME = 'template-name'
     WORKFLOW_ID = 'workflow-id'
     WORKFLOW_STARTER = 'workflow-starter'
+    APPROVAL_CHAIN_SUMMARY = 'approval-chain-summary'
 
     WORKFLOW_NAME_VARS = {DATE, TEMPLATE_NAME, WORKFLOW_ID, WORKFLOW_STARTER}
 
-    TASK_VARS = {WORKFLOW_STARTER}
+    TASK_VARS = {WORKFLOW_STARTER, APPROVAL_CHAIN_SUMMARY}

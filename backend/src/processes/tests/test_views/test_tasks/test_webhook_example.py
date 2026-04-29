@@ -49,6 +49,7 @@ def test_webhook_example__body__ok(api_client):
         'due_date_tsp': None,
         'is_completed': False,
         'is_read_only_viewer': False,
+        'hierarchy_context': None,
         'performers': [
             OrderedDict([
                 ('is_completed', False),

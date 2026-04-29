@@ -17,14 +17,17 @@ from src.processes.enums import (
     ConditionAction,
     PredicateOperator,
     PredicateType,
+    SystemVariable,
 )
 from src.utils.salt import get_salt
 
 VAR_PATTERN = re.compile(r'{{\s*([^\{\}\s]+)\s*}}')
 VAR_PATTERN_TEMPLATE = r'\{\{(\s*?)%s(\s*?)\}\}'
+
+_ALL_VARS = SystemVariable.WORKFLOW_NAME_VARS | SystemVariable.TASK_VARS
+_EXCLUDED_VARS = '|'.join(_ALL_VARS)
 VAR_PATTERN_FIELD = re.compile(
-    r'\{\{(\s*?)((?!date|template-name|'
-    r'workflow-id|workflow-starter).)+(\s*?)\}\}',
+    rf'\{{\{{(\s*?)((?!{_EXCLUDED_VARS}).)+(\s*?)\}}\}}',
 )
 VAR_PATTERN_WORKFLOW_ID = re.compile(r'\{\{\s*workflow-id\s*\}\}')
 
