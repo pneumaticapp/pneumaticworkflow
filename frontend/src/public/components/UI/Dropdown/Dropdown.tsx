@@ -23,6 +23,7 @@ export type TDropdownOption = {
   customSubOption?: React.ReactElement;
   color?: TDropdownItemColor;
   isHidden?: boolean;
+  disabled?: boolean;
   size?: 'lg' | 'sm';
   className?: string;
   Icon?(props: React.SVGAttributes<SVGElement>): JSX.Element;
@@ -103,6 +104,7 @@ export function Dropdown({
         withConfirmation,
         initialConfirmationState,
         isHidden,
+        disabled,
         className: optionClassName,
         Icon,
         onClick,
@@ -151,22 +153,28 @@ export function Dropdown({
         <div key={`option-${typeof label === 'string' ? label : mapKey}`}>
           {withUpperline && <hr className={styles['line']} />}
           <ConfirmableDropdownItem
-            {...(onClick && {
+            {...(!disabled && onClick && {
               onClick: () => {
                 onClick?.(() => setIsOpen(false));
                 closeDropdown();
               },
             })}
             cssModule={{
-              'dropdown-item': classnames(styles['dropdown-item'], getDropdownItemColorClass(color), {
-                [styles['dropdown-item-mobile']]: isMobile && isFromBreakdownItem,
-              }),
+              'dropdown-item': classnames(
+                styles['dropdown-item'],
+                getDropdownItemColorClass(color),
+                {
+                  [styles['dropdown-item-mobile']]: isMobile && isFromBreakdownItem,
+                  [styles['dropdown-item_disabled']]: disabled,
+                },
+              ),
             }}
             withConfirmation={withConfirmation}
             initialConfirmationState={initialConfirmationState}
             closeDropdown={closeDropdown}
             toggle={false}
             className={optionClassName}
+            {...(disabled && { 'aria-disabled': true })}
           >
             {renderOptionContent()}
           </ConfirmableDropdownItem>

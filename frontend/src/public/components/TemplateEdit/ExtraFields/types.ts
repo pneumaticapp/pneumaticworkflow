@@ -3,6 +3,7 @@ import { IntlShape } from 'react-intl';
 
 import { EExtraFieldMode, IExtraField } from '../../../types/template';
 import { EInputNameBackgroundColor } from '../../../types/workflow';
+import { IDatasetOption } from './utils/types';
 
 export interface IWorkflowExtraFieldProps {
   field: IExtraField;
@@ -26,5 +27,5 @@ export interface IExtraFieldProps extends IWorkflowExtraFieldProps {
   wrapperClassName?: string;
   fieldsCount?: number;
   id?: number;
-  datasetOptions?: { label: string; value: string }[];
+  datasetOptions?: IDatasetOption[];
 }

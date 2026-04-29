@@ -40,10 +40,12 @@ export function ExtraFieldDropdown({
 
     return datasetOptions.map((option) => {
       const isSelected = String(selectedDatasetId) === option.value;
+      const isEmpty = option.itemsCount === 0;
 
       return {
         mapKey: `dataset-${option.value}`,
         label: option.label,
+        disabled: isEmpty,
         className: classnames(styles['dataset-option'], isSelected && styles['dataset-option-selected']),
         onClick: (closeDropdown: () => void) => {
           onDatasetSelect?.(Number(option.value));

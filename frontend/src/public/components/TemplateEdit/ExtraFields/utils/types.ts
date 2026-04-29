@@ -3,6 +3,7 @@ import { IExtraField } from '../../../../types/template';
 export interface IDatasetOption {
   label: string;
   value: string;
+  itemsCount: number;
 }
 
 export interface IKickoffDropdownProps {
