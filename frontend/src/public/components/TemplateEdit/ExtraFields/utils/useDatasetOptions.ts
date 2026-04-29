@@ -22,11 +22,9 @@ export function useDatasetOptions(fields: IExtraField[]) {
   }, [hasDatasetFields, isDatasetsLoaded, isDatasetsLoading, dispatch]);
 
   return useMemo(
-    () => datasetsList.map(({ name, id, itemsCount }) => ({
-      label: name,
-      value: String(id),
-      itemsCount,
-    })),
+    () => datasetsList
+      .filter(({ itemsCount }) => itemsCount > 0)
+      .map(({ name, id }) => ({ label: name, value: String(id) })),
     [datasetsList],
   );
 }

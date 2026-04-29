@@ -84,15 +84,6 @@
     }
   }
 }
-
-.dropdown-item_disabled {
-  pointer-events: none;
-  color: var(--pneumatic-color-black32);
-
-  .label {
-    color: var(--pneumatic-color-black32);
-  }
-}
 .dropdown-item-mobile {
   justify-content: space-between;
 }
