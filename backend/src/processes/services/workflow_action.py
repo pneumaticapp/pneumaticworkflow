@@ -39,6 +39,7 @@ from src.processes.services.condition_check.service import (
 from src.processes.services.events import (
     WorkflowEventService,
 )
+from src.processes.services.hierarchy import HierarchyService
 from src.processes.services.tasks.field import (
     TaskFieldService,
 )
@@ -654,7 +655,6 @@ class WorkflowActionService:
                     self.continue_workflow(task=task, is_returned=is_returned)
 
     def complete_task(self, task: Task, by_user: bool = False):
-
         """ Complete workflow task if it <= current task
             Only for current task run complete actions """
 
@@ -731,7 +731,25 @@ class WorkflowActionService:
                 task=task,
                 user=self.user,
             )
-        self._start_next_tasks(parent_task=task)
+        # Hierarchy JIT-spawn: if the completed task is
+        # hierarchy-enabled and the chain can continue,
+        # create a clone for the next manager and start it
+        # instead of advancing to next DAG steps.
+        hierarchy_spawned = False
+        anchor_user = HierarchyService.should_spawn_next(
+            task=task,
+        )
+        if anchor_user is not None:
+            with transaction.atomic():
+                clone = HierarchyService.create_hierarchy_task(
+                    source_task=task,
+                    anchor_user=anchor_user,
+                )
+            self.start_task(task=clone)
+            hierarchy_spawned = True
+
+        if not hierarchy_spawned:
+            self._start_next_tasks(parent_task=task)
         if (
             WebHook.objects
             .on_account(self.account.id)

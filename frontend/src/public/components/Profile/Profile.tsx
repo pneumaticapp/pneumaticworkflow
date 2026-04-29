@@ -1,6 +1,7 @@
 import React, { useEffect, useLayoutEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { Formik, Form, FormikConfig } from 'formik';
+import { useDispatch } from 'react-redux';
 
 import {
   FIRST_DAY_OPTIONS,
@@ -24,6 +25,9 @@ import { AvatarController } from './AvatarController';
 import { FormikDropdownList} from '../UI';
 import { LockIcon } from '../icons/LockIcon';
 import { ChangePassword } from './ChangePassword';
+import { ProfileManager } from './ProfileManager';
+import { ProfileReports } from './ProfileReports';
+import { teamFetchStarted, usersFetchStarted } from '../../redux/accounts/slice';
 
 import styles from './Profile.css';
 
@@ -51,8 +55,31 @@ export type TProfileFields = {
   dateformat: string;
 };
 
+function ProfileManagerSection({
+  currentUserId,
+  managerId,
+  editCurrentUser,
+}: {
+  currentUserId: number;
+  managerId: number | null;
+  editCurrentUser: (body: IUpdateUserRequest) => void;
+}) {
+  return (
+    <fieldset className={styles['fields-group']}>
+      <ProfileManager
+        currentUserId={currentUserId}
+        managerId={managerId}
+        onManagerChange={(newManagerId) =>
+          editCurrentUser({ managerId: newManagerId })
+        }
+      />
+    </fieldset>
+  );
+}
+
 export function Profile({ user, editCurrentUser, sendChangePassword, onChangeTab }: IProfileProps) {
   const { formatMessage } = useIntl();
+  const dispatch = useDispatch();
   const [isOpenModal, setIsOpenModal] = useState(false);
   const {
     id,
@@ -104,7 +131,9 @@ export function Profile({ user, editCurrentUser, sendChangePassword, onChangeTab
 
   useEffect(() => {
     document.title = TITLES.Profile;
-  }, []);
+    dispatch(usersFetchStarted());
+    dispatch(teamFetchStarted({}));
+  }, [dispatch]);
 
   useLayoutEffect(() => {
     onChangeTab(ESettingsTabs.Profile);
@@ -175,6 +204,20 @@ export function Profile({ user, editCurrentUser, sendChangePassword, onChangeTab
               fieldSize="lg"
               title={formatMessage({ id: 'user.phone' })}
               containerClassName={styles['field']}
+            />
+          </fieldset>
+
+          <ProfileManagerSection
+            currentUserId={id}
+            managerId={user.managerId ?? null}
+            editCurrentUser={editCurrentUser}
+          />
+
+          <fieldset className={styles['fields-group']}>
+            <ProfileReports 
+              currentUserId={id} 
+              reportIds={user.reportIds || []} 
+              editCurrentUser={editCurrentUser}
             />
           </fieldset>
 

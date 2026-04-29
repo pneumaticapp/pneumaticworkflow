@@ -1,4 +1,3 @@
-# ruff: noqa: PLC0415
 import re
 from django.db.models import Q
 from typing import Any, Dict, List, Optional
@@ -28,7 +27,7 @@ from src.processes.serializers.workflows.field import (
     TaskFieldSerializer,
 )
 from src.processes.serializers.workflows.task_performer import (
-    TaskUserGroupPerformerSerializer,
+    get_performers_for_task,
 )
 from src.processes.models.workflows.task import TaskPerformer
 
@@ -84,11 +83,7 @@ class WorkflowCurrentTaskSerializer(serializers.ModelSerializer):
         return None
 
     def get_performers(self, instance) -> List[Dict[str, Any]]:
-        if hasattr(instance, 'all_performers'):
-            performers = instance.all_performers
-        else:
-            performers = instance.exclude_directly_deleted_taskperformer_set()
-        return TaskUserGroupPerformerSerializer(performers, many=True).data
+        return get_performers_for_task(instance)
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -118,14 +113,12 @@ class TaskSerializer(serializers.ModelSerializer):
             'status',
             'revert_tasks',
             'is_read_only_viewer',
+            'hierarchy_context',
         )
 
     date_started_tsp = TimeStampField(source='date_started')
     date_completed_tsp = TimeStampField(source='date_completed')
-    performers = TaskUserGroupPerformerSerializer(
-        many=True,
-        source='exclude_directly_deleted_taskperformer_set',
-    )
+    performers = serializers.SerializerMethodField()
     workflow = serializers.SerializerMethodField()
     output = TaskFieldSerializer(many=True)
     delay = serializers.SerializerMethodField(required=False, allow_null=True)
@@ -139,6 +132,10 @@ class TaskSerializer(serializers.ModelSerializer):
     sub_workflows = serializers.SerializerMethodField()
     revert_tasks = TaskShortSerializer(many=True, source='get_revert_tasks')
     is_read_only_viewer = serializers.SerializerMethodField()
+    hierarchy_context = serializers.SerializerMethodField()
+
+    def get_performers(self, instance) -> List[Dict[str, Any]]:
+        return get_performers_for_task(instance)
 
     def get_is_completed(self, instance):
         #  TODO Remove in 41258
@@ -169,13 +166,13 @@ class TaskSerializer(serializers.ModelSerializer):
             account_id=instance.account_id,
             ancestor_task_id=instance.id,
         )
-        from src.processes.serializers.workflows.workflow import (
+        from src.processes.serializers.workflows.workflow import (  # noqa: PLC0415
             WorkflowListSerializer,
         )
         return WorkflowListSerializer(instance=qst, many=True).data
 
     def get_workflow(self, instance):
-        from src.processes.serializers.workflows.workflow import (
+        from src.processes.serializers.workflows.workflow import (  # noqa: PLC0415
             WorkflowShortInfoSerializer,
         )
         return WorkflowShortInfoSerializer(instance=instance.workflow).data
@@ -240,6 +237,22 @@ class TaskSerializer(serializers.ModelSerializer):
         # Only admin template owners have full access.
         # All other cases: read-only (non-admin owners, viewers, starters).
         return not (is_template_owner and user.is_admin)
+
+    def get_hierarchy_context(
+        self,
+        instance: Task,
+    ) -> Optional[Dict[str, Any]]:
+        """Return hierarchy context if the task is
+        part of a hierarchy chain."""
+        try:
+            ctx = instance.hierarchy_context
+        except Task.hierarchy_context.RelatedObjectDoesNotExist:
+            return None
+        return {
+            'base_api_name': ctx.base_api_name,
+            'current_depth': ctx.current_depth,
+            'max_depth': ctx.max_depth,
+        }
 
 
 class TaskListSerializer(serializers.ModelSerializer):

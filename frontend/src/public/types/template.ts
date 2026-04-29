@@ -52,6 +52,10 @@ export type TTransformedTask =
   | (Pick<ITemplateTask, 'apiName' | 'fields' | 'name'> & { needSteName?: boolean })
   | (Pick<IKickoff, 'fields'> & { apiName: string; name: string; needSteName: null });
 
+export interface ITemplateTaskHierarchyConfig {
+  maxDepth: number | null;
+}
+
 export interface ITemplateTask {
   id?: number;
   apiName: string;
@@ -68,6 +72,7 @@ export interface ITemplateTask {
   checklists: TOutputChecklist[];
   revertTask: string | null;
   ancestors: string[];
+  hierarchyConfig?: ITemplateTaskHierarchyConfig | null;
 }
 
 export type TDueDateRuleTarget = 'field' | 'workflow started' | 'task started' | 'task completed';

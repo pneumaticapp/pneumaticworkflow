@@ -446,6 +446,14 @@ class User(AbstractUser, SoftDeleteModel):
     )
     is_admin = models.BooleanField(default=True)
     is_account_owner = models.BooleanField(default=False)
+    manager = models.ForeignKey(
+        'self',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='subordinates',
+        verbose_name='Manager',
+    )
 
     notify_about_tasks = models.BooleanField(default=True)
     is_digest_subscriber = models.BooleanField(default=True)

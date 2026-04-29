@@ -210,7 +210,8 @@ class Workflow(
         fields_filter_kwargs: Optional[Dict] = None,
     ) -> Dict[str, str]:
         """Extends parent method by adding the workflow-starter
-            system variable to the substitution dictionary."""
+            system variable and approval-chain-summary variables
+            to the substitution dictionary."""
 
         fields_values = super().get_fields_markdown_values(
             tasks_filter_kwargs=tasks_filter_kwargs,
@@ -221,4 +222,16 @@ class Workflow(
         fields_values['workflow-starter'] = get_workflow_starter_name(
             self.workflow_starter,
         )
+
+        # Add approval-chain-summary for each hierarchy chain
+        # Avoid circular import: Workflow (model) -> HierarchyService (service)
+        from src.processes.services.hierarchy import HierarchyService
+
+        summaries = HierarchyService.build_approval_chain_summaries(
+            workflow=self,
+        )
+        for base_api_name, summary in summaries.items():
+            summary_key = f'approval-chain-summary-{base_api_name}'
+            fields_values[summary_key] = summary
+
         return fields_values

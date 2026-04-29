@@ -39,6 +39,9 @@ from src.processes.serializers.templates.mixins import (
     CreateOrUpdateRelatedMixin,
     CustomValidationApiNameMixin,
 )
+from src.processes.serializers.templates.hierarchy_config import (
+    HierarchyConfigSerializer,
+)
 from src.processes.serializers.templates.raw_due_date import (
     RawDueDateTemplateSerializer,
 )
@@ -81,6 +84,7 @@ class TaskTemplateSerializer(
             'revert_task',
             'parents',
             'ancestors',
+            'hierarchy_config',
         )
         create_or_update_fields = {
             'name',
@@ -106,6 +110,10 @@ class TaskTemplateSerializer(
         required=False,
     )
     raw_due_date = RawDueDateTemplateSerializer(
+        required=False,
+        allow_null=True,
+    )
+    hierarchy_config = HierarchyConfigSerializer(
         required=False,
         allow_null=True,
     )
@@ -179,6 +187,10 @@ class TaskTemplateSerializer(
 
         sys_vars_is_used = bool(api_names_in_name & SystemVariable.TASK_VARS)
         api_names_in_name -= SystemVariable.TASK_VARS
+        api_names_in_name = {
+            n for n in api_names_in_name
+            if not n.startswith('approval-chain-summary-')
+        }
 
         available_fields = self._get_task_available_fields()
         available_api_names = {field.api_name for field in available_fields}
@@ -223,6 +235,10 @@ class TaskTemplateSerializer(
             return True
 
         api_names_in_description -= SystemVariable.TASK_VARS
+        api_names_in_description = {
+            n for n in api_names_in_description
+            if not n.startswith('approval-chain-summary-')
+        }
 
         available_api_names_for_description = {
             field.api_name for field in self._get_task_available_fields()
@@ -470,6 +486,17 @@ class TaskTemplateSerializer(
                 'task': instance,
             },
         )
+        self.create_or_update_related_one(
+            data=validated_data.get('hierarchy_config'),
+            ancestors_data={
+                'task_template': instance,
+            },
+            slz_cls=HierarchyConfigSerializer,
+            slz_context={
+                **self.context,
+                'task': instance,
+            },
+        )
         return instance
 
     def update(
@@ -573,6 +600,17 @@ class TaskTemplateSerializer(
                 'template': self.context['template'],
             },
             slz_cls=RawDueDateTemplateSerializer,
+            slz_context={
+                **self.context,
+                'task': instance,
+            },
+        )
+        self.create_or_update_related_one(
+            data=validated_data.get('hierarchy_config'),
+            ancestors_data={
+                'task_template': instance,
+            },
+            slz_cls=HierarchyConfigSerializer,
             slz_context={
                 **self.context,
                 'task': instance,

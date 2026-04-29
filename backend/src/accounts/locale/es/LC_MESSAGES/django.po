@@ -172,3 +172,9 @@ msgstr ""
 
 msgid "You can't delete the account owner."
 msgstr ""
+
+msgid "A user cannot be their own manager."
+msgstr "Un usuario no puede ser su propio responsable."
+
+msgid "This assignment would create a circular management hierarchy."
+msgstr "Esta asignación crearía una jerarquía de gestión circular."

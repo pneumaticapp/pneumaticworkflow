@@ -46,6 +46,22 @@ class TaskUserGroupPerformerSerializer(
         )
 
 
+def get_performers_for_task(task) -> list:
+    """Serialize active (non-deleted) performers for a given task.
+
+    Shared by WorkflowCurrentTaskSerializer and TaskSerializer to
+    avoid duplicating the serialization logic.
+
+    Uses prefetched ``all_performers`` (set by the workflow list
+    queryset via ``to_attr``) when available to avoid N+1 queries.
+    """
+    if hasattr(task, 'all_performers'):
+        performers = task.all_performers
+    else:
+        performers = task.exclude_directly_deleted_taskperformer_set()
+    return TaskUserGroupPerformerSerializer(performers, many=True).data
+
+
 class TaskGuestPerformerSerializer(
     CustomValidationErrorMixin,
     Serializer,

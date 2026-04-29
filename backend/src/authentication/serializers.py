@@ -13,7 +13,10 @@ from src.authentication.messages import (
     MSG_AU_0013,
     MSG_AU_0020,
 )
-from src.generics.fields import DateFormatField, TimeStampField
+from src.generics.fields import (
+    DateFormatField,
+    TimeStampField,
+)
 from src.generics.mixins.services import EncryptionMixin
 from src.generics.serializers import CustomValidationErrorMixin
 from src.processes.enums import OwnerRole, OwnerType
@@ -187,6 +190,8 @@ class ContextUserSerializer(serializers.ModelSerializer):
             'date_fdw',
             'has_workflow_viewer_access',
             'has_workflow_starter_access',
+            'manager_id',
+            'subordinates_ids',
         )
 
     account = ContextAccountSerializer()
@@ -195,6 +200,15 @@ class ContextUserSerializer(serializers.ModelSerializer):
     has_workflow_starter_access = serializers.SerializerMethodField()
     date_joined_tsp = TimeStampField(source='date_joined', read_only=True)
     date_fmt = DateFormatField(read_only=True)
+    manager_id = serializers.IntegerField(
+        read_only=True,
+        allow_null=True,
+    )
+    subordinates_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        read_only=True,
+        source='subordinates',
+    )
 
     def get_has_workflow_viewer_access(self, obj) -> bool:
         access = self._get_template_access(obj)

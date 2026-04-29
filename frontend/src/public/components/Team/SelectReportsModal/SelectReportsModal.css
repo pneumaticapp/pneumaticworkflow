@@ -1,0 +1,46 @@
+.select-reports-modal {
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  width: 480px;
+  max-width: 90vw;
+  background-color: var(--white);
+  border-radius: 4px;
+}
+
+.select-reports-modal__title {
+  margin-bottom: 24px;
+  font-family: var(--font-primary);
+  font-size: 24px;
+  font-weight: bold;
+  line-height: 32px;
+  color: var(--grey-800);
+}
+
+.select-reports-modal__content {
+  margin-bottom: 32px;
+}
+
+.select-reports-modal__performers {
+  margin: 16px 0 0;
+  padding: 0;
+  display: flex;
+  list-style: none;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.select-reports-modal__performer-item {
+  display: inline-block;
+}
+
+.select-reports-modal__buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+}
+
+.select-reports-modal__button-remove {
+  margin-left: auto;
+}

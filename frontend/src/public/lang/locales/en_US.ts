@@ -460,6 +460,7 @@ export const enMessages = {
 
   'validation.group-name-to-long': 'The group name is longer than 255 character',
 
+  'button.remove': 'Remove',
   'Unknown Error': 'Oops, looks like something went wrong... Our engineering team has already been notified',
   'Something Went Wrong': 'Oops, looks like something went wrong... Our engineering team has already been notified',
 
@@ -564,6 +565,9 @@ export const enMessages = {
   'templates.title-system': 'Explore Workflow Template Examples',
   'templates.title-system.tooltip': 'Pick a template from our Template Library',
   'templates.task-require-completion-by-all': 'Require completion by all',
+  'templates.hierarchical-approval-toggle': 'Hierarchical approval routing',
+  'templates.hierarchical-approval-depth': 'Max chain depth (leave empty for unlimited)',
+  'templates.approval-chain-summary': 'Approval chain summary',
   'templates.assign-perfomers-to-the-following-steps': 'Please assign users to the following steps:',
   'template.no-run-allowers': 'Please add at least one template owner',
   'template.no-tasks': 'Please add at least one task',

@@ -11,6 +11,8 @@ import { getUserFullName } from '../../../utils/users';
 import { getDate } from '../../../utils/strings';
 import { Dropdown, Header, TDropdownOption } from '../../UI';
 import { AddUserIcon, MoreIcon, RemoveUserIcon, TrashIcon } from '../../icons';
+import { SelectManagerModal } from '../SelectManagerModal';
+import { SelectReportsModal } from '../SelectReportsModal';
 
 import styles from './Users.css';
 
@@ -20,6 +22,8 @@ export interface ITeamUserProps {
   isSubscribed?: boolean;
   resendInvite(): Promise<void>;
   handleToggleAdmin(user: TUserListItem): () => Promise<void>;
+  handleChangeUserManager(userId: number, managerId: number | null): void;
+  handleChangeUserReports(userId: number, reportIds: number[]): void;
   openModal(): void;
 }
 
@@ -31,10 +35,14 @@ export function TeamUser(props: ITeamUserProps) {
     resendInvite,
     isCurrentUser,
     isSubscribed,
+    handleChangeUserManager,
+    handleChangeUserReports,
     openModal,
   } = props;
 
   const { formatMessage } = useIntl();
+  const [isManagerModalOpen, setIsManagerModalOpen] = React.useState(false);
+  const [isReportsModalOpen, setIsReportsModalOpen] = React.useState(false);
   const isUserActive = status === EUserStatus.Active;
 
   const resendInviteDebounced = React.useCallback(debounce(700, resendInvite), [resendInvite]);
@@ -45,6 +53,16 @@ export function TeamUser(props: ITeamUserProps) {
       onClick: resendInviteDebounced,
       isHidden: isUserActive,
       Icon: AddUserIcon,
+    },
+    {
+      label: 'Manager',
+      onClick: () => setIsManagerModalOpen(true),
+      isHidden: !isUserActive,
+    },
+    {
+      label: 'Reports',
+      onClick: () => setIsReportsModalOpen(true),
+      isHidden: !isUserActive,
     },
     {
       label: isUserActive
@@ -144,12 +162,38 @@ export function TeamUser(props: ITeamUserProps) {
   };
 
   return (
-    <div className={styles['card-wrapper']}>
-      <div className={classnames(styles['card'])}>
-        <Avatar user={user} containerClassName={styles['card-avatar']} size="lg" />
-        {renderDetails()}
-        {renderControllers()}
+    <>
+      <div className={styles['card-wrapper']}>
+        <div className={classnames(styles['card'])}>
+          <Avatar user={user} containerClassName={styles['card-avatar']} size="lg" />
+          {renderDetails()}
+          {renderControllers()}
+        </div>
       </div>
-    </div>
+      {isManagerModalOpen && (
+        <SelectManagerModal
+          isOpen={isManagerModalOpen}
+          onClose={() => setIsManagerModalOpen(false)}
+          onConfirm={(managerId) => {
+            handleChangeUserManager(user.id, managerId);
+            setIsManagerModalOpen(false);
+          }}
+          currentUserId={user.id}
+          currentManagerId={user.managerId || null}
+        />
+      )}
+      {isReportsModalOpen && (
+        <SelectReportsModal
+          isOpen={isReportsModalOpen}
+          onClose={() => setIsReportsModalOpen(false)}
+          onConfirm={(reportIds) => {
+            handleChangeUserReports(user.id, reportIds);
+            setIsReportsModalOpen(false);
+          }}
+          currentUserId={user.id}
+          currentReportIds={user.reportIds || []}
+        />
+      )}
+    </>
   );
 }
