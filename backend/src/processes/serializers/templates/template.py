@@ -65,6 +65,9 @@ from src.processes.serializers.templates.task import (
     TaskTemplateSerializer,
     TemplateTaskOnlyFieldsSerializer,
 )
+from src.processes.services.templates.fieldsets.fieldset import (
+    FieldSetTemplateService,
+)
 from src.processes.services.templates.integrations import (
     TemplateIntegrationsService,
 )
@@ -630,6 +633,9 @@ class TemplateSerializer(
                 'template': instance,
             },
         )
+        fieldsets_links_raw = validated_data['kickoff'].pop(
+            'fieldsettemplatekickoff_set', None,
+        ) or []
         self.create_or_update_related_one(
             slz_cls=KickoffSerializer,
             data=validated_data['kickoff'],
@@ -642,9 +648,35 @@ class TemplateSerializer(
                 'template': instance,
             },
         )
+        if fieldsets_links_raw:
+            fieldsets_links = [
+                {
+                    'api_name': link['fieldset']['api_name'],
+                    'order': link['order'],
+                }
+                for link in fieldsets_links_raw
+            ]
+            FieldSetTemplateService.create_or_update_kickoff_links(
+                kickoff=instance.kickoff_instance,
+                template=instance,
+                fieldsets_links=fieldsets_links,
+            )
         parents_by_tasks = get_tasks_parents(validated_data['tasks'])
         tasks_api_names = set(parents_by_tasks.keys())
         ancestors_by_tasks = get_tasks_ancestors(parents_by_tasks)
+        tasks_fieldsets = {}
+        for task_data in validated_data['tasks']:
+            fieldsets_raw = task_data.pop(
+                'fieldsettemplatetasktemplate_set', None,
+            ) or []
+            if fieldsets_raw:
+                tasks_fieldsets[task_data['api_name']] = [
+                    {
+                        'api_name': link['fieldset']['api_name'],
+                        'order': link['order'],
+                    }
+                    for link in fieldsets_raw
+                ]
         self.create_or_update_related(
             data=validated_data['tasks'],
             ancestors_data={
@@ -658,6 +690,7 @@ class TemplateSerializer(
                 'tasks_api_names': tasks_api_names,
                 'parents_by_tasks': parents_by_tasks,
                 'ancestors_by_tasks': ancestors_by_tasks,
+                'tasks_fieldsets': tasks_fieldsets,
             },
         )
 
@@ -701,6 +734,9 @@ class TemplateSerializer(
                 'template': instance,
             },
         )
+        fieldsets_links_raw = validated_data['kickoff'].pop(
+            'fieldsettemplatekickoff_set', None,
+        ) or []
         self.create_or_update_related_one(
             slz_cls=KickoffSerializer,
             data=validated_data['kickoff'],
@@ -713,9 +749,35 @@ class TemplateSerializer(
                 'template': instance,
             },
         )
+        if fieldsets_links_raw:
+            fieldsets_links = [
+                {
+                    'api_name': link['fieldset']['api_name'],
+                    'order': link['order'],
+                }
+                for link in fieldsets_links_raw
+            ]
+            FieldSetTemplateService.create_or_update_kickoff_links(
+                kickoff=instance.kickoff_instance,
+                template=instance,
+                fieldsets_links=fieldsets_links,
+            )
         parents_by_tasks = get_tasks_parents(validated_data['tasks'])
         tasks_api_names = set(parents_by_tasks.keys())
         ancestors_by_tasks = get_tasks_ancestors(parents_by_tasks)
+        tasks_fieldsets = {}
+        for task_data in validated_data['tasks']:
+            fieldsets_raw = task_data.pop(
+                'fieldsettemplatetasktemplate_set', None,
+            ) or []
+            if fieldsets_raw:
+                tasks_fieldsets[task_data['api_name']] = [
+                    {
+                        'api_name': link['fieldset']['api_name'],
+                        'order': link['order'],
+                    }
+                    for link in fieldsets_raw
+                ]
         self.create_or_update_related(
             data=validated_data['tasks'],
             ancestors_data={
@@ -729,6 +791,7 @@ class TemplateSerializer(
                 'tasks_api_names': tasks_api_names,
                 'parents_by_tasks': parents_by_tasks,
                 'ancestors_by_tasks': ancestors_by_tasks,
+                'tasks_fieldsets': tasks_fieldsets,
             },
         )
 

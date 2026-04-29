@@ -4,7 +4,11 @@ from django.db import transaction
 
 from src.generics.base.service import BaseModelService
 from src.processes.enums import LabelPosition, FieldSetLayout
-from src.processes.models.templates.fieldset import FieldsetTemplate
+from src.processes.models.templates.fieldset import FieldsetTemplate, \
+    FieldsetTemplateKickoff, FieldsetTemplateTaskTemplate
+from src.processes.models.templates.kickoff import Kickoff
+from src.processes.models.templates.template import Template
+from src.processes.models.templates.task import TaskTemplate
 from src.processes.services.exceptions import (
     FieldsetTemplateInUseException,
 )
@@ -49,6 +53,69 @@ class FieldSetTemplateService(BaseModelService):
         if rules:
             self.create_rules(rules_data=rules)
 
+    def _create_fields(
+        self,
+        fields_data: List[Dict],
+    ):
+        for field_data in fields_data:
+            service = FieldTemplateService(
+                user=self.user,
+                is_superuser=self.is_superuser,
+                auth_type=self.auth_type,
+            )
+            service.create(
+                fieldset_id=self.instance.id,
+                template_id=self.instance.template_id,
+                **field_data,
+            )
+
+    def _update_fields(
+        self,
+        fields_data: List[Dict],
+    ):
+        """ All fieldset fields will be updated """
+
+        existing_fields = {
+            field.api_name: field
+            for field in self.instance.fields.all()
+        }
+        fields_api_names = set()
+        for field_data in fields_data:
+            field_api_name = field_data.pop('api_name', None)
+            if field_api_name and field_api_name in existing_fields:
+                service = FieldTemplateService(
+                    user=self.user,
+                    is_superuser=self.is_superuser,
+                    auth_type=self.auth_type,
+                    instance=existing_fields[field_api_name],
+                )
+                service.partial_update(force_save=True, **field_data)
+                fields_api_names.add(field_api_name)
+            else:
+                service = FieldTemplateService(
+                    user=self.user,
+                    is_superuser=self.is_superuser,
+                    auth_type=self.auth_type,
+                )
+                field = service.create(
+                    fieldset_id=self.instance.id,
+                    template_id=self.instance.template_id,
+                    **field_data,
+                )
+                fields_api_names.add(field.api_name)
+
+        self.instance.fields.exclude(api_name__in=fields_api_names).delete()
+
+    def _validate_rules(self):
+        for rule in self.instance.rules.all():
+            service = FieldsetTemplateRuleService(
+                user=self.user,
+                is_superuser=self.is_superuser,
+                auth_type=self.auth_type,
+                instance=rule,
+            )
+            service._validate()
+
     def partial_update(
         self,
         **update_kwargs,
@@ -69,16 +136,6 @@ class FieldSetTemplateService(BaseModelService):
                 self.update_rules(rules_data=rules_data)
             self._validate_rules()
             return self.instance
-
-    def _validate_rules(self):
-        for rule in self.instance.rules.all():
-            service = FieldsetTemplateRuleService(
-                user=self.user,
-                is_superuser=self.is_superuser,
-                auth_type=self.auth_type,
-                instance=rule,
-            )
-            service._validate()
 
     def delete(self) -> None:
         if self.instance.kickoffs.exists() or self.instance.tasks.exists():
@@ -133,55 +190,56 @@ class FieldSetTemplateService(BaseModelService):
 
         self.instance.rules.exclude(id__in=rules_ids).delete()
 
-    def _create_fields(
-        self,
-        fields_data: List[Dict],
+    @classmethod
+    def create_or_update_kickoff_links(
+        cls,
+        fieldsets_links: List[dict],
+        template: Template,
+        kickoff: Optional[Kickoff] = None,
     ):
-        for field_data in fields_data:
-            service = FieldTemplateService(
-                user=self.user,
-                is_superuser=self.is_superuser,
-                auth_type=self.auth_type,
+        api_names = {e['api_name'] for e in fieldsets_links}
+        for fieldset_link in fieldsets_links:
+            fieldset_template = FieldsetTemplate.objects.get(
+                template=template,
+                api_name=fieldset_link['api_name'],
             )
-            service.create(
-                fieldset_id=self.instance.id,
-                template_id=self.instance.template_id,
-                **field_data,
+            FieldsetTemplateKickoff.objects.update_or_create(
+                fieldset=fieldset_template,
+                kickoff=kickoff,
+                defaults={
+                    'order': fieldset_link['order'],
+                },
             )
+        (
+            FieldsetTemplateKickoff.objects
+            .filter(kickoff=kickoff)
+            .exclude(fieldset__api_name__in=api_names)
+            .delete()
+        )
 
-    def _update_fields(
-        self,
-        fields_data: List[Dict],
+    @classmethod
+    def create_or_update_tasks_links(
+        cls,
+        fieldsets_links: List[dict],
+        template: Template,
+        task: Optional[TaskTemplate] = None,
     ):
-        """ All fieldset fields will be updated """
-
-        existing_fields = {
-            field.api_name: field
-            for field in self.instance.fields.all()
-        }
-        fields_api_names = set()
-        for field_data in fields_data:
-            field_api_name = field_data.pop('api_name', None)
-            if field_api_name and field_api_name in existing_fields:
-                service = FieldTemplateService(
-                    user=self.user,
-                    is_superuser=self.is_superuser,
-                    auth_type=self.auth_type,
-                    instance=existing_fields[field_api_name],
-                )
-                service.partial_update(force_save=True, **field_data)
-                fields_api_names.add(field_api_name)
-            else:
-                service = FieldTemplateService(
-                    user=self.user,
-                    is_superuser=self.is_superuser,
-                    auth_type=self.auth_type,
-                )
-                field = service.create(
-                    fieldset_id=self.instance.id,
-                    template_id=self.instance.template_id,
-                    **field_data,
-                )
-                fields_api_names.add(field.api_name)
-
-        self.instance.fields.exclude(api_name__in=fields_api_names).delete()
+        api_names = {e['api_name'] for e in fieldsets_links}
+        for fieldset_link in fieldsets_links:
+            fieldset_template = FieldsetTemplate.objects.get(
+                template=template,
+                api_name=fieldset_link['api_name'],
+            )
+            FieldsetTemplateTaskTemplate.objects.update_or_create(
+                fieldset=fieldset_template,
+                task=task,
+                defaults={
+                    'order': fieldset_link['order'],
+                },
+            )
+        (
+            FieldsetTemplateTaskTemplate.objects
+            .filter(task=task)
+            .exclude(fieldset__api_name__in=api_names)
+            .delete()
+        )
