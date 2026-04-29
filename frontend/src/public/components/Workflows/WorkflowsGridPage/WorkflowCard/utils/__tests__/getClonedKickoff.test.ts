@@ -207,6 +207,7 @@ const templateKickoffMock: IKickoff = {
       groupId: null,
     },
   ],
+  fieldsets: [],
 };
 
 const expectedKickoff = {
@@ -304,6 +305,7 @@ const expectedKickoff = {
       groupId: null,
     },
   ],
+  fieldsets: [],
 };
 
 describe('getClonedKickoff.', () => {

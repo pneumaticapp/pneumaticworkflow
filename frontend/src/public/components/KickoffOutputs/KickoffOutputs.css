@@ -81,3 +81,26 @@
     color: var(--pneumatic-color-link-hover);
   }
 }
+
+.fieldset-output-group {
+  margin-top: 8px;
+  padding-left: 12px;
+  border-left: 3px solid var(--color-primary, mediumslateblue);
+}
+
+.fieldset-output-group__title {
+  margin: 0 0 4px;
+  font-family: Nunito, sans-serif;
+  font-size: 14px;
+  font-weight: bold;
+  line-height: 20px;
+  color: #262522;
+}
+
+.fieldset-output-group__description {
+  margin: 0 0 8px;
+  font-family: Nunito, sans-serif;
+  font-size: 13px;
+  line-height: 18px;
+  color: #79756d;
+}

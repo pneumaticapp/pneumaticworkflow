@@ -58,6 +58,7 @@ def test_send_task_completed_webhook__ok(api_client, mocker):
             'contains_comments': False,
             'require_completion_by_all': False,
             'output': [],
+            'fieldsets': [],
             'delay': None,
             'date_started_tsp': task_1.date_started.timestamp(),
             'date_completed_tsp': task_1.date_completed.timestamp(),
@@ -108,6 +109,7 @@ def test_send_task_completed_webhook__ok(api_client, mocker):
                 'kickoff': {
                     'id': workflow.kickoff_instance.id,
                     'output': [],
+                    'fieldsets': [],
                 },
                 'tasks': [
                     OrderedDict([
@@ -226,6 +228,7 @@ def test_send_task_completed_webhook__sub_workflows__ok(api_client, mocker):
             'contains_comments': False,
             'require_completion_by_all': False,
             'output': [],
+            'fieldsets': [],
             'delay': None,
             'date_started_tsp': task_1.date_started.timestamp(),
             'date_completed_tsp': task_1.date_completed.timestamp(),
@@ -343,6 +346,7 @@ def test_send_task_completed_webhook__sub_workflows__ok(api_client, mocker):
                 'kickoff': {
                     'id': workflow.kickoff_instance.id,
                     'output': [],
+                    'fieldsets': [],
                 },
                 'tasks': [
                     OrderedDict([
@@ -446,6 +450,7 @@ def test_send_task_returned_webhook__ok(api_client, mocker):
             'contains_comments': False,
             'require_completion_by_all': False,
             'output': [],
+            'fieldsets': [],
             'delay': None,
             'date_started_tsp': None,
             'date_completed_tsp': None,
@@ -499,6 +504,7 @@ def test_send_task_returned_webhook__ok(api_client, mocker):
                 'kickoff': {
                     'id': workflow.kickoff_instance.id,
                     'output': [],
+                    'fieldsets': [],
                 },
                 'tasks': [
                     OrderedDict([
@@ -605,6 +611,7 @@ def test_send_workflow_started_webhook__ok(api_client, mocker):
             'kickoff': {
                 'id': workflow.kickoff_instance.id,
                 'output': [],
+                'fieldsets': [],
             },
             'tasks': [
                 OrderedDict([
@@ -708,6 +715,7 @@ def test_send_workflow_completed_webhook__ok(api_client, mocker):
             'kickoff': {
                 'id': workflow.kickoff_instance.id,
                 'output': [],
+                'fieldsets': [],
             },
             'tasks': [
                 OrderedDict([

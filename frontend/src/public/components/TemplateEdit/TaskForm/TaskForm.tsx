@@ -7,7 +7,7 @@ import { scrollToElement } from '../../../utils/helpers';
 import { TUserListItem } from '../../../types/user';
 import { IKickoff, ITemplateTask } from '../../../types/template';
 import { TTaskVariable, TTaskFormPart, ETaskFormParts } from '../types';
-import { OutputFormIntl } from '../OutputForm';
+import { OutputFormIntl } from '../OutputForm/OutputForm';
 import { ShowMore } from '../../UI/ShowMore';
 import { TaskPerformers } from './TaskPerformers';
 import { CheckIfConditions, ICondition, removeDeletedTasks, StartAfterCondition } from './Conditions';
@@ -16,7 +16,8 @@ import { TPatchTaskPayload } from '../../../redux/actions';
 
 import { ReturnTo } from './ReturnTo';
 import { DueDate } from './DueDate';
-import { getSingleLineVariables, getSystemVariables } from './utils/getTaskVariables';
+import { useTemplateEditFieldsets } from '../TemplateEditFieldsetsContext';
+import { getSingleLineVariables, getSystemVariables, getTaskVariables, getVariables } from './utils/getTaskVariables';
 
 import styles from '../TemplateEdit.css';
 
@@ -29,8 +30,6 @@ import { TaskRenderReturnInfo } from '../TaskRenderReturnInfo';
 import { StepName } from '../../StepName';
 
 export interface ITaskFormProps {
-  listVariables: TTaskVariable[];
-  templateVariables: TTaskVariable[];
   task: ITemplateTask;
   users: TUserListItem[];
   isSubscribed: boolean;
@@ -43,8 +42,6 @@ export interface ITaskFormProps {
 }
 
 export function TaskForm({
-  listVariables,
-  templateVariables,
   task,
   users,
   isSubscribed,
@@ -58,8 +55,17 @@ export function TaskForm({
 }: ITaskFormProps & { templateId: number | undefined }) {
   if (!task) return null;
   const { formatMessage } = useIntl();
+  const { fieldsetsById, isLoading: fieldsetsCatalogLoading } = useTemplateEditFieldsets();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const taskName = task.name || '';
+  const listVariables = useMemo(
+    () => getTaskVariables(kickoff, tasks, task, templateId, fieldsetsById),
+    [fieldsetsById, kickoff, task, tasks, templateId],
+  );
+  const templateVariables = useMemo(
+    () => getVariables({ kickoff, tasks, templateId, fieldsetsById }),
+    [fieldsetsById, kickoff, tasks, templateId],
+  );
   const listSystemVariables = useMemo(() => [
     ...getSystemVariables(),
     ...listVariables,
@@ -68,6 +74,7 @@ export function TaskForm({
     [ETaskFormParts.AssignPerformers]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.DueIn]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.Fields]: useRef<HTMLDivElement>(null),
+    [ETaskFormParts.Fieldsets]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.StartsAfter]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.CheckIf]: useRef<HTMLDivElement>(null),
     [ETaskFormParts.ReturnTo]: useRef<HTMLDivElement>(null),
@@ -102,7 +109,9 @@ export function TaskForm({
   }, [startingOrder, task.conditions, onEdit]);
 
   useLayoutEffect(() => {
-    const scrollTo = (scrollTarget && taskFormPartsRefs[scrollTarget]?.current) || wrapperRef.current;
+    const scrollKey =
+      scrollTarget === ETaskFormParts.Fieldsets ? ETaskFormParts.Fields : scrollTarget;
+    const scrollTo = (scrollKey && taskFormPartsRefs[scrollKey]?.current) || wrapperRef.current;
 
     if (scrollTo) scrollToElement(scrollTo);
   }, []);
@@ -165,14 +174,17 @@ export function TaskForm({
       title: 'tasks.task-outputs-create-help',
       component: (
         <OutputFormIntl
-          fields={task.fields}
-          onOutputChange={handleTaskFieldChange('fields')}
-          isDisabled={false}
-          show={ETaskFormParts.Fields === scrollTarget}
+          mode="taskMerged"
+          task={task}
+          fieldsetsById={fieldsetsById}
+          fieldsetsCatalogLoading={fieldsetsCatalogLoading}
+          templateId={templateId}
           accountId={accountId}
+          show={ETaskFormParts.Fields === scrollTarget || ETaskFormParts.Fieldsets === scrollTarget}
+          patchTask={patchTask}
         />
       ),
-      widget: createWidget(TaskRenderExtraFieldsInfo, { task }),
+      widget: createWidget(TaskRenderExtraFieldsInfo, { task })
     },
     {
       formPartId: ETaskFormParts.StartsAfter,

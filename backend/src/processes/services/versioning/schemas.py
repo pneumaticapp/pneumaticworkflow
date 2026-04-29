@@ -9,6 +9,12 @@ from src.processes.models.templates.conditions import (
     PredicateTemplate,
     RuleTemplate,
 )
+from src.processes.models.templates.fieldset import (
+    FieldsetTemplate,
+    FieldsetTemplateKickoff,
+    FieldsetTemplateRule,
+    FieldsetTemplateTaskTemplate,
+)
 from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
@@ -32,6 +38,17 @@ class SelectionSchemaV1(serializers.ModelSerializer):
         )
 
 
+class FieldsetTemplateRuleSchemaV1(serializers.ModelSerializer):
+
+    class Meta:
+        model = FieldsetTemplateRule
+        fields = (
+            'api_name',
+            'type',
+            'value',
+        )
+
+
 class FieldSchemaV1(serializers.ModelSerializer):
 
     class Meta:
@@ -48,12 +65,71 @@ class FieldSchemaV1(serializers.ModelSerializer):
             'default',
             'selections',
             'dataset_id',
+            'rules',
         )
 
     selections = SelectionSchemaV1(
         many=True,
         allow_null=True,
         allow_empty=True,
+        required=False,
+    )
+    rules = FieldsetTemplateRuleSchemaV1(
+        many=True,
+        allow_null=True,
+        allow_empty=True,
+    )
+
+
+class FieldsetTemplateTaskTemplateSchemaV1(serializers.ModelSerializer):
+
+    class Meta:
+        model = FieldsetTemplateTaskTemplate
+        fields = (
+            'task_api_name',
+            'order',
+        )
+
+    task_api_name = serializers.CharField(source='task.api_name')
+
+
+class FieldsetTemplateKickoffSchemaV1(serializers.ModelSerializer):
+
+    class Meta:
+        model = FieldsetTemplateKickoff
+        fields = ('order',)
+
+
+class FieldSetSchemaV1(serializers.ModelSerializer):
+
+    class Meta:
+        model = FieldsetTemplate
+        fields = (
+            'api_name',
+            'name',
+            'description',
+            'label_position',
+            'layout',
+            'fields',
+            'rules',
+            'task_links',
+            'kickoff_links',
+        )
+
+    fields = FieldSchemaV1(many=True, allow_null=True, allow_empty=True)
+    rules = FieldsetTemplateRuleSchemaV1(
+        many=True,
+        allow_null=True,
+        allow_empty=True,
+    )
+    task_links = FieldsetTemplateTaskTemplateSchemaV1(
+        source='fieldsettemplatetasktemplate_set',
+        many=True,
+        required=False,
+    )
+    kickoff_links = FieldsetTemplateKickoffSchemaV1(
+        source='fieldsettemplatekickoff_set',
+        many=True,
         required=False,
     )
 
@@ -64,9 +140,16 @@ class KickoffSchemaV1(serializers.ModelSerializer):
         model = Kickoff
         fields = (
             'fields',
+            'fieldsets',
         )
 
     fields = FieldSchemaV1(many=True, allow_null=True, allow_empty=True)
+    fieldsets = FieldSetSchemaV1(
+        many=True,
+        allow_null=True,
+        allow_empty=True,
+        required=False,
+    )
 
 
 class TemplateOwnerSchemaV1(serializers.ModelSerializer):
@@ -192,6 +275,7 @@ class TaskSchemaV1(serializers.ModelSerializer):
             'number',
             'require_completion_by_all',
             'fields',
+            'fieldsets',
             'delay',
             'conditions',
             'raw_performers',
@@ -202,6 +286,12 @@ class TaskSchemaV1(serializers.ModelSerializer):
         )
 
     fields = FieldSchemaV1(many=True, allow_null=True, allow_empty=True)
+    fieldsets = FieldSetSchemaV1(
+        many=True,
+        allow_null=True,
+        allow_empty=True,
+        required=False,
+    )
     conditions = ConditionSchemaV1(
         many=True,
         allow_null=True,

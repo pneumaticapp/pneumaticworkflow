@@ -21,7 +21,7 @@ import {
   TPatchTemplatePayload,
   discardTemplateChanges,
 } from '../../../redux/actions';
-import { getRunnableWorkflow, loadDatasetsMap } from '../utils/getRunnableWorkflow';
+import { getRunnableWorkflow, loadDatasetsMap, loadFieldsetsData } from '../utils/getRunnableWorkflow';
 import { ETemplateStatus } from '../../../types/redux';
 import { IRunWorkflow } from '../../WorkflowEditPopup/types';
 import { WarningPopup } from '../../UI/WarningPopup';
@@ -74,6 +74,7 @@ export function TemplateControlls({
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isTemplateActivating, setIsTemplateActivating] = useState(false);
   const [isTemplateDeleted, setIsTemplateDeleted] = useState(false);
+  const [isDiscarding, setIsDiscarding] = useState(false);
 
   useEffect(() => {
     // sets warning only when integrations are initially loaded
@@ -102,9 +103,27 @@ export function TemplateControlls({
 
   const isSavedTemplate = React.useMemo(() => Boolean(templateId), [templateId]);
 
+  const handleFieldsetsClick = () => {
+    if (templateId) {
+      history.push(ERoutes.TemplateFieldsets.replace(':templateId', String(templateId)));
+      return;
+    }
+
+    patchTemplate({
+      changedFields: {},
+      onSuccess: () => {
+        const match = window.location.pathname.match(/\/templates\/edit\/(\d+)/);
+        if (match) {
+          history.push(ERoutes.TemplateFieldsets.replace(':templateId', match[1]));
+        }
+      },
+    });
+  };
+
   const handleRunProcess = async () => {
-    const datasetsMap = await loadDatasetsMap(template.kickoff);
-    const runnableWorkflow = getRunnableWorkflow(template, datasetsMap);
+    const loadedFieldsets = await loadFieldsetsData(template.kickoff);
+    const datasetsMap = await loadDatasetsMap(template.kickoff, loadedFieldsets);
+    const runnableWorkflow = getRunnableWorkflow(template, datasetsMap, loadedFieldsets);
     if (runnableWorkflow) {
       openRunWorkflowModal(runnableWorkflow);
     }
@@ -181,7 +200,13 @@ export function TemplateControlls({
           handleChangeIsActive(true, path);
         }}
         onReject={(path) => {
-          history.push(path);
+          if (isDiscarding && path.includes('/fieldsets')) {
+            setIsDiscarding(false);
+            history.push(ERoutes.Templates);
+          } else {
+            setIsDiscarding(false);
+            history.push(path);
+          }
         }}
         shouldBlockNavigation={(location) => {
           return !checkSomeRouteMatchesLocation(location.pathname, [
@@ -212,7 +237,10 @@ export function TemplateControlls({
                 <button
                   type="button"
                   className={classnames('cancel-button', styles['keep-draf-button'])}
-                  onClick={() => dispatch(discardTemplateChanges({ templateId, onSuccess: reject }))}
+                  onClick={() => {
+                    setIsDiscarding(true);
+                    dispatch(discardTemplateChanges({ templateId, onSuccess: reject }));
+                  }}
                 >
                   {formatMessage({ id: 'templates.discard-changes' })}
                 </button>
@@ -266,6 +294,15 @@ export function TemplateControlls({
     <>
       {renderDeleteTemplateModal()}
       {templateId && renderLeavingGuard()}
+      <div className={styles['settings-block']}>
+        <button
+          type="button"
+          onClick={handleFieldsetsClick}
+          className={styles['switch-label']}
+        >
+          {formatMessage({ id: 'template.more-show-fieldsets' })}
+        </button>
+      </div>
 
       <div className={styles['settings-block']}>
         <ShowMore label={formatMessage({ id: 'template.owners' })} isInitiallyVisible={isCreateTemplate()}>
@@ -323,6 +360,7 @@ export function TemplateControlls({
                 <ActivityIcon className={styles['more-setting__icon']} />
                 <p className={styles['more-setting__text']}>{formatMessage({ id: 'template.more-show-activity' })}</p>
               </Link>
+
               <button type="button" onClick={() => cloneTemplate({ templateId })} className={styles['more-setting']}>
                 <UnionIcon className={styles['more-setting__icon']} />
                 <p className={styles['more-setting__text']}>{formatMessage({ id: 'template.more-clone-template' })}</p>
@@ -387,6 +425,7 @@ export function TemplateControlls({
           />
         </div>
       </div>
+
 
       {showDraftWarning && (
         <div className={styles['external-links-warning']}>
