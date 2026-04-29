@@ -34,13 +34,11 @@ def test_list_fieldsets__all_data__ok(api_client):
         user=user,
         tasks_count=1,
     )
-    kickoff = template.kickoff_instance
     rule_type = FieldSetRuleType.SUM_EQUAL
     rule_value = '10'
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='Kickoff Fieldset',
         rule_type=rule_type,
         rule_value=rule_value,
@@ -65,7 +63,7 @@ def test_list_fieldsets__all_data__ok(api_client):
     assert item_1['description'] == ''
     assert item_1['layout'] == fieldset.layout
     assert item_1['label_position'] == fieldset.label_position
-    assert item_1['task'] is None
+    assert item_1['tasks'] == []
 
     assert len(item_1['rules']) == 1
     rules_data = item_1['rules']
@@ -86,6 +84,61 @@ def test_list_fieldsets__all_data__ok(api_client):
     assert 'selections' not in fields_data[0]
 
 
+def test_list_fieldsets__tasks_and_kickoff_fieldset__ok(api_client):
+
+    """List fieldsets for existing template"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=2,
+    )
+    kickoff = template.kickoff_instance
+    template_task_1 = template.tasks.get(number=1)
+    template_task_2 = template.tasks.get(number=2)
+    rule_type = FieldSetRuleType.SUM_EQUAL
+    rule_value = '10'
+    fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        name='Kickoff Fieldset',
+        task=template_task_1,
+        kickoff=kickoff,
+        rule_type=rule_type,
+        rule_value=rule_value,
+    )
+    fieldset.tasks.add(template_task_2)
+    fieldset.fields.get()
+    fieldset.rules.get()
+
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(
+        f'/templates/{template.id}/fieldsets',
+    )
+
+    # assert
+    assert response.status_code == 200
+    data = response.data[0]
+    assert data['id'] == fieldset.id
+    assert data['kickoff'] == kickoff.id
+    assert data['tasks'] == [
+        {
+            'number': template_task_1.number,
+            'name': template_task_1.name,
+            'api_name': template_task_1.api_name,
+        },
+        {
+            'number': template_task_2.number,
+            'name': template_task_2.name,
+            'api_name': template_task_2.api_name,
+        },
+    ]
+
+
 def test_list_fieldsets__pagination__ok(api_client):
     """List fieldsets for existing template"""
 
@@ -96,21 +149,18 @@ def test_list_fieldsets__pagination__ok(api_client):
         user=user,
         tasks_count=1,
     )
-    template_task = template.tasks.first()
+    template.tasks.first()
     fieldset_1 = create_test_fieldset_template(
         account=account,
         template=template,
-        task=template_task,
     )
     fieldset_2 = create_test_fieldset_template(
         account=account,
         template=template,
-        task=template_task,
     )
     create_test_fieldset_template(
         account=account,
         template=template,
-        task=template_task,
     )
 
     api_client.token_authenticate(user=user)
@@ -128,11 +178,9 @@ def test_list_fieldsets__pagination__ok(api_client):
 
     item_1 = response.data['results'][0]
     assert item_1['id'] == fieldset_2.id
-    assert item_1['task'] == template_task.api_name
 
     item_2 = response.data['results'][1]
     assert item_2['id'] == fieldset_1.id
-    assert item_2['task'] == template_task.api_name
 
 
 def test_list_fieldsets__different_accounts__ok(api_client):
@@ -148,7 +196,6 @@ def test_list_fieldsets__different_accounts__ok(api_client):
     fieldset_1 = create_test_fieldset_template(
         account=account_1,
         template=template_1,
-        kickoff=template_1.kickoff_instance,
         name='Account 1 Fieldset',
     )
 
@@ -164,7 +211,6 @@ def test_list_fieldsets__different_accounts__ok(api_client):
     create_test_fieldset_template(
         account=account_2,
         template=template_2,
-        kickoff=template_2.kickoff_instance,
     )
 
     api_client.token_authenticate(user=user_1)
@@ -193,7 +239,6 @@ def test_list_fieldsets__different_templates__ok(api_client):
     fieldset_1 = create_test_fieldset_template(
         account=account,
         template=template_1,
-        kickoff=template_1.kickoff_instance,
     )
     template_2 = create_test_template(
         user=user,
@@ -202,7 +247,6 @@ def test_list_fieldsets__different_templates__ok(api_client):
     create_test_fieldset_template(
         account=account,
         template=template_2,
-        kickoff=template_2.kickoff_instance,
     )
 
     api_client.token_authenticate(user=user)
@@ -228,13 +272,11 @@ def test_list_fieldsets__rule_with_fields__ok(api_client):
         user=user,
         tasks_count=1,
     )
-    kickoff = template.kickoff_instance
     rule_type = FieldSetRuleType.SUM_EQUAL
     rule_value = '10'
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='Kickoff Fieldset',
         rule_type=rule_type,
         rule_value=rule_value,
@@ -424,12 +466,10 @@ def test_list_fieldsets__no_ordering__ok(api_client):
         user=user,
         tasks_count=1,
     )
-    kickoff = template.kickoff_instance
     now = timezone.now()
     fieldset_1 = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='Oldest',
     )
     FieldsetTemplate.objects.filter(id=fieldset_1.id).update(
@@ -438,7 +478,6 @@ def test_list_fieldsets__no_ordering__ok(api_client):
     fieldset_2 = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='Middle',
     )
     FieldsetTemplate.objects.filter(id=fieldset_2.id).update(
@@ -447,7 +486,6 @@ def test_list_fieldsets__no_ordering__ok(api_client):
     fieldset_3 = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='Newest',
     )
     FieldsetTemplate.objects.filter(id=fieldset_3.id).update(
@@ -482,23 +520,19 @@ def test_list_fieldsets__ordering_name_asc__ok(api_client):
         user=user,
         tasks_count=1,
     )
-    kickoff = template.kickoff_instance
     fieldset_1 = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='Alpha',
     )
     fieldset_2 = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='Beta',
     )
     fieldset_3 = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='Gamma',
     )
     api_client.token_authenticate(user=user)
@@ -534,23 +568,19 @@ def test_list_fieldsets__ordering_name_desc__ok(api_client):
         user=user,
         tasks_count=1,
     )
-    kickoff = template.kickoff_instance
     fieldset_1 = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='Alpha',
     )
     fieldset_2 = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='Beta',
     )
     fieldset_3 = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='Gamma',
     )
     api_client.token_authenticate(user=user)
@@ -586,12 +616,10 @@ def test_list_fieldsets__ordering_date_asc__ok(api_client):
         user=user,
         tasks_count=1,
     )
-    kickoff = template.kickoff_instance
     now = timezone.now()
     fieldset_1 = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='Oldest',
     )
     FieldsetTemplate.objects.filter(id=fieldset_1.id).update(
@@ -600,7 +628,6 @@ def test_list_fieldsets__ordering_date_asc__ok(api_client):
     fieldset_2 = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='Middle',
     )
     FieldsetTemplate.objects.filter(id=fieldset_2.id).update(
@@ -609,7 +636,6 @@ def test_list_fieldsets__ordering_date_asc__ok(api_client):
     fieldset_3 = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='Newest',
     )
     FieldsetTemplate.objects.filter(id=fieldset_3.id).update(
@@ -645,12 +671,10 @@ def test_list_fieldsets__ordering_date_desc__ok(api_client):
         user=user,
         tasks_count=1,
     )
-    kickoff = template.kickoff_instance
     now = timezone.now()
     fieldset_1 = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='Oldest',
     )
     FieldsetTemplate.objects.filter(id=fieldset_1.id).update(
@@ -659,7 +683,6 @@ def test_list_fieldsets__ordering_date_desc__ok(api_client):
     fieldset_2 = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='Middle',
     )
     FieldsetTemplate.objects.filter(id=fieldset_2.id).update(
@@ -668,7 +691,6 @@ def test_list_fieldsets__ordering_date_desc__ok(api_client):
     fieldset_3 = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='Newest',
     )
     FieldsetTemplate.objects.filter(id=fieldset_3.id).update(
@@ -704,17 +726,14 @@ def test_list_fieldsets__no_pagination__ok(api_client):
         user=user,
         tasks_count=1,
     )
-    kickoff = template.kickoff_instance
     create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='First',
     )
     create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='Second',
     )
     api_client.token_authenticate(user=user)
@@ -743,11 +762,9 @@ def test_list_fieldsets__ordering_invalid__validation_error(
         user=user,
         tasks_count=1,
     )
-    kickoff = template.kickoff_instance
     create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='First',
     )
     api_client.token_authenticate(user=user)
@@ -776,12 +793,10 @@ def test_list_fieldsets__ordering_empty__ok(api_client):
         user=user,
         tasks_count=1,
     )
-    kickoff = template.kickoff_instance
     now = timezone.now()
     fieldset_1 = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='First',
     )
     FieldsetTemplate.objects.filter(id=fieldset_1.id).update(
@@ -790,7 +805,6 @@ def test_list_fieldsets__ordering_empty__ok(api_client):
     fieldset_2 = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='Second',
     )
     FieldsetTemplate.objects.filter(id=fieldset_2.id).update(
@@ -826,11 +840,9 @@ def test_list_fieldsets__soft_deleted__ok(api_client):
         user=user,
         tasks_count=1,
     )
-    kickoff = template.kickoff_instance
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=kickoff,
         name='Deleted Fieldset',
     )
     FieldsetTemplate.objects.filter(id=fieldset.id).update(

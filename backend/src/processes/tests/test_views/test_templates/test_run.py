@@ -20,6 +20,7 @@ from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
     DueDateRule,
+    FieldSetRuleType,
     FieldType,
     OwnerRole,
     OwnerType,
@@ -30,6 +31,7 @@ from src.processes.enums import (
     WorkflowStatus,
 )
 from src.processes.messages import workflow as messages
+from src.processes.messages.fieldset import MSG_FS_0002
 from src.processes.messages.workflow import (
     MSG_PW_0028,
     MSG_PW_0030,
@@ -39,6 +41,9 @@ from src.processes.models.templates.conditions import (
     ConditionTemplate,
     PredicateTemplate,
     RuleTemplate,
+)
+from src.processes.models.templates.fieldset import (
+    FieldsetTemplateKickoff,
 )
 from src.processes.models.templates.fields import (
     FieldTemplate,
@@ -67,17 +72,21 @@ from src.processes.services.workflows.workflow import (
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
+    create_test_dataset,
+    create_test_fieldset_template,
     create_test_group,
     create_test_guest,
+    create_test_not_admin,
     create_test_owner,
     create_test_template,
     create_test_user,
     create_test_workflow,
     create_wf_completed_webhook,
-    create_wf_created_webhook, create_test_not_admin, create_test_dataset,
+    create_wf_created_webhook,
 )
 from src.utils.dates import date_format
 from src.utils.validation import ErrorCode
+
 
 pytestmark = pytest.mark.django_db
 
@@ -5182,3 +5191,424 @@ def test_run__template_starter_not_admin__ok(mocker, api_client):
     # assert
     assert response.status_code == 200
     assert Workflow.objects.filter(id=response.data['id']).exists()
+
+
+def test_run__kickoff_with_one_fieldset__ok(mocker, api_client):
+
+    """ Kickoff with one fieldset creates FieldSet. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    fieldset_template = create_test_fieldset_template(
+        account=user.account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        name='Personal info',
+        order=0,
+    )
+    FieldsetTemplateKickoff.objects.filter(
+        fieldset=fieldset_template,
+    ).update(order=11)
+    field_template = fieldset_template.fields.first()
+    field_value = 'test value'
+    wf_run_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                field_template.api_name: field_value,
+            },
+        },
+    )
+
+    # assert
+    wf_run_mock.assert_called_once()
+    analytics_mock.assert_called_once()
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    kickoff_value = KickoffValue.objects.get(workflow=workflow)
+    assert kickoff_value.fieldsets.count() == 1
+    fieldset = kickoff_value.fieldsets.first()
+    assert fieldset.name == fieldset_template.name
+    assert fieldset.api_name == fieldset_template.api_name
+    fieldsets_data = response.data['kickoff']['fieldsets']
+    assert len(fieldsets_data) == 1
+    fieldset_data = fieldsets_data[0]
+    assert fieldset_data['id'] == fieldset.id
+    assert fieldset_data['api_name'] == fieldset_template.api_name
+    assert fieldset_data['name'] == fieldset_template.name
+    assert fieldset_data['description'] == fieldset_template.description
+    assert fieldset_data['order'] == 11
+    assert fieldset_data['label_position'] == fieldset_template.label_position
+    assert fieldset_data['layout'] == fieldset_template.layout
+
+    assert len(fieldset_data['fields']) == 1
+    field_data = fieldset_data['fields'][0]
+    assert field_data['id']
+    assert field_data['api_name'] == field_template.api_name
+    assert field_data['name'] == field_template.name
+    assert field_data['type'] == field_template.type
+    assert field_data['order'] == field_template.order
+    assert field_data['is_required'] == field_template.is_required
+    assert field_data['is_hidden'] == field_template.is_hidden
+    assert field_data['description'] == field_template.description
+    assert field_data['value'] == field_value
+    assert field_data['markdown_value'] == field_value
+    assert field_data['clear_value'] == field_value
+    assert field_data['user_id'] is None
+    assert field_data['group_id'] is None
+    assert field_data['selections'] == []
+    assert field_data['attachments'] == []
+
+
+def test_run__kickoff_with_multiple_fieldsets__ok(mocker, api_client):
+
+    """ Multiple fieldsets created with correct order. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    fieldset_1 = create_test_fieldset_template(
+        account=user.account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        name='First fieldset',
+        order=0,
+    )
+    fieldset_2 = create_test_fieldset_template(
+        account=user.account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        name='Second fieldset',
+        order=1,
+    )
+    field_1 = fieldset_1.fields.first()
+    field_2 = fieldset_2.fields.first()
+    field_value_1 = 'value 1'
+    field_value_2 = 'value 2'
+    wf_run_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                field_1.api_name: field_value_1,
+                field_2.api_name: field_value_2,
+            },
+        },
+    )
+
+    # assert
+    wf_run_mock.assert_called_once()
+    analytics_mock.assert_called_once()
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    kickoff_value = KickoffValue.objects.get(
+        workflow=workflow,
+    )
+    assert kickoff_value.fieldsets.count() == 2
+    fieldsets_data = response.data['kickoff']['fieldsets']
+    assert len(fieldsets_data) == 2
+    assert fieldsets_data[0]['name'] == fieldset_2.name
+    assert fieldsets_data[0]['order'] == 1
+    assert fieldsets_data[1]['name'] == fieldset_1.name
+    assert fieldsets_data[1]['order'] == 0
+
+
+def test_run__kickoff_fieldset_and_standalone__ok(
+    mocker,
+    api_client,
+):
+
+    """ Fieldset and standalone field both created. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    fieldset_template = create_test_fieldset_template(
+        account=user.account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        name='Grouped fields',
+        order=0,
+    )
+    field_template_1 = fieldset_template.fields.first()
+    field_template_2 = FieldTemplate.objects.create(
+        name='Standalone field',
+        type=FieldType.STRING,
+        is_required=False,
+        kickoff=template.kickoff_instance,
+        template=template,
+        account=user.account,
+    )
+    field_value_1 = 'fieldset field value'
+    field_value_2 = 'standalone field value'
+    wf_run_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                field_template_1.api_name: field_value_1,
+                field_template_2.api_name: field_value_2,
+            },
+        },
+    )
+
+    # assert
+    wf_run_mock.assert_called_once()
+    analytics_mock.assert_called_once()
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    kickoff_value = workflow.kickoff_instance
+    assert kickoff_value.output.count() == 1
+    assert kickoff_value.output.get(api_name=field_template_2.api_name)
+
+    assert kickoff_value.fieldsets.count() == 1
+    fieldset = kickoff_value.fieldsets.get(api_name=fieldset_template.api_name)
+    assert fieldset.fields.get(api_name=field_template_1.api_name)
+
+    fieldset_fields_data = response.data['kickoff']['fieldsets'][0]['fields']
+    assert len(fieldset_fields_data) == 1
+    assert fieldset_fields_data[0]['api_name'] == field_template_1.api_name
+
+    fields_data = response.data['kickoff']['output']
+    assert len(fields_data) == 1
+    assert fields_data[0]['api_name'] == field_template_2.api_name
+
+
+def test_run__kickoff_fieldset_sum_equal__ok(
+    mocker,
+    api_client,
+):
+
+    """ Fieldset sum_equal rule passes on correct sum. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    fieldset_template = create_test_fieldset_template(
+        account=user.account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        name='Budget split',
+        order=0,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='100',
+    )
+    field_1 = fieldset_template.fields.first()
+    field_2 = FieldTemplate.objects.create(
+        name='Second number',
+        type=FieldType.NUMBER,
+        fieldset=fieldset_template,
+        template=template,
+        order=2,
+        api_name=(
+            f'{fieldset_template.api_name}-field-2'
+        ),
+        account=user.account,
+    )
+    rule_template = fieldset_template.rules.first()
+    field_1.rules.add(rule_template)
+    field_2.rules.add(rule_template)
+    wf_run_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                field_1.api_name: 60,
+                field_2.api_name: 40,
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    kickoff_value = KickoffValue.objects.get(
+        workflow=workflow,
+    )
+    fieldset = kickoff_value.fieldsets.first()
+    assert fieldset.fields.count() == 2
+    assert fieldset.rules.count() == 1
+    wf_run_mock.assert_called_once()
+    analytics_mock.assert_called_once()
+
+
+def test_run__kickoff_fieldset_sum_equal__validation_error(
+    mocker,
+    api_client,
+):
+
+    """ Fieldset sum_equal returns 400 on wrong sum. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    fieldset_template = create_test_fieldset_template(
+        account=user.account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        name='Budget split',
+        order=0,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='100',
+    )
+    field_1 = fieldset_template.fields.first()
+    field_2 = FieldTemplate.objects.create(
+        name='Second number',
+        type=FieldType.NUMBER,
+        fieldset=fieldset_template,
+        template=template,
+        order=2,
+        api_name=(
+            f'{fieldset_template.api_name}-field-2'
+        ),
+        account=user.account,
+    )
+    rule_template = fieldset_template.rules.first()
+    field_1.rules.add(rule_template)
+    field_2.rules.add(rule_template)
+    wf_run_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                field_1.api_name: 60,
+                field_2.api_name: 50,
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == MSG_FS_0002('100')
+    wf_run_mock.assert_not_called()
+    analytics_mock.assert_not_called()
+
+
+def test_run__kickoff_fieldset_required_empty__validation_error(
+    mocker,
+    api_client,
+):
+
+    """ Required fieldset field returns 400 when empty. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    fieldset_template = create_test_fieldset_template(
+        account=user.account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        name='Required fieldset',
+        order=0,
+    )
+    field_template = fieldset_template.fields.first()
+    field_template.is_required = True
+    field_template.save(update_fields=['is_required'])
+    wf_run_mock = mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {},
+        },
+    )
+
+    # assert
+    wf_run_mock.assert_not_called()
+    analytics_mock.assert_not_called()
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_PW_0023
+    assert response.data['details']['api_name'] == field_template.api_name

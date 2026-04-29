@@ -338,7 +338,6 @@ class BaseFieldSetMixin(FieldMetaMixin):
 
     name = models.TextField(max_length=1000)
     description = models.TextField(blank=True, default='')
-    order = models.IntegerField(default=0)
     layout = models.CharField(
         max_length=200,
         choices=FieldSetLayout.CHOICES,

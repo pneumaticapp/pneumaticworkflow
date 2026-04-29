@@ -32,6 +32,10 @@ from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
 )
+from src.processes.models.templates.fieldset import (
+    FieldsetTemplateKickoff,
+    FieldsetTemplateTaskTemplate,
+)
 from src.processes.models.templates.raw_performer import RawPerformerTemplate
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
@@ -3830,3 +3834,417 @@ def test_create__invalid_wf_name_template__validation_error(
     assert response.data['message'] == str(messages.MSG_PT_0008)
     templates_kickoff_created_mock.assert_not_called()
     templates_created_mock.assert_not_called()
+
+
+def test_create__kickoff_with_one_fieldset__ok(
+    mocker,
+    api_client,
+):
+
+    """ Creating a template with one fieldset linked to kickoff
+        calls create_or_update_kickoff_links with correct data. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account)
+    api_client.token_authenticate(user)
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    service_mock = mocker.patch(
+        'src.processes.serializers.templates.template.'
+        'FieldSetTemplateService.create_or_update_kickoff_links',
+    )
+    fieldset_api_name = 'fieldset-test-1'
+    request_data = {
+        'name': 'Template with fieldset',
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id,
+                'role': OwnerRole.OWNER,
+            },
+        ],
+        'is_active': True,
+        'kickoff': {
+            'fieldsets': [
+                {
+                    'api_name': fieldset_api_name,
+                    'order': 1,
+                },
+            ],
+        },
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'First step',
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
+    }
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    template = Template.objects.get(id=response.data['id'])
+    kickoff = template.kickoff_instance
+    assert kickoff is not None
+    service_mock.assert_called_once_with(
+        kickoff=kickoff,
+        template=template,
+        fieldsets_links=[
+            {'api_name': fieldset_api_name, 'order': 1},
+        ],
+    )
+
+
+def test_create__kickoff_with_empty_fieldsets__no_links_created(
+    mocker,
+    api_client,
+):
+
+    """ Creating a template with empty fieldsets list does not
+        create any FieldsetTemplateKickoff records. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account)
+    api_client.token_authenticate(user)
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    request_data = {
+        'name': 'Template no fieldsets',
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id,
+                'role': OwnerRole.OWNER,
+            },
+        ],
+        'is_active': True,
+        'kickoff': {
+            'fieldsets': [],
+        },
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'First step',
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
+    }
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    template = Template.objects.get(id=response.data['id'])
+    kickoff = template.kickoff_instance
+    assert FieldsetTemplateKickoff.objects.filter(
+        kickoff=kickoff,
+    ).count() == 0
+
+
+def test_create__kickoff_without_fieldsets_key__no_links_created(
+    mocker,
+    api_client,
+):
+
+    """ Creating a template without fieldsets key in kickoff does not
+        create any FieldsetTemplateKickoff records. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account)
+    api_client.token_authenticate(user)
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_created',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    request_data = {
+        'name': 'Template no fieldsets key',
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id,
+                'role': OwnerRole.OWNER,
+            },
+        ],
+        'is_active': True,
+        'kickoff': {},
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'First step',
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
+    }
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    template = Template.objects.get(id=response.data['id'])
+    kickoff = template.kickoff_instance
+    assert FieldsetTemplateKickoff.objects.filter(
+        kickoff=kickoff,
+    ).count() == 0
+
+
+def test_create__task_with_one_fieldset__ok(
+    mocker,
+    api_client,
+):
+
+    """ Creating a template with one fieldset linked to a task
+        calls create_or_update_tasks_links with correct data. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account)
+    api_client.token_authenticate(user)
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    service_mock = mocker.patch(
+        'src.processes.serializers.templates.task.'
+        'FieldSetTemplateService.create_or_update_tasks_links',
+    )
+    fieldset_api_name = 'fieldset-task-1'
+    request_data = {
+        'name': 'Template with task fieldset',
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id,
+                'role': OwnerRole.OWNER,
+            },
+        ],
+        'is_active': True,
+        'kickoff': {},
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'First step',
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+                'fieldsets': [
+                    {
+                        'api_name': fieldset_api_name,
+                        'order': 1,
+                    },
+                ],
+            },
+        ],
+    }
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    template = Template.objects.get(id=response.data['id'])
+    task = template.tasks.first()
+    assert task is not None
+    service_mock.assert_called_once_with(
+        task=task,
+        template=template,
+        fieldsets_links=[
+            {'api_name': fieldset_api_name, 'order': 1},
+        ],
+    )
+
+
+def test_create__task_with_empty_fieldsets__no_links_created(
+    mocker,
+    api_client,
+):
+
+    """ Creating a template with empty fieldsets list in task does not
+        create any FieldsetTemplateTaskTemplate records. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account)
+    api_client.token_authenticate(user)
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    request_data = {
+        'name': 'Template without task fieldsets',
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id,
+                'role': OwnerRole.OWNER,
+            },
+        ],
+        'is_active': True,
+        'kickoff': {},
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'First step',
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+                'fieldsets': [],
+            },
+        ],
+    }
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    template = Template.objects.get(id=response.data['id'])
+    task = template.tasks.first()
+    assert FieldsetTemplateTaskTemplate.objects.filter(
+        task=task,
+    ).count() == 0
+
+
+def test_create__task_without_fieldsets_key__no_links_created(
+    mocker,
+    api_client,
+):
+
+    """ Creating a template without fieldsets key in task does not
+        create any FieldsetTemplateTaskTemplate records. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_user(account=account)
+    api_client.token_authenticate(user)
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.'
+        'create_integrations_for_template',
+    )
+    mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_created',
+    )
+    request_data = {
+        'name': 'Template no fieldsets key',
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id,
+                'role': OwnerRole.OWNER,
+            },
+        ],
+        'is_active': True,
+        'kickoff': {},
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'First step',
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
+    }
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    template = Template.objects.get(id=response.data['id'])
+    task = template.tasks.first()
+    assert FieldsetTemplateTaskTemplate.objects.filter(
+        task=task,
+    ).count() == 0

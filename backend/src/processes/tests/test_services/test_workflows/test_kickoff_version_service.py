@@ -858,7 +858,11 @@ def test__update_fieldsets__provided__ok(mocker):
             'api_name': 'fs-1',
             'name': 'Fieldset 1',
             'description': 'Desc',
-            'order': 0,
+            'kickoff_links': [
+                {
+                    'order': 11,
+                },
+            ],
             'label_position': LabelPosition.TOP,
             'layout': FieldSetLayout.VERTICAL,
             'rules': rules_data_1,
@@ -885,7 +889,7 @@ def test__update_fieldsets__provided__ok(mocker):
     )
     assert fieldset.name == 'Fieldset 1'
     assert fieldset.description == 'Desc'
-    assert fieldset.order == 0
+    assert fieldset.order == 11
     assert fieldset.label_position == LabelPosition.TOP
     assert fieldset.layout == FieldSetLayout.VERTICAL
     assert fieldset.account_id == account.id

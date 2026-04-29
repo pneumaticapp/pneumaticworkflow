@@ -49,19 +49,16 @@ def test__create_instance__default_params__ok():
         auth_type=AuthTokenType.USER,
     )
     name = 'Test fieldset'
-    order = 1
 
     # act
     service._create_instance(
         name=name,
-        order=order,
         template_id=template.id,
     )
 
     # assert
     assert service.instance is not None
     assert service.instance.name == name
-    assert service.instance.order == order
     assert service.instance.template_id == template.id
     assert service.instance.account_id == account.id
     assert service.instance.description == ''
@@ -85,7 +82,6 @@ def test__create_instance__all_params__ok():
         auth_type=AuthTokenType.USER,
     )
     name = 'Test fieldset'
-    order = 2
     description = 'Test description'
     label_position = LabelPosition.LEFT
     layout = FieldSetLayout.HORIZONTAL
@@ -93,7 +89,6 @@ def test__create_instance__all_params__ok():
     # act
     service._create_instance(
         name=name,
-        order=order,
         template_id=template.id,
         description=description,
         label_position=label_position,
@@ -102,61 +97,10 @@ def test__create_instance__all_params__ok():
 
     # assert
     assert service.instance.name == name
-    assert service.instance.order == order
     assert service.instance.template_id == template.id
     assert service.instance.description == description
     assert service.instance.label_position == label_position
     assert service.instance.layout == layout
-
-
-def test__create_instance__with_kickoff_id__ok():
-
-    """Persist kickoff_id when creating a fieldset template."""
-
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(user=user, tasks_count=1)
-    kickoff = template.kickoff_instance
-    service = FieldSetTemplateService(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-    )
-
-    service._create_instance(
-        name='Kickoff fieldset',
-        order=1,
-        template_id=template.id,
-        kickoff_id=kickoff.id,
-    )
-
-    assert service.instance.kickoff_id == kickoff.id
-    assert service.instance.task_id is None
-
-
-def test__create_instance__with_task_id__ok():
-
-    """Persist task_id when creating a fieldset template."""
-
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(user=user, tasks_count=1)
-    task = template.tasks.first()
-    service = FieldSetTemplateService(
-        user=user,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-    )
-
-    service._create_instance(
-        name='Task fieldset',
-        order=1,
-        template_id=template.id,
-        task_id=task.id,
-    )
-
-    assert service.instance.task_id == task.id
-    assert service.instance.kickoff_id is None
 
 
 def test__create_fields__with_data__ok(mocker):
@@ -173,7 +117,6 @@ def test__create_fields__with_data__ok(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     service = FieldSetTemplateService(
         user=user,
@@ -238,7 +181,6 @@ def test_create_rules__with_data__ok(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     service = FieldSetTemplateService(
         user=user,
@@ -427,7 +369,6 @@ def test__update_fields__existing_field__ok(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     field_1 = FieldTemplate.objects.create(
         account=account,
@@ -553,7 +494,6 @@ def test__update_fields__orphan_fields__deleted(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     field_1 = FieldTemplate.objects.create(
         account=account,
@@ -614,7 +554,6 @@ def test__validate_rules__with_rules__ok(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     rule_1 = FieldsetTemplateRule.objects.create(
         account=account,
@@ -667,7 +606,6 @@ def test_update_rules__existing_rule__ok(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     rule_1 = FieldsetTemplateRule.objects.create(
         account=account,
@@ -713,7 +651,6 @@ def test_update_rules__existing_rule__ok(mocker):
     )
     fs_rule_update_mock.assert_called_once_with(
         value='200',
-        force_save=True,
     )
     fieldset_template_rule_service_create_mock.assert_not_called()
 
@@ -732,7 +669,6 @@ def test_update_rules__new_rule__ok(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     service = FieldSetTemplateService(
         user=user,
@@ -793,7 +729,6 @@ def test_update_rules__orphan_rules__deleted(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     rule_1 = FieldsetTemplateRule.objects.create(
         account=account,
@@ -840,81 +775,6 @@ def test_update_rules__orphan_rules__deleted(mocker):
     ).exists()
 
 
-def test_create__bind_kickoff__ok(mocker):
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    template = create_test_template(user=owner, tasks_count=1)
-    kickoff = template.kickoff_instance
-    data = {
-        "template_id": template.id,
-        "name": "Test Fieldset",
-        "fields": [],
-        "rules": [],
-    }
-
-    mock_create_instance = mocker.patch(
-        'src.processes.services.templates.fieldsets.fieldset.'
-        'FieldSetTemplateService._create_instance',
-    )
-    mock_create_related = mocker.patch(
-        'src.processes.services.templates.fieldsets.fieldset.'
-        'FieldSetTemplateService._create_related',
-    )
-    mock_create_actions = mocker.patch(
-        'src.processes.services.templates.fieldsets.fieldset.'
-        'FieldSetTemplateService._create_actions',
-    )
-    service = FieldSetTemplateService(user=owner)
-
-    # act
-    service.create(**data)
-
-    # assert
-    mock_create_instance.assert_called_once_with(**data, kickoff_id=kickoff.id)
-    mock_create_related.assert_called_once_with(**data, kickoff_id=kickoff.id)
-    mock_create_actions.assert_called_once_with(**data, kickoff_id=kickoff.id)
-
-
-def test_create_with_task_bind_task_ok(mocker):
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    template = create_test_template(user=owner, tasks_count=1)
-    task = template.tasks.get(number=1)
-    data = {
-        "template_id": template.id,
-        "name": "Test Fieldset",
-        "fields": [],
-        "rules": [],
-        "task_id": task.id,
-    }
-
-    mock_create_instance = mocker.patch(
-        'src.processes.services.templates.fieldsets.fieldset.'
-        'FieldSetTemplateService._create_instance',
-    )
-    mock_create_related = mocker.patch(
-        'src.processes.services.templates.fieldsets.fieldset.'
-        'FieldSetTemplateService._create_related',
-    )
-    mock_create_actions = mocker.patch(
-        'src.processes.services.templates.fieldsets.fieldset.'
-        'FieldSetTemplateService._create_actions',
-    )
-    service = FieldSetTemplateService(user=owner)
-
-    # act
-    service.create(**data)
-
-    # assert
-    mock_create_instance.assert_called_once_with(**data)
-    mock_create_related.assert_called_once_with(**data)
-    mock_create_actions.assert_called_once_with(**data)
-
-
 def test_partial_update_name__ok(mocker):
 
     """Call `partial_update` with default parameters"""
@@ -923,11 +783,10 @@ def test_partial_update_name__ok(mocker):
     account = create_test_account()
     owner = create_test_owner(account=account)
     template = create_test_template(user=owner, tasks_count=1)
-    task = template.tasks.get(number=1)
+    template.tasks.get(number=1)
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        task=task,
     )
     mock_update_fields = mocker.patch(
         'src.processes.services.templates.fieldsets.fieldset.'
@@ -954,91 +813,6 @@ def test_partial_update_name__ok(mocker):
     mock_validate_rules.assert_called_once_with()
 
 
-def test_partial_update_unbind_task_ok(mocker):
-
-    """Test handling of `task_id` being set to None (unbind from task)"""
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    template = create_test_template(user=owner, tasks_count=1)
-    task = template.tasks.get(number=1)
-    fieldset = create_test_fieldset_template(
-        account=account,
-        template=template,
-        task=task,
-    )
-
-    mock_update_fields = mocker.patch(
-        'src.processes.services.templates.fieldsets.fieldset.'
-        'FieldSetTemplateService._update_fields',
-    )
-    mock_update_rules = mocker.patch(
-        'src.processes.services.templates.fieldsets.fieldset.'
-        'FieldSetTemplateService.update_rules',
-    )
-    mock_validate_rules = mocker.patch(
-        'src.processes.services.templates.fieldsets.fieldset.'
-        'FieldSetTemplateService._validate_rules',
-    )
-    service = FieldSetTemplateService(instance=fieldset, user=owner)
-    data = {"task_id": None}
-
-    # act
-    result = service.partial_update(**data)
-
-    # assert
-    fieldset.refresh_from_db()
-    assert result is fieldset
-    assert fieldset.task is None
-    assert fieldset.kickoff == template.kickoff_instance
-    mock_update_fields.assert_not_called()
-    mock_update_rules.assert_not_called()
-    mock_validate_rules.assert_called_once_with()
-
-
-def test_partial_update_bind_task_ok(mocker):
-    """Test handling of `task_id` being provided (bind to task)"""
-
-    # arrange
-    account = create_test_account()
-    owner = create_test_owner(account=account)
-    template = create_test_template(user=owner, tasks_count=1)
-    task = template.tasks.get(number=1)
-    fieldset = create_test_fieldset_template(
-        account=account,
-        template=template,
-        kickoff=template.kickoff_instance,
-    )
-
-    mock_update_fields = mocker.patch(
-        'src.processes.services.templates.fieldsets.fieldset.'
-        'FieldSetTemplateService._update_fields',
-    )
-    mock_update_rules = mocker.patch(
-        'src.processes.services.templates.fieldsets.fieldset.'
-        'FieldSetTemplateService.update_rules',
-    )
-    mock_validate_rules = mocker.patch(
-        'src.processes.services.templates.fieldsets.fieldset.'
-        'FieldSetTemplateService._validate_rules',
-    )
-    service = FieldSetTemplateService(instance=fieldset, user=owner)
-    data = {"task_id": task.id}
-
-    # act
-    result = service.partial_update(**data)
-
-    # assert
-    fieldset.refresh_from_db()
-    assert result is fieldset
-    assert fieldset.task == task
-    assert fieldset.kickoff is None
-    mock_update_fields.assert_not_called()
-    mock_update_rules.assert_not_called()
-    mock_validate_rules.assert_called_once_with()
-
-
 def test_partial_update_fields_ok(mocker):
     """Verify fields update logic for existing and new fields"""
 
@@ -1046,11 +820,10 @@ def test_partial_update_fields_ok(mocker):
     account = create_test_account()
     owner = create_test_owner(account=account)
     template = create_test_template(user=owner, tasks_count=1)
-    task = template.tasks.get(number=1)
+    template.tasks.get(number=1)
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        task=task,
     )
     service = FieldSetTemplateService(user=owner, instance=fieldset)
 
@@ -1093,11 +866,10 @@ def test_partial_update__rules__ok(mocker):
     account = create_test_account()
     owner = create_test_owner(account=account)
     template = create_test_template(user=owner, tasks_count=1)
-    task = template.tasks.get(number=1)
+    template.tasks.get(number=1)
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        task=task,
     )
 
     mock_super_partial_update = mocker.patch(
@@ -1148,7 +920,6 @@ def test_delete__not_in_use__ok():
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     service = FieldSetTemplateService(
         user=user,
@@ -1179,9 +950,8 @@ def test_delete__used_by_kickoff__raise_exception():
         template=template,
         account=account,
         name='Fieldset',
-        kickoff=kickoff,
-        order=1,
     )
+    fieldset.kickoffs.add(kickoff)
     service = FieldSetTemplateService(
         user=user,
         is_superuser=False,
@@ -1212,10 +982,9 @@ def test_delete__used_by_task__raise_exception():
     fieldset = FieldsetTemplate.objects.create(
         template=template,
         account=account,
-        task=task_template,
         name='Fieldset',
-        order=1,
     )
+    fieldset.tasks.add(task_template)
     service = FieldSetTemplateService(
         user=user,
         is_superuser=False,

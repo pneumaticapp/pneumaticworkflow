@@ -1,11 +1,10 @@
-from rest_framework.fields import CharField
+from rest_framework.fields import CharField, SerializerMethodField
 from rest_framework.serializers import (
     IntegerField,
     ModelSerializer,
 )
 
 from src.generics.fields import (
-    RelatedApiNameField,
     RelatedApiNameListField,
 )
 from src.generics.mixins.serializers import CustomValidationErrorMixin
@@ -13,8 +12,10 @@ from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
     FieldsetTemplateRule,
 )
-from src.processes.models.templates.task import TaskTemplate
 from src.processes.serializers.templates.field import FieldTemplateSerializer
+from src.processes.serializers.templates.task import (
+    TemplateStepNameSerializer,
+)
 
 
 class FieldsetTemplateRuleSerializer(
@@ -50,20 +51,16 @@ class FieldsetTemplateSerializer(
             'id',
             'name',
             'description',
-            'task',
             'label_position',
             'layout',
             'rules',
             'fields',
             'api_name',
+            'tasks',
+            'kickoff',
         )
 
     id = IntegerField(required=False)
-    task = RelatedApiNameField(
-        queryset=TaskTemplate.objects.all(),
-        required=False,
-        allow_null=True,
-    )
     api_name = CharField(required=False, max_length=200)
     rules = FieldsetTemplateRuleSerializer(
         many=True,
@@ -75,9 +72,13 @@ class FieldsetTemplateSerializer(
         required=False,
         default=list,
     )
+    tasks = TemplateStepNameSerializer(
+        many=True,
+        read_only=True,
+        default=list,
+    )
+    kickoff = SerializerMethodField()
 
-    def validate(self, attrs):
-        if 'task' in attrs and attrs['task'] is not None:
-            task = attrs.pop('task')
-            attrs['task_id'] = task.id
-        return attrs
+    def get_kickoff(self, instance: FieldsetTemplate):
+        kickoff = instance.kickoffs.all().first()
+        return kickoff.id if kickoff else None

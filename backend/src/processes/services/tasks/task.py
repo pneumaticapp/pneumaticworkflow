@@ -13,6 +13,8 @@ from src.processes.enums import (
 from src.processes.models.templates.checklist import (
     ChecklistTemplateSelection,
 )
+from src.processes.models.templates.fieldset import \
+    FieldsetTemplateTaskTemplate
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.workflows.conditions import (
     Condition,
@@ -220,13 +222,20 @@ class TaskService(
         instance_template: TaskTemplate,
     ):
         for fs_template in instance_template.fieldsets.all().order_by('id'):
+            fieldset_through = (
+                FieldsetTemplateTaskTemplate.objects
+                .get(
+                    fieldset=fs_template,
+                    task=instance_template,
+                )
+            )
             service = FieldSetService(user=self.user)
             service.create(
                 instance_template=fs_template,
                 account_id=self.instance.workflow.account_id,
                 workflow=self.instance.workflow,
                 task=self.instance,
-                task_id=self.instance.id,
+                order=fieldset_through.order,
                 skip_value=True,
             )
 

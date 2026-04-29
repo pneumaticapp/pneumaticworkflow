@@ -4,6 +4,7 @@ from src.processes.enums import (
     FieldSetRuleType,
     FieldType,
 )
+from src.processes.messages.fieldset import MSG_FS_0007
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
     FieldsetTemplateRule,
@@ -13,6 +14,7 @@ from src.processes.models.workflows.fieldset import (
     FieldSet,
     FieldSetRule,
 )
+from src.processes.services.exceptions import FieldsetServiceException
 from src.processes.services.tasks.field import TaskFieldService
 from src.processes.services.workflows.fieldsets.fieldset import (
     FieldSetService,
@@ -47,19 +49,20 @@ def test__create_instance__with_kickoff__ok(mocker):
         account=account,
         name='Fieldset',
         description='Description',
-        order=1,
     )
     service = FieldSetService(
         user=user,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
+    order = 11
 
     # act
     service._create_instance(
         instance_template=fieldset_template,
         workflow=workflow,
         kickoff=kickoff,
+        order=order,
     )
 
     # assert
@@ -70,10 +73,10 @@ def test__create_instance__with_kickoff__ok(mocker):
     assert service.instance.api_name == fieldset_template.api_name
     assert service.instance.name == 'Fieldset'
     assert service.instance.description == 'Description'
-    assert service.instance.order == 1
+    assert service.instance.order == order
 
 
-def test__create_instance__with_task__ok(mocker):
+def test__create_instance__with_task__ok():
 
     """
     Call with task
@@ -89,29 +92,31 @@ def test__create_instance__with_task__ok(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     service = FieldSetService(
         user=user,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
+    order = 11
 
     # act
     service._create_instance(
         instance_template=fieldset_template,
         workflow=workflow,
         task=task,
+        order=order,
     )
 
     # assert
     assert service.instance is not None
     assert service.instance.workflow_id == workflow.id
     assert service.instance.task_id == task.id
+    assert service.instance.order == order
     assert service.instance.kickoff is None
 
 
-def test__create_instance__no_kickoff_no_task__ok(mocker):
+def test__create_instance__no_kickoff_no_task__raise_exception():
 
     """
     Call without kickoff and task
@@ -126,25 +131,24 @@ def test__create_instance__no_kickoff_no_task__ok(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     service = FieldSetService(
         user=user,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
+    order = 11
 
     # act
-    service._create_instance(
-        instance_template=fieldset_template,
-        workflow=workflow,
-    )
+    with pytest.raises(FieldsetServiceException) as ex:
+        service._create_instance(
+            instance_template=fieldset_template,
+            workflow=workflow,
+            order=order,
+        )
 
     # assert
-    assert service.instance is not None
-    assert service.instance.workflow_id == workflow.id
-    assert service.instance.kickoff is None
-    assert service.instance.task is None
+    assert ex.value.message == MSG_FS_0007
 
 
 def test__create_fields__default_params__ok(mocker):
@@ -162,7 +166,6 @@ def test__create_fields__default_params__ok(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     FieldTemplate.objects.create(
         account=account,
@@ -230,7 +233,6 @@ def test__create_fields__with_fields_data__ok(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     field_template_1 = FieldTemplate.objects.create(
         account=account,
@@ -300,7 +302,6 @@ def test__create_fields__skip_value_true__ok(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     FieldTemplate.objects.create(
         account=account,
@@ -369,7 +370,6 @@ def test__create_rules__with_template__ok(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     rule_template = FieldsetTemplateRule.objects.create(
         account=account,
@@ -429,7 +429,6 @@ def test__create_related__with_template__ok(mocker):
         template=template,
         account=account,
         name='Fieldset',
-        order=1,
     )
     service = FieldSetService(
         user=user,

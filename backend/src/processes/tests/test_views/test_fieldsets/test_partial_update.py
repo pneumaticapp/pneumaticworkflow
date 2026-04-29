@@ -72,7 +72,6 @@ def test_partial_update__all_fields__ok(api_client, mocker):
         description=data['description'],
         label_position=data['label_position'],
         layout=data['layout'],
-        kickoff=template.kickoff_instance,
         api_name=data['api_name'],
         rule_type=FieldSetRuleType.SUM_EQUAL,
     )
@@ -102,7 +101,7 @@ def test_partial_update__all_fields__ok(api_client, mocker):
     assert response.data['id'] == fieldset.id
     assert response.data['name'] == data['name']
     assert response.data['description'] == data['description']
-    assert response.data['task'] is None
+    assert response.data['tasks'] == []
     assert response.data['label_position'] == data['label_position']
     assert response.data['layout'] == data['layout']
     assert response.data['api_name'] == data['api_name']
@@ -147,7 +146,6 @@ def test_partial_update__name__ok(api_client, mocker):
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=template.kickoff_instance,
     )
     data = {
         'name': 'Updated Name',
@@ -183,106 +181,6 @@ def test_partial_update__name__ok(api_client, mocker):
     )
 
 
-def test_partial_update__task_id__ok(api_client, mocker):
-
-    """ Move fieldset from kickoff to task in one PATCH
-     (clear kickoff, set task)."""
-
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    task = template.tasks.first()
-    fieldset = create_test_fieldset_template(
-        account=account,
-        template=template,
-        task=task,
-    )
-    fieldset_service_init_mock = mocker.patch.object(
-        FieldSetTemplateService,
-        attribute='__init__',
-        return_value=None,
-    )
-    fieldset_partial_update_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.partial_update',
-        return_value=fieldset,
-    )
-    data = {
-        'task': task.api_name,
-    }
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
-        data=data,
-    )
-
-    # assert
-    assert response.status_code == 200
-    assert response.data['task'] == task.api_name
-    fieldset_service_init_mock.assert_called_once_with(
-        user=user,
-        instance=fieldset,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-    )
-    fieldset_partial_update_mock.assert_called_once_with(
-        task_id=task.id,
-    )
-
-
-def test_partial_update__task_is_null_set_kickoff__ok(api_client, mocker):
-
-    """ Move fieldset from kickoff to task in one PATCH
-        (clear kickoff, set task). """
-
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    fieldset = create_test_fieldset_template(
-        account=account,
-        template=template,
-        kickoff=template.kickoff_instance,
-    )
-    fieldset_service_init_mock = mocker.patch.object(
-        FieldSetTemplateService,
-        attribute='__init__',
-        return_value=None,
-    )
-    fieldset_partial_update_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.partial_update',
-        return_value=fieldset,
-    )
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
-        data={
-            'task': None,
-        },
-    )
-
-    # assert
-    assert response.status_code == 200
-    assert response.data['task'] is None
-    fieldset_service_init_mock.assert_called_once_with(
-        user=user,
-        instance=fieldset,
-        is_superuser=False,
-        auth_type=AuthTokenType.USER,
-    )
-    fieldset_partial_update_mock.assert_called_once_with(
-        task=None,
-    )
-
-
 def test_partial_update__with_rule_fields__ok(api_client, mocker):
 
     """
@@ -300,7 +198,6 @@ def test_partial_update__with_rule_fields__ok(api_client, mocker):
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=template.kickoff_instance,
     )
     field_api_name = 'f1'
     data = {
@@ -387,7 +284,6 @@ def test_partial_update__clear_fields__ok(api_client, mocker):
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=template.kickoff_instance,
     )
     data = {
         'name': 'Updated Fieldset',
@@ -434,149 +330,6 @@ def test_partial_update__clear_fields__ok(api_client, mocker):
     )
 
 
-def test_partial_update__not_existent__validation_error(api_client, mocker):
-
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    task = template.tasks.first()
-    fieldset = create_test_fieldset_template(
-        account=account,
-        template=template,
-        task=task,
-    )
-    fieldset_service_init_mock = mocker.patch.object(
-        FieldSetTemplateService,
-        attribute='__init__',
-        return_value=None,
-    )
-    fieldset_partial_update_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.partial_update',
-    )
-    data = {
-        'task': 'not-exist',
-    }
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
-        data=data,
-    )
-
-    # assert
-    assert response.status_code == 400
-    message = 'Object with api_name=not-exist does not exist.'
-    assert response.data['message'] == message
-    assert response.data['details']['name'] == 'task'
-    fieldset_service_init_mock.assert_not_called()
-    fieldset_partial_update_mock.assert_not_called()
-
-
-def test_partial_update__another_account_task__validation_error(
-    api_client,
-    mocker,
-):
-
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    task = template.tasks.first()
-    fieldset = create_test_fieldset_template(
-        account=account,
-        template=template,
-        task=task,
-    )
-    another_user = create_test_owner(email='another@test.test')
-    another_template = create_test_template(user=another_user, tasks_count=1)
-    another_account_task = another_template.tasks.get(number=1)
-    fieldset_service_init_mock = mocker.patch.object(
-        FieldSetTemplateService,
-        attribute='__init__',
-        return_value=None,
-    )
-    fieldset_partial_update_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.partial_update',
-    )
-    data = {
-        'task': another_account_task.api_name,
-    }
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
-        data=data,
-    )
-
-    # assert
-    assert response.status_code == 400
-    message = (
-        f'Object with api_name={another_account_task.api_name} '
-        f'does not exist.'
-    )
-    assert response.data['message'] == message
-    assert response.data['details']['name'] == 'task'
-    fieldset_service_init_mock.assert_not_called()
-    fieldset_partial_update_mock.assert_not_called()
-
-
-def test_partial_update__another_template_task__validation_error(
-    api_client,
-    mocker,
-):
-
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    task = template.tasks.first()
-    fieldset = create_test_fieldset_template(
-        account=account,
-        template=template,
-        task=task,
-    )
-    another_template = create_test_template(user=user, tasks_count=1)
-    another_template_task = another_template.tasks.get(number=1)
-    fieldset_service_init_mock = mocker.patch.object(
-        FieldSetTemplateService,
-        attribute='__init__',
-        return_value=None,
-    )
-    fieldset_partial_update_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.partial_update',
-    )
-    data = {
-        'task': another_template_task.api_name,
-    }
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
-        data=data,
-    )
-
-    # assert
-    assert response.status_code == 400
-    message = (
-        f'Object with api_name={another_template_task.api_name} '
-        f'does not exist.'
-    )
-    assert response.data['message'] == message
-    assert response.data['details']['name'] == 'task'
-    fieldset_service_init_mock.assert_not_called()
-    fieldset_partial_update_mock.assert_not_called()
-
-
 def test_partial_update__unauthenticated__unauthorized(api_client, mocker):
 
     """ Unauthenticated request returns 401 """
@@ -591,7 +344,6 @@ def test_partial_update__unauthenticated__unauthorized(api_client, mocker):
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=template.kickoff_instance,
     )
     data = {
         'name': 'Updated Fieldset',
@@ -634,7 +386,6 @@ def test_partial_update__expired_sub__permission_denied(api_client, mocker):
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=template.kickoff_instance,
     )
     data = {
         'name': 'Updated Fieldset',
@@ -676,7 +427,6 @@ def test_partial_update__billing_plan__permission_denied(api_client, mocker):
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=template.kickoff_instance,
     )
     data = {
         'name': 'Updated Fieldset',
@@ -727,7 +477,6 @@ def test_partial_update__users_limit__permission_denied(api_client, mocker):
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=template.kickoff_instance,
     )
     data = {
         'name': 'Updated Fieldset',
@@ -769,7 +518,6 @@ def test_partial_update__non_admin__permission_denied(api_client, mocker):
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=template.kickoff_instance,
     )
     user = create_test_not_admin(account=account)
     data = {
@@ -811,7 +559,6 @@ def test_partial_update__invalid_name__validation_error(api_client, mocker):
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=template.kickoff_instance,
     )
     data = {
         'name': '',
@@ -855,7 +602,6 @@ def test_partial_update__invalid_layout__validation_error(api_client, mocker):
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=template.kickoff_instance,
     )
     data = {
         'layout': 'invalid_layout',
@@ -902,7 +648,6 @@ def test_partial_update__invalid_label_position__validation_error(
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=template.kickoff_instance,
     )
     data = {
         'label_position': 'invalid_position',
@@ -948,7 +693,6 @@ def test_partial_update__service_exception__validation_error(
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
-        kickoff=template.kickoff_instance,
     )
     data = {
         'name': 'Updated Fieldset',

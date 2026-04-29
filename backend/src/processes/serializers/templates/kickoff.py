@@ -3,13 +3,10 @@ from typing import Any, Dict
 from rest_framework.serializers import (
     ModelSerializer,
 )
-
-from src.generics.fields import AccountPrimaryKeyRelatedField
 from src.generics.mixins.serializers import (
     AdditionalValidationMixin,
     CustomValidationErrorMixin,
 )
-from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.serializers.templates.field import (
     FieldTemplateListSerializer,
@@ -18,6 +15,9 @@ from src.processes.serializers.templates.field import (
 )
 from src.processes.serializers.templates.fieldset import (
     FieldsetTemplateSerializer,
+)
+from src.processes.serializers.templates.fieldset_link import (
+    FieldsetTemplateKickoffSerializer,
 )
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
@@ -45,12 +45,11 @@ class KickoffSerializer(
         }
 
     fields = FieldTemplateSerializer(many=True, required=False, default=list)
-    fieldsets = AccountPrimaryKeyRelatedField(
+    fieldsets = FieldsetTemplateKickoffSerializer(
+        source='fieldsettemplatekickoff_set',
         many=True,
-        queryset=FieldsetTemplate.objects.all(),
         required=False,
         allow_empty=True,
-        default=list,
     )
 
     def to_representation(self, instance):
@@ -64,7 +63,7 @@ class KickoffSerializer(
 
     def create(self, validated_data: Dict[str, Any]):
         self.additional_validate(validated_data)
-        fieldsets = validated_data.pop('fieldsets', None) or []
+        validated_data.pop('fieldsettemplatekickoff_set', None)
         instance = self.create_or_update_instance(
             validated_data={
                 'template': self.context['template'],
@@ -72,7 +71,6 @@ class KickoffSerializer(
                 **validated_data,
             },
         )
-        instance.fieldsets.set(fieldsets)
         self.create_or_update_related(
             data=validated_data.get('fields'),
             ancestors_data={
@@ -93,7 +91,7 @@ class KickoffSerializer(
         validated_data: Dict[str, Any],
     ):
         self.additional_validate(validated_data)
-        fieldsets = validated_data.pop('fieldsets', None) or []
+        validated_data.pop('fieldsettemplatekickoff_set', None)
         instance = self.create_or_update_instance(
             instance=instance,
             validated_data={
@@ -102,7 +100,7 @@ class KickoffSerializer(
                 **validated_data,
             },
         )
-        instance.fieldsets.set(fieldsets)
+
         self.create_or_update_related(
             data=validated_data.get('fields'),
             ancestors_data={

@@ -3,6 +3,7 @@ from django.db.models import Q, UniqueConstraint
 
 from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
+from src.generics.models import SoftDeleteModel
 from src.processes.models.base import BaseApiNameModel
 from src.processes.models.mixins import (
     BaseFieldSetMixin,
@@ -14,6 +15,7 @@ from src.processes.models.templates.task import TaskTemplate
 from src.processes.querysets import (
     FieldsetTemplateQuerySet,
     FieldsetTemplateRuleQuerySet,
+    FieldsetTemplateTaskTemplateQuerySet, FieldsetTemplateKickoffQuerySet,
 )
 
 
@@ -43,18 +45,16 @@ class FieldsetTemplate(
         on_delete=models.CASCADE,
         related_name='fieldsets',
     )
-    task = models.ForeignKey(
+    tasks = models.ManyToManyField(
         TaskTemplate,
-        on_delete=models.SET_NULL,
+        through='FieldsetTemplateTaskTemplate',
         related_name='fieldsets',
-        null=True,
         blank=True,
     )
-    kickoff = models.ForeignKey(
+    kickoffs = models.ManyToManyField(
         Kickoff,
-        on_delete=models.SET_NULL,
+        through='FieldsetTemplateKickoff',
         related_name='fieldsets',
-        null=True,
         blank=True,
     )
 
@@ -64,6 +64,67 @@ class FieldsetTemplate(
 
     def __str__(self):
         return self.name
+
+
+class FieldsetTemplateTaskTemplate(SoftDeleteModel):
+
+    """
+        Model for the relationship between
+        "TaskTemplate" <- m2m -> "FieldsetTemplate"
+    """
+
+    class Meta:
+        ordering = ['order']
+        db_table = 'processes_fieldsettemplate_tasktemplate'
+
+    fieldset = models.ForeignKey(
+        'FieldsetTemplate',
+        on_delete=models.CASCADE,
+    )
+    task = models.ForeignKey(
+        TaskTemplate,
+        on_delete=models.CASCADE,
+    )
+    order = models.IntegerField(default=0)
+
+    objects = BaseSoftDeleteManager.from_queryset(
+        FieldsetTemplateTaskTemplateQuerySet,
+    )()
+
+    def __str__(self):
+        return (
+            f'{self.fieldset_template} - {self.task_template} '
+            f'(order={self.order})'
+        )
+
+
+class FieldsetTemplateKickoff(SoftDeleteModel):
+
+    """
+        Model for the relationship
+        "Kickoff" <- m2m -> "FieldsetTemplate"
+    """
+
+    class Meta:
+        ordering = ['order']
+        db_table = 'processes_fieldsettemplate_kickoff'
+
+    fieldset = models.ForeignKey(
+        'FieldsetTemplate',
+        on_delete=models.CASCADE,
+    )
+    kickoff = models.ForeignKey(
+        Kickoff,
+        on_delete=models.CASCADE,
+    )
+    order = models.IntegerField(default=0)
+
+    objects = BaseSoftDeleteManager.from_queryset(
+        FieldsetTemplateKickoffQuerySet,
+    )()
+
+    def __str__(self):
+        return f'{self.fieldset_template} - kickoff (order={self.order})'
 
 
 class FieldsetTemplateRule(
