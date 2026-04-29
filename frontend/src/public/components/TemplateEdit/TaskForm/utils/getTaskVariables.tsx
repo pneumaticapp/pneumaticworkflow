@@ -13,9 +13,11 @@ import { EStartingType } from '../Conditions/utils/getDropdownOperators';
 export const WORKFLOW_STARTER_VARIABLE_API_NAME = 'workflow-starter';
 export const WORKFLOW_STARTER_VARIABLE_TITLE = 'Workflow starter';
 export const SYSTEM_VARIABLE_SUBTITLE = 'System variable';
+export const APPROVAL_CHAIN_SUMMARY_TITLE = 'Approval chain summary';
 
 const SYSTEM_VARIABLE_API_NAMES = [WORKFLOW_STARTER_VARIABLE_API_NAME];
-export const isSystemVariable = (apiName: string) => SYSTEM_VARIABLE_API_NAMES.includes(apiName);
+export const isSystemVariable = (apiName: string) => 
+  SYSTEM_VARIABLE_API_NAMES.includes(apiName) || apiName.startsWith('approval-chain-summary-');
 
 export function getLocalizedSystemVariable({
   apiName,
@@ -30,6 +32,13 @@ export function getLocalizedSystemVariable({
     };
   }
 
+  if (apiName.startsWith('approval-chain-summary-')) {
+    return {
+      title: formatMessage({ id: 'templates.approval-chain-summary' }),
+      ...(subtitle !== undefined && { subtitle }),
+    };
+  }
+
   return {
     title: formatMessage({ id: `kickoff.system-varibale-${apiName}` }),
     ...(subtitle !== undefined && { subtitle: formatMessage({ id: 'kickoff.system-varibale' }) }),
@@ -38,7 +47,7 @@ export function getLocalizedSystemVariable({
 
 type TGetVariablesParam = {
   kickoff?: Pick<IKickoff, 'fields'>;
-  tasks?: (Pick<ITemplateTask, 'fields'> & { name?: ITemplateTask['name'] })[];
+  tasks?: (Pick<ITemplateTask, 'fields' | 'apiName' | 'hierarchyConfig'> & { name?: ITemplateTask['name'] })[];
   templateId?: number;
 };
 
@@ -60,10 +69,21 @@ export function getSystemVariables(): TTaskVariable[] {
   ];
 }
 
+type TTaskFieldTuple = readonly [Pick<ITemplateTask, 'fields' | 'apiName' | 'hierarchyConfig'> & { name?: string }, IExtraField];
+
 export function getFieldVariables({ kickoff, tasks, templateId }: TGetVariablesParam): TTaskVariable[] {
   const tasksVariables = tasks
-    ?.reduce((acc, task) => {
-      const fieldsWithTasks = task.fields.map((field) => [task, field] as const);
+    ?.reduce<TTaskFieldTuple[]>((acc, task) => {
+      const fieldsWithTasks: TTaskFieldTuple[] = task.fields.map((field) => [task, field] as const);
+
+      if (task.hierarchyConfig) {
+        const syntheticField: Pick<IExtraField, 'apiName' | 'name' | 'type'> = {
+          apiName: `approval-chain-summary-${task.apiName}`,
+          name: APPROVAL_CHAIN_SUMMARY_TITLE,
+          type: EExtraFieldType.Text,
+        };
+        fieldsWithTasks.push([task, syntheticField as IExtraField]);
+      }
 
       return [...acc, ...fieldsWithTasks];
     }, [])
