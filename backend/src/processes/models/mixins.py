@@ -162,6 +162,7 @@ class TaskMixin(models.Model):
         validators=[MinValueValidator(1)],
     )
     require_completion_by_all = models.BooleanField(default=False)
+    skip_for_starter = models.BooleanField(default=False)
     revert_task = models.CharField(
         max_length=255,
         null=True,

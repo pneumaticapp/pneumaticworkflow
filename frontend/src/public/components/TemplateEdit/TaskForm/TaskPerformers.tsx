@@ -113,10 +113,18 @@ export function TaskPerformers({ task, users, variables, setCurrentTask }: ITask
     <div className={classNames(styles['task-fields-wrapper'], stylesTaskForm['content-mt16'])}>
       <div className="mb-3">
         <Checkbox
-          id="completeByAll"
+          checkboxId="completeByAll"
           title={formatMessage({ id: 'templates.task-require-completion-by-all' })}
           checked={task.requireCompletionByAll}
           onChange={(e) => handleRequireCompletionByAllChange(e.currentTarget.checked)}
+        />
+      </div>
+      <div className="mb-3">
+        <Checkbox
+          checkboxId="skipForStarter"
+          title={formatMessage({ id: 'templates.task-skip-for-starter' })}
+          checked={task.skipForStarter}
+          onChange={(e) => setCurrentTask({ skipForStarter: e.currentTarget.checked })}
         />
       </div>
       <div className="mb-3">
