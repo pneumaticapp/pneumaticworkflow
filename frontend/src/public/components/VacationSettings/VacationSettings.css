@@ -1,0 +1,70 @@
+.vacation-settings {
+  margin-top: 2.4rem;
+}
+
+.header {
+  margin-bottom: 2.4rem;
+}
+
+.status-dropdown {
+  margin-bottom: 2.4rem;
+}
+
+.vacation-form {
+  display: flex;
+  flex-direction: column;
+}
+
+.form-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.6rem;
+}
+
+.vacation-active {
+  padding: 1.6rem;
+  display: flex;
+  flex-direction: column;
+  background: var(--pneumatic-color-beige);
+  border-radius: 0.8rem;
+  align-items: flex-start;
+  gap: 1.6rem;
+}
+
+.vacation-active p {
+  margin: 0;
+}
+
+.dates-row {
+  display: flex;
+  gap: 1.6rem;
+}
+
+.dates-row > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.date-field {
+  width: 100%;
+}
+
+.vacation-substitutes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.selected-users {
+  margin-top: 0.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
+}
+
+.vacation-actions {
+  margin-top: 2.4rem;
+  display: flex;
+  align-items: center;
+  gap: 1.6rem;
+}

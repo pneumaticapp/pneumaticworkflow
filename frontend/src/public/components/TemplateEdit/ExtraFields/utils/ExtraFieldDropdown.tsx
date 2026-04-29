@@ -4,24 +4,11 @@ import Switch from 'rc-switch';
 import { useIntl } from 'react-intl';
 
 import { IntlMessages } from '../../../IntlMessages';
-import { ArrowDownIcon, ArrowUpIcon, BurgerIcon, DropdownCrossIcon, TrashIcon } from '../../../icons';
-import { IExtraField } from '../../../../types/template';
-import { Dropdown } from '../../../UI';
+import { ArrowDownIcon, ArrowRightIcon, ArrowUpIcon, BurgerIcon, DropdownCrossIcon, TrashIcon } from '../../../icons';
+import { Dropdown, TDropdownOption } from '../../../UI';
+import { IKickoffDropdownProps } from './types';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
-
-interface IKickoffDropdownProps {
-  apiName?: string;
-  isRequired: boolean;
-  isRequiredDisabled: boolean;
-  isHidden?: boolean;
-  isFirstItem?: boolean;
-  isLastItem?: boolean;
-  onEditField(changedProps: Partial<IExtraField>): void;
-  onDeleteField(): void;
-  onMoveFieldUp(): void;
-  onMoveFieldDown(): void;
-}
 
 export function ExtraFieldDropdown({
   apiName,
@@ -34,12 +21,36 @@ export function ExtraFieldDropdown({
   onDeleteField,
   onMoveFieldUp,
   onMoveFieldDown,
+  showDatasetOption = false,
+  datasetOptions,
+  selectedDatasetId,
+  onDatasetSelect,
 }: IKickoffDropdownProps) {
   const { formatMessage } = useIntl();
 
   const handleOptionClick = (handler: () => void) => (closeDropdown: () => void) => {
     closeDropdown();
     handler();
+  };
+
+  const getDatasetSubOptions = (): TDropdownOption[] | undefined => {
+    if (!showDatasetOption || !datasetOptions?.length) {
+      return undefined;
+    }
+
+    return datasetOptions.map((option) => {
+      const isSelected = String(selectedDatasetId) === option.value;
+
+      return {
+        mapKey: `dataset-${option.value}`,
+        label: option.label,
+        className: classnames(styles['dataset-option'], isSelected && styles['dataset-option-selected']),
+        onClick: (closeDropdown: () => void) => {
+          onDatasetSelect?.(Number(option.value));
+          closeDropdown();
+        },
+      };
+    });
   };
 
   return (
@@ -67,6 +78,13 @@ export function ExtraFieldDropdown({
           onClick: handleOptionClick(onMoveFieldDown),
           Icon: ArrowDownIcon,
           isHidden: isLastItem,
+        },
+        {
+          label: formatMessage({ id: 'template.field-datasets-menu' }),
+          isHidden: !showDatasetOption,
+          Icon: ArrowRightIcon,
+          className: classnames(styles['dataset-submenu'], !datasetOptions?.length && styles['dataset-disabled']),
+          subOptions: getDatasetSubOptions(),
         },
         {
           mapKey: 'template.kick-off-form-required',

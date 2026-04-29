@@ -7,6 +7,7 @@ import { TeamUser } from './TeamUser';
 import { DeleteTeamUserPopupContainer } from './DeleteTeamUserPopup';
 import { AddGuestsBanner } from './AddGuestsBanner';
 import { CreateUserModal } from './CreateUserModal';
+import { VacationSettingsModal } from './VacationSettingsModal';
 
 import { resendInvite } from '../../../api/resendInvite';
 import { TUserListItem } from '../../../types/user';
@@ -56,6 +57,7 @@ export function Users({
   const accessConditions = isSubscribed || isFreePlan;
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [vacationModalUser, setVacationModalUser] = useState<TUserListItem | null>(null);
 
   useEffect(() => {
     fetchUsers({});
@@ -148,6 +150,7 @@ export function Users({
           isSubscribed={accessConditions}
           handleToggleAdmin={handleToggleUserAdmin}
           openModal={() => openModal({ user })}
+          openVacationModal={() => setVacationModalUser(user)}
           user={{ ...user, isAccountOwner: user.isAccountOwner && !user.invite }}
         />
       );
@@ -159,6 +162,7 @@ export function Users({
       <DeleteTeamUserPopupContainer />
       <AddGuestsBanner />
       <CreateUserModal isOpen={isCreateUserModalOpen} onClose={handleCloseCreateUserModal} />
+      <VacationSettingsModal isOpen={!!vacationModalUser} onClose={() => setVacationModalUser(null)} user={vacationModalUser} />
 
       <PageTitle titleId={EPageTitle.Team} withUnderline={false} />
       {renderSearch()}
