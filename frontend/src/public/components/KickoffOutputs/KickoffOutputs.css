@@ -84,6 +84,7 @@
 
 .fieldset-output-group {
   margin-top: 8px;
+  margin-bottom: 8px;
   padding-left: 12px;
   border-left: 3px solid var(--color-primary, mediumslateblue);
 }

@@ -68,41 +68,61 @@ export function KickoffOutputs({
     [EExtraFieldType.User]: UserOutput,
   };
 
-  const renderOutputsList = () => {
-    if (isTruncated && isArrayWithItems(outputs)) {
-      const firstOutput = outputs[0];
-      const OutputComponent = outputsMap[firstOutput.type];
+  const renderSingleOutput = (output: IExtraField, key: string | number) => {
+    const OutputComponent = outputsMap[output.type];
+    const value = output.type === EExtraFieldType.User ? output.userId || output.groupId : output.value;
+    const hasValue = Array.isArray(value) ? value.length > 0 : Boolean(value);
+    const isEmpty = !(hasValue || output.attachments?.length);
+    return !isEmpty ? <OutputComponent key={key} {...output} /> : null;
+  };
 
-      return <OutputComponent {...firstOutput} />;
+  const renderOutputsList = () => {
+    type TOutputItem =
+      | { kind: 'field'; order: number; data: IExtraField }
+      | { kind: 'fieldset'; order: number; data: IFieldsetData };
+
+    const items: TOutputItem[] = [
+      ...(outputs || []).map((field): TOutputItem => ({
+        kind: 'field',
+        order: field.order,
+        data: field,
+      })),
+      ...(fieldsets || []).map((fieldset): TOutputItem => ({
+        kind: 'fieldset',
+        order: fieldset.order!,
+        data: fieldset,
+      })),
+    ].sort((a, b) => a.order - b.order);
+
+
+    if (isTruncated && items.length > 0) {
+      const firstItem = items[0];
+      if (firstItem.kind === 'field') {
+        return renderSingleOutput(firstItem.data, 'truncated-field');
+      }
+
+      return renderSingleOutput(firstItem.data.fields[0], 'truncated-fieldset-field');
     }
 
     return (
       <>
-        {outputs?.map((output, index) => {
-          const OutputComponent = outputsMap[output.type];
-          const value = output.type === EExtraFieldType.User ? output.userId || output.groupId : output.value;
-          const hasValue = Array.isArray(value) ? value.length > 0 : Boolean(value);
-          const isEmpty = !(hasValue || output.attachments?.length);
+        {items.map((item, index) => {
+          if (item.kind === 'field') {
+            return renderSingleOutput(item.data, `field-${item.data.apiName || index}`);
+          }
 
-          return !isEmpty ? <OutputComponent key={index} {...output} /> : null;
+          const fieldset = item.data;
+
+          return (
+            <div key={`fieldset-${fieldset.id}`} className={styles['fieldset-output-group']}>
+              {fieldset.name && <p className={styles['fieldset-output-group__title']}>{fieldset.name}</p>}
+              {fieldset.description && <p className={styles['fieldset-output-group__description']}>{fieldset.description}</p>}
+              {fieldset.fields.map((output, fieldIndex) =>
+                renderSingleOutput(output, `fieldset-${fieldset.id}-${output.apiName || fieldIndex}`),
+              )}
+            </div>
+          );
         })}
-        {fieldsets?.map((fs) => (
-          <div key={fs.id} className={styles['fieldset-output-group']}>
-            {fs.name && <p className={styles['fieldset-output-group__title']}>{fs.name}</p>}
-            {fs.description && <p className={styles['fieldset-output-group__description']}>{fs.description}</p>}
-            {fs.fields.map((output, index) => {
-              const OutputComponent = outputsMap[output.type];
-              const value = output.type === EExtraFieldType.User
-                ? output.userId || output.groupId
-                : output.value;
-              const hasValue = Array.isArray(value)
-                ? value.length > 0
-                : Boolean(value);
-              const isEmpty = !(hasValue || output.attachments?.length);
-              return !isEmpty ? <OutputComponent key={index} {...output} /> : null;
-            })}
-          </div>
-        ))}
       </>
     );
   };

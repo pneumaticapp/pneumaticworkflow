@@ -117,7 +117,7 @@ export interface IWorkflowDelay {
 }
 
 export interface IWorkflowLogTask
-  extends Pick<ITask, 'id' | 'name' | 'description' | 'output' | 'performers' | 'dueDate'> {
+  extends Pick<ITask, 'id' | 'name' | 'description' | 'output' | 'fieldsets' | 'performers' | 'dueDate'> {
   number: number;
   delay: IWorkflowDelay | null;
 }
