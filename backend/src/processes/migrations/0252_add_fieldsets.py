@@ -8,7 +8,7 @@ import src.generics.mixins.models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0144_auto_20260409_0907'),
+        ('accounts', '0142_vacation_fields'),
         ('processes', '0251_add_skip_for_starter'),
     ]
 
