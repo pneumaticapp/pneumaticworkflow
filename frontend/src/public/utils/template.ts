@@ -15,6 +15,7 @@ import {
 } from '../types/template';
 import { getUrlParams } from './getUrlParams';
 import { DEFAULT_TEMPLATE_NAME } from '../components/TemplateEdit/constants';
+import { getFieldsetsByApiNameSnapshot } from '../components/TemplateEdit/TemplateEditFieldsetsContext';
 
 import { getNormalizeFieldsOrders } from './workflows';
 import { createOwnerApiName, createTaskApiName, createUUID } from './createId';
@@ -136,6 +137,7 @@ export const getNormalizedTask = (
 };
 
 export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
+  const fieldsetsByApiName = getFieldsetsByApiNameSnapshot();
   // System variables that the backend recognizes and skips during validation.
   // Must stay in sync with backend/src/processes/enums.py :: SystemVariable
   const TASK_SYSTEM_VARS = new Set(['workflow-starter']);
@@ -145,6 +147,13 @@ export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
 
   template.kickoff?.fields?.forEach((f) => {
     if (f.apiName) validApiNames.add(f.apiName);
+  });
+
+  template.kickoff?.fieldsets?.forEach((fs) => {
+    const fieldsetData = fieldsetsByApiName?.get(fs.apiName);
+    fieldsetData?.fields?.forEach((f) => {
+      if (f.apiName) validApiNames.add(f.apiName);
+    });
   });
 
   const removeInvalidReferences = (
@@ -199,6 +208,13 @@ export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
 
     (task.fields || []).forEach((f) => {
       if (f.apiName) validApiNames.add(f.apiName);
+    });
+
+    (task.fieldsets || []).forEach((fs) => {
+      const fieldsetData = fieldsetsByApiName?.get(fs.apiName);
+      fieldsetData?.fields?.forEach((f) => {
+        if (f.apiName) validApiNames.add(f.apiName);
+      });
     });
 
     return {

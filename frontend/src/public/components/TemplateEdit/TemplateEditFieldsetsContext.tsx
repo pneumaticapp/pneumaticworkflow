@@ -18,6 +18,12 @@ const defaultValue: ITemplateEditFieldsetsContextValue = {
 
 const TemplateEditFieldsetsContext = React.createContext<ITemplateEditFieldsetsContextValue>(defaultValue);
 
+let fieldsetsByApiNameSnapshot: ReadonlyMap<string, IFieldsetData> = new Map();
+
+export function getFieldsetsByApiNameSnapshot(): ReadonlyMap<string, IFieldsetData> {
+  return fieldsetsByApiNameSnapshot;
+}
+
 export function useTemplateEditFieldsets(): ITemplateEditFieldsetsContextValue {
   return React.useContext(TemplateEditFieldsetsContext);
 }
@@ -25,6 +31,9 @@ export function useTemplateEditFieldsets(): ITemplateEditFieldsetsContextValue {
 export function TemplateEditFieldsetsProvider({ children }: { children: React.ReactNode }) {
   const template = useSelector(getTemplateData);
   const { fieldsetsByApiName, isLoading } = useTemplateEditFieldsetsCatalog(template?.id);
+
+  fieldsetsByApiNameSnapshot = fieldsetsByApiName;
+
   const value = useMemo(
     () => ({
       fieldsetsByApiName,
