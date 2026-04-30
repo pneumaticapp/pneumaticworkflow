@@ -717,4 +717,42 @@ class SystemVariable:
 
     WORKFLOW_NAME_VARS = {DATE, TEMPLATE_NAME, WORKFLOW_ID, WORKFLOW_STARTER}
 
-    TASK_VARS = {WORKFLOW_STARTER}
+    # Allowed in task name / description without matching a FieldTemplate
+    # (same as workflow name template — date, template-name,
+    # workflow-id, starter).
+    TASK_VARS = WORKFLOW_NAME_VARS
+
+
+class LabelPosition:
+
+    TOP = 'top'
+    LEFT = 'left'
+
+    CHOICES = (
+        (TOP, 'Top'),
+        (LEFT, 'Left'),
+    )
+    LITERALS = Literal[TOP, LEFT]
+
+
+class FieldSetLayout:
+
+    HORIZONTAL = 'horizontal'
+    VERTICAL = 'vertical'
+
+    CHOICES = (
+        (HORIZONTAL, 'Horizontal'),
+        (VERTICAL, 'Vertical'),
+    )
+    LITERALS = Literal[HORIZONTAL, VERTICAL]
+
+
+class FieldSetRuleType:
+
+    SUM_EQUAL = 'sum_equal'
+
+    CHOICES = (
+        (SUM_EQUAL, 'The sum is equal'),
+    )
+
+    LITERALS = Literal[SUM_EQUAL]

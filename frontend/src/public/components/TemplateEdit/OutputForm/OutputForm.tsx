@@ -1,11 +1,9 @@
-/* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
 import { injectIntl, IntlShape } from 'react-intl';
 import classNames from 'classnames';
 
 import { EMoveDirections, EInputNameBackgroundColor } from '../../../types/workflow';
-import { EExtraFieldType, IExtraField } from '../../../types/template';
+import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { getNormalizeFieldsOrders, moveWorkflowField } from '../../../utils/workflows';
 
@@ -15,28 +13,49 @@ import { ExtraFieldIntl } from '../ExtraFields';
 import { getEditedFields } from '../ExtraFields/utils/getEditedFields';
 import { getEmptyField } from '../KickoffRedux/utils/getEmptyField';
 
+import { OutputFormTaskMerged, IOutputFormTaskMergedOwnProps } from './OutputFormTaskMerged';
+
 import styles from './OutputForm.css';
 import stylesTaskForm from '../TaskForm/TaskForm.css';
+import { useDatasetOptions } from '../ExtraFields/utils/useDatasetOptions';
 
-export interface IOutputFormOwnProps {
+export interface IOutputFormSimpleOwnProps {
+  mode?: 'simple';
   fields: IExtraField[];
-  intl: IntlShape;
+  onOutputChange(value: IExtraField[]): void;
   show?: boolean;
   isDisabled: boolean;
   accountId: number;
-  onOutputChange(value: IExtraField[]): void;
 }
 
-export function OutputForm({ fields, onOutputChange, intl, isDisabled, show, accountId }: IOutputFormOwnProps) {
+export type IOutputFormTaskMergedExternalProps = Omit<IOutputFormTaskMergedOwnProps, 'intl'> & {
+  mode: 'taskMerged';
+};
+
+export type IOutputFormExternalProps = IOutputFormSimpleOwnProps | IOutputFormTaskMergedExternalProps;
+
+export type ITaskOutputFlowFormProps = Omit<IOutputFormTaskMergedExternalProps, 'mode'>;
+
+type TOutputFormInjectedProps = IOutputFormExternalProps & { intl: IntlShape };
+
+function OutputFormSimple({
+  fields,
+  onOutputChange,
+  intl,
+  isDisabled,
+  show,
+  accountId,
+}: IOutputFormSimpleOwnProps & { intl: IntlShape }) {
   const outputRef = React.useRef<HTMLInputElement>(null);
 
   React.useEffect(() => {
     if (show) {
       outputRef.current?.focus();
     }
-  }, [outputRef]);
+  }, [show]);
 
   const sortedFields = [...fields].sort((a, b) => b.order - a.order);
+  const datasetOptions = useDatasetOptions(fields);
 
   const isFormEmpty = !isArrayWithItems(fields);
 
@@ -89,7 +108,7 @@ export function OutputForm({ fields, onOutputChange, intl, isDisabled, show, acc
         <div className={styles['fields']}>
           {sortedFields.map((field, index) => (
             <ExtraFieldIntl
-              key={index}
+              key={field.apiName}
               id={index}
               field={{ ...field }}
               fieldsCount={sortedFields.length}
@@ -98,6 +117,8 @@ export function OutputForm({ fields, onOutputChange, intl, isDisabled, show, acc
               moveFieldUp={() => handleMoveField(index, EMoveDirections.Up)}
               moveFieldDown={() => handleMoveField(index, EMoveDirections.Down)}
               editField={handleEditField(field.apiName)}
+              mode={EExtraFieldMode.Kickoff}
+              datasetOptions={datasetOptions}
               isDisabled={isDisabled}
               innerRef={outputRef}
               accountId={accountId}
@@ -107,6 +128,18 @@ export function OutputForm({ fields, onOutputChange, intl, isDisabled, show, acc
       )}
     </>
   );
+}
+
+function OutputForm(props: TOutputFormInjectedProps) {
+  const { intl, ...rest } = props;
+  if (rest.mode === 'taskMerged') {
+    const { mode, ...merged } = rest as IOutputFormTaskMergedExternalProps;
+    if (mode !== 'taskMerged') {
+      return null;
+    }
+    return <OutputFormTaskMerged {...merged} intl={intl} />;
+  }
+  return <OutputFormSimple {...rest} intl={intl} />;
 }
 
 export const OutputFormIntl = injectIntl(OutputForm);

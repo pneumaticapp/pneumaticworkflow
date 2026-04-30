@@ -10,7 +10,6 @@ import { AutoSaveStatusContainer } from './AutoSaveStatus';
 import { TemplateEntity } from './TemplateEntity';
 import { AddEntityButton, EEntityTitle } from './AddEntityButton';
 import { START_DURATION, DEFAULT_TEMPLATE_NAME } from './constants';
-import { getVariables } from './TaskForm/utils/getTaskVariables';
 import { TemplateIntegrations } from './Integrations';
 import { ERoutes } from '../../constants/routes';
 import { TUserListItem } from '../../types/user';
@@ -34,6 +33,8 @@ import { getUserFullName } from '../../utils/users';
 import { getSubscriptionPlan } from '../../redux/selectors/user';
 import { ESubscriptionPlan } from '../../types/account';
 import { TemplateSettings } from './TemplateSettings';
+import { TemplateEditFieldsetsProvider } from './TemplateEditFieldsetsContext';
+import { TemplateEditVariablesSync } from './TemplateEditVariablesSync';
 
 import styles from './TemplateEdit.css';
 import { getEmptyConditions } from './TaskForm/Conditions/utils/getEmptyConditions';
@@ -114,14 +115,6 @@ export function TemplateEdit({
   }, [template.tasks, prevLocation?.pathname]);
 
   useEffect(() => {
-    const variables = getVariables(template);
-    const prevVariables = prevTemplate ? getVariables(prevTemplate) : [];
-    if (variables.length !== prevVariables.length) {
-      if (template.id) {
-        loadTemplateVariablesSuccess({ templateId: template.id, variables });
-      }
-    }
-
     const [pathName, prevPathName] = [location.pathname, prevLocation?.pathname];
     const isPreviousPathIsCreate = prevPathName === ERoutes.TemplatesCreate;
     const isCurrentPathIsEdit = checkSomeRouteIsActive(ERoutes.TemplatesEdit);
@@ -194,6 +187,7 @@ export function TemplateEdit({
       name: 'New Step',
       number: 1,
       fields: [],
+      fieldsets: [],
       rawPerformers: [
         {
           apiName: createPerformerApiName(),
@@ -467,37 +461,46 @@ export function TemplateEdit({
     );
   };
 
-  if (templateStatus === ETemplateStatus.Loading) {
-    return <div className="loading" />;
-  }
-
   return (
-    <div className={styles['container']}>
-      <AutoSaveStatusContainer onRetry={saveTemplate} />
+    <TemplateEditFieldsetsProvider>
+      {templateStatus === ETemplateStatus.Loading ? (
+        <div className="loading" />
+      ) : (
+        <>
+          <TemplateEditVariablesSync
+            template={template}
+            prevTemplate={prevTemplate}
+            loadTemplateVariablesSuccess={loadTemplateVariablesSuccess}
+          />
+          <div className={styles['container']}>
+            <AutoSaveStatusContainer onRetry={saveTemplate} />
 
-      <div className={styles['template-wrapper']}>
-        <div className={styles['template-wrapper__info']}>
-          <TemplateSettings />
-        </div>
-        <div className={styles['template-wrapper__tasks']}>
-          {!accessConditions && <ConditionsBanner />}
-          <div className={styles['tasks']}>
-            <div className={styles['kickoff-wrapper']}>
-              <KickoffReduxContainer setKickoff={handleChangeTemplateField('kickoff')} />
+            <div className={styles['template-wrapper']}>
+              <div className={styles['template-wrapper__info']}>
+                <TemplateSettings />
+              </div>
+              <div className={styles['template-wrapper__tasks']}>
+                {!accessConditions && <ConditionsBanner />}
+                <div className={styles['tasks']}>
+                  <div className={styles['kickoff-wrapper']}>
+                    <KickoffReduxContainer setKickoff={handleChangeTemplateField('kickoff')} />
+                  </div>
+                  {sortedTasks().map(getTaskListItem)}
+                  <AddEntityButton
+                    entities={[
+                      {
+                        title: EEntityTitle.Task,
+                        onAddEntity: handleAddTask,
+                      },
+                    ]}
+                  />
+                  <TemplateIntegrations />
+                </div>
+              </div>
             </div>
-            {sortedTasks().map(getTaskListItem)}
-            <AddEntityButton
-              entities={[
-                {
-                  title: EEntityTitle.Task,
-                  onAddEntity: handleAddTask,
-                },
-              ]}
-            />
-            <TemplateIntegrations />
           </div>
-        </div>
-      </div>
-    </div>
+        </>
+      )}
+    </TemplateEditFieldsetsProvider>
   );
 }

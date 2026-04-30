@@ -1,0 +1,18 @@
+.fieldset-outputs-preview__group {
+  margin: 0 0.4rem 0.4rem 0;
+  padding: 0.1rem 0.8rem;
+  display: inline-block;
+  overflow: hidden;
+  max-width: 20ch;
+  font-size: 1.3rem;
+  line-height: 1.6rem;
+  vertical-align: middle;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  user-select: all;
+  color: var(--pneumatic-color-black72);
+  background: var(--pneumatic-color-black16);
+  border: 0;
+  border-radius: 1.4rem;
+  justify-content: space-between;
+}

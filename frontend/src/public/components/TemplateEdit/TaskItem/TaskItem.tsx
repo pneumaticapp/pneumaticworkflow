@@ -2,10 +2,12 @@
 import React from 'react';
 import { useSelector } from 'react-redux';
 
-import { getKickoff, getTemplateTasks } from '../../../redux/selectors/template';
+import { getKickoff, getTemplateData, getTemplateTasks } from '../../../redux/selectors/template';
 
 import { ExtraFieldsLabels } from '../ExtraFields/utils/ExtraFieldsLabels';
 import { getVariables } from '../TaskForm/utils/getTaskVariables';
+import { useTemplateEditFieldsets } from '../TemplateEditFieldsetsContext';
+import { FieldsetOutputsPreview } from '../FieldsetOutputsPreview/FieldsetOutputsPreview';
 
 import { ITemplateTask } from '../../../types/template';
 import { ETaskFormParts } from '../types';
@@ -29,7 +31,14 @@ export const TaskItem = ({ task, toggleIsOpenTask, setScrollTarget }: ITaskItemP
 
   const kickoff = useSelector(getKickoff);
   const tasks = useSelector(getTemplateTasks);
-  const allVariables = getVariables({ kickoff, tasks });
+  const template = useSelector(getTemplateData);
+  const { fieldsetsByApiName } = useTemplateEditFieldsets();
+  const allVariables = getVariables({
+    kickoff,
+    tasks,
+    templateId: template.id,
+    fieldsetsByApiName,
+  });
 
   const handleClickOnLabel = (taskFormParts: ETaskFormParts) => {
     setScrollTarget(taskFormParts);
@@ -58,6 +67,11 @@ export const TaskItem = ({ task, toggleIsOpenTask, setScrollTarget }: ITaskItemP
 
         <div className={styles['task-preview-outputs']}>
           <ExtraFieldsLabels extraFields={fields} onClick={() => handleClickOnLabel(ETaskFormParts.Fields)} />
+          <FieldsetOutputsPreview
+            fieldsets={task.fieldsets || []}
+            fieldsetsByApiName={fieldsetsByApiName}
+            onGroupClick={() => handleClickOnLabel(ETaskFormParts.Fields)}
+          />
           {TaskRenderConditionsInfo({
             task,
             onClick: () => handleClickOnLabel(ETaskFormParts.StartsAfter),

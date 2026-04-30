@@ -12,12 +12,13 @@ import { ERoutes } from '../../constants/routes';
 import { history } from '../../utils/history';
 import { IntlMessages } from '../IntlMessages';
 import { EInputNameBackgroundColor } from '../../types/workflow';
-import { IExtraField, EExtraFieldMode } from '../../types/template';
+import { IExtraField, EExtraFieldMode, IFieldsetData } from '../../types/template';
 import { getPluralNoun, isArrayWithItems } from '../../utils/helpers';
 import { getEditedFields } from '../TemplateEdit/ExtraFields/utils/getEditedFields';
 
 import { getInitialKickoff } from './utils/getInitialKickoff';
 import { ExtraFieldIntl } from '../TemplateEdit/ExtraFields';
+import { FieldsetFieldGroup } from '../FieldsetFieldGroup';
 import { PlayLogoIcon } from '../icons';
 import { validateWorkflowName } from '../../utils/validators';
 import { checkExtraFieldsAreValid } from './utils/areKickoffFieldsValid';
@@ -75,6 +76,7 @@ function WorkflowEditPopupComponent({
     workflow.wfNameTemplate || `${reactElementToText(<DateFormat />)} — ${workflow.name}`,
   );
   const [kickoffState, setKickoffState] = useState(getInitialKickoff(workflow.kickoff));
+  const [fieldsetStates, setFieldsetStates] = useState<IFieldsetData[]>(workflow.loadedFieldsets || []);
 
   const [isUrgent, setIsUrgent] = useState(false);
 
@@ -102,6 +104,15 @@ function WorkflowEditPopupComponent({
 
       return { ...prevKickoff, fields: newFields };
     });
+  };
+
+  const handleEditFieldsetField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
+    setFieldsetStates((prevFieldsets) =>
+      prevFieldsets.map((fs) => ({
+        ...fs,
+        fields: getEditedFields(fs.fields, apiName, changedProps),
+      })),
+    );
   };
 
   const isWorkflowsStartButtonDisabled =
@@ -223,9 +234,14 @@ function WorkflowEditPopupComponent({
 
   const handleRunWorkflow = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
+    const allFieldsetFields = fieldsetStates.flatMap((fs) => fs.fields);
+    const mergedKickoff = {
+      ...kickoffState,
+      fields: [...kickoffState.fields, ...allFieldsetFields],
+    };
     onRunWorkflow({
       ...workflow,
-      kickoff: kickoffState,
+      kickoff: mergedKickoff,
       name: workflowName,
       isUrgent,
       dueDate: undefined,
@@ -262,7 +278,7 @@ function WorkflowEditPopupComponent({
               toolipText={formatMessage({ id: 'kickoff.workflow-name-tooltip' })}
               foregroundColor="beige"
             />
-            {kickoffState && isArrayWithItems(visibleKickoffFields) && (
+            {kickoffState && (isArrayWithItems(visibleKickoffFields) || isArrayWithItems(fieldsetStates)) && (
               <div className={styles['popup__kickoff']}>
                 <SectionTitle className={styles['section-title']}>
                   {formatMessage({ id: 'template.kick-off-form-title' })}
@@ -287,6 +303,19 @@ function WorkflowEditPopupComponent({
                         wrapperClassName={styles['kickoff-extra-field']}
                         accountId={accountId}
                       />
+                  ))}
+                  {fieldsetStates.map((fs) => (
+                    <FieldsetFieldGroup
+                      key={fs.id}
+                      title={fs.name}
+                      description={fs.description}
+                      fields={fs.fields}
+                      onEditField={handleEditFieldsetField}
+                      mode={EExtraFieldMode.ProcessRun}
+                      labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
+                      accountId={accountId}
+                      fieldClassName={styles['kickoff-extra-field']}
+                    />
                   ))}
                 </div>
               </div>

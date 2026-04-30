@@ -7,6 +7,7 @@ import loadable from '@loadable/component';
 import { ERoutes } from '../../constants/routes';
 import { TemplateLayout } from '../../layout';
 import { Loader } from '../../components/UI';
+import { FieldsetsView } from '../Fieldsets';
 
 const Template = loadable(
   () => import(/* webpackChunkName: "template", webpackPrefetch: true */ '../../components/TemplateEdit'),
@@ -18,6 +19,7 @@ export const TemplateView = () => {
     <TemplateLayout>
       <React.Suspense fallback={<div className="loading" />}>
         <Switch>
+          <Route path={ERoutes.TemplateFieldsets} component={FieldsetsView} />
           <Route path={ERoutes.TemplateView} component={Template} exact={true} />
           <Route path={ERoutes.TemplatesCreate} component={Template} />
           <Route path={ERoutes.TemplatesEdit} component={Template} />
@@ -27,3 +29,4 @@ export const TemplateView = () => {
     </TemplateLayout>
   );
 };
+

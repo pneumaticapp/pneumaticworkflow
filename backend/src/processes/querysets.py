@@ -293,6 +293,7 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
                     lookup='kickoff',
                     queryset=(
                         Kickoff.objects.all().prefetch_related(
+                            'fieldsets',
                             Prefetch(
                                 lookup='fields',
                                 queryset=(
@@ -364,6 +365,7 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
                     lookup='kickoff',
                     queryset=(
                         Kickoff.objects.all().prefetch_related(
+                            'fieldsets',
                             Prefetch(
                                 lookup='fields',
                                 queryset=(
@@ -443,9 +445,11 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
                 'tasks__conditions__rules',
                 'tasks__conditions__rules__predicates',
                 'tasks__raw_performers',
+                'tasks__fieldsets',
                 'kickoff',
                 'kickoff__fields',
                 'kickoff__fields__selections',
+                'kickoff__fieldsets',
             )
         )
 
@@ -1273,5 +1277,35 @@ class TemplatePresetQuerySet(AccountBaseQuerySet):
 
 
 class SearchContentQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldsetTemplateQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldsetTemplateTaskTemplateQuerySet(BaseQuerySet):
+
+    pass
+
+
+class FieldsetTemplateKickoffQuerySet(BaseQuerySet):
+
+    pass
+
+
+class FieldsetTemplateRuleQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldSetQuerySet(AccountBaseQuerySet):
+
+    pass
+
+
+class FieldSetRuleQuerySet(AccountBaseQuerySet):
 
     pass

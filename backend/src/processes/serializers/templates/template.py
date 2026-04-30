@@ -40,6 +40,7 @@ from src.processes.enums import (
     WorkflowApiStatus, TaskStatus,
 )
 from src.processes.messages import template as messages
+from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.template import (
@@ -63,6 +64,9 @@ from src.processes.serializers.templates.task import (
     TaskTemplatePrivilegesSerializer,
     TaskTemplateSerializer,
     TemplateTaskOnlyFieldsSerializer,
+)
+from src.processes.services.templates.fieldsets.fieldset import (
+    FieldSetTemplateService,
 )
 from src.processes.services.templates.integrations import (
     TemplateIntegrationsService,
@@ -170,26 +174,43 @@ class TemplateSerializer(
         """
         result = []
         try:
-            fields = data['kickoff']['fields']
+            kickoff_data = data['kickoff']
         except KeyError:
-            pass
-        else:
+            return result
+
+        fields_data = kickoff_data.get('fields') or []
+        for field in fields_data:
             try:
-                for field in fields:
-                    try:
-                        api_name = field.get('api_name')
-                        name = field.get('name')
-                        is_required = field.get('is_required', False)
-                        if api_name and name:
-                            result.append({
-                                'name': name,
-                                'api_name': api_name,
-                                'is_required': is_required,
-                            })
-                    except TypeError:
-                        continue
-            except TypeError:
-                pass
+                api_name = field.get('api_name')
+                name = field.get('name')
+                is_required = field.get('is_required', False)
+                if api_name and name:
+                    result.append({
+                        'name': name,
+                        'api_name': api_name,
+                        'is_required': is_required,
+                    })
+            except (TypeError, AttributeError):
+                continue
+        fieldset_ids = kickoff_data.get('fieldsets') or []
+        normalized_fieldset_ids = []
+        for elem in fieldset_ids:
+            try:
+                normalized_fieldset_ids.append(int(elem))
+            except (TypeError, ValueError):
+                continue
+        if normalized_fieldset_ids:
+            account = self.context.get('account')
+            fieldset_fields = FieldTemplate.objects.filter(
+                fieldset_id__in=normalized_fieldset_ids,
+                account_id=account.id,
+            )
+            for field_template in fieldset_fields:
+                result.append({
+                    'name': field_template.name,
+                    'api_name': field_template.api_name,
+                    'is_required': field_template.is_required,
+                })
         return result
 
     def _get_template_performers_ids(self, data: Dict[str, Any]) -> Set[int]:
@@ -454,8 +475,12 @@ class TemplateSerializer(
     ) -> dict:
         if isinstance(data, dict):
             data['fields'] = data.get('fields', [])
+            data['fieldsets'] = data.get('fieldsets', [])
         else:
-            data = {'fields': []}
+            data = {
+                'fields': [],
+                'fieldsets': [],
+            }
         return data
 
     def save_as_draft(self) -> Template:
@@ -608,6 +633,9 @@ class TemplateSerializer(
                 'template': instance,
             },
         )
+        fieldsets_links_raw = validated_data['kickoff'].pop(
+            'fieldsettemplatekickoff_set', None,
+        ) or []
         self.create_or_update_related_one(
             slz_cls=KickoffSerializer,
             data=validated_data['kickoff'],
@@ -620,9 +648,35 @@ class TemplateSerializer(
                 'template': instance,
             },
         )
+        if fieldsets_links_raw:
+            fieldsets_links = [
+                {
+                    'api_name': link['fieldset']['api_name'],
+                    'order': link['order'],
+                }
+                for link in fieldsets_links_raw
+            ]
+            FieldSetTemplateService.create_or_update_kickoff_links(
+                kickoff=instance.kickoff_instance,
+                template=instance,
+                fieldsets_links=fieldsets_links,
+            )
         parents_by_tasks = get_tasks_parents(validated_data['tasks'])
         tasks_api_names = set(parents_by_tasks.keys())
         ancestors_by_tasks = get_tasks_ancestors(parents_by_tasks)
+        tasks_fieldsets = {}
+        for task_data in validated_data['tasks']:
+            fieldsets_raw = task_data.pop(
+                'fieldsettemplatetasktemplate_set', None,
+            ) or []
+            if fieldsets_raw:
+                tasks_fieldsets[task_data['api_name']] = [
+                    {
+                        'api_name': link['fieldset']['api_name'],
+                        'order': link['order'],
+                    }
+                    for link in fieldsets_raw
+                ]
         self.create_or_update_related(
             data=validated_data['tasks'],
             ancestors_data={
@@ -636,6 +690,7 @@ class TemplateSerializer(
                 'tasks_api_names': tasks_api_names,
                 'parents_by_tasks': parents_by_tasks,
                 'ancestors_by_tasks': ancestors_by_tasks,
+                'tasks_fieldsets': tasks_fieldsets,
             },
         )
 
@@ -679,6 +734,9 @@ class TemplateSerializer(
                 'template': instance,
             },
         )
+        fieldsets_links_raw = validated_data['kickoff'].pop(
+            'fieldsettemplatekickoff_set', None,
+        ) or []
         self.create_or_update_related_one(
             slz_cls=KickoffSerializer,
             data=validated_data['kickoff'],
@@ -691,9 +749,35 @@ class TemplateSerializer(
                 'template': instance,
             },
         )
+        if fieldsets_links_raw:
+            fieldsets_links = [
+                {
+                    'api_name': link['fieldset']['api_name'],
+                    'order': link['order'],
+                }
+                for link in fieldsets_links_raw
+            ]
+            FieldSetTemplateService.create_or_update_kickoff_links(
+                kickoff=instance.kickoff_instance,
+                template=instance,
+                fieldsets_links=fieldsets_links,
+            )
         parents_by_tasks = get_tasks_parents(validated_data['tasks'])
         tasks_api_names = set(parents_by_tasks.keys())
         ancestors_by_tasks = get_tasks_ancestors(parents_by_tasks)
+        tasks_fieldsets = {}
+        for task_data in validated_data['tasks']:
+            fieldsets_raw = task_data.pop(
+                'fieldsettemplatetasktemplate_set', None,
+            ) or []
+            if fieldsets_raw:
+                tasks_fieldsets[task_data['api_name']] = [
+                    {
+                        'api_name': link['fieldset']['api_name'],
+                        'order': link['order'],
+                    }
+                    for link in fieldsets_raw
+                ]
         self.create_or_update_related(
             data=validated_data['tasks'],
             ancestors_data={
@@ -707,6 +791,7 @@ class TemplateSerializer(
                 'tasks_api_names': tasks_api_names,
                 'parents_by_tasks': parents_by_tasks,
                 'ancestors_by_tasks': ancestors_by_tasks,
+                'tasks_fieldsets': tasks_fieldsets,
             },
         )
 
@@ -1038,3 +1123,22 @@ class TemplateTitlesSerializer(Serializer):
     id = IntegerField(read_only=True)
     name = CharField(read_only=True)
     count = IntegerField(read_only=True)
+
+
+class FieldsetTemplateFilterSerializer(
+    CustomValidationErrorMixin,
+    AdditionalValidationMixin,
+    Serializer,
+):
+
+    ordering = ChoiceField(
+        required=False,
+        choices=(
+            ('name', 'name'),
+            ('-name', '-name'),
+            ('date', 'date'),
+            ('-date', '-date'),
+        ),
+    )
+    limit = IntegerField(min_value=0, required=False)
+    offset = IntegerField(min_value=0, required=False)

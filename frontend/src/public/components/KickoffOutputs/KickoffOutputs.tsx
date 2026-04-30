@@ -4,7 +4,7 @@ import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { EditIcon } from '../icons';
-import { EExtraFieldType, IExtraField } from '../../types/template';
+import { EExtraFieldType, IExtraField, IFieldsetData } from '../../types/template';
 
 import { CheckboxOutput } from './CheckboxOutput';
 import { RadioOutput } from './RadioOutput';
@@ -29,6 +29,7 @@ export interface IKickoffOutputs {
   description?: string | null;
   viewMode: EKickoffOutputsViewModes;
   outputs?: IExtraField[];
+  fieldsets?: IFieldsetData[];
   onEdit?(): void;
   isOnlyAttachmentsShown?: boolean;
   isTruncated?: boolean;
@@ -38,50 +39,92 @@ export function KickoffOutputs({
   containerClassName,
   viewMode,
   outputs,
+  fieldsets,
   description,
   onEdit,
   isOnlyAttachmentsShown = false,
   isTruncated,
 }: IKickoffOutputs) {
-  if (!outputs || !isArrayWithItems(outputs)) return null;
+  if ((!outputs || !isArrayWithItems(outputs)) && !isArrayWithItems(fieldsets)) return null;
 
   if (isOnlyAttachmentsShown) {
-    const fileOutputs = outputs.filter(({ type }) => type === EExtraFieldType.File);
+    const fileOutputs = (outputs || []).filter(({ type }) => type === EExtraFieldType.File);
     const attachments = flatten(fileOutputs.map(({ attachments }) => attachments || [])) as TUploadedFile[];
     return <Attachments attachments={attachments} />;
   }
 
   const { formatMessage, messages } = useIntl();
 
+  const outputsMap: { [key in EExtraFieldType]: Function } = {
+    [EExtraFieldType.Number]: TextOutput,
+    [EExtraFieldType.Checkbox]: CheckboxOutput,
+    [EExtraFieldType.Creatable]: RadioOutput,
+    [EExtraFieldType.Date]: TextOutput,
+    [EExtraFieldType.Radio]: RadioOutput,
+    [EExtraFieldType.String]: TextOutput,
+    [EExtraFieldType.Text]: TextOutput,
+    [EExtraFieldType.Url]: UrlOutput,
+    [EExtraFieldType.File]: FileOutput,
+    [EExtraFieldType.User]: UserOutput,
+  };
+
+  const renderSingleOutput = (output: IExtraField, key: string | number) => {
+    const OutputComponent = outputsMap[output.type];
+    const value = output.type === EExtraFieldType.User ? output.userId || output.groupId : output.value;
+    const hasValue = Array.isArray(value) ? value.length > 0 : Boolean(value);
+    const isEmpty = !(hasValue || output.attachments?.length);
+    return !isEmpty ? <OutputComponent key={key} {...output} /> : null;
+  };
+
   const renderOutputsList = () => {
-    const outputsMap: { [key in EExtraFieldType]: Function } = {
-      [EExtraFieldType.Number]: TextOutput,
-      [EExtraFieldType.Checkbox]: CheckboxOutput,
-      [EExtraFieldType.Creatable]: RadioOutput,
-      [EExtraFieldType.Date]: TextOutput,
-      [EExtraFieldType.Radio]: RadioOutput,
-      [EExtraFieldType.String]: TextOutput,
-      [EExtraFieldType.Text]: TextOutput,
-      [EExtraFieldType.Url]: UrlOutput,
-      [EExtraFieldType.File]: FileOutput,
-      [EExtraFieldType.User]: UserOutput,
-    };
+    type TOutputItem =
+      | { kind: 'field'; order: number; data: IExtraField }
+      | { kind: 'fieldset'; order: number; data: IFieldsetData };
 
-    if (isTruncated) {
-      const firstOutput = outputs[0];
-      const OutputComponent = outputsMap[firstOutput.type];
+    const items: TOutputItem[] = [
+      ...(outputs || []).map((field): TOutputItem => ({
+        kind: 'field',
+        order: field.order,
+        data: field,
+      })),
+      ...(fieldsets || []).map((fieldset): TOutputItem => ({
+        kind: 'fieldset',
+        order: fieldset.order!,
+        data: fieldset,
+      })),
+    ].sort((a, b) => b.order - a.order);
 
-      return <OutputComponent {...firstOutput} />;
+
+    if (isTruncated && items.length > 0) {
+      const firstItem = items[0];
+      if (firstItem.kind === 'field') {
+        return renderSingleOutput(firstItem.data, 'truncated-field');
+      }
+
+      return renderSingleOutput(firstItem.data.fields[0], 'truncated-fieldset-field');
     }
 
-    return outputs?.map((output, index) => {
-      const OutputComponent = outputsMap[output.type];
-      const value = output.type === EExtraFieldType.User ? output.userId || output.groupId : output.value;
-      const hasValue = Array.isArray(value) ? value.length > 0 : Boolean(value);
-      const isEmpty = !(hasValue || output.attachments?.length);
+    return (
+      <>
+        {items.map((item, index) => {
+          if (item.kind === 'field') {
+            return renderSingleOutput(item.data, `field-${item.data.apiName || index}`);
+          }
 
-      return !isEmpty ? <OutputComponent key={index} {...output} /> : null;
-    });
+          const fieldset = item.data;
+
+          return (
+            <div key={`fieldset-${fieldset.id}`} className={styles['fieldset-output-group']}>
+              {fieldset.name && <p className={styles['fieldset-output-group__title']}>{fieldset.name}</p>}
+              {fieldset.description && <p className={styles['fieldset-output-group__description']}>{fieldset.description}</p>}
+              {fieldset.fields.map((output, fieldIndex) =>
+                renderSingleOutput(output, `fieldset-${fieldset.id}-${output.apiName || fieldIndex}`),
+              )}
+            </div>
+          );
+        })}
+      </>
+    );
   };
 
   const renderTitle = () => {
@@ -130,3 +173,4 @@ export function KickoffOutputs({
     </div>
   );
 }
+

@@ -5,11 +5,12 @@ import { useDispatch } from 'react-redux';
 import { getEmptyField } from './utils/getEmptyField';
 import { KickoffShareForm } from './KickoffShareForm';
 import { isKickoffCleared } from './utils/isKickoffCleared';
+import { FieldsetPicker } from '../FieldsetPicker';
 
 import { KickoffMenu } from './KickoffMenu';
 import { IntlMessages } from '../../IntlMessages';
 import { EMoveDirections, EInputNameBackgroundColor } from '../../../types/workflow';
-import { EExtraFieldType, IKickoff, IExtraField, ITemplate, ETemplateParts } from '../../../types/template';
+import { EExtraFieldMode, EExtraFieldType, IKickoff, IExtraField, ITemplate, ETemplateParts } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { getNormalizeFieldsOrders, moveWorkflowField } from '../../../utils/workflows';
 import { ExtraFieldsMap } from '../ExtraFields/utils/ExtraFieldsMap';
@@ -21,10 +22,13 @@ import { ExtraFieldsLabels } from '../ExtraFields/utils/ExtraFieldsLabels';
 import { getEmptyKickoff } from '../../../utils/template';
 import { useHashLink } from '../../../hooks/useHashLink';
 import { useWorkflowNameVariables } from '../TaskForm/utils/getTaskVariables';
+import { useTemplateEditFieldsets } from '../TemplateEditFieldsetsContext';
+import { FieldsetOutputsPreview } from '../FieldsetOutputsPreview/FieldsetOutputsPreview';
 
 import styles from './KickoffRedux.css';
 import { patchTemplate } from '../../../redux/actions';
 import { InputWithVariables } from '../InputWithVariables';
+import { useDatasetOptions } from '../ExtraFields/utils/useDatasetOptions';
 
 export interface IKickoffReduxProps {
   template: ITemplate;
@@ -41,9 +45,11 @@ export function KickoffRedux({
   accountId,
 }: IKickoffReduxProps) {
   const dispatch = useDispatch();
+  const { fieldsetsByApiName } = useTemplateEditFieldsets();
   const [isOpen, setIsOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
-  const variables = useWorkflowNameVariables(kickoff);
+  const variables = useWorkflowNameVariables(kickoff, fieldsetsByApiName);
+  const datasetOptions = useDatasetOptions(kickoff.fields);
 
   const editTemplate = (templateFields: Partial<ITemplate>) => {
     dispatch(patchTemplate({ changedFields: templateFields }));
@@ -157,11 +163,27 @@ export function KickoffRedux({
                 moveFieldUp={() => handleMoveField(index, EMoveDirections.Up)}
                 moveFieldDown={() => handleMoveField(index, EMoveDirections.Down)}
                 editField={handleEditField(field.apiName)}
+                mode={EExtraFieldMode.Kickoff}
+                datasetOptions={datasetOptions}
                 accountId={accountId}
               />
             ))}
           </div>
         )}
+
+        <div className={styles['fieldsets-section']}>
+          <p className={styles['section-title']}>
+            {formatMessage({ id: 'template.kick-off-fieldsets' })}
+          </p>
+          <FieldsetPicker
+            selectedApiNames={(kickoff.fieldsets || []).map((fieldset) => fieldset.apiName)}
+            onChange={(apiNames) => {
+              const nextFieldsets = apiNames.map((apiName, index) => ({ apiName, order: index }));
+              handleChangeKickoff({ ...kickoff, fieldsets: nextFieldsets });
+            }}
+          />
+          <FieldsetOutputsPreview fieldsets={kickoff.fieldsets || []} fieldsetsByApiName={fieldsetsByApiName} />
+        </div>
 
         <KickoffShareForm className={styles['share-form']} />
       </>
@@ -169,9 +191,12 @@ export function KickoffRedux({
   };
 
   const renderKickoffLabels = () => {
-    const { fields } = kickoff;
+    const { fields, fieldsets } = kickoff;
+    const hasFieldsetChips = (fieldsets || []).some(
+      (taskFieldset) => isArrayWithItems(fieldsetsByApiName.get(taskFieldset.apiName)?.fields ?? []),
+    );
 
-    if (!isArrayWithItems(fields)) {
+    if (!isArrayWithItems(fields) && !hasFieldsetChips) {
       return null;
     }
 
@@ -188,7 +213,8 @@ export function KickoffRedux({
         role="button"
         aria-label="Toggle expand"
       >
-        <ExtraFieldsLabels extraFields={fields} />
+        {isArrayWithItems(fields) && <ExtraFieldsLabels extraFields={fields} />}
+        <FieldsetOutputsPreview fieldsets={fieldsets || []} fieldsetsByApiName={fieldsetsByApiName} />
       </div>
     );
   };

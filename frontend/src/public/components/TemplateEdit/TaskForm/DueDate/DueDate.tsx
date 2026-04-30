@@ -7,6 +7,7 @@ import { TrashIcon } from '../../../icons';
 
 import { IDueDate, IKickoff, ITemplateTask } from '../../../../types/template';
 import { START_DURATION } from '../../constants';
+import { useTemplateEditFieldsets } from '../../TemplateEditFieldsetsContext';
 import { getRuleTargetOptions, TRuleTargetOption } from './utils/getRuleTargetOptions';
 import { getRulePrepositionOptions, TRulePrepositionOption } from './utils/getRulePrepositionOptions';
 import { useUpdatePreposition } from './hooks/useUpdatePreposition';
@@ -25,6 +26,7 @@ interface IDueInProps {
 type TDueDateKeys = keyof ITemplateTask['rawDueDate'];
 
 export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDueInProps) {
+  const { fieldsetsByApiName } = useTemplateEditFieldsets();
   const { formatMessage } = useIntl();
   const { duration, durationMonths, ruleTarget, rulePreposition, sourceId } = dueDate;
   const [isDueDate, setIsDueDate] = useState(Boolean(duration || durationMonths));
@@ -34,8 +36,8 @@ export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDue
   }, [ruleTarget]);
 
   const [systemRules, dateFieldsRules, tasksRules] = useMemo(() => {
-    return getRuleTargetOptions(currentTask, tasks, kickoff);
-  }, [tasks, kickoff]);
+    return getRuleTargetOptions(currentTask, tasks, kickoff, fieldsetsByApiName);
+  }, [currentTask, fieldsetsByApiName, kickoff, tasks]);
 
   const currentPrepositionOption = useMemo(() => {
     return prepositionOptions.find((rule) => rule.rulePreposition === rulePreposition) || null;
@@ -47,7 +49,7 @@ export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDue
         (rule) => rule.sourceId === sourceId && rule.ruleTarget === ruleTarget,
       ) || null
     );
-  }, [sourceId, ruleTarget]);
+  }, [dateFieldsRules, ruleTarget, sourceId, systemRules, tasksRules]);
 
   useUpdatePreposition(prepositionOptions, currentPrepositionOption, currentTargetOption, (option) =>
     onChange({
