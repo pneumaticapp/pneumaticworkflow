@@ -45,10 +45,10 @@ export function KickoffRedux({
   accountId,
 }: IKickoffReduxProps) {
   const dispatch = useDispatch();
-  const { fieldsetsById } = useTemplateEditFieldsets();
+  const { fieldsetsByApiName } = useTemplateEditFieldsets();
   const [isOpen, setIsOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
-  const variables = useWorkflowNameVariables(kickoff, fieldsetsById);
+  const variables = useWorkflowNameVariables(kickoff, fieldsetsByApiName);
   const datasetOptions = useDatasetOptions(kickoff.fields);
 
   const editTemplate = (templateFields: Partial<ITemplate>) => {
@@ -176,12 +176,13 @@ export function KickoffRedux({
             {formatMessage({ id: 'template.kick-off-fieldsets' })}
           </p>
           <FieldsetPicker
-            selectedFieldsetIds={kickoff.fieldsets || []}
-            onChange={(fieldsetIds) => {
-              handleChangeKickoff({ ...kickoff, fieldsets: fieldsetIds });
+            selectedApiNames={(kickoff.fieldsets || []).map((fieldset) => fieldset.apiName)}
+            onChange={(apiNames) => {
+              const nextFieldsets = apiNames.map((apiName, index) => ({ apiName, order: index }));
+              handleChangeKickoff({ ...kickoff, fieldsets: nextFieldsets });
             }}
           />
-          <FieldsetOutputsPreview fieldsetIds={kickoff.fieldsets || []} fieldsetsById={fieldsetsById} />
+          <FieldsetOutputsPreview fieldsets={kickoff.fieldsets || []} fieldsetsByApiName={fieldsetsByApiName} />
         </div>
 
         <KickoffShareForm className={styles['share-form']} />
@@ -192,7 +193,7 @@ export function KickoffRedux({
   const renderKickoffLabels = () => {
     const { fields, fieldsets } = kickoff;
     const hasFieldsetChips = (fieldsets || []).some(
-      (id) => isArrayWithItems(fieldsetsById.get(id)?.fields ?? []),
+      (taskFieldset) => isArrayWithItems(fieldsetsByApiName.get(taskFieldset.apiName)?.fields ?? []),
     );
 
     if (!isArrayWithItems(fields) && !hasFieldsetChips) {
@@ -213,7 +214,7 @@ export function KickoffRedux({
         aria-label="Toggle expand"
       >
         {isArrayWithItems(fields) && <ExtraFieldsLabels extraFields={fields} />}
-        <FieldsetOutputsPreview fieldsetIds={fieldsets || []} fieldsetsById={fieldsetsById} />
+        <FieldsetOutputsPreview fieldsets={fieldsets || []} fieldsetsByApiName={fieldsetsByApiName} />
       </div>
     );
   };

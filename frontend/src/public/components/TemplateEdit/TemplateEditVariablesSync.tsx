@@ -17,14 +17,14 @@ export function TemplateEditVariablesSync({
   prevTemplate,
   loadTemplateVariablesSuccess,
 }: ITemplateEditVariablesSyncProps) {
-  const { fieldsetsById } = useTemplateEditFieldsets();
+  const { fieldsetsByApiName } = useTemplateEditFieldsets();
 
   useEffect(() => {
     const variables = getVariables({
       kickoff: template.kickoff,
       tasks: template.tasks,
       templateId: template.id,
-      fieldsetsById,
+      fieldsetsByApiName,
     });
     let prevVariables = [];
     if (prevTemplate) {
@@ -32,14 +32,14 @@ export function TemplateEditVariablesSync({
         kickoff: prevTemplate.kickoff,
         tasks: prevTemplate.tasks,
         templateId: prevTemplate.id,
-        fieldsetsById,
+        fieldsetsByApiName,
       });
     }
 
     if (variables.length !== prevVariables.length && template.id) {
       loadTemplateVariablesSuccess({ templateId: template.id, variables });
     }
-  }, [fieldsetsById, loadTemplateVariablesSuccess, prevTemplate, template]);
+  }, [fieldsetsByApiName, loadTemplateVariablesSuccess, prevTemplate, template]);
 
   return null;
 }

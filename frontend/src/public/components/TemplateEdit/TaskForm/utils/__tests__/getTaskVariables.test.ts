@@ -124,7 +124,7 @@ const mockFieldsetData: IFieldsetData = {
   ],
 };
 
-const mockFieldsetsById = new Map<number, IFieldsetData>([[mockFieldsetData.id, mockFieldsetData]]);
+const mockFieldsetsById = new Map<string, IFieldsetData>([[mockFieldsetData.apiName, mockFieldsetData]]);
 
 describe('getTaskVariables', () => {
   it("correctly gets 1st task's variables", () => {
@@ -176,7 +176,7 @@ describe('getTaskVariables', () => {
   it('appends variables from selected task fieldsets with combined subtitles', () => {
     const taskWithFieldset: ITemplateTask = {
       ...mockTask1,
-      fieldsets: [mockFieldsetData.id],
+      fieldsets: [{ apiName: mockFieldsetData.apiName, order: 0 }],
     };
     const tasks: ITemplateTask[] = [taskWithFieldset, mockTask2];
     const actualResult = getTaskVariables(mockKikoff, tasks, mockTask2, undefined, mockFieldsetsById);
@@ -199,7 +199,7 @@ describe('getKickoffVariables with fieldsets', () => {
   it('adds kickoff fieldset fields after regular kickoff fields', () => {
     const kickoff: IKickoff = {
       ...mockKikoff,
-      fieldsets: [mockFieldsetData.id],
+      fieldsets: [{ apiName: mockFieldsetData.apiName, order: 0 }],
     };
     const vars = getKickoffVariables(kickoff, mockFieldsetsById);
 

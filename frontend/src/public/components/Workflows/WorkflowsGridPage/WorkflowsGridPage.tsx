@@ -91,7 +91,7 @@ export const WorkflowsGridPage = function Workflows({
 
         return;
       }
-      const loadedFieldsets = await loadFieldsetsData(template.kickoff);
+      const loadedFieldsets = await loadFieldsetsData(template.kickoff, template.id);
       const datasetsMap = await loadDatasetsMap(template.kickoff, loadedFieldsets);
 
       const runnableWorkflow = getRunnableWorkflow(template, datasetsMap, loadedFieldsets);

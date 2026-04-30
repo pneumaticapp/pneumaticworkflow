@@ -26,7 +26,7 @@ interface IDueInProps {
 type TDueDateKeys = keyof ITemplateTask['rawDueDate'];
 
 export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDueInProps) {
-  const { fieldsetsById } = useTemplateEditFieldsets();
+  const { fieldsetsByApiName } = useTemplateEditFieldsets();
   const { formatMessage } = useIntl();
   const { duration, durationMonths, ruleTarget, rulePreposition, sourceId } = dueDate;
   const [isDueDate, setIsDueDate] = useState(Boolean(duration || durationMonths));
@@ -36,8 +36,8 @@ export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDue
   }, [ruleTarget]);
 
   const [systemRules, dateFieldsRules, tasksRules] = useMemo(() => {
-    return getRuleTargetOptions(currentTask, tasks, kickoff, fieldsetsById);
-  }, [currentTask, fieldsetsById, kickoff, tasks]);
+    return getRuleTargetOptions(currentTask, tasks, kickoff, fieldsetsByApiName);
+  }, [currentTask, fieldsetsByApiName, kickoff, tasks]);
 
   const currentPrepositionOption = useMemo(() => {
     return prepositionOptions.find((rule) => rule.rulePreposition === rulePreposition) || null;

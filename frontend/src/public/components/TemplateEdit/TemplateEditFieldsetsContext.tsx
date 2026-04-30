@@ -7,12 +7,12 @@ import { IFieldsetData } from '../../types/template';
 import { getTemplateData } from '../../redux/selectors/template';
 
 export interface ITemplateEditFieldsetsContextValue {
-  fieldsetsById: ReadonlyMap<number, IFieldsetData>;
+  fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>;
   isLoading: boolean;
 }
 
 const defaultValue: ITemplateEditFieldsetsContextValue = {
-  fieldsetsById: new Map(),
+  fieldsetsByApiName: new Map(),
   isLoading: false,
 };
 
@@ -24,13 +24,13 @@ export function useTemplateEditFieldsets(): ITemplateEditFieldsetsContextValue {
 
 export function TemplateEditFieldsetsProvider({ children }: { children: React.ReactNode }) {
   const template = useSelector(getTemplateData);
-  const { fieldsetsById, isLoading } = useTemplateEditFieldsetsCatalog(template?.id);
+  const { fieldsetsByApiName, isLoading } = useTemplateEditFieldsetsCatalog(template?.id);
   const value = useMemo(
     () => ({
-      fieldsetsById,
+      fieldsetsByApiName,
       isLoading,
     }),
-    [fieldsetsById, isLoading],
+    [fieldsetsByApiName, isLoading],
   );
 
   return (

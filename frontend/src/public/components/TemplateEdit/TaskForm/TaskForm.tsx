@@ -55,16 +55,16 @@ export function TaskForm({
 }: ITaskFormProps & { templateId: number | undefined }) {
   if (!task) return null;
   const { formatMessage } = useIntl();
-  const { fieldsetsById, isLoading: fieldsetsCatalogLoading } = useTemplateEditFieldsets();
+  const { fieldsetsByApiName, isLoading: fieldsetsCatalogLoading } = useTemplateEditFieldsets();
   const wrapperRef = useRef<HTMLDivElement>(null);
   const taskName = task.name || '';
   const listVariables = useMemo(
-    () => getTaskVariables(kickoff, tasks, task, templateId, fieldsetsById),
-    [fieldsetsById, kickoff, task, tasks, templateId],
+    () => getTaskVariables(kickoff, tasks, task, templateId, fieldsetsByApiName),
+    [fieldsetsByApiName, kickoff, task, tasks, templateId],
   );
   const templateVariables = useMemo(
-    () => getVariables({ kickoff, tasks, templateId, fieldsetsById }),
-    [fieldsetsById, kickoff, tasks, templateId],
+    () => getVariables({ kickoff, tasks, templateId, fieldsetsByApiName }),
+    [fieldsetsByApiName, kickoff, tasks, templateId],
   );
   const listSystemVariables = useMemo(() => [
     ...getSystemVariables(),
@@ -176,7 +176,7 @@ export function TaskForm({
         <OutputFormIntl
           mode="taskMerged"
           task={task}
-          fieldsetsById={fieldsetsById}
+          fieldsetsByApiName={fieldsetsByApiName}
           fieldsetsCatalogLoading={fieldsetsCatalogLoading}
           templateId={templateId}
           accountId={accountId}

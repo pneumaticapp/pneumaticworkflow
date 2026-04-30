@@ -36,6 +36,7 @@ export interface IFieldsetTemplate {
 
 export interface IFieldsetListItem {
   id: number;
+  apiName: string;
   name: string;
   description: string;
   labelPosition: TFieldLabelPosition;

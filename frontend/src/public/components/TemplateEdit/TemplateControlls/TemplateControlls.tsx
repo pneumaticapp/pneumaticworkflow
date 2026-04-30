@@ -121,7 +121,8 @@ export function TemplateControlls({
   };
 
   const handleRunProcess = async () => {
-    const loadedFieldsets = await loadFieldsetsData(template.kickoff);
+    if (!template.id) return;
+    const loadedFieldsets = await loadFieldsetsData(template.kickoff, template.id);
     const datasetsMap = await loadDatasetsMap(template.kickoff, loadedFieldsets);
     const runnableWorkflow = getRunnableWorkflow(template, datasetsMap, loadedFieldsets);
     if (runnableWorkflow) {

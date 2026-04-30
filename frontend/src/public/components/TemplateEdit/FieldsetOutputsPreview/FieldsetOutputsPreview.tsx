@@ -2,7 +2,7 @@ import * as React from 'react';
 import { useIntl } from 'react-intl';
 import classNames from 'classnames';
 
-import { IExtraField, IFieldsetData } from '../../../types/template';
+import { IExtraField, IFieldsetData, ITaskFieldset } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
 
 import styles from './FieldsetOutputsPreview.css';
@@ -10,28 +10,28 @@ import styles from './FieldsetOutputsPreview.css';
 
 
 export interface IFieldsetOutputsPreviewProps {
-  fieldsetIds: number[];
-  fieldsetsById: ReadonlyMap<number, IFieldsetData>;
+  fieldsets: ITaskFieldset[];
+  fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>;
   onGroupClick?(): void;
 }
 
-export function FieldsetOutputsPreview({ fieldsetIds, fieldsetsById, onGroupClick }: IFieldsetOutputsPreviewProps) {
+export function FieldsetOutputsPreview({ fieldsets, fieldsetsByApiName, onGroupClick }: IFieldsetOutputsPreviewProps) {
   const { formatMessage } = useIntl();
 
-  if (!fieldsetIds.length) {
+  if (!fieldsets.length) {
     return null;
   }
 
-  const groups = fieldsetIds
-    .map((id) => {
-      const fieldset = fieldsetsById.get(id);
-      if (!fieldset || !isArrayWithItems(fieldset.fields)) {
+  const groups = fieldsets
+    .map((taskFieldset) => {
+      const fieldsetData = fieldsetsByApiName.get(taskFieldset.apiName);
+      if (!fieldsetData || !isArrayWithItems(fieldsetData.fields)) {
         return null;
       }
 
-      return { id, fieldset, fields: fieldset.fields };
+      return { apiName: taskFieldset.apiName, fieldsetData, fields: fieldsetData.fields };
     })
-    .filter((g): g is { id: number; fieldset: IFieldsetData; fields: IExtraField[] } => g !== null);
+    .filter((g): g is { apiName: string; fieldsetData: IFieldsetData; fields: IExtraField[] } => g !== null);
 
   if (!groups.length) {
     return null;
@@ -39,10 +39,12 @@ export function FieldsetOutputsPreview({ fieldsetIds, fieldsetsById, onGroupClic
 
   return (
     <div className={styles['fieldset-outputs-preview']}>
-      {groups.map(({ id, fieldset }) => (
-        <button type="button" className={classNames( styles['fieldset-outputs-preview__group'])} key={id} onClick={onGroupClick}>
-          <span className={styles['fieldset-outputs-preview__title']}>{ formatMessage({ id: 'fieldsets.title' }) }: { fieldset.name}</span>
-        </button>
+      {groups.map(({ apiName, fieldsetData }) => (
+        <button type="button" className={classNames( styles['fieldset-outputs-preview__group'])} key={apiName} onClick={onGroupClick}>
+          <span className={styles['fieldset-outputs-preview__title']}>
+            { formatMessage({ id: 'fieldsets.title' }) }: { fieldsetData.name}
+          </span>
+честно         </button>
       ))}
     </div>
   );

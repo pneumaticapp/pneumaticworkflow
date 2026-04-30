@@ -1,10 +1,10 @@
 import * as React from 'react';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import classNames from 'classnames';
 import { IntlShape } from 'react-intl';
 
 import { EInputNameBackgroundColor } from '../../../types/workflow';
-import { EExtraFieldType, IExtraField, IFieldsetData, ITemplateTask } from '../../../types/template';
+import { EExtraFieldMode, EExtraFieldType, IExtraField, IFieldsetData, ITaskFieldset, ITemplateTask } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { getEditedFields } from '../ExtraFields/utils/getEditedFields';
 import { getEmptyField } from '../KickoffRedux/utils/getEmptyField';
@@ -14,9 +14,6 @@ import { ExtraFieldIntl } from '../ExtraFields';
 import { FieldsetIconPicker } from '../TaskOutputFlow/FieldsetIconPicker';
 import { FieldsetFlowRowDropdown } from '../TaskOutputFlow/FieldsetFlowRowDropdown';
 import { ExtraFieldsLabels } from '../ExtraFields/utils/ExtraFieldsLabels';
-import { updateFieldset } from '../../../api/fieldsets/updateFieldset';
-import { NotificationManager } from '../../UI/Notifications/NotificationManager';
-import { getErrorMessage } from '../../../utils/getErrorMessage';
 import { TPatchTaskPayload } from '../../../redux/actions';
 
 import {
@@ -32,7 +29,7 @@ import kickoffStyles from '../KickoffRedux/KickoffRedux.css';
 
 export interface IOutputFormTaskMergedOwnProps {
   task: ITemplateTask;
-  fieldsetsById: ReadonlyMap<number, IFieldsetData>;
+  fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>;
   fieldsetsCatalogLoading: boolean;
   templateId: number | undefined;
   accountId: number;
@@ -41,33 +38,10 @@ export interface IOutputFormTaskMergedOwnProps {
   intl: IntlShape;
 }
 
-function buildEffectiveFieldsetsMap(
-  fieldsetsById: ReadonlyMap<number, IFieldsetData>,
-  orderOverride: ReadonlyMap<number, number>,
-): ReadonlyMap<number, IFieldsetData> {
-  const next = new Map<number, IFieldsetData>();
-  fieldsetsById.forEach((value, key) => {
-    const o = orderOverride.get(key);
-    next.set(key, o === undefined ? value : { ...value, order: o });
-  });
-  orderOverride.forEach((order, id) => {
-    if (!next.has(id)) {
-      next.set(id, {
-        id,
-        apiName: `fieldset-${id}`,
-        name: '',
-        description: '',
-        fields: [],
-        order,
-      });
-    }
-  });
-  return next;
-}
 
 export function OutputFormTaskMerged({
   task,
-  fieldsetsById,
+  fieldsetsByApiName,
   fieldsetsCatalogLoading,
   templateId,
   accountId,
@@ -77,7 +51,6 @@ export function OutputFormTaskMerged({
 }: IOutputFormTaskMergedOwnProps) {
   const { formatMessage } = intl;
   const outputRef = useRef<HTMLInputElement>(null);
-  const [fieldsetOrderOverride, setFieldsetOrderOverride] = useState<ReadonlyMap<number, number>>(() => new Map());
 
   useEffect(() => {
     if (show) {
@@ -85,47 +58,24 @@ export function OutputFormTaskMerged({
     }
   }, [show]);
 
-  const effectiveFieldsetsById = useMemo(
-    () => buildEffectiveFieldsetsMap(fieldsetsById, fieldsetOrderOverride),
-    [fieldsetsById, fieldsetOrderOverride],
-  );
-
   const mergedRows = useMemo(
-    () => buildMergedTaskOutputRows(task.fields || [], task.fieldsets || [], effectiveFieldsetsById),
-    [task.fields, task.fieldsets, effectiveFieldsetsById],
+    () => buildMergedTaskOutputRows(task.fields || [], task.fieldsets || []),
+    [task.fields, task.fieldsets],
   );
 
-  const persistMergedRows = useCallback(
+  const saveOutputOrders = useCallback(
     async (
       rows: TMergedTaskOutputRow[],
-      explicitFieldsetIds?: number[],
       allFieldsSource?: IExtraField[],
     ) => {
       const allFields = allFieldsSource ?? task.fields ?? [];
-      const fieldsetIdsList = explicitFieldsetIds ?? task.fieldsets ?? [];
       const { nextFields, fieldsetOrderPatches } = normalizeMergedTaskOutputOrders(rows, allFields);
-      try {
-        await Promise.all(fieldsetOrderPatches.map((p) => updateFieldset({ id: p.id, order: p.order })));
-      } catch (error: unknown) {
-        NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
-        return;
-      }
-      setFieldsetOrderOverride((prev) => {
-        const next = new Map(prev);
-        fieldsetOrderPatches.forEach((p) => next.set(p.id, p.order));
-        return next;
-      });
-      const orderOfFieldset = (id: number): number =>
-        fieldsetOrderPatches.find((p) => p.id === id)?.order
-        ?? effectiveFieldsetsById.get(id)?.order
-        ?? 0;
-      const nextFieldsetIds = [...fieldsetIdsList].sort((a, b) => orderOfFieldset(b) - orderOfFieldset(a));
       patchTask({
         taskUUID: task.uuid,
-        changedFields: { fields: nextFields, fieldsets: nextFieldsetIds },
+        changedFields: { fields: nextFields, fieldsets: fieldsetOrderPatches },
       });
     },
-    [effectiveFieldsetsById, patchTask, task.fields, task.fieldsets, task.uuid],
+    [patchTask, task.fields, task.fieldsets, task.uuid],
   );
 
   const handleCreateField = useCallback(
@@ -135,11 +85,10 @@ export function OutputFormTaskMerged({
       const rowsWithNew = buildMergedTaskOutputRows(
         mergedTaskFields,
         task.fieldsets || [],
-        effectiveFieldsetsById,
       );
-      persistMergedRows(rowsWithNew, undefined, mergedTaskFields).catch(() => undefined);
+      saveOutputOrders(rowsWithNew, mergedTaskFields).catch(() => undefined);
     },
-    [effectiveFieldsetsById, formatMessage, persistMergedRows, task.fieldsets, task.fields],
+    [formatMessage, saveOutputOrders, task.fieldsets, task.fields],
   );
 
   const handleEditField = useCallback(
@@ -153,45 +102,43 @@ export function OutputFormTaskMerged({
   const handleDeleteField = useCallback(
     (apiName: string) => {
       const nextFields = (task.fields || []).filter((f) => f.apiName !== apiName);
-      const rows = buildMergedTaskOutputRows(nextFields, task.fieldsets || [], effectiveFieldsetsById);
-      persistMergedRows(rows, undefined, nextFields).catch(() => undefined);
+      const rows = buildMergedTaskOutputRows(nextFields, task.fieldsets || []);
+      saveOutputOrders(rows, nextFields).catch(() => undefined);
     },
-    [effectiveFieldsetsById, persistMergedRows, task.fieldsets, task.fields],
+    [saveOutputOrders, task.fieldsets, task.fields],
   );
 
   const handleMoveMergedIndex = useCallback(
     (index: number, direction: 'up' | 'down') => {
       const moved = moveMergedRow(mergedRows, index, direction);
-      persistMergedRows(moved).catch(() => undefined);
+      saveOutputOrders(moved).catch(() => undefined);
     },
-    [mergedRows, persistMergedRows],
+    [mergedRows, saveOutputOrders],
   );
 
   const handleAddFieldset = useCallback(
-    (fieldsetId: number) => {
+    (fieldsetApiName: string) => {
       const current = task.fieldsets || [];
-      if (current.includes(fieldsetId)) {
+      if (current.some((fieldSet) => fieldSet.apiName === fieldsetApiName)) {
         return;
       }
-      const nextIds = [...current, fieldsetId];
-      const rows = buildMergedTaskOutputRows(task.fields || [], nextIds, effectiveFieldsetsById);
-      persistMergedRows(rows, nextIds).catch(() => undefined);
+      const newFieldset: ITaskFieldset = { apiName: fieldsetApiName, order: current.length };
+      const nextFieldsets = [...current, newFieldset];
+      const rows = buildMergedTaskOutputRows(task.fields || [], nextFieldsets);
+      saveOutputOrders(rows).catch(() => undefined);
     },
-    [effectiveFieldsetsById, persistMergedRows, task.fieldsets, task.fields, task.uuid],
+    [saveOutputOrders, task.fieldsets, task.fields, task.uuid],
   );
 
   const handleRemoveFieldset = useCallback(
-    (fieldsetId: number) => {
-      const nextIds = (task.fieldsets || []).filter((id) => id !== fieldsetId);
-      const rows = buildMergedTaskOutputRows(task.fields || [], nextIds, effectiveFieldsetsById);
-      persistMergedRows(rows, nextIds).catch(() => undefined);
+    (fieldsetApiName: string) => {
+      const nextFieldsets = (task.fieldsets || []).filter((fieldSet) => fieldSet.apiName !== fieldsetApiName);
+      const rows = buildMergedTaskOutputRows(task.fields || [], nextFieldsets);
+      saveOutputOrders(rows).catch(() => undefined);
     },
-    [effectiveFieldsetsById, persistMergedRows, task.fieldsets, task.fields, task.uuid],
+    [saveOutputOrders, task.fieldsets, task.fields, task.uuid],
   );
 
-  useLayoutEffect(() => {
-    setFieldsetOrderOverride(new Map());
-  }, [task.uuid]);
 
   const isEmpty = !isArrayWithItems(task.fields) && !(task.fieldsets || []).length;
 
@@ -203,9 +150,9 @@ export function OutputFormTaskMerged({
         ))}
         <FieldsetIconPicker
           templateId={templateId}
-          fieldsetsById={fieldsetsById}
+          fieldsetsByApiName={fieldsetsByApiName}
           fieldsetsCatalogLoading={fieldsetsCatalogLoading}
-          selectedFieldsetIds={task.fieldsets || []}
+          selectedFieldsetApiNames={(task.fieldsets || []).map((fieldset) => fieldset.apiName)}
           onSelectFieldset={handleAddFieldset}
           onRemoveFieldset={handleRemoveFieldset}
         />
@@ -231,14 +178,15 @@ export function OutputFormTaskMerged({
                   isDisabled={false}
                   innerRef={outputRef}
                   accountId={accountId}
+                  mode={EExtraFieldMode.Kickoff}
                 />
               );
             }
-            const fs = effectiveFieldsetsById.get(row.fieldsetId);
+            const fs = fieldsetsByApiName.get(row.apiName);
             const fieldsetTitle = fs?.name || formatMessage({ id: 'tasks.task-fieldsets' });
             return (
               <div
-                key={`fieldset-${row.fieldsetId}`}
+                key={`fieldset-${row.apiName}`}
                 className={classNames(
                   kickoffStyles['with-label'],
                   kickoffStyles['kick-off-input'],
@@ -264,7 +212,7 @@ export function OutputFormTaskMerged({
                     isLastItem={isLast}
                     onMoveUp={() => handleMoveMergedIndex(index, 'up')}
                     onMoveDown={() => handleMoveMergedIndex(index, 'down')}
-                    onRemove={() => handleRemoveFieldset(row.fieldsetId)}
+                    onRemove={() => handleRemoveFieldset(row.apiName)}
                   />
                 </div>
               </div>

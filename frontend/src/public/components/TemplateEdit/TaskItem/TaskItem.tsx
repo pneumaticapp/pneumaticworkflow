@@ -32,12 +32,12 @@ export const TaskItem = ({ task, toggleIsOpenTask, setScrollTarget }: ITaskItemP
   const kickoff = useSelector(getKickoff);
   const tasks = useSelector(getTemplateTasks);
   const template = useSelector(getTemplateData);
-  const { fieldsetsById } = useTemplateEditFieldsets();
+  const { fieldsetsByApiName } = useTemplateEditFieldsets();
   const allVariables = getVariables({
     kickoff,
     tasks,
     templateId: template.id,
-    fieldsetsById,
+    fieldsetsByApiName,
   });
 
   const handleClickOnLabel = (taskFormParts: ETaskFormParts) => {
@@ -68,8 +68,8 @@ export const TaskItem = ({ task, toggleIsOpenTask, setScrollTarget }: ITaskItemP
         <div className={styles['task-preview-outputs']}>
           <ExtraFieldsLabels extraFields={fields} onClick={() => handleClickOnLabel(ETaskFormParts.Fields)} />
           <FieldsetOutputsPreview
-            fieldsetIds={task.fieldsets || []}
-            fieldsetsById={fieldsetsById}
+            fieldsets={task.fieldsets || []}
+            fieldsetsByApiName={fieldsetsByApiName}
             onGroupClick={() => handleClickOnLabel(ETaskFormParts.Fields)}
           />
           {TaskRenderConditionsInfo({

@@ -10,11 +10,11 @@ import { getTemplateData } from '../../../redux/selectors/template';
 import styles from './FieldsetPicker.css';
 
 export interface IFieldsetPickerProps {
-  selectedFieldsetIds: number[];
-  onChange: (fieldsetIds: number[]) => void;
+  selectedApiNames: string[];
+  onChange: (apiNames: string[]) => void;
 }
 
-export function FieldsetPicker({ selectedFieldsetIds, onChange }: IFieldsetPickerProps) {
+export function FieldsetPicker({ selectedApiNames, onChange }: IFieldsetPickerProps) {
   const { formatMessage } = useIntl();
   const template = useSelector(getTemplateData);
   const [isOpen, setIsOpen] = useState(false);
@@ -23,7 +23,7 @@ export function FieldsetPicker({ selectedFieldsetIds, onChange }: IFieldsetPicke
   const wrapperRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!template?.id) return;
+    if (!template?.id) return undefined;
 
     const abortCtrl = new AbortController();
 
@@ -52,22 +52,22 @@ export function FieldsetPicker({ selectedFieldsetIds, onChange }: IFieldsetPicke
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  const handleToggle = (id: number) => {
-    const isSelected = selectedFieldsetIds.includes(id);
+  const handleToggle = (apiName: string) => {
+    const isSelected = selectedApiNames.includes(apiName);
     if (isSelected) {
-      onChange(selectedFieldsetIds.filter((fId) => fId !== id));
+      onChange(selectedApiNames.filter((selectedName) => selectedName !== apiName));
     } else {
-      onChange([...selectedFieldsetIds, id]);
+      onChange([...selectedApiNames, apiName]);
     }
   };
 
-  const handleRemove = (id: number) => {
-    onChange(selectedFieldsetIds.filter((fId) => fId !== id));
+  const handleRemove = (apiName: string) => {
+    onChange(selectedApiNames.filter((selectedName) => selectedName !== apiName));
   };
 
-  const selectedFieldsets = fieldsets.filter((fs) => selectedFieldsetIds.includes(fs.id));
-  const toggleLabel = selectedFieldsetIds.length
-    ? `${selectedFieldsetIds.length} selected`
+  const selectedFieldsets = fieldsets.filter((fs) => selectedApiNames.includes(fs.apiName));
+  const toggleLabel = selectedApiNames.length
+    ? `${selectedApiNames.length} selected`
     : formatMessage({ id: 'template.fieldset-picker.placeholder' });
 
   return (
@@ -104,13 +104,13 @@ export function FieldsetPicker({ selectedFieldsetIds, onChange }: IFieldsetPicke
                 key={fs.id}
                 type="button"
                 className={styles['fieldset-picker__option']}
-                onClick={() => handleToggle(fs.id)}
+                onClick={() => handleToggle(fs.apiName)}
                 id={`fieldset-picker-option-${fs.id}`}
               >
                 <input
                   type="checkbox"
                   className={styles['fieldset-picker__checkbox']}
-                  checked={selectedFieldsetIds.includes(fs.id)}
+                  checked={selectedApiNames.includes(fs.apiName)}
                   readOnly
                   tabIndex={-1}
                 />
@@ -134,7 +134,7 @@ export function FieldsetPicker({ selectedFieldsetIds, onChange }: IFieldsetPicke
               <button
                 type="button"
                 className={styles['fieldset-picker__tag-remove']}
-                onClick={() => handleRemove(fs.id)}
+                onClick={() => handleRemove(fs.apiName)}
                 aria-label={`Remove ${fs.name}`}
                 id={`fieldset-picker-remove-${fs.id}`}
               >

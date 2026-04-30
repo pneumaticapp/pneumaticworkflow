@@ -52,6 +52,11 @@ export type TTransformedTask =
   | (Pick<ITemplateTask, 'apiName' | 'fields' | 'name'> & { needSteName?: boolean })
   | (Pick<IKickoff, 'fields'> & { apiName: string; name: string; needSteName: null });
 
+export interface ITaskFieldset {
+  apiName: string;
+  order: number;
+}
+
 export interface ITemplateTask {
   id?: number;
   apiName: string;
@@ -63,7 +68,7 @@ export interface ITemplateTask {
   requireCompletionByAll: boolean;
   rawPerformers: ITemplateTaskPerformer[];
   fields: IExtraField[];
-  fieldsets: number[];
+  fieldsets: ITaskFieldset[];
   uuid: string;
   conditions: ICondition[];
   checklists: TOutputChecklist[];
@@ -212,7 +217,7 @@ export interface IFieldsetTemplateData {
 export interface IKickoff {
   description: string;
   fields: IExtraField[];
-  fieldsets: number[];
+  fieldsets: ITaskFieldset[];
 }
 
 /** Kickoff shape from template list APIs (GET /templates/, GET /templates/titles-by-owners) */

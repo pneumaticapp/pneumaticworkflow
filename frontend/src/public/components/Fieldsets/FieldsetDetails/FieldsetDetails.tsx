@@ -26,9 +26,9 @@ import { getCurrentFieldset, isCurrentFieldsetLoading } from '../../../redux/sel
 import { getAccountId } from '../../../redux/selectors/user';
 
 
-import { EExtraFieldType, IExtraField } from '../../../types/template';
+import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../types/template';
 import { EInputNameBackgroundColor, EMoveDirections } from '../../../types/workflow';
-import { IFieldsetTemplateRule } from '../../../types/fieldset';
+import { IFieldsetTemplateRule, TFieldLabelPosition } from '../../../types/fieldset';
 import { ExtraFieldsMap } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldsMap';
 import { ExtraFieldIcon } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldIcon';
 import { ExtraFieldIntl } from '../../TemplateEdit/ExtraFields';
@@ -38,7 +38,7 @@ import { getNormalizeFieldsOrders, moveWorkflowField } from '../../../utils/work
 
 import { normalizeFieldsForUI } from './fieldsetFieldMappers';
 
-import { TFieldLabelPosition } from '../../../types/fieldset';
+
 import { TFieldsetDetailsProps } from './types';
 import styles from './FieldsetDetails.css';
 
@@ -275,10 +275,11 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
 
         <div className={styles['settings-form']}>
           <div className={styles['settings-field']}>
-            <label className={styles['settings-label']}>
+            <label htmlFor="fieldset-description" className={styles['settings-label']}>
               {formatMessage({ id: 'fieldsets.settings.description' })}
             </label>
             <textarea
+              id="fieldset-description"
               className={styles['settings-textarea']}
               value={localDescription}
               placeholder={formatMessage({ id: 'fieldsets.settings.description-placeholder' })}
@@ -287,10 +288,11 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
           </div>
 
           <div className={styles['settings-field']}>
-            <label className={styles['settings-label']}>
+            <label htmlFor="fieldset-label-position" className={styles['settings-label']}>
               {formatMessage({ id: 'fieldsets.settings.label-position' })}
             </label>
             <select
+              id="fieldset-label-position"
               className={styles['settings-select']}
               value={localLabelPosition}
               onChange={handleSettingsLabelPositionChange}
@@ -346,6 +348,7 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
                 moveFieldDown={() => handleMoveField(index, EMoveDirections.Down)}
                 editField={handleEditField(field.apiName)}
                 accountId={accountId}
+                mode={EExtraFieldMode.Kickoff}
               />
             ))}
           </div>

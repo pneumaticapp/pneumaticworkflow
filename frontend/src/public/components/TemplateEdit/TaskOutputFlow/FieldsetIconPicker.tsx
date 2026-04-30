@@ -14,6 +14,7 @@ import flowStyles from '../OutputForm/OutputForm.css';
 
 interface IFieldsetCatalogPickerRow {
   id: number;
+  apiName: string;
   name: string;
   fieldsCount: number;
   rulesCount: number;
@@ -21,56 +22,57 @@ interface IFieldsetCatalogPickerRow {
 
 export interface IFieldsetIconPickerProps {
   templateId: number | undefined;
-  fieldsetsById: ReadonlyMap<number, IFieldsetData>;
+  fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>;
   fieldsetsCatalogLoading: boolean;
-  selectedFieldsetIds: number[];
-  onSelectFieldset: (fieldsetId: number) => void;
-  onRemoveFieldset: (fieldsetId: number) => void;
+  selectedFieldsetApiNames: string[];
+  onSelectFieldset: (apiName: string) => void;
+  onRemoveFieldset: (apiName: string) => void;
 }
 
 const isReadyTemplateId = (id: number | undefined): id is number => typeof id === 'number';
 
-const buildCatalogPickerRows = (map: ReadonlyMap<number, IFieldsetData>): IFieldsetCatalogPickerRow[] => {
+const buildCatalogPickerRows = (map: ReadonlyMap<string, IFieldsetData>): IFieldsetCatalogPickerRow[] => {
   const rows = Array.from(map.values()).map<IFieldsetCatalogPickerRow>((d) => ({
     id: d.id,
+    apiName: d.apiName,
     name: d.name,
     fieldsCount: d.fields.length,
     rulesCount: d.rulesCount ?? 0,
   }));
   rows.sort((a, b) => {
-    const orderA = map.get(a.id)?.order ?? 0;
-    const orderB = map.get(b.id)?.order ?? 0;
+    const orderA = map.get(a.apiName)?.order ?? 0;
+    const orderB = map.get(b.apiName)?.order ?? 0;
     if (orderA !== orderB) {
       return orderA - orderB;
     }
-    return a.id - b.id;
+    return a.name.localeCompare(b.name);
   });
   return rows;
 };
 
 export const FieldsetIconPicker = ({
   templateId,
-  fieldsetsById,
+  fieldsetsByApiName,
   fieldsetsCatalogLoading,
-  selectedFieldsetIds,
+  selectedFieldsetApiNames,
   onSelectFieldset,
   onRemoveFieldset,
 }: IFieldsetIconPickerProps) => {
   const { formatMessage } = useIntl();
   const triggerRef = useRef<HTMLSpanElement>(null);
 
-  const catalogRows = useMemo(() => buildCatalogPickerRows(fieldsetsById), [fieldsetsById]);
+  const catalogRows = useMemo(() => buildCatalogPickerRows(fieldsetsByApiName), [fieldsetsByApiName]);
   const showListLoading = fieldsetsCatalogLoading && catalogRows.length === 0;
 
   const handleToggleFieldset = useCallback(
-    (id: number) => {
-      if (selectedFieldsetIds.includes(id)) {
-        onRemoveFieldset(id);
+    (apiName: string) => {
+      if (selectedFieldsetApiNames.includes(apiName)) {
+        onRemoveFieldset(apiName);
         return;
       }
-      onSelectFieldset(id);
+      onSelectFieldset(apiName);
     },
-    [onRemoveFieldset, onSelectFieldset, selectedFieldsetIds],
+    [onRemoveFieldset, onSelectFieldset, selectedFieldsetApiNames],
   );
 
   const catalogDropdownOption = useMemo((): TDropdownOption => {
@@ -93,13 +95,13 @@ export const FieldsetIconPicker = ({
 
           {!showListLoading
             && catalogRows.map((row) => {
-              const isSelected = selectedFieldsetIds.includes(row.id);
+              const isSelected = selectedFieldsetApiNames.includes(row.apiName);
               return (
                 <button
                   key={row.id}
                   type="button"
                   className={pickerStyles['fieldset-picker__option']}
-                  onClick={() => handleToggleFieldset(row.id)}
+                  onClick={() => handleToggleFieldset(row.apiName)}
                   id={`task-output-fieldset-option-${row.id}`}
                 >
                   <input
@@ -126,7 +128,7 @@ export const FieldsetIconPicker = ({
     catalogRows,
     formatMessage,
     handleToggleFieldset,
-    selectedFieldsetIds,
+    selectedFieldsetApiNames,
     showListLoading,
   ]);
 

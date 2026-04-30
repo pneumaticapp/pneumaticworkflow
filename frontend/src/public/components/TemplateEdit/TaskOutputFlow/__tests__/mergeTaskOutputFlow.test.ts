@@ -1,4 +1,4 @@
-import { IExtraField, IFieldsetData } from '../../../../types/template';
+import { IExtraField, IFieldsetData, ITaskFieldset } from '../../../../types/template';
 import {
   buildMergedTaskOutputRows,
   buildRuntimeMergedOutputParts,
@@ -26,28 +26,29 @@ const fs = (id: number, order: number): IFieldsetData => ({
   order,
 });
 
+const taskFs = (apiName: string, order: number): ITaskFieldset => ({ apiName, order });
+
 describe('mergeTaskOutputFlow', () => {
   it('buildMergedTaskOutputRows sorts by order descending with stable tie-break', () => {
-    const map = new Map<number, IFieldsetData>([
-      [10, fs(10, 1)],
-      [20, fs(20, 2)],
-    ]);
-    const rows = buildMergedTaskOutputRows([field('a', 0), field('b', 3)], [10, 20], map);
-    expect(rows.map((r) => (r.kind === 'field' ? r.field.apiName : r.fieldsetId))).toEqual(['b', 20, 10, 'a']);
+    const rows = buildMergedTaskOutputRows(
+      [field('a', 0), field('b', 3)],
+      [taskFs('fs-10', 1), taskFs('fs-20', 2)],
+    );
+    expect(rows.map((r) => (r.kind === 'field' ? r.field.apiName : r.apiName))).toEqual(['b', 'fs-20', 'fs-10', 'a']);
   });
 
   it('normalizeMergedTaskOutputOrders assigns contiguous orders', () => {
     const fields = [field('a', 10), field('b', 5)];
-    const rows = buildMergedTaskOutputRows(fields, [1], new Map([[1, fs(1, 7)]]));
+    const rows = buildMergedTaskOutputRows(fields, [taskFs('fs-1', 7)]);
     const { nextFields, fieldsetOrderPatches } = normalizeMergedTaskOutputOrders(rows, fields);
     const byApi = Object.fromEntries(nextFields.map((f) => [f.apiName, f.order]));
     expect(byApi.a).toBe(2);
     expect(byApi.b).toBe(0);
-    expect(fieldsetOrderPatches).toContainEqual({ id: 1, order: 1 });
+    expect(fieldsetOrderPatches).toContainEqual({ apiName: 'fs-1', order: 1 });
   });
 
   it('moveMergedRow swaps adjacent items', () => {
-    const rows = buildMergedTaskOutputRows([field('a', 1)], [], new Map());
+    const rows = buildMergedTaskOutputRows([field('a', 1)], []);
     const moved = moveMergedRow(rows, 0, 'down');
     expect(moved.length).toBe(1);
   });

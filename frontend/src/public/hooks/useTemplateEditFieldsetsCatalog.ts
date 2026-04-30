@@ -5,18 +5,18 @@ import { IFieldsetData } from '../types/template';
 import { mapFieldsetTemplateToFieldsetData } from '../utils/mapFieldsetTemplateToFieldsetData';
 
 export interface IUseTemplateEditFieldsetsCatalogResult {
-  fieldsetsById: ReadonlyMap<number, IFieldsetData>;
+  fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>;
   isLoading: boolean;
 }
 
 export function useTemplateEditFieldsetsCatalog(templateId: number | undefined): IUseTemplateEditFieldsetsCatalogResult {
-  const [fieldsetsById, setFieldsetsById] = useState<ReadonlyMap<number, IFieldsetData>>(() => new Map());
+  const [fieldsetsByApiName, setFieldsetsByApiName] = useState<ReadonlyMap<string, IFieldsetData>>(() => new Map());
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (!templateId) {
       setIsLoading(false);
-      return;
+      return undefined;
     }
 
     const abortController = new AbortController();
@@ -24,11 +24,12 @@ export function useTemplateEditFieldsetsCatalog(templateId: number | undefined):
     setIsLoading(true);
     getFieldsets({ templateId, limit: 1000, signal: abortController.signal })
       .then((response) => {
-        const nextMap = new Map<number, IFieldsetData>();
+        const nextMap = new Map<string, IFieldsetData>();
         response.results.forEach((item) => {
-          nextMap.set(item.id, mapFieldsetTemplateToFieldsetData(item));
+          const fieldsetData = mapFieldsetTemplateToFieldsetData(item);
+          nextMap.set(fieldsetData.apiName, fieldsetData);
         });
-        setFieldsetsById(nextMap);
+        setFieldsetsByApiName(nextMap);
       })
       .catch(() => {
         // Aborted or network errors: keep previous map
@@ -40,6 +41,6 @@ export function useTemplateEditFieldsetsCatalog(templateId: number | undefined):
     return () => abortController.abort();
   }, [templateId]);
 
-  return { fieldsetsById, isLoading };
+  return { fieldsetsByApiName, isLoading };
 }
 

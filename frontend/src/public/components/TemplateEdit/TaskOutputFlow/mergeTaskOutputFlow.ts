@@ -1,8 +1,8 @@
-import { IExtraField, IFieldsetData } from '../../../types/template';
+import { IExtraField, IFieldsetData, ITaskFieldset } from '../../../types/template';
 
 export type TMergedTaskOutputRow =
   | { kind: 'field'; field: IExtraField }
-  | { kind: 'fieldset'; fieldsetId: number; order: number };
+  | { kind: 'fieldset'; apiName: string; order: number };
 
 function rowOrder(row: TMergedTaskOutputRow): number {
   return row.kind === 'field' ? row.field.order : row.order;
@@ -10,17 +10,15 @@ function rowOrder(row: TMergedTaskOutputRow): number {
 
 export function buildMergedTaskOutputRows(
   fields: IExtraField[],
-  fieldsetIds: number[],
-  fieldsetsById: ReadonlyMap<number, IFieldsetData>,
+  fieldsets: ITaskFieldset[],
 ): TMergedTaskOutputRow[] {
   const rows: TMergedTaskOutputRow[] = [
     ...fields.map((field) => ({ kind: 'field' as const, field })),
-    ...fieldsetIds.map((fieldsetId) => {
-      const meta = fieldsetsById.get(fieldsetId);
+    ...fieldsets.map(({apiName, order}) => {
       return {
         kind: 'fieldset' as const,
-        fieldsetId,
-        order: meta?.order ?? 0,
+        apiName,
+        order,
       };
     }),
   ];
@@ -30,7 +28,7 @@ export function buildMergedTaskOutputRows(
       return delta;
     }
     if (a.kind === 'fieldset' && b.kind === 'fieldset') {
-      return b.fieldsetId - a.fieldsetId;
+      return b.apiName.localeCompare(a.apiName);
     }
     if (a.kind === 'field' && b.kind === 'field') {
       return b.field.apiName.localeCompare(a.field.apiName);
@@ -41,7 +39,7 @@ export function buildMergedTaskOutputRows(
 
 export interface INormalizeMergedTaskOutputResult {
   nextFields: IExtraField[];
-  fieldsetOrderPatches: { id: number; order: number }[];
+  fieldsetOrderPatches: { apiName: string; order: number }[];
 }
 
 export function normalizeMergedTaskOutputOrders(
@@ -53,14 +51,14 @@ export function normalizeMergedTaskOutputOrders(
   }
   const total = rowsInDisplayOrder.length;
   const orderByFieldApiName = new Map<string, number>();
-  const fieldsetOrderPatches: { id: number; order: number }[] = [];
+  const fieldsetOrderPatches: { apiName: string; order: number }[] = [];
 
   rowsInDisplayOrder.forEach((row, index) => {
     const order = total - index - 1;
     if (row.kind === 'field') {
       orderByFieldApiName.set(row.field.apiName, order);
     } else {
-      fieldsetOrderPatches.push({ id: row.fieldsetId, order });
+      fieldsetOrderPatches.push({ apiName: row.apiName, order });
     }
   });
 

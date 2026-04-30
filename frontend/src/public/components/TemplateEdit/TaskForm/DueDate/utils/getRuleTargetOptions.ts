@@ -18,10 +18,10 @@ export function getRuleTargetOptions(
   currentTask: ITemplateTask,
   tasks: ITemplateTask[],
   kickoff: IKickoff,
-  fieldsetsById?: ReadonlyMap<number, IFieldsetData>,
+  fieldsetsByApiName?: ReadonlyMap<string, IFieldsetData>,
 ): readonly [TRuleTargetOption[], TRuleTargetOption[], TRuleTargetOption[]] {
   const prevTasks = getPreviousTasks(currentTask, tasks);
-  const prevDateVariables = getTaskVariables(kickoff, tasks, currentTask, undefined, fieldsetsById).filter(
+  const prevDateVariables = getTaskVariables(kickoff, tasks, currentTask, undefined, fieldsetsByApiName).filter(
     (variable) => variable.type === EExtraFieldType.Date,
   );
 

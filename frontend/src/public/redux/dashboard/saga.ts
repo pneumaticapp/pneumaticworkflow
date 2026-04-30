@@ -43,7 +43,7 @@ import { getTemplate } from '../../api/getTemplate';
 
 import { openRunWorkflowModal } from '../runWorkflowModal/actions';
 import { getRunnableWorkflow, loadDatasetsMap, loadFieldsetsData } from '../../components/TemplateEdit/utils/getRunnableWorkflow';
-import { ITemplateResponse, IExtraField, IFieldsetData } from '../../types/template';
+import { ITemplateResponse, IExtraField, IFieldsetData, ITaskFieldset } from '../../types/template';
 import { mapFieldsetTemplateToFieldsetData } from '../../utils/mapFieldsetTemplateToFieldsetData';
 import { getGettingStartedChecklist } from '../../api/getGettingStartedChecklist';
 import { IGettingStartedChecklist } from '../../types/dashboard';
@@ -142,7 +142,7 @@ export function* openRunWorflowSaga({ payload: { templateId, ancestorTaskId } }:
     yield put(setGeneralLoaderVisibility(true));
     const resData: ITemplateResponse = yield getTemplate(templateId);
 
-    const loadedFieldsets: any[] = yield call(loadFieldsetsData, resData.kickoff);
+    const loadedFieldsets: any[] = yield call(loadFieldsetsData, resData.kickoff, resData.id);
     const datasetsMap: Record<number, string[]> = yield call(loadDatasetsMap, resData.kickoff, loadedFieldsets);
 
     const templateData = getRunnableWorkflow(resData, datasetsMap, loadedFieldsets);
@@ -189,7 +189,7 @@ export function* openRunWorflowByTemplateDataSaga({
     const kickoff = {
       description: '',
       fields: kickoffFields,
-      fieldsets: [] as number[],
+      fieldsets: [] as ITaskFieldset[],
     };
 
     // Load datasets for both kickoff fields and fieldset fields
