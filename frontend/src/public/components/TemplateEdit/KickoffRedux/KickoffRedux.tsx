@@ -5,6 +5,7 @@ import { useDispatch } from 'react-redux';
 import { getEmptyField } from './utils/getEmptyField';
 import { KickoffShareForm } from './KickoffShareForm';
 import { isKickoffCleared } from './utils/isKickoffCleared';
+import { FieldsetPicker } from '../FieldsetPicker';
 
 import { KickoffMenu } from './KickoffMenu';
 import { IntlMessages } from '../../IntlMessages';
@@ -21,6 +22,8 @@ import { ExtraFieldsLabels } from '../ExtraFields/utils/ExtraFieldsLabels';
 import { getEmptyKickoff } from '../../../utils/template';
 import { useHashLink } from '../../../hooks/useHashLink';
 import { useWorkflowNameVariables } from '../TaskForm/utils/getTaskVariables';
+import { useTemplateEditFieldsets } from '../TemplateEditFieldsetsContext';
+import { FieldsetOutputsPreview } from '../FieldsetOutputsPreview/FieldsetOutputsPreview';
 
 import styles from './KickoffRedux.css';
 import { patchTemplate } from '../../../redux/actions';
@@ -42,9 +45,10 @@ export function KickoffRedux({
   accountId,
 }: IKickoffReduxProps) {
   const dispatch = useDispatch();
+  const { fieldsetsByApiName } = useTemplateEditFieldsets();
   const [isOpen, setIsOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
-  const variables = useWorkflowNameVariables(kickoff);
+  const variables = useWorkflowNameVariables(kickoff, fieldsetsByApiName);
   const datasetOptions = useDatasetOptions(kickoff.fields);
 
   const editTemplate = (templateFields: Partial<ITemplate>) => {
@@ -167,15 +171,32 @@ export function KickoffRedux({
           </div>
         )}
 
+        <div className={styles['fieldsets-section']}>
+          <p className={styles['section-title']}>
+            {formatMessage({ id: 'template.kick-off-fieldsets' })}
+          </p>
+          <FieldsetPicker
+            selectedApiNames={(kickoff.fieldsets || []).map((fieldset) => fieldset.apiName)}
+            onChange={(apiNames) => {
+              const nextFieldsets = apiNames.map((apiName, index) => ({ apiName, order: index }));
+              handleChangeKickoff({ ...kickoff, fieldsets: nextFieldsets });
+            }}
+          />
+          <FieldsetOutputsPreview fieldsets={kickoff.fieldsets || []} fieldsetsByApiName={fieldsetsByApiName} />
+        </div>
+
         <KickoffShareForm className={styles['share-form']} />
       </>
     );
   };
 
   const renderKickoffLabels = () => {
-    const { fields } = kickoff;
+    const { fields, fieldsets } = kickoff;
+    const hasFieldsetChips = (fieldsets || []).some(
+      (taskFieldset) => isArrayWithItems(fieldsetsByApiName.get(taskFieldset.apiName)?.fields ?? []),
+    );
 
-    if (!isArrayWithItems(fields)) {
+    if (!isArrayWithItems(fields) && !hasFieldsetChips) {
       return null;
     }
 
@@ -192,7 +213,8 @@ export function KickoffRedux({
         role="button"
         aria-label="Toggle expand"
       >
-        <ExtraFieldsLabels extraFields={fields} />
+        {isArrayWithItems(fields) && <ExtraFieldsLabels extraFields={fields} />}
+        <FieldsetOutputsPreview fieldsets={fieldsets || []} fieldsetsByApiName={fieldsetsByApiName} />
       </div>
     );
   };

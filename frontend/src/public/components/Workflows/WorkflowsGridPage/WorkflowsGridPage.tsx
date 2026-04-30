@@ -9,7 +9,7 @@ import { isArrayWithItems } from '../../../utils/helpers';
 import { EPageTitle } from '../../../constants/defaultValues';
 import { SearchLargeIcon, StartRoundIcon } from '../../icons';
 import { getTemplate } from '../../../api/getTemplate';
-import { getRunnableWorkflow, loadDatasetsMap } from '../../TemplateEdit/utils/getRunnableWorkflow';
+import { getRunnableWorkflow, loadDatasetsMap, loadFieldsetsData } from '../../TemplateEdit/utils/getRunnableWorkflow';
 import { logger } from '../../../utils/logger';
 import { NotificationManager } from '../../UI/Notifications';
 import { getErrorMessage } from '../../../utils/getErrorMessage';
@@ -91,9 +91,10 @@ export const WorkflowsGridPage = function Workflows({
 
         return;
       }
-      const datasetsMap = await loadDatasetsMap(template.kickoff);
+      const loadedFieldsets = await loadFieldsetsData(template.kickoff, template.id);
+      const datasetsMap = await loadDatasetsMap(template.kickoff, loadedFieldsets);
 
-      const runnableWorkflow = getRunnableWorkflow(template, datasetsMap);
+      const runnableWorkflow = getRunnableWorkflow(template, datasetsMap, loadedFieldsets);
       if (!runnableWorkflow) {
         openSelectTemplateModal();
 

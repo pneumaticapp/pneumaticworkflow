@@ -68,6 +68,7 @@ class TemplateService(BaseModelService):
             'kickoff': {
                 'description': initial_kickoff_data.get('description', ''),
                 'fields': initial_kickoff_data.get('fields', []),
+                'fieldsets': initial_kickoff_data.get('fieldsets', []),
             },
             'tasks': deepcopy(initial_tasks_data),
         }

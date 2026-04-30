@@ -15,6 +15,7 @@ import {
 } from '../types/template';
 import { getUrlParams } from './getUrlParams';
 import { DEFAULT_TEMPLATE_NAME } from '../components/TemplateEdit/constants';
+import { getFieldsetsByApiNameSnapshot } from '../components/TemplateEdit/TemplateEditFieldsetsContext';
 
 import { getNormalizeFieldsOrders } from './workflows';
 import { createOwnerApiName, createTaskApiName, createUUID } from './createId';
@@ -47,6 +48,7 @@ export function getEmptyKickoff(): IKickoff {
   return {
     description: '',
     fields: [],
+    fieldsets: [],
   };
 }
 
@@ -56,7 +58,10 @@ export const getNormalizedTemplate = (
   users: TUserListItem[],
   billingPlan: ESubscriptionPlan,
 ): ITemplate => {
-  const normalizedKickoff = template.kickoff || getEmptyKickoff();
+  const normalizedKickoff = {
+    ...getEmptyKickoff(),
+    ...(template.kickoff || {}),
+  };
   const normalizedTasks = [...template.tasks]
     .sort((a, b) => a.number - b.number)
     .map((task, index, tasks) => getNormalizedTask(task, isSubscribed, tasks[index - 1]));
@@ -132,6 +137,7 @@ export const getNormalizedTask = (
 };
 
 export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
+  const fieldsetsByApiName = getFieldsetsByApiNameSnapshot();
   // System variables that the backend recognizes and skips during validation.
   // Must stay in sync with backend/src/processes/enums.py :: SystemVariable
   const TASK_SYSTEM_VARS = new Set(['workflow-starter']);
@@ -141,6 +147,13 @@ export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
 
   template.kickoff?.fields?.forEach((f) => {
     if (f.apiName) validApiNames.add(f.apiName);
+  });
+
+  template.kickoff?.fieldsets?.forEach((fs) => {
+    const fieldsetData = fieldsetsByApiName?.get(fs.apiName);
+    fieldsetData?.fields?.forEach((f) => {
+      if (f.apiName) validApiNames.add(f.apiName);
+    });
   });
 
   const removeInvalidReferences = (
@@ -195,6 +208,13 @@ export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
 
     (task.fields || []).forEach((f) => {
       if (f.apiName) validApiNames.add(f.apiName);
+    });
+
+    (task.fieldsets || []).forEach((fs) => {
+      const fieldsetData = fieldsetsByApiName?.get(fs.apiName);
+      fieldsetData?.fields?.forEach((f) => {
+        if (f.apiName) validApiNames.add(f.apiName);
+      });
     });
 
     return {

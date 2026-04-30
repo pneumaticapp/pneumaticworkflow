@@ -1,25 +1,42 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useIntl } from 'react-intl';
-import { ITemplateTask } from '../../../types/template';
+import { ITemplateTask, ITaskFieldset } from '../../../types/template';
 import styles from '../ExtraFields/utils/ExtraFieldsLabels/ExtraFieldsLabels.css';
 import { getTriplePlural } from '../../../utils/helpers';
+import { useTemplateEditFieldsets } from '../TemplateEditFieldsetsContext';
 
 interface ITaskRenderExtraFieldsInfoProps {
   task: ITemplateTask;
   onClick: () => void;
 }
 
-export const TaskRenderExtraFieldsInfo = ({ task: { fields }, onClick }: ITaskRenderExtraFieldsInfoProps) => {
+function countFieldsetOutputFields(
+  fieldsets: ITaskFieldset[] | undefined,
+  fieldsetsByApiName: ReadonlyMap<string, { fields: unknown[] }>,
+): number {
+  if (!fieldsets?.length) {
+    return 0;
+  }
+
+  return fieldsets.reduce((acc, taskFieldset) => acc + (fieldsetsByApiName.get(taskFieldset.apiName)?.fields.length ?? 0), 0);
+}
+
+export const TaskRenderExtraFieldsInfo = ({ task: { fields, fieldsets }, onClick }: ITaskRenderExtraFieldsInfoProps) => {
   const { formatMessage } = useIntl();
+  const { fieldsetsByApiName } = useTemplateEditFieldsets();
+
+  const totalCount = useMemo(() => {
+    return fields.length + countFieldsetOutputFields(fieldsets, fieldsetsByApiName);
+  }, [fieldsets, fieldsetsByApiName, fields.length]);
 
   const extraFieldsText = getTriplePlural({
-    counter: fields.length,
+    counter: totalCount,
     forms: ['tasks.task-extra-field-single', 'tasks.task-extra-field-plural-1', 'tasks.task-extra-field-plural-2'],
     formatMessage,
   });
 
   return (
-    fields.length > 0 && (
+    totalCount > 0 && (
       <button className={styles['extra-field-label']} onClick={onClick} type="button">
         {extraFieldsText}
       </button>

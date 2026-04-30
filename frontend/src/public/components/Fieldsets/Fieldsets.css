@@ -1,0 +1,24 @@
+.container {
+  margin: 0 auto;
+  display: flex;
+  flex-flow: column;
+  max-width: 108.8rem;
+  min-height: 100%;
+
+  @media (--mobile) {
+    padding-top: 2rem;
+  }
+}
+
+.cards-wrapper {
+  @mixin page-cards-wrapper;
+}
+
+.card {
+  @mixin page-card;
+}
+
+.container-loading {
+  pointer-events: none;
+  opacity: 0.4;
+}

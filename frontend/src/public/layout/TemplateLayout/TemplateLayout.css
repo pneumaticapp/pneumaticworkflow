@@ -1,0 +1,19 @@
+/* stylelint-disable declaration-no-important */
+.breadcrumb-nav {
+  display: flex;
+  gap: 16px;
+}
+
+.navbar-left__content {
+  display: flex;
+  gap: 16px;
+
+  @media (--mobile) {
+    width: 100%;
+    flex-flow: column nowrap;
+  }
+}
+
+.sorting-toggle-text {
+  margin-right: 4px !important;
+}

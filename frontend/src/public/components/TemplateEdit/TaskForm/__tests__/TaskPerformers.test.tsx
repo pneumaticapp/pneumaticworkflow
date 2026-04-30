@@ -69,6 +69,7 @@ describe('TaskPerformers', () => {
     checklists: [],
     revertTask: null,
     ancestors: [],
+    fieldsets: [],
     ...overrides,
   });
 

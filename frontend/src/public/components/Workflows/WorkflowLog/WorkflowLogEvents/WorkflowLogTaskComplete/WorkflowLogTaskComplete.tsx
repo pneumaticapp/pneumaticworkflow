@@ -39,6 +39,7 @@ export function WorkflowLogTaskComplete({
         containerClassName={styles['outputs-container']}
         viewMode={EKickoffOutputsViewModes.Short}
         outputs={currentTask?.output.filter(Boolean)}
+        fieldsets={currentTask?.fieldsets}
         isOnlyAttachmentsShown={isOnlyAttachmentsShown}
       />
     );

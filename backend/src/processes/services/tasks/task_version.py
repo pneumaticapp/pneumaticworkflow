@@ -16,6 +16,10 @@ from src.processes.models.workflows.conditions import (
     Predicate,
     Rule,
 )
+from src.processes.models.workflows.fieldset import (
+    FieldSet,
+    FieldSetRule,
+)
 from src.processes.models.workflows.fields import (
     FieldSelection,
     TaskField,
@@ -53,6 +57,27 @@ class TaskUpdateVersionService(
 
     # TODO Very bad code. Needs to be refactored
 
+    def _update_field_selections(
+        self,
+        field: TaskField,
+        field_data: Dict,
+    ) -> None:
+
+        if field_data.get('selections'):
+            selection_ids = set()
+            for selection_data in field_data['selections']:
+                selection, __ = (
+                    FieldSelection.objects.update_or_create(
+                        field=field,
+                        api_name=selection_data['api_name'],
+                        defaults={
+                            'value': selection_data['value'],
+                        },
+                    )
+                )
+                selection_ids.add(selection.id)
+            field.selections.exclude(id__in=selection_ids).delete()
+
     def _update_fields(
         self,
         data: Optional[List[Dict]] = None,
@@ -63,22 +88,9 @@ class TaskUpdateVersionService(
         field_ids = []
         if data:
             for field_data in data:
-                field, _ = self._update_field(field_data)
+                field, _ = self._update_field(field_data, fieldset=None)
                 field_ids.append(field.id)
-                if field_data.get('selections'):
-                    selection_ids = set()
-                    for selection_data in field_data['selections']:
-                        selection, __ = (
-                            FieldSelection.objects.update_or_create(
-                                field=field,
-                                api_name=selection_data['api_name'],
-                                defaults={
-                                    'value': selection_data['value'],
-                                },
-                            )
-                        )
-                        selection_ids.add(selection.id)
-                    field.selections.exclude(id__in=selection_ids).delete()
+                self._update_field_selections(field, field_data)
         self.instance.output.exclude(id__in=field_ids).delete()
 
     def _update_delay(self, new_duration: Optional[str] = None):
@@ -152,25 +164,119 @@ class TaskUpdateVersionService(
         conditions = Condition.objects.bulk_create(conditions)
         self.create_rules(conditions, conditions_tree)
 
-    def _update_field(self, template: Dict):
+    def _update_field(
+        self,
+        field_data: Dict,
+        fieldset: Optional[FieldSet] = None,
+    ):
 
         # TODO Move to TaskFieldService
 
         return TaskField.objects.update_or_create(
             task=self.instance,
-            api_name=template['api_name'],
+            api_name=field_data['api_name'],
+            fieldset=fieldset,
             defaults={
-                'name': template['name'],
-                'description': template['description'],
-                'type': template['type'],
-                'is_required': template['is_required'],
-                'is_hidden': template['is_hidden'],
-                'order': template['order'],
+                'name': field_data['name'],
+                'description': field_data['description'],
+                'type': field_data['type'],
+                'is_required': field_data['is_required'],
+                'is_hidden': field_data['is_hidden'],
+                'order': field_data['order'],
                 'workflow': self.instance.workflow,
                 'account': self.instance.account,
-                'dataset_id': template['dataset_id'],
+                'dataset_id': field_data['dataset_id'],
             },
         )
+
+    def _update_fieldset_rules(
+        self,
+        fieldset: FieldSet,
+        rules_data: Optional[List[Dict]],
+    ) -> None:
+
+        rule_ids = []
+        rules_data = rules_data or []
+        for rule_data in rules_data:
+            rule, _ = FieldSetRule.objects.update_or_create(
+                fieldset=fieldset,
+                api_name=rule_data['api_name'],
+                defaults={
+                    'account_id': fieldset.account_id,
+                    'type': rule_data['type'],
+                    'value': rule_data.get('value'),
+                },
+            )
+            rule_ids.append(rule.id)
+        fieldset.rules.exclude(id__in=rule_ids).delete()
+
+    def _update_field_rules(
+        self,
+        field: TaskField,
+        field_data: Dict,
+        fieldset: FieldSet,
+    ) -> None:
+
+        rules = field_data.get('rules', [])
+        if rules:
+            rules_api_names = [e['api_name'] for e in rules]
+            rules = FieldSetRule.objects.filter(
+                fieldset=fieldset,
+                api_name__in=rules_api_names,
+            )
+            field.rules.set(rules)
+        else:
+            field.rules.clear()
+
+    def _update_fieldset_fields(
+        self,
+        fieldset: FieldSet,
+        fields_data: Optional[List[Dict]],
+    ) -> None:
+
+        field_ids = []
+        fields_data = fields_data or []
+        for field_data in fields_data:
+            field, _ = self._update_field(field_data, fieldset=fieldset)
+            field_ids.append(field.id)
+            self._update_field_selections(field, field_data)
+            self._update_field_rules(field, field_data, fieldset)
+        fieldset.fields.exclude(id__in=field_ids).delete()
+
+    def _update_fieldsets(self, data: Optional[List]) -> None:
+
+        fieldset_api_names = set()
+        for fieldset_data in data or []:
+            task_link = next(
+                link for link in fieldset_data['task_links']
+                if link['task_api_name'] == self.instance.api_name
+            )
+            order = task_link['order']
+            fieldset, _ = FieldSet.objects.update_or_create(
+                workflow=self.instance.workflow,
+                task=self.instance,
+                api_name=fieldset_data['api_name'],
+                defaults={
+                    'account_id': self.instance.account_id,
+                    'name': fieldset_data['name'],
+                    'description': fieldset_data['description'],
+                    'order': order,
+                    'label_position': fieldset_data['label_position'],
+                    'layout': fieldset_data['layout'],
+                },
+            )
+            self._update_fieldset_rules(
+                fieldset=fieldset,
+                rules_data=fieldset_data.get('rules'),
+            )
+            self._update_fieldset_fields(
+                fieldset=fieldset,
+                fields_data=fieldset_data.get('fields'),
+            )
+            fieldset_api_names.add(fieldset.api_name)
+        FieldSet.objects.filter(
+            task=self.instance,
+        ).exclude(api_name__in=fieldset_api_names).delete()
 
     def _update_checklists(
         self,
@@ -405,6 +511,7 @@ class TaskUpdateVersionService(
                 'is_urgent': bool,
                 'require_completion_by_all': bool,
                 'fields': list,
+                'fieldsets': list,
                 'checklists': list,
                 'conditions': list,
                 'raw_due_date: dict,
@@ -423,6 +530,7 @@ class TaskUpdateVersionService(
             fields_values=tasks_fields_values,
         )
         self._update_fields(data=data.get('fields'))
+        self._update_fieldsets(data=data.get('fieldsets'))
         self._update_conditions(data=data.get('conditions'))
         self._update_checklists(
             data=data.get('checklists'),
