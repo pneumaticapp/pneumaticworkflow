@@ -1,5 +1,4 @@
 import * as React from 'react';
-import { useState, useEffect } from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector, useDispatch } from 'react-redux';
 
@@ -28,8 +27,6 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
     return history.listen((location) => {
       setPathname(location.pathname);
     });
-
-    return unlisten;
   }, []);
 
   const datasetsSorting = useSelector(getDatasetsSorting);
