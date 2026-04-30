@@ -80,7 +80,7 @@ export function OutputFormTaskMerged({
 
   const handleCreateField = useCallback(
     (type: EExtraFieldType) => {
-      const newField = getEmptyField(type, formatMessage);
+      const newField = getEmptyField(type, formatMessage, -1);
       const mergedTaskFields = [...(task.fields || []), newField];
       const rowsWithNew = buildMergedTaskOutputRows(
         mergedTaskFields,

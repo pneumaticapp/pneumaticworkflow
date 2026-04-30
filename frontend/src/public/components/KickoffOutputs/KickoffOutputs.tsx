@@ -92,7 +92,7 @@ export function KickoffOutputs({
         order: fieldset.order!,
         data: fieldset,
       })),
-    ].sort((a, b) => a.order - b.order);
+    ].sort((a, b) => b.order - a.order);
 
 
     if (isTruncated && items.length > 0) {
