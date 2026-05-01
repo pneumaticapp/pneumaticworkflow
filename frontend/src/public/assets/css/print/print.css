@@ -17,18 +17,16 @@
   
     * {
       print-color-adjust: exact;
-    }
-
-    * {
-        scrollbar-width: none;
+      -webkit-print-color-adjust: exact;
+      scrollbar-width: none;
     }
     
     *::-webkit-scrollbar {
-    display: none;
+      display: none;
     }
 
     .no-print {
-        display: none !important;
+      display: none !important;
     }
 }
   
