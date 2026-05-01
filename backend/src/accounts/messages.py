@@ -101,5 +101,14 @@ MSG_A_0046 = _(
 )
 MSG_A_0047 = _('You can\'t delete yourself.')
 MSG_A_0048 = _('You can\'t delete the account owner.')
-MSG_A_0049 = _('A user cannot be their own manager.')
-MSG_A_0050 = _('This assignment would create a circular management hierarchy.')
+MSG_A_0049 = _('You cannot delegate to yourself.')
+MSG_A_0050 = lambda missing: format_lazy(
+    _('The following users were not found: {missing}'),
+    missing=missing,
+)
+MSG_A_0051 = _('Select at least one substitute.')
+MSG_A_0052 = _('The vacation is not active.')
+MSG_A_0053 = _('The status is already active.')
+MSG_A_0054 = _('The end date must be after the start date.')
+MSG_A_0055 = _('A user cannot be their own manager.')
+MSG_A_0056 = _('This assignment would create a circular management hierarchy.')

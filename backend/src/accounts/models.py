@@ -1,6 +1,6 @@
 import uuid
 from datetime import timedelta
-from typing import Dict, Set
+from typing import Dict, Optional, Set
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
@@ -11,6 +11,7 @@ from django.db.models import Manager, Q, UniqueConstraint
 from django.utils import timezone
 
 from src.accounts.enums import (
+    AbsenceStatus,
     BillingPlanType,
     Language,
     LeaseLevel,
@@ -20,6 +21,7 @@ from src.accounts.enums import (
     Timezone,
     UserDateFormat,
     UserFirstDayWeek,
+    UserGroupType,
     UserInviteStatus,
     UserStatus,
     UserType,
@@ -30,6 +32,7 @@ from src.accounts.fields import (
 )
 from src.accounts.managers import (
     SoftDeleteGuestManager,
+    SoftDeleteGroupManager,
     SoftDeleteUserManager,
 )
 from src.accounts.querysets import (
@@ -44,6 +47,7 @@ from src.accounts.querysets import (
     SystemMessageQuerySet,
     UserInviteQuerySet,
     UserQuerySet,
+    VacationQuerySet,
 )
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
@@ -481,6 +485,19 @@ class User(AbstractUser, SoftDeleteModel):
 
     search_content = SearchVectorField(null=True)
 
+    @property
+    def vacation(self) -> Optional['UserVacation']:
+        """Returns the active (non-deleted) vacation, or None."""
+        vacations = self.vacations.all()
+        return vacations[0] if vacations else None
+
+    @property
+    def is_absent(self) -> bool:
+        vacation = self.vacation
+        if not vacation:
+            return False
+        return vacation.absence_status != AbsenceStatus.ACTIVE
+
     def get_dynamic_mapping(self) -> Dict[str, str]:
         return {
             'account_name': self.account.name or '',
@@ -673,7 +690,53 @@ class UserGroup(SoftDeleteModel):
         on_delete=models.CASCADE,
         related_name='user_groups',
     )
-    objects = BaseSoftDeleteManager.from_queryset(GroupQuerySet)()
+    type = models.CharField(
+        max_length=20,
+        choices=UserGroupType.CHOICES,
+        default=UserGroupType.REGULAR,
+    )
+    objects = SoftDeleteGroupManager.from_queryset(GroupQuerySet)()
+    include_personal = BaseSoftDeleteManager.from_queryset(GroupQuerySet)()
 
     def __str__(self):
         return self.name
+
+
+class UserVacation(
+    SoftDeleteModel,
+    AccountBaseMixin,
+):
+
+    user = models.ForeignKey(
+        'accounts.User',
+        on_delete=models.CASCADE,
+        related_name='vacations',
+    )
+    start_date = models.DateField(null=True, blank=True)
+    end_date = models.DateField(null=True, blank=True)
+    absence_status = models.CharField(
+        max_length=20,
+        choices=AbsenceStatus.CHOICES,
+        default=AbsenceStatus.VACATION,
+    )
+    substitute_group = models.ForeignKey(
+        'accounts.UserGroup',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='vacation_owners',
+    )
+
+    objects = BaseSoftDeleteManager.from_queryset(VacationQuerySet)()
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user'],
+                condition=models.Q(is_deleted=False),
+                name='unique_active_vacation_per_user',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.user.email} vacation'

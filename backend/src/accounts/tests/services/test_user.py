@@ -3057,7 +3057,7 @@ def test_validate_manager__self_assignment__error():
         service._validate_manager(user)
 
     # assert
-    assert ex.value.message == str(messages.MSG_A_0049)
+    assert ex.value.message == str(messages.MSG_A_0055)
 
 
 def test_validate_manager__circular__error():
@@ -3079,7 +3079,7 @@ def test_validate_manager__circular__error():
         service._validate_manager(manager)
 
     # assert
-    assert ex.value.message == str(messages.MSG_A_0050)
+    assert ex.value.message == str(messages.MSG_A_0056)
 
 
 def test_validate_manager__deep_chain__error():
@@ -3108,7 +3108,7 @@ def test_validate_manager__deep_chain__error():
         service._validate_manager(user_c)
 
     # assert
-    assert ex.value.message == str(messages.MSG_A_0050)
+    assert ex.value.message == str(messages.MSG_A_0056)
 
 
 def test_validate_manager__inactive_in_chain__ok():
@@ -3166,7 +3166,7 @@ def test_validate_subordinates__self__error():
         service._validate_subordinates([user])
 
     # assert
-    assert ex.value.message == str(messages.MSG_A_0049)
+    assert ex.value.message == str(messages.MSG_A_0055)
 
 
 def test_validate_subordinates__ancestor__error():
@@ -3189,7 +3189,7 @@ def test_validate_subordinates__ancestor__error():
         )
 
     # assert
-    assert ex.value.message == str(messages.MSG_A_0050)
+    assert ex.value.message == str(messages.MSG_A_0056)
 
 
 def test_validate_subordinates__proposed_mgr_none__ok():

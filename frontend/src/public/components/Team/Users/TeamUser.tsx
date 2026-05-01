@@ -4,7 +4,7 @@ import Switch from 'rc-switch';
 import { debounce } from 'throttle-debounce';
 import { useIntl } from 'react-intl';
 
-import { EUserStatus, TUserListItem } from '../../../types/user';
+import { EUserStatus, TUserListItem, isUserAbsent } from '../../../types/user';
 import { IntlMessages } from '../../IntlMessages';
 import { Avatar } from '../../UI/Avatar';
 import { getUserFullName } from '../../../utils/users';
@@ -25,6 +25,7 @@ export interface ITeamUserProps {
   handleChangeUserManager(userId: number, managerId: number | null, callbacks?: { onSuccess?: () => void; onError?: () => void }): void;
   handleChangeUserReports(userId: number, reportIds: number[], callbacks?: { onSuccess?: () => void; onError?: () => void }): void;
   openModal(): void;
+  openVacationModal(): void;
 }
 
 export function TeamUser(props: ITeamUserProps) {
@@ -38,6 +39,7 @@ export function TeamUser(props: ITeamUserProps) {
     handleChangeUserManager,
     handleChangeUserReports,
     openModal,
+    openVacationModal,
   } = props;
 
   const { formatMessage } = useIntl();
@@ -67,6 +69,12 @@ export function TeamUser(props: ITeamUserProps) {
       isHidden: !isUserActive,
     },
     {
+      label: formatMessage({ id: 'team.card-vacation-settings' }),
+      onClick: openVacationModal,
+      isHidden: !isUserActive,
+      Icon: undefined, // Or a suitable icon from standard library
+    },
+    {
       label: isUserActive
         ? formatMessage({ id: 'team.card-delete' })
         : formatMessage({ id: 'team.card-revoke-invite' }),
@@ -83,6 +91,11 @@ export function TeamUser(props: ITeamUserProps) {
         <>
           <Header size="6" tag="p" className={styles['card-header']}>
             {getUserFullName(user)}
+            {isUserAbsent(user) && (
+              <span className={styles['card-absent-badge']} data-testid="absent-badge">
+                {formatMessage({ id: 'team.card-absent-badge' })}
+              </span>
+            )}
           </Header>
           <p className={styles['card-subheader']}>
             <strong>{formatMessage({ id: 'team.user-id' }, { id: user.id })}</strong>{' '}

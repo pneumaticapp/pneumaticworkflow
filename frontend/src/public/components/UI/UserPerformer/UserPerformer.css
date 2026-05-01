@@ -35,4 +35,9 @@
       color: var(--pneumatic-color-link-hover);
     }
   }
+
+  &__badge {
+    margin-left: 0.2rem;
+    font-size: 0.9em;
+  }
 }

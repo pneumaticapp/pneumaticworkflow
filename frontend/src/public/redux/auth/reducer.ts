@@ -131,6 +131,11 @@ export const reducer = (state = INIT_STATE, action: TAuthActions | { type: strin
         draftState.account.planExpiration = planExpiration;
       });
     }
+    case EAuthActions.VacationSuccess:
+      return {
+        ...state,
+        vacation: action.payload.vacation,
+      };
 
     case changeUserManager.type: {
       const { id: userId, managerId } = action.payload as { id: number; managerId: number | null };

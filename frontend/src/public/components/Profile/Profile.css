@@ -1,39 +1,39 @@
 /* stylelint-disable declaration-no-important */
 
 .header {
-  margin-bottom: 32px;
+  margin-bottom: 3.2rem;
   padding: 0;
   display: block;
   text-align: center;
 }
 
 .avatar {
-  margin-bottom: 32px;
+  margin-bottom: 3.2rem;
   display: flex;
   justify-content: center;
 }
 
 .profile-form {
-  padding: 80px;
-  background: white;
-  border-radius: 24px;
+  padding: 8rem;
+  background: var(--pneumatic-color-white);
+  border-radius: 2.4rem;
   align-self: auto;
 
   @media (--mobile) {
-    padding: 80px 32px;
+    padding: 8rem 3.2rem;
   }
 }
 
 .fields-group {
-  margin-bottom: 32px;
+  margin-bottom: 3.2rem;
 }
 
 .fields-group__title {
-  margin-bottom: 16px;
+  margin-bottom: 1.6rem;
 }
 
 .field:not(:last-child) {
-  margin-bottom: 8px;
+  margin-bottom: 0.8rem;
 }
 
 .submit-button {
@@ -41,7 +41,7 @@
 }
 
 .avatar-controller {
-  margin-bottom: 32px;
+  margin-bottom: 3.2rem;
 }
 
 .change-pass {
@@ -123,4 +123,21 @@
 
 .manager-card__edit-btn {
   margin-top: 16px;
+}
+
+.dates-row {
+  display: flex;
+  gap: 1.6rem;
+}
+
+.dates-row > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.selected-users {
+  margin-top: 0.8rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.8rem;
 }

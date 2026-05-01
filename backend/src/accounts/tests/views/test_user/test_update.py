@@ -1023,7 +1023,7 @@ def test_put__manager_id_circular__validation_error(api_client):
     # assert
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == str(messages.MSG_A_0050)
+    assert response.data['message'] == str(messages.MSG_A_0056)
 
 
 def test_put__manager_id_self__validation_error(api_client):
@@ -1043,7 +1043,7 @@ def test_put__manager_id_self__validation_error(api_client):
     # assert
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == str(messages.MSG_A_0049)
+    assert response.data['message'] == str(messages.MSG_A_0055)
 
 
 def test_put__subordinates_circular__validation_error(api_client):
@@ -1070,7 +1070,7 @@ def test_put__subordinates_circular__validation_error(api_client):
     # assert
     assert response.status_code == 400
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == str(messages.MSG_A_0050)
+    assert response.data['message'] == str(messages.MSG_A_0056)
 
 
 def test_put__manager_id_valid__ok(api_client, mocker):

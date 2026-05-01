@@ -13,6 +13,7 @@ describe('getClonedTask', () => {
       description: "Check data on correct. If it's not - requesting for actualisation to user.",
       number: 1,
       requireCompletionByAll: true,
+      skipForStarter: false,
       fields: [
         {
           name: 'Large Text Field',

@@ -8,7 +8,7 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('accounts', '0141_notification_text_default'),
+        ('accounts', '0142_vacation_fields'),
     ]
 
     operations = [

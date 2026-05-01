@@ -19,8 +19,8 @@ from src.accounts.models import (
     Contact,
 )
 from src.accounts.messages import (
-    MSG_A_0049,
-    MSG_A_0050,
+    MSG_A_0055,
+    MSG_A_0056,
 )
 from src.accounts.serializers.user import UserWebsocketSerializer
 from src.accounts.services.exceptions import (
@@ -31,6 +31,7 @@ from src.accounts.services.exceptions import (
     PreventAccountOwnerDeletion,
 )
 from src.accounts.validators import user_is_last_performer
+from src.accounts.services.vacation import VacationDelegationService
 from src.analysis.mixins import BaseIdentifyMixin
 from src.analysis.services import AnalyticService
 from src.authentication.tokens import PneumaticToken
@@ -342,7 +343,11 @@ class UserService(
         old_manager = user.manager
         with transaction.atomic():
             self._deactivate_subordinates()
-
+            # Remove from personal (vacation substitute) groups
+            VacationDelegationService.clear_substitute_groups(user)
+            # Also deactivate own vacation if active
+            if user.is_absent:
+                VacationDelegationService(user).deactivate()
             remove_user_from_draft(
                 account_id=user.account_id,
                 user_id=user.id,
@@ -419,10 +424,10 @@ class UserService(
         """Validate that assigning *manager* to self.instance
         does not create a circular hierarchy.
 
-        1. A user cannot be their own manager (MSG_A_0049).
+        1. A user cannot be their own manager (MSG_A_0055).
         2. Walk up from *manager* through the chain; if we
            encounter self.instance the assignment would
-           create a cycle (MSG_A_0050).
+           create a cycle (MSG_A_0056).
 
         Accepts an optional pre-built *manager_map* to avoid
         a duplicate DB query when called together with
@@ -430,7 +435,7 @@ class UserService(
         """
         if manager.id == self.instance.id:
             raise UserServiceException(
-                message=str(MSG_A_0049),
+                message=str(MSG_A_0055),
             )
         if manager_map is None:
             manager_map = self._get_manager_map()
@@ -441,7 +446,7 @@ class UserService(
                 break
             if current_id == self.instance.id:
                 raise UserServiceException(
-                    message=str(MSG_A_0050),
+                    message=str(MSG_A_0056),
                 )
             visited.add(current_id)
             current_id = manager_map.get(current_id)
@@ -454,9 +459,9 @@ class UserService(
     ):
         """Validate the proposed subordinate list.
 
-        1. A user cannot be their own subordinate (MSG_A_0049).
+        1. A user cannot be their own subordinate (MSG_A_0055).
         2. No proposed subordinate may be an ancestor of the
-           user in the *future* hierarchy (MSG_A_0050).
+           user in the *future* hierarchy (MSG_A_0056).
 
         The *future* hierarchy is computed by patching the
         in-memory manager map with *proposed_manager*,
@@ -470,7 +475,7 @@ class UserService(
         for sub in subordinates:
             if sub.id == self.instance.id:
                 raise UserServiceException(
-                    message=str(MSG_A_0049),
+                    message=str(MSG_A_0055),
                 )
 
         if manager_map is None:
@@ -497,7 +502,7 @@ class UserService(
         for sub in subordinates:
             if sub.id in ancestor_ids:
                 raise UserServiceException(
-                    message=str(MSG_A_0050),
+                    message=str(MSG_A_0056),
                 )
 
     def partial_update(

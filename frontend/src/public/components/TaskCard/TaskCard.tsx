@@ -61,7 +61,7 @@ import { DateFormat } from '../UI/DateFormat';
 import UserDataWithGroup from '../UserDataWithGroup';
 import { HelpModal } from './HelpModal/HelpModal';
 import { ReturnModal } from './ReturnModal';
-import { getGroupsList } from '../../redux/selectors/groups';
+import { getRegularGroupsList } from '../../redux/selectors/groups';
 
 import styles from './TaskCard.css';
 
@@ -111,6 +111,7 @@ export function TaskCard({
   accountId,
   users,
   authUser,
+  helpText,
   changeTaskWorkflowLog,
   setCurrentTask,
   setTaskCompleted,
@@ -129,7 +130,7 @@ export function TaskCard({
   const { formatMessage } = useIntl();
   const { isMobile } = useCheckDevice();
 
-  const groups = useSelector(getGroupsList);
+  const groups = useSelector(getRegularGroupsList);
   const saveOutputsToStorageDebounced = debounce(300, addOrUpdateStorageOutput);
 
   const guestsControllerRef = useRef<React.ElementRef<typeof GuestController> | null>(null);
@@ -139,7 +140,7 @@ export function TaskCard({
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
-  const helpText = workflow?.description ?? workflow?.description ?? null;
+  const helpTextLocal = helpText ?? workflow?.description ?? null;
 
   useEffect(() => {
     autoFocusFirstField(wrapperRef.current);
@@ -242,6 +243,23 @@ export function TaskCard({
     ].every(Boolean);
 
     return task.performers.map((performer) => {
+      if (performer.type === ETemplateOwnerType.UserGroup && performer.label) {
+        return (
+          <UserPerformer
+            key={performer.sourceId}
+            user={{
+              ...performer,
+              sourceId: String(performer.sourceId),
+              value: String(performer.sourceId),
+            }}
+            bgColor={EBgColorTypes.Light}
+            {...(isPossibleToRemovePerformer && {
+              onClick: () => removeTaskPerformer({ taskId: task.id, userId: performer }),
+            })}
+          />
+        );
+      }
+
       return (
         <UserDataWithGroup key={performer.sourceId} idItem={performer.sourceId} type={performer.type}>
           {(user) => {
@@ -345,19 +363,19 @@ export function TaskCard({
       <>
         {authUser.isAdmin && !task.isReadOnlyViewer && (
           <UsersDropdown
-            isMulti
-            controlSize="sm"
-            className={styles['responsible']}
-            placeholder={formatMessage({ id: 'user.search-field-placeholder' })}
-            options={[...performerGroupDropdownOption, ...performerDropdownOption]}
-            value={[...performerDropdownValue, ...performerGroupDropdownValue]}
-            onChange={onAddTaskPerformer}
-            onChangeSelected={onRemoveTaskPerformer}
-            onUsersInvited={onUsersInvited}
-            onClickInvite={() => trackInviteTeamInPage('Task card')}
-            inviteLabel={formatMessage({ id: 'template.invite-team-member' })}
-            title={formatMessage({ id: 'task.add-performer' })}
-          />
+              isMulti
+              controlSize="sm"
+              className={styles['responsible']}
+              placeholder={formatMessage({ id: 'user.search-field-placeholder' })}
+              options={[...performerGroupDropdownOption, ...performerDropdownOption]}
+              value={[...performerDropdownValue, ...performerGroupDropdownValue]}
+              onChange={onAddTaskPerformer}
+              onChangeSelected={onRemoveTaskPerformer}
+              onUsersInvited={onUsersInvited}
+              onClickInvite={() => trackInviteTeamInPage('Task card')}
+              inviteLabel={formatMessage({ id: 'template.invite-team-member' })}
+              title={formatMessage({ id: 'task.add-performer' })}
+            />
         )}
 
         {viewMode !== ETaskCardViewMode.Guest && !task.isReadOnlyViewer && (
@@ -576,7 +594,7 @@ export function TaskCard({
         onClose={() => setIsReturnModalOpen(false)}
         onConfirm={handleReturnTask}
       />
-      {helpText && <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} helpText={helpText} />}
+      {helpTextLocal && <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} helpText={helpTextLocal} />}
       <div
         ref={wrapperRef}
         className={classnames(styles['container'], viewMode === ETaskCardViewMode.Guest && styles['container_guest'])}
@@ -625,7 +643,7 @@ export function TaskCard({
           styles['complete-form'],
           task.isReadOnlyViewer && styles['complete-form_readonly']
         )}>
-          {helpText && (
+          {helpTextLocal && (
             <button type="button" className={styles['help-trigger']} onClick={() => setIsHelpModalOpen(true)}>
               <span className={styles['help-trigger__label']}>
                 {formatMessage({ id: 'task.help', defaultMessage: 'Help' })}

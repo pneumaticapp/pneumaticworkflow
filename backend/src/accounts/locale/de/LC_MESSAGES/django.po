@@ -173,8 +173,21 @@ msgstr ""
 msgid "You can't delete the account owner."
 msgstr ""
 
-msgid "A user cannot be their own manager."
-msgstr "Ein Benutzer kann nicht sein eigener Vorgesetzter sein."
+msgid "You cannot delegate to yourself."
+msgstr "Sie können nicht an sich selbst delegieren."
 
-msgid "This assignment would create a circular management hierarchy."
-msgstr "Diese Zuweisung würde eine zirkuläre Managementhierarchie erzeugen."
+#, python-brace-format
+msgid "The following users were not found: {missing}"
+msgstr "Die folgenden Benutzer wurden nicht gefunden: {missing}"
+
+msgid "Select at least one substitute."
+msgstr "Wählen Sie mindestens eine Vertretung aus."
+
+msgid "The vacation is not active."
+msgstr "Die Abwesenheit ist nicht aktiv."
+
+msgid "The status is already active."
+msgstr "Aktivierung nicht möglich: Der Status ist bereits aktiv."
+
+msgid "The end date must be after the start date."
+msgstr "Das Enddatum muss nach dem Startdatum liegen."
