@@ -12,6 +12,7 @@ export interface IRichEditorHandle {
   insertVariable(apiName: string, variableTitle: string, subtitle?: string): void;
   getEditor?(): LexicalEditor | undefined;
   clearContent(): void;
+  replaceContent(markdown: string): void;
 }
 
 export type TMentionData = {
