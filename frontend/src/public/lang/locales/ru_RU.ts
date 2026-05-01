@@ -287,6 +287,8 @@ export const ruMessages = {
   'team.create-user-success-msg': 'Пользователь успешно создан',
   'team.decline-invite-success-msg': 'Приглашение пользователю было успешно отменено',
   'team.resend-invite-success-msg': 'Приглашение пользователю было успешно отправлено повторно',
+  'team.manager-update-success': 'Руководитель пользователя успешно обновлён',
+  'team.reports-update-success': 'Подчинённые пользователя успешно обновлены',
   'team.title-group-active': 'Активные пользователи',
   'team.title-group-invited': 'Приглашенный',
   'team.modal-nice-job-placeholder': 'Отличная работа!',

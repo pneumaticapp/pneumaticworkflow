@@ -90,10 +90,14 @@ export const authenticateUser: (payload?: void) => TAuthUser = actionGenerator<E
   EAuthActions.AuthUser,
 );
 
-export type TEditUser = ITypedReduxAction<EAuthActions.EditUser, IUpdateUserRequest>;
-export const editCurrentUser: (payload: IUpdateUserRequest) => TEditUser = actionGenerator<
+export type TEditUserPayload = IUpdateUserRequest & {
+  onSuccess?: () => void;
+  onError?: () => void;
+};
+export type TEditUser = ITypedReduxAction<EAuthActions.EditUser, TEditUserPayload>;
+export const editCurrentUser: (payload: TEditUserPayload) => TEditUser = actionGenerator<
   EAuthActions.EditUser,
-  IUpdateUserRequest
+  TEditUserPayload
 >(EAuthActions.EditUser);
 
 export type TEditAccount = ITypedReduxAction<EAuthActions.EditAccount, IUpdateAccountRequest>;

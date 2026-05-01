@@ -62,15 +62,18 @@ function ProfileManagerSection({
 }: {
   currentUserId: number;
   managerId: number | null;
-  editCurrentUser: (body: IUpdateUserRequest) => void;
+  editCurrentUser: (body: IUpdateUserRequest & {
+    onSuccess?: () => void;
+    onError?: () => void;
+  }) => void;
 }) {
   return (
     <fieldset className={styles['fields-group']}>
       <ProfileManager
         currentUserId={currentUserId}
         managerId={managerId}
-        onManagerChange={(newManagerId) =>
-          editCurrentUser({ managerId: newManagerId })
+        onManagerChange={(newManagerId, callbacks) =>
+          editCurrentUser({ managerId: newManagerId, ...callbacks })
         }
       />
     </fieldset>

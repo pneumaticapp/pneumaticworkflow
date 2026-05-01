@@ -141,12 +141,20 @@ export function Users({
       }
     };
 
-    const handleChangeUserManager = (userId: number, managerId: number | null) => {
-      loadChangeUserManager({ id: userId, managerId });
+    const handleChangeUserManager = (
+      userId: number,
+      managerId: number | null,
+      callbacks?: { onSuccess?: () => void; onError?: () => void },
+    ) => {
+      loadChangeUserManager({ id: userId, managerId, ...callbacks });
     };
 
-    const handleChangeUserReports = (userId: number, reportIds: number[]) => {
-      loadChangeUserReports({ id: userId, reportIds });
+    const handleChangeUserReports = (
+      userId: number,
+      reportIds: number[],
+      callbacks?: { onSuccess?: () => void; onError?: () => void },
+    ) => {
+      loadChangeUserReports({ id: userId, reportIds, ...callbacks });
     };
 
     return getFilteredUsers().map((user) => {

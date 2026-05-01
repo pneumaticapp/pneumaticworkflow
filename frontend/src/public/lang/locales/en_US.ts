@@ -296,6 +296,8 @@ export const enMessages = {
   'team.create-user-success-msg': 'The user has been successfully created',
   'team.decline-invite-success-msg': 'User invite has been successfully revoked',
   'team.resend-invite-success-msg': 'User invite has been successfully resent',
+  'team.manager-update-success': 'User manager updated successfully',
+  'team.reports-update-success': 'User reports updated successfully',
   'team.title-group-active': 'Active users',
   'team.title-group-invited': 'Invited',
   'team.modal-nice-job-placeholder': 'Nice job!',
