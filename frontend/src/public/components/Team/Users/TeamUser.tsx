@@ -59,7 +59,6 @@ export function TeamUser(props: ITeamUserProps) {
       Icon: AddUserIcon,
     },
     {
-    {
       label: formatMessage({ id: 'team.card-manager', defaultMessage: 'Manager' }),
       onClick: () => setIsManagerModalOpen(true),
       isHidden: !isUserActive,

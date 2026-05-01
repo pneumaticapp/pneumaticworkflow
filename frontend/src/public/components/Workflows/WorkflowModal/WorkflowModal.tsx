@@ -81,6 +81,10 @@ interface IWorkflowModalState {
   fieldsetFields: IFieldsetData[];
 }
 
+const getFieldsetsFromProps = (props: IWorkflowModalProps): IFieldsetData[] => {
+  return (props.workflow?.kickoff?.fieldsets || []).map((fs) => ({ ...fs, fields: [...fs.fields] }));
+};
+
 export class WorkflowModal extends React.Component<IWorkflowModalProps, IWorkflowModalState> {
   private processProgress: number | undefined;
 
@@ -88,12 +92,8 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps, IWorkflo
     super(props);
     this.processProgress = this.calculateWorkflowProgress();
     this.state = {
-      fieldsetFields: this.getFieldsetsFromProps(props),
+      fieldsetFields: getFieldsetsFromProps(props),
     };
-  }
-
-  private getFieldsetsFromProps(props: IWorkflowModalProps): IFieldsetData[] {
-    return (props.workflow?.kickoff?.fieldsets || []).map((fs) => ({ ...fs, fields: [...fs.fields] }));
   }
 
   public componentDidMount() {
@@ -120,7 +120,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps, IWorkflo
     if (prevKickoffId !== kickoff.id) {
       const editProcess = { name, kickoff: getEditKickoff(kickoff) };
       setWorkflowEdit(editProcess);
-      this.setState({ fieldsetFields: this.getFieldsetsFromProps(this.props) });
+      this.setState({ fieldsetFields: getFieldsetsFromProps(this.props) });
     }
 
     this.processProgress = this.calculateWorkflowProgress();
@@ -267,6 +267,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps, IWorkflo
       setWorkflowEdit,
       canEdit,
     } = this.props;
+    const { fieldsetFields } = this.state;
 
     if (!workflow) {
       return null;
@@ -309,7 +310,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps, IWorkflo
 
     const handleSave = () => {
       // Merge fieldset fields into kickoff.fields so they are included in the PATCH body
-      const allFieldsetFields = this.state.fieldsetFields.flatMap((fs) => fs.fields);
+      const allFieldsetFields = fieldsetFields.flatMap((fs) => fs.fields);
       const mergedKickoff = {
         ...editKickoff,
         fields: [...editKickoff.fields, ...allFieldsetFields],
@@ -319,7 +320,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps, IWorkflo
 
     const handleCancel = () => {
       setWorkflowEdit({ ...workflowEditData, kickoff: initialEditKickoff });
-      this.setState({ fieldsetFields: this.getFieldsetsFromProps(this.props) });
+      this.setState({ fieldsetFields: getFieldsetsFromProps(this.props) });
       setIsEditKickoff(false);
     };
 
@@ -328,7 +329,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps, IWorkflo
         <EditKickoffContainer
           isLoading={isKickoffSaving}
           kickoff={editKickoff}
-          fieldsets={this.state.fieldsetFields}
+          fieldsets={fieldsetFields}
           onEditField={handleEditField}
           onEditFieldsetField={handleEditFieldsetField}
           onSave={handleSave}
