@@ -1,0 +1,34 @@
+/* stylelint-disable declaration-no-important */
+@media print {
+    html,
+    body {
+      overflow: visible !important;
+      height: auto !important;
+    }
+  
+    [id='pneumatic-frontend'] {
+      overflow: visible !important;
+      height: auto !important;
+    }
+  
+    main .container-fluid .row {
+      display: flex !important;
+    }
+  
+    * {
+      print-color-adjust: exact;
+    }
+
+    * {
+        scrollbar-width: none;
+    }
+    
+    *::-webkit-scrollbar {
+    display: none;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+}
+  
