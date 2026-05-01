@@ -34,8 +34,7 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
   onChange,
 }) => {
   const editorRef = React.useRef<IRichEditorHandle>(null);
-  const formattedValue = escapeMarkdown(value);
-  const lastEmittedValue = React.useRef<string | undefined>(formattedValue);
+  const lastEmittedValue = React.useRef<string | undefined>(value);
 
   const handleChange: IRichEditorProps['handleChange'] = React.useCallback(
     (markdown: string) => {
@@ -47,11 +46,12 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
   );
 
   React.useEffect(() => {
-    if (formattedValue !== lastEmittedValue.current) {
-      lastEmittedValue.current = formattedValue;
+    if (value !== lastEmittedValue.current) {
+      lastEmittedValue.current = value;
+      const formattedValue = escapeMarkdown(value);
       editorRef.current?.replaceContent(formattedValue ?? '');
     }
-  }, [formattedValue]);
+  }, [value]);
 
   const handleInsertVariable = (apiName?: string) => (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -69,7 +69,7 @@ export const InputWithVariables: React.FC<IEditorWithVariablesProps> = ({
       ref={editorRef}
       title={title}
       placeholder={placeholder ?? ''}
-      defaultValue={formattedValue}
+      defaultValue={escapeMarkdown(value)}
       handleChange={handleChange}
       withToolbar={false}
       withMentions={false}
