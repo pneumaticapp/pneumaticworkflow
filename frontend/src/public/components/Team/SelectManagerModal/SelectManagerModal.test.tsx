@@ -1,0 +1,269 @@
+// <reference types="jest" />
+import * as React from 'react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import { useSelector, useDispatch } from 'react-redux';
+
+import { SelectManagerModal } from './SelectManagerModal';
+import { UsersDropdownComponent } from '../../UI/form/UsersDropdown/UsersDropdown';
+
+jest.mock('react-redux', () => ({
+  useSelector: jest.fn(),
+  useDispatch: jest.fn(),
+}));
+
+jest.mock('react-intl', () => ({
+  useIntl: () => ({
+    formatMessage: ({ id }: { id: string }) => id,
+  }),
+}));
+
+jest.mock('../../UI', () => ({
+  Modal: ({ children, isOpen }: any) => (isOpen ? <div data-testid="modal">{children}</div> : null),
+  Button: ({ onClick, label, ...props }: any) => (
+    <button onClick={onClick} data-testid={`btn-${label}`} {...props}>
+      {label}
+    </button>
+  ),
+}));
+
+jest.mock('../../UI/form/UsersDropdown/UsersDropdown', () => ({
+  UsersDropdownComponent: jest.fn(() => <div data-testid="users-dropdown" />),
+  EOptionTypes: { User: 'User' },
+}));
+
+const makeUser = (overrides: any = {}) => ({
+  id: 1,
+  firstName: 'John',
+  lastName: 'Doe',
+  email: 'john@example.com',
+  isDeleted: false,
+  ...overrides,
+});
+
+describe('SelectManagerModal', () => {
+  const mockOnClose = jest.fn();
+  const mockOnConfirm = jest.fn();
+  const mockDispatch = jest.fn();
+
+  beforeEach(() => {
+    jest.clearAllMocks();
+    (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
+    (useSelector as jest.Mock).mockReturnValue([
+      makeUser({ id: 1, firstName: 'Current', lastName: 'User' }),
+      makeUser({ id: 2, firstName: 'Potential', lastName: 'Manager' }),
+      makeUser({ id: 3, firstName: 'Another', lastName: 'Manager' }),
+    ]);
+  });
+
+  describe('Rendering', () => {
+    it('does not render the modal when isOpen=false', () => {
+      // arrange & act
+      render(
+        <SelectManagerModal
+          isOpen={false}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          currentManagerId={null}
+          currentUserId={1}
+        />
+      );
+
+      // assert
+      expect(screen.queryByTestId('modal')).not.toBeInTheDocument();
+    });
+
+    it('shows the Remove button when currentManagerId is set', () => {
+      // arrange & act
+      render(
+        <SelectManagerModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          currentManagerId={2}
+          currentUserId={1}
+        />
+      );
+
+      // assert
+      expect(screen.getByTestId('btn-button.remove')).toBeInTheDocument();
+    });
+
+    it('hides the Remove button when currentManagerId is null', () => {
+      // arrange & act
+      render(
+        <SelectManagerModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          currentManagerId={null}
+          currentUserId={1}
+        />
+      );
+
+      // assert
+      expect(screen.queryByTestId('btn-button.remove')).not.toBeInTheDocument();
+    });
+  });
+
+  describe('Actions', () => {
+    it('calls onConfirm with null when Remove is clicked', () => {
+      // arrange
+      render(
+        <SelectManagerModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          currentManagerId={2}
+          currentUserId={1}
+        />
+      );
+
+      // act
+      userEvent.click(screen.getByTestId('btn-button.remove'));
+
+      // assert
+      expect(mockOnConfirm).toHaveBeenCalledWith(null);
+      expect(mockOnClose).toHaveBeenCalled();
+    });
+
+    it('filters the current user from the available managers list', () => {
+      // arrange & act
+      render(
+        <SelectManagerModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          currentManagerId={null}
+          currentUserId={1} // The current user
+        />
+      );
+
+      // assert
+      // UsersDropdownComponent props options should not contain user id=1
+      const dropdownProps = (UsersDropdownComponent as jest.Mock).mock.calls[0][0];
+      const optionIds = dropdownProps.options.map((o: any) => o.value);
+      expect(optionIds).not.toContain('1');
+      expect(optionIds).toContain('2');
+      expect(optionIds).toContain('3');
+    });
+
+    it('calls onConfirm with the selected manager ID when Save is clicked', () => {
+      // arrange
+      render(
+        <SelectManagerModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          currentManagerId={null}
+          currentUserId={1}
+        />
+      );
+      
+      // Simulate selecting a manager
+      const dropdownProps = (UsersDropdownComponent as jest.Mock).mock.calls[0][0];
+      dropdownProps.onChange({ value: '3', id: 3, label: 'Another Manager' });
+
+      // act
+      userEvent.click(screen.getByTestId('btn-task.return-to.confirm'));
+
+      // assert
+      expect(mockOnConfirm).toHaveBeenCalledWith(3);
+      expect(mockOnClose).toHaveBeenCalled();
+    });
+
+    it('confirms button has a testid based on intl id', () => {
+      // arrange & act
+      render(
+        <SelectManagerModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          currentManagerId={null}
+          currentUserId={1}
+        />
+      );
+
+      // assert
+      expect(screen.getByTestId('btn-task.return-to.confirm')).toBeInTheDocument();
+    });
+
+    it('calls onConfirm with null when no manager is selected', () => {
+      // arrange
+      render(
+        <SelectManagerModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          currentManagerId={null}
+          currentUserId={1}
+        />
+      );
+
+      // act
+      userEvent.click(screen.getByTestId('btn-task.return-to.confirm'));
+
+      // assert
+      expect(mockOnConfirm).toHaveBeenCalledWith(null);
+      expect(mockOnClose).toHaveBeenCalled();
+    });
+
+    it('calls onClose when Remove is clicked', () => {
+      // arrange
+      render(
+        <SelectManagerModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          currentManagerId={2}
+          currentUserId={1}
+        />
+      );
+
+      // act
+      userEvent.click(screen.getByTestId('btn-button.remove'));
+
+      // assert
+      expect(mockOnClose).toHaveBeenCalledTimes(1);
+    });
+
+    it('syncs selectedManager when store data loads after mount', () => {
+      // arrange — first render with empty store
+      (useSelector as jest.Mock).mockReturnValue([]);
+      const { rerender } = render(
+        <SelectManagerModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          currentManagerId={2}
+          currentUserId={1}
+        />
+      );
+
+      // First render: dropdown value should be null (no users loaded)
+      const firstCallProps = (UsersDropdownComponent as jest.Mock).mock.calls[0][0];
+      expect(firstCallProps.value).toBeNull();
+
+      // act — store loads users
+      (useSelector as jest.Mock).mockReturnValue([
+        makeUser({ id: 1, firstName: 'Current', lastName: 'User' }),
+        makeUser({ id: 2, firstName: 'Potential', lastName: 'Manager' }),
+      ]);
+      rerender(
+        <SelectManagerModal
+          isOpen={true}
+          onClose={mockOnClose}
+          onConfirm={mockOnConfirm}
+          currentManagerId={2}
+          currentUserId={1}
+        />
+      );
+
+      // assert — dropdown should now have the manager selected
+      const lastCall = (UsersDropdownComponent as jest.Mock).mock.calls;
+      const latestProps = lastCall[lastCall.length - 1][0];
+      expect(latestProps.value).not.toBeNull();
+      expect(latestProps.value.id).toBe(2);
+    });
+  });
+});
