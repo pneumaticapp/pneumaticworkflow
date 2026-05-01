@@ -6,6 +6,7 @@ import { IntlShape } from 'react-intl';
 import { EInputNameBackgroundColor } from '../../../types/workflow';
 import { EExtraFieldMode, EExtraFieldType, IExtraField, IFieldsetData, ITaskFieldset, ITemplateTask } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
+import { useDatasetOptions } from '../ExtraFields/utils/useDatasetOptions';
 import { getEditedFields } from '../ExtraFields/utils/getEditedFields';
 import { getEmptyField } from '../KickoffRedux/utils/getEmptyField';
 import { ExtraFieldsMap } from '../ExtraFields/utils/ExtraFieldsMap';
@@ -62,6 +63,7 @@ export function OutputFormTaskMerged({
     () => buildMergedTaskOutputRows(task.fields || [], task.fieldsets || []),
     [task.fields, task.fieldsets],
   );
+  const datasetOptions = useDatasetOptions(task.fields || []);
 
   const saveOutputOrders = useCallback(
     async (
@@ -179,6 +181,7 @@ export function OutputFormTaskMerged({
                   innerRef={outputRef}
                   accountId={accountId}
                   mode={EExtraFieldMode.Kickoff}
+                  datasetOptions={datasetOptions}
                 />
               );
             }
