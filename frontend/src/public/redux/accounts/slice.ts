@@ -208,8 +208,20 @@ export const loadPlan = createAction<void>('accounts/loadPlan');
 export const startTrialSubscriptionAction = createAction<void>('accounts/startTrialSubscriptionAction');
 export const startFreeSubscriptionAction = createAction<void>('accounts/startFreeSubscriptionAction');
 export const createUser = createAction<ICreateUserRequest>('accounts/createUser');
-export const loadChangeUserManager = createAction<{ id: number; managerId: number | null }>('accounts/loadChangeUserManager');
-export const loadChangeUserReports = createAction<{ id: number; reportIds: number[] }>('accounts/loadChangeUserReports');
+type TChangeUserManagerPayload = {
+  id: number;
+  managerId: number | null;
+  onSuccess?: () => void;
+  onError?: () => void;
+};
+type TChangeUserReportsPayload = {
+  id: number;
+  reportIds: number[];
+  onSuccess?: () => void;
+  onError?: () => void;
+};
+export const loadChangeUserManager = createAction<TChangeUserManagerPayload>('accounts/loadChangeUserManager');
+export const loadChangeUserReports = createAction<TChangeUserReportsPayload>('accounts/loadChangeUserReports');
 
 export const {
   resetUsers,

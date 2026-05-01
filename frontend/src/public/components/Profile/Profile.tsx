@@ -80,15 +80,18 @@ function ProfileManagerSection({
 }: {
   currentUserId: number;
   managerId: number | null;
-  editCurrentUser: (body: IUpdateUserRequest) => void;
+  editCurrentUser: (body: IUpdateUserRequest & {
+    onSuccess?: () => void;
+    onError?: () => void;
+  }) => void;
 }) {
   return (
     <fieldset className={styles['fields-group']}>
       <ProfileManager
         currentUserId={currentUserId}
         managerId={managerId}
-        onManagerChange={(newManagerId) =>
-          editCurrentUser({ managerId: newManagerId })
+        onManagerChange={(newManagerId, callbacks) =>
+          editCurrentUser({ managerId: newManagerId, ...callbacks })
         }
       />
     </fieldset>
@@ -129,7 +132,9 @@ export function Profile({
 
   useEffect(() => {
     document.title = TITLES.Profile;
-  }, []);
+    dispatch(usersFetchStarted());
+    dispatch(teamFetchStarted({}));
+  }, [dispatch]);
 
   useLayoutEffect(() => {
     onChangeTab(ESettingsTabs.Profile);
@@ -167,15 +172,7 @@ export function Profile({
     });
   };
 
-  useEffect(() => {
-    document.title = TITLES.Profile;
-    dispatch(usersFetchStarted());
-    dispatch(teamFetchStarted({}));
-  }, [dispatch]);
 
-  useLayoutEffect(() => {
-    onChangeTab(ESettingsTabs.Profile);
-  }, [onChangeTab]);
   const handleSubmit: FormikConfig<TProfileFields>['onSubmit'] = (values) => {
     const { dateformat, timeformat, absenceStatus, vacationStartDate, vacationEndDate, substituteUserIds, ...userData } = values;
     editCurrentUser({ ...userData, dateFmt: `${dateformat} ${timeformat}` });
@@ -296,6 +293,7 @@ export function Profile({
               editCurrentUser={editCurrentUser}
             />
           </fieldset>
+
 
           <fieldset className={styles['fields-group']}>
             <SectionTitle className={styles['fields-group__title']}>

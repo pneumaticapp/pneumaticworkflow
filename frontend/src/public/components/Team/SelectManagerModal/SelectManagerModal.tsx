@@ -17,6 +17,7 @@ interface ISelectManagerModalProps {
   onConfirm: (managerId: number | null) => void;
   currentManagerId: number | null;
   currentUserId: number;
+  isLoading?: boolean;
 }
 
 export function SelectManagerModal({
@@ -25,6 +26,7 @@ export function SelectManagerModal({
   onConfirm,
   currentManagerId,
   currentUserId,
+  isLoading,
 }: ISelectManagerModalProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
@@ -72,13 +74,11 @@ export function SelectManagerModal({
 
   const handleConfirm = useCallback(() => {
     onConfirm(selectedManager ? Number(selectedManager.id) : null);
-    onClose();
-  }, [selectedManager, onConfirm, onClose]);
+  }, [selectedManager, onConfirm]);
 
   const handleRemove = useCallback(() => {
     onConfirm(null);
-    onClose();
-  }, [onConfirm, onClose]);
+  }, [onConfirm]);
 
   const handleChange = useCallback((option: TUsersDropdownOption | null) => {
     setSelectedManager(option);
@@ -115,6 +115,7 @@ export function SelectManagerModal({
             size="md"
             onClick={handleConfirm}
             label={formatMessage({ id: 'task.return-to.confirm' })}
+            disabled={isLoading}
           />
           {currentManagerId && (
             <Button
@@ -124,6 +125,7 @@ export function SelectManagerModal({
               size="md"
               onClick={handleRemove}
               label={formatMessage({ id: 'button.remove' })}
+              disabled={isLoading}
             />
           )}
         </div>

@@ -24,5 +24,7 @@ export function editProfile(body: IUpdateUserRequest) {
     {
       data: mapRequestBody(body),
       method: 'PUT',
-    });
+    },
+    { shouldThrow: true },
+  );
 }

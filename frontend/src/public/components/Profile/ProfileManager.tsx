@@ -16,12 +16,16 @@ import styles from './Profile.css';
 interface IProfileManagerProps {
   currentUserId: number;
   managerId: number | null;
-  onManagerChange: (managerId: number | null) => void;
+  onManagerChange: (
+    managerId: number | null,
+    callbacks?: { onSuccess?: () => void; onError?: () => void },
+  ) => void;
 }
 
 export function ProfileManager({ currentUserId, managerId, onManagerChange }: IProfileManagerProps) {
   const { formatMessage } = useIntl();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   
   const allUsers = useSelector(getUsers);
   const teamList = useSelector(getAccountsTeamList);
@@ -74,10 +78,26 @@ export function ProfileManager({ currentUserId, managerId, onManagerChange }: IP
       {isModalOpen && (
         <SelectManagerModal
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
-          onConfirm={(newManagerId) => onManagerChange(newManagerId)}
+          onClose={() => {
+            if (!isSaving) {
+              setIsModalOpen(false);
+            }
+          }}
+          onConfirm={(newManagerId) => {
+            setIsSaving(true);
+            onManagerChange(newManagerId, {
+              onSuccess: () => {
+                setIsSaving(false);
+                setIsModalOpen(false);
+              },
+              onError: () => {
+                setIsSaving(false);
+              },
+            });
+          }}
           currentManagerId={managerId}
           currentUserId={currentUserId}
+          isLoading={isSaving}
         />
       )}
     </div>

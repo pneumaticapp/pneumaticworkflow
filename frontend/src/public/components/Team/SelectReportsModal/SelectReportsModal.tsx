@@ -18,6 +18,7 @@ interface ISelectReportsModalProps {
   onConfirm: (reportIds: number[]) => void;
   currentReportIds: number[];
   currentUserId: number;
+  isLoading?: boolean;
 }
 
 export function SelectReportsModal({
@@ -26,6 +27,7 @@ export function SelectReportsModal({
   onConfirm,
   currentReportIds,
   currentUserId,
+  isLoading,
 }: ISelectReportsModalProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
@@ -59,8 +61,7 @@ export function SelectReportsModal({
 
   const handleConfirm = useCallback(() => {
     onConfirm(selectedReports.map(opt => Number(opt.id)));
-    onClose();
-  }, [selectedReports, onConfirm, onClose]);
+  }, [selectedReports, onConfirm]);
 
   const handleAddReport = useCallback((option: TUsersDropdownOption) => {
     setSelectedReports(prev => {
@@ -120,6 +121,7 @@ export function SelectReportsModal({
             size="md"
             onClick={handleConfirm}
             label={formatMessage({ id: 'task.return-to.confirm' })}
+            disabled={isLoading}
           />
         </div>
       </div>

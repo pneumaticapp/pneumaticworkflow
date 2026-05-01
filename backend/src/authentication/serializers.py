@@ -215,6 +215,7 @@ class ContextUserSerializer(
         source='subordinates',
     )
 
+
     def get_has_workflow_viewer_access(self, obj) -> bool:
         access = self._get_template_access(obj)
         return access['viewer']

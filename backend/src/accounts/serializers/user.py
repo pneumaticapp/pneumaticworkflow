@@ -128,6 +128,7 @@ class UserSerializer(
         source='subordinates',
     )
 
+
     def get_invite(self, instance: UserModel):
         if instance.status_invited and instance.invite:
             return UserListInviteSerializer(instance.invite).data
