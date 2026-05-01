@@ -5,27 +5,3 @@
   flex-direction: column;
   height: 100%;
 }
-
-/* Print styles need !important to override global #pneumatic-frontend and framework CSS. */
-/* stylelint-disable declaration-no-important */
-@media print {
-  html,
-  body {
-    overflow: visible !important;
-    height: auto !important;
-  }
-
-  [id='pneumatic-frontend'] {
-    overflow: visible !important;
-    height: auto !important;
-  }
-
-  main .container-fluid .row {
-    display: flex !important;
-  }
-
-  * {
-    print-color-adjust: exact;
-  }
-}
-/* stylelint-enable declaration-no-important */
