@@ -94,9 +94,9 @@ export interface IAuthUser extends IUnsavedUser {
   timezone: string;
   dateFmt: string;
   dateFdw: string;
-  vacation?: IUserVacation | null;
   managerId: number | null;
   reportIds: number[];
+  vacation?: IUserVacation | null;
 }
 
 export interface IInvitedUser {

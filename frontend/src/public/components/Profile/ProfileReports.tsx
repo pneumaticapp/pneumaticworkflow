@@ -17,12 +17,16 @@ import styles from './Profile.css';
 interface IProfileReportsProps {
   currentUserId: number;
   reportIds: number[] | undefined;
-  editCurrentUser(body: IUpdateUserRequest): void;
+  editCurrentUser(body: IUpdateUserRequest & {
+    onSuccess?: () => void;
+    onError?: () => void;
+  }): void;
 }
 
 export function ProfileReports({ currentUserId, reportIds = [], editCurrentUser }: IProfileReportsProps) {
   const { formatMessage } = useIntl();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
 
   const allUsers = useSelector(getUsers);
   const teamList = useSelector(getAccountsTeamList);
@@ -31,7 +35,17 @@ export function ProfileReports({ currentUserId, reportIds = [], editCurrentUser 
   const reports = reportIds.map(id => users.find(u => Number(u.id) === Number(id))).filter(Boolean) as typeof users;
 
   const handleReportsChange = (newReportIds: number[]) => {
-    editCurrentUser({ subordinatesIds: newReportIds });
+    setIsSaving(true);
+    editCurrentUser({
+      subordinatesIds: newReportIds,
+      onSuccess: () => {
+        setIsSaving(false);
+        setIsModalOpen(false);
+      },
+      onError: () => {
+        setIsSaving(false);
+      },
+    });
   };
 
   return (
@@ -80,10 +94,15 @@ export function ProfileReports({ currentUserId, reportIds = [], editCurrentUser 
       {isModalOpen && (
         <SelectReportsModal
           isOpen={isModalOpen}
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => {
+            if (!isSaving) {
+              setIsModalOpen(false);
+            }
+          }}
           onConfirm={handleReportsChange}
           currentReportIds={reportIds}
           currentUserId={currentUserId}
+          isLoading={isSaving}
         />
       )}
     </div>

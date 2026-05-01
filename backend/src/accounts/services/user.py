@@ -342,12 +342,12 @@ class UserService(
         user = self.instance
         old_manager = user.manager
         with transaction.atomic():
+            self._deactivate_subordinates()
             # Remove from personal (vacation substitute) groups
             VacationDelegationService.clear_substitute_groups(user)
             # Also deactivate own vacation if active
             if user.is_absent:
                 VacationDelegationService(user).deactivate()
-            self._deactivate_subordinates()
             remove_user_from_draft(
                 account_id=user.account_id,
                 user_id=user.id,

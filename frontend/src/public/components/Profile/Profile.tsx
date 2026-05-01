@@ -27,10 +27,10 @@ import { AvatarController } from './AvatarController';
 import { FormikDropdownList } from '../UI';
 import { LockIcon } from '../icons/LockIcon';
 import { ChangePassword } from './ChangePassword';
-import { ProfileVacationFields } from './ProfileVacationFields';
 import { ProfileManager } from './ProfileManager';
 import { ProfileReports } from './ProfileReports';
 import { teamFetchStarted, usersFetchStarted } from '../../redux/accounts/slice';
+import { ProfileVacationFields } from './ProfileVacationFields';
 
 import styles from './Profile.css';
 
@@ -80,15 +80,18 @@ function ProfileManagerSection({
 }: {
   currentUserId: number;
   managerId: number | null;
-  editCurrentUser: (body: IUpdateUserRequest) => void;
+  editCurrentUser: (body: IUpdateUserRequest & {
+    onSuccess?: () => void;
+    onError?: () => void;
+  }) => void;
 }) {
   return (
     <fieldset className={styles['fields-group']}>
       <ProfileManager
         currentUserId={currentUserId}
         managerId={managerId}
-        onManagerChange={(newManagerId) =>
-          editCurrentUser({ managerId: newManagerId })
+        onManagerChange={(newManagerId, callbacks) =>
+          editCurrentUser({ managerId: newManagerId, ...callbacks })
         }
       />
     </fieldset>
@@ -276,7 +279,7 @@ export function Profile({
             />
           </fieldset>
 
-          <ProfileVacationFields availableUsers={availableUsers} />
+
           <ProfileManagerSection
             currentUserId={id}
             managerId={user.managerId ?? null}
@@ -290,6 +293,7 @@ export function Profile({
               editCurrentUser={editCurrentUser}
             />
           </fieldset>
+          <ProfileVacationFields availableUsers={availableUsers} />
 
           <fieldset className={styles['fields-group']}>
             <SectionTitle className={styles['fields-group__title']}>

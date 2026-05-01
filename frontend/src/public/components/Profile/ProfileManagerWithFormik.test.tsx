@@ -94,7 +94,7 @@ const makeUser = (overrides: Partial<IAuthUser> = {}): IAuthUser => ({
   language: 'en',
   timezone: 'UTC',
   dateFdw: '0',
-  dateFmt: '%m/%d/%Y, %I:%M %p',
+  dateFmt: '%m/%d/,%Y, %I:%M %p',
   isAdmin: false,
   isAccountOwner: false,
   managerId: null,

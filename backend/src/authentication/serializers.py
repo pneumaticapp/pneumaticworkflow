@@ -193,9 +193,9 @@ class ContextUserSerializer(
             'date_fdw',
             'has_workflow_viewer_access',
             'has_workflow_starter_access',
-            'vacation',
             'manager_id',
             'subordinates_ids',
+            'vacation',
         )
 
     account = ContextAccountSerializer()

@@ -176,8 +176,8 @@ export interface IUserResponse {
   dateFdw: number;
   groups: number[];
   invite: UserInvite | null;
-  vacation?: IUserVacation | null;
   managerId: number | null;
   reportIds: number[];
   subordinatesIds: number[];
+  vacation?: IUserVacation | null;
 }

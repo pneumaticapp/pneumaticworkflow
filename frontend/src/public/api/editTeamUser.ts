@@ -12,6 +12,7 @@ export function editTeamUser(id: number, body: IEditTeamUserRequest) {
     {
       data: mapRequestBody(body),
       method: 'PATCH',
-    }
+    },
+    { shouldThrow: true },
   );
 }

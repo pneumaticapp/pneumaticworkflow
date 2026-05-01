@@ -189,27 +189,45 @@ function* saveUserAdmin({ payload: { isAdmin, email, id } }: PayloadAction<IChan
   }
 }
 
-function* saveUserManagerSaga({ payload: { id, managerId } }: PayloadAction<{ id: number; managerId: number | null }>) {
+function* saveUserManagerSaga({
+  payload: { id, managerId, onSuccess, onError },
+}: PayloadAction<{
+  id: number;
+  managerId: number | null;
+  onSuccess?: () => void;
+  onError?: () => void;
+}>) {
   try {
     yield put(setGeneralLoaderVisibility(true));
     yield call(editTeamUser, id, { managerId });
     yield put(changeUserManager({ id, managerId }));
-    NotificationManager.success({ message: 'User manager updated successfully' });
+    NotificationManager.success({ message: 'team.manager-update-success' });
+    onSuccess?.();
   } catch (error) {
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+    onError?.();
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }
 }
 
-function* saveUserReportsSaga({ payload: { id, reportIds } }: PayloadAction<{ id: number; reportIds: number[] }>) {
+function* saveUserReportsSaga({
+  payload: { id, reportIds, onSuccess, onError },
+}: PayloadAction<{
+  id: number;
+  reportIds: number[];
+  onSuccess?: () => void;
+  onError?: () => void;
+}>) {
   try {
     yield put(setGeneralLoaderVisibility(true));
     yield call(editTeamUser, id, { subordinatesIds: reportIds });
     yield put(changeUserReports({ id, reportIds }));
-    NotificationManager.success({ message: 'User reports updated successfully' });
+    NotificationManager.success({ message: 'team.reports-update-success' });
+    onSuccess?.();
   } catch (error) {
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+    onError?.();
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }

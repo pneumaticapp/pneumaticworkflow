@@ -88,9 +88,9 @@ class UserSerializer(
             'invite',
             'groups',
             'password',
-            'vacation',
             'manager_id',
             'subordinates_ids',
+            'vacation',
         )
         read_only_fields = (
             'id',
