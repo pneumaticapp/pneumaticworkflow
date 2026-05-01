@@ -13,6 +13,7 @@ export interface ITabsProps<TOption extends TOptionBase> {
   values: TOption[];
   containerClassName?: string;
   tabClassName?: string;
+  activeTabClassName?: string;
   onChange(value: TOption['id']): void;
 }
 
@@ -21,6 +22,7 @@ export function Tabs<TOption extends TOptionBase>({
   values,
   containerClassName,
   tabClassName,
+  activeTabClassName,
   onChange,
 }: ITabsProps<TOption>) {
   const checkIsActiveValue = (value: TOption) => value.id === activeValueId;
@@ -37,7 +39,12 @@ export function Tabs<TOption extends TOptionBase>({
           key={value.id}
           type="button"
           onClick={handleClickItem(value)}
-          className={classnames(styles['tab'], tabClassName, checkIsActiveValue(value) && styles['tab_active'])}
+          className={classnames(
+            styles['tab'],
+            tabClassName,
+            checkIsActiveValue(value) && styles['tab_active'],
+            checkIsActiveValue(value) && activeTabClassName
+          )}
         >
           {value.label}
         </button>

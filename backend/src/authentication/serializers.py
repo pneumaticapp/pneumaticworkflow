@@ -7,6 +7,7 @@ from typing import Any, Dict, Optional
 
 from src.accounts.enums import Language
 from src.accounts.models import Account
+from src.accounts.serializers.mixins import VacationSerializer
 from src.authentication.messages import (
     MSG_AU_0006,
     MSG_AU_0012,
@@ -154,7 +155,9 @@ class ContextAccountSerializer(serializers.ModelSerializer):
         return False
 
 
-class ContextUserSerializer(serializers.ModelSerializer):
+class ContextUserSerializer(
+    serializers.ModelSerializer,
+):
 
     class Meta:
         model = UserModel
@@ -187,6 +190,7 @@ class ContextUserSerializer(serializers.ModelSerializer):
             'date_fdw',
             'has_workflow_viewer_access',
             'has_workflow_starter_access',
+            'vacation',
         )
 
     account = ContextAccountSerializer()
@@ -195,6 +199,7 @@ class ContextUserSerializer(serializers.ModelSerializer):
     has_workflow_starter_access = serializers.SerializerMethodField()
     date_joined_tsp = TimeStampField(source='date_joined', read_only=True)
     date_fmt = DateFormatField(read_only=True)
+    vacation = VacationSerializer(read_only=True)
 
     def get_has_workflow_viewer_access(self, obj) -> bool:
         access = self._get_template_access(obj)

@@ -204,6 +204,7 @@ export function TemplateEdit({
       ],
       uuid: createUUID(),
       requireCompletionByAll: false,
+      skipForStarter: false,
       conditions: getEmptyConditions(accessConditions),
       rawDueDate: createEmptyTaskDueDate(taskApiName),
       checklists: [],

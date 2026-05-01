@@ -1,7 +1,8 @@
 from django.contrib.auth.base_user import BaseUserManager
 from django.core.exceptions import MultipleObjectsReturned
+from django.db.models import Manager
 
-from src.accounts.enums import UserStatus, UserType
+from src.accounts.enums import UserGroupType, UserStatus, UserType
 from src.generics.mixins.managers import NormalizeEmailMixin
 
 
@@ -48,4 +49,14 @@ class SoftDeleteGuestManager(NormalizeEmailMixin, BaseUserManager):
             .exclude(
                 status=UserStatus.INACTIVE,
             )
+        )
+
+
+class SoftDeleteGroupManager(Manager):
+
+    def get_queryset(self):
+        return (
+            super().get_queryset()
+            .filter(is_deleted=False)
+            .exclude(type=UserGroupType.PERSONAL)
         )

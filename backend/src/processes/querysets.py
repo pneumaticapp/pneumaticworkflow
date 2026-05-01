@@ -659,6 +659,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
                             queryset=(
                                 TaskPerformer.objects
                                 .exclude_directly_deleted()
+                                .select_related('group')
                             ),
                         ),
                         Prefetch(
@@ -755,7 +756,9 @@ class TasksQuerySet(TasksBaseQuerySet):
                     workflow__status=WorkflowStatus.RUNNING,
                 ),
             ) & ~Q(
-                taskperformer__directly_status=DirectlyStatus.DELETED,
+                taskperformer__directly_status__in=(
+                    DirectlyStatus.DELETED,
+                ),
             ),
         )
 
@@ -779,7 +782,9 @@ class TasksQuerySet(TasksBaseQuerySet):
                     workflow__status=WorkflowStatus.RUNNING,
                 ),
             ) & ~Q(
-                taskperformer__directly_status=DirectlyStatus.DELETED,
+                taskperformer__directly_status__in=(
+                    DirectlyStatus.DELETED,
+                ),
             ),
         )
 
@@ -792,8 +797,11 @@ class TasksQuerySet(TasksBaseQuerySet):
         )
 
     def exclude_directly_deleted(self):
+        """Exclude tasks where performer has DELETED directly_status."""
         return self.exclude(
-            taskperformer__directly_status=DirectlyStatus.DELETED,
+            taskperformer__directly_status__in=(
+                DirectlyStatus.DELETED,
+            ),
         )
 
     def apd_status(self):
@@ -1012,7 +1020,11 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
         return self.filter(directly_status=DirectlyStatus.NO_STATUS)
 
     def exclude_directly_deleted(self):
-        return self.exclude(directly_status=DirectlyStatus.DELETED)
+        return self.exclude(
+            directly_status__in=(
+                DirectlyStatus.DELETED,
+            ),
+        )
 
     def user_is_subscriber(self):
         return self.filter(
@@ -1069,11 +1081,15 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
         return set(direct_users).union(set(group_users))
 
     def group_ids(self):
-        qst = self.filter(type='group').values_list('group_id', flat=True)
+        qst = self.filter(
+            type=PerformerType.GROUP,
+        ).values_list('group_id', flat=True)
         return tuple(elem for elem in qst)
 
     def user_ids(self):
-        qst = self.filter(type='user').values_list('user_id', flat=True)
+        qst = self.filter(
+            type=PerformerType.USER,
+        ).values_list('user_id', flat=True)
         return tuple(elem for elem in qst)
 
     def user_ids_set(self) -> set:

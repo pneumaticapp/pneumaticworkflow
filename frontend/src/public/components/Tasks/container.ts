@@ -123,7 +123,7 @@ const SyncedTasks = withSyncedQueryString<TTasksStoreProps>(
 
         return setFilterTemplate(null);
       },
-      getQueryParamByProp: String,
+      getQueryParamByProp: (value) => (value ? String(value) : ''),
     },
     {
       propName: 'taskApiNameFilter',
@@ -137,7 +137,7 @@ const SyncedTasks = withSyncedQueryString<TTasksStoreProps>(
 
         return setFilterStep(null);
       },
-      getQueryParamByProp: String,
+      getQueryParamByProp: (value) => (value ? String(value) : ''),
     },
   ],
   resetTasksFilters(),
