@@ -232,9 +232,25 @@ export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
     if (f.apiName) validKickoffApiNames.add(f.apiName);
   });
 
+  const filteredKickoffFieldsets = (template.kickoff?.fieldsets || []).filter((fieldset) => {
+    const fieldsetData = fieldsetsByApiName?.get(fieldset.apiName);
+    if (!fieldsetData) return false;
+
+    const hasValidField = (fieldsetData.fields ?? []).some((field) => field.apiName && validApiNames.has(field.apiName));
+    return hasValidField;
+  });
+
   return {
     ...template,
-    wfNameTemplate: removeInvalidReferences(template.wfNameTemplate, validKickoffApiNames, WF_NAME_SYSTEM_VARS),
+    kickoff: {
+      ...template.kickoff,
+      fieldsets: filteredKickoffFieldsets,
+    },
+    wfNameTemplate: removeInvalidReferences(
+      template.wfNameTemplate,
+      validKickoffApiNames,
+      WF_NAME_SYSTEM_VARS
+    ),
     tasks: cleanedTasks,
   };
 };
