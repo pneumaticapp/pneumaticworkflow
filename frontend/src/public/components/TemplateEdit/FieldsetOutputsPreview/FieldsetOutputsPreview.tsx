@@ -44,7 +44,7 @@ export function FieldsetOutputsPreview({ fieldsets, fieldsetsByApiName, onGroupC
           <span className={styles['fieldset-outputs-preview__title']}>
             { formatMessage({ id: 'fieldsets.title' }) }: { fieldsetData.name}
           </span>
-честно         </button>
+ </button>
       ))}
     </div>
   );
