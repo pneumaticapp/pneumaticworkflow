@@ -365,7 +365,7 @@ export function TaskCard({
           <UsersDropdown
               isMulti
               controlSize="sm"
-              className={styles['responsible']}
+              className={classnames(styles['responsible'], 'no-print')} 
               placeholder={formatMessage({ id: 'user.search-field-placeholder' })}
               options={[...performerGroupDropdownOption, ...performerDropdownOption]}
               value={[...performerDropdownValue, ...performerGroupDropdownValue]}
@@ -379,7 +379,7 @@ export function TaskCard({
         )}
 
         {viewMode !== ETaskCardViewMode.Guest && !task.isReadOnlyViewer && (
-          <GuestController ref={guestsControllerRef} taskId={task.id} className={styles['guest-dropdown']} />
+          <GuestController ref={guestsControllerRef} taskId={task.id} className={classnames(styles['guest-dropdown'], 'no-print')} />
         )}
       </>
     );
@@ -497,7 +497,7 @@ export function TaskCard({
     );
 
     return (
-      <div className={styles['buttons']}>
+      <div className={classnames(styles['buttons'], 'no-print')}>
         <div className={styles['buttons__complete']}>
           {isEmbeddedWorkflowsComplete ? (
             renderCompleteButton(!isEmbeddedWorkflowsComplete)

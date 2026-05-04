@@ -158,7 +158,7 @@ export function WorkflowLogTaskComment({
     if (currentUserId !== userId || workflowStatus === EWorkflowStatus.Finished) return null;
 
     return (
-      <div className={styles['comment__actions']}>
+      <div className={classnames(styles['comment__actions'], 'no-print')}>
         {renderDeleteButton()}
         {!isDelete && (
           <button
@@ -327,7 +327,7 @@ export function WorkflowLogTaskComment({
           <Tooltip
             visible={isShowTooltipEmoji}
             size="auto"
-            containerClassName={classnames(styles['comment__footer-item'], styles['is-add-emoji'])}
+            containerClassName={classnames(styles['comment__footer-item'], styles['is-add-emoji'], 'no-print')}
             content={
               isShowEmoji && (
                 <Picker
