@@ -35,6 +35,7 @@ class GroupSerializer(
             'name',
             'photo',
             'users',
+            'type',
         )
 
     id = IntegerField(read_only=True)
@@ -116,6 +117,7 @@ class GroupWebsocketSerializer(serializers.ModelSerializer):
             'name',
             'photo',
             'users',
+            'type',
         )
 
     users = serializers.SerializerMethodField()

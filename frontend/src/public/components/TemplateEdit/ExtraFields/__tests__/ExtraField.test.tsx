@@ -7,6 +7,21 @@ import { ExtraFieldIntl } from '../index';
 import { ExtraFieldDropdown } from '../utils/ExtraFieldDropdown';
 import { EExtraFieldMode, EExtraFieldType } from '../../../../types/template';
 
+jest.mock('react-redux', () => ({
+  useSelector: jest.fn((selector) => {
+    const mockState = {
+      datasets: {
+        allDatasetsList: [],
+        isAllDatasetsLoading: false,
+        isAllDatasetsLoaded: false,
+      },
+    };
+
+    return selector(mockState);
+  }),
+  useDispatch: jest.fn(() => jest.fn()),
+}));
+
 jest.mock('../utils/ExtraFieldDropdown', () => ({
   ExtraFieldDropdown: jest.fn(() => null),
 }));

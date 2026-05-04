@@ -1,4 +1,4 @@
-import { EGroupsListSorting, EUserListSorting, EUserStatus, IUnsavedUser, TUserListItem } from './user';
+import { EGroupsListSorting, EUserListSorting, EUserStatus, IUnsavedUser, IUserVacation, TUserListItem } from './user';
 import { TNotificationsListItem } from './notifications';
 import { IAccountGenericTemplate } from './genericTemplates';
 import {
@@ -92,6 +92,7 @@ export interface IAuthUser extends IUnsavedUser {
   timezone: string;
   dateFmt: string;
   dateFdw: string;
+  vacation?: IUserVacation | null;
 }
 
 export interface IInvitedUser {

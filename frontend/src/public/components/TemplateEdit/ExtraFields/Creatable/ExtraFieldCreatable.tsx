@@ -11,7 +11,7 @@ import { getInputNameBackground } from '../utils/getInputNameBackground';
 import { RemoveIcon, ArrowDropdownIcon } from '../../../icons';
 import { IntlMessages } from '../../../IntlMessages';
 import { FieldWithName } from '../utils/FieldWithName';
-import { DatasetSourceToggle } from '../utils/DatasetSourceToggle';
+import { OutputFieldContent } from '../utils/OutputFieldContent';
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { EExtraFieldMode, IExtraFieldSelection } from '../../../../types/template';
 import { validateCheckboxAndRadioField } from '../../../../utils/validators';
@@ -45,6 +45,7 @@ export function ExtraFieldCreatable({
   isDisabled = false,
   labelBackgroundColor,
   innerRef,
+  datasetName,
 }: IWorkflowExtraFieldProps) {
   const { isRequired } = field;
   const optionInputsRefs = React.useRef<HTMLInputElement[]>([]);
@@ -199,10 +200,10 @@ export function ExtraFieldCreatable({
       <div className={inputStyles['kickoff-create-field-container']}>
         {renderKickoffField()}
 
-        <DatasetSourceToggle field={field} editField={editField} isDisabled={isDisabled}>
+        <OutputFieldContent field={field} editField={editField} isDisabled={isDisabled} datasetName={datasetName}>
           {customOptionsList}
           {!isDisabled && addOptionButton}
-        </DatasetSourceToggle>
+        </OutputFieldContent>
       </div>
     );
   };

@@ -19,9 +19,13 @@ from src.processes.enums import (
     WorkflowStatus,
 )
 from src.processes.messages import workflow as messages
+from src.accounts.models import UserVacation
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.workflows.event import WorkflowEvent
-from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.workflows.task import (
+    Task,
+    TaskPerformer,
+)
 from src.processes.serializers.workflows.events import (
     TaskEventJsonSerializer,
 )
@@ -2034,6 +2038,96 @@ class TestTaskPerformersService:
         )
         send_removed_task_notification_mock.assert_not_called()
 
+    def test_delete_actions__sub_group__no_run_actions(
+        self,
+        mocker,
+    ):
+        """When user has vacation substitute group, the group
+        performer is deleted with run_actions=False to avoid
+        misleading events and notifications."""
+
+        # arrange
+        account = create_test_account()
+
+        request_user = create_test_admin(
+            account=account, email='request@test.test',
+        )
+        deleted_performer = create_test_admin(
+            account=account, email='performer@test.test',
+        )
+
+        sub_group = create_test_group(
+            account=account,
+            name='SubGroup',
+        )
+        UserVacation.objects.create(
+            user=deleted_performer,
+            account=account,
+            substitute_group=sub_group,
+        )
+
+        workflow = create_test_workflow(request_user)
+        task = workflow.tasks.get(number=1)
+
+        TaskPerformer.objects.create(
+            task=task,
+            group=sub_group,
+            type=PerformerType.GROUP,
+        )
+
+        mocker.patch(
+            'src.processes.services.events.'
+            'WorkflowEventService.performer_deleted_event',
+        )
+        group_performer_service_init_mock = (
+            mocker.patch.object(
+                GroupPerformerService,
+                attribute='__init__',
+                return_value=None,
+            )
+        )
+        delete_performer_mock = mocker.patch.object(
+            GroupPerformerService,
+            attribute='delete_performer',
+        )
+        send_removed_task_notification_mock = (
+            mocker.patch(
+                'src.notifications.tasks'
+                '.send_removed_task_notification.delay',
+            )
+        )
+
+        # act
+        TaskPerformersService._delete_actions(
+            request_user=request_user,
+            user=deleted_performer,
+            task=task,
+            auth_type=AuthTokenType.USER,
+            is_superuser=False,
+        )
+
+        # assert
+        group_performer_service_init_mock.assert_called_once_with(
+            user=request_user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
+        )
+        delete_performer_mock.assert_called_once_with(
+            group_id=sub_group.id,
+            run_actions=False,
+        )
+        send_removed_task_notification_mock.assert_called_once_with(
+            task_id=task.id,
+            recipients=[
+                (
+                    deleted_performer.id,
+                    deleted_performer.email,
+                ),
+            ],
+            account_id=account.id,
+        )
+
 
 class TestGuestPerformersService:
 
@@ -3507,5 +3601,74 @@ class TestGroupPerformerService:
             performer=group,
         )
         send_removed_task_notification_mock.assert_not_called()
+        workflow_action_service_init_mock.assert_not_called()
+        complete_task_mock.assert_not_called()
+
+    def test_del_group_actions__refresh_before_check__ok(
+        self,
+        mocker,
+    ):
+        """refresh_from_db prevents stale task state from
+        causing double completion."""
+
+        # arrange
+        account = create_test_account()
+        user = create_test_user(account=account)
+        user2 = create_test_user(
+            account=account,
+            email='test2@test.test',
+        )
+        group = create_test_group(account, users=[user2])
+        template = create_test_template(
+            user=user,
+            is_active=True,
+        )
+        workflow = create_test_workflow(
+            user=user,
+            template=template,
+        )
+        task = workflow.tasks.get(number=1)
+        performer = task.taskperformer_set.get(user=user)
+        performer.is_completed = True
+        performer.save()
+        task.add_raw_performer(
+            group_id=group.id,
+            performer_type=PerformerType.GROUP,
+        )
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
+        )
+        mocker.patch(
+            'src.processes.services.events.'
+            'WorkflowEventService'
+            '.performer_group_deleted_event',
+        )
+
+        # mark task as completed in DB directly
+        # to simulate concurrent completion
+        Task.objects.filter(
+            id=task.id,
+        ).update(status=TaskStatus.COMPLETED)
+
+        workflow_action_service_init_mock = (
+            mocker.patch.object(
+                WorkflowActionService,
+                attribute='__init__',
+                return_value=None,
+            )
+        )
+        complete_task_mock = mocker.patch(
+            'src.processes.services.workflow_action'
+            '.WorkflowActionService.complete_task',
+        )
+
+        # act
+        service._delete_group_actions(group=group)
+
+        # assert — refresh_from_db picks up COMPLETED
+        # status, so can_be_completed returns False
         workflow_action_service_init_mock.assert_not_called()
         complete_task_mock.assert_not_called()

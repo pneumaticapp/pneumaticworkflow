@@ -4,7 +4,7 @@ import Switch from 'rc-switch';
 import { debounce } from 'throttle-debounce';
 import { useIntl } from 'react-intl';
 
-import { EUserStatus, TUserListItem } from '../../../types/user';
+import { EUserStatus, TUserListItem, isUserAbsent } from '../../../types/user';
 import { IntlMessages } from '../../IntlMessages';
 import { Avatar } from '../../UI/Avatar';
 import { getUserFullName } from '../../../utils/users';
@@ -21,6 +21,7 @@ export interface ITeamUserProps {
   resendInvite(): Promise<void>;
   handleToggleAdmin(user: TUserListItem): () => Promise<void>;
   openModal(): void;
+  openVacationModal(): void;
 }
 
 export function TeamUser(props: ITeamUserProps) {
@@ -32,6 +33,7 @@ export function TeamUser(props: ITeamUserProps) {
     isCurrentUser,
     isSubscribed,
     openModal,
+    openVacationModal,
   } = props;
 
   const { formatMessage } = useIntl();
@@ -45,6 +47,12 @@ export function TeamUser(props: ITeamUserProps) {
       onClick: resendInviteDebounced,
       isHidden: isUserActive,
       Icon: AddUserIcon,
+    },
+    {
+      label: formatMessage({ id: 'team.card-vacation-settings' }),
+      onClick: openVacationModal,
+      isHidden: !isUserActive,
+      Icon: undefined, // Or a suitable icon from standard library
     },
     {
       label: isUserActive
@@ -63,6 +71,11 @@ export function TeamUser(props: ITeamUserProps) {
         <>
           <Header size="6" tag="p" className={styles['card-header']}>
             {getUserFullName(user)}
+            {isUserAbsent(user) && (
+              <span className={styles['card-absent-badge']} data-testid="absent-badge">
+                {formatMessage({ id: 'team.card-absent-badge' })}
+              </span>
+            )}
           </Header>
           <p className={styles['card-subheader']}>
             <strong>{formatMessage({ id: 'team.user-id' }, { id: user.id })}</strong>{' '}

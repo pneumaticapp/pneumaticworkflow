@@ -112,6 +112,11 @@ export const reducer = (state = INIT_STATE, action: TAuthActions | ReturnType<ty
         draftState.account.planExpiration = planExpiration;
       });
     }
+    case EAuthActions.VacationSuccess:
+      return {
+        ...state,
+        vacation: action.payload.vacation,
+      };
 
     default:
       return { ...state };

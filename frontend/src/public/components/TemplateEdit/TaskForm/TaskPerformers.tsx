@@ -12,7 +12,7 @@ import { TUsersDropdownOption, UsersDropdown } from '../../UI/form/UsersDropdown
 import { getUserFullName } from '../../../utils/users';
 import { getPerformersForDropdown } from './utils/getPerformersForDropdown';
 import { EBgColorTypes, UserPerformer } from '../../UI/UserPerformer';
-import { IApplicationState } from '../../../types/redux';
+import { getRegularGroupsList } from '../../../redux/selectors/groups';
 
 import styles from '../TemplateEdit.css';
 import stylesTaskForm from './TaskForm.css';
@@ -28,7 +28,7 @@ export interface ITaskPerformersProps {
 
 export function TaskPerformers({ task, users, variables, setCurrentTask }: ITaskPerformersProps) {
   const { formatMessage } = useIntl();
-  const groups = useSelector((state: IApplicationState) => state.groups.list);
+  const groups = useSelector(getRegularGroupsList);
 
   const { rawPerformers = [] } = task;
 
@@ -113,10 +113,18 @@ export function TaskPerformers({ task, users, variables, setCurrentTask }: ITask
     <div className={classNames(styles['task-fields-wrapper'], stylesTaskForm['content-mt16'])}>
       <div className="mb-3">
         <Checkbox
-          id="completeByAll"
+          checkboxId="completeByAll"
           title={formatMessage({ id: 'templates.task-require-completion-by-all' })}
           checked={task.requireCompletionByAll}
           onChange={(e) => handleRequireCompletionByAllChange(e.currentTarget.checked)}
+        />
+      </div>
+      <div className="mb-3">
+        <Checkbox
+          checkboxId="skipForStarter"
+          title={formatMessage({ id: 'templates.task-skip-for-starter' })}
+          checked={task.skipForStarter}
+          onChange={(e) => setCurrentTask({ skipForStarter: e.currentTarget.checked })}
         />
       </div>
       <div className="mb-3">

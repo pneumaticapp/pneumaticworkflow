@@ -12,7 +12,7 @@ import { EExtraFieldMode, IExtraFieldSelection } from '../../../../types/templat
 import { fitInputWidth } from '../utils/fitInputWidth';
 import { PencilSmallIcon, RemoveIcon } from '../../../icons';
 import { Checkbox } from '../../../UI/Fields/Checkbox';
-import { DatasetSourceToggle } from '../utils/DatasetSourceToggle';
+import { OutputFieldContent } from '../utils/OutputFieldContent';
 
 import { IWorkflowExtraFieldProps } from '..';
 
@@ -38,6 +38,7 @@ export function ExtraFieldCheckbox({
   deleteField,
   editField,
   isDisabled = false,
+  datasetName,
 }: IWorkflowExtraFieldProps) {
   const selectionItems = field.selections as IExtraFieldSelection[];
   const selectionValues = field.selections as string[];
@@ -116,10 +117,10 @@ export function ExtraFieldCheckbox({
           </p>
         )}
 
-        <DatasetSourceToggle field={field} editField={editField} isDisabled={isDisabled}>
+        <OutputFieldContent field={field} editField={editField} isDisabled={isDisabled} datasetName={datasetName}>
           {customOptionsList}
           {!isDisabled && addOptionButton}
-        </DatasetSourceToggle>
+        </OutputFieldContent>
       </div>
     );
   };

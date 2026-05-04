@@ -1,3 +1,2 @@
-/* eslint-disable */
-/* prettier-ignore */
 export * from './ExtraField';
+export type { IWorkflowExtraFieldProps } from './types';

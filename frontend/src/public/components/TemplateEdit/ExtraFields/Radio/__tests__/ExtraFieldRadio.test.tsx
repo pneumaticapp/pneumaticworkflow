@@ -3,14 +3,14 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 
 import { ExtraFieldRadio } from '../ExtraFieldRadio';
-import { DatasetSourceToggle } from '../../utils/DatasetSourceToggle';
+import { OutputFieldContent } from '../../utils/OutputFieldContent';
 import { RadioButton } from '../../../../UI/Fields/RadioButton';
 import { intlMock } from '../../../../../__stubs__/intlMock';
 import { EExtraFieldMode } from '../../../../../types/template';
 
-jest.mock('../../utils/DatasetSourceToggle', () => ({
-  DatasetSourceToggle: jest.fn(({ children }: any) =>
-    React.createElement('div', { 'data-testid': 'dataset-source-toggle' }, children),
+jest.mock('../../utils/OutputFieldContent', () => ({
+  OutputFieldContent: jest.fn(({ children }: any) =>
+    React.createElement('div', { 'data-testid': 'output-field-content' }, children),
   ),
 }));
 
@@ -92,16 +92,16 @@ describe('ExtraFieldRadio', () => {
     jest.clearAllMocks();
   });
 
-  it('Kickoff: renders DatasetSourceToggle as wrapper for options', () => {
+  it('Kickoff: renders OutputFieldContent as wrapper for options', () => {
     render(React.createElement(ExtraFieldRadio as any, baseKickoffProps));
 
-    expect(screen.getByTestId('dataset-source-toggle')).toBeInTheDocument();
+    expect(screen.getByTestId('output-field-content')).toBeInTheDocument();
   });
 
-  it('Kickoff: passes field, editField, isDisabled to DatasetSourceToggle', () => {
+  it('Kickoff: passes field, editField, isDisabled to OutputFieldContent', () => {
     render(React.createElement(ExtraFieldRadio as any, baseKickoffProps));
 
-    const mock = DatasetSourceToggle as jest.Mock;
+    const mock = OutputFieldContent as jest.Mock;
     expect(mock).toHaveBeenCalledTimes(1);
     expect(mock).toHaveBeenCalledWith(
       expect.objectContaining({
