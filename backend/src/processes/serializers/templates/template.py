@@ -635,7 +635,7 @@ class TemplateSerializer(
         )
         fieldsets_links_raw = validated_data['kickoff'].pop(
             'fieldsettemplatekickoff_set', None,
-        ) or []
+        )
         self.create_or_update_related_one(
             slz_cls=KickoffSerializer,
             data=validated_data['kickoff'],
@@ -648,7 +648,7 @@ class TemplateSerializer(
                 'template': instance,
             },
         )
-        if fieldsets_links_raw:
+        if fieldsets_links_raw is not None:
             fieldsets_links = [
                 {
                     'api_name': link['fieldset']['api_name'],
@@ -668,8 +668,8 @@ class TemplateSerializer(
         for task_data in validated_data['tasks']:
             fieldsets_raw = task_data.pop(
                 'fieldsettemplatetasktemplate_set', None,
-            ) or []
-            if fieldsets_raw:
+            )
+            if fieldsets_raw is not None:
                 tasks_fieldsets[task_data['api_name']] = [
                     {
                         'api_name': link['fieldset']['api_name'],
@@ -736,7 +736,7 @@ class TemplateSerializer(
         )
         fieldsets_links_raw = validated_data['kickoff'].pop(
             'fieldsettemplatekickoff_set', None,
-        ) or []
+        )
         self.create_or_update_related_one(
             slz_cls=KickoffSerializer,
             data=validated_data['kickoff'],
@@ -749,7 +749,7 @@ class TemplateSerializer(
                 'template': instance,
             },
         )
-        if fieldsets_links_raw:
+        if fieldsets_links_raw is not None:
             fieldsets_links = [
                 {
                     'api_name': link['fieldset']['api_name'],
@@ -769,8 +769,8 @@ class TemplateSerializer(
         for task_data in validated_data['tasks']:
             fieldsets_raw = task_data.pop(
                 'fieldsettemplatetasktemplate_set', None,
-            ) or []
-            if fieldsets_raw:
+            )
+            if fieldsets_raw is not None:
                 tasks_fieldsets[task_data['api_name']] = [
                     {
                         'api_name': link['fieldset']['api_name'],

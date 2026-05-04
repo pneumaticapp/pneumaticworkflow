@@ -403,8 +403,8 @@ class TaskTemplateSerializer(
         )
         fieldsets_links = self.context.get(
             'tasks_fieldsets', {},
-        ).get(api_name, [])
-        if fieldsets_links:
+        ).get(api_name)
+        if fieldsets_links is not None:
             FieldSetTemplateService.create_or_update_tasks_links(
                 task=instance,
                 template=self.context['template'],
@@ -523,8 +523,8 @@ class TaskTemplateSerializer(
         )
         fieldsets_links = self.context.get(
             'tasks_fieldsets', {},
-        ).get(api_name, [])
-        if fieldsets_links:
+        ).get(api_name)
+        if fieldsets_links is not None:
             FieldSetTemplateService.create_or_update_tasks_links(
                 task=instance,
                 template=self.context['template'],

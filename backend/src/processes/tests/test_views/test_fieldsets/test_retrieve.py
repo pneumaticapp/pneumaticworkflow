@@ -110,6 +110,34 @@ def test_retrieve__kickoff_fieldset__ok(api_client):
     assert response.data['kickoff'] == kickoff.id
 
 
+def test_retrieve__used_by_kickoff_deleted_record__empty_kickoff(api_client):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+    )
+    kickoff = template.kickoff_instance
+    fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+    )
+    fieldset.kickoffs.clear()
+
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(f'/templates/fieldsets/{fieldset.id}')
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == fieldset.id
+    assert response.data['kickoff'] is None
+
+
 def test_retrieve__task_fieldset__ok(api_client):
 
     # arrange

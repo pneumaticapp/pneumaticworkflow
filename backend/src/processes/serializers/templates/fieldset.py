@@ -10,7 +10,7 @@ from src.generics.fields import (
 from src.generics.mixins.serializers import CustomValidationErrorMixin
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
-    FieldsetTemplateRule,
+    FieldsetTemplateRule, FieldsetTemplateKickoff,
 )
 from src.processes.serializers.templates.field import FieldTemplateSerializer
 from src.processes.serializers.templates.task import (
@@ -80,5 +80,9 @@ class FieldsetTemplateSerializer(
     kickoff = SerializerMethodField()
 
     def get_kickoff(self, instance: FieldsetTemplate):
-        kickoff = instance.kickoffs.all().first()
-        return kickoff.id if kickoff else None
+        through = FieldsetTemplateKickoff.objects.filter(
+            fieldset=instance,
+        ).first()
+        if through:
+            return through.kickoff_id
+        return None

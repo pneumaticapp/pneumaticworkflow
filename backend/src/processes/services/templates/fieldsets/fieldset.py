@@ -138,7 +138,17 @@ class FieldSetTemplateService(BaseModelService):
             return self.instance
 
     def delete(self) -> None:
-        if self.instance.kickoffs.exists() or self.instance.tasks.exists():
+        kickoffs_exists = (
+            FieldsetTemplateKickoff.objects
+            .filter(fieldset=self.instance)
+            .exists()
+        )
+        tasks_exists = (
+            FieldsetTemplateTaskTemplate.objects
+            .filter(fieldset=self.instance)
+            .exists()
+        )
+        if kickoffs_exists or tasks_exists:
             raise FieldsetTemplateInUseException
         self.instance.delete()
 
