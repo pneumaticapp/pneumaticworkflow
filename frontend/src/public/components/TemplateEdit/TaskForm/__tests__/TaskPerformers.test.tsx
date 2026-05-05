@@ -64,6 +64,7 @@ describe('TaskPerformers', () => {
     skipForStarter: false,
     rawPerformers: [],
     fields: [],
+    fieldsets: [],
     uuid: 'uuid-1',
     conditions: [],
     checklists: [],
