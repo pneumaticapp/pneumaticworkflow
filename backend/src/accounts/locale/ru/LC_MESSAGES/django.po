@@ -172,3 +172,22 @@ msgstr ""
 
 msgid "You can't delete the account owner."
 msgstr ""
+
+msgid "You cannot delegate to yourself."
+msgstr "Вы не можете делегировать самому себе."
+
+#, python-brace-format
+msgid "The following users were not found: {missing}"
+msgstr "Следующие пользователи не найдены: {missing}"
+
+msgid "Select at least one substitute."
+msgstr "Выберите хотя бы одного заместителя."
+
+msgid "The vacation is not active."
+msgstr "Отпуск не активен."
+
+msgid "The status is already active."
+msgstr "Невозможно активировать: статус уже активен."
+
+msgid "The end date must be after the start date."
+msgstr "Дата окончания должна быть позже даты начала."

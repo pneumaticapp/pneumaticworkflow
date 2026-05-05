@@ -49,7 +49,7 @@ describe('ExtraFieldUser', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useSelector as jest.Mock).mockImplementation((selector) => {
-      if (typeof selector === 'function' && selector.name === 'getGroupsList') return mockGroups;
+      if (typeof selector === 'function' && selector.name === 'getRegularGroupsList') return mockGroups;
       return mockUsers;
     });
   });

@@ -132,6 +132,20 @@
   color: var(--pneumatic-color-black32);
 }
 
+.card-absent-badge {
+  margin-left: 0.8rem;
+  padding: 0.2rem 0.6rem;
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.4rem;
+  vertical-align: middle;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: white;
+  background-color: var(--pneumatic-color-link-dark, #f5a623);
+  border-radius: 0.4rem;
+}
+
 .card-menu-icon {
   color: var(--pneumatic-color-black72);
 }

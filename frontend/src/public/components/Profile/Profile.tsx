@@ -1,4 +1,5 @@
-import React, { useEffect, useLayoutEffect, useState } from 'react';
+import * as React from 'react';
+import { useEffect, useLayoutEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { Formik, Form, FormikConfig } from 'formik';
 
@@ -19,19 +20,32 @@ import { getErrorsObject } from '../../utils/formik/getErrorsObject';
 import { Header } from '../UI/Typeography/Header';
 import { SectionTitle } from '../UI/Typeography/SectionTitle';
 import { IAuthUser } from '../../types/redux';
+import { TUserListItem, isUserAbsent } from '../../types/user';
 import { FormikCheckbox } from '../UI/Fields/Checkbox';
 import { AvatarController } from './AvatarController';
-import { FormikDropdownList} from '../UI';
+import { FormikDropdownList } from '../UI';
 import { LockIcon } from '../icons/LockIcon';
 import { ChangePassword } from './ChangePassword';
+import { ProfileVacationFields } from './ProfileVacationFields';
 
 import styles from './Profile.css';
+
+const arraysEqual = (a: number[], b: number[]) =>
+  a.length === b.length && a.every((v, i) => v === b[i]);
 
 export interface IProfileProps {
   user: IAuthUser;
   editCurrentUser(body: IUpdateUserRequest): void;
   sendChangePassword(body: TPasswordFields): void;
   onChangeTab(tab: ESettingsTabs): void;
+  onVacationActivate(data: {
+    substituteUserIds: number[];
+    vacationStartDate: string | null;
+    vacationEndDate: string | null;
+    absenceStatus?: string;
+  }): void;
+  onVacationDeactivate(): void;
+  availableUsers: TUserListItem[];
 }
 
 export type TProfileFields = {
@@ -49,9 +63,23 @@ export type TProfileFields = {
   dateFdw: string;
   timeformat: string;
   dateformat: string;
+  absenceStatus: string;
+  vacationStartDate: string | null;
+  vacationEndDate: string | null;
+  substituteUserIds: number[];
 };
 
-export function Profile({ user, editCurrentUser, sendChangePassword, onChangeTab }: IProfileProps) {
+
+
+export function Profile({
+  user,
+  editCurrentUser,
+  sendChangePassword,
+  onChangeTab,
+  onVacationActivate,
+  onVacationDeactivate,
+  availableUsers,
+}: IProfileProps) {
   const { formatMessage } = useIntl();
   const [isOpenModal, setIsOpenModal] = useState(false);
   const {
@@ -74,6 +102,14 @@ export function Profile({ user, editCurrentUser, sendChangePassword, onChangeTab
   } = user;
   const [monthFmt, yearFmt, timeFmt] = dateFmt.split(',');
 
+  useEffect(() => {
+    document.title = TITLES.Profile;
+  }, []);
+
+  useLayoutEffect(() => {
+    onChangeTab(ESettingsTabs.Profile);
+  }, []);
+
   if (!id) return <div className="loading" />;
 
   const initialValues: TProfileFields = {
@@ -91,6 +127,10 @@ export function Profile({ user, editCurrentUser, sendChangePassword, onChangeTab
     dateFdw: String(dateFdw),
     timeformat: timeFmt.trim(),
     dateformat: `${monthFmt},${yearFmt},`,
+    absenceStatus: isUserAbsent(user) ? (user.vacation?.absenceStatus || 'vacation') : 'active',
+    vacationStartDate: user.vacation?.startDate || null,
+    vacationEndDate: user.vacation?.endDate || null,
+    substituteUserIds: user.vacation?.substituteUserIds || [],
   };
 
   const mapToFormatMessageOptions = (options: any) => {
@@ -102,17 +142,33 @@ export function Profile({ user, editCurrentUser, sendChangePassword, onChangeTab
     });
   };
 
-  useEffect(() => {
-    document.title = TITLES.Profile;
-  }, []);
-
-  useLayoutEffect(() => {
-    onChangeTab(ESettingsTabs.Profile);
-  }, []);
-
   const handleSubmit: FormikConfig<TProfileFields>['onSubmit'] = (values) => {
-    const { dateformat, timeformat, ...userData } = values;
+    const { dateformat, timeformat, absenceStatus, vacationStartDate, vacationEndDate, substituteUserIds, ...userData } = values;
     editCurrentUser({ ...userData, dateFmt: `${dateformat} ${timeformat}` });
+
+    const prevIsAbsent = isUserAbsent(user);
+    const nextIsAbsent = absenceStatus !== 'active';
+    
+    // Determine if any vacation fields have changed
+    const prevAbsenceStatus = isUserAbsent(user) ? (user.vacation?.absenceStatus || 'vacation') : 'active';
+    const vacationSettingsChanged =
+      absenceStatus !== prevAbsenceStatus ||
+      vacationStartDate !== (user.vacation?.startDate || null) ||
+      vacationEndDate !== (user.vacation?.endDate || null) ||
+      !arraysEqual(substituteUserIds, user.vacation?.substituteUserIds || []);
+      
+    if (vacationSettingsChanged) {
+      if (nextIsAbsent) {
+        onVacationActivate({
+          substituteUserIds,
+          vacationStartDate,
+          vacationEndDate,
+          absenceStatus,
+        });
+      } else if (prevIsAbsent && !nextIsAbsent) {
+        onVacationDeactivate();
+      }
+    }
   };
 
   return (
@@ -124,6 +180,7 @@ export function Profile({ user, editCurrentUser, sendChangePassword, onChangeTab
       <AvatarController user={user} containerClassname={styles['avatar-controller']} />
 
       <Formik
+        enableReinitialize
         initialValues={initialValues}
         onSubmit={handleSubmit}
         validate={(values) => {
@@ -132,6 +189,19 @@ export function Profile({ user, editCurrentUser, sendChangePassword, onChangeTab
             lastName: validateName,
             phone: validatePhone,
           });
+
+          if (values.absenceStatus !== 'active' && (!values.substituteUserIds || values.substituteUserIds.length === 0)) {
+            errors.substituteUserIds = formatMessage({ id: 'validation.required' });
+          }
+
+          if (
+            values.absenceStatus !== 'active' &&
+            values.vacationStartDate &&
+            values.vacationEndDate &&
+            values.vacationEndDate < values.vacationStartDate
+          ) {
+            errors.vacationEndDate = formatMessage({ id: 'user-info.vacation.end-date-before-start' });
+          }
 
           return { ...errors };
         }}
@@ -177,6 +247,8 @@ export function Profile({ user, editCurrentUser, sendChangePassword, onChangeTab
               containerClassName={styles['field']}
             />
           </fieldset>
+
+          <ProfileVacationFields availableUsers={availableUsers} />
 
           <fieldset className={styles['fields-group']}>
             <SectionTitle className={styles['fields-group__title']}>
@@ -260,7 +332,7 @@ export function Profile({ user, editCurrentUser, sendChangePassword, onChangeTab
 
             <button type="button" className={styles['change-pass']} onClick={() => setIsOpenModal(true)}>
               <LockIcon></LockIcon>
-              <p>Change your password</p>
+              <p>{formatMessage({ id: 'user-info.change-your-password' })}</p>
             </button>
           </fieldset>
 

@@ -935,6 +935,70 @@ def test_delete__not_in_use__ok():
     assert not FieldsetTemplate.objects.filter(id=fieldset.id).exists()
 
 
+def test_delete__used_by_kickoff_deleted_record__ok():
+
+    """
+    Not in use → deleted
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    kickoff = template.kickoff_instance
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+    )
+    fieldset.kickoffs.add(kickoff)
+    fieldset.kickoffs.clear()
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=fieldset,
+    )
+
+    # act
+    service.delete()
+
+    # assert
+    assert not FieldsetTemplate.objects.filter(id=fieldset.id).exists()
+
+
+def test_delete__used_by_task_deleted_record__ok():
+
+    """
+    Not in use → deleted
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    task = template.tasks.get(number=1)
+    fieldset = FieldsetTemplate.objects.create(
+        template=template,
+        account=account,
+        name='Fieldset',
+    )
+    fieldset.tasks.add(task)
+    fieldset.tasks.clear()
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=fieldset,
+    )
+
+    # act
+    service.delete()
+
+    # assert
+    assert not FieldsetTemplate.objects.filter(id=fieldset.id).exists()
+
+
 def test_delete__used_by_kickoff__raise_exception():
 
     """

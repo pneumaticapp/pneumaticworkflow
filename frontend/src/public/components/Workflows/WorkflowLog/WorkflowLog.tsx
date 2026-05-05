@@ -222,7 +222,7 @@ export const WorkflowLog = ({
     }
 
     return (
-      <div className={styles['comment-field']}>
+      <div className={classnames(styles['comment-field'], 'no-print')}>
         <PopupCommentFieldContainer sendComment={sendComment} taskId={taskId} mentions={mentions} />
       </div>
     );

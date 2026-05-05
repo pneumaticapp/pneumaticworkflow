@@ -573,6 +573,33 @@ class WorkflowEventService:
             cls._after_create_actions(event)
         return event
 
+    @classmethod
+    def task_delegation_event(
+        cls,
+        task: Task,
+        user: UserModel,
+        substitute_group: UserGroup,
+        after_create_actions: bool = True,
+    ) -> WorkflowEvent:
+
+        event = WorkflowEvent.objects.create(
+            type=WorkflowEventType.TASK_DELEGATION,
+            account=task.account,
+            task=task,
+            task_json=TaskEventJsonSerializer(
+                instance=task,
+                context={
+                    'event_type': WorkflowEventType.TASK_DELEGATION,
+                },
+            ).data,
+            workflow=task.workflow,
+            target_user_id=user.id,
+            target_group_id=substitute_group.id,
+        )
+        if after_create_actions:
+            cls._after_create_actions(event)
+        return event
+
 
 class CommentService(BaseModelService):
 

@@ -17,11 +17,17 @@ export interface UserInvite {
   source: InvitesType;
 }
 
+export enum EUserGroupType {
+  Regular = 'regular',
+  Personal = 'personal',
+}
+
 export interface IGroup {
   id: number;
   name: string;
   photo: string | null;
   users: number[];
+  type: EUserGroupType;
 }
 
 export enum TeamPages {
@@ -44,7 +50,7 @@ export type TInviteUsersPayload = {
   onError?(): void;
 };
 
-export interface IGroupDropdownOption extends IGroup {
+export interface IGroupDropdownOption extends Omit<IGroup, 'type'> {
   optionType: EOptionTypes.Group;
   label: string;
   value: string;

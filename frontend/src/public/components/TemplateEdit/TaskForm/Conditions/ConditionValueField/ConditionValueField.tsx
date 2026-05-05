@@ -17,7 +17,7 @@ import { toTspDate } from '../../../../../utils/dateTime';
 import { getFormattedDropdownOption } from '../utils/getFormattedDropdownOption';
 import styles from '../Conditions.css';
 import { EStartingType } from '../utils/getDropdownOperators';
-import { IApplicationState } from '../../../../../types/redux';
+import { getRegularGroupsList } from '../../../../../redux/selectors/groups';
 import { useLazyDataset } from '../utils/useLazyDataset';
 
 interface IConditionValueFieldProps {
@@ -38,7 +38,7 @@ export function ConditionValueField({
   changeRuleValue,
 }: IConditionValueFieldProps) {
   const { formatMessage } = useIntl();
-  const groups = useSelector((state: IApplicationState) => state.groups.list);
+  const groups = useSelector(getRegularGroupsList);
   const datasetItems = useLazyDataset(variable)?.items;
 
   if (!variable || !operator) return null;

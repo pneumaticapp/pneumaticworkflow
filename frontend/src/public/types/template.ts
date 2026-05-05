@@ -66,6 +66,7 @@ export interface ITemplateTask {
   delay: string | null;
   rawDueDate: IDueDate;
   requireCompletionByAll: boolean;
+  skipForStarter: boolean;
   rawPerformers: ITemplateTaskPerformer[];
   fields: IExtraField[];
   fieldsets: ITaskFieldset[];
@@ -354,6 +355,7 @@ export type TTemplateWithTasksOnly = Pick<ITemplate, 'name'> & {
 export interface RawPerformer {
   type: ETemplateOwnerType;
   sourceId: number;
+  label?: string;
 }
 
 export type TOrderedFields = {

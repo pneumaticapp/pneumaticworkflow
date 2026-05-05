@@ -77,6 +77,7 @@ class TaskTemplateSerializer(
             'number',
             'description',
             'require_completion_by_all',
+            'skip_for_starter',
             'delay',
             'fields',
             'fieldsets',
@@ -94,6 +95,7 @@ class TaskTemplateSerializer(
             'number',
             'description',
             'require_completion_by_all',
+            'skip_for_starter',
             'delay',
             'api_name',
             'template',
@@ -403,8 +405,8 @@ class TaskTemplateSerializer(
         )
         fieldsets_links = self.context.get(
             'tasks_fieldsets', {},
-        ).get(api_name, [])
-        if fieldsets_links:
+        ).get(api_name)
+        if fieldsets_links is not None:
             FieldSetTemplateService.create_or_update_tasks_links(
                 task=instance,
                 template=self.context['template'],
@@ -523,8 +525,8 @@ class TaskTemplateSerializer(
         )
         fieldsets_links = self.context.get(
             'tasks_fieldsets', {},
-        ).get(api_name, [])
-        if fieldsets_links:
+        ).get(api_name)
+        if fieldsets_links is not None:
             FieldSetTemplateService.create_or_update_tasks_links(
                 task=instance,
                 template=self.context['template'],
