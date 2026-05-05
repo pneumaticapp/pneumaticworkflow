@@ -25,6 +25,10 @@ import {
   startTrialSubscriptionAction,
   startFreeSubscriptionAction,
   createUser,
+  loadChangeUserManager,
+  changeUserManager,
+  loadChangeUserReports,
+  changeUserReports,
 } from './slice';
 
 import {
@@ -62,6 +66,19 @@ import { getAccountPlan } from '../selectors/accounts';
 import { getAbsolutePath } from '../../utils/getAbsolutePath';
 import { getTenantsCountStore } from '../selectors/tenants';
 import { createUser as createUserApi } from '../../api/createUser';
+import { editTeamUser } from '../../api/editTeamUser';
+
+/**
+ * The backend API returns `subordinates_ids` (camelCased to `subordinatesIds`),
+ * but internal Redux state and UI components use `reportIds`. This helper
+ * copies the value so that both names are available in the store.
+ */
+function normalizeUserReportIds(user: TUserListItem): TUserListItem {
+  if (user.subordinatesIds && !user.reportIds) {
+    return { ...user, reportIds: user.subordinatesIds };
+  }
+  return user;
+}
 
 export function* fetchUsers(
   action: PayloadAction<TUsersFetchPayload> = { type: 'accounts/usersFetchStarted', payload: { showErrorNotification: true } }
@@ -85,7 +102,7 @@ export function* fetchUsers(
         status: EUserStatus.Active,
       };
 
-      return { ...emptyUserData, ...user };
+      return normalizeUserReportIds({ ...emptyUserData, ...user });
     });
 
     const sortedUsers = sortUsersByStatus(sortUsersByNameAsc(normalizedUsers));
@@ -144,10 +161,11 @@ function getSortedUsers(users: TUserListItem[], sorting: EUserListSorting) {
 function* fetchTeam() {
   try {
     const { userListSorting: sorting }: IAccounts = yield select(getAccountsStore);
-    const users: TUserListItem[] = yield getUsers({
+    const rawUsers: TUserListItem[] = yield getUsers({
       type: 'user',
       status: [EUserStatus.Active, EUserStatus.Invited],
     });
+    const users = rawUsers.map(normalizeUserReportIds);
 
     yield put(teamFetchFinished(getSortedUsers(users, sorting)));
   } catch (error) {
@@ -168,6 +186,50 @@ function* saveUserAdmin({ payload: { isAdmin, email, id } }: PayloadAction<IChan
 
     yield put(changeUserAdmin({ isAdmin: !isAdmin, email, id }));
     yield put(teamFetchFailed());
+  }
+}
+
+function* saveUserManagerSaga({
+  payload: { id, managerId, onSuccess, onError },
+}: PayloadAction<{
+  id: number;
+  managerId: number | null;
+  onSuccess?: () => void;
+  onError?: () => void;
+}>) {
+  try {
+    yield put(setGeneralLoaderVisibility(true));
+    yield call(editTeamUser, id, { managerId });
+    yield put(changeUserManager({ id, managerId }));
+    NotificationManager.success({ message: 'team.manager-update-success' });
+    onSuccess?.();
+  } catch (error) {
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+    onError?.();
+  } finally {
+    yield put(setGeneralLoaderVisibility(false));
+  }
+}
+
+function* saveUserReportsSaga({
+  payload: { id, reportIds, onSuccess, onError },
+}: PayloadAction<{
+  id: number;
+  reportIds: number[];
+  onSuccess?: () => void;
+  onError?: () => void;
+}>) {
+  try {
+    yield put(setGeneralLoaderVisibility(true));
+    yield call(editTeamUser, id, { subordinatesIds: reportIds });
+    yield put(changeUserReports({ id, reportIds }));
+    NotificationManager.success({ message: 'team.reports-update-success' });
+    onSuccess?.();
+  } catch (error) {
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+    onError?.();
+  } finally {
+    yield put(setGeneralLoaderVisibility(false));
   }
 }
 
@@ -315,6 +377,14 @@ export function* watchChangeAdminUser() {
   yield takeEvery(loadChangeUserAdmin.type, saveUserAdmin);
 }
 
+export function* watchChangeUserManager() {
+  yield takeEvery(loadChangeUserManager.type, saveUserManagerSaga);
+}
+
+export function* watchChangeUserReports() {
+  yield takeEvery(loadChangeUserReports.type, saveUserReportsSaga);
+}
+
 export function* watchOpenDeleteUserModal() {
   yield takeLatest(
     [openDeleteUserModal.type, closeDeleteUserModal.type],
@@ -360,5 +430,7 @@ export function* rootSaga() {
     fork(watchStartTrialSubscription),
     fork(watchStartFreeSubscription),
     fork(watchCreateUser),
+    fork(watchChangeUserManager),
+    fork(watchChangeUserReports),
   ]);
 }

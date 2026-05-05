@@ -27,7 +27,7 @@ from src.processes.serializers.workflows.field import (
     TaskFieldSerializer,
 )
 from src.processes.serializers.workflows.task_performer import (
-    TaskUserGroupPerformerSerializer,
+    get_performers_for_task,
 )
 from src.processes.models.workflows.task import TaskPerformer
 
@@ -83,11 +83,7 @@ class WorkflowCurrentTaskSerializer(serializers.ModelSerializer):
         return None
 
     def get_performers(self, instance) -> List[Dict[str, Any]]:
-        if hasattr(instance, 'all_performers'):
-            performers = instance.all_performers
-        else:
-            performers = instance.exclude_directly_deleted_taskperformer_set()
-        return TaskUserGroupPerformerSerializer(performers, many=True).data
+        return get_performers_for_task(instance)
 
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -137,11 +133,7 @@ class TaskSerializer(serializers.ModelSerializer):
     is_read_only_viewer = serializers.SerializerMethodField()
 
     def get_performers(self, instance) -> List[Dict[str, Any]]:
-        if hasattr(instance, 'all_performers'):
-            performers = instance.all_performers
-        else:
-            performers = instance.exclude_directly_deleted_taskperformer_set()
-        return TaskUserGroupPerformerSerializer(performers, many=True).data
+        return get_performers_for_task(instance)
 
     def get_is_completed(self, instance):
         #  TODO Remove in 41258
