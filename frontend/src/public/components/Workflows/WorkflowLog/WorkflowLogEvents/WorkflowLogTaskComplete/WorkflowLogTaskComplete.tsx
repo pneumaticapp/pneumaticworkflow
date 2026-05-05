@@ -28,7 +28,7 @@ export function WorkflowLogTaskComplete({
   const { formatMessage } = useIntl();
 
   const renderOutputValues = () => {
-    const hasOutputValue = isArrayWithItems(currentTask?.output.filter(Boolean));
+    const hasOutputValue = isArrayWithItems(currentTask?.output.filter(Boolean)) || isArrayWithItems(currentTask?.fieldsets);
 
     if (!hasOutputValue) {
       return null;
