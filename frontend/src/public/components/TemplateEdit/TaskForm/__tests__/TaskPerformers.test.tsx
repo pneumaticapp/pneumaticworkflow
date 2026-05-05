@@ -6,9 +6,9 @@ import { intlMock } from '../../../../__stubs__/intlMock';
 import { Checkbox } from '../../../UI/Fields/Checkbox';
 import { ITemplateTask } from '../../../../types/template';
 
-// TaskPerformers использует `import React from 'react'` (default import),
-// который не работает с ts-jest без esModuleInterop.
-// Мокаем модуль react, чтобы default === module
+// TaskPerformers uses `import React from 'react'` (default import),
+// which doesn't work with ts-jest without esModuleInterop.
+// Mocking the react module so that default === module
 jest.mock('react', () => {
   const actual = jest.requireActual('react');
   return { ...actual, default: actual, __esModule: true };
@@ -43,7 +43,7 @@ jest.mock('../../../../utils/createId', () => ({
   createPerformerApiName: jest.fn(() => 'perf-mock'),
 }));
 
-// Отложенный импорт после мока react
+// Deferred import after react mock
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const { TaskPerformers } = require('../TaskPerformers');
 
@@ -96,8 +96,8 @@ describe('TaskPerformers', () => {
     jest.clearAllMocks();
   });
 
-  describe('Чекбокс skipForStarter', () => {
-    it('передаёт title с правильным текстом локализации', () => {
+  describe('skipForStarter checkbox', () => {
+    it('passes title with correct localization text', () => {
       renderComponent();
 
       const skipCall = getSkipCheckboxCall();
@@ -106,7 +106,7 @@ describe('TaskPerformers', () => {
       expect(skipCall![0].title).toBe(SKIP_LABEL);
     });
 
-    it('передаёт checked=true при skipForStarter=true', () => {
+    it('passes checked=true when skipForStarter=true', () => {
       renderComponent({ skipForStarter: true });
 
       const skipCall = getSkipCheckboxCall();
@@ -114,7 +114,7 @@ describe('TaskPerformers', () => {
       expect(skipCall![0].checked).toBe(true);
     });
 
-    it('передаёт checked=false при skipForStarter=false', () => {
+    it('passes checked=false when skipForStarter=false', () => {
       renderComponent({ skipForStarter: false });
 
       const skipCall = getSkipCheckboxCall();
@@ -122,7 +122,7 @@ describe('TaskPerformers', () => {
       expect(skipCall![0].checked).toBe(false);
     });
 
-    it('вызывает setCurrentTask с true при onChange', () => {
+    it('calls setCurrentTask with true on onChange', () => {
       renderComponent({ skipForStarter: false });
 
       const skipCall = getSkipCheckboxCall();
@@ -134,7 +134,7 @@ describe('TaskPerformers', () => {
       );
     });
 
-    it('вызывает setCurrentTask с false при снятии чекбокса', () => {
+    it('calls setCurrentTask with false on checkbox uncheck', () => {
       renderComponent({ skipForStarter: true });
 
       const skipCall = getSkipCheckboxCall();
