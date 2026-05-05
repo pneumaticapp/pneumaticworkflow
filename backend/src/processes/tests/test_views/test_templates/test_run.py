@@ -44,6 +44,7 @@ from src.processes.models.templates.conditions import (
 )
 from src.processes.models.templates.fieldset import (
     FieldsetTemplateKickoff,
+    FieldsetTemplateTaskTemplate,
 )
 from src.processes.models.templates.fields import (
     FieldTemplate,
@@ -5612,3 +5613,176 @@ def test_run__kickoff_fieldset_required_empty__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == messages.MSG_PW_0023
     assert response.data['details']['api_name'] == field_template.api_name
+
+
+def test_run__kickoff_soft_deleted_fieldset_through__ok(
+    mocker,
+    api_client,
+):
+
+    """ Soft-deleted FieldsetTemplateKickoff is skipped. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    fieldset_template = create_test_fieldset_template(
+        account=user.account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        name='Deleted fieldset',
+        order=0,
+    )
+    FieldsetTemplateKickoff.objects.filter(
+        fieldset=fieldset_template,
+        kickoff=template.kickoff_instance,
+    ).delete()
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {},
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    kickoff_value = KickoffValue.objects.get(workflow=workflow)
+    assert kickoff_value.fieldsets.count() == 0
+    assert response.data['kickoff']['fieldsets'] == []
+
+
+def test_run__kickoff_deleted_fieldset_among_active__ok(
+    mocker,
+    api_client,
+):
+
+    """ Only active FieldsetTemplateKickoff records produce FieldSets. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    fieldset_deleted = create_test_fieldset_template(
+        account=user.account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        name='Deleted fieldset',
+        order=0,
+    )
+    fieldset_active = create_test_fieldset_template(
+        account=user.account,
+        template=template,
+        kickoff=template.kickoff_instance,
+        name='Active fieldset',
+        order=1,
+    )
+    FieldsetTemplateKickoff.objects.filter(
+        fieldset=fieldset_deleted,
+        kickoff=template.kickoff_instance,
+    ).delete()
+    field_template = fieldset_active.fields.first()
+    field_value = 'test value'
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                field_template.api_name: field_value,
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    kickoff_value = KickoffValue.objects.get(workflow=workflow)
+    assert kickoff_value.fieldsets.count() == 1
+    fieldset = kickoff_value.fieldsets.first()
+    assert fieldset.name == fieldset_active.name
+    assert fieldset.api_name == fieldset_active.api_name
+    fieldsets_data = response.data['kickoff']['fieldsets']
+    assert len(fieldsets_data) == 1
+    assert fieldsets_data[0]['name'] == fieldset_active.name
+    assert fieldsets_data[0]['order'] == 1
+
+
+def test_run__task_soft_deleted_fieldset_through__ok(
+    mocker,
+    api_client,
+):
+
+    """ Soft-deleted FieldsetTemplateTaskTemplate is skipped. """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    task_template = template.tasks.first()
+    fieldset_template = create_test_fieldset_template(
+        account=user.account,
+        template=template,
+        task=task_template,
+        name='Deleted task fieldset',
+        order=0,
+    )
+    FieldsetTemplateTaskTemplate.objects.filter(
+        fieldset=fieldset_template,
+        task=task_template,
+    ).delete()
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {},
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    workflow = Workflow.objects.get(id=response.data['id'])
+    task = workflow.tasks.first()
+    assert task.fieldsets.count() == 0

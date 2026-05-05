@@ -13,6 +13,9 @@ from src.processes.models.templates.checklist import (
     ChecklistTemplate,
     ChecklistTemplateSelection,
 )
+from src.processes.models.templates.fieldset import (
+    FieldsetTemplateTaskTemplate,
+)
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.raw_due_date import RawDueDateTemplate
 from src.processes.models.workflows.fields import TaskField
@@ -2090,3 +2093,47 @@ def test_set_due_date_directly__default__ok(mocker):
         task=task,
         user=user,
     )
+
+
+def test_create_fields_from_template__deleted_fieldsets__skip(
+    mocker,
+):
+
+    """
+    Field inside an active fieldset is excluded,
+    field inside a soft-deleted fieldset is created as standalone.
+    """
+
+    # arrange
+    user = create_test_owner()
+    template = create_test_template(user=user, tasks_count=1)
+    template_task = template.tasks.get(number=1)
+    fieldset_deleted = create_test_fieldset_template(
+        account=user.account,
+        template=template,
+        task=template_task,
+        name='Deleted fieldset',
+        order=0,
+    )
+    FieldsetTemplateTaskTemplate.objects.filter(
+        fieldset=fieldset_deleted,
+        task=template_task,
+    ).delete()
+    workflow = create_test_workflow(user=user, template=template)
+    task = workflow.tasks.get(number=1)
+    task_field_service_init_mock = mocker.patch.object(
+        TaskFieldService,
+        '__init__',
+        return_value=None,
+    )
+    task_field_service_create_mock = mocker.patch(
+        'src.processes.services.tasks.field.TaskFieldService.create',
+    )
+    service = TaskService(user=user, instance=task)
+
+    # act
+    service.create_fields_from_template(instance_template=template_task)
+
+    # assert
+    task_field_service_init_mock.assert_not_called()
+    task_field_service_create_mock.assert_not_called()

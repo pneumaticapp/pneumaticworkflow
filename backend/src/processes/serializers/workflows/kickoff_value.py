@@ -83,20 +83,16 @@ class KickoffValueSerializer(
             clear_description=clear_description,
         )
         workflow = validated_data['workflow']
-        fieldset_templates = (
-            kickoff.fieldsets
-            .prefetch_related('rules', 'fields')
-            .order_by('id')
+        fieldset_through_records = (
+            FieldsetTemplateKickoff.objects
+            .filter(kickoff=kickoff)
+            .select_related('fieldset')
+            .prefetch_related('fieldset__rules', 'fieldset__fields')
+            .order_by('order')
         )
         try:
-            for fieldset_template in fieldset_templates:
-                fieldset_through = (
-                    FieldsetTemplateKickoff.objects
-                    .get(
-                        fieldset=fieldset_template,
-                        kickoff=kickoff,
-                    )
-                )
+            for fieldset_through in fieldset_through_records:
+                fieldset_template = fieldset_through.fieldset
                 service = FieldSetService(user=self.context['user'])
                 service.create(
                     instance_template=fieldset_template,
