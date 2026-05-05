@@ -124,7 +124,7 @@ class UserViewSet(
 
     def put(self, request, *args, **kwargs):
         user = request.user
-        slz = self.get_serializer(data=request.data)
+        slz = self.get_serializer(instance=user, data=request.data)
         slz.is_valid(raise_exception=True)
         service = UserService(
             user=user,
