@@ -206,9 +206,13 @@ class TaskService(
             self.create_rules(conditions, conditions_tree)
 
     def create_fields_from_template(self, instance_template: TaskTemplate):
-
+        active_fieldset_ids = (
+            FieldsetTemplateTaskTemplate.objects
+            .filter(task=instance_template)
+            .values_list('fieldset_id', flat=True)
+        )
         for field_template in instance_template.fields.exclude(
-            fieldset__in=instance_template.fieldsets.all(),
+            fieldset__in=active_fieldset_ids,
         ):
             service = TaskFieldService(user=self.user)
             service.create(
@@ -222,17 +226,17 @@ class TaskService(
         self,
         instance_template: TaskTemplate,
     ):
-        for fs_template in instance_template.fieldsets.all().order_by('id'):
-            fieldset_through = (
-                FieldsetTemplateTaskTemplate.objects
-                .get(
-                    fieldset=fs_template,
-                    task=instance_template,
-                )
-            )
+        fieldset_through_records = (
+            FieldsetTemplateTaskTemplate.objects
+            .filter(task=instance_template)
+            .select_related('fieldset')
+            .prefetch_related('fieldset__rules', 'fieldset__fields')
+            .order_by('order')
+        )
+        for fieldset_through in fieldset_through_records:
             service = FieldSetService(user=self.user)
             service.create(
-                instance_template=fs_template,
+                instance_template=fieldset_through.fieldset,
                 account_id=self.instance.workflow.account_id,
                 workflow=self.instance.workflow,
                 task=self.instance,
