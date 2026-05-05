@@ -14,7 +14,7 @@ import { getVariables } from './TaskForm/utils/getTaskVariables';
 import { TemplateIntegrations } from './Integrations';
 import { ERoutes } from '../../constants/routes';
 import { TUserListItem } from '../../types/user';
-import { getEmptyKickoff, getNormalizedTemplateOwners, getTemplateIdFromUrl } from '../../utils/template';
+import { cleanTemplateReferences, getEmptyKickoff, getNormalizedTemplateOwners, getTemplateIdFromUrl } from '../../utils/template';
 import { checkSomeRouteIsActive, isCreateTemplate } from '../../utils/history';
 import { KickoffReduxContainer } from './KickoffRedux';
 import { moveTask } from '../../utils/workflows';
@@ -269,11 +269,15 @@ export function TemplateEdit({
       return;
     }
 
-    const newWorkflow: ITemplate = {
+    const updatedWorkflow: ITemplate = {
       ...workflow,
       [field]: value,
       isActive: false,
     };
+
+    const newWorkflow = (field === 'kickoff' || field === 'tasks')
+      ? cleanTemplateReferences(updatedWorkflow)
+      : updatedWorkflow;
 
     setTemplate(newWorkflow);
     submitDebounced();
