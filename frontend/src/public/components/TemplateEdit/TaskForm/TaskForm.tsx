@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
 
 import { TaskDescriptionEditor } from './TaskDescriptionEditor';
 import { scrollToElement } from '../../../utils/helpers';
@@ -16,7 +17,7 @@ import { TPatchTaskPayload } from '../../../redux/actions';
 
 import { ReturnTo } from './ReturnTo';
 import { DueDate } from './DueDate';
-import { useTemplateEditFieldsets } from '../TemplateEditFieldsetsContext';
+import { getFieldsetsCatalogByApiName, getFieldsetsCatalogIsLoading } from '../../../redux/selectors/fieldsets';
 import { getSingleLineVariables, getSystemVariables, getTaskVariables, getVariables } from './utils/getTaskVariables';
 
 import styles from '../TemplateEdit.css';
@@ -55,7 +56,8 @@ export function TaskForm({
 }: ITaskFormProps & { templateId: number | undefined }) {
   if (!task) return null;
   const { formatMessage } = useIntl();
-  const { fieldsetsByApiName, isLoading: fieldsetsCatalogLoading } = useTemplateEditFieldsets();
+  const fieldsetsByApiName = useSelector(getFieldsetsCatalogByApiName);
+  const fieldsetsCatalogLoading = useSelector(getFieldsetsCatalogIsLoading);
   const wrapperRef = useRef<HTMLDivElement>(null);
   const taskName = task.name || '';
   const listVariables = useMemo(

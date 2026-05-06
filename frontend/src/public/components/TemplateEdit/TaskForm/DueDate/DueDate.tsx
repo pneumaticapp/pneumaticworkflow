@@ -2,12 +2,13 @@ import React, { useState, useMemo } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 
+import { useSelector } from 'react-redux';
 import { DropdownList, Duration } from '../../../UI';
 import { TrashIcon } from '../../../icons';
 
 import { IDueDate, IKickoff, ITemplateTask } from '../../../../types/template';
 import { START_DURATION } from '../../constants';
-import { useTemplateEditFieldsets } from '../../TemplateEditFieldsetsContext';
+import { getFieldsetsCatalogByApiName } from '../../../../redux/selectors/fieldsets';
 import { getRuleTargetOptions, TRuleTargetOption } from './utils/getRuleTargetOptions';
 import { getRulePrepositionOptions, TRulePrepositionOption } from './utils/getRulePrepositionOptions';
 import { useUpdatePreposition } from './hooks/useUpdatePreposition';
@@ -26,7 +27,7 @@ interface IDueInProps {
 type TDueDateKeys = keyof ITemplateTask['rawDueDate'];
 
 export function DueDate({ dueDate, currentTask, tasks, kickoff, onChange }: IDueInProps) {
-  const { fieldsetsByApiName } = useTemplateEditFieldsets();
+  const fieldsetsByApiName = useSelector(getFieldsetsCatalogByApiName);
   const { formatMessage } = useIntl();
   const { duration, durationMonths, ruleTarget, rulePreposition, sourceId } = dueDate;
   const [isDueDate, setIsDueDate] = useState(Boolean(duration || durationMonths));

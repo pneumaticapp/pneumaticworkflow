@@ -60,6 +60,8 @@ import { insertId } from '../../utils/templates/insertId';
 import { ETemplateStatus } from '../../types/redux';
 import { TUserListItem } from '../../types/user';
 import { loadTemplateIntegrationsStats, loadTemplates } from '../actions';
+import { loadFieldsetsCatalog } from '../fieldsets/slice';
+import { getFieldsetsCatalogByApiName } from '../selectors/fieldsets';
 import { copyTemplate } from '../../api/copyTemplate';
 import { deleteTemplate } from '../../api/deleteTemplate';
 import { setGeneralLoaderVisibility } from '../general/actions';
@@ -89,6 +91,7 @@ function* fetchTemplate({ payload: id }: TLoadTemplate) {
     yield put(setTemplateStatus(ETemplateStatus.Saved));
 
     yield put(loadTemplateIntegrationsStats({ templates: [template.id] }));
+    yield put(loadFieldsetsCatalog({ templateId: template.id }));
   } catch (error) {
     logger.info('failed lo load template: ', error);
     NotificationManager.warning({ message: getErrorMessage(error) });
@@ -119,7 +122,8 @@ function* patchTemplateSaga({ payload: { changedFields, onSuccess, onFailed } }:
   };
 
   const needsCleanup = changedFields.hasOwnProperty('tasks') || changedFields.hasOwnProperty('kickoff');
-  const newTemplate = needsCleanup ? cleanTemplateReferences(mergedTemplate) : mergedTemplate;
+  const fieldsetsByApiName: ReturnType<typeof getFieldsetsCatalogByApiName> = yield select(getFieldsetsCatalogByApiName);
+  const newTemplate = needsCleanup ? cleanTemplateReferences(mergedTemplate, fieldsetsByApiName) : mergedTemplate;
 
   yield put(setTemplate(newTemplate));
   yield delay(350);
@@ -201,7 +205,8 @@ function* fetchSaveTemplate(onSuccess?: () => void, onFailed?: () => void) {
   const users: ReturnType<typeof getUsers> = yield select(getUsers);
 
   const editingTemplate: ReturnType<typeof getTemplateData> = yield select(getTemplateData);
-  const templateRequest = mapTemplateRequest(editingTemplate);
+  const fieldsetsByApiName: ReturnType<typeof getFieldsetsCatalogByApiName> = yield select(getFieldsetsCatalogByApiName);
+  const templateRequest = mapTemplateRequest(editingTemplate, fieldsetsByApiName);
 
   const savedTemplate: ITemplate | null = yield createOrUpdateTemplate(templateRequest, isSubscribed, users);
   const lastTemplateState: ReturnType<typeof getTemplateData> = yield select(getTemplateData);

@@ -33,7 +33,7 @@ import { getUserFullName } from '../../utils/users';
 import { getSubscriptionPlan } from '../../redux/selectors/user';
 import { ESubscriptionPlan } from '../../types/account';
 import { TemplateSettings } from './TemplateSettings';
-import { TemplateEditFieldsetsProvider } from './TemplateEditFieldsetsContext';
+import { getFieldsetsCatalogByApiName } from '../../redux/selectors/fieldsets';
 import { TemplateEditVariablesSync } from './TemplateEditVariablesSync';
 
 import styles from './TemplateEdit.css';
@@ -90,6 +90,7 @@ export function TemplateEdit({
   const { formatMessage } = useIntl();
   const { tasks, owners } = template;
   const billingPlan = useSelector(getSubscriptionPlan);
+  const fieldsetsByApiName = useSelector(getFieldsetsCatalogByApiName);
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
   const accessConditions = isSubscribed || isFreePlan;
 
@@ -270,7 +271,7 @@ export function TemplateEdit({
     };
 
     const newWorkflow = (field === 'kickoff' || field === 'tasks')
-      ? cleanTemplateReferences(updatedWorkflow)
+      ? cleanTemplateReferences(updatedWorkflow, fieldsetsByApiName)
       : updatedWorkflow;
 
     setTemplate(newWorkflow);
@@ -461,46 +462,42 @@ export function TemplateEdit({
     );
   };
 
-  return (
-    <TemplateEditFieldsetsProvider>
-      {templateStatus === ETemplateStatus.Loading ? (
-        <div className="loading" />
-      ) : (
-        <>
-          <TemplateEditVariablesSync
-            template={template}
-            prevTemplate={prevTemplate}
-            loadTemplateVariablesSuccess={loadTemplateVariablesSuccess}
-          />
-          <div className={styles['container']}>
-            <AutoSaveStatusContainer onRetry={saveTemplate} />
+  return templateStatus === ETemplateStatus.Loading ? (
+    <div className="loading" />
+  ) : (
+    <>
+      <TemplateEditVariablesSync
+        template={template}
+        prevTemplate={prevTemplate}
+        loadTemplateVariablesSuccess={loadTemplateVariablesSuccess}
+      />
+      <div className={styles['container']}>
+        <AutoSaveStatusContainer onRetry={saveTemplate} />
 
-            <div className={styles['template-wrapper']}>
-              <div className={styles['template-wrapper__info']}>
-                <TemplateSettings />
+        <div className={styles['template-wrapper']}>
+          <div className={styles['template-wrapper__info']}>
+            <TemplateSettings />
+          </div>
+          <div className={styles['template-wrapper__tasks']}>
+            {!accessConditions && <ConditionsBanner />}
+            <div className={styles['tasks']}>
+              <div className={styles['kickoff-wrapper']}>
+                <KickoffReduxContainer setKickoff={handleChangeTemplateField('kickoff')} />
               </div>
-              <div className={styles['template-wrapper__tasks']}>
-                {!accessConditions && <ConditionsBanner />}
-                <div className={styles['tasks']}>
-                  <div className={styles['kickoff-wrapper']}>
-                    <KickoffReduxContainer setKickoff={handleChangeTemplateField('kickoff')} />
-                  </div>
-                  {sortedTasks().map(getTaskListItem)}
-                  <AddEntityButton
-                    entities={[
-                      {
-                        title: EEntityTitle.Task,
-                        onAddEntity: handleAddTask,
-                      },
-                    ]}
-                  />
-                  <TemplateIntegrations />
-                </div>
-              </div>
+              {sortedTasks().map(getTaskListItem)}
+              <AddEntityButton
+                entities={[
+                  {
+                    title: EEntityTitle.Task,
+                    onAddEntity: handleAddTask,
+                  },
+                ]}
+              />
+              <TemplateIntegrations />
             </div>
           </div>
-        </>
-      )}
-    </TemplateEditFieldsetsProvider>
+        </div>
+      </div>
+    </>
   );
 }

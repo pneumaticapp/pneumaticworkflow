@@ -1,9 +1,10 @@
 import React, { useMemo } from 'react';
 import { useIntl } from 'react-intl';
+import { useSelector } from 'react-redux';
 import { ITemplateTask, ITaskFieldset } from '../../../types/template';
 import styles from '../ExtraFields/utils/ExtraFieldsLabels/ExtraFieldsLabels.css';
 import { getTriplePlural } from '../../../utils/helpers';
-import { useTemplateEditFieldsets } from '../TemplateEditFieldsetsContext';
+import { getFieldsetsCatalogByApiName } from '../../../redux/selectors/fieldsets';
 
 interface ITaskRenderExtraFieldsInfoProps {
   task: ITemplateTask;
@@ -23,7 +24,7 @@ function countFieldsetOutputFields(
 
 export const TaskRenderExtraFieldsInfo = ({ task: { fields, fieldsets }, onClick }: ITaskRenderExtraFieldsInfoProps) => {
   const { formatMessage } = useIntl();
-  const { fieldsetsByApiName } = useTemplateEditFieldsets();
+  const fieldsetsByApiName = useSelector(getFieldsetsCatalogByApiName);
 
   const totalCount = useMemo(() => {
     return fields.length + countFieldsetOutputFields(fieldsets, fieldsetsByApiName);

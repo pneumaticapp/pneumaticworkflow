@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { IntlShape } from 'react-intl';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { getEmptyField } from './utils/getEmptyField';
 import { KickoffShareForm } from './KickoffShareForm';
@@ -22,7 +22,7 @@ import { ExtraFieldsLabels } from '../ExtraFields/utils/ExtraFieldsLabels';
 import { getEmptyKickoff } from '../../../utils/template';
 import { useHashLink } from '../../../hooks/useHashLink';
 import { useWorkflowNameVariables } from '../TaskForm/utils/getTaskVariables';
-import { useTemplateEditFieldsets } from '../TemplateEditFieldsetsContext';
+import { getFieldsetsCatalogByApiName } from '../../../redux/selectors/fieldsets';
 import { FieldsetOutputsPreview } from '../FieldsetOutputsPreview/FieldsetOutputsPreview';
 
 import styles from './KickoffRedux.css';
@@ -45,7 +45,7 @@ export function KickoffRedux({
   accountId,
 }: IKickoffReduxProps) {
   const dispatch = useDispatch();
-  const { fieldsetsByApiName } = useTemplateEditFieldsets();
+  const fieldsetsByApiName = useSelector(getFieldsetsCatalogByApiName);
   const [isOpen, setIsOpen] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
   const variables = useWorkflowNameVariables(kickoff, fieldsetsByApiName);

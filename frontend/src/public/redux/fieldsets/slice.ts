@@ -5,6 +5,7 @@ import { IFieldsetsStore, IFieldsetsList } from '../../types/redux';
 import {
   IFieldsetTemplate, ICreateFieldsetParams,
   IUpdateFieldsetParams,
+  IFieldsetListItem,
   EFieldsetsSorting,
 } from '../../types/fieldset';
 import { TDeleteFieldsetPayload } from './types';
@@ -24,6 +25,9 @@ export const initialState: IFieldsetsStore = {
 
   currentFieldset: null,
   isCurrentFieldsetLoading: false,
+
+  catalogAllFieldsets: [],
+  isCatalogLoading: false,
 };
 
 const fieldsetsSlice = createSlice({
@@ -129,6 +133,19 @@ const fieldsetsSlice = createSlice({
       state.fieldsetsList.count -= 1;
       state.isLoading = false;
     },
+
+    loadFieldsetsCatalog: (state, _action: PayloadAction<{ templateId: number }>) => {
+      state.isCatalogLoading = true;
+    },
+
+    loadFieldsetsCatalogSuccess: (state, action: PayloadAction<IFieldsetListItem[]>) => {
+      state.catalogAllFieldsets = action.payload;
+      state.isCatalogLoading = false;
+    },
+
+    loadFieldsetsCatalogFailed: (state) => {
+      state.isCatalogLoading = false;
+    },
   },
 });
 
@@ -154,6 +171,10 @@ export const {
   updateFieldsetAction,
   deleteFieldsetAction,
   removeFieldsetFromList,
+
+  loadFieldsetsCatalog,
+  loadFieldsetsCatalogSuccess,
+  loadFieldsetsCatalogFailed,
 } = fieldsetsSlice.actions;
 
 export default fieldsetsSlice.reducer;

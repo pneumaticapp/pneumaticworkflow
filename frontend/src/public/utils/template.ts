@@ -15,7 +15,7 @@ import {
 } from '../types/template';
 import { getUrlParams } from './getUrlParams';
 import { DEFAULT_TEMPLATE_NAME } from '../components/TemplateEdit/constants';
-import { getFieldsetsByApiNameSnapshot } from '../components/TemplateEdit/TemplateEditFieldsetsContext';
+import { IFieldsetData } from '../types/template';
 
 import { getNormalizeFieldsOrders } from './workflows';
 import { createOwnerApiName, createTaskApiName, createUUID } from './createId';
@@ -136,8 +136,10 @@ export const getNormalizedTask = (
   };
 };
 
-export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
-  const fieldsetsByApiName = getFieldsetsByApiNameSnapshot();
+export const cleanTemplateReferences = (
+  template: ITemplate,
+  fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>,
+): ITemplate => {
   // System variables that the backend recognizes and skips during validation.
   // Must stay in sync with backend/src/processes/enums.py :: SystemVariable
   const TASK_SYSTEM_VARS = new Set(['workflow-starter']);
@@ -255,8 +257,11 @@ export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
   };
 };
 
-export const mapTemplateRequest = (template: ITemplate): ITemplateRequest => {
-  const cleanedTemplate = cleanTemplateReferences(template);
+export const mapTemplateRequest = (
+  template: ITemplate,
+  fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>,
+): ITemplateRequest => {
+  const cleanedTemplate = cleanTemplateReferences(template, fieldsetsByApiName);
   const { tasks } = cleanedTemplate;
 
   const normilizedTasks: ITemplateTaskRequest[] = tasks?.map((task) => {

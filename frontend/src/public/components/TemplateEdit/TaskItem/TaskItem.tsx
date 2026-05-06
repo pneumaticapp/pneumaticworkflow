@@ -6,7 +6,7 @@ import { getKickoff, getTemplateData, getTemplateTasks } from '../../../redux/se
 
 import { ExtraFieldsLabels } from '../ExtraFields/utils/ExtraFieldsLabels';
 import { getVariables } from '../TaskForm/utils/getTaskVariables';
-import { useTemplateEditFieldsets } from '../TemplateEditFieldsetsContext';
+import { getFieldsetsCatalogByApiName } from '../../../redux/selectors/fieldsets';
 import { FieldsetOutputsPreview } from '../FieldsetOutputsPreview/FieldsetOutputsPreview';
 
 import { ITemplateTask } from '../../../types/template';
@@ -32,7 +32,7 @@ export const TaskItem = ({ task, toggleIsOpenTask, setScrollTarget }: ITaskItemP
   const kickoff = useSelector(getKickoff);
   const tasks = useSelector(getTemplateTasks);
   const template = useSelector(getTemplateData);
-  const { fieldsetsByApiName } = useTemplateEditFieldsets();
+  const fieldsetsByApiName = useSelector(getFieldsetsCatalogByApiName);
   const allVariables = getVariables({
     kickoff,
     tasks,

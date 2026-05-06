@@ -11,6 +11,9 @@ import { ESubscriptionPlan } from '../../types/account';
 import { TUserListItem, EUserStatus } from '../../types/user';
 import { getNormalizedTemplate, mapTemplateRequest, getEmptyKickoff, cleanTemplateReferences } from '../template';
 import { EConditionAction, EConditionOperators, EConditionLogicOperations, TConditionRule } from '../../components/TemplateEdit/TaskForm/Conditions/types';
+import { IFieldsetData } from '../../types/template';
+
+const emptyFieldsetsMap: ReadonlyMap<string, IFieldsetData> = new Map();
 
 const createMockUser = (overrides: Partial<TUserListItem> = {}): TUserListItem => ({
   id: 1,
@@ -338,7 +341,7 @@ describe('template utilities', () => {
       ];
       const template = createMockTemplate({ owners });
 
-      const result = mapTemplateRequest(template);
+      const result = mapTemplateRequest(template, emptyFieldsetsMap);
 
       expect(result.owners).toEqual(owners);
     });
@@ -346,7 +349,7 @@ describe('template utilities', () => {
     it('preserves template name', () => {
       const template = createMockTemplate({ name: 'Custom Template Name' });
 
-      const result = mapTemplateRequest(template);
+      const result = mapTemplateRequest(template, emptyFieldsetsMap);
 
       expect(result.name).toBe('Custom Template Name');
     });
@@ -354,7 +357,7 @@ describe('template utilities', () => {
     it('uses default name when template name is empty', () => {
       const template = createMockTemplate({ name: '' });
 
-      const result = mapTemplateRequest(template);
+      const result = mapTemplateRequest(template, emptyFieldsetsMap);
 
       expect(result.name).toBe('New Template');
     });
@@ -362,7 +365,7 @@ describe('template utilities', () => {
     it('preserves publicSuccessUrl', () => {
       const template = createMockTemplate({ publicSuccessUrl: 'https://example.com/success' });
 
-      const result = mapTemplateRequest(template);
+      const result = mapTemplateRequest(template, emptyFieldsetsMap);
 
       expect(result.publicSuccessUrl).toBe('https://example.com/success');
     });
@@ -370,7 +373,7 @@ describe('template utilities', () => {
     it('sets publicSuccessUrl to null when empty', () => {
       const template = createMockTemplate({ publicSuccessUrl: '' });
 
-      const result = mapTemplateRequest(template);
+      const result = mapTemplateRequest(template, emptyFieldsetsMap);
 
       expect(result.publicSuccessUrl).toBeNull();
     });
@@ -399,7 +402,7 @@ describe('template utilities', () => {
         ],
       });
 
-      const cleaned = cleanTemplateReferences(template);
+      const cleaned = cleanTemplateReferences(template, emptyFieldsetsMap);
 
       // wfNameTemplate: {{template-name}} is a WF_NAME system var, preserved; {{invalid-field}} removed
       expect(cleaned.wfNameTemplate).toBe('Name: {{valid-field}} and  and {{template-name}}');
@@ -434,7 +437,7 @@ describe('template utilities', () => {
         },
       });
 
-      const cleaned = cleanTemplateReferences(template);
+      const cleaned = cleanTemplateReferences(template, emptyFieldsetsMap);
       const rules = cleaned.tasks[0].conditions[0].rules;
       expect(rules).toHaveLength(1);
       expect(rules[0].field).toBe('valid-field');
@@ -450,7 +453,7 @@ describe('template utilities', () => {
           },
         ],
       });
-      const cleaned = cleanTemplateReferences(template);
+      const cleaned = cleanTemplateReferences(template, emptyFieldsetsMap);
       expect(cleaned.tasks[0].name).toBe('');
     });
 
@@ -471,7 +474,7 @@ describe('template utilities', () => {
           },
         ],
       });
-      const cleaned = cleanTemplateReferences(template);
+      const cleaned = cleanTemplateReferences(template, emptyFieldsetsMap);
       expect(cleaned.tasks[0].rawPerformers).toHaveLength(2);
       expect(cleaned.tasks[0].rawPerformers.map((p) => p.apiName)).toEqual(['2', '3']);
     });
@@ -499,7 +502,7 @@ describe('template utilities', () => {
           },
         ]
       });
-      const cleaned = cleanTemplateReferences(template);
+      const cleaned = cleanTemplateReferences(template, emptyFieldsetsMap);
       expect(cleaned.tasks[0].rawDueDate?.sourceId).toBe('valid-date-field');
       expect(cleaned.tasks[0].rawDueDate?.ruleTarget).toBe('field');
       expect(cleaned.tasks[1].rawDueDate?.duration).toBeNull();
@@ -530,7 +533,7 @@ describe('template utilities', () => {
         ],
       });
 
-      const cleaned = cleanTemplateReferences(template);
+      const cleaned = cleanTemplateReferences(template, emptyFieldsetsMap);
       const rules = cleaned.tasks[0].conditions[0].rules;
       
       expect(rules).toHaveLength(4);

@@ -34,6 +34,9 @@ import {
   updateFieldsetAction,
   deleteFieldsetAction,
   removeFieldsetFromList,
+  loadFieldsetsCatalog,
+  loadFieldsetsCatalogSuccess,
+  loadFieldsetsCatalogFailed,
 } from './slice';
 
 function getFieldsetsRoute(templateId: number | null): string {
@@ -158,6 +161,32 @@ function* watchDeleteFieldset() {
   yield takeEvery(deleteFieldsetAction.type, deleteFieldsetSaga);
 }
 
+function* loadFieldsetsCatalogSaga({ payload }: ReturnType<typeof loadFieldsetsCatalog>) {
+  const abortController = new AbortController();
+  const { templateId } = payload;
+
+  try {
+    const data: IGetFieldsetsResponse = yield call(getFieldsets, {
+      templateId,
+      limit: 1000,
+      signal: abortController.signal,
+    });
+
+    yield put(loadFieldsetsCatalogSuccess(data.results || []));
+  } catch (error) {
+    if (isRequestCanceled(error)) return;
+    yield put(loadFieldsetsCatalogFailed());
+    NotificationManager.warning({ message: getErrorMessage(error) });
+    logger.error('failed to load fieldsets catalog', error);
+  } finally {
+    abortController.abort();
+  }
+}
+
+function* watchLoadFieldsetsCatalog() {
+  yield takeLatest(loadFieldsetsCatalog.type, loadFieldsetsCatalogSaga);
+}
+
 export function* rootSaga() {
   yield all([
     fork(watchLoadFieldsets),
@@ -165,5 +194,6 @@ export function* rootSaga() {
     fork(watchCreateFieldset),
     fork(watchUpdateFieldset),
     fork(watchDeleteFieldset),
+    fork(watchLoadFieldsetsCatalog),
   ]);
 }

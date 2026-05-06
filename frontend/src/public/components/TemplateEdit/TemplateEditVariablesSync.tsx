@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
 
+import { useSelector } from 'react-redux';
 import { ITemplate } from '../../types/template';
 import { TLoadTemplateVariablesSuccessPayload } from '../../redux/actions';
 import { getVariables } from './TaskForm/utils/getTaskVariables';
 
-import { useTemplateEditFieldsets } from './TemplateEditFieldsetsContext';
+import { getFieldsetsCatalogByApiName } from '../../redux/selectors/fieldsets';
 
 export interface ITemplateEditVariablesSyncProps {
   template: ITemplate;
@@ -17,7 +18,7 @@ export function TemplateEditVariablesSync({
   prevTemplate,
   loadTemplateVariablesSuccess,
 }: ITemplateEditVariablesSyncProps) {
-  const { fieldsetsByApiName } = useTemplateEditFieldsets();
+  const fieldsetsByApiName = useSelector(getFieldsetsCatalogByApiName);
 
   useEffect(() => {
     const variables = getVariables({
