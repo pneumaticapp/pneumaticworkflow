@@ -556,6 +556,7 @@ class Task(
         group: Optional[UserGroup] = None,
         field=None,
         performer_type: PerformerType = PerformerType.USER,
+        source_task_api_name: Optional[str] = None,
     ):
 
         """ Delete a raw_performer
@@ -567,6 +568,7 @@ class Task(
             user=user,
             group=group,
             field=field,
+            source_task_api_name=source_task_api_name,
         )
         if deleted_count:
             self._delete_orphaned_performers()

@@ -2120,3 +2120,85 @@ def test_add_raw_performer__user_without_source_api_name__none():
     # assert
     assert raw_performer.source_task_api_name is None
     assert raw_performer.type == PerformerType.USER
+
+
+def test_delete_raw_performer__manager__deletes_only_target():
+    """
+    Two MANAGER performers on one task — deleting by
+    source_task_api_name removes only the targeted one
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=3,
+    )
+    task_1 = workflow.tasks.get(number=1)
+    task_2 = workflow.tasks.get(number=2)
+    task_3 = workflow.tasks.get(number=3)
+
+    task_3.add_raw_performer(
+        performer_type=PerformerType.MANAGER,
+        source_task_api_name=task_1.api_name,
+    )
+    task_3.add_raw_performer(
+        performer_type=PerformerType.MANAGER,
+        source_task_api_name=task_2.api_name,
+    )
+    assert task_3.raw_performers.filter(
+        type=PerformerType.MANAGER,
+    ).count() == 2
+
+    # act
+    deleted_count = task_3.delete_raw_performer(
+        performer_type=PerformerType.MANAGER,
+        source_task_api_name=task_1.api_name,
+    )
+
+    # assert
+    assert deleted_count == 1
+    remaining = task_3.raw_performers.filter(
+        type=PerformerType.MANAGER,
+    )
+    assert remaining.count() == 1
+    assert remaining.first().source_task_api_name == (
+        task_2.api_name
+    )
+
+
+def test_delete_raw_performer__manager_no_source__deletes_nothing():
+    """
+    MANAGER without source_task_api_name — no rows match,
+    nothing is deleted (safe no-op)
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=2,
+    )
+    task_1 = workflow.tasks.get(number=1)
+    task_2 = workflow.tasks.get(number=2)
+
+    task_2.add_raw_performer(
+        performer_type=PerformerType.MANAGER,
+        source_task_api_name=task_1.api_name,
+    )
+    assert task_2.raw_performers.filter(
+        type=PerformerType.MANAGER,
+    ).count() == 1
+
+    # act
+    deleted_count = task_2.delete_raw_performer(
+        performer_type=PerformerType.MANAGER,
+    )
+
+    # assert
+    assert deleted_count == 0
+    assert task_2.raw_performers.filter(
+        type=PerformerType.MANAGER,
+    ).count() == 1

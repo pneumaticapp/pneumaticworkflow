@@ -288,6 +288,7 @@ class TaskRawPerformersMixin:
         group: Optional[UserGroup] = None,
         field=None,
         performer_type: PerformerType = PerformerType.USER,
+        source_task_api_name: Optional[str] = None,
     ) -> int:
 
         """ Delete a raw_performer
@@ -309,6 +310,7 @@ class TaskRawPerformersMixin:
             user=user,
             group=group,
             field=field,
+            source_task_api_name=source_task_api_name,
         ).delete()[0]
 
     def delete_raw_performers(self):
