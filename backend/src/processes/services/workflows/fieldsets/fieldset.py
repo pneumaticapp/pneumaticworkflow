@@ -24,7 +24,9 @@ class FieldSetService(BaseModelService):
         task = kwargs.get('task')
         kickoff = kwargs.get('kickoff')
         if not (task or kickoff):
-            raise FieldsetServiceException(MSG_FS_0007)
+            raise FieldsetServiceException(
+                message=MSG_FS_0007,
+            )
 
         self.instance = FieldSet.objects.create(
             account=self.account,

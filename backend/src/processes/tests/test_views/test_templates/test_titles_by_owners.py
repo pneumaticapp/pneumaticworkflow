@@ -4,9 +4,13 @@ from src.accounts.enums import BillingPlanType
 from src.processes.enums import OwnerRole, OwnerType, FieldType
 from src.processes.models.templates.fields import FieldTemplate, \
     FieldTemplateSelection
+from src.processes.models.templates.fieldset import (
+    FieldsetTemplateKickoff,
+)
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_fieldset_template,
     create_test_group,
     create_test_template,
     create_test_owner,
@@ -442,3 +446,128 @@ def test_titles_by_owners__kickoff_field_with_dataset_and_selections__ok(
     assert len(field_data['selections']) == 2
     assert field_data['selections'][0] == selection.value
     assert field_data['selections'][1] == dataset_item.value
+
+
+def test_titles_by_owners__kickoff_fieldset__ok(api_client):
+
+    """ GET titles-by-owners returns kickoff fieldset with all fields. """
+
+    # arrange
+    user = create_test_owner()
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+        is_active=True,
+    )
+    kickoff = template.kickoff_instance
+    fieldset = create_test_fieldset_template(
+        account=user.account,
+        template=template,
+        kickoff=kickoff,
+        name='Personal Info',
+        description='Enter your personal information',
+        api_name='fieldset-personal',
+        order=5,
+    )
+    fieldset_link = FieldsetTemplateKickoff.objects.get(
+        fieldset=fieldset,
+        kickoff=kickoff,
+    )
+    fieldset_field = fieldset.fields.first()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/templates/titles-by-owners')
+
+    # assert
+    assert response.status_code == 200
+    fieldsets = response.data[0]['kickoff']['fieldsets']
+    assert len(fieldsets) == 1
+    fieldset_data = fieldsets[0]
+    assert fieldset_data['order'] == fieldset_link.order
+    assert fieldset_data['name'] == fieldset.name
+    assert fieldset_data['description'] == fieldset.description
+    assert fieldset_data['api_name'] == fieldset.api_name
+    assert len(fieldset_data['fields']) == 1
+    field_data = fieldset_data['fields'][0]
+    assert field_data['api_name'] == fieldset_field.api_name
+    assert field_data['name'] == fieldset_field.name
+    assert field_data['type'] == fieldset_field.type
+    assert field_data['order'] == fieldset_field.order
+
+
+def test_titles_by_owners__kickoff_no_fieldsets__empty_list(
+    api_client,
+):
+
+    """ GET titles-by-owners returns empty fieldsets when none exist. """
+
+    # arrange
+    user = create_test_owner()
+    create_test_template(
+        user=user,
+        tasks_count=1,
+        is_active=True,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/templates/titles-by-owners')
+
+    # assert
+    assert response.status_code == 200
+    fieldsets = response.data[0]['kickoff']['fieldsets']
+    assert fieldsets == []
+
+
+def test_titles_by_owners__kickoff_fieldsets_ordered(
+    api_client,
+):
+
+    """ GET titles-by-owners returns fieldsets ordered by order. """
+
+    # arrange
+    user = create_test_owner()
+    template = create_test_template(
+        user=user,
+        tasks_count=1,
+        is_active=True,
+    )
+    kickoff = template.kickoff_instance
+    fieldset_2 = create_test_fieldset_template(
+        account=user.account,
+        template=template,
+        kickoff=kickoff,
+        name='Second Fieldset',
+        api_name='fieldset-second',
+        order=2,
+    )
+    link_2 = FieldsetTemplateKickoff.objects.get(
+        fieldset=fieldset_2,
+        kickoff=kickoff,
+    )
+    fieldset_1 = create_test_fieldset_template(
+        account=user.account,
+        template=template,
+        kickoff=kickoff,
+        name='First Fieldset',
+        api_name='fieldset-first',
+        order=1,
+    )
+    link_1 = FieldsetTemplateKickoff.objects.get(
+        fieldset=fieldset_1,
+        kickoff=kickoff,
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/templates/titles-by-owners')
+
+    # assert
+    assert response.status_code == 200
+    fieldsets = response.data[0]['kickoff']['fieldsets']
+    assert len(fieldsets) == 2
+    assert fieldsets[0]['order'] == link_1.order
+    assert fieldsets[0]['api_name'] == fieldset_1.api_name
+    assert fieldsets[1]['order'] == link_2.order
+    assert fieldsets[1]['api_name'] == fieldset_2.api_name

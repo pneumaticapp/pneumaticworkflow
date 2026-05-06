@@ -2,6 +2,7 @@ from rest_framework.fields import CharField
 from rest_framework.serializers import (
     ModelSerializer,
 )
+from src.processes.serializers.templates.field import FieldTemplateSerializer
 from src.generics.mixins.serializers import CustomValidationErrorMixin
 from src.processes.models.templates.fieldset import (
     FieldsetTemplateTaskTemplate,
@@ -35,3 +36,23 @@ class FieldsetTemplateKickoffSerializer(
         )
 
     api_name = CharField(source='fieldset.api_name')
+
+
+class FieldsetTemplateKickoffListSerializer(ModelSerializer):
+    class Meta:
+        model = FieldsetTemplateKickoff
+        fields = (
+            'order',
+            'name',
+            'description',
+            'fields',
+            'api_name',
+        )
+
+    name = CharField(source='fieldset.name')
+    description = CharField(source='fieldset.description')
+    api_name = CharField(source='fieldset.api_name')
+    fields = FieldTemplateSerializer(
+        source='fieldset.fields',
+        many=True,
+    )

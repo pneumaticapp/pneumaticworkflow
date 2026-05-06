@@ -93,8 +93,9 @@ class FieldsetTemplateTaskTemplate(SoftDeleteModel):
 
     def __str__(self):
         return (
-            f'{self.fieldset_template} - {self.task_template} '
-            f'(order={self.order})'
+            f'Fieldset: {self.fieldset_id} - '
+            f'Task: {self.task_template_id} - '
+            f'Order: {self.order}'
         )
 
 
@@ -124,7 +125,11 @@ class FieldsetTemplateKickoff(SoftDeleteModel):
     )()
 
     def __str__(self):
-        return f'{self.fieldset_template} - kickoff (order={self.order})'
+        return (
+            f'Fieldset: {self.fieldset_id} - '
+            f'Kickoff: {self.kickoff_id} - '
+            f'Order: {self.order}'
+        )
 
 
 class FieldsetTemplateRule(
