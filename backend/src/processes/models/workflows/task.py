@@ -355,6 +355,7 @@ class Task(
             .filter(
                 workflow_id=self.workflow_id,
                 task__api_name=source_api_name,
+                task__status=TaskStatus.COMPLETED,
                 type=WorkflowEventType.TASK_COMPLETE,
             )
             .select_related('user__manager')

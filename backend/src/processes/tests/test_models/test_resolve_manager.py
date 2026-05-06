@@ -743,3 +743,130 @@ def test_resolve_manager__invited_manager__none():
 
     # assert
     assert result is None
+
+
+def test_resolve_manager__source_reverted_after_complete__none():
+    """
+    Source task was completed (TASK_COMPLETE event exists),
+    then reverted back to ACTIVE. The stale event must be
+    ignored — manager should not be resolved.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    subordinate = create_test_user(
+        email='sub@pneumatic.app',
+        account=account,
+        is_account_owner=False,
+    )
+    manager = create_test_user(
+        email='mgr@pneumatic.app',
+        account=account,
+        is_account_owner=False,
+    )
+    subordinate.manager = manager
+    subordinate.save()
+
+    workflow = create_test_workflow(user=owner)
+    source_task = workflow.tasks.get(number=1)
+
+    # Complete the source task and create the event
+    source_task.status = TaskStatus.COMPLETED
+    source_task.date_completed = timezone.now()
+    source_task.save()
+
+    create_test_event(
+        workflow=workflow,
+        user=subordinate,
+        type_event=WorkflowEventType.TASK_COMPLETE,
+        task=source_task,
+    )
+
+    # Revert: source task goes back to ACTIVE
+    source_task.status = TaskStatus.ACTIVE
+    source_task.date_completed = None
+    source_task.save()
+
+    target_task = workflow.tasks.get(number=2)
+    raw_perf = Mock(source_task_api_name=source_task.api_name)
+
+    # act
+    result = target_task._resolve_manager(raw_perf)
+
+    # assert
+    assert result is None
+
+
+def test_resolve_manager__source_recompleted_by_other__returns_new():
+    """
+    Source task completed by user_a, reverted, then re-completed
+    by user_b. Should return user_b's manager (latest completion).
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user_a = create_test_user(
+        email='a@pneumatic.app',
+        account=account,
+        is_account_owner=False,
+    )
+    user_b = create_test_user(
+        email='b@pneumatic.app',
+        account=account,
+        is_account_owner=False,
+    )
+    manager_a = create_test_user(
+        email='mgr_a@pneumatic.app',
+        account=account,
+        is_account_owner=False,
+    )
+    manager_b = create_test_user(
+        email='mgr_b@pneumatic.app',
+        account=account,
+        is_account_owner=False,
+    )
+    user_a.manager = manager_a
+    user_a.save()
+    user_b.manager = manager_b
+    user_b.save()
+
+    workflow = create_test_workflow(user=owner)
+    source_task = workflow.tasks.get(number=1)
+
+    # First completion by user_a
+    source_task.status = TaskStatus.COMPLETED
+    source_task.date_completed = timezone.now()
+    source_task.save()
+    create_test_event(
+        workflow=workflow,
+        user=user_a,
+        type_event=WorkflowEventType.TASK_COMPLETE,
+        task=source_task,
+    )
+
+    # Revert
+    source_task.status = TaskStatus.ACTIVE
+    source_task.date_completed = None
+    source_task.save()
+
+    # Second completion by user_b
+    source_task.status = TaskStatus.COMPLETED
+    source_task.date_completed = timezone.now()
+    source_task.save()
+    create_test_event(
+        workflow=workflow,
+        user=user_b,
+        type_event=WorkflowEventType.TASK_COMPLETE,
+        task=source_task,
+    )
+
+    target_task = workflow.tasks.get(number=2)
+    raw_perf = Mock(source_task_api_name=source_task.api_name)
+
+    # act
+    result = target_task._resolve_manager(raw_perf)
+
+    # assert
+    assert result == manager_b
