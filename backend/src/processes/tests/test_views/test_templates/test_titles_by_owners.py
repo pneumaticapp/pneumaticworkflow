@@ -488,6 +488,8 @@ def test_titles_by_owners__kickoff_fieldset__ok(api_client):
     assert fieldset_data['name'] == fieldset.name
     assert fieldset_data['description'] == fieldset.description
     assert fieldset_data['api_name'] == fieldset.api_name
+    assert fieldset_data['label_position'] == fieldset.label_position
+    assert fieldset_data['layout'] == fieldset.layout
     assert len(fieldset_data['fields']) == 1
     field_data = fieldset_data['fields'][0]
     assert field_data['api_name'] == fieldset_field.api_name
