@@ -34,6 +34,9 @@ from src.processes.serializers.templates.field import (
     FieldTemplateSerializer,
     FieldTemplateShortViewSerializer,
 )
+from src.processes.serializers.templates.fieldset import (
+    FieldsetTemplateShortViewSerializer,
+)
 from src.processes.serializers.templates.fieldset_link import (
     FieldsetTemplateTaskTemplateSerializer,
 )
@@ -627,10 +630,10 @@ class TemplateStepNameSerializer(ModelSerializer):
 
 
 class TemplateTaskOnlyFieldsSerializer(ModelSerializer):
+
     class Meta:
         model = TaskTemplate
         fields = (
-            'id',  # Deprecated
             'name',
             'number',
             'api_name',
@@ -640,7 +643,12 @@ class TemplateTaskOnlyFieldsSerializer(ModelSerializer):
 
     fields = FieldTemplateShortViewSerializer(
         many=True,
-        required=False,
+        default=[],
+        read_only=True,
+    )
+    fieldsets = FieldsetTemplateShortViewSerializer(
+        many=True,
+        default=[],
         read_only=True,
     )
 

@@ -1,3 +1,4 @@
+# ruff: noqa: PLC0415
 from rest_framework.fields import CharField, SerializerMethodField
 from rest_framework.serializers import (
     IntegerField,
@@ -12,9 +13,9 @@ from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
     FieldsetTemplateRule, FieldsetTemplateKickoff,
 )
-from src.processes.serializers.templates.field import FieldTemplateSerializer
-from src.processes.serializers.templates.task import (
-    TemplateStepNameSerializer,
+from src.processes.serializers.templates.field import (
+    FieldTemplateSerializer,
+    FieldTemplateShortViewSerializer,
 )
 
 
@@ -72,11 +73,7 @@ class FieldsetTemplateSerializer(
         required=False,
         default=list,
     )
-    tasks = TemplateStepNameSerializer(
-        many=True,
-        read_only=True,
-        default=list,
-    )
+    tasks = SerializerMethodField()
     kickoff = SerializerMethodField()
 
     def get_kickoff(self, instance: FieldsetTemplate):
@@ -86,3 +83,33 @@ class FieldsetTemplateSerializer(
         if through:
             return through.kickoff_id
         return None
+
+    def get_tasks(self, instance):
+        # Resolve cyclic imports with TemplateTaskOnlyFieldsSerializer
+        from src.processes.serializers.templates.task import (
+            TemplateStepNameSerializer,
+        )
+        return TemplateStepNameSerializer(
+            instance=instance.tasks.all(),
+            many=True,
+            default=list,
+        ).data
+
+
+class FieldsetTemplateShortViewSerializer(ModelSerializer):
+
+    class Meta:
+        model = FieldsetTemplate
+        fields = (
+            'name',
+            'description',
+            'fields',
+            'api_name',
+        )
+
+    api_name = CharField(required=False, max_length=200)
+    fields = FieldTemplateShortViewSerializer(
+        many=True,
+        required=False,
+        read_only=True,
+    )
