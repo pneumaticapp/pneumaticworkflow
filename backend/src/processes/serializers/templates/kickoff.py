@@ -14,7 +14,7 @@ from src.processes.serializers.templates.field import (
     FieldTemplateShortViewSerializer,
 )
 from src.processes.serializers.templates.fieldset import (
-    FieldsetTemplateSerializer,
+    FieldsetTemplateSerializer, FieldsetTemplateShortViewSerializer,
 )
 from src.processes.serializers.templates.fieldset_link import (
     FieldsetTemplateKickoffSerializer,
@@ -126,7 +126,12 @@ class KickoffOnlyFieldsSerializer(ModelSerializer):
 
     fields = FieldTemplateShortViewSerializer(
         many=True,
-        required=False,
+        default=[],
+        read_only=True,
+    )
+    fieldsets = FieldsetTemplateShortViewSerializer(
+        many=True,
+        default=[],
         read_only=True,
     )
 
@@ -135,8 +140,6 @@ class KickoffOnlyFieldsSerializer(ModelSerializer):
         from django.db import models  # noqa : PLC0415
         if isinstance(instance, models.Manager):
             instance = instance.first()
-        if instance is None:
-            return {'fields': [], 'fieldsets': []}
         return super().to_representation(instance)
 
 

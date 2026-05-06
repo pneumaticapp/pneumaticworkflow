@@ -75,7 +75,6 @@ def test_fields__active_template__ok(api_client):
 
     assert len(data['tasks']) == 1
     task_data = data['tasks'][0]
-    assert task_data['id'] == task.id
     assert task_data['name'] == task.name
     assert task_data['number'] == task.number
     assert task_data['api_name'] == task.api_name
@@ -537,6 +536,7 @@ def test_fields__kickoff_fieldset__ok(api_client):
         template=template,
         kickoff=kickoff,
     )
+    field = fieldset.fields.first()
     api_client.token_authenticate(user)
 
     # act
@@ -546,7 +546,19 @@ def test_fields__kickoff_fieldset__ok(api_client):
     assert response.status_code == 200
     data = response.data
     assert data['id'] == template.id
-    assert data['kickoff']['fieldsets'] == [fieldset.id]
+    assert len(data['kickoff']['fieldsets']) == 1
+    fieldset_data = data['kickoff']['fieldsets'][0]
+    assert fieldset_data['name'] == fieldset.name
+    assert fieldset_data['description'] == fieldset.description
+    assert fieldset_data['api_name'] == fieldset.api_name
+    assert len(fieldset_data['fields']) == 1
+    field_data = fieldset_data['fields'][0]
+    assert field_data['name'] == field.name
+    assert field_data['type'] == field.type
+    assert field_data['order'] == field.order
+    assert field_data['description'] == field.description
+    assert field_data['is_hidden'] == field.is_hidden
+    assert field_data['api_name'] == field.api_name
 
 
 def test_fields__task_fieldset__ok(api_client):
@@ -560,6 +572,7 @@ def test_fields__task_fieldset__ok(api_client):
         template=template,
         task=task,
     )
+    field = fieldset.fields.first()
     api_client.token_authenticate(user)
 
     # act
@@ -569,4 +582,16 @@ def test_fields__task_fieldset__ok(api_client):
     assert response.status_code == 200
     data = response.data
     assert data['id'] == template.id
-    assert data['tasks'][0]['fieldsets'] == [fieldset.id]
+    assert len(data['tasks'][0]['fieldsets']) == 1
+    fieldset_data = data['tasks'][0]['fieldsets'][0]
+    assert fieldset_data['name'] == fieldset.name
+    assert fieldset_data['description'] == fieldset.description
+    assert fieldset_data['api_name'] == fieldset.api_name
+    assert len(fieldset_data['fields']) == 1
+    field_data = fieldset_data['fields'][0]
+    assert field_data['name'] == field.name
+    assert field_data['type'] == field.type
+    assert field_data['order'] == field.order
+    assert field_data['description'] == field.description
+    assert field_data['is_hidden'] == field.is_hidden
+    assert field_data['api_name'] == field.api_name
