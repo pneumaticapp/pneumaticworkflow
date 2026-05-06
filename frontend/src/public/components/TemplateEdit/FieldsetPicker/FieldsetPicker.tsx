@@ -3,9 +3,7 @@ import { useEffect, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
-import { getFieldsets } from '../../../api/fieldsets/getFieldsets';
-import { IFieldsetListItem } from '../../../types/fieldset';
-import { getTemplateData } from '../../../redux/selectors/template';
+import { getFieldsetsCatalogItems, getFieldsetsCatalogIsLoading } from '../../../redux/selectors/fieldsets';
 
 import styles from './FieldsetPicker.css';
 
@@ -16,31 +14,10 @@ export interface IFieldsetPickerProps {
 
 export function FieldsetPicker({ selectedApiNames, onChange }: IFieldsetPickerProps) {
   const { formatMessage } = useIntl();
-  const template = useSelector(getTemplateData);
+  const catalogFieldsets = useSelector(getFieldsetsCatalogItems);
+  const isLoading = useSelector(getFieldsetsCatalogIsLoading);
   const [isOpen, setIsOpen] = useState(false);
-  const [fieldsets, setFieldsets] = useState<IFieldsetListItem[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
   const wrapperRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!template?.id) return undefined;
-
-    const abortCtrl = new AbortController();
-
-    setIsLoading(true);
-    getFieldsets({ templateId: template.id, limit: 1000, signal: abortCtrl.signal })
-      .then((response) => {
-        setFieldsets(response.results);
-      })
-      .catch(() => {
-        // silently ignore aborted requests
-      })
-      .finally(() => {
-        setIsLoading(false);
-      });
-
-    return () => abortCtrl.abort();
-  }, [template?.id]);
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -65,7 +42,7 @@ export function FieldsetPicker({ selectedApiNames, onChange }: IFieldsetPickerPr
     onChange(selectedApiNames.filter((selectedName) => selectedName !== apiName));
   };
 
-  const selectedFieldsets = fieldsets.filter((fs) => selectedApiNames.includes(fs.apiName));
+  const selectedFieldsets = catalogFieldsets.filter((fs) => selectedApiNames.includes(fs.apiName));
   const toggleLabel = selectedApiNames.length
     ? `${selectedApiNames.length} selected`
     : formatMessage({ id: 'template.fieldset-picker.placeholder' });
@@ -93,13 +70,13 @@ export function FieldsetPicker({ selectedApiNames, onChange }: IFieldsetPickerPr
               <div className={styles['fieldset-picker__loading']}>Loading...</div>
             )}
 
-            {!isLoading && fieldsets.length === 0 && (
+            {!isLoading && catalogFieldsets.length === 0 && (
               <div className={styles['fieldset-picker__empty']}>
                 {formatMessage({ id: 'template.fieldset-picker.empty' })}
               </div>
             )}
 
-            {!isLoading && fieldsets.map((fs) => (
+            {!isLoading && catalogFieldsets.map((fs) => (
               <button
                 key={fs.id}
                 type="button"

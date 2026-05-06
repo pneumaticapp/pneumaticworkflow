@@ -106,6 +106,9 @@ function* createFieldsetSaga({ payload }: PayloadAction<ICreateFieldsetParams>) 
     const createdFieldset: IFieldsetTemplate = yield createFieldset(payload);
     yield put(loadCurrentFieldsetSuccess(createdFieldset));
     const templateId: number | null = yield select(getFieldsetsTemplateId);
+    if (templateId) {
+      yield put(loadFieldsetsCatalog({ templateId }));
+    }
     history.push(getFieldsetDetailRoute(templateId, createdFieldset.id));
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
@@ -119,6 +122,11 @@ function* updateFieldsetSaga({ payload }: PayloadAction<IUpdateFieldsetParams>) 
   try {
     const updatedFieldset: IFieldsetTemplate = yield call(updateFieldset, { ...payload, signal: abortController.signal });
     yield put(setCurrentFieldset(updatedFieldset));
+
+    const templateId: number | null = yield select(getFieldsetsTemplateId);
+    if (templateId) {
+      yield put(loadFieldsetsCatalog({ templateId }));
+    }
   } catch (error) {
     if (isRequestCanceled(error)) return;
     yield put(loadCurrentFieldsetFailed());
@@ -133,6 +141,11 @@ function* deleteFieldsetSaga({ payload: { id, onSuccess } }: PayloadAction<TDele
   try {
     yield deleteFieldset({ id });
     yield put(removeFieldsetFromList(id));
+
+    const templateId: number | null = yield select(getFieldsetsTemplateId);
+    if (templateId) {
+      yield put(loadFieldsetsCatalog({ templateId }));
+    }
     onSuccess?.();
   } catch (error) {
     yield put(loadFieldsetsFailed());

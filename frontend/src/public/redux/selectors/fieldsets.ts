@@ -27,6 +27,8 @@ export const getFieldsetsCatalogItems = (state: IApplicationState): IFieldsetLis
 
 export const getFieldsetsCatalogIsLoading = (state: IApplicationState): boolean => state.fieldsets.isCatalogLoading;
 
+export const getCatalogLoadedForTemplateId = (state: IApplicationState): number | null => state.fieldsets.catalogLoadedForTemplateId;
+
 let cachedCatalogItems: IFieldsetListItem[] = [];
 let cachedCatalogMap: ReadonlyMap<string, IFieldsetData> = new Map();
 

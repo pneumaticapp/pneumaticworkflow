@@ -61,7 +61,7 @@ import { ETemplateStatus } from '../../types/redux';
 import { TUserListItem } from '../../types/user';
 import { loadTemplateIntegrationsStats, loadTemplates } from '../actions';
 import { loadFieldsetsCatalog } from '../fieldsets/slice';
-import { getFieldsetsCatalogByApiName } from '../selectors/fieldsets';
+import { getFieldsetsCatalogByApiName, getCatalogLoadedForTemplateId } from '../selectors/fieldsets';
 import { copyTemplate } from '../../api/copyTemplate';
 import { deleteTemplate } from '../../api/deleteTemplate';
 import { setGeneralLoaderVisibility } from '../general/actions';
@@ -91,7 +91,11 @@ function* fetchTemplate({ payload: id }: TLoadTemplate) {
     yield put(setTemplateStatus(ETemplateStatus.Saved));
 
     yield put(loadTemplateIntegrationsStats({ templates: [template.id] }));
-    yield put(loadFieldsetsCatalog({ templateId: template.id }));
+
+    const catalogTemplateId: ReturnType<typeof getCatalogLoadedForTemplateId> = yield select(getCatalogLoadedForTemplateId);
+    if (catalogTemplateId !== template.id) {
+      yield put(loadFieldsetsCatalog({ templateId: template.id }));
+    }
   } catch (error) {
     logger.info('failed lo load template: ', error);
     NotificationManager.warning({ message: getErrorMessage(error) });

@@ -414,6 +414,7 @@ export type IFieldsetsStore = {
 
   catalogAllFieldsets: IFieldsetListItem[];
   isCatalogLoading: boolean;
+  catalogLoadedForTemplateId: number | null;
 };
 
 export interface IAction<Type> {

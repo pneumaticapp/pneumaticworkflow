@@ -28,6 +28,7 @@ export const initialState: IFieldsetsStore = {
 
   catalogAllFieldsets: [],
   isCatalogLoading: false,
+  catalogLoadedForTemplateId: null,
 };
 
 const fieldsetsSlice = createSlice({
@@ -134,8 +135,9 @@ const fieldsetsSlice = createSlice({
       state.isLoading = false;
     },
 
-    loadFieldsetsCatalog: (state, _action: PayloadAction<{ templateId: number }>) => {
+    loadFieldsetsCatalog: (state, action: PayloadAction<{ templateId: number }>) => {
       state.isCatalogLoading = true;
+      state.catalogLoadedForTemplateId = action.payload.templateId;
     },
 
     loadFieldsetsCatalogSuccess: (state, action: PayloadAction<IFieldsetListItem[]>) => {
@@ -145,6 +147,7 @@ const fieldsetsSlice = createSlice({
 
     loadFieldsetsCatalogFailed: (state) => {
       state.isCatalogLoading = false;
+      state.catalogLoadedForTemplateId = null;
     },
   },
 });
