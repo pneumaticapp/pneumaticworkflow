@@ -18,6 +18,7 @@ from src.processes.enums import (
     FieldType,
     PerformerType,
     TaskStatus,
+    WorkflowEventType,
 )
 from src.processes.models.mixins import (
     ApiNameMixin,
@@ -156,6 +157,7 @@ class Task(
         field=None,
         api_name: Optional[str] = None,
         performer_type: PerformerType = PerformerType.USER,
+        source_task_api_name: Optional[str] = None,
     ):  # -> RawPerformer
 
         """ Creates and returns a raw performer for a task with given data
@@ -182,6 +184,7 @@ class Task(
             group_id=group_id,
             user_id=user_id,
             field=field,
+            source_task_api_name=source_task_api_name,
         )
         raw_performer.save()
         return raw_performer
@@ -345,20 +348,20 @@ class Task(
         source_api_name = raw_performer.source_task_api_name
         if not source_api_name:
             return None
-        performer: Optional[TaskPerformer] = (
-            TaskPerformer.objects
+        from src.processes.models.workflows.event import WorkflowEvent
+        complete_event = (
+            WorkflowEvent.objects
             .filter(
-                task__workflow_id=self.workflow_id,
+                workflow_id=self.workflow_id,
                 task__api_name=source_api_name,
-                task__status=TaskStatus.COMPLETED,
-                date_completed__isnull=False,
+                type=WorkflowEventType.TASK_COMPLETE,
             )
             .select_related('user__manager')
-            .order_by('-date_completed')
+            .order_by('-created')
             .first()
         )
-        if performer and performer.user:
-            return performer.user.manager
+        if complete_event and complete_event.user:
+            return complete_event.user.manager
         return None
 
     def update_performers(

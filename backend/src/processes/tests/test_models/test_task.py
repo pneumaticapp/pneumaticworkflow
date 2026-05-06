@@ -841,6 +841,7 @@ def test_add_raw_performer__with_user__ok(mocker):
         group_id=None,
         user_id=None,
         field=None,
+        source_task_api_name=None,
     )
     raw_performer_mock.save.assert_called_once_with()
     assert result is raw_performer_mock
@@ -881,6 +882,7 @@ def test_add_raw_performer__with_user_id__ok(mocker):
         group_id=None,
         user_id=user.id,
         field=None,
+        source_task_api_name=None,
     )
     raw_performer_mock.save.assert_called_once_with()
     assert result is raw_performer_mock
@@ -923,6 +925,7 @@ def test_add_raw_performer__with_group_id__ok(mocker):
         group_id=group_id,
         user_id=None,
         field=None,
+        source_task_api_name=None,
     )
     raw_performer_mock.save.assert_called_once_with()
     assert result is raw_performer_mock
@@ -965,6 +968,7 @@ def test_add_raw_performer__with_field__ok(mocker):
         group_id=None,
         user_id=None,
         field=field_mock,
+        source_task_api_name=None,
     )
     raw_performer_mock.save.assert_called_once_with()
     assert result is raw_performer_mock
@@ -1005,6 +1009,7 @@ def test_add_raw_performer__workflow_starter_no_user__ok(mocker):
         group_id=None,
         user_id=None,
         field=None,
+        source_task_api_name=None,
     )
     raw_performer_mock.save.assert_called_once_with()
     assert result is raw_performer_mock
@@ -2064,3 +2069,54 @@ def test_update_performers__return_value__ok():
     assert isinstance(created_group_ids, list)
     assert isinstance(del_user_ids, list)
     assert isinstance(del_group_ids, list)
+
+
+def test_add_raw_performer__manager_with_source_api_name__ok():
+    """
+    MANAGER type with source_task_api_name saves correctly
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=2,
+    )
+    task = workflow.tasks.get(number=2)
+    source_api = workflow.tasks.get(number=1).api_name
+
+    # act
+    raw_performer = task.add_raw_performer(
+        performer_type=PerformerType.MANAGER,
+        source_task_api_name=source_api,
+    )
+
+    # assert
+    assert raw_performer.source_task_api_name == source_api
+    assert raw_performer.type == PerformerType.MANAGER
+
+
+def test_add_raw_performer__user_without_source_api_name__none():
+    """
+    USER type without source_task_api_name — stays None (backward compat)
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+
+    # act
+    raw_performer = task.add_raw_performer(
+        user=user,
+        performer_type=PerformerType.USER,
+    )
+
+    # assert
+    assert raw_performer.source_task_api_name is None
+    assert raw_performer.type == PerformerType.USER

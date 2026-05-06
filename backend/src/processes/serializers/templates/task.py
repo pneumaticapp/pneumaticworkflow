@@ -148,7 +148,12 @@ class TaskTemplateSerializer(
         if PerformerType.MANAGER in performers_types:
             template = self.context['template']
             context['template_tasks'] = {
-                task.api_name: {'name': task.name}
+                task.api_name: {
+                    'name': task.name,
+                    'require_completion_by_all': (
+                        task.require_completion_by_all
+                    ),
+                }
                 for task in template.tasks.all()
             }
         return context
