@@ -116,3 +116,25 @@ export function moveMergedRow(
   copy[to] = tmp;
   return copy;
 }
+
+export function buildRowsWithAddedFieldset(
+  fields: IExtraField[],
+  fieldsets: ITaskFieldset[],
+  fieldsetApiName: string,
+): TMergedTaskOutputRow[] | null {
+  if (fieldsets.some((fieldset) => fieldset.apiName === fieldsetApiName)) {
+    return null;
+  }
+  const newFieldset: ITaskFieldset = { apiName: fieldsetApiName, order: -1 };
+  const nextFieldsets = [...fieldsets, newFieldset];
+  return buildMergedTaskOutputRows(fields, nextFieldsets);
+}
+
+export function buildRowsWithRemovedFieldset(
+  fields: IExtraField[],
+  fieldsets: ITaskFieldset[],
+  fieldsetApiName: string,
+): TMergedTaskOutputRow[] {
+  const nextFieldsets = fieldsets.filter((fieldset) => fieldset.apiName !== fieldsetApiName);
+  return buildMergedTaskOutputRows(fields, nextFieldsets);
+}

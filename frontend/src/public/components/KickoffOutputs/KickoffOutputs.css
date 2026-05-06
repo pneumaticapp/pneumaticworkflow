@@ -86,7 +86,7 @@
   margin-top: 8px;
   margin-bottom: 8px;
   padding-left: 12px;
-  border-left: 3px solid var(--color-primary, mediumslateblue);
+  border-left: 3px solid var(--pneumatic-color-link);
 }
 
 .fieldset-output-group__title {

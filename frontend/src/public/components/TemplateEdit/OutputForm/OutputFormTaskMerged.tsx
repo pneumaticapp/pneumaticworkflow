@@ -3,22 +3,21 @@ import { useCallback, useEffect, useMemo, useRef } from 'react';
 import classNames from 'classnames';
 import { IntlShape } from 'react-intl';
 
-import { EInputNameBackgroundColor } from '../../../types/workflow';
-import { EExtraFieldMode, EExtraFieldType, IExtraField, IFieldsetData, ITaskFieldset, ITemplateTask } from '../../../types/template';
+import { EExtraFieldType, IExtraField, IFieldsetData, ITemplateTask } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { useDatasetOptions } from '../ExtraFields/utils/useDatasetOptions';
 import { getEditedFields } from '../ExtraFields/utils/getEditedFields';
 import { getEmptyField } from '../KickoffRedux/utils/getEmptyField';
 import { ExtraFieldsMap } from '../ExtraFields/utils/ExtraFieldsMap';
 import { ExtraFieldIcon } from '../ExtraFields/utils/ExtraFieldIcon';
-import { ExtraFieldIntl } from '../ExtraFields';
 import { FieldsetIconPicker } from '../TaskOutputFlow/FieldsetIconPicker';
-import { FieldsetFlowRowDropdown } from '../TaskOutputFlow/FieldsetFlowRowDropdown';
-import { ExtraFieldsLabels } from '../ExtraFields/utils/ExtraFieldsLabels';
+import { MergedOutputRows } from '../TaskOutputFlow/MergedOutputRows';
 import { TPatchTaskPayload } from '../../../redux/actions';
 
 import {
   buildMergedTaskOutputRows,
+  buildRowsWithAddedFieldset,
+  buildRowsWithRemovedFieldset,
   moveMergedRow,
   normalizeMergedTaskOutputOrders,
   TMergedTaskOutputRow,
@@ -26,7 +25,6 @@ import {
 
 import styles from './OutputForm.css';
 import stylesTaskForm from '../TaskForm/TaskForm.css';
-import kickoffStyles from '../KickoffRedux/KickoffRedux.css';
 
 export interface IOutputFormTaskMergedOwnProps {
   task: ITemplateTask;
@@ -120,25 +118,18 @@ export function OutputFormTaskMerged({
 
   const handleAddFieldset = useCallback(
     (fieldsetApiName: string) => {
-      const current = task.fieldsets || [];
-      if (current.some((fieldSet) => fieldSet.apiName === fieldsetApiName)) {
-        return;
-      }
-      const newFieldset: ITaskFieldset = { apiName: fieldsetApiName, order: current.length };
-      const nextFieldsets = [...current, newFieldset];
-      const rows = buildMergedTaskOutputRows(task.fields || [], nextFieldsets);
-      saveOutputOrders(rows).catch(() => undefined);
+      const rows = buildRowsWithAddedFieldset(task.fields || [], task.fieldsets || [], fieldsetApiName);
+      if (rows) saveOutputOrders(rows).catch(() => undefined);
     },
-    [saveOutputOrders, task.fieldsets, task.fields, task.uuid],
+    [saveOutputOrders, task.fieldsets, task.fields],
   );
 
   const handleRemoveFieldset = useCallback(
     (fieldsetApiName: string) => {
-      const nextFieldsets = (task.fieldsets || []).filter((fieldSet) => fieldSet.apiName !== fieldsetApiName);
-      const rows = buildMergedTaskOutputRows(task.fields || [], nextFieldsets);
+      const rows = buildRowsWithRemovedFieldset(task.fields || [], task.fieldsets || [], fieldsetApiName);
       saveOutputOrders(rows).catch(() => undefined);
     },
-    [saveOutputOrders, task.fieldsets, task.fields, task.uuid],
+    [saveOutputOrders, task.fieldsets, task.fields],
   );
 
 
@@ -162,65 +153,18 @@ export function OutputFormTaskMerged({
 
       {!isEmpty && (
         <div className={styles['fields']}>
-          {mergedRows.map((row, index) => {
-            const isFirst = index === 0;
-            const isLast = index === mergedRows.length - 1;
-            if (row.kind === 'field') {
-              return (
-                <ExtraFieldIntl
-                  key={row.field.apiName}
-                  id={index}
-                  field={{ ...row.field }}
-                  fieldsCount={mergedRows.length}
-                  labelBackgroundColor={EInputNameBackgroundColor.White}
-                  deleteField={() => handleDeleteField(row.field.apiName)}
-                  moveFieldUp={isFirst ? undefined : () => handleMoveMergedIndex(index, 'up')}
-                  moveFieldDown={isLast ? undefined : () => handleMoveMergedIndex(index, 'down')}
-                  editField={handleEditField(row.field.apiName)}
-                  isDisabled={false}
-                  innerRef={outputRef}
-                  accountId={accountId}
-                  mode={EExtraFieldMode.Kickoff}
-                  datasetOptions={datasetOptions}
-                />
-              );
-            }
-            const fs = fieldsetsByApiName.get(row.apiName);
-            const fieldsetTitle = fs?.name || formatMessage({ id: 'tasks.task-fieldsets' });
-            return (
-              <div
-                key={`fieldset-${row.apiName}`}
-                className={classNames(
-                  kickoffStyles['with-label'],
-                  kickoffStyles['kick-off-input'],
-                )}
-              >
-                <div className={kickoffStyles['kick-off-input__field']}>
-                  <div 
-                    className={classNames(kickoffStyles['kick-off-input__name-readonly'], styles['flow__fieldset-name'])}
-                    title={fieldsetTitle}
-                  >
-                    {formatMessage({ id: 'fieldsets.title' })}: {fieldsetTitle}
-                  </div>
-                  {fs && isArrayWithItems(fs.fields) &&
-                    <div className={styles['flow__fieldset-nested-fields']}>
-                      <ExtraFieldsLabels extraFields={fs.fields} />
-                    </div>
-                  }
-                </div>
-                <div className={kickoffStyles['kick-off-input__dropdown']}>
-                  <FieldsetFlowRowDropdown
-                    headerTitle={fieldsetTitle}
-                    isFirstItem={isFirst}
-                    isLastItem={isLast}
-                    onMoveUp={() => handleMoveMergedIndex(index, 'up')}
-                    onMoveDown={() => handleMoveMergedIndex(index, 'down')}
-                    onRemove={() => handleRemoveFieldset(row.apiName)}
-                  />
-                </div>
-              </div>
-            );
-          })}
+          <MergedOutputRows
+            mergedRows={mergedRows}
+            fieldsetsByApiName={fieldsetsByApiName}
+            onDeleteField={handleDeleteField}
+            onMoveRow={handleMoveMergedIndex}
+            onEditField={handleEditField}
+            onRemoveFieldset={handleRemoveFieldset}
+            datasetOptions={datasetOptions}
+            accountId={accountId}
+            formatMessage={formatMessage}
+            innerRef={outputRef}
+          />
         </div>
       )}
     </>

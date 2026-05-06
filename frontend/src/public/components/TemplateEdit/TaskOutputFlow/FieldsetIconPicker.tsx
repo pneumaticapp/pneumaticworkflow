@@ -8,7 +8,7 @@ import { CustomTooltip } from '../../UI/CustomTooltip';
 import { Dropdown, type TDropdownOption } from '../../UI';
 import { FieldsetIcon } from '../../icons/FieldsetIcon';
 
-import pickerStyles from '../FieldsetPicker/FieldsetPicker.css';
+import pickerStyles from './FieldsetIconPicker.css';
 import kickoffStyles from '../KickoffRedux/KickoffRedux.css';
 import flowStyles from '../OutputForm/OutputForm.css';
 
