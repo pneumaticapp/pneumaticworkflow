@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import Mock
 from django.utils import timezone
 
+from src.accounts.enums import UserStatus
 from src.processes.enums import (
     PerformerType,
     TaskStatus,
@@ -635,6 +636,101 @@ def test_resolve_manager__owner_force_completes__none():
     create_test_event(
         workflow=workflow,
         user=owner,
+        type_event=WorkflowEventType.TASK_COMPLETE,
+        task=source_task,
+    )
+
+    target_task = workflow.tasks.get(number=2)
+    raw_perf = Mock(source_task_api_name=source_task.api_name)
+
+    # act
+    result = target_task._resolve_manager(raw_perf)
+
+    # assert
+    assert result is None
+
+
+def test_resolve_manager__inactive_manager__none():
+    """
+    Manager exists but has been deactivated (status=INACTIVE).
+    Should return None — inactive managers must not be assigned.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    subordinate = create_test_user(
+        email='sub@pneumatic.app',
+        account=account,
+        is_account_owner=False,
+    )
+    manager = create_test_user(
+        email='mgr@pneumatic.app',
+        account=account,
+        is_account_owner=False,
+    )
+    subordinate.manager = manager
+    subordinate.save()
+    manager.status = UserStatus.INACTIVE
+    manager.save(update_fields=['status'])
+
+    workflow = create_test_workflow(user=owner)
+    source_task = workflow.tasks.get(number=1)
+    source_task.status = TaskStatus.COMPLETED
+    source_task.date_completed = timezone.now()
+    source_task.save()
+
+    create_test_event(
+        workflow=workflow,
+        user=subordinate,
+        type_event=WorkflowEventType.TASK_COMPLETE,
+        task=source_task,
+    )
+
+    target_task = workflow.tasks.get(number=2)
+    raw_perf = Mock(source_task_api_name=source_task.api_name)
+
+    # act
+    result = target_task._resolve_manager(raw_perf)
+
+    # assert
+    assert result is None
+
+
+def test_resolve_manager__invited_manager__none():
+    """
+    Manager exists but has status=INVITED (not yet active).
+    Should return None — only active managers are valid.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    subordinate = create_test_user(
+        email='sub@pneumatic.app',
+        account=account,
+        is_account_owner=False,
+    )
+    manager = create_test_user(
+        email='mgr@pneumatic.app',
+        account=account,
+        is_account_owner=False,
+    )
+    subordinate.manager = manager
+    subordinate.save()
+
+    manager.status = UserStatus.INVITED
+    manager.save(update_fields=['status'])
+
+    workflow = create_test_workflow(user=owner)
+    source_task = workflow.tasks.get(number=1)
+    source_task.status = TaskStatus.COMPLETED
+    source_task.date_completed = timezone.now()
+    source_task.save()
+
+    create_test_event(
+        workflow=workflow,
+        user=subordinate,
         type_event=WorkflowEventType.TASK_COMPLETE,
         task=source_task,
     )

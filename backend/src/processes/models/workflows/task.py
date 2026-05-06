@@ -6,6 +6,7 @@ from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
 
+from src.accounts.enums import UserStatus
 from src.accounts.models import (
     AccountBaseMixin,
     Notification,
@@ -361,7 +362,9 @@ class Task(
             .first()
         )
         if complete_event and complete_event.user:
-            return complete_event.user.manager
+            manager = complete_event.user.manager
+            if manager and manager.status == UserStatus.ACTIVE:
+                return manager
         return None
 
     def update_performers(
