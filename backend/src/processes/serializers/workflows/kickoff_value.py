@@ -114,10 +114,14 @@ class KickoffValueSerializer(
                     kickoff_id=instance.id,
                     value=fields_data.get(field_template.api_name),
                 )
-        except (TaskFieldException, FieldsetServiceException) as ex:
+        except TaskFieldException as ex:
             self.raise_validation_error(
                 message=ex.message,
                 api_name=ex.api_name,
+            )
+        except FieldsetServiceException as ex:
+            self.raise_validation_error(
+                message=ex.message,
             )
         return instance
 

@@ -20,7 +20,9 @@ class FieldSetRuleService(BaseModelService):
             if field.value not in self.NULL_VALUES:
                 total += float(field.value)
         if total != float(self.instance.value):
-            raise FieldsetServiceException(MSG_FS_0002(self.instance.value))
+            raise FieldsetServiceException(
+                message=MSG_FS_0002(self.instance.value),
+            )
         return True
 
     def validate(self, **kwargs):
