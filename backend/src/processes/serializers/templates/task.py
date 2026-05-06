@@ -145,6 +145,12 @@ class TaskTemplateSerializer(
             context['account_user_ids'] = set(
                 self.context['account'].get_user_ids(include_invited=True),
             )
+        if PerformerType.MANAGER in performers_types:
+            template = self.context['template']
+            context['template_tasks'] = {
+                task.api_name: {'name': task.name}
+                for task in template.tasks.all()
+            }
         return context
 
     def _get_task_available_fields(

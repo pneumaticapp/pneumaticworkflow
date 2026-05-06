@@ -73,9 +73,11 @@ describe('TaskPerformers', () => {
   });
 
   const renderComponent = (taskOverrides: Partial<ITemplateTask> = {}) => {
+    const task = makeTask(taskOverrides);
     return render(
       React.createElement(TaskPerformers, {
-        task: makeTask(taskOverrides),
+        task,
+        tasks: [task],
         users: [],
         variables: [],
         isTeamInvitesModalOpen: false,

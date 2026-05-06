@@ -260,6 +260,7 @@ def test_get_raw_performer__with_user_id__ok(mocker):
         field=None,
         api_name=api_name,
         type=PerformerType.USER,
+        source_task_api_name=None,
     )
 
 
@@ -299,6 +300,7 @@ def test_get_raw_performer__with_group_id__ok(mocker):
         field=None,
         api_name=api_name,
         type=PerformerType.GROUP,
+        source_task_api_name=None,
     )
 
 
@@ -338,6 +340,7 @@ def test_get_raw_performer__with_field__ok(mocker):
         field=field_mock,
         api_name=api_name,
         type=PerformerType.FIELD,
+        source_task_api_name=None,
     )
 
 
@@ -375,6 +378,7 @@ def test_get_raw_performer__workflow_starter_no_user__ok(mocker):
         field=None,
         api_name=api_name,
         type=PerformerType.WORKFLOW_STARTER,
+        source_task_api_name=None,
     )
 
 
@@ -1729,6 +1733,7 @@ def test_update_raw_performers_from_tmpl__new_performers__bulk_created(
         group_id=None,
         field=None,
         api_name=new_api_name,
+        source_task_api_name=None,
     )
     bulk_create_mock.assert_called_once_with([real_rp])
 

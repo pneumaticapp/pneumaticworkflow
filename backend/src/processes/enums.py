@@ -71,12 +71,14 @@ class PerformerType:
     GROUP = 'group'
     WORKFLOW_STARTER = 'workflow_starter'
     FIELD = 'field'
+    MANAGER = 'manager'
 
     choices = (
         (USER, USER),
         (GROUP, GROUP),
         (WORKFLOW_STARTER, WORKFLOW_STARTER),
         (FIELD, FIELD),
+        (MANAGER, MANAGER),
     )
 
     filter_choices = (

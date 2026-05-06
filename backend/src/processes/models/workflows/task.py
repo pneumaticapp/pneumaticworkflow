@@ -1,6 +1,6 @@
 # ruff: noqa: PLC0415
 from collections import defaultdict
-from typing import List, Optional, Set, Tuple
+from typing import TYPE_CHECKING, List, Optional, Set, Tuple
 
 from django.contrib.auth import get_user_model
 from django.db import models
@@ -30,6 +30,9 @@ from src.processes.querysets import (
     TaskPerformerQuerySet,
     TasksQuerySet,
 )
+
+if TYPE_CHECKING:
+    from src.processes.models.workflows.raw_performer import RawPerformer
 
 UserModel = get_user_model()
 
@@ -122,6 +125,7 @@ class Task(
         group_id: Optional[int] = None,
         user_id: Optional[int] = None,
         field=None,  # Optional[TaskField]
+        source_task_api_name: Optional[str] = None,
     ):  # -> RawPerformer
 
         """ Returns new a raw performer object with given data """
@@ -134,6 +138,7 @@ class Task(
             field=field,
             api_name=api_name,
             type=performer_type,
+            source_task_api_name=source_task_api_name,
         )
         if user:
             result.user = user
@@ -157,7 +162,10 @@ class Task(
             Optionally updates the performers after create raw performers """
 
         if (
-            performer_type != PerformerType.WORKFLOW_STARTER
+            performer_type not in (
+                PerformerType.WORKFLOW_STARTER,
+                PerformerType.MANAGER,
+            )
             and not group_id
             and not user
             and not user_id
@@ -261,6 +269,7 @@ class Task(
                 'user_id': e.user_id,
                 'group_id': e.group_id,
                 'api_name': e.api_name,
+                'source_task_api_name': e.source_task_api_name,
                 'field': {
                     'api_name': e.field.api_name,
                 } if e.type == PerformerType.FIELD else None,
@@ -309,6 +318,11 @@ class Task(
                         group_id=raw_performer_template.get('group_id'),
                         field=field,
                         api_name=raw_performer_template['api_name'],
+                        source_task_api_name=(
+                            raw_performer_template.get(
+                                'source_task_api_name',
+                            )
+                        ),
                     ),
                 )
         if new_raw_performers:
@@ -317,6 +331,35 @@ class Task(
             RawPerformer.objects.filter(
                 api_name__in=deleted_raw_performer_api_names,
             ).delete()
+
+    def _resolve_manager(
+        self,
+        raw_performer: 'RawPerformer',
+    ) -> Optional[UserModel]:
+
+        """ Resolve manager performer: find the user who completed
+            the source step and return their manager.
+            Returns None if source step not completed
+            or completer has no manager. """
+
+        source_api_name = raw_performer.source_task_api_name
+        if not source_api_name:
+            return None
+        performer: Optional[TaskPerformer] = (
+            TaskPerformer.objects
+            .filter(
+                task__workflow_id=self.workflow_id,
+                task__api_name=source_api_name,
+                task__status=TaskStatus.COMPLETED,
+                date_completed__isnull=False,
+            )
+            .select_related('user__manager')
+            .order_by('-date_completed')
+            .first()
+        )
+        if performer and performer.user:
+            return performer.user.manager
+        return None
 
     def update_performers(
         self,
@@ -364,6 +407,12 @@ class Task(
             elif raw_performer_.type == PerformerType.WORKFLOW_STARTER:
                 user = self.get_default_performer()
                 user_ids[user.id].append(raw_performer_)
+            elif raw_performer_.type == PerformerType.MANAGER:
+                manager_user = self._resolve_manager(
+                    raw_performer_,
+                )
+                if manager_user:
+                    user_ids[manager_user.id].append(raw_performer_)
 
         if api_names:
             user_fields = self.workflow.get_fields(

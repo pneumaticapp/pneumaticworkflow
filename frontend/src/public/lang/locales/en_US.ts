@@ -525,6 +525,7 @@ export const enMessages = {
   'tasks.task-dropdown-finish-header': 'End the workflow now',
   'tasks.task-dropdown-finish-description': 'There is no need to continue',
   'tasks.task-workflow-starter': 'Workflow starter',
+  'tasks.task-manager-of-step': 'Manager: {step}',
   'tasks.task-success-complete': 'Task completed successfully',
   'tasks.task-fail-complete': 'Failed to complete task',
   'tasks.error-field_required': 'Please fill in the required fields',
