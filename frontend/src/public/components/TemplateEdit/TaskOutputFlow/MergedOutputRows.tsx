@@ -58,6 +58,7 @@ export function MergedOutputRows({
               innerRef={innerRef}
               accountId={accountId}
               mode={EExtraFieldMode.Kickoff}
+              showDropdown
               datasetOptions={datasetOptions}
             />
           );

@@ -22,9 +22,18 @@ export interface IWorkflowExtraFieldProps {
   datasetName?: string;
 }
 
-export interface IExtraFieldProps extends IWorkflowExtraFieldProps {
+type IExtraFieldPropsBase = Omit<IWorkflowExtraFieldProps, 'showDropdown'> & {
   wrapperClassName?: string;
   fieldsCount?: number;
   id?: number;
-  datasetOptions?: { label: string; value: string }[];
-}
+};
+
+export type IExtraFieldProps = IExtraFieldPropsBase & (
+  | {
+      showDropdown: true;
+      datasetOptions: { label: string; value: string }[];
+    }
+  | {
+      showDropdown: false;
+    }
+);

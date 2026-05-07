@@ -28,7 +28,7 @@ function ExtraField(props: IExtraFieldProps) {
     field,
     field: { apiName, isRequired = false, isHidden = false },
     fieldsCount,
-    showDropdown = true,
+    showDropdown,
     deleteField,
     moveFieldUp,
     moveFieldDown,
@@ -38,13 +38,15 @@ function ExtraField(props: IExtraFieldProps) {
     wrapperClassName,
     labelBackgroundColor,
     innerRef,
-    datasetOptions,
   } = props;
+
+  // eslint-disable-next-line react/destructuring-assignment
+  const datasetOptions = showDropdown ? (props.datasetOptions ?? []) : [];
 
   const isDatasetField = DATASET_FIELD_TYPES.includes(field.type);
 
   const datasetName = useMemo(
-    () => datasetOptions?.find((option) => option.value === String(field.dataset))?.label,
+    () => datasetOptions.find((option) => option.value === String(field.dataset))?.label,
     [datasetOptions, field.dataset],
   );
 

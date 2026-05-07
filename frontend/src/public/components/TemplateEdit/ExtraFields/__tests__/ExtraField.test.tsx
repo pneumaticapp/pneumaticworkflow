@@ -51,6 +51,7 @@ const baseProps = {
   editField: jest.fn(),
   accountId: 1,
   showDropdown: true,
+  datasetOptions: [],
   mode: EExtraFieldMode.Kickoff,
 };
 
@@ -87,6 +88,25 @@ describe('ExtraField', () => {
         expect.objectContaining({ isHidden: false }),
         {},
       );
+    });
+  });
+
+  describe('Dataset options passing', () => {
+    it('does not pass undefined datasetOptions to ExtraFieldDropdown', () => {
+      const propsWithoutDatasets = {
+        field: baseField,
+        editField: jest.fn(),
+        accountId: 1,
+        showDropdown: true,
+        mode: EExtraFieldMode.Kickoff,
+      };
+
+      // @ts-ignore deliberately omitting datasetOptions to test runtime safety
+      renderWithIntl(<ExtraFieldIntl {...propsWithoutDatasets} />);
+
+      const dropdownCall = (ExtraFieldDropdown as jest.Mock).mock.calls[0]?.[0];
+      expect(dropdownCall.datasetOptions).toBeDefined();
+      expect(Array.isArray(dropdownCall.datasetOptions)).toBe(true);
     });
   });
 });

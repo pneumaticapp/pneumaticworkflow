@@ -35,6 +35,7 @@ import { ExtraFieldIntl } from '../../TemplateEdit/ExtraFields';
 import { getEmptyField } from '../../TemplateEdit/KickoffRedux/utils/getEmptyField';
 import { getEditedFields } from '../../TemplateEdit/ExtraFields/utils/getEditedFields';
 import { getNormalizeFieldsOrders, moveWorkflowField } from '../../../utils/workflows';
+import { useDatasetOptions } from '../../TemplateEdit/ExtraFields/utils/useDatasetOptions';
 
 import { normalizeFieldsForUI } from './fieldsetFieldMappers';
 
@@ -62,6 +63,7 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
 
 
   const [localFields, setLocalFields] = useState<IExtraField[]>([]);
+  const datasetOptions = useDatasetOptions(localFields);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
 
   const [localRules, setLocalRules] = useState<IFieldsetTemplateRule[]>([]);
@@ -349,6 +351,8 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
                 editField={handleEditField(field.apiName)}
                 accountId={accountId}
                 mode={EExtraFieldMode.Kickoff}
+                showDropdown
+                datasetOptions={datasetOptions}
               />
             ))}
           </div>

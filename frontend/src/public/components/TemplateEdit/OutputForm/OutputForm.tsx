@@ -118,6 +118,7 @@ function OutputFormSimple({
               moveFieldDown={() => handleMoveField(index, EMoveDirections.Down)}
               editField={handleEditField(field.apiName)}
               mode={EExtraFieldMode.Kickoff}
+              showDropdown
               datasetOptions={datasetOptions}
               isDisabled={isDisabled}
               innerRef={outputRef}
