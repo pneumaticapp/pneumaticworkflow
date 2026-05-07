@@ -25,6 +25,8 @@ export class ExtraFieldsHelper {
           return { [apiName as string]: getEndOfDayTsp(value) };
         } else if (type === 'number') {
           return { [apiName as string]: String(value).replace(',', '.') };
+        } else if (type === 'checkbox') {
+          return { [apiName as string]: this.normalizeValueByType(type, value) };
         } else {
           return { [apiName as string]: value };
         }
@@ -37,10 +39,24 @@ export class ExtraFieldsHelper {
       .reduce(
         (acc, { apiName, value, type }) =>
           Object.assign(acc, {
-            [apiName]: type === 'url' ? (value as string).replace(new RegExp(' ', 'gi'), '%20') : value,
+            [apiName]: this.normalizeValueByType(type, value),
           }),
         {},
       );
+  }
+
+  private normalizeValueByType(type: EExtraFieldType | string, value: TExtraFieldValue | undefined): TExtraFieldValue {
+    if (type === 'url') {
+      return (value as string).replace(new RegExp(' ', 'gi'), '%20');
+    }
+
+    if (type === 'checkbox') {
+      if (Array.isArray(value)) return value;
+      if (value === null || value === undefined || value === '') return [];
+      return [value as string];
+    }
+
+    return value ?? null;
   }
 
   public getFieldsWithValues() {
