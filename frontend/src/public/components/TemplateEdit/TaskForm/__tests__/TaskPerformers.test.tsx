@@ -87,12 +87,28 @@ describe('TaskPerformers', () => {
   const getSkipCheckboxCall = () => {
     const calls = (Checkbox as jest.Mock).mock.calls;
     return calls.find(
-      (c: any[]) => c[0].checkboxId === 'skipForStarter',
+      (c: any[]) => c[0].checkboxId === 'skipForStarter-task-1',
     );
   };
 
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('checkbox identifiers', () => {
+    it('generates unique checkboxId using task.apiName to prevent HTML id collisions', () => {
+      renderComponent({ apiName: 'custom-task-123' });
+
+      const calls = (Checkbox as jest.Mock).mock.calls;
+      const completeByAllCall = calls.find((c: any[]) => c[0].checkboxId?.startsWith('completeByAll-'));
+      const skipForStarterCall = calls.find((c: any[]) => c[0].checkboxId?.startsWith('skipForStarter-'));
+
+      expect(completeByAllCall).toBeDefined();
+      expect(skipForStarterCall).toBeDefined();
+
+      expect(completeByAllCall![0].checkboxId).toBe('completeByAll-custom-task-123');
+      expect(skipForStarterCall![0].checkboxId).toBe('skipForStarter-custom-task-123');
+    });
   });
 
   describe('skipForStarter checkbox', () => {
