@@ -106,6 +106,18 @@ export const mapOutputToCompleteTask = (output: IExtraField[]): IExtraField[] =>
         value: String(item.value).replace(',', '.'),
       };
     }
+    if (item.type === 'checkbox') {
+      let checkboxValue: string[];
+      if (Array.isArray(item.value)) {
+        checkboxValue = item.value;
+      } else if (item.value) {
+        checkboxValue = [item.value as string];
+      } else {
+        checkboxValue = [];
+      }
+
+      return { ...item, value: checkboxValue };
+    }
     return item;
   });
 };
