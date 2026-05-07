@@ -14,7 +14,6 @@ type TTemplateToRunWorkflow = Pick<
 
 import { getDataset } from '../../../api/datasets/getDataset';
 import { getFieldsets } from '../../../api/fieldsets/getFieldsets';
-import { IFieldsetTemplate } from '../../../types/fieldset';
 import { mapFieldsetTemplateToFieldsetData } from '../../../utils/mapFieldsetTemplateToFieldsetData';
 
 function getKickoffDatasetIds(kickoff: IKickoff, fieldsets: IFieldsetData[] = []): number[] {
@@ -49,20 +48,22 @@ export async function loadDatasetsMap(kickoff: IKickoff, fieldsets: IFieldsetDat
 }
 
 export async function loadFieldsetsData(kickoff: IKickoff, templateId: number): Promise<IFieldsetData[]> {
-  let rawFieldsets: (ITaskFieldset | IFieldsetTemplate)[] = kickoff.fieldsets || [];
-  if (rawFieldsets.length === 0) {
+  const TemplateKickoffFieldsets: ITaskFieldset[] = kickoff.fieldsets || [];
+  if (TemplateKickoffFieldsets.length === 0) {
     return [];
   }
 
-  if (!('id' in rawFieldsets[0])) {
-    const selectedApiNames = new Set(rawFieldsets.map((fieldset) => (fieldset as ITaskFieldset).apiName));
+    const selectedApiNames = new Set(TemplateKickoffFieldsets.map((fieldset) => fieldset.apiName));
 
     const response = await getFieldsets({ templateId, limit: 1000 });
 
-    rawFieldsets = response.results.filter((fieldset) => selectedApiNames.has(fieldset.apiName));
-  }
+    const catalogFieldsets = response.results.filter((fieldset) => selectedApiNames.has(fieldset.apiName));
 
-  return rawFieldsets.map(mapFieldsetTemplateToFieldsetData);
+  return catalogFieldsets.map((fieldset) => {
+    const fieldsetData = mapFieldsetTemplateToFieldsetData(fieldset);
+    const TemplateFieldsetOrder = TemplateKickoffFieldsets.find((kickoffFieldset) => kickoffFieldset.apiName === fieldsetData.apiName)?.order;
+    return { ...fieldsetData, order: TemplateFieldsetOrder ?? 0 };
+  });
 }
 
 

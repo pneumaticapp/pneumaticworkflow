@@ -15,6 +15,7 @@ import { EInputNameBackgroundColor } from '../../types/workflow';
 import { IExtraField, EExtraFieldMode, IFieldsetData } from '../../types/template';
 import { getPluralNoun, isArrayWithItems } from '../../utils/helpers';
 import { getEditedFields } from '../TemplateEdit/ExtraFields/utils/getEditedFields';
+import { buildRuntimeMergedOutputParts } from '../TemplateEdit/TaskOutputFlow/mergeTaskOutputFlow';
 
 import { getInitialKickoff } from './utils/getInitialKickoff';
 import { ExtraFieldIntl } from '../TemplateEdit/ExtraFields';
@@ -249,6 +250,7 @@ function WorkflowEditPopupComponent({
   };
 
   const visibleKickoffFields = kickoffState?.fields.filter((field) => !field.isHidden);
+  const mergedOutputParts = buildRuntimeMergedOutputParts(visibleKickoffFields, fieldsetStates);
 
   return (
     <div className={styles['popup']}>
@@ -290,33 +292,37 @@ function WorkflowEditPopupComponent({
                   </span>
                 )}
                 <div className={styles['kickoff__inputs']}>
-                  {visibleKickoffFields.map((field) => (
-                      <ExtraFieldIntl
-                        key={field.apiName}
-                        field={{ ...field }}
-                        editField={handleEditField(field.apiName)}
-                        showDropdown={false}
+                  {mergedOutputParts.map((part) => {
+                    if (part.kind === 'field') {
+                      return (
+                        <ExtraFieldIntl
+                          key={part.field.apiName}
+                          field={{ ...part.field }}
+                          editField={handleEditField(part.field.apiName)}
+                          showDropdown={false}
+                          mode={EExtraFieldMode.ProcessRun}
+                          labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
+                          namePlaceholder={part.field.name}
+                          descriptionPlaceholder={part.field.description}
+                          wrapperClassName={styles['kickoff-extra-field']}
+                          accountId={accountId}
+                        />
+                      );
+                    }
+                    return (
+                      <FieldsetFieldGroup
+                        key={part.data.id}
+                        title={part.data.name}
+                        description={part.data.description}
+                        fields={part.data.fields}
+                        onEditField={handleEditFieldsetField}
                         mode={EExtraFieldMode.ProcessRun}
                         labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
-                        namePlaceholder={field.name}
-                        descriptionPlaceholder={field.description}
-                        wrapperClassName={styles['kickoff-extra-field']}
                         accountId={accountId}
+                        fieldClassName={styles['kickoff-extra-field']}
                       />
-                  ))}
-                  {fieldsetStates.map((fs) => (
-                    <FieldsetFieldGroup
-                      key={fs.id}
-                      title={fs.name}
-                      description={fs.description}
-                      fields={fs.fields}
-                      onEditField={handleEditFieldsetField}
-                      mode={EExtraFieldMode.ProcessRun}
-                      labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
-                      accountId={accountId}
-                      fieldClassName={styles['kickoff-extra-field']}
-                    />
-                  ))}
+                    );
+                  })}
                 </div>
               </div>
             )}
