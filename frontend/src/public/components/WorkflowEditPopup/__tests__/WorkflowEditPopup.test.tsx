@@ -5,6 +5,7 @@ import { enMessages } from '../../../lang/locales/en_US';
 
 import { WorkflowEditPopup } from '../WorkflowEditPopup';
 import { EExtraFieldType } from '../../../types/template';
+import { MergedOutputList } from '../../MergedOutputList';
 
 jest.mock('react-dom', () => {
   const actual = jest.requireActual('react-dom');
@@ -14,8 +15,8 @@ jest.mock('react-dom', () => {
   };
 });
 
-jest.mock('../../TemplateEdit/ExtraFields', () => ({
-  ExtraFieldIntl: jest.fn(() => <div data-testid="extra-field" />),
+jest.mock('../../MergedOutputList', () => ({
+  MergedOutputList: jest.fn(() => <div data-testid="merged-output-list" />),
 }));
 
 jest.mock('../../TemplateEdit/InputWithVariables', () => ({
@@ -81,24 +82,76 @@ describe('WorkflowEditPopup', () => {
     jest.clearAllMocks();
   });
 
-  describe('Filtering fields by isHidden', () => {
-    it('renders only visible fields from a mixed list', () => {
-      const workflow = {
-        ...baseWorkflow,
-        kickoff: {
-          description: '',
-          fields: [
-            makeField({ apiName: 'f1', isHidden: true }),
-            makeField({ apiName: 'f2', isHidden: false }),
-            makeField({ apiName: 'f3' }),
-          ],
-          fieldsets: [],
-        },
-      };
+  it('renders MergedOutputList and passes fields and fieldsets', () => {
+    const loadedFieldsets = [
+      { id: 1, apiName: 'fs-1', name: 'FS', description: '', fields: [], order: 2 },
+    ];
 
-      renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
+    const workflow = {
+      ...baseWorkflow,
+      kickoff: {
+        description: '',
+        fields: [makeField({ apiName: 'f1', order: 1 })],
+        fieldsets: [],
+      },
+      loadedFieldsets,
+    };
 
-      expect(screen.getAllByTestId('extra-field')).toHaveLength(2);
-    });
+    renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
+
+    expect(screen.queryByTestId('merged-output-list')).not.toBeNull();
+
+    expect(MergedOutputList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fields: expect.arrayContaining([expect.objectContaining({ apiName: 'f1' })]),
+        fieldsets: loadedFieldsets,
+      }),
+      expect.anything(),
+    );
+  });
+
+  it('passes empty fieldsets when workflow has no loadedFieldsets', () => {
+    const workflow = {
+      ...baseWorkflow,
+      kickoff: {
+        description: '',
+        fields: [makeField({ apiName: 'f1' })],
+        fieldsets: [],
+      },
+    };
+
+    renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
+
+    expect(screen.queryByTestId('merged-output-list')).not.toBeNull();
+
+    expect(MergedOutputList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fieldsets: [],
+      }),
+      expect.anything(),
+    );
+  });
+
+  it('filters out isHidden fields before passing to MergedOutputList', () => {
+    const workflow = {
+      ...baseWorkflow,
+      kickoff: {
+        description: '',
+        fields: [
+          makeField({ apiName: 'hidden', isHidden: true }),
+          makeField({ apiName: 'visible-1', isHidden: false }),
+          makeField({ apiName: 'visible-2' }),
+        ],
+        fieldsets: [],
+      },
+    };
+
+    renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
+
+    const callArgs = (MergedOutputList as jest.Mock).mock.calls[0][0];
+    expect(callArgs.fields).toHaveLength(2);
+    expect(callArgs.fields.map((f: any) => f.apiName)).toEqual(
+      expect.arrayContaining(['visible-1', 'visible-2']),
+    );
   });
 });

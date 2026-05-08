@@ -5,9 +5,15 @@ import { TaskCard, ETaskCardViewMode } from '../TaskCard';
 import { EExtraFieldType, IExtraField } from '../../../types/template';
 import { ETaskStatus } from '../../../redux/actions';
 import { EWorkflowStatus, EWorkflowsLogSorting } from '../../../types/workflow';
+import { MergedOutputList } from '../../MergedOutputList';
 
-jest.mock('../../TemplateEdit/ExtraFields', () => ({
-  ExtraFieldIntl: jest.fn(() => <div data-testid="extra-field" />),
+jest.mock('react-redux', () => ({
+  ...jest.requireActual('react-redux'),
+  useSelector: jest.fn(() => []),
+}));
+
+jest.mock('../../MergedOutputList', () => ({
+  MergedOutputList: jest.fn(() => <div data-testid="merged-output-list" />),
 }));
 
 jest.mock('../utils/storageOutputs', () => ({
@@ -253,22 +259,71 @@ describe('TaskCard', () => {
     jest.clearAllMocks();
   });
 
-  describe('Filtering output fields by isHidden', () => {
-    it('renders only visible output fields from a mixed list', async () => {
-      const task = {
-        ...baseTask,
-        output: [
-          makeField({ apiName: 'a', isHidden: true }),
-          makeField({ apiName: 'b', isHidden: false }),
-          makeField({ apiName: 'c' }),
-        ],
-      };
+  it('renders MergedOutputList and passes fields and fieldsets', async () => {
+    const fieldsets = [
+      { id: 1, apiName: 'fs-1', name: 'FS', description: '', fields: [], order: 2 },
+    ];
+    const task = {
+      ...baseTask,
+      output: [makeField({ apiName: 'a', order: 1 })],
+      fieldsets,
+    };
 
-      render(<TaskCard {...baseProps} task={task} />);
+    render(<TaskCard {...baseProps} task={task} />);
 
-      await waitFor(() => {
-        expect(screen.getAllByTestId('extra-field')).toHaveLength(2);
-      });
+    await waitFor(() => {
+      expect(screen.queryByTestId('merged-output-list')).not.toBeNull();
     });
+
+    expect(MergedOutputList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fields: expect.arrayContaining([expect.objectContaining({ apiName: 'a' })]),
+        fieldsets,
+      }),
+      expect.anything(),
+    );
+  });
+
+  it('passes empty fieldsets when task has no fieldsets', async () => {
+    const task = {
+      ...baseTask,
+      output: [makeField({ apiName: 'a', order: 0 })],
+    };
+
+    render(<TaskCard {...baseProps} task={task} />);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('merged-output-list')).not.toBeNull();
+    });
+
+    expect(MergedOutputList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fieldsets: [],
+      }),
+      expect.anything(),
+    );
+  });
+
+  it('filters out isHidden fields before passing to MergedOutputList', async () => {
+    const task = {
+      ...baseTask,
+      output: [
+        makeField({ apiName: 'hidden', isHidden: true }),
+        makeField({ apiName: 'visible-1', isHidden: false }),
+        makeField({ apiName: 'visible-2' }),
+      ],
+    };
+
+    render(<TaskCard {...baseProps} task={task} />);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('merged-output-list')).not.toBeNull();
+    });
+
+    const callArgs = (MergedOutputList as jest.Mock).mock.calls[0][0];
+    expect(callArgs.fields).toHaveLength(2);
+    expect(callArgs.fields.map((f: any) => f.apiName)).toEqual(
+      expect.arrayContaining(['visible-1', 'visible-2']),
+    );
   });
 });
