@@ -111,7 +111,7 @@ export const mapOutputToCompleteTask = (output: IExtraField[]): IExtraField[] =>
       if (Array.isArray(item.value)) {
         checkboxValue = item.value;
       } else if (item.value) {
-        checkboxValue = [item.value as string];
+        checkboxValue = (item.value as string).split(', ');
       } else {
         checkboxValue = [];
       }
