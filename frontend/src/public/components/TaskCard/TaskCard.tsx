@@ -7,7 +7,7 @@ import { debounce } from 'throttle-debounce';
 import { useSelector } from 'react-redux';
 
 import { autoFocusFirstField } from '../../utils/autoFocusFirstField';
-import { EExtraFieldMode, ETaskPerformerType, ETemplateOwnerType, IExtraField, IFieldsetData } from '../../types/template';
+import { ETaskPerformerType, ETemplateOwnerType, IExtraField, IFieldsetData } from '../../types/template';
 import { sanitizeText } from '../../utils/strings';
 import { ITask } from '../../types/tasks';
 import {
@@ -29,9 +29,7 @@ import { getTaskDetailRoute, getWorkflowDetailedRoute, isTaskDetailRoute } from 
 import { Header } from '../UI/Typeography/Header';
 import { RichText } from '../RichText';
 import { getUserFullName } from '../../utils/users';
-import { ExtraFieldIntl } from '../TemplateEdit/ExtraFields';
-import { FieldsetFieldGroup } from '../FieldsetFieldGroup';
-import { buildRuntimeMergedOutputParts } from '../TemplateEdit/TaskOutputFlow/mergeTaskOutputFlow';
+import { MergedOutputList } from '../MergedOutputList';
 import { isArrayWithItems, isEmptyArray } from '../../utils/helpers';
 import { useCheckDevice } from '../../hooks/useCheckDevice';
 import { history } from '../../utils/history';
@@ -418,41 +416,21 @@ export function TaskCard({
       return null;
     }
 
-    const mergedOutputParts = buildRuntimeMergedOutputParts(visibleOutputs || [], fieldsetOutputValues);
 
     return (
       <div className={styles['task-output']}>
         <p className={styles['task-output__title']}>
           <IntlMessages id="tasks.task-outputs-fill-help" />
         </p>
-        {mergedOutputParts.map((part) =>
-          part.kind === 'field' ? (
-            <ExtraFieldIntl
-              key={part.field.apiName}
-              field={part.field}
-              editField={handleEditField(part.field.apiName)}
-              showDropdown={false}
-              mode={EExtraFieldMode.ProcessRun}
-              labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
-              namePlaceholder={part.field.name}
-              descriptionPlaceholder={part.field.description}
-              wrapperClassName={styles['task-output__field']}
-              accountId={accountId}
-            />
-          ) : (
-            <FieldsetFieldGroup
-              key={part.data.id}
-              title={part.data.name}
-              description={part.data.description}
-              fields={part.data.fields}
-              onEditField={handleEditFieldsetField}
-              mode={EExtraFieldMode.ProcessRun}
-              labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
-              accountId={accountId}
-              fieldClassName={styles['task-output__field']}
-            />
-          ),
-        )}
+        <MergedOutputList
+          fields={visibleOutputs || []}
+          fieldsets={fieldsetOutputValues}
+          onEditField={handleEditField}
+          onEditFieldsetField={handleEditFieldsetField}
+          labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
+          fieldClassName={styles['task-output__field']}
+          accountId={accountId}
+        />
       </div>
     );
   };

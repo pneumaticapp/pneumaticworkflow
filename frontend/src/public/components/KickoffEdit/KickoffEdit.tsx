@@ -1,15 +1,14 @@
 import React, { useEffect } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
-import { IExtraField, EExtraFieldMode, IKickoff, IFieldsetData } from '../../types/template';
+import { IExtraField, IKickoff, IFieldsetData } from '../../types/template';
 import { EInputNameBackgroundColor } from '../../types/workflow';
 import { isArrayWithItems } from '../../utils/helpers';
 import { IntlMessages } from '../IntlMessages';
-import { ExtraFieldIntl } from '../TemplateEdit/ExtraFields';
-import { FieldsetFieldGroup } from '../FieldsetFieldGroup';
 import { checkExtraFieldsAreValid } from '../WorkflowEditPopup/utils/areKickoffFieldsValid';
 import { Loader } from '../UI/Loader';
 import { autoFocusFirstField } from '../../utils/autoFocusFirstField';
+import { MergedOutputList } from '../MergedOutputList';
 
 import { Button } from '../UI/Buttons/Button';
 
@@ -71,6 +70,7 @@ export function EditKickoff({
     );
   };
 
+
   const renderKickoffFields = () => {
     return (
       <>
@@ -79,33 +79,15 @@ export function EditKickoff({
         </p>
         {kickoff.description && <p className={styles['kickoff__description']}>{kickoff.description}</p>}
         <div className={styles['kickoff__inputs']}>
-          {kickoff.fields.map((field) => (
-            <ExtraFieldIntl
-              key={field.apiName}
-              field={{ ...field }}
-              editField={onEditField(field.apiName)}
-              showDropdown={false}
-              mode={EExtraFieldMode.ProcessRun}
-              labelBackgroundColor={EInputNameBackgroundColor.White}
-              namePlaceholder={field.name}
-              descriptionPlaceholder={field.description}
-              wrapperClassName={styles['kickoff__field']}
-              accountId={accountId}
-            />
-          ))}
-          {fieldsets.map((fs) => (
-            <FieldsetFieldGroup
-              key={fs.id}
-              title={fs.name}
-              description={fs.description}
-              fields={fs.fields}
-              onEditField={onEditFieldsetField || onEditField}
-              mode={EExtraFieldMode.ProcessRun}
-              labelBackgroundColor={EInputNameBackgroundColor.White}
-              accountId={accountId}
-              fieldClassName={styles['kickoff__field']}
-            />
-          ))}
+          <MergedOutputList
+            fields={kickoff.fields}
+            fieldsets={fieldsets}
+            onEditField={onEditField}
+            onEditFieldsetField={onEditFieldsetField || onEditField}
+            labelBackgroundColor={EInputNameBackgroundColor.White}
+            fieldClassName={styles['kickoff__field']}
+            accountId={accountId}
+          />
         </div>
 
         {renderButtons()}
