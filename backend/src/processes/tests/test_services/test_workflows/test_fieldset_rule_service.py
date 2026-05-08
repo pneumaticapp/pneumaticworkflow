@@ -130,6 +130,158 @@ def test__validate_sum_equal__within_threshold__ok():
     assert result is True
 
 
+def test__validate_sum_equal__one_not_required_field_blank__not_count():
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    workflow = create_test_workflow(user=user, template=template)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        name='Fieldset',
+        order=1,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='100',
+    )
+    rule = fieldset.rules.first()
+    field_1 = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+        name='Field 1',
+        type=FieldType.NUMBER,
+        value='',
+        order=1,
+        is_required=False,
+    )
+    field_1.rules.add(rule)
+    field_2 = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+        name='Field 2',
+        type=FieldType.NUMBER,
+        value='100',
+        order=2,
+        is_required=True,
+    )
+    field_2.rules.add(rule)
+    service = FieldSetRuleService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=rule,
+    )
+
+    # act
+    result = service._validate_sum_equal(
+        fieldset=fieldset,
+        value='100',
+    )
+
+    # assert
+    assert result is True
+
+
+def test__validate_sum_equal__all_not_required_fields_blank__not_count():
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    workflow = create_test_workflow(user=user, template=template)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        name='Fieldset',
+        order=1,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='100',
+    )
+    rule = fieldset.rules.first()
+    field_1 = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+        name='Field 1',
+        type=FieldType.NUMBER,
+        value='',
+        order=1,
+        is_required=False,
+    )
+    field_1.rules.add(rule)
+    field_2 = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+        name='Field 2',
+        type=FieldType.NUMBER,
+        value='',
+        order=2,
+        is_required=False,
+    )
+    field_2.rules.add(rule)
+    service = FieldSetRuleService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=rule,
+    )
+
+    # act
+    result = service._validate_sum_equal(
+        fieldset=fieldset,
+        value='100',
+    )
+
+    # assert
+    assert result is True
+
+
+def test__validate_sum_equal__required_field_blank__raise_exception():
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    workflow = create_test_workflow(user=user, template=template)
+    fieldset = create_test_fieldset(
+        workflow=workflow,
+        name='Fieldset',
+        order=1,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='100',
+    )
+    rule = fieldset.rules.first()
+    field_1 = TaskField.objects.create(
+        account=account,
+        workflow=workflow,
+        fieldset=fieldset,
+        name='Field 1',
+        type=FieldType.NUMBER,
+        value='',
+        order=1,
+        is_required=True,
+    )
+    field_1.rules.add(rule)
+    service = FieldSetRuleService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=rule,
+    )
+
+    # act
+    with pytest.raises(FieldsetServiceException) as ex:
+        service._validate_sum_equal(
+            fieldset=fieldset,
+            value='100',
+        )
+
+    # assert
+    assert ex.value.message == fs_messages.MSG_FS_0002(100)
+
+
 def test__validate_sum_equal__negative_value__ok():
 
     """

@@ -16,10 +16,15 @@ class FieldSetRuleService(BaseModelService):
     def _validate_sum_equal(self, **kwargs):
 
         total = 0
+        values_exists = False
         for field in self.instance.fields.all():
-            if field.value not in self.NULL_VALUES:
+            if field.value in self.NULL_VALUES:
+                if field.is_required:
+                    values_exists = True
+            else:
                 total += float(field.value)
-        if total != float(self.instance.value):
+                values_exists = True
+        if values_exists and total != float(self.instance.value):
             raise FieldsetServiceException(
                 message=MSG_FS_0002(self.instance.value),
             )
