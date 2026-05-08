@@ -35,9 +35,9 @@ export class ExtraFieldsHelper {
     return this.fields
       .filter(({ apiName }) => apiName)
       .reduce(
-        (acc, { apiName, value }) =>
+        (acc, { apiName, value, type }) =>
           Object.assign(acc, {
-            [apiName]: value,
+            [apiName]: type === 'url' ? (value as string).replace(new RegExp(' ', 'gi'), '%20') : value,
           }),
         {},
       );
