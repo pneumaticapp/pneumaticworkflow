@@ -31,10 +31,16 @@ describe('mapOutputToCompleteTask', () => {
   });
 
   describe('checkbox normalization', () => {
-    it('wraps string value in array (bug scenario)', () => {
+    it('splits a single-option string into array', () => {
       const output = [makeField({ type: EExtraFieldType.Checkbox, value: 'New option' })];
       const [first] = mapOutputToCompleteTask(output);
       expect(first.value).toEqual(['New option']);
+    });
+
+    it('splits a multi-option comma-separated string into array', () => {
+      const output = [makeField({ type: EExtraFieldType.Checkbox, value: 'opt1, opt2, opt3' })];
+      const [first] = mapOutputToCompleteTask(output);
+      expect(first.value).toEqual(['opt1', 'opt2', 'opt3']);
     });
 
     it('keeps array value as-is', () => {
@@ -76,13 +82,13 @@ describe('mapOutputToCompleteTask', () => {
 
   it('handles mixed field types in one output array', () => {
     const output = [
-      makeField({ apiName: 'cb', type: EExtraFieldType.Checkbox, value: 'opt' }),
+      makeField({ apiName: 'cb', type: EExtraFieldType.Checkbox, value: 'opt1, opt2' }),
       makeField({ apiName: 'num', type: EExtraFieldType.Number, value: '1,5' }),
       makeField({ apiName: 'txt', type: EExtraFieldType.Text, value: 'hi' }),
     ];
     const result = mapOutputToCompleteTask(output);
     expect(result).toEqual([
-      expect.objectContaining({ apiName: 'cb', value: ['opt'] }),
+      expect.objectContaining({ apiName: 'cb', value: ['opt1', 'opt2'] }),
       expect.objectContaining({ apiName: 'num', value: '1.5' }),
       expect.objectContaining({ apiName: 'txt', value: 'hi' }),
     ]);
