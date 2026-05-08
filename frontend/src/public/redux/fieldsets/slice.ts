@@ -39,8 +39,11 @@ const fieldsetsSlice = createSlice({
       state.templateId = action.payload;
     },
 
-    loadFieldsets: (state, _action: PayloadAction<{ offset: number; templateId: number }>) => {
+    loadFieldsets: (state, action: PayloadAction<{ offset: number; templateId: number }>) => {
       state.isLoading = true;
+      if (action.payload.offset === 0) {
+        state.fieldsetsList = { count: 0, offset: 0, items: [] };
+      }
     },
 
     loadFieldsetsSuccess: (state, action: PayloadAction<IFieldsetsList>) => {
