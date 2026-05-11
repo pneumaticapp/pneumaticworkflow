@@ -50,7 +50,7 @@ import { EOptionTypes, TUsersDropdownOption, UsersDropdown } from '../UI/form/Us
 import { TUserListItem } from '../../types/user';
 import { trackInviteTeamInPage } from '../../utils/analytics';
 import { Tooltip } from '../UI';
-import { addOrUpdateStorageOutput, getOutputFromStorage } from './utils/storageOutputs';
+import { outputStorage, fieldsetsStorage } from './utils/storageOutputs';
 import { TaskCarkSkeleton } from './TaskCarkSkeleton';
 import { GuestController } from './GuestsController';
 import { createChecklistExtension, createProgressbarExtension } from './checklist';
@@ -131,7 +131,8 @@ export function TaskCard({
   const { isMobile } = useCheckDevice();
 
   const groups = useSelector(getRegularGroupsList);
-  const saveOutputsToStorageDebounced = debounce(300, addOrUpdateStorageOutput);
+  const saveOutputsToStorageDebounced = debounce(300, outputStorage.save);
+  const saveFieldsetsToStorageDebounced = debounce(300, fieldsetsStorage.save);
 
   const guestsControllerRef = useRef<React.ElementRef<typeof GuestController> | null>(null);
   const wrapperRef = useRef(null);
@@ -157,16 +158,18 @@ export function TaskCard({
   }, [task.performers.length]);
 
   useEffect(() => {
-    const { output, id } = task;
-    const storageOutput = getOutputFromStorage(id);
+    const { output, fieldsets, id } = task;
+    const storageOutput = outputStorage.get(id);
     const outputFieldsWithValues = new ExtraFieldsHelper(output, storageOutput).getFieldsWithValues();
-
     setOutputValues(outputFieldsWithValues);
-  }, [task.id]);
 
-  useEffect(() => {
-    setFieldsetOutputValues(task.fieldsets || []);
-  }, [task.id, task.fieldsets]);
+    const storageFieldsets = fieldsetsStorage.get(id);
+    const storageFieldsetsMap = new Map(storageFieldsets?.map((fieldset) => [fieldset.apiName, fieldset]) || []);
+    const mergedFieldsets = (fieldsets || []).map((fieldset) => {
+      return storageFieldsetsMap.get(fieldset.apiName) || fieldset;
+    });
+    setFieldsetOutputValues(mergedFieldsets);
+  }, [task.id]);
 
   const handleOpenWorkflowPopup = (workflowId: number | null) => (e: MouseEvent) => {
     e.preventDefault();
@@ -401,12 +404,16 @@ export function TaskCard({
   };
 
   const handleEditFieldsetField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
-    setFieldsetOutputValues((prevFieldsets) =>
-      prevFieldsets.map((fs) => ({
+    setFieldsetOutputValues((prevFieldsets) => {
+      const newFieldsets = prevFieldsets.map((fs) => ({
         ...fs,
         fields: getEditedFields(fs.fields, apiName, changedProps),
-      })),
-    );
+      }));
+
+      saveFieldsetsToStorageDebounced(task.id, newFieldsets);
+
+      return newFieldsets;
+    });
   };
 
   const renderOutputFields = () => {

@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 
 import { TaskCard, ETaskCardViewMode } from '../TaskCard';
 import { EExtraFieldType, IExtraField } from '../../../types/template';
@@ -17,8 +17,16 @@ jest.mock('../../MergedOutputList', () => ({
 }));
 
 jest.mock('../utils/storageOutputs', () => ({
-  getOutputFromStorage: jest.fn(() => undefined),
-  addOrUpdateStorageOutput: jest.fn(),
+  outputStorage: {
+    get: jest.fn(() => undefined),
+    save: jest.fn(),
+    remove: jest.fn(),
+  },
+  fieldsetsStorage: {
+    get: jest.fn(() => undefined),
+    save: jest.fn(),
+    remove: jest.fn(),
+  },
 }));
 
 jest.mock('../../../utils/autoFocusFirstField', () => ({
@@ -325,5 +333,29 @@ describe('TaskCard', () => {
     expect(callArgs.fields.map((f: any) => f.apiName)).toEqual(
       expect.arrayContaining(['visible-1', 'visible-2']),
     );
+  });
+
+  it('saves fieldsets to localStorage when a fieldset field is edited', async () => {
+    jest.useFakeTimers();
+    const { fieldsetsStorage } = require('../utils/storageOutputs');
+
+    const fieldsets = [
+      { id: 1, apiName: 'fs-1', name: 'FS', description: '', fields: [makeField({ apiName: 'f-1' })], order: 0 },
+    ];
+    const task = { ...baseTask, output: [], fieldsets };
+    render(<TaskCard {...baseProps} task={task} />);
+
+    await waitFor(() => {
+      expect(screen.queryByTestId('merged-output-list')).not.toBeNull();
+    });
+
+    const { onEditFieldsetField } = (MergedOutputList as jest.Mock).mock.calls[0][0];
+    act(() => {
+      onEditFieldsetField('f-1')({ value: 'new value' });
+      jest.advanceTimersByTime(300);
+    });
+    expect(fieldsetsStorage.save).toHaveBeenCalled();
+
+    jest.useRealTimers();
   });
 });

@@ -1,69 +1,67 @@
 /* eslint-disable */
 /* prettier-ignore */
-import produce from 'immer';
+import { IExtraField, IFieldsetData } from '../../../types/template';
 
-import { IExtraField } from '../../../types/template';
-
-const OUTPUT_LOCALSTORAGE_KEY = 'tasks_outputs';
-
-type TLocalStorageOutput = {
+type TStorageEntry<T> = {
   taskId: number;
-  output: IExtraField[];
+  data: T;
 };
 
-export function addOrUpdateStorageOutput(taskId: number, output: IExtraField[]) {
-  const currentOutput: TLocalStorageOutput = { taskId, output };
-  const savedOutputs = getOutputsFromStorage();
+function createTaskStorage<T>(storageKey: string) {
+  function getAll(): TStorageEntry<T>[] {
+    try {
+      const savedDataString = localStorage.getItem(storageKey);
 
-  const newOutputs = produce(savedOutputs, draftOutputs => {
-    const savedOutputIndex = draftOutputs.findIndex(output => output.taskId === taskId);
+      if (!savedDataString) {
+        throw new Error('no saved data');
+      }
 
-    if (savedOutputIndex === -1) {
-      draftOutputs.push(currentOutput);
+      const savedData = JSON.parse(savedDataString) as TStorageEntry<T>[];
 
-      return;
+      if (!Array.isArray(savedData)) {
+        throw new Error('saved data is invalid');
+      }
+
+      return savedData;
+    } catch (error) {
+      return [];
     }
-
-    draftOutputs[savedOutputIndex] = currentOutput;
-  });
-
-  saveOutputsToStorage(newOutputs);
-}
-
-export function getOutputFromStorage(taskId: number) {
-  const savedOutputs = getOutputsFromStorage();
-
-  return savedOutputs.find(output => output.taskId === taskId)?.output;
-}
-
-export function removeOutputFromLocalStorage(taskId: number) {
-  const savedOutputs = getOutputsFromStorage();
-  const newOutputs = savedOutputs.filter(output => output.taskId !== taskId);
-  saveOutputsToStorage(newOutputs);
-}
-
-function getOutputsFromStorage(): TLocalStorageOutput[] {
-  try {
-    const savedOutputsString = localStorage.getItem(OUTPUT_LOCALSTORAGE_KEY);
-
-    if (!savedOutputsString) {
-      throw new Error('no saved outputs');
-    }
-
-    const savedOutputs = JSON.parse(savedOutputsString) as TLocalStorageOutput[];
-
-    if (!Array.isArray(savedOutputs)) {
-      throw new Error('saved outputs are invalid');
-    }
-
-    return savedOutputs;
-  } catch (error) {
-    return [];
   }
+
+  function saveAll(entries: TStorageEntry<T>[]) {
+    const dataJSON = JSON.stringify(entries);
+
+    localStorage.setItem(storageKey, dataJSON);
+  }
+
+  return {
+    save(taskId: number, data: T) {
+      const currentEntry: TStorageEntry<T> = { taskId, data };
+      const savedEntries = getAll();
+      const savedEntryIndex = savedEntries.findIndex(entry => entry.taskId === taskId);
+
+      if (savedEntryIndex === -1) {
+        saveAll([...savedEntries, currentEntry]);
+
+        return;
+      }
+
+      const newEntries = [...savedEntries];
+      newEntries[savedEntryIndex] = currentEntry;
+      saveAll(newEntries);
+    },
+
+    get(taskId: number): T | undefined {
+      return getAll().find(entry => entry.taskId === taskId)?.data;
+    },
+
+    remove(taskId: number) {
+      const newEntries = getAll().filter(entry => entry.taskId !== taskId);
+      saveAll(newEntries);
+    },
+  };
 }
 
-function saveOutputsToStorage(outputs: TLocalStorageOutput[]) {
-  const ouputsJSON = JSON.stringify(outputs);
+export const outputStorage = createTaskStorage<IExtraField[]>('tasks_outputs');
 
-  localStorage.setItem(OUTPUT_LOCALSTORAGE_KEY, ouputsJSON);
-}
+export const fieldsetsStorage = createTaskStorage<IFieldsetData[]>('tasks_fieldsets_outputs');
