@@ -1,18 +1,15 @@
+// <reference types="jest" />
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { enMessages } from '../../../lang/locales/en_US';
 
 import { EditKickoff } from '../KickoffEdit';
-import { EExtraFieldType, IExtraField } from '../../../types/template';
+import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../types/template';
 import { MergedOutputList } from '../../MergedOutputList';
 
 jest.mock('../../MergedOutputList', () => ({
   MergedOutputList: jest.fn(() => <div data-testid="merged-output-list" />),
-}));
-
-jest.mock('../../WorkflowEditPopup/utils/areKickoffFieldsValid', () => ({
-  checkExtraFieldsAreValid: jest.fn(() => true),
 }));
 
 jest.mock('../../../utils/autoFocusFirstField', () => ({
@@ -28,22 +25,39 @@ jest.mock('../../IntlMessages', () => ({
 }));
 
 jest.mock('../../UI/Buttons/Button', () => ({
-  Button: () => <button />,
+  Button: (props: { label: string; disabled?: boolean; type?: string; onClick?: () => void }) =>
+    React.createElement('button', {
+      type: props.type || 'button',
+      disabled: props.disabled,
+      'data-testid': props.type === 'submit' ? 'save-button' : 'cancel-button',
+    }, props.label),
 }));
 
-const makeField = (apiName: string, order: number): IExtraField => ({
+const makeField = (apiName: string, order: number, overrides: Partial<IExtraField> = {}): IExtraField => ({
   apiName,
   name: apiName,
   type: EExtraFieldType.String,
   order,
   userId: null,
   groupId: null,
+  ...overrides,
+});
+
+const makeFieldset = (overrides: Partial<IFieldsetData> & { fields: IExtraField[] }): IFieldsetData => ({
+  id: 1,
+  apiName: 'fs-1',
+  name: 'Fieldset',
+  description: '',
+  order: 0,
+  ...overrides,
 });
 
 const baseProps = {
   accountId: 1,
   onEditField: jest.fn(() => jest.fn()),
+  onSave: jest.fn(),
 };
+
 
 const renderWithIntl = (ui: React.ReactElement) =>
   render(
@@ -64,7 +78,7 @@ describe('KickoffEdit', () => {
       fieldsets: [],
     };
     const fieldsets = [
-      { id: 1, apiName: 'fs-1', name: 'FS', description: '', fields: [], order: 2 },
+      makeFieldset({ fields: [], order: 2 }),
     ];
 
     renderWithIntl(
@@ -108,5 +122,63 @@ describe('KickoffEdit', () => {
       }),
       expect.anything(),
     );
+  });
+
+  it('disables Save button when fieldset contains an empty required field', () => {
+    const kickoff = {
+      description: '',
+      fields: [makeField('f1', 0, { value: 'filled' })],
+      fieldsets: [],
+    };
+
+    const fieldsets: IFieldsetData[] = [
+      makeFieldset({
+        fields: [
+          makeField('fs-field-1', 1, { isRequired: true, value: '' }),
+        ],
+        order: 1,
+      }),
+    ];
+
+    renderWithIntl(
+      <EditKickoff
+        {...baseProps}
+        kickoff={kickoff}
+        fieldsets={fieldsets}
+        onEditFieldsetField={jest.fn(() => jest.fn())}
+      />,
+    );
+
+    const saveButton = screen.getByTestId('save-button');
+    expect(saveButton).toBeDisabled();
+  });
+
+  it('enables Save button when all required fields including fieldsets are filled', () => {
+    const kickoff = {
+      description: '',
+      fields: [makeField('f1', 0, { value: 'filled' })],
+      fieldsets: [],
+    };
+
+    const fieldsets: IFieldsetData[] = [
+      makeFieldset({
+        fields: [
+          makeField('fs-field-1', 1, { isRequired: true, value: 'also filled' }),
+        ],
+        order: 1,
+      }),
+    ];
+
+    renderWithIntl(
+      <EditKickoff
+        {...baseProps}
+        kickoff={kickoff}
+        fieldsets={fieldsets}
+        onEditFieldsetField={jest.fn(() => jest.fn())}
+      />,
+    );
+
+    const saveButton = screen.getByTestId('save-button');
+    expect(saveButton).not.toBeDisabled();
   });
 });

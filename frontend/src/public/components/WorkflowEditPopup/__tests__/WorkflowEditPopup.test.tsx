@@ -1,11 +1,15 @@
+// <reference types="jest" />
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { IntlProvider } from 'react-intl';
 import { enMessages } from '../../../lang/locales/en_US';
 
 import { WorkflowEditPopup } from '../WorkflowEditPopup';
-import { EExtraFieldType } from '../../../types/template';
+import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../types/template';
 import { MergedOutputList } from '../../MergedOutputList';
+import { intlMock } from '../../../__stubs__/intlMock';
+
+
 
 jest.mock('react-dom', () => {
   const actual = jest.requireActual('react-dom');
@@ -36,13 +40,43 @@ jest.mock('../../../utils/history', () => ({
   history: { location: { pathname: '/' }, push: jest.fn() },
 }));
 
-const makeField = (overrides = {}) => ({
+jest.mock('../../UI/Buttons/Button', () => ({
+  Button: (props: { label: string; disabled?: boolean; type?: string; onClick?: () => void; isLoading?: boolean }) =>
+    React.createElement('button', {
+      type: props.type || 'button',
+      disabled: props.disabled,
+    }, props.label),
+}));
+
+jest.mock('../../UI', () => ({
+  SectionTitle: ({ children }: { children: React.ReactNode }) =>
+    React.createElement('div', null, children),
+}));
+
+jest.mock('../../RichText', () => ({
+  RichText: ({ text }: { text: string }) => React.createElement('span', null, text),
+}));
+
+jest.mock('../../icons', () => ({
+  PlayLogoIcon: () => null,
+}));
+
+const makeField = (overrides: Partial<IExtraField> = {}): IExtraField => ({
   apiName: `f-${Math.random()}`,
   name: 'Field',
   type: EExtraFieldType.String,
   order: 0,
   userId: null,
   groupId: null,
+  ...overrides,
+});
+
+const makeFieldset = (overrides: Partial<IFieldsetData> & { fields: IExtraField[] }): IFieldsetData => ({
+  id: 1,
+  apiName: 'fs-1',
+  name: 'Fieldset',
+  description: '',
+  order: 0,
   ...overrides,
 });
 
@@ -70,6 +104,9 @@ const baseProps = {
   onRunWorkflow: jest.fn(),
 };
 
+const formatMsg = (id: string) => intlMock.formatMessage({ id });
+const START_LABEL = formatMsg('templates.start-submit');
+
 const renderWithIntl = (ui: React.ReactElement) =>
   render(
     <IntlProvider locale="en" messages={enMessages}>
@@ -84,7 +121,7 @@ describe('WorkflowEditPopup', () => {
 
   it('renders MergedOutputList and passes fields and fieldsets', () => {
     const loadedFieldsets = [
-      { id: 1, apiName: 'fs-1', name: 'FS', description: '', fields: [], order: 2 },
+      makeFieldset({ fields: [], order: 2 }),
     ];
 
     const workflow = {
@@ -153,5 +190,53 @@ describe('WorkflowEditPopup', () => {
     expect(callArgs.fields.map((f: any) => f.apiName)).toEqual(
       expect.arrayContaining(['visible-1', 'visible-2']),
     );
+  });
+
+  it('disables Start button when fieldset contains an empty required field', () => {
+    const workflow = {
+      ...baseWorkflow,
+      kickoff: {
+        description: '',
+        fields: [makeField({ apiName: 'f1', value: 'filled' })],
+        fieldsets: [],
+      },
+      loadedFieldsets: [
+        makeFieldset({
+          fields: [
+            makeField({ apiName: 'fs-field-1', isRequired: true, value: '', order: 1 }),
+          ],
+          order: 1,
+        }),
+      ],
+    };
+
+    renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
+
+    const startButton = screen.getByRole('button', { name: START_LABEL });
+    expect(startButton).toBeDisabled();
+  });
+
+  it('enables Start button when all required fields including fieldsets are filled', () => {
+    const workflow = {
+      ...baseWorkflow,
+      kickoff: {
+        description: '',
+        fields: [makeField({ apiName: 'f1', value: 'filled' })],
+        fieldsets: [],
+      },
+      loadedFieldsets: [
+        makeFieldset({
+          fields: [
+            makeField({ apiName: 'fs-field-1', isRequired: true, value: 'also filled', order: 1 }),
+          ],
+          order: 1,
+        }),
+      ],
+    };
+
+    renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
+
+    const startButton = screen.getByRole('button', { name: START_LABEL });
+    expect(startButton).not.toBeDisabled();
   });
 });

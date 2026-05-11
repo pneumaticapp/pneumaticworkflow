@@ -53,7 +53,10 @@ export function EditKickoff({
         {Boolean(onSave) && (
           <Button
             type="submit"
-            disabled={!checkExtraFieldsAreValid(kickoff.fields)}
+            disabled={
+              !checkExtraFieldsAreValid(kickoff.fields) ||
+              fieldsets.some(fieldset => !checkExtraFieldsAreValid(fieldset.fields))
+            }
             label={formatMessage({ id: 'kickoff-edit.buttons.save' })}
             buttonStyle="yellow"
           />
