@@ -1,10 +1,11 @@
 /* eslint-disable */
-import React from 'react';
+import * as React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { EditIcon } from '../icons';
 import { EExtraFieldType, IExtraField, IFieldsetData } from '../../types/template';
+import { TOutputItem } from './types';
 
 import { CheckboxOutput } from './CheckboxOutput';
 import { RadioOutput } from './RadioOutput';
@@ -12,7 +13,7 @@ import { TextOutput } from './TextOutput';
 import { UrlOutput } from './UrlOutput';
 import { FileOutput } from './FileOutput';
 import { UserOutput } from './UserOutput';
-import { flatten, isArrayWithItems } from '../../utils/helpers';
+import { isArrayWithItems } from '../../utils/helpers';
 import { Attachments } from '../Attachments';
 import { TUploadedFile } from '../../utils/uploadFiles';
 import { RichText } from '../RichText';
@@ -47,10 +48,24 @@ export function KickoffOutputs({
 }: IKickoffOutputs) {
   if ((!outputs || !isArrayWithItems(outputs)) && !isArrayWithItems(fieldsets)) return null;
 
+
+  const orderedOutputs: TOutputItem[] = [
+    ...(outputs || []).map((field): TOutputItem => ({ kind: 'field', order: field.order, data: field })),
+    ...(fieldsets || []).map((fs): TOutputItem => ({ kind: 'fieldset', order: fs.order!, data: fs })),
+  ].sort((a, b) => b.order - a.order);
+
   if (isOnlyAttachmentsShown) {
-    const fileOutputs = (outputs || []).filter(({ type }) => type === EExtraFieldType.File);
-    const attachments = flatten(fileOutputs.map(({ attachments }) => attachments || [])) as TUploadedFile[];
-    return <Attachments attachments={attachments} />;
+    const fileAttachments = orderedOutputs.flatMap((item) => {
+      if (item.kind === 'field') {
+        return item.data.type === EExtraFieldType.File ? (item.data.attachments || []) : [];
+      }
+
+      return item.data.fields
+        .filter(({ type }) => type === EExtraFieldType.File)
+        .flatMap(({ attachments }) => attachments || []);
+    }) as TUploadedFile[];
+
+    return <Attachments attachments={fileAttachments} />;
   }
 
   const { formatMessage, messages } = useIntl();
@@ -77,26 +92,8 @@ export function KickoffOutputs({
   };
 
   const renderOutputsList = () => {
-    type TOutputItem =
-      | { kind: 'field'; order: number; data: IExtraField }
-      | { kind: 'fieldset'; order: number; data: IFieldsetData };
-
-    const items: TOutputItem[] = [
-      ...(outputs || []).map((field): TOutputItem => ({
-        kind: 'field',
-        order: field.order,
-        data: field,
-      })),
-      ...(fieldsets || []).map((fieldset): TOutputItem => ({
-        kind: 'fieldset',
-        order: fieldset.order!,
-        data: fieldset,
-      })),
-    ].sort((a, b) => b.order - a.order);
-
-
-    if (isTruncated && items.length > 0) {
-      const firstItem = items[0];
+    if (isTruncated && orderedOutputs.length > 0) {
+      const firstItem = orderedOutputs[0];
       if (firstItem.kind === 'field') {
         return renderSingleOutput(firstItem.data, 'truncated-field');
       }
@@ -106,7 +103,7 @@ export function KickoffOutputs({
 
     return (
       <>
-        {items.map((item, index) => {
+        {orderedOutputs.map((item, index) => {
           if (item.kind === 'field') {
             return renderSingleOutput(item.data, `field-${item.data.apiName || index}`);
           }
