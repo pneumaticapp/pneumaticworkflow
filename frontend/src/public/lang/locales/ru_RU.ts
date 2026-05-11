@@ -57,6 +57,7 @@ export const ruMessages = {
   'notifications.overdue': 'Задача {task} просрочена.',
   'notifications.snoozed': 'Процесс отложен до {date}',
   'notifications.resumed': 'Процесс возобновлен',
+  'notifications.workflow-completed': 'Процесс завершён',
   'duration-month': 'месяцы',
   'duration-month-placeholder': '0',
   'duration-day': 'дни',

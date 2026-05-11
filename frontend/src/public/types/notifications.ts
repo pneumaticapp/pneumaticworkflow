@@ -133,6 +133,13 @@ export type TNotificationsListItemOptional =
         id: number;
         name: string;
       };
+    }
+  | {
+      type: 'complete_workflow';
+      workflow: {
+        id: number;
+        name: string;
+      };
     };
 
 export type TNotificationsListItem = TNotificationsListItemCommon & TNotificationsListItemOptional;
