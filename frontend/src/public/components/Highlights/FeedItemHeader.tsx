@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
+import * as React from 'react';
+import { useState, useEffect, useRef } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
@@ -50,12 +51,14 @@ export function FeedItemHeader({
   };
 
   const renderOutputsContents = () => {
-    if (!task) {
+    const taskOutput = task?.output;
+    const kickoffOutput = kickoff?.output;
+
+    if (!taskOutput && !kickoffOutput) {
       return null;
     }
-    const { output: taskOutput } = task;
     const OUTPUTS_MAP: { [key in EWorkflowLogEvent]?: IExtraField[] } = {
-      [EWorkflowLogEvent.WorkflowRun]: kickoff?.output,
+      [EWorkflowLogEvent.WorkflowRun]: kickoffOutput,
       [EWorkflowLogEvent.WorkflowComplete]: taskOutput,
       [EWorkflowLogEvent.TaskComplete]: taskOutput,
       [EWorkflowLogEvent.WorkflowsReturned]: taskOutput,
