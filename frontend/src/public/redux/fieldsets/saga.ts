@@ -51,7 +51,7 @@ function getFieldsetDetailRoute(templateId: number | null, fieldsetId: number): 
     .replace(':id', String(fieldsetId));
 }
 
-function* loadFieldsetsSaga({ payload }: ReturnType<typeof loadFieldsets>) {
+export function* loadFieldsetsSaga({ payload }: ReturnType<typeof loadFieldsets>) {
   const abortController = new AbortController();
   const { offset, templateId } = payload;
 
@@ -78,6 +78,10 @@ function* loadFieldsetsSaga({ payload }: ReturnType<typeof loadFieldsets>) {
     yield put(loadFieldsetsFailed());
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to load fieldsets', error);
+
+    if (error?.status === 404) {
+      history.replace(ERoutes.Templates);
+    }
   } finally {
     abortController.abort();
   }
