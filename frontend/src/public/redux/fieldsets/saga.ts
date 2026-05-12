@@ -103,7 +103,7 @@ function* loadCurrentFieldsetSaga({ payload: { id } }: PayloadAction<{ id: numbe
 
 function* createFieldsetSaga({ payload }: PayloadAction<ICreateFieldsetParams>) {
   try {
-    const createdFieldset: IFieldsetTemplate = yield createFieldset(payload);
+    const createdFieldset: IFieldsetTemplate = yield call(createFieldset, payload);
     yield put(loadCurrentFieldsetSuccess(createdFieldset));
     const templateId: number | null = yield select(getFieldsetsTemplateId);
     if (templateId) {
@@ -139,7 +139,7 @@ function* updateFieldsetSaga({ payload }: PayloadAction<IUpdateFieldsetParams>) 
 
 function* deleteFieldsetSaga({ payload: { id, onSuccess } }: PayloadAction<TDeleteFieldsetPayload>) {
   try {
-    yield deleteFieldset({ id });
+    yield call(deleteFieldset, { id });
     yield put(removeFieldsetFromList(id));
 
     const templateId: number | null = yield select(getFieldsetsTemplateId);
