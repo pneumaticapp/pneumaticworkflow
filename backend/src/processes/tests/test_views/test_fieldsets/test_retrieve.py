@@ -57,6 +57,7 @@ def test_retrieve__fieldset_all_data__ok(api_client):
     assert response.data['api_name'] == fieldset.api_name
     assert response.data['name'] == 'My Fieldset'
     assert response.data['description'] == 'Fieldset description'
+    assert response.data['template_id'] == template.id
     assert response.data['layout'] == FieldSetLayout.HORIZONTAL
     assert response.data['label_position'] == LabelPosition.LEFT
     assert response.data['kickoff'] is None

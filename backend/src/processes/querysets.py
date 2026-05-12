@@ -690,7 +690,12 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
                     queryset=(
                         TaskField.objects
                         .filter(api_name__in=fields)
-                        .order_by('kickoff_id', 'task__number', '-order')
+                        .order_by(
+                            'kickoff_id',
+                            'task__number',
+                            'fieldset_id',
+                            '-order',
+                        )
                     ),
                 ),
             )
