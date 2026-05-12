@@ -23,6 +23,7 @@ export type TFieldSetLayout = 'horizontal' | 'vertical';
 
 export interface IFieldsetTemplate {
   id: number;
+  templateId: number;
   name: string;
   description: string;
   labelPosition: TFieldLabelPosition;

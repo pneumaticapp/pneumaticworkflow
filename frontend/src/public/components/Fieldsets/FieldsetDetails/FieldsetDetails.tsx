@@ -84,14 +84,15 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
     const id = Number(matchParamId);
     if (Number.isNaN(id)) {
       history.push(fieldsetListRoute);
-
       return;
     }
+    
+    dispatch(setTemplateId(Number(matchTemplateId)));
+
     if (fieldset?.id === id) return;
 
-    dispatch(setTemplateId(Number(matchTemplateId)));
     dispatch(loadCurrentFieldset({ id }));
-  }, [matchParamId]);
+  }, [matchParamId, matchTemplateId]);
 
 
 

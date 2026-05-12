@@ -87,11 +87,19 @@ export function* loadFieldsetsSaga({ payload }: ReturnType<typeof loadFieldsets>
   }
 }
 
-function* loadCurrentFieldsetSaga({ payload: { id } }: PayloadAction<{ id: number }>) {
+export function* loadCurrentFieldsetSaga({ payload: { id } }: PayloadAction<{ id: number }>) {
   const abortController = new AbortController();
 
   try {
     const currentFieldset: IFieldsetTemplate = yield call(getFieldset, { id, signal: abortController.signal });
+    const urlTemplateId: number | null = yield select(getFieldsetsTemplateId);
+
+    if (urlTemplateId && currentFieldset.templateId !== urlTemplateId) {
+      history.replace(getFieldsetsRoute(urlTemplateId));
+
+      return;
+    }
+
     yield put(loadCurrentFieldsetSuccess(currentFieldset));
   } catch (error) {
     if (isRequestCanceled(error)) return;

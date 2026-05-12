@@ -42,6 +42,7 @@ export function FieldsetCard({
   const handleEditName = () => {
     dispatch(setCurrentFieldset({
       id,
+      templateId,
       name,
       description,
       labelPosition,
