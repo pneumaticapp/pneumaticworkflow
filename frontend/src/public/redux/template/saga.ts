@@ -61,6 +61,7 @@ import { ETemplateStatus } from '../../types/redux';
 import { TUserListItem } from '../../types/user';
 import { loadTemplateIntegrationsStats, loadTemplates } from '../actions';
 import { loadFieldsetsCatalog } from '../fieldsets/slice';
+import { loadFieldsetsCatalogSuccess, loadFieldsetsCatalogFailed } from '../fieldsets/slice';
 import { getFieldsetsCatalogByApiName, getCatalogLoadedForTemplateId } from '../selectors/fieldsets';
 import { copyTemplate } from '../../api/copyTemplate';
 import { deleteTemplate } from '../../api/deleteTemplate';
@@ -77,7 +78,7 @@ function* setTemplateByTemplateResponse(template: ITemplateResponse) {
   yield put(setTemplate(normalizedTemplate));
 }
 
-function* fetchTemplate({ payload: id }: TLoadTemplate) {
+export function* fetchTemplate({ payload: id }: TLoadTemplate) {
   if (!Number.isInteger(id)) {
     history.replace(ERoutes.Templates);
     NotificationManager.warning({ message: 'template.not-found' });
@@ -88,14 +89,15 @@ function* fetchTemplate({ payload: id }: TLoadTemplate) {
   try {
     const template: ITemplateResponse = yield getTemplate(id);
     yield setTemplateByTemplateResponse(template);
-    yield put(setTemplateStatus(ETemplateStatus.Saved));
-
-    yield put(loadTemplateIntegrationsStats({ templates: [template.id] }));
 
     const catalogTemplateId: ReturnType<typeof getCatalogLoadedForTemplateId> = yield select(getCatalogLoadedForTemplateId);
     if (catalogTemplateId !== template.id) {
       yield put(loadFieldsetsCatalog({ templateId: template.id }));
+      yield take([loadFieldsetsCatalogSuccess.type, loadFieldsetsCatalogFailed.type]);
     }
+
+    yield put(setTemplateStatus(ETemplateStatus.Saved));
+    yield put(loadTemplateIntegrationsStats({ templates: [template.id] }));
   } catch (error) {
     logger.info('failed lo load template: ', error);
     NotificationManager.warning({ message: getErrorMessage(error) });
