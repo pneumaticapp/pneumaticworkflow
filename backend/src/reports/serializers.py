@@ -14,6 +14,7 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.serializers.workflows.field import (
     TaskFieldEventSerializer,
 )
+from src.processes.serializers.workflows.fieldset import FieldSetSerializer
 
 UserModel = get_user_model()
 
@@ -45,9 +46,11 @@ class ActivityKickoffValueSerializer(serializers.ModelSerializer):
         model = KickoffValue
         fields = (
             'output',
+            'fieldsets',
         )
 
     output = TaskFieldEventSerializer(many=True)
+    fieldsets = FieldSetSerializer(many=True)
 
 
 class ActivityWorkflowSerializer(serializers.ModelSerializer):

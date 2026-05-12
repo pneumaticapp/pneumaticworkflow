@@ -1,3 +1,4 @@
+from src.processes.enums import PredicateOperator
 from src.processes.models.workflows.task import Task
 
 from .base import Resolver
@@ -10,4 +11,7 @@ class TaskResolver(Resolver):
             api_name=self._predicate.field,
             workflow_id=self._workflow_id,
         )
-        self.field_value = (task.is_completed or task.is_skipped)
+        if self._predicate.operator == PredicateOperator.SKIPPED:
+            self.field_value = task.is_skipped
+        else:
+            self.field_value = task.is_completed

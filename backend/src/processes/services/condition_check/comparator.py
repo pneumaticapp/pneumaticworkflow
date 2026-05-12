@@ -57,3 +57,7 @@ class Comparator:
     @classmethod
     def completed(cls, a: bool):
         return a
+
+    @classmethod
+    def skipped(cls, a: bool):
+        return a
