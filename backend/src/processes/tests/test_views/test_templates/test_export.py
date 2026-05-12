@@ -19,6 +19,7 @@ from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
 )
+
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.raw_due_date import RawDueDateTemplate
@@ -27,6 +28,7 @@ from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
+    create_test_fieldset_template,
     create_test_group,
     create_test_guest,
     create_test_not_admin,
@@ -197,6 +199,57 @@ def test_export__response_format__ok(api_client):
     assert predicates_template[0]['api_name'] == predicate.api_name
     assert predicates_template[0]['field'] == predicate.field
     assert predicates_template[0]['operator'] == predicate.operator
+
+
+def test_export__fieldsets__ok(api_client):
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    api_client.token_authenticate(account_owner)
+    template = create_test_template(
+        user=account_owner,
+        tasks_count=1,
+    )
+    kickoff = template.kickoff_instance
+    task = template.tasks.first()
+
+    kickoff_fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        kickoff=kickoff,
+        name='Kickoff Fieldset',
+        description='Kickoff fieldset desc',
+        api_name='fieldset-kickoff-1',
+        order=0,
+    )
+
+    task_fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+        task=task,
+        name='Task Fieldset',
+        description='Task fieldset desc',
+        api_name='fieldset-task-1',
+        order=1,
+    )
+
+    # act
+    response = api_client.get('/templates/export')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    response_data = response.data[0]
+
+    kickoff_fieldsets = response_data['kickoff']['fieldsets']
+    assert len(kickoff_fieldsets) == 1
+    assert kickoff_fieldsets[0]['api_name'] == kickoff_fieldset.api_name
+    assert kickoff_fieldsets[0]['order'] == 0
+
+    task_fieldsets = response_data['tasks'][0]['fieldsets']
+    assert len(task_fieldsets) == 1
+    assert task_fieldsets[0]['api_name'] == task_fieldset.api_name
+    assert task_fieldsets[0]['order'] == 1
 
 
 def test_export__not_auth__permission_denied(api_client):
