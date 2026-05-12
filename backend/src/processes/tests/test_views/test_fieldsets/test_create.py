@@ -124,6 +124,7 @@ def test_create_fieldset__all_fields__ok(api_client, mocker):
     assert response.data['id'] == fieldset.id
     assert response.data['name'] == data['name']
     assert response.data['description'] == data['description']
+    assert response.data['template_id'] == template.id
     assert response.data['tasks'] == []
     assert response.data['label_position'] == data['label_position']
     assert response.data['layout'] == data['layout']

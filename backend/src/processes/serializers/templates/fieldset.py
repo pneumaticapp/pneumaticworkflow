@@ -59,6 +59,7 @@ class FieldsetTemplateSerializer(
             'api_name',
             'tasks',
             'kickoff',
+            'template_id',
         )
 
     id = IntegerField(required=False)

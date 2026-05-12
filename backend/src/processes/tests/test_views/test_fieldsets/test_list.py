@@ -61,6 +61,7 @@ def test_list_fieldsets__all_data__ok(api_client):
     assert item_1['api_name'] == fieldset.api_name
     assert item_1['name'] == fieldset.name
     assert item_1['description'] == ''
+    assert item_1['template_id'] == template.id
     assert item_1['layout'] == fieldset.layout
     assert item_1['label_position'] == fieldset.label_position
     assert item_1['tasks'] == []
