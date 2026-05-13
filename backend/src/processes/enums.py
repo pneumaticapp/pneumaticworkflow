@@ -248,6 +248,7 @@ class PredicateOperator:
     MORE_THAN = 'more_than'
     LESS_THAN = 'less_than'
     COMPLETED = 'completed'
+    COMPLETED_OR_SKIPPED = 'completed_or_skipped'
     SKIPPED = 'skipped'
     CHOICES = (
         (EQUAL, 'Equal'),
@@ -260,10 +261,11 @@ class PredicateOperator:
         (LESS_THAN, 'Less than'),
         (COMPLETED, COMPLETED),
         (SKIPPED, SKIPPED),
+        (COMPLETED_OR_SKIPPED, COMPLETED_OR_SKIPPED),
     )
     ALLOWED_OPERATORS = {
         PredicateType.KICKOFF: {COMPLETED},
-        PredicateType.TASK: {COMPLETED, SKIPPED},
+        PredicateType.TASK: {COMPLETED, SKIPPED, COMPLETED_OR_SKIPPED},
         PredicateType.USER: {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST},
         PredicateType.GROUP: {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST},
         PredicateType.FILE: {EXIST, NOT_EXIST},
@@ -318,7 +320,13 @@ class PredicateOperator:
             NOT_EXIST,
         },
     }
-    UNARY_OPERATORS = {EXIST, NOT_EXIST, COMPLETED, SKIPPED}
+    UNARY_OPERATORS = {
+        EXIST,
+        NOT_EXIST,
+        COMPLETED,
+        SKIPPED,
+        COMPLETED_OR_SKIPPED,
+    }
 
 
 class ConditionAction:
