@@ -1,6 +1,7 @@
 import re
 from typing import Any, Dict, List, Optional, Set
 
+from billiard.sharedctypes import template
 from django.contrib.auth import get_user_model
 from django.core.exceptions import (
     ValidationError as ValidationCoreError,
@@ -192,18 +193,21 @@ class TemplateSerializer(
                     })
             except (TypeError, AttributeError):
                 continue
-        fieldset_ids = kickoff_data.get('fieldsets') or []
-        normalized_fieldset_ids = []
-        for elem in fieldset_ids:
+        fieldset_link_data = (
+            kickoff_data.get('fieldsettemplatekickoff_set') or []
+        )
+        fieldsets_api_names = []
+        for elem in fieldset_link_data:
             try:
-                normalized_fieldset_ids.append(int(elem))
+                fieldsets_api_names.append(elem['fieldset']['api_name'])
             except (TypeError, ValueError):
                 continue
-        if normalized_fieldset_ids:
+        if fieldsets_api_names:
             account = self.context.get('account')
             fieldset_fields = FieldTemplate.objects.filter(
-                fieldset_id__in=normalized_fieldset_ids,
+                fieldset__api_name__in=fieldsets_api_names,
                 account_id=account.id,
+                template_id=template.id,
             )
             for field_template in fieldset_fields:
                 result.append({
