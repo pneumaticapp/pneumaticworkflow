@@ -429,6 +429,63 @@ class TemplateViewSet(
         serializer = self.get_serializer(data=template_data_clone)
         with transaction.atomic():
             serializer.save_as_draft()
+
+            # TODO Temporary: copy FieldsetTemplate entities ---
+            #   Remove after creating global fieldsets
+            new_template = serializer.instance
+            original_fieldsets = FieldsetTemplate.objects.filter(
+                template=template,
+            ).prefetch_related(
+                'rules', 'rules__fields',
+                'fields', 'fields__selections',
+            )
+
+            for original_fs in original_fieldsets:
+                fields_data = [
+                    {
+                        'name': f.name,
+                        'type': f.type,
+                        'description': f.description or '',
+                        'is_required': f.is_required,
+                        'order': f.order,
+                        'is_hidden': f.is_hidden,
+                        'default': f.default,
+                        'api_name': f.api_name,
+                        'dataset': f.dataset,
+                        'selections': [
+                            {'value': sel.value}
+                            for sel in f.selections.all()
+                        ],
+                    }
+                    for f in original_fs.fields.all()
+                ]
+                rules_data = [
+                    {
+                        'type': r.type,
+                        'value': r.value,
+                        'fields': [
+                            f.api_name
+                            for f in r.fields.all()
+                        ],
+                    }
+                    for r in original_fs.rules.all()
+                ]
+                service = FieldSetTemplateService(
+                    user=request.user,
+                    is_superuser=request.is_superuser,
+                    auth_type=request.token_type,
+                )
+                service.create(
+                    template_id=new_template.id,
+                    name=original_fs.name,
+                    description=original_fs.description,
+                    label_position=original_fs.label_position,
+                    layout=original_fs.layout,
+                    fields=fields_data,
+                    rules=rules_data,
+                )
+            # TODO --- End temporary code ---
+
         return self.response_ok(serializer.get_response_data())
 
     def list(self, request, *args, **kwargs):
