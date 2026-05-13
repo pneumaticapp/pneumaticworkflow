@@ -28,18 +28,22 @@ class FieldSetTemplateService(BaseModelService):
         name: str,
         template_id: int,
         description: str = '',
+        api_name: Optional[str] = None,
         label_position: LabelPosition.LITERALS = LabelPosition.TOP,
         layout: FieldSetLayout.LITERALS = FieldSetLayout.VERTICAL,
         **kwargs,
     ):
-        self.instance = FieldsetTemplate.objects.create(
-            template_id=template_id,
-            account=self.account,
-            name=name,
-            description=description,
-            label_position=label_position,
-            layout=layout,
-        )
+        create_kwargs = {
+            'template_id': template_id,
+            'account': self.account,
+            'name': name,
+            'description': description,
+            'label_position': label_position,
+            'layout': layout,
+        }
+        if api_name:
+            create_kwargs['api_name'] = api_name
+        self.instance = FieldsetTemplate.objects.create(**create_kwargs)
         return self.instance
 
     def _create_related(

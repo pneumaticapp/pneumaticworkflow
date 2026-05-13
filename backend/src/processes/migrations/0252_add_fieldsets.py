@@ -125,8 +125,8 @@ class Migration(migrations.Migration):
             model_name='fieldsettemplate',
             constraint=models.UniqueConstraint(
                 condition=models.Q(is_deleted=False),
-                fields=('account', 'api_name'),
-                name='fieldsettemplate_account_api_name_unique'),
+                fields=('template', 'api_name'),
+                name='fieldsettemplate_template_api_name_unique'),
         ),
         migrations.AddField(
             model_name='fieldsettemplate',

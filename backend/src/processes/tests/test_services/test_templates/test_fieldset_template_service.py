@@ -59,6 +59,7 @@ def test__create_instance__default_params__ok():
     # assert
     assert service.instance is not None
     assert service.instance.name == name
+    assert service.instance.api_name
     assert service.instance.template_id == template.id
     assert service.instance.account_id == account.id
     assert service.instance.description == ''
@@ -85,6 +86,7 @@ def test__create_instance__all_params__ok():
     description = 'Test description'
     label_position = LabelPosition.LEFT
     layout = FieldSetLayout.HORIZONTAL
+    api_name = 'fs-1'
 
     # act
     service._create_instance(
@@ -93,6 +95,7 @@ def test__create_instance__all_params__ok():
         description=description,
         label_position=label_position,
         layout=layout,
+        api_name=api_name,
     )
 
     # assert
@@ -101,6 +104,7 @@ def test__create_instance__all_params__ok():
     assert service.instance.description == description
     assert service.instance.label_position == label_position
     assert service.instance.layout == layout
+    assert service.instance.api_name == api_name
 
 
 def test__create_fields__with_data__ok(mocker):

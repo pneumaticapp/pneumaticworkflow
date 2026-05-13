@@ -46,14 +46,18 @@ class FieldsetTemplateRuleService(BaseModelService):
         type: FieldSetRuleType.LITERALS,  # noqa: A002
         value: Optional[str] = None,
         fieldset_id: Optional[int] = None,
+        api_name: Optional[str] = None,
         **kwargs,
     ):
-        self.instance = FieldsetTemplateRule.objects.create(
-            account=self.account,
-            type=type,
-            value=value,
-            fieldset_id=fieldset_id,
-        )
+        create_kwargs = {
+            'account': self.account,
+            'type': type,
+            'value': value,
+            'fieldset_id': fieldset_id,
+        }
+        if api_name:
+            create_kwargs['api_name'] = api_name
+        self.instance = FieldsetTemplateRule.objects.create(**create_kwargs)
         return self.instance
 
     def _create_related(
