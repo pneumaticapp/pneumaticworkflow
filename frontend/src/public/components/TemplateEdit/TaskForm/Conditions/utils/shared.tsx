@@ -35,13 +35,13 @@ interface IGetDropdownStepsProps {
 }
 
 export const CONDITION_DISABLED_OPERATOR: (EStartingType | EExtraFieldType)[] = [
-  EStartingType.Task,
-  EStartingType.Kickoff,
+  EStartingType.Kickoff
 ];
 export const OPERATORS_WITHOUT_VALUE = [
   EConditionOperators.Exist,
   EConditionOperators.NotExist,
   EConditionOperators.Completed,
+  EConditionOperators.Skipped,
 ];
 
 export const handleAddNewCondition = ({
