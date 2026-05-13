@@ -11,7 +11,10 @@ class TaskResolver(Resolver):
             api_name=self._predicate.field,
             workflow_id=self._workflow_id,
         )
-        if self._predicate.operator == PredicateOperator.SKIPPED:
+        operator = self._predicate.operator
+        if operator == PredicateOperator.SKIPPED:
             self.field_value = task.is_skipped
-        else:
+        elif operator == PredicateOperator.COMPLETED:
             self.field_value = task.is_completed
+        else:
+            self.field_value = (task.is_completed or task.is_skipped)
