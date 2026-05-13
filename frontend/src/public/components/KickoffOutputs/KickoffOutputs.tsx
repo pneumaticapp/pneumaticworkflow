@@ -91,6 +91,14 @@ export function KickoffOutputs({
     return !isEmpty ? <OutputComponent key={key} {...output} /> : null;
   };
 
+  const renderFieldsetGroup = (fieldset: IFieldsetData, children: React.ReactNode, key?: string) => (
+    <div key={key} className={styles['fieldset-output-group']}>
+      {fieldset.name && <p className={styles['fieldset-output-group__title']}>{fieldset.name}</p>}
+      {fieldset.description && <p className={styles['fieldset-output-group__description']}>{fieldset.description}</p>}
+      {children}
+    </div>
+  );
+
   const renderOutputsList = () => {
     if (isTruncated && orderedOutputs.length > 0) {
       const firstItem = orderedOutputs[0];
@@ -98,7 +106,13 @@ export function KickoffOutputs({
         return renderSingleOutput(firstItem.data, 'truncated-field');
       }
 
-      return renderSingleOutput(firstItem.data.fields[0], 'truncated-fieldset-field');
+      if (firstItem.data.fields.length) {
+        const fieldset = firstItem.data;
+        return renderFieldsetGroup(
+          fieldset,
+          renderSingleOutput(fieldset.fields[0], 'truncated-fieldset-field'),
+        );
+      }
     }
 
     return (
@@ -110,14 +124,12 @@ export function KickoffOutputs({
 
           const fieldset = item.data;
 
-          return (
-            <div key={`fieldset-${fieldset.id}`} className={styles['fieldset-output-group']}>
-              {fieldset.name && <p className={styles['fieldset-output-group__title']}>{fieldset.name}</p>}
-              {fieldset.description && <p className={styles['fieldset-output-group__description']}>{fieldset.description}</p>}
-              {fieldset.fields.map((output, fieldIndex) =>
-                renderSingleOutput(output, `fieldset-${fieldset.id}-${output.apiName || fieldIndex}`),
-              )}
-            </div>
+          return renderFieldsetGroup(
+            fieldset,
+            fieldset.fields.map((output, fieldIndex) =>
+              renderSingleOutput(output, `fieldset-${fieldset.id}-${output.apiName || fieldIndex}`),
+            ),
+            `fieldset-${fieldset.id}`,
           );
         })}
       </>
