@@ -53,17 +53,17 @@ def test_clone__fieldset_copied__ok(api_client):
     new_template_id = response.data['id']
     assert new_template_id != template.id
 
-    new_fieldsets = FieldsetTemplate.objects.filter(
+    field_clones = FieldsetTemplate.objects.filter(
         template_id=new_template_id,
     )
-    assert new_fieldsets.count() == 1
-    new_fs = new_fieldsets.first()
-    assert new_fs.name == fieldset.name
-    assert new_fs.description == fieldset.description
-    assert new_fs.label_position == fieldset.label_position
-    assert new_fs.layout == fieldset.layout
-    assert new_fs.account_id == account.id
-    assert new_fs.api_name != fieldset.api_name
+    assert field_clones.count() == 1
+    fieldset_clone = field_clones.first()
+    assert fieldset_clone.name == fieldset.name
+    assert fieldset_clone.api_name == fieldset.api_name
+    assert fieldset_clone.description == fieldset.description
+    assert fieldset_clone.label_position == fieldset.label_position
+    assert fieldset_clone.layout == fieldset.layout
+    assert fieldset_clone.account_id == account.id
 
 
 def test_clone__fieldset_with_fields__ok(api_client):
@@ -100,25 +100,27 @@ def test_clone__fieldset_with_fields__ok(api_client):
     # assert
     assert response.status_code == 200
     new_template_id = response.data['id']
-    new_fs = FieldsetTemplate.objects.get(template_id=new_template_id)
-    new_fields = FieldTemplate.objects.filter(
-        fieldset=new_fs,
+    fieldset_clone = FieldsetTemplate.objects.get(template_id=new_template_id)
+    field_clones = FieldTemplate.objects.filter(
+        fieldset=fieldset_clone,
     ).order_by('order')
-    assert new_fields.count() == 2
+    assert field_clones.count() == 2
 
-    nf1 = new_fields[0]
-    assert nf1.name == field_1.name
-    assert nf1.type == field_1.type
-    assert nf1.order == field_1.order
-    assert nf1.template_id == new_template_id
-    assert nf1.kickoff is None
-    assert nf1.task is None
+    field_1_clone = field_clones[0]
+    assert field_1_clone.name == field_1.name
+    assert field_1_clone.api_name == field_1.api_name
+    assert field_1_clone.type == field_1.type
+    assert field_1_clone.order == field_1.order
+    assert field_1_clone.template_id == new_template_id
+    assert field_1_clone.kickoff is None
+    assert field_1_clone.task is None
 
-    nf2 = new_fields[1]
-    assert nf2.name == field_2.name
-    assert nf2.type == field_2.type
-    assert nf2.order == field_2.order
-    assert nf2.is_hidden == field_2.is_hidden
+    field_2_clone = field_clones[1]
+    assert field_2_clone.name == field_2.name
+    assert field_2_clone.api_name == field_2.api_name
+    assert field_2_clone.type == field_2.type
+    assert field_2_clone.order == field_2.order
+    assert field_2_clone.is_hidden == field_2.is_hidden
 
 
 def test_clone__fieldset_with_selections__ok(api_client):
@@ -146,12 +148,12 @@ def test_clone__fieldset_with_selections__ok(api_client):
         type=FieldType.DROPDOWN,
         order=1,
     )
-    sel_1 = FieldTemplateSelection.objects.create(
+    selection_1 = FieldTemplateSelection.objects.create(
         template=template,
         field_template=field,
         value='Option A',
     )
-    sel_2 = FieldTemplateSelection.objects.create(
+    selection_2 = FieldTemplateSelection.objects.create(
         template=template,
         field_template=field,
         value='Option B',
@@ -163,16 +165,19 @@ def test_clone__fieldset_with_selections__ok(api_client):
     # assert
     assert response.status_code == 200
     new_template_id = response.data['id']
-    new_fs = FieldsetTemplate.objects.get(template_id=new_template_id)
-    new_field = FieldTemplate.objects.get(fieldset=new_fs)
-    new_selections = FieldTemplateSelection.objects.filter(
-        field_template=new_field,
+    fieldset_clone = FieldsetTemplate.objects.get(template_id=new_template_id)
+    field_clone = FieldTemplate.objects.get(fieldset=fieldset_clone)
+    selections_clone = FieldTemplateSelection.objects.filter(
+        field_template=field_clone,
     ).order_by('value')
-    assert new_selections.count() == 2
-    assert new_selections[0].value == sel_1.value
-    assert new_selections[0].template_id == new_template_id
-    assert new_selections[1].value == sel_2.value
-    assert new_selections[1].template_id == new_template_id
+    assert selections_clone.count() == 2
+    assert selections_clone[0].value == selection_1.value
+    assert selections_clone[0].template_id == new_template_id
+    assert selections_clone[0].api_name == selection_1.api_name
+
+    assert selections_clone[1].value == selection_2.value
+    assert selections_clone[1].template_id == new_template_id
+    assert selections_clone[1].api_name == selection_2.api_name
 
 
 def test_clone__fieldset_with_rules__ok(api_client):
@@ -203,18 +208,18 @@ def test_clone__fieldset_with_rules__ok(api_client):
     # assert
     assert response.status_code == 200
     new_template_id = response.data['id']
-    new_fs = FieldsetTemplate.objects.get(template_id=new_template_id)
+    fieldset_clone = FieldsetTemplate.objects.get(template_id=new_template_id)
 
-    new_rules = FieldsetTemplateRule.objects.filter(fieldset=new_fs)
-    assert new_rules.count() == 1
-    new_rule = new_rules.first()
-    assert new_rule.type == rule.type
-    assert new_rule.value == rule.value
-    assert new_rule.id != rule.id
-    assert new_rule.api_name != rule.api_name
+    rules_clone = FieldsetTemplateRule.objects.filter(fieldset=fieldset_clone)
+    assert rules_clone.count() == 1
+    rule_clone = rules_clone.first()
+    assert rule_clone.type == rule.type
+    assert rule_clone.value == rule.value
+    assert rule_clone.id != rule.id
+    assert rule_clone.api_name == rule.api_name
 
-    new_field = FieldTemplate.objects.get(fieldset=new_fs)
-    assert list(new_field.rules.all()) == [new_rule]
+    field_clone = FieldTemplate.objects.get(fieldset=fieldset_clone)
+    assert list(field_clone.rules.all()) == [rule_clone]
 
 
 def test_clone__multiple_fieldsets__ok(api_client):
@@ -244,15 +249,17 @@ def test_clone__multiple_fieldsets__ok(api_client):
     # assert
     assert response.status_code == 200
     new_template_id = response.data['id']
-    new_fieldsets = FieldsetTemplate.objects.filter(
+    fieldset_clones = FieldsetTemplate.objects.filter(
         template_id=new_template_id,
     ).order_by('name')
-    assert new_fieldsets.count() == 2
-    assert new_fieldsets[0].name == fs_1.name
-    assert new_fieldsets[1].name == fs_2.name
+    assert fieldset_clones.count() == 2
+    assert fieldset_clones[0].name == fs_1.name
+    assert fieldset_clones[0].api_name == fs_1.api_name
+    assert fieldset_clones[0].fields.count() == 1
 
-    assert new_fieldsets[0].fields.count() == 1
-    assert new_fieldsets[1].fields.count() == 1
+    assert fieldset_clones[1].name == fs_2.name
+    assert fieldset_clones[1].api_name == fs_2.api_name
+    assert fieldset_clones[1].fields.count() == 1
 
 
 def test_clone__no_kickoff_task_links__ok(api_client):
@@ -288,13 +295,13 @@ def test_clone__no_kickoff_task_links__ok(api_client):
     # assert
     assert response.status_code == 200
     new_template_id = response.data['id']
-    new_fs = FieldsetTemplate.objects.get(template_id=new_template_id)
+    fieldset_clone = FieldsetTemplate.objects.get(template_id=new_template_id)
 
     assert not FieldsetTemplateKickoff.objects.filter(
-        fieldset=new_fs,
+        fieldset=fieldset_clone,
     ).exists()
     assert not FieldsetTemplateTaskTemplate.objects.filter(
-        fieldset=new_fs,
+        fieldset=fieldset_clone,
     ).exists()
 
 
@@ -315,9 +322,9 @@ def test_clone__no_fieldsets__ok(api_client):
     # assert
     assert response.status_code == 200
     new_template_id = response.data['id']
-    assert FieldsetTemplate.objects.filter(
-        template_id=new_template_id,
-    ).count() == 0
+    assert not (
+        FieldsetTemplate.objects.filter(template_id=new_template_id).exists()
+    )
 
 
 def test_clone__fieldset_rule_multi_fields__ok(api_client):
@@ -358,13 +365,14 @@ def test_clone__fieldset_rule_multi_fields__ok(api_client):
     # assert
     assert response.status_code == 200
     new_template_id = response.data['id']
-    new_fs = FieldsetTemplate.objects.get(template_id=new_template_id)
+    fieldset_clone = FieldsetTemplate.objects.get(template_id=new_template_id)
 
-    new_rule = FieldsetTemplateRule.objects.get(fieldset=new_fs)
-    assert new_rule.value == rule.value
-    assert new_rule.type == rule.type
+    rule_clone = FieldsetTemplateRule.objects.get(fieldset=fieldset_clone)
+    assert rule_clone.value == rule.value
+    assert rule_clone.type == rule.type
+    assert rule_clone.api_name == rule.api_name
 
-    rule_fields = new_rule.fields.order_by('order')
+    rule_fields = rule_clone.fields.order_by('order')
     assert rule_fields.count() == 2
-    assert rule_fields[0].name == field_1.name
-    assert rule_fields[1].name == field_2.name
+    assert rule_fields[0].api_name == field_1.api_name
+    assert rule_fields[1].api_name == field_2.api_name

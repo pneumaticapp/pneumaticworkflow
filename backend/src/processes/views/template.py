@@ -453,7 +453,10 @@ class TemplateViewSet(
                         'api_name': f.api_name,
                         'dataset': f.dataset,
                         'selections': [
-                            {'value': sel.value}
+                            {
+                                'value': sel.value,
+                                'api_name': sel.api_name,
+                            }
                             for sel in f.selections.all()
                         ],
                     }
@@ -463,6 +466,7 @@ class TemplateViewSet(
                     {
                         'type': r.type,
                         'value': r.value,
+                        'api_name': r.api_name,
                         'fields': [
                             f.api_name
                             for f in r.fields.all()
@@ -478,6 +482,7 @@ class TemplateViewSet(
                 service.create(
                     template_id=new_template.id,
                     name=original_fs.name,
+                    api_name=original_fs.api_name,
                     description=original_fs.description,
                     label_position=original_fs.label_position,
                     layout=original_fs.layout,

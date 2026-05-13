@@ -61,6 +61,7 @@ def test__create_instance__default_params__ok():
     assert service.instance.value is None
     assert service.instance.fieldset_id == fieldset.id
     assert service.instance.account_id == account.id
+    assert service.instance.api_name
 
 
 def test__create_instance__all_params__ok():
@@ -83,20 +84,25 @@ def test__create_instance__all_params__ok():
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
+    value = '100'
+    api_name = 'rule-1'
+    rule_type = FieldSetRuleType.SUM_EQUAL
 
     # act
     service._create_instance(
-        type=FieldSetRuleType.SUM_EQUAL,
-        value='100',
+        type=rule_type,
+        value=value,
+        api_name=api_name,
         fieldset_id=fieldset.id,
     )
 
     # assert
     assert service.instance is not None
-    assert service.instance.type == FieldSetRuleType.SUM_EQUAL
-    assert service.instance.value == '100'
+    assert service.instance.type == rule_type
+    assert service.instance.value == value
     assert service.instance.fieldset_id == fieldset.id
     assert service.instance.account_id == account.id
+    assert service.instance.api_name == api_name
 
 
 def test__validate_sum_equal__valid__ok():

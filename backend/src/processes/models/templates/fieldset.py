@@ -29,9 +29,9 @@ class FieldsetTemplate(
         ordering = ['-id']
         constraints = [
             UniqueConstraint(
-                fields=['account', 'api_name'],
+                fields=['api_name', 'template'],
                 condition=Q(is_deleted=False),
-                name='fieldsettemplate_account_api_name_unique',
+                name='fieldsettemplate_api_name_template_unique',
             ),
         ]
 
