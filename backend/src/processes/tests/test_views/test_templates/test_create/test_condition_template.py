@@ -2122,6 +2122,136 @@ def test_create__predicate_type_task__completed__ok(
     assert predicate['field'] == task_1_api_name
 
 
+def test_create__predicate_type_task__skipped__ok(
+    mocker,
+    api_client,
+):
+    # arrange
+    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    user = create_test_user(account=account)
+    mocker.patch(
+        'src.processes.serializers.templates.'
+        'condition.AnalyticService.templates_task_condition_created',
+    )
+    predicate_api_name = 'predicate-skip'
+    task_1_api_name = 'task-1'
+    task_2_api_name = 'task-2'
+    task_3_api_name = 'task-3'
+    # START_TASK condition with COMPLETED makes task-1 an ancestor of task-3
+    start_condition_data = {
+        'order': 1,
+        'action': ConditionAction.START_TASK,
+        'rules': [
+            {
+                'predicates': [
+                    {
+                        'field_type': PredicateType.TASK,
+                        'operator': PredicateOperator.COMPLETED,
+                        'api_name': 'predicate-start',
+                        'field': task_1_api_name,
+                        'value': None,
+                    },
+                ],
+            },
+        ],
+    }
+    # SKIP_TASK condition with SKIPPED checks if task-1 was skipped
+    skip_condition_data = {
+        'order': 2,
+        'action': ConditionAction.SKIP_TASK,
+        'rules': [
+            {
+                'predicates': [
+                    {
+                        'field_type': PredicateType.TASK,
+                        'operator': PredicateOperator.SKIPPED,
+                        'api_name': predicate_api_name,
+                        'field': task_1_api_name,
+                        'value': None,
+                    },
+                ],
+            },
+        ],
+    }
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'fields': [
+                    {
+                        'order': 1,
+                        'name': 'First step performer',
+                        'type': FieldType.USER,
+                        'api_name': 'user-field-1',
+                        'is_required': True,
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'Step 1',
+                    'api_name': task_1_api_name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+                {
+                    'number': 2,
+                    'name': 'Step 2',
+                    'api_name': task_2_api_name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+                {
+                    'number': 3,
+                    'name': 'Step 3',
+                    'api_name': task_3_api_name,
+                    'conditions': [
+                        start_condition_data,
+                        skip_condition_data,
+                    ],
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    condition = response.data['tasks'][2]['conditions'][1]
+    predicate = condition['rules'][0]['predicates'][0]
+    assert predicate['field_type'] == PredicateType.TASK
+    assert predicate['api_name'] == predicate_api_name
+    assert predicate['operator'] == PredicateOperator.SKIPPED
+    assert predicate['value'] is None
+    assert predicate['field'] == task_1_api_name
+
+
 @pytest.mark.parametrize(
     'case', (
         (PredicateOperator.EQUAL, FieldType.STRING, 'yes'),
