@@ -80,6 +80,7 @@ export function FeedItemHeader({
       <>
         <KickoffOutputs
           outputs={filteredOutputs}
+          fieldsets={kickoff?.fieldsets || []}
           viewMode={EKickoffOutputsViewModes.Short}
           isTruncated={!isTextExpanded}
         />

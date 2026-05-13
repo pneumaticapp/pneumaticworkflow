@@ -5,7 +5,7 @@ import { render } from '@testing-library/react';
 import { FeedItemHeader } from '../FeedItemHeader';
 import { KickoffOutputs } from '../../KickoffOutputs';
 import { EWorkflowLogEvent, EWorkflowStatus } from '../../../types/workflow';
-import { EExtraFieldType, IExtraField } from '../../../types/template';
+import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../types/template';
 import { IHighlightsItem } from '../../../types/highlights';
 
 jest.mock('../../KickoffOutputs', () => ({
@@ -76,10 +76,22 @@ describe('FeedItemHeader', () => {
   });
 
   describe('Kickoff outputs for WorkflowRun with task=null', () => {
-    it('renders KickoffOutputs with kickoff.output when task=null', () => {
+    it('renders KickoffOutputs with kickoff.output and fieldsets when task=null', () => {
       const kickoffFields = [
         makeField({ apiName: 'f1', order: 1, value: 'hello' }),
         makeField({ apiName: 'f2', order: 2, value: 'world' }),
+      ];
+
+      const kickoffFieldsets: IFieldsetData[] = [
+        {
+          id: 1,
+          apiName: 'fs-1',
+          name: 'Fieldset 1',
+          description: '',
+          fields: [
+            makeField({ apiName: 'fs1-f1', order: 1, value: 'fieldset value' }),
+          ],
+        },
       ];
 
       const props = makeBaseProps({
@@ -98,6 +110,7 @@ describe('FeedItemHeader', () => {
             id: 1,
             description: null,
             output: kickoffFields,
+            fieldsets: kickoffFieldsets,
           },
           isExternal: false,
         },
@@ -106,12 +119,9 @@ describe('FeedItemHeader', () => {
       render(React.createElement(FeedItemHeader, props));
 
       const mock = KickoffOutputs as jest.Mock;
-      expect(mock).toHaveBeenCalledWith(
-        expect.objectContaining({
-          outputs: kickoffFields,
-        }),
-        {},
-      );
+      const lastCall = mock.mock.calls[mock.mock.calls.length - 1][0];
+      expect(lastCall.outputs).toEqual(kickoffFields);
+      expect(lastCall.fieldsets).toEqual(kickoffFieldsets);
     });
   });
 });

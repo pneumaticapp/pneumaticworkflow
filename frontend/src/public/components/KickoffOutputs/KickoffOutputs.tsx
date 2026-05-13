@@ -30,7 +30,7 @@ export interface IKickoffOutputs {
   description?: string | null;
   viewMode: EKickoffOutputsViewModes;
   outputs?: IExtraField[];
-  fieldsets?: IFieldsetData[];
+  fieldsets: IFieldsetData[];
   onEdit?(): void;
   isOnlyAttachmentsShown?: boolean;
   isTruncated?: boolean;
