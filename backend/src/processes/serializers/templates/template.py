@@ -1,7 +1,6 @@
 import re
 from typing import Any, Dict, List, Optional, Set
 
-from billiard.sharedctypes import template
 from django.contrib.auth import get_user_model
 from django.core.exceptions import (
     ValidationError as ValidationCoreError,
@@ -207,7 +206,6 @@ class TemplateSerializer(
             fieldset_fields = FieldTemplate.objects.filter(
                 fieldset__api_name__in=fieldsets_api_names,
                 account_id=account.id,
-                template_id=template.id,
             )
             for field_template in fieldset_fields:
                 result.append({
