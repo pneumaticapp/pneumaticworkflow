@@ -246,6 +246,7 @@ export function TaskForm({
             placeholder={formatMessage({ id: 'tasks.task-task-name-placeholder' })}
             listVariables={getSingleLineVariables(listSystemVariables)}
             templateVariables={templateVariables}
+            showInsertButton
             value={taskName}
             onChange={(value: string) => {
               handleTaskFieldChange('name')(value);

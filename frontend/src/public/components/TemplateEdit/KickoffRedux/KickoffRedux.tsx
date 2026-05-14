@@ -140,6 +140,7 @@ export function KickoffRedux({
           <InputWithVariables
             listVariables={variables}
             templateVariables={variables}
+            showInsertButton
             value={wfNameTemplate || ''}
             onChange={(value: string) => {
               editTemplate({

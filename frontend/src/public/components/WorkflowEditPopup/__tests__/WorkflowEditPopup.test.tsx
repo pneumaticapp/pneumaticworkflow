@@ -7,6 +7,7 @@ import { enMessages } from '../../../lang/locales/en_US';
 import { WorkflowEditPopup } from '../WorkflowEditPopup';
 import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../types/template';
 import { MergedOutputList } from '../../MergedOutputList';
+import { InputWithVariables } from '../../TemplateEdit/InputWithVariables';
 import { intlMock } from '../../../__stubs__/intlMock';
 
 
@@ -24,7 +25,7 @@ jest.mock('../../MergedOutputList', () => ({
 }));
 
 jest.mock('../../TemplateEdit/InputWithVariables', () => ({
-  InputWithVariables: () => <div />,
+  InputWithVariables: jest.fn(() => React.createElement('div')),
 }));
 
 jest.mock('../../TemplateEdit/TaskForm/utils/getTaskVariables', () => ({
@@ -238,5 +239,15 @@ describe('WorkflowEditPopup', () => {
 
     const startButton = screen.getByRole('button', { name: START_LABEL });
     expect(startButton).not.toBeDisabled();
+  });
+
+  it('passes showInsertButton=false to InputWithVariables', () => {
+    renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={baseWorkflow} />);
+
+    expect(InputWithVariables as jest.Mock).toHaveBeenCalledTimes(1);
+    expect(InputWithVariables as jest.Mock).toHaveBeenCalledWith(
+      expect.objectContaining({ showInsertButton: false }),
+      {},
+    );
   });
 });

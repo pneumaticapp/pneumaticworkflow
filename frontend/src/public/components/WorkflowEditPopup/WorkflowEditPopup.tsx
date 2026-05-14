@@ -270,6 +270,7 @@ function WorkflowEditPopupComponent({
               title={formatMessage({ id: 'templates.start-name' })}
               listVariables={variables}
               templateVariables={variables}
+              showInsertButton={false}
               value={workflowName || ''}
               onChange={(value) => {
                 changeWorkflowName(value);
