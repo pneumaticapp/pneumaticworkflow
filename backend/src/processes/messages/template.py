@@ -245,7 +245,8 @@ MSG_PT_0063 = _('The value must be a number.')
 MSG_PT_0064 = lambda name: format_lazy(
     _(
         'Task condition "{name}": '
-        'Only the "completed" operator is allowed for the "start_task" action',
+        'Only the "completed", "skipped" or "completed_or_skipped" '
+        'operators is allowed for the "start_task" action',
     ),
     name=name,
 )

@@ -1944,7 +1944,7 @@ def test_create__predicates_with_equal_api_names__validation_error(
     assert response.data['details']['api_name'] == predicate_api_name
 
 
-def test_create__predicate_type_kickoff_completed__ok(
+def test_create__start_task_predicate_kickoff_completed__ok(
     mocker,
     api_client,
 ):
@@ -2026,21 +2026,32 @@ def test_create__predicate_type_kickoff_completed__ok(
     assert predicate['field'] is None
 
 
-def test_create__predicate_type_task__completed__ok(
+@pytest.mark.parametrize(
+    'operator',
+    (
+        PredicateOperator.SKIPPED,
+        PredicateOperator.COMPLETED,
+        PredicateOperator.COMPLETED_OR_SKIPPED,
+    ),
+)
+def test_create__start_task_allowed_predicates__ok(
     mocker,
+    operator,
     api_client,
 ):
+
     # arrange
-    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    account = create_test_account()
     user = create_test_user(account=account)
     mocker.patch(
         'src.processes.serializers.templates.'
         'condition.AnalyticService.templates_task_condition_created',
     )
-    predicate_api_name = 'predicate-1'
+    predicate_api_name = 'predicate-skip'
     task_1_api_name = 'task-1'
     task_2_api_name = 'task-2'
-    condition_data = {
+    # START_TASK condition with COMPLETED makes task-1 an ancestor of task-2
+    start_condition_data = {
         'order': 1,
         'action': ConditionAction.START_TASK,
         'rules': [
@@ -2048,7 +2059,7 @@ def test_create__predicate_type_task__completed__ok(
                 'predicates': [
                     {
                         'field_type': PredicateType.TASK,
-                        'operator': PredicateOperator.COMPLETED,
+                        'operator': operator,
                         'api_name': predicate_api_name,
                         'field': task_1_api_name,
                         'value': None,
@@ -2057,6 +2068,7 @@ def test_create__predicate_type_task__completed__ok(
             },
         ],
     }
+
     api_client.token_authenticate(user)
 
     # act
@@ -2072,17 +2084,7 @@ def test_create__predicate_type_task__completed__ok(
                     'role': OwnerRole.OWNER,
                 },
             ],
-            'kickoff': {
-                'fields': [
-                    {
-                        'order': 1,
-                        'name': 'First step performer',
-                        'type': FieldType.USER,
-                        'api_name': 'user-field-1',
-                        'is_required': True,
-                    },
-                ],
-            },
+            'kickoff': {},
             'tasks': [
                 {
                     'number': 1,
@@ -2099,7 +2101,9 @@ def test_create__predicate_type_task__completed__ok(
                     'number': 2,
                     'name': 'Step 2',
                     'api_name': task_2_api_name,
-                    'conditions': [condition_data],
+                    'conditions': [
+                        start_condition_data,
+                    ],
                     'raw_performers': [
                         {
                             'type': PerformerType.USER,
@@ -2117,12 +2121,12 @@ def test_create__predicate_type_task__completed__ok(
     predicate = condition['rules'][0]['predicates'][0]
     assert predicate['field_type'] == PredicateType.TASK
     assert predicate['api_name'] == predicate_api_name
-    assert predicate['operator'] == PredicateOperator.COMPLETED
+    assert predicate['operator'] == operator
     assert predicate['value'] is None
     assert predicate['field'] == task_1_api_name
 
 
-def test_create__predicate_type_task__skipped__ok(
+def test_create__skip_task_predicate_task_skipped__ok(
     mocker,
     api_client,
 ):
@@ -2252,7 +2256,7 @@ def test_create__predicate_type_task__skipped__ok(
     assert predicate['field'] == task_1_api_name
 
 
-def test_create__predicate_type_task_completed_or_skipped__ok(
+def test_create__skip_task_predicate_type_task_completed_or_skipped__ok(
     mocker,
     api_client,
 ):
