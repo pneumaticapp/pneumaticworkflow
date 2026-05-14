@@ -136,6 +136,23 @@ export const getNormalizedTask = (
   };
 };
 
+const collectFieldApiNames = (
+  fields: Array<{ apiName: string }>,
+  fieldsets: Array<{ apiName: string }>,
+  fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>,
+  validApiNames: Set<string>,
+) => {
+  fields.forEach((f) => {
+    if (f.apiName) validApiNames.add(f.apiName);
+  });
+  fieldsets.forEach((fs) => {
+    const fieldsetData = fieldsetsByApiName?.get(fs.apiName);
+    fieldsetData?.fields?.forEach((f) => {
+      if (f.apiName) validApiNames.add(f.apiName);
+    });
+  });
+};
+
 export const cleanTemplateReferences = (
   template: ITemplate,
   fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>,
@@ -146,17 +163,7 @@ export const cleanTemplateReferences = (
   const WF_NAME_SYSTEM_VARS = new Set(['date', 'template-name', 'workflow-id', 'workflow-starter']);
 
   const validApiNames = new Set<string>();
-
-  template.kickoff?.fields?.forEach((f) => {
-    if (f.apiName) validApiNames.add(f.apiName);
-  });
-
-  template.kickoff?.fieldsets?.forEach((fs) => {
-    const fieldsetData = fieldsetsByApiName?.get(fs.apiName);
-    fieldsetData?.fields?.forEach((f) => {
-      if (f.apiName) validApiNames.add(f.apiName);
-    });
-  });
+  collectFieldApiNames(template.kickoff?.fields || [], template.kickoff?.fieldsets || [], fieldsetsByApiName, validApiNames);
 
   const removeInvalidReferences = (
     text: string | null | undefined,
@@ -208,16 +215,7 @@ export const cleanTemplateReferences = (
       }
     }
 
-    (task.fields || []).forEach((f) => {
-      if (f.apiName) validApiNames.add(f.apiName);
-    });
-
-    (task.fieldsets || []).forEach((fs) => {
-      const fieldsetData = fieldsetsByApiName?.get(fs.apiName);
-      fieldsetData?.fields?.forEach((f) => {
-        if (f.apiName) validApiNames.add(f.apiName);
-      });
-    });
+    collectFieldApiNames(task.fields, task.fieldsets, fieldsetsByApiName, validApiNames);
 
     return {
       ...task,
@@ -230,9 +228,7 @@ export const cleanTemplateReferences = (
   });
 
   const validKickoffApiNames = new Set<string>();
-  template.kickoff?.fields?.forEach((f) => {
-    if (f.apiName) validKickoffApiNames.add(f.apiName);
-  });
+  collectFieldApiNames(template.kickoff?.fields || [], template.kickoff?.fieldsets || [], fieldsetsByApiName, validKickoffApiNames);
 
   return {
     ...template,

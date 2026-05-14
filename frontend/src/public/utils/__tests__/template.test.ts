@@ -413,6 +413,29 @@ describe('template utilities', () => {
       expect(cleaned.tasks[1].name).toBe('Task 2 {{valid-field}} and {{valid-task-field}} and ');
     });
 
+    it('preserves kickoff fieldset field references in wfNameTemplate', () => {
+      const fieldsetFields: IExtraField[] = [
+        { apiName: 'fieldset-field-1', type: EExtraFieldType.Text, name: 'Fieldset Field 1', order: 1 } as unknown as IExtraField,
+        { apiName: 'fieldset-field-2', type: EExtraFieldType.Text, name: 'Fieldset Field 2', order: 2 } as unknown as IExtraField,
+      ];
+      const fieldsetsMap = new Map<string, IFieldsetData>([
+        ['my-fieldset', { apiName: 'my-fieldset', name: 'My Fieldset', fields: fieldsetFields } as IFieldsetData],
+      ]);
+
+      const template = createMockTemplate({
+        wfNameTemplate: 'Name: {{direct-field}} and {{fieldset-field-1}} and {{fieldset-field-2}} and {{invalid-field}} and {{date}}',
+        kickoff: {
+          ...getEmptyKickoff(),
+          fields: [{ apiName: 'direct-field', type: EExtraFieldType.Text, name: 'Direct', order: 1 } as unknown as IExtraField],
+          fieldsets: [{ apiName: 'my-fieldset', order: 1 }],
+        },
+      });
+
+      const cleaned = cleanTemplateReferences(template, fieldsetsMap);
+
+      expect(cleaned.wfNameTemplate).toBe('Name: {{direct-field}} and {{fieldset-field-1}} and {{fieldset-field-2}} and  and {{date}}');
+    });
+
     it('removes invalid field references from conditions', () => {
       const template = createMockTemplate({
         tasks: [
