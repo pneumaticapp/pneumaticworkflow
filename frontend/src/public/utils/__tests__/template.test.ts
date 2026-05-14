@@ -419,7 +419,7 @@ describe('template utilities', () => {
         { apiName: 'fieldset-field-2', type: EExtraFieldType.Text, name: 'Fieldset Field 2', order: 2 } as unknown as IExtraField,
       ];
       const fieldsetsMap = new Map<string, IFieldsetData>([
-        ['my-fieldset', { apiName: 'my-fieldset', name: 'My Fieldset', fields: fieldsetFields } as IFieldsetData],
+        ['my-fieldset', { id: 1, apiName: 'my-fieldset', name: 'My Fieldset', description: '', order: 0, fields: fieldsetFields }],
       ]);
 
       const template = createMockTemplate({

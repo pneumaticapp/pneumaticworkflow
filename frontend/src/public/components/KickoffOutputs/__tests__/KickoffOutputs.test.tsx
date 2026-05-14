@@ -39,6 +39,7 @@ describe('KickoffOutputs', () => {
     apiName: `fieldset-${Math.random()}`,
     name: 'Fieldset',
     description: '',
+    order: 0,
     fields: [],
     ...overrides,
   });

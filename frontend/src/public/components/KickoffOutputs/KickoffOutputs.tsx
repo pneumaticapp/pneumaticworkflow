@@ -51,7 +51,7 @@ export function KickoffOutputs({
 
   const orderedOutputs: TOutputItem[] = [
     ...(outputs || []).map((field): TOutputItem => ({ kind: 'field', order: field.order, data: field })),
-    ...(fieldsets || []).map((fs): TOutputItem => ({ kind: 'fieldset', order: fs.order!, data: fs })),
+    ...(fieldsets || []).map((fs): TOutputItem => ({ kind: 'fieldset', order: fs.order, data: fs })),
   ].sort((a, b) => b.order - a.order);
 
   if (isOnlyAttachmentsShown) {

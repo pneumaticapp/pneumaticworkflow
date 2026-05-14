@@ -89,6 +89,7 @@ describe('FeedItemHeader', () => {
           apiName: 'fs-1',
           name: 'Fieldset 1',
           description: '',
+          order: 0,
           fields: [
             makeField({ apiName: 'fs1-f1', order: 1, value: 'fieldset value' }),
           ],

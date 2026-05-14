@@ -189,7 +189,7 @@ export interface IFieldsetData {
   name: string;
   description: string;
   fields: IExtraField[];
-  order?: number;
+  order: number;
   labelPosition?: 'top' | 'left';
   /** From template list API; used for catalog UI (e.g. fieldset picker meta). */
   rulesCount?: number;

@@ -100,6 +100,7 @@ const mockFieldsetData: IFieldsetData = {
   apiName: 'fs-99',
   name: 'Extra Set',
   description: '',
+  order: 0,
   fields: [
     {
       name: 'Assignee',
