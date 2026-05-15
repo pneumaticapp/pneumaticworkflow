@@ -258,8 +258,8 @@ describe('getVariables', () => {
     expect(result).toHaveLength(2);
   });
 
-  it('returns only system variables when no kickoff or tasks provided', () => {
-    const result = getVariables({});
+  it('returns only system variables when kickoff and tasks are empty', () => {
+    const result = getVariables({ kickoff: { fields: [], fieldsets: [] }, tasks: [] });
 
     expect(result).toHaveLength(1);
     expect(result[0].apiName).toBe(WORKFLOW_STARTER_VARIABLE_API_NAME);

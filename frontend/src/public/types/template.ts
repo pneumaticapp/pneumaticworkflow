@@ -57,6 +57,8 @@ export interface ITaskFieldset {
   order: number;
 }
 
+export type TTemplateFieldFieldset = Pick<IFieldsetData, 'name' | 'description' | 'apiName' | 'fields'>;
+
 export interface ITemplateTask {
   id?: number;
   apiName: string;

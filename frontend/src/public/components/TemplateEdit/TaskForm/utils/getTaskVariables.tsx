@@ -1,8 +1,17 @@
+/* eslint-disable max-len */
 import * as React from 'react';
 import { useMemo } from 'react';
 import { useIntl } from 'react-intl';
 
-import { IKickoff, IExtraField, ITemplateTask, ITaskFieldset, EExtraFieldType, IFieldsetData } from '../../../../types/template';
+import {
+  IKickoff,
+  IExtraField,
+  ITemplateTask,
+  ITaskFieldset,
+  EExtraFieldType,
+  IFieldsetData,
+  TTemplateFieldFieldset,
+} from '../../../../types/template';
 import { normalizeSelections } from '../../utils/normalizeSelections';
 import { TTaskVariable } from '../../types';
 import { IGetLocalizedSystemVariableParams, IGetLocalizedSystemVariableReturn } from './types';
@@ -37,24 +46,31 @@ export function getLocalizedSystemVariable({
 }
 
 type TGetVariablesParam = {
-  kickoff?: Pick<IKickoff, 'fields' | 'fieldsets'>;
-  tasks?: (Pick<ITemplateTask, 'fields' | 'fieldsets' | 'apiName'> & { name?: ITemplateTask['name'] })[];
+  kickoff: Pick<IKickoff, 'fields'> & { fieldsets?: (ITaskFieldset | TTemplateFieldFieldset)[] };
+  tasks: (Pick<ITemplateTask, 'fields' | 'apiName'> & {
+    name?: ITemplateTask['name'];
+    fieldsets?: (ITaskFieldset | TTemplateFieldFieldset)[];
+  })[];
   templateId?: number;
   fieldsetsByApiName?: ReadonlyMap<string, IFieldsetData>;
 };
 
 function getVariablesFromSelectedFieldsets(
-  fieldsets: ITaskFieldset[] | undefined,
+  fieldsets: (ITaskFieldset | TTemplateFieldFieldset)[] | undefined,
   fieldsetsByApiName: ReadonlyMap<string, IFieldsetData> | undefined,
-  getSubtitle: (fieldset: IFieldsetData) => string,
-  getRichSubtitle: (fieldset: IFieldsetData) => React.ReactNode,
+  getSubtitle: (fieldset: Pick<IFieldsetData, 'name'>) => string,
+  getRichSubtitle: (fieldset: Pick<IFieldsetData, 'name'>) => React.ReactNode,
 ): TTaskVariable[] {
-  if (!fieldsetsByApiName || !fieldsets?.length) {
+  if (!fieldsets?.length) {
     return [];
   }
 
   return fieldsets.flatMap((taskFieldset) => {
-    const fieldsetData = fieldsetsByApiName.get(taskFieldset.apiName);
+    const fieldsetData: Pick<IFieldsetData, 'name' | 'fields'> | undefined =
+      'fields' in taskFieldset
+        ? taskFieldset
+        : fieldsetsByApiName?.get(taskFieldset.apiName);
+
     if (!fieldsetData) {
       return [];
     }
@@ -91,7 +107,7 @@ export function getFieldVariables({
   fieldsetsByApiName,
 }: TGetVariablesParam): TTaskVariable[] {
   const tasksVariables =
-    tasks?.flatMap((task) => {
+    tasks.flatMap((task) => {
       const taskName = task.name || '';
       const richTaskName = templateId ? (
         <StepName initialStepName={taskName} templateId={templateId} />
@@ -116,7 +132,7 @@ export function getFieldVariables({
       );
 
       return [...fromTaskFields, ...fromTaskFieldsets];
-    }) ?? [];
+    });
 
   const kickoffVariables = getKickoffVariables(kickoff, fieldsetsByApiName);
 
@@ -128,7 +144,7 @@ export function getVariables(params: TGetVariablesParam): TTaskVariable[] {
 }
 
 export function getKickoffVariables(
-  kickoff?: Pick<IKickoff, 'fields' | 'fieldsets'>,
+  kickoff?: Pick<IKickoff, 'fields'> & { fieldsets?: (ITaskFieldset | TTemplateFieldFieldset)[] },
   fieldsetsByApiName?: ReadonlyMap<string, IFieldsetData>,
 ) {
   const fromFields = kickoff?.fields.map((field) => getVariableFromField(field, 'Kick-off form')) ?? [];
