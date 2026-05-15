@@ -49,7 +49,6 @@ from src.processes.models.templates.template import (
 )
 from src.processes.serializers.templates.kickoff import (
     KickoffListSerializer,
-    KickoffOnlyFieldsSerializer,
     KickoffSerializer,
 )
 from src.processes.serializers.templates.mixins import (
@@ -941,7 +940,7 @@ class TemplateOnlyFieldsSerializer(ModelSerializer):
             'tasks',
         )
 
-    kickoff = KickoffOnlyFieldsSerializer(required=False, read_only=True)
+    kickoff = KickoffListSerializer(required=False, read_only=True)
     tasks = TemplateTaskOnlyFieldsSerializer(
         many=True,
         required=False,
@@ -957,7 +956,7 @@ class TemplateOnlyFieldsSerializer(ModelSerializer):
         # TemplateSerializer cannot return a single Kickoff object
         # because the Template related with Kickoff by foreign key
         # instead of one to one relation. Getting the object manually:
-        kickoff_slz = KickoffOnlyFieldsSerializer(
+        kickoff_slz = KickoffListSerializer(
             instance=self.instance.kickoff_instance,
         )
         data['kickoff'] = kickoff_slz.data

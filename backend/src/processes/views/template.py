@@ -32,6 +32,7 @@ from src.processes.models.templates.system_template import SystemTemplate
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
 from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.fields import FieldTemplateSelection
 from src.processes.permissions import (
     TemplateAccessPermission,
     TemplateAdminOwnerPermission,
@@ -288,7 +289,17 @@ class TemplateViewSet(
                             Prefetch(
                                 lookup='fields',
                                 queryset=(
-                                    FieldTemplate.objects.all()
+                                    FieldTemplate.objects.prefetch_related(
+                                        Prefetch(
+                                            'selections',
+                                            queryset=(
+                                                FieldTemplateSelection.objects
+                                                .order_by('id')
+                                            ),
+                                            to_attr='selections_values',
+                                        ),
+                                    )
+                                    .all()
                                     .order_by('-order')
                                 ),
                             ),

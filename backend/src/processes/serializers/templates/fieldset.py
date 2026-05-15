@@ -15,7 +15,6 @@ from src.processes.models.templates.fieldset import (
 )
 from src.processes.serializers.templates.field import (
     FieldTemplateSerializer,
-    FieldTemplateShortViewSerializer,
 )
 
 
@@ -95,22 +94,3 @@ class FieldsetTemplateSerializer(
             many=True,
             default=list,
         ).data
-
-
-class FieldsetTemplateShortViewSerializer(ModelSerializer):
-
-    class Meta:
-        model = FieldsetTemplate
-        fields = (
-            'name',
-            'description',
-            'fields',
-            'api_name',
-        )
-
-    api_name = CharField(required=False, max_length=200)
-    fields = FieldTemplateShortViewSerializer(
-        many=True,
-        required=False,
-        read_only=True,
-    )

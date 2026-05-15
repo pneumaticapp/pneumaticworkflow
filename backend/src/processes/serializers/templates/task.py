@@ -34,11 +34,8 @@ from src.processes.serializers.templates.field import (
     FieldTemplateSerializer,
     FieldTemplateShortViewSerializer,
 )
-from src.processes.serializers.templates.fieldset import (
-    FieldsetTemplateShortViewSerializer,
-)
 from src.processes.serializers.templates.fieldset_link import (
-    FieldsetTemplateTaskTemplateSerializer,
+    FieldsetTemplateTaskTemplateSerializer, FieldsetTemplateTaskListSerializer,
 )
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
@@ -646,10 +643,9 @@ class TemplateTaskOnlyFieldsSerializer(ModelSerializer):
         default=[],
         read_only=True,
     )
-    fieldsets = FieldsetTemplateShortViewSerializer(
+    fieldsets = FieldsetTemplateTaskListSerializer(
+        source='fieldsettemplatetasktemplate_set',
         many=True,
-        default=[],
-        read_only=True,
     )
 
 
