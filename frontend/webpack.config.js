@@ -1,20 +1,14 @@
 const webpack = require('webpack');
 const path = require('path');
-const dotenv = require('dotenv');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
-const env = dotenv.config().parsed;
 const { NODE_ENV = 'development', MCS_RUN_ENV = 'local' } = process.env;
 const devMode = NODE_ENV !== 'production';
 const fontsDir = path.resolve(__dirname, './src/public/assets');
 
-const envKeys = Object.keys(Object.assign(env, process.env)).reduce((prev, next) => {
-  prev[next] = JSON.stringify(env[next]);
-  return prev;
-}, {});
 
 const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN;
 const sentryRelease = process.env.SENTRY_RELEASE;
@@ -97,7 +91,8 @@ module.exports = {
   },
   plugins: [
     new webpack.DefinePlugin({
-      'process.env': envKeys,
+      'process.env.NODE_ENV': JSON.stringify(NODE_ENV),
+      'process.env.MCS_RUN_ENV': JSON.stringify(MCS_RUN_ENV),
     }),
     new webpack.HotModuleReplacementPlugin(),
     new MiniCssExtractPlugin({

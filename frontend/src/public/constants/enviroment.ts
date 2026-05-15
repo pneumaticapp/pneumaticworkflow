@@ -1,42 +1,56 @@
-export const envLanguageCode: string | undefined  =     process.env.LANGUAGE_CODE;
-export const envBackendURL: string | undefined =        process.env.BACKEND_URL;
-export const envSentry: string | undefined =            process.env.SENTRY_DSN;
-export const envWssURL: string | undefined =            process.env.WSS_URL;
-export const envBackendPrivateIP: string | undefined =  process.env.BACKEND_PRIVATE_IP;
+const getEnvVar = (key: string): string | undefined => {
+  if (typeof window !== 'undefined') {
+    const pneumaticConfig = (window as any).__pneumaticConfig;
+    if (pneumaticConfig?.config?.featureFlags && pneumaticConfig.config.featureFlags[key] !== undefined) {
+      return pneumaticConfig.config.featureFlags[key];
+    }
+  }
+  if (typeof process !== 'undefined' && process.env) {
+    return process.env[key];
+  }
+  return undefined;
+};
+
+export const envLanguageCode: string | undefined  =     getEnvVar('LANGUAGE_CODE');
+export const envBackendURL: string | undefined =        getEnvVar('BACKEND_URL');
+export const envSentry: string | undefined =            getEnvVar('SENTRY_DSN');
+export const envWssURL: string | undefined =            getEnvVar('WSS_URL');
+export const envBackendPrivateIP: string | undefined =  getEnvVar('BACKEND_PRIVATE_IP');
 export const envDevMode: boolean =  process.env.NODE_ENV === 'development';
 
-export const isEnvCaptcha: boolean =    process.env.CAPTCHA !== 'no';
-export const isEnvGoogleAuth: boolean = process.env.GOOGLE_AUTH !== 'no';
-export const isEnvMsAuth: boolean =     process.env.MS_AUTH !== 'no';
-export const isEnvSSOAuth: boolean =    process.env.SSO_AUTH !== 'no';
-export const isEnvSignup: boolean =     process.env.SIGNUP !== 'no';
-export const isEnvBilling: boolean =    process.env.BILLING !== 'no';
-export const isEnvAi: boolean =         process.env.AI !== 'no';
-export const isEnvPush: boolean =       process.env.PUSH !== 'no';
-export const isEnvStorage: boolean =    process.env.STORAGE !== 'no';
-export const isEnvAnalytics: boolean =  process.env.ANALYTICS !== 'no';
-export const envSSOProvider: string | undefined = process.env.SSO_PROVIDER;
+export const isEnvCaptcha: boolean =    getEnvVar('CAPTCHA') !== 'no';
+export const isEnvGoogleAuth: boolean = getEnvVar('GOOGLE_AUTH') !== 'no';
+export const isEnvMsAuth: boolean =     getEnvVar('MS_AUTH') !== 'no';
+export const isEnvSSOAuth: boolean =    getEnvVar('SSO_AUTH') !== 'no';
+export const isEnvSignup: boolean =     getEnvVar('SIGNUP') !== 'no';
+export const isEnvBilling: boolean =    getEnvVar('BILLING') !== 'no';
+export const isEnvAi: boolean =         getEnvVar('AI') !== 'no';
+export const isEnvPush: boolean =       getEnvVar('PUSH') !== 'no';
+export const isEnvStorage: boolean =    getEnvVar('STORAGE') !== 'no';
+export const isEnvAnalytics: boolean =  getEnvVar('ANALYTICS') !== 'no';
+export const envSSOProvider: string | undefined = getEnvVar('SSO_PROVIDER');
 
 
 // New ENV
 
 
-export const envHost: string | undefined = process.env.HOST;
-export const envAnalyticsId: string | undefined = process.env.ANALYTICS_ID;
-export const envRecaptchaSecret: string | undefined = process.env.RECAPTCHA_SECRET;
+export const envHost: string | undefined = getEnvVar('HOST');
+export const envAnalyticsId: string | undefined = getEnvVar('ANALYTICS_ID');
+export const envRecaptchaSecret: string | undefined = getEnvVar('RECAPTCHA_SECRET');
 
-export const envGoogleClientId: string | undefined = process.env.GOOGLE_CLIENT_ID;
-export const envGoogleClientSecret: string | undefined = process.env.GOOGLE_CLIENT_SECRET;
+export const envGoogleClientId: string | undefined = getEnvVar('GOOGLE_CLIENT_ID');
+export const envGoogleClientSecret: string | undefined = getEnvVar('GOOGLE_CLIENT_SECRET');
+export const envSentryRelease: string | undefined = getEnvVar('SENTRY_RELEASE');
 
 export const envFirebase: any = {
-  vapidKey: process.env.FIREBASE_VAPID_KEY,
+  vapidKey: getEnvVar('FIREBASE_VAPID_KEY'),
   config: {
-    apiKey: process.env.FIREBASE_API_KEY,
-    authDomain: process.env.FIREBASE_AUTH_DOMAIN,
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
-    messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
-    appId: process.env.FIREBASE_APP_ID,
-    measurementId: process.env.FIREBASE_MEASUREMENT_ID
+    apiKey: getEnvVar('FIREBASE_API_KEY'),
+    authDomain: getEnvVar('FIREBASE_AUTH_DOMAIN'),
+    projectId: getEnvVar('FIREBASE_PROJECT_ID'),
+    storageBucket: getEnvVar('FIREBASE_STORAGE_BUCKET'),
+    messagingSenderId: getEnvVar('FIREBASE_MESSAGING_SENDER_ID'),
+    appId: getEnvVar('FIREBASE_APP_ID'),
+    measurementId: getEnvVar('FIREBASE_MEASUREMENT_ID')
   }
 };
