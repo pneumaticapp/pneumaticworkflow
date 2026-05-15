@@ -6,6 +6,9 @@ import classnames from 'classnames';
 import { RouteComponentProps } from 'react-router-dom';
 
 import InfiniteScroll from 'react-infinite-scroll-component';
+import { history } from '../../utils/history';
+import { ERoutes } from '../../constants/routes';
+
 import { IFieldsetListItem } from '../../types/fieldset';
 
 import { PageTitle } from '../PageTitle';
@@ -36,10 +39,13 @@ export function Fieldsets({ match }: TFieldsetsProps) {
   const fieldsetsSorting = useSelector(getFieldsetsSorting);
 
   useEffect(() => {
-    if (numericTemplateId) {
-      dispatch(setTemplateId(numericTemplateId));
-      dispatch(loadFieldsets({ offset: 0, templateId: numericTemplateId }));
+    if (Number.isNaN(numericTemplateId)) {
+      history.push(ERoutes.Templates);
+      return;
     }
+
+    dispatch(setTemplateId(numericTemplateId));
+    dispatch(loadFieldsets({ offset: 0, templateId: numericTemplateId }));
   }, [dispatch, fieldsetsSorting, numericTemplateId]);
 
   const handleOpenCreateModal = () => {

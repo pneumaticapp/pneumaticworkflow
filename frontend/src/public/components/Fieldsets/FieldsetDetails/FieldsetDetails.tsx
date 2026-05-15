@@ -82,15 +82,19 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
 
   useEffect(() => {
     const id = Number(matchParamId);
+    const templateId = Number(matchTemplateId);
+
+    if (Number.isNaN(templateId)) {
+      history.push(ERoutes.Templates);
+      return;
+    }
     if (Number.isNaN(id)) {
       history.push(fieldsetListRoute);
       return;
     }
-    
-    dispatch(setTemplateId(Number(matchTemplateId)));
 
+    dispatch(setTemplateId(templateId));
     if (fieldset?.id === id) return;
-
     dispatch(loadCurrentFieldset({ id }));
   }, [matchParamId, matchTemplateId]);
 
