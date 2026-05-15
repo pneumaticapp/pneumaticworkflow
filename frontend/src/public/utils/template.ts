@@ -12,6 +12,8 @@ import {
   ETemplateOwnerType,
   ETemplateOwnerRole,
   ITemplateOwner,
+  IExtraField,
+  ITaskFieldset,
 } from '../types/template';
 import { getUrlParams } from './getUrlParams';
 import { DEFAULT_TEMPLATE_NAME } from '../components/TemplateEdit/constants';
@@ -136,9 +138,9 @@ export const getNormalizedTask = (
   };
 };
 
-const collectFieldApiNames = (
-  fields: Array<{ apiName: string }>,
-  fieldsets: Array<{ apiName: string }>,
+export const collectFieldApiNames = (
+  fields: IExtraField[],
+  fieldsets: ITaskFieldset[],
   fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>,
   validApiNames: Set<string>,
 ) => {
@@ -163,7 +165,7 @@ export const cleanTemplateReferences = (
   const WF_NAME_SYSTEM_VARS = new Set(['date', 'template-name', 'workflow-id', 'workflow-starter']);
 
   const validApiNames = new Set<string>();
-  collectFieldApiNames(template.kickoff?.fields || [], template.kickoff?.fieldsets || [], fieldsetsByApiName, validApiNames);
+  collectFieldApiNames(template.kickoff.fields, template.kickoff.fieldsets, fieldsetsByApiName, validApiNames);
 
   const removeInvalidReferences = (
     text: string | null | undefined,
@@ -228,7 +230,7 @@ export const cleanTemplateReferences = (
   });
 
   const validKickoffApiNames = new Set<string>();
-  collectFieldApiNames(template.kickoff?.fields || [], template.kickoff?.fieldsets || [], fieldsetsByApiName, validKickoffApiNames);
+  collectFieldApiNames(template.kickoff.fields, template.kickoff.fieldsets, fieldsetsByApiName, validKickoffApiNames);
 
   return {
     ...template,
