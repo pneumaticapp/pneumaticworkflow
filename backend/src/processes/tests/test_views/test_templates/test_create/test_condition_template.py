@@ -2387,6 +2387,109 @@ def test_create__skip_task_predicate_type_task_completed_or_skipped__ok(
 
 
 @pytest.mark.parametrize(
+    'operator',
+    (PredicateOperator.SKIPPED, PredicateOperator.COMPLETED_OR_SKIPPED),
+)
+def test_create__start_and_skip_condition_on_the_same_task__allowed(
+    mocker,
+    operator,
+    api_client,
+):
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    mocker.patch(
+        'src.processes.serializers.templates.'
+        'condition.AnalyticService.templates_task_condition_created',
+    )
+    task_1_api_name = 'task-1'
+    task_2_api_name = 'task-2'
+    condition_1 = {
+        'order': 1,
+        'action': ConditionAction.START_TASK,
+        'rules': [
+            {
+                'predicates': [
+                    {
+                        'field_type': PredicateType.TASK,
+                        'operator': operator,
+                        'api_name': 'predicate-start',
+                        'field': task_1_api_name,
+                        'value': None,
+                    },
+                ],
+            },
+        ],
+    }
+    condition_2 = {
+        'order': 2,
+        'action': ConditionAction.SKIP_TASK,
+        'rules': [
+            {
+                'predicates': [
+                    {
+                        'field_type': PredicateType.TASK,
+                        'operator': operator,
+                        'api_name': 'predicate-skip',
+                        'field': task_1_api_name,
+                        'value': None,
+                    },
+                ],
+            },
+        ],
+    }
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'Step 1',
+                    'api_name': task_1_api_name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+                {
+                    'number': 2,
+                    'name': 'Step 2',
+                    'api_name': task_2_api_name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'conditions': [
+                        condition_1,
+                        condition_2,
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+
+
+@pytest.mark.parametrize(
     'case', (
         (PredicateOperator.EQUAL, FieldType.STRING, 'yes'),
         (PredicateOperator.NOT_EQUAL, FieldType.STRING, 'yes'),

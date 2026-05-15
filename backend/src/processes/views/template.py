@@ -32,6 +32,7 @@ from src.processes.models.templates.system_template import SystemTemplate
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
 from src.processes.models.templates.owner import TemplateOwner
+from src.processes.models.templates.fields import FieldTemplateSelection
 from src.processes.permissions import (
     TemplateAccessPermission,
     TemplateAdminOwnerPermission,
@@ -53,6 +54,9 @@ from src.processes.serializers.templates.task import (
     TemplateStepFilterSerializer,
     TemplateStepNameSerializer,
 )
+from src.processes.serializers.templates.template_fields import (
+    TemplateOnlyFieldsSerializer,
+)
 from src.processes.serializers.templates.template import (
     TemplateAiSerializer,
     TemplateByNameSerializer,
@@ -60,7 +64,6 @@ from src.processes.serializers.templates.template import (
     TemplateExportFilterSerializer,
     TemplateListFilterSerializer,
     TemplateListSerializer,
-    TemplateOnlyFieldsSerializer,
     TemplateSerializer,
     TemplateTitlesByEventsSerializer,
     TemplateTitlesByTasksSerializer,
@@ -288,7 +291,17 @@ class TemplateViewSet(
                             Prefetch(
                                 lookup='fields',
                                 queryset=(
-                                    FieldTemplate.objects.all()
+                                    FieldTemplate.objects.prefetch_related(
+                                        Prefetch(
+                                            'selections',
+                                            queryset=(
+                                                FieldTemplateSelection.objects
+                                                .order_by('id')
+                                            ),
+                                            to_attr='selections_values',
+                                        ),
+                                    )
+                                    .all()
                                     .order_by('-order')
                                 ),
                             ),

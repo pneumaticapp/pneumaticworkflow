@@ -9,7 +9,10 @@ from src.processes.enums import (
     OwnerType,
     PerformerType,
 )
-from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateSelection,
+)
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.template import Template
 from src.processes.models.workflows.task import TaskPerformer
@@ -21,7 +24,7 @@ from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_template,
     create_test_workflow,
-    create_test_fieldset_template,
+    create_test_fieldset_template, create_test_dataset,
 )
 
 pytestmark = pytest.mark.django_db
@@ -531,12 +534,31 @@ def test_fields__kickoff_fieldset__ok(api_client):
     user = create_test_owner(account=account)
     template = create_test_template(user, tasks_count=1, is_active=True)
     kickoff = template.kickoff_instance
+    fieldset_order = 999
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         kickoff=kickoff,
+        order=fieldset_order,
     )
-    field = fieldset.fields.first()
+    fieldset.fields.delete()
+    dataset = create_test_dataset(account=account)
+    field = FieldTemplate.objects.create(
+        name='First task performer',
+        description='Some description',
+        type=FieldType.DROPDOWN,
+        fieldset=fieldset,
+        template=template,
+        order=1,
+        api_name='field-1',
+        account=account,
+        dataset=dataset,
+    )
+    FieldTemplateSelection.objects.create(
+        field_template=field,
+        value='Value 1',
+        template=template,
+    )
     api_client.token_authenticate(user)
 
     # act
@@ -550,8 +572,12 @@ def test_fields__kickoff_fieldset__ok(api_client):
     fieldset_data = data['kickoff']['fieldsets'][0]
     assert fieldset_data['name'] == fieldset.name
     assert fieldset_data['description'] == fieldset.description
+    assert fieldset_data['label_position'] == fieldset.label_position
+    assert fieldset_data['layout'] == fieldset.layout
     assert fieldset_data['api_name'] == fieldset.api_name
+    assert fieldset_data['order'] == fieldset_order
     assert len(fieldset_data['fields']) == 1
+
     field_data = fieldset_data['fields'][0]
     assert field_data['name'] == field.name
     assert field_data['type'] == field.type
@@ -559,6 +585,8 @@ def test_fields__kickoff_fieldset__ok(api_client):
     assert field_data['description'] == field.description
     assert field_data['is_hidden'] == field.is_hidden
     assert field_data['api_name'] == field.api_name
+    assert 'selections' not in field_data
+    assert 'dataset' not in field_data
 
 
 def test_fields__task_fieldset__ok(api_client):
@@ -567,12 +595,31 @@ def test_fields__task_fieldset__ok(api_client):
     user = create_test_owner(account=account)
     template = create_test_template(user, tasks_count=1, is_active=True)
     task = template.tasks.get(number=1)
+    fieldset_order = 888
     fieldset = create_test_fieldset_template(
         account=account,
         template=template,
         task=task,
+        order=fieldset_order,
     )
-    field = fieldset.fields.first()
+    fieldset.fields.delete()
+    dataset = create_test_dataset(account=account)
+    field = FieldTemplate.objects.create(
+        name='First task performer',
+        description='Some description',
+        type=FieldType.DROPDOWN,
+        fieldset=fieldset,
+        template=template,
+        order=1,
+        api_name='field-1',
+        account=account,
+        dataset=dataset,
+    )
+    FieldTemplateSelection.objects.create(
+        field_template=field,
+        value='Value 1',
+        template=template,
+    )
     api_client.token_authenticate(user)
 
     # act
@@ -586,6 +633,9 @@ def test_fields__task_fieldset__ok(api_client):
     fieldset_data = data['tasks'][0]['fieldsets'][0]
     assert fieldset_data['name'] == fieldset.name
     assert fieldset_data['description'] == fieldset.description
+    assert fieldset_data['label_position'] == fieldset.label_position
+    assert fieldset_data['layout'] == fieldset.layout
+    assert fieldset_data['order'] == fieldset_order
     assert fieldset_data['api_name'] == fieldset.api_name
     assert len(fieldset_data['fields']) == 1
     field_data = fieldset_data['fields'][0]
@@ -595,3 +645,5 @@ def test_fields__task_fieldset__ok(api_client):
     assert field_data['description'] == field.description
     assert field_data['is_hidden'] == field.is_hidden
     assert field_data['api_name'] == field.api_name
+    assert 'selections' not in field_data
+    assert 'dataset' not in field_data

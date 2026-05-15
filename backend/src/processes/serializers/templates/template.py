@@ -49,7 +49,6 @@ from src.processes.models.templates.template import (
 )
 from src.processes.serializers.templates.kickoff import (
     KickoffListSerializer,
-    KickoffOnlyFieldsSerializer,
     KickoffSerializer,
 )
 from src.processes.serializers.templates.mixins import (
@@ -63,7 +62,6 @@ from src.processes.serializers.templates.task import (
     ShortTaskSerializer,
     TaskTemplatePrivilegesSerializer,
     TaskTemplateSerializer,
-    TemplateTaskOnlyFieldsSerializer,
 )
 from src.processes.services.templates.fieldsets.fieldset import (
     FieldSetTemplateService,
@@ -930,43 +928,6 @@ class TemplateListSerializer(ModelSerializer):
                 is_deleted=False,
             ),
         ).exists()
-
-
-class TemplateOnlyFieldsSerializer(ModelSerializer):
-    class Meta:
-        model = Template
-        fields = (
-            'id',
-            'kickoff',
-            'tasks',
-        )
-
-    kickoff = KickoffOnlyFieldsSerializer(required=False, read_only=True)
-    tasks = TemplateTaskOnlyFieldsSerializer(
-        many=True,
-        required=False,
-        read_only=True,
-    )
-
-    def to_representation(self, data: Dict[str, Any]):
-
-        data = super().to_representation(data)
-        if data.get('tasks') is None:
-            data['tasks'] = []
-
-        # TemplateSerializer cannot return a single Kickoff object
-        # because the Template related with Kickoff by foreign key
-        # instead of one to one relation. Getting the object manually:
-        kickoff_slz = KickoffOnlyFieldsSerializer(
-            instance=self.instance.kickoff_instance,
-        )
-        data['kickoff'] = kickoff_slz.data
-        return data
-
-    def get_response_data(self) -> Dict[str, Any]:
-        if self.instance.is_active:
-            return self.data
-        return self.instance.get_draft()
 
 
 class TemplateTitlesByWorkflowsSerializer(

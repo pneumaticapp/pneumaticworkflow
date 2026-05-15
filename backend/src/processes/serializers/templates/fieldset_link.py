@@ -62,3 +62,30 @@ class FieldsetTemplateKickoffListSerializer(ModelSerializer):
         source='fieldset.fields',
         many=True,
     )
+
+
+class FieldsetTemplateTaskListSerializer(ModelSerializer):
+
+    class Meta:
+        model = FieldsetTemplateTaskTemplate
+        fields = (
+            'order',
+            'name',
+            'description',
+            'fields',
+            'api_name',
+            'label_position',
+            'layout',
+        )
+
+    name = CharField(source='fieldset.name')
+    description = CharField(source='fieldset.description')
+    api_name = CharField(source='fieldset.api_name')
+    label_position = CharField(
+        source='fieldset.label_position',
+    )
+    layout = CharField(source='fieldset.layout')
+    fields = FieldTemplateSerializer(
+        source='fieldset.fields',
+        many=True,
+    )

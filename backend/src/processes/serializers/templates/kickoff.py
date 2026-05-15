@@ -11,10 +11,6 @@ from src.processes.models.templates.kickoff import Kickoff
 from src.processes.serializers.templates.field import (
     FieldTemplateListSerializer,
     FieldTemplateSerializer,
-    FieldTemplateShortViewSerializer,
-)
-from src.processes.serializers.templates.fieldset import (
-    FieldsetTemplateShortViewSerializer,
 )
 from src.processes.serializers.templates.fieldset_link import (
     FieldsetTemplateKickoffSerializer,
@@ -117,33 +113,6 @@ class KickoffSerializer(
         return instance
 
 
-class KickoffOnlyFieldsSerializer(ModelSerializer):
-    class Meta:
-        model = Kickoff
-        fields = (
-            'fields',
-            'fieldsets',
-        )
-
-    fields = FieldTemplateShortViewSerializer(
-        many=True,
-        default=[],
-        read_only=True,
-    )
-    fieldsets = FieldsetTemplateShortViewSerializer(
-        many=True,
-        default=[],
-        read_only=True,
-    )
-
-    def to_representation(self, instance):
-        # TODO Delete when the Template <-> Kickoff relation becomes o2o
-        from django.db import models  # noqa : PLC0415
-        if isinstance(instance, models.Manager):
-            instance = instance.first()
-        return super().to_representation(instance)
-
-
 class KickoffListSerializer(ModelSerializer):
 
     class Meta:
@@ -158,3 +127,10 @@ class KickoffListSerializer(ModelSerializer):
         source='fieldsettemplatekickoff_set',
         many=True,
     )
+
+    def to_representation(self, instance):
+        # TODO Delete when the Template <-> Kickoff relation becomes o2o
+        from django.db import models  # noqa : PLC0415
+        if isinstance(instance, models.Manager):
+            instance = instance.first()
+        return super().to_representation(instance)
