@@ -54,6 +54,9 @@ from src.processes.serializers.templates.task import (
     TemplateStepFilterSerializer,
     TemplateStepNameSerializer,
 )
+from src.processes.serializers.templates.template_fields import (
+    TemplateOnlyFieldsSerializer,
+)
 from src.processes.serializers.templates.template import (
     TemplateAiSerializer,
     TemplateByNameSerializer,
@@ -61,7 +64,6 @@ from src.processes.serializers.templates.template import (
     TemplateExportFilterSerializer,
     TemplateListFilterSerializer,
     TemplateListSerializer,
-    TemplateOnlyFieldsSerializer,
     TemplateSerializer,
     TemplateTitlesByEventsSerializer,
     TemplateTitlesByTasksSerializer,

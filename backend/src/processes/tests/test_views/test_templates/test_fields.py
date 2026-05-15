@@ -554,7 +554,7 @@ def test_fields__kickoff_fieldset__ok(api_client):
         account=account,
         dataset=dataset,
     )
-    selection = FieldTemplateSelection.objects.create(
+    FieldTemplateSelection.objects.create(
         field_template=field,
         value='Value 1',
         template=template,
@@ -585,13 +585,8 @@ def test_fields__kickoff_fieldset__ok(api_client):
     assert field_data['description'] == field.description
     assert field_data['is_hidden'] == field.is_hidden
     assert field_data['api_name'] == field.api_name
-    assert field_data['selections'] == [
-        {
-            'value': selection.value,
-            'api_name': selection.api_name,
-        },
-    ]
-    assert field_data['dataset'] == dataset.id
+    assert 'selections' not in field_data
+    assert 'dataset' not in field_data
 
 
 def test_fields__task_fieldset__ok(api_client):
@@ -620,7 +615,7 @@ def test_fields__task_fieldset__ok(api_client):
         account=account,
         dataset=dataset,
     )
-    selection = FieldTemplateSelection.objects.create(
+    FieldTemplateSelection.objects.create(
         field_template=field,
         value='Value 1',
         template=template,
@@ -650,10 +645,5 @@ def test_fields__task_fieldset__ok(api_client):
     assert field_data['description'] == field.description
     assert field_data['is_hidden'] == field.is_hidden
     assert field_data['api_name'] == field.api_name
-    assert field_data['selections'] == [
-        {
-            'value': selection.value,
-            'api_name': selection.api_name,
-        },
-    ]
-    assert field_data['dataset'] == dataset.id
+    assert 'selections' not in field_data
+    assert 'dataset' not in field_data

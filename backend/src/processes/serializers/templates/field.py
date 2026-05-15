@@ -215,19 +215,6 @@ class FieldTemplateSerializer(
         return instance
 
 
-class FieldTemplateShortViewSerializer(ModelSerializer):
-    class Meta:
-        model = FieldTemplate
-        fields = (
-            'name',
-            'type',
-            'order',
-            'description',
-            'is_hidden',
-            'api_name',
-        )
-
-
 class FieldTemplateListSerializer(ModelSerializer):
 
     class Meta:

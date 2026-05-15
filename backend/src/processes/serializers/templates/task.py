@@ -32,10 +32,9 @@ from src.processes.serializers.templates.condition import (
 )
 from src.processes.serializers.templates.field import (
     FieldTemplateSerializer,
-    FieldTemplateShortViewSerializer,
 )
 from src.processes.serializers.templates.fieldset_link import (
-    FieldsetTemplateTaskTemplateSerializer, FieldsetTemplateTaskListSerializer,
+    FieldsetTemplateTaskTemplateSerializer,
 )
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
@@ -624,29 +623,6 @@ class TemplateStepNameSerializer(ModelSerializer):
             'number',
             'api_name',
         )
-
-
-class TemplateTaskOnlyFieldsSerializer(ModelSerializer):
-
-    class Meta:
-        model = TaskTemplate
-        fields = (
-            'name',
-            'number',
-            'api_name',
-            'fields',
-            'fieldsets',
-        )
-
-    fields = FieldTemplateShortViewSerializer(
-        many=True,
-        default=[],
-        read_only=True,
-    )
-    fieldsets = FieldsetTemplateTaskListSerializer(
-        source='fieldsettemplatetasktemplate_set',
-        many=True,
-    )
 
 
 class TaskTemplatePrivilegesSerializer(ModelSerializer):
