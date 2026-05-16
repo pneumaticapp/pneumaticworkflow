@@ -1,4 +1,4 @@
-import { IExtraField, IFieldsetData, ITaskFieldset } from '../../../types/template';
+import { IExtraField, IFieldsetData, ITaskFieldset, TRuntimeMergedOutputPart, TTemplateFieldFieldset } from '../../../types/template';
 
 export type TMergedTaskOutputRow =
   | { kind: 'field'; field: IExtraField }
@@ -70,17 +70,16 @@ export function normalizeMergedTaskOutputOrders(
   return { nextFields, fieldsetOrderPatches };
 }
 
-export type TRuntimeMergedOutputPart =
-  | { kind: 'field'; field: IExtraField }
-  | { kind: 'fieldset'; data: IFieldsetData };
-
 function runtimeOrder(part: TRuntimeMergedOutputPart): number {
-  return part.kind === 'field' ? part.field.order : part.data.order ?? 0;
+  if (part.kind === 'fieldset') return part.data.order ?? 0;
+  if (part.kind === 'field') return part.field.order;
+
+  return 0;
 }
 
 export function buildRuntimeMergedOutputParts(
   output: IExtraField[],
-  fieldsets: IFieldsetData[] | undefined,
+  fieldsets: IFieldsetData[] | TTemplateFieldFieldset[] | undefined,
 ): TRuntimeMergedOutputPart[] {
   const rows: TRuntimeMergedOutputPart[] = [
     ...output.map((field) => ({ kind: 'field' as const, field })),
@@ -92,7 +91,7 @@ export function buildRuntimeMergedOutputParts(
       return delta;
     }
     if (a.kind === 'fieldset' && b.kind === 'fieldset') {
-      return b.data.id - a.data.id;
+      return b.data.apiName.localeCompare(a.data.apiName);
     }
     if (a.kind === 'field' && b.kind === 'field') {
       return b.field.apiName.localeCompare(a.field.apiName);

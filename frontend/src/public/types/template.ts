@@ -47,17 +47,24 @@ export interface ITemplateOwner {
 export type ITemplateViewer = ITemplateOwner;
 export type ITemplateStarter = ITemplateOwner;
 
-export type TTransformedTask =
-  | { apiName: string; name: string; needSteName: null; fields: TSystemField[] }
-  | (Pick<ITemplateTask, 'apiName' | 'fields' | 'name'> & { needSteName?: boolean })
-  | (Pick<IKickoff, 'fields'> & { apiName: string; name: string; needSteName: null });
+export type TRuntimeMergedOutputPart =
+  | { kind: 'field'; field: IExtraField }
+  | { kind: 'fieldset'; data: IFieldsetData | TTemplateFieldFieldset }
+  | { kind: 'system'; field: TSystemField };
+
+export type TTransformedTask = {
+  apiName: string;
+  name: string;
+  needSteName?: boolean | null;
+  mergedOutputs: TRuntimeMergedOutputPart[];
+};
 
 export interface ITaskFieldset {
   apiName: string;
   order: number;
 }
 
-export type TTemplateFieldFieldset = Pick<IFieldsetData, 'name' | 'description' | 'apiName' | 'fields'>;
+export type TTemplateFieldFieldset = Pick<IFieldsetData, 'name' | 'description' | 'apiName' | 'fields' | 'order'>;
 
 export interface ITemplateTask {
   id?: number;

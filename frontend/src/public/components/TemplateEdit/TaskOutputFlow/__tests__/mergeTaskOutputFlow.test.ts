@@ -58,6 +58,6 @@ describe('mergeTaskOutputFlow', () => {
       [field('x', 1), field('y', 3)],
       [fs(9, 2)],
     );
-    expect(parts.map((p) => (p.kind === 'field' ? p.field.apiName : p.data.id))).toEqual(['y', 9, 'x']);
+    expect(parts.map((output) => (output.kind === 'fieldset' ? output.data.apiName : output.field.apiName))).toEqual(['y', 'fs-9', 'x']);
   });
 });

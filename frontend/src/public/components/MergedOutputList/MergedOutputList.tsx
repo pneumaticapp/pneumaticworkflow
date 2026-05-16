@@ -35,9 +35,10 @@ export function MergedOutputList({
             />
           );
         }
-        return (
+        if (part.kind === 'fieldset') {
+          return (
           <FieldsetFieldGroup
-            key={part.data.id}
+            key={part.data.apiName}
             title={part.data.name}
             description={part.data.description}
             fields={part.data.fields}
@@ -47,7 +48,10 @@ export function MergedOutputList({
             accountId={accountId}
             fieldClassName={fieldClassName}
           />
-        );
+          );
+        }
+
+        return null;
       })}
     </>
   );
