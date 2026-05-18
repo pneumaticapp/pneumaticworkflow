@@ -33,8 +33,13 @@ POSTGRES_PASSWORD="postgres_password"
 POSTGRES_DB="postgres_db"
 
 while IFS='=' read -r key value; do
-  key=$(echo "$key" | xargs)
-  value=$(echo "$value" | xargs)
+  key=$(echo "$key" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+  value=$(echo "$value" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+
+  [ -z "$key" ] && continue
+  [[ "$key" == \#* ]] && continue
+
+  value=$(echo "$value" | sed 's/[[:space:]]*#.*$//;s/[[:space:]]*$//')
 
   case "$key" in
     POSTGRES_HOST)     POSTGRES_HOST="$value" ;;
@@ -49,4 +54,4 @@ done < "$ENV_FILE"
 # =============================================================================
 
 print_info "Connecting to database \"$POSTGRES_DB\" as user \"$POSTGRES_USER\"..."
-docker exec -it pneumatic-postgres sh -c "PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER $POSTGRES_DB"
+docker exec -e "PGPASSWORD=$POSTGRES_PASSWORD" -it pneumatic-postgres psql -U "$POSTGRES_USER" "$POSTGRES_DB"

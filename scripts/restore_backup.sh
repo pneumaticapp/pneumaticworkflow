@@ -84,8 +84,13 @@ POSTGRES_PASSWORD="postgres_password"
 POSTGRES_DB="postgres_db"
 
 while IFS='=' read -r key value; do
-  key=$(echo "$key" | xargs)
-  value=$(echo "$value" | xargs)
+  key=$(echo "$key" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+  value=$(echo "$value" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+
+  [ -z "$key" ] && continue
+  [[ "$key" == \#* ]] && continue
+
+  value=$(echo "$value" | sed 's/[[:space:]]*#.*$//;s/[[:space:]]*$//')
 
   case "$key" in
     POSTGRES_HOST)     POSTGRES_HOST="$value" ;;
@@ -145,7 +150,7 @@ print_info "Waiting for the database to become available..."
 MAX_RETRIES=30
 RETRY_COUNT=0
 while true; do
-  docker exec -it pneumatic-postgres sh -c "pg_isready -U $POSTGRES_USER -h $POSTGRES_HOST" > /dev/null 2>&1
+  docker exec pneumatic-postgres sh -c "pg_isready -U $POSTGRES_USER -h $POSTGRES_HOST" > /dev/null 2>&1
   if [ $? -eq 0 ]; then
     print_info "Database is ready"
     break
@@ -161,7 +166,7 @@ while true; do
 done
 
 # 5.2 Drop the existing database
-output=$(docker exec -it pneumatic-postgres sh -c "dropdb -U $POSTGRES_USER $POSTGRES_DB" 2>&1)
+output=$(docker exec pneumatic-postgres sh -c "dropdb -U $POSTGRES_USER $POSTGRES_DB" 2>&1)
 if [ $? -eq 0 ]; then
   print_info "Database successfully dropped"
 else
@@ -170,7 +175,7 @@ else
 fi
 
 # 5.3 Create a new database
-output=$(docker exec -it pneumatic-postgres sh -c "createdb -U $POSTGRES_USER --owner $POSTGRES_USER $POSTGRES_DB" 2>&1)
+output=$(docker exec pneumatic-postgres sh -c "createdb -U $POSTGRES_USER --owner $POSTGRES_USER $POSTGRES_DB" 2>&1)
 if [ $? -eq 0 ]; then
   print_info "Database successfully created"
 else
@@ -180,7 +185,7 @@ fi
 
 # 5.4 Restore from backup
 print_info "Restoring database \"$POSTGRES_DB\" from file \"$BACKUP_FILENAME\", this may take a few minutes..."
-output=$(docker exec -it pneumatic-postgres sh -c "PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h $POSTGRES_HOST $POSTGRES_DB < /backups/$BACKUP_FILENAME" 2>&1)
+output=$(docker exec pneumatic-postgres sh -c "PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h $POSTGRES_HOST $POSTGRES_DB < /backups/$BACKUP_FILENAME" 2>&1)
 if [ $? -eq 0 ]; then
   print_info "Backup successfully restored"
 else
@@ -225,10 +230,10 @@ echo ""
 # 6.3 Run the selected docker-compose command
 case "$COMPOSE_FILE" in
   1)
-    output=$(docker compose -f "$PROJECT_DIR/docker-compose.yml" up -d 2>&1)
+    output=$(TAG=latest docker compose -f "$PROJECT_DIR/docker-compose.yml" up -d 2>&1)
     ;;
   2)
-    output=$(TAG=latest docker compose -f "$PROJECT_DIR/docker-compose.yml" up -d 2>&1)
+    output=$(TAG=stable docker compose -f "$PROJECT_DIR/docker-compose.yml" up -d 2>&1)
     ;;
   3)
     output=$(docker compose -f "$PROJECT_DIR/docker-compose.src.yml" up -d 2>&1)
@@ -264,5 +269,6 @@ cat << 'EOF'
                       '.____.    .___/ 
                          .\  \   |  /
                            \______/
+                             Done!
 EOF
 echo -e "${NC}"
