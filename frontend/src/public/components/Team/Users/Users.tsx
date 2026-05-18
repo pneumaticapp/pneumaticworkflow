@@ -47,6 +47,8 @@ export function Users({
   openTeamInvitesPopup,
   setGeneralLoaderVisibility,
   loadInvitesUsers,
+  loadChangeUserManager,
+  loadChangeUserReports,
 }: IUsersProps) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
@@ -141,6 +143,22 @@ export function Users({
       }
     };
 
+    const handleChangeUserManager = (
+      userId: number,
+      managerId: number | null,
+      callbacks?: { onSuccess?: () => void; onError?: () => void },
+    ) => {
+      loadChangeUserManager({ id: userId, managerId, ...callbacks });
+    };
+
+    const handleChangeUserReports = (
+      userId: number,
+      reportIds: number[],
+      callbacks?: { onSuccess?: () => void; onError?: () => void },
+    ) => {
+      loadChangeUserReports({ id: userId, reportIds, ...callbacks });
+    };
+
     return getFilteredUsers().map((user) => {
       return (
         <TeamUser
@@ -149,6 +167,8 @@ export function Users({
           isCurrentUser={currentUserId === user.id}
           isSubscribed={accessConditions}
           handleToggleAdmin={handleToggleUserAdmin}
+          handleChangeUserManager={handleChangeUserManager}
+          handleChangeUserReports={handleChangeUserReports}
           openModal={() => openModal({ user })}
           openVacationModal={() => setVacationModalUser(user)}
           user={{ ...user, isAccountOwner: user.isAccountOwner && !user.invite }}

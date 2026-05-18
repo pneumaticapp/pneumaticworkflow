@@ -316,6 +316,8 @@ export const enMessages = {
   'team.create-user-success-msg': 'The user has been successfully created',
   'team.decline-invite-success-msg': 'User invite has been successfully revoked',
   'team.resend-invite-success-msg': 'User invite has been successfully resent',
+  'team.manager-update-success': 'User manager updated successfully',
+  'team.reports-update-success': 'User reports updated successfully',
   'team.title-group-active': 'Active users',
   'team.title-group-invited': 'Invited',
   'team.modal-nice-job-placeholder': 'Nice job!',
@@ -481,6 +483,7 @@ export const enMessages = {
 
   'validation.group-name-to-long': 'The group name is longer than 255 character',
 
+  'button.remove': 'Remove',
   'Unknown Error': 'Oops, looks like something went wrong... Our engineering team has already been notified',
   'Something Went Wrong': 'Oops, looks like something went wrong... Our engineering team has already been notified',
 

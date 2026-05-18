@@ -124,6 +124,7 @@ class UsersViewSet(
             extra_fields = (
                 'user_groups',
                 'incoming_invites',
+                'subordinates',
                 'vacations',
                 'vacations__substitute_group__users',
             )
@@ -131,6 +132,7 @@ class UsersViewSet(
             queryset = queryset.prefetch_related(
                 'user_groups',
                 'incoming_invites',
+                'subordinates',
                 'vacations',
                 'vacations__substitute_group__users',
             )
