@@ -15,7 +15,6 @@ export const envLanguageCode: string | undefined  =     getEnvVar('LANGUAGE_CODE
 export const envBackendURL: string | undefined =        getEnvVar('BACKEND_URL');
 export const envSentry: string | undefined =            getEnvVar('SENTRY_DSN');
 export const envWssURL: string | undefined =            getEnvVar('WSS_URL');
-export const envBackendPrivateIP: string | undefined =  getEnvVar('BACKEND_PRIVATE_IP');
 export const envDevMode: boolean =  process.env.NODE_ENV === 'development';
 
 export const isEnvCaptcha: boolean =    getEnvVar('CAPTCHA') !== 'no';
@@ -39,7 +38,6 @@ export const envAnalyticsId: string | undefined = getEnvVar('ANALYTICS_ID');
 export const envRecaptchaSecret: string | undefined = getEnvVar('RECAPTCHA_SECRET');
 
 export const envGoogleClientId: string | undefined = getEnvVar('GOOGLE_CLIENT_ID');
-export const envGoogleClientSecret: string | undefined = getEnvVar('GOOGLE_CLIENT_SECRET');
 export const envSentryRelease: string | undefined = getEnvVar('SENTRY_RELEASE');
 
 export const envFirebase: any = {
@@ -49,7 +47,7 @@ export const envFirebase: any = {
     authDomain: getEnvVar('FIREBASE_AUTH_DOMAIN'),
     projectId: getEnvVar('FIREBASE_PROJECT_ID'),
     storageBucket: getEnvVar('FIREBASE_STORAGE_BUCKET'),
-    messagingSenderId: getEnvVar('FIREBASE_MESSAGING_SENDER_ID'),
+    messagingSenderId: getEnvVar('FIREBASE_SENDER_ID'),
     appId: getEnvVar('FIREBASE_APP_ID'),
     measurementId: getEnvVar('FIREBASE_MEASUREMENT_ID')
   }
