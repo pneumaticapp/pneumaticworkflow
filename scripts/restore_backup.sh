@@ -6,7 +6,6 @@
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 BACKUPS_DIR="$SCRIPT_DIR/../postgres/backups"
-ENV_FILE="$SCRIPT_DIR/../.env"
 
 # =============================================================================
 # Color output helpers
@@ -70,13 +69,49 @@ print_info "Selected file: $BACKUP_FILENAME"
 echo ""
 
 # =============================================================================
-# Section 3: Read .env file and extract database configuration
+# Section 2.2: Select .env file
 # =============================================================================
+
+print_info "Select .env file:"
+echo ""
+echo "  1. Root .env file"
+echo "  2. backend/.env file"
+echo "  3. frontend/.env file"
+echo ""
+
+while true; do
+  read -r -p "Enter .env file number (1-3): " env_choice
+
+  if ! [[ "$env_choice" =~ ^[0-9]+$ ]]; then
+    print_error "Enter a number from 1 to 3"
+    continue
+  fi
+
+  if [ "$env_choice" -lt 1 ] || [ "$env_choice" -gt 3 ]; then
+    print_error "Enter a number from 1 to 3"
+    continue
+  fi
+
+  case "$env_choice" in
+    1) ENV_FILE="$SCRIPT_DIR/../.env" ;;
+    2) ENV_FILE="$SCRIPT_DIR/../backend/.env" ;;
+    3) ENV_FILE="$SCRIPT_DIR/../frontend/.env" ;;
+  esac
+  break
+done
 
 if [ ! -f "$ENV_FILE" ]; then
   print_error "Error: .env file not found at $ENV_FILE. Cannot proceed without database configuration."
   exit 1
 fi
+
+echo ""
+print_info "Selected .env file: $ENV_FILE"
+echo ""
+
+# =============================================================================
+# Section 3: Read .env file and extract database configuration
+# =============================================================================
 
 POSTGRES_HOST="postgres"
 POSTGRES_USER="postgres_user"
@@ -185,7 +220,7 @@ fi
 
 # 5.4 Restore from backup
 print_info "Restoring database \"$POSTGRES_DB\" from file \"$BACKUP_FILENAME\", this may take a few minutes..."
-output=$(docker exec -i -e "PGPASSWORD=$POSTGRES_PASSWORD" pneumatic-postgres psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -h "$POSTGRES_HOST" "$POSTGRES_DB" < "$BACKUPS_DIR/$BACKUP_FILENAME" 2>&1)
+output=$(docker exec -i -e "PGPASSWORD=$POSTGRES_PASSWORD" pneumatic-postgres psql -U "$POSTGRES_USER" -h "$POSTGRES_HOST" "$POSTGRES_DB" < "$BACKUPS_DIR/$BACKUP_FILENAME" 2>&1)
 if [ $? -eq 0 ]; then
   print_info "Backup successfully restored"
 else
