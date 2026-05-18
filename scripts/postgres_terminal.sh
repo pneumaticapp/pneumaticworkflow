@@ -32,7 +32,7 @@ POSTGRES_USER="postgres_user"
 POSTGRES_PASSWORD="postgres_password"
 POSTGRES_DB="postgres_db"
 
-while IFS='=' read -r key value; do
+while IFS='=' read -r key value || [ -n "$key" ]; do
   key=$(echo "$key" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
   value=$(echo "$value" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
 

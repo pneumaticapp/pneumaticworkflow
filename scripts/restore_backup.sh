@@ -118,7 +118,7 @@ POSTGRES_USER="postgres_user"
 POSTGRES_PASSWORD="postgres_password"
 POSTGRES_DB="postgres_db"
 
-while IFS='=' read -r key value; do
+while IFS='=' read -r key value || [ -n "$key" ]; do
   key=$(echo "$key" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
   value=$(echo "$value" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
 
@@ -201,7 +201,7 @@ while true; do
 done
 
 # 5.2 Drop the existing database
-output=$(docker exec -e "PGPASSWORD=$POSTGRES_PASSWORD" pneumatic-postgres dropdb -U "$POSTGRES_USER" "$POSTGRES_DB" 2>&1)
+output=$(docker exec -e "PGPASSWORD=$POSTGRES_PASSWORD" pneumatic-postgres dropdb -U "$POSTGRES_USER" -h "$POSTGRES_HOST" "$POSTGRES_DB" 2>&1)
 if [ $? -eq 0 ]; then
   print_info "Database successfully dropped"
 else
@@ -210,7 +210,7 @@ else
 fi
 
 # 5.3 Create a new database
-output=$(docker exec -e "PGPASSWORD=$POSTGRES_PASSWORD" pneumatic-postgres createdb -U "$POSTGRES_USER" --owner "$POSTGRES_USER" "$POSTGRES_DB" 2>&1)
+output=$(docker exec -e "PGPASSWORD=$POSTGRES_PASSWORD" pneumatic-postgres createdb -U "$POSTGRES_USER" -h "$POSTGRES_HOST" --owner "$POSTGRES_USER" "$POSTGRES_DB" 2>&1)
 if [ $? -eq 0 ]; then
   print_info "Database successfully created"
 else
@@ -274,10 +274,11 @@ case "$COMPOSE_FILE" in
     output=$(docker compose -f "$PROJECT_DIR/docker-compose.src.yml" up -d 2>&1)
     ;;
   4)
-    output=$(docker compose -f "$PROJECT_DIR/frontend/docker-compose.yml" up -d 2>&1)
+    # Compose resolves .env from the compose file's directory; pass the selected file explicitly.
+    output=$(docker compose --env-file "$ENV_FILE" -f "$PROJECT_DIR/frontend/docker-compose.yml" up -d 2>&1)
     ;;
   5)
-    output=$(docker compose -f "$PROJECT_DIR/backend/docker-compose.yml" up -d 2>&1)
+    output=$(docker compose --env-file "$ENV_FILE" -f "$PROJECT_DIR/backend/docker-compose.yml" up -d 2>&1)
     ;;
 esac
 
