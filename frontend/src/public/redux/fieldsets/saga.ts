@@ -95,8 +95,8 @@ export function* loadCurrentFieldsetSaga({ payload: { id } }: PayloadAction<{ id
     const urlTemplateId: number | null = yield select(getFieldsetsTemplateId);
 
     if (urlTemplateId && currentFieldset.templateId !== urlTemplateId) {
+      yield put(loadCurrentFieldsetFailed());
       history.replace(getFieldsetsRoute(urlTemplateId));
-
       return;
     }
 

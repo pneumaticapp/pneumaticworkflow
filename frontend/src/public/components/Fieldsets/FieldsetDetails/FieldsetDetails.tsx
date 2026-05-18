@@ -253,8 +253,12 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
     setHasUnsavedRuleChanges(false);
   };
 
-  if (isLoading || !fieldset) {
+  if (isLoading) {
     return <FieldsetDetailsSkeleton />;
+  }
+
+  if (!fieldset) {
+    return null;
   }
 
   return (
