@@ -185,7 +185,7 @@ fi
 
 # 5.4 Restore from backup
 print_info "Restoring database \"$POSTGRES_DB\" from file \"$BACKUP_FILENAME\", this may take a few minutes..."
-output=$(docker exec -i -e "PGPASSWORD=$POSTGRES_PASSWORD" pneumatic-postgres psql -U "$POSTGRES_USER" -h "$POSTGRES_HOST" "$POSTGRES_DB" < "$BACKUPS_DIR/$BACKUP_FILENAME" 2>&1)
+output=$(docker exec -i -e "PGPASSWORD=$POSTGRES_PASSWORD" pneumatic-postgres psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -h "$POSTGRES_HOST" "$POSTGRES_DB" < "$BACKUPS_DIR/$BACKUP_FILENAME" 2>&1)
 if [ $? -eq 0 ]; then
   print_info "Backup successfully restored"
 else
