@@ -90,7 +90,7 @@ while IFS='=' read -r key value; do
   [ -z "$key" ] && continue
   [[ "$key" == \#* ]] && continue
 
-  value=$(echo "$value" | sed 's/[[:space:]]*#.*$//;s/[[:space:]]*$//')
+  value=$(echo "$value" | sed 's/[[:space:]]\+#.*$//;s/[[:space:]]*$//')
 
   case "$key" in
     POSTGRES_HOST)     POSTGRES_HOST="$value" ;;
@@ -150,7 +150,7 @@ print_info "Waiting for the database to become available..."
 MAX_RETRIES=30
 RETRY_COUNT=0
 while true; do
-  docker exec pneumatic-postgres sh -c "pg_isready -U $POSTGRES_USER -h $POSTGRES_HOST" > /dev/null 2>&1
+  docker exec pneumatic-postgres pg_isready -U "$POSTGRES_USER" -h "$POSTGRES_HOST" > /dev/null 2>&1
   if [ $? -eq 0 ]; then
     print_info "Database is ready"
     break
@@ -166,7 +166,7 @@ while true; do
 done
 
 # 5.2 Drop the existing database
-output=$(docker exec pneumatic-postgres sh -c "dropdb -U $POSTGRES_USER $POSTGRES_DB" 2>&1)
+output=$(docker exec -e "PGPASSWORD=$POSTGRES_PASSWORD" pneumatic-postgres dropdb -U "$POSTGRES_USER" "$POSTGRES_DB" 2>&1)
 if [ $? -eq 0 ]; then
   print_info "Database successfully dropped"
 else
@@ -175,7 +175,7 @@ else
 fi
 
 # 5.3 Create a new database
-output=$(docker exec pneumatic-postgres sh -c "createdb -U $POSTGRES_USER --owner $POSTGRES_USER $POSTGRES_DB" 2>&1)
+output=$(docker exec -e "PGPASSWORD=$POSTGRES_PASSWORD" pneumatic-postgres createdb -U "$POSTGRES_USER" --owner "$POSTGRES_USER" "$POSTGRES_DB" 2>&1)
 if [ $? -eq 0 ]; then
   print_info "Database successfully created"
 else
@@ -185,7 +185,7 @@ fi
 
 # 5.4 Restore from backup
 print_info "Restoring database \"$POSTGRES_DB\" from file \"$BACKUP_FILENAME\", this may take a few minutes..."
-output=$(docker exec pneumatic-postgres sh -c "PGPASSWORD=$POSTGRES_PASSWORD psql -U $POSTGRES_USER -h $POSTGRES_HOST $POSTGRES_DB < /backups/$BACKUP_FILENAME" 2>&1)
+output=$(docker exec -i -e "PGPASSWORD=$POSTGRES_PASSWORD" pneumatic-postgres psql -U "$POSTGRES_USER" -h "$POSTGRES_HOST" "$POSTGRES_DB" < "$BACKUPS_DIR/$BACKUP_FILENAME" 2>&1)
 if [ $? -eq 0 ]; then
   print_info "Backup successfully restored"
 else

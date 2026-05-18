@@ -39,7 +39,7 @@ while IFS='=' read -r key value; do
   [ -z "$key" ] && continue
   [[ "$key" == \#* ]] && continue
 
-  value=$(echo "$value" | sed 's/[[:space:]]*#.*$//;s/[[:space:]]*$//')
+  value=$(echo "$value" | sed 's/[[:space:]]\+#.*$//;s/[[:space:]]*$//')
 
   case "$key" in
     POSTGRES_HOST)     POSTGRES_HOST="$value" ;;
