@@ -69,45 +69,62 @@ print_info "Selected file: $BACKUP_FILENAME"
 echo ""
 
 # =============================================================================
-# Section 2.2: Select .env file
+# Section 2.1: Select docker-compose configuration to start containers
 # =============================================================================
 
-print_info "Select .env file:"
 echo ""
-echo "  1. Root .env file"
-echo "  2. backend/.env file"
-echo "  3. frontend/.env file"
+print_info "Select a docker-compose configuration to start containers after restoring the backup:"
+echo ""
+echo "  1. Root (from sources)"
+echo "  2. Root (stable)"
+echo "  3. Root (latest)"
+echo "  4. Frontend"
+echo "  5. Backend"
 echo ""
 
+# 2.1.2 User selects a configuration by number
 while true; do
-  read -r -p "Enter .env file number (1-3): " env_choice
+  read -r -p "Enter configuration number (1-5): " COMPOSE_FILE
 
-  if ! [[ "$env_choice" =~ ^[0-9]+$ ]]; then
-    print_error "Enter a number from 1 to 3"
+  if ! [[ "$COMPOSE_FILE" =~ ^[0-9]+$ ]]; then
+    print_error "Enter the file number"
     continue
   fi
 
-  if [ "$env_choice" -lt 1 ] || [ "$env_choice" -gt 3 ]; then
-    print_error "Enter a number from 1 to 3"
+  if [ "$COMPOSE_FILE" -lt 1 ] || [ "$COMPOSE_FILE" -gt 5 ]; then
+    print_error "Entered number does not match any file from the list"
     continue
   fi
 
-  case "$env_choice" in
-    1) ENV_FILE="$SCRIPT_DIR/../.env" ;;
-    2) ENV_FILE="$SCRIPT_DIR/../backend/.env" ;;
-    3) ENV_FILE="$SCRIPT_DIR/../frontend/.env" ;;
-  esac
   break
 done
+
+case "$COMPOSE_FILE" in
+  1) COMPOSE_LABEL="Root (from sources)" ;;
+  2) COMPOSE_LABEL="Root (stable)" ;;
+  3) COMPOSE_LABEL="Root (latest)" ;;
+  4) COMPOSE_LABEL="Frontend" ;;
+  5) COMPOSE_LABEL="Backend" ;;
+esac
+
+echo ""
+print_info "Selected configuration: $COMPOSE_LABEL"
+echo ""
+
+# =============================================================================
+# Section 2.2: Select .env file based on docker-compose choice (section 2.1)
+# =============================================================================
+
+case "$COMPOSE_FILE" in
+  1|2|3) ENV_FILE="$SCRIPT_DIR/../.env" ;;
+  4)    ENV_FILE="$SCRIPT_DIR/../frontend/.env" ;;
+  5)    ENV_FILE="$SCRIPT_DIR/../backend/.env" ;;
+esac
 
 if [ ! -f "$ENV_FILE" ]; then
   print_error "Error: .env file not found at $ENV_FILE. Cannot proceed without database configuration."
   exit 1
 fi
-
-echo ""
-print_info "Selected .env file: $ENV_FILE"
-echo ""
 
 # =============================================================================
 # Section 3: Read .env file and extract database configuration
@@ -229,49 +246,18 @@ else
 fi
 
 # =============================================================================
-# Section 6: Start containers
+# Section 6: Run the selected docker-compose command
 # =============================================================================
 
-# 6.1 Ask user which docker-compose configuration to use
-echo ""
-print_info "Select a docker-compose configuration to start containers:"
-echo ""
-echo "  1. Root (latest)"
-echo "  2. Root (stable)"
-echo "  3. Root (from sources)"
-echo "  4. Frontend"
-echo "  5. Backend"
-echo ""
-
-# 6.2 User selects a configuration by number
-while true; do
-  read -r -p "Enter configuration number (1-5): " COMPOSE_FILE
-
-  if ! [[ "$COMPOSE_FILE" =~ ^[0-9]+$ ]]; then
-    print_error "Enter the file number"
-    continue
-  fi
-
-  if [ "$COMPOSE_FILE" -lt 1 ] || [ "$COMPOSE_FILE" -gt 5 ]; then
-    print_error "Entered number does not match any file from the list"
-    continue
-  fi
-
-  break
-done
-
-echo ""
-
-# 6.3 Run the selected docker-compose command
 case "$COMPOSE_FILE" in
   1)
-    output=$(TAG=latest docker compose -f "$PROJECT_DIR/docker-compose.yml" up -d 2>&1)
+    output=$(docker compose -f "$PROJECT_DIR/docker-compose.src.yml" up -d 2>&1)
     ;;
   2)
     output=$(TAG=stable docker compose -f "$PROJECT_DIR/docker-compose.yml" up -d 2>&1)
     ;;
   3)
-    output=$(docker compose -f "$PROJECT_DIR/docker-compose.src.yml" up -d 2>&1)
+    output=$(TAG=latest docker compose -f "$PROJECT_DIR/docker-compose.yml" up -d 2>&1)
     ;;
   4)
     # Compose resolves .env from the compose file's directory; pass the selected file explicitly.
@@ -290,19 +276,19 @@ else
 fi
 
 echo ""
-print_info "Done! Database \"$POSTGRES_DB\" has been successfully restored from \"$BACKUP_FILENAME\"."
+print_info "Done! Database '${POSTGRES_DB}' has been successfully restored from '${BACKUP_FILENAME}'."
 
 echo ""
 echo -e "${GREEN}"
-cat << 'EOF'
+cat <<'EOF'
                     __
-                   '. \
-                    '- \
+                   . \
+                    - \
                      / /_         .---.
                     / | \\,.\/--.//    )
                     |  \//        )/  /
-                     \  ' ^ ^    /    )
-                      '.____.    .___/ 
+                     \   ^ ^    /    )
+                      .____.    .___/
                          .\  \   |  /
                            \______/
                              Done!
