@@ -126,7 +126,7 @@ class Migration(migrations.Migration):
             constraint=models.UniqueConstraint(
                 condition=models.Q(is_deleted=False),
                 fields=('template', 'api_name'),
-                name='fieldsettemplate_template_api_name_unique'),
+                name='fieldsettemplate_api_name_template_unique'),
         ),
         migrations.AddField(
             model_name='fieldsettemplate',
@@ -158,4 +158,48 @@ class Migration(migrations.Migration):
             name='rules',
             field=models.ManyToManyField(blank=True, related_name='fields', to='processes.FieldSetRule'),
         ),
+        migrations.AlterField(
+            model_name='predicate',
+            name='operator',
+            field=models.CharField(
+                choices=[('equals', 'Equal'), ('not_equals', 'Not equal'),
+                         ('exists', 'Exists'), ('not_exists', 'Not exists'),
+                         ('contains', 'Contains'),
+                         ('not_contains', 'Not contains'),
+                         ('more_than', 'More than'),
+                         ('less_than', 'Less than'),
+                         ('completed', 'completed'), ('skipped', 'skipped'),
+                         ('completed_or_skipped', 'completed_or_skipped')],
+                max_length=30),
+        ),
+        migrations.AlterField(
+            model_name='predicatetemplate',
+            name='operator',
+            field=models.CharField(
+                choices=[('equals', 'Equal'), ('not_equals', 'Not equal'),
+                         ('exists', 'Exists'), ('not_exists', 'Not exists'),
+                         ('contains', 'Contains'),
+                         ('not_contains', 'Not contains'),
+                         ('more_than', 'More than'),
+                         ('less_than', 'Less than'),
+                         ('completed', 'completed'), ('skipped', 'skipped'),
+                         ('completed_or_skipped', 'completed_or_skipped')],
+                max_length=30),
+        ),
+        migrations.RunSQL("""
+            UPDATE processes_predicate p
+            SET    operator = 'completed_or_skipped'
+            FROM   processes_rule r
+            WHERE  p.rule_id    = r.id
+              AND  p.operator   = 'completed'
+              AND  p.field_type = 'task'
+        """),
+            migrations.RunSQL("""
+            UPDATE processes_predicatetemplate pt
+            SET    operator = 'completed_or_skipped'
+            FROM   processes_ruletemplate rt
+            WHERE  pt.rule_id   = rt.id
+              AND  pt.operator  = 'completed'
+              AND  pt.field_type = 'task'
+        """)
     ]
