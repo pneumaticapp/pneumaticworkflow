@@ -1,4 +1,5 @@
-import React, { useEffect, useState } from 'react';
+import * as React from 'react';
+import { useEffect, useState } from 'react';
 import Switch from 'rc-switch';
 import { Link } from 'react-router-dom';
 import classnames from 'classnames';

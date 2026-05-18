@@ -1,7 +1,10 @@
+// <reference types="jest" />
 import { IExtraField, IFieldsetData, ITaskFieldset } from '../../../../types/template';
 import {
   buildMergedTaskOutputRows,
   buildRuntimeMergedOutputParts,
+  buildRowsWithAddedFieldset,
+  buildRowsWithRemovedFieldset,
   moveMergedRow,
   normalizeMergedTaskOutputOrders,
 } from '../mergeTaskOutputFlow';
@@ -59,5 +62,59 @@ describe('mergeTaskOutputFlow', () => {
       [fs(9, 2)],
     );
     expect(parts.map((output) => (output.kind === 'fieldset' ? output.data.apiName : output.field.apiName))).toEqual(['y', 'fs-9', 'x']);
+  });
+
+  describe('buildRowsWithAddedFieldset', () => {
+    it('adds fieldset to rows when it is not already present', () => {
+      const rows = buildRowsWithAddedFieldset(
+        [field('a', 0)],
+        [taskFs('fs-1', 1)],
+        'fs-new',
+      );
+      expect(rows).not.toBeNull();
+      const apiNames = rows!.map((r) => (r.kind === 'field' ? r.field.apiName : r.apiName));
+      expect(apiNames).toContain('fs-new');
+    });
+
+    it('returns null when fieldset with that apiName is already present', () => {
+      const result = buildRowsWithAddedFieldset(
+        [field('a', 0)],
+        [taskFs('fs-1', 1)],
+        'fs-1',
+      );
+      expect(result).toBeNull();
+    });
+  });
+
+  describe('buildRowsWithRemovedFieldset', () => {
+    it('removes fieldset by apiName, other rows are preserved', () => {
+      const rows = buildRowsWithRemovedFieldset(
+        [field('a', 0)],
+        [taskFs('fs-1', 1), taskFs('fs-2', 2)],
+        'fs-1',
+      );
+      const apiNames = rows.map((r) => (r.kind === 'field' ? r.field.apiName : r.apiName));
+      expect(apiNames).not.toContain('fs-1');
+      expect(apiNames).toContain('fs-2');
+      expect(apiNames).toContain('a');
+    });
+
+    it('does not throw when fieldset is absent — returns rows unchanged', () => {
+      const rows = buildRowsWithRemovedFieldset(
+        [field('a', 0)],
+        [taskFs('fs-1', 1)],
+        'fs-missing',
+      );
+      const apiNames = rows.map((r) => (r.kind === 'field' ? r.field.apiName : r.apiName));
+      expect(apiNames).toContain('fs-1');
+      expect(apiNames).toContain('a');
+    });
+  });
+
+  it('normalizeMergedTaskOutputOrders with empty rowsInDisplayOrder returns fields unchanged and empty patches', () => {
+    const originalFields = [field('a', 5), field('b', 3)];
+    const { nextFields, fieldsetOrderPatches } = normalizeMergedTaskOutputOrders([], originalFields);
+    expect(fieldsetOrderPatches).toEqual([]);
+    expect(nextFields).toEqual(originalFields);
   });
 });
