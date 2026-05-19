@@ -418,9 +418,7 @@ class Task(
                 user = self.get_default_performer()
                 user_ids[user.id].append(raw_performer_)
             elif raw_performer_.type == PerformerType.MANAGER:
-                manager_user = self._resolve_manager(
-                    raw_performer_,
-                )
+                manager_user = self._resolve_manager(raw_performer_)
                 if manager_user:
                     user_ids[manager_user.id].append(raw_performer_)
                 elif raw_performer_.task_performer_id is not None:
@@ -537,7 +535,9 @@ class Task(
             left pointing to the performer) """
 
         task_performer_ids = list(
-            self.raw_performers.values_list('task_performer_id', flat=True),
+            self.raw_performers
+            .exclude(task_performer_id=None)
+            .values_list('task_performer_id', flat=True),
         )
         performers_to_delete = (
             TaskPerformer.objects

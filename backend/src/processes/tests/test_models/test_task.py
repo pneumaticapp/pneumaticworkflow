@@ -19,8 +19,8 @@ from src.processes.tests.fixtures import (
     create_test_group,
     create_test_owner,
     create_test_not_admin,
-    create_test_user,
-    create_test_workflow, create_test_dataset,
+    create_test_workflow,
+    create_test_dataset,
 )
 
 pytestmark = pytest.mark.django_db
@@ -2281,39 +2281,32 @@ def test_add_raw_performer__manager_no_source__raise_exception():
 
 def test_update_performers__stale_mgr_after_revert__clears():
     """
-    MANAGER raw performer keeps stale task_performer_id after
-    source task revert — update_performers must clear it so
-    _delete_orphaned_performers removes the old TaskPerformer.
+    When source task is reverted, _resolve_manager returns None.
+    update_performers must clear the stale task_performer_id so
+    _delete_orphaned_performers removes the orphaned TaskPerformer.
     """
 
     # arrange
     account = create_test_account()
     owner = create_test_owner(account=account)
-    subordinate = create_test_user(
+    subordinate = create_test_not_admin(
         email='sub@pneumatic.app',
         account=account,
-        is_account_owner=False,
     )
-    manager = create_test_user(
+    manager = create_test_not_admin(
         email='mgr@pneumatic.app',
         account=account,
-        is_account_owner=False,
     )
     subordinate.manager = manager
     subordinate.save()
 
-    workflow = create_test_workflow(
-        user=owner,
-        tasks_count=2,
-    )
+    workflow = create_test_workflow(user=owner, tasks_count=2)
     source_task = workflow.tasks.get(number=1)
     target_task = workflow.tasks.get(number=2)
 
-    # complete source task so _resolve_manager finds manager
     source_task.status = TaskStatus.COMPLETED
     source_task.date_completed = timezone.now()
     source_task.save()
-
     create_test_event(
         workflow=workflow,
         user=subordinate,
@@ -2321,7 +2314,6 @@ def test_update_performers__stale_mgr_after_revert__clears():
         task=source_task,
     )
 
-    # add MANAGER raw performer and run update_performers
     target_task.raw_performers.all().delete()
     target_task.taskperformer_set.all().delete()
     mgr_raw = target_task.add_raw_performer(
@@ -2330,14 +2322,10 @@ def test_update_performers__stale_mgr_after_revert__clears():
     )
     target_task.update_performers()
 
-    # verify manager TaskPerformer was created
     mgr_raw.refresh_from_db()
     assert mgr_raw.task_performer_id is not None
-    assert target_task.taskperformer_set.filter(
-        user=manager,
-    ).exists()
+    assert target_task.taskperformer_set.filter(user=manager).exists()
 
-    # revert source task
     source_task.status = TaskStatus.ACTIVE
     source_task.date_completed = None
     source_task.save()
@@ -2348,6 +2336,4 @@ def test_update_performers__stale_mgr_after_revert__clears():
     # assert
     mgr_raw.refresh_from_db()
     assert mgr_raw.task_performer_id is None
-    assert not target_task.taskperformer_set.filter(
-        user=manager,
-    ).exists()
+    assert not target_task.taskperformer_set.filter(user=manager).exists()
