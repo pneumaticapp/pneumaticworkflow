@@ -136,7 +136,7 @@ export function getConfig(): TConfig {
       "WSS_URL": process.env.WSS_URL,
       "HOST": process.env.HOST,
       "ANALYTICS_ID": process.env.ANALYTICS_ID,
-      "RECAPTCHA_SECRET": process.env.RECAPTCHA_SECRET,
+      "RECAPTCHA_SITE_KEY": process.env.RECAPTCHA_SITE_KEY,
       "GOOGLE_CLIENT_ID": process.env.GOOGLE_CLIENT_ID,
       "FIREBASE_VAPID_KEY": process.env.FIREBASE_VAPID_KEY,
       "FIREBASE_API_KEY": process.env.FIREBASE_API_KEY,
