@@ -5,7 +5,7 @@ const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
-const { NODE_ENV = 'development', MCS_RUN_ENV = 'local' } = process.env;
+const { NODE_ENV = 'development' } = process.env;
 const devMode = NODE_ENV !== 'production';
 const fontsDir = path.resolve(__dirname, './src/public/assets');
 
@@ -92,7 +92,6 @@ module.exports = {
   plugins: [
     new webpack.DefinePlugin({
       'process.env.NODE_ENV': JSON.stringify(NODE_ENV),
-      'process.env.MCS_RUN_ENV': JSON.stringify(MCS_RUN_ENV),
     }),
     new webpack.HotModuleReplacementPlugin(),
     new MiniCssExtractPlugin({
@@ -102,7 +101,7 @@ module.exports = {
       chunks: ['main'],
       filename: 'main.ejs',
       template: '!!raw-loader!./src/public/index.ejs',
-      mcsRunEnv: MCS_RUN_ENV,
+
       removeComments: true,
       favicon: './src/public/assets/favicon.png',
     }),
@@ -110,7 +109,7 @@ module.exports = {
       chunks: ['forms'],
       filename: 'forms.ejs',
       template: '!!raw-loader!./src/public/forms.ejs',
-      mcsRunEnv: MCS_RUN_ENV,
+
       removeComments: true,
       favicon: './src/public/assets/favicon.png',
     }),
