@@ -25,3 +25,5 @@ COPY ./pyproject.toml ./poetry.lock /tmp/
 WORKDIR /pneumatic_backend
 RUN poetry config virtualenvs.create false && \
     poetry install --without dev --no-root --no-interaction --directory /tmp
+
+COPY . .
