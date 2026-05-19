@@ -164,11 +164,13 @@ class Task(
         """ Creates and returns a raw performer for a task with given data
             Optionally updates the performers after create raw performers """
 
-        if (
-            performer_type not in (
-                PerformerType.WORKFLOW_STARTER,
-                PerformerType.MANAGER,
-            )
+        if performer_type == PerformerType.MANAGER:
+            if not source_task_api_name:
+                raise Exception(
+                    'Manager performer requires source_task_api_name',
+                )
+        elif (
+            performer_type != PerformerType.WORKFLOW_STARTER
             and not group_id
             and not user
             and not user_id

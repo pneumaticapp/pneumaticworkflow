@@ -1825,6 +1825,52 @@ def test_update_raw_performers_from_tmpl__orphans__deleted(
     ).exists()
 
 
+def test_update_raw_performers_from_tmpl__dict_manager__source_preserved():
+    """
+    MANAGER performer from dict input preserves source_task_api_name
+    through the versioning/update path.
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=2,
+    )
+    task_1 = workflow.tasks.get(number=1)
+    task_2 = workflow.tasks.get(number=2)
+
+    # Clear existing raw performers on task_2
+    task_2.raw_performers.all().delete()
+
+    template_dict = {
+        'raw_performers': [
+            {
+                'api_name': 'raw-performer-mgr-1',
+                'type': PerformerType.MANAGER,
+                'user_id': None,
+                'group_id': None,
+                'field': None,
+                'source_task_api_name': task_1.api_name,
+            },
+        ],
+    }
+
+    # act
+    task_2.update_raw_performers_from_task_template(
+        task_template=template_dict,
+    )
+
+    # assert
+    mgr_raw = task_2.raw_performers.filter(
+        type=PerformerType.MANAGER,
+    ).first()
+    assert mgr_raw is not None
+    assert mgr_raw.source_task_api_name == task_1.api_name
+    assert mgr_raw.api_name == 'raw-performer-mgr-1'
+
+
 def test_update_performers__single_user_raw_performer__ok():
     """
     Single raw_performer provided, USER type — creates TaskPerformer
@@ -2202,3 +2248,29 @@ def test_delete_raw_performer__manager_no_source__deletes_nothing():
     assert task_2.raw_performers.filter(
         type=PerformerType.MANAGER,
     ).count() == 1
+
+
+def test_add_raw_performer__manager_no_source__raise_exception():
+    """
+    MANAGER without source_task_api_name raises Exception
+    because the manager can never be resolved without
+    knowing which step's completer to look up.
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=2,
+    )
+    task = workflow.tasks.get(number=2)
+
+    # act
+    with pytest.raises(Exception) as ex:
+        task.add_raw_performer(
+            performer_type=PerformerType.MANAGER,
+        )
+
+    # assert
+    assert str(ex.value) == 'Manager performer requires source_task_api_name'
