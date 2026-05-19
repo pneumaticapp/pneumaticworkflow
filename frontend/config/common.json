@@ -172,6 +172,7 @@
     "mainPage",
     "formSubdomain",
     "recaptchaSecret",
-    "firebase"
+    "firebase",
+    "featureFlags"
   ]
 }

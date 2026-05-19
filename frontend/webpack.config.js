@@ -1,24 +1,14 @@
 const webpack = require('webpack');
 const path = require('path');
-const dotenv = require('dotenv');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');
 // const BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin;
 
-const env = dotenv.config().parsed;
-const { NODE_ENV = 'development', MCS_RUN_ENV = 'local' } = process.env;
+const { NODE_ENV = 'development' } = process.env;
 const devMode = NODE_ENV !== 'production';
 const fontsDir = path.resolve(__dirname, './src/public/assets');
 
-const envKeys = Object.keys(Object.assign(env, process.env)).reduce((prev, next) => {
-  prev[next] = JSON.stringify(env[next]);
-  return prev;
-}, {});
-
-const sentryAuthToken = process.env.SENTRY_AUTH_TOKEN;
-const sentryRelease = process.env.SENTRY_RELEASE;
-const enableSentryUpload = Boolean(sentryAuthToken && sentryRelease && !devMode);
 
 module.exports = {
   entry: {
@@ -28,7 +18,7 @@ module.exports = {
   cache: devMode
     ? { type: 'filesystem', buildDependencies: { config: [__filename] } }
     : false,
-  devtool: devMode ? 'eval-cheap-module-source-map' : undefined,
+
   output: {
     filename: devMode ? '[name].js' : '[name].[contenthash].js',
     path: path.resolve(__dirname, './public'),
@@ -97,7 +87,7 @@ module.exports = {
   },
   plugins: [
     new webpack.DefinePlugin({
-      'process.env': envKeys,
+      'process.env.NODE_ENV': JSON.stringify(NODE_ENV),
     }),
     new webpack.HotModuleReplacementPlugin(),
     new MiniCssExtractPlugin({
@@ -107,7 +97,7 @@ module.exports = {
       chunks: ['main'],
       filename: 'main.ejs',
       template: '!!raw-loader!./src/public/index.ejs',
-      mcsRunEnv: MCS_RUN_ENV,
+
       removeComments: true,
       favicon: './src/public/assets/favicon.png',
     }),
@@ -115,29 +105,14 @@ module.exports = {
       chunks: ['forms'],
       filename: 'forms.ejs',
       template: '!!raw-loader!./src/public/forms.ejs',
-      mcsRunEnv: MCS_RUN_ENV,
+
       removeComments: true,
       favicon: './src/public/assets/favicon.png',
     }),
     new ForkTsCheckerWebpackPlugin(),
     // Uncomment to run Bundle Analyzer
     // new BundleAnalyzerPlugin(),
-    ...(enableSentryUpload
-      ? [
-          (() => {
-            const { sentryWebpackPlugin } = require('@sentry/webpack-plugin');
-            return sentryWebpackPlugin({
-              org: process.env.SENTRY_ORG,
-              project: process.env.SENTRY_PROJECT,
-              authToken: sentryAuthToken,
-              release: { name: sentryRelease, inject: true },
-              errorHandler: (err) => {
-                console.warn('Sentry source map upload failed:', err);
-              },
-            });
-          })(),
-        ]
-      : []),
+
     {
       apply: (compiler) => {
         compiler.hooks.done.tap('DonePlugin', (stats) => {

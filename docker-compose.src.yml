@@ -396,10 +396,7 @@ services:
       FIREBASE_APP_ID: ${FIREBASE_APP_ID:-}
       FIREBASE_MEASUREMENT_ID: ${FIREBASE_MEASUREMENT_ID:-}
       RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
-    command: >
-      sh -c "
-        npm run build-client:prod && 
-        pm2-runtime start pm2.json"
+    command: pm2-runtime start pm2.json
     expose:
       - 8000
     networks:
