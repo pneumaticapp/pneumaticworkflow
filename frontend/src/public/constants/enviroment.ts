@@ -1,7 +1,13 @@
+interface IPneumaticConfig {
+  config?: {
+    featureFlags?: Record<string, string | undefined>;
+  };
+}
+
 const getEnvVar = (key: string): string | undefined => {
   if (typeof window !== 'undefined') {
     // eslint-disable-next-line no-underscore-dangle
-    const pneumaticConfig = (window as any).__pneumaticConfig;
+    const pneumaticConfig = (window as unknown as { __pneumaticConfig?: IPneumaticConfig }).__pneumaticConfig;
     if (pneumaticConfig?.config?.featureFlags && pneumaticConfig.config.featureFlags[key] !== undefined) {
       return pneumaticConfig.config.featureFlags[key];
     }
@@ -36,7 +42,7 @@ export const envSSOProvider: string | undefined = getEnvVar('SSO_PROVIDER');
 
 export const envHost: string | undefined = getEnvVar('HOST');
 export const envAnalyticsId: string | undefined = getEnvVar('ANALYTICS_ID');
-export const envRecaptchaSecret: string | undefined = getEnvVar('RECAPTCHA_SITE_KEY');
+export const envRecaptchaSiteKey: string | undefined = getEnvVar('RECAPTCHA_SITE_KEY');
 
 export const envGoogleClientId: string | undefined = getEnvVar('GOOGLE_CLIENT_ID');
 export const envSentryRelease: string | undefined = getEnvVar('SENTRY_RELEASE');

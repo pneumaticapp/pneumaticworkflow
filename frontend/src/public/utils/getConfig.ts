@@ -118,36 +118,17 @@ export function getConfig(): TConfig {
         "measurementId": FIREBASE_MEASUREMENT_ID
       }
     },
-    "featureFlags": {
-      "CAPTCHA": process.env.CAPTCHA,
-      "GOOGLE_AUTH": process.env.GOOGLE_AUTH,
-      "MS_AUTH": process.env.MS_AUTH,
-      "SSO_AUTH": process.env.SSO_AUTH,
-      "SIGNUP": process.env.SIGNUP,
-      "BILLING": process.env.BILLING,
-      "AI": process.env.AI,
-      "PUSH": process.env.PUSH,
-      "STORAGE": process.env.STORAGE,
-      "ANALYTICS": process.env.ANALYTICS,
-      "SSO_PROVIDER": process.env.SSO_PROVIDER,
-      "LANGUAGE_CODE": process.env.LANGUAGE_CODE,
-      "BACKEND_URL": process.env.BACKEND_URL,
-      "SENTRY_DSN": process.env.SENTRY_DSN,
-      "WSS_URL": process.env.WSS_URL,
-      "HOST": process.env.HOST,
-      "ANALYTICS_ID": process.env.ANALYTICS_ID,
-      "RECAPTCHA_SITE_KEY": process.env.RECAPTCHA_SITE_KEY,
-      "GOOGLE_CLIENT_ID": process.env.GOOGLE_CLIENT_ID,
-      "FIREBASE_VAPID_KEY": process.env.FIREBASE_VAPID_KEY,
-      "FIREBASE_API_KEY": process.env.FIREBASE_API_KEY,
-      "FIREBASE_AUTH_DOMAIN": process.env.FIREBASE_AUTH_DOMAIN,
-      "FIREBASE_PROJECT_ID": process.env.FIREBASE_PROJECT_ID,
-      "FIREBASE_STORAGE_BUCKET": process.env.FIREBASE_STORAGE_BUCKET,
-      "FIREBASE_SENDER_ID": process.env.FIREBASE_SENDER_ID,
-      "FIREBASE_APP_ID": process.env.FIREBASE_APP_ID,
-      "FIREBASE_MEASUREMENT_ID": process.env.FIREBASE_MEASUREMENT_ID,
-      "SENTRY_RELEASE": process.env.SENTRY_RELEASE
-    }
+    "featureFlags": Object.fromEntries(
+      [
+        'CAPTCHA', 'GOOGLE_AUTH', 'MS_AUTH', 'SSO_AUTH', 'SIGNUP', 'BILLING',
+        'AI', 'PUSH', 'STORAGE', 'ANALYTICS', 'SSO_PROVIDER', 'LANGUAGE_CODE',
+        'BACKEND_URL', 'SENTRY_DSN', 'WSS_URL', 'HOST', 'ANALYTICS_ID',
+        'RECAPTCHA_SITE_KEY', 'GOOGLE_CLIENT_ID', 'FIREBASE_VAPID_KEY',
+        'FIREBASE_API_KEY', 'FIREBASE_AUTH_DOMAIN', 'FIREBASE_PROJECT_ID',
+        'FIREBASE_STORAGE_BUCKET', 'FIREBASE_SENDER_ID', 'FIREBASE_APP_ID',
+        'FIREBASE_MEASUREMENT_ID', 'SENTRY_RELEASE',
+      ].map(key => [key, process.env[key]])
+    )
   });
 }
 
