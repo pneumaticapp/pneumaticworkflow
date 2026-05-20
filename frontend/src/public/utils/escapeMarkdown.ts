@@ -5,7 +5,7 @@ export function escapeMarkdown(text: string = ''): string {
     return `__VAR_${variables.length - 1}__`;
   });
 
-  text = text.replace(/([\\`*_[\]{}()#+\-.!|&%=:"'~])/g, '\\$1');
+  text = text.replace(/([\\`*_[\]{}()#+.!|&%=:"'~])/g, '\\$1');
   variables.forEach((variable, index) => {
     text = text.replace(`\\_\\_VAR\\_${index}\\_\\_`, variable);
   });
