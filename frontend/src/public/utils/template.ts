@@ -160,6 +160,11 @@ export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
 
   const tasks = [...(template.tasks || [])].sort((a, b) => a.number - b.number);
 
+  const validTaskApiNames = new Set<string>();
+  tasks.forEach((t) => {
+    if (t.apiName) validTaskApiNames.add(t.apiName);
+  });
+
   const cleanedTasks = tasks.map((task) => {
     const name = removeInvalidReferences(task.name, validApiNames, TASK_SYSTEM_VARS);
     const description = removeInvalidReferences(task.description, validApiNames, TASK_SYSTEM_VARS);
@@ -176,6 +181,9 @@ export const cleanTemplateReferences = (template: ITemplate): ITemplate => {
     const rawPerformers = (task.rawPerformers || []).filter((p) => {
       if (p.type === 'field') {
         return !!p.sourceId && validApiNames.has(p.sourceId);
+      }
+      if (p.type === 'manager') {
+        return !!p.sourceId && validTaskApiNames.has(p.sourceId);
       }
       return true;
     });

@@ -20,6 +20,10 @@ from src.processes.messages.template import (
     MSG_PT_0035,
     MSG_PT_0036,
     MSG_PT_0056,
+    MSG_PT_0071,
+    MSG_PT_0072,
+    MSG_PT_0073,
+    MSG_PT_0074,
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.raw_performer import RawPerformerTemplate
@@ -57,6 +61,7 @@ class RawPerformerSerializer(
             'api_name',
             'user_id',
             'group_id',
+            'source_task_api_name',
         }
 
     api_name = CharField(max_length=200, required=False)
@@ -153,6 +158,46 @@ class RawPerformerSerializer(
                 api_name=task.api_name,
             )
 
+    def additional_validate_raw_performers_type_manager(
+        self,
+        data: Dict[str, Any],
+    ):
+        task = self.context['task']
+        source_id = data.get('source_id')
+        if not source_id:
+            self.raise_validation_error(
+                message=MSG_PT_0071,
+                api_name=task.api_name,
+            )
+        elif source_id == task.api_name:
+            self.raise_validation_error(
+                message=MSG_PT_0072(name=task.name),
+                api_name=task.api_name,
+            )
+
+        # Cross-step validation via template tasks context
+        template_tasks = self.context.get('template_tasks')
+        if template_tasks is None:
+            return
+
+        source_task_data = template_tasks.get(source_id)
+        if not source_task_data:
+            self.raise_validation_error(
+                message=MSG_PT_0073(
+                    name=task.name,
+                    step_name=source_id,
+                ),
+                api_name=task.api_name,
+            )
+        elif source_task_data.get('require_completion_by_all'):
+            self.raise_validation_error(
+                message=MSG_PT_0074(
+                    name=task.name,
+                    step_name=source_task_data.get('name', source_id),
+                ),
+                api_name=task.api_name,
+            )
+
     def additional_validate(
         self,
         data: Dict[str, Any],
@@ -181,6 +226,33 @@ class RawPerformerSerializer(
             elif instance.type == PerformerType.GROUP:
                 data['source_id'] = str(instance.group_id)
                 data['label'] = instance.group.name
+            elif instance.type == PerformerType.MANAGER:
+                source_api_name = instance.source_task_api_name
+                data['source_id'] = source_api_name
+                template_tasks = self.context.get(
+                    'template_tasks',
+                )
+                if template_tasks is not None:
+                    task_data = template_tasks.get(
+                        source_api_name, {},
+                    )
+                    source_task_name = task_data.get('name')
+                else:
+                    source_task_name = None
+                    for task_template in (
+                        instance.task.template.tasks.all()
+                    ):
+                        if task_template.api_name == (
+                            source_api_name
+                        ):
+                            source_task_name = (
+                                task_template.name
+                            )
+                            break
+                step_label = (
+                    source_task_name or source_api_name
+                )
+                data['label'] = f'Manager: {step_label}'
         return data
 
     def create(self, validated_data):
@@ -204,6 +276,10 @@ class RawPerformerSerializer(
                 api_name=api_name,
             )
             raw_performer_data['field'] = field
+        elif validated_data['type'] == PerformerType.MANAGER:
+            raw_performer_data['source_task_api_name'] = (
+                validated_data['source_id']
+            )
         return self.create_or_update_instance(
             validated_data=raw_performer_data,
             not_unique_exception_msg=MSG_PT_0056(
@@ -233,6 +309,10 @@ class RawPerformerSerializer(
                 api_name=api_name,
             )
             raw_performer_data['field'] = field
+        elif validated_data['type'] == PerformerType.MANAGER:
+            raw_performer_data['source_task_api_name'] = (
+                validated_data['source_id']
+            )
         return self.create_or_update_instance(
             instance=instance,
             validated_data=raw_performer_data,

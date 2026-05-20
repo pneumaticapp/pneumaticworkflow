@@ -140,6 +140,7 @@ class RawPerformerTemplateSchemaV1(serializers.ModelSerializer):
             'group_id',
             'api_name',
             'field',
+            'source_task_api_name',
         )
 
     field = RawPerformerTemplateFieldSchemaV1(allow_null=True, required=False)
