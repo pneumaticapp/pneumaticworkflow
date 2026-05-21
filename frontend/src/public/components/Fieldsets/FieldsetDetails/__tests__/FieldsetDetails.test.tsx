@@ -46,7 +46,40 @@ jest.mock('../../../UI', () => ({
       disabled: props.disabled,
     }, props.label),
   ),
-  FilterSelect: jest.fn(() => null),
+  FilterSelect: jest.fn((props: {
+    options: { apiName: string; name: string }[];
+    selectedOptions: (string | number | null)[];
+    onChange: (vals: (string | number | null)[]) => void;
+    renderPlaceholder?: (opts: { apiName: string; name: string }[]) => React.ReactNode;
+  }) =>
+    React.createElement(
+      'div',
+      { 'data-testid': 'filter-select' },
+      React.createElement(
+        'span',
+        { 'data-testid': 'filter-placeholder' },
+        props.renderPlaceholder ? props.renderPlaceholder(props.options) : null,
+      ),
+      ...props.options.map((opt) =>
+        React.createElement(
+          'button',
+          {
+            key: opt.apiName,
+            type: 'button',
+            'data-testid': `filter-option-${opt.apiName}`,
+            onClick: () => {
+              const isSelected = props.selectedOptions.includes(opt.apiName);
+              const next = isSelected
+                ? props.selectedOptions.filter((v) => v !== opt.apiName)
+                : [...props.selectedOptions, opt.apiName];
+              props.onChange(next);
+            },
+          },
+          opt.name,
+        ),
+      ),
+    ),
+  ),
 }));
 
 jest.mock('../../../UI/ModifyDropdown/types', () => ({
@@ -249,7 +282,7 @@ describe('FieldsetDetails', () => {
 
     it('renders nothing when fieldset=null and isLoading=false', () => {
       const { container } = renderWithState(nullFieldsetState);
-      expect(container.innerHTML).toBe('');
+      expect(container).toBeEmptyDOMElement();
       expect(screen.queryByRole('status')).not.toBeInTheDocument();
     });
   });
@@ -258,7 +291,7 @@ describe('FieldsetDetails', () => {
     it('displays fieldset name in heading', () => {
       renderWithState(makeLoadedState({ name: 'My Fieldset' }));
       const heading = screen.getByRole('heading', { level: 1 });
-      expect(heading).toHaveTextContent('My Fieldset');
+      expect(heading).toHaveTextContent(/^My Fieldset$/);
     });
 
     it('onEdit in ModifyDropdown dispatches openEditModal', () => {
@@ -303,10 +336,10 @@ describe('FieldsetDetails', () => {
   describe('Settings section', () => {
     it('syncs description and labelPosition from fieldset', () => {
       renderWithState(makeLoadedState({ description: 'Test desc', labelPosition: 'left' }));
-      const textarea = screen.getByLabelText(formatMsg('fieldsets.settings.description')) as HTMLTextAreaElement;
-      const select = screen.getByLabelText(formatMsg('fieldsets.settings.label-position')) as HTMLSelectElement;
-      expect(textarea.value).toBe('Test desc');
-      expect(select.value).toBe('left');
+      const textarea = screen.getByLabelText(formatMsg('fieldsets.settings.description'));
+      const select = screen.getByLabelText(formatMsg('fieldsets.settings.label-position'));
+      expect(textarea).toHaveValue('Test desc');
+      expect(select).toHaveValue('left');
     });
 
     it('shows save bar after changing description', () => {
@@ -461,7 +494,7 @@ describe('FieldsetDetails', () => {
 
     it('Add Rule button is always visible', () => {
       renderWithState(makeLoadedState());
-      expect(screen.getByText(new RegExp(ADD_RULE_TEXT))).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') })).toBeInTheDocument();
     });
   });
 
@@ -469,7 +502,7 @@ describe('FieldsetDetails', () => {
     it('handleAddRule adds a rule and shows save bar', () => {
       renderWithState(makeLoadedState());
 
-      userEvent.click(screen.getByText(new RegExp(ADD_RULE_TEXT)));
+      userEvent.click(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') }));
 
       expect(screen.getByText(UNSAVED_RULES_HINT)).toBeInTheDocument();
       const ruleInput = screen.getByPlaceholderText(formatMsg('fieldsets.rule-value-placeholder'));
@@ -479,7 +512,7 @@ describe('FieldsetDetails', () => {
     it('handleEditRuleValue updates rule value', () => {
       renderWithState(makeLoadedState());
 
-      userEvent.click(screen.getByText(new RegExp(ADD_RULE_TEXT)));
+      userEvent.click(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') }));
 
       const ruleInput = screen.getByPlaceholderText(formatMsg('fieldsets.rule-value-placeholder'));
       userEvent.type(ruleInput, '100');
@@ -489,7 +522,7 @@ describe('FieldsetDetails', () => {
     it('handleDeleteRule removes a rule', () => {
       renderWithState(makeLoadedState());
 
-      userEvent.click(screen.getByText(new RegExp(ADD_RULE_TEXT)));
+      userEvent.click(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') }));
       expect(screen.getByPlaceholderText(formatMsg('fieldsets.rule-value-placeholder'))).toBeInTheDocument();
 
       userEvent.click(screen.getByText(RULE_DELETE_TEXT));
@@ -503,7 +536,7 @@ describe('FieldsetDetails', () => {
       ];
       renderWithState(makeLoadedState({ id: 10, fields }));
 
-      userEvent.click(screen.getByText(new RegExp(ADD_RULE_TEXT)));
+      userEvent.click(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') }));
 
       const filterMock = getFilterSelectMock();
       const lastFilterCall = filterMock.mock.calls[filterMock.mock.calls.length - 1];
@@ -538,6 +571,61 @@ describe('FieldsetDetails', () => {
       renderWithState(makeLoadedState());
       const props = getFieldsetModalProps();
       expect(props.type).toBe('edit');
+    });
+  });
+
+  describe('External rules sync', () => {
+    it('re-syncs local rules from store and hides save bar on external fieldset update', () => {
+      const initialState = makeLoadedState({
+        id: 10,
+        rules: [{ id: 1, type: 'sum_equal', value: 'old', fields: [] }],
+      });
+      (useSelector as jest.Mock).mockImplementation((selector: (s: object) => unknown) =>
+        selector(initialState),
+      );
+      const { rerender } = render(React.createElement(FieldsetDetails, makeProps()));
+
+      const ruleInput = screen.getByPlaceholderText(formatMsg('fieldsets.rule-value-placeholder'));
+      userEvent.type(ruleInput, '!');
+      expect(ruleInput).toHaveValue('old!');
+      expect(screen.getByText(UNSAVED_RULES_HINT)).toBeInTheDocument();
+
+      const updatedState = makeLoadedState({
+        id: 10,
+        rules: [{ id: 2, type: 'sum_equal', value: 'fresh', fields: [] }],
+      });
+      (useSelector as jest.Mock).mockImplementation((selector: (s: object) => unknown) =>
+        selector(updatedState),
+      );
+      rerender(React.createElement(FieldsetDetails, makeProps()));
+
+      expect(screen.queryByDisplayValue('old!')).not.toBeInTheDocument();
+      expect(screen.getByDisplayValue('fresh')).toBeInTheDocument();
+      expect(screen.queryByText(UNSAVED_RULES_HINT)).not.toBeInTheDocument();
+      expect(mockDispatch).not.toHaveBeenCalledWith(
+        expect.objectContaining({ type: 'fieldsets/updateFieldsetAction' }),
+      );
+    });
+  });
+
+  describe('Selected fields placeholder in FilterSelect', () => {
+    it('shows selected field names joined by comma after picking fields in UI', () => {
+      const fields = [
+        makeField({ apiName: 'field-1', name: 'Total', order: 1 }),
+        makeField({ apiName: 'field-2', name: 'Tax', order: 2 }),
+        makeField({ apiName: 'field-3', name: 'Discount', order: 3 }),
+      ];
+      renderWithState(makeLoadedState({ id: 10, fields }));
+
+      userEvent.click(screen.getByRole('button', { name: new RegExp(ADD_RULE_TEXT, 'i') }));
+
+      expect(screen.getByTestId('filter-placeholder'))
+        .toHaveTextContent(formatMsg('fieldsets.rule-fields-placeholder'));
+
+      userEvent.click(screen.getByTestId('filter-option-field-1'));
+      userEvent.click(screen.getByTestId('filter-option-field-3'));
+
+      expect(screen.getByTestId('filter-placeholder')).toHaveTextContent(/^Total, Discount$/);
     });
   });
 });

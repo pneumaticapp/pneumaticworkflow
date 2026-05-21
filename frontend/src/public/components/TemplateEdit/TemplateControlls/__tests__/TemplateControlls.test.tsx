@@ -1,18 +1,30 @@
 // <reference types="jest" />
 import * as React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { useDispatch } from 'react-redux';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { history } from '../../../../utils/history';
 import { TemplateControlls, ITemplateControllsProps } from '../TemplateControlls';
 import { ERoutes } from '../../../../constants/routes';
 import { ETemplateStatus } from '../../../../types/redux';
+import { RouteLeavingGuard } from '../../../UI';
+import {
+  getRunnableWorkflow,
+  loadDatasetsMap,
+  loadFieldsetsData,
+} from '../../utils/getRunnableWorkflow';
+import { discardTemplateChanges } from '../../../../redux/actions';
 
 jest.mock('../../../../utils/history', () => ({
   history: { push: jest.fn() },
   isCreateTemplate: jest.fn(() => false),
   checkSomeRouteMatchesLocation: jest.fn(() => false),
+}));
+
+jest.mock('../../../../redux/actions', () => ({
+  discardTemplateChanges: jest.fn((p) => ({ type: 'template/discardChanges', payload: p })),
 }));
 
 jest.mock('react-router-dom', () => ({
@@ -39,7 +51,14 @@ jest.mock('../../../UI/ShowMore', () => ({
 }));
 
 jest.mock('../../../UI/Buttons/Button', () => ({
-  Button: () => null,
+  Button: jest.fn(
+    (props: { label: string; onClick?: () => void; disabled?: boolean }) =>
+      React.createElement(
+        'button',
+        { type: 'button', onClick: props.onClick, disabled: props.disabled },
+        props.label,
+      ),
+  ),
 }));
 
 jest.mock('../../../UI/WarningPopup', () => ({
@@ -51,7 +70,13 @@ jest.mock('../../../UI/Notifications', () => ({
 }));
 
 jest.mock('../../../UI', () => ({
-  RouteLeavingGuard: () => null,
+  RouteLeavingGuard: jest.fn(
+    (props: {
+      onConfirm: (path: string) => void;
+      onReject: (path: string) => void;
+      renderControlls: (confirm: (p: string) => void, reject: (p: string) => void) => React.ReactNode;
+    }) => props.renderControlls(props.onConfirm, props.onReject),
+  ),
 }));
 
 jest.mock('../../TemplateOwners', () => ({
@@ -162,6 +187,104 @@ describe('TemplateControlls — fieldset logic', () => {
     expect(patchTemplate).toHaveBeenCalledTimes(1);
     expect(patchTemplate).toHaveBeenCalledWith(
       expect.objectContaining({ changedFields: {} }),
+    );
+  });
+
+  it('after a successful draft patch, onSuccess redirects to the fieldsets page using the new id from the URL', () => {
+    const patchTemplate = jest.fn();
+
+    const originalLocation = window.location;
+    Object.defineProperty(window, 'location', {
+      writable: true,
+      value: { pathname: '/templates/edit/42' },
+    });
+
+    try {
+      render(
+        React.createElement(
+          TemplateControlls,
+          makeProps({ template: makeTemplate(undefined), patchTemplate }),
+        ),
+      );
+
+      userEvent.click(
+        screen.getByRole('button', { name: formatMsg('template.more-show-fieldsets') }),
+      );
+
+      const onSuccess = (patchTemplate.mock.calls[0][0] as { onSuccess: () => void }).onSuccess;
+      onSuccess();
+
+      const expectedUrl = ERoutes.TemplateFieldsets.replace(':templateId', '42');
+      expect(history.push).toHaveBeenCalledTimes(1);
+      expect(history.push).toHaveBeenCalledWith(expectedUrl);
+    } finally {
+      Object.defineProperty(window, 'location', { writable: true, value: originalLocation });
+    }
+  });
+
+  it('clicking Run on an active saved template runs the chain loadFieldsets → loadDatasets → getRunnable → openModal', async () => {
+    const openRunWorkflowModal = jest.fn();
+    const loadedFieldsets = [{ apiName: 'fs-1' }] as any[];
+    const datasetsMap = { ds1: ['v1'] } as any;
+    const runnableWorkflow = { kickoff: {}, tasks: [] } as any;
+
+    (loadFieldsetsData as jest.Mock).mockResolvedValue(loadedFieldsets);
+    (loadDatasetsMap as jest.Mock).mockResolvedValue(datasetsMap);
+    (getRunnableWorkflow as jest.Mock).mockReturnValue(runnableWorkflow);
+
+    const template = makeTemplate(10);
+    template.isActive = true;
+
+    render(
+      React.createElement(
+        TemplateControlls,
+        makeProps({ template, openRunWorkflowModal, templateStatus: ETemplateStatus.Saved }),
+      ),
+    );
+
+    userEvent.click(screen.getByRole('button', { name: formatMsg('templates.run-workflow') }));
+
+    await waitFor(() => expect(openRunWorkflowModal).toHaveBeenCalledTimes(1));
+
+    expect(loadFieldsetsData).toHaveBeenCalledTimes(1);
+    expect(loadFieldsetsData).toHaveBeenCalledWith(template.kickoff, 10);
+
+    expect(loadDatasetsMap).toHaveBeenCalledTimes(1);
+    expect(loadDatasetsMap).toHaveBeenCalledWith(template.kickoff, loadedFieldsets);
+
+    expect(getRunnableWorkflow).toHaveBeenCalledTimes(1);
+    expect(getRunnableWorkflow).toHaveBeenCalledWith(template, datasetsMap, loadedFieldsets);
+
+    expect(openRunWorkflowModal).toHaveBeenCalledWith(runnableWorkflow);
+  });
+
+  it('after Discard, calling onReject with a fieldsets path redirects to /templates/ instead of fieldsets', () => {
+    const mockDispatch = jest.fn();
+    (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
+
+    const template = makeTemplate(1);
+    template.isActive = false;
+
+    render(React.createElement(TemplateControlls, makeProps({ template })));
+
+    userEvent.click(
+      screen.getByRole('button', { name: formatMsg('templates.discard-changes') }),
+    );
+
+    const guardMock = RouteLeavingGuard as unknown as jest.Mock;
+    const lastProps = guardMock.mock.calls[guardMock.mock.calls.length - 1][0];
+    const onReject = lastProps.onReject as (path: string) => void;
+
+    act(() => {
+      onReject('/templates/1/fieldsets/');
+    });
+
+    expect(history.push).toHaveBeenCalledTimes(1);
+    expect(history.push).toHaveBeenCalledWith(ERoutes.Templates);
+
+    expect(discardTemplateChanges).toHaveBeenCalledTimes(1);
+    expect(discardTemplateChanges).toHaveBeenCalledWith(
+      expect.objectContaining({ templateId: 1 }),
     );
   });
 });

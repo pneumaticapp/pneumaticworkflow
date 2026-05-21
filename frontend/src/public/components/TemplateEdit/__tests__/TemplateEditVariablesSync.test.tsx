@@ -88,4 +88,48 @@ describe('TemplateEditVariablesSync', () => {
 
     expect(loadTemplateVariablesSuccess).not.toHaveBeenCalled();
   });
+
+  it('recomputes variables when the fieldsets catalog changes between renders', () => {
+    const loadTemplateVariablesSuccess = jest.fn();
+    const FIELDSETS_V1 = new Map();
+    const FIELDSETS_V2 = new Map([['fs-1', { apiName: 'fs-1', fields: [] } as any]]);
+
+    (getVariables as jest.Mock)
+      .mockReturnValueOnce([{ apiName: 'v1' }])
+      .mockReturnValueOnce([{ apiName: 'v1' }]);
+    (useSelector as jest.Mock).mockReturnValue(FIELDSETS_V1);
+
+    const { rerender } = render(
+      React.createElement(TemplateEditVariablesSync, {
+        template: makeTemplate(10),
+        prevTemplate: makeTemplate(10),
+        loadTemplateVariablesSuccess,
+      } as ITemplateEditVariablesSyncProps),
+    );
+    expect(loadTemplateVariablesSuccess).not.toHaveBeenCalled();
+
+    const expectedVariables = [{ apiName: 'v1' }, { apiName: 'fs-1.fld' }] as any[];
+    (getVariables as jest.Mock)
+      .mockReturnValueOnce(expectedVariables)
+      .mockReturnValueOnce([{ apiName: 'v1' }]);
+    (useSelector as jest.Mock).mockReturnValue(FIELDSETS_V2);
+
+    rerender(
+      React.createElement(TemplateEditVariablesSync, {
+        template: makeTemplate(10),
+        prevTemplate: makeTemplate(10),
+        loadTemplateVariablesSuccess,
+      } as ITemplateEditVariablesSyncProps),
+    );
+
+    expect(loadTemplateVariablesSuccess).toHaveBeenCalledTimes(1);
+    expect(loadTemplateVariablesSuccess).toHaveBeenCalledWith({
+      templateId: 10,
+      variables: expectedVariables,
+    });
+    expect(getVariables).toHaveBeenCalledTimes(4);
+    expect(getVariables).toHaveBeenLastCalledWith(
+      expect.objectContaining({ fieldsetsByApiName: FIELDSETS_V2 }),
+    );
+  });
 });
