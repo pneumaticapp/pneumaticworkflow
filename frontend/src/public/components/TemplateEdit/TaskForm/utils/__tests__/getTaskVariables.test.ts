@@ -1,3 +1,6 @@
+import { createElement } from 'react';
+import { render, screen } from '@testing-library/react';
+
 import { EExtraFieldType, IFieldsetData, IKickoff, ITemplateTask } from '../../../../../types/template';
 import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
 import { TTaskVariable } from '../../../types';
@@ -8,6 +11,7 @@ import {
   getVariables,
   getSingleLineVariables,
   isSystemVariable,
+  useWorkflowNameVariables,
   WORKFLOW_STARTER_VARIABLE_API_NAME,
   WORKFLOW_STARTER_VARIABLE_TITLE,
   SYSTEM_VARIABLE_SUBTITLE,
@@ -196,6 +200,43 @@ describe('getTaskVariables', () => {
       type: EExtraFieldType.User,
     });
   });
+
+  it('expands task-fieldset with inline `fields` without using the catalog', () => {
+    const inlineFieldset = {
+      apiName: 'fs-inline',
+      order: 0,
+      name: 'Inline Set',
+      fields: [
+        {
+          apiName: 'inline-field-1',
+          name: 'Inline Field',
+          type: EExtraFieldType.String,
+          isRequired: false,
+          description: '',
+          selections: [],
+          order: 0,
+          userId: null,
+          groupId: null,
+        },
+      ],
+    };
+    const taskWithInline: ITemplateTask = {
+      ...mockTask1,
+      fieldsets: [inlineFieldset as ITemplateTask['fieldsets'][number]],
+    };
+    const tasks: ITemplateTask[] = [taskWithInline, mockTask2];
+
+    const emptyCatalog = new Map<string, IFieldsetData>();
+    const actualResult = getTaskVariables(mockKikoff, tasks, mockTask2, undefined, emptyCatalog);
+
+    const inlineVar = actualResult.find((v) => v.apiName === 'inline-field-1');
+    expect(inlineVar).toBeDefined();
+    expect(inlineVar).toMatchObject({
+      title: 'Inline Field',
+      subtitle: 'Task 1 · Inline Set',
+      type: EExtraFieldType.String,
+    });
+  });
 });
 
 describe('getKickoffVariables with fieldsets', () => {
@@ -212,6 +253,20 @@ describe('getKickoffVariables with fieldsets', () => {
       title: 'Assignee',
       type: EExtraFieldType.User,
     });
+  });
+
+  it('skips fieldset missing from catalog without crashing or producing phantom options', () => {
+    const kickoff: IKickoff = {
+      ...mockKikoff,
+      fieldsets: [
+        { apiName: 'missing-fs', order: 0 },
+        { apiName: mockFieldsetData.apiName, order: 1 },
+      ],
+    };
+
+    const vars = getKickoffVariables(kickoff, mockFieldsetsById);
+
+    expect(vars.map((v) => v.apiName)).toEqual(['client-name-3967', 'assignee-fs', 'kickoff-date-fs']);
   });
 });
 
@@ -308,5 +363,119 @@ describe('getSingleLineVariables', () => {
     ];
 
     expect(getSingleLineVariables(variables)).toHaveLength(6);
+  });
+});
+
+describe('useWorkflowNameVariables', () => {
+  function TestWrapper({
+    kickoff,
+    fieldsetsByApiName,
+  }: {
+    kickoff?: Parameters<typeof useWorkflowNameVariables>[0];
+    fieldsetsByApiName?: Parameters<typeof useWorkflowNameVariables>[1];
+  }) {
+    const vars = useWorkflowNameVariables(kickoff, fieldsetsByApiName);
+    return createElement(
+      'div',
+      null,
+      vars.map((v) =>
+        createElement(
+          'span',
+          { key: v.apiName, 'data-testid': `var-${v.apiName}`, 'data-type': v.type },
+          v.title,
+        ),
+      ),
+    );
+  }
+
+  it('includes 4 system variables plus single-line kickoff and fieldset fields, filters out multi-line types', () => {
+    const fieldsetData: IFieldsetData = {
+      id: 100,
+      apiName: 'fs-name',
+      name: 'Name Set',
+      description: '',
+      order: 0,
+      fields: [
+        {
+          apiName: 'fs-date',
+          name: 'FS Date',
+          type: EExtraFieldType.Date,
+          isRequired: false,
+          description: '',
+          selections: [],
+          order: 0,
+          userId: null,
+          groupId: null,
+        },
+        {
+          apiName: 'fs-number',
+          name: 'FS Number',
+          type: EExtraFieldType.Number,
+          isRequired: false,
+          description: '',
+          selections: [],
+          order: 1,
+          userId: null,
+          groupId: null,
+        },
+        {
+          apiName: 'fs-text',
+          name: 'FS Text',
+          type: EExtraFieldType.Text,
+          isRequired: false,
+          description: '',
+          selections: [],
+          order: 2,
+          userId: null,
+          groupId: null,
+        },
+      ],
+    };
+
+    const kickoff: IKickoff = {
+      description: '',
+      fields: [
+        {
+          apiName: 'kickoff-string',
+          name: 'Kickoff String',
+          type: EExtraFieldType.String,
+          isRequired: false,
+          description: '',
+          selections: [],
+          order: 0,
+          userId: null,
+          groupId: null,
+        },
+        {
+          apiName: 'kickoff-text',
+          name: 'Kickoff Text',
+          type: EExtraFieldType.Text,
+          isRequired: false,
+          description: '',
+          selections: [],
+          order: 1,
+          userId: null,
+          groupId: null,
+        },
+      ],
+      fieldsets: [{ apiName: 'fs-name', order: 0 }],
+    };
+
+    const catalog = new Map<string, IFieldsetData>([['fs-name', fieldsetData]]);
+
+    render(createElement(TestWrapper, { kickoff, fieldsetsByApiName: catalog }));
+
+    expect(screen.getByTestId('var-date')).toBeInTheDocument();
+    expect(screen.getByTestId('var-template-name')).toBeInTheDocument();
+    expect(screen.getByTestId('var-workflow-id')).toBeInTheDocument();
+    expect(screen.getByTestId('var-workflow-starter')).toBeInTheDocument();
+
+    expect(screen.getByTestId('var-kickoff-string')).toBeInTheDocument();
+
+    expect(screen.getByTestId('var-fs-date')).toBeInTheDocument();
+    expect(screen.getByTestId('var-fs-number')).toBeInTheDocument();
+
+    expect(screen.queryByTestId('var-kickoff-text')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('var-fs-text')).not.toBeInTheDocument();
   });
 });
