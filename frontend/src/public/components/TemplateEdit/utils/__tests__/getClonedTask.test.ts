@@ -109,4 +109,36 @@ describe('getClonedTask', () => {
     expect(clonedTask.conditions[0].rules[0].ruleId).toBe(undefined);
     expect(clonedTask.conditions[0].rules[0].ruleApiName).toBe(clonedTask.conditions[0].rules[1].ruleApiName);
   });
+
+  it('preserves task.fieldsets on clone (KNOWN BUG: apiName is reused, see follow-up task)', () => {
+    const mockTask: ITemplateTask = {
+      id: 1,
+      apiName: 'task-source',
+      name: 'Task',
+      description: '',
+      number: 1,
+      requireCompletionByAll: false,
+      skipForStarter: false,
+      fields: [],
+      rawPerformers: [],
+      delay: null,
+      rawDueDate: createEmptyTaskDueDate(),
+      conditions: [],
+      uuid: 'uuid-source',
+      checklists: [],
+      revertTask: null,
+      ancestors: [],
+      fieldsets: [
+        { apiName: 'fs-a', order: 0 },
+        { apiName: 'fs-b', order: 5 },
+      ],
+    };
+
+    const clonedTask = getClonedTask(mockTask);
+
+    expect(clonedTask.fieldsets).toEqual([
+      { apiName: 'fs-a', order: 0 },
+      { apiName: 'fs-b', order: 5 },
+    ]);
+  });
 });

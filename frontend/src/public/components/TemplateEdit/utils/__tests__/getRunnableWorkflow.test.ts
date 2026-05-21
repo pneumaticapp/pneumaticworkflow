@@ -1,6 +1,16 @@
 // <reference types="jest" />
-import { ETaskPerformerType, EExtraFieldType, ITemplateResponse, ETemplateOwnerType, ETemplateOwnerRole } from '../../../../types/template';
-import { getRunnableWorkflow } from '../getRunnableWorkflow';
+import { ETaskPerformerType, EExtraFieldType, ITemplateResponse, ETemplateOwnerType, ETemplateOwnerRole, IKickoff, IFieldsetData, IExtraField } from '../../../../types/template';
+import { getRunnableWorkflow, loadFieldsetsData, loadDatasetsMap } from '../getRunnableWorkflow';
+import { getFieldsets } from '../../../../api/fieldsets/getFieldsets';
+import { getDataset } from '../../../../api/datasets/getDataset';
+
+jest.mock('../../../../api/fieldsets/getFieldsets', () => ({
+  getFieldsets: jest.fn(),
+}));
+
+jest.mock('../../../../api/datasets/getDataset', () => ({
+  getDataset: jest.fn(),
+}));
 
 const templateResponseMock: ITemplateResponse = {
   id: 4654,
@@ -200,7 +210,18 @@ const stringifyReturn = {
   loadedFieldsets: [],
 };
 
+const assertNonNull = <T>(value: T | null, message: string): T => {
+  if (value === null) {
+    throw new Error(message);
+  }
+  return value;
+};
+
 describe('getRunnableWorkflow.', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
   it('return correct workflow data', () => {
     const runnableWorkflow = getRunnableWorkflow(templateResponseMock);
 
@@ -229,9 +250,9 @@ describe('getRunnableWorkflow.', () => {
     };
 
     const datasetsMap = { 5: ['A', 'B'] };
-    const result = getRunnableWorkflow(template, datasetsMap);
+    const result = assertNonNull(getRunnableWorkflow(template, datasetsMap), 'expected non-null result');
 
-    expect(result!.kickoff.fields[0].selections).toEqual(['A', 'B']);
+    expect(result.kickoff.fields[0].selections).toEqual(['A', 'B']);
   });
 
   it('normalizes object selections into string[] when field has no dataset', () => {
@@ -254,9 +275,9 @@ describe('getRunnableWorkflow.', () => {
       },
     };
 
-    const result = getRunnableWorkflow(template);
+    const result = assertNonNull(getRunnableWorkflow(template), 'expected non-null result');
 
-    expect(result!.kickoff.fields[0].selections).toEqual(['A', 'B']);
+    expect(result.kickoff.fields[0].selections).toEqual(['A', 'B']);
   });
 
   it('passes string selections as-is when field has no dataset', () => {
@@ -279,9 +300,9 @@ describe('getRunnableWorkflow.', () => {
       },
     };
 
-    const result = getRunnableWorkflow(template);
+    const result = assertNonNull(getRunnableWorkflow(template), 'expected non-null result');
 
-    expect(result!.kickoff.fields[0].selections).toEqual(['A', 'B']);
+    expect(result.kickoff.fields[0].selections).toEqual(['A', 'B']);
   });
 
   it('falls back to empty array when datasetsMap does not contain the dataset id', () => {
@@ -306,19 +327,148 @@ describe('getRunnableWorkflow.', () => {
     };
 
     const datasetsMap = { 5: ['X'] };
-    const result = getRunnableWorkflow(template, datasetsMap);
+    const result = assertNonNull(getRunnableWorkflow(template, datasetsMap), 'expected non-null result');
 
-    expect(result!.kickoff.fields[0].selections).toEqual([]);
+    expect(result.kickoff.fields[0].selections).toEqual([]);
   });
 
-  it('returns null when isActive is false', () => {
-    const template = {
-      ...templateResponseMock,
-      isActive: false,
+  it('returns null when isActive is false or template id is missing', () => {
+    expect(getRunnableWorkflow({ ...templateResponseMock, isActive: false })).toBeNull();
+
+    type TRunnableInput = Parameters<typeof getRunnableWorkflow>[0];
+    const { id, ...templateWithoutId } = templateResponseMock;
+    expect(
+      getRunnableWorkflow(templateWithoutId as unknown as TRunnableInput),
+    ).toBeNull();
+  });
+
+  it('loadFieldsetsData returns [] and does not call getFieldsets when kickoff.fieldsets is empty', async () => {
+    const kickoff: IKickoff = { description: '', fields: [], fieldsets: [] };
+
+    const result = await loadFieldsetsData(kickoff, 42);
+
+    expect(result).toEqual([]);
+    expect(getFieldsets).not.toHaveBeenCalled();
+  });
+
+  it('loadFieldsetsData filters catalog by selected apiNames and inherits order from kickoff', async () => {
+    const kickoff: IKickoff = {
+      description: '',
+      fields: [],
+      fieldsets: [
+        { apiName: 'fs-a', order: 5 },
+        { apiName: 'fs-b', order: 10 },
+      ],
     };
+    (getFieldsets as jest.Mock).mockResolvedValue({
+      results: [
+        { id: 1, apiName: 'fs-a', name: 'A', fields: [], order: 0 },
+        { id: 2, apiName: 'fs-b', name: 'B', fields: [], order: 0 },
+        { id: 3, apiName: 'fs-c', name: 'C', fields: [], order: 0 },
+      ],
+    });
 
-    const result = getRunnableWorkflow(template);
+    const result = await loadFieldsetsData(kickoff, 42);
 
-    expect(result).toBeNull();
+    expect(result.length).toBe(2);
+    const byApiName = Object.fromEntries(result.map((fs) => [fs.apiName, fs.order]));
+    expect(byApiName['fs-a']).toBe(5);
+    expect(byApiName['fs-b']).toBe(10);
+    expect(result.find((fs) => fs.apiName === 'fs-c')).toBeUndefined();
+  });
+
+  it('loadDatasetsMap returns {} and does not call getDataset when there are no dataset ids', async () => {
+    const kickoff: IKickoff = { description: '', fields: [], fieldsets: [] };
+
+    const result = await loadDatasetsMap(kickoff, []);
+
+    expect(result).toEqual({});
+    expect(getDataset).not.toHaveBeenCalled();
+  });
+
+  it('loadDatasetsMap dedups dataset id shared by a kickoff field and a fieldset field', async () => {
+    const makeFieldWithDataset = (apiName: string, name: string, datasetId: number): IExtraField => ({
+      apiName,
+      name,
+      type: EExtraFieldType.Checkbox,
+      order: 0,
+      isRequired: false,
+      dataset: datasetId,
+      selections: [],
+      userId: null,
+      groupId: null,
+    });
+    const kickoff: IKickoff = {
+      description: '',
+      fields: [makeFieldWithDataset('k-f', 'K', 7)],
+      fieldsets: [],
+    };
+    const fieldsets: IFieldsetData[] = [
+      {
+        id: 1,
+        apiName: 'fs-1',
+        name: 'FS',
+        description: '',
+        order: 0,
+        fields: [makeFieldWithDataset('fs-f', 'F', 7)],
+      },
+    ];
+    (getDataset as jest.Mock).mockResolvedValue({ items: [{ value: 'A' }, { value: 'B' }] });
+
+    const result = await loadDatasetsMap(kickoff, fieldsets);
+
+    expect(getDataset).toHaveBeenCalledTimes(1);
+    expect(getDataset).toHaveBeenCalledWith({ id: 7 });
+    expect(result).toEqual({ 7: ['A', 'B'] });
+  });
+
+  it('getRunnableWorkflow applies datasetsMap and normalizes selections for fieldset fields', () => {
+    const datasetsMap = { 5: ['X', 'Y'] };
+    const fieldWithDataset: IExtraField = {
+      apiName: 'fs-f-ds',
+      name: 'DS',
+      type: EExtraFieldType.Checkbox,
+      order: 0,
+      isRequired: false,
+      dataset: 5,
+      selections: [],
+      userId: null,
+      groupId: null,
+    };
+    const fieldWithObjectSelections: IExtraField = {
+      apiName: 'fs-f-obj',
+      name: 'Obj',
+      type: EExtraFieldType.Checkbox,
+      order: 1,
+      isRequired: false,
+      selections: [
+        { value: 'P', apiName: 's-1' },
+        { value: 'Q', apiName: 's-2' },
+      ],
+      userId: null,
+      groupId: null,
+    };
+    const loadedFieldsets: IFieldsetData[] = [
+      {
+        id: 1,
+        apiName: 'fs-1',
+        name: 'FS',
+        description: '',
+        order: 0,
+        fields: [fieldWithDataset, fieldWithObjectSelections],
+      },
+    ];
+
+    const result = assertNonNull(
+      getRunnableWorkflow(templateResponseMock, datasetsMap, loadedFieldsets),
+      'expected non-null result',
+    );
+    const { loadedFieldsets: loaded } = result;
+    if (loaded === undefined) {
+      throw new Error('expected loadedFieldsets to be defined');
+    }
+    expect(loaded).toHaveLength(1);
+    expect(loaded[0].fields[0].selections).toEqual(['X', 'Y']);
+    expect(loaded[0].fields[1].selections).toEqual(['P', 'Q']);
   });
 });

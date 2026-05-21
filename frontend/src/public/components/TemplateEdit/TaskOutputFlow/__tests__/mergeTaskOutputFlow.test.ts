@@ -7,7 +7,17 @@ import {
   buildRowsWithRemovedFieldset,
   moveMergedRow,
   normalizeMergedTaskOutputOrders,
+  TMergedTaskOutputRow,
 } from '../mergeTaskOutputFlow';
+
+const assertRowsDefined = (
+  rows: TMergedTaskOutputRow[] | null,
+): TMergedTaskOutputRow[] => {
+  if (rows === null) {
+    throw new Error('expected rows to be non-null');
+  }
+  return rows;
+};
 
 const field = (apiName: string, order: number): IExtraField => ({
   apiName,
@@ -50,10 +60,21 @@ describe('mergeTaskOutputFlow', () => {
     expect(fieldsetOrderPatches).toContainEqual({ apiName: 'fs-1', order: 1 });
   });
 
-  it('moveMergedRow swaps adjacent items', () => {
-    const rows = buildMergedTaskOutputRows([field('a', 1)], []);
-    const moved = moveMergedRow(rows, 0, 'down');
-    expect(moved.length).toBe(1);
+  it('moveMergedRow swaps adjacent items and does not mutate the input', () => {
+    const original = buildMergedTaskOutputRows(
+      [field('a', 4), field('b', 3), field('c', 2), field('d', 1)],
+      [],
+    );
+    const apiNamesOf = (rows: ReturnType<typeof buildMergedTaskOutputRows>) =>
+      rows.map((r) => (r.kind === 'field' ? r.field.apiName : r.apiName));
+    const snapshotBefore = apiNamesOf(original);
+    expect(snapshotBefore).toEqual(['a', 'b', 'c', 'd']);
+
+    const moved = moveMergedRow(original, 1, 'down');
+
+    expect(apiNamesOf(moved)).toEqual(['a', 'c', 'b', 'd']);
+    expect(moved).not.toBe(original);
+    expect(apiNamesOf(original)).toEqual(snapshotBefore);
   });
 
   it('buildRuntimeMergedOutputParts interleaves fields and fieldsets', () => {
@@ -64,15 +85,24 @@ describe('mergeTaskOutputFlow', () => {
     expect(parts.map((output) => (output.kind === 'fieldset' ? output.data.apiName : output.field.apiName))).toEqual(['y', 'fs-9', 'x']);
   });
 
+  it('buildRuntimeMergedOutputParts returns only fields when fieldsets is undefined', () => {
+    const parts = buildRuntimeMergedOutputParts(
+      [field('x', 1), field('y', 3)],
+      undefined,
+    );
+    expect(parts.every((p) => p.kind === 'field')).toBe(true);
+    expect(parts.map((p) => (p.kind === 'field' ? p.field.apiName : ''))).toEqual(['y', 'x']);
+  });
+
   describe('buildRowsWithAddedFieldset', () => {
     it('adds fieldset to rows when it is not already present', () => {
-      const rows = buildRowsWithAddedFieldset(
+      const result = buildRowsWithAddedFieldset(
         [field('a', 0)],
         [taskFs('fs-1', 1)],
         'fs-new',
       );
-      expect(rows).not.toBeNull();
-      const apiNames = rows!.map((r) => (r.kind === 'field' ? r.field.apiName : r.apiName));
+      const rows = assertRowsDefined(result);
+      const apiNames = rows.map((r) => (r.kind === 'field' ? r.field.apiName : r.apiName));
       expect(apiNames).toContain('fs-new');
     });
 
@@ -83,6 +113,18 @@ describe('mergeTaskOutputFlow', () => {
         'fs-1',
       );
       expect(result).toBeNull();
+    });
+
+    it('places the newly added fieldset as the last row in the merged list', () => {
+      const result = buildRowsWithAddedFieldset(
+        [field('a', 5), field('b', 3)],
+        [taskFs('fs-1', 1)],
+        'fs-new',
+      );
+      const rows = assertRowsDefined(result);
+      const lastRow = rows[rows.length - 1];
+      expect(lastRow.kind).toBe('fieldset');
+      expect(lastRow.kind === 'fieldset' && lastRow.apiName).toBe('fs-new');
     });
   });
 

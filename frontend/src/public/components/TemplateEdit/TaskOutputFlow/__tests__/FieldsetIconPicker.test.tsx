@@ -3,13 +3,17 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { IFieldsetData } from '../../../../types/template';
+import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../../types/template';
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { Dropdown } from '../../../UI';
+import { IDropdownProps, TDropdownOption } from '../../../UI/Dropdown/Dropdown';
 import { FieldsetIconPicker, IFieldsetIconPickerProps } from '../FieldsetIconPicker';
 
 jest.mock('../../../UI', () => ({
-  Dropdown: jest.fn((props: any) => props.options?.customSubOption ?? null),
+  Dropdown: jest.fn(({ options }: IDropdownProps) => {
+    const single = !Array.isArray(options) ? (options as TDropdownOption) : null;
+    return single?.customSubOption ?? null;
+  }),
   CustomTooltip: () => null,
 }));
 
@@ -36,10 +40,21 @@ const makeFieldsetData = (
   rulesCount: 0,
 } as IFieldsetData);
 
-const getDropdownProps = () => {
+const getDropdownProps = (): IDropdownProps => {
   const calls = (Dropdown as jest.Mock).mock.calls;
   return calls[calls.length - 1][0];
 };
+
+const makeField = (apiName: string): IExtraField => ({
+  apiName,
+  name: `Field ${apiName}`,
+  type: EExtraFieldType.String,
+  order: 0,
+  isRequired: false,
+  isHidden: false,
+  userId: null,
+  groupId: null,
+});
 
 const formatMsg = (id: string, defaultMessage?: string) =>
   intlMock.formatMessage({ id, defaultMessage });
@@ -175,5 +190,75 @@ describe('FieldsetIconPicker', () => {
 
     const checkbox = screen.getByRole('checkbox', { hidden: true });
     expect(checkbox).toBeChecked();
+  });
+
+  it('unselected fieldset renders checkbox in unchecked state', () => {
+    const map = new Map<string, IFieldsetData>([
+      ['fs-1', makeFieldsetData(1, 'fs-1', 'My Fieldset', 0)],
+    ]);
+
+    render(
+      React.createElement(
+        FieldsetIconPicker,
+        makeProps({
+          fieldsetsByApiName: map,
+          selectedFieldsetApiNames: [],
+        }),
+      ),
+    );
+
+    const checkbox = screen.getByRole('checkbox', { hidden: true });
+    expect(checkbox).not.toBeChecked();
+  });
+
+  it('background catalog load does not show loading text when list is not empty', () => {
+    const map = new Map<string, IFieldsetData>([
+      ['fs-1', makeFieldsetData(1, 'fs-1', 'My Set', 0)],
+    ]);
+
+    render(
+      React.createElement(
+        FieldsetIconPicker,
+        makeProps({ fieldsetsCatalogLoading: true, fieldsetsByApiName: map }),
+      ),
+    );
+
+    expect(
+      screen.queryByText(formatMsg('template.fieldset-picker.loading', 'Loading…')),
+    ).not.toBeInTheDocument();
+    expect(screen.getByText('My Set')).toBeInTheDocument();
+  });
+
+  it('meta line shows "<fieldsCount> fields · <rulesCount> rules" with real numbers', () => {
+    const fieldset: IFieldsetData = {
+      id: 1,
+      apiName: 'fs-1',
+      name: 'My Set',
+      description: '',
+      order: 0,
+      fields: [makeField('a'), makeField('b'), makeField('c')],
+      rulesCount: 5,
+    };
+    const map = new Map<string, IFieldsetData>([['fs-1', fieldset]]);
+
+    render(React.createElement(FieldsetIconPicker, makeProps({ fieldsetsByApiName: map })));
+
+    expect(screen.getByText('3 fields · 5 rules')).toBeInTheDocument();
+  });
+
+  it('meta line falls back to "0 rules" when rulesCount is undefined', () => {
+    const fieldset: IFieldsetData = {
+      id: 1,
+      apiName: 'fs-1',
+      name: 'My Set',
+      description: '',
+      order: 0,
+      fields: [],
+    };
+    const map = new Map<string, IFieldsetData>([['fs-1', fieldset]]);
+
+    render(React.createElement(FieldsetIconPicker, makeProps({ fieldsetsByApiName: map })));
+
+    expect(screen.getByText('0 fields · 0 rules')).toBeInTheDocument();
   });
 });
