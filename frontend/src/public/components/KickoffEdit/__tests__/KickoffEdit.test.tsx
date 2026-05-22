@@ -92,6 +92,7 @@ describe('KickoffEdit', () => {
 
     expect(screen.queryByTestId('merged-output-list')).not.toBeNull();
 
+    expect(MergedOutputList).toHaveBeenCalledTimes(1);
     expect(MergedOutputList).toHaveBeenCalledWith(
       expect.objectContaining({
         fields: expect.arrayContaining([expect.objectContaining({ apiName: 'f1' })]),
@@ -112,6 +113,7 @@ describe('KickoffEdit', () => {
 
     expect(screen.queryByTestId('merged-output-list')).not.toBeNull();
 
+    expect(MergedOutputList).toHaveBeenCalledTimes(1);
     expect(MergedOutputList).toHaveBeenCalledWith(
       expect.objectContaining({
         fields: expect.arrayContaining([
@@ -180,5 +182,89 @@ describe('KickoffEdit', () => {
 
     const saveButton = screen.getByTestId('save-button');
     expect(saveButton).not.toBeDisabled();
+  });
+
+  it('does not render the form when there are neither plain fields nor fieldsets', () => {
+    const kickoff = {
+      description: '',
+      fields: [],
+      fieldsets: [],
+    };
+
+    renderWithIntl(<EditKickoff {...baseProps} kickoff={kickoff} fieldsets={[]} />);
+
+    expect(screen.queryByTestId('merged-output-list')).toBeNull();
+    expect(screen.queryByTestId('save-button')).toBeNull();
+    expect(screen.queryByTestId('cancel-button')).toBeNull();
+    expect(MergedOutputList).not.toHaveBeenCalled();
+  });
+
+  it('renders the form when there are no plain fields but there are fieldsets', () => {
+    const kickoff = {
+      description: '',
+      fields: [],
+      fieldsets: [],
+    };
+
+    const fieldsets: IFieldsetData[] = [
+      makeFieldset({
+        fields: [makeField('fs-field-1', 1)],
+        order: 1,
+      }),
+    ];
+
+    renderWithIntl(
+      <EditKickoff
+        {...baseProps}
+        kickoff={kickoff}
+        fieldsets={fieldsets}
+        onEditFieldsetField={jest.fn(() => jest.fn())}
+      />,
+    );
+
+    expect(screen.queryByTestId('merged-output-list')).not.toBeNull();
+    expect(MergedOutputList).toHaveBeenCalledTimes(1);
+    expect(MergedOutputList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        fields: [],
+        fieldsets,
+      }),
+      expect.anything(),
+    );
+  });
+
+  it('forwards onEditField as onEditFieldsetField when a dedicated handler is not provided', () => {
+    const onEditField = jest.fn(() => jest.fn());
+    const kickoff = {
+      description: '',
+      fields: [makeField('f1', 0)],
+      fieldsets: [],
+    };
+
+    const fieldsets: IFieldsetData[] = [
+      makeFieldset({
+        fields: [makeField('fs-field-1', 1)],
+        order: 1,
+      }),
+    ];
+
+    renderWithIntl(
+      <EditKickoff
+        accountId={1}
+        onSave={jest.fn()}
+        onEditField={onEditField}
+        kickoff={kickoff}
+        fieldsets={fieldsets}
+      />,
+    );
+
+    expect(MergedOutputList).toHaveBeenCalledTimes(1);
+    expect(MergedOutputList).toHaveBeenCalledWith(
+      expect.objectContaining({
+        onEditField,
+        onEditFieldsetField: onEditField,
+      }),
+      expect.anything(),
+    );
   });
 });

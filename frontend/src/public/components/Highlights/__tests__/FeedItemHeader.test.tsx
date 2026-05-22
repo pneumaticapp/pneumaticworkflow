@@ -1,6 +1,7 @@
 // <reference types="jest" />
 import * as React from 'react';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
 import { FeedItemHeader } from '../FeedItemHeader';
 import { KickoffOutputs } from '../../KickoffOutputs';
@@ -17,7 +18,13 @@ jest.mock('../../KickoffOutputs', () => ({
 jest.mock('../../RichText', () => ({ RichText: () => null }));
 jest.mock('../../Attachments', () => ({ Attachments: () => null }));
 jest.mock('../../UserData', () => ({ UserData: () => null }));
-jest.mock('../Ellipsis', () => ({ Ellipsis: jest.fn(() => null) }));
+jest.mock('../Ellipsis', () => ({
+  Ellipsis: jest.fn(({ expand }: { expand: () => void }) => (
+    <button type="button" data-testid="ellipsis" onClick={expand}>
+      ellipsis
+    </button>
+  )),
+}));
 jest.mock('../utils/TruncatedContent', () => ({
   TruncatedContent: ({ children }: { children: React.ReactNode }) => children,
 }));
@@ -343,6 +350,133 @@ describe('FeedItemHeader', () => {
       render(React.createElement(FeedItemHeader, props));
 
       expect(Ellipsis).toHaveBeenCalled();
+    });
+
+    it('keeps a User field inside a fieldset that has only groupId set (no value, no userId)', () => {
+      const fieldsets = [
+        makeFieldset({
+          fields: [
+            makeField({
+              apiName: 'owner-group',
+              type: EExtraFieldType.User,
+              value: null,
+              userId: null,
+              groupId: 99,
+              order: 1,
+            }),
+          ],
+        }),
+      ];
+
+      const props = makeBaseProps({
+        type: EWorkflowLogEvent.WorkflowRun,
+        workflow: makeWorkflow({
+          id: 1,
+          description: null,
+          output: [],
+          fieldsets,
+        }),
+      });
+
+      render(React.createElement(FeedItemHeader, props));
+
+      const passedFieldsets = getLastKickoffOutputsProps().fieldsets;
+      expect(passedFieldsets).toHaveLength(1);
+      expect(passedFieldsets[0].fields).toHaveLength(1);
+      expect(passedFieldsets[0].fields[0].apiName).toBe('owner-group');
+    });
+
+    it('keeps a fieldset field that has no value but has attachments', () => {
+      const fieldsets = [
+        makeFieldset({
+          fields: [
+            makeField({
+              apiName: 'doc',
+              type: EExtraFieldType.File,
+              value: null,
+              attachments: [{ id: 1, url: 'doc.pdf', name: 'doc.pdf', size: 10 }],
+              order: 1,
+            }),
+            makeField({
+              apiName: 'empty',
+              value: '',
+              attachments: [],
+              order: 2,
+            }),
+          ],
+        }),
+      ];
+
+      const props = makeBaseProps({
+        type: EWorkflowLogEvent.WorkflowRun,
+        workflow: makeWorkflow({
+          id: 1,
+          description: null,
+          output: [],
+          fieldsets,
+        }),
+      });
+
+      render(React.createElement(FeedItemHeader, props));
+
+      const passedFieldsets = getLastKickoffOutputsProps().fieldsets;
+      expect(passedFieldsets).toHaveLength(1);
+      expect(passedFieldsets[0].fields).toHaveLength(1);
+      expect(passedFieldsets[0].fields[0].apiName).toBe('doc');
+    });
+
+    it('shows Ellipsis when total count of outputs + fieldset fields is greater than 1', () => {
+      const outputs = [makeField({ apiName: 'plain', value: 'top-value', order: 5 })];
+      const fieldsets = [
+        makeFieldset({
+          fields: [makeField({ apiName: 'inside', value: 'inside-value', order: 1 })],
+        }),
+      ];
+
+      const props = makeBaseProps({
+        type: EWorkflowLogEvent.WorkflowRun,
+        workflow: makeWorkflow({
+          id: 1,
+          description: null,
+          output: outputs,
+          fieldsets,
+        }),
+      });
+
+      render(React.createElement(FeedItemHeader, props));
+
+      expect(Ellipsis).toHaveBeenCalled();
+      expect(screen.getByTestId('ellipsis')).toBeInTheDocument();
+    });
+
+    it('after Ellipsis click passes isTruncated=false to KickoffOutputs and hides the ellipsis', () => {
+      const fieldsets = [
+        makeFieldset({
+          fields: [
+            makeField({ apiName: 'a', value: 'va', order: 1 }),
+            makeField({ apiName: 'b', value: 'vb', order: 2 }),
+          ],
+        }),
+      ];
+
+      const props = makeBaseProps({
+        type: EWorkflowLogEvent.WorkflowRun,
+        workflow: makeWorkflow({
+          id: 1,
+          description: null,
+          output: [],
+          fieldsets,
+        }),
+      });
+
+      render(React.createElement(FeedItemHeader, props));
+
+      expect(getLastKickoffOutputsProps().isTruncated).toBe(true);
+
+      userEvent.click(screen.getByTestId('ellipsis'));
+
+      expect(getLastKickoffOutputsProps().isTruncated).toBe(false);
+      expect(screen.queryByTestId('ellipsis')).toBeNull();
     });
   });
 });
