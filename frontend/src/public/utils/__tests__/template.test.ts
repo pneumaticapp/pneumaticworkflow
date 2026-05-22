@@ -9,7 +9,7 @@ import {
 } from '../../types/template';
 import { ESubscriptionPlan } from '../../types/account';
 import { TUserListItem, EUserStatus } from '../../types/user';
-import { getNormalizedTemplate, mapTemplateRequest, getEmptyKickoff, cleanTemplateReferences } from '../template';
+import { getNormalizedTemplate, mapTemplateRequest, getEmptyKickoff, cleanTemplateReferences, collectFieldApiNames } from '../template';
 import { EConditionAction, EConditionOperators, EConditionLogicOperations, TConditionRule } from '../../components/TemplateEdit/TaskForm/Conditions/types';
 import { IFieldsetData } from '../../types/template';
 
@@ -567,4 +567,47 @@ describe('template utilities', () => {
     });
   });
 });
+
+  describe('collectFieldApiNames', () => {
+    it('does not crash and leaves Set empty for empty fields and fieldsets', () => {
+      const validApiNames = new Set<string>();
+
+      collectFieldApiNames([], [], emptyFieldsetsMap, validApiNames);
+
+      expect(validApiNames.size).toBe(0);
+    });
+
+    it('collects apiNames from direct fields and fieldset fields', () => {
+      const fields: IExtraField[] = [
+        { apiName: 'direct-field', type: EExtraFieldType.Text, name: 'Direct', order: 0, userId: null, groupId: null },
+      ];
+      const fieldsets = [{ apiName: 'my-fs', order: 0 }];
+      const fieldsetsMap = new Map<string, IFieldsetData>([
+        ['my-fs', {
+          id: 1, apiName: 'my-fs', name: 'FS', description: '', order: 0,
+          fields: [
+            { apiName: 'fs-field-1', type: EExtraFieldType.String, name: 'F1', order: 0, userId: null, groupId: null },
+            { apiName: 'fs-field-2', type: EExtraFieldType.Number, name: 'F2', order: 1, userId: null, groupId: null },
+          ],
+        }],
+      ]);
+      const validApiNames = new Set<string>();
+
+      collectFieldApiNames(fields, fieldsets, fieldsetsMap, validApiNames);
+
+      expect(validApiNames.has('direct-field')).toBe(true);
+      expect(validApiNames.has('fs-field-1')).toBe(true);
+      expect(validApiNames.has('fs-field-2')).toBe(true);
+      expect(validApiNames.size).toBe(3);
+    });
+
+    it('ignores fieldset missing from catalog without crashing', () => {
+      const fieldsets = [{ apiName: 'non-existent-fs', order: 0 }];
+      const validApiNames = new Set<string>();
+
+      collectFieldApiNames([], fieldsets, emptyFieldsetsMap, validApiNames);
+
+      expect(validApiNames.size).toBe(0);
+    });
+  });
 });

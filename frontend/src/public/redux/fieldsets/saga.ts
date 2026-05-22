@@ -149,7 +149,7 @@ function* updateFieldsetSaga({ payload }: PayloadAction<IUpdateFieldsetParams>) 
   }
 }
 
-function* deleteFieldsetSaga({ payload: { id, onSuccess } }: PayloadAction<TDeleteFieldsetPayload>) {
+export function* deleteFieldsetSaga({ payload: { id, onSuccess } }: PayloadAction<TDeleteFieldsetPayload>) {
   try {
     yield call(deleteFieldset, { id });
     yield put(removeFieldsetFromList(id));

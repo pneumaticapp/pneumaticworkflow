@@ -1,32 +1,35 @@
 // <reference types="jest" />
+
 import { runSaga } from 'redux-saga';
 import { call } from 'redux-saga/effects';
 
-import { loadFieldsetsSaga, loadCurrentFieldsetSaga } from '../saga';
+import { loadFieldsetsSaga, loadCurrentFieldsetSaga, deleteFieldsetSaga } from '../saga';
 import { getFieldsets } from '../../../api/fieldsets/getFieldsets';
 import { getFieldset } from '../../../api/fieldsets/getFieldset';
-import { loadFieldsets, loadFieldsetsFailed, loadCurrentFieldset, loadCurrentFieldsetSuccess } from '../slice';
+import { deleteFieldset } from '../../../api/fieldsets/deleteFieldset';
+import {
+  loadFieldsets, loadFieldsetsSuccess, loadFieldsetsFailed,
+  loadCurrentFieldset, loadCurrentFieldsetSuccess,
+  removeFieldsetFromList,
+  loadFieldsetsCatalog,
+} from '../slice';
+import { initialState } from '../slice';
 import { history } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
+import { EFieldsetsSorting } from '../../../types/fieldset';
+import { isRequestCanceled } from '../../../utils/isRequestCanceled';
 
 jest.mock('../../../utils/getConfig', () => ({
   getBrowserConfigEnv: jest.fn().mockReturnValue({
-    api: {
-      urls: {
-        templateFieldsets: '/templates/:id/fieldsets',
-        fieldset: '/fieldsets/:id',
-      },
-    },
+    api: { urls: { templateFieldsets: '/templates/:id/fieldsets', fieldset: '/fieldsets/:id' } },
   }),
 }));
 
-jest.mock('../../../api/fieldsets/getFieldsets', () => ({
-  getFieldsets: jest.fn(),
-}));
-
-jest.mock('../../../api/fieldsets/getFieldset', () => ({
-  getFieldset: jest.fn(),
-}));
+jest.mock('../../../api/fieldsets/getFieldsets', () => ({ getFieldsets: jest.fn() }));
+jest.mock('../../../api/fieldsets/getFieldset', () => ({ getFieldset: jest.fn() }));
+jest.mock('../../../api/fieldsets/createFieldset', () => ({ createFieldset: jest.fn() }));
+jest.mock('../../../api/fieldsets/updateFieldset', () => ({ updateFieldset: jest.fn() }));
+jest.mock('../../../api/fieldsets/deleteFieldset', () => ({ deleteFieldset: jest.fn() }));
 
 jest.mock('../../../utils/history', () => ({
   history: { replace: jest.fn(), push: jest.fn() },
@@ -38,6 +41,10 @@ jest.mock('../../../components/UI/Notifications', () => ({
 
 jest.mock('../../../utils/logger', () => ({
   logger: { error: jest.fn() },
+}));
+
+jest.mock('../../../utils/isRequestCanceled', () => ({
+  isRequestCanceled: jest.fn(() => false),
 }));
 
 interface IDispatchedAction {
@@ -86,7 +93,7 @@ describe('loadFieldsetsSaga', () => {
     return dispatched;
   };
 
-  describe('Redirect on non-existent template', () => {
+  describe('redirect on non-existent template', () => {
     it('redirects to templates list on 404 API response', async () => {
       const error404 = { status: 404, message: 'Not found' };
       (getFieldsets as jest.Mock).mockRejectedValue(error404);
@@ -182,7 +189,7 @@ describe('loadCurrentFieldsetSaga', () => {
     return dispatched;
   };
 
-  describe('Redirect on template ownership mismatch', () => {
+  describe('redirect on template ownership mismatch', () => {
     it('redirects to fieldsets list when fieldset belongs to a different template', async () => {
       (getFieldset as jest.Mock).mockResolvedValue(makeFieldset());
 
@@ -214,5 +221,152 @@ describe('loadCurrentFieldsetSaga', () => {
       );
       expect(successAction).toBeDefined();
     });
+  });
+
+  it('dispatches success without template check when URL templateId is null', async () => {
+    const fieldset = makeFieldset({ templateId: 99 });
+    (getFieldset as jest.Mock).mockResolvedValue(fieldset);
+
+    const dispatched = await runLoadCurrentFieldset(FIELDSET_ID, null);
+
+    const successAction = dispatched.find((a) => a.type === loadCurrentFieldsetSuccess.type);
+    expect(successAction).toBeDefined();
+    expect(history.replace).not.toHaveBeenCalled();
+  });
+});
+
+describe('loadFieldsetsSaga — additional cases', () => {
+  beforeEach(() => { jest.clearAllMocks(); });
+
+  const runSagaHelper = async (
+    saga: (...args: unknown[]) => Generator,
+    action: { type: string; payload?: unknown },
+    stateOverrides: Record<string, unknown> = {},
+  ) => {
+    const dispatched: { type: string; payload?: unknown }[] = [];
+    const fieldsets = { ...initialState };
+    Object.keys(stateOverrides).forEach((key) => {
+      (fieldsets as Record<string, unknown>)[key] = stateOverrides[key];
+    });
+    const state = { fieldsets };
+
+    function* wrapper() {
+      yield call(saga, action);
+    }
+
+    await runSaga(
+      {
+        dispatch: (a: { type: string; payload?: unknown }) => dispatched.push(a),
+        getState: () => state,
+      },
+      wrapper,
+    ).toPromise();
+
+    return dispatched;
+  };
+
+  it('offset=0: passes offset*30, sorting from store, dispatches success', async () => {
+    const apiResponse = { count: 2, results: [{ id: 1 }, { id: 2 }] };
+    (getFieldsets as jest.Mock).mockResolvedValue(apiResponse);
+
+    const dispatched = await runSagaHelper(
+      loadFieldsetsSaga,
+      loadFieldsets({ offset: 0, templateId: 10 }),
+      { fieldsetsListSorting: EFieldsetsSorting.NameAsc },
+    );
+
+    expect(getFieldsets).toHaveBeenCalledTimes(1);
+    expect(getFieldsets).toHaveBeenCalledWith(
+      expect.objectContaining({
+        templateId: 10,
+        offset: 0,
+        limit: 30,
+        ordering: EFieldsetsSorting.NameAsc,
+      }),
+    );
+
+    expect(dispatched).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: loadFieldsetsSuccess.type,
+          payload: { count: 2, offset: 0, items: [{ id: 1 }, { id: 2 }] },
+        }),
+      ]),
+    );
+  });
+
+  it('isRequestCanceled — does not dispatch failed', async () => {
+    (getFieldsets as jest.Mock).mockRejectedValue(new Error('canceled'));
+    (isRequestCanceled as jest.Mock).mockReturnValueOnce(true);
+
+    const dispatched = await runSagaHelper(
+      loadFieldsetsSaga,
+      loadFieldsets({ offset: 0, templateId: 10 }),
+    );
+
+    expect(dispatched).toEqual([]);
+  });
+});
+
+describe('deleteFieldsetSaga', () => {
+  beforeEach(() => { jest.clearAllMocks(); });
+
+  it('happy: removes from list, reloads catalog, calls onSuccess', async () => {
+    (deleteFieldset as jest.Mock).mockResolvedValue(undefined);
+    const onSuccess = jest.fn();
+
+    const dispatched: { type: string; payload?: unknown }[] = [];
+    const state = { fieldsets: { ...initialState, templateId: 10 } };
+
+    await runSaga(
+      {
+        dispatch: (a: { type: string; payload?: unknown }) => dispatched.push(a),
+        getState: () => state,
+      },
+      function* wrapper() {
+        yield call(deleteFieldsetSaga, {
+          type: 'fieldsets/deleteFieldsetAction',
+          payload: { id: 5, onSuccess },
+        });
+      },
+    ).toPromise();
+
+    expect(deleteFieldset).toHaveBeenCalledTimes(1);
+    expect(deleteFieldset).toHaveBeenCalledWith({ id: 5 });
+    expect(dispatched).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: removeFieldsetFromList.type, payload: 5 }),
+        expect.objectContaining({ type: loadFieldsetsCatalog.type }),
+      ]),
+    );
+    expect(onSuccess).toHaveBeenCalledTimes(1);
+  });
+
+  it('error: onSuccess is NOT called', async () => {
+    (deleteFieldset as jest.Mock).mockRejectedValue(new Error('fail'));
+    const onSuccess = jest.fn();
+
+    const dispatched: { type: string; payload?: unknown }[] = [];
+    const state = { fieldsets: { ...initialState, templateId: 10 } };
+
+    await runSaga(
+      {
+        dispatch: (a: { type: string; payload?: unknown }) => dispatched.push(a),
+        getState: () => state,
+      },
+      function* wrapper() {
+        yield call(deleteFieldsetSaga, {
+          type: 'fieldsets/deleteFieldsetAction',
+          payload: { id: 5, onSuccess },
+        });
+      },
+    ).toPromise();
+
+    expect(onSuccess).not.toHaveBeenCalled();
+    expect(dispatched).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: loadFieldsetsFailed.type }),
+      ]),
+    );
   });
 });
