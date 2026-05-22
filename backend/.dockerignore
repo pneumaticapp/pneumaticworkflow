@@ -1,3 +1,55 @@
-.idea
-.pytest_cache
+# Version control
 .git
+.gitignore
+
+# IDE / Editor
+.idea
+.vscode
+.cursor
+
+# Python caches
+__pycache__
+*.py[cod]
+*.pyo
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+coverage.xml
+htmlcov/
+
+# Virtual environments
+.venv
+venv
+env
+
+# Docker (avoid recursive copy)
+Dockerfile
+docker-compose*.yml
+.dockerignore
+
+# Logs
+*.log
+django_queries.log
+
+# Local env files
+.env
+default.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+staticfiles/
+tmp/
+
+# Google credentials (should be mounted, not baked in)
+google_api_credentials.json
+
+# Pre-commit
+.pre-commit-config.yaml
+
+# Database files
+*.sql
+*.sqlite3
