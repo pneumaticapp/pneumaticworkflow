@@ -1,6 +1,7 @@
 // <reference types="jest" />
 import * as React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, act } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { IntlProvider } from 'react-intl';
 import { enMessages } from '../../../lang/locales/en_US';
 
@@ -9,8 +10,6 @@ import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../types/temp
 import { MergedOutputList } from '../../MergedOutputList';
 import { InputWithVariables } from '../../TemplateEdit/InputWithVariables';
 import { intlMock } from '../../../__stubs__/intlMock';
-
-
 
 jest.mock('react-dom', () => {
   const actual = jest.requireActual('react-dom');
@@ -137,8 +136,9 @@ describe('WorkflowEditPopup', () => {
 
     renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
 
-    expect(screen.queryByTestId('merged-output-list')).not.toBeNull();
+    expect(screen.queryByTestId('merged-output-list')).toBeInTheDocument();
 
+    expect(MergedOutputList).toHaveBeenCalledTimes(1);
     expect(MergedOutputList).toHaveBeenCalledWith(
       expect.objectContaining({
         fields: expect.arrayContaining([expect.objectContaining({ apiName: 'f1' })]),
@@ -160,8 +160,9 @@ describe('WorkflowEditPopup', () => {
 
     renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
 
-    expect(screen.queryByTestId('merged-output-list')).not.toBeNull();
+    expect(screen.queryByTestId('merged-output-list')).toBeInTheDocument();
 
+    expect(MergedOutputList).toHaveBeenCalledTimes(1);
     expect(MergedOutputList).toHaveBeenCalledWith(
       expect.objectContaining({
         fieldsets: [],
@@ -188,7 +189,7 @@ describe('WorkflowEditPopup', () => {
 
     const callArgs = (MergedOutputList as jest.Mock).mock.calls[0][0];
     expect(callArgs.fields).toHaveLength(2);
-    expect(callArgs.fields.map((f: any) => f.apiName)).toEqual(
+    expect(callArgs.fields.map((f: IExtraField) => f.apiName)).toEqual(
       expect.arrayContaining(['visible-1', 'visible-2']),
     );
   });
@@ -249,5 +250,122 @@ describe('WorkflowEditPopup', () => {
       expect.objectContaining({ showInsertButton: false }),
       {},
     );
+  });
+
+  describe('Fieldsets: merge and validation', () => {
+    it('onRunWorkflow receives kickoff.fields = kickoff fields + all fieldset fields on submit', () => {
+      const kickoffField = makeField({ apiName: 'k1', value: 'kickoff-val' });
+      const fsField1 = makeField({ apiName: 'fs1', value: 'fs-val-1' });
+      const fsField2 = makeField({ apiName: 'fs2', value: 'fs-val-2' });
+
+      const workflow = {
+        ...baseWorkflow,
+        kickoff: {
+          description: '',
+          fields: [kickoffField],
+          fieldsets: [],
+        },
+        loadedFieldsets: [
+          makeFieldset({ fields: [fsField1], order: 1 }),
+          makeFieldset({ id: 2, apiName: 'fs-2', fields: [fsField2], order: 2 }),
+        ],
+      };
+
+      renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
+
+      userEvent.click(screen.getByRole('button', { name: START_LABEL }));
+
+      expect(baseProps.onRunWorkflow).toHaveBeenCalledTimes(1);
+      expect(baseProps.onRunWorkflow).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kickoff: expect.objectContaining({
+            fields: expect.arrayContaining([
+              expect.objectContaining({ apiName: 'k1' }),
+              expect.objectContaining({ apiName: 'fs1' }),
+              expect.objectContaining({ apiName: 'fs2' }),
+            ]),
+          }),
+        }),
+      );
+    });
+
+    it('editing a fieldset field via onEditFieldsetField is reflected in onRunWorkflow on submit', () => {
+      const fsField = makeField({ apiName: 'fs-edit-1', value: 'old-value' });
+
+      const workflow = {
+        ...baseWorkflow,
+        kickoff: { description: '', fields: [], fieldsets: [] },
+        loadedFieldsets: [
+          makeFieldset({ fields: [fsField], order: 1 }),
+        ],
+      };
+
+      renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
+
+      const mergedMock = MergedOutputList as jest.Mock;
+      const lastCallProps = mergedMock.mock.calls[mergedMock.mock.calls.length - 1][0];
+
+      act(() => {
+        lastCallProps.onEditFieldsetField('fs-edit-1')({ value: 'new-value' });
+      });
+
+      userEvent.click(screen.getByRole('button', { name: START_LABEL }));
+
+      expect(baseProps.onRunWorkflow).toHaveBeenCalledTimes(1);
+      expect(baseProps.onRunWorkflow).toHaveBeenCalledWith(
+        expect.objectContaining({
+          kickoff: expect.objectContaining({
+            fields: expect.arrayContaining([
+              expect.objectContaining({ apiName: 'fs-edit-1', value: 'new-value' }),
+            ]),
+          }),
+        }),
+      );
+    });
+
+    it('Start is disabled when one of multiple fieldsets has an empty required field', () => {
+      const workflow = {
+        ...baseWorkflow,
+        kickoff: { description: '', fields: [], fieldsets: [] },
+        loadedFieldsets: [
+          makeFieldset({
+            id: 1,
+            apiName: 'fs-ok',
+            fields: [makeField({ apiName: 'ok-field', isRequired: true, value: 'filled' })],
+            order: 1,
+          }),
+          makeFieldset({
+            id: 2,
+            apiName: 'fs-bad',
+            fields: [makeField({ apiName: 'bad-field', isRequired: true, value: '' })],
+            order: 2,
+          }),
+        ],
+      };
+
+      renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
+
+      expect(screen.getByRole('button', { name: START_LABEL })).toBeDisabled();
+    });
+
+    it('renders MergedOutputList when kickoff fields are empty but fieldsets exist', () => {
+      const workflow = {
+        ...baseWorkflow,
+        kickoff: { description: '', fields: [], fieldsets: [] },
+        loadedFieldsets: [
+          makeFieldset({ fields: [makeField({ apiName: 'fs-only-1' })], order: 1 }),
+        ],
+      };
+
+      renderWithIntl(<WorkflowEditPopup {...baseProps} workflow={workflow} />);
+
+      expect(screen.queryByTestId('merged-output-list')).toBeInTheDocument();
+
+      const mergedMock = MergedOutputList as jest.Mock;
+      expect(mergedMock).toHaveBeenCalledTimes(1);
+      const lastCallProps = mergedMock.mock.calls[mergedMock.mock.calls.length - 1][0];
+      expect(lastCallProps.fields).toHaveLength(0);
+      expect(lastCallProps.fieldsets).toHaveLength(1);
+    });
   });
 });

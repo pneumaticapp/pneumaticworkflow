@@ -314,4 +314,134 @@ describe('getClonedKickoff.', () => {
 
     expect(clonedKickoff).toStrictEqual(expectedKickoff);
   });
+
+  describe('Fieldsets', () => {
+    it('does not carry over fieldsets from workflowKickoff into the result (fieldsets=[])', async () => {
+      const workflowWithFieldsets: IWorkflowDetailsKickoff = {
+        id: 2,
+        description: '',
+        output: [],
+        fieldsets: [
+          {
+            id: 10,
+            apiName: 'fs-1',
+            name: 'Fieldset 1',
+            description: '',
+            order: 0,
+            fields: [
+              {
+                apiName: 'fs-field-1',
+                name: 'FS Field',
+                type: EExtraFieldType.String,
+                value: 'data',
+                order: 0,
+                userId: null,
+                groupId: null,
+              },
+            ],
+          },
+        ],
+      };
+
+      const emptyTemplateKickoff: IKickoff = {
+        description: '',
+        fields: [],
+        fieldsets: [],
+      };
+
+      const result = await getClonedKickoff(workflowWithFieldsets, emptyTemplateKickoff);
+
+      expect(result.fieldsets).toEqual([]);
+      expect(result.fields).toEqual([]);
+    });
+
+    it('drops workflow fields that are absent in the template', async () => {
+      const workflowKickoff: IWorkflowDetailsKickoff = {
+        id: 3,
+        description: '',
+        output: [
+          {
+            apiName: 'exists-in-both',
+            name: 'Both',
+            type: EExtraFieldType.String,
+            value: 'keep',
+            order: 0,
+            userId: null,
+            groupId: null,
+          },
+          {
+            apiName: 'only-in-workflow',
+            name: 'Orphan',
+            type: EExtraFieldType.String,
+            value: 'drop',
+            order: 1,
+            userId: null,
+            groupId: null,
+          },
+        ],
+      };
+
+      const templateKickoff: IKickoff = {
+        description: '',
+        fields: [
+          {
+            apiName: 'exists-in-both',
+            name: 'Both',
+            type: EExtraFieldType.String,
+            order: 0,
+            userId: null,
+            groupId: null,
+          },
+        ],
+        fieldsets: [],
+      };
+
+      const result = await getClonedKickoff(workflowKickoff, templateKickoff);
+
+      expect(result.fields).toHaveLength(1);
+      expect(result.fields[0].apiName).toBe('exists-in-both');
+      expect(result.fields[0].value).toBe('keep');
+    });
+
+    it('filters checkbox value by template selections', async () => {
+      const workflowKickoff: IWorkflowDetailsKickoff = {
+        id: 4,
+        description: '',
+        output: [
+          {
+            apiName: 'cb-1',
+            name: 'CB',
+            type: EExtraFieldType.Checkbox,
+            value: 'a, b, c',
+            selections: [],
+            order: 0,
+            userId: null,
+            groupId: null,
+          },
+        ],
+      };
+
+      const templateKickoff: IKickoff = {
+        description: '',
+        fields: [
+          {
+            apiName: 'cb-1',
+            name: 'CB',
+            type: EExtraFieldType.Checkbox,
+            selections: ['a', 'c', 'd'],
+            order: 0,
+            userId: null,
+            groupId: null,
+          },
+        ],
+        fieldsets: [],
+      };
+
+      const result = await getClonedKickoff(workflowKickoff, templateKickoff);
+
+      expect(result.fields).toHaveLength(1);
+      expect(result.fields[0].value).toEqual(['a', 'c']);
+      expect(result.fields[0].selections).toEqual(['a', 'c', 'd']);
+    });
+  });
 });
