@@ -30,11 +30,11 @@ const {
 export function initServer() {
   initSentryServer();
 
+  const webpackCompiler = webpack(webpackConfig);
   const app = express();
   const { host, port = 8000, formSubdomain, mainPage, firebase } = getConfig();
 
   if (devMode) {
-    const webpackCompiler = webpack(webpackConfig);
     app.use(devMiddleware(webpackCompiler));
     app.use(
       hotMiddleware(webpackCompiler, {

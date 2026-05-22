@@ -16,7 +16,7 @@ describe('enviroment constants', () => {
 
   const loadModule = () => require('../enviroment');
 
-  describe('getEnvVar (via exported constants)', () => {
+  describe('getEnv (via exported constants)', () => {
     describe('when window.__pneumaticConfig has featureFlags', () => {
       it('reads value from featureFlags over process.env', () => {
         process.env.LANGUAGE_CODE = 'en';
