@@ -191,8 +191,8 @@ http {
 
     server {
         listen 443 ssl;
-        ssl_certificate     /etc/keys/${SERVER_ADDRESS}/fullchain.pem;
-        ssl_certificate_key /etc/keys/${SERVER_ADDRESS}/privkey.pem;
+        ssl_certificate     /etc/keys/${FORM_DOMAIN}/fullchain.pem;
+        ssl_certificate_key /etc/keys/${FORM_DOMAIN}/privkey.pem;
 
         root /var/www/html;
         index index.html index.nginx-debian.html;
