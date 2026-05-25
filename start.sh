@@ -3,6 +3,20 @@
 # Pneumatic Workflow automated startup
 set -e
 
+# Always run from the directory containing this script so that all relative
+# paths (.env, docker-compose.yml, nginx/, etc.) resolve correctly regardless
+# of where the caller invoked start.sh from.
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+cd "$SCRIPT_DIR"
+
+# Prevent environment variable injection: unset all variables that are later
+# written into .env via sed. Values must be entered interactively or generated
+# by this script — never inherited from the caller's environment.
+unset SERVER_ADDRESS
+unset DJANGO_SECRET_KEY
+unset POSTGRES_PASSWORD REDIS_PASSWORD RABBITMQ_PASSWORD
+unset CERTBOT_ENABLE CERTBOT_EMAIL NGINX_CONF_TEMPLATE
+
 RED='\033[0;31m'
 ORANGE='\033[0;33m'
 GREEN='\033[0;32m'
@@ -20,9 +34,8 @@ ENV_FILE_CREATED=false
 
 if [ ! -f ".env" ]; then
 
-    SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
-    DEFAULT_ENV="$SCRIPT_DIR/default.env"
-    ENV_FILE="$SCRIPT_DIR/.env"
+    DEFAULT_ENV="./default.env"
+    ENV_FILE="./.env"
     NGINX_CONF_TEMPLATE=./nginx/templates/
 
     cp "$DEFAULT_ENV" "$ENV_FILE"
@@ -31,10 +44,8 @@ if [ ! -f ".env" ]; then
 
 
     # 1.1 Set Required values
-    if [ -z "$DJANGO_SECRET_KEY" ]; then
-        DJANGO_SECRET_KEY=$(cat /dev/urandom | tr -dc 'abcdefghijklmnopqrstuvwxyz0123456789!@%^*()_=+-' | head -c 50)
-        print_info "Django secret key generated"
-    fi
+    DJANGO_SECRET_KEY=$(cat /dev/urandom | tr -dc 'abcdefghijklmnopqrstuvwxyz0123456789!@%^*()_=+' | head -c 50)
+    print_info "Django secret key generated"
     sed -i "s|^#\?\s*DJANGO_SECRET_KEY=.*|DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY|"                  "$ENV_FILE"
 
     # =============================================================================
@@ -45,18 +56,16 @@ if [ ! -f ".env" ]; then
     DOMAIN_PATTERN='^([a-zA-Z0-9][a-zA-Z0-9-]*\.)+[a-zA-Z]{2,}$'
     IP_PATTERN='^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
 
-    if [ -z "$SERVER_ADDRESS" ]; then
-        while true; do
-            read -rp "Enter server address (IP, domain or localhost): " SERVER_ADDRESS
-            if [[ "$SERVER_ADDRESS" =~ $DOMAIN_PATTERN ]] || \
-               [[ "$SERVER_ADDRESS" =~ $IP_PATTERN ]]     || \
-               [ "$SERVER_ADDRESS" = "localhost" ]; then
-                break
-            else
-                print_error "Invalid address. Please enter an IP address, domain name or localhost."
-            fi
-        done
-    fi
+    while true; do
+        read -rp "Enter server address (IP, domain or localhost): " SERVER_ADDRESS
+        if [[ "$SERVER_ADDRESS" =~ $DOMAIN_PATTERN ]] || \
+           [[ "$SERVER_ADDRESS" =~ $IP_PATTERN ]]     || \
+           [ "$SERVER_ADDRESS" = "localhost" ]; then
+            break
+        else
+            print_error "Invalid address. Please enter an IP address, domain name or localhost."
+        fi
+    done
 
     # 1.2.2 Address type boolean flags
     ADDRESS_IS_DOMAIN=false
@@ -67,36 +76,20 @@ if [ ! -f ".env" ]; then
     [[ "$SERVER_ADDRESS" =~ $IP_PATTERN ]]     && ADDRESS_IS_IP=true
     [ "$SERVER_ADDRESS" = "localhost" ]         && ADDRESS_IS_LOCALHOST=true
 
-    # 1.2.3 Write SERVER_ADDRESS and URLs to .env
-    sed -i "s|^#\?\s*SERVER_ADDRESS=.*|SERVER_ADDRESS=$SERVER_ADDRESS|"        "$ENV_FILE"
-    sed -i "s|^#\?\s*BACKEND_URL=.*|BACKEND_URL=http://$SERVER_ADDRESS:8001|"  "$ENV_FILE"
-    sed -i "s|^#\?\s*FRONTEND_URL=.*|FRONTEND_URL=http://$SERVER_ADDRESS|"     "$ENV_FILE"
-    sed -i "s|^#\?\s*FORMS_URL=.*|FORMS_URL=http://form.$SERVER_ADDRESS|"      "$ENV_FILE"
-    sed -i "s|^#\?\s*FRONTEND_DOMAIN=.*|FRONTEND_DOMAIN=$SERVER_ADDRESS|"      "$ENV_FILE"
-    sed -i "s|^#\?\s*BACKEND_DOMAIN=.*|BACKEND_DOMAIN=$SERVER_ADDRESS|"        "$ENV_FILE"
-    sed -i "s|^#\?\s*FORM_DOMAIN=.*|FORM_DOMAIN=form.$SERVER_ADDRESS|"         "$ENV_FILE"
-    sed -i "s|^#\?\s*WSS_URL=.*|WSS_URL=ws://$SERVER_ADDRESS:8001|"            "$ENV_FILE"
-
     # =============================================================================
     # 1.3 Set passwords
     # =============================================================================
 
     if [ "$ADDRESS_IS_LOCALHOST" = false ]; then
-        # 1.3.1 Generate missing passwords (not needed for localhost)
-        if [ -z "$POSTGRES_PASSWORD" ]; then
-            POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
-            print_info "Postgres password generated"
-        fi
+        # 1.3.1 Generate passwords (not needed for localhost)
+        POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
+        print_info "Postgres password generated"
 
-        if [ -z "$REDIS_PASSWORD" ]; then
-            REDIS_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
-            print_info "Redis password generated"
-        fi
+        REDIS_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
+        print_info "Redis password generated"
 
-        if [ -z "$RABBITMQ_PASSWORD" ]; then
-            RABBITMQ_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
-            print_info "RabbitMQ password generated"
-        fi
+        RABBITMQ_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
+        print_info "RabbitMQ password generated"
 
 
         # 1.3.2 Write passwords to .env
@@ -151,6 +144,25 @@ if [ ! -f ".env" ]; then
         print_info "Setup completed successfully"
 
     fi
+    # =============================================================================
+    # 1.5 Write SERVER_ADDRESS and URLs to .env
+    # =============================================================================
+
+    # 1.5.1 Set protocol variables
+    HTTP_PROTOCOL=http
+    WS_PROTOCOL=ws
+    [ "$CERTBOT_ENABLE" = true ] && HTTP_PROTOCOL=https
+    [ "$CERTBOT_ENABLE" = true ] && WS_PROTOCOL=wss
+
+    sed -i "s|^#\?\s*SERVER_ADDRESS=.*|SERVER_ADDRESS=$SERVER_ADDRESS|"                             "$ENV_FILE"
+    sed -i "s|^#\?\s*BACKEND_URL=.*|BACKEND_URL=$HTTP_PROTOCOL://$SERVER_ADDRESS:8001|"             "$ENV_FILE"
+    sed -i "s|^#\?\s*FRONTEND_URL=.*|FRONTEND_URL=$HTTP_PROTOCOL://$SERVER_ADDRESS|"                "$ENV_FILE"
+    sed -i "s|^#\?\s*FORMS_URL=.*|FORMS_URL=$HTTP_PROTOCOL://form.$SERVER_ADDRESS|"                 "$ENV_FILE"
+    sed -i "s|^#\?\s*FRONTEND_DOMAIN=.*|FRONTEND_DOMAIN=$SERVER_ADDRESS|"                           "$ENV_FILE"
+    sed -i "s|^#\?\s*BACKEND_DOMAIN=.*|BACKEND_DOMAIN=$SERVER_ADDRESS|"                             "$ENV_FILE"
+    sed -i "s|^#\?\s*FORM_DOMAIN=.*|FORM_DOMAIN=form.$SERVER_ADDRESS|"                              "$ENV_FILE"
+    sed -i "s|^#\?\s*WSS_URL=.*|WSS_URL=$WS_PROTOCOL://$SERVER_ADDRESS:8001|"                       "$ENV_FILE"
+
 fi
 
 # =============================================================================
@@ -184,9 +196,9 @@ while true; do
 done
 
 case "$COMPOSE_FILE" in
-  1) COMPOSE_LABEL="Stable (recommended)" ;;
-  2) COMPOSE_LABEL="Latest" ;;
-  3) COMPOSE_LABEL="From sources (custom branch)" ;;
+  1) COMPOSE_LABEL="Stable (recommended)";   COMPOSE_ARGS=('-f' 'docker-compose.yml');     COMPOSE_TAG="stable" ;;
+  2) COMPOSE_LABEL="Latest";                 COMPOSE_ARGS=('-f' 'docker-compose.yml');     COMPOSE_TAG="latest" ;;
+  3) COMPOSE_LABEL="From sources (custom branch)"; COMPOSE_ARGS=('-f' 'docker-compose.src.yml'); COMPOSE_TAG=""   ;;
 esac
 
 echo ""
@@ -196,24 +208,18 @@ echo ""
 
 # 2.2 Stop running containers
 echo "Stopping existing containers..."
-docker compose down
+docker compose "${COMPOSE_ARGS[@]}" down
 
 # 2.3 Start containers
 
 echo ""
 echo "Starting Docker containers..."
 
-case "$COMPOSE_FILE" in
-  1)
-    output=$(TAG=stable docker compose -f "docker-compose.yml" up -d 2>&1)
-    ;;
-  2)
-    output=$(TAG=latest docker compose -f "docker-compose.yml" up -d 2>&1)
-    ;;
-  3)
-    output=$(docker compose -f "docker-compose.src.yml" up -d 2>&1)
-    ;;
-esac
+if [ -n "$COMPOSE_TAG" ]; then
+    output=$(TAG="$COMPOSE_TAG" docker compose "${COMPOSE_ARGS[@]}" up -d 2>&1)
+else
+    output=$(docker compose "${COMPOSE_ARGS[@]}" up -d 2>&1)
+fi
 if [ $? -eq 0 ]; then
   print_info "Containers successfully started"
 else
