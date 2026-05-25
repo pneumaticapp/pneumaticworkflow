@@ -66,7 +66,7 @@ http {
         root /var/www/html;
         index index.html index.nginx-debian.html;
 
-        server_name ${BACKEND_DOMAIN};
+        server_name ${SERVER_ADDRESS};
 
         location / {
             proxy_pass http://backend;
@@ -131,7 +131,7 @@ http {
         root /var/www/html;
         index index.html index.nginx-debian.html;
 
-        server_name ${FRONTEND_DOMAIN};
+        server_name ${SERVER_ADDRESS};
 
         # Okta logout redirect to backend (temporary workaround)
         # Issue: Okta requires logout URL without port (https://staging.pneumatic.app/auth/okta/logout)

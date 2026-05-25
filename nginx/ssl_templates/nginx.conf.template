@@ -70,13 +70,13 @@ http {
 
     server {
         listen 8001 ssl;
-        ssl_certificate     /etc/keys/${BACKEND_DOMAIN}.crt;
-        ssl_certificate_key /etc/keys/${BACKEND_DOMAIN}.key;
+        ssl_certificate     /etc/keys/${SERVER_ADDRESS}/fullchain.pem;
+        ssl_certificate_key /etc/keys/${SERVER_ADDRESS}/privkey.pem;
 
         root /var/www/html;
         index index.html index.nginx-debian.html;
 
-        server_name ${BACKEND_DOMAIN};
+        server_name ${SERVER_ADDRESS};
 
         location / {
             proxy_pass http://backend;
@@ -138,13 +138,13 @@ http {
     }
     server {
         listen 443 ssl;
-        ssl_certificate     /etc/keys/${FRONTEND_DOMAIN}.crt;
-        ssl_certificate_key /etc/keys/${FRONTEND_DOMAIN}.key;
+        ssl_certificate     /etc/keys/${SERVER_ADDRESS}/fullchain.pem;
+        ssl_certificate_key /etc/keys/${SERVER_ADDRESS}/privkey.pem;
 
         root /var/www/html;
         index index.html index.nginx-debian.html;
 
-        server_name ${FRONTEND_DOMAIN};
+        server_name ${SERVER_ADDRESS};
 
         # Okta logout redirect to backend (temporary workaround)
         # Issue: Okta requires logout URL without port (https://staging.pneumatic.app/auth/okta/logout)
@@ -191,8 +191,8 @@ http {
 
     server {
         listen 443 ssl;
-        ssl_certificate     /etc/keys/${FORM_DOMAIN}.crt;
-        ssl_certificate_key /etc/keys/${FORM_DOMAIN}.key;
+        ssl_certificate     /etc/keys/${SERVER_ADDRESS}/fullchain.pem;
+        ssl_certificate_key /etc/keys/${SERVER_ADDRESS}/privkey.pem;
 
         root /var/www/html;
         index index.html index.nginx-debian.html;
