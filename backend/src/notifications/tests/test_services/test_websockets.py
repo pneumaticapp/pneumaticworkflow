@@ -366,7 +366,7 @@ def test_send_overdue_task__type_user__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.overdue_task,
+        method_name=NotificationMethod.notification_created,
         group_name=f'events_{user_id}',
         data=data,
         sync=True,
@@ -434,7 +434,7 @@ def test_send_resume_workflow__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.resume_workflow,
+        method_name=NotificationMethod.notification_created,
         group_name=f'events_{user_id}',
         data=data,
         sync=True,
@@ -473,7 +473,7 @@ def test_send_delay_workflow__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.delay_workflow,
+        method_name=NotificationMethod.notification_created,
         group_name=f'events_{user_id}',
         data=data,
         sync=False,
@@ -514,7 +514,7 @@ def test_send_due_date_changed__type_user__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.due_date_changed,
+        method_name=NotificationMethod.notification_created,
         group_name=f'events_{user_id}',
         data=data,
         sync=True,
@@ -611,7 +611,7 @@ async def test_consumer_send_notification__received(mocker, api_client):
     # assert
     assert 'id' in response
     assert 'date_created_tsp' in response
-    assert response['type'] == NotificationMethod.comment
+    assert response['type'] == NotificationMethod.notification_created
     assert 'data' in response
     assert response['data']['id'] == notification.id
     assert response['data']['text'] == notification.text
@@ -738,7 +738,7 @@ def test_send_urgent__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.urgent,
+        method_name=NotificationMethod.notification_created,
         group_name=f'events_{user_id}',
         data=data,
         sync=True,
@@ -777,7 +777,7 @@ def test_send_not_urgent__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.not_urgent,
+        method_name=NotificationMethod.notification_created,
         group_name=f'events_{user_id}',
         data=data,
         sync=True,
@@ -816,7 +816,7 @@ def test_send_mention__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.mention,
+        method_name=NotificationMethod.notification_created,
         group_name=f'events_{user_id}',
         data=data,
         sync=True,
@@ -855,7 +855,7 @@ def test_send_comment__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.comment,
+        method_name=NotificationMethod.notification_created,
         group_name=f'events_{user_id}',
         data=data,
         sync=True,
@@ -894,7 +894,7 @@ def test_send_system__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.system,
+        method_name=NotificationMethod.notification_created,
         group_name=f'events_{user_id}',
         data=data,
         sync=True,
@@ -933,7 +933,7 @@ def test_send_reaction__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.reaction,
+        method_name=NotificationMethod.notification_created,
         group_name=f'events_{user_id}',
         data=data,
         sync=True,
@@ -971,7 +971,7 @@ def test_send_task_completed__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.task_completed,
+        method_name=NotificationMethod.notification_created,
         group_name=f'events_{user_id}',
         data=data,
         sync=True,
@@ -1342,16 +1342,6 @@ def test_send_dataset_created__ok(mocker):
         'src.notifications.services.websockets.'
         'WebSocketService._send',
     )
-    uuid_mock = mocker.patch(
-        'src.notifications.services.websockets.uuid.uuid4',
-        return_value='fixed-uuid',
-    )
-    now_mock = mocker.patch(
-        'src.notifications.services.websockets.timezone.now',
-        return_value=mocker.Mock(
-            timestamp=mocker.Mock(return_value=1000.0),
-        ),
-    )
     service = WebSocketService(
         logging=True,
         logo_lg='https://logo.com',
@@ -1369,16 +1359,9 @@ def test_send_dataset_created__ok(mocker):
     send_mock.assert_called_once_with(
         method_name=NotificationMethod.dataset_created,
         group_name=f'events_{user_id}',
-        data={
-            'id': 'fixed-uuid',
-            'date_created_tsp': 1000.0,
-            'type': NotificationMethod.dataset_created,
-            'data': dataset_data,
-        },
+        data=dataset_data,
         sync=True,
     )
-    uuid_mock.assert_called_once()
-    now_mock.assert_called_once()
 
 
 def test_send_dataset_updated__ok(mocker):
@@ -1391,16 +1374,6 @@ def test_send_dataset_updated__ok(mocker):
     send_mock = mocker.patch(
         'src.notifications.services.websockets.'
         'WebSocketService._send',
-    )
-    uuid_mock = mocker.patch(
-        'src.notifications.services.websockets.uuid.uuid4',
-        return_value='fixed-uuid',
-    )
-    now_mock = mocker.patch(
-        'src.notifications.services.websockets.timezone.now',
-        return_value=mocker.Mock(
-            timestamp=mocker.Mock(return_value=2000.0),
-        ),
     )
     service = WebSocketService(
         logging=True,
@@ -1419,16 +1392,9 @@ def test_send_dataset_updated__ok(mocker):
     send_mock.assert_called_once_with(
         method_name=NotificationMethod.dataset_updated,
         group_name=f'events_{user_id}',
-        data={
-            'id': 'fixed-uuid',
-            'date_created_tsp': 2000.0,
-            'type': NotificationMethod.dataset_updated,
-            'data': dataset_data,
-        },
+        data=dataset_data,
         sync=True,
     )
-    uuid_mock.assert_called_once()
-    now_mock.assert_called_once()
 
 
 def test_send_dataset_deleted__ok(mocker):
@@ -1441,16 +1407,6 @@ def test_send_dataset_deleted__ok(mocker):
     send_mock = mocker.patch(
         'src.notifications.services.websockets.'
         'WebSocketService._send',
-    )
-    uuid_mock = mocker.patch(
-        'src.notifications.services.websockets.uuid.uuid4',
-        return_value='fixed-uuid',
-    )
-    now_mock = mocker.patch(
-        'src.notifications.services.websockets.timezone.now',
-        return_value=mocker.Mock(
-            timestamp=mocker.Mock(return_value=3000.0),
-        ),
     )
     service = WebSocketService(
         logging=True,
@@ -1469,13 +1425,6 @@ def test_send_dataset_deleted__ok(mocker):
     send_mock.assert_called_once_with(
         method_name=NotificationMethod.dataset_deleted,
         group_name=f'events_{user_id}',
-        data={
-            'id': 'fixed-uuid',
-            'date_created_tsp': 3000.0,
-            'type': NotificationMethod.dataset_deleted,
-            'data': dataset_data,
-        },
+        data=dataset_data,
         sync=True,
     )
-    uuid_mock.assert_called_once()
-    now_mock.assert_called_once()
