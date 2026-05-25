@@ -71,12 +71,14 @@ class PerformerType:
     GROUP = 'group'
     WORKFLOW_STARTER = 'workflow_starter'
     FIELD = 'field'
+    MANAGER = 'manager'
 
     choices = (
         (USER, USER),
         (GROUP, GROUP),
         (WORKFLOW_STARTER, WORKFLOW_STARTER),
         (FIELD, FIELD),
+        (MANAGER, MANAGER),
     )
 
     filter_choices = (
@@ -91,6 +93,17 @@ class OwnerType:
     choices = (
         (USER, USER),
         (GROUP, GROUP),
+    )
+
+
+class OwnerRole:
+    OWNER = 'owner'
+    VIEWER = 'viewer'
+    STARTER = 'starter'
+    choices = (
+        (OWNER, OWNER),
+        (VIEWER, VIEWER),
+        (STARTER, STARTER),
     )
 
 
@@ -411,6 +424,14 @@ class TaskStatus:
         (SKIPPED, SKIPPED),
     )
 
+    LITERALS = Literal[
+        PENDING,
+        ACTIVE,
+        COMPLETED,
+        DELAYED,
+        SKIPPED,
+    ]
+
 
 class TemplateIntegrationType:
 
@@ -568,6 +589,7 @@ class WorkflowEventType:
     TASK_PERFORMER_GROUP_CREATED = 20
     TASK_PERFORMER_GROUP_DELETED = 21
     TASK_DELAY = 22
+    TASK_DELEGATION = 23
 
     URGENT_TYPES = (
         URGENT,
@@ -588,6 +610,7 @@ class WorkflowEventType:
         NOT_URGENT,
         SUB_WORKFLOW_RUN,
         TASK_DELAY,
+        TASK_DELEGATION,
     )
 
     CHOICES = (
@@ -616,7 +639,34 @@ class WorkflowEventType:
         (TASK_PERFORMER_CREATED, 'Performer group added to task'),
         (TASK_PERFORMER_DELETED, 'Performer group deleted from task'),
         (TASK_DELAY, 'Task snoozed from template'),
+        (TASK_DELEGATION, 'Task delegated'),
     )
+
+    LITERALS = Literal[
+        RUN,
+        COMPLETE,
+        ENDED,
+        DELAY,
+        REVERT,
+        ENDED_BY_CONDITION,
+        URGENT,
+        NOT_URGENT,
+        FORCE_RESUME,
+        FORCE_DELAY,
+        TASK_START,
+        TASK_COMPLETE,
+        TASK_REVERT,
+        COMMENT,
+        TASK_SKIP,
+        TASK_SKIP_NO_PERFORMERS,
+        TASK_PERFORMER_CREATED,
+        TASK_PERFORMER_DELETED,
+        DUE_DATE_CHANGED,
+        SUB_WORKFLOW_RUN,
+        TASK_PERFORMER_GROUP_CREATED,
+        TASK_PERFORMER_GROUP_DELETED,
+        TASK_DELAY,
+    ]
 
 
 class WorkflowEventActionType:
@@ -637,3 +687,36 @@ class PresetType:
         (PERSONAL, 'Personal'),
         (ACCOUNT, 'Account'),
     )
+
+
+class SearchContentType:
+
+    WORKFLOW = 'workflow'
+    KICKOFF_FIELD = 'kickoff_field'
+    TASK_FIELD = 'task_field'
+    TASK = 'task'
+    TEMPLATE = 'template'
+    EVENT = 'event'
+    TASK_TEMPLATE = 'task_template'
+
+    CHOICES = (
+        (WORKFLOW, WORKFLOW),
+        (KICKOFF_FIELD, KICKOFF_FIELD),
+        (TASK_FIELD, TASK_FIELD),
+        (TASK, TASK),
+        (TEMPLATE, TEMPLATE),
+        (EVENT, EVENT),
+        (TASK_TEMPLATE, TASK_TEMPLATE),
+    )
+
+
+class SystemVariable:
+
+    DATE = 'date'
+    TEMPLATE_NAME = 'template-name'
+    WORKFLOW_ID = 'workflow-id'
+    WORKFLOW_STARTER = 'workflow-starter'
+
+    WORKFLOW_NAME_VARS = {DATE, TEMPLATE_NAME, WORKFLOW_ID, WORKFLOW_STARTER}
+
+    TASK_VARS = {WORKFLOW_STARTER}

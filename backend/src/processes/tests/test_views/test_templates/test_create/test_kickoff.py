@@ -3,6 +3,7 @@ from django.contrib.auth import get_user_model
 
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     PerformerType,
 )
@@ -40,6 +41,7 @@ class TestCreateKickoff:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -96,6 +98,7 @@ class TestCreateKickoff:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': request_data,
@@ -153,6 +156,7 @@ class TestCreateKickoff:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'tasks': [
@@ -196,6 +200,7 @@ class TestCreateKickoff:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': False,
@@ -239,6 +244,7 @@ class TestCreateKickoff:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': False,

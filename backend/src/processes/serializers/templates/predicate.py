@@ -17,7 +17,6 @@ from src.processes.enums import (
 from src.processes.messages.template import (
     MSG_PT_0043,
     MSG_PT_0044,
-    MSG_PT_0045,
     MSG_PT_0046,
     MSG_PT_0051,
     MSG_PT_0062,
@@ -29,7 +28,6 @@ from src.processes.messages.template import (
     MSG_PT_0068,
 )
 from src.processes.models.templates.conditions import PredicateTemplate
-from src.processes.models.templates.fields import FieldTemplateSelection
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
     CustomValidationApiNameMixin,
@@ -190,32 +188,12 @@ class PredicateTemplateSerializer(
             )
         return group_id
 
-    def _validate_selection(
-        self,
-        field_api_name: str,
-        selection_api_name: str,
-        predicate_api_name: Optional[str] = None,
-    ):
-        if not FieldTemplateSelection.objects.filter(
-            api_name=selection_api_name,
-            field_template__api_name=field_api_name,
-        ).exists():
-            raise_validation_error(
-                message=MSG_PT_0045(
-                    task=self.context['task'].name,
-                    selection_api_name=selection_api_name,
-                ),
-                api_name=predicate_api_name,
-            )
-        return selection_api_name
-
     def additional_validate(self, data: Dict[str, Any]):
         super().additional_validate(data)
         account = self.context['account']
         field_type = data['field_type']
         operator = data['operator']
         value = data.get('value')
-        field = data['field']
         api_name = data.get('api_name')
 
         self._validate_allowed_operators(
@@ -238,12 +216,6 @@ class PredicateTemplateSerializer(
                 self._validate_group(
                     account=account,
                     group_id=value,
-                    predicate_api_name=api_name,
-                )
-            elif field_type in FieldType.TYPES_WITH_SELECTIONS:
-                self._validate_selection(
-                    field_api_name=field,
-                    selection_api_name=value,
                     predicate_api_name=api_name,
                 )
             elif field_type == FieldType.NUMBER:

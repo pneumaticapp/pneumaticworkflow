@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import classnames from 'classnames';
 import { UncontrolledDropdown, DropdownToggle, DropdownMenu } from 'reactstrap';
 import OutsideClickHandler from 'react-outside-click-handler';
@@ -123,8 +124,12 @@ export function Dropdown({
 
       if (customSubOption || (subOptions && Array.isArray(subOptions) && isArrayWithItems(subOptions))) {
         return (
-          <UncontrolledDropdown key={`submenu-${typeof label === 'string' ? label : mapKey}`} direction="right">
-            <DropdownToggle tag="button" className={styles['dropdown-item']}>
+          <UncontrolledDropdown
+            key={`submenu-${typeof label === 'string' ? label : mapKey}`}
+            direction="right"
+            className={optionClassName}
+          >
+            <DropdownToggle tag="button" className={classnames(styles['dropdown-item'], getDropdownItemColorClass(color))}>
               <span className={styles['label']}>{label}</span>
               <ArrowRightIcon className={styles['dropdown-item-icon']} />
             </DropdownToggle>
@@ -171,6 +176,7 @@ export function Dropdown({
     const isWide = items.every((item) => item.size === 'lg');
     const Menu = CustomDropdownMenu || DefaultDropdownMenu;
 
+    // Only pass renderMenuContent to the top-level menu to prevent submenus from inheriting the parent's custom header
     return (
       <Menu
         renderedOptions={renderedOptions}
@@ -178,7 +184,7 @@ export function Dropdown({
         level={level}
         direction={direction}
         className={menuClassName}
-        renderMenuContent={renderMenuContent}
+        {...(level === 0 && { renderMenuContent })}
       />
     );
   };

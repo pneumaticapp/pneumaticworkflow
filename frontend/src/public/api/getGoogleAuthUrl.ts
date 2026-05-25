@@ -8,7 +8,8 @@ export interface IGoogleRegisterInfoResponse {
 const OAUTH_MAP_URL: { [key in EOAuthType]: string } = {
   [EOAuthType.Google]: 'oAuthGoogle',
   [EOAuthType.Microsoft]: 'oAuthMicrosoft',
-  [EOAuthType.SSO]: 'oAuthSSO',
+  [EOAuthType.SSOAuth0]: 'oAuthSSOAuth0',
+  [EOAuthType.SSOOkta]: 'oAuthSSOOkta',
 };
 
 export function getOAuthUrl(type: EOAuthType) {

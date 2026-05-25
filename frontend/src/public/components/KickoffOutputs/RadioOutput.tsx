@@ -11,19 +11,13 @@ export interface IRadioOutputProps extends IExtraField {}
 
 export function RadioOutput({
   name,
-  selections,
+  value,
 }: IExtraField) {
   const { formatMessage } = useIntl();
 
   const renderSelections = () => {
     const defaultValue = formatMessage({ id: 'template.kick-off-form-unfilled-value' });
-
-    const mappedSelections = selections
-      ?.filter(({ isSelected }) => isSelected)
-      ?.reduce((acc, { value }) => [...acc, value], [])
-      ?.join(', ');
-
-    const displayValue = mappedSelections ? mappedSelections : defaultValue;
+    const displayValue = value || defaultValue;
 
     return (
       <span className={styles['output__text']}>

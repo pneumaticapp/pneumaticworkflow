@@ -15,6 +15,7 @@ export const isEnvAi: boolean =         process.env.AI !== 'no';
 export const isEnvPush: boolean =       process.env.PUSH !== 'no';
 export const isEnvStorage: boolean =    process.env.STORAGE !== 'no';
 export const isEnvAnalytics: boolean =  process.env.ANALYTICS !== 'no';
+export const envSSOProvider: string | undefined = process.env.SSO_PROVIDER;
 
 
 // New ENV

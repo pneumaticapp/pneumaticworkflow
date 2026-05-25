@@ -112,7 +112,7 @@ class UnsubscribeEmailToken(BaseToken):
     lifetime = timedelta(days=settings.UNSUBSCRIBE_TOKEN_IN_DAYS)
 
     @classmethod
-    def create_token(cls, user_id: int, email_type: MailoutType):
+    def create_token(cls, user_id: int, email_type: MailoutType.LITERALS):
         token = cls.for_user_id(user_id)
         token.payload.update({'email_type': MailoutType.MAP[email_type]})
         return token

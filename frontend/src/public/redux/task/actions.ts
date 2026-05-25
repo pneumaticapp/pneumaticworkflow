@@ -4,7 +4,7 @@ import { IExtraField, RawPerformer } from '../../types/template';
 import { ITask } from '../../types/tasks';
 import { ETaskCardViewMode } from '../../components/TaskCard';
 import { EWorkflowsLogSorting, IWorkflowDetailsClient, IWorkflowLogItem } from '../../types/workflow';
-import { ISendWorkflowLogComment } from '../actions';
+import { ISendWorkflowLogComment } from '../workflows/types';
 
 export const enum ETaskActions {
   LoadCurrentTask = 'LOAD_CURRENT_TASK',
@@ -28,6 +28,7 @@ export const enum ETaskActions {
   UnmarkChecklistItem = 'UNMARK_CHECKLIST_ITEM',
   SetChecklistsHandling = 'SET_CHECKLISTS_HANDLING',
   SetCurrentTaskDueDate = 'SET_CURRENT_TASK_DUE_DATE',
+  ToggleSkippedTasksVisibility = 'TOGGLE_SKIPPED_TASKS_VISIBILITY',
   DeleteCurrentTaskDueDate = 'DELETE_CURRENT_TASK_DUE_DATE',
 }
 
@@ -81,6 +82,11 @@ export const changeTaskWorkflowLogViewSettings: (
   ETaskActions.ChangeTaskWorkflowLogViewSettings,
   IChangeTaskWorkflowLogViewSettingsPayload
 >(ETaskActions.ChangeTaskWorkflowLogViewSettings);
+
+export type TToggleSkippedTasksVisibility = ITypedReduxAction<ETaskActions.ToggleSkippedTasksVisibility, void>;
+export const toggleTaskSkippedTasksVisibility = () => ({
+  type: ETaskActions.ToggleSkippedTasksVisibility as const,
+});
 
 export type TPatchCurrentTask = ITypedReduxAction<ETaskActions.PatchCurrentTask, Partial<ITask>>;
 export const patchCurrentTask: (payload: Partial<ITask>) => TPatchCurrentTask = actionGenerator<
@@ -248,4 +254,5 @@ export type TTaskActions =
   | TMarkChecklistItem
   | TSendTaskWorkflowLogComment
   | TUnmarkChecklistItem
-  | TSetChecklistsHandling;
+  | TSetChecklistsHandling
+  | TToggleSkippedTasksVisibility;

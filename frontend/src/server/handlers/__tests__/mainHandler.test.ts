@@ -32,7 +32,7 @@ describe('handlers', () => {
         render: jest.fn(),
         redirect: jest.fn(),
       };
-      const env = process.env.MCS_RUN_ENV || "local";
+      const env = process.env.MCS_RUN_ENV || 'local';
       jest.spyOn(serverApi, 'get').mockResolvedValueOnce({});
 
       await mainHandler(req as unknown as Request, res as unknown as Response);
@@ -42,7 +42,7 @@ describe('handlers', () => {
         env,
         invitedUser: '{}',
         isBuildAnalytics: false,
-        pages: "{}",
+        pages: '{}',
         user: '{}',
       });
     });

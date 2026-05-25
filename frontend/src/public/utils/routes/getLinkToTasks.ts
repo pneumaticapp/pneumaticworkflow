@@ -4,15 +4,15 @@ import { isArrayWithItems } from '../helpers';
 
 type TGetLinkToTasks = {
   templateId?: number;
-  stepId?: number;
+  taskApiNAme?: string;
   status?: ETaskListCompletionStatus;
   sorting?: ETaskListSorting | ETaskListCompleteSorting;
 };
 
-export function getLinkToTasks({ templateId, stepId, status, sorting }: TGetLinkToTasks) {
+export function getLinkToTasks({ templateId, status, sorting, taskApiNAme }: TGetLinkToTasks) {
   const queryParams = [
     templateId && `template=${templateId}`,
-    stepId && `template-step=${stepId}`,
+    taskApiNAme && `template-task=${taskApiNAme}`,
     status && `status=${status}`,
     sorting && `sorting=${sorting}`,
   ].filter(Boolean);

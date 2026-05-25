@@ -1,10 +1,7 @@
-/* eslint-disable */
-/* prettier-ignore */
-/* tslint:disable:max-file-line-count */
 import * as React from 'react';
 import classnames from 'classnames';
 import OutsideClickHandler from 'react-outside-click-handler';
-import { default as TextareaAutosize } from 'react-textarea-autosize';
+import TextareaAutosize from 'react-textarea-autosize';
 import { Modal, ModalBody } from 'reactstrap';
 
 import {
@@ -21,11 +18,6 @@ import { EditKickoffContainer } from '../../KickoffEdit';
 import { getEditKickoff } from '../../../utils/workflows';
 import { getPercent } from '../../../utils/helpers';
 import { getUserFullName } from '../../../utils/users';
-import {
-  IChangeWorkflowLogViewSettingsPayload,
-  ISendWorkflowLogComment,
-  TEditWorkflowPayload,
-} from '../../../redux/actions';
 import { IntlMessages } from '../../IntlMessages';
 import { EUserStatus } from '../../../types/user';
 import { EKickoffOutputsViewModes, KickoffOutputs } from '../../KickoffOutputs';
@@ -40,6 +32,11 @@ import { UserData } from '../../UserData';
 import { DateFormat } from '../../UI/DateFormat';
 
 import styles from './WorkflowModal.css';
+import {
+  IChangeWorkflowLogViewSettingsPayload,
+  ISendWorkflowLogComment,
+  TEditWorkflowPayload,
+} from '../../../redux/workflows/types';
 
 export interface IWorkflowModalOwnProps {
   onClose?(): void;
@@ -51,6 +48,7 @@ export interface IWorkflowModalStoreProps {
   sorting: EWorkflowsLogSorting;
   isCommentsShown: boolean;
   isOnlyAttachmentsShown: boolean;
+  isSkippedTasksShown: boolean;
   isOpen: boolean;
   timezone: string;
   dateFmt: string;
@@ -67,6 +65,7 @@ export interface IWorkflowModalStoreProps {
   setIsEditWorkflowName(payload: boolean): void;
   setIsEditKickoff(payload: boolean): void;
   changeWorkflowLogViewSettings(payload: IChangeWorkflowLogViewSettingsPayload): void;
+  toggleSkippedTasksVisibility(): void;
   editWorkflow(payload: TEditWorkflowPayload): void;
   setWorkflowEdit(payload: IWorkflowEditData): void;
   toggleModal(): void;
@@ -87,31 +86,28 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
   }
 
   public componentDidMount() {
-    if (!this.props.workflow) {
+    const { workflow, setWorkflowEdit } = this.props;
+    if (!workflow) {
       return;
     }
 
-    const {
-      workflow: { name, kickoff },
-      setWorkflowEdit,
-    } = this.props;
+    const { name, kickoff } = workflow;
     const editWorkflow = { name, kickoff: getEditKickoff(kickoff) };
 
     setWorkflowEdit(editWorkflow);
   }
 
   public componentDidUpdate(prevProps: IWorkflowModalStoreProps) {
-    if (!this.props.workflow) {
+    const { workflow, setWorkflowEdit } = this.props;
+    if (!workflow) {
       return;
     }
 
-    if (prevProps.workflow?.kickoff.id !== this.props.workflow?.kickoff.id) {
-      const {
-        workflow: { name, kickoff },
-        setWorkflowEdit,
-      } = this.props;
-      const editProcess = { name, kickoff: getEditKickoff(kickoff) };
+    const { name, kickoff } = workflow;
+    const prevKickoffId = prevProps.workflow?.kickoff.id;
 
+    if (prevKickoffId !== kickoff.id) {
+      const editProcess = { name, kickoff: getEditKickoff(kickoff) };
       setWorkflowEdit(editProcess);
     }
 
@@ -119,13 +115,12 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
   }
 
   private calculateWorkflowProgress = () => {
-    if (!this.props.workflow) {
+    const { workflow } = this.props;
+    if (!workflow) {
       return undefined;
     }
 
-    const {
-      workflow: { completedTasks, tasksCountWithoutSkipped },
-    } = this.props;
+    const { completedTasks, tasksCountWithoutSkipped } = workflow;
     if (tasksCountWithoutSkipped) {
       return getPercent(completedTasks.length, tasksCountWithoutSkipped);
     }
@@ -162,12 +157,8 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
   };
 
   private renderWorkflowName = () => {
-    if (!this.props.workflow) {
-      return null;
-    }
-
     const {
-      workflow: { name: initialName, isUrgent },
+      workflow,
       workflowEdit: {
         isWorkflowNameEditing,
         isWorkflowNameSaving,
@@ -178,6 +169,12 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
       setIsEditWorkflowName,
       setWorkflowEdit,
     } = this.props;
+
+    if (!workflow) {
+      return null;
+    }
+
+    const { name: initialName, isUrgent } = workflow;
 
     if (!isWorkflowNameEditing) {
       return (
@@ -197,6 +194,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
                   type="button"
                   className={styles['popup-title__edit']}
                   onClick={() => setIsEditWorkflowName(true)}
+                  aria-label="Edit workflow name"
                 >
                   <EditIcon />
                 </button>
@@ -245,12 +243,8 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
   };
 
   private renderKickoff = () => {
-    if (!this.props.workflow) {
-      return null;
-    }
-
     const {
-      workflow: { kickoff: initialKickoff },
+      workflow,
       workflowEdit: {
         isKickoffEditing,
         isKickoffSaving,
@@ -262,6 +256,10 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
       canEdit,
     } = this.props;
 
+    if (!workflow) {
+      return null;
+    }
+    const { kickoff: initialKickoff } = workflow;
     if (!initialKickoff || !editKickoff) {
       return null;
     }
@@ -323,18 +321,32 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
       sorting,
       isCommentsShown,
       isOnlyAttachmentsShown,
+      isSkippedTasksShown,
       workflow,
       items,
       workflowId,
       isLoading,
       changeWorkflowLogViewSettings,
+      toggleSkippedTasksVisibility,
       sendWorkflowLogComments,
       isLogLoading,
     } = this.props;
 
     if (isLoading) {
       return (
-        <div className={classnames('w-100', styles['popup-header'])} onClick={this.closeModal}>
+        <div
+          className={classnames('w-100', styles['popup-header'])}
+          onClick={this.closeModal}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault();
+              this.closeModal();
+            }
+          }}
+          aria-label="Close workflow modal"
+        >
           <Loader isLoading />
         </div>
       );
@@ -377,42 +389,25 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
             isLoading={isLogLoading}
             isCommentsShown={isCommentsShown}
             isOnlyAttachmentsShown={isOnlyAttachmentsShown}
+            isSkippedTasksShown={isSkippedTasksShown}
             workflowId={workflowId}
             changeWorkflowLogViewSettings={changeWorkflowLogViewSettings}
-            includeHeader={true}
+            toggleSkippedTasksVisibility={toggleSkippedTasksVisibility}
+            includeHeader
             sendComment={sendWorkflowLogComments}
             workflowStatus={workflow.status}
             onClickTask={this.closeModal}
-            areTasksClickable={true}
+            areTasksClickable
+            isCommentFieldHidden={false}
           />
         </ModalBody>
       </>
     );
   };
 
-  public render() {
-    const { isOpen, isRunWorkflowOpen, isFullscreenImageOpen } = this.props;
-
-    return (
-      <div className={styles['popup']}>
-        <Modal
-          isOpen={isOpen}
-          toggle={this.closeModal}
-          backdrop="static"
-          wrapClassName={classnames('processes-workflows-popup', 'processes-inwork-popup', styles['inwork-popup'])}
-          className={styles['inwork-popup-dialog']}
-          contentClassName={classnames(styles['inwork-popup-content'])}
-        >
-          <OutsideClickHandler disabled={isRunWorkflowOpen || isFullscreenImageOpen} onOutsideClick={this.closeModal}>
-            {this.renderContent()}
-          </OutsideClickHandler>
-        </Modal>
-      </div>
-    );
-  }
-
   private renderDescription = () => {
-    const workflowDescription = this.props.workflow?.description;
+    const { workflow } = this.props;
+    const workflowDescription = workflow?.description;
 
     if (workflowDescription) {
       return <div className={styles['popup-description']}>{workflowDescription}</div>;
@@ -436,12 +431,12 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
             const userData =
               workflow && workflow.isExternal
                 ? {
-                    status: EUserStatus.External,
-                    email: '',
-                    firstName: 'External User',
-                    lastName: '',
-                    photo: '',
-                  }
+                  status: EUserStatus.External,
+                  email: '',
+                  firstName: 'External User',
+                  lastName: '',
+                  photo: '',
+                }
                 : user;
 
             return (
@@ -473,4 +468,26 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps> {
       </div>
     );
   };
+
+  public render() {
+    const { isOpen, isRunWorkflowOpen, isFullscreenImageOpen } = this.props;
+
+    return (
+      <div className={styles['popup']}>
+        <Modal
+          isOpen={isOpen}
+          toggle={this.closeModal}
+          backdrop="static"
+          keyboard={false}
+          wrapClassName={classnames('processes-workflows-popup', 'processes-inwork-popup', styles['inwork-popup'])}
+          className={styles['inwork-popup-dialog']}
+          contentClassName={classnames(styles['inwork-popup-content'])}
+        >
+          <OutsideClickHandler disabled={isRunWorkflowOpen || isFullscreenImageOpen} onOutsideClick={this.closeModal}>
+            {this.renderContent()}
+          </OutsideClickHandler>
+        </Modal>
+      </div>
+    );
+  }
 }

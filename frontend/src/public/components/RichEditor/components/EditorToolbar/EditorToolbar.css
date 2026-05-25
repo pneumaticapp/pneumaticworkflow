@@ -1,0 +1,56 @@
+.toolbar-wrapper {
+  display: block;
+}
+
+.toolbar {
+  margin-top: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.toolbar-format {
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.separator {
+  width: 0.1rem;
+  height: 2.4rem;
+  background-color: var(--pneumatic-color-black16);
+}
+
+.button-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.4rem;
+  height: 2.4rem;
+}
+
+.button {
+  display: block;
+  cursor: pointer;
+  color: var(--pneumatic-color-black32);
+
+  &.is-active {
+    color: var(--pneumatic-color-link-hover);
+  }
+
+  &:hover,
+  &:focus {
+    color: var(--pneumatic-color-link-hover);
+    outline: 0;
+  }
+}
+
+.file-input {
+  position: absolute;
+  top: 0;
+  left: -9999rem;
+  overflow: hidden;
+  width: 0;
+  height: 0;
+  opacity: 0;
+}

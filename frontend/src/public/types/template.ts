@@ -14,6 +14,8 @@ export interface ITemplate {
   description: string;
   isActive: boolean;
   finalizable: boolean;
+  completionNotification: boolean;
+  reminderNotification: boolean;
   dateUpdated: string | null;
   updatedBy: number | null;
   owners: ITemplateOwner[];
@@ -29,11 +31,21 @@ export interface ITemplate {
   performersCount: number;
 }
 
+export enum ETemplateOwnerRole {
+  Owner = 'owner',
+  Viewer = 'viewer',
+  Starter = 'starter',
+}
+
 export interface ITemplateOwner {
   apiName: string;
   sourceId: string;
   type: ETemplateOwnerType;
+  role: ETemplateOwnerRole;
 }
+
+export type ITemplateViewer = ITemplateOwner;
+export type ITemplateStarter = ITemplateOwner;
 
 export type TTransformedTask =
   | { apiName: string; name: string; needSteName: null; fields: TSystemField[] }
@@ -49,6 +61,7 @@ export interface ITemplateTask {
   delay: string | null;
   rawDueDate: IDueDate;
   requireCompletionByAll: boolean;
+  skipForStarter: boolean;
   rawPerformers: ITemplateTaskPerformer[];
   fields: IExtraField[];
   uuid: string;
@@ -98,11 +111,18 @@ export enum ETemplateOwnerType {
   UserGroup = 'group',
 }
 
+export const TemplateViewerType = ETemplateOwnerType;
+export type TTemplateViewerType = ETemplateOwnerType;
+
+export const TemplateStarterType = ETemplateOwnerType;
+export type TTemplateStarterType = ETemplateOwnerType;
+
 export enum ETaskPerformerType {
   User = 'user',
   OutputUser = 'field',
   WorkflowStarter = 'workflow_starter',
   UserGroup = 'group',
+  Manager = 'manager',
 }
 
 export interface ITemplateResponse extends Omit<ITemplate, 'id' | 'tasks' | 'tasksCount' | 'performersCount'> {
@@ -173,6 +193,7 @@ export interface ITemplateListItem {
   performersCount: number;
   owners: number[];
   kickoff: IKickoff | null;
+  isEditable: boolean;
 }
 
 export interface ITableViewFields extends IExtraField {
@@ -189,10 +210,12 @@ export interface IExtraField {
   apiName: string;
   description?: string;
   isRequired?: boolean;
+  isHidden?: boolean;
   name: string;
   type: EExtraFieldType;
   value?: TExtraFieldValue;
-  selections?: IExtraFieldSelection[];
+  selections?: IExtraFieldSelection[] | string[];
+  dataset?: number | null;
   attachments?: TUploadedFile[];
   order: number;
   userId: number | null;
@@ -240,6 +263,13 @@ export interface ISystemTemplate {
 export interface ITemplateTitle {
   id: number;
   name: string;
+  count: number;
+}
+
+export interface ITemplateTitleBaseWithCount {
+  id: number;
+  name: string;
+  count: number;
 }
 
 export enum ETemplateTitleWorkflowStatuses {
@@ -270,6 +300,7 @@ export type TTemplateWithTasksOnly = Pick<ITemplate, 'name'> & {
 export interface RawPerformer {
   type: ETemplateOwnerType;
   sourceId: number;
+  label?: string;
 }
 
 export type TOrderedFields = {
@@ -289,3 +320,12 @@ export type TTemplatePreset = {
 };
 
 export type TAddTemplatePreset = Omit<TTemplatePreset, 'id' | 'author' | 'dateCreatedTsp'>;
+
+export enum ETemplatesTab {
+  Templates = 'templates',
+  Datasets = 'datasets',
+}
+
+export interface ITemplatesLayoutProps {
+  children: JSX.Element;
+}

@@ -9,17 +9,21 @@ class NotificationMethod:
     new_task_websocket = 'new_task_websocket'
     returned_task = 'returned_task'
     removed_task = 'removed_task'
+    task_reminder = 'task_reminder'
     overdue_task = 'overdue_task'
+    complete_task = 'complete_task'
     mention = 'mention'
     comment = 'comment'
     delay_workflow = 'delay_workflow'
     guest_new_task = 'guest_new_task'
     resume_workflow = 'resume_workflow'
+    complete_workflow = 'complete_workflow'
     unread_notifications = 'unread_notifications'
     due_date_changed = 'due_date_changed'
     system = 'system'
     urgent = 'urgent'
     not_urgent = 'not_urgent'
+    vacation_delegation = 'vacation_delegation'
     workflow_event = 'workflow_event'
     reaction = 'reaction'
     reset_password = 'reset_password'
@@ -35,23 +39,36 @@ class NotificationMethod:
     task_deleted = 'task_deleted'
     event_created = 'event_created'
     event_updated = 'event_updated'
+    dataset_created = 'dataset_created'
+    dataset_updated = 'dataset_updated'
+    dataset_deleted = 'dataset_deleted'
+    workflows_digest = 'workflows_digest'
+    tasks_digest = 'tasks_digest'
+    user_deactivated = 'user_deactivated'
+    user_transfer = 'user_transfer'
+    verification = 'verification'
+    invite = 'invite'
 
     LITERALS = Literal[
         new_task,
         new_task_websocket,
         returned_task,
         removed_task,
+        task_reminder,
         overdue_task,
+        complete_task,
         mention,
         comment,
         delay_workflow,
         guest_new_task,
         resume_workflow,
+        complete_workflow,
         unread_notifications,
         due_date_changed,
         system,
         urgent,
         not_urgent,
+        vacation_delegation,
         workflow_event,
         reaction,
         reset_password,
@@ -67,16 +84,36 @@ class NotificationMethod:
         task_deleted,
         event_created,
         event_updated,
+        dataset_created,
+        dataset_updated,
+        dataset_deleted,
+        workflows_digest,
+        tasks_digest,
+        user_deactivated,
+        user_transfer,
+        verification,
+        invite,
     ]
 
 
-class EmailTemplate:
+class EmailProvider:
+
+    CUSTOMERIO = 'customerio'
+    SMTP = 'smtp'
+
+    LITERALS = Literal[
+        CUSTOMERIO,
+        SMTP,
+    ]
+
+
+class EmailType:
 
     RESET_PASSWORD = 'reset_password'
     USER_DEACTIVATED = 'user_deactivated'
     NEW_TASK = 'new_task'
-    COMPLETE_TASK = 'complete_task'
     TASK_RETURNED = 'task_returned'
+    TASK_REMINDER = 'task_reminder'
     ACCOUNT_VERIFICATION = 'account_verification'
     WORKFLOWS_DIGEST = 'digest'
     TASKS_DIGEST = 'tasks_digest'
@@ -85,13 +122,16 @@ class EmailTemplate:
     GUEST_NEW_TASK = 'guest_new_task'
     OVERDUE_TASK = 'overdue_task'
     MENTION = 'mention'
+    INVITE = 'invite'
+    COMPLETE_WORKFLOW = 'complete_workflow'
+    VACATION_DELEGATION = 'vacation_delegation'
 
     LITERALS = Literal[
         RESET_PASSWORD,
         USER_DEACTIVATED,
         NEW_TASK,
-        COMPLETE_TASK,
         TASK_RETURNED,
+        TASK_REMINDER,
         ACCOUNT_VERIFICATION,
         WORKFLOWS_DIGEST,
         TASKS_DIGEST,
@@ -100,24 +140,78 @@ class EmailTemplate:
         GUEST_NEW_TASK,
         OVERDUE_TASK,
         MENTION,
+        INVITE,
+        COMPLETE_WORKFLOW,
+        VACATION_DELEGATION,
+    ]
+
+    CHOICES = [
+        (RESET_PASSWORD, 'Reset Password'),
+        (USER_DEACTIVATED, 'User Deactivated'),
+        (NEW_TASK, 'New Task'),
+        (TASK_RETURNED, 'Task Returned'),
+        (TASK_REMINDER, 'Task Reminder'),
+        (ACCOUNT_VERIFICATION, 'Account Verification'),
+        (WORKFLOWS_DIGEST, 'Workflows Digest'),
+        (TASKS_DIGEST, 'Tasks Digest'),
+        (USER_TRANSFER, 'User Transfer'),
+        (UNREAD_NOTIFICATIONS, 'Unread Notifications'),
+        (GUEST_NEW_TASK, 'Guest New Task'),
+        (OVERDUE_TASK, 'Overdue Task'),
+        (MENTION, 'Mention'),
+        (INVITE, 'Invite'),
+        (COMPLETE_WORKFLOW, 'Complete Workflow'),
+        (VACATION_DELEGATION, 'Vacation Delegation'),
     ]
 
 
 cio_template_ids = {
-    EmailTemplate.RESET_PASSWORD: env.get('CIO_TEMPLATE__RESET_PASSWORD'),
-    EmailTemplate.USER_DEACTIVATED: env.get('CIO_TEMPLATE__USER_DEACTIVATED'),
-    EmailTemplate.NEW_TASK: env.get('CIO_TEMPLATE__NEW_TASK'),
-    EmailTemplate.TASK_RETURNED: env.get('CIO_TEMPLATE__TASK_RETURNED'),
-    EmailTemplate.ACCOUNT_VERIFICATION: env.get(
+    EmailType.RESET_PASSWORD: env.get('CIO_TEMPLATE__RESET_PASSWORD'),
+    EmailType.USER_DEACTIVATED: env.get('CIO_TEMPLATE__USER_DEACTIVATED'),
+    EmailType.NEW_TASK: env.get('CIO_TEMPLATE__NEW_TASK'),
+    EmailType.TASK_RETURNED: env.get('CIO_TEMPLATE__TASK_RETURNED'),
+    EmailType.TASK_REMINDER: env.get('CIO_TEMPLATE__TASK_REMINDER'),
+    EmailType.ACCOUNT_VERIFICATION: env.get(
         'CIO_TEMPLATE__ACCOUNT_VERIFICATION',
     ),
-    EmailTemplate.WORKFLOWS_DIGEST: env.get('CIO_TEMPLATE__WORKFLOWS_DIGEST'),
-    EmailTemplate.TASKS_DIGEST: env.get('CIO_TEMPLATE__TASKS_DIGEST'),
-    EmailTemplate.USER_TRANSFER: env.get('CIO_TEMPLATE__USER_TRANSFER'),
-    EmailTemplate.UNREAD_NOTIFICATIONS: env.get(
+    EmailType.WORKFLOWS_DIGEST: env.get('CIO_TEMPLATE__WORKFLOWS_DIGEST'),
+    EmailType.TASKS_DIGEST: env.get('CIO_TEMPLATE__TASKS_DIGEST'),
+    EmailType.USER_TRANSFER: env.get('CIO_TEMPLATE__USER_TRANSFER'),
+    EmailType.UNREAD_NOTIFICATIONS: env.get(
         'CIO_TEMPLATE__UNREAD_NOTIFICATIONS',
     ),
-    EmailTemplate.GUEST_NEW_TASK: env.get('CIO_TEMPLATE__GUEST_NEW_TASK'),
-    EmailTemplate.OVERDUE_TASK: env.get('CIO_TEMPLATE__OVERDUE_TASK'),
-    EmailTemplate.MENTION: env.get('CIO_TEMPLATE__MENTION'),
+    EmailType.GUEST_NEW_TASK: env.get('CIO_TEMPLATE__GUEST_NEW_TASK'),
+    EmailType.OVERDUE_TASK: env.get('CIO_TEMPLATE__OVERDUE_TASK'),
+    EmailType.MENTION: env.get('CIO_TEMPLATE__MENTION'),
+    EmailType.COMPLETE_WORKFLOW: env.get('CIO_TEMPLATE__COMPLETE_WORKFLOW'),
+    EmailType.VACATION_DELEGATION: env.get(
+        'CIO_TEMPLATE__VACATION_DELEGATION',
+    ),
+}
+
+email_titles = {
+    NotificationMethod.new_task: "You've been assigned a task",
+    NotificationMethod.returned_task: 'A task was returned to you',
+    NotificationMethod.overdue_task: 'You Have an Overdue Task',
+    NotificationMethod.guest_new_task: "Has Invited You to the",
+    NotificationMethod.unread_notifications: 'You have unread notifications',
+    NotificationMethod.reset_password: 'Forgot Your Password?',
+    NotificationMethod.mention: 'You have been mentioned',
+    NotificationMethod.workflows_digest: 'Workflows Weekly Digest',
+    NotificationMethod.tasks_digest: 'Tasks Weekly Digest',
+    NotificationMethod.user_deactivated: (
+        'Your Pneumatic profile was deactivated.'
+    ),
+    NotificationMethod.user_transfer: 'invited you to join team on Pneumatic!',
+    NotificationMethod.verification: 'Welcome to Pneumatic!',
+    NotificationMethod.invite: (
+        "✅ You've been invited to join your team in Pneumatic"
+    ),
+    NotificationMethod.complete_workflow: 'Workflow completed',
+    NotificationMethod.task_reminder: (
+        'Reminder: you have unfinished tasks in Pneumatic'
+    ),
+    NotificationMethod.vacation_delegation: (
+        'Tasks have been delegated to you'
+    ),
 }

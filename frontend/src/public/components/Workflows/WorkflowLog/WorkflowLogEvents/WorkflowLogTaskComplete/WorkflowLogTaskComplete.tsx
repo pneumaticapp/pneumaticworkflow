@@ -1,4 +1,4 @@
-import * as React from 'react';
+import React from 'react';
 import { useIntl } from 'react-intl';
 
 import { Avatar } from '../../../../UI/Avatar';
@@ -67,7 +67,9 @@ export function WorkflowLogTaskComplete({
                 </span>
               </p>
               {!isOnlyAttachmentsShown && (
-                <div className={styles['text']}>{formatMessage({ id: 'workflows.log-complete' })}</div>
+                <div className={styles['text']}>
+                  {formatMessage({ id: 'workflows.log-complete' }, { taskName: currentTask?.name })}
+                </div>
               )}
               {renderOutputValues()}
             </div>

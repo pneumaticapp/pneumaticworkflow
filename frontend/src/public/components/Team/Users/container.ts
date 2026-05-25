@@ -3,13 +3,15 @@ import { Users } from './Users';
 import { IUsersProps } from './types';
 import { IApplicationState } from '../../../types/redux';
 import { getIsUserSubsribed } from '../../../redux/selectors/user';
-import {
+import {setGeneralLoaderVisibility} from '../../../redux/actions';
+import {  
   teamFetchStarted,
   loadChangeUserAdmin,
   openDeleteUserModal,
-  setGeneralLoaderVisibility,
-  changeUserListSorting,
-} from '../../../redux/actions';
+  loadChangeUserManager,
+  loadChangeUserReports,
+  userListSortingChanged as changeUserListSorting
+} from '../../../redux/accounts/slice';
 import { openTeamInvitesPopup, loadInvitesUsers } from '../../../redux/team/slice';
 import { EUserListSorting } from '../../../types/user';
 import { withSyncedQueryString } from '../../../HOCs/withSyncedQueryString';
@@ -32,7 +34,10 @@ type TTeamDispatchProps = Pick<
   | 'openModal'
   | 'openTeamInvitesPopup'
   | 'setGeneralLoaderVisibility'
+  | 'setGeneralLoaderVisibility'
   | 'loadInvitesUsers'
+  | 'loadChangeUserManager'
+  | 'loadChangeUserReports'
 >;
 
 export function mapStateToProps(state: IApplicationState): TTeamProps {
@@ -65,6 +70,8 @@ export const mapDispatchToProps: TTeamDispatchProps = {
   openTeamInvitesPopup,
   setGeneralLoaderVisibility,
   loadInvitesUsers,
+  loadChangeUserManager,
+  loadChangeUserReports,
 };
 
 const SyncedUsers = withSyncedQueryString<TTeamProps>([

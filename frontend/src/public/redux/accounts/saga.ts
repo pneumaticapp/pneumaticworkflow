@@ -1,9 +1,6 @@
-/* eslint-disable */
-/* prettier-ignore */
-// tslint:disable: max-file-line-count
 import { all, call, fork, put, select, takeEvery, takeLatest } from 'redux-saga/effects';
+import { PayloadAction } from '@reduxjs/toolkit';
 import {
-  EAccountsActions,
   teamFetchFailed,
   teamFetchFinished,
   teamFetchStarted,
@@ -11,22 +8,39 @@ import {
   setCurrentPlan,
   usersFetchFailed,
   usersFetchFinished,
-  TLoadChangeUserAdmin,
   changeUserAdmin,
-  TDeleteUser,
-  TOpenDeleteUserModal,
-  TDeclineIvite,
   setDeleteUserModalState,
-  TCloseDeleteUserModal,
-  setUserWorkflowsCount,
+  setWorkflowsCount as setUserWorkflowsCount,
   usersFetchStarted,
   activeUsersCountFetchFinished,
-  TUsersFetchStarted,
   loadActiveUsersCount,
-} from '../actions';
+  closeCreateUserModal,
+  closeDeleteUserModal,
+  openDeleteUserModal,
+  userListSortingChanged,
+  loadChangeUserAdmin,
+  deleteUser as deleteUserAction,
+  declineInvite as declineInviteAction,
+  loadPlan,
+  startTrialSubscriptionAction,
+  startFreeSubscriptionAction,
+  createUser,
+  loadChangeUserManager,
+  changeUserManager,
+  loadChangeUserReports,
+  changeUserReports,
+} from './slice';
+
+import {
+  IChangeUserAdminProps,
+  TOpenDeleteUserModalPayload,
+  TDeleteUserPayload,
+  TUsersFetchPayload,
+  TDeclineInvitePayload,
+} from './types';
 
 import { getAccountsStore } from '../selectors/user';
-import { EUserListSorting, EUserStatus, TUserListItem } from '../../types/user';
+import { EUserListSorting, EUserStatus, ICreateUserRequest, TUserListItem } from '../../types/user';
 import { EDeleteUserModalState, IAccounts } from '../../types/redux';
 
 import { getErrorMessage } from '../../utils/getErrorMessage';
@@ -42,6 +56,7 @@ import { countUserWorkflows, TCountUserWorkflowsResponse } from '../../api/count
 import { reassignWorkflows } from '../../api/reassignWorkflows';
 import { ESubscriptionPlan } from '../../types/account';
 import { logger } from '../../utils/logger';
+import { setSentryUser } from '../../utils/sentryUser';
 import { setGeneralLoaderVisibility } from '../general/actions';
 import { auth } from '../../api/auth';
 import { startFreeSubscription } from '../../api/startFreeSubscription';
@@ -50,12 +65,23 @@ import { sortUsersByStatus, sortUsersByNameAsc, sortUsersByNameDesc } from '../.
 import { getAccountPlan } from '../selectors/accounts';
 import { getAbsolutePath } from '../../utils/getAbsolutePath';
 import { getTenantsCountStore } from '../selectors/tenants';
+import { createUser as createUserApi } from '../../api/createUser';
+import { editTeamUser } from '../../api/editTeamUser';
+
+/**
+ * The backend API returns `subordinates_ids` (camelCased to `subordinatesIds`),
+ * but internal Redux state and UI components use `reportIds`. This helper
+ * copies the value so that both names are available in the store.
+ */
+function normalizeUserReportIds(user: TUserListItem): TUserListItem {
+  if (user.subordinatesIds && !user.reportIds) {
+    return { ...user, reportIds: user.subordinatesIds };
+  }
+  return user;
+}
 
 export function* fetchUsers(
-  action: TUsersFetchStarted = {
-    type: EAccountsActions.UsersFetchStarted,
-    payload: { showErrorNotification: true },
-  },
+  action: PayloadAction<TUsersFetchPayload> = { type: 'accounts/usersFetchStarted', payload: { showErrorNotification: true } }
 ) {
   const { payload: { showErrorNotification } = { showErrorNotification: true } } = action;
 
@@ -76,7 +102,7 @@ export function* fetchUsers(
         status: EUserStatus.Active,
       };
 
-      return { ...emptyUserData, ...user };
+      return normalizeUserReportIds({ ...emptyUserData, ...user });
     });
 
     const sortedUsers = sortUsersByStatus(sortUsersByNameAsc(normalizedUsers));
@@ -106,8 +132,8 @@ export function* fetchActiveUsersCount() {
 export function* fetchPlan() {
   const currentPlan: ReturnType<typeof getAccountPlan> = yield select(getAccountPlan);
   try {
-    const currentPlan: TGetPlanResponse = yield call(getPlan);
-    yield put(setCurrentPlan(currentPlan));
+    const planResponse: TGetPlanResponse = yield call(getPlan);
+    yield put(setCurrentPlan(planResponse));
   } catch (error) {
     NotificationManager.notifyApiError(error, { title: 'plan.fetch-error', message: getErrorMessage(error) });
     console.info('fetch plan error : ', error);
@@ -126,7 +152,7 @@ function getSortedUsers(users: TUserListItem[], sorting: EUserListSorting) {
   const sortingMethodMap = {
     [EUserListSorting.NameAsc]: sortUsersByNameAsc,
     [EUserListSorting.NameDesc]: sortUsersByNameDesc,
-    [EUserListSorting.Status]: (users: TUserListItem[]) => sortUsersByStatus(sortUsersByNameAsc(users)),
+    [EUserListSorting.Status]: (usersList: TUserListItem[]) => sortUsersByStatus(sortUsersByNameAsc(usersList)),
   };
 
   return sortingMethodMap[sorting](users);
@@ -135,10 +161,11 @@ function getSortedUsers(users: TUserListItem[], sorting: EUserListSorting) {
 function* fetchTeam() {
   try {
     const { userListSorting: sorting }: IAccounts = yield select(getAccountsStore);
-    const users: TUserListItem[] = yield getUsers({
+    const rawUsers: TUserListItem[] = yield getUsers({
       type: 'user',
       status: [EUserStatus.Active, EUserStatus.Invited],
     });
+    const users = rawUsers.map(normalizeUserReportIds);
 
     yield put(teamFetchFinished(getSortedUsers(users, sorting)));
   } catch (error) {
@@ -147,7 +174,7 @@ function* fetchTeam() {
   }
 }
 
-function* saveUserAdmin({ payload: { isAdmin, email, id } }: TLoadChangeUserAdmin) {
+function* saveUserAdmin({ payload: { isAdmin, email, id } }: PayloadAction<IChangeUserAdminProps>) {
   try {
     yield put(changeUserAdmin({ isAdmin, email, id }));
     yield changeUserPermissions(id);
@@ -162,19 +189,59 @@ function* saveUserAdmin({ payload: { isAdmin, email, id } }: TLoadChangeUserAdmi
   }
 }
 
+function* saveUserManagerSaga({
+  payload: { id, managerId, onSuccess, onError },
+}: PayloadAction<{
+  id: number;
+  managerId: number | null;
+  onSuccess?: () => void;
+  onError?: () => void;
+}>) {
+  try {
+    yield put(setGeneralLoaderVisibility(true));
+    yield call(editTeamUser, id, { managerId });
+    yield put(changeUserManager({ id, managerId }));
+    NotificationManager.success({ message: 'team.manager-update-success' });
+    onSuccess?.();
+  } catch (error) {
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+    onError?.();
+  } finally {
+    yield put(setGeneralLoaderVisibility(false));
+  }
+}
+
+function* saveUserReportsSaga({
+  payload: { id, reportIds, onSuccess, onError },
+}: PayloadAction<{
+  id: number;
+  reportIds: number[];
+  onSuccess?: () => void;
+  onError?: () => void;
+}>) {
+  try {
+    yield put(setGeneralLoaderVisibility(true));
+    yield call(editTeamUser, id, { subordinatesIds: reportIds });
+    yield put(changeUserReports({ id, reportIds }));
+    NotificationManager.success({ message: 'team.reports-update-success' });
+    onSuccess?.();
+  } catch (error) {
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+    onError?.();
+  } finally {
+    yield put(setGeneralLoaderVisibility(false));
+  }
+}
+
 async function fetchReassignWorkflows(oldUserId: number, newUserId: number | null) {
   if (!newUserId) {
     return;
   }
 
-  try {
-    await reassignWorkflows(oldUserId, newUserId);
-  } catch (error) {
-    throw error;
-  }
+  await reassignWorkflows(oldUserId, newUserId);
 }
 
-function* fetchDeleteUser({ payload: { userId, reassignedUserId } }: TDeleteUser) {
+function* fetchDeleteUser({ payload: { userId, reassignedUserId } }: PayloadAction<TDeleteUserPayload>) {
   try {
     yield put(setDeleteUserModalState(EDeleteUserModalState.PerformingAction));
     yield call(fetchReassignWorkflows, userId, reassignedUserId);
@@ -190,7 +257,7 @@ function* fetchDeleteUser({ payload: { userId, reassignedUserId } }: TDeleteUser
   }
 }
 
-function* fetchDeclineInvite({ payload: { userId, inviteId, reassignedUserId } }: TDeclineIvite) {
+function* fetchDeclineInvite({ payload: { userId, inviteId, reassignedUserId } }: PayloadAction<TDeclineInvitePayload>) {
   try {
     yield put(setDeleteUserModalState(EDeleteUserModalState.PerformingAction));
     yield call(fetchReassignWorkflows, userId, reassignedUserId);
@@ -206,14 +273,14 @@ function* fetchDeclineInvite({ payload: { userId, inviteId, reassignedUserId } }
   }
 }
 
-function* handleToggleDeleteUserModal(action: TOpenDeleteUserModal | TCloseDeleteUserModal) {
-  if (action.type === EAccountsActions.CloseDeleteUserModal) {
+function* handleToggleDeleteUserModal(action: PayloadAction<TOpenDeleteUserModalPayload> | PayloadAction<void>) {
+  if (action.type === 'accounts/closeDeleteUserModal') {
     return;
   }
 
   const {
     payload: { user },
-  } = action;
+  } = action as PayloadAction<TOpenDeleteUserModalPayload>;
 
   try {
     yield put(setDeleteUserModalState(EDeleteUserModalState.FetchingUserData));
@@ -264,6 +331,7 @@ function* startFreeSubscriptionSaga() {
     yield fetchPlan();
     const result: TAuthUserResult = yield call(auth.getUser);
     yield put(authUserSuccess(result));
+    setSentryUser({ id: result.id, email: result.email });
     NotificationManager.success({ message: 'pricing.switched-to-free-plan' });
   } catch (error) {
     const message = getErrorMessage(error);
@@ -274,51 +342,78 @@ function* startFreeSubscriptionSaga() {
   }
 }
 
+function* createUserSaga({ payload }: PayloadAction<ICreateUserRequest>) {
+  try {
+    yield call(createUserApi, payload);
+    NotificationManager.success({ message: 'team.create-user-success-msg' });
+    yield put(closeCreateUserModal());
+
+    yield put(teamFetchStarted({}));
+    yield put(usersFetchStarted());
+    yield put(loadActiveUsersCount());
+  } catch (error) {
+    NotificationManager.notifyApiError( error, { message: getErrorMessage(error) });
+    logger.error('failed to create user', error);
+  }
+}
+
 export function* watchFetchUser() {
-  yield takeEvery(EAccountsActions.UsersFetchStarted, fetchUsers);
+  yield takeEvery(usersFetchStarted.type, fetchUsers);
 }
 
 export function* watchFetchActiveUsersCount() {
-  yield takeEvery(EAccountsActions.ActiveUsersCountFetchStarted, fetchActiveUsersCount);
+  yield takeEvery(loadActiveUsersCount.type, fetchActiveUsersCount);
 }
 
 export function* watchFetchTeam() {
-  yield takeEvery(EAccountsActions.TeamFetchStarted, fetchTeam);
+  yield takeEvery(teamFetchStarted.type, fetchTeam);
 }
 
 export function* watchUserListSortingChnaged() {
-  yield takeEvery(EAccountsActions.UserListSortingChanged, onChangeUserSorting);
+  yield takeEvery(userListSortingChanged.type, onChangeUserSorting);
 }
 
 export function* watchChangeAdminUser() {
-  yield takeEvery(EAccountsActions.LoadChangeUserAdmin, saveUserAdmin);
+  yield takeEvery(loadChangeUserAdmin.type, saveUserAdmin);
+}
+
+export function* watchChangeUserManager() {
+  yield takeEvery(loadChangeUserManager.type, saveUserManagerSaga);
+}
+
+export function* watchChangeUserReports() {
+  yield takeEvery(loadChangeUserReports.type, saveUserReportsSaga);
 }
 
 export function* watchOpenDeleteUserModal() {
   yield takeLatest(
-    [EAccountsActions.OpenDeleteUserModal, EAccountsActions.CloseDeleteUserModal],
+    [openDeleteUserModal.type, closeDeleteUserModal.type],
     handleToggleDeleteUserModal,
   );
 }
 
 export function* watchDeleteUser() {
-  yield takeEvery(EAccountsActions.DeleteUser, fetchDeleteUser);
+  yield takeEvery(deleteUserAction.type, fetchDeleteUser);
 }
 
 export function* watchDeclineInvite() {
-  yield takeEvery(EAccountsActions.DeclineInvite, fetchDeclineInvite);
+  yield takeEvery(declineInviteAction.type, fetchDeclineInvite);
 }
 
 export function* watchFetchPlan() {
-  yield takeEvery(EAccountsActions.FetchPlan, fetchPlan);
+  yield takeEvery(loadPlan.type, fetchPlan);
 }
 
 export function* watchStartTrialSubscription() {
-  yield takeEvery(EAccountsActions.StartTrialSubscription, startTrialSubscriptionSaga);
+  yield takeEvery(startTrialSubscriptionAction.type, startTrialSubscriptionSaga);
 }
 
 export function* watchStartFreeSubscription() {
-  yield takeEvery(EAccountsActions.StartFreeSubscription, startFreeSubscriptionSaga);
+  yield takeEvery(startFreeSubscriptionAction.type, startFreeSubscriptionSaga);
+}
+
+export function* watchCreateUser() {
+  yield takeEvery(createUser.type, createUserSaga);
 }
 
 export function* rootSaga() {
@@ -334,5 +429,8 @@ export function* rootSaga() {
     fork(watchFetchPlan),
     fork(watchStartTrialSubscription),
     fork(watchStartFreeSubscription),
+    fork(watchCreateUser),
+    fork(watchChangeUserManager),
+    fork(watchChangeUserReports),
   ]);
 }

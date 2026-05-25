@@ -19,6 +19,7 @@ from src.generics.mixins.serializers import (
 from src.processes.enums import (
     PerformerType,
     PredicateType,
+    SystemVariable,
 )
 from src.processes.messages import template as messages
 from src.processes.models.templates.fields import FieldTemplate
@@ -70,6 +71,7 @@ class TaskTemplateSerializer(
             'number',
             'description',
             'require_completion_by_all',
+            'skip_for_starter',
             'delay',
             'fields',
             'conditions',
@@ -86,6 +88,7 @@ class TaskTemplateSerializer(
             'number',
             'description',
             'require_completion_by_all',
+            'skip_for_starter',
             'delay',
             'api_name',
             'template',
@@ -142,6 +145,32 @@ class TaskTemplateSerializer(
             context['account_user_ids'] = set(
                 self.context['account'].get_user_ids(include_invited=True),
             )
+        if PerformerType.MANAGER in performers_types:
+            all_tasks_data = self.context.get('all_tasks_data')
+            if all_tasks_data is not None:
+                context['template_tasks'] = {
+                    task_data['api_name']: {
+                        'name': task_data['name'],
+                        'require_completion_by_all': (
+                            task_data.get(
+                                'require_completion_by_all',
+                                False,
+                            )
+                        ),
+                    }
+                    for task_data in all_tasks_data
+                }
+            else:
+                template = self.context['template']
+                context['template_tasks'] = {
+                    task.api_name: {
+                        'name': task.name,
+                        'require_completion_by_all': (
+                            task.require_completion_by_all
+                        ),
+                    }
+                    for task in template.tasks.all()
+                }
         return context
 
     def _get_task_available_fields(
@@ -160,11 +189,14 @@ class TaskTemplateSerializer(
         **kwargs,
     ):
 
-        """ Checks three cases:
-            1. If api-name is in task name, this field is available
-            (created in previous steps).
-            2. If only api-names is in task name, at least one field
-            must be required. """
+        """ Validates variables {{ ... }} in task name.
+            1. Each variable must reference an existing field
+               from previous steps, OR be a known system variable.
+            2. If the name consists ONLY of variables,
+               at least one field must be required
+               (so the name won't be empty at runtime).
+               System variables always have a value,
+               so this check is skipped when they're present. """
 
         api_names_in_name = {
             api_name.strip()
@@ -172,6 +204,9 @@ class TaskTemplateSerializer(
         }
         if not api_names_in_name:
             return
+
+        sys_vars_is_used = bool(api_names_in_name & SystemVariable.TASK_VARS)
+        api_names_in_name -= SystemVariable.TASK_VARS
 
         available_fields = self._get_task_available_fields()
         available_api_names = {field.api_name for field in available_fields}
@@ -183,7 +218,7 @@ class TaskTemplateSerializer(
             )
 
         contains_only_api_names = VAR_PATTERN.sub('', value).strip() == ''
-        if contains_only_api_names:
+        if contains_only_api_names and not sys_vars_is_used:
             not_required_fields = True
             for field in available_fields:
                 if field.api_name in api_names_in_name and field.is_required:
@@ -201,8 +236,9 @@ class TaskTemplateSerializer(
         data: Dict[str, Any],
     ):
 
-        """ Checks that api-name in text should be available
-             (created in previous steps) """
+        """ Validates variables {{ ... }} in task description.
+            Each variable must reference an existing field
+            from previous steps, OR be a known system variable. """
 
         if not value:
             return None
@@ -213,6 +249,8 @@ class TaskTemplateSerializer(
         }
         if not api_names_in_description:
             return True
+
+        api_names_in_description -= SystemVariable.TASK_VARS
 
         available_api_names_for_description = {
             field.api_name for field in self._get_task_available_fields()

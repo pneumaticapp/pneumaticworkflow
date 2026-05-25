@@ -1,10 +1,17 @@
 import pytest
+from datetime import timedelta
+
+from django.utils import timezone
 
 from src.accounts.enums import BillingPlanType
+from src.accounts.messages import MSG_A_0035, MSG_A_0037, MSG_A_0041
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     PerformerType,
 )
+from src.processes.messages import template as messages
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.template import (
     Template,
     TemplateDraft,
@@ -12,7 +19,10 @@ from src.processes.models.templates.template import (
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_group,
-    create_test_user,
+    create_test_not_admin,
+    create_test_owner,
+    create_test_template,
+    create_test_user, create_test_admin,
 )
 
 pytestmark = pytest.mark.django_db
@@ -39,10 +49,13 @@ class TestCopyTemplate:
             'is_active': is_active,
             'is_public': True,
             'finalizable': True,
+            'reminder_notification': True,
+            'completion_notification': True,
             'owners': [
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},
@@ -88,7 +101,9 @@ class TestCopyTemplate:
         assert response_2_data['is_active'] is False
         assert response_2_data['is_public'] is True
         assert response_2_data['public_url'] is not None
-        assert response_2_data['finalizable'] == request_data['finalizable']
+        assert response_2_data['finalizable'] is True
+        assert response_2_data['reminder_notification'] is True
+        assert response_2_data['completion_notification'] is True
         assert (
             response_2_data['owners'][0]['source_id'] ==
             str(request_data['owners'][0]['source_id'])
@@ -151,6 +166,7 @@ class TestCopyTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             "tasks_count": 7,
@@ -199,6 +215,7 @@ class TestCopyTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -245,6 +262,7 @@ class TestCopyTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},
@@ -284,3 +302,238 @@ class TestCopyTemplate:
         assert len(raw_performers_data) == 1
         assert raw_performers_data[0]['type'] == PerformerType.GROUP
         assert raw_performers_data[0]['source_id'] == str(group.id)
+
+
+def test_clone__unauthenticated__unauthorized(api_client):
+
+    """Unauthenticated user → 401"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+
+    # act
+    response = api_client.post(f'/templates/{template.id}/clone')
+
+    # assert
+    assert response.status_code == 401
+
+
+def test_clone__expired_subscription__permission_denied(api_client):
+
+    """Expired subscription → 403"""
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.PREMIUM,
+        plan_expiration=timezone.now() - timedelta(days=1),
+    )
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post(f'/templates/{template.id}/clone')
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == MSG_A_0035
+
+
+def test_clone__billing_plan_limit__permission_denied(api_client):
+
+    """Billing plan limit exceeded → 403"""
+
+    # arrange
+    account = create_test_account(plan=None)
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post(f'/templates/{template.id}/clone')
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == MSG_A_0041
+
+
+def test_clone__users_overlimited__permission_denied(api_client):
+
+    """Users over limit → 403"""
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.PREMIUM,
+        max_users=1,
+    )
+    user = create_test_owner(account=account)
+    create_test_not_admin(
+        account=account,
+        email='extra@pneumatic.app',
+    )
+    account.active_users = 2
+    account.save()
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post(f'/templates/{template.id}/clone')
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == MSG_A_0037
+
+
+def test_clone__not_template_owner__permission_denied(api_client):
+
+    """User is not template owner → 403"""
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    template = create_test_template(
+        user=owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post(f'/templates/{template.id}/clone')
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == str(messages.MSG_PT_0023)
+
+
+def test_clone__owner_not_admin__permission_denied(api_client):
+
+    """User is not admin → 403"""
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    template = create_test_template(
+        user=owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
+        template=template,
+        type=OwnerType.USER,
+        user=user,
+        account=account,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post(f'/templates/{template.id}/clone')
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == (
+        'You do not have permission to perform this action.'
+    )
+
+
+def test_clone__template_viewer__permission_denied(api_client):
+
+    """User is not viewer role → 403"""
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    template = create_test_template(
+        user=owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
+        template=template,
+        type=OwnerType.USER,
+        user=user,
+        account=account,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post(f'/templates/{template.id}/clone')
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == str(messages.MSG_PT_0023)
+
+
+def test_clone__template_starter__permission_denied(api_client):
+
+    """User is not starter role → 403"""
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    template = create_test_template(
+        user=owner,
+        is_active=True,
+        tasks_count=1,
+    )
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=user,
+        account=account,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.post(f'/templates/{template.id}/clone')
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == str(messages.MSG_PT_0023)
+
+
+def test_clone__not_found__not_found(mocker, api_client):
+
+    """Template not found → 404"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user=user)
+    get_template_draft_clone_mock = mocker.patch(
+        'src.processes.views.template.'
+        'CloneService.get_template_draft_clone',
+    )
+    nonexistent_id = 999999
+
+    # act
+    response = api_client.post(f'/templates/{nonexistent_id}/clone')
+
+    # assert
+    assert response.status_code == 404
+    get_template_draft_clone_mock.assert_not_called()

@@ -14,7 +14,6 @@ const meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// Создаем обертку с состоянием
 const DatePickerWithState = () => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(new Date('1993-02-23'));
 

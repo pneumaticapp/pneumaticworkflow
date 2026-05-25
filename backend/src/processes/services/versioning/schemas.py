@@ -36,15 +36,18 @@ class FieldSchemaV1(serializers.ModelSerializer):
 
     class Meta:
         model = FieldTemplate
+
         fields = (
             'name',
             'type',
             'description',
             'is_required',
+            'is_hidden',
             'api_name',
             'order',
             'default',
             'selections',
+            'dataset_id',
         )
 
     selections = SelectionSchemaV1(
@@ -70,6 +73,7 @@ class TemplateOwnerSchemaV1(serializers.ModelSerializer):
     class Meta:
         model = TemplateOwner
         fields = (
+            'role',
             'type',
             'user_id',
             'group_id',
@@ -136,6 +140,7 @@ class RawPerformerTemplateSchemaV1(serializers.ModelSerializer):
             'group_id',
             'api_name',
             'field',
+            'source_task_api_name',
         )
 
     field = RawPerformerTemplateFieldSchemaV1(allow_null=True, required=False)
@@ -187,6 +192,7 @@ class TaskSchemaV1(serializers.ModelSerializer):
             'clear_description',
             'number',
             'require_completion_by_all',
+            'skip_for_starter',
             'fields',
             'delay',
             'conditions',
@@ -239,4 +245,6 @@ class TemplateSchemaV1(serializers.ModelSerializer):
             'owners',
             'updated_by',
             'wf_name_template',
+            'reminder_notification',
+            'completion_notification',
         )

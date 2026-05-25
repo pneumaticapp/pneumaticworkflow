@@ -39,6 +39,19 @@ class AccountPrimaryKeyRelatedField(serializers.PrimaryKeyRelatedField):
             raise Exception(MSG_GE_0002)
         return queryset.filter(account=account)
 
+    def to_internal_value(self, data):
+        # When create_or_update_related passes already-validated data
+        # (e.g. from a parent serializer's validated_data), the value
+        # may already be a model instance rather than a raw PK.
+        # In that case, verify it belongs to the correct account and
+        # return it directly, avoiding a redundant DB lookup.
+        queryset = self.get_queryset()
+        if queryset is not None and isinstance(data, queryset.model):
+            if not queryset.filter(pk=data.pk).exists():
+                self.fail('does_not_exist', pk_value=data.pk)
+            return data
+        return super().to_internal_value(data)
+
 
 class AnyField(serializers.Field):
 

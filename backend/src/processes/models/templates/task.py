@@ -3,7 +3,6 @@ from typing import Optional, Set
 
 from django.contrib.auth import get_user_model
 from django.contrib.postgres.fields import ArrayField
-from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 from django.db.models import Q, UniqueConstraint
 
@@ -62,7 +61,6 @@ class TaskTemplate(
         default=list,
         help_text='Api names of task ancestors',
     )
-    search_content = SearchVectorField(null=True)
 
     objects = BaseSoftDeleteManager.from_queryset(TaskTemplateQuerySet)()
 

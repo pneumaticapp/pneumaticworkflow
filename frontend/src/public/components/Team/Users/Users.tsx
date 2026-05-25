@@ -1,10 +1,13 @@
 import * as React from 'react';
+import  { useEffect, useState } from 'react';
 import { useIntl } from 'react-intl';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import { TeamUser } from './TeamUser';
 import { DeleteTeamUserPopupContainer } from './DeleteTeamUserPopup';
 import { AddGuestsBanner } from './AddGuestsBanner';
+import { CreateUserModal } from './CreateUserModal';
+import { VacationSettingsModal } from './VacationSettingsModal';
 
 import { resendInvite } from '../../../api/resendInvite';
 import { TUserListItem } from '../../../types/user';
@@ -19,8 +22,10 @@ import { TITLES } from '../../../constants/titles';
 import { PageTitle } from '../../PageTitle';
 import { EPageTitle } from '../../../constants/defaultValues';
 import { getSubscriptionPlan } from '../../../redux/selectors/user';
+import { getIsCreateUserModalOpen } from '../../../redux/selectors/accounts';
 import { ESubscriptionPlan } from '../../../types/account';
 import { IUsersProps } from './types';
+import { openCreateUserModal, closeCreateUserModal } from '../../../redux/accounts/slice';
 
 import styles from './Users.css';
 
@@ -42,16 +47,21 @@ export function Users({
   openTeamInvitesPopup,
   setGeneralLoaderVisibility,
   loadInvitesUsers,
+  loadChangeUserManager,
+  loadChangeUserReports,
 }: IUsersProps) {
   const { formatMessage } = useIntl();
+  const dispatch = useDispatch();
 
   const billingPlan = useSelector(getSubscriptionPlan);
+  const isCreateUserModalOpen = useSelector(getIsCreateUserModalOpen);
   const isFreePlan = billingPlan === ESubscriptionPlan.Free;
   const accessConditions = isSubscribed || isFreePlan;
 
-  const [searchQuery, setSearchQuery] = React.useState('');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [vacationModalUser, setVacationModalUser] = useState<TUserListItem | null>(null);
 
-  React.useEffect(() => {
+  useEffect(() => {
     fetchUsers({});
     loadInvitesUsers();
     document.title = TITLES.Team;
@@ -60,6 +70,14 @@ export function Users({
   const handleClickInviteButton = () => {
     openTeamInvitesPopup();
     trackInviteTeamInPage('Team Page');
+  };
+
+  const handleOpenCreateUserModal = () => {
+    dispatch(openCreateUserModal());
+  };
+
+  const handleCloseCreateUserModal = () => {
+    dispatch(closeCreateUserModal());
   };
 
   const renderSearch = () => {
@@ -125,6 +143,22 @@ export function Users({
       }
     };
 
+    const handleChangeUserManager = (
+      userId: number,
+      managerId: number | null,
+      callbacks?: { onSuccess?: () => void; onError?: () => void },
+    ) => {
+      loadChangeUserManager({ id: userId, managerId, ...callbacks });
+    };
+
+    const handleChangeUserReports = (
+      userId: number,
+      reportIds: number[],
+      callbacks?: { onSuccess?: () => void; onError?: () => void },
+    ) => {
+      loadChangeUserReports({ id: userId, reportIds, ...callbacks });
+    };
+
     return getFilteredUsers().map((user) => {
       return (
         <TeamUser
@@ -133,7 +167,10 @@ export function Users({
           isCurrentUser={currentUserId === user.id}
           isSubscribed={accessConditions}
           handleToggleAdmin={handleToggleUserAdmin}
+          handleChangeUserManager={handleChangeUserManager}
+          handleChangeUserReports={handleChangeUserReports}
           openModal={() => openModal({ user })}
+          openVacationModal={() => setVacationModalUser(user)}
           user={{ ...user, isAccountOwner: user.isAccountOwner && !user.invite }}
         />
       );
@@ -144,15 +181,24 @@ export function Users({
     <div className={styles['container']}>
       <DeleteTeamUserPopupContainer />
       <AddGuestsBanner />
+      <CreateUserModal isOpen={isCreateUserModalOpen} onClose={handleCloseCreateUserModal} />
+      <VacationSettingsModal isOpen={!!vacationModalUser} onClose={() => setVacationModalUser(null)} user={vacationModalUser} />
 
       <PageTitle titleId={EPageTitle.Team} withUnderline={false} />
       {renderSearch()}
 
-      <AddButton
-        title={formatMessage({ id: 'team.invite-team-large-btn' })}
-        caption={formatMessage({ id: 'team.invite-team-large-btn-caption' })}
-        onClick={handleClickInviteButton}
-      />
+      <div className={styles['buttons-row']}>
+        <AddButton
+          title={formatMessage({ id: 'team.invite-team-large-btn' })}
+          caption={formatMessage({ id: 'team.invite-team-large-btn-caption' })}
+          onClick={handleClickInviteButton}
+        />
+        <AddButton
+          title={formatMessage({ id: 'team.create-user-button' })}
+          caption={formatMessage({ id: 'team.create-user-button-caption' })}
+          onClick={handleOpenCreateUserModal}
+        />
+      </div>
 
       <div className={styles['cards']}>{renderUsers()}</div>
     </div>

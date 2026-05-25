@@ -1,14 +1,16 @@
 import { connect } from 'react-redux';
 
 import {
+  closeWorkflowLogPopup,
   changeWorkflowLogViewSettings,
   setIsEditWorkflowName,
   setIsEditKickoff,
-  editWorkflow,
   setWorkflowEdit,
   sendWorkflowLogComments,
-  closeWorkflowLogPopup,
-} from '../../../redux/workflows/actions';
+  editWorkflow,
+  toggleSkippedTasksVisibility,
+} from '../../../redux/workflows/slice';
+
 import { IApplicationState } from '../../../types/redux';
 
 import { WorkflowModal, IWorkflowModalProps } from './WorkflowModal';
@@ -22,6 +24,7 @@ export type TStoreProps = Pick<
   | 'sorting'
   | 'isCommentsShown'
   | 'isOnlyAttachmentsShown'
+  | 'isSkippedTasksShown'
   | 'isLogLoading'
   | 'workflow'
   | 'items'
@@ -37,6 +40,7 @@ export type TStoreProps = Pick<
 export type TDispatchProps = Pick<
   IWorkflowModalProps,
   | 'changeWorkflowLogViewSettings'
+  | 'toggleSkippedTasksVisibility'
   | 'sendWorkflowLogComments'
   | 'setIsEditWorkflowName'
   | 'setIsEditKickoff'
@@ -46,9 +50,18 @@ export type TDispatchProps = Pick<
 >;
 
 export function mapStateToProps({
-  authUser: { id: currentUserId, isAccountOwner, timezone, dateFmt, language },
+  authUser: { id: currentUserId, isAccountOwner, isAdmin, timezone, dateFmt, language },
   workflows: {
-    workflowLog: { workflowId, isCommentsShown, isOnlyAttachmentsShown, isOpen, items, sorting, isLoading: isLogLoading },
+    workflowLog: {
+      workflowId,
+      isCommentsShown,
+      isOnlyAttachmentsShown,
+      isSkippedTasksShown,
+      isOpen,
+      items,
+      sorting,
+      isLoading: isLogLoading,
+    },
     isWorkflowLoading,
     workflow,
     workflowEdit,
@@ -58,9 +71,8 @@ export function mapStateToProps({
     fullscreenImage: { isOpen: isFullscreenImageOpen },
   },
 }: IApplicationState): TStoreProps {
-  const isTemplateOwner = workflow?.owners?.some((id) => id === currentUserId);
-
-  const canEdit = [isAccountOwner, isTemplateOwner].some(Boolean);
+  const isWorkflowOwner = workflow?.owners?.some((id) => id === currentUserId) ?? false;
+  const canEdit = Boolean(isAccountOwner) || (isWorkflowOwner && Boolean(isAdmin));
 
   return {
     dateFmt,
@@ -73,6 +85,7 @@ export function mapStateToProps({
     isCommentsShown,
     isLogLoading,
     isOnlyAttachmentsShown,
+    isSkippedTasksShown,
     isLoading: isWorkflowLoading,
     isOpen,
     items,
@@ -85,6 +98,7 @@ export function mapStateToProps({
 
 export const mapDispatchToProps: TDispatchProps = {
   changeWorkflowLogViewSettings,
+  toggleSkippedTasksVisibility,
   sendWorkflowLogComments,
   setIsEditWorkflowName,
   setIsEditKickoff,

@@ -28,11 +28,13 @@ class TemplateOwnerSerializer(
         api_primary_field = 'api_name'
         fields = (
             'api_name',
+            'role',
             'type',
             'source_id',
         )
         create_or_update_fields = {
             'api_name',
+            'role',
             'type',
             'source_id',
             'account',
@@ -48,6 +50,7 @@ class TemplateOwnerSerializer(
         raw_performer_data = {
             'template': self.context['template'],
             'account': self.context['account'],
+            'role': validated_data['role'],
             'type': validated_data['type'],
         }
         if validated_data.get('api_name'):
@@ -86,6 +89,7 @@ class TemplateOwnerSerializer(
     def to_representation(self, instance):
         data = super().to_representation(instance)
         if isinstance(instance, TemplateOwner):
+            data['role'] = instance.role
             data['type'] = instance.type
             data['api_name'] = instance.api_name
             if instance.type == OwnerType.USER:

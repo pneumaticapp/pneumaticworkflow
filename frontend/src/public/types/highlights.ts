@@ -31,6 +31,7 @@ export interface IHighlightsItem {
     isExternal: boolean;
   };
   userId: number | null;
+  targetUserId: number | null;
   delay: IHighlightsDelay | null;
 }
 

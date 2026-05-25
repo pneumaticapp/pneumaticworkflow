@@ -7,6 +7,7 @@ from rest_framework.serializers import ValidationError
 from src.accounts.enums import BillingPlanType
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     PerformerType,
     SysTemplateType,
@@ -262,10 +263,12 @@ def test_create_template_from_sys_template__ok(
     )
     owners = [
         {
+            'role': OwnerRole.OWNER,
             'type': OwnerType.USER,
             'source_id': account_owner.id,
         },
         {
+            'role': OwnerRole.OWNER,
             'type': OwnerType.USER,
             'source_id': user.id,
         },
@@ -345,6 +348,7 @@ def test_create_template_from_sys_template__default_task_performer__ok(
     template_data = deepcopy(system_template.template)
     template_data['owners'] = [
         {
+            'role': OwnerRole.OWNER,
             'type': OwnerType.USER,
             'source_id': user.id,
         },
@@ -447,6 +451,7 @@ def test_create_template_from_sys_template__create_task_api_name__ok(
     )
     template_data['owners'] = [
         {
+            'role': OwnerRole.OWNER,
             'type': OwnerType.USER,
             'source_id': user.id,
         },
@@ -536,6 +541,7 @@ def test_create_template_from_sys_template__validation_error__save_draft(
     template_data = deepcopy(system_template.template)
     template_data['owners'] = [
         {
+            'role': OwnerRole.OWNER,
             'type': OwnerType.USER,
             'source_id': user.id,
         },
@@ -625,6 +631,7 @@ def test_create_template_from_sys_template__save_validation_error__save_draft(
     template_data = deepcopy(system_template.template)
     template_data['owners'] = [
         {
+            'role': OwnerRole.OWNER,
             'type': OwnerType.USER,
             'source_id': user.id,
         },

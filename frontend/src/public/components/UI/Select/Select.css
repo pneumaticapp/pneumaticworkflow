@@ -15,18 +15,6 @@
   }
 }
 
-.dropdown__active-value {
-  margin: 0;
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  color: red !important;
-
-  @media screen and (min-width: 576rem) {
-    max-width: 10.5rem !important;
-  }
-}
-
 .dropdown-menu {
   margin-top: 0.6rem !important;
   margin-left: -1.6rem !important;
@@ -34,6 +22,18 @@
 
   @media (--mobile) {
     width: 100%;
+  }
+}
+
+.dropdown-menu__position-fixed {
+  @media (--mobile) {
+    max-width: 27.5rem;
+  }
+}
+
+.dropdown-menu__position-fixed--select-menu {
+  @media (--mobile) {
+    margin-top: 2.6rem !important;
   }
 }
 
@@ -69,6 +69,7 @@
 .dropdown-item-check__label {
   width: 100%;
   cursor: pointer;
+  align-items: center;
 }
 
 .dropdown-item-check__title {
@@ -79,14 +80,15 @@
   display: flex;
   align-items: center;
   width: 100%;
+  gap: 0.8rem;
 }
 
 .dropdown-item-content__text {
   overflow: hidden;
-  max-width: 100%;
+  min-width: 0;
   white-space: nowrap;
   text-overflow: ellipsis;
-
+  flex: 1 1 0;
   > * {
     overflow: hidden;
     text-overflow: ellipsis;
@@ -105,9 +107,8 @@
 }
 
 .dropdown-item-content__count {
-  margin-left: auto;
-  padding: 0 0.4rem;
   display: flex;
+  flex-shrink: 0;
   min-width: 2rem;
   height: 2rem;
   font-size: 1.1rem;
@@ -115,10 +116,9 @@
   line-height: 1.6rem;
   letter-spacing: 0.05em;
   color: var(--pneumatic-color-black48);
-  background: var(--pneumatic-color-black4);
   border-radius: 1.2rem;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
 }
 
 .dropdown-item__text_stub {
@@ -141,7 +141,7 @@
   border-width: 0;
   align-items: center;
 
-  &:not(.active-value_clear-hovered):hover {
+  &:not(.active-value_clear-hovered):not([disabled]):hover {
     color: var(--pneumatic-color-link-hover);
   }
 
@@ -183,6 +183,10 @@
 
 .active-value_disabled {
   pointer-events: none;
+}
+
+.filter-select_disabled {
+  opacity: 32%;
 }
 
 .value-item {
@@ -244,7 +248,16 @@
   transition: transform 0.3s color 0.1s;
   flex-shrink: 0;
 
-  &:hover {
+  &:not([aria-disabled='true']):hover {
     color: var(--pneumatic-color-link-hover);
   }
+}
+
+.dropdown-item-content__title {
+  letter-spacing: 0.06rem;
+  text-transform: uppercase;
+  color: var(--pneumatic-color-black48);
+
+  @mixin text-small-extra bold;
+  @mixin text-truncate;
 }

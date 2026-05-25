@@ -5,7 +5,6 @@ from src.accounts.enums import (
     UserStatus,
     UserType,
 )
-from src.accounts.services.user import UserService
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.generics.messages import MSG_GE_0001
 from src.processes.enums import OwnerType
@@ -25,7 +24,6 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
 )
-from src.utils.dates import date_format
 
 pytestmark = pytest.mark.django_db
 
@@ -61,7 +59,6 @@ def test_privileges__response_format__ok(api_client):
     assert data['first_name'] == user.first_name
     assert data['last_name'] == user.last_name
     assert data['type'] == user.type
-    assert data['date_joined'] == user.date_joined.strftime(date_format)
     assert data['date_joined_tsp'] == user.date_joined.timestamp()
     assert data['is_admin'] == user.is_admin
     assert data['is_account_owner'] == user.is_account_owner
@@ -305,9 +302,9 @@ def test_privileges__status_inactive__ok(api_client):
     inactive_user = create_test_user(
         account=user.account,
         email='test@test.test',
+        status=UserStatus.INACTIVE,
     )
 
-    UserService.deactivate(inactive_user)
     create_invited_user(user)
     api_client.token_authenticate(user)
 
@@ -327,11 +324,11 @@ def test_privileges__status_active__ok(api_client):
 
     # arrange
     user = create_test_owner()
-    inactive_user = create_test_user(
+    create_test_user(
         account=user.account,
         email='test@test.test',
+        status=UserStatus.INACTIVE,
     )
-    UserService.deactivate(inactive_user)
     create_invited_user(user)
     api_client.token_authenticate(user)
 
@@ -351,11 +348,11 @@ def test_privileges__status_invited__ok(api_client):
 
     # arrange
     user = create_test_owner()
-    inactive_user = create_test_user(
+    create_test_user(
         account=user.account,
         email='test@test.test',
+        status=UserStatus.INACTIVE,
     )
-    UserService.deactivate(inactive_user)
     invited_user = create_invited_user(user)
     api_client.token_authenticate(user)
 
@@ -375,11 +372,11 @@ def test_privileges__status_multiple_values__ok(api_client):
 
     # arrange
     user = create_test_owner(last_name='z')
-    inactive_user = create_test_user(
+    create_test_user(
         account=user.account,
         email='test@test.test',
+        status=UserStatus.INACTIVE,
     )
-    UserService.deactivate(inactive_user)
     invited_user = create_invited_user(user, last_name='x')
     api_client.token_authenticate(user)
 

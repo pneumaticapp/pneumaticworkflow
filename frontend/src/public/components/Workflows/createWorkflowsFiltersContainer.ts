@@ -3,24 +3,25 @@ import { connect } from 'react-redux';
 
 import { IApplicationState } from '../../types/redux';
 import {
-  setWorkflowsFilterStatus,
-  loadWorkflowsFilterTemplates,
-  setWorkflowsFilterTemplate,
   changeWorkflowsSorting,
-  setWorkflowsFilterPerfomers,
-  setWorkflowsFilterWorkflowStarters,
-  applyWorkflowsFilters,
-  loadWorkflowsFilterSteps,
-  setWorkflowsFilterSteps,
+  loadFilterTemplates as loadWorkflowsFilterTemplates,
+  loadFilterSteps as loadWorkflowsFilterSteps,
+  setFilterStatus as setWorkflowsFilterStatus,
+  setFilterTemplate as setWorkflowsFilterTemplate,
+  setFilterTemplateTasks as setWorkflowsFilterTasks,
+  setFilterPerformers as setWorkflowsFilterPerfomers,
+  setFilterPerformersGroup as setWorkflowsFilterPerfomersGroup,
+  setFilterWorkflowStarters as setWorkflowsFilterWorkflowStarters,
+  clearFilters as clearWorkflowsFilters,
+  applyFilters as applyWorkflowsFilters,
   updateCurrentPerformersCounters,
   updateWorkflowStartersCounters,
-  clearWorkflowsFilters,
   updateWorkflowsTemplateStepsCounters,
-  setWorkflowsFilterPerfomersGroup,
-} from '../../redux/workflows/actions';
+} from '../../redux/workflows/slice';
 import { getActiveUsers } from '../../utils/users';
 import { getIsUserSubsribed } from '../../redux/selectors/user';
 import { IWorkflowsFiltersProps } from './types';
+import { getRegularGroupsList } from '../../redux/selectors/groups';
 
 export type TWorkflowsFiltersStoreProps = Pick<
   IWorkflowsFiltersProps,
@@ -28,7 +29,7 @@ export type TWorkflowsFiltersStoreProps = Pick<
   | 'areFiltersChanged'
   | 'statusFilter'
   | 'templatesIdsFilter'
-  | 'stepsIdsFilter'
+  | 'tasksApiNamesFilter'
   | 'performersIdsFilter'
   | 'performersGroupIdsFilter'
   | 'filterTemplates'
@@ -55,7 +56,7 @@ type TDispatchProps = Pick<
   | 'applyFilters'
   | 'setWorkflowStartersFilter'
   | 'loadTemplateSteps'
-  | 'setStepsFilter'
+  | 'setTasksFilter'
   | 'updateCurrentPerformersCounters'
   | 'updateWorkflowStartersCounters'
   | 'updateWorkflowsTemplateStepsCounters'
@@ -74,7 +75,7 @@ export function mapStateToProps(state: IApplicationState): TWorkflowsFiltersStor
         values: {
           statusFilter,
           templatesIdsFilter,
-          stepsIdsFilter,
+          tasksApiNamesFilter,
           performersIdsFilter,
           performersGroupIdsFilter,
           workflowStartersIdsFilter,
@@ -82,7 +83,6 @@ export function mapStateToProps(state: IApplicationState): TWorkflowsFiltersStor
         counters: { performersCounters, workflowStartersCounters },
       },
     },
-    groups,
     accounts: { users, isLoading: areUsersLoading },
   } = state;
   const isSubscribed = getIsUserSubsribed(state);
@@ -92,12 +92,12 @@ export function mapStateToProps(state: IApplicationState): TWorkflowsFiltersStor
     areFiltersChanged,
     statusFilter,
     templatesIdsFilter,
-    stepsIdsFilter,
+    tasksApiNamesFilter,
     filterTemplates: templateList.items,
     performersIdsFilter,
     performersGroupIdsFilter,
     workflowStartersIdsFilter,
-    groups: groups.list,
+    groups: getRegularGroupsList(state),
     users: getActiveUsers(users),
     areFilterTemplatesLoading: templateList.isLoading,
     areUsersLoading,
@@ -119,7 +119,7 @@ export const mapDispatchToProps: TDispatchProps = {
   applyFilters: applyWorkflowsFilters,
   setWorkflowStartersFilter: setWorkflowsFilterWorkflowStarters,
   loadTemplateSteps: loadWorkflowsFilterSteps,
-  setStepsFilter: setWorkflowsFilterSteps,
+  setTasksFilter: setWorkflowsFilterTasks,
   updateCurrentPerformersCounters,
   updateWorkflowStartersCounters,
   updateWorkflowsTemplateStepsCounters,

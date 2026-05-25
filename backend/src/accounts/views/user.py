@@ -6,6 +6,7 @@ from rest_framework.viewsets import GenericViewSet
 from src.accounts.filters import (
     ContactsFilterSet,
 )
+from src.accounts.messages import MSG_A_0052
 from src.accounts.models import (
     Contact,
 )
@@ -17,10 +18,16 @@ from src.accounts.serializers.user import (
     ContactRequestSerializer,
     ContactResponseSerializer,
     UserSerializer,
-    UserWebsocketSerializer,
+    VacationActivateSerializer,
+)
+from src.accounts.services.exceptions import (
+    UserServiceException,
+)
+from src.accounts.services.user import UserService
+from src.accounts.services.vacation import (
+    VacationDelegationService,
 )
 from src.analysis.mixins import BaseIdentifyMixin
-from src.analysis.services import AnalyticService
 from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import (
     CustomViewSetMixin,
@@ -29,11 +36,6 @@ from src.generics.permissions import (
     IsAuthenticated,
     UserIsAuthenticated,
 )
-from src.notifications.tasks import send_user_updated_notification
-from src.payment.stripe.exceptions import StripeServiceException
-from src.payment.stripe.service import StripeService
-from src.processes.enums import FieldType
-from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import Task
 from src.utils.validation import raise_validation_error
 
@@ -54,7 +56,14 @@ class UserViewSet(
     }
     action_serializer_classes = {
         'contacts': ContactResponseSerializer,
+        'activate_vacation': VacationActivateSerializer,
     }
+
+    def get_serializer_context(self, **kwargs):
+        context = super().get_serializer_context(**kwargs)
+        context['account'] = self.request.user.account
+        context['user'] = self.request.user
+        return context
 
     def get_permissions(self):
         method = self.request.method
@@ -68,6 +77,15 @@ class UserViewSet(
             return (
                 IsAuthenticated(),
                 BillingPlanPermission(),
+            )
+        if self.action in {
+            'activate_vacation',
+            'deactivate_vacation',
+        }:
+            return (
+                UserIsAuthenticated(),
+                BillingPlanPermission(),
+                ExpiredSubscriptionPermission(),
             )
         return (
             UserIsAuthenticated(),
@@ -105,52 +123,61 @@ class UserViewSet(
         return self.response_ok(slz.data)
 
     def put(self, request, *args, **kwargs):
+        user = request.user
+        slz = self.get_serializer(instance=user, data=request.data)
+        slz.is_valid(raise_exception=True)
+        service = UserService(
+            user=user,
+            instance=user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        try:
+            user = service.partial_update(
+                **slz.validated_data,
+                force_save=True,
+            )
+        except UserServiceException as ex:
+            raise_validation_error(message=ex.message)
+        return self.response_ok(
+            UserSerializer(instance=user).data,
+        )
+
+    @action(
+        detail=False,
+        methods=('post',),
+        url_path='activate-vacation',
+    )
+    def activate_vacation(self, request, *args, **kwargs):
+        user = request.user
         slz = self.get_serializer(
-            instance=request.user,
             data=request.data,
-            partial=False,
+            extra_fields={
+                'vacation_user': user,
+            },
         )
         slz.is_valid(raise_exception=True)
-
-        old_first_name = request.user.first_name
-        old_last_name = request.user.last_name
-
-        user = slz.save()
-
-        if (
-            old_first_name != user.first_name or
-            old_last_name != user.last_name
-        ):
-            TaskField.objects.filter(
-                type=FieldType.USER,
-                user_id=user.id,
-            ).update(value=user.name)
-
-        if (
-            not user.account.is_tenant
-            and user.is_account_owner
-            and user.account.billing_sync
-        ):
-            try:
-                service = StripeService(
-                    user=user,
-                    auth_type=self.request.token_type,
-                    is_superuser=self.request.is_superuser,
-                )
-                service.update_customer()
-            except StripeServiceException as ex:
-                raise_validation_error(message=ex.message)
-
-        if slz.data.get('is_digest_subscriber') is False:
-            AnalyticService.users_digest(
-                user=user,
-                auth_type=self.request.token_type,
-                is_superuser=self.request.is_superuser,
-            )
-        send_user_updated_notification.delay(
-            logging=user.account.log_api_requests,
-            account_id=user.account.id,
-            user_data=UserWebsocketSerializer(user).data,
+        data = slz.validated_data
+        service = VacationDelegationService(user=user)
+        user = service.activate(
+            substitute_user_ids=data['substitute_user_ids'],
+            absence_status=data['absence_status'],
+            vacation_start_date=(data.get('vacation_start_date')),
+            vacation_end_date=(data.get('vacation_end_date')),
         )
-        self.identify(user)
-        return self.response_ok(slz.data)
+        return self.response_ok(UserSerializer(instance=user).data)
+
+    @action(
+        detail=False,
+        methods=('post',),
+        url_path='deactivate-vacation',
+    )
+    def deactivate_vacation(self, request, *args, **kwargs):
+        user = request.user
+        if not user.vacation:
+            raise_validation_error(
+                message=MSG_A_0052,
+            )
+        service = VacationDelegationService(user=user)
+        user = service.deactivate()
+        return self.response_ok(UserSerializer(instance=user).data)

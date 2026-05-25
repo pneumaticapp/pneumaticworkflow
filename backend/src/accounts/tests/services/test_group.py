@@ -2,6 +2,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
+from src.accounts.enums import UserGroupType
 from src.accounts.services.group import UserGroupService
 from src.analysis.events import GroupsAnalyticsEvent
 from src.authentication.enums import AuthTokenType
@@ -195,6 +196,7 @@ class TestUserGroupService:
                 'name': group.name,
                 'photo': group.photo,
                 'users': [],
+                'type': UserGroupType.REGULAR,
             },
         )
 
@@ -502,7 +504,10 @@ class TestUserGroupService:
                     'photo': user_2.photo,
                     'is_admin': user_2.is_admin,
                     'is_account_owner': user_2.is_account_owner,
+                    'manager_id': user_2.manager_id,
+                    'subordinates_ids': [],
                 }],
+                'type': UserGroupType.REGULAR,
             },
         )
 
@@ -755,6 +760,7 @@ class TestUserGroupService:
                 'name': group.name,
                 'photo': group.photo,
                 'users': [],
+                'type': UserGroupType.REGULAR,
             },
         )
 
@@ -1123,7 +1129,10 @@ class TestUserGroupService:
                     'photo': user.photo,
                     'is_admin': user.is_admin,
                     'is_account_owner': user.is_account_owner,
+                    'manager_id': user.manager_id,
+                    'subordinates_ids': [],
                 }],
+                'type': UserGroupType.REGULAR,
             },
         )
 
@@ -1200,7 +1209,10 @@ class TestUserGroupService:
                     'photo': user.photo,
                     'is_admin': user.is_admin,
                     'is_account_owner': user.is_account_owner,
+                    'manager_id': user.manager_id,
+                    'subordinates_ids': [],
                 }],
+                'type': 'regular',
             },
         )
 

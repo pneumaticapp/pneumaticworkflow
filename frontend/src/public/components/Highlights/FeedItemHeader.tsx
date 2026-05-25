@@ -27,7 +27,7 @@ export function FeedItemHeader({
   workflow: { kickoff },
   task,
   delay,
-  userId,
+  targetUserId,
 }: IFeedItemHeaderProps) {
   const { messages, formatMessage } = useIntl();
   const commentTextRef = useRef<HTMLSpanElement>(null);
@@ -70,7 +70,7 @@ export function FeedItemHeader({
 
     const filteredOutputs = outputs.filter((output) => {
       const value = output.type === EExtraFieldType.User ? output.userId || output.groupId : output.value;
-      return value || output.attachments?.length || output?.selections?.some((selection) => selection.isSelected);
+      return value || output.attachments?.length;
     });
 
     return (
@@ -111,7 +111,7 @@ export function FeedItemHeader({
           <div className={styles['header__comment']}>
             <span className={styles['comment__title']}>
               {type === EWorkflowLogEvent.TaskRevert
-                ? messages['workflow-highlights.return-to.returned-task']
+                ? formatMessage({ id: 'task.log-returned' }, { taskName: task?.name })
                 : messages['general.comment']}
             </span>
             <span
@@ -147,14 +147,14 @@ export function FeedItemHeader({
   };
 
   const renderAddedPerformer = () => {
-    if (!userId) {
+    if (!targetUserId) {
       return null;
     }
 
     return (
       <div className={styles['changed-performer']}>
         {formatMessage({ id: 'task.log-added-performer' })}
-        <UserData userId={userId}>
+        <UserData userId={targetUserId}>
           {(user) => {
             if (!user) {
               return null;
@@ -168,14 +168,14 @@ export function FeedItemHeader({
   };
 
   const renderRemovedPerformer = () => {
-    if (!userId) {
+    if (!targetUserId) {
       return null;
     }
 
     return (
       <div className={styles['changed-performer']}>
         {formatMessage({ id: 'task.log-removed-performer' })}
-        <UserData userId={userId}>
+        <UserData userId={targetUserId}>
           {(user) => {
             if (!user) {
               return null;

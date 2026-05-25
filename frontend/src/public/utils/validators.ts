@@ -146,10 +146,6 @@ export const KICKOFF_FIELD_NAME_RULES: IRule[] = [
     message: 'validation.kickoff-form-field-name-empty',
     isInvalid: isEmpty,
   },
-  {
-    message: 'validation.kickoff-form-field-name-too-long',
-    isInvalid: (value) => value.length > 120,
-  },
 ];
 
 export const KICKOFF_FIELD_DESCRIPTION_RULES: IRule[] = [
@@ -159,17 +155,21 @@ export const KICKOFF_FIELD_DESCRIPTION_RULES: IRule[] = [
   },
 ];
 
+export const REGISTRATION_PASSWORD_MSG_EMPTY = 'validation.registration-password-field-empty';
+export const REGISTRATION_PASSWORD_MSG_SPACES = 'validation.registration-password-field-contain-spaces';
+export const REGISTRATION_PASSWORD_MSG_TOO_SHORT = 'validation.registration-password-field-too-short';
+
 export const REGISTRATION_PASSWORD_RULES: IRule[] = [
   {
-    message: 'validation.registration-password-field-empty',
+    message: REGISTRATION_PASSWORD_MSG_EMPTY,
     isInvalid: (value) => !hasWhitespaces(value) && isEmpty(value),
   },
   {
-    message: 'validation.registration-password-field-contain-spaces',
+    message: REGISTRATION_PASSWORD_MSG_SPACES,
     isInvalid: hasWhitespaces,
   },
   {
-    message: 'validation.registration-password-field-too-short',
+    message: REGISTRATION_PASSWORD_MSG_TOO_SHORT,
     isInvalid: (value) => value.length < 6,
   },
 ];
@@ -225,6 +225,32 @@ export const GROUP_NAME_RULES: IRule[] = [
   },
 ];
 
+export const DATASET_NAME_RULES: IRule[] = [
+  {
+    message: 'validation.dataset-name-empty',
+    isInvalid: isEmpty,
+  },
+  {
+    message: 'validation.dataset-name-to-long',
+    isInvalid: (value) => value.length > 200,
+  },
+];
+
+export const getDatasetRowRules = (existingItems: string[]): IRule[] => [
+  {
+    message: 'validation.dataset-row-empty',
+    isInvalid: isEmpty,
+  },
+  {
+    message: 'validation.dataset-row-exists',
+    isInvalid: (value: string) => {
+      const trimmedValue = (value || '').trim().toLowerCase();
+      if (!trimmedValue) return false; 
+      return existingItems.some((item) => item.trim().toLowerCase() === trimmedValue);
+    },
+  },
+];
+
 export const validateFieldCreator =
   (rules: IRule[]) =>
   (value: any): string => {
@@ -250,5 +276,19 @@ export const validateKickoffFieldDescription = validateFieldCreator(KICKOFF_FIEL
 export const validateRegistrationPassword = validateFieldCreator(REGISTRATION_PASSWORD_RULES);
 export const validateDelayField = validateFieldCreator(DELAY_RULES);
 export const validateCheckboxAndRadioField = validateFieldCreator(CHECKBOX_AND_RADIO_FIELDS_RULUES);
+export const getSelectionDuplicateError = (value: string, allValues: string[]): string => {
+  const trimmedValue = (value || '').trim().toLowerCase();
+  if (!trimmedValue) return '';
+  const count = allValues.filter((item) => item.trim().toLowerCase() === trimmedValue).length;
+  return count > 1 ? 'validation.checkbox-and-radio-value-duplicate' : '';
+};
 export const validateTenantName = validateFieldCreator(TENANT_NAME_RULES);
 export const validateGroupName = validateFieldCreator(GROUP_NAME_RULES);
+export const validateDatasetName = validateFieldCreator(DATASET_NAME_RULES);
+export const validateDatasetRow = (value: string, existingItems: string[], excludeValue?: string) => {
+  const filtered = excludeValue
+    ? existingItems.filter((item) => item.trim().toLowerCase() !== excludeValue.trim().toLowerCase())
+    : existingItems;
+
+  return validateFieldCreator(getDatasetRowRules(filtered))(value);
+};

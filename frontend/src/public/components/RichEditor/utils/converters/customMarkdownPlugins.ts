@@ -4,9 +4,9 @@ import { Remarkable } from 'remarkable';
 
 import { mentionsRegex, variableRegex } from '../../../../constants/defaultValues';
 import { TTaskVariable } from '../../../TemplateEdit/types';
-import { TMentionData } from '../..';
+import { TMentionData } from '../../types';
 import { ECustomEditorEntities } from '../types';
-import { getAttachmentEntityType } from '../AttachmentsPlugin/modifiers/addAttachment';
+import { getAttachmentEntityType } from '../getAttachmentEntityType';
 import { ContentToken } from 'remarkable/lib';
 
 export type TVariableToken = {

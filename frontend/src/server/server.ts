@@ -5,6 +5,7 @@ import * as webpack from 'webpack';
 import * as devMiddleware from 'webpack-dev-middleware';
 import * as hotMiddleware from 'webpack-hot-middleware';
 
+import { initSentryServer } from './utils/initSentryServer';
 import { mainHandler, oAuthHandler, apiProxy } from './handlers';
 import { authMiddleware, verificateAccountMiddleware, forwardForSubdomain } from './middleware';
 import { getConfig, serverConfigToBrowser } from '../public/utils/getConfig';
@@ -12,30 +13,33 @@ import { ERoutes } from '../public/constants/routes';
 import { setPublicAuthCookie } from './utils/cookie';
 import { getUserPublic } from './middleware/utils/getUserPublic';
 import { mapToCamelCase } from '../public/utils/mappers';
+import { SSOProvider } from './types';
 
 const webpackConfig = require('../../webpack.config');
 
-const { NODE_ENV = 'development'} = process.env;
+const { NODE_ENV = 'development' } = process.env;
 const devMode = NODE_ENV !== 'production';
+
+const isSSOAuth = process.env.SSO_AUTH !== 'no';
+const envSSOProvider = process.env.SSO_PROVIDER;
 
 const {
   api: { urls },
 } = getConfig();
 
 export function initServer() {
+  initSentryServer();
+
   const webpackCompiler = webpack(webpackConfig);
   const app = express();
   const { host, port = 8000, formSubdomain, mainPage, firebase } = getConfig();
 
   if (devMode) {
+    app.use(devMiddleware(webpackCompiler));
     app.use(
       hotMiddleware(webpackCompiler, {
         path: '/__webpack_hmr',
       }),
-    );
-
-    app.use(
-      devMiddleware(webpackCompiler),
     );
   }
 
@@ -90,13 +94,19 @@ export function initServer() {
 
     return null;
   });
+
   app.use(forwardForSubdomain([formSubdomain], formsRouter));
-
   app.get(ERoutes.AccountVerificationLink, verificateAccountMiddleware);
-
   app.get(ERoutes.OAuthGoogle, oAuthHandler(urls.getGoogleAuthUri, urls.getGoogleAuthToken));
   app.get(ERoutes.OAuthMicrosoft, oAuthHandler(urls.getMicrosoftAuthUri, urls.getMicrosoftAuthToken));
-  app.get(ERoutes.OAuthSSO, oAuthHandler(urls.getSSOAuthUri, urls.getSSOAuthToken));
+
+  if (isSSOAuth && envSSOProvider === SSOProvider.Auth0) {
+    app.get(ERoutes.OAuthSSOAuth0, oAuthHandler(urls.getSSOAuthUri, urls.getSSOAuthToken));
+  }
+
+  if (isSSOAuth && envSSOProvider === SSOProvider.Okta) {
+    app.get(ERoutes.OAuthSSOOkta, oAuthHandler(urls.getSSOOktaUri, urls.getSSOOktaToken));
+  }
 
   app.get('*', authMiddleware);
   app.get('*', mainHandler);

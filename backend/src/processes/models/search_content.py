@@ -1,0 +1,64 @@
+from django.contrib.postgres.search import SearchVectorField
+from django.db import models
+
+from src.accounts.models import AccountBaseMixin
+from src.generics.managers import BaseSoftDeleteManager
+from src.generics.models import SoftDeleteModel
+from src.processes.enums import SearchContentType
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.template import Template
+from src.processes.models.workflows.workflow import Workflow
+from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.task import Task
+from src.processes.models.workflows.event import WorkflowEvent
+from src.processes.querysets import SearchContentQuerySet
+
+
+class SearchContent(
+    SoftDeleteModel,
+    AccountBaseMixin,
+):
+
+    class Meta:
+        ordering = ['id']
+
+    content = SearchVectorField(null=True, blank=True)
+    workflow = models.ForeignKey(
+        Workflow,
+        on_delete=models.CASCADE,
+        null=True,
+    )
+    task = models.ForeignKey(
+        Task,
+        on_delete=models.CASCADE,
+        null=True,
+    )
+    event = models.ForeignKey(
+        WorkflowEvent,
+        on_delete=models.CASCADE,
+        null=True,
+    )
+    task_field = models.ForeignKey(
+        TaskField,
+        on_delete=models.CASCADE,
+        null=True,
+    )
+    template = models.ForeignKey(
+        Template,
+        on_delete=models.CASCADE,
+        null=True,
+    )
+    task_template = models.ForeignKey(
+        TaskTemplate,
+        on_delete=models.CASCADE,
+        null=True,
+    )
+    type = models.CharField(
+        choices=SearchContentType.CHOICES,
+        max_length=50,
+    )
+
+    objects = BaseSoftDeleteManager.from_queryset(SearchContentQuerySet)()
+
+    def __str__(self):
+        return str(self.content)

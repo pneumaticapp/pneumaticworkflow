@@ -203,7 +203,6 @@ def test__head_request__skip(api_client, mocker):
     # arrange
     account = create_test_account(log_api_requests=True)
     user = create_test_user(account=account)
-    api_client.token_authenticate(user, token_type=AuthTokenType.API)
     mocker.patch(
         'src.authentication.tokens.'
         'PneumaticToken.data',
@@ -213,12 +212,16 @@ def test__head_request__skip(api_client, mocker):
             'for_api_key': True,
         },
     )
-    path = f'/accounts/users/{user.id}/delete'
-    data = {'key_1': 'Value1,Value2', 'key_2': '123'}
+    api_client.token_authenticate(user, token_type=AuthTokenType.API)
 
     # act
-    response = api_client.head(path, data=data)
-
+    response = api_client.head(
+        path=f'/accounts/users/{user.id}/toggle-admin',
+        data={
+            'key_1': 'Value1,Value2',
+            'key_2': '123',
+        },
+    )
     # assert
     assert response.status_code == 405
     assert not AccountEvent.objects.all().exists()
@@ -239,11 +242,15 @@ def test__options_request__skip(api_client, mocker):
             'for_api_key': True,
         },
     )
-    path = f'/accounts/users/{user.id}/delete'
-    data = {'key_1': 'Value1,Value2', 'key_2': '123'}
 
     # act
-    response = api_client.options(path, data=data)
+    response = api_client.options(
+        path=f'/accounts/users/{user.id}/toggle-admin',
+        data={
+            'key_1': 'Value1,Value2',
+            'key_2': '123',
+        },
+    )
 
     # assert
     assert response.status_code == 200

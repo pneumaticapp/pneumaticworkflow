@@ -24,15 +24,17 @@ from src.authentication.permissions import (
     PrivateApiPermission,
 )
 from src.authentication.services.user_auth import AuthService
+from src.authentication.views.mixins import SSORestrictionMixin
 from src.generics.mixins.views import (
     BaseResponseMixin,
 )
-from src.services.email import EmailService
+from src.notifications.tasks import send_verification_notification
 
 UserModel = get_user_model()
 
 
 class TokenObtainPairCustomView(
+    SSORestrictionMixin,
     CreateAPIView,
     BaseIdentifyMixin,
     BaseResponseMixin,
@@ -46,10 +48,15 @@ class TokenObtainPairCustomView(
         if not user:
             raise AuthenticationFailed(MSG_AU_0003)
 
+        self.check_sso_restrictions(user)
+
         if user.account.is_verification_timed_out():
             owner = user.account.users.get(is_account_owner=True)
-            EmailService.send_verification_email(
-                user=owner,
+            send_verification_notification.delay(
+                user_id=owner.id,
+                user_email=owner.email,
+                account_id=owner.account_id,
+                user_first_name=owner.first_name,
                 token=str(VerificationToken.for_user(owner)),
                 logo_lg=user.account.logo_lg,
             )

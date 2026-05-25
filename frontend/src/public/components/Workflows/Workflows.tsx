@@ -8,11 +8,11 @@ import WorkflowsTablePage from './WorkflowsTablePage';
 import { getWorkflowsView } from '../../redux/selectors/workflows';
 import { EWorkflowsView } from '../../types/workflow';
 import { TITLES } from '../../constants/titles';
-import { resetWorkflows, openWorkflowLogPopup } from '../../redux/actions';
+import { openWorkflowLogPopup, resetWorkflows } from '../../redux/workflows/slice';
 
 export interface IWorkflowsLocationMatchParams {
   id?: string;
-};
+}
 
 export const Workflows = withRouter(({ match: { params } }: RouteComponentProps<IWorkflowsLocationMatchParams>) => {
   const view = useSelector(getWorkflowsView);
@@ -20,7 +20,7 @@ export const Workflows = withRouter(({ match: { params } }: RouteComponentProps<
 
   const clearWorkflowsList = () => {
     dispatch(resetWorkflows());
-  }
+  };
 
   React.useEffect(() => {
     document.title = TITLES.Workflows;
@@ -36,7 +36,7 @@ export const Workflows = withRouter(({ match: { params } }: RouteComponentProps<
   const pageMap = {
     [EWorkflowsView.Table]: <WorkflowsTablePage />,
     [EWorkflowsView.Grid]: <WorkflowsGridPage />,
-  }
+  };
 
   return pageMap[view];
-})
+});

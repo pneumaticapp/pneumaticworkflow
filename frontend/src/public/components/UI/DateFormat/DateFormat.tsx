@@ -1,4 +1,4 @@
-import React from 'react';
+import * as React from 'react';
 import { isSameYear, Locale } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { enUS, ru } from 'date-fns/locale';

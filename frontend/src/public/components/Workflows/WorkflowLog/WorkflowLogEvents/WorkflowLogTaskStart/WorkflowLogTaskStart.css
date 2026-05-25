@@ -75,6 +75,7 @@
 
 .task-name {
   overflow-wrap: break-word;
+  min-width: 0;
 }
 
 .start-responsibles {

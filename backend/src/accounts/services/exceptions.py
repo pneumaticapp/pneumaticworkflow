@@ -14,6 +14,8 @@ from src.accounts.messages import (
     MSG_A_0042,
     MSG_A_0043,
     MSG_A_0044,
+    MSG_A_0047,
+    MSG_A_0048,
 )
 from src.generics.exceptions import BaseServiceException
 
@@ -66,22 +68,32 @@ class ExpiredTransferTokenException(BaseServiceException):
     default_message = MSG_A_0009
 
 
-class UserNotFoundException(BaseServiceException):
+class UserNotFoundException(UserServiceException):
 
     default_message = MSG_A_0010
 
 
-class UserIsPerformerException(BaseServiceException):
+class UserIsPerformerException(UserServiceException):
 
     default_message = MSG_A_0011
 
 
-class ReassignUserDoesNotExist(BaseServiceException):
+class ReassignUserDoesNotExist(UserServiceException):
 
     default_message = MSG_A_0012
 
 
-class InvalidOrExpiredToken(BaseServiceException):
+class PreventSelfDeletion(BaseServiceException):
+
+    default_message = MSG_A_0047
+
+
+class PreventAccountOwnerDeletion(BaseServiceException):
+
+    default_message = MSG_A_0048
+
+
+class InvalidOrExpiredToken(UserServiceException):
 
     default_message = MSG_A_0013
 

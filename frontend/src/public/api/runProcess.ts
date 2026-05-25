@@ -1,7 +1,7 @@
 import { commonRequest } from './commonRequest';
 import { mapRequestBody } from '../utils/mappers';
 import { getBrowserConfigEnv } from '../utils/getConfig';
-import { IStartWorkflowPayload } from '../redux/workflows/actions';
+import { IStartWorkflowPayload } from '../redux/workflows/types';
 import { TWorkflowDetailsResponse } from '../types/workflow';
 
 export type TRunProcessResponse = Pick<TWorkflowDetailsResponse, 'name' | 'tasks' | 'status'>;

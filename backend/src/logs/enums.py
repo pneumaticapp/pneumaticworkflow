@@ -4,12 +4,14 @@ from typing_extensions import Literal
 class AccountEventType:
 
     API = 'api'
+    AUTH = 'auth'
     DATABUS = 'databus'
     WEBHOOK = 'webhook'
     SYSTEM = 'system'
 
     CHOICES = (
         (API, API),
+        (AUTH, AUTH),
         (DATABUS, DATABUS),
         (WEBHOOK, WEBHOOK),
         (SYSTEM, SYSTEM),

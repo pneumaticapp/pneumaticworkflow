@@ -10,6 +10,7 @@ from src.analysis.actions import (
 from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.processes.consts import WORKFLOW_NAME_LENGTH
+from src.processes.utils.common import get_workflow_starter_name
 from src.processes.models.templates.template import Template
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.serializers.workflows.kickoff_value import (
@@ -70,6 +71,10 @@ class WorkflowService(
         if workflow_starter:
             values.update(workflow_starter.get_dynamic_mapping())
 
+        values['workflow-starter'] = get_workflow_starter_name(
+            workflow_starter,
+        )
+
         if user_provided_name:
             result = insert_fields_values_to_text(
                 text=user_provided_name,
@@ -109,6 +114,8 @@ class WorkflowService(
             finalizable=instance_template.finalizable,
             status_updated=timezone.now(),
             version=instance_template.version,
+            reminder_notification=instance_template.reminder_notification,
+            completion_notification=instance_template.completion_notification,
             workflow_starter=kwargs.get('workflow_starter'),
             is_external=kwargs.get('is_external') or False,
             is_urgent=kwargs.get('is_urgent') or False,

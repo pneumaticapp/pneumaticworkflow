@@ -1,6 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
-/* tslint:disable:max-file-line-count */
 import classnames from 'classnames';
 import * as React from 'react';
 import InfiniteScroll from 'react-infinite-scroll-component';
@@ -12,15 +9,14 @@ import { TITLES } from '../../constants/titles';
 import { history } from '../../utils/history';
 import { PROCESS_HIGHLIGHTS_DATE_RANGE_MAP } from '../../utils/dateTime';
 import { UsersFilter } from './UsersFilter';
-import { IGetTemplatesTitlesRequesConfig } from '../../api/getTemplatesTitles';
 import { ILoadHighlightsConfig } from '../../redux/highlights/actions';
 import { IHighlightsFilters } from '../../types/redux';
 import { INIT_FILTERS } from '../../redux/highlights/reducer';
 import { isArrayWithItems } from '../../utils/helpers';
 import { TUserListItem } from '../../types/user';
-import { ITemplateTitle } from '../../types/template';
+import { ITemplateTitleBaseWithCount } from '../../types/template';
 import { Placeholder, Button } from '../UI';
-import { TOpenWorkflowLogPopupPayload } from '../../redux/actions';
+import { TOpenWorkflowLogPopupPayload } from '../../redux/workflows/types';
 
 import { HighlightsPlaceholderIcon } from './HighlightsPlaceholderIcon';
 import { TemplatesFilter } from './TemplatesFilter';
@@ -29,6 +25,7 @@ import { FeedItem } from './FeedItem';
 import styles from './HighlightsFeed.css';
 import { EPageTitle } from '../../constants/defaultValues';
 import { PageTitle } from '../PageTitle/PageTitle';
+import { IGetHighlightsTitlesRequestConfig } from '../../api/getHighlightsTitles';
 
 export interface IHighlightsFeedProps {
   count: number;
@@ -38,7 +35,7 @@ export interface IHighlightsFeedProps {
   items: IHighlightsItem[];
   workflowId: number | null;
   users: TUserListItem[];
-  templatesTitles: ITemplateTitle[];
+  templatesTitles: ITemplateTitleBaseWithCount[];
   timeRange: EHighlightsDateFilter;
   startDate: Date;
   endDate: Date;
@@ -48,7 +45,7 @@ export interface IHighlightsFeedProps {
   loadHighlights({ limit, offset, onScroll }: ILoadHighlightsConfig): void;
   openWorkflowLogPopup(payload: TOpenWorkflowLogPopupPayload): void;
   resetHightlightsStore(): void;
-  loadTemplatesTitles({ eventDateFrom, eventDateTo }: IGetTemplatesTitlesRequesConfig): void;
+  loadTemplatesTitles({ eventDateFrom, eventDateTo }: IGetHighlightsTitlesRequestConfig): void;
   setFilters(value: Partial<IHighlightsFilters>): void;
   setFiltersChanged(): void;
 }
@@ -172,9 +169,9 @@ export function HighlightsFeed({
       setFilters({ timeRange: selectedTimeRange });
 
       if (selectedTimeRange !== EHighlightsDateFilter.Custom) {
-        const { startDate, endDate } = PROCESS_HIGHLIGHTS_DATE_RANGE_MAP[selectedTimeRange];
+        const { startDate: newStartDate, endDate: newEndDate } = PROCESS_HIGHLIGHTS_DATE_RANGE_MAP[selectedTimeRange];
 
-        setFilters({ startDate, endDate });
+        setFilters({ startDate: newStartDate, endDate: newEndDate });
       }
     },
     [timeRange],
@@ -199,9 +196,9 @@ export function HighlightsFeed({
 
   const [workflowLogWorkflowId, setWorkflowLogWorkflowId] = useState<number | null>(null);
   const handleOpenWorkflowLogPopup = useCallback(
-    (workflowId: number) => () => {
-      setWorkflowLogWorkflowId(workflowId);
-      openWorkflowLogPopup({ workflowId });
+    (workflowIdParam: number) => () => {
+      setWorkflowLogWorkflowId(workflowIdParam);
+      openWorkflowLogPopup({ workflowId: workflowIdParam });
     },
     [workflowLogWorkflowId],
   );
@@ -257,8 +254,8 @@ export function HighlightsFeed({
               startDate={startDate}
               selectedDateFilter={timeRange}
               changeSelectedDateFilter={handleChangeSelectedDateFilter}
-              changeEndDate={(endDate: Date) => setFilters({ endDate })}
-              changeStartDate={(startDate: Date) => setFilters({ startDate })}
+              changeEndDate={(newEndDate: Date) => setFilters({ endDate: newEndDate })}
+              changeStartDate={(newStartDate: Date) => setFilters({ startDate: newStartDate })}
             />
             <TemplatesFilter
               changeTemplatesSearchText={handleChangeTemplatesSearchText}

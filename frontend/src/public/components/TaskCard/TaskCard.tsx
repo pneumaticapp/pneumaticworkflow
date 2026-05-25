@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef } from 'react';
+import * as React from 'react';
+import { useEffect, useState, useRef, MouseEvent } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 import { Link } from 'react-router-dom';
@@ -11,16 +12,18 @@ import { sanitizeText } from '../../utils/strings';
 import { ITask } from '../../types/tasks';
 import {
   ETaskStatus,
-  IChangeWorkflowLogViewSettingsPayload,
-  ISendWorkflowLogComment,
   TAddTaskPerformerPayload,
   TOpenModalPayload,
-  TOpenWorkflowLogPopupPayload,
   TRemoveTaskPerformerPayload,
   TSetTaskCompletedPayload,
   TSetTaskRevertedPayload,
-  TSetWorkflowFinishedPayload,
 } from '../../redux/actions';
+import {
+  IChangeWorkflowLogViewSettingsPayload,
+  ISendWorkflowLogComment,
+  TOpenWorkflowLogPopupPayload,
+  TSetWorkflowFinishedPayload,
+} from '../../redux/workflows/types';
 import { ExtraFieldsHelper } from '../TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
 import { getTaskDetailRoute, getWorkflowDetailedRoute, isTaskDetailRoute } from '../../utils/routes';
 import { Header } from '../UI/Typeography/Header';
@@ -39,9 +42,9 @@ import {
 import { getEditedFields } from '../TemplateEdit/ExtraFields/utils/getEditedFields';
 import { IntlMessages } from '../IntlMessages';
 import { Button } from '../UI/Buttons/Button';
-import { IApplicationState, IAuthUser, IWorkflowLog } from '../../types/redux';
+import { IAuthUser, IWorkflowLog } from '../../types/redux';
 import { WorkflowLog } from '../Workflows/WorkflowLog';
-import { DoneInfoIcon, PlayLogoIcon, ReturnTaskInfoIcon, ReturnToIcon } from '../icons';
+import { DoneInfoIcon, InfoIcon, PlayLogoIcon, ReturnTaskInfoIcon, ReturnToIcon } from '../icons';
 import { WorkflowLogSkeleton } from '../Workflows/WorkflowLog/WorkflowLogSkeleton';
 import { EOptionTypes, TUsersDropdownOption, UsersDropdown } from '../UI/form/UsersDropdown';
 import { TUserListItem } from '../../types/user';
@@ -56,9 +59,11 @@ import { SubWorkflowsContainer } from './SubWorkflows';
 import { EBgColorTypes, UserPerformer } from '../UI/UserPerformer';
 import { DateFormat } from '../UI/DateFormat';
 import UserDataWithGroup from '../UserDataWithGroup';
+import { HelpModal } from './HelpModal/HelpModal';
+import { ReturnModal } from './ReturnModal';
+import { getRegularGroupsList } from '../../redux/selectors/groups';
 
 import styles from './TaskCard.css';
-import { ReturnModal } from './ReturnModal';
 
 export enum ETaskCardViewMode {
   Single = 'single',
@@ -78,6 +83,7 @@ export interface ITaskCardProps {
   accountId: number;
   users: TUserListItem[];
   authUser: IAuthUser;
+  helpText?: string;
   addTaskPerformer(payload: TAddTaskPerformerPayload): void;
   removeTaskPerformer(payload: TRemoveTaskPerformerPayload): void;
   changeTaskWorkflowLog(value: Partial<IWorkflowLog>): void;
@@ -86,6 +92,7 @@ export interface ITaskCardProps {
   setWorkflowFinished(payload: TSetWorkflowFinishedPayload): void;
   sendTaskWorkflowLogComments(payload: ISendWorkflowLogComment): void;
   changeTaskWorkflowLogViewSettings(payload: IChangeWorkflowLogViewSettingsPayload): void;
+  toggleTaskSkippedTasksVisibility(): void;
   setCurrentTask(task: ITask | null): void;
   clearWorkflow(): void;
   openWorkflowLogPopup(payload: TOpenWorkflowLogPopupPayload): void;
@@ -104,12 +111,14 @@ export function TaskCard({
   accountId,
   users,
   authUser,
+  helpText,
   changeTaskWorkflowLog,
   setCurrentTask,
   setTaskCompleted,
   setTaskReverted,
   sendTaskWorkflowLogComments,
   changeTaskWorkflowLogViewSettings,
+  toggleTaskSkippedTasksVisibility,
   clearWorkflow,
   addTaskPerformer,
   removeTaskPerformer,
@@ -121,7 +130,7 @@ export function TaskCard({
   const { formatMessage } = useIntl();
   const { isMobile } = useCheckDevice();
 
-  const groups = useSelector((state: IApplicationState) => state.groups.list);
+  const groups = useSelector(getRegularGroupsList);
   const saveOutputsToStorageDebounced = debounce(300, addOrUpdateStorageOutput);
 
   const guestsControllerRef = useRef<React.ElementRef<typeof GuestController> | null>(null);
@@ -129,6 +138,9 @@ export function TaskCard({
   const workflowLinkRef = useRef(null);
   const [outputValues, setOutputValues] = useState([] as IExtraField[]);
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
+  const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
+
+  const helpTextLocal = helpText ?? workflow?.description ?? null;
 
   useEffect(() => {
     autoFocusFirstField(wrapperRef.current);
@@ -151,7 +163,7 @@ export function TaskCard({
     setOutputValues(outputFieldsWithValues);
   }, [task.id]);
 
-  const handleOpenWorkflowPopup = (workflowId: number | null) => (e: React.MouseEvent) => {
+  const handleOpenWorkflowPopup = (workflowId: number | null) => (e: MouseEvent) => {
     e.preventDefault();
     if (workflowId) {
       openWorkflowLogPopup({ workflowId });
@@ -227,9 +239,27 @@ export function TaskCard({
       viewMode !== ETaskCardViewMode.Guest,
       status !== ETaskStatus.Completed,
       workflow?.status !== EWorkflowStatus.Finished,
+      !task.isReadOnlyViewer,
     ].every(Boolean);
 
     return task.performers.map((performer) => {
+      if (performer.type === ETemplateOwnerType.UserGroup && performer.label) {
+        return (
+          <UserPerformer
+            key={performer.sourceId}
+            user={{
+              ...performer,
+              sourceId: String(performer.sourceId),
+              value: String(performer.sourceId),
+            }}
+            bgColor={EBgColorTypes.Light}
+            {...(isPossibleToRemovePerformer && {
+              onClick: () => removeTaskPerformer({ taskId: task.id, userId: performer }),
+            })}
+          />
+        );
+      }
+
       return (
         <UserDataWithGroup key={performer.sourceId} idItem={performer.sourceId} type={performer.type}>
           {(user) => {
@@ -255,6 +285,7 @@ export function TaskCard({
 
   const renderPerformersControllers = () => {
     if (status === ETaskStatus.Completed || workflow?.status === EWorkflowStatus.Finished) return null;
+    if (task.isReadOnlyViewer) return null;
 
     const performerDropdownOption = users.map((item) => {
       return {
@@ -330,25 +361,25 @@ export function TaskCard({
 
     return (
       <>
-        {authUser.isAdmin && (
+        {authUser.isAdmin && !task.isReadOnlyViewer && (
           <UsersDropdown
-            isMulti
-            controlSize="sm"
-            className={styles['responsible']}
-            placeholder={formatMessage({ id: 'user.search-field-placeholder' })}
-            options={[...performerGroupDropdownOption, ...performerDropdownOption]}
-            value={[...performerDropdownValue, ...performerGroupDropdownValue]}
-            onChange={onAddTaskPerformer}
-            onChangeSelected={onRemoveTaskPerformer}
-            onUsersInvited={onUsersInvited}
-            onClickInvite={() => trackInviteTeamInPage('Task card')}
-            inviteLabel={formatMessage({ id: 'template.invite-team-member' })}
-            title={formatMessage({ id: 'task.add-performer' })}
-          />
+              isMulti
+              controlSize="sm"
+              className={classnames(styles['responsible'], 'no-print')} 
+              placeholder={formatMessage({ id: 'user.search-field-placeholder' })}
+              options={[...performerGroupDropdownOption, ...performerDropdownOption]}
+              value={[...performerDropdownValue, ...performerGroupDropdownValue]}
+              onChange={onAddTaskPerformer}
+              onChangeSelected={onRemoveTaskPerformer}
+              onUsersInvited={onUsersInvited}
+              onClickInvite={() => trackInviteTeamInPage('Task card')}
+              inviteLabel={formatMessage({ id: 'template.invite-team-member' })}
+              title={formatMessage({ id: 'task.add-performer' })}
+            />
         )}
 
-        {viewMode !== ETaskCardViewMode.Guest && (
-          <GuestController ref={guestsControllerRef} taskId={task.id} className={styles['guest-dropdown']} />
+        {viewMode !== ETaskCardViewMode.Guest && !task.isReadOnlyViewer && (
+          <GuestController ref={guestsControllerRef} taskId={task.id} className={classnames(styles['guest-dropdown'], 'no-print')} />
         )}
       </>
     );
@@ -365,7 +396,9 @@ export function TaskCard({
   };
 
   const renderOutputFields = () => {
-    if (!isArrayWithItems(outputValues) || status === ETaskStatus.Completed) {
+    const visibleOutputs = outputValues?.filter((field) => !field.isHidden);
+
+    if (!isArrayWithItems(visibleOutputs) || status === ETaskStatus.Completed) {
       return null;
     }
 
@@ -374,21 +407,21 @@ export function TaskCard({
         <p className={styles['task-output__title']}>
           <IntlMessages id="tasks.task-outputs-fill-help" />
         </p>
-
-        {outputValues?.map((field) => (
-          <ExtraFieldIntl
-            key={field.apiName}
-            field={field}
-            editField={handleEditField(field.apiName)}
-            showDropdown={false}
-            mode={EExtraFieldMode.ProcessRun}
-            labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
-            namePlaceholder={field.name}
-            descriptionPlaceholder={field.description}
-            wrapperClassName={styles['task-output__field']}
-            accountId={accountId}
-          />
-        ))}
+        {visibleOutputs
+          .map((field) => (
+            <ExtraFieldIntl
+              key={field.apiName}
+              field={field}
+              editField={handleEditField(field.apiName)}
+              showDropdown={false}
+              mode={EExtraFieldMode.ProcessRun}
+              labelBackgroundColor={EInputNameBackgroundColor.OrchidWhite}
+              namePlaceholder={field.name}
+              descriptionPlaceholder={field.description}
+              wrapperClassName={styles['task-output__field']}
+              accountId={accountId}
+            />
+          ))}
       </div>
     );
   };
@@ -403,6 +436,8 @@ export function TaskCard({
   };
 
   const renderTaskButtons = () => {
+    if (task.isReadOnlyViewer) return null;
+    
     if (status === ETaskStatus.Completed || task.workflow.status === EWorkflowStatus.Finished) {
       const dateCompleted = task.dateCompleted || task.workflow.dateCompleted;
 
@@ -462,7 +497,7 @@ export function TaskCard({
     );
 
     return (
-      <div className={styles['buttons']}>
+      <div className={classnames(styles['buttons'], 'no-print')}>
         <div className={styles['buttons__complete']}>
           {isEmbeddedWorkflowsComplete ? (
             renderCompleteButton(!isEmbeddedWorkflowsComplete)
@@ -526,15 +561,19 @@ export function TaskCard({
         sorting={workflowLog.sorting}
         isCommentsShown={workflowLog.isCommentsShown}
         isOnlyAttachmentsShown={workflowLog.isOnlyAttachmentsShown}
+        isSkippedTasksShown={workflowLog.isSkippedTasksShown}
         workflowId={workflowLog.workflowId}
         includeHeader
         isLogMinimized={false}
         areTasksClickable={viewMode === ETaskCardViewMode.Single}
         minimizedLogMaxEvents={MINIMIZED_LOG_MAX_EVENTS}
-        isCommentFieldHidden={viewMode === ETaskCardViewMode.Guest && status === ETaskStatus.Completed}
-        isToggleCommentHidden
+        isCommentFieldHidden={
+          viewMode === ETaskCardViewMode.Guest && status === ETaskStatus.Completed
+        }
+        areRightTogglesHidden
         sendComment={sendTaskWorkflowLogComments}
         changeWorkflowLogViewSettings={changeTaskWorkflowLogViewSettings}
+        toggleSkippedTasksVisibility={toggleTaskSkippedTasksVisibility}
         onUnmount={() =>
           changeTaskWorkflowLog({
             isOnlyAttachmentsShown: false,
@@ -555,6 +594,7 @@ export function TaskCard({
         onClose={() => setIsReturnModalOpen(false)}
         onConfirm={handleReturnTask}
       />
+      {helpTextLocal && <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} helpText={helpTextLocal} />}
       <div
         ref={wrapperRef}
         className={classnames(styles['container'], viewMode === ETaskCardViewMode.Guest && styles['container_guest'])}
@@ -574,7 +614,7 @@ export function TaskCard({
             {renderPerformers()}
           </div>
 
-          {viewMode !== ETaskCardViewMode.Guest && (
+          {viewMode !== ETaskCardViewMode.Guest && !task.isReadOnlyViewer && (
             <DueIn
               withTime
               timezone={authUser.timezone}
@@ -586,9 +626,31 @@ export function TaskCard({
               dateCompleted={task.dateCompleted || task.workflow.dateCompleted}
             />
           )}
+          {task.isReadOnlyViewer && task.dueDate && (
+            <DueIn
+              withTime
+              timezone={authUser.timezone}
+              dateFmt={authUser.dateFmt}
+              dueDate={task.dueDate}
+              containerClassName={styles['due-in']}
+              dateCompleted={task.dateCompleted || task.workflow.dateCompleted}
+              readOnly
+            />
+          )}
         </div>
 
-        <div className={styles['complete-form']}>
+        <div className={classnames(
+          styles['complete-form'],
+          task.isReadOnlyViewer && styles['complete-form_readonly']
+        )}>
+          {helpTextLocal && (
+            <button type="button" className={styles['help-trigger']} onClick={() => setIsHelpModalOpen(true)}>
+              <span className={styles['help-trigger__label']}>
+                {formatMessage({ id: 'task.help', defaultMessage: 'Help' })}
+              </span>
+              <InfoIcon className={styles['help-trigger__icon']} />
+            </button>
+          )}
           {renderOutputFields()}
           {renderTaskButtons()}
           {viewMode !== ETaskCardViewMode.Guest && !isEmptyArray(task.subWorkflows) && (

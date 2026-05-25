@@ -1,10 +1,11 @@
 /* eslint-disable */
 /* prettier-ignore */
 import { copyAttachment } from '../../../../../api/copyAttachment';
-import { IExtraField, IKickoff, TExtraFieldValue } from '../../../../../types/template';
+import { EExtraFieldType, IExtraField, IKickoff, TExtraFieldValue } from '../../../../../types/template';
 import { IWorkflowDetailsKickoff } from '../../../../../types/workflow';
 import { TUploadedFile } from '../../../../../utils/uploadFiles';
 import { getEditKickoff } from '../../../../../utils/workflows';
+import { normalizeSelections } from '../../../../TemplateEdit/utils/normalizeSelections';
 
 export async function getClonedKickoff(
   workflowKickoff: IWorkflowDetailsKickoff,
@@ -23,37 +24,46 @@ export async function getClonedKickoff(
     fields.filter(Boolean),
   )) as IExtraField[];
 
-  return { ...kickoff, fields: normalizedKickoffFields };
+  const finalFields = normalizedKickoffFields.map((field) => {
+    if (field.type !== EExtraFieldType.Checkbox) {
+      return field;
+    }
+
+    if (Array.isArray(field.value)) {
+      return field;
+    }
+
+    const arrayValue = typeof field.value === 'string' && field.value !== ''
+      ? field.value.split(', ')
+      : [];
+
+    return { ...field, value: arrayValue as TExtraFieldValue };
+  });
+
+  return { ...kickoff, fields: finalFields };
 }
 
 function cloneFieldSelections(field: IExtraField, templateField: IExtraField): IExtraField {
-  if (!field.selections) {
+  if (!templateField.selections?.length) {
     return field;
   }
+  const templateValues = normalizeSelections(templateField.selections);
+  let normalizedValue = field.value;
 
-  const selectionIdMap = new Map(
-    field.selections
-      .map((selection) => {
-        const templateSelection = templateField.selections?.find(
-          (templateSelection) => templateSelection.apiName === selection.apiName,
-        );
-        return templateSelection ? ([selection.apiName as string, templateSelection.apiName as string] as const) : null;
-      })
-      .filter(Boolean) as (readonly [string, string])[],
-  );
+  if (normalizedValue) {
+    const parts = Array.isArray(normalizedValue)
+      ? normalizedValue
+      : (normalizedValue as string).split(', ');
+    const filtered = parts.filter((value) => templateValues.includes(value));
 
-  const normalizedSelections = field.selections.filter((selection) => selectionIdMap.get(selection.apiName as string));
+    if (field.type === EExtraFieldType.Checkbox) {
+      normalizedValue = filtered as TExtraFieldValue;
+    } else {
+      normalizedValue = filtered.length > 0 ? filtered[0] : null;
+    }
+  }
 
-  const normalizedValue = Array.isArray(field.value)
-    ? (field.value
-        .map((selectedId) => {
-          const newValue = selectionIdMap.get(selectedId);
-          return newValue ? String(newValue) : null;
-        })
-        .filter(Boolean) as TExtraFieldValue)
-    : field.value;
-
-  return { ...field, selections: normalizedSelections, value: normalizedValue };
+  return { ...field, selections: templateValues, value: normalizedValue };
 }
 
 async function cloneAttachments(field: IExtraField): Promise<IExtraField> {
@@ -71,7 +81,7 @@ async function cloneAttachments(field: IExtraField): Promise<IExtraField> {
     return { ...attachment, id: attachmentsMap.get(attachment.id) } as TUploadedFile;
   }) as TUploadedFile[];
 
-  const normalizedValue = Array.isArray(field.value)
+  const normalizedValue = (field.type === EExtraFieldType.File && Array.isArray(field.value))
     ? (field.value
         .map((fileId) => {
           const newValue = attachmentsMap.get(Number(fileId));

@@ -4,6 +4,7 @@ from src.accounts.models import (
     UserInvite,
 )
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     PerformerType,
 )
@@ -170,6 +171,7 @@ def test_count_templates__raw_performer__ok(api_client):
     api_client.token_authenticate(user)
     request_template_owners = [
         {
+            'role': OwnerRole.OWNER,
             'type': OwnerType.USER,
             'source_id': f'{user.id}',
         },

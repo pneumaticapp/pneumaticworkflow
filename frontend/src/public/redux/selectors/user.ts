@@ -25,6 +25,15 @@ export const getIsBlocked = ({
 
 export const getIsAdmin = ({ authUser }: IApplicationState) => authUser.isAdmin || false;
 
+export const getCanAccessWorkflows = ({ authUser }: IApplicationState) => 
+  (authUser?.isAdmin || authUser?.hasWorkflowViewerAccess || authUser?.hasWorkflowStarterAccess) || false;
+
+export const getHasExtendedInterface = ({ authUser }: IApplicationState) =>
+  (authUser?.isAdmin || authUser?.hasWorkflowViewerAccess) || false;
+
+export const getHasBasicInterface = ({ authUser }: IApplicationState) =>
+  (authUser?.hasWorkflowStarterAccess && !authUser?.hasWorkflowViewerAccess && !authUser?.isAdmin) || false;
+
 export const getIsUserSubsribed = ({
   authUser: {
     account: { isSubscribed },
@@ -63,3 +72,6 @@ export const getUserApiKey = (state: IApplicationState) => state.integrations.ap
 export const getUserTimezone = (state: IApplicationState): string => state.authUser.timezone;
 
 export const getLanguage = ({ authUser }: IApplicationState) => authUser.language;
+
+export const getAccountId = (state: IApplicationState): number =>
+  state.authUser.account?.id ?? -1;

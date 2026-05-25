@@ -1,5 +1,4 @@
 from django.contrib.auth import get_user_model
-from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 
 from src.generics.managers import BaseSoftDeleteManager
@@ -61,8 +60,10 @@ class TaskField(
         on_delete=models.CASCADE,
         related_name='fields',
     )
-    search_content = SearchVectorField(null=True)
     objects = BaseSoftDeleteManager.from_queryset(TaskFieldQuerySet)()
+
+    def __str__(self):
+        return f'{self.type}: {self.value}'
 
 
 class FieldSelection(
@@ -78,9 +79,11 @@ class FieldSelection(
         on_delete=models.CASCADE,
         related_name='selections',
     )
-    is_selected = models.BooleanField(default=False)
     value = models.CharField(max_length=200)
 
     objects = BaseSoftDeleteManager.from_queryset(
         FieldSelectionQuerySet,
     )()
+
+    def __str__(self):
+        return self.value

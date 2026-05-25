@@ -6,6 +6,7 @@ from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     ConditionAction,
     FieldType,
+    OwnerRole,
     OwnerType,
     PredicateOperator,
 )
@@ -40,6 +41,10 @@ from src.processes.services.versioning.schemas import (
 from src.processes.services.versioning.versioning import (
     TemplateVersioningService,
 )
+from src.processes.services.workflow_action import WorkflowActionService
+from src.processes.services.workflows.kickoff_version import \
+    KickoffUpdateVersionService
+from src.processes.services.workflows.workflow import WorkflowService
 from src.processes.services.workflows.workflow_version import (
     WorkflowUpdateVersionService,
 )
@@ -61,7 +66,135 @@ pytestmark = pytest.mark.django_db
 
 class TestWorkflowUpdateVersionService:
 
-    def test_update_from_version__ok(self):
+    def test_update_from_version__ok(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        account_owner = create_test_owner(account=account)
+        template = create_test_template(
+            user=account_owner,
+            is_active=True,
+            tasks_count=1,
+            finalizable=False,
+            description='Old desc',
+            reminder_notification=False,
+            completion_notification=False,
+        )
+        workflow = create_test_workflow(
+            user=account_owner,
+            template=template,
+        )
+        # Change template data
+        template.finalizable = True
+        template.description = 'New desc'
+        template.reminder_notification = True
+        template.completion_notification = True
+        template.save()
+        user = create_test_admin(account=account)
+        template.owners.all().delete()
+        TemplateOwner.objects.create(
+            template=template,
+            account=account,
+            type=OwnerType.USER,
+            user_id=user.id,
+        )
+
+        template.refresh_from_db()
+        template_version = TemplateVersioningService(
+            TemplateSchemaV1,
+        ).save(template)
+        data = template_version.data
+
+        kickoff_service_init_mock = mocker.patch.object(
+            KickoffUpdateVersionService,
+            attribute='__init__',
+            return_value=None,
+        )
+        kickoff_service_update_mock = mocker.patch(
+            'src.processes.services.workflows.kickoff_version.'
+            'KickoffUpdateVersionService.update_from_version',
+        )
+        workflow_service_init_mock = mocker.patch.object(
+            WorkflowService,
+            attribute='__init__',
+            return_value=None,
+        )
+        workflow_service_update_mock = mocker.patch(
+            'src.processes.services.workflows.workflow.WorkflowService.'
+            'partial_update',
+            return_value=workflow,
+        )
+        update_tasks_from_version_mock = mocker.patch(
+            'src.processes.services.workflows.workflow_version.'
+            'WorkflowUpdateVersionService._update_tasks_from_version',
+        )
+        workflow_action_service_init_mock = mocker.patch.object(
+            WorkflowActionService,
+            attribute='__init__',
+            return_value=None,
+        )
+        update_tasks_status_mock = mocker.patch(
+            'src.processes.services.workflow_action.WorkflowActionService'
+            '.update_tasks_status',
+        )
+        is_superuser = False
+        auth_type = AuthTokenType.USER
+        version_service = WorkflowUpdateVersionService(
+            instance=workflow,
+            user=account_owner,
+            is_superuser=is_superuser,
+            auth_type=auth_type,
+        )
+
+        # act
+        version_service.update_from_version(
+            data=data,
+            version=template_version.version,
+        )
+
+        # assert
+        kickoff_service_init_mock.assert_called_once_with(
+            is_superuser=is_superuser,
+            auth_type=auth_type,
+            user=account_owner,
+            instance=workflow.kickoff_instance,
+        )
+        kickoff_service_update_mock.assert_called_once_with(
+            data={'fields': []},
+            version=template_version.version,
+        )
+        workflow_service_init_mock.assert_called_once_with(
+            instance=workflow,
+            user=account_owner,
+            is_superuser=is_superuser,
+            auth_type=auth_type,
+        )
+        workflow_service_update_mock.assert_called_once_with(
+            description=template.description,
+            finalizable=template.finalizable,
+            reminder_notification=template.reminder_notification,
+            completion_notification=template.completion_notification,
+            version=template_version.version,
+            force_save=True,
+        )
+        update_tasks_from_version_mock.assert_called_once_with(
+            version=template_version.version,
+            tasks_data=data['tasks'],
+        )
+        workflow_action_service_init_mock.assert_called_once_with(
+            workflow=workflow,
+            user=account_owner,
+            is_superuser=is_superuser,
+            auth_type=auth_type,
+            sync=False,
+        )
+        update_tasks_status_mock.assert_called_once_with()
+        assert workflow.owners.count() == 1
+        assert workflow.owners.first().id == user.id
+        assert workflow.members.count() == 2
+        assert user in workflow.members.all()
+
+    def test_update_from_version__all_instances__ok(self):
 
         # arrange
         account = create_test_account()
@@ -85,12 +218,14 @@ class TestWorkflowUpdateVersionService:
             name='Number field',
             kickoff=kickoff_template,
             template=template,
+            account=user.account,
         )
         field_template = FieldTemplate.objects.create(
             type=FieldType.TEXT,
             name='Text field',
             task=template_task_1,
             template=template,
+            account=user.account,
         )
         condition_template = ConditionTemplate.objects.create(
             task=template_task_1,
@@ -224,6 +359,7 @@ class TestWorkflowUpdateVersionService:
             name='Text field',
             task=task_1,
             template=template,
+            account=user.account,
         )
         TaskField.objects.create(
             name='Some text field',
@@ -232,12 +368,14 @@ class TestWorkflowUpdateVersionService:
             is_required=True,
             task=workflow_task,
             workflow=workflow,
+            account=user.account,
         )
         field_template_2 = FieldTemplate.objects.create(
             type=FieldType.CHECKBOX,
             name='Checkbox field',
             task=task_1,
             template=template,
+            account=user.account,
         )
         second_workflow_field = TaskField.objects.create(
             name='Some text',
@@ -246,6 +384,7 @@ class TestWorkflowUpdateVersionService:
             is_required=True,
             task=workflow_task,
             workflow=workflow,
+            account=user.account,
         )
         FieldTemplateSelection.objects.create(
             value='first',
@@ -270,6 +409,9 @@ class TestWorkflowUpdateVersionService:
             name='Text field',
             kickoff=kickoff,
             template=template,
+            account=user.account,
+            is_required=False,
+            is_hidden=True,
         )
         TaskField.objects.create(
             type=FieldType.TEXT,
@@ -278,12 +420,16 @@ class TestWorkflowUpdateVersionService:
             kickoff=workflow.kickoff_instance,
             is_required=True,
             workflow=workflow,
+            account=user.account,
         )
         kickoff_field_template_2 = FieldTemplate.objects.create(
             type=FieldType.CHECKBOX,
             name='Checkbox field',
             kickoff=kickoff,
             template=template,
+            account=user.account,
+            is_required=False,
+            is_hidden=False,
         )
         FieldTemplateSelection.objects.create(
             value='first',
@@ -325,6 +471,12 @@ class TestWorkflowUpdateVersionService:
         assert kickoff_fields.filter(
             type=FieldType.TEXT,
         ).first().is_required is False
+        assert kickoff_fields.filter(
+            type=FieldType.TEXT,
+        ).first().is_hidden is True
+        assert kickoff_fields.filter(
+            type=FieldType.CHECKBOX,
+        ).first().is_hidden is False
         assert kickoff_fields.filter(
             type=FieldType.CHECKBOX,
         ).first().selections.count() == 2
@@ -375,12 +527,14 @@ class TestWorkflowUpdateVersionService:
             name='Text field',
             task=new_task,
             template=template,
+            account=user.account,
         )
         field_template_2 = FieldTemplate.objects.create(
             type=FieldType.CHECKBOX,
             name='Checkbox field',
             task=new_task,
             template=template,
+            account=user.account,
         )
         first_selection = FieldTemplateSelection.objects.create(
             value='first',
@@ -506,6 +660,7 @@ class TestWorkflowUpdateVersionService:
             name='Screenshot',
             kickoff=kickoff,
             template=template,
+            account=user.account,
         )
         workflow = create_test_workflow(user, template)
         file_field = TaskField.objects.create(
@@ -517,6 +672,7 @@ class TestWorkflowUpdateVersionService:
             value='http://file.png',
             clear_value='http://clear-file.png',
             markdown_value='[attachment](http://file.png)',
+            account=user.account,
         )
         attachment = FileAttachment.objects.create(
             name='attachment',
@@ -662,14 +818,17 @@ class TestWorkflowUpdateVersionService:
             name='user',
             kickoff=template.kickoff_instance,
             template=template,
+            account=owner.account,
         )
         field_template_2 = FieldTemplate.objects.create(
             type=FieldType.STRING,
             name='text',
             kickoff=template.kickoff_instance,
             template=template,
+            account=owner.account,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=account,
             type=OwnerType.USER,
@@ -808,14 +967,17 @@ class TestWorkflowUpdateVersionService:
             name='user',
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
         field_template_2 = FieldTemplate.objects.create(
             type=FieldType.STRING,
             name='text',
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=user.account,
             type=OwnerType.USER,
@@ -934,14 +1096,17 @@ class TestWorkflowUpdateVersionService:
             name='user',
             kickoff=template.kickoff_instance,
             template=template,
+            account=owner.account,
         )
         field_template_2 = FieldTemplate.objects.create(
             type=FieldType.STRING,
             name='text',
             kickoff=template.kickoff_instance,
             template=template,
+            account=owner.account,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=account,
             type=OwnerType.USER,

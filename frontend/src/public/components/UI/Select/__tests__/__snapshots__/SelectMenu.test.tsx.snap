@@ -31,6 +31,7 @@ exports[`SelectMenu renders correctly 1`] = `
   <DropdownMenu
     className="dropdown-menu"
     flip={true}
+    positionFixed={false}
     tag="div"
   >
     <DropdownItem

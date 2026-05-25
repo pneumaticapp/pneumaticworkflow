@@ -1,3 +1,4 @@
+from typing_extensions import Literal
 
 
 class MailoutType:
@@ -35,3 +36,13 @@ class MailoutType:
     CUSTOMERIO_TYPES = {
         NEWSLETTER,
     }
+
+    LITERALS = Literal[
+        NEWSLETTER,
+        OFFER,
+        COMMENTS,
+        NEW_TASK,
+        WF_DIGEST,
+        TASKS_DIGEST,
+        COMPLETE_TASK,
+    ]

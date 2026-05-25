@@ -37,7 +37,7 @@ export interface IWorkflowClientProperties {
   completedTasks: IWorkflowTaskClient[];
 
   areMultipleTasks: boolean;
-  namesMultipleTasks: Record<string, string>;
+  multipleTasksNamesByApiNames: Record<string, string>;
   oneActiveTaskName?: string | null;
   selectedUsers: RawPerformer[];
 
@@ -67,6 +67,7 @@ export interface IWorkflowDetails {
 
   description: string;
   kickoff: IWorkflowDetailsKickoff;
+  isReadOnlyViewer?: boolean;
 }
 
 export interface IWorkflowEditData {
@@ -327,7 +328,7 @@ export type TUserCounter = {
 };
 
 export type TTemplateStepCounter = {
-  templateTaskId: number;
+  templateTaskApiName: string;
   workflowsCount: number;
 };
 
@@ -338,7 +339,7 @@ export interface IWorkflowsSettings {
   values: {
     statusFilter: EWorkflowsStatus;
     templatesIdsFilter: number[];
-    stepsIdsFilter: number[];
+    tasksApiNamesFilter: string[];
     performersIdsFilter: number[];
     performersGroupIdsFilter: number[];
     workflowStartersIdsFilter: number[];

@@ -1,3 +1,10 @@
 .template-name {
+  width: 100%;
+  text-align: left;
+
   @mixin text-truncate;
+}
+
+.template-name:hover {
+  color: var(--pneumatic-color-link-hover);
 }

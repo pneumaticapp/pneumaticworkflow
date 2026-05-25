@@ -20,7 +20,7 @@ import 'promise-polyfill/src/polyfill';
 import 'whatwg-fetch';
 import './assets/css/style.css';
 
-initSentry(getPublicFormConfig);
+initSentry(getPublicFormConfig, 'forms');
 
 const {
   config: { mainPage },

@@ -1,4 +1,9 @@
+from datetime import timedelta
+
 import pytest
+from django.utils import timezone
+
+from src.accounts.enums import BillingPlanType
 
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
@@ -8,6 +13,9 @@ from src.processes.enums import (
 )
 from src.processes.messages import workflow as messages
 from src.processes.models.workflows.task import TaskPerformer
+from src.processes.services.exceptions import (
+    WorkflowActionServiceException,
+)
 from src.processes.services.workflow_action import (
     WorkflowActionService,
 )
@@ -16,6 +24,7 @@ from src.processes.tests.fixtures import (
     create_test_admin,
     create_test_group,
     create_test_guest,
+    create_test_not_admin,
     create_test_owner,
     create_test_user,
     create_test_workflow,
@@ -689,3 +698,176 @@ def test_complete__guest_another_workflow_task__permission_denied(
     assert response.status_code == 401
     service_init_mock.assert_not_called()
     complete_task_for_user_mock.assert_not_called()
+
+
+def test_complete__not_authenticated__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/task-complete',
+        data={'task_id': task.id},
+    )
+
+    # assert
+    assert response.status_code == 401
+
+
+def test_complete__expired_subscription__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.UNLIMITED,
+        plan_expiration=timezone.now() - timedelta(hours=1),
+    )
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/task-complete',
+        data={'task_id': task.id},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_complete__billing_plan__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(plan=None)
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/task-complete',
+        data={'task_id': task.id},
+    )
+    # assert
+    assert response.status_code == 403
+
+
+def test_complete__users_overlimited__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.PREMIUM,
+        max_users=1,
+    )
+    owner = create_test_owner(account=account)
+    create_test_not_admin(account=account)
+    account.active_users = 2
+    account.save()
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/task-complete',
+        data={'task_id': task.id},
+    )
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_complete__not_found__not_found(api_client):
+
+    # arrange
+    user = create_test_owner()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        '/workflows/99999999/task-complete',
+        data={'task_api_name': 'some-task'},
+    )
+
+    # assert
+    assert response.status_code == 404
+
+
+def test_complete__no_task_id_no_api_name__validation_error(api_client):
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/task-complete',
+        data={},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_PW_0076
+
+
+def test_complete__task_not_found__validation_error(api_client):
+
+    # arrange
+    user = create_test_owner()
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/task-complete',
+        data={'task_api_name': 'non-existent-task-api-name'},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == messages.MSG_PW_0077
+
+
+def test_complete__service_exception__validation_error(mocker, api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    service_init_mock = mocker.patch.object(
+        WorkflowActionService,
+        attribute='__init__',
+        return_value=None,
+    )
+    message = 'Service error occurred'
+    ex = WorkflowActionServiceException(message)
+    complete_task_for_user_mock = mocker.patch(
+        'src.processes.services.'
+        'workflow_action.WorkflowActionService.'
+        'complete_task_for_user',
+        side_effect=ex,
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(
+        f'/workflows/{workflow.id}/task-complete',
+        data={'task_id': task.id},
+    )
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    assert response.data['message'] == message
+    service_init_mock.assert_called_once()
+    complete_task_for_user_mock.assert_called_once()

@@ -4,7 +4,7 @@ import { useIntl } from 'react-intl';
 import { BaseModal, ModalBody, ModalFooter, ModalHeader } from '../../../UI/BaseModal';
 
 import { IntlMessages } from '../../../IntlMessages';
-import { TDeclineIvitePayload, TDeleteUserPayload } from '../../../../redux/actions';
+
 import { EDeleteUserModalState } from '../../../../types/redux';
 import { TUserListItem } from '../../../../types/user';
 import { getDropdownUsersList, getUserFullName } from '../../../../utils/users';
@@ -13,6 +13,7 @@ import { DropdownList } from '../../../UI/DropdownList';
 import { Button } from '../../../UI';
 
 import styles from './DeleteTeamUserPopup.css';
+import { TDeclineInvitePayload, TDeleteUserPayload } from '../../../../redux/accounts/types';
 
 export interface IDeleteTeamUserPopupProps {
   user: TUserListItem | null;
@@ -22,7 +23,7 @@ export interface IDeleteTeamUserPopupProps {
   usersList: TUserListItem[];
   closeModal(): void;
   deleteUser(params: TDeleteUserPayload): void;
-  declineInvite(params: TDeclineIvitePayload): void;
+  declineInvite(params: TDeclineInvitePayload): void;
 }
 
 export function DeleteTeamUserPopup({

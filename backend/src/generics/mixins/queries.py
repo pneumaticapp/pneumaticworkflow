@@ -10,12 +10,14 @@ class DereferencedOwnersMixin:
             JOIN accounts_usergroup_users AS g
               ON g.usergroup_id = pto.group_id
             WHERE pto.type = 'group'
+              AND pto.role = 'owner'
               AND pto.is_deleted IS FALSE
               AND g.user_id = %(user_id)s
             UNION
             SELECT pto.template_id, pto.user_id
             FROM processes_templateowner AS pto
             WHERE pto.type = 'user'
+              AND pto.role = 'owner'
               AND pto.is_deleted IS FALSE
               AND pto.user_id = %(user_id)s
         """
@@ -34,6 +36,7 @@ class DereferencedOwnersMixin:
             LEFT JOIN accounts_usergroup_users ug
               ON pto.type = 'group' AND pto.group_id = ug.usergroup_id
             WHERE pto.template_id = %(template_id)s
+              AND pto.role = 'owner'
               AND pto.is_deleted IS FALSE
               AND COALESCE(pto.user_id, ug.user_id) IS NOT NULL
         """
@@ -93,4 +96,27 @@ class DereferencedPerformersMixin:
                 ptp.type = '{PerformerType.USER}'
                 AND ptp.user_id = %(user_id)s
               )
+        """
+
+    @staticmethod
+    def all_dereferenced_performers():
+
+        """ Convert group performers to users and return it (for any user) """
+
+        return f"""
+            SELECT DISTINCT ON (user_id, ptp.task_id)
+              (
+                CASE
+                  WHEN ptp.type = '{PerformerType.GROUP}' THEN g.user_id
+                  ELSE ptp.user_id
+                END
+              ) AS user_id,
+              ptp.task_id,
+              ptp.is_completed
+            FROM processes_taskperformer ptp
+            LEFT JOIN accounts_usergroup_users g
+              ON g.usergroup_id = ptp.group_id
+            WHERE
+              ptp.is_deleted IS FALSE
+              AND ptp.directly_status != '{DirectlyStatus.DELETED}'
         """

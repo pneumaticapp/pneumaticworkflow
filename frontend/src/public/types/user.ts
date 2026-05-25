@@ -14,11 +14,16 @@ export interface IUnsavedUser {
   status?: EUserStatus;
   invite?: UserInvite;
   isAdmin?: boolean;
+  hasWorkflowViewerAccess?: boolean;
+  hasWorkflowStarterAccess?: boolean;
   type: TUserType;
   language: string;
   timezone: string;
   dateFmt: string;
   dateFdw: string;
+  managerId?: number | null;
+  reportIds?: number[];
+  subordinatesIds?: number[];
 }
 
 export enum EUserDropdownOptionType {
@@ -28,10 +33,22 @@ export enum EUserDropdownOptionType {
 
 export type TUserListItem = Pick<
   IUnsavedUser,
-  'email' | 'isAdmin' | 'isAccountOwner' | 'firstName' | 'lastName' | 'phone' | 'photo' | 'invite' | 'isAdmin' | 'type'
+  | 'email'
+  | 'isAdmin'
+  | 'isAccountOwner'
+  | 'firstName'
+  | 'lastName'
+  | 'phone'
+  | 'photo'
+  | 'invite'
+  | 'type'
+  | 'managerId'
+  | 'reportIds'
+  | 'subordinatesIds'
 > & {
   id: number;
   status: EUserStatus;
+  vacation?: IUserVacation | null;
 };
 
 export type TAccountLeaseLevel = 'standard' | 'partner' | 'tenant';
@@ -67,13 +84,31 @@ export type TUserInvited = Pick<IUnsavedUser, 'firstName' | 'lastName' | 'timezo
   password: string;
 };
 
-export const enum EUserStatus {
+export enum EUserStatus {
   Invited = 'invited',
   Active = 'active',
   Deleted = 'deleted',
   Registration = 'registration',
   Inactive = 'inactive',
   External = 'external',
+}
+
+export const enum EAbsenceStatus {
+  Active = 'active',
+  Vacation = 'vacation',
+  SickLeave = 'sick_leave',
+}
+
+export interface IUserVacation {
+  startDate: string | null;
+  endDate: string | null;
+  absenceStatus: string;
+  substituteUserIds: number[];
+}
+
+export function isUserAbsent(user: { vacation?: IUserVacation | null }): boolean {
+  if (!user.vacation) return false;
+  return user.vacation.absenceStatus !== EAbsenceStatus.Active;
 }
 
 export type TUserId = {
@@ -89,4 +124,60 @@ export enum EUserListSorting {
 export enum EGroupsListSorting {
   NameAsc = 'group-name-asc',
   NameDesc = 'group-name-desc',
+}
+
+export interface ICreateUserRequest {
+  email: string;
+  password?: string;
+  phone?: string;
+  photo?: string;
+  firstName?: string;
+  lastName?: string;
+  isAdmin?: boolean;
+  isTasksDigestSubscriber?: boolean;
+  isDigestSubscriber?: boolean;
+  isNewslettersSubscriber?: boolean;
+  isSpecialOffersSubscriber?: boolean;
+  isNewTasksSubscriber?: boolean;
+  isCompleteTasksSubscriber?: boolean;
+  isCommentsMentionsSubscriber?: boolean;
+  language?: string;
+  timezone?: string;
+  dateFmt?: string;
+  dateFdw?: number;
+  groups?: number[];
+  managerId?: number | null;
+  reportIds?: number[];
+  subordinatesIds?: number[];
+}
+
+export interface IUserResponse {
+  id: number;
+  email: string;
+  phone: string;
+  photo: string;
+  firstName: string;
+  lastName: string;
+  type: TUserType;
+  dateJoined: string;
+  dateJoinedTsp: number;
+  isAdmin: boolean;
+  isAccountOwner: boolean;
+  isTasksDigestSubscriber: boolean;
+  isDigestSubscriber: boolean;
+  isNewslettersSubscriber: boolean;
+  isSpecialOffersSubscriber: boolean;
+  isNewTasksSubscriber: boolean;
+  isCompleteTasksSubscriber: boolean;
+  isCommentsMentionsSubscriber: boolean;
+  language: string;
+  timezone: string;
+  dateFmt: string;
+  dateFdw: number;
+  groups: number[];
+  invite: UserInvite | null;
+  managerId: number | null;
+  reportIds: number[];
+  subordinatesIds: number[];
+  vacation?: IUserVacation | null;
 }

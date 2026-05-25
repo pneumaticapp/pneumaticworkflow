@@ -7,12 +7,14 @@ from src.accounts.enums import (
 )
 from src.accounts.services import exceptions
 from src.accounts.services.account import AccountService
+from src.accounts.services.user import UserService
 from src.accounts.services.user_invite import UserInviteService
 from src.accounts.services.user_transfer import UserTransferService
 from src.accounts.tokens import TransferToken
 from src.authentication.enums import AuthTokenType
 from src.payment.stripe.service import StripeService
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     PerformerType,
 )
@@ -26,7 +28,6 @@ pytestmark = pytest.mark.django_db
 
 
 def test_accept_transfer__ok(mocker):
-
     # arrange
     prev_account = create_test_account(name='prev')
     prev_user = create_test_user(
@@ -87,7 +88,6 @@ def test_accept_transfer__ok(mocker):
 
 
 def test_get_valid_user__ok():
-
     # arrange
     prev_account = create_test_account(name='prev')
     prev_user = create_test_user(
@@ -117,7 +117,6 @@ def test_get_valid_user__ok():
 
 
 def test_get_valid_user__already_accepted__raise_exception():
-
     # arrange
     prev_account = create_test_account(name='prev')
     prev_user = create_test_user(
@@ -146,7 +145,6 @@ def test_get_valid_user__already_accepted__raise_exception():
 
 
 def test_get_valid_user__does_not_exist__raise_exception():
-
     # arrange
     prev_account = create_test_account(name='prev')
     prev_user = create_test_user(
@@ -175,7 +173,6 @@ def test_get_valid_user__does_not_exist__raise_exception():
 
 
 def test_get_valid_user__incorrect_token__raise_exception():
-
     # arrange
     prev_account = create_test_account(name='prev')
     prev_user = create_test_user(
@@ -204,7 +201,6 @@ def test_get_valid_user__incorrect_token__raise_exception():
 
 
 def test_get_valid_prev_user__ok():
-
     # arrange
     new_account = create_test_account(name='new')
     account_owner = create_test_user(
@@ -236,7 +232,6 @@ def test_get_valid_prev_user__ok():
 
 
 def test_get_valid_prev_user__inactive__raise_exception():
-
     # arrange
     new_account = create_test_account(name='new')
     account_owner = create_test_user(
@@ -272,7 +267,6 @@ def test_get_valid_prev_user__inactive__raise_exception():
 
 
 def test_get_valid_token__ok():
-
     # arrange
     new_account = create_test_account(name='new')
     new_user = create_test_user(account=new_account)
@@ -296,7 +290,6 @@ def test_get_valid_token__ok():
 
 
 def test_get_valid_token__invalid__raise_exception():
-
     # arrange
     service = UserTransferService()
 
@@ -306,22 +299,18 @@ def test_get_valid_token__invalid__raise_exception():
 
 
 def test_after_transfer_actions__premium__ok(mocker):
-
     # arrange
     account = create_test_account(plan=BillingPlanType.PREMIUM)
     user = create_test_user(account=account)
     prev_user = create_test_user(email='prev@test.test')
     users_transferred_mock = mocker.patch(
-        'src.analysis.services.AnalyticService.'
-        'users_transferred',
+        'src.analysis.services.AnalyticService.users_transferred',
     )
     identify_mock = mocker.patch(
-        'src.accounts.services.user_transfer'
-        '.UserTransferService.identify',
+        'src.accounts.services.user_transfer.UserTransferService.identify',
     )
     group_mock = mocker.patch(
-        'src.accounts.services.user_transfer'
-        '.UserTransferService.group',
+        'src.accounts.services.user_transfer.UserTransferService.group',
     )
     increase_plan_users_mock = mocker.patch(
         'src.payment.tasks.increase_plan_users.delay',
@@ -330,8 +319,7 @@ def test_after_transfer_actions__premium__ok(mocker):
         'src.accounts.services.user_transfer.settings',
     )
     send_user_updated_mock = mocker.patch(
-        'src.notifications.tasks.'
-        'send_user_updated_notification.delay',
+        'src.notifications.tasks.send_user_updated_notification.delay',
     )
     settings_mock.PROJECT_CONF = {'BILLING': True}
     service = UserTransferService()
@@ -344,10 +332,12 @@ def test_after_transfer_actions__premium__ok(mocker):
     # assert
     identify_mock.assert_called_once_with(service.user)
     assert group_mock.call_count == 2
-    assert group_mock.has_calls([
-        mocker.call(service.prev_user),
-        mocker.call(service.user),
-    ])
+    group_mock.assert_has_calls(
+        [
+            mocker.call(service.prev_user),
+            mocker.call(service.user),
+        ],
+    )
     users_transferred_mock.assert_called_once_with(
         user=service.prev_user,
     )
@@ -367,27 +357,25 @@ def test_after_transfer_actions__premium__ok(mocker):
             'photo': user.photo,
             'is_admin': user.is_admin,
             'is_account_owner': user.is_account_owner,
+            'manager_id': None,
+            'subordinates_ids': [],
         },
     )
 
 
 def test_after_transfer_actions__unlimited__ok(mocker):
-
     # arrange
     account = create_test_account(plan=BillingPlanType.UNLIMITED)
     user = create_test_user(account=account)
     prev_user = create_test_user(email='prev@test.test')
     users_transferred_mock = mocker.patch(
-        'src.analysis.services.AnalyticService.'
-        'users_transferred',
+        'src.analysis.services.AnalyticService.users_transferred',
     )
     identify_mock = mocker.patch(
-        'src.accounts.services.user_transfer'
-        '.UserTransferService.identify',
+        'src.accounts.services.user_transfer.UserTransferService.identify',
     )
     group_mock = mocker.patch(
-        'src.accounts.services.user_transfer'
-        '.UserTransferService.group',
+        'src.accounts.services.user_transfer.UserTransferService.group',
     )
     increase_plan_users_mock = mocker.patch(
         'src.payment.tasks.increase_plan_users.delay',
@@ -396,8 +384,7 @@ def test_after_transfer_actions__unlimited__ok(mocker):
         'src.accounts.services.user_transfer.settings',
     )
     send_user_updated_mock = mocker.patch(
-        'src.notifications.tasks.'
-        'send_user_updated_notification.delay',
+        'src.notifications.tasks.send_user_updated_notification.delay',
     )
     settings_mock.PROJECT_CONF = {'BILLING': True}
     service = UserTransferService()
@@ -410,10 +397,12 @@ def test_after_transfer_actions__unlimited__ok(mocker):
     # assert
     identify_mock.assert_called_once_with(service.user)
     assert group_mock.call_count == 2
-    assert group_mock.has_calls([
-        mocker.call(service.prev_user),
-        mocker.call(service.user),
-    ])
+    group_mock.assert_has_calls(
+        [
+            mocker.call(service.prev_user),
+            mocker.call(service.user),
+        ],
+    )
     users_transferred_mock.assert_called_once_with(
         user=service.prev_user,
     )
@@ -429,13 +418,14 @@ def test_after_transfer_actions__unlimited__ok(mocker):
             'photo': user.photo,
             'is_admin': user.is_admin,
             'is_account_owner': user.is_account_owner,
+            'manager_id': None,
+            'subordinates_ids': [],
         },
     )
 
 
 @pytest.mark.parametrize('plan', BillingPlanType.PAYMENT_PLANS)
 def test_after_transfer_actions__disable_billing__ok(mocker, plan):
-
     # arrange
     account = create_test_account(
         plan=plan,
@@ -444,16 +434,13 @@ def test_after_transfer_actions__disable_billing__ok(mocker, plan):
     user = create_test_user(account=account, is_account_owner=True)
     prev_user = create_test_user(email='prev@test.test')
     users_transferred_mock = mocker.patch(
-        'src.analysis.services.AnalyticService.'
-        'users_transferred',
+        'src.analysis.services.AnalyticService.users_transferred',
     )
     identify_mock = mocker.patch(
-        'src.accounts.services.user_transfer'
-        '.UserTransferService.identify',
+        'src.accounts.services.user_transfer.UserTransferService.identify',
     )
     group_mock = mocker.patch(
-        'src.accounts.services.user_transfer'
-        '.UserTransferService.group',
+        'src.accounts.services.user_transfer.UserTransferService.group',
     )
     increase_plan_users_mock = mocker.patch(
         'src.payment.tasks.increase_plan_users.delay',
@@ -462,8 +449,7 @@ def test_after_transfer_actions__disable_billing__ok(mocker, plan):
         'src.accounts.services.user_transfer.settings',
     )
     send_user_updated_mock = mocker.patch(
-        'src.notifications.tasks.'
-        'send_user_updated_notification.delay',
+        'src.notifications.tasks.send_user_updated_notification.delay',
     )
     settings_mock.PROJECT_CONF = {'BILLING': False}
     service = UserTransferService()
@@ -476,10 +462,12 @@ def test_after_transfer_actions__disable_billing__ok(mocker, plan):
     # assert
     identify_mock.assert_called_once_with(service.user)
     assert group_mock.call_count == 2
-    assert group_mock.has_calls([
-        mocker.call(service.prev_user),
-        mocker.call(service.user),
-    ])
+    group_mock.assert_has_calls(
+        [
+            mocker.call(service.prev_user),
+            mocker.call(service.user),
+        ],
+    )
     users_transferred_mock.assert_called_once_with(
         user=service.prev_user,
     )
@@ -495,12 +483,13 @@ def test_after_transfer_actions__disable_billing__ok(mocker, plan):
             'photo': user.photo,
             'is_admin': user.is_admin,
             'is_account_owner': user.is_account_owner,
+            'manager_id': None,
+            'subordinates_ids': [],
         },
     )
 
 
 def test_deactivate_prev_user__ok(mocker):
-
     # arrange
     user = create_test_user()
     prev_account = create_test_account(plan=BillingPlanType.FREEMIUM)
@@ -518,20 +507,22 @@ def test_deactivate_prev_user__ok(mocker):
     service.user = user
     service.prev_user = prev_user
     reassign_everywhere_mock = mocker.patch(
-        'src.accounts.services.reassign.ReassignService.'
-        'reassign_everywhere',
+        'src.accounts.services.reassign.ReassignService.reassign_everywhere',
     )
     remove_user_from_draft_mock = mocker.patch(
-        'src.accounts.services.user_transfer'
-        '.remove_user_from_draft',
+        'src.accounts.services.user_transfer.remove_user_from_draft',
     )
     delete_pending_invites_mock = mocker.patch(
         'src.accounts.services.user_transfer'
         '.UserTransferService._delete_prev_user_pending_invites',
     )
     cancel_subscription_mock = mocker.patch(
-        'src.payment.stripe.service.'
-        'StripeService.cancel_subscription',
+        'src.payment.stripe.service.StripeService.cancel_subscription',
+    )
+    user_service_init_mock = mocker.patch.object(
+        UserService,
+        attribute='__init__',
+        return_value=None,
     )
     deactivate_mock = mocker.patch(
         'src.accounts.services.user.UserService.deactivate',
@@ -552,14 +543,14 @@ def test_deactivate_prev_user__ok(mocker):
     )
     delete_pending_invites_mock.assert_called_once()
     cancel_subscription_mock.assert_not_called()
-    deactivate_mock.assert_called_once_with(
-        prev_user,
-        skip_validation=True,
+    user_service_init_mock.assert_called_once_with(
+        user=prev_user,
+        instance=prev_user,
     )
+    deactivate_mock.assert_called_once_with(skip_validation=True)
 
 
 def test_deactivate_prev_user__cancel_subscription__ok(mocker):
-
     # arrange
     user = create_test_user()
     prev_account = create_test_account(plan=BillingPlanType.PREMIUM)
@@ -577,12 +568,10 @@ def test_deactivate_prev_user__cancel_subscription__ok(mocker):
     service.user = user
     service.prev_user = prev_user
     reassign_everywhere_mock = mocker.patch(
-        'src.accounts.services.reassign.ReassignService.'
-        'reassign_everywhere',
+        'src.accounts.services.reassign.ReassignService.reassign_everywhere',
     )
     remove_user_from_draft_mock = mocker.patch(
-        'src.accounts.services.user_transfer'
-        '.remove_user_from_draft',
+        'src.accounts.services.user_transfer.remove_user_from_draft',
     )
     delete_pending_invites_mock = mocker.patch(
         'src.accounts.services.user_transfer'
@@ -594,8 +583,12 @@ def test_deactivate_prev_user__cancel_subscription__ok(mocker):
         return_value=None,
     )
     cancel_subscription_mock = mocker.patch(
-        'src.payment.stripe.service.'
-        'StripeService.cancel_subscription',
+        'src.payment.stripe.service.StripeService.cancel_subscription',
+    )
+    user_service_init_mock = mocker.patch.object(
+        UserService,
+        attribute='__init__',
+        return_value=None,
     )
     deactivate_mock = mocker.patch(
         'src.accounts.services.user.UserService.deactivate',
@@ -621,15 +614,15 @@ def test_deactivate_prev_user__cancel_subscription__ok(mocker):
         auth_type=AuthTokenType.USER,
     )
     cancel_subscription_mock.assert_called_once()
-    deactivate_mock.assert_called_once_with(
-        prev_user,
-        skip_validation=True,
+    user_service_init_mock.assert_called_once_with(
+        user=prev_user,
+        instance=prev_user,
     )
+    deactivate_mock.assert_called_once_with(skip_validation=True)
 
 
 @pytest.mark.parametrize('plan', BillingPlanType.PAYMENT_PLANS)
 def test_deactivate_prev_user__disable_billing__ok(plan, mocker):
-
     # arrange
     user = create_test_user()
     prev_account = create_test_account(
@@ -650,20 +643,22 @@ def test_deactivate_prev_user__disable_billing__ok(plan, mocker):
     service.user = user
     service.prev_user = prev_user
     reassign_everywhere_mock = mocker.patch(
-        'src.accounts.services.reassign.ReassignService.'
-        'reassign_everywhere',
+        'src.accounts.services.reassign.ReassignService.reassign_everywhere',
     )
     remove_user_from_draft_mock = mocker.patch(
-        'src.accounts.services.user_transfer'
-        '.remove_user_from_draft',
+        'src.accounts.services.user_transfer.remove_user_from_draft',
     )
     delete_pending_invites_mock = mocker.patch(
         'src.accounts.services.user_transfer'
         '.UserTransferService._delete_prev_user_pending_invites',
     )
     cancel_subscription_mock = mocker.patch(
-        'src.payment.stripe.service.'
-        'StripeService.cancel_subscription',
+        'src.payment.stripe.service.StripeService.cancel_subscription',
+    )
+    user_service_init_mock = mocker.patch.object(
+        UserService,
+        attribute='__init__',
+        return_value=None,
     )
     deactivate_mock = mocker.patch(
         'src.accounts.services.user.UserService.deactivate',
@@ -684,16 +679,16 @@ def test_deactivate_prev_user__disable_billing__ok(plan, mocker):
     )
     delete_pending_invites_mock.assert_called_once()
     cancel_subscription_mock.assert_not_called()
-    deactivate_mock.assert_called_once_with(
-        prev_user,
-        skip_validation=True,
+    user_service_init_mock.assert_called_once_with(
+        user=prev_user,
+        instance=prev_user,
     )
+    deactivate_mock.assert_called_once_with(skip_validation=True)
 
 
 def test_accept_transfer__template_owner_in_template__ok(
     api_client,
 ):
-
     # arrange
     account_1 = create_test_account(name='transfer from')
     account_2 = create_test_account(
@@ -729,10 +724,12 @@ def test_accept_transfer__template_owner_in_template__ok(
     token['new_user_id'] = account_2_new_user.id
     request_template_owners = [
         {
+            'role': OwnerRole.OWNER,
             'type': OwnerType.USER,
             'source_id': f'{account_2_owner.id}',
         },
         {
+            'role': OwnerRole.OWNER,
             'type': OwnerType.USER,
             'source_id': account_2_new_user.id,
         },
@@ -772,9 +769,7 @@ def test_accept_transfer__template_owner_in_template__ok(
     # assert
     assert response_create.status_code == 200
     assert response.status_code == 200
-    template_owners = [
-        owner['source_id'] for owner in response.data['owners']
-    ]
+    template_owners = [owner['source_id'] for owner in response.data['owners']]
     assert str(account_2_new_user.id) in template_owners
     raw_performer_data = response.data['tasks'][0]['raw_performers'][0]
     assert raw_performer_data['source_id'] == str(
@@ -783,7 +778,6 @@ def test_accept_transfer__template_owner_in_template__ok(
 
 
 def test_activate_user__ok(mocker):
-
     # arrange
     email = 'transfer@test.test'
     prev_user = create_test_user(
@@ -817,8 +811,7 @@ def test_activate_user__ok(mocker):
         return_value=None,
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.account.'
-        'AccountService.update_users_counts',
+        'src.accounts.services.account.AccountService.update_users_counts',
     )
 
     # act

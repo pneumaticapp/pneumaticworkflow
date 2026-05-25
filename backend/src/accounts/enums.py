@@ -3,17 +3,21 @@ from typing_extensions import Literal
 
 class NotificationType:
 
+    # TODO Union with the NotificationMethod
+
     SYSTEM = 'system'
     COMMENT = 'comment'
     MENTION = 'mention'
     URGENT = 'urgent'
     NOT_URGENT = 'not_urgent'
     OVERDUE_TASK = 'overdue_task'
+    REMINDER_TASK = 'reminder_task'
     DELAY_WORKFLOW = 'snooze_workflow'
     RESUME_WORKFLOW = 'resume_workflow'
     DUE_DATE_CHANGED = 'due_date_changed'
     REACTION = 'reaction'
     COMPLETE_TASK = 'complete_task'
+    COMPLETE_WORKFLOW = 'complete_workflow'
 
     URGENT_TYPES = (
         URGENT,
@@ -27,11 +31,13 @@ class NotificationType:
         (URGENT, 'urgent'),
         (NOT_URGENT, 'not urgent'),
         (OVERDUE_TASK, 'overdue task'),
+        (REMINDER_TASK, 'reminder task'),
         (DELAY_WORKFLOW, 'snooze workflow'),
         (RESUME_WORKFLOW, 'resume workflow'),
         (DUE_DATE_CHANGED, 'due date changed'),
         (REACTION, 'reaction'),
         (COMPLETE_TASK, 'complete task'),
+        (COMPLETE_WORKFLOW, 'complete workflow'),
     )
 
 
@@ -92,6 +98,16 @@ class UserFirstDayWeek:
         (SATURDAY, 'Saturday'),
     )
 
+    LITERALS = Literal[
+        SUNDAY,
+        MONDAY,
+        TUESDAY,
+        WEDNESDAY,
+        THURSDAY,
+        FRIDAY,
+        SATURDAY,
+    ]
+
 
 class UserDateFormat:
 
@@ -137,6 +153,7 @@ class UserDateFormat:
         PY_USA_24: API_USA_24,
         PY_EUROPE_24: API_EUROPE_24,
     }
+    LITERALS = Literal[PY_USA_12, PY_EUROPE_12, PY_USA_24, PY_EUROPE_24]
 
 
 class LeaseLevel:
@@ -202,11 +219,14 @@ class SourceType:
     MICROSOFT = 'microsoft'
     GOOGLE = 'google'
     AUTH0 = 'auth0'
+    OKTA = 'okta'
 
     CHOICES = (
         (EMAIL, EMAIL),
         (MICROSOFT, MICROSOFT),
         (GOOGLE, GOOGLE),
+        (AUTH0, AUTH0),
+        (OKTA, OKTA),
     )
 
     LITERALS = Literal[
@@ -214,6 +234,7 @@ class SourceType:
         MICROSOFT,
         GOOGLE,
         AUTH0,
+        OKTA,
     ]
 
 
@@ -295,3 +316,29 @@ class Language:
     LITERALS = Literal[en, es, de, fr, ru]
     VALUES = (en, es, de, fr, ru)
     EURO_VALUES = (en, es, de, fr)
+
+
+class UserGroupType:
+
+    REGULAR = 'regular'
+    PERSONAL = 'personal'
+
+    CHOICES = (
+        (REGULAR, 'Regular'),
+        (PERSONAL, 'Personal'),
+    )
+
+
+class AbsenceStatus:
+
+    ACTIVE = 'active'
+    VACATION = 'vacation'
+    SICK_LEAVE = 'sick_leave'
+
+    CHOICES = (
+        (ACTIVE, 'Active'),
+        (VACATION, 'On vacation'),
+        (SICK_LEAVE, 'Sick leave'),
+    )
+
+    LITERALS = Literal[ACTIVE, VACATION, SICK_LEAVE]

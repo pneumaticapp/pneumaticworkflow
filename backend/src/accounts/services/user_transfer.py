@@ -147,7 +147,11 @@ class UserTransferService(
             )
             service.cancel_subscription()
 
-        UserService.deactivate(self.prev_user, skip_validation=True)
+        user_service = UserService(
+            user=self.prev_user,
+            instance=self.prev_user,
+        )
+        user_service.deactivate(skip_validation=True)
 
     def _activate_user(self):
 

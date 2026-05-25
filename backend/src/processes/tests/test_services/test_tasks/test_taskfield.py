@@ -13,8 +13,8 @@ from src.processes.models.templates.fields import (
 from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.event import WorkflowEvent
 from src.processes.models.workflows.fields import (
-    FieldSelection,
     TaskField,
+    FieldSelection,
 )
 from src.processes.services.events import (
     WorkflowEventService,
@@ -26,9 +26,7 @@ from src.processes.services.tasks.field import (
     FieldData,
     TaskFieldService,
 )
-from src.processes.services.tasks.selection import (
-    SelectionService,
-)
+from src.processes.services.tasks.selection import SelectionService
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
@@ -36,18 +34,158 @@ from src.processes.tests.fixtures import (
     create_test_owner,
     create_test_template,
     create_test_user,
-    create_test_workflow,
+    create_test_workflow, create_test_dataset,
 )
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
 
 
+def test__get_selections_values__instance_template__ok():
+
+    """instance_template is set — uses it as source"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    field_template = FieldTemplate.objects.create(
+        task=template.tasks.first(),
+        type=FieldType.RADIO,
+        name='Radio field',
+        api_name='radio-field-1',
+        template=template,
+        account=account,
+    )
+    selection_1 = FieldTemplateSelection.objects.create(
+        value='option_1',
+        field_template=field_template,
+        template=template,
+    )
+    selection_2 = FieldTemplateSelection.objects.create(
+        value='option_2',
+        field_template=field_template,
+        template=template,
+    )
+    service = TaskFieldService(user=user)
+    service.instance_template = field_template
+
+    # act
+    result = service._get_selections_values()
+
+    # assert
+    assert result == {selection_1.value, selection_2.value}
+
+
+def test__get_selections_values__instance__ok():
+
+    """instance_template is not set — uses instance as source"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        type=FieldType.RADIO,
+        api_name='radio-field-1',
+        workflow=workflow,
+        account=account,
+    )
+    selection_1 = FieldSelection.objects.create(
+        field=task_field,
+        value='option_1',
+    )
+    selection_2 = FieldSelection.objects.create(
+        field=task_field,
+        value='option_2',
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+
+    # act
+    result = service._get_selections_values()
+
+    # assert
+    assert result == {selection_1.value, selection_2.value}
+
+
+def test__get_selections_values__instance_template_dataset_id_set__ok():
+
+    """dataset_id is not None — dataset items merged into values"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account, items_count=1)
+    dataset_item = dataset.items.get(order=1)
+    template = create_test_template(user=user, tasks_count=1)
+    field_template = FieldTemplate.objects.create(
+        task=template.tasks.first(),
+        type=FieldType.RADIO,
+        name='Radio field',
+        api_name='radio-field-1',
+        template=template,
+        account=account,
+        dataset=dataset,
+    )
+    selection_value = 'selection 1'
+    FieldTemplateSelection.objects.create(
+        value=selection_value,
+        field_template=field_template,
+        template=template,
+    )
+    service = TaskFieldService(user=user)
+    service.instance_template = field_template
+
+    # act
+    result = service._get_selections_values()
+
+    # assert
+    assert {selection_value, dataset_item.value} == result
+
+
+def test__get_selections_values__instance_dataset_id_set__ok():
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account, items_count=1)
+    dataset_item = dataset.items.get(order=1)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        type=FieldType.RADIO,
+        api_name='radio-field-1',
+        workflow=workflow,
+        account=account,
+        dataset=dataset,
+    )
+    selection_1 = FieldSelection.objects.create(
+        field=task_field,
+        value='option_1',
+    )
+    selection_2 = FieldSelection.objects.create(
+        field=task_field,
+        value='option_2',
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+
+    # act
+    result = service._get_selections_values()
+
+    # assert
+    assert result == {selection_1.value, selection_2.value, dataset_item.value}
+
+
 def test_create_instance__task_field__ok(mocker):
 
     # arrange
-    user = create_test_user()
+    account = create_test_account()
+    user = create_test_owner(account=account)
     template = create_test_template(user=user, tasks_count=1)
+    dataset = create_test_dataset(account=account, items_count=0)
     field_template = FieldTemplate.objects.create(
         type=FieldType.FILE,
         name='Some file',
@@ -57,6 +195,8 @@ def test_create_instance__task_field__ok(mocker):
         task=template.tasks.get(number=1),
         template=template,
         is_required=True,
+        account=user.account,
+        dataset=dataset,
     )
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
@@ -90,10 +230,7 @@ def test_create_instance__task_field__ok(mocker):
     )
 
     # assert
-    get_valid_value_mock.assert_called_once_with(
-        raw_value=raw_value,
-        selections=None,
-    )
+    get_valid_value_mock.assert_called_once_with(raw_value)
     task_field = service.instance
     assert task_field.kickoff is None
     assert task_field.task == task
@@ -108,18 +245,23 @@ def test_create_instance__task_field__ok(mocker):
     assert task_field.clear_value == clear_value
     assert task_field.user_id == user_id
     assert task_field.group_id == group_id
+    assert task_field.dataset == dataset
 
 
 def test_create_instance__kickoff_field__ok(mocker):
 
     # arrange
-    user = create_test_user()
-    template = create_test_template(user, tasks_count=1)
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    dataset = create_test_dataset(account=account, items_count=0)
     field_template = FieldTemplate.objects.create(
         type=FieldType.TEXT,
         name='Some text',
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
+        dataset=dataset,
     )
     workflow = create_test_workflow(user=user, template=template)
     value = 'https://john.cena/john.cena'
@@ -146,13 +288,11 @@ def test_create_instance__kickoff_field__ok(mocker):
     )
 
     # assert
-    get_valid_value_mock.assert_called_once_with(
-        raw_value=raw_value,
-        selections=None,
-    )
+    get_valid_value_mock.assert_called_once_with(raw_value)
     task_field = service.instance
     assert task_field.task is None
     assert task_field.kickoff_id == workflow.kickoff_instance.id
+    assert task_field.dataset == dataset
 
 
 def test_create_instance__skip_value__ok(mocker):
@@ -165,6 +305,7 @@ def test_create_instance__skip_value__ok(mocker):
         name='Some user',
         kickoff=template.kickoff_instance,
         template=template,
+        account=user.account,
     )
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
@@ -206,66 +347,13 @@ def test_create_instance__skip_value__ok(mocker):
     assert task_field.group_id is None
 
 
-@pytest.mark.parametrize('field_type', FieldType.TYPES_WITH_SELECTION)
-def test_create_selections_with_value__radio_dropdown__not_value__ok(
-    field_type,
+def test_create_selections__ok(
     mocker,
 ):
 
     # arrange
-    user = create_test_user()
-    template = create_test_template(user=user, tasks_count=1)
-    template_task = template.tasks.first()
-    field_template = FieldTemplate.objects.create(
-        task=template_task,
-        type=field_type,
-        name='Checkbox field',
-        template=template,
-        api_name='api-name-1',
-    )
-    selection_template = FieldTemplateSelection.objects.create(
-        value='first',
-        field_template=field_template,
-        template=template,
-    )
-    workflow = create_test_workflow(user=user, template=template)
-    task = workflow.tasks.get(number=1)
-    task_field = TaskField.objects.create(
-        task=task,
-        api_name='api-name-1',
-        is_required=True,
-        type=field_type,
-        workflow=workflow,
-    )
-    service = TaskFieldService(
-        instance=task_field,
-        user=user,
-    )
-    create_selection_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
-        'SelectionService.create',
-    )
-
-    # act
-    service._create_selections_with_value(
-        raw_value=None,
-        instance_template=field_template,
-    )
-
-    # assert
-    create_selection_mock.assert_called_once_with(
-        instance_template=selection_template,
-        field_id=task_field.id,
-        is_selected=False,
-    )
-
-
-def test_create_selections_with_value__checkbox__not_value__ok(
-    mocker,
-):
-
-    # arrange
-    user = create_test_user()
+    account = create_test_account()
+    user = create_test_owner(account=account)
     template = create_test_template(user=user, tasks_count=1)
     template_task = template.tasks.first()
     field_template = FieldTemplate.objects.create(
@@ -273,10 +361,15 @@ def test_create_selections_with_value__checkbox__not_value__ok(
         type=FieldType.CHECKBOX,
         name='Checkbox field',
         template=template,
-        api_name='api-name-1',
+        account=account,
     )
-    selection_template = FieldTemplateSelection.objects.create(
-        value='first',
+    selection_1 = FieldTemplateSelection.objects.create(
+        value='value 1',
+        field_template=field_template,
+        template=template,
+    )
+    selection_2 = FieldTemplateSelection.objects.create(
+        value='value 2',
         field_template=field_template,
         template=template,
     )
@@ -284,14 +377,20 @@ def test_create_selections_with_value__checkbox__not_value__ok(
     task = workflow.tasks.get(number=1)
     task_field = TaskField.objects.create(
         task=task,
-        api_name='api-name-1',
-        is_required=True,
-        type=FieldType.CHECKBOX,
+        api_name=field_template.api_name,
+        is_required=field_template.is_required,
+        type=field_template.type,
         workflow=workflow,
+        account=account,
     )
     service = TaskFieldService(
         instance=task_field,
         user=user,
+    )
+    selection_service_init_mock = mocker.patch.object(
+        SelectionService,
+        attribute='__init__',
+        return_value=None,
     )
     create_selection_mock = mocker.patch(
         'src.processes.services.tasks.field.'
@@ -299,151 +398,74 @@ def test_create_selections_with_value__checkbox__not_value__ok(
     )
 
     # act
-    service._create_selections_with_value(
-        raw_value=None,
+    service._create_selections(
         instance_template=field_template,
     )
 
     # assert
-    create_selection_mock.assert_called_once_with(
-        instance_template=selection_template,
-        field_id=task_field.id,
-        is_selected=False,
-    )
-
-
-def test_create_selections_with_value__checkbox_api_name__ok(
-    mocker,
-):
-
-    # arrange
-    create_selection_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
-        'SelectionService.create',
-    )
-    user = create_test_user()
-    template = create_test_template(user=user, tasks_count=1)
-    template_task = template.tasks.first()
-    field_template = FieldTemplate.objects.create(
-        task=template_task,
-        type=FieldType.CHECKBOX,
-        name='Checkbox field',
-        template=template,
-        api_name='api-name-1',
-    )
-    selection_template_1 = FieldTemplateSelection.objects.create(
-        value='first',
-        field_template=field_template,
-        template=template,
-    )
-    selection_template_2 = FieldTemplateSelection.objects.create(
-        value='second',
-        field_template=field_template,
-        template=template,
-    )
-    workflow = create_test_workflow(user=user, template=template)
-    task = workflow.tasks.get(number=1)
-    task_field = TaskField.objects.create(
-        task=task,
-        api_name='api-name-1',
-        is_required=True,
-        type=FieldType.CHECKBOX,
-        workflow=workflow,
-    )
-    service = TaskFieldService(
-        instance=task_field,
-        user=user,
-    )
-    raw_value = [selection_template_1.api_name]
-
-    # act
-    service._create_selections_with_value(
-        raw_value=raw_value,
-        instance_template=field_template,
-    )
-
-    # assert
-    create_selection_mock.call_count = 2
-    create_selection_mock.assert_has_calls([
+    selection_service_init_mock.has_calls([
+        mocker.call(user=user),
+        mocker.call(user=user),
+    ])
+    create_selection_mock.has_calls([
         mocker.call(
-            instance_template=selection_template_1,
+            instance_template=selection_1,
             field_id=task_field.id,
-            is_selected=True,
         ),
         mocker.call(
-            instance_template=selection_template_2,
+            instance_template=selection_2,
             field_id=task_field.id,
-            is_selected=False,
         ),
     ])
 
 
-@pytest.mark.parametrize('field_type', FieldType.TYPES_WITH_SELECTION)
-def test_create_selections_with_value__radio_dropdown_api_name__ok(
-    field_type,
-    mocker,
-):
+def test_create_selections__not_selection_template__skip(mocker):
 
     # arrange
-    create_selection_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
-        'SelectionService.create',
-    )
-    user = create_test_user()
+    account = create_test_account()
+    user = create_test_owner(account=account)
     template = create_test_template(user=user, tasks_count=1)
     template_task = template.tasks.first()
     field_template = FieldTemplate.objects.create(
         task=template_task,
-        type=field_type,
+        type=FieldType.CHECKBOX,
         name='Checkbox field',
         template=template,
         api_name='api-name-1',
-    )
-    selection_template_1 = FieldTemplateSelection.objects.create(
-        value='first',
-        field_template=field_template,
-        template=template,
-    )
-    selection_template_2 = FieldTemplateSelection.objects.create(
-        value='second',
-        field_template=field_template,
-        template=template,
+        account=account,
     )
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
     task_field = TaskField.objects.create(
         task=task,
-        api_name='api-name-1',
-        is_required=True,
-        type=field_type,
+        api_name=field_template.api_name,
+        is_required=field_template.is_required,
+        type=field_template.type,
         workflow=workflow,
+        account=account,
     )
     service = TaskFieldService(
         instance=task_field,
         user=user,
     )
-    raw_value = selection_template_1.api_name
+    selection_service_init_mock = mocker.patch.object(
+        SelectionService,
+        attribute='__init__',
+        return_value=None,
+    )
+    create_selection_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'SelectionService.create',
+    )
 
     # act
-    service._create_selections_with_value(
-        raw_value=raw_value,
+    service._create_selections(
         instance_template=field_template,
     )
 
     # assert
-    create_selection_mock.call_count = 2
-    create_selection_mock.assert_has_calls([
-        mocker.call(
-            instance_template=selection_template_1,
-            field_id=task_field.id,
-            is_selected=True,
-        ),
-        mocker.call(
-            instance_template=selection_template_2,
-            field_id=task_field.id,
-            is_selected=False,
-        ),
-    ])
+    selection_service_init_mock.assert_not_called()
+    create_selection_mock.assert_not_called()
 
 
 def test_link_new_attachments__not_attached__ok():
@@ -457,6 +479,7 @@ def test_link_new_attachments__not_attached__ok():
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     attachment = FileAttachment.objects.create(
         name='john.cena',
@@ -491,6 +514,7 @@ def test_link_new_attachments__update_attached__ok():
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     attachment = FileAttachment.objects.create(
         output_id=task_field.id,
@@ -526,6 +550,7 @@ def test_link_new_attachments__event_attachment__not_link():
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     attachment = FileAttachment.objects.create(
         name='john.cena',
@@ -572,6 +597,7 @@ def test_link_new_attachments__another_account_attachment__not_update():
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     attachment = FileAttachment.objects.create(
         name='john.cena',
@@ -606,6 +632,7 @@ def test_link_new_attachments__not_value__not_attached():
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     attachment = FileAttachment.objects.create(
         name='john.cena',
@@ -629,300 +656,369 @@ def test_link_new_attachments__not_value__not_attached():
     assert attachment.workflow_id is None
 
 
-@pytest.mark.parametrize('field_type', FieldType.TYPES_WITH_SELECTION)
-def test_update_selections__radio_dropdown__not_value__ok(
-    field_type,
-    mocker,
-):
+def test__link_new_attachments__ids_none__skip():
+
+    """attachments_ids is None (default) — no update performed"""
 
     # arrange
-    user = create_test_user()
-    template = create_test_template(user=user, tasks_count=1)
-    template_task = template.tasks.first()
-    field_template = FieldTemplate.objects.create(
-        task=template_task,
-        type=field_type,
-        name='Checkbox field',
-        template=template,
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
         api_name='api-name-1',
+        type=FieldType.FILE,
+        workflow=workflow,
+        account=account,
     )
-    selection_template = FieldTemplateSelection.objects.create(
-        value='first',
-        field_template=field_template,
+    attachment = FileAttachment.objects.create(
+        name='test.jpg',
+        url='https://test.test/test.jpg',
+        size=1234,
+        account_id=account.id,
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+
+    # act
+    service._link_new_attachments()
+
+    # assert
+    attachment.refresh_from_db()
+    assert attachment.output_id is None
+    assert attachment.workflow_id is None
+
+
+def test__remove_unused_attachments__value_some_deleted__ok():
+
+    """value is truthy, some ids removed — only deleted ids are removed"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.FILE,
+        workflow=workflow,
+        account=account,
+    )
+    attachment_1 = FileAttachment.objects.create(
+        name='keep.jpg',
+        url='https://test.test/keep.jpg',
+        size=100,
+        account_id=account.id,
+        output=task_field,
+    )
+    attachment_2 = FileAttachment.objects.create(
+        name='delete.jpg',
+        url='https://test.test/delete.jpg',
+        size=200,
+        account_id=account.id,
+        output=task_field,
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+    value = attachment_1.url
+    attachment_ids = [str(attachment_1.id)]
+
+    # act
+    service._remove_unused_attachments(
+        value=value,
+        attachment_ids=attachment_ids,
+    )
+
+    # assert
+    assert FileAttachment.objects.filter(id=attachment_1.id).exists()
+    assert not FileAttachment.objects.filter(id=attachment_2.id).exists()
+
+
+def test__remove_unused_attachments__value_none_deleted__ok():
+
+    """value is truthy, no ids removed — nothing deleted"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.FILE,
+        workflow=workflow,
+        account=account,
+    )
+    attachment_1 = FileAttachment.objects.create(
+        name='keep.jpg',
+        url='https://test.test/keep.jpg',
+        size=100,
+        account_id=account.id,
+        output=task_field,
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+    value = attachment_1.url
+    attachment_ids = [str(attachment_1.id)]
+
+    # act
+    service._remove_unused_attachments(
+        value=value,
+        attachment_ids=attachment_ids,
+    )
+
+    # assert
+    assert FileAttachment.objects.filter(id=attachment_1.id).exists()
+
+
+def test__remove_unused_attachments__no_value__ok():
+
+    """value is falsy — all current attachments deleted"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.FILE,
+        workflow=workflow,
+        account=account,
+    )
+    attachment_1 = FileAttachment.objects.create(
+        name='delete.jpg',
+        url='https://test.test/delete.jpg',
+        size=100,
+        account_id=account.id,
+        output=task_field,
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+
+    # act
+    service._remove_unused_attachments(
+        value=None,
+        attachment_ids=None,
+    )
+
+    # assert
+    assert not FileAttachment.objects.filter(id=attachment_1.id).exists()
+
+
+def test__remove_unused_attachments__no_value_no_attachments__ok():
+
+    """value is falsy, no current attachments — nothing deleted"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.FILE,
+        workflow=workflow,
+        account=account,
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+
+    # act
+    service._remove_unused_attachments(
+        value=None,
+        attachment_ids=None,
+    )
+
+    # assert
+    assert not FileAttachment.objects.filter(
+        output=task_field,
+    ).exists()
+
+
+def test__create_related__file_type_not_skip__ok(mocker):
+
+    """type is FILE and skip_value is False — _link_new_attachments called"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    field_template = FieldTemplate.objects.create(
+        task=template.tasks.first(),
+        type=FieldType.FILE,
+        name='File field',
+        api_name='file-field-1',
         template=template,
+        account=account,
     )
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
     task_field = TaskField.objects.create(
         task=task,
-        api_name='api-name-1',
-        is_required=True,
-        type=field_type,
+        api_name='file-field-1',
+        type=FieldType.FILE,
         workflow=workflow,
+        account=account,
     )
-    selection = FieldSelection.objects.create(
-        field=task_field,
-        value=selection_template.value,
-        api_name=selection_template.api_name,
-        is_selected=False,
-    )
-    service = TaskFieldService(
-        instance=task_field,
-        user=user,
-    )
-    update_selection_mock = mocker.patch(
+    link_new_attachments_mock = mocker.patch(
         'src.processes.services.tasks.field.'
-        'SelectionService.partial_update',
+        'TaskFieldService._link_new_attachments',
     )
-    selection_service_init_mock = mocker.patch.object(
-        SelectionService,
-        attribute='__init__',
-        return_value=None,
+    create_selections_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._create_selections',
     )
+    service = TaskFieldService(instance=task_field, user=user)
+    raw_value = ['123']
 
     # act
-    service._update_selections(raw_value=None)
+    service._create_related(
+        instance_template=field_template,
+        value=raw_value,
+        skip_value=False,
+    )
 
     # assert
-    selection_service_init_mock.assert_called_once_with(
-        instance=selection,
-        user=user,
-    )
-    update_selection_mock.assert_called_once_with(
-        is_selected=False,
-        force_save=True,
-    )
+    link_new_attachments_mock.assert_called_once_with(raw_value)
+    create_selections_mock.assert_not_called()
 
 
-def test_update_selections__checkbox__not_value__ok(
-    mocker,
-):
+def test__create_related__file_type_skip__skip(mocker):
+
+    """type is FILE and skip_value is True — neither method called"""
 
     # arrange
-    user = create_test_user()
+    account = create_test_account()
+    user = create_test_owner(account=account)
     template = create_test_template(user=user, tasks_count=1)
-    template_task = template.tasks.first()
     field_template = FieldTemplate.objects.create(
-        task=template_task,
-        type=FieldType.CHECKBOX,
-        name='Checkbox field',
+        task=template.tasks.first(),
+        type=FieldType.FILE,
+        name='File field',
+        api_name='file-field-1',
         template=template,
-        api_name='api-name-1',
-    )
-    selection_template = FieldTemplateSelection.objects.create(
-        value='first',
-        field_template=field_template,
-        template=template,
+        account=account,
     )
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
     task_field = TaskField.objects.create(
         task=task,
-        api_name='api-name-1',
-        is_required=True,
-        type=FieldType.CHECKBOX,
+        api_name='file-field-1',
+        type=FieldType.FILE,
         workflow=workflow,
+        account=account,
     )
-    selection = FieldSelection.objects.create(
-        field=task_field,
-        value=selection_template.value,
-        api_name=selection_template.api_name,
-        is_selected=False,
-    )
-    service = TaskFieldService(
-        instance=task_field,
-        user=user,
-    )
-    update_selection_mock = mocker.patch(
+    link_new_attachments_mock = mocker.patch(
         'src.processes.services.tasks.field.'
-        'SelectionService.partial_update',
+        'TaskFieldService._link_new_attachments',
     )
-    selection_service_init_mock = mocker.patch.object(
-        SelectionService,
-        attribute='__init__',
-        return_value=None,
+    create_selections_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._create_selections',
     )
+    service = TaskFieldService(instance=task_field, user=user)
 
     # act
-    service._update_selections(raw_value=None)
+    service._create_related(
+        instance_template=field_template,
+        value=['123'],
+        skip_value=True,
+    )
 
     # assert
-    selection_service_init_mock.assert_called_once_with(
-        instance=selection,
-        user=user,
-    )
-    update_selection_mock.assert_called_once_with(
-        is_selected=False,
-        force_save=True,
-    )
+    link_new_attachments_mock.assert_not_called()
+    create_selections_mock.assert_not_called()
 
 
-def test_update_selections__checkbox_api_name__ok(
-    mocker,
-):
+def test__create_related__selection_type__ok(mocker):
+
+    """type is in TYPES_WITH_SELECTIONS — _create_selections called"""
 
     # arrange
-    update_selection_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
-        'SelectionService.partial_update',
-    )
-    selection_service_init_mock = mocker.patch.object(
-        SelectionService,
-        attribute='__init__',
-        return_value=None,
-    )
-    user = create_test_user()
+    account = create_test_account()
+    user = create_test_owner(account=account)
     template = create_test_template(user=user, tasks_count=1)
-    template_task = template.tasks.first()
     field_template = FieldTemplate.objects.create(
-        task=template_task,
-        type=FieldType.CHECKBOX,
-        name='Checkbox field',
+        task=template.tasks.first(),
+        type=FieldType.RADIO,
+        name='Radio field',
+        api_name='radio-field-1',
         template=template,
-        api_name='api-name-1',
-    )
-    selection_template_1 = FieldTemplateSelection.objects.create(
-        value='first',
-        field_template=field_template,
-        template=template,
-    )
-    selection_template_2 = FieldTemplateSelection.objects.create(
-        value='second',
-        field_template=field_template,
-        template=template,
+        account=account,
     )
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
     task_field = TaskField.objects.create(
         task=task,
-        api_name='api-name-1',
-        is_required=True,
-        type=FieldType.CHECKBOX,
+        api_name='radio-field-1',
+        type=FieldType.RADIO,
         workflow=workflow,
+        account=account,
     )
-    selection_1 = FieldSelection.objects.create(
-        field=task_field,
-        value=selection_template_1.value,
-        api_name=selection_template_1.api_name,
-        is_selected=True,
+    link_new_attachments_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._link_new_attachments',
     )
-    selection_2 = FieldSelection.objects.create(
-        field=task_field,
-        value=selection_template_2.value,
-        api_name=selection_template_2.api_name,
-        is_selected=True,
+    create_selections_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._create_selections',
     )
-    service = TaskFieldService(
-        instance=task_field,
-        user=user,
-    )
-    raw_value = [selection_1.api_name]
+    service = TaskFieldService(instance=task_field, user=user)
 
     # act
-    service._update_selections(raw_value=raw_value)
+    service._create_related(
+        instance_template=field_template,
+    )
 
     # assert
-    selection_service_init_mock.call_count = 2
-    selection_service_init_mock.assert_has_calls([
-        mocker.call(instance=selection_1, user=user),
-        mocker.call(instance=selection_2, user=user),
-    ])
-    update_selection_mock.call_count = 2
-    update_selection_mock.assert_has_calls([
-        mocker.call(
-            is_selected=True,
-            force_save=True,
-        ),
-        mocker.call(
-            is_selected=False,
-            force_save=True,
-        ),
-    ])
+    create_selections_mock.assert_called_once_with(field_template)
+    link_new_attachments_mock.assert_not_called()
 
 
-@pytest.mark.parametrize('field_type', FieldType.TYPES_WITH_SELECTION)
-def test_update_selections__radio_dropdown_api_name__ok(
-    field_type,
-    mocker,
-):
+def test__create_related__other_type__skip(mocker):
+
+    """type is neither FILE nor selection type — neither method called"""
 
     # arrange
-    update_selection_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
-        'SelectionService.partial_update',
-    )
-    selection_service_init_mock = mocker.patch.object(
-        SelectionService,
-        attribute='__init__',
-        return_value=None,
-    )
-    user = create_test_user()
+    account = create_test_account()
+    user = create_test_owner(account=account)
     template = create_test_template(user=user, tasks_count=1)
-    template_task = template.tasks.first()
     field_template = FieldTemplate.objects.create(
-        task=template_task,
-        type=field_type,
-        name='field',
+        task=template.tasks.first(),
+        type=FieldType.STRING,
+        name='String field',
+        api_name='string-field-1',
         template=template,
-        api_name='api-name-1',
-    )
-    selection_template_1 = FieldTemplateSelection.objects.create(
-        value='first',
-        field_template=field_template,
-        template=template,
-    )
-    selection_template_2 = FieldTemplateSelection.objects.create(
-        value='second',
-        field_template=field_template,
-        template=template,
+        account=account,
     )
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
     task_field = TaskField.objects.create(
         task=task,
-        api_name='api-name-1',
-        is_required=True,
-        type=field_type,
+        api_name='string-field-1',
+        type=FieldType.STRING,
         workflow=workflow,
+        account=account,
     )
-    selection_1 = FieldSelection.objects.create(
-        field=task_field,
-        value=selection_template_1.value,
-        api_name=selection_template_1.api_name,
-        is_selected=False,
+    link_new_attachments_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._link_new_attachments',
     )
-    selection_2 = FieldSelection.objects.create(
-        field=task_field,
-        value=selection_template_2.value,
-        api_name=selection_template_2.api_name,
-        is_selected=True,
+    create_selections_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._create_selections',
     )
-    service = TaskFieldService(
-        instance=task_field,
-        user=user,
-    )
-    raw_value = selection_1.api_name
+    service = TaskFieldService(instance=task_field, user=user)
 
     # act
-    service._update_selections(raw_value=raw_value)
+    service._create_related(
+        instance_template=field_template,
+    )
 
     # assert
-    selection_service_init_mock.call_count = 2
-    selection_service_init_mock.assert_has_calls([
-        mocker.call(instance=selection_1, user=user),
-        mocker.call(instance=selection_2, user=user),
-    ])
-    update_selection_mock.call_count = 2
-    update_selection_mock.assert_has_calls([
-        mocker.call(
-            is_selected=True,
-            force_save=True,
-        ),
-        mocker.call(
-            is_selected=False,
-            force_save=True,
-        ),
-    ])
+    link_new_attachments_mock.assert_not_called()
+    create_selections_mock.assert_not_called()
 
 
 def test_partial_update__ok(mocker):
@@ -937,6 +1033,7 @@ def test_partial_update__ok(mocker):
         is_required=True,
         type=FieldType.NUMBER,
         workflow=workflow,
+        account=user.account,
     )
     value = 'value'
     clear_value = 'clear value'
@@ -958,10 +1055,6 @@ def test_partial_update__ok(mocker):
         'src.processes.services.tasks.field.'
         'TaskFieldService._link_new_attachments',
     )
-    update_selections_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
-        'TaskFieldService._update_selections',
-    )
     service = TaskFieldService(
         instance=task_field,
         user=user,
@@ -972,12 +1065,8 @@ def test_partial_update__ok(mocker):
     service.partial_update(value=raw_value)
 
     # assert
-    get_valid_value_mock.assert_called_once_with(
-        raw_value=raw_value,
-        selections=None,
-    )
+    get_valid_value_mock.assert_called_once_with(raw_value)
     link_new_attachments_mock.assert_not_called()
-    update_selections_mock.assert_not_called()
     task_field.refresh_from_db()
     assert task_field.value == value
     assert task_field.markdown_value == markdown_value
@@ -998,6 +1087,7 @@ def test_partial_update__type_file__ok(mocker):
         is_required=True,
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     deleted_attachment = FileAttachment.objects.create(
         name='test',
@@ -1029,10 +1119,7 @@ def test_partial_update__type_file__ok(mocker):
         'src.processes.services.tasks.field.'
         'TaskFieldService._link_new_attachments',
     )
-    update_selections_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
-        'TaskFieldService._update_selections',
-    )
+
     service = TaskFieldService(
         instance=task_field,
         user=user,
@@ -1043,13 +1130,9 @@ def test_partial_update__type_file__ok(mocker):
     service.partial_update(value=raw_value)
 
     # assert
-    get_valid_value_mock.assert_called_once_with(
-        raw_value=raw_value,
-        selections=None,
-    )
+    get_valid_value_mock.assert_called_once_with(raw_value)
     assert not FileAttachment.objects.filter(id=deleted_attachment.id).exists()
     link_new_attachments_mock.assert_called_once_with(raw_value)
-    update_selections_mock.assert_not_called()
     task_field.refresh_from_db()
     assert task_field.value == value
     assert task_field.markdown_value == markdown_value
@@ -1073,6 +1156,7 @@ def test_partial_update__type_file_null_value__ok(mocker):
         is_required=True,
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     deleted_attachment = FileAttachment.objects.create(
         name='test',
@@ -1101,28 +1185,60 @@ def test_partial_update__type_file_null_value__ok(mocker):
         'src.processes.services.tasks.field.'
         'TaskFieldService._link_new_attachments',
     )
-    update_selections_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
-        'TaskFieldService._update_selections',
-    )
 
     # act
     service.partial_update(value=raw_value)
 
     # assert
-    get_valid_value_mock.assert_called_once_with(
-        raw_value=raw_value,
-        selections=None,
-    )
+    get_valid_value_mock.assert_called_once_with(raw_value)
     assert not FileAttachment.objects.filter(id=deleted_attachment.id).exists()
     link_new_attachments_mock.assert_called_once_with(raw_value)
-    update_selections_mock.assert_not_called()
     task_field.refresh_from_db()
     assert task_field.value == value
     assert task_field.markdown_value == markdown_value
     assert task_field.clear_value == clear_value
     assert task_field.user_id is None
     assert task_field.group_id is None
+
+
+def test__partial_update__no_value_kwarg__ok(mocker):
+
+    """value not provided in kwargs — defaults to None"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        workflow=workflow,
+        account=account,
+    )
+    get_valid_value_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._get_valid_value',
+        return_value=FieldData(),
+    )
+    remove_unused_attachments_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._remove_unused_attachments',
+    )
+    link_new_attachments_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._link_new_attachments',
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+
+    # act
+    service.partial_update()
+
+    # assert
+    get_valid_value_mock.assert_called_once_with(None)
+    remove_unused_attachments_mock.assert_not_called()
+    link_new_attachments_mock.assert_not_called()
 
 
 @pytest.mark.parametrize('raw_value', (0, 176516132789, 176516132.00000123))
@@ -1154,6 +1270,7 @@ def test_get_valid_number_value__invalid_value__raise_exception(raw_value):
         api_name=field_api_name,
         type=FieldType.NUMBER,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(instance=task_field)
     raw_value = None
@@ -1206,6 +1323,7 @@ def test_get_valid_string_value__invalid_value__raise_exception(
         api_name=field_api_name,
         type=FieldType.STRING,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(instance=task_field)
     clear_markdown_mock = mocker.patch(
@@ -1235,6 +1353,7 @@ def test_get_valid_string_value__over_limit__raise_exception():
         api_name=field_api_name,
         type=FieldType.STRING,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(instance=task_field)
     raw_value = 's' * (TaskFieldService.STRING_LENGTH + 1)
@@ -1289,6 +1408,7 @@ def test_get_valid_text_value__invalid_value__raise_exception(
         api_name=field_api_name,
         type=FieldType.TEXT,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(instance=task_field)
     clear_markdown_mock = mocker.patch(
@@ -1312,7 +1432,6 @@ def test_get_valid_dropdown_value__ok(mocker):
     service = TaskFieldService()
     raw_value = 'api_name'
     result_mock = mocker.Mock()
-    selections_mock = mocker.Mock()
     get_valid_radio_value_mock = mocker.patch(
         'src.processes.services.tasks.field.'
         'TaskFieldService._get_valid_radio_value',
@@ -1320,302 +1439,301 @@ def test_get_valid_dropdown_value__ok(mocker):
     )
 
     # act
-    field_data = service._get_valid_dropdown_value(
-        raw_value=raw_value,
-        selections=selections_mock,
-    )
+    field_data = service._get_valid_dropdown_value(raw_value)
 
     # assert
     assert field_data == result_mock
-    get_valid_radio_value_mock.assert_called_once_with(
-        raw_value, selections=selections_mock,
-    )
+    get_valid_radio_value_mock.assert_called_once_with(raw_value)
 
 
-def test_get_valid_radio_value__api_name__ok(mocker):
+def test_get_valid_radio_value__ok(mocker):
 
     # arrange
-    user = create_test_user()
-    template = create_test_template(user=user, tasks_count=1)
-    template_task = template.tasks.first()
-    field_template = FieldTemplate.objects.create(
-        task=template_task,
-        type=FieldType.RADIO,
-        name='Radio field',
-        template=template,
-        api_name='api-name-1',
-    )
-    value = 'first option'
-    selection_template = FieldTemplateSelection.objects.create(
-        value=value,
-        field_template=field_template,
-        template=template,
-    )
-    workflow = create_test_workflow(user=user, template=template)
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.tasks.get(number=1)
     task_field = TaskField.objects.create(
         task=task,
-        api_name=field_template.api_name,
-        is_required=field_template.is_required,
-        type=field_template.type,
+        type=FieldType.RADIO,
         workflow=workflow,
+        account=user.account,
     )
-    selection = FieldSelection.objects.create(
-        field=task_field,
-        value=selection_template.value,
-        api_name=selection_template.api_name,
-        is_selected=True,
+    value_1 = 'second option'
+    value_2 = 'first option'
+    raw_value = value_1
+    allowed_values = {value_1, value_2}
+    get_selections_valid_values_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._get_selections_values',
+        return_value=allowed_values,
     )
-    service = TaskFieldService(instance=task_field)
-    raw_value = selection.api_name
     clear_value = 'clear value'
     clear_markdown_mock = mocker.patch(
         'src.processes.services.tasks.field.'
         'MarkdownService.clear',
         return_value=clear_value,
     )
-
-    # act
-    field_data = service._get_valid_radio_value(
-        raw_value=raw_value,
-        selections=field_template.selections.all(),
-    )
-
-    # assert
-    assert field_data.value == value
-    assert field_data.markdown_value == value
-    assert field_data.clear_value == clear_value
-    clear_markdown_mock.assert_called_once_with(value)
-
-
-def test_get_valid_radio_value__first_create_selection__ok(mocker):
-
-    # arrange
-    user = create_test_user()
-    template = create_test_template(user=user, tasks_count=1)
-    template_task = template.tasks.first()
-    field_template = FieldTemplate.objects.create(
-        task=template_task,
-        type=FieldType.RADIO,
-        name='Radio field',
-        template=template,
-        api_name='api-name-1',
-    )
-    value = 'first option'
-    selection_template = FieldTemplateSelection.objects.create(
-        value=value,
-        field_template=field_template,
-        template=template,
-    )
-    workflow = create_test_workflow(user=user, template=template)
-    task = workflow.tasks.get(number=1)
-    task_field = TaskField.objects.create(
-        task=task,
-        api_name=field_template.api_name,
-        is_required=field_template.is_required,
-        type=field_template.type,
-        workflow=workflow,
-    )
     service = TaskFieldService(instance=task_field)
-    raw_value = selection_template.api_name
-    clear_value = 'clear value'
-    clear_markdown_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
-        'MarkdownService.clear',
-        return_value=clear_value,
-    )
 
     # act
-    field_data = service._get_valid_radio_value(
-        raw_value=raw_value,
-        selections=field_template.selections.all(),
-    )
+    field_data = service._get_valid_radio_value(raw_value)
 
     # assert
-    assert field_data.value == selection_template.value
-    assert field_data.markdown_value == selection_template.value
+    assert field_data.value == value_1
+    assert field_data.markdown_value == value_1
     assert field_data.clear_value == clear_value
-    clear_markdown_mock.assert_called_once_with(value)
+    get_selections_valid_values_mock.assert_called_once_with()
+    clear_markdown_mock.assert_called_once_with(value_1)
 
 
-@pytest.mark.parametrize('raw_value', ('abc', None))
-def test_get_valid_radio_value__not_string__raise_exception(raw_value):
+@pytest.mark.parametrize('raw_value', ([], 3, None))
+def test_get_valid_radio_value__not_string__raise_exception(raw_value, mocker):
 
     # arrange
-    user = create_test_user()
-    workflow = create_test_workflow(user=user)
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.tasks.get(number=1)
     task_field = TaskField.objects.create(
         task=task,
         api_name='api-name-1',
         type=FieldType.RADIO,
         workflow=workflow,
+        account=user.account,
+    )
+    get_selections_valid_values_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._get_selections_values',
     )
     service = TaskFieldService(instance=task_field)
 
     # act
     with pytest.raises(TaskFieldException) as ex:
-        service._get_valid_radio_value(
-            raw_value=raw_value,
-            selections=task_field.selections.all(),
-        )
+        service._get_valid_radio_value(raw_value)
 
     # assert
     assert ex.value.message == messages.MSG_PW_0028
     assert ex.value.api_name == task_field.api_name
+    get_selections_valid_values_mock.assert_not_called()
 
 
-def test_get_valid_radio_value__not_exists_selection__raise_exception():
+def test_get_valid_radio_value__not_exists_selection__raise_exception(mocker):
 
     # arrange
-    user = create_test_user()
-    workflow = create_test_workflow(user=user)
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.tasks.get(number=1)
     task_field = TaskField.objects.create(
         task=task,
         api_name='api-name-1',
         type=FieldType.RADIO,
         workflow=workflow,
+        account=user.account,
+    )
+    value_1 = 'second option'
+    value_2 = 'first option'
+    allowed_values = {value_1, value_2}
+    get_selections_valid_values_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._get_selections_values',
+        return_value=allowed_values,
     )
     service = TaskFieldService(instance=task_field)
 
     # act
     with pytest.raises(TaskFieldException) as ex:
-        service._get_valid_radio_value(
-            raw_value='12352',
-            selections=task_field.selections.all(),
-        )
+        service._get_valid_radio_value('12352')
+
     # assert
     assert ex.value.message == messages.MSG_PW_0028
     assert ex.value.api_name == task_field.api_name
+    get_selections_valid_values_mock.assert_called_once_with()
 
 
-def test_get_valid_checkbox_value__one_api_name__ok(mocker):
+def test_get_valid_checkbox_value__one_value__ok(mocker):
 
     # arrange
-    user = create_test_user()
-    template = create_test_template(user=user, tasks_count=1)
-    template_task = template.tasks.first()
-    field_template = FieldTemplate.objects.create(
-        task=template_task,
-        type=FieldType.CHECKBOX,
-        name='Checkbox field',
-        template=template,
-        api_name='api-name-1',
-    )
-    value = 'first option'
-    FieldTemplateSelection.objects.create(
-        value='Another value',
-        field_template=field_template,
-        template=template,
-    )
-    selection_template = FieldTemplateSelection.objects.create(
-        value=value,
-        field_template=field_template,
-        template=template,
-    )
-    workflow = create_test_workflow(user=user, template=template)
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.tasks.get(number=1)
     task_field = TaskField.objects.create(
         task=task,
-        api_name=field_template.api_name,
-        is_required=field_template.is_required,
-        type=field_template.type,
+        type=FieldType.CHECKBOX,
         workflow=workflow,
+        account=user.account,
     )
-    FieldSelection.objects.create(
-        field=task_field,
-        value=selection_template.value,
-        api_name=selection_template.api_name,
-        is_selected=True,
+    value_1 = 'second option'
+    value_2 = 'first option'
+    raw_value = [value_1]
+    allowed_values = {value_1, value_2}
+    get_selections_valid_values_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._get_selections_values',
+        return_value=allowed_values,
     )
-    service = TaskFieldService(instance=task_field)
-    raw_value = [selection_template.api_name]
     clear_value = 'clear value'
     clear_markdown_mock = mocker.patch(
         'src.processes.services.tasks.field.'
         'MarkdownService.clear',
         return_value=clear_value,
     )
+    service = TaskFieldService(instance=task_field)
 
     # act
-    field_data = service._get_valid_checkbox_value(
-        raw_value=raw_value,
-        selections=field_template.selections.all(),
-    )
+    field_data = service._get_valid_checkbox_value(raw_value)
 
     # assert
-    assert field_data.value == value
-    assert field_data.markdown_value == value
+    assert field_data.value == value_1
+    assert field_data.markdown_value == value_1
     assert field_data.clear_value == clear_value
-    clear_markdown_mock.assert_called_once_with(value)
+    get_selections_valid_values_mock.assert_called_once_with()
+    clear_markdown_mock.assert_called_once_with(value_1)
 
 
-def test_get_valid_checkbox_value__many_api_names__ok(mocker):
+def test_get_valid_checkbox_value__many_values__ok(mocker):
 
     # arrange
-    user = create_test_user()
-    template = create_test_template(user=user, tasks_count=1)
-    template_task = template.tasks.first()
-    field_template = FieldTemplate.objects.create(
-        task=template_task,
-        type=FieldType.CHECKBOX,
-        name='Checkbox field',
-        template=template,
-        api_name='api-name-1',
-    )
-    value_1 = 'first option'
-    selection_template_1 = FieldTemplateSelection.objects.create(
-        value=value_1,
-        field_template=field_template,
-        template=template,
-    )
-    value_2 = 'second option'
-    selection_template_2 = FieldTemplateSelection.objects.create(
-        value=value_2,
-        field_template=field_template,
-        template=template,
-    )
-    workflow = create_test_workflow(user=user, template=template)
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
     task = workflow.tasks.get(number=1)
     task_field = TaskField.objects.create(
         task=task,
-        api_name=field_template.api_name,
-        is_required=field_template.is_required,
-        type=field_template.type,
+        type=FieldType.CHECKBOX,
         workflow=workflow,
+        account=user.account,
     )
-    FieldSelection.objects.create(
-        field=task_field,
-        value=selection_template_1.value,
-        api_name=selection_template_1.api_name,
-    )
-    FieldSelection.objects.create(
-        field=task_field,
-        value=selection_template_2.value,
-        api_name=selection_template_2.api_name,
-    )
-    clear_value = 'clear value'
-    clear_markdown_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
-        'MarkdownService.clear',
-        return_value=clear_value,
-    )
-    service = TaskFieldService(instance=task_field)
-    raw_value = [selection_template_1.api_name, selection_template_2.api_name]
+    value_1 = 'second option'
+    value_2 = 'first option'
+    raw_value = [value_1, value_2]
     value = f'{value_1}, {value_2}'
+    allowed_values = {value_1, value_2}
+    get_selections_valid_values_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._get_selections_values',
+        return_value=allowed_values,
+    )
+    clear_value = 'clear value'
+    clear_markdown_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'MarkdownService.clear',
+        return_value=clear_value,
+    )
+    service = TaskFieldService(instance=task_field)
 
     # act
-    field_data = service._get_valid_checkbox_value(
-        raw_value=raw_value,
-        selections=field_template.selections.all(),
-    )
+    field_data = service._get_valid_checkbox_value(raw_value)
 
     # assert
     assert field_data.value == value
     assert field_data.markdown_value == value
     assert field_data.clear_value == clear_value
+    get_selections_valid_values_mock.assert_called_once_with()
     clear_markdown_mock.assert_called_once_with(value)
+
+
+def test__get_valid_checkbox_value__not_list__raise_exception(mocker):
+
+    """raw_value is not a list — raises TaskFieldException"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.CHECKBOX,
+        workflow=workflow,
+        account=account,
+    )
+    get_selections_values_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._get_selections_values',
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+    raw_value = 'not_a_list'
+
+    # act
+    with pytest.raises(TaskFieldException) as ex:
+        service._get_valid_checkbox_value(raw_value)
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0029
+    assert ex.value.api_name == task_field.api_name
+    get_selections_values_mock.assert_not_called()
+
+
+def test__get_valid_checkbox_value__element_not_str__raise_exception(mocker):
+
+    """List contains a non-string element — raises TaskFieldException"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.CHECKBOX,
+        workflow=workflow,
+        account=account,
+    )
+    get_selections_values_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._get_selections_values',
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+    raw_value = ['valid_option', 123]
+
+    # act
+    with pytest.raises(TaskFieldException) as ex:
+        service._get_valid_checkbox_value(raw_value)
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0030
+    assert ex.value.api_name == task_field.api_name
+    get_selections_values_mock.assert_not_called()
+
+
+def test__get_valid_checkbox_value__not_in_allowed__raise_exception(mocker):
+
+    """List values not subset of allowed — raises TaskFieldException"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.CHECKBOX,
+        workflow=workflow,
+        account=account,
+    )
+    allowed_values = {'allowed_1', 'allowed_2'}
+    get_selections_values_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._get_selections_values',
+        return_value=allowed_values,
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+    raw_value = ['allowed_1', 'not_allowed_value']
+
+    # act
+    with pytest.raises(TaskFieldException) as ex:
+        service._get_valid_checkbox_value(raw_value=raw_value)
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0031
+    assert ex.value.api_name == task_field.api_name
+    get_selections_values_mock.assert_called_once_with()
 
 
 def test_get_valid_file_value__one_file__ok():
@@ -1629,6 +1747,7 @@ def test_get_valid_file_value__one_file__ok():
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     attachment = FileAttachment.objects.create(
         name='john.cena',
@@ -1661,6 +1780,7 @@ def test_get_valid_file_value__multiple_files__ok():
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     attachment_1 = FileAttachment.objects.create(
         name='john.cena',
@@ -1701,6 +1821,7 @@ def test_get_valid_file_value__new_field__ok():
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     event = WorkflowEvent.objects.create(
         account=user.account,
@@ -1755,6 +1876,7 @@ def test_get_valid_file_value__not_list__raise_exception():
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     attachment = FileAttachment.objects.create(
         name='john.cena',
@@ -1797,6 +1919,7 @@ def test_get_valid_file_value__invalid_attach_id__raise_exception(raw_value):
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(instance=task_field)
 
@@ -1820,6 +1943,7 @@ def test_get_valid_file_value__incorrect_attachments_count__raise_exception():
         api_name='api-name-1',
         type=FieldType.FILE,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(instance=task_field)
     raw_value = None
@@ -1869,6 +1993,7 @@ def test_get_valid_user_value__invalid_value__raise_exception(raw_value):
         api_name=field_api_name,
         type=FieldType.USER,
         workflow=workflow,
+        account=account_owner.account,
     )
     service = TaskFieldService(
         user=account_owner,
@@ -1913,6 +2038,7 @@ def test_get_valid_date_value__invalid_value__raise_exception(raw_value):
         name='Date field',
         template=template,
         api_name='api-name-1',
+        account=user.account,
     )
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
@@ -1922,6 +2048,7 @@ def test_get_valid_date_value__invalid_value__raise_exception(raw_value):
         is_required=field_template.is_required,
         type=field_template.type,
         workflow=workflow,
+        account=user.account,
     )
     service = TaskFieldService(instance=task_field)
 
@@ -1947,6 +2074,7 @@ def test_get_valid_url_value__not_string__raise_exception(raw_value):
         name='URL field',
         template=template,
         api_name='api-name-1',
+        account=user.account,
     )
     service = TaskFieldService(user=user, instance=field_template)
 
@@ -1975,6 +2103,7 @@ def test_get_valid_url_value__invalid_url__raise_exception(raw_value):
         name='URL field',
         template=template,
         api_name='api-name-1',
+        account=user.account,
     )
     service = TaskFieldService(user=user, instance=field_template)
 
@@ -2003,6 +2132,7 @@ def test_get_valid_url_value__valid_value__ok(raw_value):
         name='URL field',
         template=template,
         api_name='api-name-1',
+        account=user.account,
     )
     service = TaskFieldService(user=user, instance=field_template)
 
@@ -2094,6 +2224,7 @@ def test_get_valid_user_value__by_group_name_case_insensitive__ok():
         api_name=field_api_name,
         type=FieldType.USER,
         workflow=workflow,
+        account=account_owner.account,
     )
 
     service = TaskFieldService(
@@ -2132,6 +2263,7 @@ def test_get_valid_user_value__email_vs_group_name__prefer_email():
         api_name=field_api_name,
         type=FieldType.USER,
         workflow=workflow,
+        account=account_owner.account,
     )
 
     service = TaskFieldService(
@@ -2174,6 +2306,7 @@ def test_get_valid_user_value__invalid_string__raise_exception(raw_value):
         api_name=field_api_name,
         type=FieldType.USER,
         workflow=workflow,
+        account=account_owner.account,
     )
     service = TaskFieldService(
         user=account_owner,
@@ -2187,3 +2320,74 @@ def test_get_valid_user_value__invalid_string__raise_exception(raw_value):
     # assert
     assert ex.value.message == messages.MSG_PW_0090
     assert ex.value.api_name == field_api_name
+
+
+@pytest.mark.parametrize('raw_value', ['', None, []])
+def test__get_valid_value__required_and_null_value__raise_exception(
+    mocker,
+    raw_value,
+):
+
+    """raw_value is None and field is required — raises TaskFieldException"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        is_required=True,
+        workflow=workflow,
+        account=account,
+    )
+    get_valid_string_value_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._get_valid_string_value',
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+
+    # act
+    with pytest.raises(TaskFieldException) as ex:
+        service._get_valid_value(raw_value=raw_value)
+
+    # assert
+    assert ex.value.message == messages.MSG_PW_0023
+    assert ex.value.api_name == task_field.api_name
+    get_valid_string_value_mock.assert_not_called()
+
+
+@pytest.mark.parametrize('raw_value', ['', None, []])
+def test__get_valid_value__not_required_and_null_value__ok(
+    mocker,
+    raw_value,
+):
+    """raw_value is None and field is not required — returns empty FieldData"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    task_field = TaskField.objects.create(
+        task=task,
+        api_name='api-name-1',
+        type=FieldType.STRING,
+        is_required=False,
+        workflow=workflow,
+        account=account,
+    )
+    get_valid_string_value_mock = mocker.patch(
+        'src.processes.services.tasks.field.'
+        'TaskFieldService._get_valid_string_value',
+    )
+    service = TaskFieldService(instance=task_field, user=user)
+
+    # act
+    result = service._get_valid_value(raw_value=raw_value)
+
+    # assert
+    assert result == FieldData()
+    get_valid_string_value_mock.assert_not_called()

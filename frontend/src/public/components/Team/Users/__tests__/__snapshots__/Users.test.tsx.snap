@@ -6,6 +6,15 @@ exports[`Team rendered correctly 1`] = `
 >
   <[object Object] />
   <AddGuestsBanner />
+  <CreateUserModal
+    isOpen={false}
+    onClose={[Function]}
+  />
+  <VacationSettingsModal
+    isOpen={false}
+    onClose={[Function]}
+    user={null}
+  />
   <PageTitle
     titleId="team.title"
     withUnderline={false}
@@ -26,20 +35,32 @@ exports[`Team rendered correctly 1`] = `
       value=""
     />
   </div>
-  <AddButton
-    caption="Invite new team members and organize them into groups"
-    onClick={[Function]}
-    title="Invite Team"
-  />
+  <div
+    className="buttons-row"
+  >
+    <AddButton
+      caption="Invite new team members"
+      onClick={[Function]}
+      title="Invite Team"
+    />
+    <AddButton
+      caption="Create new team members"
+      onClick={[Function]}
+      title="Create User"
+    />
+  </div>
   <div
     className="cards"
   >
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={true}
-      isSubscribed={false}
+      isSubscribed={true}
       key="0"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {
@@ -56,11 +77,14 @@ exports[`Team rendered correctly 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
-      isSubscribed={false}
+      isSubscribed={true}
       key="1"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {
@@ -77,11 +101,14 @@ exports[`Team rendered correctly 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
-      isSubscribed={false}
+      isSubscribed={true}
       key="2"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {
@@ -98,11 +125,14 @@ exports[`Team rendered correctly 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
-      isSubscribed={false}
+      isSubscribed={true}
       key="3"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {
@@ -119,11 +149,14 @@ exports[`Team rendered correctly 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
-      isSubscribed={false}
+      isSubscribed={true}
       key="4"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {
@@ -140,11 +173,14 @@ exports[`Team rendered correctly 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
-      isSubscribed={false}
+      isSubscribed={true}
       key="5"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {
@@ -161,11 +197,14 @@ exports[`Team rendered correctly 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
-      isSubscribed={false}
+      isSubscribed={true}
       key="6"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {
@@ -182,11 +221,14 @@ exports[`Team rendered correctly 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
-      isSubscribed={false}
+      isSubscribed={true}
       key="7"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {
@@ -203,11 +245,14 @@ exports[`Team rendered correctly 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
-      isSubscribed={false}
+      isSubscribed={true}
       key="8"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {
@@ -224,11 +269,14 @@ exports[`Team rendered correctly 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
-      isSubscribed={false}
+      isSubscribed={true}
       key="9"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {
@@ -245,11 +293,14 @@ exports[`Team rendered correctly 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
-      isSubscribed={false}
+      isSubscribed={true}
       key="10"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {
@@ -275,6 +326,15 @@ exports[`Team rendered correctly with descending sorting 1`] = `
 >
   <[object Object] />
   <AddGuestsBanner />
+  <CreateUserModal
+    isOpen={false}
+    onClose={[Function]}
+  />
+  <VacationSettingsModal
+    isOpen={false}
+    onClose={[Function]}
+    user={null}
+  />
   <PageTitle
     titleId="team.title"
     withUnderline={false}
@@ -295,20 +355,32 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       value=""
     />
   </div>
-  <AddButton
-    caption="Invite new team members and organize them into groups"
-    onClick={[Function]}
-    title="Invite Team"
-  />
+  <div
+    className="buttons-row"
+  >
+    <AddButton
+      caption="Invite new team members"
+      onClick={[Function]}
+      title="Invite Team"
+    />
+    <AddButton
+      caption="Create new team members"
+      onClick={[Function]}
+      title="Create User"
+    />
+  </div>
   <div
     className="cards"
   >
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={true}
-      isSubscribed={false}
+      isSubscribed={true}
       key="0"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {
@@ -325,11 +397,14 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
-      isSubscribed={false}
+      isSubscribed={true}
       key="1"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {
@@ -346,11 +421,14 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
-      isSubscribed={false}
+      isSubscribed={true}
       key="2"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {
@@ -367,11 +445,14 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
-      isSubscribed={false}
+      isSubscribed={true}
       key="3"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {
@@ -388,11 +469,14 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
-      isSubscribed={false}
+      isSubscribed={true}
       key="4"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {
@@ -409,11 +493,14 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
-      isSubscribed={false}
+      isSubscribed={true}
       key="5"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {
@@ -430,11 +517,14 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
-      isSubscribed={false}
+      isSubscribed={true}
       key="6"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {
@@ -451,11 +541,14 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
-      isSubscribed={false}
+      isSubscribed={true}
       key="7"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {
@@ -472,11 +565,14 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
-      isSubscribed={false}
+      isSubscribed={true}
       key="8"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {
@@ -493,11 +589,14 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
-      isSubscribed={false}
+      isSubscribed={true}
       key="9"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {
@@ -514,11 +613,14 @@ exports[`Team rendered correctly with descending sorting 1`] = `
       }
     />
     <TeamUser
+      handleChangeUserManager={[Function]}
+      handleChangeUserReports={[Function]}
       handleToggleAdmin={[Function]}
       isCurrentUser={false}
-      isSubscribed={false}
+      isSubscribed={true}
       key="10"
       openModal={[Function]}
+      openVacationModal={[Function]}
       resendInvite={[Function]}
       user={
         {

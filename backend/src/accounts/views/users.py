@@ -2,7 +2,6 @@ from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.http import Http404
 from rest_framework.decorators import action
-from rest_framework.generics import get_object_or_404
 from rest_framework.mixins import ListModelMixin, RetrieveModelMixin
 from rest_framework.pagination import LimitOffsetPagination
 from rest_framework.permissions import AllowAny
@@ -21,9 +20,11 @@ from src.accounts.permissions import (
     UserIsAdminOrAccountOwner,
 )
 from src.accounts.queries import CountTemplatesByUserQuery
+from src.accounts.messages import MSG_A_0052
 from src.accounts.serializers.user import (
     UserPrivilegesSerializer,
     UserSerializer,
+    VacationActivateSerializer,
 )
 from src.accounts.serializers.users import (
     AcceptTransferSerializer,
@@ -34,7 +35,7 @@ from src.accounts.services.exceptions import (
     AlreadyAcceptedInviteException,
     InvalidTransferTokenException,
     ReassignServiceException,
-    UserIsPerformerException,
+    UserServiceException,
 )
 from src.accounts.services.reassign import (
     ReassignService,
@@ -42,6 +43,9 @@ from src.accounts.services.reassign import (
 from src.accounts.services.user import UserService
 from src.accounts.services.user_transfer import (
     UserTransferService,
+)
+from src.accounts.services.vacation import (
+    VacationDelegationService,
 )
 from src.analysis.mixins import BaseIdentifyMixin
 from src.executor import RawSqlExecutor
@@ -71,6 +75,7 @@ class UsersViewSet(
     action_serializer_classes = {
         'reassign': ReassignSerializer,
         'privileges': UserPrivilegesSerializer,
+        'activate_vacation': VacationActivateSerializer,
     }
     action_filterset_classes = {
         'list': UsersListFilterSet,
@@ -91,6 +96,16 @@ class UsersViewSet(
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
             )
+        if self.action in {
+            'activate_vacation',
+            'deactivate_vacation',
+        }:
+            return (
+                UserIsAuthenticated(),
+                BillingPlanPermission(),
+                ExpiredSubscriptionPermission(),
+                UserIsAdminOrAccountOwner(),
+            )
         return (
             UserIsAuthenticated(),
             BillingPlanPermission(),
@@ -109,11 +124,17 @@ class UsersViewSet(
             extra_fields = (
                 'user_groups',
                 'incoming_invites',
+                'subordinates',
+                'vacations',
+                'vacations__substitute_group__users',
             )
         elif self.action == 'privileges':
             queryset = queryset.prefetch_related(
                 'user_groups',
                 'incoming_invites',
+                'subordinates',
+                'vacations',
+                'vacations__substitute_group__users',
             )
 
         return super().prefetch_queryset(
@@ -122,36 +143,87 @@ class UsersViewSet(
         )
 
     def get_queryset(self):
+        account_id = self.request.user.account_id
+        user = self.request.user
         if self.action == 'transfer':
             queryset = UserModel.objects.all()
         elif self.action in {'list', 'privileges'}:
-            account_id = self.request.user.account_id
-            queryset = UserModel.include_inactive.all_account_users(
-                account_id,
+            queryset = (
+                UserModel.include_inactive
+                .all_account_users(account_id)
             )
         elif self.action == 'toggle_admin':
-            account = self.request.user.account
-            queryset = UserModel.objects.on_account(account.id).exclude(
-                is_account_owner=True,
-            ).exclude(id=self.request.user.id)
+            queryset = (
+                UserModel.objects
+                .on_account(account_id)
+                .exclude(is_account_owner=True)
+                .exclude(id=user.id)
+            )
         else:
-            queryset = self.request.user.account.users
+            queryset = UserModel.objects.on_account(account_id)
         return self.prefetch_queryset(queryset)
 
-    @action(detail=False, methods=('get',))
-    def privileges(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset())
-        return self.paginated_response(queryset)
-
-    @action(detail=True, methods=('post',))
-    def delete(self, request, pk=None):
-        queryset = self.get_queryset().exclude(id=request.user.id)
-        user = get_object_or_404(queryset, pk=pk)
+    def create(self, request, *args, **kwargs):
+        slz = self.get_serializer(data=request.data)
+        slz.is_valid(raise_exception=True)
+        service = UserService(
+            user=request.user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
         try:
-            UserService.deactivate(user)
-        except UserIsPerformerException as ex:
+            user = service.create(
+                account=request.user.account,
+                **slz.validated_data,
+            )
+        except UserServiceException as ex:
+            raise_validation_error(message=ex.message)
+        return self.response_ok(UserSerializer(instance=user).data)
+
+    def update(self, request, *args, **kwargs):
+        user = self.get_object()
+        slz = self.get_serializer(
+            instance=user,
+            data=request.data,
+        )
+        slz.is_valid(raise_exception=True)
+        service = UserService(
+            user=request.user,
+            instance=user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        try:
+            user = service.partial_update(
+                **slz.validated_data,
+                force_save=True,
+            )
+        except UserServiceException as ex:
+            raise_validation_error(message=ex.message)
+        return self.response_ok(UserSerializer(instance=user).data)
+
+    def partial_update(self, *args, **kwargs):
+        return self.update(*args, **kwargs)
+
+    def destroy(self, request, *args, **kwargs):
+        request_user = request.user
+        user = self.get_object()
+        service = UserService(
+            user=request_user,
+            instance=user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        try:
+            service.deactivate()
+        except UserServiceException as ex:
             raise_validation_error(message=ex.message)
         return self.response_ok()
+
+    @action(detail=False, methods=('get',))
+    def privileges(self, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset())
+        return self.paginated_response(queryset)
 
     @action(
         detail=True,
@@ -252,6 +324,43 @@ class UsersViewSet(
 
     @action(
         detail=True,
+        methods=('post',),
+        url_path='activate-vacation',
+    )
+    def activate_vacation(self, request, pk=None, *args, **kwargs):
+        user = self.get_object()
+        slz = self.get_serializer(
+            data=request.data,
+            extra_fields={
+                'vacation_user': user,
+            },
+        )
+        slz.is_valid(raise_exception=True)
+        data = slz.validated_data
+        service = VacationDelegationService(user=user)
+        user = service.activate(
+            substitute_user_ids=data['substitute_user_ids'],
+            absence_status=data['absence_status'],
+            vacation_start_date=(data.get('vacation_start_date')),
+            vacation_end_date=(data.get('vacation_end_date')),
+        )
+        return self.response_ok(UserSerializer(instance=user).data)
+
+    @action(
+        detail=True,
+        methods=('post',),
+        url_path='deactivate-vacation',
+    )
+    def deactivate_vacation(self, request, pk=None, *args, **kwargs):
+        user = self.get_object()
+        if not user.vacation:
+            raise_validation_error(message=MSG_A_0052)
+        service = VacationDelegationService(user=user)
+        user = service.deactivate()
+        return self.response_ok(UserSerializer(instance=user).data)
+
+    @action(
+        detail=True,
         methods=('get',),
         url_path='count-workflows',
     )
@@ -291,3 +400,22 @@ class UsersViewSet(
             request.user.account_id,
         )
         return self.response_ok(data=account_data)
+
+    @action(detail=True, methods=('post',))
+    def delete(self, request, *args, **kwargs):
+
+        # TODO Deprecated. Duplicate of the "destroy" action
+
+        request_user = request.user
+        user = self.get_object()
+        service = UserService(
+            user=request_user,
+            instance=user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        try:
+            service.deactivate()
+        except UserServiceException as ex:
+            raise_validation_error(message=ex.message)
+        return self.response_ok()

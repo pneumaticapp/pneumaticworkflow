@@ -7,20 +7,22 @@ import {
   TWorkflowsFiltersStoreProps,
   createWorkflowsFiltersContainer,
 } from '../../components/Workflows/createWorkflowsFiltersContainer';
+
 import {
   closeWorkflowLogPopup,
-  removeWorkflowFromList,
   changeWorkflowsSorting,
-  setWorkflowsFilterPerfomers,
-  setWorkflowsFilterStatus,
-  setWorkflowsFilterSteps,
-  setWorkflowsFilterTemplate,
-  setWorkflowsFilterWorkflowStarters,
+  setFilterStatus as setWorkflowsFilterStatus,
+  setFilterTemplate as setWorkflowsFilterTemplate,
+  setFilterTemplateTasks as setWorkflowsFilterTasks,
+  setFilterPerformers as setWorkflowsFilterPerfomers,
+  setFilterPerformersGroup as setWorkflowsFilterPerfomersGroup,
+  setFilterWorkflowStarters as setWorkflowsFilterWorkflowStarters,
+  clearFilters as clearWorkflowsFilters,
+  removeWorkflowFromList,
   setWorkflowsView,
-  clearWorkflowsFilters,
-  setWorkflowsFilterPerfomersGroup,
-  setWorkflowsFilterSelectedFields,
-} from '../../redux/actions';
+  setFilterSelectedFields as setWorkflowsFilterSelectedFields,
+} from '../../redux/workflows/slice';
+
 import { withSyncedQueryString } from '../../HOCs/withSyncedQueryString';
 import { EWorkflowsSorting, EWorkflowsStatus, EWorkflowsView } from '../../types/workflow';
 
@@ -79,16 +81,12 @@ const SyncedWorkflowsFilters = withSyncedQueryString<TWorkflowsFiltersStoreProps
       getQueryParamByProp: (value: number[]) => value.join(','),
     },
     {
-      propName: 'stepsIdsFilter',
-      queryParamName: 'steps',
-      defaultAction: setWorkflowsFilterSteps([]),
+      propName: 'tasksApiNamesFilter',
+      queryParamName: 'tasks',
+      defaultAction: setWorkflowsFilterTasks([]),
       createAction: (queryParam) => {
-        const steps = queryParam.split(',').map(Number);
-        if (steps.every(Number.isInteger)) {
-          return setWorkflowsFilterSteps(steps);
-        }
-
-        return setWorkflowsFilterSteps([]);
+        const tasks = queryParam.split(',');
+        return setWorkflowsFilterTasks(tasks);
       },
       getQueryParamByProp: (value: number[]) => value.join(','),
     },

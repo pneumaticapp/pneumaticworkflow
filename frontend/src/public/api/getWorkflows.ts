@@ -18,7 +18,7 @@ export interface IGetWorkflowsConfig {
   limit?: number;
   sorting: EWorkflowsSorting;
   templatesIdsFilter: number[];
-  stepsIdsFilter: number[];
+  tasksApiNamesFilter: string[];
   performersIdsFilter: number[];
   performersGroupIdsFilter: number[];
   workflowStartersIdsFilter: number[];
@@ -32,7 +32,7 @@ export function getWorkflows({
   sorting,
   limit = 30,
   templatesIdsFilter,
-  stepsIdsFilter,
+  tasksApiNamesFilter,
   performersIdsFilter,
   performersGroupIdsFilter,
   workflowStartersIdsFilter,
@@ -50,7 +50,7 @@ export function getWorkflows({
       offset,
       sorting,
       templatesIdsFilter,
-      stepsIdsFilter,
+      tasksApiNamesFilter,
       performersIdsFilter,
       performersGroupIdsFilter,
       workflowStartersIdsFilter,
@@ -70,7 +70,7 @@ export function getWorkflowsQueryString({
   offset,
   sorting,
   templatesIdsFilter,
-  stepsIdsFilter,
+  tasksApiNamesFilter,
   performersIdsFilter,
   performersGroupIdsFilter,
   workflowStartersIdsFilter,
@@ -95,7 +95,7 @@ export function getWorkflowsQueryString({
     `limit=${limit}`,
     `offset=${offset}`,
     `template_id=${templatesIdsFilter.join(',')}`,
-    canFilterByTemplateStep(statusFilter) && `template_task_id=${stepsIdsFilter.join(',')}`,
+    canFilterByTemplateStep(statusFilter) && `template_task_api_name=${tasksApiNamesFilter.join(',')}`,
     canFilterByCurrentPerformer(statusFilter) && `current_performer=${performersIdsFilter.join(',')}`,
     canFilterByCurrentPerformer(statusFilter) && `current_performer_group_ids=${performersGroupIdsFilter.join(',')}`,
     `workflow_starter=${workflowStarters.join(',')}`,

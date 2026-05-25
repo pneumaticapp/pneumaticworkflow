@@ -1,0 +1,77 @@
+.output-field-content {
+  position: relative;
+  margin-top: 1.6rem;
+  display: flex;
+  box-sizing: border-box;
+  max-width: 100%;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.6rem;
+
+  @media (--mobile) {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    width: calc(100% + 40px);
+    max-width: none;
+  }
+}
+
+.output-field-content__content {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.output-field-content__info {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.4rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.output-field-content__info-dataset {
+  margin-top: 0.4rem;
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.output-field-content__info-label {
+  @mixin text-base;
+
+  color: var(--pneumatic-color-black100);
+}
+
+.output-field-content__info-tag {
+  padding: 0.1rem 0.8rem;
+  color: var(--pneumatic-color-black100);
+  background-color: var(--pneumatic-color-selection);
+  border-radius: 0.4rem;
+
+  @mixin text-small;
+}
+
+.output-field-content__clear-btn {
+  @mixin btn-field-action;
+}
+
+.output-field-content__option-text {
+  display: block;
+
+  @mixin text-overflow;
+}
+
+.output-field-content__info-tag-tooltip {
+  display: block;
+  overflow: hidden;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.output-field-content__tooltip-box {
+  padding: 0.4rem 0.8rem;
+  text-align: center;
+}

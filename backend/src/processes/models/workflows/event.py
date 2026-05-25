@@ -3,7 +3,6 @@ from django.contrib.postgres.fields import (
     ArrayField,
     JSONField,
 )
-from django.contrib.postgres.search import SearchVectorField
 from django.db import models
 
 from src.accounts.models import AccountBaseMixin
@@ -69,7 +68,6 @@ class WorkflowEvent(
     target_user_id = models.IntegerField(null=True)
     target_group_id = models.IntegerField(null=True)
     with_attachments = models.BooleanField(default=False)
-    search_content = SearchVectorField(null=True)
 
     objects = BaseSoftDeleteManager.from_queryset(WorkflowEventQuerySet)()
 

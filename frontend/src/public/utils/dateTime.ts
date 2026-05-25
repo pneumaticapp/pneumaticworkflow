@@ -12,6 +12,7 @@ import {
   startOfWeek,
   startOfYesterday,
   isAfter,
+  format,
 } from 'date-fns';
 import { useIntl } from 'react-intl';
 
@@ -234,3 +235,7 @@ export const formatDateToISOInWorkflow = <T extends WorkflowWithTspFields>(
 export function toISOStringFromTsp(dueDateTsp: number) {
   return moment.unix(dueDateTsp).utc().format('YYYY-MM-DDTHH:mm:ss[Z]');
 }
+
+export const formatDateTimeAmPm = (timestampMs: number) => {
+  return format(new Date(timestampMs), 'MMM d, h:mmaaa');
+};

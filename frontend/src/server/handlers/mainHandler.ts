@@ -10,7 +10,6 @@ import { isEnvAnalytics } from '../../public/constants/enviroment';
 import { resetCookie } from '../middleware';
 import { getPages } from '../middleware/utils/getPages';
 
-
 export async function mainHandler(req: Request, res: Response) {
   try {
     const appPart = identifyAppPartOnServer(req);
@@ -20,7 +19,7 @@ export async function mainHandler(req: Request, res: Response) {
 
     const dataToRender = {
       config: JSON.stringify(serverConfigToBrowser()),
-      invitedUser: JSON.stringify({}),      
+      invitedUser: JSON.stringify({}),
       user: JSON.stringify(mapToCamelCase(user)),
       pages: JSON.stringify(pages),
       isBuildAnalytics: !isEnvAnalytics,

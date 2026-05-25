@@ -2,59 +2,53 @@ import { connect } from 'react-redux';
 
 import { IApplicationState } from '../../types/redux';
 import {
-  setTasksFilterTemplate,
-  setTasksFilterStep,
-  loadTasksFilterTemplates,
-  loadTasksFilterSteps,
-  clearTasksFilters,
-  closeWorkflowLogPopup,
-  changeTasksSorting,
-  changeTasksCompleteStatus,
-} from '../../redux/actions';
-import {
-  ITasksLayoutDispatchProps,
-  ITasksLayoutStoreProps,
-  TasksLayoutComponent,
-} from './TasksLayout';
+  changeTaskListSorting,
+  changeTaskListCompletionStatus,
+  loadFilterTemplates,
+  setFilterTemplate,
+  loadFilterSteps,
+  setFilterStep,
+  clearFilters,
+} from '../../redux/tasks/slice';
+import { closeWorkflowLogPopup } from '../../redux/workflows/slice';
+
+import { ITasksLayoutDispatchProps, ITasksLayoutStoreProps, TasksLayoutComponent } from './TasksLayout';
 
 const mapStateToProps = ({
   tasks: {
-    tasksSettings:
-    {
+    tasksSettings: {
       sorting,
       isHasFilter,
       completionStatus,
-      filterValues: {
-        templateIdFilter,
-        stepIdFilter,
-      },
+      filterValues: { templateIdFilter, taskApiNameFilter },
       templateList,
       templateStepList,
     },
   },
 }: IApplicationState): ITasksLayoutStoreProps => {
-
   return {
     isHasFilter,
     sorting,
     filterTemplates: templateList.items,
     filterSteps: templateStepList.items,
     templateIdFilter,
-    stepIdFilter,
+    taskApiNameFilter,
     completionStatus,
   };
 };
 
 const mapDispatchToProps: ITasksLayoutDispatchProps = {
-  loadTasksFilterTemplates,
-  loadTasksFilterSteps,
-  setTasksFilterTemplate,
-  setTasksFilterStep,
-  clearFilters: clearTasksFilters,
+  loadFilterTemplates,
+  loadFilterSteps,
+  setFilterTemplate,
+  setFilterStep,
+  clearFilters,
   closeWorkflowLogPopup,
-  changeTasksCompleteStatus,
-  changeTasksSorting,
+  changeTaskListCompletionStatus,
+  changeTaskListSorting,
 };
 
-export const TasksLayoutContainer = connect<ITasksLayoutStoreProps, ITasksLayoutDispatchProps>
-(mapStateToProps, mapDispatchToProps)(TasksLayoutComponent);
+export const TasksLayoutContainer = connect<ITasksLayoutStoreProps, ITasksLayoutDispatchProps>(
+  mapStateToProps,
+  mapDispatchToProps,
+)(TasksLayoutComponent);

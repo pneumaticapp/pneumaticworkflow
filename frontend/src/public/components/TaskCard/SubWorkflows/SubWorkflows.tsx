@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import classnames from 'classnames';
 
 import { IWorkflowControllsProps, WorkflowControlls } from '../../Workflows/WorkflowControlls';
@@ -7,7 +8,8 @@ import { Dropdown, Tooltip } from '../../UI';
 import { MoreIcon, UrgentColorIcon } from '../../icons';
 import { isArrayWithItems } from '../../../utils/helpers';
 
-import { TLoadCurrentTaskPayload, TOpenWorkflowLogPopupPayload } from '../../../redux/actions';
+import { TLoadCurrentTaskPayload } from '../../../redux/actions';
+import { TOpenWorkflowLogPopupPayload } from '../../../redux/workflows/types';
 import { WorkflowsProgress } from '../../Workflows/WorkflowsProgress';
 
 import styles from './SubWorkflows.css';

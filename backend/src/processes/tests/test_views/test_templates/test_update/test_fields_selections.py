@@ -1,6 +1,7 @@
 import pytest
 
 from src.processes.enums import (
+    OwnerRole,
     FieldType,
     OwnerType,
     PerformerType,
@@ -42,6 +43,7 @@ class TestUpdateFieldSelections:
             task=task,
             api_name='radio-field-1',
             template=template,
+            account=user.account,
         )
         selection = FieldTemplateSelection.objects.create(
             value='First selection',
@@ -69,6 +71,7 @@ class TestUpdateFieldSelections:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'tasks': [
@@ -135,6 +138,7 @@ class TestUpdateFieldSelections:
             task=task,
             api_name='radio-field-1',
             template=template,
+            account=user.account,
         )
         selection = FieldTemplateSelection.objects.create(
             value='First selection',
@@ -162,6 +166,7 @@ class TestUpdateFieldSelections:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -228,6 +233,7 @@ class TestUpdateFieldSelections:
             task=task,
             api_name='radio-field-1',
             template=template,
+            account=user.account,
         )
         selection = FieldTemplateSelection.objects.create(
             value='First selection',
@@ -251,6 +257,7 @@ class TestUpdateFieldSelections:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -320,6 +327,7 @@ class TestUpdateFieldSelections:
             task=task,
             api_name='radio-field-1',
             template=template,
+            account=user.account,
         )
         selection = FieldTemplateSelection.objects.create(
             value='First selection',
@@ -342,6 +350,7 @@ class TestUpdateFieldSelections:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -414,6 +423,7 @@ class TestUpdateFieldSelections:
             task=task,
             api_name='radio-field-1',
             template=template,
+            account=user.account,
         )
         selection = FieldTemplateSelection.objects.create(
             value='First selection',
@@ -438,6 +448,7 @@ class TestUpdateFieldSelections:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'tasks': [

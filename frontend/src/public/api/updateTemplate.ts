@@ -2,6 +2,7 @@ import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { mapRequestBody } from '../utils/mappers';
 import { ITemplateRequest, ITemplateResponse } from '../types/template';
+import { ETimeouts } from '../constants/defaultValues';
 
 export function updateTemplate(id: number, template: ITemplateRequest) {
   const { api: { urls }} = getBrowserConfigEnv();
@@ -15,6 +16,7 @@ export function updateTemplate(id: number, template: ITemplateRequest) {
       method: 'PUT',
     }, {
       shouldThrow: true,
+      timeOut: ETimeouts.Long,
     },
   );
 }

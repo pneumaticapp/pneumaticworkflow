@@ -825,3 +825,93 @@ def test_token__utm_parameters__passed_to_signup(
         job_title='Developer',
         **utm_params,
     )
+
+
+def test_token__new_user__long_google_photo_url__signup_called_with_full_url(
+    mocker,
+    api_client,
+):
+    # arrange
+    mocker.patch(
+        'src.authentication.views.google.GoogleAuthPermission.'
+        'has_permission',
+        return_value=True,
+    )
+    mocker.patch(
+        'src.authentication.services.google.'
+        'GoogleAuthService.__init__',
+        return_value=None,
+    )
+    email = 'new_google_user@test.test'
+    long_photo_url = (
+        'https://lh3.googleusercontent.com/a-/ALV-UjWKVqsz6krMJcnaNuFH'
+        'WiZtnxWb4FtOnjXtR5FWJCLmC4BNRr8sL3SJnHC1fvMMJARBLV-1n0MQs5xe'
+        'bNR6HPYkC-zhOakqc9WLeI0M-522lIZNzZ5WNB0H3AUT_XGR7fGhAmaO8y24'
+        'DSnoyES8Ovb57eq-LdiW76LV6ki9NQwB5HdNoLb9emGGa6jNNP9qEAEip03sb'
+        '4PXejO4rdS_3DaeT3BpGTYE3sbl0GhxrFi7mH_64kE1iLyNNz55s9bUPETriQ'
+        'SDSIaINGOeQmFP5U_WfEFaZ-wT8kADHm2kirRNGIstCh0uKTHOnQCKmzKCx_D'
+        'Xfsco_ADXd8KyVOA-S7jmpsp3-e_rfp93JTi8hOQvnYB2OPA0t7G-NFbfFEeA'
+        'o5HWW9Hzf3psxtmkrds3Qix0lDh-tfUchtp4NdVAkXut0vI-axgVAgiuM7F2W'
+        'dzijaTVw6Ecwz7Nb7m_O4' +
+        'X' * 800 +
+        '=s96-c'
+    )
+    user_data = UserData(
+        email=email,
+        first_name='John',
+        last_name='Doe',
+        company_name='',
+        photo=long_photo_url,
+        job_title='',
+    )
+    mocker.patch(
+        'src.authentication.services.google.'
+        'GoogleAuthService.get_user_data',
+        return_value=user_data,
+    )
+    mocker.patch(
+        'src.authentication.views.google.settings.PROJECT_CONF',
+        {'SIGNUP': True},
+    )
+    user = create_test_user(email='different@email.com')
+    token = 'test_token'
+    signup_mock = mocker.patch(
+        'src.authentication.views.google.'
+        'GoogleAuthViewSet.signup',
+        return_value=(user, token),
+    )
+    mocker.patch(
+        'src.authentication.services.google.'
+        'GoogleAuthService.save_tokens_for_user',
+    )
+    mocker.patch(
+        'src.authentication.tasks.'
+        'update_google_contacts.delay',
+    )
+
+    # act
+    response = api_client.get(
+        path='/auth/google/token',
+        data={
+            'code': '4/0AbUR2VMeHxU...',
+            'state': 'random_state_string',
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['token'] == token
+    signup_mock.assert_called_once_with(
+        email=email,
+        first_name='John',
+        last_name='Doe',
+        company_name='',
+        photo=long_photo_url,
+        job_title='',
+        utm_source=None,
+        utm_medium=None,
+        utm_campaign=None,
+        utm_term=None,
+        utm_content=None,
+        gclid=None,
+    )

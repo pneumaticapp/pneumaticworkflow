@@ -1,17 +1,14 @@
 import { connect } from 'react-redux';
 
 import { SubWorkflows, TSubWorkflowsProps } from './SubWorkflows';
-import { loadCurrentTask, openWorkflowLogPopup } from '../../../redux/actions';
+import { loadCurrentTask } from '../../../redux/actions';
+import { openWorkflowLogPopup } from '../../../redux/workflows/slice';
 
-type TDispatchProps = Pick<
-TSubWorkflowsProps,
-  | 'openWorkflowLogPopup'
-  | 'loadCurrentTask'
->;
+type TDispatchProps = Pick<TSubWorkflowsProps, 'openWorkflowLogPopup' | 'loadCurrentTask'>;
 
 export const mapDispatchToProps: TDispatchProps = {
   openWorkflowLogPopup,
-  loadCurrentTask
+  loadCurrentTask,
 };
 
 export const SubWorkflowsContainer = connect(null, mapDispatchToProps)(SubWorkflows);

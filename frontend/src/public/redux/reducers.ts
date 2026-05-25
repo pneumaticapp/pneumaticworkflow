@@ -2,16 +2,13 @@ import { RootStateOrAny } from 'react-redux';
 import { combineReducers } from 'redux';
 
 import { IApplicationState } from '../types/redux';
-
 import { general } from './general';
-import { accounts } from './accounts';
 import { authUser } from './auth';
 import { dashboard } from './dashboard';
 import { genericTemplates } from './genericTemplates';
 import { initialState } from './store';
 import { menu } from './menu';
 import { notifications } from './notifications';
-import { workflows } from './workflows';
 import { profile } from './profile';
 import { settings } from './settings';
 import { task } from './task';
@@ -21,13 +18,18 @@ import { selectTemplateModal } from './selectTemplateModal';
 import { template } from './template';
 import { integrations } from './integrations';
 import { runWorkflowModal } from './runWorkflowModal';
-import { tasks } from './tasks';
 import { webhooks } from './webhooks';
 import { tenants } from './tenants';
 import { EAuthActions } from './actions';
 import { groups } from './groups';
+
 import pages from './pages/slice';
 import team from './team/slice';
+import workflows from './workflows/slice';
+import accounts from './accounts/slice';
+import tasks from './tasks/slice';
+import datasets from './datasets/slice';
+
 
 export const reducers = combineReducers({
   general,
@@ -52,6 +54,7 @@ export const reducers = combineReducers({
   runWorkflowModal,
   webhooks,
   tenants,
+  datasets,
   pages,
 });
 

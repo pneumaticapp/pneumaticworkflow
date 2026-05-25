@@ -1,5 +1,5 @@
 import { IWorkflow, IWorkflowClient, WorkflowWithTsp } from './workflow';
-import { IExtraField, ITemplateTitle, RawPerformer } from './template';
+import { IExtraField, ITemplateTitleBaseWithCount, RawPerformer } from './template';
 
 export type TTaskWorkflow = Pick<IWorkflow, 'id' | 'name' | 'status' | 'dateCompleted'> & {
   templateName: string;
@@ -62,6 +62,8 @@ export interface ITask {
   checklists: TTaskChecklists;
   status?: ETaskStatus;
   revertTasks: ITaskRevertTask[];
+  helpText?: string | null;
+  isReadOnlyViewer?: boolean;
 }
 
 export type TTaskChecklists = {
@@ -113,7 +115,7 @@ export interface ITaskListItem {
   dueDate: string | null;
   dateCompleted: string | null;
   templateId: number;
-  templateTaskId: number;
+  templateTaskApiName: string;
 }
 
 export enum ETaskListSorting {
@@ -138,14 +140,14 @@ export interface ITasksSettings {
   sorting: ETaskListSorting | ETaskListCompleteSorting;
   filterValues: {
     templateIdFilter: number | null;
-    stepIdFilter: number | null;
+    taskApiNameFilter: string | null;
   };
   templateStepList: {
     items: ITemplateStep[];
     isLoading: boolean;
   };
   templateList: {
-    items: ITemplateTitle[];
+    items: ITemplateTitleBaseWithCount[];
     isLoading: boolean;
   };
 }
@@ -154,4 +156,5 @@ export interface ITemplateStep {
   id: number;
   name: string;
   number: number;
+  apiName: string;
 }

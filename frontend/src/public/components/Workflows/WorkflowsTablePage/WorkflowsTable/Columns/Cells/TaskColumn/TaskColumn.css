@@ -1,0 +1,24 @@
+.task {
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  @mixin text-overflow;
+}
+
+.multiple-tasks {
+  width: fit-content;
+}
+
+.tooltip {
+  display: flex;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.single-task:hover {
+  color: var(--pneumatic-color-link-hover);
+}
+
+.single-task_button {
+  text-align: left;
+}

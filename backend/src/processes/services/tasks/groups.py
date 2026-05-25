@@ -31,7 +31,7 @@ class GroupPerformerService(BasePerformerService2):
         group_id: int,
     ) -> UserModel:
         try:
-            return UserGroup.objects.get(
+            return UserGroup.include_personal.get(
                 account_id=self.user.account_id,
                 id=group_id,
             )
@@ -86,6 +86,7 @@ class GroupPerformerService(BasePerformerService2):
             auth_type=self.auth_type,
             is_superuser=self.is_superuser,
         )
+        self.task.refresh_from_db()
         if self.task.can_be_completed():
             first_completed_user = (
                 self.task.taskperformer_set.completed()
@@ -171,7 +172,6 @@ class GroupPerformerService(BasePerformerService2):
                 wf_starter = workflow.workflow_starter
                 wf_starter_name = wf_starter.name if wf_starter else None
                 wf_starter_photo = wf_starter.photo if wf_starter else None
-
                 send_new_task_notification.delay(
                     logging=self.user.account.log_api_requests,
                     account_id=self.user.account_id,

@@ -1,3 +1,5 @@
+from typing import Optional, List
+
 from rest_framework.decorators import action
 from rest_framework.generics import (
     get_object_or_404,
@@ -23,7 +25,9 @@ from src.generics.permissions import (
     IsAuthenticated,
     UserIsAuthenticated,
 )
-from src.processes.enums import WorkflowEventType
+from src.processes.enums import (
+    WorkflowEventType,
+)
 from src.processes.filters import (
     WorkflowEventFilter,
     WorkflowWebhookFilterSet,
@@ -34,7 +38,8 @@ from src.processes.paginations import WorkflowListPagination
 from src.processes.permissions import (
     GuestWorkflowEventsPermission,
     GuestWorkflowPermission,
-    WorkflowMemberPermission,
+    WorkflowCommentPermission,
+    WorkflowMemberOrViewerPermission,
     WorkflowOwnerPermission,
 )
 from src.processes.serializers.comments import CommentCreateSerializer
@@ -107,13 +112,33 @@ class WorkflowViewSet(
     def get_queryset(self):
         user = self.request.user
         queryset = Workflow.objects.on_account(user.account_id)
-        if self.action in ('list', 'fields'):
-            queryset = queryset.with_member(user)
-        elif self.action == 'webhook_example':
+        if self.action == 'webhook_example':
             queryset = queryset.filter(
                 owners=user.id,
             ).order_by('-date_created')
         return self.prefetch_queryset(queryset)
+
+    def prefetch_queryset(
+        self,
+        queryset,
+        extra_fields: Optional[List[str]] = None,
+    ):
+        if self.action in (
+            'retrieve',
+            'snooze',
+            'resume',
+            'partial_update',
+        ):
+            extra_fields = [
+                'kickoff__output__selections',
+                'kickoff__output__attachments',
+            ]
+        else:
+            extra_fields = None
+        return super().prefetch_queryset(
+            queryset=queryset,
+            extra_fields=extra_fields,
+        )
 
     def get_object(self):
 
@@ -139,7 +164,6 @@ class WorkflowViewSet(
                 UserIsAuthenticated(),
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
-                UserIsAdminOrAccountOwner(),
             )
         if self.action == 'fields':
             return (
@@ -152,7 +176,7 @@ class WorkflowViewSet(
                 UserIsAuthenticated(),
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
-                WorkflowMemberPermission(),
+                WorkflowMemberOrViewerPermission(),
             )
         if self.action in (
             'destroy',
@@ -185,7 +209,7 @@ class WorkflowViewSet(
                 ExpiredSubscriptionPermission(),
                 UsersOverlimitedPermission(),
                 GuestWorkflowPermission(),
-                WorkflowMemberPermission(),
+                WorkflowCommentPermission(),
             )
         if self.action == 'complete':
             return (
@@ -201,7 +225,7 @@ class WorkflowViewSet(
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
                 GuestWorkflowEventsPermission(),
-                WorkflowMemberPermission(),
+                WorkflowMemberOrViewerPermission(),
             )
         if self.action == 'webhook_example':
             return (
@@ -338,21 +362,6 @@ class WorkflowViewSet(
         return self.response_ok()
 
     def destroy(self, request, *args, **kwargs):
-        service = WorkflowActionService(
-            workflow=self.get_object(),
-            user=request.user,
-            auth_type=request.token_type,
-            is_superuser=request.is_superuser,
-        )
-        try:
-            service.terminate_workflow()
-        except WorkflowActionServiceException as ex:
-            raise_validation_error(message=ex.message)
-        return self.response_ok()
-
-    @action(methods=['post'], detail=True, url_path='close')
-    def terminate(self, request, *args, **kwargs):
-        # Deprecated. Will be removed in my.pneumatic.app/workflows/34225/
         service = WorkflowActionService(
             workflow=self.get_object(),
             user=request.user,

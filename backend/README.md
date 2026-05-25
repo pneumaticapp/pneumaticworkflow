@@ -45,7 +45,12 @@ Open a terminal in the "backend" directory and run the following commands:
 1. Place the database dump file named ``dump.sql`` in the ``pneumaticworkflow/postgres/backups`` directory. 
 2. Recreate the pneumatic database with the command: ``docker exec -it pneumatic-postgres sh -c "dropdb -U postgres_user postgres_db && createdb -U postgres_user --owner postgres_user postgres_db"``.
 3. Load the dump file into the database with the command: ``docker exec -it pneumatic-postgres sh -c "psql -U postgres_user -h localhost postgres_db < /backups/dump.sql"``. This process will take several minutes.
-4. (Optional). Connect to the database and verify the schema. Command: ``docker exec -it pneumatic-postgres sh -c "psql -U postgres_user postgres_db"``
+
+#### Create a backup copy of the database
+Command: ``docker exec -it pneumatic-postgres sh -c "pg_dump -U postgres_user postgres_db > /backups/pneumatic-backup-$(date +%Y-%m-%d[%Hh:%Mm]%ZTZ).sql"``
+
+#### Connect to the database
+Command: ``docker exec -it pneumatic-postgres sh -c "psql -U postgres_user postgres_db"``
 
 ### Windows
 Open PowerShell in the backend directory and run the following commands:

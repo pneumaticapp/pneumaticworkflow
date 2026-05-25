@@ -1,5 +1,3 @@
-/* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
@@ -40,6 +38,7 @@ const inputContainerSizeClassMap: { [key in TInputFieldSize]: string } = {
 };
 
 export function InputField({
+  placeholder,
   type = 'text',
   icon,
   ref,
@@ -64,6 +63,13 @@ export function InputField({
   const [isPasswordVisible, setIsPasswordVisible] = React.useState(false);
   const { messages, formatMessage } = useIntl();
   const inputRef = inputRefProp || React.useRef(null);
+  const inputIdRef = React.useRef<string | null>(null);
+
+  if (!inputIdRef.current) {
+    inputIdRef.current = `input-${Math.random().toString(36).slice(2, 9)}`;
+  }
+  const inputId = inputIdRef.current;
+
   const shouldShowErrorMessage = errorMessage && (showErrorIfTouched ? touched : true);
   const normalizedErrorMessage = shouldShowErrorMessage && (messages[errorMessage!] || errorMessage!);
 
@@ -86,6 +92,7 @@ export function InputField({
 
     const input = (
       <input
+        id={inputId}
         value={value}
         ref={inputRef}
         type={getInputType()}
@@ -93,6 +100,7 @@ export function InputField({
         disabled={disabled}
         data-testid="input-field"
         onBlur={() => setTouched(true)}
+        placeholder={placeholder}
         {...props}
       />
     );
@@ -108,6 +116,14 @@ export function InputField({
             onClick={() => setIsPasswordVisible((prev) => !prev)}
             className={styles['password-toggle']}
             role="button"
+            aria-label="Toggle password visibility"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' || e.key === ' ') {
+                e.preventDefault();
+                setIsPasswordVisible((prev) => !prev);
+              }
+            }}
           >
             <EyeIcon fill={isPasswordVisible ? EColors.Primary : EColors.Black16} />
           </div>
@@ -162,6 +178,7 @@ export function InputField({
 
   return (
     <label
+      htmlFor={inputId}
       className={classnames(
         styles['container'],
         inputContainerSizeClassMap[fieldSize],
@@ -180,12 +197,13 @@ export function InputField({
 
 export function FormikInputField(props: TInputFieldProps & FieldHookConfig<string>) {
   const [field, meta] = useField(props);
+  const { type } = props;
 
   return (
     <InputField
       {...props}
       {...field}
-      {...(meta.touched && meta.error && props.type !== 'hidden' && { errorMessage: meta.error })}
+      {...(meta.touched && meta.error && type !== 'hidden' && { errorMessage: meta.error })}
     />
   );
 }

@@ -1,4 +1,3 @@
-
 .settings-block {
   margin-bottom: 16px;
 }
@@ -9,14 +8,11 @@
   height: 16px;
 }
 
-.info-control:not(:last-child) {
-  margin-bottom: 8px;
-}
-
 .info-controls-switch {
   margin-bottom: 32px;
   display: flex;
   flex-flow: column;
+  gap: 1.6rem;
 }
 
 .switch-label {

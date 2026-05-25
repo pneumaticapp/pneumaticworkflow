@@ -13,6 +13,7 @@ export const INIT_STATE: IStoreTask = {
     items: [] as IWorkflowLogItem[],
     isCommentsShown: true,
     isOnlyAttachmentsShown: false,
+    isSkippedTasksShown: false,
     sorting: EWorkflowsLogSorting.New,
     isOpen: false,
     isLoading: false,
@@ -84,6 +85,11 @@ export const reducer = (state = INIT_STATE, action: TTaskActions): IStoreTask =>
         draftState.workflowLog.isCommentsShown = action.payload.comments;
         draftState.workflowLog.isOnlyAttachmentsShown = action.payload.isOnlyAttachmentsShown;
         draftState.workflowLog.sorting = action.payload.sorting;
+      });
+
+    case ETaskActions.ToggleSkippedTasksVisibility:
+      return produce(state, (draftState) => {
+        draftState.workflowLog.isSkippedTasksShown = !draftState.workflowLog.isSkippedTasksShown;
       });
 
     case ETaskActions.UpdateTaskWorkflowLogItem:

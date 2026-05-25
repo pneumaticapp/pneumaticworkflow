@@ -1,6 +1,7 @@
-import React, { Ref, useCallback, useMemo } from 'react';
+import * as React from 'react';
+import { useCallback, useMemo } from 'react';
 import classnames from 'classnames';
-import { injectIntl, IntlShape } from 'react-intl';
+import { injectIntl} from 'react-intl';
 
 import { ExtraFieldString } from './String';
 import { ExtraFieldText } from './Text';
@@ -13,40 +14,19 @@ import { ExtraFieldFile } from './File';
 import { ExtraFieldUser } from './User';
 import { ExtraFieldNumber } from './Number';
 
-import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../types/template';
-import { EInputNameBackgroundColor } from '../../../types/workflow';
+import { EExtraFieldType } from '../../../types/template';
 import { ExtraFieldDropdown } from './utils/ExtraFieldDropdown';
 import { getInputNameBackground } from './utils/getInputNameBackground';
+import { IExtraFieldProps } from './types';
 
 import styles from '../KickoffRedux/KickoffRedux.css';
 
-export interface IWorkflowExtraFieldProps {
-  field: IExtraField;
-  intl: IntlShape;
-  showDropdown?: boolean;
-  mode?: EExtraFieldMode;
-  namePlaceholder?: string;
-  descriptionPlaceholder?: string;
-  labelBackgroundColor?: EInputNameBackgroundColor;
-  deleteField?(): void;
-  moveFieldUp?(): void;
-  moveFieldDown?(): void;
-  editField(changedProps: Partial<IExtraField>): void;
-  isDisabled?: boolean;
-  innerRef?: Ref<HTMLInputElement>;
-  accountId: number;
-}
-
-interface IExtraFieldProps extends IWorkflowExtraFieldProps {
-  wrapperClassName?: string;
-  fieldsCount?: number;
-  id?: number;
-}
+import { DATASET_FIELD_TYPES } from './constants';
 
 function ExtraField(props: IExtraFieldProps) {
   const {
     field,
-    field: { apiName, isRequired = false },
+    field: { apiName, isRequired = false, isHidden = false },
     fieldsCount,
     showDropdown = true,
     deleteField,
@@ -58,7 +38,22 @@ function ExtraField(props: IExtraFieldProps) {
     wrapperClassName,
     labelBackgroundColor,
     innerRef,
+    datasetOptions,
   } = props;
+
+  const isDatasetField = DATASET_FIELD_TYPES.includes(field.type);
+
+  const datasetName = useMemo(
+    () => datasetOptions?.find((option) => option.value === String(field.dataset))?.label,
+    [datasetOptions, field.dataset],
+  );
+
+  const handleDatasetSelect = useCallback(
+    (datasetId: number) => {
+      editField({ dataset: datasetId, selections: undefined });
+    },
+    [editField],
+  );
 
   const handleDeleteField = useCallback(() => {
     if (!deleteField) {
@@ -100,7 +95,7 @@ function ExtraField(props: IExtraFieldProps) {
 
     const Field = fieldsMap[field.type];
 
-    return <Field {...props} innerRef={innerRef} />;
+    return <Field {...props} innerRef={innerRef} {...(isDatasetField && { datasetName })} />;
   };
 
   const isFirstItem = useMemo(() => id === 0 && id !== undefined, [id]);
@@ -148,22 +143,35 @@ function ExtraField(props: IExtraFieldProps) {
     return isRequiredDisabledMap[field.type];
   };
 
+  const getDropdownClassName = () => {
+    return classnames(
+      styles['kick-off-input__dropdown'],
+      (field.type === EExtraFieldType.Checkbox || field.type === EExtraFieldType.Radio) && styles['kick-off-input__dropdown_choices'],
+      field.type === EExtraFieldType.Creatable && styles['kick-off-input__dropdown_creatable']
+    );
+  };
+
   return (
     <div className={getFieldClassName()}>
       {renderField()}
 
       {showDropdown && !isDisabled && (
-        <div className={styles['kick-off-input__dropdown']}>
+        <div className={getDropdownClassName()}>
           <ExtraFieldDropdown
             isFirstItem={isFirstItem}
             isLastItem={isLastItem}
             apiName={apiName}
             isRequired={isRequired}
             isRequiredDisabled={getIsRequiredDisabled()}
+            isHidden={isHidden}
             onEditField={editField}
             onMoveFieldUp={handleMoveFieldUp}
             onMoveFieldDown={handleMoveFieldDown}
             onDeleteField={handleDeleteField}
+            showDatasetOption={isDatasetField}
+            datasetOptions={datasetOptions}
+            {...(field.dataset && { selectedDatasetId: field.dataset })}
+            onDatasetSelect={handleDatasetSelect}
           />
         </div>
       )}

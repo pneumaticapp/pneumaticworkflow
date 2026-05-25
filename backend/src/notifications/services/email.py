@@ -1,7 +1,6 @@
 from datetime import datetime, timedelta
 from typing import Any, Dict, Optional, Union
 
-from customerio import APIClient, SendEmailRequest
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.utils import timezone
@@ -9,7 +8,6 @@ from django.utils.dateparse import parse_datetime
 
 from src.accounts.enums import UserType
 from src.accounts.tokens import (
-    ResetPasswordToken,
     UnsubscribeEmailToken,
 )
 from src.analysis.enums import MailoutType
@@ -18,10 +16,16 @@ from src.logs.enums import (
 )
 from src.logs.service import AccountLogService
 from src.notifications import messages
+from src.notifications.clients import (
+    CustomerIOEmailClient,
+    EmailClient,
+    SMTPEmailClient,
+)
 from src.notifications.enums import (
-    EmailTemplate,
+    EmailProvider,
+    EmailType,
     NotificationMethod,
-    cio_template_ids,
+    email_titles,
 )
 from src.notifications.services.base import (
     NotificationService,
@@ -34,6 +38,20 @@ UserModel = get_user_model()
 
 class EmailService(NotificationService):
 
+    def __init__(
+        self,
+        account_id: int,
+        logging: bool = False,
+        logo_lg: Optional[str] = None,
+    ):
+        super().__init__(account_id, logging, logo_lg)
+        client_cls = (
+            CustomerIOEmailClient
+            if settings.EMAIL_PROVIDER == EmailProvider.CUSTOMERIO
+            else SMTPEmailClient
+        )
+        self.client: EmailClient = client_cls(account_id=account_id)
+
     ALLOWED_METHODS = {
         NotificationMethod.new_task,
         NotificationMethod.returned_task,
@@ -42,6 +60,15 @@ class EmailService(NotificationService):
         NotificationMethod.unread_notifications,
         NotificationMethod.reset_password,
         NotificationMethod.mention,
+        NotificationMethod.workflows_digest,
+        NotificationMethod.tasks_digest,
+        NotificationMethod.user_deactivated,
+        NotificationMethod.user_transfer,
+        NotificationMethod.verification,
+        NotificationMethod.invite,
+        NotificationMethod.complete_workflow,
+        NotificationMethod.task_reminder,
+        NotificationMethod.vacation_delegation,
     }
 
     def _send_email_to_console(
@@ -50,9 +77,9 @@ class EmailService(NotificationService):
         template_code: str,
         data: dict,
     ):
-        message_vars = ''
-        for key, val in data.items():
-            '\n'.join(f'- {key}: {val}')
+        message_vars = (
+            '\n'.join(f'- {key}: {val}' for key, val in data.items())
+        )
         print(  # noqa: T201
             f"""
             -------------------------
@@ -65,7 +92,7 @@ class EmailService(NotificationService):
             """,
         )
 
-    def _send_email_via_customerio(
+    def _send_email_via_client(
         self,
         title: str,
         user_id: int,
@@ -73,22 +100,19 @@ class EmailService(NotificationService):
         template_code: str,
         data: Dict[str, Any],
     ):
-        client = APIClient(settings.CUSTOMERIO_TRANSACTIONAL_API_KEY)
-        message_id = cio_template_ids[template_code]
-        request = SendEmailRequest(
+        self.client.send_email(
             to=user_email,
-            transactional_message_id=message_id,
+            template_code=template_code,
             message_data=data,
-            identifiers={'id': user_id},
+            user_id=user_id,
         )
-        client.send_email(request)
         if self.logging:
             AccountLogService().email_message(
                 title=f'Email to: {user_email}: {title}',
                 request_data=data,
                 account_id=self.account_id,
                 status=AccountEventStatus.SUCCESS,
-                contractor='Customer.io',
+                contractor=settings.EMAIL_PROVIDER,
             )
 
     def _send(
@@ -96,8 +120,8 @@ class EmailService(NotificationService):
         title: str,
         user_id: int,
         user_email: str,
-        template_code: str,
-        method_name: NotificationMethod,
+        template_code: EmailType.LITERALS,
+        method_name: NotificationMethod.LITERALS,
         data: Dict[str, str],
     ):
 
@@ -116,7 +140,7 @@ class EmailService(NotificationService):
                 data=data,
             )
         else:
-            self._send_email_via_customerio(
+            self._send_email_via_client(
                 title=title,
                 user_id=user_id,
                 user_email=user_email,
@@ -129,6 +153,7 @@ class EmailService(NotificationService):
 
     def send_new_task(
         self,
+        link: str,
         user_id: int,
         user_email: str,
         template_name: str,
@@ -147,8 +172,13 @@ class EmailService(NotificationService):
             user_id=user_id,
             email_type=MailoutType.NEW_TASK,
         ).__str__()
+        unsubscribe_link = (
+            f'{settings.BACKEND_URL}/accounts/emails/unsubscribe?token='
+            f'{unsubscribe_token}'
+        )
 
         data = {
+            'title': email_titles[NotificationMethod.new_task],
             'template': template_name,
             'workflow_name': workflow_name,
             'task_name': task_name,
@@ -156,7 +186,8 @@ class EmailService(NotificationService):
             'overdue': overdue,
             'task_description': html_description,
             'task_id': task_id,
-            'unsubscribe_token': unsubscribe_token,
+            'link': link,
+            'unsubscribe_link': unsubscribe_link,
             'logo_lg': self.logo_lg,
             'started_by': {
                 'name': wf_starter_name,
@@ -167,13 +198,62 @@ class EmailService(NotificationService):
             title=str(messages.MSG_NF_0002),
             user_id=user_id,
             user_email=user_email,
-            template_code=EmailTemplate.NEW_TASK,
+            template_code=EmailType.NEW_TASK,
             method_name=NotificationMethod.new_task,
+            data=data,
+        )
+
+    def send_complete_workflow(
+        self,
+        link: str,
+        user_id: int,
+        user_email: str,
+        user_first_name: str,
+        workflow_name: str,
+        template_name: str,
+        workflow_starter_name: str,
+        workflow_starter_photo: Optional[str] = None,
+        **kwargs,
+    ):
+        unsubscribe_token = UnsubscribeEmailToken.create_token(
+            user_id=user_id,
+            email_type=MailoutType.NEW_TASK,
+        ).__str__()
+        unsubscribe_link = (
+            f'{settings.BACKEND_URL}/accounts/emails/unsubscribe?token='
+            f'{unsubscribe_token}'
+        )
+        content = (
+            f'Hello {user_first_name}, \n'
+            f'The workflow has been successfully completed.\n'
+            f'All tasks in this workflow are now finished.\n'
+            f'Thank you for your contribution.'
+        )
+        data = {
+            'title': email_titles[NotificationMethod.complete_workflow],
+            'template': template_name,
+            'workflow_name': workflow_name,
+            'content': content,
+            'started_by': {
+                'name': workflow_starter_name,
+                'avatar': workflow_starter_photo,
+            },
+            'link': link,
+            'unsubscribe_link': unsubscribe_link,
+            'logo_lg': self.logo_lg,
+        }
+        self._send(
+            title=email_titles[NotificationMethod.complete_workflow],
+            user_id=user_id,
+            user_email=user_email,
+            template_code=EmailType.COMPLETE_WORKFLOW,
+            method_name=NotificationMethod.complete_workflow,
             data=data,
         )
 
     def send_returned_task(
         self,
+        link: str,
         user_id: int,
         user_email: str,
         template_name: str,
@@ -187,13 +267,17 @@ class EmailService(NotificationService):
         overdue: Optional[str] = None,
         **kwargs,
     ):
-
         unsubscribe_token = UnsubscribeEmailToken.create_token(
             user_id=user_id,
             email_type=MailoutType.NEW_TASK,
         ).__str__()
+        unsubscribe_link = (
+            f'{settings.BACKEND_URL}/accounts/emails/unsubscribe?token='
+            f'{unsubscribe_token}'
+        )
 
         data = {
+            'title': email_titles[NotificationMethod.returned_task],
             'template': template_name,
             'workflow_name': workflow_name,
             'task_name': task_name,
@@ -201,7 +285,8 @@ class EmailService(NotificationService):
             'overdue': overdue,
             'task_description': html_description,
             'task_id': task_id,
-            'unsubscribe_token': unsubscribe_token,
+            'link': link,
+            'unsubscribe_link': unsubscribe_link,
             'logo_lg': self.logo_lg,
             'started_by': {
                 'name': wf_starter_name,
@@ -212,13 +297,14 @@ class EmailService(NotificationService):
             title=str(messages.MSG_NF_0003),
             user_id=user_id,
             user_email=user_email,
-            template_code=EmailTemplate.TASK_RETURNED,
+            template_code=EmailType.TASK_RETURNED,
             method_name=NotificationMethod.returned_task,
             data=data,
         )
 
     def send_overdue_task(
         self,
+        link: str,
         user_id: int,
         user_email: str,
         user_type: UserType.LITERALS,
@@ -227,35 +313,45 @@ class EmailService(NotificationService):
         task_id: int,
         task_name: str,
         template_name: str,
-        workflow_starter_id: int,
         workflow_starter_first_name: str,
         workflow_starter_last_name: str,
         token: Optional[str] = None,
         **kwargs,
     ):
+
+        started_by = {
+            'name': (
+                f'{workflow_starter_first_name} {workflow_starter_last_name}'
+                .strip()
+            ),
+            'avatar': None,
+        }
+
         self._send(
             title=str(messages.MSG_NF_0004),
             user_id=user_id,
             user_email=user_email,
-            template_code=EmailTemplate.OVERDUE_TASK,
+            template_code=EmailType.OVERDUE_TASK,
             method_name=NotificationMethod.overdue_task,
             data={
+                'title': email_titles[NotificationMethod.overdue_task],
+                'template': template_name,
                 'workflow_id': workflow_id,
                 'workflow_name': workflow_name,
                 'task_id': str(task_id),
                 'task_name': task_name,
+                'link': link,
                 'template_name': template_name,
-                'workflow_starter_id': workflow_starter_id,
-                'workflow_starter_first_name': workflow_starter_first_name,
-                'workflow_starter_last_name': workflow_starter_last_name,
-                'logo_lg': self.logo_lg,
+                'started_by': started_by,
                 'user_type': user_type,
                 'token': token,
+                'logo_lg': self.logo_lg,
             },
         )
 
     def send_guest_new_task(
         self,
+        link: str,
         user_id: int,
         user_email: str,
         token: str,
@@ -270,13 +366,20 @@ class EmailService(NotificationService):
             convert_text_to_html(task_description)
             if task_description else None
         )
+        title = (
+            f'{sender_name} {email_titles[NotificationMethod.guest_new_task]} '
+            f'{task_name} Task'
+        )
+
         data = {
+            'title': title,
             'token': token,
             'user_id': user_id,
+            'link': link,
             'task_id': task_id,
             'task_name': task_name,
             'task_description': description,
-            'sender_name': sender_name,
+            'guest_sender_name': sender_name,
             'logo_lg': self.logo_lg,
         }
         if task_due_date:
@@ -294,13 +397,14 @@ class EmailService(NotificationService):
             title=str(messages.MSG_NF_0002),
             user_id=user_id,
             user_email=user_email,
-            template_code=EmailTemplate.GUEST_NEW_TASK,
+            template_code=EmailType.GUEST_NEW_TASK,
             method_name=NotificationMethod.guest_new_task,
             data=data,
         )
 
     def send_unread_notifications(
         self,
+        link: str,
         user_id: int,
         user_email: str,
         user_first_name: str,
@@ -310,56 +414,383 @@ class EmailService(NotificationService):
             user_id=user_id,
             email_type=MailoutType.COMMENTS,
         ).__str__()
+        unsubscribe_link = (
+            f'{settings.BACKEND_URL}/accounts/emails/unsubscribe?token='
+            f'{unsubscribe_token}'
+        )
+        content = (
+            f'{user_first_name}, work in your company is in full swing. '
+            f'Check your recent notifications to be up to date.'
+        )
+
         self._send(
             title=str(messages.MSG_NF_0013),
             user_id=user_id,
             user_email=user_email,
-            template_code=EmailTemplate.UNREAD_NOTIFICATIONS,
+            template_code=EmailType.UNREAD_NOTIFICATIONS,
             method_name=NotificationMethod.unread_notifications,
             data={
+                'title': email_titles[NotificationMethod.unread_notifications],
+                'content': content,
                 'user_name': user_first_name,
-                'unsubscribe_token': unsubscribe_token,
+                'button_text': 'View Notifications',
+                'unsubscribe_link': unsubscribe_link,
+                'link': link,
                 'logo_lg': self.logo_lg,
             },
         )
 
     def send_reset_password(
         self,
+        link: str,
+        token: str,
         user_id: int,
         user_email: str,
         **kwargs,
     ):
+        content = 'We got a request to reset your Pneumatic account password.'
+        additional_content = (
+            'A strong password includes eight or more characters '
+            'and a combination of uppercase and lowercase letters, '
+            'numbers and symbols, and is not based on words in the dictionary.'
+        )
 
-        token = ResetPasswordToken.for_user_id(user_id).__str__()
         self._send(
             title=str(messages.MSG_NF_0014),
             user_id=user_id,
             user_email=user_email,
-            template_code=EmailTemplate.RESET_PASSWORD,
+            template_code=EmailType.RESET_PASSWORD,
             method_name=NotificationMethod.reset_password,
             data={
+                'title': email_titles[NotificationMethod.reset_password],
+                'content': content,
+                'additional_content': additional_content,
+                'button_text': 'Reset my password',
                 'token': token,
+                'link': link,
                 'logo_lg': self.logo_lg,
             },
         )
 
     def send_mention(
         self,
+        link: str,
         task_id: int,
         user_id: int,
         user_email: str,
         user_first_name: str,
         **kwargs,
     ):
+        content = (
+            f"{user_first_name}, there's some activity happening. "
+            f"Check your mentions to stay updated on your tasks right away."
+        )
+
         self._send(
             title=str(messages.MSG_NF_0005),
             user_id=user_id,
             user_email=user_email,
-            template_code=EmailTemplate.MENTION,
+            template_code=EmailType.MENTION,
             method_name=NotificationMethod.mention,
             data={
+                'title': email_titles[NotificationMethod.mention],
+                'content': content,
                 'logo_lg': self.logo_lg,
+                'button_text': 'View Mentions',
                 'user_first_name': user_first_name,
                 'task_id': task_id,
+                'link': link,
             },
+        )
+
+    def send_user_deactivated(
+        self,
+        link: str,
+        user_id: int,
+        user_email: str,
+        **kwargs,
+    ):
+
+        self._send(
+            title=str(messages.MSG_NF_0015),
+            user_id=user_id,
+            user_email=user_email,
+            template_code=EmailType.USER_DEACTIVATED,
+            method_name=NotificationMethod.user_deactivated,
+            data={
+                'title': email_titles[NotificationMethod.user_deactivated],
+                'logo_lg': self.logo_lg,
+                'image_url': True,
+                'link': link,
+            },
+        )
+
+    def send_user_transfer(
+        self,
+        link: str,
+        user_id: int,
+        user_email: str,
+        invited_by_name: str,
+        company_name: str,
+        token: str,
+        **kwargs,
+    ):
+        """Send user transfer notification."""
+
+        content = (
+            "Your User Profile is associated with another Pneumatic account. "
+            "By agreeing to this invitation, you permit us to transfer your "
+            "User Profile to an invitee's account. This transfer will revoke "
+            "your access to your old account."
+        )
+
+        self._send(
+            title=str(messages.MSG_NF_0016),
+            user_id=user_id,
+            user_email=user_email,
+            template_code=EmailType.USER_TRANSFER,
+            method_name=NotificationMethod.user_transfer,
+            data={
+                'title': (
+                    f'{invited_by_name} '
+                    f'{email_titles[NotificationMethod.user_transfer]}'
+                ),
+                'content': content,
+                'button_text': 'Transfer My Profile',
+                'token': token,
+                'link': link,
+                'sender_name': invited_by_name,
+                'company_name': company_name,
+                'user_id': user_id,
+                'logo_lg': self.logo_lg,
+            },
+        )
+
+    def send_verification(
+        self,
+        link: str,
+        user_id: int,
+        user_email: str,
+        user_first_name: str,
+        token: str,
+        **kwargs,
+    ):
+        """Send verification notification."""
+
+        content = (
+            'Thank you for signing up for Pneumatic. '
+            'Please verify your email address to get started.'
+        )
+
+        self._send(
+            title=str(messages.MSG_NF_0017),
+            user_id=user_id,
+            user_email=user_email,
+            template_code=EmailType.ACCOUNT_VERIFICATION,
+            method_name=NotificationMethod.verification,
+            data={
+                'title': email_titles[NotificationMethod.verification],
+                'content': content,
+                'button_text': 'Get Started',
+                'token': token,
+                'link': link,
+                'first_name': user_first_name,
+                'logo_lg': self.logo_lg,
+            },
+        )
+
+    def send_invite(
+        self,
+        link: str,
+        user_id: int,
+        user_email: str,
+        **kwargs,
+    ):
+
+        self._send(
+            title=str(messages.MSG_NF_0020),
+            user_id=user_id,
+            user_email=user_email,
+            template_code=EmailType.INVITE,
+            method_name=NotificationMethod.invite,
+            data={
+                'title': email_titles[NotificationMethod.invite],
+                'button_text': 'Join Your Team',
+                'link': link,
+                'logo_lg': self.logo_lg,
+                'is_invite': True,
+            },
+        )
+
+    def send_workflows_digest(
+        self,
+        link: str,
+        user_id: int,
+        user_email: str,
+        date_from: str,
+        date_to: str,
+        digest: Dict[str, Any],
+        **kwargs,
+    ):
+        """Send workflows digest notification."""
+        unsubscribe_token = str(
+            UnsubscribeEmailToken.create_token(
+                user_id=user_id,
+                email_type=MailoutType.WF_DIGEST,
+            ),
+        )
+        unsubscribe_link = (
+            f'{settings.BACKEND_URL}/accounts/emails/unsubscribe?token='
+            f'{unsubscribe_token}'
+        )
+
+        data = {
+            'title': email_titles[NotificationMethod.workflows_digest],
+            'date_from': date_from,
+            'date_to': date_to,
+            'unsubscribe_link': unsubscribe_link,
+            'workflows_link': link,
+            'logo_lg': self.logo_lg,
+            'is_tasks_digest': False,
+            'status_labels': {
+                'started': 'Started',
+                'in_progress': 'In Progress',
+                'overdue': 'Overdue',
+                'completed': 'Completed',
+            },
+            'base_link': f'{settings.FRONTEND_URL}/workflows',
+            'status_queries': {
+                'started': '?type=running',
+                'in_progress': '?type=running',
+                'overdue': '?type=running&sorting=overdue',
+                'completed': '?type=done',
+            },
+            'template_query_param': 'templates',
+            **digest,
+        }
+        self._send(
+            title=str(messages.MSG_NF_0018),
+            user_id=user_id,
+            user_email=user_email,
+            template_code=EmailType.WORKFLOWS_DIGEST,
+            method_name=NotificationMethod.workflows_digest,
+            data=data,
+        )
+
+    def send_tasks_digest(
+        self,
+        link: str,
+        user_id: int,
+        user_email: str,
+        date_from: str,
+        date_to: str,
+        digest: Dict[str, Any],
+        **kwargs,
+    ):
+        """Send tasks digest notification."""
+        unsubscribe_token = str(
+            UnsubscribeEmailToken.create_token(
+                user_id=user_id,
+                email_type=MailoutType.TASKS_DIGEST,
+            ),
+        )
+        unsubscribe_link = (
+            f'{settings.BACKEND_URL}/accounts/unsubscribe/'
+            f'{unsubscribe_token}'
+        )
+
+        data = {
+            'title': email_titles[NotificationMethod.tasks_digest],
+            'date_from': date_from,
+            'date_to': date_to,
+            'unsubscribe_link': unsubscribe_link,
+            'tasks_link': link,
+            'logo_lg': self.logo_lg,
+            'is_tasks_digest': True,
+            'status_labels': {
+                'started': 'Launched',
+                'in_progress': 'Ongoing',
+                'overdue': 'Overdue',
+                'completed': 'Completed',
+            },
+            'base_link': f'{settings.FRONTEND_URL}/tasks',
+            'status_queries': {
+                'started': '',
+                'in_progress': '',
+                'overdue': '?sorting=overdue',
+                'completed': '',
+            },
+            'template_query_param': 'template',
+            **digest,
+        }
+        self._send(
+            title=str(messages.MSG_NF_0019),
+            user_id=user_id,
+            user_email=user_email,
+            template_code=EmailType.TASKS_DIGEST,
+            method_name=NotificationMethod.tasks_digest,
+            data=data,
+        )
+
+    def send_task_reminder(
+        self,
+        link: str,
+        user_id: int,
+        user_email: str,
+        user_first_name: str,
+        count: int,
+        **kwargs,
+    ):
+        content = (
+            f'Hi {user_first_name}, This is a friendly reminder that you '
+            f'still have unfinished '
+            f'tasks waiting for you in Pneumatic. Tasks count: ({count}).'
+        )
+        data = {
+            'title': str(email_titles[NotificationMethod.task_reminder]),
+            'link': link,
+            'logo_lg': self.logo_lg,
+            'content': content,
+        }
+        self._send(
+            title=str(email_titles[NotificationMethod.task_reminder]),
+            user_id=user_id,
+            user_email=user_email,
+            template_code=EmailType.TASK_REMINDER,
+            method_name=NotificationMethod.task_reminder,
+            data=data,
+        )
+
+    def send_vacation_delegation(
+        self,
+        link: str,
+        user_id: int,
+        user_email: str,
+        user_first_name: str,
+        tasks_count: int,
+        vacation_owner_name: str,
+        **kwargs,
+    ):
+        content = (
+            f'Hi {user_first_name}, \n\n'
+            f'{vacation_owner_name} has gone on vacation or sick leave and '
+            f'designated you as a substitute. '
+            f'As a result, {tasks_count} active task(s) have been delegated '
+            f'to you.\n\n'
+            f'Please check your tasks list to see the newly assigned work.'
+        )
+        data = {
+            'title': str(email_titles[NotificationMethod.vacation_delegation]),
+            'link': link,
+            'logo_lg': self.logo_lg,
+            'content': content,
+            'button_text': 'View Tasks',
+        }
+        self._send(
+            title=str(messages.MSG_NF_0025),
+            user_id=user_id,
+            user_email=user_email,
+            template_code=EmailType.VACATION_DELEGATION,
+            method_name=NotificationMethod.vacation_delegation,
+            data=data,
         )

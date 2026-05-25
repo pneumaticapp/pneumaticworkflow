@@ -5,6 +5,7 @@ import pytest
 
 from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
+    OwnerRole,
     ConditionAction,
     DueDateRule,
     FieldType,
@@ -75,6 +76,7 @@ class TestUpdateTemplateTask:
             kickoff=kickoff,
             is_required=True,
             template=template,
+            account=user.account,
         )
         mocker.patch(
             'src.processes.services.templates.'
@@ -126,10 +128,12 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -216,6 +220,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -303,6 +308,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -323,6 +329,7 @@ class TestUpdateTemplateTask:
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ]
         mocker.patch(
@@ -373,6 +380,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -432,6 +440,7 @@ class TestUpdateTemplateTask:
             is_required=True,
             task=template_first_task,
             template=template,
+            account=user.account,
         )
         mocker.patch(
             'src.processes.services.templates.'
@@ -447,6 +456,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -542,6 +552,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -652,6 +663,7 @@ class TestUpdateTemplateTask:
             is_required=True,
             task=task_template2,
             template=template,
+            account=user.account,
         )
         task_template1 = template.tasks.first()
         mocker.patch(
@@ -668,6 +680,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -718,6 +731,7 @@ class TestUpdateTemplateTask:
             is_required=True,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
 
         task_template1 = template.tasks.first()
@@ -730,6 +744,7 @@ class TestUpdateTemplateTask:
             is_required=True,
             task=task_template1,
             template=template,
+            account=user.account,
         )
         task_template2 = template.tasks.last()
         task_template2.description = (
@@ -784,10 +799,12 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -895,6 +912,7 @@ class TestUpdateTemplateTask:
             is_required=True,
             kickoff=kickoff,
             template=template,
+            account=user1.account,
         )
         field_template_2 = FieldTemplate.objects.create(
             name="Kickoff user field 2",
@@ -902,6 +920,7 @@ class TestUpdateTemplateTask:
             is_required=True,
             kickoff=kickoff,
             template=template,
+            account=user1.account,
         )
         task_template = template.tasks.first()
         task_template.delete_raw_performers()
@@ -938,18 +957,22 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user1.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user1_new.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2_new.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -1039,6 +1062,7 @@ class TestUpdateTemplateTask:
             is_required=True,
             kickoff=kickoff,
             template=template,
+            account=user1.account,
         )
         field_template_2 = FieldTemplate.objects.create(
             name="Kickoff user field 2",
@@ -1046,6 +1070,7 @@ class TestUpdateTemplateTask:
             is_required=True,
             kickoff=kickoff,
             template=template,
+            account=user1.account,
         )
         template_first_task = template.tasks.first()
         template_first_task.add_raw_performer(
@@ -1082,18 +1107,22 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user1.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user1_new.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2_new.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -1183,6 +1212,7 @@ class TestUpdateTemplateTask:
             is_required=True,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user1.account,
         )
 
         for task_template in template.tasks.all():
@@ -1224,10 +1254,12 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user1.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -1317,6 +1349,7 @@ class TestUpdateTemplateTask:
             is_required=True,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user1.account,
         )
 
         response = api_client.post(
@@ -1356,14 +1389,17 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user1.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user3.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -1452,6 +1488,7 @@ class TestUpdateTemplateTask:
             is_required=True,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
         task_template_1 = template.tasks.first()
         task_template_2 = template.tasks.last()
@@ -1468,6 +1505,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -1594,6 +1632,7 @@ class TestUpdateTemplateTask:
             kickoff=template.kickoff_instance,
             is_required=True,
             template=template,
+            account=user.account,
         )
         mocker.patch(
             'src.processes.services.templates.'
@@ -1640,6 +1679,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -1684,6 +1724,7 @@ class TestUpdateTemplateTask:
             kickoff=kickoff,
             is_required=True,
             template=template,
+            account=user.account,
         )
         mocker.patch(
             'src.processes.services.templates.'
@@ -1701,6 +1742,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -1762,6 +1804,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -1827,6 +1870,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -1894,6 +1938,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -2018,6 +2063,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -2095,6 +2141,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -2171,6 +2218,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -2236,6 +2284,7 @@ class TestUpdateTemplateTask:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -2292,10 +2341,12 @@ class TestUpdateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -2389,10 +2440,12 @@ class TestUpdateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -2492,10 +2545,12 @@ class TestUpdateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},
@@ -2578,10 +2633,12 @@ class TestUpdateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -2665,6 +2722,7 @@ class TestUpdateTemplateRawPerformer:
             is_required=True,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
         task.add_raw_performer(user)
         task.add_raw_performer(
@@ -2690,10 +2748,12 @@ class TestUpdateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -2775,6 +2835,7 @@ class TestUpdateTemplateRawPerformer:
             is_required=True,
             kickoff=template.kickoff_instance,
             template=template,
+            account=user.account,
         )
         raw_performer_1 = task_template.raw_performers.first()
         task_template.add_raw_performer(
@@ -2810,6 +2871,7 @@ class TestUpdateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {
@@ -2872,6 +2934,7 @@ class TestUpdateTemplateRawPerformer:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'kickoff': {},

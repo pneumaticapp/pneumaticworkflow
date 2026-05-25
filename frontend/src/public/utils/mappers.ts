@@ -1,7 +1,5 @@
-/* eslint-disable indent */
 import { IExtraField, IKickoff } from '../types/template';
 import { isArrayWithItems } from './helpers';
-import { IStartWorkflowPayload, TEditWorkflowPayload } from '../redux/actions';
 import { IRunWorkflow } from '../components/WorkflowEditPopup/types';
 import { ExtraFieldsHelper } from '../components/TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
 import {
@@ -22,6 +20,7 @@ import {
 import { IHighlightsItem } from '../types/highlights';
 import { TaskWithDateFields, TaskWithTspFields, TFormatTaskDates } from '../types/tasks';
 import { getWorkflowAddComputedPropsToRedux } from '../components/Workflows/utils/getWorfkflowClientProperties';
+import { IStartWorkflowPayload, TEditWorkflowPayload } from '../redux/workflows/types';
 
 interface OptionsMapRequestBody {
   ignorePropertyMapToSnakeCase?: string[];
@@ -107,6 +106,18 @@ export const mapOutputToCompleteTask = (output: IExtraField[]): IExtraField[] =>
         value: String(item.value).replace(',', '.'),
       };
     }
+    if (item.type === 'checkbox') {
+      let checkboxValue: string[];
+      if (Array.isArray(item.value)) {
+        checkboxValue = item.value;
+      } else if (item.value) {
+        checkboxValue = (item.value as string).split(', ');
+      } else {
+        checkboxValue = [];
+      }
+
+      return { ...item, value: checkboxValue };
+    }
     return item;
   });
 };
@@ -173,9 +184,8 @@ export const getNormalizeOutputUsersToEmails = (
     const { value, type, userId } = output;
     if (type === 'user' && userId !== null) {
       return { ...output, value: setUsers.get(userId as number) || value };
-    } 
-      return output;
-    
+    }
+    return output;
   });
 };
 

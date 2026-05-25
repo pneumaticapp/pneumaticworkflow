@@ -7,8 +7,8 @@ from django.utils.dateparse import parse_duration
 from src.notifications.tasks import (
     send_new_task_notification,
     send_task_deleted_notification,
+    send_new_task_websocket,
 )
-from src.processes.enums import TaskStatus
 from src.processes.models.workflows.checklist import (
     ChecklistSelection,
 )
@@ -165,8 +165,11 @@ class TaskUpdateVersionService(
                 'description': template['description'],
                 'type': template['type'],
                 'is_required': template['is_required'],
+                'is_hidden': template['is_hidden'],
                 'order': template['order'],
                 'workflow': self.instance.workflow,
+                'account': self.instance.account,
+                'dataset_id': template['dataset_id'],
             },
         )
 
@@ -239,6 +242,7 @@ class TaskUpdateVersionService(
             'require_completion_by_all': data[
                 'require_completion_by_all'
             ],
+            'skip_for_starter': data['skip_for_starter'],
             'name_template': data['name'],
             'name': insert_fields_values_to_text(
                 text=data['name'],
@@ -371,6 +375,13 @@ class TaskUpdateVersionService(
                 logo_lg=account.logo_lg,
                 is_returned=False,
             )
+            send_new_task_websocket.delay(
+                logging=account.log_api_requests,
+                task_id=self.instance.id,
+                recipients=list(send_new_task_recipients),
+                account_id=account.id,
+                task_data=task_data,
+            )
         if send_removed_task_recipients:
             task_data = task_data or self.instance.get_data_for_list()
             send_task_deleted_notification.delay(
@@ -406,20 +417,18 @@ class TaskUpdateVersionService(
         """
 
         workflow = kwargs['workflow']
-        completed_tasks_fields_values = workflow.get_fields_markdown_values(
-            tasks_filter_kwargs={'task__status': TaskStatus.COMPLETED},
-        )
+        tasks_fields_values = workflow.get_fields_markdown_values()
         self._create_or_update_instance(
             data=data,
             workflow=workflow,
-            fields_values=completed_tasks_fields_values,
+            fields_values=tasks_fields_values,
         )
         self._update_fields(data=data.get('fields'))
         self._update_conditions(data=data.get('conditions'))
         self._update_checklists(
             data=data.get('checklists'),
             version=version,
-            fields_values=completed_tasks_fields_values,
+            fields_values=tasks_fields_values,
         )
         self._update_delay(new_duration=data.get('delay'))
         # Don't snooze active tasks if delay created

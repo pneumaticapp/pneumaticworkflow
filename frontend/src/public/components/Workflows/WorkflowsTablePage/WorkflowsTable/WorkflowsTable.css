@@ -141,7 +141,7 @@
   font-size: 1.1rem;
   font-weight: bold;
   line-height: 1.6rem;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06rem;
   text-transform: uppercase;
 }
 
@@ -157,10 +157,6 @@
 .user {
   display: flex;
   align-items: center;
-}
-
-.user-avatar {
-  flex-shrink: 0;
 }
 
 .user-name {
@@ -214,6 +210,7 @@
 }
 
 .container__actions--narrow-table {
+  margin-bottom: 1.6rem;
   display: flex;
   width: 100%;
   min-width: 29rem;
@@ -222,19 +219,23 @@
 
 .container__actions--wide-table {
   position: sticky;
+  z-index: 5;
   left: 0;
+  margin-bottom: 1.6rem;
   padding: 0 2.4rem 0 3.2rem;
   display: flex;
+  align-items: center;
   width: 100%;
   justify-content: space-between;
 
   @media (--mobile) {
+    margin-bottom: 3.2rem;
     padding: 0 1.6rem;
   }
 }
 
 .title {
-  margin-bottom: 1.6rem;
+  margin-bottom: 0;
 }
 
 .tune-view-button {
@@ -246,11 +247,24 @@
   }
 }
 
+.tune-view-icon {
+  margin-right: 0.2rem !important;
+}
+
+.actions-buttons {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
+}
+
 .workflow-tune-view-tooltip {
   padding: 0.4rem 0.8rem;
   text-align: center;
 }
 
-.column-header__template-name {
+.column-header__template-name,
+.column-header__starter-name,
+.column-header__performer-name,
+.column-header__task-name {
   @mixin text-truncate;
 }

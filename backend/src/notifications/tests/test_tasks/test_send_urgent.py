@@ -1,4 +1,5 @@
 import pytest
+from django.conf import settings
 from django.utils import timezone
 
 from src.accounts.enums import (
@@ -81,18 +82,20 @@ def test_send_urgent_notification__call_services__ok(mocker):
         author_id=user.id,
         account_id=account.id,
         type=NotificationType.URGENT,
-        text=None,
+        text='',
     )
     websocket_service_init_mock.assert_called_once_with(
         logo_lg=account.logo_lg,
         account_id=account.id,
         logging=account.log_api_requests,
     )
+    link = f'{settings.FRONTEND_URL}/tasks/{task.id}'
     websocket_urgent_mock.assert_called_once_with(
         user_id=account_owner.id,
         user_email=account_owner.email,
         sync=True,
         notification=notification,
+        link=link,
     )
     websocket_not_urgent_mock.assert_not_called()
 
@@ -158,18 +161,20 @@ def test_send_urgent_notification__call_services_with_group__ok(mocker):
         author_id=user.id,
         account_id=account.id,
         type=NotificationType.URGENT,
-        text=None,
+        text='',
     )
     websocket_service_init_mock.assert_called_once_with(
         logo_lg=account.logo_lg,
         account_id=account.id,
         logging=account.log_api_requests,
     )
+    link = f'{settings.FRONTEND_URL}/tasks/{task.id}'
     websocket_urgent_mock.assert_called_once_with(
         user_id=user_in_group.id,
         user_email=user_in_group.email,
         sync=True,
         notification=notification,
+        link=link,
     )
     websocket_not_urgent_mock.assert_not_called()
 
@@ -225,18 +230,20 @@ def test_send_not_urgent_notification__call_services__ok(mocker):
         author_id=user.id,
         account_id=account.id,
         type=NotificationType.NOT_URGENT,
-        text=None,
+        text='',
     )
     websocket_service_init_mock.assert_called_once_with(
         logo_lg=account.logo_lg,
         account_id=account.id,
         logging=account.log_api_requests,
     )
+    link = f'{settings.FRONTEND_URL}/tasks/{task.id}'
     websocket_not_urgent_mock.assert_called_once_with(
         user_id=account_owner.id,
         user_email=account_owner.email,
         sync=True,
         notification=notification,
+        link=link,
     )
     websocket_urgent_mock.assert_not_called()
 
@@ -289,7 +296,7 @@ def test_send_urgent_notification_completed_performer__skip(mocker):
         author_id=user.id,
         account_id=account.id,
         type=NotificationType.URGENT,
-        text=None,
+        text='',
     ).exists()
 
     websocket_urgent_mock.assert_not_called()
@@ -345,7 +352,7 @@ def test_send_urgent_notification_deleted_performer__skip(mocker):
         author_id=user.id,
         account_id=account.id,
         type=NotificationType.URGENT,
-        text=None,
+        text='',
     ).exists()
 
     websocket_urgent_mock.assert_not_called()
@@ -399,7 +406,7 @@ def test_send_urgent_notification_guest_performer__skip(mocker):
         author_id=user.id,
         account_id=account.id,
         type=NotificationType.URGENT,
-        text=None,
+        text='',
     ).exists()
 
     websocket_urgent_mock.assert_not_called()
@@ -452,13 +459,15 @@ def test_send_urgent_notification__another_task__skip(mocker):
         author_id=user.id,
         account_id=account.id,
         type=NotificationType.URGENT,
-        text=None,
+        text='',
     )
 
+    link = f'{settings.FRONTEND_URL}/tasks/{task_2.id}'
     websocket_urgent_mock.assert_called_once_with(
         user_id=account_owner.id,
         user_email=account_owner.email,
         sync=True,
         notification=notification,
+        link=link,
     )
     websocket_not_urgent_mock.assert_not_called()

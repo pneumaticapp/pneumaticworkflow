@@ -1,4 +1,3 @@
-/* eslint-disable react/button-has-type */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import classnames from 'classnames';
 import InfiniteScroll from 'react-infinite-scroll-component';
@@ -34,7 +33,7 @@ export interface ITasksProps {
   taskSorting: ETaskListSorting | ETaskListCompleteSorting;
   completionStatus: ETaskListCompletionStatus;
   templateIdFilter: number | null;
-  stepIdFilter: number | null;
+  taskApiNameFilter: string | null;
   taskListStatus: ETaskListStatus;
   detailedTaskId: number | null;
   detailedTask: ITask | null;
@@ -63,7 +62,7 @@ export function Tasks({
   hasNewTasks,
   taskSorting,
   templateIdFilter,
-  stepIdFilter,
+  taskApiNameFilter,
   searchText,
   completionStatus,
   loadTaskList,
@@ -99,7 +98,7 @@ export function Tasks({
 
   useDidUpdateEffect(() => {
     searchTasks();
-  }, [taskSorting, templateIdFilter, stepIdFilter, completionStatus, searchText]);
+  }, [taskSorting, templateIdFilter, taskApiNameFilter, completionStatus, searchText]);
 
   useEffect(() => {
     if (hasNewTasks) {

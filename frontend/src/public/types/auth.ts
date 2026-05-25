@@ -1,7 +1,8 @@
 export const enum EOAuthType {
   Google = 'Google',
   Microsoft = 'Microsoft',
-  SSO = 'SSO',
+  SSOAuth0 = 'SSOAuth0',
+  SSOOkta = 'SSOOkta',
 }
 
 export const enum ERegisterType {

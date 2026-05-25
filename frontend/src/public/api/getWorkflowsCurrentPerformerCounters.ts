@@ -5,14 +5,16 @@ import { EXTERNAL_USER_ID } from '../utils/users';
 
 export interface IGetWorkflowsCurrentPerformerCountersConfig {
   templatesIdsFilter: number[];
-  stepsIdsFilter: number[];
+  tasksApiNamesFilter: string[];
   workflowStartersIdsFilter: number[];
+  signal?: AbortSignal;
 }
 
 export function getWorkflowsCurrentPerformerCounters({
   templatesIdsFilter,
-  stepsIdsFilter,
+  tasksApiNamesFilter,
   workflowStartersIdsFilter,
+  signal,
 }: IGetWorkflowsCurrentPerformerCountersConfig) {
   const {
     api: { urls },
@@ -21,15 +23,21 @@ export function getWorkflowsCurrentPerformerCounters({
   return commonRequest<TUserCounter[]>(
     `${urls.workflowsCurrentPerformerCounters}?${getQueryString({
       templatesIdsFilter,
-      stepsIdsFilter,
+      tasksApiNamesFilter,
       workflowStartersIdsFilter,
     })}`,
+    {
+      signal,
+    },
+    {
+      shouldThrow: true,
+    },
   );
 }
 
 export function getQueryString({
   templatesIdsFilter,
-  stepsIdsFilter,
+  tasksApiNamesFilter,
   workflowStartersIdsFilter,
 }: IGetWorkflowsCurrentPerformerCountersConfig) {
   const isExternal = workflowStartersIdsFilter?.some((userId) => userId === EXTERNAL_USER_ID);
@@ -37,7 +45,7 @@ export function getQueryString({
 
   return [
     `template_ids=${templatesIdsFilter.join(',')}`,
-    `template_task_ids=${stepsIdsFilter.join(',')}`,
+    `template_task_api_names=${tasksApiNamesFilter.join(',')}`,
     `workflow_starter_ids=${workflowStarters.join(',')}`,
     isExternal && 'is_external=true',
   ]
