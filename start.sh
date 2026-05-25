@@ -23,11 +23,19 @@ if [ ! -f ".env" ]; then
     SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
     DEFAULT_ENV="$SCRIPT_DIR/default.env"
     ENV_FILE="$SCRIPT_DIR/.env"
+    NGINX_CONF_TEMPLATE=./nginx/templates/
 
     cp "$DEFAULT_ENV" "$ENV_FILE"
     ENV_FILE_CREATED=true
     print_info ".env created from default.env"
 
+
+    # 1.1 Set Required values
+    if [ -z "$DJANGO_SECRET_KEY" ]; then
+        DJANGO_SECRET_KEY=$(cat /dev/urandom | tr -dc 'abcdefghijklmnopqrstuvwxyz0123456789!@%^*()_=+-' | head -c 50)
+        print_info "Django secret key generated"
+    fi
+    sed -i "s|^#\?\s*DJANGO_SECRET_KEY=.*|DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY|"                  "$ENV_FILE"
 
     # =============================================================================
     # 1.2 Set SERVER_ADDRESS
@@ -74,7 +82,7 @@ if [ ! -f ".env" ]; then
     # =============================================================================
 
     if [ "$ADDRESS_IS_LOCALHOST" = false ]; then
-        # 3.1 Generate missing passwords (not needed for localhost)
+        # 1.3.1 Generate missing passwords (not needed for localhost)
         if [ -z "$POSTGRES_PASSWORD" ]; then
             POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
             print_info "Postgres password generated"
@@ -90,7 +98,8 @@ if [ ! -f ".env" ]; then
             print_info "RabbitMQ password generated"
         fi
 
-        # 3.2 Write passwords to .env
+
+        # 1.3.2 Write passwords to .env
         sed -i "s|^#\?\s*POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$POSTGRES_PASSWORD|"                  "$ENV_FILE"
         sed -i "s|^#\?\s*POSTGRES_REPLICA_PASSWORD=.*|POSTGRES_REPLICA_PASSWORD=$POSTGRES_PASSWORD|"  "$ENV_FILE"
         sed -i "s|^#\?\s*REDIS_PASSWORD=.*|REDIS_PASSWORD=$REDIS_PASSWORD|"                           "$ENV_FILE"
@@ -101,7 +110,7 @@ if [ ! -f ".env" ]; then
     # 1.4 Set SSL
     # =============================================================================
     if [ "$ADDRESS_IS_LOCALHOST" = false ]; then
-        # 4.1 Prompt to enable SSL if SERVER_ADDRESS is a domain
+        # 1.4.1 Prompt to enable SSL if SERVER_ADDRESS is a domain
         if [ "$ADDRESS_IS_DOMAIN" = true ]; then
             if [ -z "$CERTBOT_ENABLE" ]; then
                 while true; do
@@ -118,8 +127,9 @@ if [ ! -f ".env" ]; then
             CERTBOT_ENABLE=false
         fi
 
-        # 4.2 Prompt for CERTBOT_EMAIL if SSL is enabled
+        # 1.4.2 Prompt for CERTBOT_EMAIL if SSL is enabled
         if [ "$CERTBOT_ENABLE" = true ]; then
+            NGINX_CONF_TEMPLATE=./nginx/ssl_templates/
             EMAIL_PATTERN='^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$'
             while true; do
                 read -rp "Enter email for free Let's Encrypt SSL certificate: " CERTBOT_EMAIL
@@ -131,11 +141,12 @@ if [ ! -f ".env" ]; then
             done
         fi
 
-        # 4.3 Write SSL settings to .env
+        # 1.4.3 Write SSL settings to .env
         _certbot_enable_value="no"
         [ "$CERTBOT_ENABLE" = true ] && _certbot_enable_value="yes"
-        sed -i "s|^#\?\s*CERTBOT_ENABLE=.*|CERTBOT_ENABLE=$_certbot_enable_value|" "$ENV_FILE"
-        sed -i "s|^#\?\s*CERTBOT_EMAIL=.*|CERTBOT_EMAIL=$CERTBOT_EMAIL|"           "$ENV_FILE"
+        sed -i "s|^#\?\s*CERTBOT_ENABLE=.*|CERTBOT_ENABLE=$_certbot_enable_value|"                     "$ENV_FILE"
+        sed -i "s|^#\?\s*CERTBOT_EMAIL=.*|CERTBOT_EMAIL=$CERTBOT_EMAIL|"                               "$ENV_FILE"
+        sed -i "s|^#\?\s*NGINX_CONF_TEMPLATE=.*|NGINX_CONF_TEMPLATE=$NGINX_CONF_TEMPLATE|"             "$ENV_FILE"
 
         print_info "Setup completed successfully"
 
@@ -217,8 +228,5 @@ fi
 echo ""
 echo "Pneumatic Workflow started successfully!"
 echo ""
-echo "http://$SERVER_ADDRESS"
-echo ""
 echo "Please wait a few minutes for all services to fully start"
-echo "Check status: docker compose ps"
-echo "View logs: docker compose logs -f"
+echo ""
