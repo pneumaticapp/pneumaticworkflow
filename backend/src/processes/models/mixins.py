@@ -40,6 +40,11 @@ class RawPerformerMixin(models.Model):
         on_delete=models.CASCADE,
         null=True,
     )
+    source_task_api_name = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+    )
 
 
 class WorkflowMixin(models.Model):
@@ -283,13 +288,17 @@ class TaskRawPerformersMixin:
         group: Optional[UserGroup] = None,
         field=None,
         performer_type: PerformerType = PerformerType.USER,
+        source_task_api_name: Optional[str] = None,
     ) -> int:
 
         """ Delete a raw_performer
             and returns the number of objects deleted """
 
         if (
-            performer_type != PerformerType.WORKFLOW_STARTER
+            performer_type not in (
+                PerformerType.WORKFLOW_STARTER,
+                PerformerType.MANAGER,
+            )
             and user is None and group is None and field is None
         ):
             raise Exception(
@@ -301,6 +310,7 @@ class TaskRawPerformersMixin:
             user=user,
             group=group,
             field=field,
+            source_task_api_name=source_task_api_name,
         ).delete()[0]
 
     def delete_raw_performers(self):

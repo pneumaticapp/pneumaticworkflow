@@ -20,13 +20,14 @@ import { createPerformerApiName } from '../../../utils/createId';
 
 export interface ITaskPerformersProps {
   task: ITemplateTask;
+  tasks: ITemplateTask[];
   users: TUserListItem[];
   variables: TTaskVariable[];
   isTeamInvitesModalOpen: boolean;
   setCurrentTask(changedFields: Partial<ITemplateTask>): void;
 }
 
-export function TaskPerformers({ task, users, variables, setCurrentTask }: ITaskPerformersProps) {
+export function TaskPerformers({ task, tasks, users, variables, setCurrentTask }: ITaskPerformersProps) {
   const { formatMessage } = useIntl();
   const groups = useSelector(getRegularGroupsList);
 
@@ -37,11 +38,15 @@ export function TaskPerformers({ task, users, variables, setCurrentTask }: ITask
     groups,
     variables,
     formatMessage,
+    task,
+    tasks,
   );
   const selectedPerformerOption = rawPerformers.map((user) => {
     return {
       ...user,
-      value: String(user.sourceId),
+      value: user.type === ETaskPerformerType.Manager
+        ? `manager-${user.sourceId}`
+        : String(user.sourceId),
     };
   });
 

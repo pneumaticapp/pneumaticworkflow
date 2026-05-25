@@ -1,5 +1,5 @@
 import { IntlShape } from 'react-intl';
-import { EExtraFieldType, ETaskPerformerType, ITemplateTaskPerformer } from '../../../../types/template';
+import { EExtraFieldType, ETaskPerformerType, ITemplateTask, ITemplateTaskPerformer } from '../../../../types/template';
 import { TUserListItem } from '../../../../types/user';
 import { getUserFullName } from '../../../../utils/users';
 import { TTaskVariable } from '../../types';
@@ -11,6 +11,8 @@ export function getPerformersForDropdown(
   groups: IGroup[],
   variables: TTaskVariable[],
   formatMessage: IntlShape['formatMessage'],
+  currentTask?: ITemplateTask,
+  tasks?: ITemplateTask[],
 ): TUsersDropdownOption[] {
   const userPeformers: (Omit<ITemplateTaskPerformer, 'apiName'> & TUsersDropdownOption)[] = users.map((user) => ({
     id: user.id,
@@ -58,5 +60,24 @@ export function getPerformersForDropdown(
     value: String(null),
   };
 
-  return [workflowStarterPerformers, ...groupsPerformers, ...outputUsersPerformers, ...userPeformers];
+  const managerPerformers: TUsersDropdownOption[] = (tasks || [])
+    .filter((step) => !currentTask || step.apiName !== currentTask.apiName)
+    .map((step) => ({
+      id: 0,
+      optionType: EOptionTypes.Manager,
+      firstName: '',
+      lastName: '',
+      type: ETaskPerformerType.Manager,
+      sourceId: step.apiName,
+      label: formatMessage({ id: 'tasks.task-manager-of-step' }, { step: step.name }),
+      value: `manager-${step.apiName}`,
+    }));
+
+  return [
+    workflowStarterPerformers,
+    ...managerPerformers,
+    ...groupsPerformers,
+    ...outputUsersPerformers,
+    ...userPeformers,
+  ];
 }
