@@ -1,20 +1,25 @@
-/**
- * WebSocket `/ws/events` envelope (see Public API Websockets spec).
- * Wire format uses snake_case; normalize with mapToCamelCase where frames are read.
- */
+import type {
+  IRealtimeWsEnvelope,
+  INotificationWsEnvelope,
+  TNotificationWsEventType,
+} from './wsPayloads';
+
+export type {
+  IRealtimeWsEnvelope,
+  INotificationWsEnvelope,
+  TNotificationWsEventType,
+};
+export type {
+  IWsTaskCreatedData,
+  IWsTaskCompletedData,
+  IWsTaskDeletedData,
+} from './wsPayloads';
+
 export type TRealtimeEventType =
   | 'task_created'
   | 'task_completed'
   | 'task_deleted'
-  | 'delay_workflow'
-  | 'resume_workflow'
-  | 'due_date_changed'
-  | 'urgent'
-  | 'not_urgent'
-  | 'system'
-  | 'comment'
-  | 'mention'
-  | 'reaction'
+  | TNotificationWsEventType
   | 'event_created'
   | 'event_updated'
   | 'user_created'
@@ -22,8 +27,7 @@ export type TRealtimeEventType =
   | 'user_deleted'
   | 'group_created'
   | 'group_updated'
-  | 'group_deleted'
-  | 'overdue_task';
+  | 'group_deleted';
 
 export const REALTIME_EVENT_TYPES: readonly TRealtimeEventType[] = [
   'task_created',
@@ -49,9 +53,19 @@ export const REALTIME_EVENT_TYPES: readonly TRealtimeEventType[] = [
   'overdue_task',
 ] as const;
 
-export interface IRealtimeWsEnvelope {
-  id: string;
-  dateCreatedTsp: number;
-  type: string;
-  data: unknown;
+export const NOTIFICATION_WS_TYPES: ReadonlySet<TNotificationWsEventType> = new Set([
+  'comment',
+  'mention',
+  'reaction',
+  'system',
+  'urgent',
+  'not_urgent',
+  'overdue_task',
+  'delay_workflow',
+  'resume_workflow',
+  'due_date_changed',
+]);
+
+export function isNotificationWsEventType(type: string): type is TNotificationWsEventType {
+  return NOTIFICATION_WS_TYPES.has(type as TNotificationWsEventType);
 }

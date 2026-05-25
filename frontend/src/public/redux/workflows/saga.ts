@@ -1,7 +1,5 @@
 import uniqBy from 'lodash.uniqby';
 import { all, fork, put, takeEvery, select, takeLatest, call, delay, take, race } from 'redux-saga/effects';
-import { EventChannel } from 'redux-saga';
-
 import { PayloadAction } from '@reduxjs/toolkit';
 import {
   openRunWorkflowModal,
@@ -101,7 +99,7 @@ import {
   getWorkflowsStatus,
   getLastLoadedTemplateIdForTable,
 } from '../selectors/workflows';
-import { getTaskStore, getCurrentTask } from '../selectors/task';
+import { getCurrentTask } from '../selectors/task';
 import { getEditKickoff, mapFilesToRequest } from '../../utils/workflows';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getWorkflows } from '../../api/getWorkflows';
@@ -109,7 +107,7 @@ import { getWorkflow } from '../../api/getWorkflow';
 import { getWorkflowLog } from '../../api/getWorkflowLog';
 import { returnWorkflowToTask } from '../../api/returnWorkflowToTask';
 import { history } from '../../utils/history';
-import { IStoreTask, IStoreWorkflows } from '../../types/redux';
+import { IStoreWorkflows } from '../../types/redux';
 import { logger } from '../../utils/logger';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { sendWorkflowComment } from '../../api/sendWorkflowComment';
@@ -136,18 +134,12 @@ import { getWorkflowsTemplateStepsCounters } from '../../api/getWorkflowsTemplat
 import { snoozeWorkflow } from '../../api/snoozeWorkflow';
 import { deleteComment, IDeleteComment } from '../../api/workflows/deleteComment';
 import { editComment, IEditComment } from '../../api/workflows/editComment';
-import { getBrowserConfigEnv } from '../../utils/getConfig';
-import { mergePaths } from '../../utils/urls';
-import { parseCookies } from '../../utils/cookie';
-import { createWebSocketChannel } from '../utils/createWebSocketChannel';
 import { deleteReactionComment, IDeleteReaction } from '../../api/workflows/deleteReactionComment';
 import { createReactionComment, ICreateReaction } from '../../api/workflows/createReactionComment';
 import { IWatchedComment, watchedComment } from '../../api/workflows/watchedComment';
-import { envWssURL } from '../../constants/enviroment';
 import {
   mapBackandworkflowLogToRedux,
   mapBackendWorkflowToRedux,
-  mapBackendNewEventToRedux,
   formatDueDateToEditWorkflow,
   mapWorkflowsToISOStringToRedux,
   mapWorkflowsAddComputedPropsToRedux,
@@ -905,31 +897,6 @@ export function* editCommentSaga({ payload: { id, text, attachments } }: Payload
     NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
   } finally {
     yield put(setGeneralLoaderVisibility(false));
-  }
-}
-
-export function* watchNewWorkflowsEvent() {
-  const {
-    api: { wsPublicUrl, urls },
-  } = getBrowserConfigEnv();
-  const url = mergePaths(
-    envWssURL || wsPublicUrl,
-    `${urls.wsWorkflowsEvent}?auth_token=${parseCookies(document.cookie).token}`,
-  );
-  const channel: EventChannel<IWorkflowLogItem> = yield call(createWebSocketChannel, url);
-
-  while (true) {
-    const newEvent: IWorkflowLogItem = yield take(channel);
-    const timezone: ReturnType<typeof getUserTimezone> = yield select(getUserTimezone);
-    const { data }: IStoreTask = yield select(getTaskStore);
-    const { workflow }: IStoreTask = yield select(getWorkflowsStore);
-
-    const formattedNewEvent: IWorkflowLogItem = mapBackendNewEventToRedux(newEvent, timezone);
-
-    if (newEvent.workflowId === data?.workflow.id || newEvent?.workflowId === workflow?.id) {
-      yield put(updateWorkflowLogItem(formattedNewEvent));
-      yield put(updateTaskWorkflowLogItem(formattedNewEvent));
-    }
   }
 }
 
