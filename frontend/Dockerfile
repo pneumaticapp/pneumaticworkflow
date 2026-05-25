@@ -23,6 +23,6 @@ RUN npm ci --legacy-peer-deps
 ADD . /pneumatic_frontend/
 
 # Build webpack bundle at image build time (env-independent since runtime config refactor)
-RUN NODE_ENV=production npx webpack
+RUN npm run build-client:prod
 
 CMD ["pm2-runtime", "start", "pm2.json"]
