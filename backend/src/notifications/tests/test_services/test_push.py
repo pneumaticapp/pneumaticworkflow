@@ -1219,6 +1219,7 @@ class TestPushNotificationService:
 
         # act
         service.send_task_completed(
+            link=link,
             task_id=1,
             task_name=task_name,
             workflow_name=workflow_name,
