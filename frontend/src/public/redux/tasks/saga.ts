@@ -268,7 +268,7 @@ export function* watchShiftTaskList() {
   yield takeLatest(shiftTaskList.type, handleShiftTaskList);
 }
 
-export function* handleAddTask(newTask: ITaskListItem): Generator {
+export function* handleAddTask(newTask: ITaskListItem) {
   const totalTasksCount: ReturnType<typeof getTotalTasksCount> = yield select(getTotalTasksCount);
   if (totalTasksCount !== null) {
     yield put(changeTasksCount(totalTasksCount + 1));
@@ -295,7 +295,7 @@ export function* handleAddTask(newTask: ITaskListItem): Generator {
   }
 }
 
-export function* handleRemoveTask(taskId: number): Generator {
+export function* handleRemoveTask(taskId: number) {
   const totalTasksCount: ReturnType<typeof getTotalTasksCount> = yield select(getTotalTasksCount);
   if (totalTasksCount !== null) {
     yield put(changeTasksCount(totalTasksCount - 1));

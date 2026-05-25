@@ -1,3 +1,4 @@
+import type { EventChannel } from 'redux-saga';
 import { call, put, select, take } from 'redux-saga/effects';
 
 import { updateTaskWorkflowLogItem } from '../actions';
@@ -23,7 +24,7 @@ import { mapWsEnvelopeToWorkflowLogItem } from './utils/mapWorkflowLogEventFromW
 import type { IRealtimeWsEnvelope, INotificationWsEnvelope } from './types';
 import { isNotificationWsEventType } from './types';
 
-function* prependNotificationItem(item: TNotificationsListItem): Generator {
+function* prependNotificationItem(item: TNotificationsListItem) {
   const {
     items: currentNotificationsList,
     totalItemsCount,
@@ -38,16 +39,16 @@ function* prependNotificationItem(item: TNotificationsListItem): Generator {
   }
 }
 
-function* routeRealtimeEvent(envelope: IRealtimeWsEnvelope): Generator {
+function* routeRealtimeEvent(envelope: IRealtimeWsEnvelope) {
   switch (envelope.type) {
     case 'task_created': {
       const task = mapTaskCreatedDataToListItem(envelope.data);
-      yield* handleAddTask(task);
+      yield call(handleAddTask, task);
       break;
     }
     case 'task_completed':
     case 'task_deleted': {
-      yield* handleRemoveTask(envelope.data.id);
+      yield call(handleRemoveTask, envelope.data.id);
       break;
     }
     case 'event_created':
@@ -74,23 +75,23 @@ function* routeRealtimeEvent(envelope: IRealtimeWsEnvelope): Generator {
       if (isNotificationWsEventType(envelope.type)) {
         const item = mapRealtimeEnvelopeToNotificationItem(envelope as INotificationWsEnvelope);
         if (item) {
-          yield* prependNotificationItem(item);
+          yield call(prependNotificationItem, item);
         }
       }
   }
 }
 
-export function* watchWsEvents(): Generator {
+export function* watchWsEvents() {
   const { api: { wsPublicUrl, urls } } = getBrowserConfigEnv();
   const url = mergePaths(
     envWssURL || wsPublicUrl,
     `${urls.wsEvents}?auth_token=${parseCookies(document.cookie).token}`,
   );
 
-  const channel = yield call(createWebSocketChannel, url);
+  const channel: EventChannel<IRealtimeWsEnvelope> = yield call(createWebSocketChannel, url);
 
   while (true) {
-    const envelope = (yield take(channel)) as IRealtimeWsEnvelope;
-    yield* routeRealtimeEvent(envelope);
+    const envelope: IRealtimeWsEnvelope = yield take(channel);
+    yield call(routeRealtimeEvent, envelope);
   }
 }
