@@ -15,6 +15,7 @@ import { envWssURL } from '../../constants/enviroment';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { mapBackendNewEventToRedux } from '../../utils/mappers';
 import { mergePaths } from '../../utils/urls';
+import { logger } from '../../utils/logger';
 import type { IStoreTask, IStoreWorkflows } from '../../types/redux';
 import type { TNotificationsListItem } from '../../types';
 
@@ -56,6 +57,7 @@ function* routeRealtimeEvent(envelope: IRealtimeWsEnvelope) {
       const logItem = mapWsEnvelopeToWorkflowLogItem(envelope);
 
       if (!logItem) {
+        logger.error(`unhandled WebSocket event: ${envelope.type}, id=${envelope.id}`);
         break;
       }
 
@@ -76,7 +78,11 @@ function* routeRealtimeEvent(envelope: IRealtimeWsEnvelope) {
         const item = mapRealtimeEnvelopeToNotificationItem(envelope as INotificationWsEnvelope);
         if (item) {
           yield call(prependNotificationItem, item);
+        } else {
+          logger.error(`unhandled WebSocket event: ${envelope.type}, id=${envelope.id}`);
         }
+      } else {
+        logger.error(`unhandled WebSocket event: ${envelope.type}, id=${envelope.id}`);
       }
   }
 }
