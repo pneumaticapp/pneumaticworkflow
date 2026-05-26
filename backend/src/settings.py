@@ -63,7 +63,11 @@ class Common(Configuration):
     EXPIRED_INVITE_PAGE = f'{FRONTEND_URL}/auth/expired-invite'
 
     # Forms
-    FORMS_URL = env.get('FORMS_URL')
+    # If FORMS_URL is not set, auto-derive from FRONTEND_URL (path-based mode).
+    # Supports both modes:
+    #   - Path-based:  FORMS_URL=https://mycompany.com/forms (default)
+    #   - Subdomain:   FORMS_URL=https://form.mycompany.com (explicit)
+    FORMS_URL = env.get('FORMS_URL') or f'{FRONTEND_URL}/forms'
 
     # Auth
     AUTH_USER_MODEL = 'accounts.User'
