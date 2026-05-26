@@ -4,12 +4,13 @@ import { Redirect, Route, Router, Switch } from 'react-router-dom';
 import { IntlProvider } from 'react-intl';
 import { Provider } from 'react-redux';
 
+import { createBrowserHistory } from 'history';
 import { store } from './redux/store';
-import { history } from './utils/history';
 
 import { initSentry } from './utils/initSentry';
 import { getPublicFormConfig } from './utils/getConfig';
 
+import { getFormsBasename } from './utils/identifyAppPart/constants';
 import { EPublicFormRoutes } from './constants/routes';
 import { SharedPublicForm, EmbeddedPublicForm } from './components/PublicFormsApp';
 import { AppLocale } from './lang';
@@ -25,13 +26,17 @@ initSentry(getPublicFormConfig, 'forms');
 const {
   config: { mainPage },
 } = getPublicFormConfig();
+
+const formsHistory = createBrowserHistory({
+  basename: getFormsBasename(window.location.pathname),
+});
 const currentAppLocale = AppLocale[defaultLocale];
 
 ReactDOM.render(
   <Provider store={store}>
     <React.Suspense fallback={<div className="loading" />}>
 
-      <Router history={history}>
+      <Router history={formsHistory}>
         <IntlProvider locale={currentAppLocale.locale} messages={currentAppLocale.messages}>
           <Switch>
             <Route
