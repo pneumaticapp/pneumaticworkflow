@@ -475,6 +475,7 @@ services:
       - ./nginx/keys/:/etc/keys/:ro
       - ./nginx/www/:/var/www/:ro
       - ${NGINX_CONF_TEMPLATE:-./nginx/templates/}:/etc/nginx/templates
+      - ./nginx/includes/:/etc/nginx/includes/:ro
       - backend-socket:/tmp/gunicorn/
       - backend-staticfiles:/tmp/backend-staticfiles/
     ports:
