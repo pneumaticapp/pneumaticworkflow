@@ -67,7 +67,10 @@ class Common(Configuration):
     # Supports both modes:
     #   - Path-based:  FORMS_URL=https://mycompany.com/forms (default)
     #   - Subdomain:   FORMS_URL=https://form.mycompany.com (explicit)
-    FORMS_URL = env.get('FORMS_URL') or f'{FRONTEND_URL}/forms'
+    FORMS_URL = (
+        env.get('FORMS_URL')
+        or (f'{FRONTEND_URL}/forms' if FRONTEND_URL else None)
+    )
 
     # Auth
     AUTH_USER_MODEL = 'accounts.User'
