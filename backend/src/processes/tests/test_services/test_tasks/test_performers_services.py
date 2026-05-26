@@ -2090,10 +2090,10 @@ class TestTaskPerformersService:
             GroupPerformerService,
             attribute='delete_performer',
         )
-        send_removed_task_notification_mock = (
+        send_task_deleted_notification_mock = (
             mocker.patch(
                 'src.notifications.tasks'
-                '.send_removed_task_notification.delay',
+                '.send_task_deleted_notification.delay',
             )
         )
 
@@ -2117,7 +2117,7 @@ class TestTaskPerformersService:
             group_id=sub_group.id,
             run_actions=False,
         )
-        send_removed_task_notification_mock.assert_called_once_with(
+        send_task_deleted_notification_mock.assert_called_once_with(
             task_id=task.id,
             recipients=[
                 (
