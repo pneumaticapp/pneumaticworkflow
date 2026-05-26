@@ -472,7 +472,7 @@ services:
       NGINX_ENVSUBST_TEMPLATE_DIR: /etc/nginx/templates
     volumes:
       - ./nginx/logs/:/var/log/nginx/
-      - /etc/letsencrypt/live:/etc/keys/:ro
+      - ./nginx/keys/:/etc/keys/:ro
       - ./nginx/www/:/var/www/:ro
       - ${NGINX_CONF_TEMPLATE:-./nginx/templates/}:/etc/nginx/templates
       - backend-socket:/tmp/gunicorn/
