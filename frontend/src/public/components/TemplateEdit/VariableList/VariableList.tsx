@@ -1,4 +1,5 @@
-import React, { MouseEventHandler, useRef, useState } from 'react';
+import * as React from 'react';
+import { MouseEventHandler, useRef, useState } from 'react';
 import OutsideClickHandler from 'react-outside-click-handler';
 import * as PerfectScrollbar from 'react-perfect-scrollbar';
 import { Tooltip as ReactstrapTooltip } from 'reactstrap';
@@ -10,6 +11,7 @@ import { isArrayWithItems } from '../../../utils/helpers';
 import { ExpandIcon } from '../../icons';
 import { ELearnMoreLinks } from '../../../constants/defaultValues';
 import { TTaskVariable } from '../types';
+import { getLocalizedSystemVariable } from '../TaskForm/utils/getTaskVariables';
 import { useCheckDevice } from '../../../hooks/useCheckDevice';
 import { TooltipRichContent } from '../TooltipRichContent';
 import styles from './VariableList.css';
@@ -97,11 +99,18 @@ export const VariableList = ({
               options={{ suppressScrollX: true, wheelPropagation: false }}
             >
               {variables.map(({ title, richSubtitle, subtitle, apiName }) => {
+                const { title: displayTitle, subtitle: displaySubtitle } = getLocalizedSystemVariable({
+                  apiName,
+                  title,
+                  subtitle,
+                  formatMessage,
+                });
+
                 return (
                   <Tooltip
                     interactive={false}
                     containerClassName={styles['condition__tooltop']}
-                    content={<TooltipRichContent title={title} subtitle={subtitle || ''} variables={variables} />}
+                    content={<TooltipRichContent title={displayTitle} subtitle={displaySubtitle || ''} variables={variables} />}
                     key={apiName}
                   >
                     <p
@@ -113,8 +122,8 @@ export const VariableList = ({
                       tabIndex={0}
                       onKeyDown={(e) => e.key === 'Enter' && onVariableClick(apiName)}
                     >
-                      <span className={styles['variable-list-item__name']}>{title}</span>
-                      <span className={styles['variable-list-item__task-name']}>{richSubtitle || subtitle}</span>
+                      <span className={styles['variable-list-item__name']}>{displayTitle}</span>
+                      <span className={styles['variable-list-item__task-name']}>{richSubtitle || displaySubtitle}</span>
                     </p>
                   </Tooltip>
                 );

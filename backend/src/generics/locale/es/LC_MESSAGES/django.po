@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-13 13:45+0000\n"
+"POT-Creation-Date: 2026-04-07 11:48+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,80 +17,61 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: generics/messages.py:6
 #, python-brace-format
 msgid "'{choice}' is an invalid value for the filter"
 msgstr "'{choice}' es un valor no válido para el filtro."
 
 #. Translators: AccountPrimaryKeyRelatedField incorrect init
-#: generics/messages.py:10
 msgid "Account or queryset not provided"
 msgstr "Cuenta o conjunto de consultas no proporcionado"
 
-#: generics/messages.py:11
 msgid "Value should be a list of integers."
 msgstr "El valor debe ser una lista de enteros."
 
-#: generics/messages.py:13
 msgid "The \"raise_validation_error\" method should be used only after calling the \"is_valid\" method"
 msgstr "El método \"raise_validation_error\" debe usarse solo después de llamar al método \"is_valid\"."
 
-#: generics/messages.py:17
 msgid "You need to set a \"Meta.fields\" value before using AdditionalValidationMixin"
 msgstr "Debe establecer un valor para \"Meta.fields\" antes de usar AdditionalValidationMixin."
 
-#: generics/messages.py:20
 msgid "Numeric type expected."
 msgstr "Se espera un tipo numérico."
 
-#: generics/messages.py:22
 msgid "Jan"
 msgstr "Ene"
 
-#: generics/messages.py:23
 msgid "Feb"
 msgstr "Feb"
 
-#: generics/messages.py:24
 msgid "Mar"
 msgstr "Mar"
 
-#: generics/messages.py:25
 msgid "Apr"
 msgstr "Abr"
 
-#: generics/messages.py:26
 msgid "May"
 msgstr "May"
 
-#: generics/messages.py:27
 msgid "Jun"
 msgstr "Jun"
 
-#: generics/messages.py:28
 msgid "Jul"
 msgstr "Jul"
 
-#: generics/messages.py:29
 msgid "Aug"
 msgstr "Ago"
 
-#: generics/messages.py:30
 msgid "Sep"
 msgstr "Sep"
 
-#: generics/messages.py:31
 msgid "Oct"
 msgstr "Oct"
 
-#: generics/messages.py:32
 msgid "Nov"
 msgstr "Nov"
 
-#: generics/messages.py:33
 msgid "Dec"
 msgstr "Dic"
 
-#: generics/messages.py:36
 msgid "An incorrect value has been passed in; a timestamp format is expected."
 msgstr "Se ha proporcionado un valor incorrecto; se espera un valor en formato timestamp."

@@ -1,6 +1,6 @@
-/* eslint-disable */
-/* prettier-ignore */
+
 import * as React from 'react';
+import { useCallback } from 'react';
 import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
@@ -25,12 +25,12 @@ export function WorkflowLogTaskSkipped({ task, theme }: IWorkflowLogTaskSkippedP
       return null;
     }
 
-    const usersLeft = Math.max(task?.performers.length - MAX_SHOW_USERS, 0);
+    const usersLeft = Math.max(task.performers.length - MAX_SHOW_USERS, 0);
 
     return (
       <div className={styles['performers']}>
-        {task?.performers.slice(0, MAX_SHOW_USERS).map(({sourceId}, index) => (
-          <UserData userId={sourceId}>
+        {task?.performers.slice(0, MAX_SHOW_USERS).map(({sourceId}) => (
+          <UserData key={sourceId} userId={sourceId}>
             {user => {
               if (!user) {
                 return null;
@@ -38,7 +38,6 @@ export function WorkflowLogTaskSkipped({ task, theme }: IWorkflowLogTaskSkippedP
 
               return (
                 <Avatar
-                  key={index}
                   user={user}
                   size="sm"
                   containerClassName={styles['performer']}
@@ -58,7 +57,7 @@ export function WorkflowLogTaskSkipped({ task, theme }: IWorkflowLogTaskSkippedP
     );
   };
 
-  const getThemeClassName = React.useCallback(() => {
+  const getThemeClassName = useCallback(() => {
     const themeClassNameMap: { [key in TWorkflowLogTheme]: string } = {
       beige: styles['container-beige'],
       white: styles['container-white'],
@@ -71,17 +70,13 @@ export function WorkflowLogTaskSkipped({ task, theme }: IWorkflowLogTaskSkippedP
     <div className={classnames(styles['container'], getThemeClassName())}>
       <div className={styles['top-area']}>
         <div className={styles['top-area__meta']}>
-          <p className={styles['pre-title']}>
-            {formatMessage({ id: 'workflows.step-pre-title' }, { task: task?.number })}
-          </p>
+          <Header tag="h3" size="6" className={styles['task-name']}>
+            {task?.name}
+          </Header>
           <p className={styles['skipped']}>
             {formatMessage({ id: 'workflows.log-task-skipped' })}
           </p>
         </div>
-
-        <Header tag="h3" size="6" className={styles['task-name']}>
-          {task?.name}
-        </Header>
       </div>
 
       <div className={styles['bottom-area']}>

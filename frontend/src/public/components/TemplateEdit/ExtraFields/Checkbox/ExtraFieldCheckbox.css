@@ -9,6 +9,7 @@
     font-family: Nunito, sans-serif;
     font-size: 15.04px;
     line-height: 16px;
+    white-space: pre;
   }
 }
 
@@ -50,7 +51,6 @@
 
 .kickoff-create-field-options {
   margin: 0;
-  margin-top: 8px;
   padding: 0;
   list-style: none;
 }
@@ -70,11 +70,11 @@
 }
 
 .labeled-checkbox__remove-icon {
+  margin-left: 8px;
   cursor: pointer;
 }
 
 .labeled-checkbox__input {
-  width: 95px;
   max-width: calc(100% - 50px);
   border: none;
 
@@ -89,13 +89,12 @@
 }
 
 .kickoff-create-field-add-option {
+  @mixin btn-field-action;
+
   margin: 0;
   padding: 0;
   overflow: visible;
   width: auto;
-  color: #fec336;
-  background: transparent;
-  border: none;
 }
 
 .kickoff-set-field-container {

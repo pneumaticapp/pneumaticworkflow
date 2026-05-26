@@ -64,6 +64,9 @@ export function TaskItemUsers({ task, maxUsers = MAX_SHOW_USERS, onClick }: ITas
       [ETaskPerformerType.WorkflowStarter]: () => {
         return <Avatar size="sm" containerClassName={styles['card-user']} isEmpty />;
       },
+      [ETaskPerformerType.Manager]: () => {
+        return <Avatar size="sm" containerClassName={styles['card-user']} isEmpty />;
+      },
     };
 
     return performer.type && performerRenderMap[performer.type](performer);

@@ -16,4 +16,6 @@ export interface IUsersProps {
   openTeamInvitesPopup(): void;
   loadInvitesUsers(): void;
   setGeneralLoaderVisibility(isVisible: boolean): void;
+  loadChangeUserManager(payload: { id: number; managerId: number | null; onSuccess?: () => void; onError?: () => void }): void;
+  loadChangeUserReports(payload: { id: number; reportIds: number[]; onSuccess?: () => void; onError?: () => void }): void;
 }

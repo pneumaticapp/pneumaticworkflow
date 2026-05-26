@@ -4,7 +4,10 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.utils import timezone
 
+from src.accounts.enums import BillingPlanType
+
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     TaskStatus,
     WorkflowStatus,
@@ -17,6 +20,7 @@ from src.processes.services.exceptions import (
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
+    create_test_not_admin,
     create_test_owner,
     create_test_template,
     create_test_user,
@@ -158,6 +162,7 @@ def test_resume__template_owner__not_admin__permission_denied(
         tasks_count=1,
     )
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account_owner.account,
         type=OwnerType.USER,
@@ -210,3 +215,103 @@ def test_resume__service_exception__validation_error(
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
     assert response.data['message'] == message
     resume_mock.assert_called_once()
+
+
+def test_resume__not_authenticated__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+
+    # act
+    response = api_client.post(f'/workflows/{workflow.id}/resume')
+
+    # assert
+    assert response.status_code == 401
+
+
+def test_resume__expired_subscription__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.UNLIMITED,
+        plan_expiration=timezone.now() - timedelta(hours=1),
+    )
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(f'/workflows/{workflow.id}/resume')
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_resume__billing_plan__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(plan=None)
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(f'/workflows/{workflow.id}/resume')
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_resume__not_owner__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    admin = create_test_admin(
+        account=account,
+        email='admin@test.test',
+    )
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(admin)
+
+    # act
+    response = api_client.post(f'/workflows/{workflow.id}/resume')
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_resume__users_overlimited__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.PREMIUM,
+        max_users=1,
+    )
+    owner = create_test_owner(account=account)
+    create_test_not_admin(account=account)
+    account.active_users = 2
+    account.save()
+    workflow = create_test_workflow(user=owner, tasks_count=1)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.post(f'/workflows/{workflow.id}/resume')
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_resume__not_found__not_found(api_client):
+
+    # arrange
+    user = create_test_owner()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post('/workflows/99999999/resume')
+
+    # assert
+    assert response.status_code == 404

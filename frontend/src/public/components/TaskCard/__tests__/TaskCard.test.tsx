@@ -171,6 +171,7 @@ const baseWorkflowLog = {
   items: [],
   isCommentsShown: false,
   isOnlyAttachmentsShown: false,
+  isSkippedTasksShown: false,
   sorting: EWorkflowsLogSorting.New,
   isOpen: false,
   workflowId: null,
@@ -217,6 +218,8 @@ const baseAuthUser = {
   isNewTasksSubscriber: false,
   isNewslettersSubscriber: false,
   isSpecialOffersSubscriber: false,
+  managerId: null,
+  reportIds: [],
 };
 
 const baseProps = {
@@ -236,6 +239,7 @@ const baseProps = {
   setWorkflowFinished: jest.fn(),
   sendTaskWorkflowLogComments: jest.fn(),
   changeTaskWorkflowLogViewSettings: jest.fn(),
+  toggleTaskSkippedTasksVisibility: jest.fn(),
   setCurrentTask: jest.fn(),
   clearWorkflow: jest.fn(),
   openWorkflowLogPopup: jest.fn(),

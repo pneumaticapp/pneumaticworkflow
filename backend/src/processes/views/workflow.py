@@ -25,7 +25,9 @@ from src.generics.permissions import (
     IsAuthenticated,
     UserIsAuthenticated,
 )
-from src.processes.enums import WorkflowEventType
+from src.processes.enums import (
+    WorkflowEventType,
+)
 from src.processes.filters import (
     WorkflowEventFilter,
     WorkflowWebhookFilterSet,
@@ -36,7 +38,8 @@ from src.processes.paginations import WorkflowListPagination
 from src.processes.permissions import (
     GuestWorkflowEventsPermission,
     GuestWorkflowPermission,
-    WorkflowMemberPermission,
+    WorkflowCommentPermission,
+    WorkflowMemberOrViewerPermission,
     WorkflowOwnerPermission,
 )
 from src.processes.serializers.comments import CommentCreateSerializer
@@ -109,9 +112,7 @@ class WorkflowViewSet(
     def get_queryset(self):
         user = self.request.user
         queryset = Workflow.objects.on_account(user.account_id)
-        if self.action in ('list', 'fields'):
-            queryset = queryset.with_member(user)
-        elif self.action == 'webhook_example':
+        if self.action == 'webhook_example':
             queryset = queryset.filter(
                 owners=user.id,
             ).order_by('-date_created')
@@ -163,7 +164,6 @@ class WorkflowViewSet(
                 UserIsAuthenticated(),
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
-                UserIsAdminOrAccountOwner(),
             )
         if self.action == 'fields':
             return (
@@ -176,7 +176,7 @@ class WorkflowViewSet(
                 UserIsAuthenticated(),
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
-                WorkflowMemberPermission(),
+                WorkflowMemberOrViewerPermission(),
             )
         if self.action in (
             'destroy',
@@ -209,7 +209,7 @@ class WorkflowViewSet(
                 ExpiredSubscriptionPermission(),
                 UsersOverlimitedPermission(),
                 GuestWorkflowPermission(),
-                WorkflowMemberPermission(),
+                WorkflowCommentPermission(),
             )
         if self.action == 'complete':
             return (
@@ -225,7 +225,7 @@ class WorkflowViewSet(
                 BillingPlanPermission(),
                 ExpiredSubscriptionPermission(),
                 GuestWorkflowEventsPermission(),
-                WorkflowMemberPermission(),
+                WorkflowMemberOrViewerPermission(),
             )
         if self.action == 'webhook_example':
             return (

@@ -63,6 +63,9 @@ __all__ = [
     'send_comment_notification',
     'send_complete_task_notification',
     'send_completed_workflow_notification',
+    'send_dataset_created_notification',
+    'send_dataset_deleted_notification',
+    'send_dataset_updated_notification',
     'send_delayed_workflow_notification',
     'send_due_date_changed',
     'send_group_created_notification',
@@ -88,6 +91,7 @@ __all__ = [
     'send_user_deleted_notification',
     'send_user_transfer_notification',
     'send_user_updated_notification',
+    'send_vacation_delegation_notification',
     'send_verification_notification',
     'send_workflow_comment_watched',
     'send_workflow_event',
@@ -717,21 +721,18 @@ def _send_completed_workflow_notification(
         .get(id=workflow_id)
     )
     if workflow.is_external:
-        workflow_starter_name = 'External User'
-        workflow_starter_photo = None
-    else:
-        workflow_starter_name = workflow.workflow_starter.name
-        workflow_starter_photo = workflow.workflow_starter.photo
+        return
+    workflow_starter_name = workflow.workflow_starter.name
+    workflow_starter_photo = workflow.workflow_starter.photo
 
     workflow_json = NotificationWorkflowSerializer(instance=workflow).data
     users = (
-        TaskPerformer.objects
-        .acd_task_status()
-        .users()
-        .by_workflow(workflow_id)
-        .exclude_directly_deleted()
-        .order_by('id')
-        .get_user_ids_name_emails_subscriber_set()
+        (
+            workflow.workflow_starter.id,
+            workflow.workflow_starter.email,
+            workflow.workflow_starter.first_name,
+            True,
+        ),
     )
     link = f'{settings.FRONTEND_URL}/workflows/{workflow_id}'
 
@@ -1440,3 +1441,120 @@ def _send_user_deleted_notification(
 @shared_task(base=NotificationTask)
 def send_user_deleted_notification(**kwargs):
     _send_user_deleted_notification(**kwargs)
+
+
+def _send_dataset_created_notification(
+    logging: bool,
+    account_id: int,
+    dataset_data: dict,
+    **kwargs,
+):
+    users = UserModel.objects.filter(
+        account_id=account_id,
+        status=UserStatus.ACTIVE,
+    ).values_list('id', 'email')
+
+    for (user_id, user_email) in users:
+        _send_notification(
+            method_name=NotificationMethod.dataset_created,
+            account_id=account_id,
+            user_id=user_id,
+            user_email=user_email,
+            logging=logging,
+            dataset_data=dataset_data,
+            sync=True,
+        )
+
+
+@shared_task(base=NotificationTask)
+def send_dataset_created_notification(**kwargs):
+    _send_dataset_created_notification(**kwargs)
+
+
+def _send_dataset_updated_notification(
+    logging: bool,
+    account_id: int,
+    dataset_data: dict,
+    **kwargs,
+):
+    users = UserModel.objects.filter(
+        account_id=account_id,
+        status=UserStatus.ACTIVE,
+    ).values_list('id', 'email')
+
+    for (user_id, user_email) in users:
+        _send_notification(
+            method_name=NotificationMethod.dataset_updated,
+            account_id=account_id,
+            user_id=user_id,
+            user_email=user_email,
+            logging=logging,
+            dataset_data=dataset_data,
+            sync=True,
+        )
+
+
+@shared_task(base=NotificationTask)
+def send_dataset_updated_notification(**kwargs):
+    _send_dataset_updated_notification(**kwargs)
+
+
+def _send_dataset_deleted_notification(
+    logging: bool,
+    account_id: int,
+    dataset_data: dict,
+    **kwargs,
+):
+    users = UserModel.objects.filter(
+        account_id=account_id,
+        status=UserStatus.ACTIVE,
+    ).values_list('id', 'email')
+
+    for (user_id, user_email) in users:
+        _send_notification(
+            method_name=NotificationMethod.dataset_deleted,
+            account_id=account_id,
+            user_id=user_id,
+            user_email=user_email,
+            logging=logging,
+            dataset_data=dataset_data,
+            sync=True,
+        )
+
+
+@shared_task(base=NotificationTask)
+def send_dataset_deleted_notification(**kwargs):
+    _send_dataset_deleted_notification(**kwargs)
+
+
+def _send_vacation_delegation_notification(
+    user_id: int,
+    user_email: str,
+    user_first_name: str,
+    account_id: int,
+    tasks_count: int,
+    vacation_owner_name: str,
+    logo_lg: Optional[str] = None,
+    logging: bool = False,
+    **kwargs,
+):
+    """Send vacation delegation summary letter through notification system."""
+
+    _send_notification(
+        method_name=NotificationMethod.vacation_delegation,
+        user_id=user_id,
+        user_email=user_email,
+        account_id=account_id,
+        logo_lg=logo_lg,
+        logging=logging,
+        user_first_name=user_first_name,
+        tasks_count=tasks_count,
+        vacation_owner_name=vacation_owner_name,
+        link=f'{settings.FRONTEND_URL}/tasks',
+        sync=True,
+    )
+
+
+@shared_task(base=NotificationTask)
+def send_vacation_delegation_notification(**kwargs):
+    _send_vacation_delegation_notification(**kwargs)

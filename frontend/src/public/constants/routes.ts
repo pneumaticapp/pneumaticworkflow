@@ -49,6 +49,8 @@ export enum ERoutes {
   IntegrationsDetail = '/integrations/:id/',
   GuestTask = '/guest-task/:id/',
   Tenants = '/tenants/',
+  Datasets = '/datasets/',
+  DatasetDetail = '/datasets/:id/',
 }
 
 export enum EPublicFormRoutes {

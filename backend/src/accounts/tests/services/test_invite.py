@@ -45,7 +45,6 @@ UserModel = get_user_model()
 
 
 def test__init_service__ok():
-
     # arrange
     account = create_test_account()
     request_user = create_test_user(account=account)
@@ -67,7 +66,6 @@ def test__init_service__ok():
 
 
 def test_get_invite_token():
-
     # arrange
     account = create_test_account()
     request_user = create_test_user(account=account)
@@ -89,7 +87,6 @@ def test_get_invite_token():
 
 
 def test_get_transfer_token():
-
     # arrange
     account = create_test_account()
     request_user = create_test_user(account=account)
@@ -184,7 +181,6 @@ def test_create_invited_user__ok(mocker):
 
 
 def test_create_invited_user__transfer__ok():
-
     # arrange
     account = create_test_account()
     language = Language.fr
@@ -226,9 +222,12 @@ def test_create_invited_user__transfer__ok():
     # assert
     assert user.email == user_to_transfer.email
     assert user.password == user_to_transfer.password
-    assert UserModel.objects.get_by_natural_key(
-        user_to_transfer.email,
-    ).id == user_to_transfer.id
+    assert (
+        UserModel.objects.get_by_natural_key(
+            user_to_transfer.email,
+        ).id
+        == user_to_transfer.id
+    )
     assert user.timezone == account_owner.timezone
     assert user.language == account_owner.language
     assert user.date_fmt == account_owner.date_fmt
@@ -236,7 +235,6 @@ def test_create_invited_user__transfer__ok():
 
 
 def test_get_another_account_user__ok():
-
     account = create_test_account()
     request_user = create_test_user(account=account)
     user_to_transfer = create_test_user(
@@ -258,7 +256,6 @@ def test_get_another_account_user__ok():
 
 
 def test_get_another_account_user__from_current_account__return_none():
-
     account = create_test_account()
     request_user = create_test_user(account=account)
     another_user = create_test_user(
@@ -305,7 +302,6 @@ def test_get_another_account_user__not_active_status__return_none(status):
 
 
 def test_get_account_user__another_account__return_none():
-
     account = create_test_account()
     request_user = create_test_user(account=account)
     another_invited_user = create_test_user(
@@ -346,7 +342,6 @@ def test_get_account_user__ok():
 
 
 def test_create_user_invite__ok():
-
     # arrange
     request_user = create_test_user()
     current_url = 'http://current.test'
@@ -376,14 +371,12 @@ def test_create_user_invite__ok():
 
 @pytest.mark.parametrize('plan', BillingPlanType.PAYMENT_PLANS)
 def test_user_create_actions__premium__ok(mocker, plan):
-
     # arrange
     account = create_test_account(plan=plan)
     request_user = create_test_user(account=account)
     key = '!@#W32423'
     create_key_mock = mocker.patch(
-        'src.accounts.services.user_invite.'
-        'PneumaticToken.create',
+        'src.accounts.services.user_invite.PneumaticToken.create',
         return_value=key,
     )
     current_url = 'http://current.test'
@@ -395,8 +388,7 @@ def test_user_create_actions__premium__ok(mocker, plan):
         last_name='Invited',
     )
     send_user_created_mock = mocker.patch(
-        'src.notifications.tasks.'
-        'send_user_created_notification.delay',
+        'src.notifications.tasks.send_user_created_notification.delay',
     )
 
     service = UserInviteService(
@@ -431,12 +423,13 @@ def test_user_create_actions__premium__ok(mocker, plan):
             'photo': invited_user.photo,
             'is_admin': invited_user.is_admin,
             'is_account_owner': invited_user.is_account_owner,
+            'manager_id': None,
+            'subordinates_ids': [],
         },
     )
 
 
 def test_user_create_actions__freemium__ok(mocker):
-
     # arrange
     account = create_test_account(plan=BillingPlanType.FREEMIUM)
     request_user = create_test_user(account=account)
@@ -446,13 +439,11 @@ def test_user_create_actions__freemium__ok(mocker):
     invited_user = create_invited_user(user=request_user)
     key = '!@#W32423'
     create_key_mock = mocker.patch(
-        'src.accounts.services.user_invite.'
-        'PneumaticToken.create',
+        'src.accounts.services.user_invite.PneumaticToken.create',
         return_value=key,
     )
     send_user_created_mock = mocker.patch(
-        'src.notifications.tasks.'
-        'send_user_created_notification.delay',
+        'src.notifications.tasks.send_user_created_notification.delay',
     )
 
     service = UserInviteService(
@@ -487,12 +478,13 @@ def test_user_create_actions__freemium__ok(mocker):
             'photo': invited_user.photo,
             'is_admin': invited_user.is_admin,
             'is_account_owner': invited_user.is_account_owner,
+            'manager_id': None,
+            'subordinates_ids': [],
         },
     )
 
 
 def test_send_transfer_email__ok(mocker):
-
     # arrange
     account = create_test_account(logo_lg='https://another/image.jpg')
     request_user = create_test_user(account=account)
@@ -538,7 +530,6 @@ def test_send_transfer_email__ok(mocker):
 
 
 def test_validate_already_accepted__status_accepted__raise_exception():
-
     # arrange
     account = create_test_account()
     request_user = create_test_user(account=account)
@@ -560,7 +551,6 @@ def test_validate_already_accepted__status_accepted__raise_exception():
 
 
 def test_validate_already_accepted__status_invited__ok():
-
     # arrange
     account = create_test_account()
     request_user = create_test_user(account=account)
@@ -578,7 +568,6 @@ def test_validate_already_accepted__status_invited__ok():
 
 
 def test_validate_limit_invites__active_users_less_then_max_users__ok():
-
     # arrange
     account = create_test_account(plan=BillingPlanType.PREMIUM)
     request_user = create_test_user(account=account)
@@ -599,7 +588,6 @@ def test_validate_limit_invites__active_users_less_then_max_users__ok():
 
 
 def test_validate_limit_invites__active_users_less_then_max_invites__ok():
-
     # arrange
     account = create_test_account(plan=BillingPlanType.PREMIUM)
     request_user = create_test_user(account=account)
@@ -620,7 +608,6 @@ def test_validate_limit_invites__active_users_less_then_max_invites__ok():
 
 
 def test_validate_limit_invites__account_invites_limit__raise_exception():
-
     # arrange
     account = create_test_account(plan=BillingPlanType.PREMIUM)
     request_user = create_test_user(account=account)
@@ -650,7 +637,6 @@ def test_validate_limit_invites__account_invites_limit__raise_exception():
     ),
 )
 def test_validate_limit_invites__not_premium_plan__not_raise(plan):
-
     # arrange
     account = create_test_account(plan=plan)
     request_user = create_test_user(account=account)
@@ -671,7 +657,6 @@ def test_validate_limit_invites__not_premium_plan__not_raise(plan):
 
 
 def test__user_invite_actions__ok(mocker):
-
     # arrange
     request_user = create_test_user()
     invited_user = create_invited_user(user=request_user)
@@ -679,8 +664,7 @@ def test__user_invite_actions__ok(mocker):
     is_superuser = False
     invite_token_str = '!@#wweqasd'
     identify_mock = mocker.patch(
-        'src.accounts.services.user_invite.UserInviteService.'
-        'identify',
+        'src.accounts.services.user_invite.UserInviteService.identify',
     )
     invite_token_mock = mocker.patch(
         'src.accounts.services.user_invite.UserInviteService.'
@@ -688,12 +672,10 @@ def test__user_invite_actions__ok(mocker):
         return_value=invite_token_str,
     )
     users_invited_mock = mocker.patch(
-        'src.analysis.services.AnalyticService.'
-        'users_invited',
+        'src.analysis.services.AnalyticService.users_invited',
     )
     users_invite_sent_mock = mocker.patch(
-        'src.analysis.services.AnalyticService.'
-        'users_invite_sent',
+        'src.analysis.services.AnalyticService.users_invite_sent',
     )
     email_message_log = mocker.patch(
         'src.logs.service.AccountLogService.email_message',
@@ -725,7 +707,6 @@ def test__user_invite_actions__ok(mocker):
 
 
 def test__user_invite_actions__enable_logging__create_event(mocker):
-
     # arrange
     account = create_test_account(log_api_requests=True)
     request_user = create_test_owner(account=account)
@@ -734,8 +715,7 @@ def test__user_invite_actions__enable_logging__create_event(mocker):
     is_superuser = False
     invite_token_str = '!@#wweqasd'
     identify_mock = mocker.patch(
-        'src.accounts.services.user_invite.UserInviteService.'
-        'identify',
+        'src.accounts.services.user_invite.UserInviteService.identify',
     )
     invite_token_mock = mocker.patch(
         'src.accounts.services.user_invite.UserInviteService.'
@@ -743,12 +723,10 @@ def test__user_invite_actions__enable_logging__create_event(mocker):
         return_value=invite_token_str,
     )
     users_invited_mock = mocker.patch(
-        'src.analysis.services.AnalyticService.'
-        'users_invited',
+        'src.analysis.services.AnalyticService.users_invited',
     )
     users_invite_sent_mock = mocker.patch(
-        'src.analysis.services.AnalyticService.'
-        'users_invite_sent',
+        'src.analysis.services.AnalyticService.users_invite_sent',
     )
     email_message_log = mocker.patch(
         'src.logs.service.AccountLogService.email_message',
@@ -780,7 +758,6 @@ def test__user_invite_actions__enable_logging__create_event(mocker):
 
 
 def test__user_transfer_actions__ok(mocker):
-
     # arrange
     request_user = create_test_user()
     invited_user = create_invited_user(user=request_user)
@@ -789,8 +766,7 @@ def test__user_transfer_actions__ok(mocker):
     is_superuser = False
     invite_token_str = '!@#wweqasd'
     identify_mock = mocker.patch(
-        'src.accounts.services.user_invite.UserInviteService.'
-        'identify',
+        'src.accounts.services.user_invite.UserInviteService.identify',
     )
     invite_token_mock = mocker.patch(
         'src.accounts.services.user_invite.UserInviteService.'
@@ -798,12 +774,10 @@ def test__user_transfer_actions__ok(mocker):
         return_value=invite_token_str,
     )
     users_invited_mock = mocker.patch(
-        'src.analysis.services.AnalyticService.'
-        'users_invited',
+        'src.analysis.services.AnalyticService.users_invited',
     )
     users_invite_sent_mock = mocker.patch(
-        'src.analysis.services.AnalyticService.'
-        'users_invite_sent',
+        'src.analysis.services.AnalyticService.users_invite_sent',
     )
     service = UserInviteService(
         current_url=current_url,
@@ -834,7 +808,6 @@ def test__user_transfer_actions__ok(mocker):
 
 
 def test_invite_new_user__all_fields__ok(mocker):
-
     # arrange
     request_user = create_test_user()
     invited_user = create_invited_user(user=request_user)
@@ -909,7 +882,6 @@ def test_invite_new_user__all_fields__ok(mocker):
 
 
 def test_invite_new_user__only_required_fields__ok(mocker):
-
     # arrange
     request_user = create_test_user()
     invited_user = create_invited_user(user=request_user)
@@ -979,7 +951,6 @@ def test_invite_new_user__only_required_fields__ok(mocker):
 
 
 def test_invite_new_user__already_accepted__ok(mocker):
-
     # arrange
     request_user = create_test_user()
     invited_user = create_invited_user(user=request_user)
@@ -1042,7 +1013,6 @@ def test_invite_new_user__already_accepted__ok(mocker):
 
 
 def test_invite_new_user__not_send_email__ok(mocker):
-
     # arrange
     request_user = create_test_user()
     invited_user = create_invited_user(user=request_user)
@@ -1115,7 +1085,6 @@ def test_invite_new_user__not_send_email__ok(mocker):
 
 
 def test_transfer_existent_user__all_fields__ok(mocker):
-
     # arrange
     request_user = create_test_user()
     invited_user = create_invited_user(user=request_user)
@@ -1208,7 +1177,6 @@ def test_transfer_existent_user__all_fields__ok(mocker):
 
 
 def test_transfer_existent_user__only_required_fields__ok(mocker):
-
     # arrange
     request_user = create_test_user()
     invited_user = create_invited_user(user=request_user)
@@ -1296,7 +1264,6 @@ def test_transfer_existent_user__only_required_fields__ok(mocker):
 
 
 def test_transfer_existent_user__already_accepted__ok(mocker):
-
     # arrange
     request_user = create_test_user()
     invited_user = create_invited_user(
@@ -1371,7 +1338,6 @@ def test_transfer_existent_user__already_accepted__ok(mocker):
 
 
 def test_transfer_existent_user__not_send_email__ok(mocker):
-
     # arrange
     request_user = create_test_user()
     invited_user = create_invited_user(user=request_user)
@@ -1459,7 +1425,6 @@ def test_transfer_existent_user__not_send_email__ok(mocker):
 
 
 def test_resend_invite__ok(mocker):
-
     # arrange
     account = create_test_account()
     request_user = create_test_user(account=account)
@@ -1496,7 +1461,6 @@ def test_resend_invite__ok(mocker):
 
 
 def test_resend_invite_transfer__ok(mocker):
-
     # arrange
     user_to_transfer = create_test_user(email='transfer@test.test')
     account = create_test_account()
@@ -1532,7 +1496,6 @@ def test_resend_invite_transfer__ok(mocker):
     send_transfer_email_mock.assert_called_once_with(
         current_account_user=invited_user,
         another_account_user=user_to_transfer,
-
     )
     user_transfer_actions_mock.assert_called_once_with(
         current_account_user=invited_user,
@@ -1542,7 +1505,6 @@ def test_resend_invite_transfer__ok(mocker):
 
 
 def test_resend_invite__invite_yourself__raise_exception(mocker):
-
     # arrange
     account = create_test_account()
     request_user = create_test_user(account=account)
@@ -1577,7 +1539,6 @@ def test_resend_invite__invite_yourself__raise_exception(mocker):
 
 
 def test_resend_invite__non_existent_user__raise_exception(mocker):
-
     # arrange
     account = create_test_account()
     another_account_owner = create_test_user(email='another.owner@test.test')
@@ -1616,7 +1577,6 @@ def test_resend_invite__non_existent_user__raise_exception(mocker):
 
 
 def test_resend_invite__already_active_user__raise_exception(mocker):
-
     # arrange
     account = create_test_account()
     invited_user = create_test_user(account=account, email='invited@test.test')
@@ -1652,7 +1612,6 @@ def test_resend_invite__already_active_user__raise_exception(mocker):
 
 
 def test_invite_user__ok(mocker):
-
     # arrange
     request_user = create_test_user()
     group = create_test_group(account=request_user.account)
@@ -1672,8 +1631,7 @@ def test_invite_user__ok(mocker):
         request_user=request_user,
     )
     invite_new_user_mock = mocker.patch(
-        'src.accounts.services.user_invite.UserInviteService.'
-        '_invite_new_user',
+        'src.accounts.services.user_invite.UserInviteService._invite_new_user',
     )
     transfer_existent_user_mock = mocker.patch(
         'src.accounts.services.user_invite.UserInviteService.'
@@ -1689,7 +1647,6 @@ def test_invite_user__ok(mocker):
 
 
 def test_invite_user__transfer_invite__ok(mocker):
-
     # arrange
     user_to_transfer = create_test_user(
         email='transfer@test.test',
@@ -1710,8 +1667,7 @@ def test_invite_user__transfer_invite__ok(mocker):
         request_user=request_user,
     )
     invite_new_user_mock = mocker.patch(
-        'src.accounts.services.user_invite.UserInviteService.'
-        '_invite_new_user',
+        'src.accounts.services.user_invite.UserInviteService._invite_new_user',
     )
     transfer_existent_user_mock = mocker.patch(
         'src.accounts.services.user_invite.UserInviteService.'
@@ -1731,7 +1687,6 @@ def test_invite_user__transfer_invite__ok(mocker):
 
 
 def test_invite_user__update_contacts__ok(mocker):
-
     # arrange
     email = 'test_1@ms.test'
     invite_data = InviteData(
@@ -1759,8 +1714,7 @@ def test_invite_user__update_contacts__ok(mocker):
         request_user=request_user,
     )
     invite_new_user_mock = mocker.patch(
-        'src.accounts.services.user_invite.UserInviteService.'
-        '_invite_new_user',
+        'src.accounts.services.user_invite.UserInviteService._invite_new_user',
     )
     transfer_existent_user_mock = mocker.patch(
         'src.accounts.services.user_invite.UserInviteService.'
@@ -1824,7 +1778,6 @@ def test_invite_user__update_contacts__ok(mocker):
 
 
 def test_invite_users__ok(mocker):
-
     # arrange
     invite_data_1 = InviteData(
         invited_from=SourceType.EMAIL,
@@ -1856,14 +1809,15 @@ def test_invite_users__ok(mocker):
     service.invite_users(data=[invite_data_1, invite_data_2])
 
     # assert
-    invite_user_mock.has_calls([
-        mocker.call(**invite_data_1),
-        mocker.call(**invite_data_2),
-    ])
+    invite_user_mock.assert_has_calls(
+        [
+            mocker.call(**invite_data_1),
+            mocker.call(**invite_data_2),
+        ],
+    )
 
 
 def test__accept__all_fields__ok(identify_mock, group_mock, mocker):
-
     # arrange
     account = create_test_account(plan=BillingPlanType.UNLIMITED)
     request_user = create_test_user(
@@ -1904,23 +1858,19 @@ def test__accept__all_fields__ok(identify_mock, group_mock, mocker):
         return_value=None,
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.user_invite.AccountService.'
-        'update_users_counts',
+        'src.accounts.services.user_invite.AccountService.update_users_counts',
     )
     increase_plan_users_mock = mocker.patch(
-        'src.accounts.services.user_invite.'
-        'increase_plan_users.delay',
+        'src.accounts.services.user_invite.increase_plan_users.delay',
     )
     users_joined_mock = mocker.patch(
-        'src.accounts.services.user_invite.'
-        'AnalyticService.users_joined',
+        'src.accounts.services.user_invite.AnalyticService.users_joined',
     )
     settings_mock = mocker.patch(
         'src.accounts.services.user_invite.settings',
     )
     send_user_updated_mock = mocker.patch(
-        'src.notifications.tasks.'
-        'send_user_updated_notification.delay',
+        'src.notifications.tasks.send_user_updated_notification.delay',
     )
     settings_mock.PROJECT_CONF = {'BILLING': True}
     first_name = 'John'
@@ -1975,12 +1925,13 @@ def test__accept__all_fields__ok(identify_mock, group_mock, mocker):
             'photo': invited_user.photo,
             'is_admin': invited_user.is_admin,
             'is_account_owner': invited_user.is_account_owner,
+            'manager_id': None,
+            'subordinates_ids': [],
         },
     )
 
 
 def test__accept__only_required_fields__ok(identify_mock, group_mock, mocker):
-
     # arrange
     account = create_test_account(plan=BillingPlanType.UNLIMITED)
     request_user = create_test_user(
@@ -2019,23 +1970,19 @@ def test__accept__only_required_fields__ok(identify_mock, group_mock, mocker):
         return_value=None,
     )
     update_users_counts_mock = mocker.patch(
-        'src.accounts.services.user_invite.AccountService.'
-        'update_users_counts',
+        'src.accounts.services.user_invite.AccountService.update_users_counts',
     )
     increase_plan_users_mock = mocker.patch(
-        'src.accounts.services.user_invite.'
-        'increase_plan_users.delay',
+        'src.accounts.services.user_invite.increase_plan_users.delay',
     )
     users_joined_mock = mocker.patch(
-        'src.accounts.services.user_invite.'
-        'AnalyticService.users_joined',
+        'src.accounts.services.user_invite.AnalyticService.users_joined',
     )
     settings_mock = mocker.patch(
         'src.accounts.services.user_invite.settings',
     )
     send_user_updated_mock = mocker.patch(
-        'src.notifications.tasks.'
-        'send_user_updated_notification.delay',
+        'src.notifications.tasks.send_user_updated_notification.delay',
     )
     settings_mock.PROJECT_CONF = {'BILLING': True}
     first_name = 'John'
@@ -2085,5 +2032,7 @@ def test__accept__only_required_fields__ok(identify_mock, group_mock, mocker):
             'photo': invited_user.photo,
             'is_admin': invited_user.is_admin,
             'is_account_owner': invited_user.is_account_owner,
+            'manager_id': None,
+            'subordinates_ids': [],
         },
     )

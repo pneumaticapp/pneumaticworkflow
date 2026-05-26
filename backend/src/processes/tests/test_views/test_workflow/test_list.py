@@ -1,4 +1,6 @@
 from datetime import timedelta
+from django.urls import reverse
+from rest_framework import status
 from string import punctuation
 
 import pytest
@@ -10,6 +12,7 @@ from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
     FieldType,
+    OwnerRole,
     OwnerType,
     PerformerType,
     PredicateOperator,
@@ -19,7 +22,7 @@ from src.processes.enums import (
     WorkflowStatus,
 )
 from src.processes.messages import workflow as messages
-from src.processes.models import SearchContent
+from src.processes.models.search_content import SearchContent
 from src.processes.models.templates.conditions import (
     ConditionTemplate,
     PredicateTemplate,
@@ -37,6 +40,7 @@ from src.processes.services.events import (
 from src.processes.services.tasks.performers import (
     TaskPerformersService,
 )
+from src.processes.paginations import WorkflowListPagination
 from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
@@ -45,6 +49,7 @@ from src.processes.tests.fixtures import (
     create_test_attachment_for_event,
     create_test_group,
     create_test_guest,
+    create_test_not_admin,
     create_test_owner,
     create_test_template,
     create_test_user,
@@ -1826,6 +1831,7 @@ def test_list__filter__multiple_current_performer_group_ids__ok(api_client):
     api_client.token_authenticate(another_user)
     template = create_test_template(user=user, tasks_count=2)
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account,
         type=OwnerType.USER,
@@ -1876,6 +1882,7 @@ def test_list__filter_multiple_current_performer_group_user__ok(api_client):
     api_client.token_authenticate(another_user)
     template = create_test_template(user=user, tasks_count=2)
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account,
         type=OwnerType.USER,
@@ -2883,3 +2890,248 @@ def test_list__first_task_end_workflow__found(api_client):
     assert len(response.data['results']) == 1
     wf_data = response.data['results'][0]
     assert wf_data['id'] == workflow_id
+
+
+def test_list__not_authenticated__permission_denied(api_client):
+
+    # act
+    response = api_client.get('/workflows')
+
+    # assert
+    assert response.status_code == 401
+
+
+def test_list__user_starter_role__empty_list(api_client):
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    user = create_test_not_admin(account=account)
+    template = create_test_template(
+        user=account_owner,
+        tasks_count=1,
+    )
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        account=account,
+        type=OwnerType.USER,
+        user_id=user.id,
+    )
+    create_test_workflow(account_owner, template=template)
+
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/workflows')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 0
+
+
+def test_list__expired_subscription__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.UNLIMITED,
+        plan_expiration=timezone.now() - timedelta(hours=1),
+    )
+    owner = create_test_owner(account=account)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get('/workflows')
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_list__billing_plan__permission_denied(api_client):
+
+    # arrange
+    account = create_test_account(plan=None)
+    owner = create_test_owner(account=account)
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get('/workflows')
+
+    # assert
+    assert response.status_code == 403
+
+
+def test_list__invalid_status__validation_error(api_client):
+
+    # arrange
+    user = create_test_user()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/workflows?status=invalid')
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+    message = '"invalid" is not a valid choice.'
+    assert response.data['message'] == message
+    assert response.data['details']['reason'] == message
+    assert response.data['details']['name'] == 'status'
+
+
+def test_list__limit_above_max__validation_error(api_client):
+
+    # arrange
+    user = create_test_user()
+    api_client.token_authenticate(user)
+    limit = WorkflowListPagination.max_limit + 1
+
+    # act
+    response = api_client.get(f'/workflows?limit={limit}')
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+
+
+def test_list__offset_below_min__validation_error(api_client):
+
+    # arrange
+    user = create_test_user()
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.get('/workflows?offset=-1')
+
+    # assert
+    assert response.status_code == 400
+    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
+
+
+def test_list__all_params__ok(api_client):
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=owner,
+        tasks_count=1,
+        status=WorkflowStatus.RUNNING,
+    )
+    api_client.token_authenticate(owner)
+
+    # act
+    response = api_client.get(
+        path='/workflows',
+        data={
+            'status': WorkflowApiStatus.RUNNING,
+            'ordering': '-urgent',
+            'limit': 10,
+            'offset': 0,
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data['results']) == 1
+    assert response.data['results'][0]['id'] == workflow.id
+
+
+def test_workflow_list__template_starter__includes_only_own_workflows(
+    api_client,
+):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(
+        user=template_owner,
+        name='Template',
+    )
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    # Workflow started by starter
+    workflow_own = create_test_workflow(
+        template=template, user=starter_user,
+    )
+    # Workflow started by owner
+    workflow_other = create_test_workflow(
+        template=template, user=template_owner,
+    )
+
+    api_client.token_authenticate(starter_user)
+    url = reverse('workflows-list')
+
+    # act
+    response = api_client.get(url)
+
+    # assert
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+
+    workflow_ids = [item['id'] for item in data['results']]
+    assert workflow_own.id in workflow_ids
+    assert workflow_other.id not in workflow_ids
+
+
+def test_workflow_list__group_template_starter__includes_only_own_workflows(
+    api_client,
+):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(
+        user=template_owner,
+        name='Template',
+    )
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+    group = create_test_group(account=account, name='Starters Group')
+    group.users.add(starter_user)
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.GROUP,
+        group=group,
+        account=account,
+    )
+
+    # Workflow started by starter
+    workflow_own = create_test_workflow(
+        template=template, user=starter_user,
+    )
+    # Workflow started by owner
+    workflow_other = create_test_workflow(
+        template=template, user=template_owner,
+    )
+
+    api_client.token_authenticate(starter_user)
+    url = reverse('workflows-list')
+
+    # act
+    response = api_client.get(url)
+
+    # assert
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+
+    workflow_ids = [item['id'] for item in data['results']]
+    assert workflow_own.id in workflow_ids
+    assert workflow_other.id not in workflow_ids

@@ -50,6 +50,9 @@ class WebSocketService(NotificationService):
         NotificationMethod.user_created,
         NotificationMethod.user_updated,
         NotificationMethod.user_deleted,
+        NotificationMethod.dataset_created,
+        NotificationMethod.dataset_updated,
+        NotificationMethod.dataset_deleted,
     }
 
     def _get_serialized_notification(
@@ -436,6 +439,63 @@ class WebSocketService(NotificationService):
                 'date_created_tsp': timezone.now().timestamp(),
                 'type': NotificationMethod.user_deleted,
                 'data': user_data,
+            },
+            sync=sync,
+        )
+
+    def send_dataset_created(
+        self,
+        user_id: int,
+        dataset_data: dict,
+        sync: bool,
+        **kwargs,
+    ):
+        self._send(
+            method_name=NotificationMethod.dataset_created,
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            data={
+                'id': str(uuid.uuid4()),
+                'date_created_tsp': timezone.now().timestamp(),
+                'type': NotificationMethod.dataset_created,
+                'data': dataset_data,
+            },
+            sync=sync,
+        )
+
+    def send_dataset_updated(
+        self,
+        user_id: int,
+        dataset_data: dict,
+        sync: bool,
+        **kwargs,
+    ):
+        self._send(
+            method_name=NotificationMethod.dataset_updated,
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            data={
+                'id': str(uuid.uuid4()),
+                'date_created_tsp': timezone.now().timestamp(),
+                'type': NotificationMethod.dataset_updated,
+                'data': dataset_data,
+            },
+            sync=sync,
+        )
+
+    def send_dataset_deleted(
+        self,
+        user_id: int,
+        dataset_data: dict,
+        sync: bool,
+        **kwargs,
+    ):
+        self._send(
+            method_name=NotificationMethod.dataset_deleted,
+            group_name=f'{EventsConsumer.classname}_{user_id}',
+            data={
+                'id': str(uuid.uuid4()),
+                'date_created_tsp': timezone.now().timestamp(),
+                'type': NotificationMethod.dataset_deleted,
+                'data': dataset_data,
             },
             sync=sync,
         )

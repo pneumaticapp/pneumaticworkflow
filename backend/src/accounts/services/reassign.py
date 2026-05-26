@@ -32,6 +32,9 @@ from src.accounts.queries import (
     DeleteUserGroupFromTemplateOwnerQuery,
 )
 from src.accounts.services import exceptions
+from src.accounts.services.vacation import (
+    VacationDelegationService,
+)
 from src.authentication.enums import AuthTokenType
 from src.executor import RawSqlExecutor
 from src.processes.enums import (
@@ -475,6 +478,16 @@ class ReassignService:
                     user=self.old_user,
                 ).update(user=self.new_user)
 
+    def _cleanup_personal_groups(self):
+        """Remove old_user from personal (vacation) groups.
+
+        If the group becomes empty after removal, auto-deactivate
+        vacation for the group owner.
+        """
+        if not self.old_user:
+            return
+        VacationDelegationService.clear_substitute_groups(self.old_user)
+
     def reassign_everywhere(self):
         with transaction.atomic():
             self._reassign_in_raw_performer_templates()
@@ -486,6 +499,7 @@ class ReassignService:
             self._reassign_in_workflow_members()
             self._reassign_in_template_conditions()
             self._reassign_in_conditions()
+            self._cleanup_personal_groups()
             if self.new_user:
                 user_id = self.new_user.id
             elif self.new_group and self.new_group.users.exists():

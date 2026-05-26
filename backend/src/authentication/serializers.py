@@ -1,20 +1,27 @@
 from django.contrib.auth import authenticate, get_user_model
 from django.core.validators import RegexValidator
+from django.db.models import Exists, Q
 from drf_recaptcha.fields import ReCaptchaV2Field
 from rest_framework import serializers
 from typing import Any, Dict, Optional
 
 from src.accounts.enums import Language
 from src.accounts.models import Account
+from src.accounts.serializers.mixins import VacationSerializer
 from src.authentication.messages import (
     MSG_AU_0006,
     MSG_AU_0012,
     MSG_AU_0013,
     MSG_AU_0020,
 )
-from src.generics.fields import DateFormatField, TimeStampField
+from src.generics.fields import (
+    DateFormatField,
+    TimeStampField,
+)
 from src.generics.mixins.services import EncryptionMixin
 from src.generics.serializers import CustomValidationErrorMixin
+from src.processes.enums import OwnerRole, OwnerType
+from src.processes.models.templates.owner import TemplateOwner
 
 UserModel = get_user_model()
 
@@ -151,7 +158,9 @@ class ContextAccountSerializer(serializers.ModelSerializer):
         return False
 
 
-class ContextUserSerializer(serializers.ModelSerializer):
+class ContextUserSerializer(
+    serializers.ModelSerializer,
+):
 
     class Meta:
         model = UserModel
@@ -182,12 +191,71 @@ class ContextUserSerializer(serializers.ModelSerializer):
             'timezone',
             'date_fmt',
             'date_fdw',
+            'has_workflow_viewer_access',
+            'has_workflow_starter_access',
+            'manager_id',
+            'subordinates_ids',
+            'vacation',
         )
 
     account = ContextAccountSerializer()
     is_supermode = serializers.BooleanField(required=False)
+    has_workflow_viewer_access = serializers.SerializerMethodField()
+    has_workflow_starter_access = serializers.SerializerMethodField()
     date_joined_tsp = TimeStampField(source='date_joined', read_only=True)
     date_fmt = DateFormatField(read_only=True)
+    manager_id = serializers.IntegerField(
+        read_only=True,
+        allow_null=True,
+    )
+    subordinates_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        read_only=True,
+        source='subordinates',
+    )
+    vacation = VacationSerializer(read_only=True)
+
+    def get_has_workflow_viewer_access(self, obj) -> bool:
+        access = self._get_template_access(obj)
+        return access['viewer']
+
+    def get_has_workflow_starter_access(self, obj) -> bool:
+        access = self._get_template_access(obj)
+        return access['starter']
+
+    def _get_template_access(self, obj) -> dict:
+        if hasattr(self, '_template_access_cache'):
+            return self._template_access_cache
+
+        user_id = obj.id
+        account_id = obj.account_id
+
+        base_qs = TemplateOwner.objects.filter(
+            template__account_id=account_id,
+            is_deleted=False,
+        ).filter(
+            Q(type=OwnerType.USER, user_id=user_id) |
+            Q(type=OwnerType.GROUP, group__users__id=user_id),
+        )
+        owner_subq = base_qs.filter(role=OwnerRole.OWNER)
+        viewer_subq = base_qs.filter(role=OwnerRole.VIEWER)
+        starter_subq = base_qs.filter(role=OwnerRole.STARTER)
+
+        result = UserModel.objects.filter(pk=user_id).annotate(
+            has_owner=Exists(owner_subq),
+            has_viewer=Exists(viewer_subq),
+            has_starter=Exists(starter_subq),
+        ).values('has_owner', 'has_viewer', 'has_starter').first()
+
+        has_owner = result['has_owner'] if result else False
+        has_viewer = result['has_viewer'] if result else False
+        has_starter = result['has_starter'] if result else False
+
+        self._template_access_cache = {
+            'viewer': has_owner or has_viewer,
+            'starter': has_owner or has_viewer or has_starter,
+        }
+        return self._template_access_cache
 
     def to_representation(self, data):
         data = super().to_representation(data)

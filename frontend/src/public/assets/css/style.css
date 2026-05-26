@@ -2,6 +2,7 @@
 // Table of Contents
 // -------------------
 // 00. Variables
+// 00.1. Print
 // 01. Library
 // 02. Reset style
 // 03. Base style
@@ -13,6 +14,12 @@
 // =================== */
 
 @import './variables/color';
+
+/* ===================
+// 00.1. Print
+// =================== */
+
+@import './print/print.css';
 
 /* ===================
 // 01. Library

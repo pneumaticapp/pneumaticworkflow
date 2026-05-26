@@ -9,6 +9,7 @@ from src.accounts.models import UserGroup
 from src.analysis.services import AnalyticService
 from src.generics.base.service import BaseModelService
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     PerformerType,
     sys_template_type_map,
@@ -77,6 +78,7 @@ class TemplateService(BaseModelService):
                 {
                     'type': OwnerType.USER,
                     'source_id': f'{self.user.id}',
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -206,6 +208,7 @@ class TemplateService(BaseModelService):
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             }
             for user in
             UserModel.objects.on_account(self.account.id).order_by('id')
@@ -214,6 +217,7 @@ class TemplateService(BaseModelService):
             {
                 'type': OwnerType.GROUP,
                 'source_id': group.id,
+                'role': OwnerRole.OWNER,
             }
             for group in
             UserGroup.objects.filter(account_id=self.account.id).order_by('id')

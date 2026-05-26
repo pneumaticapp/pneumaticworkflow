@@ -1,6 +1,7 @@
 import pytest
 
 from src.processes.enums import (
+    OwnerRole,
     DueDateRule,
     FieldType,
     OwnerType,
@@ -26,6 +27,7 @@ def test_clone__ok(is_active, api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': is_active,

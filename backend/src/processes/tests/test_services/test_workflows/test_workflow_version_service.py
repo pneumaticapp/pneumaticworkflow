@@ -6,6 +6,7 @@ from src.authentication.enums import AuthTokenType
 from src.processes.enums import (
     ConditionAction,
     FieldType,
+    OwnerRole,
     OwnerType,
     PredicateOperator,
 )
@@ -825,6 +826,7 @@ class TestWorkflowUpdateVersionService:
             account=owner.account,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=account,
             type=OwnerType.USER,
@@ -973,6 +975,7 @@ class TestWorkflowUpdateVersionService:
             account=user.account,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=user.account,
             type=OwnerType.USER,
@@ -1101,6 +1104,7 @@ class TestWorkflowUpdateVersionService:
             account=owner.account,
         )
         TemplateOwner.objects.create(
+            role=OwnerRole.OWNER,
             template=template,
             account=account,
             type=OwnerType.USER,

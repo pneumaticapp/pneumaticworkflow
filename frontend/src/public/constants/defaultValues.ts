@@ -117,6 +117,7 @@ export const enum EPageTitle {
   Highlights = 'workflow-highlights.title',
   Integrations = 'integrations.title',
   Team = 'team.title',
+  Datasets = 'datasets.title',
 }
 
 export const enum ELearnMoreLinks {
@@ -127,6 +128,7 @@ export const enum ELearnMoreLinks {
   Highlights = 'https://support.pneumatic.app/en/articles/5249965-how-to-use-workflow-highlights',
   Integrations = 'https://support.pneumatic.app/en/articles/6014550-integrations',
   HowToCreateTemplate = 'https://support.pneumatic.app/en/articles/5534875-how-to-create-your-first-workflow-template',
+  Datasets = '',
   GuestUsers = 'https://support.pneumatic.app/en/articles/6145048-free-external-users',
   Checklists = 'https://support.pneumatic.app/en/articles/6145048-free-external-users',
   Tenants = 'https://www.pneumatic.app/partners/',
@@ -179,3 +181,4 @@ export const enum EResponseStatuses {
 
 export const LIMIT_LOAD_TEMPLATES = 30;
 export const LIMIT_LOAD_SYSTEMS_TEMPLATES = 16;
+export const LIMIT_LOAD_DATASETS = 30;

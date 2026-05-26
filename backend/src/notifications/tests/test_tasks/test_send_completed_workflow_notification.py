@@ -97,7 +97,7 @@ def test_send_completed_workflow__call_all_services__ok(mocker):
 
 
 @pytest.mark.parametrize('status', (TaskStatus.SKIPPED, TaskStatus.PENDING))
-def test_send_completed_workflow__not_active_task__skip(
+def test_send_completed_workflow__not_active_task__ok(
     mocker,
     status,
 ):
@@ -111,6 +111,7 @@ def test_send_completed_workflow__not_active_task__skip(
     )
     workflow.tasks.filter(number=1).update(status=status)
     logging = False
+    link = f'{settings.FRONTEND_URL}/workflows/{workflow.id}'
     send_notification_mock = mocker.patch(
         'src.notifications.tasks._send_notification',
     )
@@ -122,11 +123,28 @@ def test_send_completed_workflow__not_active_task__skip(
     )
 
     # assert
-    assert not Notification.objects.filter(
+    notification = Notification.objects.get(
+        user_id=account_owner.id,
         account_id=account.id,
         type=NotificationType.COMPLETE_WORKFLOW,
-    ).exists()
-    send_notification_mock.assert_not_called()
+    )
+    send_notification_mock.assert_called_once_with(
+        logging=logging,
+        logo_lg=None,
+        user_id=account_owner.id,
+        user_email=account_owner.email,
+        user_first_name=account_owner.first_name,
+        workflow_starter_name=account_owner.name,
+        workflow_starter_photo=account_owner.photo,
+        account_id=account.id,
+        notification=notification,
+        method_name=NotificationMethod.complete_workflow,
+        workflow_id=workflow.id,
+        workflow_name=workflow.name,
+        template_name=workflow.template.name,
+        link=link,
+        sync=True,
+    )
 
 
 @pytest.mark.parametrize(
@@ -184,7 +202,7 @@ def test_send_completed_workflow__active_task__ok(mocker, status):
     )
 
 
-def test_send_completed_workflow__external_workflow__ok(mocker):
+def test_send_completed_workflow__external_workflow__skip(mocker):
 
     # arrange
     account = create_test_account()
@@ -195,7 +213,6 @@ def test_send_completed_workflow__external_workflow__ok(mocker):
         is_external=True,
     )
     logging = False
-    link = f'{settings.FRONTEND_URL}/workflows/{workflow.id}'
     send_notification_mock = mocker.patch(
         'src.notifications.tasks._send_notification',
     )
@@ -207,28 +224,12 @@ def test_send_completed_workflow__external_workflow__ok(mocker):
     )
 
     # assert
-    notification = Notification.objects.get(
+    assert not Notification.objects.filter(
         user_id=account_owner.id,
         account_id=account.id,
         type=NotificationType.COMPLETE_WORKFLOW,
-    )
-    send_notification_mock.assert_called_once_with(
-        logging=logging,
-        logo_lg=None,
-        user_id=account_owner.id,
-        user_email=account_owner.email,
-        user_first_name=account_owner.first_name,
-        workflow_starter_name='External User',
-        workflow_starter_photo=None,
-        account_id=account.id,
-        notification=notification,
-        method_name=NotificationMethod.complete_workflow,
-        workflow_id=workflow.id,
-        workflow_name=workflow.name,
-        template_name=workflow.template.name,
-        link=link,
-        sync=True,
-    )
+    ).exists()
+    send_notification_mock.assert_not_called()
 
 
 def test_send_completed_another_workflow__skip(mocker):
@@ -268,8 +269,12 @@ def test_send_completed_another_workflow__skip(mocker):
         type=NotificationType.COMPLETE_WORKFLOW,
     ).exists()
 
+    assert Notification.objects.filter(
+        type=NotificationType.COMPLETE_WORKFLOW,
+        account=account,
+        user=account_owner,
+    ).count() == 1
     notification = Notification.objects.get(
-        workflow_json=NotificationWorkflowSerializer(instance=workflow).data,
         user_id=account_owner.id,
         account_id=account.id,
         type=NotificationType.COMPLETE_WORKFLOW,
@@ -317,6 +322,11 @@ def test_send_completed_workflow__one_user_on_multiple_tasks__ok(mocker):
     )
 
     # assert
+    assert Notification.objects.filter(
+        type=NotificationType.COMPLETE_WORKFLOW,
+        account=account,
+        user=account_owner,
+    ).count() == 1
     notification = Notification.objects.get(
         user_id=account_owner.id,
         account_id=account.id,
@@ -361,6 +371,7 @@ def test_send_completed_workflow__directly_deleted_performer_user__skip(
         user_id=user.id,
         directly_status=DirectlyStatus.DELETED,
     )
+    link = f'{settings.FRONTEND_URL}/workflows/{workflow.id}'
 
     logging = True
     send_notification_mock = mocker.patch(
@@ -374,11 +385,33 @@ def test_send_completed_workflow__directly_deleted_performer_user__skip(
     )
 
     # assert
-    assert not Notification.objects.filter(
+    assert Notification.objects.filter(
+        type=NotificationType.COMPLETE_WORKFLOW,
+        account=account,
+        user=account_owner,
+    ).count() == 1
+    notification = Notification.objects.get(
+        user_id=account_owner.id,
         account_id=account.id,
         type=NotificationType.COMPLETE_WORKFLOW,
-    ).exists()
-    send_notification_mock.assert_not_called()
+    )
+    send_notification_mock.assert_called_once_with(
+        logging=logging,
+        logo_lg=None,
+        user_id=account_owner.id,
+        user_email=account_owner.email,
+        user_first_name=account_owner.first_name,
+        workflow_starter_name=account_owner.name,
+        workflow_starter_photo=account_owner.photo,
+        account_id=account.id,
+        notification=notification,
+        method_name=NotificationMethod.complete_workflow,
+        workflow_id=workflow.id,
+        workflow_name=workflow.name,
+        template_name=workflow.template.name,
+        link=link,
+        sync=True,
+    )
 
 
 def test_send_completed_workflow__directly_deleted_performer_group__skip(
@@ -402,6 +435,7 @@ def test_send_completed_workflow__directly_deleted_performer_group__skip(
         group_id=group.id,
         directly_status=DirectlyStatus.DELETED,
     )
+    link = f'{settings.FRONTEND_URL}/workflows/{workflow.id}'
 
     logging = True
     send_notification_mock = mocker.patch(
@@ -415,11 +449,31 @@ def test_send_completed_workflow__directly_deleted_performer_group__skip(
     )
 
     # assert
-    assert not Notification.objects.filter(
+    assert Notification.objects.filter(
+        type=NotificationType.COMPLETE_WORKFLOW,
+    ).count() == 1
+    notification = Notification.objects.get(
+        user_id=account_owner.id,
         account_id=account.id,
         type=NotificationType.COMPLETE_WORKFLOW,
-    ).exists()
-    send_notification_mock.assert_not_called()
+    )
+    send_notification_mock.assert_called_once_with(
+        logging=logging,
+        logo_lg=None,
+        user_id=account_owner.id,
+        user_email=account_owner.email,
+        user_first_name=account_owner.first_name,
+        workflow_starter_name=account_owner.name,
+        workflow_starter_photo=account_owner.photo,
+        account_id=account.id,
+        notification=notification,
+        method_name=NotificationMethod.complete_workflow,
+        workflow_id=workflow.id,
+        workflow_name=workflow.name,
+        template_name=workflow.template.name,
+        link=link,
+        sync=True,
+    )
 
 
 def test_send_completed_workflow__two_performers_on_same_task__ok(
@@ -453,55 +507,30 @@ def test_send_completed_workflow__two_performers_on_same_task__ok(
     )
 
     # assert
-    notification_1 = Notification.objects.get(
-        user_id=user_1.id,
+    assert Notification.objects.filter(
+        type=NotificationType.COMPLETE_WORKFLOW,
+    ).count() == 1
+    notification = Notification.objects.get(
+        user_id=account_owner.id,
         account_id=account.id,
         type=NotificationType.COMPLETE_WORKFLOW,
     )
-    notification_2 = Notification.objects.get(
-        user_id=user_2.id,
+    send_notification_mock.assert_called_once_with(
+        logging=logging,
+        logo_lg=None,
+        user_id=account_owner.id,
+        user_email=account_owner.email,
+        user_first_name=account_owner.first_name,
+        workflow_starter_name=account_owner.name,
+        workflow_starter_photo=account_owner.photo,
         account_id=account.id,
-        type=NotificationType.COMPLETE_WORKFLOW,
-    )
-    assert send_notification_mock.call_count == 2
-    send_notification_mock.assert_has_calls(
-        [
-            mocker.call(
-                logging=logging,
-                logo_lg=None,
-                user_id=user_1.id,
-                user_email=user_1.email,
-                user_first_name=user_1.first_name,
-                workflow_starter_name=account_owner.name,
-                workflow_starter_photo=account_owner.photo,
-                account_id=account.id,
-                notification=notification_1,
-                method_name=NotificationMethod.complete_workflow,
-                workflow_id=workflow.id,
-                workflow_name=workflow.name,
-                template_name=workflow.template.name,
-                link=link,
-                sync=True,
-            ),
-            mocker.call(
-                logging=logging,
-                logo_lg=None,
-                user_id=user_2.id,
-                user_email=user_2.email,
-                user_first_name=user_2.first_name,
-                workflow_starter_name=account_owner.name,
-                workflow_starter_photo=account_owner.photo,
-                account_id=account.id,
-                notification=notification_2,
-                method_name=NotificationMethod.complete_workflow,
-                workflow_id=workflow.id,
-                workflow_name=workflow.name,
-                template_name=workflow.template.name,
-                link=link,
-                sync=True,
-            ),
-        ],
-        any_order=True,
+        notification=notification,
+        method_name=NotificationMethod.complete_workflow,
+        workflow_id=workflow.id,
+        workflow_name=workflow.name,
+        template_name=workflow.template.name,
+        link=link,
+        sync=True,
     )
 
 
@@ -537,54 +566,27 @@ def test_send_completed_workflow__two_performers_on_different_tasks__ok(
     )
 
     # assert
-    notification_1 = Notification.objects.get(
-        user_id=user_1.id,
+    notification = Notification.objects.get(
+        user_id=account_owner.id,
         account_id=account.id,
         type=NotificationType.COMPLETE_WORKFLOW,
     )
-    notification_2 = Notification.objects.get(
-        user_id=user_2.id,
+    send_notification_mock.assert_called_once_with(
+        logging=logging,
+        logo_lg=None,
+        user_id=account_owner.id,
+        user_email=account_owner.email,
+        user_first_name=account_owner.first_name,
+        workflow_starter_name=account_owner.name,
+        workflow_starter_photo=account_owner.photo,
         account_id=account.id,
-        type=NotificationType.COMPLETE_WORKFLOW,
-    )
-    send_notification_mock.assert_has_calls(
-        [
-            mocker.call(
-                logging=logging,
-                logo_lg=None,
-                user_id=user_1.id,
-                user_email=user_1.email,
-                user_first_name=user_1.first_name,
-                workflow_starter_name=account_owner.name,
-                workflow_starter_photo=account_owner.photo,
-                account_id=account.id,
-                notification=notification_1,
-                method_name=NotificationMethod.complete_workflow,
-                workflow_id=workflow.id,
-                workflow_name=workflow.name,
-                template_name=workflow.template.name,
-                link=link,
-                sync=True,
-            ),
-            mocker.call(
-                logging=logging,
-                logo_lg=None,
-                user_id=user_2.id,
-                user_email=user_2.email,
-                user_first_name=user_2.first_name,
-                workflow_starter_name=account_owner.name,
-                workflow_starter_photo=account_owner.photo,
-                account_id=account.id,
-                notification=notification_2,
-                method_name=NotificationMethod.complete_workflow,
-                workflow_id=workflow.id,
-                workflow_name=workflow.name,
-                template_name=workflow.template.name,
-                link=link,
-                sync=True,
-            ),
-        ],
-        any_order=True,
+        notification=notification,
+        method_name=NotificationMethod.complete_workflow,
+        workflow_id=workflow.id,
+        workflow_name=workflow.name,
+        template_name=workflow.template.name,
+        link=link,
+        sync=True,
     )
 
 
@@ -601,6 +603,7 @@ def test_send_completed_workflow__performer_guest__skip(mocker):
     task = workflow.tasks.get(number=1)
     task.performers.clear()
     task.performers.add(guest)
+    link = f'{settings.FRONTEND_URL}/workflows/{workflow.id}'
     logging = True
     send_notification_mock = mocker.patch(
         'src.notifications.tasks._send_notification',
@@ -613,11 +616,31 @@ def test_send_completed_workflow__performer_guest__skip(mocker):
     )
 
     # assert
-    assert not Notification.objects.filter(
+    assert Notification.objects.filter(
+        type=NotificationType.COMPLETE_WORKFLOW,
+    ).count() == 1
+    notification = Notification.objects.get(
+        user_id=account_owner.id,
         account_id=account.id,
         type=NotificationType.COMPLETE_WORKFLOW,
-    ).exists()
-    send_notification_mock.assert_not_called()
+    )
+    send_notification_mock.assert_called_once_with(
+        logging=logging,
+        logo_lg=None,
+        user_id=account_owner.id,
+        user_email=account_owner.email,
+        user_first_name=account_owner.first_name,
+        workflow_starter_name=account_owner.name,
+        workflow_starter_photo=account_owner.photo,
+        account_id=account.id,
+        notification=notification,
+        method_name=NotificationMethod.complete_workflow,
+        workflow_id=workflow.id,
+        workflow_name=workflow.name,
+        template_name=workflow.template.name,
+        link=link,
+        sync=True,
+    )
 
 
 def test_send_completed_workflow__performer_group__ok(
@@ -654,128 +677,28 @@ def test_send_completed_workflow__performer_group__ok(
     )
 
     # assert
-    notification_1 = Notification.objects.get(
-        user_id=user_1.id,
+    assert Notification.objects.filter(
+        type=NotificationType.COMPLETE_WORKFLOW,
+    ).count() == 1
+    notification = Notification.objects.get(
+        user_id=account_owner.id,
         account_id=account.id,
         type=NotificationType.COMPLETE_WORKFLOW,
     )
-    notification_2 = Notification.objects.get(
-        user_id=user_2.id,
+    send_notification_mock.assert_called_once_with(
+        logging=logging,
+        logo_lg=None,
+        user_id=account_owner.id,
+        user_email=account_owner.email,
+        user_first_name=account_owner.first_name,
+        workflow_starter_name=account_owner.name,
+        workflow_starter_photo=account_owner.photo,
         account_id=account.id,
-        type=NotificationType.COMPLETE_WORKFLOW,
-    )
-    assert send_notification_mock.call_count == 2
-    send_notification_mock.assert_has_calls(
-        [
-            mocker.call(
-                logging=logging,
-                logo_lg=None,
-                user_id=user_1.id,
-                user_email=user_1.email,
-                user_first_name=user_1.first_name,
-                workflow_starter_name=account_owner.name,
-                workflow_starter_photo=account_owner.photo,
-                account_id=account.id,
-                notification=notification_1,
-                method_name=NotificationMethod.complete_workflow,
-                workflow_id=workflow.id,
-                workflow_name=workflow.name,
-                template_name=workflow.template.name,
-                link=link,
-                sync=True,
-            ),
-            mocker.call(
-                logging=logging,
-                logo_lg=None,
-                user_id=user_2.id,
-                user_email=user_2.email,
-                user_first_name=user_2.first_name,
-                workflow_starter_name=account_owner.name,
-                workflow_starter_photo=account_owner.photo,
-                account_id=account.id,
-                notification=notification_2,
-                method_name=NotificationMethod.complete_workflow,
-                workflow_id=workflow.id,
-                workflow_name=workflow.name,
-                template_name=workflow.template.name,
-                link=link,
-                sync=True,
-            ),
-        ],
-        any_order=True,
-    )
-
-
-def test_send_completed_workflow__group_user__is_not_subscribed__skip(
-    mocker,
-):
-
-    # arrange
-    account = create_test_account()
-    account_owner = create_test_owner(account=account)
-    user = create_test_admin(account=account, is_new_tasks_subscriber=False)
-    group = create_test_group(account, users=[user])
-    workflow = create_test_workflow(
-        account_owner,
-        tasks_count=1,
-    )
-    task = workflow.tasks.get(number=1)
-    task.performers.clear()
-    TaskPerformer.objects.create(
-        task_id=task.id,
-        type=PerformerType.GROUP,
-        group_id=group.id,
-    )
-    logging = False
-    send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification',
-    )
-
-    # act
-    _send_completed_workflow_notification(
-        logging=logging,
+        notification=notification,
+        method_name=NotificationMethod.complete_workflow,
         workflow_id=workflow.id,
+        workflow_name=workflow.name,
+        template_name=workflow.template.name,
+        link=link,
+        sync=True,
     )
-
-    # assert
-    assert not Notification.objects.filter(
-        type=NotificationType.COMPLETE_WORKFLOW,
-    ).exists()
-    send_notification_mock.assert_not_called()
-
-
-def test_send_completed_workflow__user__is_not_subscribed__skip(
-    mocker,
-):
-
-    # arrange
-    account = create_test_account()
-    account_owner = create_test_owner(account=account)
-    user = create_test_admin(account=account, is_new_tasks_subscriber=False)
-    workflow = create_test_workflow(
-        account_owner,
-        tasks_count=1,
-    )
-    task = workflow.tasks.get(number=1)
-    task.performers.clear()
-    TaskPerformer.objects.create(
-        task_id=task.id,
-        type=PerformerType.USER,
-        user_id=user.id,
-    )
-    logging = False
-    send_notification_mock = mocker.patch(
-        'src.notifications.tasks._send_notification',
-    )
-
-    # act
-    _send_completed_workflow_notification(
-        logging=logging,
-        workflow_id=workflow.id,
-    )
-
-    # assert
-    assert not Notification.objects.filter(
-        type=NotificationType.COMPLETE_WORKFLOW,
-    ).exists()
-    send_notification_mock.assert_not_called()

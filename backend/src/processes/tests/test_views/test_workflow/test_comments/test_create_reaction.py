@@ -10,9 +10,12 @@ from src.processes.services.events import (
 from src.processes.services.exceptions import (
     CommentServiceException,
 )
+from src.processes.enums import OwnerRole, OwnerType
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_guest,
+    create_test_template,
     create_test_user,
     create_test_workflow,
 )
@@ -118,6 +121,60 @@ def test_create_reaction__workflow_member__ok(api_client, mocker):
     create_reaction_mock.assert_called_once_with(value=value)
 
 
+def test_create_reaction__template_viewer__ok(api_client, mocker):
+
+    # arrange
+    owner = create_test_user(is_account_owner=True)
+    workflow = create_test_workflow(owner)
+    task = workflow.tasks.get(number=1)
+    event = WorkflowEventService.comment_created_event(
+        text='Some comment',
+        task=task,
+        user=owner,
+        after_create_actions=False,
+    )
+    viewer_user = create_test_user(
+        account=owner.account,
+        email='viewer@test.test',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
+        template=workflow.template,
+        type=OwnerType.USER,
+        user=viewer_user,
+        account=owner.account,
+    )
+    service_init_mock = mocker.patch.object(
+        CommentService,
+        attribute='__init__',
+        return_value=None,
+    )
+    create_reaction_mock = mocker.patch(
+        'src.processes.views.comments.'
+        'CommentService.create_reaction',
+    )
+    value = '=b'
+    api_client.token_authenticate(viewer_user)
+
+    # act
+    response = api_client.post(
+        f'/workflows/comments/{event.id}/create-reaction',
+        data={'value': value},
+    )
+
+    # assert
+    assert response.status_code == 204
+    service_init_mock.assert_called_once_with(
+        instance=event,
+        user=viewer_user,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    create_reaction_mock.assert_called_once_with(value=value)
+
+
 def test_create_reaction__user_not_member__permission_denied(
     api_client,
     mocker,
@@ -137,6 +194,7 @@ def test_create_reaction__user_not_member__permission_denied(
         account=owner.account,
         email='not-member@test.test',
         is_account_owner=False,
+        is_admin=False,
     )
     service_init_mock = mocker.patch.object(
         CommentService,
@@ -648,3 +706,57 @@ def test_create_reaction__value_invalid_type__validation_error(
     assert response.data['message'] == 'Not a valid string.'
     service_init_mock.assert_not_called()
     create_reaction_mock.assert_not_called()
+
+
+def test_create_reaction__template_starter_own_workflow__ok(
+    api_client,
+    mocker,
+):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    workflow = create_test_workflow(template=template, user=template_owner)
+    # The starter started THIS workflow
+    workflow.workflow_starter_id = starter_user.id
+    workflow.save(update_fields=['workflow_starter_id'])
+
+    comment = WorkflowEventService.comment_created_event(
+        text='Owner comment',
+        task=workflow.tasks.first(),
+        user=template_owner,
+        after_create_actions=False,
+    )
+
+    reaction = mocker.Mock(id=1, value='likes', user_id=starter_user.id)
+    mocker.patch(
+        'src.processes.services.events.'
+        'CommentService.create_reaction',
+        return_value=reaction,
+    )
+
+    api_client.token_authenticate(starter_user)
+
+    # act
+    response = api_client.post(
+        f'/workflows/comments/{comment.id}/create-reaction',
+        data={'value': 'likes'},
+    )
+
+    # assert
+    assert response.status_code == 204

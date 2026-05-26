@@ -1,8 +1,11 @@
 import { IApplicationState } from '../../types/redux';
 import { EUserListSorting } from '../../types/user';
-import { IGroup } from '../team/types';
+import { EUserGroupType, IGroup } from '../team/types';
 
 export const getGroupsList = (state: IApplicationState): IGroup[] => state.groups.list;
+
+export const getRegularGroupsList = (state: IApplicationState): IGroup[] =>
+  state.groups.list.filter((group) => group.type !== EUserGroupType.Personal);
 
 export const getGroupsIsLoading = (state: IApplicationState): boolean => state.groups.isLoading;
 

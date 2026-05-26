@@ -14,7 +14,7 @@ import { getVariables } from './TaskForm/utils/getTaskVariables';
 import { TemplateIntegrations } from './Integrations';
 import { ERoutes } from '../../constants/routes';
 import { TUserListItem } from '../../types/user';
-import { getEmptyKickoff, getNormalizedTemplateOwners, getTemplateIdFromUrl } from '../../utils/template';
+import { cleanTemplateReferences, getEmptyKickoff, getNormalizedTemplateOwners, getTemplateIdFromUrl } from '../../utils/template';
 import { checkSomeRouteIsActive, isCreateTemplate } from '../../utils/history';
 import { KickoffReduxContainer } from './KickoffRedux';
 import { moveTask } from '../../utils/workflows';
@@ -22,7 +22,7 @@ import { NotificationManager } from '../UI/Notifications';
 import { isArrayWithItems } from '../../utils/helpers';
 import { createOwnerApiName, createPerformerApiName, createTaskApiName, createUUID } from '../../utils/createId';
 import { EMoveDirections } from '../../types/workflow';
-import { ETaskPerformerType, ETemplateOwnerType, ITemplate, ITemplateTask } from '../../types/template';
+import { ETaskPerformerType, ETemplateOwnerRole, ETemplateOwnerType, ITemplate, ITemplateTask } from '../../types/template';
 import { TLoadTemplateVariablesSuccessPayload } from '../../redux/actions';
 import { ETemplateStatus, IAuthUser } from '../../types/redux';
 import { getKickoffConditions } from './TaskForm/Conditions/utils/getKickoffConditions';
@@ -204,6 +204,7 @@ export function TemplateEdit({
       ],
       uuid: createUUID(),
       requireCompletionByAll: false,
+      skipForStarter: false,
       conditions: getEmptyConditions(accessConditions),
       rawDueDate: createEmptyTaskDueDate(taskApiName),
       checklists: [],
@@ -227,12 +228,22 @@ export function TemplateEdit({
       ],
       isActive: false,
       finalizable: false,
+      dateUpdated: null,
+      updatedBy: null,
+      isPublic: false,
+      publicUrl: null,
+      publicSuccessUrl: null,
+      isEmbedded: false,
+      embedUrl: null,
+      tasksCount: 1,
+      performersCount: 0,
       owners: getNormalizedTemplateOwners(
         [
           {
             sourceId: String(authUser.id),
             type: ETemplateOwnerType.User,
             apiName: createOwnerApiName(),
+            role: ETemplateOwnerRole.Owner,
           },
         ],
         accessConditions,
@@ -258,11 +269,15 @@ export function TemplateEdit({
       return;
     }
 
-    const newWorkflow: ITemplate = {
+    const updatedWorkflow: ITemplate = {
       ...workflow,
       [field]: value,
       isActive: false,
     };
+
+    const newWorkflow = (field === 'kickoff' || field === 'tasks')
+      ? cleanTemplateReferences(updatedWorkflow)
+      : updatedWorkflow;
 
     setTemplate(newWorkflow);
     submitDebounced();

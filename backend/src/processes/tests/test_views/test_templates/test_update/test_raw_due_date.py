@@ -3,6 +3,7 @@ from datetime import timedelta
 import pytest
 
 from src.processes.enums import (
+    OwnerRole,
     DueDateRule,
     OwnerType,
     PerformerType,
@@ -53,6 +54,7 @@ def test_update__ok(api_client, mocker):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},
@@ -119,6 +121,7 @@ def test_update__create__ok(api_client, mocker):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},
@@ -197,6 +200,7 @@ def test_update__delete__ok(api_client, mocker):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},
@@ -261,6 +265,7 @@ def test_update__change_api_name__validation_error(api_client, mocker):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},

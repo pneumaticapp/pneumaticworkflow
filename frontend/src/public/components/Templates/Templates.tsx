@@ -11,7 +11,6 @@ import styles from './Templates.css';
 export interface ITemplatesProps {
   templatesList: ITemplatesList;
   loading?: boolean;
-  canEdit: boolean | undefined;
   templatesListSorting: ETemplatesSorting;
   systemTemplates: ITemplatesSystem;
   loadTemplatesSystemCategories(payload: void): void;
@@ -30,7 +29,6 @@ export interface ITemplatesProps {
 export function Templates({
   templatesList,
   loading,
-  canEdit,
   systemTemplates,
   loadTemplatesSystemCategories,
   cloneTemplate,
@@ -57,7 +55,6 @@ export function Templates({
       <TemplatesUser
         loading={loading}
         templatesList={templatesList}
-        canEdit={canEdit}
         cloneTemplate={cloneTemplate}
         deleteTemplate={deleteTemplate}
         loadTemplates={loadTemplates}

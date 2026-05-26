@@ -11,6 +11,8 @@ from src.processes.services.events import (
 from src.processes.services.exceptions import (
     CommentServiceException,
 )
+from src.processes.enums import OwnerRole, OwnerType
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
@@ -161,6 +163,56 @@ def test_watched__user_in_group_task_performer__ok(api_client, mocker):
     comment_watched_mock.assert_called_once()
 
 
+def test_watched__template_viewer__ok(api_client, mocker):
+
+    # arrange
+    owner = create_test_user(is_account_owner=True)
+    workflow = create_test_workflow(owner)
+    task = workflow.tasks.get(number=1)
+    event = WorkflowEventService.comment_created_event(
+        text='Some comment',
+        task=task,
+        user=owner,
+        after_create_actions=False,
+    )
+    viewer_user = create_test_user(
+        account=owner.account,
+        email='viewer@test.test',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
+        template=workflow.template,
+        type=OwnerType.USER,
+        user=viewer_user,
+        account=owner.account,
+    )
+    service_init_mock = mocker.patch.object(
+        CommentService,
+        attribute='__init__',
+        return_value=None,
+    )
+    comment_watched_mock = mocker.patch(
+        'src.processes.services.events.'
+        'CommentService.watched',
+    )
+    api_client.token_authenticate(viewer_user)
+
+    # act
+    response = api_client.post(f'/workflows/comments/{event.id}/watched')
+
+    # assert
+    assert response.status_code == 204
+    service_init_mock.assert_called_once_with(
+        instance=event,
+        user=viewer_user,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    comment_watched_mock.assert_called_once()
+
+
 def test_watched__user_not_member__permission_denied(api_client, mocker):
 
     # arrange
@@ -177,6 +229,7 @@ def test_watched__user_not_member__permission_denied(api_client, mocker):
         account=owner.account,
         email='not-member@test.test',
         is_account_owner=False,
+        is_admin=False,
     )
     service_init_mock = mocker.patch.object(
         CommentService,

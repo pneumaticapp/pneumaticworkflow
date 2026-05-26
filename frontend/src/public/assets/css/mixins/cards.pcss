@@ -1,0 +1,76 @@
+@define-mixin page-cards-wrapper {
+  position: relative;
+  margin: -0.8rem;
+  display: flex;
+  flex-flow: wrap;
+  max-width: 112.2rem;
+}
+
+@define-mixin page-card {
+  margin: 0.8rem;
+  width: 100%;
+  max-width: 26rem;
+
+  @media screen and (max-width: 1211px) {
+    max-width: 30%;
+  }
+  
+  @media (--mobile) {
+    max-width: 100%;
+  }
+}
+
+@define-mixin page-card-content {
+  position: relative;
+  padding: 3.2rem;
+  display: flex;
+  justify-content: space-between;
+  flex-flow: column;
+  height: 22.4rem;
+  color: var(--pneumatic-color-black100);
+  background-color: white;
+  border-radius: 2.4rem;
+  transition: box-shadow 0.1s ease-in-out;
+
+  &:hover {
+    box-shadow: 0 0.8rem 2.4rem rgba(98, 98, 95, 0.08);
+  }
+}
+
+@define-mixin page-card-header {
+  display: flex;
+  justify-content: space-between;
+}
+
+@define-mixin page-card-title {
+  margin-bottom: 0.8rem;
+
+  /* stylelint-disable-next-line value-no-vendor-prefix */
+  display: -webkit-box;
+  overflow: hidden;
+  max-height: 9.6rem;
+  font-weight: 800;
+  text-overflow: ellipsis;
+  word-break: break-word;
+  -webkit-line-clamp: 4;
+  line-clamp: 4;
+
+  /* stylelint-disable-next-line property-no-vendor-prefix */
+  -webkit-box-orient: vertical;
+  transition: all 0.1s ease-in-out;
+
+  @mixin h6;
+}
+
+@define-mixin page-card-more {
+  margin-left: 1.6rem;
+  cursor: pointer;
+  color: var(--pneumatic-color-black16);
+  transition: color 0.1s ease-in-out;
+
+  &.is_active,
+
+  &:hover {
+    color: var(--pneumatic-color-link-hover);
+  }
+}

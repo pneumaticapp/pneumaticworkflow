@@ -22,6 +22,7 @@ from src.processes.enums import (
     DirectlyStatus,
     DueDateRule,
     FieldType,
+    OwnerRole,
     OwnerType,
     PerformerType,
     PredicateOperator,
@@ -73,7 +74,7 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
     create_wf_completed_webhook,
-    create_wf_created_webhook, create_test_not_admin,
+    create_wf_created_webhook, create_test_not_admin, create_test_dataset,
 )
 from src.utils.dates import date_format
 from src.utils.validation import ErrorCode
@@ -222,8 +223,8 @@ def test_run__all__ok(api_client, mocker):
                     '(https://files.example.com/sec_template_file)',
                 ],
                 kickoff_field_5.api_name: [
-                    str(selection_1.api_name),
-                    str(selection_2.api_name),
+                    str(selection_1.value),
+                    str(selection_2.value),
                 ],
             },
         },
@@ -303,11 +304,7 @@ def test_run__all__ok(api_client, mocker):
 
     kickoff_field_5_data = data['kickoff']['output'][4]
     assert len(kickoff_field_5_data['selections']) == 2
-    selection_1_data = kickoff_field_5_data['selections'][0]
-    assert selection_1_data['id']
-    assert selection_1_data['api_name'] == selection_1.api_name
-    assert selection_1_data['value'] == selection_1.value
-    assert selection_1_data['is_selected'] is True
+    assert kickoff_field_5_data['selections'][0] == selection_1.value
     assert data['id'] == workflow.id
     assert data['tasks'][0]['performers'] == [
         {
@@ -361,9 +358,83 @@ def test_run__all__ok(api_client, mocker):
     kv_selection_1 = kv_selections.get(api_name=selection_1.api_name)
     kv_selection_2 = kv_selections.get(api_name=selection_2.api_name)
     assert kv_selection_1.value == selection_1.value
-    assert kv_selection_1.is_selected
     assert kv_selection_2.value == selection_2.value
-    assert kv_selection_2.is_selected
+
+    analytics_mock.assert_called_once_with(
+        workflow=workflow,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+        user=user,
+    )
+    send_workflow_started_webhook_mock.assert_called_once_with(
+        user_id=user.id,
+        account_id=user.account_id,
+        payload=webhook_payload,
+    )
+
+
+def test_run__field_with_dataset__ok(api_client, mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    create_wf_created_webhook(user)
+
+    dataset = create_test_dataset(account=account, items_count=1)
+    dataset_item = dataset.items.get(order=1)
+    template = create_test_template(user=user, tasks_count=1, is_active=True)
+    field = FieldTemplate.objects.create(
+        name='Checkbox',
+        type=FieldType.CHECKBOX,
+        kickoff=template.kickoff_instance,
+        template=template,
+        account=account,
+        dataset=dataset,
+    )
+
+    analytics_mock = mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    send_workflow_started_webhook_mock = mocker.patch(
+        'src.processes.tasks.webhooks.'
+        'send_workflow_started_webhook.delay',
+    )
+    webhook_payload = mocker.Mock()
+    mocker.patch(
+        'src.processes.models.workflows.workflow.Workflow'
+        '.webhook_payload',
+        return_value=webhook_payload,
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={
+            'kickoff': {
+                field.api_name: [dataset_item.value],
+            },
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    data = response.data
+    workflow = Workflow.objects.get(id=data['id'])
+    assert data['id'] == workflow.id
+
+    kickoff_field_data = data['kickoff']['output'][0]
+    assert kickoff_field_data['id']
+    assert kickoff_field_data['type'] == FieldType.CHECKBOX
+    assert kickoff_field_data['api_name'] == field.api_name
+    assert kickoff_field_data['name'] == field.name
+    assert kickoff_field_data['value'] == dataset_item.value
+    assert kickoff_field_data['selections'] == [dataset_item.value]
 
     analytics_mock.assert_called_once_with(
         workflow=workflow,
@@ -889,29 +960,8 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         'WorkflowEventService.workflow_run_event',
     )
     account = create_test_account(plan=BillingPlanType.PREMIUM)
-    user = create_test_user(account=account)
+    user = create_test_owner(account=account)
     api_client.token_authenticate(user)
-
-    api_name_skip_field = 'skip-field'
-    api_name_skip_selection = 'skip-selection'
-    api_name_file = 'file-field-1'
-    api_name_url = 'url-field-1'
-    api_name_str = 'str-field-1'
-    api_name_text = 'text-field-1'
-    api_name_checkbox = 'box-field-1'
-    api_name_radio = 'radio-field-1'
-    api_name_dropdown = 'drop-field-1'
-
-    task_2_name = 'Second {{%s}}step' % api_name_str
-    task_2_description = '{{%s}}{{%s}}{{%s}}{{%s}}{{%s}}{{%s}}{{%s}}' % (
-        api_name_file,
-        api_name_url,
-        api_name_str,
-        api_name_text,
-        api_name_checkbox,
-        api_name_radio,
-        api_name_dropdown,
-    )
 
     template = create_test_template(
         user=user,
@@ -919,128 +969,22 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         tasks_count=2,
     )
     template_task_1 = template.tasks.get(number=1)
-    template_task_2 = template.tasks.get(number=2)
-    template_task_2.name = task_2_name
-    template_task_2.description = task_2_description
-    template_task_2.save()
 
-    checkbox_field = FieldTemplate.objects.create(
+    skip_field_api_name = 'skip-field'
+    skip_selection_value = 'skip value'
+
+    skip_field = FieldTemplate.objects.create(
         order=1,
         name='Skip first task',
         type=FieldType.CHECKBOX,
-        is_required=False,
         kickoff=template.kickoff_instance,
         template=template,
-        api_name=api_name_skip_field,
-        account=user.account,
-    )
-    selection = FieldTemplateSelection.objects.create(
-        value='Click to skip first step',
-        field_template=checkbox_field,
-        api_name=api_name_skip_selection,
-        template=template,
-    )
-
-    FieldTemplate.objects.create(
-        order=1,
-        name='Attached file',
-        type=FieldType.FILE,
-        is_required=False,
-        task=template_task_1,
-        template=template,
-        api_name=api_name_file,
-        account=user.account,
-    )
-    FieldTemplate.objects.create(
-        order=2,
-        name='Attached URL',
-        type=FieldType.URL,
-        is_required=False,
-        task=template_task_1,
-        template=template,
-        api_name=api_name_url,
-        account=user.account,
-    )
-    FieldTemplate.objects.create(
-        order=3,
-        name='String field',
-        type=FieldType.STRING,
-        is_required=False,
-        task=template_task_1,
-        template=template,
-        api_name=api_name_str,
-        account=user.account,
-    )
-    FieldTemplate.objects.create(
-        order=4,
-        name='Text field',
-        type=FieldType.TEXT,
-        is_required=False,
-        task=template_task_1,
-        template=template,
-        api_name=api_name_text,
-        account=user.account,
-    )
-    checkbox_field = FieldTemplate.objects.create(
-        order=5,
-        name='Checkbox field',
-        type=FieldType.CHECKBOX,
-        is_required=False,
-        task=template_task_1,
-        template=template,
-        api_name=api_name_checkbox,
-        account=user.account,
+        api_name=skip_field_api_name,
+        account=account,
     )
     FieldTemplateSelection.objects.create(
-        value='First checkbox',
-        field_template=checkbox_field,
-        template=template,
-    )
-    FieldTemplateSelection.objects.create(
-        value='Second checkbox',
-        field_template=checkbox_field,
-        template=template,
-    )
-
-    radio_field = FieldTemplate.objects.create(
-        order=6,
-        name='Radio field',
-        type=FieldType.RADIO,
-        is_required=False,
-        task=template_task_1,
-        template=template,
-        api_name=api_name_radio,
-        account=user.account,
-    )
-    FieldTemplateSelection.objects.create(
-        value='First radio',
-        field_template=radio_field,
-        template=template,
-    )
-    FieldTemplateSelection.objects.create(
-        value='Second radio',
-        field_template=radio_field,
-        template=template,
-    )
-
-    dropdown_field = FieldTemplate.objects.create(
-        order=7,
-        name='Dropdown field',
-        type=FieldType.DROPDOWN,
-        is_required=False,
-        task=template_task_1,
-        template=template,
-        api_name=api_name_dropdown,
-        account=user.account,
-    )
-    FieldTemplateSelection.objects.create(
-        value='First selection',
-        field_template=dropdown_field,
-        template=template,
-    )
-    FieldTemplateSelection.objects.create(
-        value='Second selection',
-        field_template=dropdown_field,
+        value=skip_selection_value,
+        field_template=skip_field,
         template=template,
     )
 
@@ -1058,8 +1002,8 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         rule=rule,
         operator=PredicateOperator.EQUAL,
         field_type=FieldType.CHECKBOX,
-        field=api_name_skip_field,
-        value=api_name_skip_selection,
+        field=skip_field_api_name,
+        value=skip_selection_value,
         template=template,
     )
 
@@ -1068,7 +1012,7 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
         f'/templates/{template.id}/run',
         data={
             'kickoff': {
-                api_name_skip_field: [selection.api_name],
+                skip_field_api_name: [skip_selection_value],
             },
         },
     )
@@ -1076,12 +1020,8 @@ def test_run__skip_task__fields_is_empty(api_client, mocker):
 
     # assert
     assert response.status_code == 200
-    task_1 = workflow.tasks.get(number=1)
-    assert task_1.is_skipped
-    task_2 = workflow.tasks.get(number=2)
-    assert task_2.status == TaskStatus.ACTIVE
-    assert task_2.name == 'Second step'
-    assert task_2.description == ''
+    assert workflow.tasks.get(number=1).is_skipped
+    assert workflow.tasks.get(number=2).is_active
 
 
 def test_skip_delayed_task__fields_is_empty(mocker, api_client):
@@ -1106,8 +1046,8 @@ def test_skip_delayed_task__fields_is_empty(mocker, api_client):
         'send_new_task_notification.delay',
     )
 
-    api_name_skip_field = 'skip-field'
-    api_name_skip_selection = 'skip-selection'
+    skip_field_api_name = 'skip-field'
+    skip_selection_api_name = 'skip-selection'
     api_name_file = 'file-field-1'
     api_name_url = 'url-field-1'
     api_name_str = 'str-field-1'
@@ -1203,10 +1143,10 @@ def test_skip_delayed_task__fields_is_empty(mocker, api_client):
                 {
                     'predicates': [
                         {
-                            'field': api_name_skip_field,
+                            'field': skip_field_api_name,
                             'field_type': FieldType.CHECKBOX,
                             'operator': PredicateOperator.EQUAL,
-                            'value': api_name_skip_selection,
+                            'value': skip_selection_api_name,
                         },
                     ],
                 },
@@ -1223,6 +1163,7 @@ def test_skip_delayed_task__fields_is_empty(mocker, api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -1230,12 +1171,12 @@ def test_skip_delayed_task__fields_is_empty(mocker, api_client):
                     {
                         'order': 1,
                         'name': 'Skip first task',
-                        'api_name': api_name_skip_field,
+                        'api_name': skip_field_api_name,
                         'type': FieldType.CHECKBOX,
                         'is_required': False,
                         'selections': [
                             {
-                                'api_name': api_name_skip_selection,
+                                'api_name': skip_selection_api_name,
                                 'value': 'Click to skip first step',
                             },
                         ],
@@ -1274,14 +1215,14 @@ def test_skip_delayed_task__fields_is_empty(mocker, api_client):
     )
     template = Template.objects.get(id=response_create.data['id'])
     selection = FieldTemplateSelection.objects.get(
-        api_name=api_name_skip_selection,
+        api_name=skip_selection_api_name,
     )
     response = api_client.post(
         f'/templates/{template.id}/run',
         data={
             'name': 'test workflow',
             'kickoff': {
-                api_name_skip_field: [selection.api_name],
+                skip_field_api_name: [selection.value],
             },
         },
     )
@@ -1512,6 +1453,7 @@ def test_run__cancel_delay__ok(api_client, mocker):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -1572,6 +1514,7 @@ def test_run__cancel_delay__ok(api_client, mocker):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': True,
@@ -2347,10 +2290,12 @@ def test_run__user_field_invited_transfer__ok(
                 {
                     'type': OwnerType.USER,
                     'source_id': account_2_owner.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': account_2_new_user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -3065,6 +3010,7 @@ def test_run__task_name_with_field__ok(mocker, api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -3159,6 +3105,7 @@ def test_run__task_name_with_kickoff_data_value_int__ok(mocker, api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -3244,6 +3191,7 @@ def test_run__task_name_with_kickoff_data_value_float__ok(mocker, api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -3331,6 +3279,7 @@ def test_run__task_name_with_invalid_kickoff_data_value__validation_error(
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -3418,6 +3367,7 @@ def test_run__task_name_with_field_2__ok(mocker, api_client):
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -3493,8 +3443,8 @@ def test_run__task_name_with_field_2__ok(mocker, api_client):
         data={
             'kickoff': {
                 api_name_1: [
-                    str(selection_1.api_name),
-                    str(selection_2.api_name),
+                    str(selection_1.value),
+                    str(selection_2.value),
                 ],
                 api_name_2: 1726012800,
                 api_name_3: str(user.email),
@@ -5007,3 +4957,234 @@ def test_run__group_performers__ok(mocker, api_client):
         account_id=account.id,
         task_data=task.get_data_for_list(),
     )
+
+
+def test_run__template_viewer_user__ok(mocker, api_client):
+    """
+    Template viewer (user) should be able to run workflow from template.
+    """
+
+    # arrange
+    mocker.patch(
+        'src.notifications.tasks'
+        '.send_new_task_notification.delay',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    account = create_test_account()
+    template_owner = create_test_user(
+        email='owner@test.test',
+        account=account,
+        is_account_owner=True,
+    )
+    template = create_test_template(
+        user=template_owner,
+        is_active=True,
+        tasks_count=1,
+    )
+
+    viewer_user = create_test_user(
+        account=account,
+        email='viewer@test.test',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
+        template=template,
+        type=OwnerType.USER,
+        user=viewer_user,
+        account=account,
+    )
+
+    api_client.token_authenticate(viewer_user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={'name': 'Test workflow'},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert Workflow.objects.filter(id=response.data['id']).exists()
+
+
+def test_run__template_viewer_group__ok(mocker, api_client):
+    """
+    Template viewer (via group) should be able to run workflow from template.
+    """
+
+    # arrange
+    mocker.patch(
+        'src.notifications.tasks'
+        '.send_new_task_notification.delay',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    account = create_test_account()
+    template_owner = create_test_user(
+        email='owner@test.test',
+        account=account,
+        is_account_owner=True,
+    )
+    template = create_test_template(
+        user=template_owner,
+        is_active=True,
+        tasks_count=1,
+    )
+
+    viewer_user = create_test_user(
+        account=account,
+        email='viewer@test.test',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    group = create_test_group(account=account, name='Viewers Group')
+    group.users.add(viewer_user)
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.VIEWER,
+        template=template,
+        type=OwnerType.GROUP,
+        group=group,
+        account=account,
+    )
+
+    api_client.token_authenticate(viewer_user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={'name': 'Test workflow'},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert Workflow.objects.filter(id=response.data['id']).exists()
+
+
+def test_run__template_owner_not_admin__ok(mocker, api_client):
+    """
+    Template owner (non-admin) should be able to run workflow from template.
+    """
+
+    # arrange
+    mocker.patch(
+        'src.notifications.tasks'
+        '.send_new_task_notification.delay',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    account = create_test_account()
+    account_owner = create_test_user(
+        email='account_owner@test.test',
+        account=account,
+        is_account_owner=True,
+    )
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1,
+    )
+
+    owner_user = create_test_user(
+        account=account,
+        email='owner@test.test',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
+        template=template,
+        type=OwnerType.USER,
+        user=owner_user,
+        account=account,
+    )
+
+    api_client.token_authenticate(owner_user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={'name': 'Test workflow'},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert Workflow.objects.filter(id=response.data['id']).exists()
+
+
+def test_run__template_starter_not_admin__ok(mocker, api_client):
+    """
+    Template starter (non-admin) should be able to run workflow from template.
+    """
+
+    # arrange
+    mocker.patch(
+        'src.notifications.tasks'
+        '.send_new_task_notification.delay',
+    )
+    mocker.patch(
+        'src.analysis.services.AnalyticService.'
+        'workflows_started',
+    )
+    mocker.patch(
+        'src.processes.services.workflow_action.'
+        'WorkflowEventService.workflow_run_event',
+    )
+    account = create_test_account()
+    account_owner = create_test_user(
+        email='account_owner@test.test',
+        account=account,
+        is_account_owner=True,
+    )
+    template = create_test_template(
+        user=account_owner,
+        is_active=True,
+        tasks_count=1,
+    )
+
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.test',
+        is_account_owner=False,
+        is_admin=False,
+    )
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    api_client.token_authenticate(starter_user)
+
+    # act
+    response = api_client.post(
+        path=f'/templates/{template.id}/run',
+        data={'name': 'Test workflow'},
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert Workflow.objects.filter(id=response.data['id']).exists()

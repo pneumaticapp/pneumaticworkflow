@@ -5,6 +5,7 @@ from src.accounts.models import AccountBaseMixin
 from src.generics.managers import BaseSoftDeleteManager
 from src.generics.models import SoftDeleteModel
 from src.processes.models.workflows.workflow import Workflow
+from src.processes.querysets import KickoffValueQuerySet
 
 
 class KickoffValue(
@@ -31,4 +32,4 @@ class KickoffValue(
         blank=True,
         help_text='Does not contains markdown',
     )
-    objects = BaseSoftDeleteManager()
+    objects = BaseSoftDeleteManager.from_queryset(KickoffValueQuerySet)()

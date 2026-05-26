@@ -13,6 +13,8 @@ from src.generics.mixins.queries import (
 )
 from src.processes.enums import (
     DirectlyStatus,
+    OwnerRole,
+    OwnerType,
     TaskOrdering,
     TaskStatus,
     TemplateOrdering,
@@ -34,7 +36,38 @@ from src.queries import (
 UserModel = get_user_model()
 
 
+class TemplateOwnerRoleMixin:
+    def _get_template_owner_role_allowed(self, role):
+        """User is template owner by role (user or via group)."""
+        param_base = f'role_{role}'
+        self.params[f'{param_base}_type_user'] = OwnerType.USER
+        self.params[f'{param_base}_type_group'] = OwnerType.GROUP
+        self.params[param_base] = role
+
+        return f"""EXISTS (
+            SELECT 1 FROM processes_templateowner pto
+            WHERE pto.template_id = pw.template_id
+              AND pto.is_deleted IS FALSE
+              AND pto.role = %({param_base})s
+              AND (
+                (
+                    pto.type = %({param_base}_type_user)s
+                    AND pto.user_id = %(user_id)s
+                )
+                OR (
+                  pto.type = %({param_base}_type_group)s
+                  AND pto.group_id IN (
+                    SELECT aug.usergroup_id
+                    FROM accounts_usergroup_users aug
+                    WHERE aug.user_id = %(user_id)s
+                  )
+                )
+              )
+        )"""
+
+
 class WorkflowListQuery(
+    TemplateOwnerRoleMixin,
     SqlQueryObject,
     SearchSqlQueryMixin,
     OrderByMixin,
@@ -160,10 +193,24 @@ class WorkflowListQuery(
             AND pw.account_id = %(account_id)s """
 
         if self.user_id:
+            # Workflow list visibility: user sees workflows where they are
+            # a workflow owner OR a template viewer.
+            # IN ADDITION, if they are a template starter
+            # and they started the workflow.
             where = f"""{where}
                 AND (
                     pwo.user_id = %(user_id)s
-                    OR pw.workflow_starter_id = %(user_id)s
+                    OR {
+                        self._get_template_owner_role_allowed(OwnerRole.VIEWER)
+                    }
+                    OR (
+                        pw.workflow_starter_id = %(user_id)s
+                        AND {
+                            self._get_template_owner_role_allowed(
+                                OwnerRole.STARTER
+                            )
+                        }
+                    )
                 )"""
             self.params['user_id'] = self.user_id
 
@@ -324,6 +371,7 @@ class WorkflowListQuery(
 
 
 class WorkflowCountsByWfStarterQuery(
+    TemplateOwnerRoleMixin,
     SqlQueryObject,
 ):
 
@@ -384,11 +432,22 @@ class WorkflowCountsByWfStarterQuery(
         return f"ptp.group_id in {result}"
 
     def _get_inner_where(self):
-        where = """
+        where = f"""
             WHERE au.is_deleted IS FALSE
             AND pw.is_deleted IS FALSE
             AND pw.account_id = %(account_id)s
-            AND ptra.user_id = %(user_id)s """
+            AND (
+                ptra.user_id = %(user_id)s
+                OR {self._get_template_owner_role_allowed(OwnerRole.VIEWER)}
+                OR (
+                    pw.workflow_starter_id = %(user_id)s
+                    AND {
+                        self._get_template_owner_role_allowed(
+                            OwnerRole.STARTER
+                        )
+                    }
+                )
+            ) """
 
         if self.template_ids:
             where = f'{where} AND {self._get_template_ids()}'
@@ -474,6 +533,7 @@ class WorkflowCountsByWfStarterQuery(
 
 
 class WorkflowCountsByCPerformerQuery(
+    TemplateOwnerRoleMixin,
     SqlQueryObject,
 ):
 
@@ -531,7 +591,18 @@ class WorkflowCountsByCPerformerQuery(
             WHERE au.is_deleted IS FALSE
             AND pw.is_deleted IS FALSE
             AND pw.account_id = %(account_id)s
-            AND ptra.user_id = %(user_id)s
+            AND (
+                ptra.user_id = %(user_id)s
+                OR {self._get_template_owner_role_allowed(OwnerRole.VIEWER)}
+                OR (
+                    pw.workflow_starter_id = %(user_id)s
+                    AND {
+                        self._get_template_owner_role_allowed(
+                            OwnerRole.STARTER
+                        )
+                    }
+                )
+            )
             AND ptp.directly_status != '{DirectlyStatus.DELETED}' """
 
         if self.template_ids:
@@ -605,7 +676,22 @@ class WorkflowCountsByCPerformerQuery(
             WHERE au.is_deleted IS FALSE
                 AND pw.is_deleted IS FALSE
                 AND pw.account_id = %(account_id)s
-                AND ptra.user_id = %(user_id)s
+                AND (
+                    ptra.user_id = %(user_id)s
+                    OR {
+                        self._get_template_owner_role_allowed(
+                            OwnerRole.VIEWER
+                        )
+                    }
+                    OR (
+                        pw.workflow_starter_id = %(user_id)s
+                        AND {
+                            self._get_template_owner_role_allowed(
+                                OwnerRole.STARTER
+                            )
+                        }
+                    )
+                )
                 AND ptp.directly_status != '{DirectlyStatus.DELETED}'
                 AND ag.is_deleted IS FALSE
                 AND ptp.group_id IS NOT NULL
@@ -632,7 +718,22 @@ class WorkflowCountsByCPerformerQuery(
             WHERE au.is_deleted IS FALSE
                 AND pw.is_deleted IS FALSE
                 AND pw.account_id = %(account_id)s
-                AND ptra.user_id = %(user_id)s
+                AND (
+                    ptra.user_id = %(user_id)s
+                    OR {
+                        self._get_template_owner_role_allowed(
+                            OwnerRole.VIEWER
+                        )
+                    }
+                    OR (
+                        pw.workflow_starter_id = %(user_id)s
+                        AND {
+                            self._get_template_owner_role_allowed(
+                                OwnerRole.STARTER
+                            )
+                        }
+                    )
+                )
                 AND ptp.directly_status != '{DirectlyStatus.DELETED}'
                 AND ag.is_deleted IS FALSE
                 AND ptp.group_id IS NOT NULL
@@ -1143,7 +1244,11 @@ class TemplateListQuery(
 
     def _get_allowed(self):
         self.params.update({'allowed_id': self.user_id})
-        return """owners.user_id = %(allowed_id)s"""
+        return """(
+            owners.user_id = %(allowed_id)s
+            OR viewers.user_id = %(allowed_id)s
+            OR starters.user_id = %(allowed_id)s
+        )"""
 
     def _get_active(self):
         self.params.update({'is_active': self.is_active})
@@ -1177,6 +1282,8 @@ class TemplateListQuery(
           ptt.is_deleted = false
         )
         LEFT JOIN owners ON pt.id = owners.template_id
+        LEFT JOIN viewers ON pt.id = viewers.template_id
+        LEFT JOIN starters ON pt.id = starters.template_id
         LEFT JOIN accounts_user ON (
           owners.user_id = accounts_user.id AND
           accounts_user.is_deleted = false
@@ -1209,12 +1316,9 @@ class TemplateListQuery(
         where = """
         WHERE pt.is_deleted = false AND
         pt.account_id = %(account_id)s AND
-        accounts_user.id = %(user_id)s
         """
-
         where = (
-            f'{where} AND {self._get_filter_by_type()} AND '
-            f'{self._get_allowed()}'
+            f'{where} {self._get_allowed()} AND {self._get_filter_by_type()}'
         )
 
         if self.search_text:
@@ -1227,6 +1331,50 @@ class TemplateListQuery(
             where = f'{where} AND {self._get_public()}'
 
         return where
+
+    def _dereferenced_viewers(self):
+        self.params['viewer_type_user'] = OwnerType.USER
+        self.params['viewer_type_group'] = OwnerType.GROUP
+        self.params['role_viewer'] = 'viewer'
+        return """
+            SELECT ptv.template_id, g.user_id AS user_id
+            FROM processes_templateowner AS ptv
+            JOIN accounts_usergroup_users AS g
+              ON g.usergroup_id = ptv.group_id
+            WHERE ptv.role = %(role_viewer)s
+              AND ptv.type = %(viewer_type_group)s
+              AND ptv.is_deleted IS FALSE
+              AND g.user_id = %(user_id)s
+            UNION
+            SELECT ptv.template_id, ptv.user_id
+            FROM processes_templateowner AS ptv
+            WHERE ptv.role = %(role_viewer)s
+              AND ptv.type = %(viewer_type_user)s
+              AND ptv.is_deleted IS FALSE
+              AND ptv.user_id = %(user_id)s
+        """
+
+    def _dereferenced_starters(self):
+        self.params['starter_type_user'] = OwnerType.USER
+        self.params['starter_type_group'] = OwnerType.GROUP
+        self.params['role_starter'] = 'starter'
+        return """
+            SELECT pts.template_id, g.user_id AS user_id
+            FROM processes_templateowner AS pts
+            JOIN accounts_usergroup_users AS g
+              ON g.usergroup_id = pts.group_id
+            WHERE pts.role = %(role_starter)s
+              AND pts.type = %(starter_type_group)s
+              AND pts.is_deleted IS FALSE
+              AND g.user_id = %(user_id)s
+            UNION
+            SELECT pts.template_id, pts.user_id
+            FROM processes_templateowner AS pts
+            WHERE pts.role = %(role_starter)s
+              AND pts.type = %(starter_type_user)s
+              AND pts.is_deleted IS FALSE
+              AND pts.user_id = %(user_id)s
+        """
 
     def _get_select(self):
 
@@ -1255,7 +1403,10 @@ class TemplateListQuery(
 
     def _get_inner_sql(self):
         return f"""
-        WITH owners AS ({self.dereferenced_owners()})
+        WITH
+          owners AS ({self.dereferenced_owners()}),
+          viewers AS ({self._dereferenced_viewers()}),
+          starters AS ({self._dereferenced_starters()})
         {self._get_select()}
         {self._get_from()}
         {self._get_inner_where()}
@@ -1279,6 +1430,200 @@ class TemplateListQuery(
         """, self.params
 
 
+class TemplateListByOwnersQuery(
+    SqlQueryObject,
+    SearchSqlQueryMixin,
+    OrderByMixin,
+    DereferencedOwnersMixin,
+):
+    """
+    Returns templates where the user is a Template Owner
+    (directly or via group membership).
+    Unlike TemplateListQuery, this excludes viewers and starters.
+    """
+
+    ordering_map = TemplateOrdering.MAP
+
+    def __init__(
+            self,
+            user_id: int,
+            account_id: int,
+            ordering: Optional[str] = None,
+            search_text: Optional[str] = None,
+            is_active: Optional[bool] = None,
+            is_public: Optional[bool] = None,
+    ):
+
+        self.user_id = user_id
+        self.account_id = account_id
+        self.params = {
+            'account_id': self.account_id,
+            'user_id': user_id,
+        }
+        self.search_text = search_text
+        if self.search_text:
+            self.search_tsquery, search_params = self._get_tsquery()
+            self.params.update(search_params)
+        else:
+            self.search_tsquery = None
+        self.order = None
+        self.is_active = is_active
+        self.is_public = is_public
+        self.ordering = ordering
+
+    def _get_search(self):
+        return f"""
+              (
+                {
+                    self._search_in(
+                        table='ps',
+                        field='content',
+                        tsquery=self.search_tsquery
+                    )
+                } OR {
+                    self._search_in(
+                        table='accounts_user',
+                        tsquery=self.search_tsquery
+                    )
+                }
+              )
+            """
+
+    def _get_allowed(self):
+        self.params.update({'allowed_id': self.user_id})
+        return 'owners.user_id = %(allowed_id)s'
+
+    def _get_active(self):
+        self.params.update({'is_active': self.is_active})
+        return 'pt.is_active IS %(is_active)s'
+
+    def _get_public(self):
+        self.params.update({'is_public': self.is_public})
+        return 'pt.is_public IS %(is_public)s'
+
+    def _get_filter_by_type(self):
+        result, params = self._to_sql_list(
+            values=TemplateType.TYPES_ONBOARDING,
+            prefix='template_type',
+        )
+        self.params.update(params)
+        return f"pt.type NOT IN {result}"
+
+    def get_workflows_select(self):
+        if self.ordering in {
+            TemplateOrdering.USAGE,
+            TemplateOrdering.REVERSE_USAGE,
+        }:
+            return 'COUNT(DISTINCT workflows.id) AS workflows_count,'
+        return ''
+
+    def _get_from(self):
+        result = """
+            FROM processes_template pt
+            LEFT JOIN processes_tasktemplate ptt ON (
+              ptt.template_id = pt.id AND
+              ptt.is_deleted = false
+            )
+            LEFT JOIN owners ON pt.id = owners.template_id
+            LEFT JOIN accounts_user ON (
+              owners.user_id = accounts_user.id AND
+              accounts_user.is_deleted = false
+            )
+            """
+        if self.search_text:
+            # ! Does not change
+            # "ps.is_deleted = FALSE" to a "ps.is_deleted IS FALSE"
+            # it breaks using gin index
+            result += """
+                    INNER JOIN processes_searchcontent ps ON (
+                        pt.id = ps.template_id
+                        AND ps.is_deleted = FALSE
+                        AND ps.account_id = %(account_id)s
+                    )
+                """
+        if self.ordering in {
+            TemplateOrdering.USAGE,
+            TemplateOrdering.REVERSE_USAGE,
+        }:
+            result += """
+                LEFT JOIN processes_workflow workflows ON (
+                  pt.id = workflows.template_id AND
+                  workflows.is_deleted = FALSE
+                )
+            """
+        return result
+
+    def _get_inner_where(self):
+        where = """
+            WHERE pt.is_deleted = false AND
+            pt.account_id = %(account_id)s AND
+            """
+        where = (
+            f'{where} {self._get_allowed()} AND {self._get_filter_by_type()}'
+        )
+
+        if self.search_text:
+            where = f'{where} AND {self._get_search()}'
+
+        if self.is_active is not None:
+            where = f'{where} AND {self._get_active()}'
+
+        if self.is_public is not None:
+            where = f'{where} AND {self._get_public()}'
+
+        return where
+
+    def _get_select(self):
+
+        result = f"""
+            SELECT
+                pt.id,
+                pt.is_deleted,
+                pt.name,
+                pt.wf_name_template,
+                pt.description,
+                pt.date_created,
+                pt.finalizable,
+                pt.account_id,
+                pt.is_active,
+                pt.is_public,
+                pt.is_embedded,
+                {self.get_workflows_select()}
+                COUNT(DISTINCT ptt.id) as tasks_count,
+                pt.type{',' if self.search_tsquery else ''}
+            """
+        if self.search_tsquery:
+            result += f"""
+                MAX(ts_rank(ps.content, {self.search_tsquery})) AS search_rank
+            """
+        return result
+
+    def _get_inner_sql(self):
+        return f"""
+            WITH owners AS ({self.dereferenced_owners()})
+            {self._get_select()}
+            {self._get_from()}
+            {self._get_inner_where()}
+            GROUP BY pt.id
+        """
+
+    def get_sql(self):
+        pre_columns = []
+        if self.search_tsquery:
+            pre_columns.append('templates.search_rank DESC')
+        pre_columns.append('templates.is_active DESC')
+        pre_columns = ', '.join(pre_columns) if pre_columns else None
+        order_by = self.get_order_by(
+            pre_columns=pre_columns,
+            default_column='templates.id',
+        )
+        return f"""
+            SELECT *
+            FROM ({self._get_inner_sql()}) templates
+            {order_by}
+            """, self.params
+
+
 class TemplateExportQuery(
     SqlQueryObject,
     OrderByMixin,
@@ -1287,14 +1632,14 @@ class TemplateExportQuery(
     ordering_map = TemplateOrdering.MAP
 
     def __init__(
-        self,
-        user_id: int,
-        account_id: int,
-        ordering: Optional[str] = None,
-        is_active: Optional[bool] = None,
-        is_public: Optional[bool] = None,
-        owners_ids: Optional[List[int]] = None,
-        owners_group_ids: Optional[List[int]] = None,
+            self,
+            user_id: int,
+            account_id: int,
+            ordering: Optional[str] = None,
+            is_active: Optional[bool] = None,
+            is_public: Optional[bool] = None,
+            owners_ids: Optional[List[int]] = None,
+            owners_group_ids: Optional[List[int]] = None,
     ):
 
         self.user_id = user_id
@@ -1577,6 +1922,12 @@ class HighlightsQuery(SqlQueryObject):
             self.date_after_tsp = date_after_tsp
 
     def get_sql(self):
+        self.sql_params['viewer_type_user'] = OwnerType.USER
+        self.sql_params['viewer_type_group'] = OwnerType.GROUP
+        self.sql_params['role_viewer'] = OwnerRole.VIEWER
+        self.sql_params['starter_type_user'] = OwnerType.USER
+        self.sql_params['starter_type_group'] = OwnerType.GROUP
+        self.sql_params['role_starter'] = OwnerRole.STARTER
         subquery = """
         SELECT DISTINCT ON (we.workflow_id)
           we.id,
@@ -1595,12 +1946,51 @@ class HighlightsQuery(SqlQueryObject):
           workflow.template_id = template.id
         LEFT JOIN processes_workflow_owners workflow_owners ON
           workflow.id = workflow_owners.workflow_id
+        LEFT JOIN processes_templateowner ptv_user ON
+          template.id = ptv_user.template_id
+          AND ptv_user.is_deleted IS FALSE
+          AND ptv_user.role = %(role_viewer)s
+          AND ptv_user.type = %(viewer_type_user)s
+          AND ptv_user.user_id = %(user_id)s
+        LEFT JOIN processes_templateowner ptv_grp ON
+          template.id = ptv_grp.template_id
+          AND ptv_grp.is_deleted IS FALSE
+          AND ptv_grp.role = %(role_viewer)s
+          AND ptv_grp.type = %(viewer_type_group)s
+        LEFT JOIN accounts_usergroup_users grp_u ON
+          ptv_grp.group_id = grp_u.usergroup_id
+          AND grp_u.user_id = %(user_id)s
+        LEFT JOIN processes_templateowner pts_user ON
+          template.id = pts_user.template_id
+          AND pts_user.is_deleted IS FALSE
+          AND pts_user.role = %(role_starter)s
+          AND pts_user.type = %(starter_type_user)s
+          AND pts_user.user_id = %(user_id)s
+        LEFT JOIN processes_templateowner pts_grp ON
+          template.id = pts_grp.template_id
+          AND pts_grp.is_deleted IS FALSE
+          AND pts_grp.role = %(role_starter)s
+          AND pts_grp.type = %(starter_type_group)s
+        LEFT JOIN accounts_usergroup_users grp_u_starter ON
+          pts_grp.group_id = grp_u_starter.usergroup_id
+          AND grp_u_starter.user_id = %(user_id)s
         WHERE
           NOT we.is_deleted AND
           we.account_id = %(account_id)s AND
           NOT workflow.is_deleted AND
           NOT template.is_deleted AND
-          workflow_owners.user_id = %(user_id)s
+          (
+            workflow_owners.user_id = %(user_id)s
+            OR ptv_user.id IS NOT NULL
+            OR grp_u.user_id IS NOT NULL
+            OR (
+                workflow.workflow_starter_id = %(user_id)s
+                AND (
+                    pts_user.id IS NOT NULL
+                    OR grp_u_starter.user_id IS NOT NULL
+                )
+            )
+          )
         """
         ordering = 'ORDER BY we.created DESC, we.id DESC'
         sub_ordering = ' ORDER BY we.workflow_id, we.created DESC'
@@ -1783,6 +2173,7 @@ class TemplateTitlesByEventsQuery(SqlQueryObject):
 
 
 class TemplateTitlesByWorkflowsQuery(
+    TemplateOwnerRoleMixin,
     SqlQueryObject,
     DereferencedPerformersMixin,
     DereferencedOwnersMixin,
@@ -1793,6 +2184,7 @@ class TemplateTitlesByWorkflowsQuery(
         user: User,
         status: Optional[WorkflowStatus] = None,
     ):
+        self.user = user
         self.params = {
             'account_id': user.account.id,
             'user_id': user.id,
@@ -1811,17 +2203,113 @@ class TemplateTitlesByWorkflowsQuery(
         self.params.update(params)
         return f"t.type NOT IN {result}"
 
+    def _get_accessible_templates(self):
+        """Returns templates where user is owner, viewer or starter"""
+        # Users can see templates where they are:
+        # 1. Template owners (user or via group)
+        # 2. Template viewers (user or via group)
+        # 3. Template starters (user or via group)
+        self.params['owner_type_user'] = OwnerType.USER
+        self.params['owner_type_group'] = OwnerType.GROUP
+        self.params['viewer_type_user'] = OwnerType.USER
+        self.params['viewer_type_group'] = OwnerType.GROUP
+        self.params['starter_type_user'] = OwnerType.USER
+        self.params['starter_type_group'] = OwnerType.GROUP
+        self.params['owner_role'] = OwnerRole.OWNER
+        self.params['viewer_role'] = OwnerRole.VIEWER
+        self.params['starter_role'] = OwnerRole.STARTER
+        return """
+                SELECT DISTINCT template_id
+                FROM (
+                    -- Template owners (users)
+                    SELECT pto.template_id
+                    FROM processes_templateowner AS pto
+                    WHERE pto.type = %(owner_type_user)s
+                      AND pto.role = %(owner_role)s
+                      AND pto.is_deleted IS FALSE
+                      AND pto.user_id = %(user_id)s
+
+                    UNION
+
+                    -- Template owners (groups)
+                    SELECT pto.template_id
+                    FROM processes_templateowner AS pto
+                    JOIN accounts_usergroup_users AS g
+                      ON g.usergroup_id = pto.group_id
+                    WHERE pto.type = %(owner_type_group)s
+                      AND pto.role = %(owner_role)s
+                      AND pto.is_deleted IS FALSE
+                      AND g.user_id = %(user_id)s
+
+                    UNION
+
+                    -- Template viewers (users)
+                    SELECT ptv.template_id
+                    FROM processes_templateowner AS ptv
+                    WHERE ptv.role = %(viewer_role)s
+                      AND ptv.type = %(viewer_type_user)s
+                      AND ptv.is_deleted IS FALSE
+                      AND ptv.user_id = %(user_id)s
+
+                    UNION
+
+                    -- Template viewers (groups)
+                    SELECT ptv.template_id
+                    FROM processes_templateowner AS ptv
+                    JOIN accounts_usergroup_users AS g
+                      ON g.usergroup_id = ptv.group_id
+                    WHERE ptv.role = %(viewer_role)s
+                      AND ptv.type = %(viewer_type_group)s
+                      AND ptv.is_deleted IS FALSE
+                      AND g.user_id = %(user_id)s
+
+                    UNION
+
+                    -- Template starters (users)
+                    SELECT pts.template_id
+                    FROM processes_templateowner AS pts
+                    WHERE pts.role = %(starter_role)s
+                      AND pts.type = %(starter_type_user)s
+                      AND pts.is_deleted IS FALSE
+                      AND pts.user_id = %(user_id)s
+
+                    UNION
+
+                    -- Template starters (groups)
+                    SELECT pts.template_id
+                    FROM processes_templateowner AS pts
+                    JOIN accounts_usergroup_users AS g
+                      ON g.usergroup_id = pts.group_id
+                    WHERE pts.role = %(starter_role)s
+                      AND pts.type = %(starter_type_group)s
+                      AND pts.is_deleted IS FALSE
+                      AND g.user_id = %(user_id)s
+                ) accessible_templates
+            """
+
     def _get_workflows_count(self):
-        result = """
-            SELECT template_id, COUNT(id) AS count
-            FROM processes_workflow
-            WHERE is_deleted IS FALSE
-              AND account_id = %(account_id)s
+        result = f"""
+            SELECT pw.template_id, COUNT(pw.id) AS count
+            FROM processes_workflow pw
+            WHERE pw.is_deleted IS FALSE
+              AND pw.account_id = %(account_id)s
+              AND (
+                  {self._get_template_owner_role_allowed(OwnerRole.OWNER)}
+                  OR {self._get_template_owner_role_allowed(OwnerRole.VIEWER)}
+                  OR (
+                      pw.workflow_starter_id = %(user_id)s
+                      AND {
+                          self._get_template_owner_role_allowed(
+                              OwnerRole.STARTER
+                          )
+                      }
+                  )
+              )
         """
         if self.status is not None:
-            result += "AND status = %(status)s"
+            result += " AND pw.status = %(status)s "
         result += """
-          GROUP BY template_id
+          GROUP BY pw.template_id
         """
         return result
 
@@ -1834,10 +2322,10 @@ class TemplateTitlesByWorkflowsQuery(
               t.name,
               COALESCE(pw.count, 0) AS count
             FROM (
-              {self.dereferenced_owners()}
-            ) pto
+              {self._get_accessible_templates()}
+            ) accessible
               INNER JOIN processes_template t
-                ON t.id = pto.template_id
+                ON t.id = accessible.template_id
               LEFT JOIN (
                 {self._get_workflows_count()}
               ) pw

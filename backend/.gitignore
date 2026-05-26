@@ -71,7 +71,6 @@ coverage.xml
 
 # Translations
 *.mo
-*.pot
 
 # Sphinx documentation
 docs/_build/
@@ -82,7 +81,6 @@ target/
 
 ### Django ###
 *.log
-*.pot
 *.pyc
 __pycache__/
 local_settings.py

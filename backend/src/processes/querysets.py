@@ -23,6 +23,8 @@ from src.generics.querysets import (
 from src.processes.enums import (
     ConditionAction,
     DirectlyStatus,
+    OwnerRole,
+    OwnerType,
     PerformerType,
     PresetType,
     SysTemplateType,
@@ -36,6 +38,7 @@ from src.processes.enums import (
 from src.processes.queries import (
     RunningTaskTemplateQuery,
     TemplateExportQuery,
+    TemplateListByOwnersQuery,
     TemplateListQuery,
     WorkflowListQuery,
 )
@@ -103,19 +106,75 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
 
     def with_template_owner(self, user_id: int):
         return self.filter(
-            Q(owners__type='user', owners__user_id=user_id) |
-            Q(owners__type='group', owners__group__users__id=user_id),
+            Q(
+                owners__role=OwnerRole.OWNER,
+                owners__type=OwnerType.USER,
+                owners__user_id=user_id,
+                owners__is_deleted=False,
+            ) | Q(
+                owners__role=OwnerRole.OWNER,
+                owners__type=OwnerType.GROUP,
+                owners__group__users__id=user_id,
+                owners__is_deleted=False,
+            ),
+        ).distinct()
+
+    def with_template_viewer(self, user_id: int):
+        return self.filter(
+            Q(
+                owners__role=OwnerRole.VIEWER,
+                owners__type=OwnerType.USER,
+                owners__user_id=user_id,
+                owners__is_deleted=False,
+            ) | Q(
+                owners__role=OwnerRole.VIEWER,
+                owners__type=OwnerType.GROUP,
+                owners__group__users__id=user_id,
+                owners__is_deleted=False,
+            ),
+        ).distinct()
+
+    def with_template_starter(self, user_id: int):
+        return self.filter(
+            Q(
+                owners__role=OwnerRole.STARTER,
+                owners__type=OwnerType.USER,
+                owners__user_id=user_id,
+                owners__is_deleted=False,
+            ) | Q(
+                owners__role=OwnerRole.STARTER,
+                owners__type=OwnerType.GROUP,
+                owners__group__users__id=user_id,
+                owners__is_deleted=False,
+            ),
+        ).distinct()
+
+    def with_template_access(self, user_id: int):
+        return self.filter(
+            Q(
+                owners__type=OwnerType.USER,
+                owners__user_id=user_id,
+                owners__is_deleted=False,
+            ) | Q(
+                owners__type=OwnerType.GROUP,
+                owners__group__users__id=user_id,
+                owners__is_deleted=False,
+            ),
         ).distinct()
 
     def get_owners_as_users(self):
         user_owners = self.filter(
-            owners__type='user',
+            owners__role=OwnerRole.OWNER,
+            owners__type=OwnerType.USER,
             owners__user_id__isnull=False,
+            owners__is_deleted=False,
         ).values_list('owners__user_id', flat=True)
         group_owners = self.filter(
-            owners__type='group',
+            owners__role=OwnerRole.OWNER,
+            owners__type=OwnerType.GROUP,
             owners__group__users__isnull=False,
             owners__group__users__id__isnull=False,
+            owners__is_deleted=False,
         ).prefetch_related('owners__group__users').values_list(
             'owners__group__users__id', flat=True,
         )
@@ -204,8 +263,12 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
         is_active: Optional[bool] = None,
         is_public: Optional[bool] = None,
     ):
-        from src.processes.models.templates.owner import (
-            TemplateOwner,
+        from src.processes.models.templates.owner import TemplateOwner
+        from src.processes.models.templates.fields import FieldTemplate
+        from src.processes.models.templates.kickoff import Kickoff
+        from src.datasets.models import DatasetItem
+        from src.processes.models.templates.fields import (
+            FieldTemplateSelection,
         )
 
         query = TemplateListQuery(
@@ -221,11 +284,112 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
             .prefetch_related(
                 Prefetch(
                     'owners',
-                    queryset=TemplateOwner.objects.order_by('type', 'id'),
+                    queryset=(
+                        TemplateOwner.objects
+                        .order_by('type', 'id')
+                    ),
                 ),
-                'kickoff',
-                'kickoff__fields',
-                'kickoff__fields__selections',
+                Prefetch(
+                    lookup='kickoff',
+                    queryset=(
+                        Kickoff.objects.all().prefetch_related(
+                            Prefetch(
+                                lookup='fields',
+                                queryset=(
+                                    FieldTemplate.objects.prefetch_related(
+                                        Prefetch(
+                                            lookup='selections',
+                                            queryset=(
+                                                FieldTemplateSelection
+                                                .objects.order_by('id')
+                                            ),
+                                            to_attr='selections_values',
+                                        ),
+                                        Prefetch(
+                                            'dataset__items',
+                                            queryset=(
+                                                DatasetItem.objects
+                                                .order_by('order')
+                                            ),
+                                            to_attr='dataset_values',
+                                        ),
+                                    ).all().order_by('-order')
+                                ),
+                            ),
+                        )
+                    ),
+                ),
+            )
+        )
+
+    def raw_list_by_owners_query(
+        self,
+        account_id: int,
+        user_id: int,
+        ordering: Optional[TemplateOrdering] = None,
+        search: Optional[str] = None,
+        is_active: Optional[bool] = None,
+        is_public: Optional[bool] = None,
+    ):
+        """
+        Returns templates where the user is a Template Owner
+        (directly or via group membership).
+        """
+        from src.processes.models.templates.owner import TemplateOwner
+        from src.processes.models.templates.fields import FieldTemplate
+        from src.processes.models.templates.kickoff import Kickoff
+        from src.datasets.models import DatasetItem
+        from src.processes.models.templates.fields import (
+            FieldTemplateSelection,
+        )
+        query = TemplateListByOwnersQuery(
+            user_id=user_id,
+            account_id=account_id,
+            ordering=ordering,
+            search_text=search,
+            is_active=is_active,
+            is_public=is_public,
+        )
+        return (
+            self.execute_raw(query)
+            .prefetch_related(
+                Prefetch(
+                    'owners',
+                    queryset=(
+                        TemplateOwner.objects
+                        .order_by('type', 'id')
+                    ),
+                ),
+                Prefetch(
+                    lookup='kickoff',
+                    queryset=(
+                        Kickoff.objects.all().prefetch_related(
+                            Prefetch(
+                                lookup='fields',
+                                queryset=(
+                                    FieldTemplate.objects.prefetch_related(
+                                        Prefetch(
+                                            lookup='selections',
+                                            queryset=(
+                                                FieldTemplateSelection
+                                                .objects.order_by('id')
+                                            ),
+                                            to_attr='selections_values',
+                                        ),
+                                        Prefetch(
+                                            'dataset__items',
+                                            queryset=(
+                                                DatasetItem.objects
+                                                .order_by('order')
+                                            ),
+                                            to_attr='dataset_values',
+                                        ),
+                                    ).all().order_by('-order')
+                                ),
+                            ),
+                        )
+                    ),
+                ),
             )
         )
 
@@ -300,8 +464,76 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
 
     def with_template_owner(self, user_id: int):
         return self.exclude_legacy().filter(
-            template__template_owners=user_id,
+            Q(
+                template__owners__role=OwnerRole.OWNER,
+                template__owners__user_id=user_id,
+                template__owners__is_deleted=False,
+            )
+            | Q(
+                template__owners__role=OwnerRole.OWNER,
+                template__owners__group__users__id=user_id,
+                template__owners__is_deleted=False,
+            ),
         ).distinct()
+
+    def with_template_viewer(self, user_id: int):
+        return self.exclude_legacy().filter(
+            Q(
+                template__owners__role=OwnerRole.VIEWER,
+                template__owners__user_id=user_id,
+                template__owners__is_deleted=False,
+            )
+            | Q(
+                template__owners__role=OwnerRole.VIEWER,
+                template__owners__group__users__id=user_id,
+                template__owners__is_deleted=False,
+            ),
+        ).distinct()
+
+    def with_template_starter(self, user_id: int):
+        return self.exclude_legacy().filter(
+            Q(
+                template__owners__role=OwnerRole.STARTER,
+                template__owners__user_id=user_id,
+                template__owners__is_deleted=False,
+            )
+            | Q(
+                template__owners__role=OwnerRole.STARTER,
+                template__owners__group__users__id=user_id,
+                template__owners__is_deleted=False,
+            ),
+        ).distinct()
+
+    def with_template_access(self, user_id: int):
+        return self.exclude_legacy().filter(
+            Q(
+                template__owners__user_id=user_id,
+                template__owners__is_deleted=False,
+            ) | Q(
+                template__owners__group__users__id=user_id,
+                template__owners__is_deleted=False,
+            ),
+        ).distinct()
+
+    def with_owner_viewer_or_started_by_starter(self, user_id: int):
+        base_owner_q = Q(template__owners__is_deleted=False) & (
+            Q(
+                template__owners__type=OwnerType.USER,
+                template__owners__user_id=user_id,
+            ) |
+            Q(
+                template__owners__type=OwnerType.GROUP,
+                template__owners__group__users__id=user_id,
+            )
+        )
+        access_q = (
+            Q(template__owners__role__in=(OwnerRole.OWNER, OwnerRole.VIEWER)) |
+            Q(
+                template__owners__role=OwnerRole.STARTER,
+                workflow_starter_id=user_id,
+            )
+        )
+        return self.exclude_legacy().filter(base_owner_q & access_q).distinct()
 
     def with_member(self, user_id: int):
         return self.filter(members=user_id)
@@ -425,6 +657,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
                             queryset=(
                                 TaskPerformer.objects
                                 .exclude_directly_deleted()
+                                .select_related('group')
                             ),
                         ),
                         Prefetch(
@@ -441,7 +674,9 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             ),
         ]
         if fields:
-            from src.processes.models.workflows.fields import TaskField
+            from src.processes.models.workflows.fields import (
+                TaskField,
+            )
             prefetch_args.append(
                 Prefetch(
                     lookup='fields',
@@ -519,7 +754,9 @@ class TasksQuerySet(TasksBaseQuerySet):
                     workflow__status=WorkflowStatus.RUNNING,
                 ),
             ) & ~Q(
-                taskperformer__directly_status=DirectlyStatus.DELETED,
+                taskperformer__directly_status__in=(
+                    DirectlyStatus.DELETED,
+                ),
             ),
         )
 
@@ -543,7 +780,9 @@ class TasksQuerySet(TasksBaseQuerySet):
                     workflow__status=WorkflowStatus.RUNNING,
                 ),
             ) & ~Q(
-                taskperformer__directly_status=DirectlyStatus.DELETED,
+                taskperformer__directly_status__in=(
+                    DirectlyStatus.DELETED,
+                ),
             ),
         )
 
@@ -556,8 +795,11 @@ class TasksQuerySet(TasksBaseQuerySet):
         )
 
     def exclude_directly_deleted(self):
+        """Exclude tasks where performer has DELETED directly_status."""
         return self.exclude(
-            taskperformer__directly_status=DirectlyStatus.DELETED,
+            taskperformer__directly_status__in=(
+                DirectlyStatus.DELETED,
+            ),
         )
 
     def apd_status(self):
@@ -592,6 +834,10 @@ class KickoffQuerySet(AccountBaseQuerySet):
     pass
 
 
+class KickoffValueQuerySet(AccountBaseQuerySet):
+    pass
+
+
 class FieldTemplateValuesQuerySet(BaseQuerySet):
 
     def by_ids(self, ids: List[int]):
@@ -599,9 +845,6 @@ class FieldTemplateValuesQuerySet(BaseQuerySet):
 
     def by_api_names(self, api_names: List[str]):
         return self.filter(api_name__in=api_names)
-
-    def selected(self):
-        return self.filter(is_selected=True)
 
 
 class FieldSelectionQuerySet(BaseQuerySet):
@@ -617,9 +860,6 @@ class FieldSelectionQuerySet(BaseQuerySet):
 
     def exclude_values(self, values: List[str]):
         return self.filter(~Q(value__in=values))
-
-    def selected(self):
-        return self.filter(is_selected=True)
 
 
 class SystemTemplateQuerySet(BaseQuerySet):
@@ -846,7 +1086,11 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
         return self.filter(directly_status=DirectlyStatus.NO_STATUS)
 
     def exclude_directly_deleted(self):
-        return self.exclude(directly_status=DirectlyStatus.DELETED)
+        return self.exclude(
+            directly_status__in=(
+                DirectlyStatus.DELETED,
+            ),
+        )
 
     def user_is_subscriber(self):
         return self.filter(
@@ -903,11 +1147,15 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
         return set(direct_users).union(set(group_users))
 
     def group_ids(self):
-        qst = self.filter(type='group').values_list('group_id', flat=True)
+        qst = self.filter(
+            type=PerformerType.GROUP,
+        ).values_list('group_id', flat=True)
         return tuple(elem for elem in qst)
 
     def user_ids(self):
-        qst = self.filter(type='user').values_list('user_id', flat=True)
+        qst = self.filter(
+            type=PerformerType.USER,
+        ).values_list('user_id', flat=True)
         return tuple(elem for elem in qst)
 
     def user_ids_set(self) -> set:

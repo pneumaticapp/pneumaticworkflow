@@ -48,6 +48,7 @@ def test_webhook_example__body__ok(api_client):
         'date_completed_tsp': None,
         'due_date_tsp': None,
         'is_completed': False,
+        'is_read_only_viewer': False,
         'performers': [
             OrderedDict([
                 ('is_completed', False),
@@ -77,6 +78,7 @@ def test_webhook_example__body__ok(api_client):
             'workflow_starter': user.id,
             'ancestor_task_id': None,
             'is_legacy_template': False,
+            'is_read_only_viewer': False,
             'legacy_template_name': None,
             'owners': [user.id],
             'template': OrderedDict([

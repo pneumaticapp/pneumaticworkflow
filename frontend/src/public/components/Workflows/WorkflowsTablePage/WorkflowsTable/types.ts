@@ -1,5 +1,5 @@
 import { ITableViewFields } from '../../../../types/template';
-import { IWorkflowClient } from '../../../../types/workflow';
+import { EWorkflowsLoadingStatus, IWorkflowClient } from '../../../../types/workflow';
 
 export type TableColumns = {
   'system-column-workflow': IWorkflowClient;
@@ -18,3 +18,9 @@ export type TSystemField = {
   isDisabled: boolean;
   hasNotTooltip: boolean;
 };
+
+export interface WorkflowsTableActionsProps {
+  workflowsLoadingStatus: EWorkflowsLoadingStatus;
+  isWideTable?: boolean;
+  isMobile?: boolean;
+}

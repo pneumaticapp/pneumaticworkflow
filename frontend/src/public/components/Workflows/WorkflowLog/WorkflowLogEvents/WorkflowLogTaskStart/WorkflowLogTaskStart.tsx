@@ -119,9 +119,7 @@ export function WorkflowLogTaskStart({
     <div className={classnames(styles['container'], getThemeClassName())}>
       <div className={styles['top-area']}>
         <div className={styles['top-area__meta']}>
-          <p className={styles['pre-title']}>
-            {formatMessage({ id: 'workflows.log-task-started-pre-title' }, { task: task?.number })}
-          </p>
+          {renderTitle()}
           <p className={styles['date-started']}>
             {formatMessage({ id: 'workflows.log-task-started' })}
             &nbsp;
@@ -130,8 +128,6 @@ export function WorkflowLogTaskStart({
             </span>
           </p>
         </div>
-
-        {renderTitle()}
       </div>
 
       <div className={styles['bottom-area']}>

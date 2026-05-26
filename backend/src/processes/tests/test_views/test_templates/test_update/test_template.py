@@ -1,7 +1,11 @@
 import pytest
+from datetime import timedelta
+
+from django.utils import timezone
 from django.conf import settings
 
 from src.accounts.enums import BillingPlanType
+from src.accounts.messages import MSG_A_0035, MSG_A_0037, MSG_A_0041
 from src.accounts.services.user_transfer import (
     UserTransferService,
 )
@@ -15,6 +19,7 @@ from src.authentication.tokens import (
 )
 from src.processes.enums import (
     FieldType,
+    OwnerRole,
     OwnerType,
     PerformerType,
     WorkflowStatus,
@@ -30,6 +35,8 @@ from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
     create_test_group,
+    create_test_not_admin,
+    create_test_owner,
     create_test_template,
     create_test_user,
     create_test_workflow,
@@ -100,10 +107,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': user2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {
@@ -246,10 +255,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': user2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': True,
@@ -352,10 +363,12 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': user2.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': False,
@@ -382,10 +395,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': user2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': True,
@@ -478,6 +493,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': False,
@@ -521,6 +537,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': True,
@@ -612,6 +629,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': False,
@@ -656,6 +674,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': True,
@@ -716,6 +735,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': False,
@@ -752,6 +772,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': False,
@@ -818,6 +839,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': False,
@@ -854,6 +876,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user_2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'is_active': False,
@@ -921,6 +944,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -960,6 +984,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'finalizable': template.finalizable,
@@ -1016,6 +1041,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -1051,6 +1077,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': template.finalizable,
@@ -1116,6 +1143,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': template.finalizable,
@@ -1190,10 +1218,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.GROUP,
                     'source_id': group.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': template.finalizable,
@@ -1263,14 +1293,17 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.GROUP,
                     'source_id': group.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.GROUP,
                     'source_id': group_2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': template.finalizable,
@@ -1352,6 +1385,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],            'finalizable': True,
             'kickoff': {
@@ -1389,6 +1423,178 @@ class TestUpdateTemplate:
         template_update_mock.assert_called_once()
         kickoff_update_mock.assert_called_once()
 
+    def test_update__non_admin_in_template_owners__ok(
+        self,
+        mocker,
+        api_client,
+    ):
+        """
+        Non-admin users can be added as template owners.
+        They will have viewer-level access (read-only).
+        """
+        # arrange
+        template_update_mock = mocker.patch(
+            'src.processes.services.templates.'
+            'integrations.TemplateIntegrationsService.template_updated',
+        )
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(
+            is_account_owner=True,
+            account=account,
+        )
+        non_admin = create_test_user(
+            email='non_admin@test.test',
+            is_admin=False,
+            is_account_owner=False,
+            account=account,
+        )
+        api_client.token_authenticate(user)
+
+        template = create_test_template(
+            user=user,
+            is_active=True,
+            tasks_count=1,
+        )
+        task = template.tasks.first()
+
+        request_data = {
+            'id': template.id,
+            'is_active': True,
+            'is_public': template.is_public,
+            'description': '',
+            'name': 'Name changed',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': non_admin.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'finalizable': True,
+            'kickoff': {
+                'id': template.kickoff_instance.id,
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        }
+
+        # act
+        response = api_client.put(
+            path=f'/templates/{template.id}',
+            data=request_data,
+        )
+
+        # assert
+        assert response.status_code == 200
+        response_data = response.json()
+        assert len(response_data['owners']) == 2
+        owner_user_ids = [o['source_id'] for o in response_data['owners']]
+        assert str(user.id) in owner_user_ids
+        assert str(non_admin.id) in owner_user_ids
+        template_update_mock.assert_called_once()
+
+    def test_update__admin_in_template_owners__ok(
+        self,
+        mocker,
+        api_client,
+    ):
+        # arrange
+        template_update_mock = mocker.patch(
+            'src.processes.services.templates.'
+            'integrations.TemplateIntegrationsService.template_updated',
+        )
+        account = create_test_account(plan=BillingPlanType.PREMIUM)
+        user = create_test_user(
+            is_account_owner=True,
+            account=account,
+        )
+        admin_user = create_test_user(
+            email='admin@test.test',
+            is_admin=True,
+            account=account,
+        )
+        api_client.token_authenticate(user)
+
+        template = create_test_template(
+            user=user,
+            is_active=True,
+            tasks_count=1,
+        )
+        task = template.tasks.first()
+
+        request_data = {
+            'id': template.id,
+            'is_active': True,
+            'is_public': template.is_public,
+            'description': '',
+            'name': 'Name changed',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+                {
+                    'type': OwnerType.USER,
+                    'source_id': admin_user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'finalizable': True,
+            'kickoff': {
+                'id': template.kickoff_instance.id,
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        }
+
+        # act
+        response = api_client.put(
+            path=f'/templates/{template.id}',
+            data=request_data,
+        )
+
+        # assert
+        assert response.status_code == 200
+        response_data = response.json()
+        assert len(response_data['owners']) == 2
+        assert response_data['owners'][0].get('api_name')
+        assert response_data['owners'][0]['source_id'] == str(user.id)
+        assert response_data['owners'][0]['type'] == OwnerType.USER
+        assert response_data['owners'][1].get('api_name')
+        assert response_data['owners'][1]['source_id'] == str(admin_user.id)
+        assert response_data['owners'][1]['type'] == OwnerType.USER
+        template_update_mock.assert_called_once()
+
     def test_update__make_public__ok(
         self,
         mocker,
@@ -1410,6 +1616,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -1447,6 +1654,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': template.finalizable,
@@ -1498,6 +1706,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'is_active': True,
@@ -1535,6 +1744,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': template.finalizable,
@@ -1599,10 +1809,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': user_2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': True,
@@ -1695,6 +1907,7 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': account_1_owner.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'finalizable': True,
@@ -1769,10 +1982,12 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': non_admin.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': owner.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'finalizable': True,
@@ -1858,10 +2073,12 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': non_admin.id,
+                        'role': OwnerRole.OWNER,
                     },
                     {
                         'type': OwnerType.USER,
                         'source_id': owner.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'finalizable': True,
@@ -1964,6 +2181,7 @@ class TestUpdateTemplate:
                     {
                         'type': OwnerType.USER,
                         'source_id': user.id,
+                        'role': OwnerRole.OWNER,
                     },
                 ],
                 'finalizable': True,
@@ -2046,10 +2264,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': user2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},
@@ -2138,10 +2358,12 @@ class TestUpdateTemplate:
                 {
                     'type': OwnerType.USER,
                     'source_id': user.id,
+                    'role': OwnerRole.OWNER,
                 },
                 {
                     'type': OwnerType.USER,
                     'source_id': user2.id,
+                    'role': OwnerRole.OWNER,
                 },
             ],
             'kickoff': {},
@@ -2188,3 +2410,422 @@ class TestUpdateTemplate:
             type=PerformerType.GROUP,
             group=group,
         )
+
+
+def test_update__unauthenticated__unauthorized(api_client):
+
+    """Unauthenticated user → 401"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    request_data = {
+        'name': template.name,
+        'is_active': False,
+        'kickoff': {},
+        'tasks': [],
+    }
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 401
+
+
+def test_update__expired_subscription__permission_denied(api_client):
+
+    """Expired subscription → 403"""
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.PREMIUM,
+        plan_expiration=timezone.now() - timedelta(days=1),
+    )
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+    request_data = {
+        'name': template.name,
+        'is_active': False,
+        'kickoff': {},
+        'tasks': [],
+    }
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == MSG_A_0035
+
+
+def test_update__billing_plan_limit__permission_denied(api_client):
+
+    """Billing plan limit exceeded → 403"""
+
+    # arrange
+    account = create_test_account(plan=None)
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+    request_data = {
+        'name': template.name,
+        'is_active': False,
+        'kickoff': {},
+        'tasks': [],
+    }
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == MSG_A_0041
+
+
+def test_update__users_overlimited__permission_denied(api_client):
+
+    """Users over limit → 403"""
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.PREMIUM,
+        max_users=1,
+    )
+    user = create_test_owner(account=account)
+    create_test_not_admin(
+        account=account,
+        email='extra@pneumatic.app',
+    )
+    account.active_users = 2
+    account.save()
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+    request_data = {
+        'name': template.name,
+        'is_active': False,
+        'kickoff': {},
+        'tasks': [],
+    }
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == MSG_A_0037
+
+
+def test_update__not_found__not_found(mocker, api_client):
+
+    """Template not found → 404"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user=user)
+    template_integrations_service_init_mock = mocker.patch.object(
+        TemplateIntegrationsService,
+        attribute='__init__',
+        return_value=None,
+    )
+    template_updated_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    nonexistent_id = 999999
+    request_data = {
+        'name': 'Template',
+        'is_active': False,
+        'kickoff': {},
+        'tasks': [],
+    }
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{nonexistent_id}',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 404
+    template_integrations_service_init_mock.assert_not_called()
+    template_updated_mock.assert_not_called()
+
+
+def test_update__missing_name__validation_error(mocker, api_client):
+
+    """Missing required field `name` → 400"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+    template_integrations_service_init_mock = mocker.patch.object(
+        TemplateIntegrationsService,
+        attribute='__init__',
+        return_value=None,
+    )
+    template_updated_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    task_api_name = template.tasks.first().api_name
+    request_data = {
+        'is_active': True,
+        'kickoff': {},
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id,
+                'role': OwnerRole.OWNER,
+            },
+        ],
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'Step',
+                'api_name': task_api_name,
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
+    }
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 400
+    template_integrations_service_init_mock.assert_not_called()
+    template_updated_mock.assert_not_called()
+
+
+def test_update__missing_tasks__validation_error(mocker, api_client):
+
+    """Missing required field `tasks` → 400"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+    template_integrations_service_init_mock = mocker.patch.object(
+        TemplateIntegrationsService,
+        attribute='__init__',
+        return_value=None,
+    )
+    template_updated_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    request_data = {
+        'name': 'Updated Template',
+        'is_active': True,
+        'kickoff': {},
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id,
+                'role': OwnerRole.OWNER,
+            },
+        ],
+    }
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 400
+    template_integrations_service_init_mock.assert_not_called()
+    template_updated_mock.assert_not_called()
+
+
+def test_update__invalid_owners__validation_error(mocker, api_client):
+
+    """Invalid `owners` value → 400"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+    template_integrations_service_init_mock = mocker.patch.object(
+        TemplateIntegrationsService,
+        attribute='__init__',
+        return_value=None,
+    )
+    template_updated_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    task_api_name = template.tasks.first().api_name
+    request_data = {
+        'name': 'Updated Template',
+        'is_active': True,
+        'kickoff': {},
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': 999999,
+                'role': OwnerRole.OWNER,
+            },
+        ],
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'Step',
+                'api_name': task_api_name,
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
+    }
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 400
+    template_integrations_service_init_mock.assert_not_called()
+    template_updated_mock.assert_not_called()
+
+
+def test_update__inactive_template__analytics_skipped(mocker, api_client):
+
+    """template.is_active=False → analytics not triggered"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+    template_integrations_service_init_mock = mocker.patch.object(
+        TemplateIntegrationsService,
+        attribute='__init__',
+        return_value=None,
+    )
+    template_updated_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    api_request_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.api_request',
+    )
+    templates_kickoff_updated_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_updated',
+    )
+    templates_updated_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_updated',
+    )
+    task_api_name = template.tasks.first().api_name
+    request_data = {
+        'name': 'Updated Template',
+        'is_active': False,
+        'kickoff': {},
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id,
+                'role': OwnerRole.OWNER,
+            },
+        ],
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'Step',
+                'api_name': task_api_name,
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
+    }
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    template_integrations_service_init_mock.assert_called_once_with(
+        account=user.account,
+        is_superuser=False,
+        user=user,
+    )
+    template_updated_mock.assert_called_once()
+    api_request_mock.assert_not_called()
+    templates_kickoff_updated_mock.assert_not_called()
+    templates_updated_mock.assert_not_called()

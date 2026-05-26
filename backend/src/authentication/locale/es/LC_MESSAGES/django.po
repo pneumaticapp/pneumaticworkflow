@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2024-11-13 13:45+0000\n"
+"POT-Creation-Date: 2026-04-07 11:48+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -17,84 +17,72 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: authentication/messages.py:5
 msgid "Access token not found for the user."
 msgstr "Token de acceso no encontrado para el usuario."
 
-#: authentication/messages.py:8
 #, python-brace-format
 msgid "Your account has not been verified. A new verification link was sent to {email}."
 msgstr "Su cuenta no ha sido verificada. Se ha enviado un nuevo enlace de verificación a {email}."
 
-#: authentication/messages.py:13
 msgid "Invalid login or password."
 msgstr "Inicio de sesión o contraseña no válidos."
 
 #. Translators: Microsoft account doesn't contain email
-#: authentication/messages.py:15
 msgid "Email is not listed in profile."
 msgstr "El correo electrónico no está listado en el perfil."
 
-#: authentication/messages.py:16
 msgid "Error while retrieving Microsoft profile data."
 msgstr "Error al recuperar los datos del perfil de Microsoft."
 
-#: authentication/messages.py:18
 msgid "Phone number must be entered in the format: \"+99999999999\". Up to 15 digits allowed."
 msgstr "El número de teléfono debe ingresarse en el formato: \"+99999999999\". Se permiten hasta 15 dígitos."
 
 #. Translators: Guest authentication
-#: authentication/messages.py:22
 msgid "Authorization header contain spaces."
 msgstr "El encabezado de autorización contiene espacios."
 
-#: authentication/messages.py:23
 msgid "Token is invalid."
 msgstr "El token no es válido."
 
-#: authentication/messages.py:24
 msgid "Token is expired."
 msgstr "El token ha expirado."
 
 #. Translators: Guest authentication
-#: authentication/messages.py:26
 msgid "Given token not valid for guest token type."
 msgstr "El token proporcionado no es válido para el tipo de token de invitado."
 
 #. Translators: Guest authentication
-#: authentication/messages.py:28
 msgid "Token contained no recognizable user identification."
 msgstr "El token no contiene una identificación de usuario reconocible."
 
 #. Translators: Change password from profile
-#: authentication/messages.py:30
 msgid "The current password is incorrect."
 msgstr "La contraseña actual es incorrecta."
 
-#: authentication/messages.py:31
 msgid "The new password and its confirmation don't match."
 msgstr "La nueva contraseña y su confirmación no coinciden."
 
-#: authentication/messages.py:32
-msgid "Failed to fetch organization members."
-msgstr "Error al obtener los miembros de la organización."
+#. Translators: Google authorization
+#, fuzzy
+#| msgid "Error while retrieving Microsoft profile data."
+msgid "Error while retrieving Google profile data."
+msgstr "Error al recuperar los datos del perfil de Microsoft."
 
-#: authentication/messages.py:34
 msgid "The system is configured to use a different SSO provider. Please contact your administrator."
 msgstr "El sistema está configurado para usar otro proveedor de SSO. Por favor, contacte a su administrador."
 
-#: authentication/messages.py:37
 msgid "This account uses SSO authentication. Please sign in through your organization's SSO portal."
 msgstr "Esta cuenta utiliza autenticación SSO. Por favor, inicie sesión a través del portal SSO de su organización."
 
-#: authentication/messages.py:41
 msgid "SSO authentication is currently unavailable. Please contact support."
 msgstr "La autenticación SSO no está disponible en este momento. Por favor, contacte con soporte."
 
-#: authentication/messages.py:43
+#, python-brace-format
 msgid "No active SSO configuration found for the domain: \"{domain}\"."
 msgstr "No se encontró una configuración SSO activa para el dominio: \"{domain}\"."
 
-#: authentication/messages.py:46
 msgid "This account does not use SSO authentication. Please contact support."
 msgstr "Esta cuenta no utiliza autenticación SSO. Por favor, contacte con soporte."
+
+msgid "Format field is required"
+msgstr ""

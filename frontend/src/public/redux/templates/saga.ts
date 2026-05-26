@@ -26,7 +26,7 @@ import { TTemplateIntegrationStatsApi, TTransformedTask } from '../../types/temp
 import { logger } from '../../utils/logger';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getTemplatesStore, getTemplatesSystemList } from '../selectors/templates';
-import { getTemplates } from '../../api/getTemplates';
+import { getTemplates, getTemplatesByOwners } from '../../api/getTemplates';
 import { history } from '../../utils/history';
 import { ERoutes } from '../../constants/routes';
 import { getVariables } from '../../components/TemplateEdit/TaskForm/utils/getTaskVariables';
@@ -89,7 +89,7 @@ function* fetchTemplates({ payload: offset = 0 }: TLoadTemplates) {
       getTemplatesStore,
     );
 
-    const { count, results } = yield getTemplates({
+    const { count, results } = yield getTemplatesByOwners({
       offset,
       limit: LIMIT_LOAD_TEMPLATES,
       sorting: templatesListSorting,

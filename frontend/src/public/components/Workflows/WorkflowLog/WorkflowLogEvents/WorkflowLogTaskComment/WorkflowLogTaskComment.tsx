@@ -21,7 +21,8 @@ import {
   CommentInfoIcon,
   CommentWatchedIcon,
 } from '../../../../icons';
-import { RichEditorContainer } from '../../../../RichEditor';
+import { RichEditor } from '../../../../RichEditor';
+import { type TMentionData } from '../../../../RichEditor/types';
 import { IAccount, TUserListItem } from '../../../../../types/user';
 import { useStatePromise } from '../../../../../hooks/useStatePromise';
 import { TUploadedFile } from '../../../../../utils/uploadFiles';
@@ -30,6 +31,8 @@ import { IWatchedComment } from '../../../../../api/workflows/watchedComment';
 import { Tooltip } from '../../../../UI';
 import { ICreateReaction } from '../../../../../api/workflows/createReactionComment';
 import { IDeleteReaction } from '../../../../../api/workflows/deleteReactionComment';
+
+
 
 import styles from './WorkflowLogTaskComment.css';
 import { DateFormat } from '../../../../UI/DateFormat';
@@ -53,6 +56,7 @@ export function WorkflowLogTaskComment({
   watchedComment,
   createReactionComment,
   deleteReactionComment,
+  mentions,
 }: TWorkflowLogTaskCommentProps) {
   const { formatMessage } = useIntl();
 
@@ -154,7 +158,7 @@ export function WorkflowLogTaskComment({
     if (currentUserId !== userId || workflowStatus === EWorkflowStatus.Finished) return null;
 
     return (
-      <div className={styles['comment__actions']}>
+      <div className={classnames(styles['comment__actions'], 'no-print')}>
         {renderDeleteButton()}
         {!isDelete && (
           <button
@@ -223,7 +227,8 @@ export function WorkflowLogTaskComment({
               <RichText text={text} />
             </div>
           ) : (
-            <RichEditorContainer
+            <RichEditor
+              placeholder={formatMessage({ id: 'workflows.log-comment-field-placeholder' })}
               defaultValue={text || ''}
               handleChange={setCommentText}
               cancelIcon={<CommentEditCancelIcon />}
@@ -231,6 +236,7 @@ export function WorkflowLogTaskComment({
               onCancel={() => setIsEdit(false)}
               onSubmit={() => handleEditComment()}
               accountId={userId as number}
+              mentions={mentions}
             />
           ))}
 
@@ -321,7 +327,7 @@ export function WorkflowLogTaskComment({
           <Tooltip
             visible={isShowTooltipEmoji}
             size="auto"
-            containerClassName={classnames(styles['comment__footer-item'], styles['is-add-emoji'])}
+            containerClassName={classnames(styles['comment__footer-item'], styles['is-add-emoji'], 'no-print')}
             content={
               isShowEmoji && (
                 <Picker
@@ -385,6 +391,7 @@ export type TWorkflowLogTaskCommentProps = Pick<
   currentUserId: number;
   workflowModal: boolean;
   workflowStatus: EWorkflowStatus;
+  mentions: TMentionData[];
   isOnlyAttachmentsShown?: boolean;
   editComment(payload: IEditComment): void;
   deleteComment(payload: IDeleteComment): void;

@@ -82,6 +82,7 @@ export const initialState: IStoreWorkflows = {
     items: [] as IWorkflowLogItem[],
     isCommentsShown: true,
     isOnlyAttachmentsShown: false,
+    isSkippedTasksShown: false,
     sorting: EWorkflowsLogSorting.New,
     isOpen: false,
     isLoading: false,
@@ -163,6 +164,9 @@ const workflowsSlice = createSlice({
       state.workflowLog.isCommentsShown = action.payload.comments;
       state.workflowLog.isOnlyAttachmentsShown = action.payload.isOnlyAttachmentsShown;
       state.workflowLog.sorting = action.payload.sorting;
+    },
+    toggleSkippedTasksVisibility: (state) => {
+      state.workflowLog.isSkippedTasksShown = !state.workflowLog.isSkippedTasksShown;
     },
     changeWorkflowsSearchText: (state, action: PayloadAction<string>) => {
       state.workflowsLoadingStatus = EWorkflowsLoadingStatus.LoadingList;
@@ -400,6 +404,7 @@ export const {
   changeWorkflowLog,
   updateWorkflowLogItem,
   changeWorkflowLogViewSettings,
+  toggleSkippedTasksVisibility,
   changeWorkflowsSearchText,
   setWorkflowIsLoading,
   loadWorkflowsList,

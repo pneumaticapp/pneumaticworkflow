@@ -1,89 +1,78 @@
-/* eslint-disable react/destructuring-assignment */
 import * as React from 'react';
-import { IntlShape } from 'react-intl';
+import { useIntl } from 'react-intl';
+import { useSelector, useDispatch } from 'react-redux';
 
 import { TopNavContainer } from '../../components/TopNav';
 import { EDashboardTimeRange } from '../../types/dashboard';
-import { EDashboardModes } from '../../types/redux';
+import { EDashboardModes, IApplicationState } from '../../types/redux';
 import { SelectMenu, Tabs } from '../../components/UI';
 import { FilterIcon } from '../../components/icons';
+import { getCanAccessWorkflows } from '../../redux/selectors/user';
+import {
+  setDashboardTimeRange,
+  setDashboardMode,
+  setDashboardSettingsManuallyChanged,
+} from '../../redux/dashboard/actions';
 
 import styles from './DashboardLayout.css';
 
-export interface IDashboardLayoutStoreProps {
-  isAccountOwner: boolean;
-  isVerified?: boolean;
-  currentTimeRange: EDashboardTimeRange;
-  dashboardMode: EDashboardModes;
-  isAdmin?: boolean;
-}
-
-export interface IDashboardLayoutDispatchProps {
-  resendVerification(): void;
-  setTimeRange(payload: EDashboardTimeRange): void;
-  setDashboardMode(payload: EDashboardModes): void;
-  setDashboardSettingsManuallyChanged(): void;
-}
-
-export interface IDashboardLayoutState {
-  isResendClicked: boolean;
-}
-
-type TAppLayoutComponentProps = IDashboardLayoutStoreProps &
-  IDashboardLayoutDispatchProps & {
-    intl: IntlShape;
-  };
-
 const timeRangesTitles = Object.values(EDashboardTimeRange);
+const dashboardModesEnum = Object.values(EDashboardModes);
 
-export class DashboardLayoutComponent extends React.Component<TAppLayoutComponentProps> {
-  private dashboardModes = Object.values(EDashboardModes).map((mode) => ({
-    id: mode,
-    label: this.props.intl.formatMessage({ id: mode }),
-  }));
+export const DashboardLayoutComponent: React.FC = ({ children }) => {
+  const intl = useIntl();
+  const dispatch = useDispatch();
 
-  public state = {};
+  const currentTimeRange = useSelector((state: IApplicationState) => state.dashboard.timeRange);
+  const dashboardMode = useSelector((state: IApplicationState) => state.dashboard.mode);
+  const canAccessWorkflows = useSelector(getCanAccessWorkflows);
 
-  public renderDashboardContent = () => {
-    const { currentTimeRange, dashboardMode, setTimeRange, setDashboardMode, setDashboardSettingsManuallyChanged } =
-      this.props;
+  const dashboardModes = React.useMemo(
+    () =>
+      dashboardModesEnum.map((mode) => ({
+        id: mode,
+        label: intl.formatMessage({ id: mode }),
+      })),
+    [intl]
+  );
 
-    const handleSetTimeRange = (newTimeRange: EDashboardTimeRange) => {
-      setDashboardSettingsManuallyChanged();
-      setTimeRange(newTimeRange);
-    };
+  const handleSetTimeRange = React.useCallback(
+    (newTimeRange: EDashboardTimeRange) => {
+      dispatch(setDashboardSettingsManuallyChanged());
+      dispatch(setDashboardTimeRange(newTimeRange));
+    },
+    [dispatch]
+  );
 
-    const handleSetDashboardMode = (newDashboardMode: EDashboardModes) => {
-      setDashboardMode(newDashboardMode);
-    };
+  const handleSetDashboardMode = React.useCallback(
+    (newDashboardMode: EDashboardModes) => {
+      dispatch(setDashboardMode(newDashboardMode));
+    },
+    [dispatch]
+  );
 
-    return (
-      <div className={styles['navbar-left__content']}>
-        <div className={styles['filters']}>
-          {this.props.isAdmin && (
-            <Tabs values={this.dashboardModes} activeValueId={dashboardMode} onChange={handleSetDashboardMode} />
-          )}
-          <SelectMenu
-            values={timeRangesTitles}
-            activeValue={currentTimeRange}
-            onChange={handleSetTimeRange}
-            Icon={FilterIcon}
-          />
-        </div>
+  const leftContent = (
+    <div className={styles['navbar-left__content']}>
+      <div className={styles['filters']}>
+        {canAccessWorkflows && (
+          <Tabs values={dashboardModes} activeValueId={dashboardMode} onChange={handleSetDashboardMode} />
+        )}
+        <SelectMenu
+          values={timeRangesTitles}
+          activeValue={currentTimeRange}
+          onChange={handleSetTimeRange}
+          Icon={FilterIcon}
+        />
       </div>
-    );
-  };
+    </div>
+  );
 
-  public render() {
-    const leftContent = this.renderDashboardContent();
-
-    return (
-      <>
-        <TopNavContainer leftContent={leftContent} />
-        <main className={styles['main']}>
-          <div className="container-fluid">{this.props.children}</div>
-        </main>
-      </>
-    );
-  }
-}
+  return (
+    <>
+      <TopNavContainer leftContent={leftContent} />
+      <main className={styles['main']}>
+        <div className="container-fluid">{children}</div>
+      </main>
+    </>
+  );
+};

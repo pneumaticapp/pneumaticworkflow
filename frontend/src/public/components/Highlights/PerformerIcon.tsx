@@ -33,7 +33,7 @@ export const PerformerIcon = ({ type }: { type: EWorkflowLogEvent }) => {
           <CommentIcon fill="#B9B9B8" size="sm" />
         </div>
       );
-    case EWorkflowLogEvent.ProcessRun:
+    case EWorkflowLogEvent.WorkflowRun:
       return (
         <div className={styles.performer_icon}>
           <ProcessStartIcon size="sm" />

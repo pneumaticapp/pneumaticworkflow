@@ -35,9 +35,9 @@ export interface ITypedConditionPredicateValue<FieldType, ValueType> {
 export type TConditionPredicateValue =
   | ITypedConditionPredicateValue<EExtraFieldType.String, string>
   | ITypedConditionPredicateValue<EExtraFieldType.Text, string>
-  | ITypedConditionPredicateValue<EExtraFieldType.Creatable, number>
-  | ITypedConditionPredicateValue<EExtraFieldType.Checkbox, number>
-  | ITypedConditionPredicateValue<EExtraFieldType.Radio, number>
+  | ITypedConditionPredicateValue<EExtraFieldType.Creatable, string>
+  | ITypedConditionPredicateValue<EExtraFieldType.Checkbox, string>
+  | ITypedConditionPredicateValue<EExtraFieldType.Radio, string>
   | ITypedConditionPredicateValue<EExtraFieldType.Date, string>
   | ITypedConditionPredicateValue<EExtraFieldType.File, null>
   | ITypedConditionPredicateValue<EExtraFieldType.Url, string>

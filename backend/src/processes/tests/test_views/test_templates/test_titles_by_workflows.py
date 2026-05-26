@@ -1,7 +1,9 @@
 import pytest
+from rest_framework import status
 
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
+    OwnerRole,
     OwnerType,
     TemplateType,
     WorkflowApiStatus,
@@ -273,7 +275,7 @@ def test_titles__user_not_template_owner__empty_result__ok(api_client):
         user=account_owner,
         template=template,
     )
-    request_user = create_test_admin(account=account)
+    request_user = create_test_not_admin(account=account)
     api_client.token_authenticate(request_user)
 
     # act
@@ -282,6 +284,73 @@ def test_titles__user_not_template_owner__empty_result__ok(api_client):
     # assert
     assert response.status_code == 200
     assert len(response.data) == 0
+
+
+def test_titles__account_owner_not_template_owner__empty_result__ok(
+    api_client,
+):
+
+    """Account owner should only see templates where they are
+       an owner or viewer, not all templates in the account."""
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    admin = create_test_admin(account=account)
+    template = create_test_template(
+        user=admin,
+        is_active=True,
+        tasks_count=1,
+    )
+    create_test_workflow(
+        user=admin,
+        template=template,
+    )
+    api_client.token_authenticate(account_owner)
+
+    # act
+    response = api_client.get('/templates/titles-by-workflows')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0
+
+
+def test_titles__account_owner_is_viewer__ok(api_client):
+
+    """Account owner with viewer role should see the template."""
+
+    # arrange
+    account = create_test_account()
+    account_owner = create_test_owner(account=account)
+    admin = create_test_admin(account=account)
+    template = create_test_template(
+        user=admin,
+        is_active=True,
+        tasks_count=1,
+    )
+    create_test_workflow(
+        user=admin,
+        template=template,
+    )
+    TemplateOwner.objects.create(
+        template=template,
+        account=account,
+        user_id=account_owner.id,
+        type=OwnerType.USER,
+        role=OwnerRole.VIEWER,
+    )
+    api_client.token_authenticate(account_owner)
+
+    # act
+    response = api_client.get('/templates/titles-by-workflows')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['id'] == template.id
+    assert response.data[0]['name'] == template.name
+    assert response.data[0]['count'] == 1
 
 
 def test_titles__invited_user__unauthorized(api_client):
@@ -514,7 +583,7 @@ def test_titles__status__user_not_owner__empty_result(
         user=account_owner,
         template=template,
     )
-    request_user = create_test_admin(account=account)
+    request_user = create_test_not_admin(account=account)
     api_client.token_authenticate(request_user)
 
     # act
@@ -613,7 +682,7 @@ def test_titles__status_running__not_template_owner__empty_result(
         template=template,
     )
     task = workflow.tasks.get(number=1)
-    request_user = create_test_admin(account=account)
+    request_user = create_test_not_admin(account=account)
     TaskPerformer.objects.create(
         task=task,
         user=request_user,
@@ -711,7 +780,7 @@ def test_titles__status_done__another_user__not_found(
         template=template,
         status=WorkflowStatus.DONE,
     )
-    request_user = create_test_admin(account=account)
+    request_user = create_test_not_admin(account=account)
     api_client.token_authenticate(request_user)
 
     # act
@@ -777,3 +846,75 @@ def test_titles__status_invalid_value__validation_error(
     assert response.data['message'] == message
     assert response.data['details']['reason'] == message
     assert response.data['details']['name'] == 'status'
+
+
+def test_titles_by_workflows__template_starter__ok(api_client):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_owner(account=account)
+    template = create_test_template(template_owner)
+
+    starter_user = create_test_not_admin(
+        account=account,
+        email='starter@test.com',
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    create_test_workflow(template=template, user=starter_user)
+
+    api_client.token_authenticate(starter_user)
+
+    # act
+    response = api_client.get('/templates/titles-by-workflows')
+
+    # assert
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+
+    assert len(data) == 1
+    assert data[0]['id'] == template.id
+    assert data[0]['count'] == 1
+
+
+def test_titles_by_workflows__starter_isolates_data__ok(
+    api_client,
+):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_owner(account=account)
+    template = create_test_template(template_owner)
+
+    starter_user = create_test_not_admin(
+        account=account,
+        email='starter@test.com',
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    create_test_workflow(template=template, user=starter_user)
+    create_test_workflow(template=template, user=template_owner)
+
+    api_client.token_authenticate(starter_user)
+
+    # act
+    response = api_client.get('/templates/titles-by-workflows')
+
+    # assert
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]['id'] == template.id
+    assert data[0]['count'] == 1

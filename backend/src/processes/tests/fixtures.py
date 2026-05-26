@@ -26,6 +26,7 @@ from src.payment.enums import BillingPeriod
 from src.processes.enums import (
     ConditionAction,
     FieldType,
+    OwnerRole,
     OwnerType,
     PerformerType,
     PredicateOperator,
@@ -52,6 +53,8 @@ from src.processes.models.templates.preset import (
 )
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
+from src.datasets.models import Dataset, DatasetItem
+
 from src.processes.models.workflows.conditions import (
     Condition,
     Predicate,
@@ -64,6 +67,7 @@ from src.processes.models.workflows.workflow import Workflow
 from src.processes.serializers.templates.template import (
     TemplateSerializer,
 )
+from src.processes.serializers.workflows.events import TaskEventJsonSerializer
 from src.processes.services.tasks.task import TaskService
 from src.storage.models import Attachment
 from src.storage.enums import SourceType, AccessType
@@ -162,6 +166,7 @@ def create_test_user(
 ) -> UserModel:
 
     """
+        TODO Do not call directly!
         Creating users with custom configuration.
         Instead of this method use:
         - create_test_owner
@@ -334,6 +339,7 @@ def create_test_template(
         kickoff.template = template
         kickoff.save()
     TemplateOwner.objects.create(
+        role=OwnerRole.OWNER,
         template=template,
         account=account,
         type=OwnerType.USER,
@@ -534,6 +540,7 @@ def get_workflow_create_data(user):
             {
                 'type': OwnerType.USER,
                 'source_id': user.id,
+                'role': OwnerRole.OWNER,
             },
         ],
         'description': 'Test workflow description',
@@ -624,19 +631,32 @@ def get_workflow_create_data(user):
 def create_test_event(
     workflow: Workflow,
     user: UserModel,
-    type_event: Optional[WorkflowEventType] = WorkflowEventType.RUN,
+    type_event: Optional[WorkflowEventType.LITERALS] = WorkflowEventType.RUN,
+    task: Optional[Task] = None,
     data_create: Optional[datetime] = None,
 ) -> WorkflowEvent:
 
     """Creating workflow events."""
 
-    task = workflow.tasks.get(number=1)
+    task = task or workflow.tasks.get(number=1)
+    if (
+        type_event in WorkflowEventType.TASK_EVENTS
+        and type_event != WorkflowEventType.SUB_WORKFLOW_RUN
+    ):
+        task_json = TaskEventJsonSerializer(
+            instance=task,
+            context={'event_type': type_event},
+        ).data
+    else:
+        task_json = None
+
     event = WorkflowEvent.objects.create(
         type=type_event,
         account=workflow.account,
         workflow=workflow,
         user=user,  # For highlights
         task=task,
+        task_json=task_json,
     )
     if data_create:
         event.created = data_create
@@ -825,3 +845,27 @@ def create_test_attachment_for_event(
     event.save(update_fields=['with_attachments'])
 
     return attachment
+
+
+def create_test_dataset(
+    account: Account,
+    name: str = 'Test Dataset',
+    description: str = '',
+    items_count: int = 2,
+) -> Dataset:
+
+    """Creating datasets with a given number of items."""
+
+    dataset = Dataset.objects.create(
+        account=account,
+        name=name,
+        description=description,
+    )
+    for i in range(1, items_count + 1):
+        DatasetItem.objects.create(
+            account=account,
+            dataset=dataset,
+            value=f'Item {i}',
+            order=i,
+        )
+    return dataset

@@ -23,6 +23,7 @@ class NotificationMethod:
     system = 'system'
     urgent = 'urgent'
     not_urgent = 'not_urgent'
+    vacation_delegation = 'vacation_delegation'
     workflow_event = 'workflow_event'
     reaction = 'reaction'
     reset_password = 'reset_password'
@@ -32,6 +33,9 @@ class NotificationMethod:
     user_created = 'user_created'
     user_updated = 'user_updated'
     user_deleted = 'user_deleted'
+    dataset_created = 'dataset_created'
+    dataset_updated = 'dataset_updated'
+    dataset_deleted = 'dataset_deleted'
     workflows_digest = 'workflows_digest'
     tasks_digest = 'tasks_digest'
     user_deactivated = 'user_deactivated'
@@ -58,6 +62,7 @@ class NotificationMethod:
         system,
         urgent,
         not_urgent,
+        vacation_delegation,
         workflow_event,
         reaction,
         reset_password,
@@ -67,6 +72,9 @@ class NotificationMethod:
         user_created,
         user_updated,
         user_deleted,
+        dataset_created,
+        dataset_updated,
+        dataset_deleted,
         workflows_digest,
         tasks_digest,
         user_deactivated,
@@ -104,6 +112,7 @@ class EmailType:
     MENTION = 'mention'
     INVITE = 'invite'
     COMPLETE_WORKFLOW = 'complete_workflow'
+    VACATION_DELEGATION = 'vacation_delegation'
 
     LITERALS = Literal[
         RESET_PASSWORD,
@@ -121,6 +130,7 @@ class EmailType:
         MENTION,
         INVITE,
         COMPLETE_WORKFLOW,
+        VACATION_DELEGATION,
     ]
 
     CHOICES = [
@@ -139,6 +149,7 @@ class EmailType:
         (MENTION, 'Mention'),
         (INVITE, 'Invite'),
         (COMPLETE_WORKFLOW, 'Complete Workflow'),
+        (VACATION_DELEGATION, 'Vacation Delegation'),
     ]
 
 
@@ -161,6 +172,9 @@ cio_template_ids = {
     EmailType.OVERDUE_TASK: env.get('CIO_TEMPLATE__OVERDUE_TASK'),
     EmailType.MENTION: env.get('CIO_TEMPLATE__MENTION'),
     EmailType.COMPLETE_WORKFLOW: env.get('CIO_TEMPLATE__COMPLETE_WORKFLOW'),
+    EmailType.VACATION_DELEGATION: env.get(
+        'CIO_TEMPLATE__VACATION_DELEGATION',
+    ),
 }
 
 email_titles = {
@@ -184,5 +198,8 @@ email_titles = {
     NotificationMethod.complete_workflow: 'Workflow completed',
     NotificationMethod.task_reminder: (
         'Reminder: you have unfinished tasks in Pneumatic'
+    ),
+    NotificationMethod.vacation_delegation: (
+        'Tasks have been delegated to you'
     ),
 }

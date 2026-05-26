@@ -67,6 +67,7 @@ export interface IWorkflowDetails {
 
   description: string;
   kickoff: IWorkflowDetailsKickoff;
+  isReadOnlyViewer?: boolean;
 }
 
 export interface IWorkflowEditData {

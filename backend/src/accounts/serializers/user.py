@@ -1,9 +1,12 @@
+
 from django.conf import settings
 from django.contrib.auth import get_user_model
 from django.db.models import Prefetch, Q
+
 from rest_framework import serializers
 
 from src.accounts.enums import (
+    AbsenceStatus,
     Language,
     SourceType,
     Timezone,
@@ -12,11 +15,23 @@ from src.accounts.models import Contact
 from src.accounts.serializers.group import (
     GroupNameSerializer,
 )
-from src.accounts.messages import MSG_A_0036, MSG_A_0046
+from src.accounts.messages import (
+    MSG_A_0036,
+    MSG_A_0046,
+    MSG_A_0049,
+    MSG_A_0050,
+    MSG_A_0051,
+    MSG_A_0053,
+    MSG_A_0054,
+)
+from src.accounts.serializers.mixins import (
+    VacationSerializer,
+)
 from src.accounts.serializers.user_invites import (
     UserListInviteSerializer,
 )
 from src.generics.fields import (
+    AccountPrimaryKeyRelatedField,
     CommaSeparatedListField,
     DateFormatField,
     RelatedListField,
@@ -73,6 +88,9 @@ class UserSerializer(
             'invite',
             'groups',
             'password',
+            'manager_id',
+            'subordinates_ids',
+            'vacation',
         )
         read_only_fields = (
             'id',
@@ -96,6 +114,19 @@ class UserSerializer(
     date_fmt = DateFormatField(required=False)
     invite = serializers.SerializerMethodField(allow_null=True, read_only=True)
     password = serializers.CharField(write_only=True, required=False)
+    manager_id = AccountPrimaryKeyRelatedField(
+        queryset=UserModel.objects,
+        required=False,
+        allow_null=True,
+        source='manager',
+    )
+    subordinates_ids = AccountPrimaryKeyRelatedField(
+        many=True,
+        queryset=UserModel.objects,
+        required=False,
+        source='subordinates',
+    )
+    vacation = VacationSerializer(read_only=True)
 
     def get_invite(self, instance: UserModel):
         if instance.status_invited and instance.invite:
@@ -266,4 +297,70 @@ class UserWebsocketSerializer(serializers.ModelSerializer):
             'photo',
             'is_admin',
             'is_account_owner',
+            'manager_id',
+            'subordinates_ids',
         )
+
+    subordinates_ids = serializers.PrimaryKeyRelatedField(
+        many=True,
+        read_only=True,
+        source='subordinates',
+    )
+
+
+class VacationActivateSerializer(
+    CustomValidationErrorMixin,
+    serializers.Serializer,
+):
+    substitute_user_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        min_length=1,
+        error_messages={'min_length': MSG_A_0051},
+    )
+    vacation_start_date = serializers.DateField(
+        required=False,
+        allow_null=True,
+    )
+    vacation_end_date = serializers.DateField(
+        required=False,
+        allow_null=True,
+    )
+    absence_status = serializers.ChoiceField(
+        choices=AbsenceStatus.CHOICES,
+        required=False,
+        default=AbsenceStatus.VACATION,
+    )
+
+    def validate_substitute_user_ids(self, value):
+        user = self.context['vacation_user']
+        account_id = user.account_id
+
+        if user.id in value:
+            raise serializers.ValidationError(MSG_A_0049)
+
+        existing = set(
+            UserModel.objects
+            .on_account(account_id)
+            .filter(id__in=value)
+            .values_list('id', flat=True),
+        )
+        missing = set(value) - existing
+        if missing:
+            raise serializers.ValidationError(
+                MSG_A_0050(missing=sorted(missing)),
+            )
+        return value
+
+    def validate_absence_status(self, value):
+        if value == AbsenceStatus.ACTIVE:
+            raise serializers.ValidationError(
+                MSG_A_0053,
+            )
+        return value
+
+    def validate(self, attrs):
+        start = attrs.get('vacation_start_date')
+        end = attrs.get('vacation_end_date')
+        if start and end and start >= end:
+            raise serializers.ValidationError(MSG_A_0054)
+        return attrs

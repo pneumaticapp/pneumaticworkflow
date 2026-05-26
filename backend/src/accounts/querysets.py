@@ -9,6 +9,7 @@ from src.accounts.enums import (
     NotificationStatus,
     SourceType,
     UserInviteStatus,
+    UserGroupType,
     UserStatus,
     UserType,
 )
@@ -319,4 +320,9 @@ class ContactQuerySet(AccountBaseQuerySet):
 
 class GroupQuerySet(AccountBaseQuerySet):
 
+    def exclude_personal(self):
+        return self.exclude(type=UserGroupType.PERSONAL)
+
+
+class VacationQuerySet(BaseQuerySet):
     pass

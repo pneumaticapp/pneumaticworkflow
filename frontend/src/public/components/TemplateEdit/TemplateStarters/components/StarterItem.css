@@ -1,0 +1,44 @@
+.user {
+  position: relative;
+  margin: 0.8rem 0;
+  display: flex;
+  align-items: center;
+
+  &:hover {
+    .user-delete {
+      opacity: 1;
+    }
+  }
+
+  &-info {
+    margin: 0 2.8rem 0 0.8rem;
+    display: flex;
+    overflow: hidden;
+    flex-direction: column;
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  &-role {
+    color: var(--pneumatic-color-black48);
+  }
+
+  &-name {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    color: var(--pneumatic-color-black100);
+  }
+
+  &-delete {
+    position: absolute;
+    right: 0;
+    cursor: pointer;
+    color: #dcdcdb;
+    opacity: 0;
+
+    &:hover {
+      color: #e79a26;
+    }
+  }
+}

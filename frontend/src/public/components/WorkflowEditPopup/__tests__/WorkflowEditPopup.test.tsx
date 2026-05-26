@@ -26,6 +26,11 @@ jest.mock('../../TemplateEdit/TaskForm/utils/getTaskVariables', () => ({
   useWorkflowNameVariables: () => [],
 }));
 
+jest.mock('../../UI/DateFormat', () => ({
+  DateFormat: () => 'mocked-date',
+  DateFormatComponent: () => 'mocked-date',
+}));
+
 jest.mock('../../../utils/history', () => ({
   history: { location: { pathname: '/' }, push: jest.fn() },
 }));

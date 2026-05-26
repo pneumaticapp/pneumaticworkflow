@@ -1,12 +1,17 @@
 import pytest
 
+from rest_framework import status
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.processes.enums import (
+    OwnerRole,
+    OwnerType,
     PerformerType,
-    TaskStatus,
+    TaskStatus, FieldType,
 )
+from src.processes.models.workflows.fields import TaskField
 from src.processes.models.workflows.task import TaskPerformer
+from src.processes.models.templates.owner import TemplateOwner
 from src.processes.services.workflow_action import (
     WorkflowActionService,
 )
@@ -16,8 +21,9 @@ from src.processes.tests.fixtures import (
     create_test_group,
     create_test_guest,
     create_test_owner,
+    create_test_template,
     create_test_user,
-    create_test_workflow,
+    create_test_workflow, create_test_dataset,
 )
 from src.utils.validation import ErrorCode
 
@@ -517,6 +523,76 @@ def test_complete__empty_fields_data__ok(
     check_delay_workflow_mock.assert_called_once()
 
 
+def test_complete__field_with_dataset__ok(
+    mocker,
+    api_client,
+):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account, items_count=1)
+    dataset_item = dataset.items.get(order=1)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    field = TaskField.objects.create(
+        type=FieldType.DROPDOWN,
+        name='dropdown',
+        task=task,
+        value=dataset_item.value,
+        workflow=workflow,
+        account=account,
+        dataset=dataset,
+    )
+    service_init_mock = mocker.patch.object(
+        WorkflowActionService,
+        attribute='__init__',
+        return_value=None,
+    )
+    complete_task_by_user_mock = mocker.patch(
+        'src.processes.services.'
+        'workflow_action.WorkflowActionService.'
+        'complete_task_for_user',
+        return_value=task,
+    )
+    check_delay_workflow_mock = mocker.patch(
+        'src.processes.services.'
+        'workflow_action.WorkflowActionService.'
+        'check_delay_workflow',
+    )
+    fields_data = {
+        field.api_name: dataset_item.value,
+    }
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.post(
+        f'/v2/tasks/{task.id}/complete',
+        data={
+            'output': fields_data,
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert response.data['id'] == task.id
+    field_data = response.data['output'][0]
+    assert field_data['id'] == field.id
+    assert field_data['type'] == FieldType.DROPDOWN
+    assert field_data['selections'] == [dataset_item.value]
+    service_init_mock.assert_called_once_with(
+        workflow=workflow,
+        user=user,
+        auth_type=AuthTokenType.USER,
+        is_superuser=False,
+    )
+    complete_task_by_user_mock.assert_called_once_with(
+        task=task,
+        fields_values=fields_data,
+    )
+    check_delay_workflow_mock.assert_called_once()
+
+
 def test_complete__guest_another_workflow__permission_denied(
     mocker,
     api_client,
@@ -704,3 +780,37 @@ def test_complete__invalid_output__validation_error(
     service_init_mock.assert_not_called()
     complete_task_by_user_mock.assert_not_called()
     check_delay_workflow_mock.assert_not_called()
+
+
+def test_task_complete__template_starter_own_workflow__forbidden(api_client):
+    # arrange
+    account = create_test_account()
+    template_owner = create_test_user(account=account)
+    template = create_test_template(template_owner)
+
+    starter_user = create_test_user(
+        account=account,
+        email='starter@test.com',
+        is_admin=False,
+        is_account_owner=False,
+    )
+
+    TemplateOwner.objects.create(
+        role=OwnerRole.STARTER,
+        template=template,
+        type=OwnerType.USER,
+        user=starter_user,
+        account=account,
+    )
+
+    workflow = create_test_workflow(template=template, user=starter_user)
+    task = workflow.tasks.order_by('number').first()
+
+    api_client.token_authenticate(starter_user)
+
+    # act
+    response = api_client.post(f'/v2/tasks/{task.id}/complete')
+
+    # assert
+    # Starter is not a performer, should be forbidden
+    assert response.status_code == status.HTTP_403_FORBIDDEN

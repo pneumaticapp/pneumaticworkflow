@@ -13,7 +13,7 @@
     "noUnusedLocals": true,
     "sourceMap": true,
     "strictNullChecks": true,
-    "target": "es5",
+    "target": "es2015",
     "jsx": "react",
     "experimentalDecorators": false,
     "downlevelIteration": true,
@@ -21,7 +21,7 @@
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/**/*.tsx"],
   "exclude": ["**/dist"],
   "ts-node": {
     // these options are overrides used only by ts-node

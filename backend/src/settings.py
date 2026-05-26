@@ -159,6 +159,7 @@ class Common(Configuration):
         'src.notifications',
         'src.celery_app',
         'src.processes',
+        'src.datasets',
         'src.reports',
         'src.generics',
         'src.webhooks',
@@ -215,24 +216,7 @@ class Common(Configuration):
         },
     }
 
-    AUTH_PASSWORD_VALIDATORS = [
-        {
-            'NAME': 'django.contrib.auth.password_validation.'
-                    'UserAttributeSimilarityValidator',
-        },
-        {
-            'NAME': 'django.contrib.auth.password_validation.'
-                    'MinimumLengthValidator',
-        },
-        {
-            'NAME': 'django.contrib.auth.password_validation.'
-                    'CommonPasswordValidator',
-        },
-        {
-            'NAME': 'django.contrib.auth.password_validation.'
-                    'NumericPasswordValidator',
-        },
-    ]
+    AUTH_PASSWORD_VALIDATORS = []
 
     STATIC_URL = '/static/'
     STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')

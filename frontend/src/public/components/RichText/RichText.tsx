@@ -1,10 +1,10 @@
-/* eslint-disable */
-/* prettier-ignore */
 import * as React from 'react';
 import ReactDOMServer from 'react-dom/server';
 import * as xssFilters from 'xss-filters';
 import { useDispatch } from 'react-redux';
+import { useIntl } from 'react-intl';
 import { Remarkable } from 'remarkable';
+import { LinkCloseToken } from 'remarkable/lib';
 import { linkify } from './linkify';
 
 import {
@@ -16,6 +16,7 @@ import {
 } from '../../constants/defaultValues';
 import { isArrayWithItems } from '../../utils/helpers';
 import { TTaskVariable } from '../TemplateEdit/types';
+import { getLocalizedSystemVariable } from '../TemplateEdit/TaskForm/utils/getTaskVariables';
 import { truncateString } from '../../utils/truncateString';
 import { openFullscreenImage } from '../../redux/general/actions';
 import { DocumentAttachment } from '../Attachments/DocumentAttachment';
@@ -24,7 +25,7 @@ import {
   checklistsRemarkablePlugin,
   TCustomLinkToken,
 } from '../RichEditor/utils/converters/customMarkdownPlugins';
-import { LinkCloseToken } from 'remarkable/lib';
+
 import { ECustomEditorEntities } from '../RichEditor/utils/types';
 import { createChecklistRenderer } from '../TaskCard/checklist/createChecklistRenderer';
 import { createCheckPlaceholderId } from '../TaskCard/checklist/createCheckPlaceholderId';
@@ -92,6 +93,7 @@ export function RichText({
     );
 
   const dispatch = useDispatch();
+  const { formatMessage } = useIntl();
   const conatainerRef = React.useRef<HTMLDivElement>(null);
 
   const handleClick = React.useCallback((event: MouseEvent) => {
@@ -105,7 +107,7 @@ export function RichText({
 
   const showImagePlaceholders = (container: HTMLDivElement) => {
     const images = container.getElementsByTagName('img');
-    for (let i = 0; i < images.length; i++) {
+    for (let i = 0; i < images.length; i += 1) {
       images[i].classList.add(styles['loading-image']);
       images[i].onload = () => {
         images[i].classList.remove(styles['loading-image']);
@@ -151,13 +153,19 @@ export function RichText({
           return match;
         }
 
-        const variable = variables.find((variable) => variableApiName === variable.apiName);
+        const variable = variables.find((item) => variableApiName === item.apiName);
         if (!variable) {
           return match;
         }
 
+        const { title } = getLocalizedSystemVariable({
+          apiName: variableApiName,
+          title: variable.title,
+          formatMessage,
+        });
+
         return `<span class="${badgeStyles['badge']} ${badgeStyles['specifity']}">${truncateString(
-          variable.title,
+          title,
           MAX_VARIABLE_LENGTH,
         )}</span>`;
       },
@@ -172,6 +180,7 @@ export function RichText({
     return acc.replace(replaceRegex, replaceLogic);
   }, sanitizedText);
 
+  /* eslint-disable react/no-danger */
   if (!isMarkdownMode) {
     return <div dangerouslySetInnerHTML={{ __html: htmlString }} />;
   }
@@ -186,6 +195,7 @@ export function RichText({
       />
     </>
   );
+  /* eslint-enable react/no-danger */
 }
 
 const attachmnetRenderer = (embedVideoLinks: boolean, hideIcon?: boolean) => {
@@ -199,13 +209,23 @@ const attachmnetRenderer = (embedVideoLinks: boolean, hideIcon?: boolean) => {
       {
         regExp: loomVideoRegexp,
         replaceLogic: (match: string, group1: string) => {
-          return `<div><iframe class="${styles['video']}" frameBorder="0" src="https://www.useloom.com/embed/${group1}" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe></div>`;
+          return '<div><iframe'
+            + ` class="${styles['video']}"`
+            + ' frameBorder="0"'
+            + ` src="https://www.useloom.com/embed/${group1}"`
+            + ' webkitallowfullscreen mozallowfullscreen allowfullscreen'
+            + '></iframe></div>';
         },
       },
       {
         regExp: youtubeVideoRegexp,
         replaceLogic: (match: string, group1: string) => {
-          return `<div><iframe class="${styles['video']}" frameBorder="0" src="//www.youtube.com/embed/${group1}" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe></div>`;
+          return '<div><iframe'
+            + ` class="${styles['video']}"`
+            + ' frameBorder="0"'
+            + ` src="//www.youtube.com/embed/${group1}"`
+            + ' webkitallowfullscreen mozallowfullscreen allowfullscreen'
+            + '></iframe></div>';
         },
       },
       {
@@ -213,7 +233,12 @@ const attachmnetRenderer = (embedVideoLinks: boolean, hideIcon?: boolean) => {
         replaceLogic: (match: string, videoId: string) => {
           const videoUrl = `https://fast.wistia.com/embed/medias/${videoId}`;
 
-          return `<div><iframe class="${styles['video']}" allowtransparency="true" frameborder="0" scrolling="no" src="${videoUrl}" webkitallowfullscreen mozallowfullscreen allowfullscreen></iframe></div>`;
+          return '<div><iframe'
+            + ` class="${styles['video']}"`
+            + ' allowtransparency="true" frameborder="0" scrolling="no"'
+            + ` src="${videoUrl}"`
+            + ' webkitallowfullscreen mozallowfullscreen allowfullscreen'
+            + '></iframe></div>';
         },
       },
     ];
@@ -232,10 +257,7 @@ const attachmnetRenderer = (embedVideoLinks: boolean, hideIcon?: boolean) => {
 
     // @ts-ignore
     md.renderer.rules.link_open = (tokens: TCustomLinkToken[], idx: number) => {
-      const url = tokens[idx]['url'];
-      const name = tokens[idx]['name'];
-      const entityType = tokens[idx]['entityType'];
-      const isLinkified = tokens[idx]['isLinkified'];
+      const { url, name, entityType, isLinkified } = tokens[idx];
 
       if (isLinkified || !entityType) {
         return renderLink(url, name);
@@ -244,6 +266,7 @@ const attachmnetRenderer = (embedVideoLinks: boolean, hideIcon?: boolean) => {
       const renderMap: { [key in ECustomEditorEntities]: string } = {
         [ECustomEditorEntities.Link]: `<a href="${url}" target="_blank">`,
         [ECustomEditorEntities.Image]: `<img src=${url} />`,
+        // eslint-disable-next-line jsx-a11y/media-has-caption
         [ECustomEditorEntities.Video]: ReactDOMServer.renderToStaticMarkup(<video src={url} preload="auto" controls />),
         [ECustomEditorEntities.File]: ReactDOMServer.renderToStaticMarkup(
           <DocumentAttachment name={name} url={url} isEdit={false} hideIcon={hideIcon} />,
@@ -258,7 +281,7 @@ const attachmnetRenderer = (embedVideoLinks: boolean, hideIcon?: boolean) => {
     // @ts-ignore
     md.renderer.rules.link_close = (tokens: LinkCloseToken[], idx: number) => {
       // @ts-ignore
-      const entityType = tokens[idx]['entityType'];
+      const { entityType } = tokens[idx];
       if (entityType === 'LINK') {
         return '</a>';
       }

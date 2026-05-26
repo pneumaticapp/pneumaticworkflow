@@ -210,6 +210,7 @@
 }
 
 .container__actions--narrow-table {
+  margin-bottom: 1.6rem;
   display: flex;
   width: 100%;
   min-width: 29rem;
@@ -218,23 +219,23 @@
 
 .container__actions--wide-table {
   position: sticky;
+  z-index: 5;
   left: 0;
+  margin-bottom: 1.6rem;
   padding: 0 2.4rem 0 3.2rem;
   display: flex;
+  align-items: center;
   width: 100%;
   justify-content: space-between;
 
   @media (--mobile) {
+    margin-bottom: 3.2rem;
     padding: 0 1.6rem;
   }
 }
 
 .title {
-  margin-bottom: 1.6rem;
-
-  @media (--mobile) {
-    margin-bottom: 3.2rem;
-  }
+  margin-bottom: 0;
 }
 
 .tune-view-button {
@@ -244,6 +245,16 @@
     padding: 0 0.9rem;
     box-sizing: content-box;
   }
+}
+
+.tune-view-icon {
+  margin-right: 0.2rem !important;
+}
+
+.actions-buttons {
+  display: flex;
+  gap: 0.8rem;
+  align-items: center;
 }
 
 .workflow-tune-view-tooltip {
