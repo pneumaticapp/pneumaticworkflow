@@ -42,6 +42,12 @@ class NotificationMethod:
     user_transfer = 'user_transfer'
     verification = 'verification'
     invite = 'invite'
+    task_completed = 'task_completed'
+    task_completed_websocket = 'task_completed_websocket'
+    task_created = 'task_created'
+    task_deleted = 'task_deleted'
+    event_created = 'event_created'
+    event_updated = 'event_updated'
 
     LITERALS = Literal[
         new_task,
@@ -81,6 +87,12 @@ class NotificationMethod:
         user_transfer,
         verification,
         invite,
+        task_completed,
+        task_completed_websocket,
+        task_created,
+        task_deleted,
+        event_created,
+        event_updated,
     ]
 
 

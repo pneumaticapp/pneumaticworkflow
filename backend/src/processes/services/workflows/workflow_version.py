@@ -3,7 +3,7 @@ from typing import Dict, List
 from django.contrib.auth import get_user_model
 
 from src.notifications.tasks import (
-    send_removed_task_notification,
+    send_task_deleted_notification,
 )
 from src.processes.models.templates.template import Template
 from src.processes.models.workflows.task import Task
@@ -40,7 +40,7 @@ class WorkflowUpdateVersionService(BaseUpdateVersionService):
             .get_user_emails_and_ids_set(),
         )
         if recipients:
-            send_removed_task_notification.delay(
+            send_task_deleted_notification.delay(
                 task_id=task.id,
                 task_data=task.get_data_for_list(),
                 recipients=recipients,

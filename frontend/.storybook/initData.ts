@@ -147,6 +147,7 @@ window['__pneumaticConfig'] = {
         datasets: '/datasets',
         dataset: '/datasets/:id',
         getFaq: '/faq',
+        wsEvents: '/ws/events',
         wsNotifications: '/ws/notifications',
         wsNewTask: '/ws/workflows/new-task',
         wsRemovedTask: '/ws/workflows/removed-task',

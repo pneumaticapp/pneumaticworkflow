@@ -157,6 +157,9 @@
       "vacationDeactivate": "/accounts/user/deactivate-vacation",
       "vacationUserActivate": "/accounts/users/:id/activate-vacation",
       "vacationUserDeactivate": "/accounts/users/:id/deactivate-vacation",
+      "wsEvents": "/ws/events",
+
+
       "wsNotifications": "/ws/notifications",
       "wsNewTask": "/ws/workflows/new-task",
       "wsRemovedTask": "/ws/workflows/removed-task",
