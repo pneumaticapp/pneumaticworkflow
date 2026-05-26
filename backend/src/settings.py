@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 import datetime
 import os
 from os import environ as env
+from urllib.parse import urlparse
 
 from configurations import Configuration, values
 from corsheaders.defaults import default_headers
@@ -108,7 +109,16 @@ class Common(Configuration):
     # A list of origins that are authorized to make cross-site HTTP requests.
     # A list of origins echoed back to the client in the
     # Access-Control-Allow-Origin header. Defaults to [].
-    CORS_ORIGIN_WHITELIST = [FRONTEND_URL, FORMS_URL]
+    _forms_origin = None
+    if FORMS_URL:
+        _parsed = urlparse(FORMS_URL)
+        if _parsed.netloc:
+            _forms_origin = (
+                f"{_parsed.scheme}://{_parsed.netloc}"
+            )
+    CORS_ORIGIN_WHITELIST = [FRONTEND_URL]
+    if _forms_origin and _forms_origin != FRONTEND_URL:
+        CORS_ORIGIN_WHITELIST.append(_forms_origin)
     EXTRA_CORS_ORIGIN_WHITELIST = env.get('CORS_ORIGIN_WHITELIST')
     if EXTRA_CORS_ORIGIN_WHITELIST:
         CORS_ORIGIN_WHITELIST.extend(EXTRA_CORS_ORIGIN_WHITELIST.split(' '))
