@@ -60,6 +60,15 @@ class AttachmentService(BaseModelService):
         if self.instance.access_type == AccessType.RESTRICTED:
             self._assign_restricted_permissions()
 
+    def assign_permissions(self, attachment: Attachment) -> None:
+        """Public API: assign permissions for a newly created attachment.
+
+        Use this instead of calling _create_related() directly from
+        external services (e.g., TaskFieldService).
+        """
+        self.instance = attachment
+        self._create_related()
+
     def reassign_restricted_permissions(self, attachment: Attachment) -> None:
         """
         Re-assigns restricted permissions for existing attachment.

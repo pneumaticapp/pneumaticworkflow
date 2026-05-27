@@ -1,5 +1,6 @@
 """Token authentication classes."""
 
+import asyncio
 import hashlib
 from typing import Any
 
@@ -26,7 +27,8 @@ class PneumaticToken:
     async def encrypt(cls, token: str) -> str:
         """Encrypt token using PBKDF2."""
         settings = get_settings()
-        encrypted_token = hashlib.pbkdf2_hmac(
+        encrypted_token = await asyncio.to_thread(
+            hashlib.pbkdf2_hmac,
             'sha256',
             token.encode(),
             settings.DJANGO_SECRET_KEY.encode(),

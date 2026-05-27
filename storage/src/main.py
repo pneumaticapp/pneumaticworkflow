@@ -1,9 +1,12 @@
 """FastAPI application entry point."""
 
+from contextlib import asynccontextmanager
+
 import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.infra.http_client import close_shared_client, get_shared_client
 from src.presentation.api import files_router
 from src.shared_kernel.config import get_settings
 from src.shared_kernel.exceptions import register_exception_handlers
@@ -11,6 +14,16 @@ from src.shared_kernel.middleware import AuthenticationMiddleware
 
 # Get settings
 settings = get_settings()
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Application lifespan event handlers."""
+    # Initialize shared HTTP client
+    get_shared_client()
+    yield
+    # Close shared HTTP client on shutdown
+    await close_shared_client()
 
 # Create application
 app = FastAPI(
@@ -20,6 +33,7 @@ app = FastAPI(
     openapi_url='/openapi.json' if settings.CONFIG != 'Production' else None,
     docs_url='/docs' if settings.CONFIG != 'Production' else None,
     redoc_url='/redoc' if settings.CONFIG != 'Production' else None,
+    lifespan=lifespan,
 )
 
 # CORS configuration
@@ -28,7 +42,12 @@ app.add_middleware(
     allow_origins=settings.ALLOWED_ORIGINS,
     allow_credentials=True,
     allow_methods=['GET', 'POST', 'PUT', 'DELETE'],
-    allow_headers=['*'],
+    allow_headers=[
+        'Authorization',
+        'Content-Type',
+        'X-Guest-Authorization',
+        'X-Public-Authorization',
+    ],
 )
 
 # Authentication middleware

@@ -1,15 +1,12 @@
 """File download use case."""
 
 from collections.abc import AsyncIterator
-from typing import TYPE_CHECKING
 
 from src.application.dto import DownloadFileQuery
 from src.domain.entities import FileRecord
 from src.infra.repositories import FileRecordRepository
+from src.infra.repositories.storage_service import StorageService
 from src.shared_kernel.exceptions import DomainFileNotFoundError
-
-if TYPE_CHECKING:
-    from src.infra.repositories import StorageService
 
 
 class DownloadFileUseCase:
@@ -18,7 +15,7 @@ class DownloadFileUseCase:
     def __init__(
         self,
         file_repository: FileRecordRepository,
-        storage_service: 'StorageService',
+        storage_service: StorageService,
     ) -> None:
         """Initialize download file use case.
 
@@ -50,12 +47,14 @@ class DownloadFileUseCase:
 
     async def get_stream(
             self,
-            query: DownloadFileQuery,
+            file_record: FileRecord,
+            range_header: str | None = None,
     ) -> AsyncIterator[bytes]:
         """Get file stream after permissions are verified.
 
         Args:
-            query: File download query.
+            file_record: File metadata.
+            range_header: Optional HTTP Range header.
 
         Returns:
             AsyncIterator[bytes]: File byte stream.
@@ -64,11 +63,6 @@ class DownloadFileUseCase:
             DomainFileNotFoundError: If file not found.
 
         """
-        # Get file information from database
-        file_record = await self._file_repository.get_by_id(query.file_id)
-        if not file_record:
-            raise DomainFileNotFoundError(query.file_id)
-
         # Get S3 download paths from StorageService
         bucket_name, file_path = self._storage_service.get_storage_path(
             file_record.account_id,
@@ -79,4 +73,5 @@ class DownloadFileUseCase:
         return self._storage_service.download_file(
             bucket_name=bucket_name,
             file_path=file_path,
+            range_header=range_header,
         )

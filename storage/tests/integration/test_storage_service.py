@@ -16,12 +16,12 @@ class TestStorageService:
         # Act
         bucket_name, file_path = service.get_storage_path(
             account_id=1,
-            file_id='test-file-id',
+            file_id='12345678-1234-5678-1234-567812345678',
         )
 
         # Assert
         assert '1' in bucket_name
-        assert file_path == 'test-file-id'
+        assert file_path == '12345678-1234-5678-1234-567812345678'
 
     @pytest.mark.asyncio
     async def test_upload_file__valid_data__upload_successfully(
@@ -50,7 +50,7 @@ class TestStorageService:
         )
 
         # Assert
-        mock_s3_client.put_object.assert_called_once()
+        mock_s3_client.upload_fileobj.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_download_file__valid_file__return_content_generator(

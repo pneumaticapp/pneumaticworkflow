@@ -48,6 +48,7 @@ class TaskFieldSerializer(serializers.ModelSerializer):
             'user_id',
             'group_id',
             'selections',
+            'attachments',
         )
 
     selections = serializers.SerializerMethodField()

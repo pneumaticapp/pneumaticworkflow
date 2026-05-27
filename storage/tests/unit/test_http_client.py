@@ -38,7 +38,7 @@ class TestHttpClient:
     ):
         """Test successful file permission check."""
         # Arrange
-        file_id = 'test-file-id'
+        file_id = '12345678-1234-5678-1234-567812345678'
         token = 'valid-token'
         user = AuthUser(
             auth_type=UserType.AUTHENTICATED,
@@ -67,7 +67,7 @@ class TestHttpClient:
     ):
         """Test file permission check denied."""
         # Arrange
-        file_id = 'test-file-id'
+        file_id = '12345678-1234-5678-1234-567812345678'
         token = 'valid-token'
         user = AuthUser(
             auth_type=UserType.AUTHENTICATED,
@@ -96,7 +96,7 @@ class TestHttpClient:
     ):
         """Test file permission check with HTTP error."""
         # Arrange
-        file_id = 'test-file-id'
+        file_id = '12345678-1234-5678-1234-567812345678'
         token = 'valid-token'
         user = AuthUser(
             auth_type=UserType.AUTHENTICATED,
@@ -120,7 +120,7 @@ class TestHttpClient:
     ):
         """Test file permission check with timeout error."""
         # Arrange
-        file_id = 'test-file-id'
+        file_id = '12345678-1234-5678-1234-567812345678'
         token = 'valid-token'
         user = AuthUser(
             auth_type=UserType.AUTHENTICATED,
@@ -144,7 +144,7 @@ class TestHttpClient:
     ):
         """Test file permission check with cookie token."""
         # Arrange
-        file_id = 'test-file-id'
+        file_id = '12345678-1234-5678-1234-567812345678'
         token = 'session-token'
         user = AuthUser(
             auth_type=UserType.GUEST_TOKEN,
@@ -173,7 +173,7 @@ class TestHttpClient:
     ):
         """Test file permission check without auth."""
         # Arrange
-        file_id = 'test-file-id'
+        file_id = '12345678-1234-5678-1234-567812345678'
         user = AuthUser(
             auth_type=UserType.ANONYMOUS,
             user_id=None,
@@ -201,7 +201,7 @@ class TestHttpClient:
     ):
         """Test file permission check with 500 response."""
         # Arrange
-        file_id = 'test-file-id'
+        file_id = '12345678-1234-5678-1234-567812345678'
         token = 'valid-token'
         user = AuthUser(
             auth_type=UserType.AUTHENTICATED,
@@ -217,32 +217,5 @@ class TestHttpClient:
         # Act
         result = await http_client.check_file_permission(user, file_id)
 
-        # Assert
         assert result is False
         mock_httpx_post.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_close__valid_client__close_successfully(self, http_client):
-        """Test client close."""
-        # Arrange
-        mock_client = AsyncMock()
-        http_client._client = mock_client
-
-        # Act
-        await http_client.close()
-
-        # Assert
-        mock_client.aclose.assert_called_once()
-        assert http_client._client is None
-
-    @pytest.mark.asyncio
-    async def test_close__client_none__do_nothing(self, http_client):
-        """Test client close when client is None."""
-        # Arrange
-        http_client._client = None
-
-        # Act
-        await http_client.close()
-
-        # Assert
-        assert http_client._client is None

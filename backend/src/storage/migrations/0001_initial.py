@@ -11,6 +11,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('accounts', '0139_remove_account_external_id'),
+        ('processes', '0001_initial'),
     ]
 
     operations = [

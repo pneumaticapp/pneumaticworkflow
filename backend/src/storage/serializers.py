@@ -37,7 +37,7 @@ class AttachmentCheckPermissionSerializer(
     """Serializer for checking file access permissions."""
 
     file_id = serializers.CharField(
-        max_length=64,
+        max_length=512,
         required=True,
         help_text='Unique file identifier',
     )

@@ -1,4 +1,5 @@
-from datetime import datetime, timezone
+import io
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock
 
 import pytest
@@ -35,7 +36,7 @@ class TestUploadFileUseCaseIntegration:
         )
 
         command = UploadFileCommand(
-            file_content=b'test file content',
+            file_stream=io.BytesIO(b'test file content'),
             filename='test_file.txt',
             content_type='text/plain',
             size=18,
@@ -102,7 +103,7 @@ class TestUploadFileUseCaseIntegration:
         )
 
         command = UploadFileCommand(
-            file_content=content,
+            file_stream=io.BytesIO(content),
             filename=filename,
             content_type=content_type,
             size=len(content),
@@ -152,18 +153,21 @@ class TestDownloadFileUseCaseIntegration:
 
         # Create record in DB
         file_record = FileRecord(
-            file_id='test-file-id',
+            file_id='12345678-1234-5678-1234-567812345678',
             filename='test_file.txt',
             content_type='text/plain',
             size=18,
             user_id=1,
             account_id=1,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
         await repository.create(file_record)
         await async_session.commit()
 
-        query = DownloadFileQuery(file_id='test-file-id', user_id=1)
+        query = DownloadFileQuery(
+            file_id='12345678-1234-5678-1234-567812345678',
+            user_id=1,
+        )
 
         mock_s3_client = AsyncMock()
 
@@ -181,11 +185,13 @@ class TestDownloadFileUseCaseIntegration:
 
         # Act
         result_file_record = await use_case.get_metadata(query)
-        result_stream = await use_case.get_stream(query)
+        result_stream = await use_case.get_stream(result_file_record)
 
         # Assert
         assert result_file_record is not None
-        assert result_file_record.file_id == 'test-file-id'
+        assert result_file_record.file_id == (
+            '12345678-1234-5678-1234-567812345678'
+        )
         assert result_file_record.filename == 'test_file.txt'
         assert result_stream is not None
 
@@ -211,7 +217,10 @@ class TestDownloadFileUseCaseIntegration:
             storage_service=storage_service,
         )
 
-        query = DownloadFileQuery(file_id='nonexistent-file-id', user_id=1)
+        query = DownloadFileQuery(
+            file_id='00000000-0000-0000-0000-000000000000',
+            user_id=1,
+        )
 
         # Act & Assert
         with pytest.raises(DomainFileNotFoundError):

@@ -1,5 +1,6 @@
 """Storage service for file operations."""
 
+import typing
 from collections.abc import AsyncGenerator
 
 import aioboto3
@@ -88,7 +89,7 @@ class StorageService:
         self,
         bucket_name: str,
         file_path: str,
-        file_content: bytes,
+        file_stream: typing.IO[bytes],
         content_type: str | None,
     ) -> None:
         """Upload file to storage.
@@ -96,7 +97,7 @@ class StorageService:
         Args:
             bucket_name: Bucket name.
             file_path: File path in bucket.
-            file_content: File content.
+            file_stream: File stream.
             content_type: File MIME type.
 
         Returns:
@@ -106,42 +107,53 @@ class StorageService:
         session = self._get_session()
 
         async with session.client(**self._client_params) as s3:
-            try:
-                # Try to create bucket if it doesn't exist
-                try:
-                    # For GCS don't specify LocationConstraint when creating
-                    await s3.create_bucket(Bucket=bucket_name)
-                except ClientError as e:
-                    if e.response['Error']['Code'] not in (
-                        'BucketAlreadyExists',
-                        'BucketAlreadyOwnedByYou',
-                    ):
-                        raise StorageError(
-                            MSG_STORAGE_009.format(details=str(e)),
-                        ) from e
+            extra_args = {}
+            if content_type:
+                extra_args['ContentType'] = content_type
 
-                # Upload file
-                await s3.put_object(
+            try:
+                # Upload file directly via stream
+                await s3.upload_fileobj(
+                    Fileobj=file_stream,
                     Bucket=bucket_name,
                     Key=file_path,
-                    Body=file_content,
-                    ContentType=content_type,
+                    ExtraArgs=extra_args,
                 )
             except ClientError as e:
+                # If bucket doesn't exist, try creating it and retry upload
+                if e.response['Error']['Code'] == 'NoSuchBucket':
+                    try:
+                        await s3.create_bucket(Bucket=bucket_name)
+                        # Rewind stream before retry
+                        file_stream.seek(0)
+                        await s3.upload_fileobj(
+                            Fileobj=file_stream,
+                            Bucket=bucket_name,
+                            Key=file_path,
+                            ExtraArgs=extra_args,
+                        )
+                        return
+                    except ClientError as create_e:
+                        raise StorageError(
+                            MSG_STORAGE_009.format(details=str(create_e)),
+                        ) from create_e
+
                 raise StorageError(
-                    MSG_STORAGE_010.format(details=str(e))
+                    MSG_STORAGE_010.format(details=str(e)),
                 ) from e
 
     async def download_file(
         self,
         bucket_name: str,
         file_path: str,
+        range_header: str | None = None,
     ) -> AsyncGenerator[bytes, None]:
         """Download file as stream.
 
         Args:
             bucket_name: Bucket name.
             file_path: File path in storage.
+            range_header: Optional HTTP Range header (e.g. 'bytes=0-100').
 
         Yields:
             bytes: File chunks.
@@ -155,11 +167,16 @@ class StorageService:
 
         async with session.client(**self._client_params) as s3:
             try:
+                # Prepare arguments
+                kwargs = {
+                    'Bucket': bucket_name,
+                    'Key': file_path,
+                }
+                if range_header:
+                    kwargs['Range'] = range_header
+
                 # Get object
-                response = await s3.get_object(
-                    Bucket=bucket_name,
-                    Key=file_path,
-                )
+                response = await s3.get_object(**kwargs)
 
                 body = response['Body']
                 async for chunk in body.iter_chunks(chunk_size=chunk_size):
@@ -173,5 +190,30 @@ class StorageService:
                     )
                     raise StorageError(error_msg) from e
                 raise StorageError(
-                    MSG_STORAGE_011.format(details=str(e))
+                    MSG_STORAGE_011.format(details=str(e)),
+                ) from e
+
+    async def delete_file(self, bucket_name: str, file_path: str) -> None:
+        """Delete file from storage.
+
+        Args:
+            bucket_name: Bucket name.
+            file_path: File path in storage.
+
+        Raises:
+            StorageError: On deletion error.
+
+        """
+        session = self._get_session()
+
+        async with session.client(**self._client_params) as s3:
+            try:
+                await s3.delete_object(
+                    Bucket=bucket_name,
+                    Key=file_path,
+                )
+            except ClientError as e:
+                # We log or wrap it
+                raise StorageError(
+                    f'Error deleting file {file_path} from {bucket_name}: {e}',
                 ) from e

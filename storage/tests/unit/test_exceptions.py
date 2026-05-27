@@ -157,33 +157,43 @@ class TestDomainExceptions:
 
     def test_file_not_found_error(self):
         """Test file not found error."""
-        exception = DomainFileNotFoundError('test-file-id')
+        exception = DomainFileNotFoundError(
+            '12345678-1234-5678-1234-567812345678',
+        )
 
         assert exception.error_code.code == 'FILE_001'
         assert exception.error_code.message == (
-            "File with ID 'test-file-id' not found"
+            "File with ID '12345678-1234-5678-1234-567812345678' not found"
         )
         assert exception.http_status == 404
         assert exception.error_type == ErrorType.DOMAIN
 
     def test_file_not_found_error_with_account(self):
         """Test file not found error with account ID."""
-        exception = DomainFileNotFoundError('test-file-id', account_id=123)
+        exception = DomainFileNotFoundError(
+            '12345678-1234-5678-1234-567812345678',
+            account_id=123,
+        )
 
         assert exception.error_code.code == 'FILE_001'
         assert exception.error_code.message == (
-            "File with ID 'test-file-id' not found in account 123"
+            "File with ID '12345678-1234-5678-1234-567812345678' "
+            'not found in account 123'
         )
         assert exception.http_status == 404
         assert exception.error_type == ErrorType.DOMAIN
 
     def test_file_access_denied_error(self):
         """Test file access denied error."""
-        exception = FileAccessDeniedError('test-file-id', user_id=456)
+        exception = FileAccessDeniedError(
+            '12345678-1234-5678-1234-567812345678',
+            user_id=456,
+        )
 
         assert exception.error_code.code == 'FILE_002'
         assert exception.error_code.message == (
-            "User 456 has no access to file 'test-file-id'"
+            'User 456 has no access to file '
+            "'12345678-1234-5678-1234-567812345678'"
         )
         assert exception.http_status == 403
         assert exception.error_type == ErrorType.AUTHORIZATION
@@ -469,7 +479,7 @@ class TestExceptionHandlerIntegration:
 
         @app.get('/test')
         async def test_endpoint():
-            file_id = 'test-file-id'
+            file_id = '12345678-1234-5678-1234-567812345678'
             raise DomainFileNotFoundError(file_id)
 
         client = TestClient(app)
@@ -479,7 +489,7 @@ class TestExceptionHandlerIntegration:
         data = response.json()
         assert data['error_code'] == 'FILE_001'
         assert data['error_type'] == 'domain'
-        assert 'test-file-id' in data['message']
+        assert '12345678-1234-5678-1234-567812345678' in data['message']
 
     def test_authentication_error_handler_integration(self):
         """Test authentication error handler integration."""

@@ -19,7 +19,7 @@ class TestAuthenticationMiddleware:
         # Arrange
         headers = {'Authorization': 'Bearer test-token'}
         file_record = MagicMock()
-        file_record.file_id = 'test-file-id'
+        file_record.file_id = '12345678-1234-5678-1234-567812345678'
         file_record.filename = 'test.txt'
         file_record.content_type = 'text/plain'
         file_record.size = 12
@@ -30,7 +30,10 @@ class TestAuthenticationMiddleware:
         )
 
         # Act
-        response = e2e_client.get('/test-file-id', headers=headers)
+        response = e2e_client.get(
+            '/12345678-1234-5678-1234-567812345678',
+            headers=headers,
+        )
 
         # Assert
         assert response.status_code != 401
@@ -41,7 +44,7 @@ class TestAuthenticationMiddleware:
         # No headers
 
         # Act
-        response = e2e_client.get('/test-file-id')
+        response = e2e_client.get('/12345678-1234-5678-1234-567812345678')
 
         # Assert
         assert response.status_code == 401
@@ -59,7 +62,7 @@ class TestAuthenticationMiddleware:
         # Arrange
         cookies = {'token': 'valid-session-token'}
         file_record = MagicMock()
-        file_record.file_id = 'test-file-id'
+        file_record.file_id = '12345678-1234-5678-1234-567812345678'
         file_record.filename = 'test.txt'
         file_record.content_type = 'text/plain'
         file_record.size = 12
@@ -70,7 +73,10 @@ class TestAuthenticationMiddleware:
         )
 
         # Act
-        response = e2e_client.get('/test-file-id', cookies=cookies)
+        response = e2e_client.get(
+            '/12345678-1234-5678-1234-567812345678',
+            cookies=cookies,
+        )
 
         # Assert
         assert response.status_code != 401
@@ -87,7 +93,10 @@ class TestAuthenticationMiddleware:
         mock_redis_auth_client_get.return_value = None
 
         # Act
-        response = e2e_client.get('/test-file-id', cookies=cookies)
+        response = e2e_client.get(
+            '/12345678-1234-5678-1234-567812345678',
+            cookies=cookies,
+        )
 
         # Assert
         assert response.status_code == 401

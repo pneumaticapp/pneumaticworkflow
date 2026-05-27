@@ -1,5 +1,6 @@
-from datetime import datetime, timezone
-from unittest.mock import AsyncMock, Mock
+import io
+from datetime import UTC, datetime
+from unittest.mock import ANY, AsyncMock, Mock
 
 import pytest
 
@@ -29,7 +30,7 @@ class TestUploadFileUseCase:
         """Test successful file upload."""
         # Arrange
         command = UploadFileCommand(
-            file_content=b'test content',
+            file_stream=io.BytesIO(b'test content'),
             filename='test.txt',
             content_type='text/plain',
             size=12,
@@ -38,13 +39,13 @@ class TestUploadFileUseCase:
         )
 
         file_record = FileRecord(
-            file_id='test-file-id',
+            file_id='12345678-1234-5678-1234-567812345678',
             filename='test.txt',
             content_type='text/plain',
             size=12,
             user_id=1,
             account_id=1,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
 
         mock_uow = AsyncMock()
@@ -54,7 +55,7 @@ class TestUploadFileUseCase:
         mock_repository.create.return_value = file_record
         mock_storage_service.get_storage_path.return_value = (
             'test-bucket',
-            'test-file-id',
+            '12345678-1234-5678-1234-567812345678',
         )
         mock_storage_service.upload_file.return_value = None
 
@@ -77,11 +78,10 @@ class TestUploadFileUseCase:
         mock_repository.create.assert_called_once()
         mock_storage_service.upload_file.assert_called_once_with(
             bucket_name='test-bucket',
-            file_path='test-file-id',
-            file_content=b'test content',
+            file_path='12345678-1234-5678-1234-567812345678',
+            file_stream=ANY,
             content_type='text/plain',
         )
-        mock_uow.commit.assert_called_once()
 
     @pytest.mark.asyncio
     async def test_upload_file__storage_error__raise_storage_error(
@@ -92,7 +92,7 @@ class TestUploadFileUseCase:
         """Test upload with storage error."""
         # Arrange
         command = UploadFileCommand(
-            file_content=b'test content',
+            file_stream=io.BytesIO(b'test content'),
             filename='test.txt',
             content_type='text/plain',
             size=12,
@@ -106,7 +106,7 @@ class TestUploadFileUseCase:
 
         mock_storage_service.get_storage_path.return_value = (
             'test-bucket',
-            'test-file-id',
+            '12345678-1234-5678-1234-567812345678',
         )
         mock_storage_service.upload_file.side_effect = (
             StorageError.upload_failed('Upload failed')
@@ -135,16 +135,19 @@ class TestDownloadFileUseCase:
     ):
         """Test get_metadata returns file record without loading stream."""
         # Arrange
-        query = DownloadFileQuery(file_id='test-file-id', user_id=1)
+        query = DownloadFileQuery(
+            file_id='12345678-1234-5678-1234-567812345678',
+            user_id=1,
+        )
 
         file_record = FileRecord(
-            file_id='test-file-id',
+            file_id='12345678-1234-5678-1234-567812345678',
             filename='test.txt',
             content_type='text/plain',
             size=12,
             user_id=1,
             account_id=1,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
 
         mock_repository.get_by_id.return_value = file_record
@@ -159,7 +162,9 @@ class TestDownloadFileUseCase:
 
         # Assert
         assert result == file_record
-        mock_repository.get_by_id.assert_called_once_with('test-file-id')
+        mock_repository.get_by_id.assert_called_once_with(
+            '12345678-1234-5678-1234-567812345678',
+        )
         mock_storage_service.get_storage_path.assert_not_called()
         mock_storage_service.download_file.assert_not_called()
 
@@ -192,22 +197,19 @@ class TestDownloadFileUseCase:
     ):
         """Test get_stream returns file stream."""
         # Arrange
-        query = DownloadFileQuery(file_id='test-file-id', user_id=1)
-
         file_record = FileRecord(
-            file_id='test-file-id',
+            file_id='12345678-1234-5678-1234-567812345678',
             filename='test.txt',
             content_type='text/plain',
             size=12,
             user_id=1,
             account_id=1,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
 
-        mock_repository.get_by_id.return_value = file_record
         mock_storage_service.get_storage_path.return_value = (
             'test-bucket',
-            'test-file-id',
+            '12345678-1234-5678-1234-567812345678',
         )
 
         async def mock_download_generator():
@@ -223,33 +225,12 @@ class TestDownloadFileUseCase:
         )
 
         # Act
-        result_stream = await use_case.get_stream(query)
+        result_stream = await use_case.get_stream(file_record)
 
         # Assert
         assert result_stream is not None
-        mock_repository.get_by_id.assert_called_once_with('test-file-id')
         mock_storage_service.download_file.assert_called_once_with(
             bucket_name='test-bucket',
-            file_path='test-file-id',
+            file_path='12345678-1234-5678-1234-567812345678',
+            range_header=None,
         )
-
-    @pytest.mark.asyncio
-    async def test_get_stream__file_not_found__raise_file_not_found_error(
-        self,
-        mock_storage_service,
-        mock_repository,
-    ):
-        """Test get_stream with file not found."""
-        # Arrange
-        query = DownloadFileQuery(file_id='missing-file-id', user_id=1)
-
-        mock_repository.get_by_id.return_value = None
-
-        use_case = DownloadFileUseCase(
-            file_repository=mock_repository,
-            storage_service=mock_storage_service,
-        )
-
-        # Act & Assert
-        with pytest.raises(DomainFileNotFoundError):
-            await use_case.get_stream(query)

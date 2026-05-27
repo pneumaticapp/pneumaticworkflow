@@ -57,7 +57,7 @@ def sample_large_file_content() -> bytes:
 def sample_file_record() -> FileRecord:
     """Sample file record."""
     return FileRecord(
-        file_id='test-file-id-123',
+        file_id='12345678-1234-5678-1234-567812345679',
         filename='test_file.txt',
         content_type='text/plain',
         size=1024,
@@ -84,7 +84,7 @@ def sample_upload_command() -> UploadFileCommand:
 def sample_download_query() -> DownloadFileQuery:
     """Sample download query."""
     return DownloadFileQuery(
-        file_id='test-file-id-123',
+        file_id='12345678-1234-5678-1234-567812345679',
         user_id=1,
     )
 
@@ -132,7 +132,12 @@ def mock_storage_service():
     """Mock storage service."""
     mock = AsyncMock()
     # get_storage_path - synchronous method, not AsyncMock
-    mock.get_storage_path = Mock(return_value=('test-bucket', 'test-file-id'))
+    mock.get_storage_path = Mock(
+        return_value=(
+            'test-bucket',
+            '12345678-1234-5678-1234-567812345678',
+        ),
+    )
     return mock
 
 

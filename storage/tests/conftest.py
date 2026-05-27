@@ -73,7 +73,8 @@ def mock_download_use_case_get_stream(mocker):
 @pytest.fixture
 def mock_download_use_case_execute(mocker):
     """Mock for DownloadFileUseCase.execute
-    (deprecated, use get_metadata/get_stream)."""
+    (deprecated, use get_metadata/get_stream).
+    """
     # This fixture is kept for backward compatibility with old tests
     # It mocks both get_metadata and get_stream
     # to simulate old execute behavior

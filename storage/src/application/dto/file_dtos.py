@@ -2,13 +2,14 @@
 
 from dataclasses import dataclass
 from datetime import datetime
+from typing import IO
 
 
 @dataclass(frozen=True)
 class UploadFileCommand:
     """Command to upload file."""
 
-    file_content: bytes
+    file_stream: IO[bytes]
     filename: str | None
     content_type: str | None
     size: int
@@ -30,6 +31,7 @@ class DownloadFileQuery:
 
     file_id: str  # Unique file identifier
     user_id: int | None
+    range_header: str | None = None
 
 
 @dataclass(frozen=True)

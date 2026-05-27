@@ -478,8 +478,7 @@ class TaskFieldService(BaseWorkflowService):
                 continue
             if created:
                 service = AttachmentService(user=self.user)
-                service.instance = attachment
-                service._create_related()
+                service.assign_permissions(attachment)
 
     def partial_update(
         self,
@@ -515,8 +514,7 @@ class TaskFieldService(BaseWorkflowService):
             )
             if self.instance.type == FieldType.FILE:
                 self._link_new_attachments(raw_value)
-            elif self.instance.type in FieldType.TYPES_WITH_SELECTIONS:
-                self._update_selections(raw_value)
+
             elif self.instance.type in {
                 FieldType.STRING,
                 FieldType.TEXT,

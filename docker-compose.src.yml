@@ -393,7 +393,8 @@ services:
       SSO_PROVIDER: ${SSO_PROVIDER:-} # Allowed values: okta, auth0
       AI: ${AI:-no}
       PUSH: ${PUSH:-no}
-      STORAGE: ${STORAGE:-no}
+      STORAGE: ${STORAGE:-yes}
+      FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://localhost/files}
       RELEASE: ${RELEASE:-1.0.0}
       SENTRY_DSN: ${SENTRY_FRONTEND_DSN:-}
       SENTRY_RELEASE: ${RELEASE:-1.0.0}
@@ -472,7 +473,7 @@ services:
       GCS_S3_ACCESS_KEY: ${FILE_GCS_S3_ACCESS_KEY}
       GCS_S3_SECRET_KEY: ${FILE_GCS_S3_SECRET_KEY}
       GCS_S3_REGION: ${FILE_GCS_S3_REGION}
-      FASTAPI_BASE_URL: ${FILE_FASTAPI_BASE_URL:-http://file.localhost}
+      FASTAPI_BASE_URL: ${FILE_FASTAPI_BASE_URL:-http://localhost/files}
       BUCKET_PREFIX: ${FILE_BUCKET_PREFIX:-pneumatic-dev-test}
       MAX_FILE_SIZE: ${FILE_MAX_FILE_SIZE:-104857600}
       CHUNK_SIZE: ${FILE_CHUNK_SIZE:-1048576}

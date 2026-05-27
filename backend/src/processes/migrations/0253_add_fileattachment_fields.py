@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('processes', '0244_add_reminder'),
+        ('processes', '0252_add_manager_performer_type'),
     ]
 
     operations = [

@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from unittest.mock import AsyncMock, Mock
 
 import pytest
@@ -30,26 +30,26 @@ class TestFileRecordRepository:
     def sample_file_record(self):
         """Sample file record."""
         return FileRecord(
-            file_id='test-file-id',
+            file_id='12345678-1234-5678-1234-567812345678',
             filename='test.txt',
             content_type='text/plain',
             size=1024,
             user_id=1,
             account_id=1,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
 
     @pytest.fixture
     def sample_file_record_orm(self):
         """Sample file record ORM."""
         return FileRecordORM(
-            file_id='test-file-id',
+            file_id='12345678-1234-5678-1234-567812345678',
             filename='test.txt',
             content_type='text/plain',
             size=1024,
             user_id=1,
             account_id=1,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
 
     @pytest.mark.asyncio
@@ -118,11 +118,13 @@ class TestFileRecordRepository:
         mock_session.execute.return_value = mock_result
 
         # Act
-        result = await repository.get_by_id('test-file-id')
+        result = await repository.get_by_id(
+            '12345678-1234-5678-1234-567812345678',
+        )
 
         # Assert
         assert result is not None
-        assert result.file_id == 'test-file-id'
+        assert result.file_id == '12345678-1234-5678-1234-567812345678'
         mock_session.execute.assert_called_once()
 
     @pytest.mark.asyncio
@@ -159,4 +161,4 @@ class TestFileRecordRepository:
 
         # Act & Assert
         with pytest.raises(DatabaseConnectionError):
-            await repository.get_by_id('test-file-id')
+            await repository.get_by_id('12345678-1234-5678-1234-567812345678')

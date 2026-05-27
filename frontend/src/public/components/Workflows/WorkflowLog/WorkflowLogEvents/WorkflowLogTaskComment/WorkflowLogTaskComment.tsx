@@ -112,7 +112,7 @@ export function WorkflowLogTaskComment({
     setIsEdit(false);
 
     if (commentText && commentText !== text) {
-      editComment({ id, text: commentText, attachments: filesToUpload });
+      editComment({ id, text: commentText, attachments: filesToUpload.map(f => ({ id: f.id })) });
     }
 
     setFilesToUpload([]);

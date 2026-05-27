@@ -85,8 +85,11 @@ def mock_upload_use_case(mocker) -> Iterator[AsyncMock]:
         'src.application.use_cases.file_upload.UploadFileUseCase.execute',
     )
     mock_response = MagicMock()
-    mock_response.file_id = 'test-file-id-123'
-    mock_response.public_url = 'http://localhost:8000/test-file-id-123'
+    mock_response.file_id = '12345678-1234-5678-1234-567812345679'
+    mock_response.public_url = (
+        'http://localhost:8000/'
+        '12345678-1234-5678-1234-567812345679'
+    )
     mock.return_value = mock_response
     return mock
 
@@ -105,10 +108,12 @@ def mock_download_use_case(mocker) -> Iterator[AsyncMock]:
         new_callable=AsyncMock,
     )
     mock_file_record = MagicMock()
-    mock_file_record.file_id = 'test-file-id'
+    mock_file_record.file_id = '12345678-1234-5678-1234-567812345678'
     mock_file_record.filename = 'test.txt'
     mock_file_record.content_type = 'text/plain'
     mock_file_record.size = 12
+    mock_file_record.user_id = 1
+    mock_file_record.account_id = 1
 
     mock_metadata.return_value = mock_file_record
     mock_stream.return_value = AsyncIteratorMock(b'test content')
@@ -131,8 +136,11 @@ def session_cookies() -> dict[str, str]:
 def mock_upload_response() -> MagicMock:
     """Mock upload response."""
     response = MagicMock()
-    response.file_id = 'test-file-id-123'
-    response.public_url = 'http://localhost:8000/test-file-id-123'
+    response.file_id = '12345678-1234-5678-1234-567812345679'
+    response.public_url = (
+        'http://localhost:8000/'
+        '12345678-1234-5678-1234-567812345679'
+    )
     return response
 
 
@@ -140,10 +148,12 @@ def mock_upload_response() -> MagicMock:
 def mock_file_record() -> MagicMock:
     """Mock file record."""
     record = MagicMock()
-    record.file_id = 'test-file-id-123'
+    record.file_id = '12345678-1234-5678-1234-567812345679'
     record.filename = 'test_file.txt'
     record.content_type = 'text/plain'
     record.size = 1024
+    record.user_id = 1
+    record.account_id = 1
     return record
 
 
@@ -168,10 +178,12 @@ class AsyncIteratorMock:
 def mock_download_response() -> tuple[MagicMock, AsyncIteratorMock]:
     """Mock download response."""
     record = MagicMock()
-    record.file_id = 'test-file-id-123'
+    record.file_id = '12345678-1234-5678-1234-567812345679'
     record.filename = 'test_file.txt'
     record.content_type = 'text/plain'
     record.size = 1024
+    record.user_id = 1
+    record.account_id = 1
 
     content = AsyncIteratorMock(b'test file content')
     return record, content

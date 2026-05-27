@@ -1,9 +1,10 @@
+from datetime import UTC, datetime
 from unittest.mock import MagicMock
-from datetime import datetime, timezone
+
 import pytest
 
-from src.shared_kernel.exceptions import DomainFileNotFoundError
 from src.domain.entities.file_record import FileRecord
+from src.shared_kernel.exceptions import DomainFileNotFoundError
 
 
 class TestAPIEndpoints:
@@ -88,8 +89,11 @@ class TestAPIEndpoints:
         """Test upload endpoint with large file."""
         # Arrange
         mock_upload_use_case_execute.return_value = MagicMock(
-            file_id='large-file-id',
-            public_url='http://localhost:8000/download/large-file-id',
+            file_id='87654321-4321-8765-4321-876543210987',
+            public_url=(
+                'http://localhost:8000/download/'
+                '87654321-4321-8765-4321-876543210987'
+            ),
         )
 
         # Act
@@ -106,7 +110,7 @@ class TestAPIEndpoints:
         data = response.json()
         assert 'public_url' in data
         assert 'file_id' in data
-        assert data['file_id'] == 'large-file-id'
+        assert data['file_id'] == '87654321-4321-8765-4321-876543210987'
 
     def test_download_endpoint__valid_file_with_auth__return_file_content(
         self,
@@ -126,19 +130,63 @@ class TestAPIEndpoints:
         mock_download_use_case_get_stream.return_value = stream
 
         # Act
-        response = e2e_client.get('/test-file-id', headers=auth_headers)
+        response = e2e_client.get(
+            '/12345678-1234-5678-1234-567812345678',
+            headers=auth_headers,
+        )
 
         # Assert
         assert response.status_code == 200
         assert 'text/plain' in response.headers['content-type']
         assert response.headers['content-disposition'] == (
-            'attachment; filename="test_file.txt"'
+            "attachment; filename*=utf-8''test_file.txt"
         )
+        assert response.headers['accept-ranges'] == 'bytes'
+
+    def test_download_endpoint__range_header__return_206_partial_content(
+        self,
+        e2e_client,
+        mock_auth_middleware,
+        mock_http_client,
+        mock_storage_service,
+        auth_headers,
+        mock_download_use_case_get_metadata,
+        mock_download_use_case_get_stream,
+    ):
+        """Test download with Range header returns 206."""
+        # Arrange
+        file_record = FileRecord(
+            file_id='12345678-1234-5678-1234-567812345678',
+            filename='video.mp4',
+            content_type='video/mp4',
+            size=1000,
+            user_id=1,
+            account_id=1,
+            created_at=datetime.now(UTC),
+        )
+
+        async def partial_stream():
+            yield b'partial'
+
+        mock_download_use_case_get_metadata.return_value = file_record
+        mock_download_use_case_get_stream.return_value = partial_stream()
+
+        # Act
+        response = e2e_client.get(
+            '/12345678-1234-5678-1234-567812345678',
+            headers={**auth_headers, 'Range': 'bytes=0-99'},
+        )
+
+        # Assert
+        assert response.status_code == 206
+        assert response.headers['content-range'] == 'bytes 0-99/1000'
+        assert response.headers['content-length'] == '100'
+        assert response.headers['accept-ranges'] == 'bytes'
 
     def test_download_endpoint__no_auth__return_401(self, e2e_client):
         """Test download endpoint without authentication."""
         # Act
-        response = e2e_client.get('/test-file-id')
+        response = e2e_client.get('/12345678-1234-5678-1234-567812345678')
 
         # Assert
         assert response.status_code == 401
@@ -154,11 +202,14 @@ class TestAPIEndpoints:
         """Test download nonexistent file endpoint."""
         # Arrange
         mock_download_use_case_get_metadata.side_effect = (
-            DomainFileNotFoundError('nonexistent-file-id')
+            DomainFileNotFoundError('00000000-0000-0000-0000-000000000000')
         )
 
         # Act
-        response = e2e_client.get('/nonexistent-file-id', headers=auth_headers)
+        response = e2e_client.get(
+            '/00000000-0000-0000-0000-000000000000',
+            headers=auth_headers,
+        )
 
         # Assert
         # FileNotFoundError should be handled and return 404
@@ -175,7 +226,7 @@ class TestAPIEndpoints:
         """Test download endpoint without permission."""
         # Arrange
         file_record = MagicMock()
-        file_record.file_id = 'test-file-id'
+        file_record.file_id = '12345678-1234-5678-1234-567812345678'
         file_record.filename = 'test_file.txt'
         file_record.content_type = 'text/plain'
         file_record.size = 12
@@ -185,7 +236,10 @@ class TestAPIEndpoints:
         mock_http_client_check_permission.return_value = False
 
         # Act
-        response = e2e_client.get('/test-file-id', headers=auth_headers)
+        response = e2e_client.get(
+            '/12345678-1234-5678-1234-567812345678',
+            headers=auth_headers,
+        )
 
         # Assert
         assert response.status_code == 403
@@ -209,7 +263,10 @@ class TestAPIEndpoints:
         mock_http_client.check_file_permission.return_value = False
 
         # Act
-        response = e2e_client.get('/test-file-id', headers=auth_headers)
+        response = e2e_client.get(
+            '/12345678-1234-5678-1234-567812345678',
+            headers=auth_headers,
+        )
 
         # Assert
         assert response.status_code == 200
@@ -229,19 +286,22 @@ class TestAPIEndpoints:
         """Test download endpoint - non-owner without permission gets 403."""
         # Arrange
         file_record = FileRecord(
-            file_id='test-file-id',
+            file_id='12345678-1234-5678-1234-567812345678',
             filename='test_file.txt',
             content_type='text/plain',
             size=12,
             user_id=999,
             account_id=1,
-            created_at=datetime.now(timezone.utc),
+            created_at=datetime.now(UTC),
         )
         mock_download_use_case_get_metadata.return_value = file_record
         mock_http_client_check_permission.return_value = False
 
         # Act
-        response = e2e_client.get('/test-file-id', headers=auth_headers)
+        response = e2e_client.get(
+            '/12345678-1234-5678-1234-567812345678',
+            headers=auth_headers,
+        )
 
         # Assert
         assert response.status_code == 403
@@ -274,8 +334,11 @@ class TestAPIEndpoints:
         """Test upload endpoint with different content types."""
         # Arrange
         mock_upload_use_case_execute.return_value = MagicMock(
-            file_id='test-file-id',
-            public_url='http://localhost:8000/download/test-file-id',
+            file_id='12345678-1234-5678-1234-567812345678',
+            public_url=(
+                'http://localhost:8000/download/'
+                '12345678-1234-5678-1234-567812345678'
+            ),
         )
 
         # Act

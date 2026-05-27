@@ -14,9 +14,7 @@ class FileRecordORM(Base):
     file_id = Column(
         String,
         primary_key=True,
-        unique=True,
         nullable=False,
-        index=True,
     )
     size = Column(BigInteger, nullable=False)
     content_type = Column(String, nullable=False)

@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import (
     async_sessionmaker,
     create_async_engine,
 )
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import DeclarativeBase
 
 from src.shared_kernel.config import get_settings
 
@@ -19,6 +19,10 @@ engine = create_async_engine(
     settings.database_url,
     echo=settings.DEBUG,
     future=True,
+    pool_size=20,
+    max_overflow=10,
+    pool_pre_ping=True,
+    pool_recycle=3600,
 )
 
 # Create session factory
@@ -28,8 +32,10 @@ AsyncSessionLocal = async_sessionmaker(
     expire_on_commit=False,
 )
 
+
 # Base class for all ORM models
-Base = declarative_base()
+class Base(DeclarativeBase):
+    """Declarative base for ORM models."""
 
 
 async def get_async_session() -> AsyncGenerator[AsyncSession, None]:

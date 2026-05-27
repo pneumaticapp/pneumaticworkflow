@@ -27,7 +27,6 @@ from src.processes.tests.fixtures import (
 )
 from src.storage.models import Attachment
 from src.storage.enums import SourceType, AccessType
-from src.processes.models.workflows.attachment import FileAttachment
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -1577,11 +1576,11 @@ def test_check__file__exist__has_attachment__ok():
         workflow=workflow,
         account=owner.account,
     )
-    FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        size=1488,
-        account_id=owner.account_id,
+    Attachment.objects.create(
+        file_id='12345678-1234-5678-1234-567812345678',
+        source_type=SourceType.TASK,
+        access_type=AccessType.ACCOUNT,
+        account=owner.account,
         output=field,
     )
     condition = Condition.objects.create(
@@ -1626,11 +1625,11 @@ def test_check__file__exist__no_attachment__fail():
         workflow=workflow,
         account=owner.account,
     )
-    FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        size=1488,
-        account_id=owner.account_id,
+    Attachment.objects.create(
+        file_id='12345678-1234-5678-1234-567812345678',
+        source_type=SourceType.TASK,
+        access_type=AccessType.ACCOUNT,
+        account=owner.account,
         output=None,
     )
     condition = Condition.objects.create(
@@ -1675,11 +1674,11 @@ def test_check__file__not_exist__no_attachment__ok():
         workflow=workflow,
         account=owner.account,
     )
-    FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        size=1488,
-        account_id=owner.account_id,
+    Attachment.objects.create(
+        file_id='12345678-1234-5678-1234-567812345678',
+        source_type=SourceType.TASK,
+        access_type=AccessType.ACCOUNT,
+        account=owner.account,
         output=None,
     )
     condition = Condition.objects.create(
@@ -1724,11 +1723,11 @@ def test_check__file__not_exist__has_attachment__fail():
         workflow=workflow,
         account=owner.account,
     )
-    FileAttachment.objects.create(
-        name='john.cena',
-        url='https://john.cena/john.cena',
-        size=1488,
-        account_id=owner.account_id,
+    Attachment.objects.create(
+        file_id='12345678-1234-5678-1234-567812345678',
+        source_type=SourceType.TASK,
+        access_type=AccessType.ACCOUNT,
+        account=owner.account,
         output=field,
     )
     condition = Condition.objects.create(

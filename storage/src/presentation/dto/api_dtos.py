@@ -2,7 +2,7 @@
 
 from datetime import datetime
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class FileUploadResponse(BaseModel):
@@ -15,16 +15,12 @@ class FileUploadResponse(BaseModel):
 class FileInfoResponse(BaseModel):
     """File information response."""
 
-    id: int
+    model_config = ConfigDict(from_attributes=True)
+
     file_id: str
     filename: str
     size: int
     content_type: str
-    user_id: int
+    user_id: int | None
     account_id: int
     created_at: datetime
-
-    class Config:
-        """Pydantic configuration."""
-
-        from_attributes = True

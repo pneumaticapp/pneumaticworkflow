@@ -35,7 +35,6 @@ from src.processes.tests.fixtures import (
 )
 from src.storage.models import Attachment
 from src.storage.enums import SourceType, AccessType
-from src.processes.models.workflows.attachment import FileAttachment
 
 UserModel = get_user_model()
 pytestmark = pytest.mark.django_db
@@ -672,11 +671,11 @@ def test__link_new_attachments__ids_none__skip():
         workflow=workflow,
         account=account,
     )
-    attachment = FileAttachment.objects.create(
-        name='test.jpg',
-        url='https://test.test/test.jpg',
-        size=1234,
-        account_id=account.id,
+    attachment = Attachment.objects.create(
+        file_id='test.jpg',
+        account=account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
     )
     service = TaskFieldService(instance=task_field, user=user)
 
@@ -705,33 +704,31 @@ def test__remove_unused_attachments__value_some_deleted__ok():
         workflow=workflow,
         account=account,
     )
-    attachment_1 = FileAttachment.objects.create(
-        name='keep.jpg',
-        url='https://test.test/keep.jpg',
-        size=100,
-        account_id=account.id,
+    attachment_1 = Attachment.objects.create(
+        file_id='keep.jpg',
+        account=account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
         output=task_field,
     )
-    attachment_2 = FileAttachment.objects.create(
-        name='delete.jpg',
-        url='https://test.test/delete.jpg',
-        size=200,
-        account_id=account.id,
+    attachment_2 = Attachment.objects.create(
+        file_id='delete.jpg',
+        account=account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
         output=task_field,
     )
     service = TaskFieldService(instance=task_field, user=user)
-    value = attachment_1.url
-    attachment_ids = [str(attachment_1.id)]
+    markdown_values = [attachment_1.file_id]
 
     # act
     service._remove_unused_attachments(
-        value=value,
-        attachment_ids=attachment_ids,
+        markdown_values=markdown_values,
     )
 
     # assert
-    assert FileAttachment.objects.filter(id=attachment_1.id).exists()
-    assert not FileAttachment.objects.filter(id=attachment_2.id).exists()
+    assert Attachment.objects.filter(id=attachment_1.id).exists()
+    assert not Attachment.objects.filter(id=attachment_2.id).exists()
 
 
 def test__remove_unused_attachments__value_none_deleted__ok():
@@ -750,25 +747,23 @@ def test__remove_unused_attachments__value_none_deleted__ok():
         workflow=workflow,
         account=account,
     )
-    attachment_1 = FileAttachment.objects.create(
-        name='keep.jpg',
-        url='https://test.test/keep.jpg',
-        size=100,
-        account_id=account.id,
+    attachment_1 = Attachment.objects.create(
+        file_id='keep.jpg',
+        account=account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
         output=task_field,
     )
     service = TaskFieldService(instance=task_field, user=user)
-    value = attachment_1.url
-    attachment_ids = [str(attachment_1.id)]
+    markdown_values = [attachment_1.file_id]
 
     # act
     service._remove_unused_attachments(
-        value=value,
-        attachment_ids=attachment_ids,
+        markdown_values=markdown_values,
     )
 
     # assert
-    assert FileAttachment.objects.filter(id=attachment_1.id).exists()
+    assert Attachment.objects.filter(id=attachment_1.id).exists()
 
 
 def test__remove_unused_attachments__no_value__ok():
@@ -787,23 +782,22 @@ def test__remove_unused_attachments__no_value__ok():
         workflow=workflow,
         account=account,
     )
-    attachment_1 = FileAttachment.objects.create(
-        name='delete.jpg',
-        url='https://test.test/delete.jpg',
-        size=100,
-        account_id=account.id,
+    attachment_1 = Attachment.objects.create(
+        file_id='delete.jpg',
+        account=account,
+        source_type=SourceType.TASK,
+        access_type=AccessType.RESTRICTED,
         output=task_field,
     )
     service = TaskFieldService(instance=task_field, user=user)
 
     # act
     service._remove_unused_attachments(
-        value=None,
-        attachment_ids=None,
+        markdown_values=None,
     )
 
     # assert
-    assert not FileAttachment.objects.filter(id=attachment_1.id).exists()
+    assert not Attachment.objects.filter(id=attachment_1.id).exists()
 
 
 def test__remove_unused_attachments__no_value_no_attachments__ok():
@@ -826,12 +820,11 @@ def test__remove_unused_attachments__no_value_no_attachments__ok():
 
     # act
     service._remove_unused_attachments(
-        value=None,
-        attachment_ids=None,
+        markdown_values=None,
     )
 
     # assert
-    assert not FileAttachment.objects.filter(
+    assert not Attachment.objects.filter(
         output=task_field,
     ).exists()
 
@@ -1065,7 +1058,10 @@ def test_partial_update__ok(mocker):
     service.partial_update(value=raw_value)
 
     # assert
-    get_valid_value_mock.assert_called_once_with(raw_value)
+    get_valid_value_mock.assert_called_once_with(
+        raw_value=raw_value,
+        selections=None,
+    )
     link_new_attachments_mock.assert_not_called()
     task_field.refresh_from_db()
     assert task_field.value == value
@@ -1383,10 +1379,6 @@ def test_remove_unused_attachments__comment_attachment_unchanged(mocker):
         'src.processes.services.tasks.field.'
         'TaskFieldService._link_new_attachments',
     )
-    update_selections_mock = mocker.patch(
-        'src.processes.services.tasks.field.'
-        'TaskFieldService._update_selections',
-    )
     service = TaskFieldService(
         instance=task_field,
         user=user,
@@ -1399,7 +1391,6 @@ def test_remove_unused_attachments__comment_attachment_unchanged(mocker):
     get_valid_value_mock.assert_called_once()
     assert Attachment.objects.filter(id=comment_attachment.id).exists()
     link_new_mock.assert_called_once_with(None)
-    update_selections_mock.assert_not_called()
 
 
 def test__partial_update__no_value_kwarg__ok(mocker):
@@ -1437,7 +1428,10 @@ def test__partial_update__no_value_kwarg__ok(mocker):
     service.partial_update()
 
     # assert
-    get_valid_value_mock.assert_called_once_with(None)
+    get_valid_value_mock.assert_called_once_with(
+        raw_value=None,
+        selections=None,
+    )
     remove_unused_attachments_mock.assert_not_called()
     link_new_attachments_mock.assert_not_called()
 
@@ -1938,6 +1932,7 @@ def test__get_valid_checkbox_value__not_in_allowed__raise_exception(mocker):
     get_selections_values_mock.assert_called_once_with()
 
 
+@override_settings(FILE_DOMAIN='example.com')
 def test_get_valid_file_value__one_file__ok():
 
     # arrange

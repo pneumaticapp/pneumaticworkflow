@@ -17,6 +17,36 @@ if TYPE_CHECKING:
     from src.shared_kernel.middleware.auth_middleware import AuthUser
 
 
+class SharedClientHolder:
+    """Holder for the shared HTTP client."""
+
+    _instance: httpx.AsyncClient | None = None
+
+    @classmethod
+    def get(cls) -> httpx.AsyncClient:
+        """Get or create shared HTTP client instance."""
+        if cls._instance is None:
+            cls._instance = httpx.AsyncClient()
+        return cls._instance
+
+    @classmethod
+    async def close(cls) -> None:
+        """Close shared HTTP client."""
+        if cls._instance is not None:
+            await cls._instance.aclose()
+            cls._instance = None
+
+
+def get_shared_client() -> httpx.AsyncClient:
+    """Get or create shared HTTP client."""
+    return SharedClientHolder.get()
+
+
+async def close_shared_client() -> None:
+    """Close shared HTTP client."""
+    await SharedClientHolder.close()
+
+
 class HttpClient:
     """HTTP client for Django backend requests."""
 
@@ -28,14 +58,11 @@ class HttpClient:
 
         """
         self.base_url = base_url
-        self._client: httpx.AsyncClient | None = None
 
     @property
     def client(self) -> httpx.AsyncClient:
-        """Lazy client initialization."""
-        if self._client is None:
-            self._client = httpx.AsyncClient()
-        return self._client
+        """Shared client instance."""
+        return get_shared_client()
 
     async def check_file_permission(
         self,
@@ -76,6 +103,4 @@ class HttpClient:
 
     async def close(self) -> None:
         """Close HTTP client."""
-        if self._client is not None:
-            await self._client.aclose()
-            self._client = None
+        # No-op since we use a shared global client managed by lifespan

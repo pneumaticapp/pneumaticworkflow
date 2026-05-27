@@ -1,11 +1,15 @@
 """File API endpoints."""
 
+import re
+import urllib.parse
+import uuid
 from typing import Annotated
 
 from fastapi import (
     APIRouter,
     Depends,
     File,
+    Header,
     UploadFile,
 )
 from fastapi.responses import StreamingResponse
@@ -43,6 +47,19 @@ from src.shared_kernel.permissions import (
 router = APIRouter(prefix='', tags=['files'])
 
 
+def secure_filename(filename: str) -> str:
+    """Sanitize filename to prevent path traversal and unsafe characters."""
+    if not filename:
+        return 'unnamed_file'
+    # Keep only alphanumeric, dot, dash, and underscore
+    filename = re.sub(r'[^a-zA-Z0-9.\-_]', '_', filename)
+    # Prevent hidden files and traversal
+    filename = filename.lstrip('.')
+    if not filename:
+        return 'unnamed_file'
+    return filename
+
+
 @router.post('/upload', dependencies=[Depends(is_authenticated)])
 async def upload_file(
     file: Annotated[UploadFile, File(...)],
@@ -62,17 +79,21 @@ async def upload_file(
         FileUploadResponse: Upload result with file ID and public URL.
 
     """
-    # Read file content
-    file_content = await file.read()
-    file_size = len(file_content)
+    # Compute size efficiently without reading into memory
+    file.file.seek(0, 2)
+    file_size = file.file.tell()
+    file.file.seek(0)
 
     if file_size > settings.MAX_FILE_SIZE:
         raise FileSizeExceededError(file_size, settings.MAX_FILE_SIZE)
 
+    # Sanitize filename
+    safe_filename = secure_filename(file.filename)
+
     # Create command
     command = UploadFileCommand(
-        file_content=file_content,
-        filename=file.filename,
+        file_stream=file.file,
+        filename=safe_filename,
         content_type=file.content_type,
         size=file_size,
         user_id=current_user.user_id,
@@ -89,10 +110,11 @@ async def upload_file(
 
 @router.get('/{file_id}', dependencies=[Depends(authenticated_no_public)])
 async def download_file(
-    file_id: str,
+    file_id: uuid.UUID,
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     use_case: Annotated[DownloadFileUseCase, Depends(get_download_use_case)],
     http_client: Annotated[HttpClient, Depends(get_http_client)],
+    range_header: Annotated[str | None, Header(alias='Range')] = None,
 ) -> StreamingResponse:
     """Download file from storage.
 
@@ -101,16 +123,20 @@ async def download_file(
         current_user: Current authenticated user.
         use_case: Download use case dependency.
         http_client: HTTP client for permission checks.
+        range_header: Optional HTTP Range header.
 
     Returns:
         StreamingResponse: File stream with appropriate headers.
 
     Raises:
         FileAccessDeniedError: If access is denied.
+
     """
+    file_id_str = str(file_id)
     query = DownloadFileQuery(
-        file_id=file_id,
+        file_id=file_id_str,
         user_id=current_user.user_id,
+        range_header=range_header,
     )
 
     # Get file metadata first (fail fast, without loading the stream)
@@ -126,21 +152,52 @@ async def download_file(
         # Check permissions only for non-owners (saves backend request)
         has_access = await http_client.check_file_permission(
             user=current_user,
-            file_id=file_id,
+            file_id=file_id_str,
         )
         if not has_access:
-            raise FileAccessDeniedError(file_id, current_user.user_id)
+            raise FileAccessDeniedError(file_id_str, current_user.user_id)
 
     # Load the file stream only if access is granted
-    file_stream = await use_case.get_stream(query)
+    file_stream = await use_case.get_stream(
+        file_record=file_record,
+        range_header=range_header,
+    )
+
+    quoted_filename = urllib.parse.quote(file_record.filename)
+    headers = {
+        'Content-Disposition': (
+            f"attachment; filename*=utf-8''{quoted_filename}"
+        ),
+        'Accept-Ranges': 'bytes',
+    }
+
+    status_code = 200
+    total_size = file_record.size
+
+    if range_header:
+        # Parse "bytes=START-END" (END is optional)
+        range_match = re.match(r'bytes=(\d+)-(\d*)', range_header)
+        if range_match:
+            start = int(range_match.group(1))
+            end = (
+                int(range_match.group(2))
+                if range_match.group(2)
+                else total_size - 1
+            )
+            content_length = end - start + 1
+            status_code = 206
+            headers['Content-Range'] = (
+                f'bytes {start}-{end}/{total_size}'
+            )
+            headers['Content-Length'] = str(content_length)
+        else:
+            headers['Content-Length'] = str(total_size)
+    else:
+        headers['Content-Length'] = str(total_size)
 
     return StreamingResponse(
         file_stream,
+        status_code=status_code,
         media_type=file_record.content_type,
-        headers={
-            'Content-Disposition': (
-                f'attachment; filename="{file_record.filename}"'
-            ),
-            'Content-Length': str(file_record.size),
-        },
+        headers=headers,
     )

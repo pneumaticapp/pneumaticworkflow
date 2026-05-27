@@ -70,24 +70,33 @@ class Command(BaseCommand):
                     access_type = AccessType.RESTRICTED
 
                 source_type = SourceType.ACCOUNT
-
                 task_id = None
-                if attr.event_id and attr.event.task_id:
-                    task_id = attr.event.task_id
-                elif attr.output_id and attr.output.task_id:
-                    task_id = attr.output.task_id
-
                 template_id = None
+
                 if attr.workflow_id:
+                    source_type = SourceType.WORKFLOW
                     template_id = attr.workflow.template_id
-                elif (
-                    attr.event_id and
-                    attr.event.task_id and
-                    attr.event.task.workflow_id
-                ):
-                    template_id = attr.event.task.workflow.template_id
-                elif attr.output_id and attr.output.workflow_id:
-                    template_id = attr.output.workflow.template_id
+                elif attr.event_id:
+                    if attr.event.task_id:
+                        source_type = SourceType.TASK
+                        task_id = attr.event.task_id
+                        template_id = (
+                            attr.event.task.workflow.template_id
+                            if attr.event.task.workflow_id
+                            else None
+                        )
+                    else:
+                        source_type = SourceType.WORKFLOW
+                        template_id = (
+                            attr.event.workflow.template_id
+                            if attr.event.workflow_id
+                            else None
+                        )
+                elif attr.output_id:
+                    source_type = SourceType.TASK
+                    task_id = attr.output.task_id
+                    if attr.output.workflow_id:
+                        template_id = attr.output.workflow.template_id
 
                 if not dry_run:
                     with transaction.atomic():

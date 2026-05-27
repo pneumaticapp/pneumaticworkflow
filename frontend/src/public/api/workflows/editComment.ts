@@ -2,12 +2,12 @@ import { commonRequest } from '../commonRequest';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { mapRequestBody } from '../../utils/mappers';
 import { ISendWorkflowCommentResponse } from '../sendWorkflowComment';
-import { TUploadedFile } from '../../utils/uploadFiles';
+import { ITaskCommentAttachmentRequest } from '../../types/workflow';
 
 export interface IEditComment {
   id: number;
   text: string | null;
-  attachments: TUploadedFile[] | null;
+  attachments: ITaskCommentAttachmentRequest[] | null;
 }
 
 export function editComment({ id, text, attachments }: IEditComment) {

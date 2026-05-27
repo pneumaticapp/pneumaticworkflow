@@ -68,14 +68,21 @@ class UploadFileUseCase:
         await self._storage_service.upload_file(
             bucket_name=bucket_name,
             file_path=file_path,
-            file_content=command.file_content,
+            file_stream=command.file_stream,
             content_type=command.content_type,
         )
 
         # Save record to database
-        async with self._unit_of_work:
-            await self._file_repository.create(file_record)
-            await self._unit_of_work.commit()
+        try:
+            async with self._unit_of_work:
+                await self._file_repository.create(file_record)
+        except Exception:
+            # Clean up S3 if DB operation fails
+            await self._storage_service.delete_file(
+                bucket_name=bucket_name,
+                file_path=file_path,
+            )
+            raise
 
         # Generate public download URL
         public_url = f'{self._fastapi_base_url}/{file_record.file_id}'

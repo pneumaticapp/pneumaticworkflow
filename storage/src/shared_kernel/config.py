@@ -3,18 +3,33 @@
 from functools import lru_cache
 from typing import Literal
 
-from pydantic_settings import BaseSettings
+from pydantic import field_validator
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
     """Application settings."""
+
+    model_config = SettingsConfigDict(
+        env_file=('.env',),
+        extra='ignore',
+    )
 
     # Application
     DEBUG: bool = True
     CONFIG: str = 'Development'
     WORKERS: int = 1
     PORT: int = 8000
-    ALLOWED_ORIGINS: list[str] = ['*']
+    ALLOWED_ORIGINS: list[str] = ['http://localhost:3000']
+
+    @field_validator('ALLOWED_ORIGINS', mode='before')
+    @classmethod
+    def assemble_cors_origins(cls, v: str | list[str]) -> list[str]:
+        if isinstance(v, str) and not v.startswith('['):
+            return [i.strip() for i in v.split(',')]
+        if isinstance(v, (list, str)):
+            return v
+        raise ValueError(v)
 
     # Database
     POSTGRES_USER: str = 'pneumatic'
@@ -72,12 +87,6 @@ class Settings(BaseSettings):
             f'{self.POSTGRES_USER}:{self.POSTGRES_PASSWORD}@'
             f'{self.POSTGRES_HOST}:{self.POSTGRES_PORT}/{self.POSTGRES_DB}'
         )
-
-    class Config:
-        """Pydantic configuration."""
-
-        env_file = ('.env',)
-        extra = 'ignore'
 
 
 @lru_cache

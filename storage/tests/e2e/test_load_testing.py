@@ -29,8 +29,11 @@ class TestLoadTesting:
         def upload_file(i):
             try:
                 mock_upload_use_case_execute.return_value = MagicMock(
-                    file_id=f'load-test-file-id-{i}',
-                    public_url=f'http://localhost:8000/load-test-file-id-{i}',
+                    file_id=f'12345678-1234-5678-1234-{i:012d}',
+                    public_url=(
+                        'http://localhost:8000/'
+                        f'12345678-1234-5678-1234-{i:012d}'
+                    ),
                 )
 
                 response = e2e_client.post(
@@ -98,7 +101,7 @@ class TestLoadTesting:
         def download_file(i):
             try:
                 mock_record = MagicMock()
-                mock_record.file_id = f'load-test-download-id-{i}'
+                mock_record.file_id = f'22345678-1234-5678-1234-{i:012d}'
                 mock_record.filename = f'load_test_{i}.txt'
                 mock_record.content_type = 'text/plain'
                 mock_record.size = 20
@@ -109,7 +112,7 @@ class TestLoadTesting:
                 )
 
                 response = e2e_client.get(
-                    f'/load-test-download-id-{i}',
+                    f'/22345678-1234-5678-1234-{i:012d}',
                     headers=auth_headers,
                 )
                 results.append(
@@ -168,8 +171,11 @@ class TestLoadTesting:
             try:
                 # Upload phase
                 mock_upload_use_case_execute.return_value = MagicMock(
-                    file_id=f'mixed-workload-id-{i}',
-                    public_url=f'http://localhost:8000/mixed-workload-id-{i}',
+                    file_id=f'32345678-1234-5678-1234-{i:012d}',
+                    public_url=(
+                        'http://localhost:8000/'
+                        f'32345678-1234-5678-1234-{i:012d}'
+                    ),
                 )
 
                 upload_response = e2e_client.post(
@@ -196,7 +202,7 @@ class TestLoadTesting:
 
                 # Download phase
                 mock_record = MagicMock()
-                mock_record.file_id = f'mixed-workload-id-{i}'
+                mock_record.file_id = f'32345678-1234-5678-1234-{i:012d}'
                 mock_record.filename = f'mixed_test_{i}.txt'
                 mock_record.content_type = 'text/plain'
                 mock_record.size = 25
@@ -207,7 +213,7 @@ class TestLoadTesting:
                 )
 
                 download_response = e2e_client.get(
-                    f'/mixed-workload-id-{i}',
+                    f'/32345678-1234-5678-1234-{i:012d}',
                     headers=auth_headers,
                 )
 
@@ -275,8 +281,11 @@ class TestStressTesting:
         def extreme_upload(i):
             try:
                 mock_upload_use_case_execute.return_value = MagicMock(
-                    file_id=f'extreme-id-{i}',
-                    public_url=f'http://localhost:8000/extreme-id-{i}',
+                    file_id=f'42345678-1234-5678-1234-{i:012d}',
+                    public_url=(
+                        'http://localhost:8000/'
+                        f'42345678-1234-5678-1234-{i:012d}'
+                    ),
                 )
 
                 response = e2e_client.post(
