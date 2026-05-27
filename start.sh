@@ -27,6 +27,16 @@ print_error()   { echo -e "${RED}$1${NC}"; }
 print_warning() { echo -e "${ORANGE}$1${NC}"; }
 print_info()    { echo -e "${GREEN}$1${NC}"; }
 
+echo ""
+echo -e "${ORANGE}"
+echo "  ██████╗ ███╗   ██╗███████╗██╗   ██╗███╗   ███╗ █████╗ ████████╗██╗ ██████╗ "
+echo "  ██╔══██╗████╗  ██║██╔════╝██║   ██║████╗ ████║██╔══██╗╚══██╔══╝██║██╔════╝ "
+echo "  ██████╔╝██╔██╗ ██║█████╗  ██║   ██║██╔████╔██║███████║   ██║   ██║██║      "
+echo "  ██╔═══╝ ██║╚██╗██║██╔══╝  ██║   ██║██║╚██╔╝██║██╔══██║   ██║   ██║██║      "
+echo "  ██║     ██║ ╚████║███████╗╚██████╔╝██║ ╚═╝ ██║██║  ██║   ██║   ██║╚██████╗ "
+echo "  ╚═╝     ╚═╝  ╚═══╝╚══════╝ ╚═════╝ ╚═╝     ╚═╝╚═╝  ╚═╝   ╚═╝   ╚═╝ ╚═════╝"
+echo -e "${NC}"
+
 # =============================================================================
 # 0. Prerequisites check
 # =============================================================================
@@ -72,7 +82,7 @@ if [ ! -f ".env" ]; then
     cp "$DEFAULT_ENV" "$ENV_FILE"
     ENV_FILE_CREATED=true
     print_info "Project configuration started"
-
+    echo ""
 
     # 1.1 Set Required values
     DJANGO_SECRET_KEY=$(cat /dev/urandom | tr -dc 'abcdefghijklmnopqrstuvwxyz0123456789!@%^*()_=+' | head -c 50)
@@ -133,6 +143,7 @@ if [ ! -f ".env" ]; then
 
     # 1.4.1 Prompt to enable SSL if SERVER_ADDRESS is a domain
     if [ "$ADDRESS_IS_DOMAIN" = true ]; then
+        echo ""
         while true; do
             read -rp "Enable SSL for $SERVER_ADDRESS? A free Let's Encrypt certificate will be used [y/n]: " ssl_choice
             case "$ssl_choice" in
@@ -148,14 +159,16 @@ if [ ! -f ".env" ]; then
     if [ "$CERTBOT_ENABLE" = true ]; then
         NGINX_CONF_TEMPLATE=./nginx/ssl_templates/
         EMAIL_PATTERN='^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$'
+        echo ""
         while true; do
-            read -rp "Enter email for free Let's Encrypt SSL certificate: " CERTBOT_EMAIL
+            read -rp "Enter email for registration free Let's Encrypt SSL certificate: " CERTBOT_EMAIL
             if [[ "$CERTBOT_EMAIL" =~ $EMAIL_PATTERN ]]; then
                 break
             else
                 print_error "Invalid email address. Please try again."
             fi
         done
+        print_info "Let's Encrypt certificate will be registered to: $CERTBOT_EMAIL"
     fi
 
     # 1.4.3 Write SSL settings to .env
@@ -168,7 +181,8 @@ if [ ! -f ".env" ]; then
     sed -i "s|^#\?\s*CERTBOT_EMAIL=.*|CERTBOT_EMAIL=$CERTBOT_EMAIL|"                               "$ENV_FILE"
     sed -i "s|^#\?\s*NGINX_CONF_TEMPLATE=.*|NGINX_CONF_TEMPLATE=$NGINX_CONF_TEMPLATE|"             "$ENV_FILE"
 
-    print_info "Setup completed successfully"
+    echo ""
+    print_info "Setup completed"
     # =============================================================================
     # 1.5 Write SERVER_ADDRESS and URLs to .env
     # =============================================================================
@@ -193,12 +207,10 @@ fi
 
 # 2.1 Select docker-compose configuration
 echo ""
-print_info "Select a version to start:"
-echo ""
+echo "Select a version to start:"
 echo "  1. Stable (recommended)"
 echo "  2. Latest"
 echo "  3. From sources (Branch: \"$GIT_BRANCH\")"
-echo ""
 
 while true; do
     read -r -p "Enter number (1-3): " COMPOSE_FILE
@@ -222,18 +234,11 @@ case "$COMPOSE_FILE" in
   3) COMPOSE_LABEL="From sources (Branch: \"$GIT_BRANCH\")"; COMPOSE_ARGS=('-f' 'docker-compose.src.yml'); COMPOSE_TAG=""   ;;
 esac
 
-echo ""
 print_info "Selected configuration: $COMPOSE_LABEL"
 echo ""
 
+# 2.2 Start containers
 
-# 2.2 Stop running containers
-echo "Stopping existing containers..."
-docker compose "${COMPOSE_ARGS[@]}" down
-
-# 2.3 Start containers
-
-echo ""
 echo "Starting Docker containers..."
 
 if [ -n "$COMPOSE_TAG" ]; then
@@ -242,7 +247,7 @@ else
     output=$(docker compose "${COMPOSE_ARGS[@]}" up -d 2>&1)
 fi
 if [ $? -eq 0 ]; then
-  print_info "Containers successfully started"
+  print_info "Done"
 else
   print_error "$output"
   exit 1
@@ -254,6 +259,5 @@ fi
 
 echo ""
 echo "Pneumatic Workflow started successfully!"
-echo ""
-echo "Please wait a few minutes for all services to fully start"
+print_info "Please wait a few minutes for all services to fully start"
 echo ""

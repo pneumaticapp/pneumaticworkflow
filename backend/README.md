@@ -5,7 +5,6 @@ Create a file ".env" with the following values in "backend" directory:
 ```shell
 BACKEND_URL=http://localhost:8001
 FRONTEND_URL=http://localhost
-FORMS_URL=http://form.localhost
 ENVIRONMENT=Development
 ENABLE_LOGGING=yes
 DJANGO_DEBUG=yes

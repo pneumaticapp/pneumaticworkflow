@@ -110,7 +110,10 @@ class Common(Configuration):
     # A list of origins that are authorized to make cross-site HTTP requests.
     # A list of origins echoed back to the client in the
     # Access-Control-Allow-Origin header. Defaults to [].
-    CORS_ORIGIN_WHITELIST = [FRONTEND_URL, FORMS_URL]
+    CORS_ORIGIN_WHITELIST = [FRONTEND_URL]
+    if env.get('FORMS_URL'):
+        # Add if FORMS_URL customized
+        CORS_ORIGIN_WHITELIST.append(FORMS_URL)
     EXTRA_CORS_ORIGIN_WHITELIST = env.get('CORS_ORIGIN_WHITELIST')
     if EXTRA_CORS_ORIGIN_WHITELIST:
         CORS_ORIGIN_WHITELIST.extend(EXTRA_CORS_ORIGIN_WHITELIST.split(' '))
