@@ -94,11 +94,10 @@ If you want to be accessing Pneumatic over the Internet and the machine you plan
 
 <pre>
   # Without SSL
+  SERVER_ADDRESS=your-address
   BACKEND_URL=http://your-address:8001
   FRONTEND_URL=http://your-address
   FORMS_URL=http://form.your-address
-  FRONTEND_DOMAIN=your-address
-  BACKEND_DOMAIN=your-address
   FORM_DOMAIN=form.your-address
   WSS_URL=ws://your-address:8001
 </pre>

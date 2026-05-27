@@ -344,8 +344,8 @@ class Common(Configuration):
     ]
 
     # reCaptcha
-    DRF_RECAPTCHA_SITE_KEY = env.get('RECAPTCHA_SITE_KEY', 'key')
-    DRF_RECAPTCHA_SECRET_KEY = env.get('RECAPTCHA_SECRET_KEY', 'key')
+    DRF_RECAPTCHA_SITE_KEY = env.get('RECAPTCHA_SITE_KEY') or 'key'
+    DRF_RECAPTCHA_SECRET_KEY = env.get('RECAPTCHA_SECRET_KEY') or 'key'
     DRF_RECAPTCHA_TESTING = env.get('RECAPTCHA_TESTING', 'yes') == 'yes'
 
     # Firebase Credentials
