@@ -160,11 +160,11 @@ services:
       CHANNELS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/2"
       SESSION_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/3"
       CELERY_BROKER_URL: "amqp://${RABBITMQ_USER:-rabbitmq_user}:${RABBITMQ_PASSWORD:-rabbitmq_password}@rabbitmq:5672"
-      ALLOWED_HOSTS: "pneumatic-nginx ${SERVER_ADDRESS:-localhost}"
+      ALLOWED_HOSTS: "pneumatic-nginx"
       VERIFICATION_CHECK: no
       CORS_ORIGIN_ALLOW_ALL: no
       CORS_ALLOW_CREDENTIALS: yes
-      CORS_ORIGIN_WHITELIST: "http://localhost:8000 ${FRONTEND_URL:-http://localhost}"
+      CORS_ORIGIN_WHITELIST: "http://localhost:8000"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
     volumes:
       - ./:/pneumatic_backend
@@ -275,11 +275,11 @@ services:
       CHANNELS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/2"
       SESSION_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/3"
       CELERY_BROKER_URL: "amqp://${RABBITMQ_USER:-rabbitmq_user}:${RABBITMQ_PASSWORD:-rabbitmq_password}@rabbitmq:5672"
-      ALLOWED_HOSTS: "pneumatic-nginx ${SERVER_ADDRESS:-localhost}"
+      ALLOWED_HOSTS: "pneumatic-nginx"
       VERIFICATION_CHECK: no
       CORS_ORIGIN_ALLOW_ALL: no
       CORS_ALLOW_CREDENTIALS: yes
-      CORS_ORIGIN_WHITELIST: "http://localhost:8000 ${FRONTEND_URL:-http://localhost}"
+      CORS_ORIGIN_WHITELIST: "http://localhost:8000"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
     volumes:
       - ./:/pneumatic_backend

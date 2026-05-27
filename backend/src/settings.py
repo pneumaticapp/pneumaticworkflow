@@ -62,7 +62,7 @@ class Common(Configuration):
     EXPIRED_INVITE_PAGE = f'{FRONTEND_URL}/auth/expired-invite'
 
     # Forms
-    FORMS_URL = env.get('FORMS_URL')
+    FORMS_URL = env.get('FORMS_URL') or f'{FRONTEND_URL}/forms'
 
     # Auth
     AUTH_USER_MODEL = 'accounts.User'
@@ -75,7 +75,9 @@ class Common(Configuration):
 
     BACKEND_URL = env.get('BACKEND_URL')
     BACKEND_HOST = BACKEND_URL.split('//')[1].split(':')[0]
-    ALLOWED_HOSTS = [BACKEND_HOST]
+    FRONTEND_HOST = FRONTEND_URL.split('//')[1].split(':')[0]
+    FORMS_HOST = FORMS_URL.split('//')[1].split(':')[0]
+    ALLOWED_HOSTS = [BACKEND_HOST, FRONTEND_HOST, FORMS_HOST]
     EXTRA_ALLOWED_HOSTS = env.get("ALLOWED_HOSTS")
     if EXTRA_ALLOWED_HOSTS:
         ALLOWED_HOSTS.extend(EXTRA_ALLOWED_HOSTS.split(' '))

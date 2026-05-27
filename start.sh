@@ -182,7 +182,6 @@ if [ ! -f ".env" ]; then
     sed -i "s|^#\?\s*SERVER_ADDRESS=.*|SERVER_ADDRESS=$SERVER_ADDRESS|"                             "$ENV_FILE"
     sed -i "s|^#\?\s*BACKEND_URL=.*|BACKEND_URL=$HTTP_PROTOCOL://$SERVER_ADDRESS:8001|"             "$ENV_FILE"
     sed -i "s|^#\?\s*FRONTEND_URL=.*|FRONTEND_URL=$HTTP_PROTOCOL://$SERVER_ADDRESS|"                "$ENV_FILE"
-    sed -i "s|^#\?\s*FORM_DOMAIN=.*|FORM_DOMAIN=form.$SERVER_ADDRESS|"                              "$ENV_FILE"
     sed -i "s|^#\?\s*WSS_URL=.*|WSS_URL=$WS_PROTOCOL://$SERVER_ADDRESS:8001|"                       "$ENV_FILE"
 
 fi
