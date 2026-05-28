@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { ITemplateTask, IFieldsetData } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { ETaskFormParts } from '../../types';
 
 jest.mock('react', () => {
@@ -101,6 +102,7 @@ describe('TaskItem', () => {
     name: 'My Fieldset',
     description: '',
     order: 0,
+    labelPosition: EFieldLabelPosition.Top,
     fields: [],
   };
 

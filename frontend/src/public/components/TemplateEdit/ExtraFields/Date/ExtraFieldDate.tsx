@@ -27,6 +27,7 @@ export function ExtraFieldDate({
   editField,
   isDisabled = false,
   labelBackgroundColor,
+  labelPosition,
   innerRef,
 }: IWorkflowExtraFieldProps) {
   const handleChangeName = React.useCallback(
@@ -92,6 +93,7 @@ export function ExtraFieldDate({
           mode={mode}
           handleChangeName={handleChangeName}
           labelBackgroundColor={labelBackgroundColor}
+          labelPosition={labelPosition}
           handleChangeDescription={handleChangeDescription}
           validate={getFieldValidator(field, mode)}
           icon={<DateIcon />}

@@ -6,6 +6,7 @@ import { enMessages } from '../../../lang/locales/en_US';
 
 import { WorkflowEditPopup } from '../WorkflowEditPopup';
 import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../types/template';
+import { EFieldLabelPosition } from '../../../types/fieldset';
 import { MergedOutputList } from '../../MergedOutputList';
 import { InputWithVariables } from '../../TemplateEdit/InputWithVariables';
 import { intlMock } from '../../../__stubs__/intlMock';
@@ -76,6 +77,7 @@ const makeFieldset = (overrides: Partial<IFieldsetData> & { fields: IExtraField[
   name: 'Fieldset',
   description: '',
   order: 0,
+  labelPosition: EFieldLabelPosition.Top,
   ...overrides,
 });
 

@@ -18,7 +18,10 @@ export interface IFieldsetField {
   dataset?: number | null;
 }
 
-export type TFieldLabelPosition = 'top' | 'left';
+export enum EFieldLabelPosition {
+  Top = 'top',
+  Left = 'left',
+}
 export type TFieldSetLayout = 'horizontal' | 'vertical';
 
 export interface IFieldsetTemplate {
@@ -26,7 +29,7 @@ export interface IFieldsetTemplate {
   templateId: number;
   name: string;
   description: string;
-  labelPosition: TFieldLabelPosition;
+  labelPosition: EFieldLabelPosition;
   layout: TFieldSetLayout;
   order: number;
   kickoffId: number | null;
@@ -40,7 +43,7 @@ export interface IFieldsetListItem {
   apiName: string;
   name: string;
   description: string;
-  labelPosition: TFieldLabelPosition;
+  labelPosition: EFieldLabelPosition;
   layout: TFieldSetLayout;
   order: number;
   kickoffId: number | null;
@@ -84,7 +87,7 @@ export interface IUpdateFieldsetParams {
   order?: number;
   kickoff_id?: number | null;
   task_id?: number | null;
-  label_position?: TFieldLabelPosition;
+  label_position?: EFieldLabelPosition;
   layout?: TFieldSetLayout;
   rules?: IFieldsetTemplateRule[];
   fields?: IFieldsetField[];

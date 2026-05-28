@@ -8,7 +8,7 @@ import fieldsetsReducer, {
   loadFieldsetsCatalogFailed,
   loadFieldsetsCatalogSuccess,
 } from '../slice';
-import { IFieldsetListItem, IFieldsetTemplate } from '../../../types/fieldset';
+import { IFieldsetListItem, IFieldsetTemplate, EFieldLabelPosition } from '../../../types/fieldset';
 import { IFieldsetsStore } from '../../../types/redux';
 
 const createMockFieldsetItem = (id: number, name: string): IFieldsetListItem => ({
@@ -16,7 +16,7 @@ const createMockFieldsetItem = (id: number, name: string): IFieldsetListItem => 
   apiName: `fieldset-${id}`,
   name,
   description: '',
-  labelPosition: 'top',
+  labelPosition: EFieldLabelPosition.Top,
   layout: 'vertical',
   order: id,
   kickoffId: null,
@@ -30,7 +30,7 @@ const makeFieldsetTemplate = (overrides: Partial<IFieldsetTemplate> = {}): IFiel
   templateId: 10,
   name: 'Fieldset One',
   description: 'Desc',
-  labelPosition: 'top',
+  labelPosition: EFieldLabelPosition.Top,
   layout: 'vertical',
   order: 0,
   kickoffId: null,

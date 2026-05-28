@@ -4,6 +4,7 @@ import userEvent from '@testing-library/user-event';
 
 import { TaskCard, ETaskCardViewMode } from '../TaskCard';
 import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../types/template';
+import { EFieldLabelPosition } from '../../../types/fieldset';
 import { ETaskStatus } from '../../../redux/actions';
 import { EWorkflowStatus, EWorkflowsLogSorting } from '../../../types/workflow';
 import { IAuthUser, ELoggedState } from '../../../types/redux';
@@ -290,7 +291,7 @@ describe('TaskCard', () => {
 
   it('renders MergedOutputList and passes fields and fieldsets', async () => {
     const fieldsets = [
-      { id: 1, apiName: 'fs-1', name: 'FS', description: '', fields: [], order: 2 },
+      { id: 1, apiName: 'fs-1', name: 'FS', description: '', fields: [], order: 2, labelPosition: EFieldLabelPosition.Top },
     ];
     const task = {
       ...baseTask,
@@ -365,7 +366,7 @@ describe('TaskCard', () => {
     const { fieldsetsStorage } = require('../utils/storageOutputs');
 
     const fieldsets = [
-      { id: 1, apiName: 'fs-1', name: 'FS', description: '', fields: [makeField({ apiName: 'f-1' })], order: 0 },
+      { id: 1, apiName: 'fs-1', name: 'FS', description: '', fields: [makeField({ apiName: 'f-1' })], order: 0, labelPosition: EFieldLabelPosition.Top },
     ];
     const task = { ...baseTask, output: [], fieldsets };
     render(<TaskCard {...baseProps} task={task} />);
@@ -393,6 +394,7 @@ describe('TaskCard', () => {
       name: 'FS-1',
       description: '',
       order: 1,
+      labelPosition: EFieldLabelPosition.Top,
       fields: [makeField({ apiName: 'email', value: 'draft@x.com' })],
     };
     (fieldsetsStorage.get as jest.Mock).mockReturnValue([storageFs]);
@@ -403,6 +405,7 @@ describe('TaskCard', () => {
       name: 'FS-1',
       description: '',
       order: 1,
+      labelPosition: EFieldLabelPosition.Top,
       fields: [makeField({ apiName: 'email', value: 'server@x.com' })],
     };
     const serverFs2: IFieldsetData = {
@@ -411,6 +414,7 @@ describe('TaskCard', () => {
       name: 'FS-2',
       description: '',
       order: 2,
+      labelPosition: EFieldLabelPosition.Top,
       fields: [makeField({ apiName: 'phone', value: 'server-phone' })],
     };
 
@@ -441,6 +445,7 @@ describe('TaskCard', () => {
       name: 'Stranger',
       description: '',
       order: 0,
+      labelPosition: EFieldLabelPosition.Top,
       fields: [makeField({ apiName: 'wrong', value: 'wrong' })],
     };
     (fieldsetsStorage.get as jest.Mock).mockReturnValue([strangerFs]);
@@ -451,6 +456,7 @@ describe('TaskCard', () => {
       name: 'FS-1',
       description: '',
       order: 1,
+      labelPosition: EFieldLabelPosition.Top,
       fields: [makeField({ apiName: 'email' })],
     };
 
@@ -509,6 +515,7 @@ describe('TaskCard', () => {
       name: 'FS',
       description: '',
       order: 0,
+      labelPosition: EFieldLabelPosition.Top,
       fields: [makeField({ apiName: 'k', value })],
     });
 
@@ -542,6 +549,7 @@ describe('TaskCard', () => {
         name: 'FS-1',
         description: '',
         order: 2,
+        labelPosition: EFieldLabelPosition.Top,
         fields: [makeField({ apiName: 'a' }), makeField({ apiName: 'b' })],
       },
       {
@@ -550,6 +558,7 @@ describe('TaskCard', () => {
         name: 'FS-2',
         description: '',
         order: 3,
+        labelPosition: EFieldLabelPosition.Top,
         fields: [makeField({ apiName: 'c' })],
       },
     ];
@@ -591,6 +600,7 @@ describe('TaskCard', () => {
         name: 'FS',
         description: '',
         order: 0,
+        labelPosition: EFieldLabelPosition.Top,
         fields: [makeField({ apiName: 'k' })],
       },
     ];
@@ -624,6 +634,7 @@ describe('TaskCard', () => {
           name: 'FS',
           description: '',
           order: 0,
+          labelPosition: EFieldLabelPosition.Top,
           fields: [makeField({ apiName: 'k' })],
         },
       ] as IFieldsetData[],
@@ -647,6 +658,7 @@ describe('TaskCard', () => {
         name: 'FS-1',
         description: '',
         order: 0,
+        labelPosition: EFieldLabelPosition.Top,
         fields: [makeField({ apiName: 'email', value: 'old@x.com' })],
       },
     ];

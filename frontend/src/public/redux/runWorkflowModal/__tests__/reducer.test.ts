@@ -3,6 +3,7 @@
 import { reducer, INIT_STATE } from '../reducer';
 import { openRunWorkflowModal } from '../actions';
 import { IKickoff, EExtraFieldType } from '../../../types/template';
+import { EFieldLabelPosition } from '../../../types/fieldset';
 
 describe('runWorkflowModal reducer', () => {
   it('openRunWorkflowModal open modal window', () => {
@@ -158,6 +159,7 @@ describe('OpenModal — fieldsets acceptance', () => {
       name: 'Contacts',
       description: 'Contact information',
       order: 0,
+      labelPosition: EFieldLabelPosition.Top,
       fields: [
         {
           apiName: 'contact-name',

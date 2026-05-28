@@ -1,5 +1,6 @@
 import { outputStorage, fieldsetsStorage } from '../storageOutputs';
 import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 
 const OUTPUT_STORAGE_KEY = 'tasks_outputs';
 const FIELDSETS_STORAGE_KEY = 'tasks_fieldsets_outputs';
@@ -25,6 +26,7 @@ const makeFieldset = (
   description: '',
   order: 0,
   fields,
+  labelPosition: EFieldLabelPosition.Top,
   ...overrides,
 });
 

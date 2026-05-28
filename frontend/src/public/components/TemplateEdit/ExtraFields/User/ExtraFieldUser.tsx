@@ -35,6 +35,7 @@ export function ExtraFieldUser({
   editField,
   isDisabled = false,
   labelBackgroundColor,
+  labelPosition,
   innerRef,
 }: IExtraFieldUserProps) {
   const { formatMessage } = useIntl();
@@ -73,6 +74,7 @@ export function ExtraFieldUser({
       validate={getFieldValidator(field, mode)}
       isDisabled={isDisabled}
       icon={<ArrowDropdownIcon />}
+      labelPosition={labelPosition}
       innerRef={innerRef}
     />
   );

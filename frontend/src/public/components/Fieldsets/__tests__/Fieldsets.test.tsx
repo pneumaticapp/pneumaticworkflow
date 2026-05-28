@@ -14,7 +14,7 @@ import {
   setTemplateId,
 } from '../../../redux/fieldsets/slice';
 import { intlMock } from '../../../__stubs__/intlMock';
-import { EFieldsetsSorting, IFieldsetListItem } from '../../../types/fieldset';
+import { EFieldsetsSorting, IFieldsetListItem, EFieldLabelPosition } from '../../../types/fieldset';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
 jest.mock('../../../utils/history', () => ({
@@ -80,7 +80,7 @@ describe('Fieldsets', () => {
     apiName: 'fs-1',
     name: 'Test Fieldset',
     description: '',
-    labelPosition: 'top',
+    labelPosition: EFieldLabelPosition.Top,
     layout: 'vertical',
     order: 0,
     kickoffId: null,

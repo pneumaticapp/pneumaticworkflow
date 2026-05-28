@@ -16,6 +16,7 @@ export const ExtraFieldText = ({
   editField,
   isDisabled = false,
   labelBackgroundColor,
+  labelPosition,
   innerRef,
   accountId,
 }: IWorkflowExtraFieldProps) => {
@@ -45,6 +46,7 @@ export const ExtraFieldText = ({
       namePlaceholder={namePlaceholder}
       mode={mode}
       labelBackgroundColor={labelBackgroundColor}
+      labelPosition={labelPosition}
       tagName={mode === EExtraFieldMode.ProcessRun ? EFieldTagName.RichText : EFieldTagName.Textarea}
       handleChangeName={handleChangeName}
       handleChangeDescription={handleChangeDescription}

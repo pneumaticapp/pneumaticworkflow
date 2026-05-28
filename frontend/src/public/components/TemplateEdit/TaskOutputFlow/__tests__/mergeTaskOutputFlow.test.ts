@@ -1,4 +1,5 @@
 import { IExtraField, IFieldsetData, ITaskFieldset } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import {
   buildMergedTaskOutputRows,
   buildRuntimeMergedOutputParts,
@@ -36,6 +37,7 @@ const fs = (id: number, order: number): IFieldsetData => ({
   description: '',
   fields: [],
   order,
+  labelPosition: EFieldLabelPosition.Top,
 });
 
 const taskFs = (apiName: string, order: number): ITaskFieldset => ({ apiName, order });

@@ -1,14 +1,14 @@
 
 import { getFieldsetsCatalogByApiName } from '../fieldsets';
 import { IApplicationState } from '../../../types/redux';
-import { IFieldsetListItem, EFieldsetsSorting } from '../../../types/fieldset';
+import { IFieldsetListItem, EFieldsetsSorting, EFieldLabelPosition } from '../../../types/fieldset';
 
 const makeListItem = (overrides: Partial<IFieldsetListItem> = {}): IFieldsetListItem => ({
   id: 1,
   apiName: 'fs-1',
   name: 'Fieldset One',
   description: '',
-  labelPosition: 'top',
+  labelPosition: EFieldLabelPosition.Top,
   layout: 'vertical',
   order: 0,
   kickoffId: null,

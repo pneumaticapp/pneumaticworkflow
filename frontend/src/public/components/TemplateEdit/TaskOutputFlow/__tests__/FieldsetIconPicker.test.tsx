@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { Dropdown } from '../../../UI';
 import { IDropdownProps, TDropdownOption } from '../../../UI/Dropdown/Dropdown';
@@ -35,6 +36,7 @@ const makeFieldsetData = (
   name,
   description: '',
   order,
+  labelPosition: EFieldLabelPosition.Top,
   fields: [],
   rulesCount: 0,
 } as IFieldsetData);
@@ -235,6 +237,7 @@ describe('FieldsetIconPicker', () => {
       name: 'My Set',
       description: '',
       order: 0,
+      labelPosition: EFieldLabelPosition.Top,
       fields: [makeField('a'), makeField('b'), makeField('c')],
       rulesCount: 5,
     };
@@ -252,6 +255,7 @@ describe('FieldsetIconPicker', () => {
       name: 'My Set',
       description: '',
       order: 0,
+      labelPosition: EFieldLabelPosition.Top,
       fields: [],
     };
     const map = new Map<string, IFieldsetData>([['fs-1', fieldset]]);

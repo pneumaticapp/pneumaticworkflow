@@ -28,7 +28,7 @@ import { getAccountId } from '../../../redux/selectors/user';
 
 import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../types/template';
 import { EInputNameBackgroundColor, EMoveDirections } from '../../../types/workflow';
-import { IFieldsetTemplateRule, TFieldLabelPosition } from '../../../types/fieldset';
+import { IFieldsetTemplateRule, EFieldLabelPosition } from '../../../types/fieldset';
 import { ExtraFieldsMap } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldsMap';
 import { ExtraFieldIcon } from '../../TemplateEdit/ExtraFields/utils/ExtraFieldIcon';
 import { ExtraFieldIntl } from '../../TemplateEdit/ExtraFields';
@@ -47,9 +47,9 @@ const RULE_TYPES = [
   { value: 'sum_equal', labelKey: 'fieldsets.rule-type-sum_equal' },
 ] as const;
 
-const LABEL_POSITION_OPTIONS: { value: TFieldLabelPosition; labelKey: string }[] = [
-  { value: 'top', labelKey: 'fieldsets.settings.label-position.top' },
-  { value: 'left', labelKey: 'fieldsets.settings.label-position.left' },
+const LABEL_POSITION_OPTIONS: { value: EFieldLabelPosition; labelKey: string }[] = [
+  { value: EFieldLabelPosition.Top, labelKey: 'fieldsets.settings.label-position.top' },
+  { value: EFieldLabelPosition.Left, labelKey: 'fieldsets.settings.label-position.left' },
 ];
 
 
@@ -71,7 +71,7 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
 
   // Settings local state
   const [localDescription, setLocalDescription] = useState('');
-  const [localLabelPosition, setLocalLabelPosition] = useState<TFieldLabelPosition>('top');
+  const [localLabelPosition, setLocalLabelPosition] = useState<EFieldLabelPosition>(EFieldLabelPosition.Top);
 
   const [hasUnsavedSettingsChanges, setHasUnsavedSettingsChanges] = useState(false);
 
@@ -126,7 +126,7 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
   useEffect(() => {
     if (fieldset) {
       setLocalDescription(fieldset.description || '');
-      setLocalLabelPosition(fieldset.labelPosition || 'top');
+      setLocalLabelPosition(fieldset.labelPosition);
       setHasUnsavedSettingsChanges(false);
     }
   }, [
@@ -141,7 +141,7 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
   };
 
   const handleSettingsLabelPositionChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setLocalLabelPosition(e.target.value as TFieldLabelPosition);
+    setLocalLabelPosition(e.target.value as EFieldLabelPosition);
     setHasUnsavedSettingsChanges(true);
   };
 
@@ -362,6 +362,7 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
                 mode={EExtraFieldMode.Kickoff}
                 showDropdown
                 datasetOptions={datasetOptions}
+                labelPosition={localLabelPosition}
               />
             ))}
           </div>

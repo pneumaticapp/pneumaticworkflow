@@ -2,6 +2,7 @@ import { createElement } from 'react';
 import { render, screen } from '@testing-library/react';
 
 import { EExtraFieldType, IFieldsetData, IKickoff, ITemplateTask } from '../../../../../types/template';
+import { EFieldLabelPosition } from '../../../../../types/fieldset';
 import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
 import { TTaskVariable } from '../../../types';
 import {
@@ -105,6 +106,7 @@ const mockFieldsetData: IFieldsetData = {
   name: 'Extra Set',
   description: '',
   order: 0,
+  labelPosition: EFieldLabelPosition.Top,
   fields: [
     {
       name: 'Assignee',
@@ -395,6 +397,7 @@ describe('useWorkflowNameVariables', () => {
       name: 'Name Set',
       description: '',
       order: 0,
+      labelPosition: EFieldLabelPosition.Top,
       fields: [
         {
           apiName: 'fs-date',

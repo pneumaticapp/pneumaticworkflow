@@ -1,5 +1,6 @@
 import { IWorkflowDetailsKickoff } from '../../../../../../types/workflow';
 import { EExtraFieldType, IKickoff } from '../../../../../../types/template';
+import { EFieldLabelPosition } from '../../../../../../types/fieldset';
 import { getClonedKickoff } from '../getClonedKickoff';
 
 const mockWorkflowDetailKickoff: IWorkflowDetailsKickoff = {
@@ -328,6 +329,7 @@ describe('getClonedKickoff.', () => {
             name: 'Fieldset 1',
             description: '',
             order: 0,
+            labelPosition: EFieldLabelPosition.Top,
             fields: [
               {
                 apiName: 'fs-field-1',

@@ -10,6 +10,7 @@ import {
   IKickoff,
   ITemplate,
 } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { ETemplateStatus } from '../../../../types/redux';
 
 jest.mock('../../../../redux/selectors/fieldsets', () => ({
@@ -188,6 +189,7 @@ describe('KickoffRedux', () => {
     description: '',
     order: 0,
     fields: [],
+    labelPosition: EFieldLabelPosition.Top,
     ...overrides,
   });
 

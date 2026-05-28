@@ -6,6 +6,7 @@ import { enMessages } from '../../../../../../lang/locales/en_US';
 import { WorkflowLogTaskComplete } from '../WorkflowLogTaskComplete';
 import { KickoffOutputs } from '../../../../../KickoffOutputs';
 import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../../../../types/template';
+import { EFieldLabelPosition } from '../../../../../../types/fieldset';
 import { IWorkflowLogTask } from '../../../../../../types/workflow';
 
 jest.mock('../../../../../KickoffOutputs', () => ({
@@ -58,6 +59,7 @@ const makeFieldset = (overrides: Partial<IFieldsetData> = {}): IFieldsetData => 
   description: '',
   fields: [makeField()],
   order: 0,
+  labelPosition: EFieldLabelPosition.Top,
   ...overrides,
 });
 

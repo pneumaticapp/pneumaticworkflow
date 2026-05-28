@@ -5,6 +5,7 @@ import { IntlProvider } from 'react-intl';
 import { enMessages } from '../../../lang/locales/en_US';
 
 import { TTransformedTask, TRuntimeMergedOutputPart, EExtraFieldType, IExtraField } from '../../../types/template';
+import { EFieldLabelPosition } from '../../../types/fieldset';
 
 const mockDispatch = jest.fn();
 
@@ -101,7 +102,7 @@ const makeFieldsetOutput = (
   fields: IExtraField[],
 ): TRuntimeMergedOutputPart => ({
   kind: 'fieldset' as const,
-  data: { apiName, name, description: '', fields, order: 0 },
+  data: { apiName, name, description: '', fields, order: 0, labelPosition: EFieldLabelPosition.Top },
 });
 
 const makeFieldOutput = (field: IExtraField): TRuntimeMergedOutputPart => ({

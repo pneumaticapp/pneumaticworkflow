@@ -1,6 +1,7 @@
 /* eslint-disable */
 /* prettier-ignore */
 import { IFieldsetData, IExtraField } from '../types/template';
+import { EFieldLabelPosition } from '../types/fieldset';
 
 /**
  * Maps a fieldset template object (from API response, already camelCased by commonRequest)
@@ -38,7 +39,7 @@ export function mapFieldsetTemplateToFieldsetData(
     description: fieldsetTemplate.description || '',
     fields,
     order: fieldsetTemplate.order ?? 0,
-    labelPosition: labelPosition === 'left' ? 'left' : 'top',
+    labelPosition: labelPosition === EFieldLabelPosition.Left ? EFieldLabelPosition.Left : EFieldLabelPosition.Top,
     rulesCount,
   };
 }

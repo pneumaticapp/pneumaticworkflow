@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { MergedOutputRows, IMergedOutputRowsProps } from '../MergedOutputRows';
 import { TMergedTaskOutputRow } from '../mergeTaskOutputFlow';
@@ -79,6 +80,7 @@ const makeFieldsetData = (apiName: string, fieldsCount: number): IFieldsetData =
   name: `Fieldset ${apiName}`,
   description: '',
   order: 0,
+  labelPosition: EFieldLabelPosition.Top,
   fields: Array.from({ length: fieldsCount }, (_, i) => makeField(`${apiName}-field-${i}`)),
   rulesCount: 0,
 } as IFieldsetData);

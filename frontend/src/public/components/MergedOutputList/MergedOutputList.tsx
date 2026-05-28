@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { EExtraFieldMode } from '../../types/template';
+import { EFieldLabelPosition } from '../../types/fieldset';
 import { ExtraFieldIntl } from '../TemplateEdit/ExtraFields';
 import { FieldsetFieldGroup } from '../FieldsetFieldGroup';
 import { buildRuntimeMergedOutputParts } from '../TemplateEdit/TaskOutputFlow/mergeTaskOutputFlow';
@@ -32,6 +33,7 @@ export function MergedOutputList({
               descriptionPlaceholder={part.field.description}
               wrapperClassName={fieldClassName}
               accountId={accountId}
+              labelPosition={EFieldLabelPosition.Top}
             />
           );
         }
@@ -47,6 +49,7 @@ export function MergedOutputList({
             labelBackgroundColor={labelBackgroundColor}
             accountId={accountId}
             fieldClassName={fieldClassName}
+            labelPosition={part.data.labelPosition}
           />
           );
         }

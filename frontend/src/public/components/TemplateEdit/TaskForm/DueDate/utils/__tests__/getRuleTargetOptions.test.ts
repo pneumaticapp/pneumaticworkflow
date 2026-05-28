@@ -1,4 +1,5 @@
 import { EExtraFieldType, IFieldsetData, IKickoff, ITemplateTask } from '../../../../../../types/template';
+import { EFieldLabelPosition } from '../../../../../../types/fieldset';
 import { createEmptyTaskDueDate } from '../../../../../../utils/dueDate/createEmptyTaskDueDate';
 import { getRuleTargetOptions } from '../getRuleTargetOptions';
 
@@ -41,6 +42,7 @@ const makeFieldsetData = (overrides: Partial<IFieldsetData> = {}): IFieldsetData
   description: '',
   order: 0,
   fields: [],
+  labelPosition: EFieldLabelPosition.Top,
   ...overrides,
 });
 

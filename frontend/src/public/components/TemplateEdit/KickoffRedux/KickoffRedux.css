@@ -95,6 +95,31 @@
     min-width: 0;
   }
 
+  .kick-off-input__field_label-left {
+    flex-direction: row;
+    gap: 1.6rem;
+
+    .kick-off-input__name {
+      margin: 0;
+      flex-shrink: 0;
+      width: 45%;
+      align-self: center;
+
+      /* stylelint-disable-next-line selector-max-compound-selectors */
+      input,
+      .kick-off-input__name-textarea,
+      .kick-off-input__name-readonly {
+        padding-left: 0;
+
+        @mixin text-base;
+      }
+    }
+
+    .kick-off-input__description {
+      flex: 1;
+    }
+  }
+
   svg {
     margin-bottom: 0.2rem;
   }

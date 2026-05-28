@@ -6,6 +6,7 @@ import { enMessages } from '../../../../lang/locales/en_US';
 import { ExtraFieldIntl } from '../index';
 import { ExtraFieldDropdown } from '../utils/ExtraFieldDropdown';
 import { EExtraFieldMode, EExtraFieldType } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 
 jest.mock('react-redux', () => ({
   useSelector: jest.fn((selector) => {
@@ -52,6 +53,7 @@ const baseProps = {
   accountId: 1,
   showDropdown: true,
   datasetOptions: [],
+  labelPosition: EFieldLabelPosition.Top,
   mode: EExtraFieldMode.Kickoff,
 };
 

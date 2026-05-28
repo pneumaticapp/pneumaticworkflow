@@ -12,6 +12,7 @@ import { TUserListItem, EUserStatus } from '../../types/user';
 import { getNormalizedTemplate, mapTemplateRequest, getEmptyKickoff, cleanTemplateReferences, collectFieldApiNames } from '../template';
 import { EConditionAction, EConditionOperators, EConditionLogicOperations, TConditionRule } from '../../components/TemplateEdit/TaskForm/Conditions/types';
 import { IFieldsetData } from '../../types/template';
+import { EFieldLabelPosition } from '../../types/fieldset';
 
 const emptyFieldsetsMap: ReadonlyMap<string, IFieldsetData> = new Map();
 
@@ -419,7 +420,7 @@ describe('template utilities', () => {
         { apiName: 'fieldset-field-2', type: EExtraFieldType.Text, name: 'Fieldset Field 2', order: 2 } as unknown as IExtraField,
       ];
       const fieldsetsMap = new Map<string, IFieldsetData>([
-        ['my-fieldset', { id: 1, apiName: 'my-fieldset', name: 'My Fieldset', description: '', order: 0, fields: fieldsetFields }],
+        ['my-fieldset', { id: 1, apiName: 'my-fieldset', name: 'My Fieldset', description: '', order: 0, labelPosition: EFieldLabelPosition.Top, fields: fieldsetFields }],
       ]);
 
       const template = createMockTemplate({
@@ -584,7 +585,7 @@ describe('template utilities', () => {
       const fieldsets = [{ apiName: 'my-fs', order: 0 }];
       const fieldsetsMap = new Map<string, IFieldsetData>([
         ['my-fs', {
-          id: 1, apiName: 'my-fs', name: 'FS', description: '', order: 0,
+          id: 1, apiName: 'my-fs', name: 'FS', description: '', order: 0, labelPosition: EFieldLabelPosition.Top,
           fields: [
             { apiName: 'fs-field-1', type: EExtraFieldType.String, name: 'F1', order: 0, userId: null, groupId: null },
             { apiName: 'fs-field-2', type: EExtraFieldType.Number, name: 'F2', order: 1, userId: null, groupId: null },

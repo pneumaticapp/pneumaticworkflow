@@ -11,6 +11,7 @@ import {
   IExtraField,
   IFieldsetData,
 } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import {
   EWorkflowStatus,
   EWorkflowsLogSorting,
@@ -137,6 +138,7 @@ const makeFieldset = (overrides: Partial<IFieldsetData> & { fields: IExtraField[
   name: 'Fieldset',
   description: '',
   order: 0,
+  labelPosition: EFieldLabelPosition.Top,
   ...overrides,
 });
 

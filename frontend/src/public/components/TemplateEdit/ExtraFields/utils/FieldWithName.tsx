@@ -18,6 +18,7 @@ import { validateKickoffFieldName } from '../../../../utils/validators';
 import { EInputNameBackgroundColor } from '../../../../types/workflow';
 import { getInputNameBackground } from './getInputNameBackground';
 import { EExtraFieldMode, IExtraField } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { PencilSmallIcon } from '../../../icons';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
@@ -38,6 +39,7 @@ interface IKickoffFormFieldWithNameProps {
   handleChangeName(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void;
   handleChangeDescription(e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void;
   validate(value: string): string;
+  labelPosition: EFieldLabelPosition;
   onClick?(): void;
   onNumericKeyDown?(event: KeyboardEvent<HTMLInputElement>): void;
   isNumericField?: boolean;
@@ -76,6 +78,7 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
       labelBackgroundColor,
       innerRef,
       accountId,
+      labelPosition,
       onNumericKeyDown,
       isNumericField,
     },
@@ -159,8 +162,13 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
       [onClick, handleDescriptionWrapperKeyDown],
     );
 
+    const fieldContainerClassName = classnames(
+      styles['kick-off-input__field'],
+      labelPosition === EFieldLabelPosition.Left && styles['kick-off-input__field_label-left'],
+    );
+
     return (
-      <div className={styles['kick-off-input__field']} data-autofocus-first-field>
+      <div className={fieldContainerClassName} data-autofocus-first-field>
         <div className={fieldNameClassName}>
           {isKickoffEditorMode ? (
             <>

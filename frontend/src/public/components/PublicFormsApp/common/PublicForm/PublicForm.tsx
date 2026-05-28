@@ -12,6 +12,7 @@ import { EExtraFieldMode, IExtraField } from '../../../../types/template';
 import { Button } from '../../../UI/Buttons/Button';
 import { getEditedFields } from '../../../TemplateEdit/ExtraFields/utils/getEditedFields';
 import { EInputNameBackgroundColor } from '../../../../types/workflow';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { getPublicForm } from '../../../../api/getPublicForm';
 import { EPublicFormState, IPublicForm } from '../types';
 import { logger } from '../../../../utils/logger';
@@ -153,6 +154,7 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
               descriptionPlaceholder={field.description}
               wrapperClassName={styles['output__field']}
               accountId={publicForm.accountId}
+              labelPosition={EFieldLabelPosition.Top}
             />
           ))}
 

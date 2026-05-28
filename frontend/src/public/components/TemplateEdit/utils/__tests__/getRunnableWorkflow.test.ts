@@ -1,4 +1,5 @@
 import { ETaskPerformerType, EExtraFieldType, ITemplateResponse, ETemplateOwnerType, ETemplateOwnerRole, IKickoff, IFieldsetData, IExtraField } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { getRunnableWorkflow, loadFieldsetsData, loadDatasetsMap } from '../getRunnableWorkflow';
 import { getFieldsets } from '../../../../api/fieldsets/getFieldsets';
 import { getDataset } from '../../../../api/datasets/getDataset';
@@ -409,6 +410,7 @@ describe('getRunnableWorkflow.', () => {
         name: 'FS',
         description: '',
         order: 0,
+        labelPosition: EFieldLabelPosition.Top,
         fields: [makeFieldWithDataset('fs-f', 'F', 7)],
       },
     ];
@@ -454,6 +456,7 @@ describe('getRunnableWorkflow.', () => {
         name: 'FS',
         description: '',
         order: 0,
+        labelPosition: EFieldLabelPosition.Top,
         fields: [fieldWithDataset, fieldWithObjectSelections],
       },
     ];

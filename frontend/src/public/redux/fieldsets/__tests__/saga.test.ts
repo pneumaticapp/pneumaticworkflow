@@ -15,7 +15,7 @@ import {
 import { initialState } from '../slice';
 import { history } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
-import { EFieldsetsSorting } from '../../../types/fieldset';
+import { EFieldsetsSorting, EFieldLabelPosition } from '../../../types/fieldset';
 import { isRequestCanceled } from '../../../utils/isRequestCanceled';
 
 jest.mock('../../../utils/getConfig', () => ({
@@ -140,7 +140,7 @@ describe('loadCurrentFieldsetSaga', () => {
     templateId: FIELDSET_TEMPLATE_ID,
     name: 'Test Fieldset',
     description: '',
-    labelPosition: 'top',
+    labelPosition: EFieldLabelPosition.Top,
     layout: 'one_column',
     order: 0,
     kickoffId: null,

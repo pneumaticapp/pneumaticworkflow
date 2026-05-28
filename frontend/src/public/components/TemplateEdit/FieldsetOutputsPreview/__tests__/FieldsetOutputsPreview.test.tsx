@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { EExtraFieldType, IFieldsetData, ITaskFieldset } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { FieldsetOutputsPreview } from '../FieldsetOutputsPreview';
 
 const makeTaskFieldset = (apiName: string, order = 0): ITaskFieldset => ({ apiName, order });
@@ -13,6 +14,7 @@ const makeFieldsetData = (apiName: string, fieldsCount: number): IFieldsetData =
   name: `Fieldset ${apiName}`,
   description: '',
   order: 0,
+  labelPosition: EFieldLabelPosition.Top,
   fields: Array.from({ length: fieldsCount }, (_, i) => ({
     apiName: `field-${apiName}-${i}`,
     name: `Field ${i}`,

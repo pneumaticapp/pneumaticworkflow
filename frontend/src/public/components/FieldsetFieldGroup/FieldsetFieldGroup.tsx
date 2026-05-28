@@ -1,6 +1,7 @@
 import * as React from 'react';
 import { IExtraField, EExtraFieldMode } from '../../types/template';
 import { EInputNameBackgroundColor } from '../../types/workflow';
+import { EFieldLabelPosition } from '../../types/fieldset';
 import { ExtraFieldIntl } from '../TemplateEdit/ExtraFields';
 
 import styles from './FieldsetFieldGroup.css';
@@ -15,6 +16,7 @@ export interface IFieldsetFieldGroupProps {
   accountId: number;
   fieldClassName?: string;
   validationError?: string | null;
+  labelPosition: EFieldLabelPosition;
 }
 
 export function FieldsetFieldGroup({
@@ -27,6 +29,7 @@ export function FieldsetFieldGroup({
   accountId,
   fieldClassName,
   validationError,
+  labelPosition,
 }: IFieldsetFieldGroupProps) {
   return (
     <div className={styles['fieldset-group']}>
@@ -44,6 +47,7 @@ export function FieldsetFieldGroup({
           descriptionPlaceholder={field.description}
           wrapperClassName={fieldClassName}
           accountId={accountId}
+          labelPosition={labelPosition}
         />
       ))}
       {validationError && (

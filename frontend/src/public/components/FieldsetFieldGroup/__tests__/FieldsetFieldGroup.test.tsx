@@ -5,6 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { FieldsetFieldGroup } from '../FieldsetFieldGroup';
 import { EExtraFieldType, EExtraFieldMode, IExtraField } from '../../../types/template';
 import { EInputNameBackgroundColor } from '../../../types/workflow';
+import { EFieldLabelPosition } from '../../../types/fieldset';
 
 type TExtraFieldIntlMockProps = {
   field: IExtraField;
@@ -42,6 +43,7 @@ const baseProps = {
   mode: EExtraFieldMode.Kickoff,
   labelBackgroundColor: EInputNameBackgroundColor.White,
   accountId: 1,
+  labelPosition: EFieldLabelPosition.Top,
 };
 
 describe('FieldsetFieldGroup', () => {

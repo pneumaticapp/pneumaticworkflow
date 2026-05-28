@@ -6,6 +6,7 @@ import { FeedItemHeader } from '../FeedItemHeader';
 import { KickoffOutputs } from '../../KickoffOutputs';
 import { EWorkflowLogEvent, EWorkflowStatus } from '../../../types/workflow';
 import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../types/template';
+import { EFieldLabelPosition } from '../../../types/fieldset';
 import { IHighlightsItem } from '../../../types/highlights';
 import { Ellipsis } from '../Ellipsis';
 
@@ -96,6 +97,7 @@ describe('FeedItemHeader', () => {
           name: 'Fieldset 1',
           description: '',
           order: 0,
+          labelPosition: EFieldLabelPosition.Top,
           fields: [
             makeField({ apiName: 'fs1-f1', order: 1, value: 'fieldset value' }),
           ],
@@ -140,6 +142,7 @@ describe('FeedItemHeader', () => {
       name: 'Test Fieldset',
       description: '',
       order: 0,
+      labelPosition: EFieldLabelPosition.Top,
       ...overrides,
     });
 

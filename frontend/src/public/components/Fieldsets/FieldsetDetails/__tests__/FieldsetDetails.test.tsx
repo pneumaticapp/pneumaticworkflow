@@ -23,6 +23,7 @@ import { getEmptyField } from '../../../TemplateEdit/KickoffRedux/utils/getEmpty
 import { getEditedFields } from '../../../TemplateEdit/ExtraFields/utils/getEditedFields';
 import { moveWorkflowField } from '../../../../utils/workflows';
 import { EExtraFieldType } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 
 jest.mock('../../../../utils/history', () => ({
   history: { push: jest.fn(), location: { pathname: '/' }, listen: jest.fn() },
@@ -208,7 +209,7 @@ describe('FieldsetDetails', () => {
       templateId: 5,
       name: 'Test Fieldset',
       description: '',
-      labelPosition: 'top' as const,
+      labelPosition: EFieldLabelPosition.Top,
       layout: 'horizontal' as const,
       order: 0,
       kickoffId: null,

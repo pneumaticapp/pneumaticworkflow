@@ -44,6 +44,7 @@ export function ExtraFieldCreatable({
   deleteField,
   isDisabled = false,
   labelBackgroundColor,
+  labelPosition,
   innerRef,
   datasetName,
 }: IWorkflowExtraFieldProps) {
@@ -181,6 +182,7 @@ export function ExtraFieldCreatable({
       validate={getFieldValidator(field, mode)}
       isDisabled={isDisabled}
       icon={<ArrowDropdownIcon />}
+      labelPosition={labelPosition}
       innerRef={innerRef}
     />
   );

@@ -1,5 +1,6 @@
 
 import { mapFieldsetTemplateToFieldsetData } from '../mapFieldsetTemplateToFieldsetData';
+import { EFieldLabelPosition } from '../../types/fieldset';
 
 const makeFieldsetTemplate = (overrides = {}) => ({
   id: 1,
@@ -7,7 +8,7 @@ const makeFieldsetTemplate = (overrides = {}) => ({
   name: 'Test Fieldset',
   description: 'A test fieldset',
   order: 0,
-  labelPosition: 'top',
+  labelPosition: EFieldLabelPosition.Top,
   rules: [],
   fields: [],
   ...overrides,
@@ -42,7 +43,7 @@ describe('mapFieldsetTemplateToFieldsetData', () => {
       expect(result.name).toBe('Test Fieldset');
       expect(result.description).toBe('A test fieldset');
       expect(result.order).toBe(0);
-      expect(result.labelPosition).toBe('top');
+      expect(result.labelPosition).toBe(EFieldLabelPosition.Top);
       expect(result.rulesCount).toBe(1);
 
       expect(result.fields).toHaveLength(1);
@@ -81,7 +82,7 @@ describe('mapFieldsetTemplateToFieldsetData', () => {
       const result = mapFieldsetTemplateToFieldsetData(template);
 
       expect(result.apiName).toBe('fs-snake');
-      expect(result.labelPosition).toBe('left');
+      expect(result.labelPosition).toBe(EFieldLabelPosition.Left);
       expect(result.fields[0].apiName).toBe('f-snake');
       expect(result.fields[0].isRequired).toBe(true);
       expect(result.fields[0].isHidden).toBe(true);
@@ -93,8 +94,8 @@ describe('mapFieldsetTemplateToFieldsetData', () => {
       const template = makeFieldsetTemplate({
         apiName: 'camel-wins',
         api_name: 'snake-loses',
-        labelPosition: 'left',
-        label_position: 'top',
+        labelPosition: EFieldLabelPosition.Left,
+        label_position: EFieldLabelPosition.Top,
         fields: [{
           apiName: 'camel-field',
           api_name: 'snake-field',
@@ -111,7 +112,7 @@ describe('mapFieldsetTemplateToFieldsetData', () => {
       const result = mapFieldsetTemplateToFieldsetData(template);
 
       expect(result.apiName).toBe('camel-wins');
-      expect(result.labelPosition).toBe('left');
+      expect(result.labelPosition).toBe(EFieldLabelPosition.Left);
       expect(result.fields[0].apiName).toBe('camel-field');
       expect(result.fields[0].isRequired).toBe(true);
       expect(result.fields[0].isHidden).toBe(true);
@@ -172,10 +173,10 @@ describe('mapFieldsetTemplateToFieldsetData', () => {
 
   describe('labelPosition normalization', () => {
     it.each([
-      ['left', 'left'],
-      ['top', 'top'],
-      [undefined, 'top'],
-      ['garbage', 'top'],
+      [EFieldLabelPosition.Left, EFieldLabelPosition.Left],
+      [EFieldLabelPosition.Top, EFieldLabelPosition.Top],
+      [undefined, EFieldLabelPosition.Top],
+      ['garbage', EFieldLabelPosition.Top],
     ] as const)('labelPosition = %s results in %s', (input, expected) => {
       const template = makeFieldsetTemplate({
         labelPosition: input,

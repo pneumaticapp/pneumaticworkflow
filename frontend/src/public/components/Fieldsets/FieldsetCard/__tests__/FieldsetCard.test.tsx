@@ -14,7 +14,7 @@ import {
 import { history } from '../../../../utils/history';
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { IFieldsetCardProps } from '../types';
-import { IFieldsetField, IFieldsetTemplateRule } from '../../../../types/fieldset';
+import { IFieldsetField, IFieldsetTemplateRule, EFieldLabelPosition } from '../../../../types/fieldset';
 
 jest.mock('../../../../utils/history', () => ({
   history: { push: jest.fn(), location: { pathname: '/' }, listen: jest.fn() },
@@ -77,7 +77,7 @@ describe('FieldsetCard', () => {
     apiName: 'fs-10',
     name: 'Test Fieldset',
     description: 'A test fieldset',
-    labelPosition: 'top',
+    labelPosition: EFieldLabelPosition.Top,
     layout: 'vertical',
     order: 0,
     kickoffId: null,

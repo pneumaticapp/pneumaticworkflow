@@ -7,6 +7,7 @@ import {
 } from '../components/TemplateEdit/TaskForm/Conditions';
 import { TUploadedFile } from '../utils/uploadFiles';
 import { TSystemField } from '../components/Workflows/WorkflowsTablePage/WorkflowsTable/types';
+import { EFieldLabelPosition } from './fieldset';
 
 export interface ITemplate {
   id?: number;
@@ -64,7 +65,7 @@ export interface ITaskFieldset {
   order: number;
 }
 
-export type TTemplateFieldFieldset = Pick<IFieldsetData, 'name' | 'description' | 'apiName' | 'fields' | 'order'>;
+export type TTemplateFieldFieldset = Pick<IFieldsetData, 'name' | 'description' | 'apiName' | 'fields' | 'order' | 'labelPosition'>;
 
 export interface ITemplateTask {
   id?: number;
@@ -199,7 +200,7 @@ export interface IFieldsetData {
   description: string;
   fields: IExtraField[];
   order: number;
-  labelPosition?: 'top' | 'left';
+  labelPosition: EFieldLabelPosition;
   /** From template list API; used for catalog UI (e.g. fieldset picker meta). */
   rulesCount?: number;
 }

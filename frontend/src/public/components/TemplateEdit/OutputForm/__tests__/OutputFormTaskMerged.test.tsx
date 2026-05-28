@@ -9,6 +9,7 @@ import {
   IFieldsetData,
   ITemplateTask,
 } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 
 jest.mock('../../ExtraFields/utils/useDatasetOptions', () => ({
   useDatasetOptions: jest.fn(() => []),
@@ -175,6 +176,7 @@ describe('OutputFormTaskMerged', () => {
     description: '',
     order: 0,
     fields: [],
+    labelPosition: EFieldLabelPosition.Top,
     ...overrides,
   });
 

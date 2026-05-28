@@ -3,6 +3,7 @@ import classNames from 'classnames';
 
 import { EInputNameBackgroundColor } from '../../../types/workflow';
 import { EExtraFieldMode, IExtraField, IFieldsetData } from '../../../types/template';
+import { EFieldLabelPosition } from '../../../types/fieldset';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { ExtraFieldIntl } from '../ExtraFields';
 import { ExtraFieldsLabels } from '../ExtraFields/utils/ExtraFieldsLabels';
@@ -60,6 +61,7 @@ export function MergedOutputRows({
               mode={EExtraFieldMode.Kickoff}
               showDropdown
               datasetOptions={datasetOptions}
+              labelPosition={EFieldLabelPosition.Top}
             />
           );
         }

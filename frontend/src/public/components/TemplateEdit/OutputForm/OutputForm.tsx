@@ -4,6 +4,7 @@ import classNames from 'classnames';
 
 import { EMoveDirections, EInputNameBackgroundColor } from '../../../types/workflow';
 import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../types/template';
+import { EFieldLabelPosition } from '../../../types/fieldset';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { getNormalizeFieldsOrders, moveWorkflowField } from '../../../utils/workflows';
 
@@ -123,6 +124,7 @@ function OutputFormSimple({
               isDisabled={isDisabled}
               innerRef={outputRef}
               accountId={accountId}
+              labelPosition={EFieldLabelPosition.Top}
             />
           ))}
         </div>

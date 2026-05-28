@@ -3,6 +3,7 @@ import { render, screen } from '@testing-library/react';
 
 import { KickoffOutputs, EKickoffOutputsViewModes } from '../KickoffOutputs';
 import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../types/template';
+import { EFieldLabelPosition } from '../../../types/fieldset';
 import { Attachments } from '../../Attachments';
 
 type TOutputMockProps = Pick<IExtraField, 'apiName' | 'name'>;
@@ -50,6 +51,7 @@ describe('KickoffOutputs', () => {
     description: '',
     order: 0,
     fields: [],
+    labelPosition: EFieldLabelPosition.Top,
     ...overrides,
   });
 

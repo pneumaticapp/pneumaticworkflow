@@ -2,6 +2,7 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MergedOutputList } from '../MergedOutputList';
 import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../types/template';
+import { EFieldLabelPosition } from '../../../types/fieldset';
 import { EInputNameBackgroundColor } from '../../../types/workflow';
 
 jest.mock('../../TemplateEdit/ExtraFields', () => ({
@@ -34,6 +35,7 @@ const makeFieldset = (id: number, name: string, order: number): IFieldsetData =>
   description: '',
   fields: [],
   order,
+  labelPosition: EFieldLabelPosition.Top,
 });
 
 const baseProps = {

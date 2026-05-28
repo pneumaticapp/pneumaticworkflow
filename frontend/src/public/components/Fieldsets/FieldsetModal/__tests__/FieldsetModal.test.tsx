@@ -14,6 +14,7 @@ import {
 } from '../../../../redux/fieldsets/slice';
 import { validateFieldsetName } from '../../../../utils/validators';
 import { intlMock } from '../../../../__stubs__/intlMock';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 
 jest.mock('../../../../redux/fieldsets/slice', () => ({
   closeCreateModal: jest.fn(() => ({ type: 'fieldsets/closeCreateModal' })),
@@ -94,7 +95,7 @@ describe('FieldsetModal', () => {
         id: 10,
         name: 'Original Name',
         description: 'desc',
-        labelPosition: 'top' as const,
+        labelPosition: EFieldLabelPosition.Top,
         layout: 'vertical' as const,
         order: 0,
         kickoffId: null,
