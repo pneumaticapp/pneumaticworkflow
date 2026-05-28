@@ -62,7 +62,7 @@ class Common(Configuration):
     EXPIRED_INVITE_PAGE = f'{FRONTEND_URL}/auth/expired-invite'
 
     # Forms
-    FORMS_URL = env.get('FORMS_URL') or f'{FRONTEND_URL}/forms'
+    FORMS_URL = env.get('FORMS_URL')
 
     # Auth
     AUTH_USER_MODEL = 'accounts.User'
@@ -111,7 +111,7 @@ class Common(Configuration):
     # A list of origins echoed back to the client in the
     # Access-Control-Allow-Origin header. Defaults to [].
     CORS_ORIGIN_WHITELIST = [FRONTEND_URL]
-    if env.get('FORMS_URL'):
+    if FRONTEND_URL not in FORMS_URL:
         # Add if FORMS_URL customized
         CORS_ORIGIN_WHITELIST.append(FORMS_URL)
     EXTRA_CORS_ORIGIN_WHITELIST = env.get('CORS_ORIGIN_WHITELIST')

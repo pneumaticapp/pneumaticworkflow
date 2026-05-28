@@ -16,6 +16,7 @@ unset SERVER_ADDRESS
 unset DJANGO_SECRET_KEY
 unset POSTGRES_PASSWORD REDIS_PASSWORD RABBITMQ_PASSWORD
 unset CERTBOT_ENABLE CERTBOT_EMAIL NGINX_CONF_TEMPLATE
+unset FORM_DOMAIN
 unset GIT_BRANCH
 
 RED='\033[0;31m'
@@ -108,7 +109,40 @@ if [ ! -f ".env" ]; then
     done
     print_info "Server address: $SERVER_ADDRESS"
 
-    # 1.2.2 Address type boolean flags
+    # 1.2.2 Prompt for Sharable kickoff forms address
+    if [ "$ADDRESS_IS_DOMAIN" = true ]; then
+        echo ""
+        echo "Sharable kickoff forms address:"
+        echo "  1. Use default: $SERVER_ADDRESS/forms"
+        echo "  2. Enter a specific domain"
+        while true; do
+            read -rp "Enter number (1-2): " kickoff_choice
+            case "$kickoff_choice" in
+                1)
+                    KICKOFF_URL=""
+                    print_info "Kickoff forms will be served at: $SERVER_ADDRESS/forms"
+                    break
+                    ;;
+                2)
+                    KICKOFF_DOMAIN_PATTERN='^([a-zA-Z0-9][a-zA-Z0-9-]*\.)+[a-zA-Z]{2,}$'
+                    while true; do
+                        read -rp "Enter domain for kickoff forms (e.g. forms.example.com): " KICKOFF_DOMAIN
+                        if [[ "$KICKOFF_DOMAIN" =~ $KICKOFF_DOMAIN_PATTERN ]]; then
+                            break
+                        else
+                            print_error "Invalid domain. Please enter a valid domain name."
+                        fi
+                    done
+                    KICKOFF_URL="$KICKOFF_DOMAIN"
+                    print_info "Kickoff forms domain: $KICKOFF_DOMAIN"
+                    break
+                    ;;
+                *) print_error "Please enter 1 or 2." ;;
+            esac
+        done
+    fi
+
+    # 1.2.3 Address type boolean flags
     ADDRESS_IS_DOMAIN=false
     ADDRESS_IS_IP=false
     ADDRESS_IS_LOCALHOST=false
@@ -116,6 +150,36 @@ if [ ! -f ".env" ]; then
     [[ "$SERVER_ADDRESS" =~ $DOMAIN_PATTERN ]] && ADDRESS_IS_DOMAIN=true
     [[ "$SERVER_ADDRESS" =~ $IP_PATTERN ]]     && ADDRESS_IS_IP=true
     [ "$SERVER_ADDRESS" = "localhost" ]         && ADDRESS_IS_LOCALHOST=true
+
+    # =============================================================================
+    # 1.2.3 Prompt for Sharable kickoff forms domain
+    # =============================================================================
+
+    FORM_DOMAIN=""
+    if [ "$ADDRESS_IS_DOMAIN" = true ]; then
+        echo ""
+        read -rp "Use default address for Sharable kickoff forms ($SERVER_ADDRESS/forms)? [Y/n]: " forms_choice
+        case "$forms_choice" in
+            [Nn]|[Nn][Oo])
+                # 1.2.4 Prompt for a separate kickoff forms domain
+                while true; do
+                    read -rp "Enter domain for Sharable kickoff forms (e.g. forms.example.com): " FORM_DOMAIN
+                    if [[ "$FORM_DOMAIN" =~ $DOMAIN_PATTERN ]]; then
+                        break
+                    else
+                        print_error "Invalid domain. Please enter a valid domain name (e.g. forms.example.com)."
+                    fi
+                done
+                print_info "Kickoff forms domain: $FORM_DOMAIN"
+                ;;
+            *)
+                print_info "Kickoff forms will be served at: $SERVER_ADDRESS/forms"
+                ;;
+        esac
+        if [ -n "$FORM_DOMAIN" ]; then
+            sed -i "s|^#\?\s*FORM_DOMAIN=.*|FORM_DOMAIN=$FORM_DOMAIN|" "$ENV_FILE"
+        fi
+    fi
 
     # =============================================================================
     # 1.3 Set passwords
@@ -157,7 +221,6 @@ if [ ! -f ".env" ]; then
 
     # 1.4.2 Prompt for CERTBOT_EMAIL if SSL is enabled
     if [ "$CERTBOT_ENABLE" = true ]; then
-        NGINX_CONF_TEMPLATE=./nginx/ssl_templates/
         EMAIL_PATTERN='^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$'
         echo ""
         while true; do
@@ -171,7 +234,16 @@ if [ ! -f ".env" ]; then
         print_info "Let's Encrypt certificate will be registered to: $CERTBOT_EMAIL"
     fi
 
-    # 1.4.3 Write SSL settings to .env
+    # 1.4.3 Set NGINX_CONF_TEMPLATE
+    if [ "$CERTBOT_ENABLE" = true ] && [ -n "$FORM_DOMAIN" ]; then
+        NGINX_CONF_TEMPLATE=./nginx/ssl_forms_templates/
+    elif [ "$CERTBOT_ENABLE" = true ]; then
+        NGINX_CONF_TEMPLATE=./nginx/ssl_templates/
+    else
+        NGINX_CONF_TEMPLATE=./nginx/templates/
+    fi
+
+    # 1.4.4 Write SSL settings to .env
     _ssl_value="no"
     [ "$SSL" = true ] && _ssl_value="yes"
     _certbot_enable_value="no"
@@ -197,6 +269,12 @@ if [ ! -f ".env" ]; then
     sed -i "s|^#\?\s*BACKEND_URL=.*|BACKEND_URL=$HTTP_PROTOCOL://$SERVER_ADDRESS:8001|"             "$ENV_FILE"
     sed -i "s|^#\?\s*FRONTEND_URL=.*|FRONTEND_URL=$HTTP_PROTOCOL://$SERVER_ADDRESS|"                "$ENV_FILE"
     sed -i "s|^#\?\s*WSS_URL=.*|WSS_URL=$WS_PROTOCOL://$SERVER_ADDRESS:8001|"                       "$ENV_FILE"
+    if [ -n "$FORM_DOMAIN" ]; then
+        FORMS_URL="$HTTP_PROTOCOL://$FORM_DOMAIN"
+    else
+        FORMS_URL="$HTTP_PROTOCOL://$SERVER_ADDRESS/forms"
+    fi
+    sed -i "s|^#\?\s*FORMS_URL=.*|FORMS_URL=$FORMS_URL|"                                            "$ENV_FILE"
 
 fi
 
