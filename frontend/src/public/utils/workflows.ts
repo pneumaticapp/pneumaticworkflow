@@ -3,12 +3,10 @@ import {
   EWorkflowLogEvent,
   ECommentType,
   IWorkflowDetailsKickoff,
-  ITaskCommentAttachmentRequest,
 } from '../types/workflow';
 import { ITemplateTask, IKickoff, IExtraField } from '../types/template';
 import { isArrayWithItems, deepCopy } from './helpers';
 import { ExtraFieldsHelper } from '../components/TemplateEdit/ExtraFields/utils/ExtraFieldsHelper';
-import { TUploadedFile } from './uploadFiles';
 
 export const MAP_COMMENT_LOG: { [key: number]: EWorkflowLogEvent } = {
   [EDashboardActivityAction.Reverted]: EWorkflowLogEvent.TaskRevert,
@@ -72,12 +70,4 @@ export const getNormalizeFieldsOrders = (fields?: IExtraField[]): IExtraField[] 
   }
 
   return fields.map((field, index) => ({ ...field, order: fields.length - index - 1 }));
-};
-
-export const mapFilesToRequest = (files?: TUploadedFile[]) => {
-  if (!files || !isArrayWithItems(files)) {
-    return [];
-  }
-
-  return files.map((file) => ({ id: file.id } as ITaskCommentAttachmentRequest));
 };

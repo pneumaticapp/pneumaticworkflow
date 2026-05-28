@@ -489,14 +489,8 @@ class TaskFieldService(BaseWorkflowService):
 
         old_markdown_value = self.instance.markdown_value
         raw_value = update_kwargs.pop('value', None)
-        selections = (
-            self.instance.selections.all()
-            if self.instance.type in FieldType.TYPES_WITH_SELECTIONS
-            else None
-        )
         field_data = self._get_valid_value(
             raw_value=raw_value,
-            selections=selections,
         )
         with transaction.atomic():
             if self.instance.type == FieldType.FILE:

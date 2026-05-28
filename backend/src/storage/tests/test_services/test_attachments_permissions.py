@@ -572,12 +572,6 @@ class TestAttachmentServiceTemplatePermissions:
         # arrange
         owner = create_test_admin()
         template = create_test_template(owner, is_active=True)
-        TemplateOwner.objects.create(
-            template=template,
-            account=template.account,
-            user=owner,
-            type=OwnerType.USER,
-        )
         service = AttachmentService(user=owner)
 
         # act
@@ -603,12 +597,7 @@ class TestAttachmentServiceTemplatePermissions:
         owner1 = create_test_admin()
         owner2 = create_test_user(account=owner1.account, is_admin=True)
         template = create_test_template(owner1, is_active=True)
-        TemplateOwner.objects.create(
-            template=template,
-            account=template.account,
-            user=owner1,
-            type=OwnerType.USER,
-        )
+        # owner1 is already created by create_test_template
         TemplateOwner.objects.create(
             template=template,
             account=template.account,
@@ -646,12 +635,6 @@ class TestAttachmentServiceTemplatePermissions:
         owner = create_test_admin()
         other_user = create_test_user(account=owner.account)
         template = create_test_template(owner, is_active=True)
-        TemplateOwner.objects.create(
-            template=template,
-            account=template.account,
-            user=owner,
-            type=OwnerType.USER,
-        )
         service = AttachmentService(user=owner)
 
         # act

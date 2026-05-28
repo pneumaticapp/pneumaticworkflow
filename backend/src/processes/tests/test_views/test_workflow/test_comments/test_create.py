@@ -571,27 +571,6 @@ def test_comment__no_text_no_attachments__validation_error(api_client):
     assert response.data['code'] == ErrorCode.VALIDATION_ERROR
 
 
-def test_comment__invalid_attachment__validation_error(api_client):
-
-    # arrange
-    user = create_test_owner()
-    workflow = create_test_workflow(user=user, tasks_count=1)
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.post(
-        f'/workflows/{workflow.id}/comment',
-        data={
-            'text': 'Some comment',
-            'attachments': ['not-an-integer'],
-        },
-    )
-
-    # assert
-    assert response.status_code == 400
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-
-
 def test_create_comment__template_starter_own_workflow__ok(api_client, mocker):
     # arrange
     account = create_test_account()

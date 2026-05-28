@@ -228,10 +228,6 @@ export interface ITaskCommentItem {
   attachments: TUploadedFile[];
 }
 
-export interface ITaskCommentAttachmentRequest {
-  id: string;
-}
-
 export enum EWorkflowsLogSorting {
   New = 'new',
   Old = 'old',

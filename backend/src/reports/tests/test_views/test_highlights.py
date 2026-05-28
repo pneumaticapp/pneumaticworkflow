@@ -1308,7 +1308,6 @@ def test__kickoff_field_type_user__ok(api_client):
     assert field_data['api_name'] == field.api_name
     # TODO Replace in https://my.pneumatic.app/workflows/18137/
     assert field_data['value'] == user.get_full_name()
-    assert field_data['selections'] == []
     assert field_data['attachments'] == []
     assert field_data['user_id'] == user.id
 
@@ -1515,7 +1514,6 @@ def test_complete_task_event__task_field_with_dataset__ok(api_client):
     assert field_data['id'] == field.id
     assert field_data['type'] == FieldType.DROPDOWN
     assert field_data['value'] == dataset_item.value
-    assert 'selections' not in field_data
 
 
 def test_complete_task_event__kickoff_field_with_dataset__ok(api_client):
@@ -1554,4 +1552,3 @@ def test_complete_task_event__kickoff_field_with_dataset__ok(api_client):
     assert field_data['id'] == field.id
     assert field_data['type'] == FieldType.DROPDOWN
     assert field_data['value'] == dataset_item.value
-    assert 'selections' not in field_data

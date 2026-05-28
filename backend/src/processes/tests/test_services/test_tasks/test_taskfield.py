@@ -710,6 +710,7 @@ def test__remove_unused_attachments__value_some_deleted__ok():
         source_type=SourceType.TASK,
         access_type=AccessType.RESTRICTED,
         output=task_field,
+        workflow=workflow,
     )
     attachment_2 = Attachment.objects.create(
         file_id='delete.jpg',
@@ -717,6 +718,7 @@ def test__remove_unused_attachments__value_some_deleted__ok():
         source_type=SourceType.TASK,
         access_type=AccessType.RESTRICTED,
         output=task_field,
+        workflow=workflow,
     )
     service = TaskFieldService(instance=task_field, user=user)
     markdown_values = [attachment_1.file_id]
@@ -788,6 +790,7 @@ def test__remove_unused_attachments__no_value__ok():
         source_type=SourceType.TASK,
         access_type=AccessType.RESTRICTED,
         output=task_field,
+        workflow=workflow,
     )
     service = TaskFieldService(instance=task_field, user=user)
 
@@ -1060,7 +1063,6 @@ def test_partial_update__ok(mocker):
     # assert
     get_valid_value_mock.assert_called_once_with(
         raw_value=raw_value,
-        selections=None,
     )
     link_new_attachments_mock.assert_not_called()
     task_field.refresh_from_db()
@@ -1123,7 +1125,6 @@ def test_partial_update__type_file__ok(mocker):
     # assert
     get_valid_value_mock.assert_called_once_with(
         raw_value=raw_value,
-        selections=None,
     )
     assert not Attachment.objects.filter(id=deleted_attachment.id).exists()
     link_new_attachments_mock.assert_called_once_with(raw_value)
@@ -1188,7 +1189,6 @@ def test_partial_update__type_file_null_value__ok(mocker):
     # assert
     get_valid_value_mock.assert_called_once_with(
         raw_value=raw_value,
-        selections=None,
     )
     assert not Attachment.objects.filter(id=deleted_attachment.id).exists()
     link_new_attachments_mock.assert_called_once_with(raw_value)
@@ -1250,9 +1250,9 @@ def test_remove_unused_attachments__event_linked_attachment_preserved(
         'src.processes.services.tasks.field.'
         'TaskFieldService._link_new_attachments',
     )
-    update_selections_mock = mocker.patch(
+    create_selections_mock = mocker.patch(
         'src.processes.services.tasks.field.'
-        'TaskFieldService._update_selections',
+        'TaskFieldService._create_selections',
     )
     service = TaskFieldService(
         instance=task_field,
@@ -1268,7 +1268,7 @@ def test_remove_unused_attachments__event_linked_attachment_preserved(
         id=attachment_linked_to_event.id,
     ).exists()
     link_new_mock.assert_called_once_with(None)
-    update_selections_mock.assert_not_called()
+    create_selections_mock.assert_not_called()
 
 
 def test_remove_unused_attachments__field_only_attachment_deleted(mocker):
@@ -1312,9 +1312,9 @@ def test_remove_unused_attachments__field_only_attachment_deleted(mocker):
         'src.processes.services.tasks.field.'
         'TaskFieldService._link_new_attachments',
     )
-    update_selections_mock = mocker.patch(
+    create_selections_mock = mocker.patch(
         'src.processes.services.tasks.field.'
-        'TaskFieldService._update_selections',
+        'TaskFieldService._create_selections',
     )
     service = TaskFieldService(
         instance=task_field,
@@ -1330,7 +1330,7 @@ def test_remove_unused_attachments__field_only_attachment_deleted(mocker):
         id=field_only_attachment.id,
     ).exists()
     link_new_mock.assert_called_once_with(None)
-    update_selections_mock.assert_not_called()
+    create_selections_mock.assert_not_called()
 
 
 def test_remove_unused_attachments__comment_attachment_unchanged(mocker):
@@ -1430,7 +1430,6 @@ def test__partial_update__no_value_kwarg__ok(mocker):
     # assert
     get_valid_value_mock.assert_called_once_with(
         raw_value=None,
-        selections=None,
     )
     remove_unused_attachments_mock.assert_not_called()
     link_new_attachments_mock.assert_not_called()

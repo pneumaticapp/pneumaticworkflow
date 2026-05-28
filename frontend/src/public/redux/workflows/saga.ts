@@ -102,7 +102,7 @@ import {
   getLastLoadedTemplateIdForTable,
 } from '../selectors/workflows';
 import { getTaskStore, getCurrentTask } from '../selectors/task';
-import { getEditKickoff, mapFilesToRequest } from '../../utils/workflows';
+import { getEditKickoff } from '../../utils/workflows';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getWorkflows } from '../../api/getWorkflows';
 import { getWorkflow } from '../../api/getWorkflow';
@@ -366,7 +366,7 @@ function* fetchWorkflowsList({ payload: offset = 0 }: PayloadAction<number>) {
   }
 }
 
-function* saveWorkflowLogComment({ payload: { text, attachments } }: PayloadAction<ISendWorkflowLogComment>) {
+function* saveWorkflowLogComment({ payload: { text } }: PayloadAction<ISendWorkflowLogComment>) {
   const {
     items,
     workflowId: processId,
@@ -377,14 +377,11 @@ function* saveWorkflowLogComment({ payload: { text, attachments } }: PayloadActi
     return;
   }
 
-  const normalizedAttachments = mapFilesToRequest(attachments);
-
   try {
     yield put(setGeneralLoaderVisibility(true));
     const newComment: IWorkflowLogItem = yield sendWorkflowComment({
       id: processId,
       text,
-      attachments: normalizedAttachments,
     });
 
     const preLoadedProcessLogMap = {
@@ -895,10 +892,10 @@ export function* deleteCommentSaga({ payload: { id } }: PayloadAction<IDeleteCom
   }
 }
 
-export function* editCommentSaga({ payload: { id, text, attachments } }: PayloadAction<IEditComment>) {
+export function* editCommentSaga({ payload: { id, text } }: PayloadAction<IEditComment>) {
   try {
     yield put(setGeneralLoaderVisibility(true));
-    const updateComment: IWorkflowLogItem = yield editComment({ id, text, attachments });
+    const updateComment: IWorkflowLogItem = yield editComment({ id, text });
     yield put(updateWorkflowLogItem(updateComment));
     yield put(updateTaskWorkflowLogItem(updateComment));
   } catch (error) {

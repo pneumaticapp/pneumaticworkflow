@@ -88,7 +88,7 @@ import {
   IWorkflowLogItem,
   TWorkflowDetailsResponse,
 } from '../../types/workflow';
-import { mapFilesToRequest } from '../../utils/workflows';
+
 import { ETemplateOwnerType, RawPerformer } from '../../types/template';
 import { getTaskWorkflowLog } from '../../api/getTaskWorkflowLog';
 import { sendTaskComment } from '../../api/sendTaskComment';
@@ -217,7 +217,7 @@ function* loadTaskWorkflowLog({
   }
 }
 
-function* saveWorkflowLogComment({ payload: { text, attachments, taskId } }: PayloadAction<ISendWorkflowLogComment>) {
+function* saveWorkflowLogComment({ payload: { text, taskId } }: PayloadAction<ISendWorkflowLogComment>) {
   const {
     workflowLog: { items, workflowId: processId, sorting },
   }: ReturnType<typeof getTaskStore> = yield select(getTaskStore);
@@ -226,14 +226,11 @@ function* saveWorkflowLogComment({ payload: { text, attachments, taskId } }: Pay
     return;
   }
 
-  const normalizedAttachments = mapFilesToRequest(attachments);
-
   try {
     yield put(setGeneralLoaderVisibility(true));
     const newComment: IWorkflowLogItem = yield sendTaskComment({
       taskId: taskId || 0,
       text,
-      attachments: normalizedAttachments,
     });
 
     const preLoadedProcessLogMap = {

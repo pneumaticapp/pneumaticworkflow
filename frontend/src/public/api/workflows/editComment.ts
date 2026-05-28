@@ -2,15 +2,13 @@ import { commonRequest } from '../commonRequest';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { mapRequestBody } from '../../utils/mappers';
 import { ISendWorkflowCommentResponse } from '../sendWorkflowComment';
-import { ITaskCommentAttachmentRequest } from '../../types/workflow';
 
 export interface IEditComment {
   id: number;
   text: string | null;
-  attachments: ITaskCommentAttachmentRequest[] | null;
 }
 
-export function editComment({ id, text, attachments }: IEditComment) {
+export function editComment({ id, text }: IEditComment) {
   const {
     api: { urls },
   } = getBrowserConfigEnv();
@@ -23,7 +21,6 @@ export function editComment({ id, text, attachments }: IEditComment) {
       method: 'PATCH',
       data: mapRequestBody({
         text,
-        attachments,
       }),
     },
     { shouldThrow: true },

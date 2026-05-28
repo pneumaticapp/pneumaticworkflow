@@ -31,7 +31,6 @@ describe('editComment', () => {
     editComment({
       id: 42,
       text: 'updated text',
-      attachments: null,
     });
 
     expect(mockedCommonRequest).toHaveBeenCalledTimes(1);
@@ -41,54 +40,32 @@ describe('editComment', () => {
     expect(options.method).toBe('PATCH');
   });
 
-  it('sends text and attachments in body', () => {
-    const attachments = [{ id: 'file-abc' }, { id: 'file-xyz' }];
-
+  it('sends only text in body', () => {
     editComment({
       id: 10,
       text: 'hello',
-      attachments,
     });
 
     const [, options] = mockedCommonRequest.mock.calls[0];
     expect(options.data).toEqual({
       text: 'hello',
-      attachments,
     });
   });
 
-  it('sends attachments as {id} objects, not full TUploadedFile', () => {
-    const attachments = [{ id: 'abc-123' }];
-
-    editComment({
-      id: 1,
-      text: 'test',
-      attachments,
-    });
-
-    const [, options] = mockedCommonRequest.mock.calls[0];
-    expect(options.data.attachments).toEqual([{ id: 'abc-123' }]);
-    expect(options.data.attachments[0]).not.toHaveProperty('url');
-    expect(options.data.attachments[0]).not.toHaveProperty('name');
-    expect(options.data.attachments[0]).not.toHaveProperty('size');
-  });
-
-  it('sends null attachments when no files', () => {
+  it('sends null text', () => {
     editComment({
       id: 5,
-      text: 'no files',
-      attachments: null,
+      text: null,
     });
 
     const [, options] = mockedCommonRequest.mock.calls[0];
-    expect(options.data.attachments).toBeNull();
+    expect(options.data.text).toBeNull();
   });
 
   it('uses shouldThrow option', () => {
     editComment({
       id: 1,
       text: 'test',
-      attachments: null,
     });
 
     const [, , extra] = mockedCommonRequest.mock.calls[0];

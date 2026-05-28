@@ -119,12 +119,7 @@ class TestTemplateAttachmentsE2E:
         owner1 = create_test_admin()
         owner2 = create_test_user(account=owner1.account, is_admin=True)
         template = create_test_template(owner1, is_active=True)
-        TemplateOwner.objects.create(
-            template=template,
-            account=template.account,
-            user=owner1,
-            type=OwnerType.USER,
-        )
+        # owner1 is already created by create_test_template
         TemplateOwner.objects.create(
             template=template,
             account=template.account,
@@ -162,12 +157,6 @@ class TestTemplateAttachmentsE2E:
         # arrange
         owner = create_test_admin()
         template = create_test_template(owner, is_active=True)
-        TemplateOwner.objects.create(
-            template=template,
-            account=template.account,
-            user=owner,
-            type=OwnerType.USER,
-        )
         template.description = 'Initial template description'
         template.save()
         refresh_attachments(source=template, user=owner)
@@ -196,12 +185,6 @@ class TestTemplateAttachmentsE2E:
         # arrange
         owner = create_test_admin()
         template = create_test_template(owner, is_active=True)
-        TemplateOwner.objects.create(
-            template=template,
-            account=template.account,
-            user=owner,
-            type=OwnerType.USER,
-        )
         template.description = (
             'File: [f](https://files.example.com/tmpl_remove_e2e)'
         )
@@ -234,12 +217,6 @@ class TestTemplateAttachmentsE2E:
             email='owner2_tmpl@test.pneumatic.app',
         )
         template = create_test_template(owner1, is_active=True)
-        TemplateOwner.objects.create(
-            template=template,
-            account=template.account,
-            user=owner1,
-            type=OwnerType.USER,
-        )
         template.description = (
             'File: [f](https://files.example.com/tmpl_owner_e2e)'
         )
@@ -285,12 +262,6 @@ class TestTemplateAttachmentsE2E:
         # arrange
         owner = create_test_admin()
         template = create_test_template(owner, is_active=True)
-        TemplateOwner.objects.create(
-            template=template,
-            account=template.account,
-            user=owner,
-            type=OwnerType.USER,
-        )
         template.description = (
             'Files: '
             '[a](https://files.example.com/tmpl_multi_1_e2e) '
@@ -321,12 +292,6 @@ class TestTemplateAttachmentsE2E:
         owner = create_test_admin()
         other_user = create_test_user(account=owner.account)
         template = create_test_template(owner, is_active=True)
-        TemplateOwner.objects.create(
-            template=template,
-            account=template.account,
-            user=owner,
-            type=OwnerType.USER,
-        )
         template.description = (
             'File: [f](https://files.example.com/tmpl_no_access_e2e)'
         )
@@ -356,12 +321,6 @@ class TestTemplateAttachmentsE2E:
         # arrange
         owner = create_test_admin()
         template = create_test_template(owner, is_active=True)
-        TemplateOwner.objects.create(
-            template=template,
-            account=template.account,
-            user=owner,
-            type=OwnerType.USER,
-        )
         template.description = (
             'File: [f](https://files.example.com/tmpl_old_e2e)'
         )

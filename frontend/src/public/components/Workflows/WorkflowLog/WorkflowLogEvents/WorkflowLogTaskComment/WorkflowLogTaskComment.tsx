@@ -25,7 +25,6 @@ import { RichEditor } from '../../../../RichEditor';
 import { type TMentionData } from '../../../../RichEditor/types';
 import { IAccount, TUserListItem } from '../../../../../types/user';
 import { useStatePromise } from '../../../../../hooks/useStatePromise';
-import { TUploadedFile } from '../../../../../utils/uploadFiles';
 import { IEditComment } from '../../../../../api/workflows/editComment';
 import { IWatchedComment } from '../../../../../api/workflows/watchedComment';
 import { Tooltip } from '../../../../UI';
@@ -67,7 +66,6 @@ export function WorkflowLogTaskComment({
   const [isDelete, setIsDelete] = useState(false);
   const [isEdit, setIsEdit] = useState(false);
   const [commentText, setCommentText] = useStatePromise('');
-  const [filesToUpload, setFilesToUpload] = useStatePromise<TUploadedFile[]>([]);
 
   useClickOutside(clickRef, () => {
     setIsShowTooltipEmoji(false);
@@ -112,10 +110,9 @@ export function WorkflowLogTaskComment({
     setIsEdit(false);
 
     if (commentText && commentText !== text) {
-      editComment({ id, text: commentText, attachments: filesToUpload.map(f => ({ id: f.id })) });
+      editComment({ id, text: commentText });
     }
 
-    setFilesToUpload([]);
     setCommentText('');
   };
 
