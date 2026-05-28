@@ -1,4 +1,3 @@
-// <reference types="jest" />
 import { runSaga, stdChannel } from 'redux-saga';
 import { call } from 'redux-saga/effects';
 

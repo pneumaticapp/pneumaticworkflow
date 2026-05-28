@@ -1,4 +1,3 @@
-// <reference types="jest" />
 import { setTaskCompleted } from '../saga';
 import { ETaskActions, TSetTaskCompleted } from '../actions';
 import { ETaskCardViewMode } from '../../../components/TaskCard';

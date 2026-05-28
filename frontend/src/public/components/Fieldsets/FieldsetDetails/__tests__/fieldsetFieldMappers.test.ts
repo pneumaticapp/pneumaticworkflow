@@ -1,4 +1,3 @@
-// <reference types="jest" />
 
 import { normalizeFieldForUI, normalizeFieldsForUI } from '../fieldsetFieldMappers';
 import { EExtraFieldType, IExtraField } from '../../../../types/template';

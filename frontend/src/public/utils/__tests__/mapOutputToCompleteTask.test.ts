@@ -1,4 +1,3 @@
-/// <reference types="jest" />
 import { mapOutputToCompleteTask } from '../mappers';
 import { EExtraFieldType, IExtraField } from '../../types/template';
 

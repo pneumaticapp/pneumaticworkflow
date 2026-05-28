@@ -1,4 +1,3 @@
-// <reference types="jest" />
 import { ETaskPerformerType, EExtraFieldType, ITemplateResponse, ETemplateOwnerType, ETemplateOwnerRole, IKickoff, IFieldsetData, IExtraField } from '../../../../types/template';
 import { getRunnableWorkflow, loadFieldsetsData, loadDatasetsMap } from '../getRunnableWorkflow';
 import { getFieldsets } from '../../../../api/fieldsets/getFieldsets';

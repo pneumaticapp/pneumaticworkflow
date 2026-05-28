@@ -1,4 +1,3 @@
-// <reference types="jest" />
 import { areExtraFieldsValid } from '../areExtraFieldsValid';
 import { EExtraFieldType, IExtraField } from '../../../../types/template';
 

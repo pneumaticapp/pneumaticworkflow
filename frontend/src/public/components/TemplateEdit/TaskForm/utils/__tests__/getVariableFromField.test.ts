@@ -1,4 +1,3 @@
-// <reference types="jest" />
 import { getVariableFromField } from '../getTaskVariables';
 import { EExtraFieldType, IExtraField } from '../../../../../types/template';
 

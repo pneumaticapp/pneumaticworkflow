@@ -1,4 +1,3 @@
-// <reference types="jest" />
 import { IExtraField, IFieldsetData, ITaskFieldset } from '../../../../types/template';
 import {
   buildMergedTaskOutputRows,

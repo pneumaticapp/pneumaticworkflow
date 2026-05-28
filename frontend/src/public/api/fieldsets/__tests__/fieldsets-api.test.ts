@@ -1,4 +1,3 @@
-// <reference types="jest" />
 
 const MOCK_URLS = {
   templateFieldsets: '/templates/:id/fieldsets',

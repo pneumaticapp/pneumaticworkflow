@@ -1,4 +1,3 @@
-// <reference types="jest" />
 
 import { mapFieldsetTemplateToFieldsetData } from '../mapFieldsetTemplateToFieldsetData';
 

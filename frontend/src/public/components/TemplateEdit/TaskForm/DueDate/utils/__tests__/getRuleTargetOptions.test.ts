@@ -1,4 +1,3 @@
-// <reference types="jest" />
 import { EExtraFieldType, IFieldsetData, IKickoff, ITemplateTask } from '../../../../../../types/template';
 import { createEmptyTaskDueDate } from '../../../../../../utils/dueDate/createEmptyTaskDueDate';
 import { getRuleTargetOptions } from '../getRuleTargetOptions';

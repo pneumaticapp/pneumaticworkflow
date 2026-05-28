@@ -1,4 +1,3 @@
-// <reference types="jest" />
 
 import { runSaga } from 'redux-saga';
 import { call } from 'redux-saga/effects';

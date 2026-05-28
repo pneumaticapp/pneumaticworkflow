@@ -1,4 +1,3 @@
-// <reference types="jest" />
 
 import { validateFieldsetName } from '../validators';
 

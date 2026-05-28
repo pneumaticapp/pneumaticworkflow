@@ -1,4 +1,3 @@
-// <reference types="jest" />
 
 import { getFieldsetsCatalogByApiName } from '../fieldsets';
 import { IApplicationState } from '../../../types/redux';
