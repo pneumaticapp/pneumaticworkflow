@@ -1,8 +1,9 @@
 import { expectSaga } from 'redux-saga-test-plan';
 import * as matchers from 'redux-saga-test-plan/matchers';
+import { call } from 'redux-saga/effects';
 
 import { loadBreakdownTasks } from '../actions';
-import { fetchBreakdownTasks } from '../saga';
+import { fetchBreakdownTasks, openRunWorflowByTemplateDataSaga } from '../saga';
 import { getDashboardStore } from '../../selectors/dashboard';
 import { getCanAccessWorkflows } from '../../selectors/user';
 import { EDashboardModes, IDashboardStore, IDashboardTask } from '../../../types/redux';
@@ -10,6 +11,9 @@ import { EDashboardTimeRange } from '../../../types/dashboard';
 import { reducer } from '../reducer';
 import { getDashboardWorkflowsTasks } from '../../../api/dashboard/getDashboardWorkflowsTasks';
 import * as templatesSaga from '../../templates/saga';
+import { openRunWorkflowModalSideMenu } from '../actions';
+import { loadDatasetsMap } from '../../../components/TemplateEdit/utils/getRunnableWorkflow';
+import { openRunWorkflowModal } from '../../runWorkflowModal/actions';
 
 describe('fetchBreakdownTasks', () => {
   it('load breakdown tasks', () => {
@@ -54,9 +58,12 @@ describe('fetchBreakdownTasks', () => {
     ];
     jest.spyOn(templatesSaga, 'handleLoadTemplateVariables').mockImplementation(function* () {});
 
-    // tslint:disable-next-line: no-any
+    function* wrapper() {
+      yield call(fetchBreakdownTasks, fetchBreakdownTasksAction);
+    }
+
     return (
-      expectSaga(fetchBreakdownTasks as any, fetchBreakdownTasksAction)
+      expectSaga(wrapper)
         .provide([
           [matchers.select.selector(getCanAccessWorkflows), true],
           [matchers.select.selector(getDashboardStore), mockDashboardStore],
@@ -64,12 +71,104 @@ describe('fetchBreakdownTasks', () => {
         ])
         .withReducer(reducer, mockDashboardStore)
 
-        // assert dispatch the following action
         .put({
           type: 'PATCH_DASHBOARD_BREAKDOWN_ITEM',
           payload: { templateId: 1, changedFields: { tasks: mockTasks } },
         })
         .run()
+    );
+  });
+});
+
+describe('openRunWorflowByTemplateDataSaga — fieldset selections enrichment', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('enriches fieldset field selections from datasetsMap', async () => {
+    const DATASET_ID = 5;
+    const DATASET_OPTIONS = ['opt-a', 'opt-b'];
+
+    const templateData = {
+      id: 10,
+      name: 'Template From Side Menu',
+      kickoff: {
+        fields: [],
+        fieldsets: [
+          {
+            apiName: 'fs-1',
+            name: 'Fieldset 1',
+            order: 0,
+            fields: [
+              {
+                apiName: 'field-ds',
+                name: 'Field With Dataset',
+                type: 'string',
+                isRequired: false,
+                isHidden: false,
+                order: 0,
+                selections: [],
+                dataset: DATASET_ID,
+              },
+              {
+                apiName: 'field-no-ds',
+                name: 'Field Without Dataset',
+                type: 'string',
+                isRequired: false,
+                isHidden: false,
+                order: 1,
+                selections: ['original'],
+                dataset: null,
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const action = openRunWorkflowModalSideMenu({
+      templateData,
+      ancestorTaskId: 99,
+    });
+
+    const openModalActionType = openRunWorkflowModal({} as never).type;
+
+    function* wrapper() {
+      yield call(openRunWorflowByTemplateDataSaga, action);
+    }
+
+    const { effects } = await expectSaga(wrapper)
+      .provide([
+        [matchers.call.fn(loadDatasetsMap), { [DATASET_ID]: DATASET_OPTIONS }],
+      ])
+      .run();
+
+    const putEffects = effects.put || [];
+    const openModalPut = putEffects.find(
+      (effect) => effect.payload.action.type === openModalActionType,
+    );
+
+    if (!openModalPut) {
+      throw new Error('Expected openRunWorkflowModal PUT not found');
+    }
+
+    const { loadedFieldsets } = openModalPut.payload.action.payload;
+
+    expect(loadedFieldsets).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          fields: expect.arrayContaining([
+            expect.objectContaining({
+              apiName: 'field-ds',
+              selections: DATASET_OPTIONS,
+            }),
+            expect.objectContaining({
+              apiName: 'field-no-ds',
+              selections: ['original'],
+            }),
+          ]),
+        }),
+      ]),
     );
   });
 });

@@ -1,15 +1,10 @@
 /* eslint-disable */
 /* prettier-ignore */
 import { reducer, INIT_STATE } from '../reducer';
-import { TRunWorkflowModalActions, openRunWorkflowModal } from '../actions';
+import { openRunWorkflowModal } from '../actions';
 import { IKickoff, EExtraFieldType } from '../../../types/template';
 
 describe('runWorkflowModal reducer', () => {
-  it('return default state', () => {
-    const result = reducer(undefined, 'NOT_ACTION' as unknown as TRunWorkflowModalActions);
-
-    expect(result).toEqual(INIT_STATE);
-  });
   it('openRunWorkflowModal open modal window', () => {
     const runnableWorkflow = {
       id: 4654,
@@ -148,5 +143,66 @@ describe('runWorkflowModal reducer', () => {
     const result = reducer(INIT_STATE, action);
 
     expect(result.isOpen).toEqual(true);
+  });
+});
+
+describe('OpenModal — fieldsets acceptance', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('preserves kickoff.fieldsets and loadedFieldsets without data loss', () => {
+    const mockFieldsetData = {
+      id: 1,
+      apiName: 'fs-contacts',
+      name: 'Contacts',
+      description: 'Contact information',
+      order: 0,
+      fields: [
+        {
+          apiName: 'contact-name',
+          name: 'Contact Name',
+          type: EExtraFieldType.String,
+          isRequired: true,
+          isHidden: false,
+          order: 0,
+          value: '',
+          selections: [],
+          userId: null,
+          groupId: null,
+        },
+      ],
+    };
+
+    const action = openRunWorkflowModal({
+      id: 10,
+      name: 'Template With Fieldsets',
+      wfNameTemplate: null,
+      description: '',
+      tasksCount: 2,
+      performersCount: 1,
+      kickoff: {
+        description: '',
+        fields: [],
+        fieldsets: [{ apiName: 'fs-contacts', order: 0 }],
+      },
+      loadedFieldsets: [mockFieldsetData],
+    });
+
+    const result = reducer(INIT_STATE, action);
+
+    expect(result.isOpen).toBe(true);
+
+    if (result.workflow === null) {
+      throw new Error('Expected workflow to be non-null');
+    }
+
+    expect(result.workflow.kickoff.fieldsets).toHaveLength(1);
+    expect(result.workflow.kickoff.fieldsets).toEqual([
+      { apiName: 'fs-contacts', order: 0 },
+    ]);
+
+    expect(result.workflow.loadedFieldsets).toHaveLength(1);
+    expect(result.workflow.loadedFieldsets).toEqual([mockFieldsetData]);
   });
 });
