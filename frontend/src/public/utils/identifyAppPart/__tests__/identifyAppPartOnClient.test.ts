@@ -126,11 +126,11 @@ describe('identifyAppPartOnClient', () => {
       expect(identifyAppPartOnClient()).toBe(EAppPart.MainApp);
     });
 
-    it('partial hostname match — includes() matches substrings', () => {
+    it('partial hostname match — exact comparison rejects substrings', () => {
       mockGetBrowserConfig.mockReturnValue({ config: { formSubdomain: 'form.example.com' } });
       setWindowLocation({ hostname: 'reform.example.com' });
 
-      expect(identifyAppPartOnClient()).toBe(EAppPart.PublicFormApp);
+      expect(identifyAppPartOnClient()).toBe(EAppPart.MainApp);
     });
   });
 });
