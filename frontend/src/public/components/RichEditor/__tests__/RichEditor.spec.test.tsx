@@ -35,7 +35,7 @@ const defaultProps: IRichEditorProps = {
   withMentions: false,
 };
 
-describe('Spec §7.1 Базовое редактирование', () => {
+describe('Spec §7.1 Basic editing', () => {
   it('renders editor with placeholder and toolbar props', () => {
     render(
       <RichEditor
@@ -55,7 +55,7 @@ describe('Spec §7.1 Базовое редактирование', () => {
   });
 });
 
-describe('Spec §7.2 Переменные', () => {
+describe('Spec §7.2 Variables', () => {
   it('ref.insertVariable(apiName, title, subtitle) is callable', () => {
     const ref = React.createRef<IRichEditorHandle>();
     render(<RichEditor {...defaultProps} ref={ref} />);
@@ -82,7 +82,7 @@ describe('Spec §7.2 Переменные', () => {
 
 });
 
-describe('Spec §7.3 Чек-листы', () => {
+describe('Spec §7.3 Checklists', () => {
   it('withChecklists renders without crash', () => {
     const handleChangeChecklists = jest.fn();
     render(
@@ -98,7 +98,7 @@ describe('Spec §7.3 Чек-листы', () => {
 
 });
 
-describe('Spec §7.4 Ссылки и упоминания', () => {
+describe('Spec §7.4 Links and mentions', () => {
   it('withMentions and mentions prop render without crash', () => {
     render(
       <RichEditor
@@ -112,7 +112,7 @@ describe('Spec §7.4 Ссылки и упоминания', () => {
 
 });
 
-describe('Spec §7.5 Вложения', () => {
+describe('Spec §7.5 Attachments', () => {
   it('renders with accountId for built-in upload', () => {
     render(
       <RichEditor {...defaultProps} accountId={1} />,
@@ -130,7 +130,7 @@ describe('Spec §7.5 Вложения', () => {
 
 });
 
-describe('Spec §7.6 Интеграция с формами', () => {
+describe('Spec §7.6 Form integration', () => {
   it('TaskDescriptionEditor profile: handleChange + handleChangeChecklists + VariableList children', () => {
     const handleChange = jest.fn().mockResolvedValue('');
     const handleChangeChecklists = jest.fn();
@@ -189,7 +189,7 @@ describe('Spec §7.6 Интеграция с формами', () => {
 
 });
 
-describe('Spec §7.7 Крайние случаи', () => {
+describe('Spec §7.7 Edge cases', () => {
   it('empty defaultValue: editor mounts with empty content', () => {
     render(<RichEditor {...defaultProps} defaultValue="" />);
     expect(screen.getByTestId('rich-editor-root')).toBeInTheDocument();

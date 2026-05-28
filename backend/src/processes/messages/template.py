@@ -285,3 +285,30 @@ MSG_PT_0069 = _('Permission denied. You do not have access to this template.')
 MSG_PT_0070 = _(
     'Permission denied. You are not a template owner or viewer.',
 )
+MSG_PT_0071 = _(
+    'You should set the source step for performer '
+    'with the type "manager".',
+)
+MSG_PT_0072 = lambda name: format_lazy(
+    _(
+        'Task "{name}": Manager performer '
+        'cannot reference its own step.',
+    ),
+    name=name,
+)
+MSG_PT_0073 = lambda name, step_name: format_lazy(
+    _(
+        'Task "{name}": Manager performer references '
+        'a non-existent step "{step_name}".',
+    ),
+    name=name,
+    step_name=step_name,
+)
+MSG_PT_0074 = lambda name, step_name: format_lazy(
+    _(
+        'Task "{name}": Disable "Required completion by all" '
+        'on step "{step_name}" to use Manager performer.',
+    ),
+    name=name,
+    step_name=step_name,
+)
