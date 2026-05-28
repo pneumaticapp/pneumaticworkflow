@@ -23,6 +23,7 @@ RUN npm ci --legacy-peer-deps
 ADD . /pneumatic_frontend/
 
 # Build webpack bundle at image build time (env-independent since runtime config refactor)
+ENV NODE_OPTIONS="--max-old-space-size=3072"
 RUN npm run build-client:prod
 
 CMD ["pm2-runtime", "start", "pm2.json"]
