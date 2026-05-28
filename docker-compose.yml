@@ -77,11 +77,25 @@ services:
       RELEASE: ${RELEASE:-1.0.0}
       LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru
       CAPTCHA: ${CAPTCHA:-no}
+      RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
+      RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-}
+      RECAPTCHA_TESTING: ${RECAPTCHA_TESTING:-no}
       ANALYTICS: ${ANALYTICS:-no}
+      ANALYTICS_DEBUG: ${ANALYTICS_DEBUG:-no}
+      ANALYTICS_WRITE_KEY: ${ANALYTICS_WRITE_KEY:-}
       BILLING: ${BILLING:-no}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_WEBHOOK_IP_WHITELIST: ${STRIPE_WEBHOOK_IP_WHITELIST:-}
       SIGNUP: ${SIGNUP:-yes}
       MS_AUTH: ${MS_AUTH:-no}
+      MS_CLIENT_ID: ${MS_CLIENT_ID:-}
+      MS_CLIENT_SECRET: ${MS_CLIENT_SECRET:-}
+      MS_AUTHORITY: ${MS_AUTHORITY:-}
       GOOGLE_AUTH: ${GOOGLE_AUTH:-no}
+      GOOGLE_OAUTH2_CLIENT_ID: ${GOOGLE_OAUTH2_CLIENT_ID:-}
+      GOOGLE_OAUTH2_CLIENT_SECRET: ${GOOGLE_OAUTH2_CLIENT_SECRET:-}
+      GOOGLE_OAUTH2_REDIRECT_URI: ${GOOGLE_OAUTH2_REDIRECT_URI:-}
       SSO_AUTH: ${SSO_AUTH:-no}
       SSO_PROVIDER: ${SSO_PROVIDER:-} # Allowed values: okta, auth0
       OKTA_DOMAIN: ${OKTA_DOMAIN:-}
@@ -121,11 +135,15 @@ services:
       EMAIL_TIMEOUT: ${EMAIL_TIMEOUT:-}
       AI: ${AI:-no}
       AI_PROVIDER: ${AI_PROVIDER:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_API_ORG: ${OPENAI_API_ORG:-}
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER:-}
+      FIREBASE_PUSH_APPLICATION_CREDENTIALS: ${FIREBASE_PUSH_APPLICATION_CREDENTIALS:-/pneumatic_backend/firebase-push.json}
       STORAGE: ${STORAGE:-no}
       STORAGE_PROVIDER: ${STORAGE_PROVIDER:-}
-      GOOGLE_APPLICATION_CREDENTIALS: /pneumatic_backend/google_api_credentials.json
+      GCLOUD_BUCKET_NAME: ${GCLOUD_BUCKET_NAME:-pneumatic}
+      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-/pneumatic_backend/google_api_credentials.json}
       SENTRY_DSN: ${SENTRY_DSN:-}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
@@ -144,7 +162,7 @@ services:
       CHANNELS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/2"
       SESSION_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/3"
       CELERY_BROKER_URL: "amqp://${RABBITMQ_USER:-rabbitmq_user}:${RABBITMQ_PASSWORD:-rabbitmq_password}@rabbitmq:5672"
-      ALLOWED_HOSTS: "pneumatic-nginx ${FRONTEND_DOMAIN:-localhost}"
+      ALLOWED_HOSTS: "pneumatic-nginx ${SERVER_ADDRESS:-localhost}"
       VERIFICATION_CHECK: no
       CORS_ORIGIN_ALLOW_ALL: no
       CORS_ALLOW_CREDENTIALS: yes
@@ -180,11 +198,25 @@ services:
       RELEASE: ${RELEASE:-1.0.0}
       LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru
       CAPTCHA: ${CAPTCHA:-no}
+      RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
+      RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-}
+      RECAPTCHA_TESTING: ${RECAPTCHA_TESTING:-no}
       ANALYTICS: ${ANALYTICS:-no}
+      ANALYTICS_DEBUG: ${ANALYTICS_DEBUG:-no}
+      ANALYTICS_WRITE_KEY: ${ANALYTICS_WRITE_KEY:-}
       BILLING: ${BILLING:-no}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_WEBHOOK_IP_WHITELIST: ${STRIPE_WEBHOOK_IP_WHITELIST:-}
       SIGNUP: ${SIGNUP:-yes}
       MS_AUTH: ${MS_AUTH:-no}
+      MS_CLIENT_ID: ${MS_CLIENT_ID:-}
+      MS_CLIENT_SECRET: ${MS_CLIENT_SECRET:-}
+      MS_AUTHORITY: ${MS_AUTHORITY:-}
       GOOGLE_AUTH: ${GOOGLE_AUTH:-no}
+      GOOGLE_OAUTH2_CLIENT_ID: ${GOOGLE_OAUTH2_CLIENT_ID:-}
+      GOOGLE_OAUTH2_CLIENT_SECRET: ${GOOGLE_OAUTH2_CLIENT_SECRET:-}
+      GOOGLE_OAUTH2_REDIRECT_URI: ${GOOGLE_OAUTH2_REDIRECT_URI:-}
       SSO_AUTH: ${SSO_AUTH:-no}
       SSO_PROVIDER: ${SSO_PROVIDER:-} # Allowed values: okta, auth0
       OKTA_DOMAIN: ${OKTA_DOMAIN:-}
@@ -224,11 +256,15 @@ services:
       EMAIL_TIMEOUT: ${EMAIL_TIMEOUT:-}
       AI: ${AI:-no}
       AI_PROVIDER: ${AI_PROVIDER:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_API_ORG: ${OPENAI_API_ORG:-}
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER:-}
+      FIREBASE_PUSH_APPLICATION_CREDENTIALS: ${FIREBASE_PUSH_APPLICATION_CREDENTIALS:-/pneumatic_backend/firebase-push.json}
       STORAGE: ${STORAGE:-no}
       STORAGE_PROVIDER: ${STORAGE_PROVIDER:-}
-      GOOGLE_APPLICATION_CREDENTIALS: /pneumatic_backend/google_api_credentials.json
+      GCLOUD_BUCKET_NAME: ${GCLOUD_BUCKET_NAME:-pneumatic}
+      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-/pneumatic_backend/google_api_credentials.json}
       SENTRY_DSN: ${SENTRY_DSN:-}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
@@ -247,7 +283,7 @@ services:
       CHANNELS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/2"
       SESSION_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/3"
       CELERY_BROKER_URL: "amqp://${RABBITMQ_USER:-rabbitmq_user}:${RABBITMQ_PASSWORD:-rabbitmq_password}@rabbitmq:5672"
-      ALLOWED_HOSTS: "pneumatic-nginx ${FRONTEND_DOMAIN:-localhost}"
+      ALLOWED_HOSTS: "pneumatic-nginx ${SERVER_ADDRESS:-localhost}"
       VERIFICATION_CHECK: no
       CORS_ORIGIN_ALLOW_ALL: no
       CORS_ALLOW_CREDENTIALS: yes
@@ -278,11 +314,25 @@ services:
       RELEASE: ${RELEASE:-1.0.0}
       LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru
       CAPTCHA: ${CAPTCHA:-no}
+      RECAPTCHA_SITE_KEY: ${RECAPTCHA_SITE_KEY:-}
+      RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY:-}
+      RECAPTCHA_TESTING: ${RECAPTCHA_TESTING:-no}
       ANALYTICS: ${ANALYTICS:-no}
+      ANALYTICS_DEBUG: ${ANALYTICS_DEBUG:-no}
+      ANALYTICS_WRITE_KEY: ${ANALYTICS_WRITE_KEY:-}
       BILLING: ${BILLING:-no}
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY:-}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-}
+      STRIPE_WEBHOOK_IP_WHITELIST: ${STRIPE_WEBHOOK_IP_WHITELIST:-}
       SIGNUP: ${SIGNUP:-yes}
       MS_AUTH: ${MS_AUTH:-no}
+      MS_CLIENT_ID: ${MS_CLIENT_ID:-}
+      MS_CLIENT_SECRET: ${MS_CLIENT_SECRET:-}
+      MS_AUTHORITY: ${MS_AUTHORITY:-}
       GOOGLE_AUTH: ${GOOGLE_AUTH:-no}
+      GOOGLE_OAUTH2_CLIENT_ID: ${GOOGLE_OAUTH2_CLIENT_ID:-}
+      GOOGLE_OAUTH2_CLIENT_SECRET: ${GOOGLE_OAUTH2_CLIENT_SECRET:-}
+      GOOGLE_OAUTH2_REDIRECT_URI: ${GOOGLE_OAUTH2_REDIRECT_URI:-}
       SSO_AUTH: ${SSO_AUTH:-no}
       SSO_PROVIDER: ${SSO_PROVIDER:-} # Allowed values: okta, auth0
       OKTA_DOMAIN: ${OKTA_DOMAIN:-}
@@ -322,11 +372,15 @@ services:
       EMAIL_TIMEOUT: ${EMAIL_TIMEOUT:-}
       AI: ${AI:-no}
       AI_PROVIDER: ${AI_PROVIDER:-}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_API_ORG: ${OPENAI_API_ORG:-}
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER:-}
+      FIREBASE_PUSH_APPLICATION_CREDENTIALS: ${FIREBASE_PUSH_APPLICATION_CREDENTIALS:-/pneumatic_backend/firebase-push.json}
       STORAGE: ${STORAGE:-no}
       STORAGE_PROVIDER: ${STORAGE_PROVIDER:-}
-      GOOGLE_APPLICATION_CREDENTIALS: /pneumatic_backend/google_api_credentials.json
+      GCLOUD_BUCKET_NAME: ${GCLOUD_BUCKET_NAME:-pneumatic}
+      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-/pneumatic_backend/google_api_credentials.json}
       SENTRY_DSN: ${SENTRY_DSN:-}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
@@ -345,7 +399,7 @@ services:
       CHANNELS_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/2"
       SESSION_REDIS_URL: "redis://:${REDIS_PASSWORD:-redis_password}@redis:6379/3"
       CELERY_BROKER_URL: "amqp://${RABBITMQ_USER:-rabbitmq_user}:${RABBITMQ_PASSWORD:-rabbitmq_password}@rabbitmq:5672"
-      ALLOWED_HOSTS: "pneumatic-nginx ${FRONTEND_DOMAIN:-localhost}"
+      ALLOWED_HOSTS: "pneumatic-nginx ${SERVER_ADDRESS:-localhost}"
       VERIFICATION_CHECK: no
       CORS_ORIGIN_ALLOW_ALL: no
       CORS_ALLOW_CREDENTIALS: yes
@@ -378,6 +432,7 @@ services:
       LANGUAGE_CODE: ${LANGUAGE_CODE:-en} # Allowed values: en, fr, de, es, ru
       CAPTCHA: ${CAPTCHA:-no}
       ANALYTICS: ${ANALYTICS:-no}
+      ANALYTICS_WRITE_KEY: ${ANALYTICS_WRITE_KEY:-}
       BILLING: ${BILLING:-no}
       SIGNUP: ${SIGNUP:-yes}
       MS_AUTH: ${MS_AUTH:-no}
@@ -413,8 +468,7 @@ services:
     image: nginx:1.25.4
     container_name: pneumatic-nginx
     environment:
-      BACKEND_DOMAIN: ${BACKEND_DOMAIN:-localhost}
-      FRONTEND_DOMAIN: ${FRONTEND_DOMAIN:-localhost}
+      SERVER_ADDRESS: ${SERVER_ADDRESS:-localhost}
       FORM_DOMAIN: ${FORM_DOMAIN:-form.localhost}
       NGINX_ENVSUBST_OUTPUT_DIR: /etc/nginx/
       NGINX_ENVSUBST_TEMPLATE_DIR: /etc/nginx/templates
@@ -423,6 +477,7 @@ services:
       - ./nginx/keys/:/etc/keys/:ro
       - ./nginx/www/:/var/www/:ro
       - ${NGINX_CONF_TEMPLATE:-./nginx/templates/}:/etc/nginx/templates
+      - ./nginx/includes/:/etc/nginx/includes/:ro
       - backend-socket:/tmp/gunicorn/
       - backend-staticfiles:/tmp/backend-staticfiles/
     ports:
