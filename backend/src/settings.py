@@ -62,7 +62,7 @@ class Common(Configuration):
     if not FRONTEND_URL:
         raise Exception(
             'FRONTEND_URL is not set. '
-            'Please define FRONTEND_URL in your .env file.'
+            'Please define FRONTEND_URL in your .env file.',
         )
     EXPIRED_INVITE_PAGE = f'{FRONTEND_URL}/auth/expired-invite'
 
@@ -71,7 +71,7 @@ class Common(Configuration):
     if not FORMS_URL:
         raise Exception(
             'FORMS_URL is not set. '
-            'Please define FORMS_URL in your .env file.'
+            'Please define FORMS_URL in your .env file.',
         )
 
     # Auth
@@ -87,7 +87,7 @@ class Common(Configuration):
     if not BACKEND_URL:
         raise Exception(
             'BACKEND_URL is not set. '
-            'Please define BACKEND_URL in your .env file.'
+            'Please define BACKEND_URL in your .env file.',
         )
     BACKEND_HOST = BACKEND_URL.split('//')[1].split(':')[0]
     FRONTEND_HOST = FRONTEND_URL.split('//')[1].split(':')[0]
