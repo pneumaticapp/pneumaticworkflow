@@ -76,6 +76,7 @@ ENV_FILE_CREATED=false
 
 if [ ! -f ".env" ]; then
 
+    # 1.1 Create new .env file from default
     DEFAULT_ENV="./default.env"
     ENV_FILE="./.env"
     NGINX_CONF_TEMPLATE=./nginx/templates/
@@ -85,15 +86,11 @@ if [ ! -f ".env" ]; then
     print_info "Project configuration started"
     echo ""
 
-    # 1.1 Set Required values
+    # 1.2 Create DJANGO_SECRET_KEY
     DJANGO_SECRET_KEY=$(cat /dev/urandom | tr -dc 'abcdefghijklmnopqrstuvwxyz0123456789!@%^*()_=+' | head -c 50)
     sed -i "s|^#\?\s*DJANGO_SECRET_KEY=.*|DJANGO_SECRET_KEY=$DJANGO_SECRET_KEY|"                  "$ENV_FILE"
 
-    # =============================================================================
-    # 1.2 Set SERVER_ADDRESS
-    # =============================================================================
-
-    # 1.2.1 Prompt for SERVER_ADDRESS
+    # 1.3 Prompt server address
     DOMAIN_PATTERN='^([a-zA-Z0-9][a-zA-Z0-9-]*\.)+[a-zA-Z]{2,}$'
     IP_PATTERN='^((25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$'
 
@@ -101,7 +98,8 @@ if [ ! -f ".env" ]; then
         read -rp "Enter server address (IP, domain or localhost): " SERVER_ADDRESS
         if [[ "$SERVER_ADDRESS" =~ $DOMAIN_PATTERN ]] || \
            [[ "$SERVER_ADDRESS" =~ $IP_PATTERN ]]     || \
-           [ "$SERVER_ADDRESS" = "localhost" ]; then
+           [ "$SERVER_ADDRESS" = "localhost" ]        || \
+           [ "$SERVER_ADDRESS" = "127.0.0.1" ]; then
             break
         else
             print_error "Invalid address. Please enter an IP address, domain name or localhost."
@@ -109,52 +107,20 @@ if [ ! -f ".env" ]; then
     done
     print_info "Server address: $SERVER_ADDRESS"
 
-    # 1.2.2 Prompt for Sharable kickoff forms address
-    if [ "$ADDRESS_IS_DOMAIN" = true ]; then
-        echo ""
-        echo "Sharable kickoff forms address:"
-        echo "  1. Use default: $SERVER_ADDRESS/forms"
-        echo "  2. Enter a specific domain"
-        while true; do
-            read -rp "Enter number (1-2): " kickoff_choice
-            case "$kickoff_choice" in
-                1)
-                    KICKOFF_URL=""
-                    print_info "Kickoff forms will be served at: $SERVER_ADDRESS/forms"
-                    break
-                    ;;
-                2)
-                    KICKOFF_DOMAIN_PATTERN='^([a-zA-Z0-9][a-zA-Z0-9-]*\.)+[a-zA-Z]{2,}$'
-                    while true; do
-                        read -rp "Enter domain for kickoff forms (e.g. forms.example.com): " KICKOFF_DOMAIN
-                        if [[ "$KICKOFF_DOMAIN" =~ $KICKOFF_DOMAIN_PATTERN ]]; then
-                            break
-                        else
-                            print_error "Invalid domain. Please enter a valid domain name."
-                        fi
-                    done
-                    KICKOFF_URL="$KICKOFF_DOMAIN"
-                    print_info "Kickoff forms domain: $KICKOFF_DOMAIN"
-                    break
-                    ;;
-                *) print_error "Please enter 1 or 2." ;;
-            esac
-        done
-    fi
-
-    # 1.2.3 Address type boolean flags
+    # 1.3.2 Set address type boolean flags
     ADDRESS_IS_DOMAIN=false
     ADDRESS_IS_IP=false
     ADDRESS_IS_LOCALHOST=false
 
-    [[ "$SERVER_ADDRESS" =~ $DOMAIN_PATTERN ]] && ADDRESS_IS_DOMAIN=true
-    [[ "$SERVER_ADDRESS" =~ $IP_PATTERN ]]     && ADDRESS_IS_IP=true
-    [ "$SERVER_ADDRESS" = "localhost" ]         && ADDRESS_IS_LOCALHOST=true
+    if [ "$SERVER_ADDRESS" = "localhost" ] || [ "$SERVER_ADDRESS" = "127.0.0.1" ]; then
+        ADDRESS_IS_LOCALHOST=true
+    elif [[ "$SERVER_ADDRESS" =~ $DOMAIN_PATTERN ]]; then
+        ADDRESS_IS_DOMAIN=true
+    elif [[ "$SERVER_ADDRESS" =~ $IP_PATTERN ]]; then
+        ADDRESS_IS_IP=true
+    fi
 
-    # =============================================================================
-    # 1.2.3 Prompt for Sharable kickoff forms domain
-    # =============================================================================
-
+    # 1.4 Sharable kickoff forms domain
     FORM_DOMAIN=""
     if [ "$ADDRESS_IS_DOMAIN" = true ]; then
         echo ""
@@ -181,31 +147,26 @@ if [ ! -f ".env" ]; then
         fi
     fi
 
-    # =============================================================================
-    # 1.3 Set passwords
-    # =============================================================================
-
+    # 1.5 Passwords
     if [ "$ADDRESS_IS_LOCALHOST" = false ]; then
-        # 1.3.1 Generate passwords (not needed for localhost)
+
+        # 1.5.1 Generate passwords (not needed for localhost)
         POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
         REDIS_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
         RABBITMQ_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
 
-        # 1.3.2 Write passwords to .env
+        # 1.5.2 Write passwords to .env
         sed -i "s|^#\?\s*POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$POSTGRES_PASSWORD|"                  "$ENV_FILE"
         sed -i "s|^#\?\s*POSTGRES_REPLICA_PASSWORD=.*|POSTGRES_REPLICA_PASSWORD=$POSTGRES_PASSWORD|"  "$ENV_FILE"
         sed -i "s|^#\?\s*REDIS_PASSWORD=.*|REDIS_PASSWORD=$REDIS_PASSWORD|"                           "$ENV_FILE"
         sed -i "s|^#\?\s*RABBITMQ_PASSWORD=.*|RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD|"                  "$ENV_FILE"
     fi
 
-    # =============================================================================
-    # 1.4 Set SSL
-    # =============================================================================
-
+    # 1.6 SSL
     SSL=false
     CERTBOT_ENABLE=false
 
-    # 1.4.1 Prompt to enable SSL if SERVER_ADDRESS is a domain
+    # 1.6.1 Prompt to enable SSL if SERVER_ADDRESS is a domain
     if [ "$ADDRESS_IS_DOMAIN" = true ]; then
         echo ""
         while true; do
@@ -217,9 +178,20 @@ if [ ! -f ".env" ]; then
             esac
         done
         [ "$SSL" = true ] && print_info "SSL enabled"
+
+        # 1.6.2 Write SSL to .env
+        _ssl_value="no"
+        [ "$SSL" = true ] && _ssl_value="yes"
+        sed -i "s|^#\?\s*SSL=.*|SSL=$_ssl_value|" "$ENV_FILE"
+
+        # 1.6.3 Write $CERTBOT_ENABLE to .env
+        _certbot_enable_value="no"
+        [ "$CERTBOT_ENABLE" = true ] && _certbot_enable_value="yes"
+        sed -i "s|^#\?\s*CERTBOT_ENABLE=.*|CERTBOT_ENABLE=$_certbot_enable_value|" "$ENV_FILE"
+
     fi
 
-    # 1.4.2 Prompt for CERTBOT_EMAIL if SSL is enabled
+    # 1.7 Prompt for CERTBOT_EMAIL if SSL is enabled
     if [ "$CERTBOT_ENABLE" = true ]; then
         EMAIL_PATTERN='^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$'
         echo ""
@@ -232,9 +204,12 @@ if [ ! -f ".env" ]; then
             fi
         done
         print_info "Let's Encrypt certificate will be registered to: $CERTBOT_EMAIL"
+
+        # 1.7.1  Write $CERTBOT_EMAIL to .env
+        sed -i "s|^#\?\s*CERTBOT_EMAIL=.*|CERTBOT_EMAIL=$CERTBOT_EMAIL|" "$ENV_FILE"
     fi
 
-    # 1.4.3 Set NGINX_CONF_TEMPLATE
+    # 1.8 Set Nginx conf template
     if [ "$CERTBOT_ENABLE" = true ] && [ -n "$FORM_DOMAIN" ]; then
         NGINX_CONF_TEMPLATE=./nginx/ssl_forms_templates/
     elif [ "$CERTBOT_ENABLE" = true ]; then
@@ -242,46 +217,37 @@ if [ ! -f ".env" ]; then
     else
         NGINX_CONF_TEMPLATE=./nginx/templates/
     fi
-
-    # 1.4.4 Write SSL settings to .env
-    _ssl_value="no"
-    [ "$SSL" = true ] && _ssl_value="yes"
-    _certbot_enable_value="no"
-    [ "$CERTBOT_ENABLE" = true ] && _certbot_enable_value="yes"
-    sed -i "s|^#\?\s*SSL=.*|SSL=$_ssl_value|"                                                       "$ENV_FILE"
-    sed -i "s|^#\?\s*CERTBOT_ENABLE=.*|CERTBOT_ENABLE=$_certbot_enable_value|"                     "$ENV_FILE"
-    sed -i "s|^#\?\s*CERTBOT_EMAIL=.*|CERTBOT_EMAIL=$CERTBOT_EMAIL|"                               "$ENV_FILE"
-    sed -i "s|^#\?\s*NGINX_CONF_TEMPLATE=.*|NGINX_CONF_TEMPLATE=$NGINX_CONF_TEMPLATE|"             "$ENV_FILE"
+    sed -i "s|^#\?\s*NGINX_CONF_TEMPLATE=.*|NGINX_CONF_TEMPLATE=$NGINX_CONF_TEMPLATE|" "$ENV_FILE"
 
     echo ""
     print_info "Setup completed"
-    # =============================================================================
-    # 1.5 Write SERVER_ADDRESS and URLs to .env
-    # =============================================================================
 
-    # 1.5.1 Set protocol variables
+    # 1.9 Set protocol variables
     HTTP_PROTOCOL=http
     WS_PROTOCOL=ws
     [ "$CERTBOT_ENABLE" = true ] && HTTP_PROTOCOL=https
     [ "$CERTBOT_ENABLE" = true ] && WS_PROTOCOL=wss
 
-    sed -i "s|^#\?\s*SERVER_ADDRESS=.*|SERVER_ADDRESS=$SERVER_ADDRESS|"                             "$ENV_FILE"
-    sed -i "s|^#\?\s*BACKEND_URL=.*|BACKEND_URL=$HTTP_PROTOCOL://$SERVER_ADDRESS:8001|"             "$ENV_FILE"
-    sed -i "s|^#\?\s*FRONTEND_URL=.*|FRONTEND_URL=$HTTP_PROTOCOL://$SERVER_ADDRESS|"                "$ENV_FILE"
-    sed -i "s|^#\?\s*WSS_URL=.*|WSS_URL=$WS_PROTOCOL://$SERVER_ADDRESS:8001|"                       "$ENV_FILE"
+    # 1.10 Write addresses and URLs to .env
+    sed -i "s|^#\?\s*SERVER_ADDRESS=.*|SERVER_ADDRESS=$SERVER_ADDRESS|"                   "$ENV_FILE"
+    sed -i "s|^#\?\s*BACKEND_URL=.*|BACKEND_URL=$HTTP_PROTOCOL://$SERVER_ADDRESS:8001|"   "$ENV_FILE"
+    sed -i "s|^#\?\s*FRONTEND_URL=.*|FRONTEND_URL=$HTTP_PROTOCOL://$SERVER_ADDRESS|"      "$ENV_FILE"
+    sed -i "s|^#\?\s*WSS_URL=.*|WSS_URL=$WS_PROTOCOL://$SERVER_ADDRESS:8001|"             "$ENV_FILE"
+
+    # 1.11 Write forms url to .env
     if [ -n "$FORM_DOMAIN" ]; then
         FORMS_URL="$HTTP_PROTOCOL://$FORM_DOMAIN"
     else
         FORMS_URL="$HTTP_PROTOCOL://$SERVER_ADDRESS/forms"
     fi
-    sed -i "s|^#\?\s*FORMS_URL=.*|FORMS_URL=$FORMS_URL|"                                            "$ENV_FILE"
+    sed -i "s|^#\?\s*FORMS_URL=.*|FORMS_URL=$FORMS_URL|"  "$ENV_FILE"
+
 
 fi
 
 # =============================================================================
 # 2. Start Docker containers
 # =============================================================================
-
 
 # 2.1 Select docker-compose configuration
 echo ""
@@ -335,7 +301,20 @@ fi
 # 3. Summary
 # =============================================================================
 
+# Read FRONTEND_URL from .env if not already set (e.g. on repeated runs)
+if [ -z "$FRONTEND_URL" ] && [ -f ".env" ]; then
+    FRONTEND_URL=$(grep -E '^FRONTEND_URL=' .env | cut -d'=' -f2-)
+fi
+
 echo ""
 echo "Pneumatic Workflow started successfully!"
-print_info "Please wait a few minutes for all services to fully start"
+echo "The application is available at $FRONTEND_URL"
+print_warning "Please wait a few minutes for all services to fully start"
+print_warning ""
+
+if [ "$CERTBOT_ENABLE" = true ]; then
+    print_warning "SSL Let's Encrypt certificate was not created automatically. This feature will be available in the next patch."
+    print_warning "Install certbot on the host machine and copy the certificates to the nginx/keys/your-domain/ directory."
+fi
+
 echo ""
