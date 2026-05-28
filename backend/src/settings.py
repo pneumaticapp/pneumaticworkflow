@@ -59,10 +59,20 @@ class Common(Configuration):
 
     # Frontend
     FRONTEND_URL = env.get('FRONTEND_URL')
+    if not FRONTEND_URL:
+        raise Exception(
+            'FRONTEND_URL is not set. '
+            'Please define FRONTEND_URL in your .env file.'
+        )
     EXPIRED_INVITE_PAGE = f'{FRONTEND_URL}/auth/expired-invite'
 
     # Forms
     FORMS_URL = env.get('FORMS_URL')
+    if not FORMS_URL:
+        raise Exception(
+            'FORMS_URL is not set. '
+            'Please define FORMS_URL in your .env file.'
+        )
 
     # Auth
     AUTH_USER_MODEL = 'accounts.User'
@@ -74,6 +84,11 @@ class Common(Configuration):
     USER_TRANSFER_TOKEN_LIFETIME_IN_DAYS = 7
 
     BACKEND_URL = env.get('BACKEND_URL')
+    if not BACKEND_URL:
+        raise Exception(
+            'BACKEND_URL is not set. '
+            'Please define BACKEND_URL in your .env file.'
+        )
     BACKEND_HOST = BACKEND_URL.split('//')[1].split(':')[0]
     FRONTEND_HOST = FRONTEND_URL.split('//')[1].split(':')[0]
     FORMS_HOST = FORMS_URL.split('//')[1].split(':')[0]
