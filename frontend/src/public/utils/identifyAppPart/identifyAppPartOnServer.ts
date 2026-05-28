@@ -1,5 +1,5 @@
 import { Request } from 'express';
-import { GUEST_URLS, FORMS_PATH_PREFIX } from './constants';
+import { GUEST_URLS, FORMS_PATH_PREFIX, isFormPath } from './constants';
 import { EAppPart } from './types';
 
 import { getConfig } from '../getConfig';
@@ -9,13 +9,10 @@ export const identifyAppPartOnServer = (req: Request): EAppPart => {
 
   const identifyAppPartMap = [
     {
-      // Path-based forms: domain.com/forms/*
-      check: () => req.baseUrl === FORMS_PATH_PREFIX || req.path.startsWith(`${FORMS_PATH_PREFIX}/`),
-      appPart: EAppPart.PublicFormApp,
-    },
-    {
-      // Subdomain forms: form.domain.com/* (FORM_DOMAIN)
-      check: () => !!formSubdomain && req.hostname.includes(formSubdomain),
+      // Forms: path-based (domain.com/forms/*), subdomain (form.domain.com/*),
+      // or Express-mounted sub-app at /forms
+      check: () => req.baseUrl === FORMS_PATH_PREFIX
+        || isFormPath(req.hostname, req.path, formSubdomain),
       appPart: EAppPart.PublicFormApp,
     },
     {

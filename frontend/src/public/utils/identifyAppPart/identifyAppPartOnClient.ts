@@ -1,4 +1,4 @@
-import { GUEST_URLS, getFormsBasename } from './constants';
+import { GUEST_URLS, isFormPath } from './constants';
 import { EAppPart } from './types';
 
 import { getBrowserConfig } from '../getConfig';
@@ -9,14 +9,12 @@ export const identifyAppPartOnClient = (): EAppPart => {
 
   const identifyAppPartMap = [
     {
-      // Path-based forms: domain.com/forms/*
-      check: () => !!getFormsBasename(window.location.pathname),
-      appPart: EAppPart.PublicFormApp,
-    },
-    {
-      // Subdomain forms: form.domain.com/* (FORM_DOMAIN)
-      check: () => !!formSubdomain
-        && window.location.hostname.includes(formSubdomain),
+      // Forms: path-based (domain.com/forms/*) or subdomain (form.domain.com/*)
+      check: () => isFormPath(
+        window.location.hostname,
+        window.location.pathname,
+        formSubdomain,
+      ),
       appPart: EAppPart.PublicFormApp,
     },
     {
