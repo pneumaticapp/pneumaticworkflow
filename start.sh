@@ -77,28 +77,39 @@ fi
 GIT_BRANCH=$(git -C "$SCRIPT_DIR" rev-parse --abbrev-ref HEAD 2>/dev/null || echo "unknown")
 
 # =============================================================================
-# 1. Check for incomplete setup
+# 1. Configuration status checks
 # =============================================================================
 
-if [ -f ".env" ] && grep -q "^SETUP_INCOMPLETE=yes" ".env"; then
+if [ -f ".env" ]; then
 
-    print_error "Previous setup was interrupted. The .env file is incomplete."
-    echo ""
-    echo "  1. Delete .env and restart setup (recommended)"
-    echo "  2. Exit and edit .env manually"
-    read -rp "Enter number (1-2): " INCOMPLETE_CHOICE
-    INCOMPLETE_CHOICE=$(strip_invisible "$INCOMPLETE_CHOICE")
-    case "$INCOMPLETE_CHOICE" in
-        1)
-            rm ".env"
-            print_info "Restarting setup..."
-            exec bash "$0"
-            ;;
-        *)
-            print_warning "Exiting. Edit .env manually, then run the script again."
-            exit 0
-            ;;
-    esac
+    if grep -q "^SETUP_INCOMPLETE=yes" ".env"; then
+
+        # 1.1 Setup was interrupted
+        print_error "Previous setup was interrupted. The .env file is incomplete."
+        echo ""
+        echo "  1. Delete .env and restart setup (recommended)"
+        echo "  2. Exit and edit .env manually"
+        read -rp "Enter number (1-2): " INCOMPLETE_CHOICE
+        INCOMPLETE_CHOICE=$(strip_invisible "$INCOMPLETE_CHOICE")
+        case "$INCOMPLETE_CHOICE" in
+            1)
+                rm ".env"
+                print_info "Restarting setup..."
+                exec bash "$0"
+                ;;
+            *)
+                print_warning "Exiting. Edit .env manually, then run the script again."
+                exit 0
+                ;;
+        esac
+
+    else
+
+        # 1.2 Setup already complete (repeated run)
+        print_info "To change the current configuration, edit the .env file manually following the instructions:"
+        echo "https://github.com/pneumaticapp/pneumaticworkflow/wiki/Configuration"
+
+    fi
 
 fi
 
