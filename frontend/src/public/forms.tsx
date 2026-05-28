@@ -28,7 +28,7 @@ const {
 } = getPublicFormConfig();
 
 const formsHistory = createBrowserHistory({
-  basename: getFormsBasename(window.location.pathname),
+  basename: getFormsBasename(window.location.pathname) || '/',
 });
 const currentAppLocale = AppLocale[defaultLocale];
 

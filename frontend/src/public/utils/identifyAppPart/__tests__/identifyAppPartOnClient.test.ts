@@ -35,38 +35,36 @@ describe('identifyAppPartOnClient', () => {
     (history as any).location.pathname = '/';
   });
 
-  describe('path-based forms', () => {
-    beforeEach(() => {
+  describe('forms detection', () => {
+    it('returns PublicFormApp for path-based forms (/forms/*)', () => {
       mockGetBrowserConfig.mockReturnValue({ config: { formSubdomain: '' } });
-    });
-
-    it('returns PublicFormApp when pathname starts with FORMS_PATH_PREFIX/', () => {
       setWindowLocation({ pathname: `${FORMS_PATH_PREFIX}/abc123` });
 
       expect(identifyAppPartOnClient()).toBe(EAppPart.PublicFormApp);
     });
 
-    it('returns PublicFormApp when pathname equals FORMS_PATH_PREFIX', () => {
+    it('returns PublicFormApp when pathname equals /forms', () => {
+      mockGetBrowserConfig.mockReturnValue({ config: { formSubdomain: '' } });
       setWindowLocation({ pathname: FORMS_PATH_PREFIX });
 
       expect(identifyAppPartOnClient()).toBe(EAppPart.PublicFormApp);
     });
-  });
 
-  describe('subdomain forms', () => {
-    it('returns PublicFormApp when hostname matches formSubdomain', () => {
+    it('returns PublicFormApp for subdomain forms', () => {
       mockGetBrowserConfig.mockReturnValue({ config: { formSubdomain: 'form.example.com' } });
       setWindowLocation({ hostname: 'form.example.com' });
 
       expect(identifyAppPartOnClient()).toBe(EAppPart.PublicFormApp);
     });
 
-    it('returns MainApp when formSubdomain is empty string (no false positive)', () => {
-      mockGetBrowserConfig.mockReturnValue({ config: { formSubdomain: '' } });
-      setWindowLocation({ hostname: 'localhost', pathname: '/dashboard' });
-      (history as any).location.pathname = '/dashboard';
+    it('returns PublicFormApp when both path and subdomain match', () => {
+      mockGetBrowserConfig.mockReturnValue({ config: { formSubdomain: 'form.example.com' } });
+      setWindowLocation({
+        pathname: `${FORMS_PATH_PREFIX}/token`,
+        hostname: 'form.example.com',
+      });
 
-      expect(identifyAppPartOnClient()).toBe(EAppPart.MainApp);
+      expect(identifyAppPartOnClient()).toBe(EAppPart.PublicFormApp);
     });
   });
 
@@ -93,17 +91,13 @@ describe('identifyAppPartOnClient', () => {
 
       expect(identifyAppPartOnClient()).toBe(EAppPart.MainApp);
     });
-  });
 
-  describe('priority order', () => {
-    it('path-based forms takes priority over subdomain', () => {
-      mockGetBrowserConfig.mockReturnValue({ config: { formSubdomain: 'form.example.com' } });
-      setWindowLocation({
-        pathname: `${FORMS_PATH_PREFIX}/token`,
-        hostname: 'form.example.com',
-      });
+    it('returns MainApp when formSubdomain is empty string', () => {
+      mockGetBrowserConfig.mockReturnValue({ config: { formSubdomain: '' } });
+      setWindowLocation({ hostname: 'localhost', pathname: '/dashboard' });
+      (history as any).location.pathname = '/dashboard';
 
-      expect(identifyAppPartOnClient()).toBe(EAppPart.PublicFormApp);
+      expect(identifyAppPartOnClient()).toBe(EAppPart.MainApp);
     });
   });
 
