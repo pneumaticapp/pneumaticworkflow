@@ -27,6 +27,14 @@ NC='\033[0m'
 print_error()   { echo -e "${RED}$1${NC}"; }
 print_warning() { echo -e "${ORANGE}$1${NC}"; }
 print_info()    { echo -e "${GREEN}$1${NC}"; }
+strip_invisible() {
+    local s
+    # Remove ANSI/VT escape sequences (e.g. bracket paste mode: \e[200~ ... \e[201~)
+    s=$(printf '%s' "$1" | sed 's/\x1b\[[0-9;?]*[A-Za-z~]//g')
+    # Remove leading and trailing whitespace and control characters (CR, BOM, etc.)
+    s=$(printf '%s' "$s" | LC_ALL=C sed 's/^[[:space:][:cntrl:]]*//; s/[[:space:][:cntrl:]]*$//')
+    printf '%s' "$s"
+}
 
 echo ""
 echo -e "${ORANGE}"
@@ -79,6 +87,7 @@ if [ -f ".env" ] && grep -q "^SETUP_INCOMPLETE=yes" ".env"; then
     echo "  1. Delete .env and restart setup (recommended)"
     echo "  2. Exit and edit .env manually"
     read -rp "Enter number (1-2): " INCOMPLETE_CHOICE
+    INCOMPLETE_CHOICE=$(strip_invisible "$INCOMPLETE_CHOICE")
     case "$INCOMPLETE_CHOICE" in
         1)
             rm ".env"
@@ -123,6 +132,7 @@ if [ ! -f ".env" ]; then
 
     while true; do
         read -rp "Enter server address (IP, domain or localhost): " SERVER_ADDRESS
+        SERVER_ADDRESS=$(strip_invisible "$SERVER_ADDRESS")
         if [[ "$SERVER_ADDRESS" =~ $DOMAIN_PATTERN ]] || \
            [[ "$SERVER_ADDRESS" =~ $IP_PATTERN ]]     || \
            [ "$SERVER_ADDRESS" = "localhost" ]        || \
@@ -152,11 +162,13 @@ if [ ! -f ".env" ]; then
     if [ "$ADDRESS_IS_DOMAIN" = true ]; then
         echo ""
         read -rp "Use default address for Sharable kickoff forms ($SERVER_ADDRESS/forms)? [Y/n]: " forms_choice
+        forms_choice=$(strip_invisible "$forms_choice")
         case "$forms_choice" in
             [Nn]|[Nn][Oo])
                 # 2.4.1 Prompt for a separate kickoff forms domain
                 while true; do
                     read -rp "Enter domain for Sharable kickoff forms (e.g. forms.example.com): " FORM_DOMAIN
+                    FORM_DOMAIN=$(strip_invisible "$FORM_DOMAIN")
                     if [[ "$FORM_DOMAIN" =~ $DOMAIN_PATTERN ]]; then
                         break
                     else
@@ -198,6 +210,7 @@ if [ ! -f ".env" ]; then
         echo ""
         while true; do
             read -rp "Enable SSL for $SERVER_ADDRESS? A free Let's Encrypt certificate will be used [y/n]: " ssl_choice
+            ssl_choice=$(strip_invisible "$ssl_choice")
             case "$ssl_choice" in
                 [Yy]|[Yy][Ee][Ss]) SSL=true;  CERTBOT_ENABLE=true;  break ;;
                 [Nn]|[Nn][Oo])     SSL=false; CERTBOT_ENABLE=false; break ;;
@@ -224,6 +237,7 @@ if [ ! -f ".env" ]; then
         echo ""
         while true; do
             read -rp "Enter email for registration free Let's Encrypt SSL certificate: " CERTBOT_EMAIL
+            CERTBOT_EMAIL=$(strip_invisible "$CERTBOT_EMAIL")
             if [[ "$CERTBOT_EMAIL" =~ $EMAIL_PATTERN ]]; then
                 break
             else
@@ -287,6 +301,7 @@ echo "  3. From sources (Branch: \"$GIT_BRANCH\")"
 
 while true; do
     read -r -p "Enter number (1-3): " COMPOSE_FILE
+    COMPOSE_FILE=$(strip_invisible "$COMPOSE_FILE")
 
     if ! [[ "$COMPOSE_FILE" =~ ^[0-9]+$ ]]; then
         print_error "Please enter a number."
