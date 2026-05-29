@@ -582,7 +582,7 @@ describe('template utilities', () => {
         ],
       });
 
-      const cleaned = cleanTemplateReferences(template);
+      const cleaned = cleanTemplateReferences(template, emptyFieldsetsMap);
 
       expect(cleaned.tasks[0].rawPerformers).toHaveLength(1);
       expect(cleaned.tasks[0].rawPerformers[0].type).toBe(ETaskPerformerType.User);
@@ -604,7 +604,7 @@ describe('template utilities', () => {
         ],
       });
 
-      const cleaned = cleanTemplateReferences(template);
+      const cleaned = cleanTemplateReferences(template, emptyFieldsetsMap);
 
       expect(cleaned.tasks[1].rawPerformers).toHaveLength(1);
       expect(cleaned.tasks[1].rawPerformers[0].type).toBe(ETaskPerformerType.Manager);
@@ -624,7 +624,7 @@ describe('template utilities', () => {
         ],
       });
 
-      const cleaned = cleanTemplateReferences(template);
+      const cleaned = cleanTemplateReferences(template, emptyFieldsetsMap);
 
       expect(cleaned.tasks[0].rawPerformers).toHaveLength(0);
     });

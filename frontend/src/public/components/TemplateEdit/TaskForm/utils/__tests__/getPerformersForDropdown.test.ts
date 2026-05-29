@@ -28,6 +28,7 @@ describe('getPerformersForDropdown', () => {
     checklists: [],
     revertTask: null,
     ancestors: [],
+    fieldsets: [],
     ...overrides,
   });
 
