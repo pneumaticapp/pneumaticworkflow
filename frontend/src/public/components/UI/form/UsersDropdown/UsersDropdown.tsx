@@ -15,6 +15,7 @@ export enum EOptionTypes {
   User = ETaskPerformerType.User,
   Starter = ETaskPerformerType.WorkflowStarter,
   Field = ETaskPerformerType.OutputUser,
+  Manager = ETaskPerformerType.Manager,
   InviteUsers = 'invite-users',
   AllUsers = 'all-users',
 }

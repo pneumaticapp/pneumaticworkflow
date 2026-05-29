@@ -691,6 +691,7 @@ class TemplateSerializer(
                 'parents_by_tasks': parents_by_tasks,
                 'ancestors_by_tasks': ancestors_by_tasks,
                 'tasks_fieldsets': tasks_fieldsets,
+                'all_tasks_data': validated_data['tasks'],
             },
         )
 
@@ -792,6 +793,7 @@ class TemplateSerializer(
                 'parents_by_tasks': parents_by_tasks,
                 'ancestors_by_tasks': ancestors_by_tasks,
                 'tasks_fieldsets': tasks_fieldsets,
+                'all_tasks_data': validated_data['tasks'],
             },
         )
 

@@ -566,6 +566,68 @@ describe('template utilities', () => {
       expect(rules[2].field).toBeUndefined();
       expect(rules[3].field).toBeNull();
     });
+
+    it('removes Manager performer when source step is deleted from template', () => {
+      const template = createMockTemplate({
+        tasks: [
+          {
+            ...createMockTemplate().tasks[0],
+            apiName: 'task-1',
+            number: 1,
+            rawPerformers: [
+              { type: ETaskPerformerType.Manager, sourceId: 'task-deleted', label: 'Manager: Deleted', apiName: 'perf-mgr-1' },
+              { type: ETaskPerformerType.User, sourceId: '1', label: 'Regular User', apiName: 'perf-user-1' },
+            ],
+          },
+        ],
+      });
+
+      const cleaned = cleanTemplateReferences(template);
+
+      expect(cleaned.tasks[0].rawPerformers).toHaveLength(1);
+      expect(cleaned.tasks[0].rawPerformers[0].type).toBe(ETaskPerformerType.User);
+    });
+
+    it('preserves Manager performer when source step exists in template', () => {
+      const baseTask = createMockTemplate().tasks[0];
+      const template = createMockTemplate({
+        tasks: [
+          { ...baseTask, apiName: 'task-1', number: 1 },
+          {
+            ...baseTask,
+            apiName: 'task-2',
+            number: 2,
+            rawPerformers: [
+              { type: ETaskPerformerType.Manager, sourceId: 'task-1', label: 'Manager: Task 1', apiName: 'perf-mgr-1' },
+            ],
+          },
+        ],
+      });
+
+      const cleaned = cleanTemplateReferences(template);
+
+      expect(cleaned.tasks[1].rawPerformers).toHaveLength(1);
+      expect(cleaned.tasks[1].rawPerformers[0].type).toBe(ETaskPerformerType.Manager);
+      expect(cleaned.tasks[1].rawPerformers[0].sourceId).toBe('task-1');
+    });
+
+    it('removes Manager performer with empty sourceId', () => {
+      const template = createMockTemplate({
+        tasks: [
+          {
+            ...createMockTemplate().tasks[0],
+            rawPerformers: [
+              { type: ETaskPerformerType.Manager, sourceId: '', label: 'Manager: ?', apiName: 'perf-mgr-empty' },
+              { type: ETaskPerformerType.Manager, sourceId: null, label: 'Manager: null', apiName: 'perf-mgr-null' },
+            ],
+          },
+        ],
+      });
+
+      const cleaned = cleanTemplateReferences(template);
+
+      expect(cleaned.tasks[0].rawPerformers).toHaveLength(0);
+    });
   });
 });
 

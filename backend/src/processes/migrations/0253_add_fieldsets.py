@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('accounts', '0142_vacation_fields'),
-        ('processes', '0251_add_skip_for_starter'),
+        ('processes', '0252_add_manager_performer_type'),
     ]
 
     operations = [
@@ -201,5 +201,74 @@ class Migration(migrations.Migration):
             WHERE  pt.rule_id   = rt.id
               AND  pt.operator  = 'completed'
               AND  pt.field_type = 'task'
+        """),
+        migrations.RunSQL("""
+            UPDATE processes_templatedraft td
+            SET draft = (
+                SELECT jsonb_set(
+                    td.draft,
+                    '{tasks}',
+                    jsonb_agg(
+                        CASE
+                            WHEN jsonb_typeof(task->'conditions') = 'array' THEN
+                                jsonb_set(
+                                    task,
+                                    '{conditions}',
+                                    (
+                                        SELECT jsonb_agg(
+                                            CASE
+                                                WHEN jsonb_typeof(cond->'rules') = 'array' THEN
+                                                    jsonb_set(
+                                                        cond,
+                                                        '{rules}',
+                                                        (
+                                                            SELECT jsonb_agg(
+                                                                CASE
+                                                                    WHEN jsonb_typeof(rule->'predicates') = 'array' THEN
+                                                                        jsonb_set(
+                                                                            rule,
+                                                                            '{predicates}',
+                                                                            (
+                                                                                SELECT jsonb_agg(
+                                                                                    CASE
+                                                                                        WHEN (pred->>'operator') = 'completed'
+                                                                                         AND (pred->>'field_type') = 'task'
+                                                                                        THEN jsonb_set(pred, '{operator}', '"completed_or_skipped"')
+                                                                                        ELSE pred
+                                                                                    END
+                                                                                )
+                                                                                FROM jsonb_array_elements(rule->'predicates') AS pred
+                                                                            )
+                                                                        )
+                                                                    ELSE rule
+                                                                END
+                                                            )
+                                                            FROM jsonb_array_elements(cond->'rules') AS rule
+                                                        )
+                                                    )
+                                                ELSE cond
+                                            END
+                                        )
+                                        FROM jsonb_array_elements(task->'conditions') AS cond
+                                    )
+                                )
+                            ELSE task
+                        END
+                    )
+                )
+                FROM jsonb_array_elements(td.draft->'tasks') AS task
+            )
+            WHERE td.is_deleted = FALSE
+              AND td.draft IS NOT NULL
+              AND jsonb_typeof(td.draft->'tasks') = 'array'
+              AND EXISTS (
+                  SELECT 1
+                  FROM jsonb_array_elements(td.draft->'tasks') AS task,
+                       jsonb_array_elements(task->'conditions') AS cond,
+                       jsonb_array_elements(cond->'rules') AS rule,
+                       jsonb_array_elements(rule->'predicates') AS pred
+                  WHERE (pred->>'operator') = 'completed'
+                    AND (pred->>'field_type') = 'task'
+              )
         """)
     ]

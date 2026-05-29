@@ -148,6 +148,7 @@ export function TaskForm({
         <TaskPerformers
           users={users}
           task={task}
+          tasks={tasks}
           variables={listVariables}
           setCurrentTask={setCurrentTask}
           isTeamInvitesModalOpen={isTeamInvitesModalOpen}

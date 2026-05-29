@@ -138,6 +138,7 @@ export enum ETaskPerformerType {
   OutputUser = 'field',
   WorkflowStarter = 'workflow_starter',
   UserGroup = 'group',
+  Manager = 'manager',
 }
 
 export interface ITemplateResponse extends Omit<ITemplate, 'id' | 'tasks' | 'tasksCount' | 'performersCount'> {
