@@ -15,292 +15,372 @@ from src.shared_kernel.permissions import (
 )
 
 
-def _make_request(user=None, *, has_user: bool = True) -> MagicMock:
-    """Create a mock request with optional user."""
-    request = MagicMock(spec=Request)
-    if has_user and user is not None:
-        request.state.user = user
-    elif not has_user:
-        # Simulate missing user attribute
-        del request.state.user
-        request.state = MagicMock(spec=[])
-    else:
-        request.state.user = None
-    return request
+@pytest.fixture
+def make_perm_request():
+    """Factory for mock requests with optional user."""
+
+    def _factory(user=None, *, has_user: bool = True):
+        request = MagicMock(spec=Request)
+        if has_user and user is not None:
+            request.state.user = user
+        elif not has_user:
+            del request.state.user
+            request.state = MagicMock(spec=[])
+        else:
+            request.state.user = None
+        return request
+
+    return _factory
 
 
-def _make_user(
-    auth_type: str = UserType.AUTHENTICATED,
-    is_anonymous: bool = False,
-) -> MagicMock:
-    """Create a mock user."""
-    user = MagicMock()
-    user.auth_type = auth_type
-    user.is_anonymous = is_anonymous
-    return user
+@pytest.fixture
+def make_perm_user():
+    """Factory for mock users."""
+
+    def _factory(
+        auth_type: str = UserType.AUTHENTICATED,
+        is_anonymous: bool = False,
+    ):
+        user = MagicMock()
+        user.auth_type = auth_type
+        user.is_anonymous = is_anonymous
+        return user
+
+    return _factory
 
 
-class TestIsAuthenticated:
-    """Test IsAuthenticated permission."""
-
-    @pytest.mark.asyncio
-    async def test_has_permission__authed_user__true(self):
-        """Authenticated user passes."""
-        # arrange
-        user = _make_user()
-        request = _make_request(user)
-
-        # act
-        result = await IsAuthenticated().has_permission(request)
-
-        # assert
-        assert result is True
-
-    @pytest.mark.asyncio
-    async def test_has_permission__anonymous__false(self):
-        """Anonymous user is denied."""
-        # arrange
-        user = _make_user(is_anonymous=True)
-        request = _make_request(user)
-
-        # act
-        result = await IsAuthenticated().has_permission(request)
-
-        # assert
-        assert result is False
-
-    @pytest.mark.asyncio
-    async def test_has_permission__no_user__false(self):
-        """No user on request is denied."""
-        # arrange
-        request = _make_request(has_user=False)
-
-        # act
-        result = await IsAuthenticated().has_permission(request)
-
-        # assert
-        assert result is False
-
-    @pytest.mark.asyncio
-    async def test_has_permission__user_none__false(self):
-        """User is None is denied."""
-        # arrange
-        request = _make_request(user=None)
-
-        # act
-        result = await IsAuthenticated().has_permission(request)
-
-        # assert
-        assert result is False
-
-    @pytest.mark.asyncio
-    async def test_call__denied__raise_error(self):
-        """Denied user raises PermissionDeniedError."""
-        # arrange
-        request = _make_request(has_user=False)
-
-        # act & assert
-        with pytest.raises(PermissionDeniedError):
-            await IsAuthenticated()(request)
+# --- IsAuthenticated ---
 
 
-class TestDenyPublicToken:
-    """Test DenyPublicToken permission."""
+@pytest.mark.asyncio
+async def test_is_authenticated__authed_user__true(
+    make_perm_user,
+    make_perm_request,
+):
 
-    @pytest.mark.asyncio
-    async def test_has_permission__session_token__true(self):
-        """Session token user is allowed."""
-        # arrange
-        user = _make_user(auth_type=UserType.AUTHENTICATED)
-        request = _make_request(user)
+    # arrange
+    user = make_perm_user()
+    request = make_perm_request(user)
 
-        # act
-        result = await DenyPublicToken().has_permission(request)
+    # act
+    result = await IsAuthenticated().has_permission(request)
 
-        # assert
-        assert result is True
+    # assert
+    assert result is True
 
-    @pytest.mark.asyncio
-    async def test_has_permission__public_token__false(self):
-        """Public token user is denied."""
-        # arrange
-        user = _make_user(auth_type=UserType.PUBLIC_TOKEN)
-        request = _make_request(user)
 
-        # act
-        result = await DenyPublicToken().has_permission(request)
+@pytest.mark.asyncio
+async def test_is_authenticated__anonymous__false(
+    make_perm_user,
+    make_perm_request,
+):
+
+    # arrange
+    user = make_perm_user(is_anonymous=True)
+    request = make_perm_request(user)
+
+    # act
+    result = await IsAuthenticated().has_permission(request)
+
+    # assert
+    assert result is False
+
+
+@pytest.mark.asyncio
+async def test_is_authenticated__no_user__false(
+    make_perm_request,
+):
+
+    # arrange
+    request = make_perm_request(has_user=False)
+
+    # act
+    result = await IsAuthenticated().has_permission(request)
+
+    # assert
+    assert result is False
+
+
+@pytest.mark.asyncio
+async def test_is_authenticated__user_none__false(
+    make_perm_request,
+):
+
+    # arrange
+    request = make_perm_request(user=None)
+
+    # act
+    result = await IsAuthenticated().has_permission(request)
+
+    # assert
+    assert result is False
+
+
+@pytest.mark.asyncio
+async def test_is_authenticated__denied__raise_error(
+    make_perm_request,
+):
+
+    # arrange
+    request = make_perm_request(has_user=False)
+
+    # act
+    with pytest.raises(PermissionDeniedError):
 
         # assert
-        assert result is False
-
-    @pytest.mark.asyncio
-    async def test_has_permission__user_none__false(self):
-        """User is None → deny (safe default)."""
-        # arrange
-        request = _make_request(user=None)
-
-        # act
-        result = await DenyPublicToken().has_permission(request)
-
-        # assert
-        assert result is False
-
-    @pytest.mark.asyncio
-    async def test_has_permission__no_user_attr__false(self):
-        """No user attribute on request → deny."""
-        # arrange
-        request = _make_request(has_user=False)
-
-        # act
-        result = await DenyPublicToken().has_permission(request)
-
-        # assert
-        assert result is False
-
-    @pytest.mark.asyncio
-    async def test_call__public_token__raise_error(self):
-        """Public token raises PermissionDeniedError."""
-        # arrange
-        user = _make_user(auth_type=UserType.PUBLIC_TOKEN)
-        request = _make_request(user)
-
-        # act & assert
-        with pytest.raises(PermissionDeniedError):
-            await DenyPublicToken()(request)
-
-    @pytest.mark.asyncio
-    async def test_call__session_token__return_true(self):
-        """Session token user returns True."""
-        # arrange
-        user = _make_user(auth_type=UserType.AUTHENTICATED)
-        request = _make_request(user)
-
-        # act
-        result = await DenyPublicToken()(request)
-
-        # assert
-        assert result is True
-
-    @pytest.mark.asyncio
-    async def test_has_permission__guest_token__true(self):
-        """Guest token user is allowed (not public)."""
-        # arrange
-        user = _make_user(auth_type=UserType.GUEST_TOKEN)
-        request = _make_request(user)
-
-        # act
-        result = await DenyPublicToken().has_permission(request)
-
-        # assert
-        assert result is True
-
-    @pytest.mark.asyncio
-    async def test_has_permission__anonymous__true(self):
-        """Anonymous user is allowed (anonymous != public)."""
-        # arrange
-        user = _make_user(
-            auth_type=UserType.AUTHENTICATED,
-            is_anonymous=True,
-        )
-        request = _make_request(user)
-
-        # act
-        result = await DenyPublicToken().has_permission(request)
-
-        # assert — anonymous is NOT public token
-        assert result is True
+        await IsAuthenticated()(request)
 
 
-class TestCombinedPermissions:
-    """Test CombinedPermissions."""
+# --- DenyPublicToken ---
 
-    @pytest.mark.asyncio
-    async def test_combined__all_pass__true(self):
-        """All permissions pass → True."""
-        # arrange
-        user = _make_user(auth_type=UserType.AUTHENTICATED)
-        request = _make_request(user)
-        combined = CombinedPermissions([
-            IsAuthenticated(),
-            DenyPublicToken(),
-        ])
 
-        # act
-        result = await combined.has_permission(request)
+@pytest.mark.asyncio
+async def test_deny_public__session_token__true(
+    make_perm_user,
+    make_perm_request,
+):
+
+    # arrange
+    user = make_perm_user(auth_type=UserType.AUTHENTICATED)
+    request = make_perm_request(user)
+
+    # act
+    result = await DenyPublicToken().has_permission(request)
+
+    # assert
+    assert result is True
+
+
+@pytest.mark.asyncio
+async def test_deny_public__public_token__false(
+    make_perm_user,
+    make_perm_request,
+):
+
+    # arrange
+    user = make_perm_user(auth_type=UserType.PUBLIC_TOKEN)
+    request = make_perm_request(user)
+
+    # act
+    result = await DenyPublicToken().has_permission(request)
+
+    # assert
+    assert result is False
+
+
+@pytest.mark.asyncio
+async def test_deny_public__user_none__false(
+    make_perm_request,
+):
+
+    # arrange
+    request = make_perm_request(user=None)
+
+    # act
+    result = await DenyPublicToken().has_permission(request)
+
+    # assert
+    assert result is False
+
+
+@pytest.mark.asyncio
+async def test_deny_public__no_user_attr__false(
+    make_perm_request,
+):
+
+    # arrange
+    request = make_perm_request(has_user=False)
+
+    # act
+    result = await DenyPublicToken().has_permission(request)
+
+    # assert
+    assert result is False
+
+
+@pytest.mark.asyncio
+async def test_deny_public__call_public__raise_error(
+    make_perm_user,
+    make_perm_request,
+):
+
+    # arrange
+    user = make_perm_user(auth_type=UserType.PUBLIC_TOKEN)
+    request = make_perm_request(user)
+
+    # act
+    with pytest.raises(PermissionDeniedError):
 
         # assert
-        assert result is True
+        await DenyPublicToken()(request)
 
-    @pytest.mark.asyncio
-    async def test_combined__one_fails__false(self):
-        """One permission fails → False."""
-        # arrange
-        user = _make_user(auth_type=UserType.PUBLIC_TOKEN)
-        request = _make_request(user)
-        combined = CombinedPermissions([
-            IsAuthenticated(),
-            DenyPublicToken(),
-        ])
 
-        # act
-        result = await combined.has_permission(request)
+@pytest.mark.asyncio
+async def test_deny_public__call_session__return_true(
+    make_perm_user,
+    make_perm_request,
+):
 
-        # assert — IsAuthenticated passes but DenyPublicToken fails
-        assert result is False
+    # arrange
+    user = make_perm_user(auth_type=UserType.AUTHENTICATED)
+    request = make_perm_request(user)
 
-    @pytest.mark.asyncio
-    async def test_combined__call__denied__raise_error(self):
-        """Combined denial raises PermissionDeniedError."""
-        # arrange
-        request = _make_request(has_user=False)
-        combined = CombinedPermissions([
-            IsAuthenticated(),
-        ])
+    # act
+    result = await DenyPublicToken()(request)
 
-        # act & assert
-        with pytest.raises(PermissionDeniedError):
-            await combined(request)
+    # assert
+    assert result is True
 
-    @pytest.mark.asyncio
-    async def test_combined__empty_list__true(self):
-        """Empty permissions list → True (vacuous truth)."""
-        # arrange
-        request = _make_request(has_user=False)
-        combined = CombinedPermissions([])
 
-        # act
-        result = await combined.has_permission(request)
+@pytest.mark.asyncio
+async def test_deny_public__guest_token__true(
+    make_perm_user,
+    make_perm_request,
+):
+
+    # arrange
+    user = make_perm_user(auth_type=UserType.GUEST_TOKEN)
+    request = make_perm_request(user)
+
+    # act
+    result = await DenyPublicToken().has_permission(request)
+
+    # assert
+    assert result is True
+
+
+@pytest.mark.asyncio
+async def test_deny_public__anonymous__true(
+    make_perm_user,
+    make_perm_request,
+):
+
+    # arrange
+    user = make_perm_user(
+        auth_type=UserType.AUTHENTICATED,
+        is_anonymous=True,
+    )
+    request = make_perm_request(user)
+
+    # act
+    result = await DenyPublicToken().has_permission(request)
+
+    # assert — anonymous is NOT public token
+    assert result is True
+
+
+# --- CombinedPermissions ---
+
+
+@pytest.mark.asyncio
+async def test_combined__all_pass__true(
+    make_perm_user,
+    make_perm_request,
+):
+
+    # arrange
+    user = make_perm_user(auth_type=UserType.AUTHENTICATED)
+    request = make_perm_request(user)
+    combined = CombinedPermissions([
+        IsAuthenticated(),
+        DenyPublicToken(),
+    ])
+
+    # act
+    result = await combined.has_permission(request)
+
+    # assert
+    assert result is True
+
+
+@pytest.mark.asyncio
+async def test_combined__one_fails__false(
+    make_perm_user,
+    make_perm_request,
+):
+
+    # arrange
+    user = make_perm_user(auth_type=UserType.PUBLIC_TOKEN)
+    request = make_perm_request(user)
+    combined = CombinedPermissions([
+        IsAuthenticated(),
+        DenyPublicToken(),
+    ])
+
+    # act
+    result = await combined.has_permission(request)
+
+    # assert
+    assert result is False
+
+
+@pytest.mark.asyncio
+async def test_combined__denied__raise_error(
+    make_perm_request,
+):
+
+    # arrange
+    request = make_perm_request(has_user=False)
+    combined = CombinedPermissions([IsAuthenticated()])
+
+    # act
+    with pytest.raises(PermissionDeniedError):
 
         # assert
-        assert result is True
+        await combined(request)
 
 
-class TestCheckPermissions:
-    """Test check_permissions utility."""
+@pytest.mark.asyncio
+async def test_combined__empty_list__true(
+    make_perm_request,
+):
 
-    @pytest.mark.asyncio
-    async def test_check__all_pass__no_error(self):
-        """All permissions pass → no error."""
-        # arrange
-        user = _make_user(auth_type=UserType.AUTHENTICATED)
-        request = _make_request(user)
+    # arrange
+    request = make_perm_request(has_user=False)
+    combined = CombinedPermissions([])
 
-        # act & assert — no error
+    # act
+    result = await combined.has_permission(request)
+
+    # assert
+    assert result is True
+
+
+# --- check_permissions utility ---
+
+
+@pytest.mark.asyncio
+async def test_check_perms__all_pass__no_error(
+    make_perm_user,
+    make_perm_request,
+):
+
+    # arrange
+    user = make_perm_user(auth_type=UserType.AUTHENTICATED)
+    request = make_perm_request(user)
+
+    # act — no error
+    await check_permissions(request, [
+        IsAuthenticated(),
+        DenyPublicToken(),
+    ])
+
+
+@pytest.mark.asyncio
+async def test_check_perms__one_fails__raise_error(
+    make_perm_user,
+    make_perm_request,
+):
+
+    # arrange
+    user = make_perm_user(auth_type=UserType.PUBLIC_TOKEN)
+    request = make_perm_request(user)
+
+    # act
+    with pytest.raises(PermissionDeniedError):
+
+        # assert
         await check_permissions(request, [
             IsAuthenticated(),
             DenyPublicToken(),
         ])
-
-    @pytest.mark.asyncio
-    async def test_check__one_fails__raise_error(self):
-        """One permission fails → PermissionDeniedError."""
-        # arrange
-        user = _make_user(auth_type=UserType.PUBLIC_TOKEN)
-        request = _make_request(user)
-
-        # act & assert
-        with pytest.raises(PermissionDeniedError):
-            await check_permissions(request, [
-                IsAuthenticated(),
-                DenyPublicToken(),
-            ])

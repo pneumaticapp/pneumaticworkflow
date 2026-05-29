@@ -1,3 +1,5 @@
+"""Tests for use cases (upload/download)."""
+
 import io
 from datetime import UTC, datetime
 from unittest.mock import ANY, AsyncMock, Mock
@@ -9,7 +11,9 @@ from src.application.dto.file_dtos import (
     UploadFileCommand,
     UploadFileUseCaseResponse,
 )
-from src.application.use_cases.file_download import DownloadFileUseCase
+from src.application.use_cases.file_download import (
+    DownloadFileUseCase,
+)
 from src.application.use_cases.file_upload import UploadFileUseCase
 from src.domain.entities.file_record import FileRecord
 from src.shared_kernel.exceptions import (
@@ -17,220 +21,212 @@ from src.shared_kernel.exceptions import (
     StorageError,
 )
 
-
-class TestUploadFileUseCase:
-    """Test UploadFileUseCase."""
-
-    @pytest.mark.asyncio
-    async def test_upload_file__valid_command__return_response(
-        self,
-        mock_storage_service,
-        mock_repository,
-    ):
-        """Test successful file upload."""
-        # Arrange
-        command = UploadFileCommand(
-            file_stream=io.BytesIO(b'test content'),
-            filename='test.txt',
-            content_type='text/plain',
-            size=12,
-            user_id=1,
-            account_id=1,
-        )
-
-        file_record = FileRecord(
-            file_id='12345678-1234-5678-1234-567812345678',
-            filename='test.txt',
-            content_type='text/plain',
-            size=12,
-            user_id=1,
-            account_id=1,
-            created_at=datetime.now(UTC),
-        )
-
-        mock_uow = AsyncMock()
-        mock_uow.__aenter__.return_value = mock_uow
-        mock_uow.__aexit__.return_value = None
-
-        mock_repository.create.return_value = file_record
-        mock_storage_service.get_storage_path.return_value = (
-            'test-bucket',
-            '12345678-1234-5678-1234-567812345678',
-        )
-        mock_storage_service.upload_file.return_value = None
-
-        use_case = UploadFileUseCase(
-            file_repository=mock_repository,
-            storage_service=mock_storage_service,
-            unit_of_work=mock_uow,
-            fastapi_base_url='http://localhost:8000',
-        )
-
-        # Act
-        result = await use_case.execute(command)
-
-        # Assert
-        assert isinstance(result, UploadFileUseCaseResponse)
-        assert result.file_id is not None
-        assert result.public_url.startswith('http://localhost:8000/')
-        assert result.file_id in result.public_url
-
-        mock_repository.create.assert_called_once()
-        mock_storage_service.upload_file.assert_called_once_with(
-            bucket_name='test-bucket',
-            file_path='12345678-1234-5678-1234-567812345678',
-            file_stream=ANY,
-            content_type='text/plain',
-        )
-
-    @pytest.mark.asyncio
-    async def test_upload_file__storage_error__raise_storage_error(
-        self,
-        mock_storage_service,
-        mock_repository,
-    ):
-        """Test upload with storage error."""
-        # Arrange
-        command = UploadFileCommand(
-            file_stream=io.BytesIO(b'test content'),
-            filename='test.txt',
-            content_type='text/plain',
-            size=12,
-            user_id=1,
-            account_id=1,
-        )
-
-        mock_uow = AsyncMock()
-        mock_uow.__aenter__.return_value = mock_uow
-        mock_uow.__aexit__.return_value = None
-
-        mock_storage_service.get_storage_path.return_value = (
-            'test-bucket',
-            '12345678-1234-5678-1234-567812345678',
-        )
-        mock_storage_service.upload_file.side_effect = (
-            StorageError.upload_failed('Upload failed')
-        )
-
-        use_case = UploadFileUseCase(
-            file_repository=mock_repository,
-            storage_service=mock_storage_service,
-            unit_of_work=mock_uow,
-            fastapi_base_url='http://localhost:8000',
-        )
-
-        # Act & Assert
-        with pytest.raises(StorageError):
-            await use_case.execute(command)
+# --- UploadFileUseCase ---
 
 
-class TestDownloadFileUseCase:
-    """Test DownloadFileUseCase."""
+@pytest.mark.asyncio
+async def test_upload__valid_command__return_response(
+    mock_storage_service,
+    mock_repository,
+):
 
-    @pytest.mark.asyncio
-    async def test_get_metadata__valid_query__return_file_record(
-        self,
-        mock_storage_service,
-        mock_repository,
-    ):
-        """Test get_metadata returns file record without loading stream."""
-        # Arrange
-        query = DownloadFileQuery(
-            file_id='12345678-1234-5678-1234-567812345678',
-            user_id=1,
-        )
+    # arrange
+    command = UploadFileCommand(
+        file_stream=io.BytesIO(b'test content'),
+        filename='test.txt',
+        content_type='text/plain',
+        size=12,
+        user_id=1,
+        account_id=1,
+    )
+    file_record = FileRecord(
+        file_id='12345678-1234-5678-1234-567812345678',
+        filename='test.txt',
+        content_type='text/plain',
+        size=12,
+        user_id=1,
+        account_id=1,
+        created_at=datetime.now(UTC),
+    )
+    mock_uow = AsyncMock()
+    mock_uow.__aenter__.return_value = mock_uow
+    mock_uow.__aexit__.return_value = None
+    mock_repository.create.return_value = file_record
+    mock_storage_service.get_storage_path.return_value = (
+        'test-bucket',
+        '12345678-1234-5678-1234-567812345678',
+    )
+    mock_storage_service.upload_file.return_value = None
+    use_case = UploadFileUseCase(
+        file_repository=mock_repository,
+        storage_service=mock_storage_service,
+        unit_of_work=mock_uow,
+        fastapi_base_url='http://localhost:8000',
+    )
 
-        file_record = FileRecord(
-            file_id='12345678-1234-5678-1234-567812345678',
-            filename='test.txt',
-            content_type='text/plain',
-            size=12,
-            user_id=1,
-            account_id=1,
-            created_at=datetime.now(UTC),
-        )
+    # act
+    result = await use_case.execute(command)
 
-        mock_repository.get_by_id.return_value = file_record
+    # assert
+    assert isinstance(result, UploadFileUseCaseResponse)
+    assert result.file_id is not None
+    assert result.public_url.startswith(
+        'http://localhost:8000/',
+    )
+    assert result.file_id in result.public_url
+    mock_repository.create.assert_called_once_with(
+        mock_repository.create.call_args[0][0],
+    )
+    mock_storage_service.upload_file.assert_called_once_with(
+        bucket_name='test-bucket',
+        file_path='12345678-1234-5678-1234-567812345678',
+        file_stream=ANY,
+        content_type='text/plain',
+    )
 
-        use_case = DownloadFileUseCase(
-            file_repository=mock_repository,
-            storage_service=mock_storage_service,
-        )
 
-        # Act
-        result = await use_case.get_metadata(query)
+@pytest.mark.asyncio
+async def test_upload__storage_error__raise(
+    mock_storage_service,
+    mock_repository,
+):
 
-        # Assert
-        assert result == file_record
-        mock_repository.get_by_id.assert_called_once_with(
-            '12345678-1234-5678-1234-567812345678',
-        )
-        mock_storage_service.get_storage_path.assert_not_called()
-        mock_storage_service.download_file.assert_not_called()
+    # arrange
+    command = UploadFileCommand(
+        file_stream=io.BytesIO(b'test content'),
+        filename='test.txt',
+        content_type='text/plain',
+        size=12,
+        user_id=1,
+        account_id=1,
+    )
+    mock_uow = AsyncMock()
+    mock_uow.__aenter__.return_value = mock_uow
+    mock_uow.__aexit__.return_value = None
+    mock_storage_service.get_storage_path.return_value = (
+        'test-bucket',
+        '12345678-1234-5678-1234-567812345678',
+    )
+    mock_storage_service.upload_file.side_effect = (
+        StorageError.upload_failed('Upload failed')
+    )
+    use_case = UploadFileUseCase(
+        file_repository=mock_repository,
+        storage_service=mock_storage_service,
+        unit_of_work=mock_uow,
+        fastapi_base_url='http://localhost:8000',
+    )
 
-    @pytest.mark.asyncio
-    async def test_get_metadata__file_not_found__raise_file_not_found_error(
-        self,
-        mock_storage_service,
-        mock_repository,
-    ):
-        """Test get_metadata with file not found."""
-        # Arrange
-        query = DownloadFileQuery(file_id='missing-file-id', user_id=1)
+    # act
+    with pytest.raises(StorageError):
 
-        mock_repository.get_by_id.return_value = None
+        # assert
+        await use_case.execute(command)
 
-        use_case = DownloadFileUseCase(
-            file_repository=mock_repository,
-            storage_service=mock_storage_service,
-        )
 
-        # Act & Assert
-        with pytest.raises(DomainFileNotFoundError):
-            await use_case.get_metadata(query)
+# --- DownloadFileUseCase ---
 
-    @pytest.mark.asyncio
-    async def test_get_stream__valid_query__return_stream(
-        self,
-        mock_storage_service,
-        mock_repository,
-    ):
-        """Test get_stream returns file stream."""
-        # Arrange
-        file_record = FileRecord(
-            file_id='12345678-1234-5678-1234-567812345678',
-            filename='test.txt',
-            content_type='text/plain',
-            size=12,
-            user_id=1,
-            account_id=1,
-            created_at=datetime.now(UTC),
-        )
 
-        mock_storage_service.get_storage_path.return_value = (
-            'test-bucket',
-            '12345678-1234-5678-1234-567812345678',
-        )
+@pytest.mark.asyncio
+async def test_get_metadata__valid__return_record(
+    mock_storage_service,
+    mock_repository,
+):
 
-        async def mock_download_generator():
-            yield b'test content'
+    # arrange
+    query = DownloadFileQuery(
+        file_id='12345678-1234-5678-1234-567812345678',
+        user_id=1,
+    )
+    file_record = FileRecord(
+        file_id='12345678-1234-5678-1234-567812345678',
+        filename='test.txt',
+        content_type='text/plain',
+        size=12,
+        user_id=1,
+        account_id=1,
+        created_at=datetime.now(UTC),
+    )
+    mock_repository.get_by_id.return_value = file_record
+    use_case = DownloadFileUseCase(
+        file_repository=mock_repository,
+        storage_service=mock_storage_service,
+    )
 
-        mock_storage_service.download_file = Mock(
-            return_value=mock_download_generator(),
-        )
+    # act
+    result = await use_case.get_metadata(query)
 
-        use_case = DownloadFileUseCase(
-            file_repository=mock_repository,
-            storage_service=mock_storage_service,
-        )
+    # assert
+    assert result == file_record
+    mock_repository.get_by_id.assert_called_once_with(
+        '12345678-1234-5678-1234-567812345678',
+    )
+    mock_storage_service.get_storage_path.assert_not_called()
+    mock_storage_service.download_file.assert_not_called()
 
-        # Act
-        result_stream = await use_case.get_stream(file_record)
 
-        # Assert
-        assert result_stream is not None
-        mock_storage_service.download_file.assert_called_once_with(
-            bucket_name='test-bucket',
-            file_path='12345678-1234-5678-1234-567812345678',
-            range_header=None,
-        )
+@pytest.mark.asyncio
+async def test_get_metadata__not_found__raise(
+    mock_storage_service,
+    mock_repository,
+):
+
+    # arrange
+    query = DownloadFileQuery(
+        file_id='missing-file-id', user_id=1,
+    )
+    mock_repository.get_by_id.return_value = None
+    use_case = DownloadFileUseCase(
+        file_repository=mock_repository,
+        storage_service=mock_storage_service,
+    )
+
+    # act
+    with pytest.raises(DomainFileNotFoundError):
+
+        # assert
+        await use_case.get_metadata(query)
+
+
+@pytest.mark.asyncio
+async def test_get_stream__valid__return_stream(
+    mock_storage_service,
+    mock_repository,
+):
+
+    # arrange
+    file_record = FileRecord(
+        file_id='12345678-1234-5678-1234-567812345678',
+        filename='test.txt',
+        content_type='text/plain',
+        size=12,
+        user_id=1,
+        account_id=1,
+        created_at=datetime.now(UTC),
+    )
+    mock_storage_service.get_storage_path.return_value = (
+        'test-bucket',
+        '12345678-1234-5678-1234-567812345678',
+    )
+
+    async def mock_download_generator():
+        yield b'test content'
+
+    mock_storage_service.download_file = Mock(
+        return_value=mock_download_generator(),
+    )
+    use_case = DownloadFileUseCase(
+        file_repository=mock_repository,
+        storage_service=mock_storage_service,
+    )
+
+    # act
+    result_stream = await use_case.get_stream(file_record)
+
+    # assert
+    assert result_stream is not None
+    mock_storage_service.download_file.assert_called_once_with(
+        bucket_name='test-bucket',
+        file_path='12345678-1234-5678-1234-567812345678',
+        range_header=None,
+    )

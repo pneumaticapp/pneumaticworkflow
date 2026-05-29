@@ -1,10 +1,11 @@
-from unittest.mock import AsyncMock, Mock
+"""Tests for HttpClient and SharedClientHolder."""
+
+from unittest.mock import AsyncMock
 
 import httpx
 import pytest
-from fastapi import Request
 
-from src.infra.http_client import HttpClient, SharedClientHolder
+from src.infra.http_client import SharedClientHolder
 from src.shared_kernel.auth.user_types import UserType
 from src.shared_kernel.exceptions import (
     HttpClientError,
@@ -12,270 +13,259 @@ from src.shared_kernel.exceptions import (
 )
 from src.shared_kernel.middleware.auth_middleware import AuthUser
 
-
-class TestHttpClient:
-    """Test HttpClient."""
-
-    @pytest.fixture
-    def http_client(self):
-        """HTTP client instance."""
-        return HttpClient(base_url='http://test.example.com')
-
-    @pytest.fixture
-    def mock_request(self):
-        """Mock request."""
-        request = Mock(spec=Request)
-        request.headers = {}
-        request.cookies = {}
-        return request
-
-    @pytest.mark.asyncio
-    async def test_check_file_permission__valid_token__return_true(
-        self,
-        http_client,
-        mock_request,
-        mock_httpx_post,
-    ):
-        """Test successful file permission check."""
-        # Arrange
-        file_id = '12345678-1234-5678-1234-567812345678'
-        token = 'valid-token'
-        user = AuthUser(
-            auth_type=UserType.AUTHENTICATED,
-            user_id=1,
-            account_id=1,
-            token=token,
-        )
-
-        mock_response = AsyncMock()
-        mock_response.status_code = 204  # NO_CONTENT
-        mock_httpx_post.return_value = mock_response
-
-        # Act
-        result = await http_client.check_file_permission(user, file_id)
-
-        # Assert
-        assert result is True
-        mock_httpx_post.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_check_file_permission__access_denied__return_false(
-        self,
-        http_client,
-        mock_request,
-        mock_httpx_post,
-    ):
-        """Test file permission check denied."""
-        # Arrange
-        file_id = '12345678-1234-5678-1234-567812345678'
-        token = 'valid-token'
-        user = AuthUser(
-            auth_type=UserType.AUTHENTICATED,
-            user_id=1,
-            account_id=1,
-            token=token,
-        )
-
-        mock_response = AsyncMock()
-        mock_response.status_code = 403  # FORBIDDEN
-        mock_httpx_post.return_value = mock_response
-
-        # Act
-        result = await http_client.check_file_permission(user, file_id)
-
-        # Assert
-        assert result is False
-        mock_httpx_post.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_check_file_permission__http_error__return_false(
-        self,
-        http_client,
-        mock_request,
-        mock_httpx_post,
-    ):
-        """Test file permission check with HTTP error."""
-        # Arrange
-        file_id = '12345678-1234-5678-1234-567812345678'
-        token = 'valid-token'
-        user = AuthUser(
-            auth_type=UserType.AUTHENTICATED,
-            user_id=1,
-            account_id=1,
-            token=token,
-        )
-
-        mock_httpx_post.side_effect = httpx.RequestError('HTTP error')
-
-        # Act & Assert
-        with pytest.raises(HttpClientError):
-            await http_client.check_file_permission(user, file_id)
-
-    @pytest.mark.asyncio
-    async def test_check_file_permission__timeout_error__raise_timeout_error(
-        self,
-        http_client,
-        mock_request,
-        mock_httpx_post,
-    ):
-        """Test file permission check with timeout error."""
-        # Arrange
-        file_id = '12345678-1234-5678-1234-567812345678'
-        token = 'valid-token'
-        user = AuthUser(
-            auth_type=UserType.AUTHENTICATED,
-            user_id=1,
-            account_id=1,
-            token=token,
-        )
-
-        mock_httpx_post.side_effect = httpx.TimeoutException('Timeout')
-
-        # Act & Assert
-        with pytest.raises(HttpTimeoutError):
-            await http_client.check_file_permission(user, file_id)
-
-    @pytest.mark.asyncio
-    async def test_check_file_permission__cookie_token__return_true(
-        self,
-        http_client,
-        mock_request,
-        mock_httpx_post,
-    ):
-        """Test file permission check with cookie token."""
-        # Arrange
-        file_id = '12345678-1234-5678-1234-567812345678'
-        token = 'session-token'
-        user = AuthUser(
-            auth_type=UserType.GUEST_TOKEN,
-            user_id=None,
-            account_id=None,
-            token=token,
-        )
-
-        mock_response = AsyncMock()
-        mock_response.status_code = 204  # NO_CONTENT
-        mock_httpx_post.return_value = mock_response
-
-        # Act
-        result = await http_client.check_file_permission(user, file_id)
-
-        # Assert
-        assert result is True
-        mock_httpx_post.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_check_file_permission__no_auth__return_false(
-        self,
-        http_client,
-        mock_request,
-        mock_httpx_post,
-    ):
-        """Test file permission check without auth."""
-        # Arrange
-        file_id = '12345678-1234-5678-1234-567812345678'
-        user = AuthUser(
-            auth_type=UserType.ANONYMOUS,
-            user_id=None,
-            account_id=None,
-            token=None,
-        )
-
-        mock_response = AsyncMock()
-        mock_response.status_code = 401  # UNAUTHORIZED
-        mock_httpx_post.return_value = mock_response
-
-        # Act
-        result = await http_client.check_file_permission(user, file_id)
-
-        # Assert
-        assert result is False
-        mock_httpx_post.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_check_file_permission__server_error__return_false(
-        self,
-        http_client,
-        mock_request,
-        mock_httpx_post,
-    ):
-        """Test file permission check with 500 response."""
-        # Arrange
-        file_id = '12345678-1234-5678-1234-567812345678'
-        token = 'valid-token'
-        user = AuthUser(
-            auth_type=UserType.AUTHENTICATED,
-            user_id=1,
-            account_id=1,
-            token=token,
-        )
-
-        mock_response = AsyncMock()
-        mock_response.status_code = 500  # INTERNAL_SERVER_ERROR
-        mock_httpx_post.return_value = mock_response
-
-        # Act
-        result = await http_client.check_file_permission(user, file_id)
-
-        assert result is False
-        mock_httpx_post.assert_called_once()
+# --- HttpClient.check_file_permission ---
 
 
-class TestSharedClientHolder:
-    """Test SharedClientHolder timeout configuration."""
+@pytest.mark.asyncio
+async def test_check_permission__valid_token__true(
+    http_client,
+    mock_httpx_post,
+):
 
-    @pytest.fixture(autouse=True)
-    def _reset_holder(self):
-        """Reset holder between tests."""
-        SharedClientHolder._instance = None
-        yield
-        SharedClientHolder._instance = None
+    # arrange
+    file_id = '12345678-1234-5678-1234-567812345678'
+    user = AuthUser(
+        auth_type=UserType.AUTHENTICATED,
+        user_id=1,
+        account_id=1,
+        token='valid-token',
+    )
+    mock_response = AsyncMock()
+    mock_response.status_code = 204
+    mock_httpx_post.return_value = mock_response
 
-    def test_get__creates_client_with_timeout(self):
-        """Client is created with explicit timeout."""
+    # act
+    result = await http_client.check_file_permission(
+        user, file_id,
+    )
 
-        # act
-        client = SharedClientHolder.get()
+    # assert
+    assert result is True
+    assert mock_httpx_post.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_check_permission__denied__false(
+    http_client,
+    mock_httpx_post,
+):
+
+    # arrange
+    file_id = '12345678-1234-5678-1234-567812345678'
+    user = AuthUser(
+        auth_type=UserType.AUTHENTICATED,
+        user_id=1,
+        account_id=1,
+        token='valid-token',
+    )
+    mock_response = AsyncMock()
+    mock_response.status_code = 403
+    mock_httpx_post.return_value = mock_response
+
+    # act
+    result = await http_client.check_file_permission(
+        user, file_id,
+    )
+
+    # assert
+    assert result is False
+    assert mock_httpx_post.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_check_permission__http_error__raise(
+    http_client,
+    mock_httpx_post,
+):
+
+    # arrange
+    file_id = '12345678-1234-5678-1234-567812345678'
+    user = AuthUser(
+        auth_type=UserType.AUTHENTICATED,
+        user_id=1,
+        account_id=1,
+        token='valid-token',
+    )
+    mock_httpx_post.side_effect = httpx.RequestError(
+        'HTTP error',
+    )
+
+    # act
+    with pytest.raises(HttpClientError):
 
         # assert
-        assert client.timeout.read == 30.0
-        assert client.timeout.connect == 10.0
+        await http_client.check_file_permission(user, file_id)
 
-    def test_get__singleton__same_instance(self):
-        """Multiple calls return same instance."""
 
-        # act
-        client1 = SharedClientHolder.get()
-        client2 = SharedClientHolder.get()
+@pytest.mark.asyncio
+async def test_check_permission__timeout__raise(
+    http_client,
+    mock_httpx_post,
+):
 
-        # assert
-        assert client1 is client2
+    # arrange
+    file_id = '12345678-1234-5678-1234-567812345678'
+    user = AuthUser(
+        auth_type=UserType.AUTHENTICATED,
+        user_id=1,
+        account_id=1,
+        token='valid-token',
+    )
+    mock_httpx_post.side_effect = httpx.TimeoutException(
+        'Timeout',
+    )
 
-    def test_timeout_constant__properly_defined(self):
-        """Timeout constant is properly defined."""
-
-        # act & assert
-        assert isinstance(
-            SharedClientHolder._TIMEOUT, httpx.Timeout,
-        )
-        assert SharedClientHolder._TIMEOUT.read == 30.0
-        assert SharedClientHolder._TIMEOUT.connect == 10.0
-
-    @pytest.mark.asyncio
-    async def test_close__has_instance__cleanup(self):
-        """Close cleans up the client."""
-        SharedClientHolder.get()
-        assert SharedClientHolder._instance is not None
-
-        # act
-        await SharedClientHolder.close()
+    # act
+    with pytest.raises(HttpTimeoutError):
 
         # assert
-        assert SharedClientHolder._instance is None
+        await http_client.check_file_permission(user, file_id)
 
-    @pytest.mark.asyncio
-    async def test_close__no_instance__no_error(self):
-        """Close with no instance does nothing."""
 
-        # act & assert — no error
-        await SharedClientHolder.close()
+@pytest.mark.asyncio
+async def test_check_permission__cookie_token__true(
+    http_client,
+    mock_httpx_post,
+):
+
+    # arrange
+    file_id = '12345678-1234-5678-1234-567812345678'
+    user = AuthUser(
+        auth_type=UserType.GUEST_TOKEN,
+        user_id=None,
+        account_id=None,
+        token='session-token',
+    )
+    mock_response = AsyncMock()
+    mock_response.status_code = 204
+    mock_httpx_post.return_value = mock_response
+
+    # act
+    result = await http_client.check_file_permission(
+        user, file_id,
+    )
+
+    # assert
+    assert result is True
+    assert mock_httpx_post.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_check_permission__no_auth__false(
+    http_client,
+    mock_httpx_post,
+):
+
+    # arrange
+    file_id = '12345678-1234-5678-1234-567812345678'
+    user = AuthUser(
+        auth_type=UserType.ANONYMOUS,
+        user_id=None,
+        account_id=None,
+        token=None,
+    )
+    mock_response = AsyncMock()
+    mock_response.status_code = 401
+    mock_httpx_post.return_value = mock_response
+
+    # act
+    result = await http_client.check_file_permission(
+        user, file_id,
+    )
+
+    # assert
+    assert result is False
+    assert mock_httpx_post.call_count == 1
+
+
+@pytest.mark.asyncio
+async def test_check_permission__server_error__false(
+    http_client,
+    mock_httpx_post,
+):
+
+    # arrange
+    file_id = '12345678-1234-5678-1234-567812345678'
+    user = AuthUser(
+        auth_type=UserType.AUTHENTICATED,
+        user_id=1,
+        account_id=1,
+        token='valid-token',
+    )
+    mock_response = AsyncMock()
+    mock_response.status_code = 500
+    mock_httpx_post.return_value = mock_response
+
+    # act
+    result = await http_client.check_file_permission(
+        user, file_id,
+    )
+
+    # assert
+    assert result is False
+    assert mock_httpx_post.call_count == 1
+
+
+# --- SharedClientHolder ---
+
+
+def test_get__creates_client_with_timeout(
+    reset_shared_client_holder,
+):
+
+    # act
+    client = SharedClientHolder.get()
+
+    # assert
+    assert client.timeout.read == 30.0
+    assert client.timeout.connect == 10.0
+
+
+def test_get__singleton__same_instance(
+    reset_shared_client_holder,
+):
+
+    # act
+    client1 = SharedClientHolder.get()
+    client2 = SharedClientHolder.get()
+
+    # assert
+    assert client1 is client2
+
+
+def test_timeout_constant__properly_defined(
+    reset_shared_client_holder,
+):
+
+    # act
+    timeout = SharedClientHolder._TIMEOUT
+
+    # assert
+    assert isinstance(timeout, httpx.Timeout)
+    assert timeout.read == 30.0
+    assert timeout.connect == 10.0
+
+
+@pytest.mark.asyncio
+async def test_close__has_instance__cleanup(
+    reset_shared_client_holder,
+):
+
+    # arrange
+    SharedClientHolder.get()
+    assert SharedClientHolder._instance is not None
+
+    # act
+    await SharedClientHolder.close()
+
+    # assert
+    assert SharedClientHolder._instance is None
+
+
+@pytest.mark.asyncio
+async def test_close__no_instance__no_error(
+    reset_shared_client_holder,
+):
+
+    # act — no error
+    await SharedClientHolder.close()

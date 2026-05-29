@@ -29,553 +29,602 @@ from src.shared_kernel.exceptions import (
     register_exception_handlers,
 )
 
-
-class TestErrorCode:
-    """Test ErrorCode class."""
-
-    def test_error_code_creation(self):
-        """Test error code creation."""
-        error_code = ErrorCode(
-            code='TEST_001',
-            message='Test error',
-            error_type=ErrorType.VALIDATION,
-            http_status=422,
-        )
-
-        assert error_code.code == 'TEST_001'
-        assert error_code.message == 'Test error'
-        assert error_code.error_type == ErrorType.VALIDATION
-        assert error_code.http_status == 422
-
-    def test_error_code_with_details(self):
-        """Test error code with details."""
-        error_code = ErrorCode(
-            code='TEST_002',
-            message='Test error with details',
-            error_type=ErrorType.DOMAIN,
-            http_status=404,
-            details='Additional details',
-        )
-
-        assert error_code.details == 'Additional details'
+# --- ErrorCode ---
 
 
-class TestErrorResponse:
-    """Test ErrorResponse class."""
+def test_error_code__create__ok():
 
-    def test_error_response_creation(self):
-        """Test error response creation."""
-        response = ErrorResponse(
-            error_code='TEST_001',
-            message='Test error',
-            error_type='validation',
-        )
+    # act
+    error_code = ErrorCode(
+        code='TEST_001',
+        message='Test error',
+        error_type=ErrorType.VALIDATION,
+        http_status=422,
+    )
 
-        assert response.error_code == 'TEST_001'
-        assert response.message == 'Test error'
-        assert response.error_type == 'validation'
-
-    def test_error_response_to_dict(self):
-        """Test error response to dict conversion."""
-        response = ErrorResponse(
-            error_code='TEST_001',
-            message='Test error',
-            error_type='validation',
-            details='Test details',
-            timestamp='2023-01-01T00:00:00',
-            request_id='test-123',
-        )
-
-        result = response.to_dict()
-
-        assert result['error_code'] == 'TEST_001'
-        assert result['message'] == 'Test error'
-        assert result['error_type'] == 'validation'
-        assert result['details'] == 'Test details'
-        assert result['timestamp'] == '2023-01-01T00:00:00'
-        assert result['request_id'] == 'test-123'
-
-    def test_error_response_to_dict_without_optional_fields(self):
-        """Test error response to dict without optional fields."""
-        response = ErrorResponse(
-            error_code='TEST_001',
-            message='Test error',
-            error_type='validation',
-        )
-
-        result = response.to_dict()
-
-        assert 'details' not in result
-        assert 'timestamp' not in result
-        assert 'request_id' not in result
+    # assert
+    assert error_code.code == 'TEST_001'
+    assert error_code.message == 'Test error'
+    assert error_code.error_type == ErrorType.VALIDATION
+    assert error_code.http_status == 422
 
 
-class TestBaseAppException:
-    """Test BaseAppError class."""
+def test_error_code__with_details__ok():
 
-    def test_base_app_exception_creation(self):
-        """Test base app exception creation."""
-        error_code = ErrorCode(
-            code='TEST_001',
-            message='Test error',
-            error_type=ErrorType.VALIDATION,
-            http_status=422,
-        )
+    # act
+    error_code = ErrorCode(
+        code='TEST_002',
+        message='Test error with details',
+        error_type=ErrorType.DOMAIN,
+        http_status=404,
+        details='Additional details',
+    )
 
-        exception = BaseAppError(error_code, details='Test details')
-
-        assert exception.error_code == error_code
-        assert exception.details == 'Test details'
-        assert exception.http_status == 422
-        assert exception.error_type == ErrorType.VALIDATION
-        assert str(exception) == 'TEST_001: Test error'
-
-    def test_base_app_exception_to_response(self):
-        """Test base app exception to response."""
-        error_code = ErrorCode(
-            code='TEST_001',
-            message='Test error',
-            error_type=ErrorType.VALIDATION,
-            http_status=422,
-        )
-
-        exception = BaseAppError(error_code, details='Test details')
-        response = exception.to_response(
-            timestamp='2023-01-01T00:00:00',
-            request_id='test-123',
-        )
-
-        assert response.error_code == 'TEST_001'
-        assert response.message == 'Test error'
-        assert response.error_type == 'validation'
-        assert response.details == 'Test details'
-        assert response.timestamp == '2023-01-01T00:00:00'
-        assert response.request_id == 'test-123'
+    # assert
+    assert error_code.details == 'Additional details'
 
 
-class TestDomainExceptions:
-    """Test domain exceptions."""
+# --- ErrorResponse ---
 
-    def test_file_not_found_error(self):
-        """Test file not found error."""
-        exception = DomainFileNotFoundError(
+
+def test_error_response__create__ok():
+
+    # act
+    response = ErrorResponse(
+        error_code='TEST_001',
+        message='Test error',
+        error_type='validation',
+    )
+
+    # assert
+    assert response.error_code == 'TEST_001'
+    assert response.message == 'Test error'
+    assert response.error_type == 'validation'
+
+
+def test_error_response__to_dict__all_fields():
+
+    # arrange
+    response = ErrorResponse(
+        error_code='TEST_001',
+        message='Test error',
+        error_type='validation',
+        details='Test details',
+        timestamp='2023-01-01T00:00:00',
+        request_id='test-123',
+    )
+
+    # act
+    result = response.to_dict()
+
+    # assert
+    assert result['error_code'] == 'TEST_001'
+    assert result['message'] == 'Test error'
+    assert result['error_type'] == 'validation'
+    assert result['details'] == 'Test details'
+    assert result['timestamp'] == '2023-01-01T00:00:00'
+    assert result['request_id'] == 'test-123'
+
+
+def test_error_response__to_dict__no_optional():
+
+    # arrange
+    response = ErrorResponse(
+        error_code='TEST_001',
+        message='Test error',
+        error_type='validation',
+    )
+
+    # act
+    result = response.to_dict()
+
+    # assert
+    assert 'details' not in result
+    assert 'timestamp' not in result
+    assert 'request_id' not in result
+
+
+# --- BaseAppError ---
+
+
+def test_base_app_error__create__ok():
+
+    # arrange
+    error_code = ErrorCode(
+        code='TEST_001',
+        message='Test error',
+        error_type=ErrorType.VALIDATION,
+        http_status=422,
+    )
+
+    # act
+    exception = BaseAppError(error_code, details='Test details')
+
+    # assert
+    assert exception.error_code == error_code
+    assert exception.details == 'Test details'
+    assert exception.http_status == 422
+    assert exception.error_type == ErrorType.VALIDATION
+    assert str(exception) == 'TEST_001: Test error'
+
+
+def test_base_app_error__to_response__ok():
+
+    # arrange
+    error_code = ErrorCode(
+        code='TEST_001',
+        message='Test error',
+        error_type=ErrorType.VALIDATION,
+        http_status=422,
+    )
+    exception = BaseAppError(error_code, details='Test details')
+
+    # act
+    response = exception.to_response(
+        timestamp='2023-01-01T00:00:00',
+        request_id='test-123',
+    )
+
+    # assert
+    assert response.error_code == 'TEST_001'
+    assert response.message == 'Test error'
+    assert response.error_type == 'validation'
+    assert response.details == 'Test details'
+    assert response.timestamp == '2023-01-01T00:00:00'
+    assert response.request_id == 'test-123'
+
+
+# --- Domain exceptions ---
+
+
+def test_file_not_found__create__ok():
+
+    # act
+    exc = DomainFileNotFoundError(
+        '12345678-1234-5678-1234-567812345678',
+    )
+
+    # assert
+    assert exc.error_code.code == 'FILE_001'
+    assert (
+        "'12345678-1234-5678-1234-567812345678'"
+        in exc.error_code.message
+    )
+    assert exc.http_status == 404
+    assert exc.error_type == ErrorType.DOMAIN
+
+
+def test_file_not_found__with_account__ok():
+
+    # act
+    exc = DomainFileNotFoundError(
+        '12345678-1234-5678-1234-567812345678',
+        account_id=123,
+    )
+
+    # assert
+    assert exc.error_code.code == 'FILE_001'
+    assert 'account 123' in exc.error_code.message
+    assert exc.http_status == 404
+
+
+def test_file_access_denied__create__ok():
+
+    # act
+    exc = FileAccessDeniedError(
+        '12345678-1234-5678-1234-567812345678',
+        user_id=456,
+    )
+
+    # assert
+    assert exc.error_code.code == 'FILE_002'
+    assert 'User 456' in exc.error_code.message
+    assert exc.http_status == 403
+    assert exc.error_type == ErrorType.AUTHORIZATION
+
+
+def test_file_access_denied__none_user__anonymous():
+
+    # act
+    exc = FileAccessDeniedError(
+        '12345678-1234-5678-1234-567812345678',
+        user_id=None,
+    )
+
+    # assert
+    assert exc.error_code.code == 'FILE_002'
+    assert 'anonymous' in exc.error_code.message
+    assert exc.http_status == 403
+
+
+def test_file_size_exceeded__create__ok():
+
+    # act
+    exc = FileSizeExceededError(1000, 500)
+
+    # assert
+    assert exc.error_code.code == 'FILE_003'
+    assert '1000' in exc.error_code.message
+    assert '500' in exc.error_code.message
+    assert exc.http_status == 413
+    assert exc.error_type == ErrorType.VALIDATION
+
+
+# --- StorageError ---
+
+
+def test_storage__upload_failed__ok():
+
+    # act
+    exc = StorageError.upload_failed('Connection timeout')
+
+    # assert
+    assert exc.error_code.code == 'STORAGE_002'
+    assert exc.details == 'Upload failed: Connection timeout'
+    assert exc.http_status == 503
+
+
+def test_storage__download_failed__ok():
+
+    # act
+    exc = StorageError.download_failed('File corrupted')
+
+    # assert
+    assert exc.error_code.code == 'STORAGE_003'
+    assert exc.details == 'Download failed: File corrupted'
+    assert exc.http_status == 503
+
+
+def test_storage__bucket_create_failed__ok():
+
+    # act
+    exc = StorageError.bucket_create_failed(
+        'Insufficient permissions',
+    )
+
+    # assert
+    assert exc.error_code.code == 'STORAGE_004'
+    assert 'Insufficient permissions' in exc.details
+    assert exc.http_status == 503
+
+
+def test_storage__file_not_found__ok():
+
+    # act
+    exc = StorageError.file_not_found_in_storage(
+        'path/to/file.txt', 'my-bucket',
+    )
+
+    # assert
+    assert exc.error_code.code == 'STORAGE_005'
+    assert 'path/to/file.txt' in exc.details
+    assert 'my-bucket' in exc.details
+    assert exc.http_status == 404
+
+
+def test_storage__file_not_found__with_details():
+
+    # act
+    exc = StorageError.file_not_found_in_storage(
+        file_path='doc.pdf',
+        bucket_name='bucket-1',
+        details='S3 returned 404',
+    )
+
+    # assert
+    assert exc.error_code.code == 'STORAGE_005'
+    assert 'doc.pdf' in exc.details
+    assert 'bucket-1' in exc.details
+    assert 'S3 returned 404' in exc.details
+
+
+def test_storage__delete_failed__ok():
+
+    # act
+    exc = StorageError.delete_failed('Access denied')
+
+    # assert
+    assert exc.error_code.code == 'STORAGE_006'
+    assert exc.details == 'Delete failed: Access denied'
+    assert exc.http_status == 503
+
+
+def test_storage__delete_no_details__unknown():
+
+    # act
+    exc = StorageError.delete_failed()
+
+    # assert
+    assert exc.details == 'Delete failed: Unknown error'
+
+
+def test_storage__upload_no_details__unknown():
+
+    # act
+    exc = StorageError.upload_failed()
+
+    # assert
+    assert exc.details == 'Upload failed: Unknown error'
+
+
+def test_storage__download_no_details__unknown():
+
+    # act
+    exc = StorageError.download_failed()
+
+    # assert
+    assert exc.details == 'Download failed: Unknown error'
+
+
+def test_storage__bucket_no_details__unknown():
+
+    # act
+    exc = StorageError.bucket_create_failed()
+
+    # assert
+    assert exc.details == (
+        'Bucket creation failed: Unknown error'
+    )
+
+
+def test_storage__invalid_key__raise_key_error():
+
+    # act
+    with pytest.raises(KeyError):
+
+        # assert
+        StorageError('NONEXISTENT_KEY')
+
+
+# --- Database exceptions ---
+
+
+def test_db_connection_error__create__ok():
+
+    # act
+    exc = DatabaseConnectionError('Connection failed')
+
+    # assert
+    assert exc.error_code.code == 'DB_001'
+    assert exc.details == 'Connection failed'
+    assert exc.http_status == 503
+
+
+def test_db_operation_error__create__ok():
+
+    # act
+    exc = DatabaseOperationError('SELECT', 'Query failed')
+
+    # assert
+    assert exc.error_code.code == 'DB_002'
+    assert "Database operation 'SELECT' failed" in exc.details
+    assert 'Query failed' in exc.details
+    assert exc.http_status == 500
+
+
+def test_db_constraint_error__create__ok():
+
+    # act
+    exc = DatabaseConstraintError(
+        'unique_constraint', 'Duplicate key',
+    )
+
+    # assert
+    assert exc.error_code.code == 'DB_004'
+    assert 'unique_constraint' in exc.details
+    assert 'Duplicate key' in exc.details
+    assert exc.http_status == 409
+
+
+def test_db_error__base_class__ok():
+
+    # act
+    exc = DatabaseError(
+        'DATABASE_CONNECTION_ERROR', 'Test error',
+    )
+
+    # assert
+    assert exc.error_code.code == 'DB_001'
+    assert exc.details == 'Test error'
+    assert exc.http_status == 503
+
+
+# --- External service exceptions ---
+
+
+def test_redis_connection_error__create__ok():
+
+    # act
+    exc = RedisConnectionError('Redis unavailable')
+
+    # assert
+    assert exc.error_code.code == 'EXT_001'
+    assert exc.details == 'Redis unavailable'
+    assert exc.http_status == 503
+
+
+def test_redis_operation_error__create__ok():
+
+    # act
+    exc = RedisOperationError('GET', 'Operation failed')
+
+    # assert
+    assert exc.error_code.code == 'EXT_002'
+    assert "Redis operation 'GET' failed" in exc.details
+    assert exc.http_status == 500
+
+
+def test_http_client_error__create__ok():
+
+    # act
+    exc = HttpClientError(
+        'http://example.com', details='Request failed',
+    )
+
+    # assert
+    assert exc.error_code.code == 'EXT_003'
+    assert "'http://example.com'" in exc.details
+    assert exc.http_status == 502
+
+
+def test_http_client_error__with_status__ok():
+
+    # act
+    exc = HttpClientError(
+        'http://example.com',
+        status_code=404,
+        details='Not found',
+    )
+
+    # assert
+    assert exc.error_code.code == 'EXT_003'
+    assert 'status 404' in exc.details
+    assert exc.http_status == 502
+
+
+def test_http_timeout_error__create__ok():
+
+    # act
+    exc = HttpTimeoutError(
+        'http://example.com', 30, 'Timeout occurred',
+    )
+
+    # assert
+    assert exc.error_code.code == 'EXT_004'
+    assert '30s' in exc.details
+    assert exc.http_status == 504
+
+
+def test_external_service__base_class__ok():
+
+    # act
+    exc = ExternalServiceError(
+        'REDIS_CONNECTION_ERROR', 'Test error',
+    )
+
+    # assert
+    assert exc.error_code.code == 'EXT_001'
+    assert exc.details == 'Test error'
+    assert exc.http_status == 503
+
+
+# --- Permission / Validation / Auth ---
+
+
+def test_permission_denied__create__ok():
+
+    # act
+    exc = PermissionDeniedError('Access denied')
+
+    # assert
+    assert exc.error_code.code == 'PERM_001'
+    assert exc.details == 'Access denied'
+    assert exc.http_status == 403
+
+
+def test_validation__invalid_file_size__ok():
+
+    # arrange
+    error_code = VALIDATION_ERROR_CODES['INVALID_FILE_SIZE']
+
+    # act
+    exc = BaseAppError(error_code, 'File size must be positive')
+
+    # assert
+    assert exc.error_code.code == 'VAL_001'
+    assert exc.details == 'File size must be positive'
+    assert exc.http_status == 422
+
+
+def test_authentication_error__create__ok():
+
+    # act
+    exc = AuthenticationError('Auth failed')
+
+    # assert
+    assert exc.error_code.code == 'AUTH_001'
+    assert exc.details == 'Auth failed'
+    assert exc.http_status == 401
+
+
+# --- Exception handlers ---
+
+
+def test_create_error_response__all_fields__ok():
+
+    # act
+    response = create_error_response(
+        error_code='TEST_001',
+        message='Test error',
+        error_type='validation',
+        details='Test details',
+        timestamp='2023-01-01T00:00:00',
+    )
+
+    # assert
+    assert response['error_code'] == 'TEST_001'
+    assert response['message'] == 'Test error'
+    assert response['details'] == 'Test details'
+
+
+def test_register_handlers__registers__ok():
+
+    # arrange
+    app = FastAPI()
+
+    # act
+    register_exception_handlers(app)
+
+    # assert
+    handlers = list(app.exception_handlers.keys())
+    assert BaseAppError in handlers
+    assert Exception in handlers
+
+
+# --- Handler integration ---
+
+
+def test_handler__file_not_found__404():
+
+    # arrange
+    app = FastAPI()
+    register_exception_handlers(app)
+
+    @app.get('/test')
+    async def test_endpoint():
+        raise DomainFileNotFoundError(
             '12345678-1234-5678-1234-567812345678',
         )
 
-        assert exception.error_code.code == 'FILE_001'
-        assert exception.error_code.message == (
-            "File with ID '12345678-1234-5678-1234-567812345678' not found"
-        )
-        assert exception.http_status == 404
-        assert exception.error_type == ErrorType.DOMAIN
+    client = TestClient(app)
 
-    def test_file_not_found_error_with_account(self):
-        """Test file not found error with account ID."""
-        exception = DomainFileNotFoundError(
-            '12345678-1234-5678-1234-567812345678',
-            account_id=123,
-        )
+    # act
+    response = client.get('/test')
 
-        assert exception.error_code.code == 'FILE_001'
-        assert exception.error_code.message == (
-            "File with ID '12345678-1234-5678-1234-567812345678' "
-            'not found in account 123'
-        )
-        assert exception.http_status == 404
-        assert exception.error_type == ErrorType.DOMAIN
+    # assert
+    assert response.status_code == 404
+    data = response.json()
+    assert data['error_code'] == 'FILE_001'
+    assert data['error_type'] == 'domain'
 
-    def test_file_access_denied_error(self):
-        """Test file access denied error."""
-        exception = FileAccessDeniedError(
-            '12345678-1234-5678-1234-567812345678',
-            user_id=456,
-        )
 
-        assert exception.error_code.code == 'FILE_002'
-        assert exception.error_code.message == (
-            'User 456 has no access to file '
-            "'12345678-1234-5678-1234-567812345678'"
-        )
-        assert exception.http_status == 403
-        assert exception.error_type == ErrorType.AUTHORIZATION
+def test_handler__auth_error__401():
 
-    def test_file_access_denied_error__user_id_none__shows_anonymous(
-        self,
-    ):
-        """Test file access denied with None user_id."""
-        exception = FileAccessDeniedError(
-            '12345678-1234-5678-1234-567812345678',
-            user_id=None,
-        )
+    # arrange
+    app = FastAPI()
+    register_exception_handlers(app)
 
-        assert exception.error_code.code == 'FILE_002'
-        assert 'anonymous' in exception.error_code.message
-        assert exception.http_status == 403
-        assert exception.error_type == ErrorType.AUTHORIZATION
+    @app.get('/test')
+    async def test_endpoint():
+        raise AuthenticationError
 
-    def test_file_size_exceeded_error(self):
-        """Test file size exceeded error."""
-        exception = FileSizeExceededError(1000, 500)
+    client = TestClient(app)
 
-        assert exception.error_code.code == 'FILE_003'
-        assert exception.error_code.message == (
-            'File size 1000 bytes exceeds limit 500 bytes'
-        )
-        assert exception.http_status == 413
-        assert exception.error_type == ErrorType.VALIDATION
+    # act
+    response = client.get('/test')
 
-    def test_storage_error_upload_failed(self):
-        """Test storage upload failed error."""
-        exception = StorageError.upload_failed('Connection timeout')
-
-        assert exception.error_code.code == 'STORAGE_002'
-        assert exception.error_code.message == (
-            'Failed to upload file to storage'
-        )
-        assert exception.details == 'Upload failed: Connection timeout'
-        assert exception.http_status == 503
-        assert exception.error_type == ErrorType.INFRASTRUCTURE
-
-    def test_storage_error_download_failed(self):
-        """Test storage download failed error."""
-        exception = StorageError.download_failed('File corrupted')
-
-        assert exception.error_code.code == 'STORAGE_003'
-        assert exception.error_code.message == (
-            'Failed to download file from storage'
-        )
-        assert exception.details == 'Download failed: File corrupted'
-        assert exception.http_status == 503
-        assert exception.error_type == ErrorType.INFRASTRUCTURE
-
-    def test_storage_error_bucket_create_failed(self):
-        """Test storage bucket creation failed error."""
-        exception = StorageError.bucket_create_failed(
-            'Insufficient permissions',
-        )
-
-        assert exception.error_code.code == 'STORAGE_004'
-        assert exception.error_code.message == (
-            'Failed to create storage bucket'
-        )
-        assert exception.details == (
-            'Bucket creation failed: Insufficient permissions'
-        )
-        assert exception.http_status == 503
-        assert exception.error_type == ErrorType.INFRASTRUCTURE
-
-    def test_storage_error_file_not_found_in_storage(self):
-        """Test storage file not found error."""
-        exception = StorageError.file_not_found_in_storage(
-            'path/to/file.txt', 'my-bucket',
-        )
-
-        assert exception.error_code.code == 'STORAGE_005'
-        assert exception.error_code.message == 'File not found in storage'
-        assert exception.details == (
-            "File 'path/to/file.txt' not found in bucket 'my-bucket'"
-        )
-        assert exception.http_status == 404
-        assert exception.error_type == ErrorType.INFRASTRUCTURE
-
-    def test_storage_error_file_not_found_with_details(self):
-        """Test file not found in storage with extra details."""
-        exception = StorageError.file_not_found_in_storage(
-            file_path='doc.pdf',
-            bucket_name='bucket-1',
-            details='S3 returned 404',
-        )
-
-        assert exception.error_code.code == 'STORAGE_005'
-        assert 'doc.pdf' in exception.details
-        assert 'bucket-1' in exception.details
-        assert 'S3 returned 404' in exception.details
-
-    def test_storage_error_delete_failed(self):
-        """Test storage delete failed error."""
-        exception = StorageError.delete_failed('Access denied')
-
-        assert exception.error_code.code == 'STORAGE_006'
-        assert exception.error_code.message == (
-            'Failed to delete file from storage'
-        )
-        assert exception.details == 'Delete failed: Access denied'
-        assert exception.http_status == 503
-        assert exception.error_type == ErrorType.INFRASTRUCTURE
-
-    def test_storage_error_delete_failed_no_details(self):
-        """Test delete failed error without details."""
-        exception = StorageError.delete_failed()
-
-        assert exception.error_code.code == 'STORAGE_006'
-        assert exception.details == 'Delete failed: Unknown error'
-
-    def test_storage_error_upload_failed_no_details(self):
-        """Test upload failed error without details."""
-        exception = StorageError.upload_failed()
-
-        assert exception.details == 'Upload failed: Unknown error'
-
-    def test_storage_error_download_failed_no_details(self):
-        """Test download failed error without details."""
-        exception = StorageError.download_failed()
-
-        assert exception.details == 'Download failed: Unknown error'
-
-    def test_storage_error_bucket_create_no_details(self):
-        """Test bucket create failed without details."""
-        exception = StorageError.bucket_create_failed()
-
-        assert exception.details == (
-            'Bucket creation failed: Unknown error'
-        )
-
-    def test_storage_error_invalid_key(self):
-        """Test StorageError with invalid key raises KeyError."""
-        with pytest.raises(KeyError):
-            StorageError('NONEXISTENT_KEY')
-
-
-class TestDatabaseExceptions:
-    """Test database exceptions."""
-
-    def test_database_connection_error(self):
-        """Test database connection error."""
-        exception = DatabaseConnectionError('Connection failed')
-
-        assert exception.error_code.code == 'DB_001'
-        assert exception.error_code.message == 'Database connection failed'
-        assert exception.details == 'Connection failed'
-        assert exception.http_status == 503
-        assert exception.error_type == ErrorType.INFRASTRUCTURE
-
-    def test_database_operation_error(self):
-        """Test database operation error."""
-        exception = DatabaseOperationError('SELECT', 'Query failed')
-
-        assert exception.error_code.code == 'DB_002'
-        assert exception.error_code.message == 'Database operation failed'
-        assert "Database operation 'SELECT' failed" in exception.details
-        assert 'Query failed' in exception.details
-        assert exception.http_status == 500
-        assert exception.error_type == ErrorType.INFRASTRUCTURE
-
-    def test_database_constraint_error(self):
-        """Test database constraint error."""
-        exception = DatabaseConstraintError(
-            'unique_constraint', 'Duplicate key',
-        )
-
-        assert exception.error_code.code == 'DB_004'
-        assert exception.error_code.message == 'Database constraint violation'
-        assert 'unique_constraint' in exception.details
-        assert 'Duplicate key' in exception.details
-        assert exception.http_status == 409
-        assert exception.error_type == ErrorType.DOMAIN
-
-    def test_database_error_base_class(self):
-        """Test database error base class."""
-        exception = DatabaseError('DATABASE_CONNECTION_ERROR', 'Test error')
-
-        assert exception.error_code.code == 'DB_001'
-        assert exception.details == 'Test error'
-        assert exception.http_status == 503
-
-
-class TestExternalServiceExceptions:
-    """Test external service exceptions."""
-
-    def test_redis_connection_error(self):
-        """Test Redis connection error."""
-        exception = RedisConnectionError('Redis unavailable')
-
-        assert exception.error_code.code == 'EXT_001'
-        assert exception.error_code.message == 'Redis connection failed'
-        assert exception.details == 'Redis unavailable'
-        assert exception.http_status == 503
-        assert exception.error_type == ErrorType.EXTERNAL_SERVICE
-
-    def test_redis_operation_error(self):
-        """Test Redis operation error."""
-        exception = RedisOperationError('GET', 'Operation failed')
-
-        assert exception.error_code.code == 'EXT_002'
-        assert exception.error_code.message == 'Redis operation failed'
-        assert exception.details == (
-            "Redis operation 'GET' failed: Operation failed"
-        )
-        assert exception.http_status == 500
-        assert exception.error_type == ErrorType.EXTERNAL_SERVICE
-
-    def test_http_client_error(self):
-        """Test HTTP client error."""
-        exception = HttpClientError(
-            'http://example.com', details='Request failed',
-        )
-
-        assert exception.error_code.code == 'EXT_003'
-        assert exception.error_code.message == 'HTTP client request failed'
-        assert exception.details == (
-            "HTTP request to 'http://example.com' failed: Request failed"
-        )
-        assert exception.http_status == 502
-        assert exception.error_type == ErrorType.EXTERNAL_SERVICE
-
-    def test_http_client_error_with_status_code(self):
-        """Test HTTP client error with status code."""
-        exception = HttpClientError(
-            'http://example.com', status_code=404, details='Not found',
-        )
-
-        assert exception.error_code.code == 'EXT_003'
-        assert exception.error_code.message == 'HTTP client request failed'
-        assert exception.details == (
-            "HTTP request to 'http://example.com' "
-            'failed with status 404: Not found'
-        )
-        assert exception.http_status == 502
-        assert exception.error_type == ErrorType.EXTERNAL_SERVICE
-
-    def test_http_timeout_error(self):
-        """Test HTTP timeout error."""
-        exception = HttpTimeoutError(
-            'http://example.com',
-            30,
-            'Timeout occurred',
-        )
-
-        assert exception.error_code.code == 'EXT_004'
-        assert exception.error_code.message == 'HTTP request timeout'
-        assert exception.details == (
-            "HTTP request to 'http://example.com' "
-            'timed out after 30s: Timeout occurred'
-        )
-        assert exception.http_status == 504
-        assert exception.error_type == ErrorType.EXTERNAL_SERVICE
-
-    def test_external_service_error_base_class(self):
-        """Test external service error base class."""
-        exception = ExternalServiceError(
-            'REDIS_CONNECTION_ERROR', 'Test error',
-        )
-
-        assert exception.error_code.code == 'EXT_001'
-        assert exception.details == 'Test error'
-        assert exception.http_status == 503
-
-
-class TestPermissionExceptions:
-    """Test permission exceptions."""
-
-    def test_permission_denied_error(self):
-        """Test permission denied error."""
-        exception = PermissionDeniedError('Access denied')
-
-        assert exception.error_code.code == 'PERM_001'
-        assert exception.error_code.message == 'Permission denied'
-        assert exception.details == 'Access denied'
-        assert exception.http_status == 403
-        assert exception.error_type == ErrorType.AUTHORIZATION
-
-
-class TestValidationExceptions:
-    """Test validation exceptions."""
-
-    def test_invalid_file_size_error(self):
-        """Test invalid file size validation error."""
-        # Create validation error manually since we don't have a specific class
-        error_code = VALIDATION_ERROR_CODES['INVALID_FILE_SIZE']
-        exception = BaseAppError(error_code, 'File size must be positive')
-
-        assert exception.error_code.code == 'VAL_001'
-        assert exception.error_code.message == 'Invalid file size'
-        assert exception.details == 'File size must be positive'
-        assert exception.http_status == 422
-        assert exception.error_type.value == 'validation'
-
-
-class TestAuthExceptions:
-    """Test authentication exceptions."""
-
-    def test_authentication_error(self):
-        """Test authentication error."""
-        exception = AuthenticationError('Auth failed')
-
-        assert exception.error_code.code == 'AUTH_001'
-        assert exception.error_code.message == 'Authentication failed'
-        assert exception.details == 'Auth failed'
-        assert exception.http_status == 401
-        assert exception.error_type == ErrorType.AUTHENTICATION
-
-
-class TestExceptionHandlers:
-    """Test exception handlers."""
-
-    def test_create_error_response(self):
-        """Test create error response."""
-        response = create_error_response(
-            error_code='TEST_001',
-            message='Test error',
-            error_type='validation',
-            details='Test details',
-            timestamp='2023-01-01T00:00:00',
-        )
-
-        assert response['error_code'] == 'TEST_001'
-        assert response['message'] == 'Test error'
-        assert response['error_type'] == 'validation'
-        assert response['details'] == 'Test details'
-        assert response['timestamp'] == '2023-01-01T00:00:00'
-
-    def test_register_exception_handlers(self):
-        """Test register universal exception handlers."""
-        app = FastAPI()
-        register_exception_handlers(app)
-
-        # Check that handlers are registered
-        assert len(app.exception_handlers) > 0
-
-        # Check for main handlers
-        handlers = list(app.exception_handlers.keys())
-        assert BaseAppError in handlers
-        assert Exception in handlers
-
-
-class TestExceptionHandlerIntegration:
-    """Test exception handler integration."""
-
-    def test_file_not_found_handler_integration(self):
-        """Test file not found handler integration."""
-        app = FastAPI()
-        register_exception_handlers(app)
-
-        @app.get('/test')
-        async def test_endpoint():
-            file_id = '12345678-1234-5678-1234-567812345678'
-            raise DomainFileNotFoundError(file_id)
-
-        client = TestClient(app)
-        response = client.get('/test')
-
-        assert response.status_code == 404
-        data = response.json()
-        assert data['error_code'] == 'FILE_001'
-        assert data['error_type'] == 'domain'
-        assert '12345678-1234-5678-1234-567812345678' in data['message']
-
-    def test_authentication_error_handler_integration(self):
-        """Test authentication error handler integration."""
-        app = FastAPI()
-        register_exception_handlers(app)
-
-        @app.get('/test')
-        async def test_endpoint():
-            raise AuthenticationError
-
-        client = TestClient(app)
-        response = client.get('/test')
-
-        assert response.status_code == 401
-        data = response.json()
-        assert data['error_code'] == 'AUTH_001'
-        assert data['error_type'] == 'authentication'
+    # assert
+    assert response.status_code == 401
+    data = response.json()
+    assert data['error_code'] == 'AUTH_001'
+    assert data['error_type'] == 'authentication'

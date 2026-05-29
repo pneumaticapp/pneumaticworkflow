@@ -1,164 +1,152 @@
-from datetime import UTC, datetime
+"""Tests for FileRecordRepository."""
+
 from unittest.mock import AsyncMock, Mock
 
 import pytest
 from sqlalchemy.exc import IntegrityError, OperationalError
 
-from src.domain.entities.file_record import FileRecord
-from src.infra.repositories.file_record_repository import FileRecordRepository
-from src.shared_kernel.database.models import FileRecordORM
 from src.shared_kernel.exceptions import (
     DatabaseConnectionError,
     DatabaseConstraintError,
 )
 
 
-class TestFileRecordRepository:
-    """Test FileRecordRepository."""
+@pytest.mark.asyncio
+async def test_create__valid_record__ok(
+    file_record_repository,
+    repo_mock_session,
+    sample_file_record,
+):
 
-    @pytest.fixture
-    def mock_session(self):
-        """Mock database session."""
-        return AsyncMock()
+    # arrange
+    repo_mock_session.add = Mock()
 
-    @pytest.fixture
-    def repository(self, mock_session):
-        """FileRecordRepository instance."""
-        return FileRecordRepository(mock_session)
+    # act
+    await file_record_repository.create(sample_file_record)
 
-    @pytest.fixture
-    def sample_file_record(self):
-        """Sample file record."""
-        return FileRecord(
-            file_id='12345678-1234-5678-1234-567812345678',
-            filename='test.txt',
-            content_type='text/plain',
-            size=1024,
-            user_id=1,
-            account_id=1,
-            created_at=datetime.now(UTC),
-        )
+    # assert
+    repo_mock_session.add.assert_called_once_with(
+        pytest.approx(
+            repo_mock_session.add.call_args[0][0],
+        ),
+    )
 
-    @pytest.fixture
-    def sample_file_record_orm(self):
-        """Sample file record ORM."""
-        return FileRecordORM(
-            file_id='12345678-1234-5678-1234-567812345678',
-            filename='test.txt',
-            content_type='text/plain',
-            size=1024,
-            user_id=1,
-            account_id=1,
-            created_at=datetime.now(UTC),
-        )
 
-    @pytest.mark.asyncio
-    async def test_create__valid_record__ok(
-        self,
-        repository,
-        mock_session,
-        sample_file_record,
-    ):
-        """Test successful file record creation."""
-        # Arrange
-        mock_session.add = Mock()
+@pytest.mark.asyncio
+async def test_create__integrity_error__raise_constraint(
+    file_record_repository,
+    repo_mock_session,
+    sample_file_record,
+):
 
-        # Act
-        await repository.create(sample_file_record)
+    # arrange
+    repo_mock_session.add = Mock(
+        side_effect=IntegrityError(
+            'UNIQUE constraint failed', None, None,
+        ),
+    )
 
-        # Assert
-        mock_session.add.assert_called_once()
+    # act
+    with pytest.raises(DatabaseConstraintError):
 
-    @pytest.mark.asyncio
-    async def test_create__integrity_error__raise_constraint_error(
-        self,
-        repository,
-        mock_session,
-        sample_file_record,
-    ):
-        """Test file record creation with integrity error."""
-        # Arrange
-        mock_session.add = Mock(
-            side_effect=IntegrityError('UNIQUE constraint failed', None, None),
-        )
+        # assert
+        await file_record_repository.create(sample_file_record)
 
-        # Act & Assert
-        with pytest.raises(DatabaseConstraintError):
-            await repository.create(sample_file_record)
 
-    @pytest.mark.asyncio
-    async def test_create__operational_error__raise_connection_error(
-        self,
-        repository,
-        mock_session,
-        sample_file_record,
-    ):
-        """Test file record creation with operational error."""
-        # Arrange
-        mock_session.add = Mock(
-            side_effect=OperationalError('Connection lost', None, None),
-        )
+@pytest.mark.asyncio
+async def test_create__operational_error__raise_conn_err(
+    file_record_repository,
+    repo_mock_session,
+    sample_file_record,
+):
 
-        # Act & Assert
-        with pytest.raises(DatabaseConnectionError):
-            await repository.create(sample_file_record)
+    # arrange
+    repo_mock_session.add = Mock(
+        side_effect=OperationalError(
+            'Connection lost', None, None,
+        ),
+    )
 
-    @pytest.mark.asyncio
-    async def test_get_by_id__existing_record__return_record(
-        self,
-        repository,
-        mock_session,
-        sample_file_record_orm,
-    ):
-        """Test successful get by id."""
-        # Arrange
-        mock_session.execute = AsyncMock()
-        mock_result = Mock()
-        mock_result.scalar_one_or_none.return_value = sample_file_record_orm
-        mock_session.execute.return_value = mock_result
+    # act
+    with pytest.raises(DatabaseConnectionError):
 
-        # Act
-        result = await repository.get_by_id(
+        # assert
+        await file_record_repository.create(sample_file_record)
+
+
+@pytest.mark.asyncio
+async def test_get_by_id__existing__return_record(
+    file_record_repository,
+    repo_mock_session,
+    sample_file_record_orm,
+):
+
+    # arrange
+    mock_result = Mock()
+    mock_result.scalar_one_or_none.return_value = (
+        sample_file_record_orm
+    )
+    repo_mock_session.execute = AsyncMock(
+        return_value=mock_result,
+    )
+
+    # act
+    result = await file_record_repository.get_by_id(
+        '12345678-1234-5678-1234-567812345678',
+    )
+
+    # assert
+    assert result is not None
+    assert result.file_id == (
+        '12345678-1234-5678-1234-567812345678'
+    )
+    repo_mock_session.execute.assert_called_once_with(
+        repo_mock_session.execute.call_args[0][0],
+    )
+
+
+@pytest.mark.asyncio
+async def test_get_by_id__non_existent__return_none(
+    file_record_repository,
+    repo_mock_session,
+):
+
+    # arrange
+    mock_result = Mock()
+    mock_result.scalar_one_or_none.return_value = None
+    repo_mock_session.execute = AsyncMock(
+        return_value=mock_result,
+    )
+
+    # act
+    result = await file_record_repository.get_by_id(
+        'non-existent-id',
+    )
+
+    # assert
+    assert result is None
+    repo_mock_session.execute.assert_called_once_with(
+        repo_mock_session.execute.call_args[0][0],
+    )
+
+
+@pytest.mark.asyncio
+async def test_get_by_id__operational_error__raise_conn_err(
+    file_record_repository,
+    repo_mock_session,
+):
+
+    # arrange
+    repo_mock_session.execute = AsyncMock(
+        side_effect=OperationalError(
+            'Connection lost', None, None,
+        ),
+    )
+
+    # act
+    with pytest.raises(DatabaseConnectionError):
+
+        # assert
+        await file_record_repository.get_by_id(
             '12345678-1234-5678-1234-567812345678',
         )
-
-        # Assert
-        assert result is not None
-        assert result.file_id == '12345678-1234-5678-1234-567812345678'
-        mock_session.execute.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_get_by_id__non_existent_record__return_none(
-        self,
-        repository,
-        mock_session,
-    ):
-        """Test get by id when not found."""
-        # Arrange
-        mock_session.execute = AsyncMock()
-        mock_result = Mock()
-        mock_result.scalar_one_or_none.return_value = None
-        mock_session.execute.return_value = mock_result
-
-        # Act
-        result = await repository.get_by_id('non-existent-id')
-
-        # Assert
-        assert result is None
-        mock_session.execute.assert_called_once()
-
-    @pytest.mark.asyncio
-    async def test_get_by_id__operational_error__raise_connection_error(
-        self,
-        repository,
-        mock_session,
-    ):
-        """Test get by id with operational error."""
-        # Arrange
-        mock_session.execute = AsyncMock(
-            side_effect=OperationalError('Connection lost', None, None),
-        )
-
-        # Act & Assert
-        with pytest.raises(DatabaseConnectionError):
-            await repository.get_by_id('12345678-1234-5678-1234-567812345678')

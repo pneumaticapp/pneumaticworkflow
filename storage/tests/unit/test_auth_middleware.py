@@ -1,230 +1,204 @@
+"""Tests for authentication middleware."""
+
 import json
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock
 
 import pytest
-from fastapi import Request, Response
 
 from src.shared_kernel.auth.user_types import UserType
-from src.shared_kernel.middleware.auth_middleware import (
-    AuthenticationMiddleware,
-    AuthUser,
-)
+from src.shared_kernel.middleware.auth_middleware import AuthUser
 
 
-class TestAuthUser:
-    """Test AuthUser class."""
+def test_auth_user__valid_data__ok():
 
-    def test_create__valid_data__ok(self):
-        """Test user creation."""
-        user = AuthUser(
-            auth_type=UserType.AUTHENTICATED,
-            user_id=1,
-            account_id=2,
-        )
+    # act
+    user = AuthUser(
+        auth_type=UserType.AUTHENTICATED,
+        user_id=1,
+        account_id=2,
+    )
 
-        assert user.user_id == 1
-        assert user.account_id == 2
-        assert user.is_anonymous is False
+    # assert
+    assert user.user_id == 1
+    assert user.account_id == 2
+    assert user.is_anonymous is False
 
 
-class TestAuthenticationMiddleware:
-    """Test AuthenticationMiddleware."""
+@pytest.mark.asyncio
+async def test_authenticate_token__valid_token__return_user(
+    auth_middleware,
+    mocker,
+):
 
-    @pytest.fixture
-    def mock_app(self):
-        """Mock FastAPI app."""
-        return Mock()
+    # arrange
+    token = 'valid-token'
+    token_data_mock = mocker.patch(
+        'src.shared_kernel.middleware.'
+        'auth_middleware.PneumaticToken.data',
+        new_callable=AsyncMock,
+        return_value={'user_id': 1, 'account_id': 2},
+    )
 
-    @pytest.fixture
-    def middleware(self, mock_app):
-        """Authenticate middleware instance."""
-        return AuthenticationMiddleware(mock_app, require_auth=True)
+    # act
+    result = await auth_middleware.authenticate_token(token)
 
-    @pytest.fixture
-    def middleware_no_auth(self, mock_app):
-        """Middleware without required auth."""
-        return AuthenticationMiddleware(mock_app, require_auth=False)
+    # assert
+    assert result is not None
+    assert result.user_id == 1
+    assert result.account_id == 2
+    token_data_mock.assert_called_once_with(token)
 
-    @pytest.fixture
-    def mock_request(self):
-        """Mock request."""
-        request = Mock(spec=Request)
-        request.state = type('State', (), {})()
-        request.cookies = {}
-        return request
 
-    @pytest.fixture
-    def mock_call_next(self):
-        """Mock call_next function."""
+@pytest.mark.asyncio
+async def test_authenticate_token__invalid__return_none(
+    auth_middleware,
+    mocker,
+):
 
-        async def mock_call_next(request):
-            return Response(content='OK', status_code=200)
+    # arrange
+    token = 'invalid-token'
+    token_data_mock = mocker.patch(
+        'src.shared_kernel.middleware.auth_middleware'
+        '.PneumaticToken.data',
+        new_callable=AsyncMock,
+        return_value=None,
+    )
 
-        return mock_call_next
+    # act
+    result = await auth_middleware.authenticate_token(token)
 
-    @pytest.mark.asyncio
-    async def test_authenticate_token__valid_token__return_user(
-        self,
-        middleware,
-    ):
-        """Test successful token authentication."""
-        # Arrange
-        token = 'valid-token'
+    # assert
+    assert result is None
+    token_data_mock.assert_called_once_with(token)
 
-        # Mock PneumaticToken.data
-        with pytest.MonkeyPatch().context() as m:
-            m.setattr(
-                'src.shared_kernel.middleware.'
-                'auth_middleware.PneumaticToken.data',
-                AsyncMock(return_value={'user_id': 1, 'account_id': 2}),
-            )
 
-            # Act
-            result = await middleware.authenticate_token(token)
+@pytest.mark.asyncio
+async def test_authenticate_token__exception__return_none(
+    auth_middleware,
+    mocker,
+):
 
-            # Assert
-            assert result is not None
-            assert result.user_id == 1
-            assert result.account_id == 2
+    # arrange
+    token = 'error-token'
+    token_data_mock = mocker.patch(
+        'src.shared_kernel.middleware.auth_middleware'
+        '.PneumaticToken.data',
+        new_callable=AsyncMock,
+        side_effect=ValueError('Token error'),
+    )
 
-    @pytest.mark.asyncio
-    async def test_authenticate_token__invalid_token__return_none(
-        self,
-        middleware,
-    ):
-        """Test failed token authentication."""
-        # Arrange
-        token = 'invalid-token'
+    # act
+    result = await auth_middleware.authenticate_token(token)
 
-        # Mock PneumaticToken.data to return None
-        with pytest.MonkeyPatch().context() as m:
-            m.setattr(
-                'src.shared_kernel.middleware.auth_middleware'
-                '.PneumaticToken.data',
-                AsyncMock(return_value=None),
-            )
+    # assert
+    assert result is None
+    token_data_mock.assert_called_once_with(token)
 
-            # Act
-            result = await middleware.authenticate_token(token)
 
-            # Assert
-            assert result is None
+@pytest.mark.asyncio
+async def test_dispatch__valid_token__return_ok(
+    auth_middleware,
+    auth_mw_request,
+    auth_mw_call_next,
+    mocker,
+):
 
-    @pytest.mark.asyncio
-    async def test_authenticate_token__exception_occurred__return_none(
-        self,
-        middleware,
-    ):
-        """Test authentication with exception."""
-        # Arrange
-        token = 'error-token'
+    # arrange
+    auth_mw_request.headers = {
+        'Authorization': 'Bearer valid-token',
+    }
+    token_data_mock = mocker.patch(
+        'src.shared_kernel.middleware'
+        '.auth_middleware.PneumaticToken.data',
+        new_callable=AsyncMock,
+        return_value={'user_id': 1, 'account_id': 2},
+    )
 
-        # Mock PneumaticToken.data to raise ValueError (which is caught)
-        with pytest.MonkeyPatch().context() as m:
-            m.setattr(
-                'src.shared_kernel.middleware.auth_middleware'
-                '.PneumaticToken.data',
-                AsyncMock(side_effect=ValueError('Token error')),
-            )
+    # act
+    response = await auth_middleware.dispatch(
+        auth_mw_request,
+        auth_mw_call_next,
+    )
 
-            # Act
-            result = await middleware.authenticate_token(token)
+    # assert
+    assert response.status_code == 200
+    assert auth_mw_request.state.user.user_id == 1
+    assert auth_mw_request.state.user.account_id == 2
+    token_data_mock.assert_called_once_with('valid-token')
 
-            # Assert
-            assert result is None
 
-    @pytest.mark.asyncio
-    async def test_dispatch__valid_token__return_success_response(
-        self,
-        middleware,
-        mock_request,
-        mock_call_next,
-    ):
-        """Test dispatch with valid token."""
-        # Arrange
-        mock_request.headers = {'Authorization': 'Bearer valid-token'}
+@pytest.mark.asyncio
+async def test_dispatch__session_token__return_ok(
+    auth_middleware,
+    auth_mw_request,
+    auth_mw_call_next,
+    mocker,
+):
 
-        with pytest.MonkeyPatch().context() as m:
-            m.setattr(
-                'src.shared_kernel.middleware'
-                '.auth_middleware.PneumaticToken.data',
-                AsyncMock(return_value={'user_id': 1, 'account_id': 2}),
-            )
+    # arrange
+    auth_mw_request.headers = {}
+    auth_mw_request.cookies = {'token': 'session-token'}
+    token_data_mock = mocker.patch(
+        'src.shared_kernel.middleware.auth_middleware'
+        '.PneumaticToken.data',
+        new_callable=AsyncMock,
+        return_value={'user_id': 3, 'account_id': 4},
+    )
 
-            # Act
-            response = await middleware.dispatch(mock_request, mock_call_next)
+    # act
+    response = await auth_middleware.dispatch(
+        auth_mw_request,
+        auth_mw_call_next,
+    )
 
-            # Assert
-            assert response.status_code == 200
-            assert mock_request.state.user.user_id == 1
-            assert mock_request.state.user.account_id == 2
+    # assert
+    assert response.status_code == 200
+    assert auth_mw_request.state.user.user_id == 3
+    assert auth_mw_request.state.user.account_id == 4
+    token_data_mock.assert_called_once_with('session-token')
 
-    @pytest.mark.asyncio
-    async def test_dispatch__session_token__return_success_response(
-        self,
-        middleware,
-        mock_request,
-        mock_call_next,
-    ):
-        """Test dispatch with session token."""
-        # Arrange
-        mock_request.headers = {}
-        mock_request.cookies = {'token': 'session-token'}
 
-        with pytest.MonkeyPatch().context() as m:
-            m.setattr(
-                'src.shared_kernel.middleware.auth_middleware'
-                '.PneumaticToken.data',
-                AsyncMock(return_value={'user_id': 3, 'account_id': 4}),
-            )
+@pytest.mark.asyncio
+async def test_dispatch__no_auth_required__anonymous(
+    auth_middleware_no_auth,
+    auth_mw_request,
+    auth_mw_call_next,
+):
 
-            # Act
-            response = await middleware.dispatch(mock_request, mock_call_next)
+    # arrange
+    auth_mw_request.headers = {}
+    auth_mw_request.cookies = {}
 
-            # Assert
-            assert response.status_code == 200
-            assert mock_request.state.user.user_id == 3
-            assert mock_request.state.user.account_id == 4
+    # act
+    response = await auth_middleware_no_auth.dispatch(
+        auth_mw_request,
+        auth_mw_call_next,
+    )
 
-    @pytest.mark.asyncio
-    async def test_dispatch__no_auth_required__return_anonymous_user(
-        self,
-        middleware_no_auth,
-        mock_request,
-        mock_call_next,
-    ):
-        """Test dispatch without token sets anonymous user."""
-        # Arrange
-        mock_request.headers = {}
-        mock_request.cookies = {}
+    # assert
+    assert response.status_code == 200
+    assert auth_mw_request.state.user.is_anonymous is True
 
-        # Act
-        response = await middleware_no_auth.dispatch(
-            mock_request,
-            mock_call_next,
-        )
 
-        # Assert
-        assert response.status_code == 200
-        assert mock_request.state.user.is_anonymous is True
+@pytest.mark.asyncio
+async def test_dispatch__auth_required_no_token__401(
+    auth_middleware,
+    auth_mw_request,
+    auth_mw_call_next,
+):
 
-    @pytest.mark.asyncio
-    async def test_dispatch__auth_required_no_token__return_401(
-        self,
-        middleware,
-        mock_request,
-        mock_call_next,
-    ):
-        """Test dispatch with required auth but no token."""
-        # Arrange
-        mock_request.headers = {}
-        mock_request.cookies = {}
+    # arrange
+    auth_mw_request.headers = {}
+    auth_mw_request.cookies = {}
 
-        # Act
-        response = await middleware.dispatch(mock_request, mock_call_next)
+    # act
+    response = await auth_middleware.dispatch(
+        auth_mw_request,
+        auth_mw_call_next,
+    )
 
-        # Assert
-        assert response.status_code == 401
-        response_data = json.loads(response.body.decode())
-        assert response_data['error_code'] == 'AUTH_001'
-        assert response_data['error_type'] == 'authentication'
+    # assert
+    assert response.status_code == 401
+    response_data = json.loads(response.body.decode())
+    assert response_data['error_code'] == 'AUTH_001'
+    assert response_data['error_type'] == 'authentication'

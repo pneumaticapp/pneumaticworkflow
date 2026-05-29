@@ -1,7 +1,7 @@
 import asyncio
 from collections.abc import Generator
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock, MagicMock, Mock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 from fastapi.testclient import TestClient
@@ -91,19 +91,9 @@ def sample_download_query() -> DownloadFileQuery:
 
 
 @pytest.fixture
-def mock_user() -> MagicMock:
-    """Mock user."""
-    mock = MagicMock()
-    mock.user_id = 1
-    mock.account_id = 1
-    mock.is_authenticated = True
-    return mock
-
-
-@pytest.fixture
-def mock_auth_user():
+def mock_user():
     """Mock authenticated user."""
-    mock = MagicMock()
+    mock = Mock()
     mock.user_id = 1
     mock.account_id = 1
     mock.is_authenticated = True
@@ -113,7 +103,7 @@ def mock_auth_user():
 @pytest.fixture
 def mock_anonymous_user():
     """Mock anonymous user."""
-    mock = MagicMock()
+    mock = Mock()
     mock.user_id = None
     mock.account_id = None
     mock.is_authenticated = False
@@ -132,6 +122,7 @@ def mock_http_client() -> AsyncMock:
 def mock_storage_service():
     """Mock storage service."""
     mock = AsyncMock()
+
     # get_storage_path - synchronous method, not AsyncMock
     mock.get_storage_path = Mock(
         return_value=(
