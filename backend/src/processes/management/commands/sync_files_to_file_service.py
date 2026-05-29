@@ -111,6 +111,8 @@ class Command(BaseCommand):
                         "database! Please ensure the file service migrations "
                         "are already applied.",
                     ))
+                    cursor.close()
+                    conn.close()
                     return
         except psycopg2.Error as e:
             self.stdout.write(self.style.ERROR(

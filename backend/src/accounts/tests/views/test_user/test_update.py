@@ -184,6 +184,32 @@ def test_put__all_fields__ok(api_client, mocker):
     )
 
 
+def test_put__photo_unchanged__no_sync_called(api_client, mocker):
+
+    # arrange
+    user = create_test_owner()
+    user.photo = 'https://my.lovely.photo.jpg'
+    user.save()
+    request_data = {
+        'first_name': 'Updated',
+        'photo': 'https://my.lovely.photo.jpg',
+    }
+    sync_account_file_fields_mock = mocker.patch(
+        'src.accounts.views.user.sync_account_file_fields',
+    )
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path='/accounts/user',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    sync_account_file_fields_mock.assert_not_called()
+
+
 def test_update__partial__update_request_fields(mocker, api_client):
 
     # arrange

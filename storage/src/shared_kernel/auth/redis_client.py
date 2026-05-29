@@ -47,7 +47,7 @@ def _safe_loads(data: bytes) -> Any:
     return _RestrictedUnpickler(io.BytesIO(data)).load()
 
 
-def _validate_auth_data(data: Any) -> dict[str, Any] | None:
+def _validate_auth_data(data: Any) -> dict[str, Any] | list[str] | None:
     """Validate deserialized auth data matches expected structure.
 
     Django PneumaticToken stores two types of values:
@@ -83,7 +83,7 @@ class RedisAuthClient:
         # Settings match Django: KEY_PREFIX = '' for auth cache
         self._client = redis.from_url(redis_url)
 
-    async def get(self, key: str) -> dict[str, Any] | None:
+    async def get(self, key: str) -> dict[str, Any] | list[str] | None:
         """Get value from cache."""
         try:
             settings = get_settings()

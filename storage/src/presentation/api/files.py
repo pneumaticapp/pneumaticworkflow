@@ -198,6 +198,12 @@ async def download_file(
                 if range_match.group(2)
                 else total_size - 1
             )
+            if start > total_size - 1 or start > end:
+                return StreamingResponse(
+                    iter([""]),
+                    status_code=416,
+                    headers={'Content-Range': f'bytes */{total_size}'},
+                )
             content_length = end - start + 1
             status_code = 206
             headers['Content-Range'] = (
