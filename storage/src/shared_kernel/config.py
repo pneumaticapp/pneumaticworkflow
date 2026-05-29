@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     @field_validator('ALLOWED_ORIGINS', mode='before')
     @classmethod
     def assemble_cors_origins(cls, v: str | list[str]) -> list[str]:
+        """Parse CORS origins from comma-separated string or list."""
         if isinstance(v, str) and not v.startswith('['):
             return [i.strip() for i in v.split(',')]
         if isinstance(v, (list, str)):
@@ -65,7 +66,7 @@ class Settings(BaseSettings):
     KEY_PREFIX_REDIS: str = ':1:'
 
     # Django secret key for token decoding
-    DJANGO_SECRET_KEY: str = 'DJANGO_SECRET_KEY'
+    DJANGO_SECRET_KEY: str  # Required, no default (security)
     AUTH_TOKEN_ITERATIONS: int = 1
 
     # Django backend base URL

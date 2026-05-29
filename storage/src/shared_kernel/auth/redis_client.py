@@ -3,6 +3,7 @@
 import builtins
 import io
 import pickle
+from functools import lru_cache
 from typing import Any
 
 import redis.asyncio as redis
@@ -37,9 +38,8 @@ class _RestrictedUnpickler(pickle.Unpickler):
     def find_class(self, module: str, name: str) -> type:
         if module == 'builtins' and name in _SAFE_BUILTINS:
             return getattr(builtins, name)
-        raise pickle.UnpicklingError(
-            f'Unsafe class blocked: {module}.{name}',
-        )
+        msg = f'Unsafe class blocked: {module}.{name}'
+        raise pickle.UnpicklingError(msg)
 
 
 def _safe_loads(data: bytes) -> Any:
@@ -107,8 +107,26 @@ class RedisAuthClient:
                 details=MSG_EXT_013.format(key=key, details=str(e)),
             ) from e
 
+    async def close(self) -> None:
+        """Close Redis connection pool."""
+        await self._client.aclose()
 
+
+@lru_cache
 def get_redis_client() -> RedisAuthClient:
-    """Get or create Redis client."""
+    """Get or create Redis client singleton.
+
+    Uses @lru_cache to return the same instance across calls,
+    matching the get_settings() pattern.
+    """
     settings = get_settings()
     return RedisAuthClient(settings.AUTH_REDIS_URL)
+
+
+async def close_redis_client() -> None:
+    """Close Redis client and clear cache for shutdown."""
+    try:
+        client = get_redis_client()
+        await client.close()
+    finally:
+        get_redis_client.cache_clear()

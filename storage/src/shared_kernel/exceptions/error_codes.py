@@ -18,6 +18,7 @@ from .error_messages import (
     MSG_STORAGE_003,
     MSG_STORAGE_005,
     MSG_STORAGE_007,
+    MSG_STORAGE_012,
     MSG_VAL_001,
     MSG_VAL_007,
 )
@@ -71,6 +72,12 @@ DOMAIN_ERROR_CODES = {
         message=MSG_STORAGE_007,
         error_type=ErrorType.INFRASTRUCTURE,
         http_status=404,
+    ),
+    'STORAGE_DELETE_FAILED': ErrorCode(
+        code='STORAGE_006',
+        message=MSG_STORAGE_012,
+        error_type=ErrorType.INFRASTRUCTURE,
+        http_status=503,
     ),
 }
 

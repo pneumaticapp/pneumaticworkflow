@@ -4,7 +4,7 @@ import httpx
 import pytest
 from fastapi import Request
 
-from src.infra.http_client import HttpClient
+from src.infra.http_client import HttpClient, SharedClientHolder
 from src.shared_kernel.auth.user_types import UserType
 from src.shared_kernel.exceptions import (
     HttpClientError,
@@ -219,3 +219,63 @@ class TestHttpClient:
 
         assert result is False
         mock_httpx_post.assert_called_once()
+
+
+class TestSharedClientHolder:
+    """Test SharedClientHolder timeout configuration."""
+
+    @pytest.fixture(autouse=True)
+    def _reset_holder(self):
+        """Reset holder between tests."""
+        SharedClientHolder._instance = None
+        yield
+        SharedClientHolder._instance = None
+
+    def test_get__creates_client_with_timeout(self):
+        """Client is created with explicit timeout."""
+
+        # act
+        client = SharedClientHolder.get()
+
+        # assert
+        assert client.timeout.read == 30.0
+        assert client.timeout.connect == 10.0
+
+    def test_get__singleton__same_instance(self):
+        """Multiple calls return same instance."""
+
+        # act
+        client1 = SharedClientHolder.get()
+        client2 = SharedClientHolder.get()
+
+        # assert
+        assert client1 is client2
+
+    def test_timeout_constant__properly_defined(self):
+        """Timeout constant is properly defined."""
+
+        # act & assert
+        assert isinstance(
+            SharedClientHolder._TIMEOUT, httpx.Timeout,
+        )
+        assert SharedClientHolder._TIMEOUT.read == 30.0
+        assert SharedClientHolder._TIMEOUT.connect == 10.0
+
+    @pytest.mark.asyncio
+    async def test_close__has_instance__cleanup(self):
+        """Close cleans up the client."""
+        SharedClientHolder.get()
+        assert SharedClientHolder._instance is not None
+
+        # act
+        await SharedClientHolder.close()
+
+        # assert
+        assert SharedClientHolder._instance is None
+
+    @pytest.mark.asyncio
+    async def test_close__no_instance__no_error(self):
+        """Close with no instance does nothing."""
+
+        # act & assert — no error
+        await SharedClientHolder.close()

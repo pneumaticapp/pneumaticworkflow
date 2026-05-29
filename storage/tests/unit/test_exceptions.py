@@ -1,5 +1,6 @@
 """Tests for exception system."""
 
+import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 
@@ -198,6 +199,20 @@ class TestDomainExceptions:
         assert exception.http_status == 403
         assert exception.error_type == ErrorType.AUTHORIZATION
 
+    def test_file_access_denied_error__user_id_none__shows_anonymous(
+        self,
+    ):
+        """Test file access denied with None user_id."""
+        exception = FileAccessDeniedError(
+            '12345678-1234-5678-1234-567812345678',
+            user_id=None,
+        )
+
+        assert exception.error_code.code == 'FILE_002'
+        assert 'anonymous' in exception.error_code.message
+        assert exception.http_status == 403
+        assert exception.error_type == ErrorType.AUTHORIZATION
+
     def test_file_size_exceeded_error(self):
         """Test file size exceeded error."""
         exception = FileSizeExceededError(1000, 500)
@@ -262,6 +277,63 @@ class TestDomainExceptions:
         )
         assert exception.http_status == 404
         assert exception.error_type == ErrorType.INFRASTRUCTURE
+
+    def test_storage_error_file_not_found_with_details(self):
+        """Test file not found in storage with extra details."""
+        exception = StorageError.file_not_found_in_storage(
+            file_path='doc.pdf',
+            bucket_name='bucket-1',
+            details='S3 returned 404',
+        )
+
+        assert exception.error_code.code == 'STORAGE_005'
+        assert 'doc.pdf' in exception.details
+        assert 'bucket-1' in exception.details
+        assert 'S3 returned 404' in exception.details
+
+    def test_storage_error_delete_failed(self):
+        """Test storage delete failed error."""
+        exception = StorageError.delete_failed('Access denied')
+
+        assert exception.error_code.code == 'STORAGE_006'
+        assert exception.error_code.message == (
+            'Failed to delete file from storage'
+        )
+        assert exception.details == 'Delete failed: Access denied'
+        assert exception.http_status == 503
+        assert exception.error_type == ErrorType.INFRASTRUCTURE
+
+    def test_storage_error_delete_failed_no_details(self):
+        """Test delete failed error without details."""
+        exception = StorageError.delete_failed()
+
+        assert exception.error_code.code == 'STORAGE_006'
+        assert exception.details == 'Delete failed: Unknown error'
+
+    def test_storage_error_upload_failed_no_details(self):
+        """Test upload failed error without details."""
+        exception = StorageError.upload_failed()
+
+        assert exception.details == 'Upload failed: Unknown error'
+
+    def test_storage_error_download_failed_no_details(self):
+        """Test download failed error without details."""
+        exception = StorageError.download_failed()
+
+        assert exception.details == 'Download failed: Unknown error'
+
+    def test_storage_error_bucket_create_no_details(self):
+        """Test bucket create failed without details."""
+        exception = StorageError.bucket_create_failed()
+
+        assert exception.details == (
+            'Bucket creation failed: Unknown error'
+        )
+
+    def test_storage_error_invalid_key(self):
+        """Test StorageError with invalid key raises KeyError."""
+        with pytest.raises(KeyError):
+            StorageError('NONEXISTENT_KEY')
 
 
 class TestDatabaseExceptions:

@@ -32,6 +32,8 @@ MSG_STORAGE_008 = "File '{file_path}' not found in bucket '{bucket_name}'"
 MSG_STORAGE_009 = 'Failed create bucket: {details}'
 MSG_STORAGE_010 = 'Failed to upload file: {details}'
 MSG_STORAGE_011 = 'Failed to download file: {details}'
+MSG_STORAGE_012 = 'Failed to delete file from storage'
+MSG_STORAGE_013 = 'Delete failed: {details}'
 
 # Database errors
 MSG_DB_001 = 'Database connection failed'

@@ -25,7 +25,10 @@ class AuthenticatedUser:
         """
         self.auth_type = auth_user.auth_type
         self.user_id = auth_user.user_id
-        self.account_id: int = auth_user.account_id  # type: ignore[assignment]
+        if auth_user.account_id is None:
+            msg = 'account_id must not be None for authenticated users'
+            raise TypeError(msg)
+        self.account_id: int = auth_user.account_id
         self.token = auth_user.token
 
     @property

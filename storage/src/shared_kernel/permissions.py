@@ -52,7 +52,7 @@ class DenyPublicToken(BasePermission):
         """Check if user is not using public token."""
         user = getattr(request.state, 'user', None)
         if user is None:
-            return True
+            return False
         # Deny if user is authenticated via public token
         return user.auth_type != UserType.PUBLIC_TOKEN
 

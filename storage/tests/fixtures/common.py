@@ -32,6 +32,7 @@ def test_settings() -> Settings:
         STORAGE_TYPE='local',
         MAX_FILE_SIZE=1024 * 1024,  # 1MB
         FASTAPI_BASE_URL='http://localhost:8000',
+        DJANGO_SECRET_KEY='test-secret-key-for-testing',
     )
 
 

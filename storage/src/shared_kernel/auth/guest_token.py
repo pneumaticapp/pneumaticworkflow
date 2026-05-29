@@ -3,7 +3,7 @@
 from typing import Any
 
 import jwt
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 from src.shared_kernel.config import get_settings
 
@@ -12,7 +12,7 @@ class GuestToken(BaseModel):
     """Guest JWT token implementation."""
 
     token: str | None = None
-    payload: dict[str, Any] = {}
+    payload: dict[str, Any] = Field(default_factory=dict)
 
     def __init__(self, **data: str | int | None) -> None:
         """Initialize guest token.

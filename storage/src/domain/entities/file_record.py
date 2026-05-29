@@ -19,8 +19,8 @@ class FileRecord:
     def __post_init__(self) -> None:
         """Validate entity invariants (Rich Domain Model)."""
         if self.size < 0:
-            raise ValueError(
-                f'File size must be non-negative, got {self.size}',
-            )
+            msg = f'File size must be non-negative, got {self.size}'
+            raise ValueError(msg)
         if not self.file_id:
-            raise ValueError('file_id must not be empty')
+            msg = 'file_id must not be empty'
+            raise ValueError(msg)

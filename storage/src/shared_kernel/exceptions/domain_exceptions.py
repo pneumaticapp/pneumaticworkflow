@@ -11,6 +11,7 @@ from .error_messages import (
     MSG_STORAGE_004,
     MSG_STORAGE_006,
     MSG_STORAGE_008,
+    MSG_STORAGE_013,
 )
 
 
@@ -62,19 +63,22 @@ class FileAccessDeniedError(BaseAppError):
     def __init__(
         self,
         file_id: str,
-        user_id: int,
+        user_id: int | None,
         details: str | None = None,
     ) -> None:
         """Initialize file access denied error.
 
         Args:
             file_id: ID of the file access was denied for.
-            user_id: ID of the user who was denied access.
+            user_id: ID of the user denied access (None if anonymous).
             details: Optional error details.
 
         """
         error_code = DOMAIN_ERROR_CODES['FILE_ACCESS_DENIED']
-        message = MSG_FILE_005.format(user_id=user_id, file_id=file_id)
+        display_user = user_id if user_id is not None else 'anonymous'
+        message = MSG_FILE_005.format(
+            user_id=display_user, file_id=file_id,
+        )
 
         custom_error_code = error_code.__class__(
             code=error_code.code,
@@ -188,3 +192,14 @@ class StorageError(BaseAppError):
         if details:
             custom_details += f': {details}'
         return cls('STORAGE_FILE_NOT_FOUND', custom_details)
+
+    @classmethod
+    def delete_failed(
+        cls,
+        details: str | None = None,
+    ) -> 'StorageError':
+        """Create delete failed error."""
+        custom_details = MSG_STORAGE_013.format(
+            details=details or 'Unknown error',
+        )
+        return cls('STORAGE_DELETE_FAILED', custom_details)

@@ -10,6 +10,7 @@ from src.shared_kernel.auth.redis_client import (
     RedisAuthClient,
     _safe_loads,
     _validate_auth_data,
+    close_redis_client,
     get_redis_client,
 )
 from src.shared_kernel.exceptions import (
@@ -407,7 +408,14 @@ class TestRedisAuthClient:
 
 
 class TestGetRedisClient:
-    """Test get_redis_client function."""
+    """Test get_redis_client singleton function."""
+
+    @pytest.fixture(autouse=True)
+    def _clear_cache(self):
+        """Clear lru_cache before and after each test."""
+        get_redis_client.cache_clear()
+        yield
+        get_redis_client.cache_clear()
 
     @pytest.mark.asyncio
     async def test_get_redis_client__default_url__return_client(
@@ -429,3 +437,106 @@ class TestGetRedisClient:
         # Assert
         assert isinstance(result, RedisAuthClient)
         mock_redis_from_url.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_get_redis__twice__same_instance(
+        self,
+        mock_get_settings,
+        mock_redis_from_url,
+    ):
+        """Test get_redis_client returns same instance."""
+        # arrange
+        mock_get_settings.return_value.AUTH_REDIS_URL = (
+            'redis://localhost:6379/1'
+        )
+        mock_redis_from_url.return_value = AsyncMock()
+
+        # act
+        first = get_redis_client()
+        second = get_redis_client()
+
+        # assert
+        assert first is second
+        # from_url called only once due to lru_cache
+        mock_redis_from_url.assert_called_once()
+
+    @pytest.mark.asyncio
+    async def test_get_redis__after_clear__new_inst(
+        self,
+        mock_get_settings,
+        mock_redis_from_url,
+    ):
+        """Test new instance after cache clear."""
+        # arrange
+        mock_get_settings.return_value.AUTH_REDIS_URL = (
+            'redis://localhost:6379/1'
+        )
+        mock_redis_from_url.return_value = AsyncMock()
+
+        first = get_redis_client()
+        get_redis_client.cache_clear()
+
+        mock_redis_from_url.return_value = AsyncMock()
+
+        # act
+        second = get_redis_client()
+
+        # assert
+        assert first is not second
+
+
+class TestCloseRedisClient:
+    """Test close_redis_client shutdown function."""
+
+    @pytest.fixture(autouse=True)
+    def _clear_cache(self):
+        """Clear lru_cache before and after each test."""
+        get_redis_client.cache_clear()
+        yield
+        get_redis_client.cache_clear()
+
+    @pytest.mark.asyncio
+    async def test_close__calls_aclose(
+        self,
+        mock_get_settings,
+        mock_redis_from_url,
+    ):
+        """Test close_redis_client closes connection."""
+        # arrange
+        mock_get_settings.return_value.AUTH_REDIS_URL = (
+            'redis://localhost:6379/1'
+        )
+        mock_underlying = AsyncMock()
+        mock_redis_from_url.return_value = mock_underlying
+
+        get_redis_client()
+
+        # act
+        await close_redis_client()
+
+        # assert
+        mock_underlying.aclose.assert_called_once_with()
+
+    @pytest.mark.asyncio
+    async def test_close__clears_cache(
+        self,
+        mock_get_settings,
+        mock_redis_from_url,
+    ):
+        """Test close clears lru_cache for fresh instance."""
+        # arrange
+        mock_get_settings.return_value.AUTH_REDIS_URL = (
+            'redis://localhost:6379/1'
+        )
+        mock_redis_from_url.return_value = AsyncMock()
+
+        first = get_redis_client()
+        await close_redis_client()
+
+        mock_redis_from_url.return_value = AsyncMock()
+
+        # act
+        second = get_redis_client()
+
+        # assert
+        assert first is not second

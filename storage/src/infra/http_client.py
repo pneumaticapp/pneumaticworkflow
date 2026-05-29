@@ -21,12 +21,19 @@ class SharedClientHolder:
     """Holder for the shared HTTP client."""
 
     _instance: httpx.AsyncClient | None = None
+    # Explicit timeouts (seconds)
+    _TIMEOUT = httpx.Timeout(
+        timeout=30.0,   # total request timeout
+        connect=10.0,   # connection timeout
+    )
 
     @classmethod
     def get(cls) -> httpx.AsyncClient:
         """Get or create shared HTTP client instance."""
         if cls._instance is None:
-            cls._instance = httpx.AsyncClient()
+            cls._instance = httpx.AsyncClient(
+                timeout=cls._TIMEOUT,
+            )
         return cls._instance
 
     @classmethod
@@ -89,7 +96,7 @@ class HttpClient:
         except httpx.TimeoutException as e:
             raise HttpTimeoutError(
                 url=self.base_url,
-                timeout=30.0,  # Default timeout
+                timeout=SharedClientHolder._TIMEOUT.read,
                 details=str(e),
             ) from e
         except httpx.RequestError as e:

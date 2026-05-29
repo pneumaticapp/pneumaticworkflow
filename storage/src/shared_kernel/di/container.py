@@ -11,7 +11,11 @@ from src.application.use_cases import (
     UploadFileUseCase,
 )
 from src.infra.http_client import HttpClient
-from src.infra.repositories import FileRecordRepository, StorageService
+from src.infra.repositories import (
+    FileRecordRepository,
+    StorageService,
+    StorageServiceHolder,
+)
 from src.shared_kernel.config import Settings, get_settings
 from src.shared_kernel.database import get_async_session
 from src.shared_kernel.uow import UnitOfWork
@@ -28,9 +32,11 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
         yield session
 
 
-async def get_storage_service() -> AsyncGenerator[StorageService, None]:
-    """Get storage service."""
-    yield StorageService()
+async def get_storage_service() -> AsyncGenerator[
+    StorageService, None,
+]:
+    """Get storage service singleton."""
+    yield await StorageServiceHolder.get()
 
 
 async def get_upload_use_case(

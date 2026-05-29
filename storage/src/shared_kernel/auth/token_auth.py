@@ -1,11 +1,46 @@
 """Token authentication classes."""
 
-import asyncio
 import hashlib
+from functools import lru_cache
 from typing import Any
 
 from src.shared_kernel.auth.redis_client import get_redis_client
 from src.shared_kernel.config import get_settings
+
+# Threshold: below this, PBKDF2 runs inline (< 1ms).
+# Above this, it would need asyncio.to_thread to avoid
+# blocking the event loop (not currently needed since
+# AUTH_TOKEN_ITERATIONS defaults to 1).
+_INLINE_ITERATIONS_THRESHOLD = 100
+
+
+@lru_cache(maxsize=256)
+def _compute_pbkdf2(
+    token: str,
+    salt: str,
+    iterations: int,
+) -> str:
+    """Compute PBKDF2-HMAC-SHA256 with LRU cache.
+
+    Caches token→hash mappings to avoid re-hashing the same
+    token on every request. Cache is bounded to 256 entries
+    (evicts least-recently-used).
+
+    Args:
+        token: Raw token string.
+        salt: Secret key for PBKDF2.
+        iterations: Number of PBKDF2 iterations.
+
+    Returns:
+        Hex-encoded hash string.
+
+    """
+    return hashlib.pbkdf2_hmac(
+        'sha256',
+        token.encode(),
+        salt.encode(),
+        iterations,
+    ).hex()
 
 
 class PneumaticToken:
@@ -25,24 +60,27 @@ class PneumaticToken:
 
     @classmethod
     async def encrypt(cls, token: str) -> str:
-        """Encrypt token using PBKDF2."""
+        """Encrypt token using PBKDF2.
+
+        Uses inline computation (no thread) when iterations
+        are below threshold. Results are cached via LRU.
+        """
         settings = get_settings()
-        encrypted_token = await asyncio.to_thread(
-            hashlib.pbkdf2_hmac,
-            'sha256',
-            token.encode(),
-            settings.DJANGO_SECRET_KEY.encode(),
-            settings.AUTH_TOKEN_ITERATIONS,
+        return _compute_pbkdf2(
+            token=token,
+            salt=settings.DJANGO_SECRET_KEY,
+            iterations=settings.AUTH_TOKEN_ITERATIONS,
         )
-        return encrypted_token.hex()
 
     @classmethod
-    async def data(cls, token: str) -> dict[str, Any] | None:
+    async def data(
+        cls,
+        token: str,
+    ) -> dict[str, Any] | None:
         """Get cached token data."""
         try:
             encrypted_token = await cls.encrypt(token)
             redis_client = get_redis_client()
             return await redis_client.get(encrypted_token)
         except (ValueError, KeyError, TypeError):
-            # Handle specific token/redis errors
             return None

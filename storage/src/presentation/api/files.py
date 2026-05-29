@@ -43,18 +43,31 @@ from src.shared_kernel.permissions import (
     authenticated_no_public,
     is_authenticated,
 )
+from src.shared_kernel.security import sanitize_content_type
 
 router = APIRouter(prefix='', tags=['files'])
 
+# Pre-compiled patterns for secure_filename
+_RE_UNSAFE_CHARS = re.compile(r'[^\w.\- ]', re.UNICODE)
+_RE_WHITESPACE = re.compile(r'[\s_]+')
 
-def secure_filename(filename: str) -> str:
-    """Sanitize filename to prevent path traversal and unsafe characters."""
+
+def secure_filename(filename: str | None) -> str:
+    """Sanitize filename to prevent path traversal and unsafe characters.
+
+    Preserves Unicode letters (Cyrillic, CJK, etc.) while blocking
+    control characters, path separators, and shell metacharacters.
+    """
     if not filename:
         return 'unnamed_file'
-    # Keep only alphanumeric, dot, dash, and underscore
-    filename = re.sub(r'[^a-zA-Z0-9.\-_]', '_', filename)
+    # Keep Unicode word chars (\w), dot, dash, space
+    filename = _RE_UNSAFE_CHARS.sub('_', filename)
+    # Collapse multiple spaces/underscores
+    filename = _RE_WHITESPACE.sub('_', filename)
     # Prevent hidden files and traversal
-    filename = filename.lstrip('.')
+    filename = filename.lstrip('._')
+    # Strip trailing dots/spaces (Windows FS issue)
+    filename = filename.rstrip('. ')
     if not filename:
         return 'unnamed_file'
     return filename
@@ -88,13 +101,13 @@ async def upload_file(
         raise FileSizeExceededError(file_size, settings.MAX_FILE_SIZE)
 
     # Sanitize filename
-    safe_filename = secure_filename(file.filename)
+    safe_filename = secure_filename(file.filename or '')
 
     # Create command
     command = UploadFileCommand(
         file_stream=file.file,
         filename=safe_filename,
-        content_type=file.content_type,
+        content_type=sanitize_content_type(file.content_type),
         size=file_size,
         user_id=current_user.user_id,
         account_id=current_user.account_id,
@@ -169,6 +182,7 @@ async def download_file(
             f"attachment; filename*=utf-8''{quoted_filename}"
         ),
         'Accept-Ranges': 'bytes',
+        'X-Content-Type-Options': 'nosniff',
     }
 
     status_code = 200

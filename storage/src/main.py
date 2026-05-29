@@ -7,10 +7,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from src.infra.http_client import close_shared_client, get_shared_client
+from src.infra.repositories import StorageServiceHolder
 from src.presentation.api import files_router
+from src.shared_kernel.auth import close_redis_client
 from src.shared_kernel.config import get_settings
 from src.shared_kernel.exceptions import register_exception_handlers
 from src.shared_kernel.middleware import AuthenticationMiddleware
+from src.shared_kernel.middleware.rate_limit import RateLimitMiddleware
+from src.shared_kernel.middleware.security_headers import (
+    SecurityHeadersMiddleware,
+)
 
 # Get settings
 settings = get_settings()
@@ -22,7 +28,9 @@ async def lifespan(app: FastAPI):
     # Initialize shared HTTP client
     get_shared_client()
     yield
-    # Close shared HTTP client on shutdown
+    # Close services on shutdown
+    await StorageServiceHolder.close()
+    await close_redis_client()
     await close_shared_client()
 
 # Create application
@@ -56,12 +64,23 @@ app.add_middleware(
     require_auth=True,
 )
 
+# Rate limiting middleware (disabled in debug/test mode)
+app.add_middleware(
+    RateLimitMiddleware,  # type: ignore[arg-type]
+    enabled=not settings.DEBUG,
+)
+
+# Security headers middleware
+app.add_middleware(
+    SecurityHeadersMiddleware,  # type: ignore[arg-type]
+    include_hsts=settings.CONFIG == 'Production',
+)
+
 # Register exception handlers
 register_exception_handlers(app)
 
 # Include routers
 app.include_router(files_router)
-
 
 if __name__ == '__main__':
     uvicorn.run(

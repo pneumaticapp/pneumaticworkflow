@@ -37,9 +37,6 @@ from .error_messages import (
     MSG_EXT_012,
     MSG_EXT_013,
     MSG_EXT_014,
-    MSG_STORAGE_009,
-    MSG_STORAGE_010,
-    MSG_STORAGE_011,
 )
 from .exception_handler import (
     create_error_response,
@@ -68,9 +65,6 @@ __all__ = [
     'MSG_EXT_012',
     'MSG_EXT_013',
     'MSG_EXT_014',
-    'MSG_STORAGE_009',
-    'MSG_STORAGE_010',
-    'MSG_STORAGE_011',
     'PERMISSION_ERROR_CODES',
     'VALIDATION_ERROR_CODES',
     'AuthenticationError',
