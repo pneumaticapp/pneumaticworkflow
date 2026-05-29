@@ -39,7 +39,7 @@ class TestUploadFileUseCaseIntegration:
             file_stream=io.BytesIO(b'test file content'),
             filename='test_file.txt',
             content_type='text/plain',
-            size=18,
+            size=17,
             user_id=1,
             account_id=1,
         )
@@ -64,7 +64,7 @@ class TestUploadFileUseCaseIntegration:
         assert file_record is not None
         assert file_record.filename == 'test_file.txt'
         assert file_record.content_type == 'text/plain'
-        assert file_record.size == 18
+        assert file_record.size == 17
         assert file_record.user_id == 1
         assert file_record.account_id == 1
 
@@ -156,7 +156,7 @@ class TestDownloadFileUseCaseIntegration:
             file_id='12345678-1234-5678-1234-567812345678',
             filename='test_file.txt',
             content_type='text/plain',
-            size=18,
+            size=17,
             user_id=1,
             account_id=1,
             created_at=datetime.now(UTC),

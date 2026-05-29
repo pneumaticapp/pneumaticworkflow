@@ -276,7 +276,10 @@ def refresh_attachments_for_event(
             )
         return [a.file_id for a in created_attachments], has_attachments
     except (ValueError, TypeError, IntegrityError):
-        return [], bool(existent_file_ids)
+        has_attachments = Attachment.objects.filter(
+            **filter_kwargs,
+        ).exists()
+        return [], has_attachments
 
 
 def refresh_attachments_for_text(

@@ -904,6 +904,9 @@ class TestUserGroupService:
             'src.notifications.tasks.'
             'send_group_updated_notification.delay',
         )
+        sync_account_file_fields_mock = mocker.patch(
+            'src.accounts.services.group.sync_account_file_fields',
+        )
 
         # act
         service.partial_update(
@@ -913,6 +916,12 @@ class TestUserGroupService:
         )
 
         # assert
+        sync_account_file_fields_mock.assert_called_once_with(
+            account=account,
+            user=user,
+            old_values=['photo.jpg'],
+            new_values=[delete_photo],
+        )
         get_template_ids_mock.assert_not_called()
         update_workflow_owners_mock.assert_not_called()
         send_added_users_notifications_mock.assert_not_called()
@@ -981,6 +990,9 @@ class TestUserGroupService:
             'src.notifications.tasks.'
             'send_group_updated_notification.delay',
         )
+        sync_account_file_fields_mock = mocker.patch(
+            'src.accounts.services.group.sync_account_file_fields',
+        )
 
         # act
         service.partial_update(
@@ -990,6 +1002,7 @@ class TestUserGroupService:
         )
 
         # assert
+        sync_account_file_fields_mock.assert_not_called()
         get_template_ids_mock.assert_not_called()
         update_workflow_owners_mock.assert_not_called()
         send_added_users_notifications_mock.assert_not_called()

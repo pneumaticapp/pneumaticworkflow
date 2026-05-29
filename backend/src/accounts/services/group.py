@@ -223,12 +223,13 @@ class UserGroupService(BaseModelService):
                 ),
             )
         result = super().partial_update(**update_kwargs, force_save=force_save)
-        sync_account_file_fields(
-            account=self.instance.account,
-            user=self.user,
-            old_values=[old_photo],
-            new_values=[self.instance.photo],
-        )
+        if old_photo != self.instance.photo:
+            sync_account_file_fields(
+                account=self.instance.account,
+                user=self.user,
+                old_values=[old_photo],
+                new_values=[self.instance.photo],
+            )
 
         send_group_updated_notification.delay(
             logging=self.account.log_api_requests,

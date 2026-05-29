@@ -4,6 +4,7 @@ Tests for refresh_attachments and related utilities.
 from unittest.mock import Mock, patch
 
 import pytest
+from django.db import IntegrityError
 from django.test import override_settings
 
 from src.processes.models.workflows.event import WorkflowEvent
@@ -198,6 +199,246 @@ class TestRefreshAttachmentsForText:
         # assert
         assert result == []
         mock_attachment_objects.filter.assert_called()
+
+    @override_settings(
+        FILE_SERVICE_URL='https://files.pneumatic.app',
+        FILE_DOMAIN='files.pneumatic.app',
+    )
+    def test_refresh_for_event__rollback__recalc_from_db(
+        self,
+        mocker,
+    ):
+
+        # arrange
+        attachment_objects_mock = mocker.patch(
+            'src.storage.utils.Attachment.objects',
+        )
+        attachment_service_cls_mock = mocker.patch(
+            'src.storage.utils.AttachmentService',
+        )
+        clear_permissions_mock = mocker.patch(
+            'src.storage.utils'
+            '.clear_guardian_permissions_for_attachment_ids',
+        )
+        user_mock = Mock()
+        account_mock = Mock()
+        account_mock.id = 1
+        event_mock = Mock()
+        event_mock.task_id = 1
+
+        filter_mock = attachment_objects_mock.filter.return_value
+        filter_mock.values_list.return_value = []
+        exclude_mock = filter_mock.exclude.return_value
+        exclude_mock.values_list.return_value = []
+        exclude_mock.delete.return_value = (0, {})
+
+        service_mock = Mock()
+        attachment_service_cls_mock.return_value = service_mock
+        service_mock.bulk_create_for_event.side_effect = (
+            IntegrityError('duplicate')
+        )
+        filter_mock.exists.return_value = True
+        text = (
+            "[doc.pdf]"
+            "(https://files.pneumatic.app/new_file_id)"
+        )
+
+        # act
+        new_file_ids, has_attachments = (
+            refresh_attachments_for_event(
+                account=account_mock,
+                user=user_mock,
+                text=text,
+                event=event_mock,
+            )
+        )
+
+        # assert
+        assert new_file_ids == []
+        assert has_attachments is True
+        filter_mock.exists.assert_called_once_with()
+        clear_permissions_mock.assert_called_once_with([])
+
+    @override_settings(
+        FILE_SERVICE_URL='https://files.pneumatic.app',
+        FILE_DOMAIN='files.pneumatic.app',
+    )
+    def test_refresh_for_event__rollback_no_att__false(
+        self,
+        mocker,
+    ):
+
+        # arrange
+        attachment_objects_mock = mocker.patch(
+            'src.storage.utils.Attachment.objects',
+        )
+        attachment_service_cls_mock = mocker.patch(
+            'src.storage.utils.AttachmentService',
+        )
+        clear_permissions_mock = mocker.patch(
+            'src.storage.utils'
+            '.clear_guardian_permissions_for_attachment_ids',
+        )
+        user_mock = Mock()
+        account_mock = Mock()
+        account_mock.id = 1
+        event_mock = Mock()
+        event_mock.task_id = 1
+
+        filter_mock = attachment_objects_mock.filter.return_value
+        filter_mock.values_list.return_value = []
+        exclude_mock = filter_mock.exclude.return_value
+        exclude_mock.values_list.return_value = []
+        exclude_mock.delete.return_value = (0, {})
+
+        service_mock = Mock()
+        attachment_service_cls_mock.return_value = service_mock
+        service_mock.bulk_create_for_event.side_effect = (
+            IntegrityError('duplicate')
+        )
+        filter_mock.exists.return_value = False
+        text = (
+            "[doc.pdf]"
+            "(https://files.pneumatic.app/some_file)"
+        )
+
+        # act
+        new_file_ids, has_attachments = (
+            refresh_attachments_for_event(
+                account=account_mock,
+                user=user_mock,
+                text=text,
+                event=event_mock,
+            )
+        )
+
+        # assert
+        assert new_file_ids == []
+        assert has_attachments is False
+        filter_mock.exists.assert_called_once_with()
+        clear_permissions_mock.assert_called_once_with([])
+
+    @override_settings(
+        FILE_SERVICE_URL='https://files.pneumatic.app',
+        FILE_DOMAIN='files.pneumatic.app',
+    )
+    def test_refresh_for_event__value_error__recalc(
+        self,
+        mocker,
+    ):
+
+        # arrange
+        attachment_objects_mock = mocker.patch(
+            'src.storage.utils.Attachment.objects',
+        )
+        attachment_service_cls_mock = mocker.patch(
+            'src.storage.utils.AttachmentService',
+        )
+        clear_permissions_mock = mocker.patch(
+            'src.storage.utils'
+            '.clear_guardian_permissions_for_attachment_ids',
+        )
+        user_mock = Mock()
+        account_mock = Mock()
+        account_mock.id = 1
+        event_mock = Mock()
+        event_mock.task_id = None
+
+        filter_mock = attachment_objects_mock.filter.return_value
+        filter_mock.values_list.return_value = []
+        exclude_mock = filter_mock.exclude.return_value
+        exclude_mock.values_list.return_value = []
+        exclude_mock.delete.return_value = (0, {})
+
+        service_mock = Mock()
+        attachment_service_cls_mock.return_value = service_mock
+        service_mock.bulk_create_for_event.side_effect = (
+            ValueError('bad value')
+        )
+        filter_mock.exists.return_value = True
+        text = (
+            "[f.pdf]"
+            "(https://files.pneumatic.app/val_err_file)"
+        )
+
+        # act
+        new_file_ids, has_attachments = (
+            refresh_attachments_for_event(
+                account=account_mock,
+                user=user_mock,
+                text=text,
+                event=event_mock,
+            )
+        )
+
+        # assert
+        assert new_file_ids == []
+        assert has_attachments is True
+        filter_mock.exists.assert_called_once_with()
+        clear_permissions_mock.assert_called_once_with([])
+
+    @override_settings(
+        FILE_SERVICE_URL='https://files.pneumatic.app',
+        FILE_DOMAIN='files.pneumatic.app',
+    )
+    def test_refresh_for_event__rollback_existent__recalc(
+        self,
+        mocker,
+    ):
+
+        # arrange
+        attachment_objects_mock = mocker.patch(
+            'src.storage.utils.Attachment.objects',
+        )
+        attachment_service_cls_mock = mocker.patch(
+            'src.storage.utils.AttachmentService',
+        )
+        clear_permissions_mock = mocker.patch(
+            'src.storage.utils'
+            '.clear_guardian_permissions_for_attachment_ids',
+        )
+        user_mock = Mock()
+        account_mock = Mock()
+        account_mock.id = 1
+        event_mock = Mock()
+        event_mock.task_id = 1
+
+        filter_mock = attachment_objects_mock.filter.return_value
+        filter_mock.values_list.return_value = [
+            'existing_file_1',
+        ]
+        exclude_mock = filter_mock.exclude.return_value
+        exclude_mock.values_list.return_value = []
+        exclude_mock.delete.return_value = (0, {})
+
+        service_mock = Mock()
+        attachment_service_cls_mock.return_value = service_mock
+        service_mock.bulk_create_for_event.side_effect = (
+            IntegrityError('dup')
+        )
+        filter_mock.exists.return_value = False
+        text = (
+            "[a.pdf]"
+            "(https://files.pneumatic.app/existing_file_1) "
+            "[b.pdf]"
+            "(https://files.pneumatic.app/new_file_2)"
+        )
+
+        # act
+        new_file_ids, has_attachments = (
+            refresh_attachments_for_event(
+                account=account_mock,
+                user=user_mock,
+                text=text,
+                event=event_mock,
+            )
+        )
+
+        # assert
+        assert new_file_ids == []
+        assert has_attachments is False
+        filter_mock.exists.assert_called_once_with()
+        clear_permissions_mock.assert_called_once_with([])
 
 
 class TestRefreshAttachments:

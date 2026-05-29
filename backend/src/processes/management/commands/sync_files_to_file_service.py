@@ -122,61 +122,62 @@ class Command(BaseCommand):
         skipped = 0
         errors = 0
 
-        for attr in attachments.iterator(chunk_size=batch_size):
-            file_id = attr.file_id
-            size = attr.size if attr.size else 0
-            filename = attr.name or "unnamed"
+        try:
+            for attr in attachments.iterator(chunk_size=batch_size):
+                file_id = attr.file_id
+                size = attr.size if attr.size else 0
+                filename = attr.name or "unnamed"
 
-            content_type, _ = mimetypes.guess_type(filename)
-            if not content_type:
-                content_type = 'application/octet-stream'
+                content_type, _ = mimetypes.guess_type(filename)
+                if not content_type:
+                    content_type = 'application/octet-stream'
 
-            user_id = None
-            if attr.account_id:
-                owner = attr.account.get_owner()
-                user_id = owner.id if owner else None
+                user_id = None
+                if attr.account_id:
+                    owner = attr.account.get_owner()
+                    user_id = owner.id if owner else None
 
-            created_at = datetime.now(timezone.utc)
+                created_at = datetime.now(timezone.utc)
 
-            if not dry_run:
-                try:
-                    cursor.execute(
-                        "SELECT file_id FROM files WHERE file_id = %s",
-                        (file_id,),
-                    )
-                    if cursor.fetchone() is not None:
-                        skipped += 1
-                        continue
-
-                    insert_query = """
-                        INSERT INTO files
-                        (file_id, size, content_type, filename, user_id,
-                         account_id, created_at)
-                        VALUES (%s, %s, %s, %s, %s, %s, %s)
-                    """
-                    cursor.execute(insert_query, (
-                        file_id, size, content_type, filename, user_id,
-                        attr.account_id, created_at,
-                    ))
-                    synced += 1
-
-                    if synced % batch_size == 0:
-                        conn.commit()
-                        self.stdout.write(
-                            f'Synced {synced} / {total} records...',
+                if not dry_run:
+                    try:
+                        cursor.execute(
+                            "SELECT file_id FROM files WHERE file_id = %s",
+                            (file_id,),
                         )
+                        if cursor.fetchone() is not None:
+                            skipped += 1
+                            continue
 
-                except psycopg2.Error as e:
-                    logger.error("Error syncing %s: %s", file_id, e)
-                    conn.rollback()
-                    errors += 1
-            else:
-                synced += 1
+                        insert_query = """
+                            INSERT INTO files
+                            (file_id, size, content_type, filename, user_id,
+                             account_id, created_at)
+                            VALUES (%s, %s, %s, %s, %s, %s, %s)
+                        """
+                        cursor.execute(insert_query, (
+                            file_id, size, content_type, filename, user_id,
+                            attr.account_id, created_at,
+                        ))
+                        synced += 1
 
-        if not dry_run:
-            conn.commit()
-            cursor.close()
-            conn.close()
+                        if synced % batch_size == 0:
+                            conn.commit()
+                            self.stdout.write(
+                                f'Synced {synced} / {total} records...',
+                            )
+
+                    except psycopg2.Error as e:
+                        logger.error("Error syncing %s: %s", file_id, e)
+                        conn.rollback()
+                        errors += 1
+                else:
+                    synced += 1
+        finally:
+            if not dry_run:
+                conn.commit()
+                cursor.close()
+                conn.close()
 
         self.stdout.write(self.style.SUCCESS(
             f'Done. Synced: {synced}, Skipped: {skipped}, Errors: {errors} '

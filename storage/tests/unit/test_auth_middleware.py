@@ -70,11 +70,6 @@ class TestAuthenticationMiddleware:
         """Test successful token authentication."""
         # Arrange
         token = 'valid-token'
-        AuthUser(
-            auth_type=UserType.AUTHENTICATED,
-            user_id=1,
-            account_id=2,
-        )
 
         # Mock PneumaticToken.data
         with pytest.MonkeyPatch().context() as m:
