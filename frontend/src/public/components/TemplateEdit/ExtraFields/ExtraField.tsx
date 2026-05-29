@@ -15,6 +15,7 @@ import { ExtraFieldUser } from './User';
 import { ExtraFieldNumber } from './Number';
 
 import { EExtraFieldType } from '../../../types/template';
+import { EFieldLabelPosition } from '../../../types/fieldset';
 import { ExtraFieldDropdown } from './utils/ExtraFieldDropdown';
 import { getInputNameBackground } from './utils/getInputNameBackground';
 import { IExtraFieldProps } from './types';
@@ -38,6 +39,7 @@ function ExtraField(props: IExtraFieldProps) {
     wrapperClassName,
     labelBackgroundColor,
     innerRef,
+    labelPosition,
   } = props;
 
   // eslint-disable-next-line react/destructuring-assignment
@@ -149,7 +151,8 @@ function ExtraField(props: IExtraFieldProps) {
     return classnames(
       styles['kick-off-input__dropdown'],
       (field.type === EExtraFieldType.Checkbox || field.type === EExtraFieldType.Radio) && styles['kick-off-input__dropdown_choices'],
-      field.type === EExtraFieldType.Creatable && styles['kick-off-input__dropdown_creatable']
+      field.type === EExtraFieldType.Creatable && styles['kick-off-input__dropdown_creatable'],
+      labelPosition === EFieldLabelPosition.Left && styles['kick-off-input__dropdown_label-left'],
     );
   };
 

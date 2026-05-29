@@ -9,6 +9,8 @@ import { validateCheckboxAndRadioField, validateKickoffFieldName } from '../../.
 import { handleSelectionBlur, recalculateDuplicateErrors } from '../utils/handleSelectionBlur';
 import { IntlMessages } from '../../../IntlMessages';
 import { EExtraFieldMode, IExtraFieldSelection } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
+import { FieldLabel } from '../utils/FieldLabel';
 import { fitInputWidth } from '../utils/fitInputWidth';
 import { PencilSmallIcon, RemoveIcon } from '../../../icons';
 import { RadioButton } from '../../../UI/Fields/RadioButton';
@@ -33,6 +35,7 @@ export function ExtraFieldRadio({
   editField,
   isDisabled = false,
   datasetName,
+  labelPosition,
 }: IWorkflowExtraFieldProps) {
   const selectionItems = field.selections as IExtraFieldSelection[];
   const selectionValues = field.selections as string[];
@@ -70,38 +73,53 @@ export function ExtraFieldRadio({
     );
 
     return (
-      <div className={fieldStyles['kickoff-create-field-container']}>
-        <div className={fieldNameClassName}>
-          <AutosizeInput
-            inputRef={(ref) => (fieldNameInputRef.current = ref)}
-            inputClassName={classnames(
-              fieldStyles['kickoff-create-field-name-input'],
-              !isKickoffFieldNameValid && fieldStyles['kickoff-create-field-name-input_error'],
-            )}
-            onChange={handleChangeName}
-            placeholder={namePlaceholder}
-            type="text"
-            value={name}
-            disabled={isDisabled}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                setIsFocused(false);
-                event.currentTarget.blur();
-              }
-            }}
+      <div className={classnames(
+        fieldStyles['kickoff-create-field-container'],
+        labelPosition === EFieldLabelPosition.Left && styles['kick-off-input__field_label-left'],
+      )}>
+        {labelPosition === EFieldLabelPosition.Left ? (
+          <FieldLabel
+            name={name}
+            isRequired={isRequired}
+            isDisabled={isDisabled}
+            mode={mode}
+            namePlaceholder={namePlaceholder}
+            handleChangeName={handleChangeName}
+            className={styles['kick-off-input__name_label-left']}
           />
-          {isRequired && <span className={styles['kick-off-required-sign']} />}
-          {!isFocused && mode === EExtraFieldMode.Kickoff && (
-            <button
-              onClick={() => fieldNameInputRef.current?.focus()}
-              className={classnames(styles['kick-off-edit-name'], fieldStyles['edit-name-button'])}
-            >
-              <PencilSmallIcon />
-            </button>
-          )}
-        </div>
+        ) : (
+          <div className={fieldNameClassName}>
+            <AutosizeInput
+              inputRef={(ref) => (fieldNameInputRef.current = ref)}
+              inputClassName={classnames(
+                fieldStyles['kickoff-create-field-name-input'],
+                !isKickoffFieldNameValid && fieldStyles['kickoff-create-field-name-input_error'],
+              )}
+              onChange={handleChangeName}
+              placeholder={namePlaceholder}
+              type="text"
+              value={name}
+              disabled={isDisabled}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  setIsFocused(false);
+                  event.currentTarget.blur();
+                }
+              }}
+            />
+            {isRequired && <span className={styles['kick-off-required-sign']} />}
+            {!isFocused && mode === EExtraFieldMode.Kickoff && (
+              <button
+                onClick={() => fieldNameInputRef.current?.focus()}
+                className={classnames(styles['kick-off-edit-name'], fieldStyles['edit-name-button'])}
+              >
+                <PencilSmallIcon />
+              </button>
+            )}
+          </div>
+        )}
 
         {!isKickoffFieldNameValid && (
           <p className={fieldStyles['kickoff-create-field-container__error-message']}>
@@ -109,7 +127,13 @@ export function ExtraFieldRadio({
           </p>
         )}
 
-        <OutputFieldContent field={field} editField={editField} isDisabled={isDisabled} datasetName={datasetName}>
+        <OutputFieldContent
+          field={field}
+          editField={editField}
+          isDisabled={isDisabled}
+          datasetName={datasetName}
+          {...(labelPosition === EFieldLabelPosition.Left && { className: styles['kick-off-input__options-content_label-left'] })}
+        >
           {customOptionsList}
           {!isDisabled && addOptionButton}
         </OutputFieldContent>

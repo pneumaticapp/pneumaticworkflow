@@ -14,6 +14,7 @@ import { FieldWithName } from '../utils/FieldWithName';
 import { OutputFieldContent } from '../utils/OutputFieldContent';
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { EExtraFieldMode, IExtraFieldSelection } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { validateCheckboxAndRadioField } from '../../../../utils/validators';
 import { handleSelectionBlur, recalculateDuplicateErrors } from '../utils/handleSelectionBlur';
 
@@ -183,6 +184,7 @@ export function ExtraFieldCreatable({
       isDisabled={isDisabled}
       icon={<ArrowDropdownIcon />}
       labelPosition={labelPosition}
+      {...(labelPosition === EFieldLabelPosition.Left && { labelClassName: styles['kick-off-input__name_label-left'] })}
       innerRef={innerRef}
     />
   );

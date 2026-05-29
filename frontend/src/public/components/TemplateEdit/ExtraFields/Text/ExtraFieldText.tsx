@@ -2,10 +2,13 @@ import * as React from 'react';
 
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { EExtraFieldMode } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { EFieldTagName } from '../../../Field';
 import { FieldWithName } from '../utils/FieldWithName';
 
 import { IWorkflowExtraFieldProps } from '..';
+
+import styles from '../../KickoffRedux/KickoffRedux.css';
 
 export const ExtraFieldText = ({
   field,
@@ -47,6 +50,7 @@ export const ExtraFieldText = ({
       mode={mode}
       labelBackgroundColor={labelBackgroundColor}
       labelPosition={labelPosition}
+      {...(labelPosition === EFieldLabelPosition.Left && { labelClassName: styles['kick-off-input__name_label-left'] })}
       tagName={mode === EExtraFieldMode.ProcessRun ? EFieldTagName.RichText : EFieldTagName.Textarea}
       handleChangeName={handleChangeName}
       handleChangeDescription={handleChangeDescription}

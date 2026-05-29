@@ -3,6 +3,8 @@
 import * as React from 'react';
 import classnames from 'classnames';
 import { EExtraFieldMode } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
+import { FieldLabel } from '../utils/FieldLabel';
 import { PencilSmallIcon } from '../../../icons';
 import { TUploadedFile, uploadFiles } from '../../../../utils/uploadFiles';
 import { NotificationManager } from '../../../UI/Notifications';
@@ -27,6 +29,7 @@ export function ExtraFieldFile({
   editField,
   isDisabled = false,
   accountId,
+  labelPosition,
 }: IWorkflowExtraFieldProps) {
   const { useCallback, useState, useEffect, createRef } = React;
   const [isUploading, setUploadingState] = useState(false);
@@ -84,41 +87,55 @@ export function ExtraFieldFile({
   const isKickoffFieldNameValid = !Boolean(fieldNameErrorMessage);
 
   const renderKickoffView = () => (
-    <div className={styles['extra-field-file__conteiner--template']}>
-      <div className={styles['extra-field-file__input--template']}>
-        <AutosizeInput
-          inputRef={(ref) => (fieldNameInputRef.current = ref)}
-          inputClassName={classnames(
-            styles['extra-field-file__input-name--template'],
-            !isKickoffFieldNameValid && styles['extra-field-file__input-name-error--template'],
-          )}
-          onChange={handleChangeName}
-          placeholder={namePlaceholder}
-          type="text"
-          value={name}
-          disabled={isDisabled}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          onKeyDown={(event) => {
-            if (event.key === 'Enter') {
-              setIsFocused(false);
-              event.currentTarget.blur();
-            }
-          }}
+    <div className={classnames(
+      styles['extra-field-file__conteiner--template'],
+      labelPosition === EFieldLabelPosition.Left && kickoffStyles['kick-off-input__field_label-left'],
+    )}>
+      {labelPosition === EFieldLabelPosition.Left ? (
+        <FieldLabel
+          name={name}
+          isRequired={isRequired || false}
+          isDisabled={isDisabled}
+          mode={mode}
+          namePlaceholder={namePlaceholder}
+          handleChangeName={handleChangeName}
         />
-        {isRequired && <span className={kickoffStyles['kick-off-required-sign']} />}
-        {!isFocused && mode === EExtraFieldMode.Kickoff && (
-          <button
-            onClick={() => fieldNameInputRef.current?.focus()}
-            className={classnames(
-              kickoffStyles['kick-off-edit-name'],
-              styles['extra-field-file__edit-name-button--template'],
+      ) : (
+        <div className={styles['extra-field-file__input--template']}>
+          <AutosizeInput
+            inputRef={(ref) => (fieldNameInputRef.current = ref)}
+            inputClassName={classnames(
+              styles['extra-field-file__input-name--template'],
+              !isKickoffFieldNameValid && styles['extra-field-file__input-name-error--template'],
             )}
-          >
-            <PencilSmallIcon />
-          </button>
-        )}
-      </div>
+            onChange={handleChangeName}
+            placeholder={namePlaceholder}
+            type="text"
+            value={name}
+            disabled={isDisabled}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                setIsFocused(false);
+                event.currentTarget.blur();
+              }
+            }}
+          />
+          {isRequired && <span className={kickoffStyles['kick-off-required-sign']} />}
+          {!isFocused && mode === EExtraFieldMode.Kickoff && (
+            <button
+              onClick={() => fieldNameInputRef.current?.focus()}
+              className={classnames(
+                kickoffStyles['kick-off-edit-name'],
+                styles['extra-field-file__edit-name-button--template'],
+              )}
+            >
+              <PencilSmallIcon />
+            </button>
+          )}
+        </div>
+      )}
 
       {!isKickoffFieldNameValid && (
         <p className={styles['extra-field-file__error-message--template']}>
