@@ -99,6 +99,7 @@
 
 .kickoff-set-field-container {
   display: block;
+  flex-grow: 1;
 }
 
 .kickoff-set-field-name {
@@ -134,4 +135,9 @@
 .edit-name-button {
   position: relative;
   top: -2px;
+}
+
+.checkbox-options-wrapper_label-left {
+  flex: 1;
+  min-width: 0;
 }

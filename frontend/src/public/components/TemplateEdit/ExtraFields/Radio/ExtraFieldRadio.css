@@ -106,6 +106,7 @@
 
 .kickoff-set-field-container {
   display: block;
+  flex-grow: 1;
 }
 
 .kickoff-set-field-name {
@@ -146,4 +147,9 @@
 .connected_radio {
   position: relative;
   bottom: 15px;
+}
+
+.radio-options-wrapper_label-left {
+  flex: 1;
+  min-width: 0;
 }

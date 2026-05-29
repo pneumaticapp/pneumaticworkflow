@@ -50,7 +50,7 @@ export const ExtraFieldText = ({
       mode={mode}
       labelBackgroundColor={labelBackgroundColor}
       labelPosition={labelPosition}
-      {...(labelPosition === EFieldLabelPosition.Left && { labelClassName: styles['kick-off-input__name_label-left'] })}
+      {...(labelPosition === EFieldLabelPosition.Left && { labelClassName: styles['kick-off-input__name_label-left_centered'] })}
       tagName={mode === EExtraFieldMode.ProcessRun ? EFieldTagName.RichText : EFieldTagName.Textarea}
       handleChangeName={handleChangeName}
       handleChangeDescription={handleChangeDescription}

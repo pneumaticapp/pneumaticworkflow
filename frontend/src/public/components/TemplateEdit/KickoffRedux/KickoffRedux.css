@@ -118,7 +118,15 @@
 
     .kick-off-input__name_label-left {
       align-self: flex-start;
-      top: 1.6rem;
+      margin-top: 1.6rem;
+    }
+
+    .kick-off-input__name_label-left_centered {
+      align-self: center;
+    }
+
+    .kick-off-input__name_label-left_aligned-start {
+      align-self: flex-start;
     }
 
     .kick-off-input__description {

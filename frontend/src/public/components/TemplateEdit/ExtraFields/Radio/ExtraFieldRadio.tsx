@@ -36,6 +36,7 @@ export function ExtraFieldRadio({
   isDisabled = false,
   datasetName,
   labelPosition,
+  labelBackgroundColor,
 }: IWorkflowExtraFieldProps) {
   const selectionItems = field.selections as IExtraFieldSelection[];
   const selectionValues = field.selections as string[];
@@ -245,16 +246,36 @@ export function ExtraFieldRadio({
   const renderProcessRunField = () => {
     if (!selectionValues) return null;
 
+    const isLabelLeft = labelPosition === EFieldLabelPosition.Left;
     const fieldNameClassName = classnames(fieldStyles['kickoff-set-field-name']);
 
     return (
-      <div className={fieldStyles['kickoff-set-field-container']} data-autofocus-first-field={true}>
-        <div>
-          <div className={fieldNameClassName}>{name}</div>
-          {isRequired && <span className={styles['kick-off-required-sign']} />}
+      <div
+        className={classnames(
+          fieldStyles['kickoff-set-field-container'],
+          isLabelLeft && styles['kick-off-input__field_label-left'],
+        )}
+        data-autofocus-first-field={true}
+      >
+        {isLabelLeft ? (
+          <FieldLabel
+            name={name}
+            isRequired={isRequired}
+            isDisabled={isDisabled}
+            mode={mode}
+            labelBackgroundColor={labelBackgroundColor}
+            handleChangeName={handleChangeName}
+            className={styles['kick-off-input__name_label-left_aligned-start']}
+          />
+        ) : (
+          <div>
+            <div className={fieldNameClassName}>{name}</div>
+            {isRequired && <span className={styles['kick-off-required-sign']} />}
+          </div>
+        )}
+        <div {...(isLabelLeft && { className: fieldStyles['radio-options-wrapper_label-left'] })}>
+          <ul className={fieldStyles['kickoff-set-field-options']}>{selectionValues.map(renderProcessRunOption)}</ul>
         </div>
-
-        <ul className={fieldStyles['kickoff-set-field-options']}>{selectionValues.map(renderProcessRunOption)}</ul>
       </div>
     );
   };
