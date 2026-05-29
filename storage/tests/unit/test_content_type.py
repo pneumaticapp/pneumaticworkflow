@@ -75,11 +75,10 @@ def test_sanitize__empty__octet_stream():
 
 def test_sanitize__unknown__octet_stream():
 
-    # arrange
-    content_type = 'application/x-custom-dangerous'
-
     # act
-    result = sanitize_content_type(content_type=content_type)
+    result = sanitize_content_type(
+        content_type='application/x-custom-dangerous',
+    )
 
     # assert
     assert result == 'application/octet-stream'

@@ -6,7 +6,6 @@ from unittest.mock import AsyncMock, Mock
 import pytest
 from fastapi.testclient import TestClient
 
-from src.application.dto import DownloadFileQuery, UploadFileCommand
 from src.domain.entities import FileRecord
 from src.main import app
 from src.shared_kernel.config import Settings
@@ -64,50 +63,8 @@ def sample_file_record() -> FileRecord:
         size=1024,
         user_id=1,
         account_id=1,
-        created_at=datetime.now(UTC),
+        created_at=datetime(2024, 1, 1, tzinfo=UTC),
     )
-
-
-@pytest.fixture
-def sample_upload_command() -> UploadFileCommand:
-    """Sample upload command."""
-    return UploadFileCommand(
-        file_content=b'test file content',
-        filename='test_file.txt',
-        content_type='text/plain',
-        size=1024,
-        user_id=1,
-        account_id=1,
-    )
-
-
-@pytest.fixture
-def sample_download_query() -> DownloadFileQuery:
-    """Sample download query."""
-    return DownloadFileQuery(
-        file_id='12345678-1234-5678-1234-567812345679',
-        user_id=1,
-    )
-
-
-@pytest.fixture
-def mock_user():
-    """Mock authenticated user."""
-    mock = Mock()
-    mock.user_id = 1
-    mock.account_id = 1
-    mock.is_authenticated = True
-    return mock
-
-
-@pytest.fixture
-def mock_anonymous_user():
-    """Mock anonymous user."""
-    mock = Mock()
-    mock.user_id = None
-    mock.account_id = None
-    mock.is_authenticated = False
-    return mock
 
 
 @pytest.fixture

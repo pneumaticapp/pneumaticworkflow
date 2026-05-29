@@ -181,7 +181,9 @@ def test_file_not_found__create__ok():
 
     # act
     exc = DomainFileNotFoundError(
-        '12345678-1234-5678-1234-567812345678',
+        file_id=(
+            '12345678-1234-5678-1234-567812345678'
+        ),
     )
 
     # assert
@@ -198,7 +200,9 @@ def test_file_not_found__with_account__ok():
 
     # act
     exc = DomainFileNotFoundError(
-        '12345678-1234-5678-1234-567812345678',
+        file_id=(
+            '12345678-1234-5678-1234-567812345678'
+        ),
         account_id=123,
     )
 
@@ -212,7 +216,9 @@ def test_file_access_denied__create__ok():
 
     # act
     exc = FileAccessDeniedError(
-        '12345678-1234-5678-1234-567812345678',
+        file_id=(
+            '12345678-1234-5678-1234-567812345678'
+        ),
         user_id=456,
     )
 
@@ -227,7 +233,9 @@ def test_file_access_denied__none_user__anonymous():
 
     # act
     exc = FileAccessDeniedError(
-        '12345678-1234-5678-1234-567812345678',
+        file_id=(
+            '12345678-1234-5678-1234-567812345678'
+        ),
         user_id=None,
     )
 
@@ -240,7 +248,9 @@ def test_file_access_denied__none_user__anonymous():
 def test_file_size_exceeded__create__ok():
 
     # act
-    exc = FileSizeExceededError(1000, 500)
+    exc = FileSizeExceededError(
+        size=1000, max_size=500,
+    )
 
     # assert
     assert exc.error_code.code == 'FILE_003'
@@ -292,7 +302,8 @@ def test_storage__file_not_found__ok():
 
     # act
     exc = StorageError.file_not_found_in_storage(
-        'path/to/file.txt', 'my-bucket',
+        file_path='path/to/file.txt',
+        bucket_name='my-bucket',
     )
 
     # assert
@@ -371,8 +382,6 @@ def test_storage__invalid_key__raise_key_error():
 
     # act
     with pytest.raises(KeyError):
-
-        # assert
         StorageError('NONEXISTENT_KEY')
 
 
@@ -393,7 +402,10 @@ def test_db_connection_error__create__ok():
 def test_db_operation_error__create__ok():
 
     # act
-    exc = DatabaseOperationError('SELECT', 'Query failed')
+    exc = DatabaseOperationError(
+        operation='SELECT',
+        details='Query failed',
+    )
 
     # assert
     assert exc.error_code.code == 'DB_002'
@@ -406,7 +418,8 @@ def test_db_constraint_error__create__ok():
 
     # act
     exc = DatabaseConstraintError(
-        'unique_constraint', 'Duplicate key',
+        constraint='unique_constraint',
+        details='Duplicate key',
     )
 
     # assert
@@ -420,7 +433,8 @@ def test_db_error__base_class__ok():
 
     # act
     exc = DatabaseError(
-        'DATABASE_CONNECTION_ERROR', 'Test error',
+        error_code_key='DATABASE_CONNECTION_ERROR',
+        details='Test error',
     )
 
     # assert
@@ -446,7 +460,10 @@ def test_redis_connection_error__create__ok():
 def test_redis_operation_error__create__ok():
 
     # act
-    exc = RedisOperationError('GET', 'Operation failed')
+    exc = RedisOperationError(
+        operation='GET',
+        details='Operation failed',
+    )
 
     # assert
     assert exc.error_code.code == 'EXT_002'
@@ -486,7 +503,9 @@ def test_http_timeout_error__create__ok():
 
     # act
     exc = HttpTimeoutError(
-        'http://example.com', 30, 'Timeout occurred',
+        url='http://example.com',
+        timeout=30,
+        details='Timeout occurred',
     )
 
     # assert
@@ -499,7 +518,8 @@ def test_external_service__base_class__ok():
 
     # act
     exc = ExternalServiceError(
-        'REDIS_CONNECTION_ERROR', 'Test error',
+        error_code_key='REDIS_CONNECTION_ERROR',
+        details='Test error',
     )
 
     # assert
@@ -528,7 +548,10 @@ def test_validation__invalid_file_size__ok():
     error_code = VALIDATION_ERROR_CODES['INVALID_FILE_SIZE']
 
     # act
-    exc = BaseAppError(error_code, 'File size must be positive')
+    exc = BaseAppError(
+        error_code=error_code,
+        details='File size must be positive',
+    )
 
     # assert
     assert exc.error_code.code == 'VAL_001'

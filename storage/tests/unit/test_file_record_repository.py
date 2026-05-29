@@ -1,6 +1,6 @@
 """Tests for FileRecordRepository."""
 
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import ANY, AsyncMock, Mock
 
 import pytest
 from sqlalchemy.exc import IntegrityError, OperationalError
@@ -22,14 +22,12 @@ async def test_create__valid_record__ok(
     repo_mock_session.add = Mock()
 
     # act
-    await file_record_repository.create(sample_file_record)
+    await file_record_repository.create(
+        file_record=sample_file_record,
+    )
 
     # assert
-    repo_mock_session.add.assert_called_once_with(
-        pytest.approx(
-            repo_mock_session.add.call_args[0][0],
-        ),
-    )
+    repo_mock_session.add.assert_called_once_with(ANY)
 
 
 @pytest.mark.asyncio
@@ -48,9 +46,9 @@ async def test_create__integrity_error__raise_constraint(
 
     # act
     with pytest.raises(DatabaseConstraintError):
-
-        # assert
-        await file_record_repository.create(sample_file_record)
+        await file_record_repository.create(
+            file_record=sample_file_record,
+        )
 
 
 @pytest.mark.asyncio
@@ -69,9 +67,9 @@ async def test_create__operational_error__raise_conn_err(
 
     # act
     with pytest.raises(DatabaseConnectionError):
-
-        # assert
-        await file_record_repository.create(sample_file_record)
+        await file_record_repository.create(
+            file_record=sample_file_record,
+        )
 
 
 @pytest.mark.asyncio
@@ -92,7 +90,7 @@ async def test_get_by_id__existing__return_record(
 
     # act
     result = await file_record_repository.get_by_id(
-        '12345678-1234-5678-1234-567812345678',
+        file_id='12345678-1234-5678-1234-567812345678',
     )
 
     # assert
@@ -101,7 +99,7 @@ async def test_get_by_id__existing__return_record(
         '12345678-1234-5678-1234-567812345678'
     )
     repo_mock_session.execute.assert_called_once_with(
-        repo_mock_session.execute.call_args[0][0],
+        ANY,
     )
 
 
@@ -120,13 +118,13 @@ async def test_get_by_id__non_existent__return_none(
 
     # act
     result = await file_record_repository.get_by_id(
-        'non-existent-id',
+        file_id='non-existent-id',
     )
 
     # assert
     assert result is None
     repo_mock_session.execute.assert_called_once_with(
-        repo_mock_session.execute.call_args[0][0],
+        ANY,
     )
 
 
@@ -145,8 +143,6 @@ async def test_get_by_id__operational_error__raise_conn_err(
 
     # act
     with pytest.raises(DatabaseConnectionError):
-
-        # assert
         await file_record_repository.get_by_id(
-            '12345678-1234-5678-1234-567812345678',
+            file_id='12345678-1234-5678-1234-567812345678',
         )

@@ -1,9 +1,10 @@
 """Fixtures specific to unit tests."""
 
 from datetime import UTC, datetime
-from unittest.mock import AsyncMock, Mock
+from unittest.mock import AsyncMock, MagicMock, Mock
 
 import pytest
+from botocore.exceptions import ClientError
 from fastapi import Request
 from starlette.applications import Starlette
 from starlette.responses import PlainTextResponse, Response
@@ -18,8 +19,12 @@ from src.infra.repositories.storage_service import (
     StorageService,
     StorageServiceHolder,
 )
-from src.shared_kernel.auth.redis_client import RedisAuthClient
+from src.shared_kernel.auth.redis_client import (
+    RedisAuthClient,
+    get_redis_client,
+)
 from src.shared_kernel.auth.token_auth import _compute_pbkdf2
+from src.shared_kernel.auth.user_types import UserType
 from src.shared_kernel.database.models import FileRecordORM
 from src.shared_kernel.middleware.auth_middleware import (
     AuthenticationMiddleware,
@@ -94,7 +99,7 @@ def sample_file_record_orm():
         size=1024,
         user_id=1,
         account_id=1,
-        created_at=datetime.now(UTC),
+        created_at=datetime(2024, 1, 1, tzinfo=UTC),
     )
 
 
@@ -131,7 +136,7 @@ def sec_headers_client_hsts():
     return TestClient(app)
 
 
-# --- rate_limit fixtures ---
+# --- rate_limit config ---
 
 
 @pytest.fixture
@@ -216,3 +221,225 @@ def storage_service_with_mock_s3(mock_storage_settings):
     mock_client = AsyncMock()
     svc._s3_client = mock_client
     return svc, mock_client
+
+
+# --- permissions fixtures ---
+
+
+@pytest.fixture
+def make_perm_request():
+    """Factory for mock requests with optional user."""
+
+    def _factory(user=None, *, has_user: bool = True):
+        request = MagicMock(spec=Request)
+        if has_user and user is not None:
+            request.state.user = user
+        elif not has_user:
+            del request.state.user
+            request.state = MagicMock(spec=[])
+        else:
+            request.state.user = None
+        return request
+
+    return _factory
+
+
+@pytest.fixture
+def make_perm_user():
+    """Factory for mock users."""
+
+    def _factory(
+        auth_type: str = UserType.AUTHENTICATED,
+        is_anonymous: bool = False,
+    ):
+        user = MagicMock()
+        user.auth_type = auth_type
+        user.is_anonymous = is_anonymous
+        return user
+
+    return _factory
+
+
+# --- rate_limit request factory ---
+
+
+@pytest.fixture
+def make_rate_request():
+    """Factory for mock rate-limit requests."""
+
+    def _factory(
+        path='/upload',
+        method='POST',
+        client_ip='127.0.0.1',
+    ):
+        request = MagicMock(spec=Request)
+        request.url = MagicMock()
+        request.url.path = path
+        request.method = method
+        request.headers = {}
+        request.client = MagicMock()
+        request.client.host = client_ip
+        return request
+
+    return _factory
+
+
+# --- redis cache management ---
+
+
+@pytest.fixture(autouse=False)
+def clear_redis_cache():
+    """Clear lru_cache before and after test."""
+    get_redis_client.cache_clear()
+    yield
+    get_redis_client.cache_clear()
+
+
+# --- client error factory ---
+
+
+@pytest.fixture
+def make_client_error():
+    """Factory for botocore ClientError."""
+
+    def _factory(code: str) -> ClientError:
+        return ClientError(
+            error_response={
+                'Error': {
+                    'Code': code,
+                    'Message': 'test',
+                },
+            },
+            operation_name='TestOp',
+        )
+
+    return _factory
+
+
+# --- mock fixtures ---
+
+
+@pytest.fixture
+def mock_redis_settings(mocker):
+    """Mock for get_settings in redis_client module."""
+    return mocker.patch(
+        'src.shared_kernel.auth.redis_client.get_settings',
+    )
+
+
+@pytest.fixture
+def mock_get_settings(mocker):
+    """Mock for get_settings."""
+    return mocker.patch(
+        'src.shared_kernel.auth.token_auth.get_settings',
+    )
+
+
+@pytest.fixture
+def mock_get_redis_client(mocker):
+    """Mock for get_redis_client."""
+    return mocker.patch(
+        'src.shared_kernel.auth.token_auth.get_redis_client',
+    )
+
+
+@pytest.fixture
+def mock_httpx_post(mocker):
+    """Mock for httpx.AsyncClient.post."""
+    return mocker.patch('httpx.AsyncClient.post')
+
+
+@pytest.fixture
+def mock_redis_from_url(mocker):
+    """Mock for redis.asyncio.from_url."""
+    return mocker.patch('redis.asyncio.from_url')
+
+
+@pytest.fixture
+def mock_redis_auth_client_get(mocker):
+    """Mock for RedisAuthClient.get."""
+    return mocker.patch(
+        'src.shared_kernel.auth.redis_client'
+        '.RedisAuthClient.get',
+    )
+
+
+@pytest.fixture
+def mock_get_db_session(mocker):
+    """Mock for get_db_session."""
+    return mocker.patch(
+        'src.shared_kernel.di.container.get_db_session',
+    )
+
+
+@pytest.fixture
+def mock_upload_use_case_execute(mocker):
+    """Mock for UploadFileUseCase.execute."""
+    return mocker.patch(
+        'src.application.use_cases.file_upload'
+        '.UploadFileUseCase.execute',
+    )
+
+
+@pytest.fixture
+def mock_download_use_case_get_metadata(mocker):
+    """Mock for DownloadFileUseCase.get_metadata."""
+    return mocker.patch(
+        'src.application.use_cases.file_download.'
+        'DownloadFileUseCase.get_metadata',
+        new_callable=AsyncMock,
+    )
+
+
+@pytest.fixture
+def mock_download_use_case_get_stream(mocker):
+    """Mock for DownloadFileUseCase.get_stream."""
+    return mocker.patch(
+        'src.application.use_cases.file_download.'
+        'DownloadFileUseCase.get_stream',
+        new_callable=AsyncMock,
+    )
+
+
+@pytest.fixture
+def mock_pneumatic_token_data(mocker):
+    """Mock for PneumaticToken.data."""
+    return mocker.patch(
+        'src.shared_kernel.auth.token_auth'
+        '.PneumaticToken.data',
+    )
+
+
+@pytest.fixture
+def mock_http_client_check_permission(mocker):
+    """Mock for HttpClient.check_file_permission."""
+    return mocker.patch(
+        'src.infra.http_client'
+        '.HttpClient.check_file_permission',
+        new_callable=AsyncMock,
+    )
+
+
+@pytest.fixture
+def mock_aioboto3_session(mocker):
+    """Mock for aioboto3.Session."""
+    return mocker.patch('aioboto3.Session')
+
+
+@pytest.fixture
+def mock_auth_middleware_authenticate_token(mocker):
+    """Mock for AuthenticationMiddleware.authenticate_token."""
+    return mocker.patch(
+        'src.shared_kernel.middleware.auth_middleware'
+        '.AuthenticationMiddleware.authenticate_token',
+        new_callable=AsyncMock,
+    )
+
+
+@pytest.fixture
+def mock_auth_middleware_pneumatic_token_data(mocker):
+    """Mock for PneumaticToken.data in auth middleware."""
+    return mocker.patch(
+        'src.shared_kernel.middleware.auth_middleware'
+        '.PneumaticToken.data',
+    )

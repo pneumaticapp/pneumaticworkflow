@@ -79,8 +79,6 @@ def test_safe_loads__os_system__raise_error():
     with pytest.raises(
         pickle.UnpicklingError, match='Unsafe class',
     ):
-
-        # assert
         _safe_loads(payload)
 
 
@@ -97,8 +95,6 @@ def test_safe_loads__subprocess__raise_error():
     with pytest.raises(
         pickle.UnpicklingError, match='Unsafe class',
     ):
-
-        # assert
         _safe_loads(payload)
 
 
@@ -115,8 +111,6 @@ def test_safe_loads__eval__raise_error():
     with pytest.raises(
         pickle.UnpicklingError, match='Unsafe class',
     ):
-
-        # assert
         _safe_loads(payload)
 
 
@@ -133,8 +127,6 @@ def test_safe_loads__exec__raise_error():
     with pytest.raises(
         pickle.UnpicklingError, match='Unsafe class',
     ):
-
-        # assert
         _safe_loads(payload)
 
 
@@ -151,8 +143,6 @@ def test_safe_loads__os_module__raise_error():
     with pytest.raises(
         pickle.UnpicklingError, match='Unsafe class',
     ):
-
-        # assert
         _safe_loads(payload)
 
 
@@ -160,8 +150,6 @@ def test_safe_loads__invalid_bytes__raise_error():
 
     # act
     with pytest.raises(pickle.UnpicklingError):
-
-        # assert
         _safe_loads(b'not-valid-pickle')
 
 
@@ -305,12 +293,15 @@ def test_validate__empty_list__return_list():
 async def test_redis_get__valid_key__return_data(
     redis_auth_client,
     unit_mock_redis_client,
-    mock_get_settings,
+    mock_redis_settings,
 ):
 
     # arrange
     expected_data = {'user_id': 1, 'account_id': 2}
-    mock_get_settings.return_value.KEY_PREFIX_REDIS = 'auth:'
+    prefix = 'auth:'
+    mock_redis_settings.return_value.KEY_PREFIX_REDIS = (
+        prefix
+    )
     unit_mock_redis_client.get.return_value = (
         pickle.dumps(expected_data)
     )
@@ -321,7 +312,7 @@ async def test_redis_get__valid_key__return_data(
     # assert
     assert result == expected_data
     unit_mock_redis_client.get.assert_called_once_with(
-        unit_mock_redis_client.get.call_args[0][0],
+        f'{prefix}test-key',
     )
 
 
@@ -329,11 +320,14 @@ async def test_redis_get__valid_key__return_data(
 async def test_redis_get__none_value__return_none(
     redis_auth_client,
     unit_mock_redis_client,
-    mock_get_settings,
+    mock_redis_settings,
 ):
 
     # arrange
-    mock_get_settings.return_value.KEY_PREFIX_REDIS = 'auth:'
+    prefix = 'auth:'
+    mock_redis_settings.return_value.KEY_PREFIX_REDIS = (
+        prefix
+    )
     unit_mock_redis_client.get.return_value = None
 
     # act
@@ -342,7 +336,7 @@ async def test_redis_get__none_value__return_none(
     # assert
     assert result is None
     unit_mock_redis_client.get.assert_called_once_with(
-        unit_mock_redis_client.get.call_args[0][0],
+        f'{prefix}test-key',
     )
 
 
@@ -350,7 +344,7 @@ async def test_redis_get__none_value__return_none(
 async def test_redis_get__rce_payload__raise_error(
     redis_auth_client,
     unit_mock_redis_client,
-    mock_get_settings,
+    mock_redis_settings,
 ):
 
     # arrange
@@ -359,13 +353,13 @@ async def test_redis_get__rce_payload__raise_error(
         b"\x8c\x05posix\x8c\x06system\x93"
         b"\x8c\x0becho pwned\x85R."
     )
-    mock_get_settings.return_value.KEY_PREFIX_REDIS = 'auth:'
+    mock_redis_settings.return_value.KEY_PREFIX_REDIS = (
+        'auth:'
+    )
     unit_mock_redis_client.get.return_value = malicious_payload
 
     # act
     with pytest.raises(RedisOperationError):
-
-        # assert
         await redis_auth_client.get('test-key')
 
 
@@ -373,19 +367,19 @@ async def test_redis_get__rce_payload__raise_error(
 async def test_redis_get__redis_error__raise_op_error(
     redis_auth_client,
     unit_mock_redis_client,
-    mock_get_settings,
+    mock_redis_settings,
 ):
 
     # arrange
-    mock_get_settings.return_value.KEY_PREFIX_REDIS = 'auth:'
+    mock_redis_settings.return_value.KEY_PREFIX_REDIS = (
+        'auth:'
+    )
     unit_mock_redis_client.get.side_effect = (
         redis.RedisError('Redis connection error')
     )
 
     # act
     with pytest.raises(RedisOperationError):
-
-        # assert
         await redis_auth_client.get('test-key')
 
 
@@ -393,19 +387,19 @@ async def test_redis_get__redis_error__raise_op_error(
 async def test_redis_get__conn_error__raise_conn_error(
     redis_auth_client,
     unit_mock_redis_client,
-    mock_get_settings,
+    mock_redis_settings,
 ):
 
     # arrange
-    mock_get_settings.return_value.KEY_PREFIX_REDIS = 'auth:'
+    mock_redis_settings.return_value.KEY_PREFIX_REDIS = (
+        'auth:'
+    )
     unit_mock_redis_client.get.side_effect = (
         redis.ConnectionError('Connection failed')
     )
 
     # act
     with pytest.raises(RedisConnectionError):
-
-        # assert
         await redis_auth_client.get('test-key')
 
 
@@ -413,42 +407,34 @@ async def test_redis_get__conn_error__raise_conn_error(
 async def test_redis_get__unpickling_error__raise_op_error(
     redis_auth_client,
     unit_mock_redis_client,
-    mock_get_settings,
+    mock_redis_settings,
 ):
 
     # arrange
-    mock_get_settings.return_value.KEY_PREFIX_REDIS = 'auth:'
+    mock_redis_settings.return_value.KEY_PREFIX_REDIS = (
+        'auth:'
+    )
     unit_mock_redis_client.get.return_value = (
         b'invalid-pickle-data'
     )
 
     # act
     with pytest.raises(RedisOperationError):
-
-        # assert
         await redis_auth_client.get('test-key')
 
 
 # --- get_redis_client singleton ---
 
 
-@pytest.fixture(autouse=False)
-def clear_redis_cache():
-    """Clear lru_cache before and after test."""
-    get_redis_client.cache_clear()
-    yield
-    get_redis_client.cache_clear()
-
-
 @pytest.mark.asyncio
 async def test_get_redis__default_url__return_client(
     clear_redis_cache,
-    mock_get_settings,
+    mock_redis_settings,
     mock_redis_from_url,
 ):
 
     # arrange
-    mock_get_settings.return_value.AUTH_REDIS_URL = (
+    mock_redis_settings.return_value.AUTH_REDIS_URL = (
         'redis://localhost:6379/1'
     )
     mock_redis_from_url.return_value = AsyncMock()
@@ -459,20 +445,19 @@ async def test_get_redis__default_url__return_client(
     # assert
     assert isinstance(result, RedisAuthClient)
     mock_redis_from_url.assert_called_once_with(
-        mock_redis_from_url.call_args[0][0],
-        **mock_redis_from_url.call_args[1],
+        'redis://localhost:6379/1',
     )
 
 
 @pytest.mark.asyncio
 async def test_get_redis__twice__same_instance(
     clear_redis_cache,
-    mock_get_settings,
+    mock_redis_settings,
     mock_redis_from_url,
 ):
 
     # arrange
-    mock_get_settings.return_value.AUTH_REDIS_URL = (
+    mock_redis_settings.return_value.AUTH_REDIS_URL = (
         'redis://localhost:6379/1'
     )
     mock_redis_from_url.return_value = AsyncMock()
@@ -484,20 +469,19 @@ async def test_get_redis__twice__same_instance(
     # assert
     assert first is second
     mock_redis_from_url.assert_called_once_with(
-        mock_redis_from_url.call_args[0][0],
-        **mock_redis_from_url.call_args[1],
+        'redis://localhost:6379/1',
     )
 
 
 @pytest.mark.asyncio
 async def test_get_redis__after_clear__new_instance(
     clear_redis_cache,
-    mock_get_settings,
+    mock_redis_settings,
     mock_redis_from_url,
 ):
 
     # arrange
-    mock_get_settings.return_value.AUTH_REDIS_URL = (
+    mock_redis_settings.return_value.AUTH_REDIS_URL = (
         'redis://localhost:6379/1'
     )
     mock_redis_from_url.return_value = AsyncMock()
@@ -518,12 +502,12 @@ async def test_get_redis__after_clear__new_instance(
 @pytest.mark.asyncio
 async def test_close_redis__calls_aclose(
     clear_redis_cache,
-    mock_get_settings,
+    mock_redis_settings,
     mock_redis_from_url,
 ):
 
     # arrange
-    mock_get_settings.return_value.AUTH_REDIS_URL = (
+    mock_redis_settings.return_value.AUTH_REDIS_URL = (
         'redis://localhost:6379/1'
     )
     mock_underlying = AsyncMock()
@@ -540,12 +524,12 @@ async def test_close_redis__calls_aclose(
 @pytest.mark.asyncio
 async def test_close_redis__clears_cache(
     clear_redis_cache,
-    mock_get_settings,
+    mock_redis_settings,
     mock_redis_from_url,
 ):
 
     # arrange
-    mock_get_settings.return_value.AUTH_REDIS_URL = (
+    mock_redis_settings.return_value.AUTH_REDIS_URL = (
         'redis://localhost:6379/1'
     )
     mock_redis_from_url.return_value = AsyncMock()

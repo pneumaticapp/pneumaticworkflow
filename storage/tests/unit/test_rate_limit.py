@@ -185,27 +185,6 @@ def test_sliding_window__mixed__count_recent_only():
     assert count == 2
 
 
-@pytest.fixture
-def make_rate_request():
-    """Factory for mock rate-limit requests."""
-
-    def _factory(
-        path='/upload',
-        method='POST',
-        client_ip='127.0.0.1',
-    ):
-        request = MagicMock(spec=Request)
-        request.url = MagicMock()
-        request.url.path = path
-        request.method = method
-        request.headers = {}
-        request.client = MagicMock()
-        request.client.host = client_ip
-        return request
-
-    return _factory
-
-
 @pytest.mark.asyncio
 async def test_dispatch__under_limit__pass(
     fast_rate_limits,
@@ -268,15 +247,17 @@ async def test_dispatch__different_ips__independent(
     call_next_mock = AsyncMock(
         return_value=Response(status_code=200),
     )
+    responses = []
 
     # act
     for ip in ('10.0.0.1', '10.0.0.2'):
         for _ in range(2):
             req = make_rate_request(client_ip=ip)
             resp = await mw.dispatch(req, call_next_mock)
-            assert resp.status_code == 200
+            responses.append(resp)
 
     # assert
+    assert all(r.status_code == 200 for r in responses)
     assert call_next_mock.call_count == 4
 
 
@@ -293,14 +274,16 @@ async def test_dispatch__non_limited_route__pass(
     call_next_mock = AsyncMock(
         return_value=Response(status_code=200),
     )
+    responses = []
 
     # act
     for _ in range(10):
         req = make_rate_request(path='/', method='GET')
         resp = await mw.dispatch(req, call_next_mock)
+        responses.append(resp)
 
-        # assert
-        assert resp.status_code == 200
+    # assert
+    assert all(r.status_code == 200 for r in responses)
 
 
 @pytest.mark.asyncio
@@ -342,6 +325,7 @@ async def test_dispatch__download_higher_limit(
     call_next_mock = AsyncMock(
         return_value=Response(status_code=200),
     )
+    responses = []
 
     # act — 3 downloads OK, 4th blocked
     for _ in range(3):
@@ -349,7 +333,7 @@ async def test_dispatch__download_higher_limit(
             path='/some-file-id', method='GET',
         )
         resp = await mw.dispatch(req, call_next_mock)
-        assert resp.status_code == 200
+        responses.append(resp)
 
     req = make_rate_request(
         path='/some-file-id', method='GET',
@@ -357,4 +341,5 @@ async def test_dispatch__download_higher_limit(
     response = await mw.dispatch(req, call_next_mock)
 
     # assert
+    assert all(r.status_code == 200 for r in responses)
     assert response.status_code == 429

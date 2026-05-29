@@ -46,7 +46,7 @@ async def test_upload__valid_command__return_response(
         size=12,
         user_id=1,
         account_id=1,
-        created_at=datetime.now(UTC),
+        created_at=datetime(2024, 1, 1, tzinfo=UTC),
     )
     mock_uow = AsyncMock()
     mock_uow.__aenter__.return_value = mock_uow
@@ -65,7 +65,7 @@ async def test_upload__valid_command__return_response(
     )
 
     # act
-    result = await use_case.execute(command)
+    result = await use_case.execute(command=command)
 
     # assert
     assert isinstance(result, UploadFileUseCaseResponse)
@@ -74,9 +74,7 @@ async def test_upload__valid_command__return_response(
         'http://localhost:8000/',
     )
     assert result.file_id in result.public_url
-    mock_repository.create.assert_called_once_with(
-        mock_repository.create.call_args[0][0],
-    )
+    mock_repository.create.assert_called_once_with(ANY)
     mock_storage_service.upload_file.assert_called_once_with(
         bucket_name='test-bucket',
         file_path='12345678-1234-5678-1234-567812345678',
@@ -119,9 +117,7 @@ async def test_upload__storage_error__raise(
 
     # act
     with pytest.raises(StorageError):
-
-        # assert
-        await use_case.execute(command)
+        await use_case.execute(command=command)
 
 
 # --- DownloadFileUseCase ---
@@ -145,7 +141,7 @@ async def test_get_metadata__valid__return_record(
         size=12,
         user_id=1,
         account_id=1,
-        created_at=datetime.now(UTC),
+        created_at=datetime(2024, 1, 1, tzinfo=UTC),
     )
     mock_repository.get_by_id.return_value = file_record
     use_case = DownloadFileUseCase(
@@ -154,7 +150,7 @@ async def test_get_metadata__valid__return_record(
     )
 
     # act
-    result = await use_case.get_metadata(query)
+    result = await use_case.get_metadata(query=query)
 
     # assert
     assert result == file_record
@@ -183,9 +179,7 @@ async def test_get_metadata__not_found__raise(
 
     # act
     with pytest.raises(DomainFileNotFoundError):
-
-        # assert
-        await use_case.get_metadata(query)
+        await use_case.get_metadata(query=query)
 
 
 @pytest.mark.asyncio
@@ -202,7 +196,7 @@ async def test_get_stream__valid__return_stream(
         size=12,
         user_id=1,
         account_id=1,
-        created_at=datetime.now(UTC),
+        created_at=datetime(2024, 1, 1, tzinfo=UTC),
     )
     mock_storage_service.get_storage_path.return_value = (
         'test-bucket',
@@ -221,7 +215,9 @@ async def test_get_stream__valid__return_stream(
     )
 
     # act
-    result_stream = await use_case.get_stream(file_record)
+    result_stream = await use_case.get_stream(
+        file_record=file_record,
+    )
 
     # assert
     assert result_stream is not None

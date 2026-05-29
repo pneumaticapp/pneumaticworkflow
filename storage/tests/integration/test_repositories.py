@@ -1,61 +1,73 @@
+"""Tests for FileRecordRepository integration."""
+
 from datetime import UTC, datetime
 
 import pytest
 
 from src.domain.entities.file_record import FileRecord
-from src.infra.repositories.file_record_repository import FileRecordRepository
+from src.infra.repositories.file_record_repository import (
+    FileRecordRepository,
+)
 
 
-class TestFileRecordRepository:
-    """Test FileRecordRepository integration."""
+@pytest.mark.asyncio
+async def test_create_and_get__valid__return_record(
+    async_session,
+):
 
-    @pytest.mark.asyncio
-    async def test_create_and_get__valid_record__return_record(
-        self,
-        async_session,
-    ):
-        """Test create and get file record."""
-        # Arrange
-        repository = FileRecordRepository(async_session)
-        file_record = FileRecord(
-            file_id='12345678-1234-5678-1234-567812345679',
-            filename='test_file.txt',
-            content_type='text/plain',
-            size=1024,
-            user_id=1,
-            account_id=1,
-            created_at=datetime.now(UTC),
-        )
-
-        # Act
-        await repository.create(file_record)
-        await async_session.commit()
-
-        retrieved_record = await repository.get_by_id(
-            '12345678-1234-5678-1234-567812345679',
-        )
-
-        # Assert
-        assert retrieved_record is not None
-        assert retrieved_record.file_id == (
+    # arrange
+    repository = FileRecordRepository(
+        session=async_session,
+    )
+    file_record = FileRecord(
+        file_id=(
             '12345678-1234-5678-1234-567812345679'
-        )
-        assert retrieved_record.filename == 'test_file.txt'
-        assert retrieved_record.content_type == 'text/plain'
-        assert retrieved_record.size == 1024
-        assert retrieved_record.user_id == 1
-        assert retrieved_record.account_id == 1
+        ),
+        filename='test_file.txt',
+        content_type='text/plain',
+        size=1024,
+        user_id=1,
+        account_id=1,
+        created_at=datetime(2024, 1, 1, tzinfo=UTC),
+    )
 
-    @pytest.mark.asyncio
-    async def test_get__nonexistent_record__return_none(self, async_session):
-        """Test get nonexistent file record."""
-        # Arrange
-        repository = FileRecordRepository(async_session)
+    # act
+    await repository.create(file_record=file_record)
+    await async_session.commit()
+    retrieved = await repository.get_by_id(
+        file_id=(
+            '12345678-1234-5678-1234-567812345679'
+        ),
+    )
 
-        # Act
-        retrieved_record = await repository.get_by_id(
-            '00000000-0000-0000-0000-000000000000',
-        )
+    # assert
+    assert retrieved is not None
+    assert retrieved.file_id == (
+        '12345678-1234-5678-1234-567812345679'
+    )
+    assert retrieved.filename == 'test_file.txt'
+    assert retrieved.content_type == 'text/plain'
+    assert retrieved.size == 1024
+    assert retrieved.user_id == 1
+    assert retrieved.account_id == 1
 
-        # Assert
-        assert retrieved_record is None
+
+@pytest.mark.asyncio
+async def test_get__nonexistent__return_none(
+    async_session,
+):
+
+    # arrange
+    repository = FileRecordRepository(
+        session=async_session,
+    )
+
+    # act
+    retrieved = await repository.get_by_id(
+        file_id=(
+            '00000000-0000-0000-0000-000000000000'
+        ),
+    )
+
+    # assert
+    assert retrieved is None

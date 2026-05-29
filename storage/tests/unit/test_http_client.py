@@ -36,12 +36,18 @@ async def test_check_permission__valid_token__true(
 
     # act
     result = await http_client.check_file_permission(
-        user, file_id,
+        user=user, file_id=file_id,
     )
 
     # assert
     assert result is True
-    assert mock_httpx_post.call_count == 1
+    mock_httpx_post.assert_called_once_with(
+        url='http://test.example.com',
+        data={'file_id': file_id},
+        headers={
+            'Authorization': 'Bearer valid-token',
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -64,12 +70,18 @@ async def test_check_permission__denied__false(
 
     # act
     result = await http_client.check_file_permission(
-        user, file_id,
+        user=user, file_id=file_id,
     )
 
     # assert
     assert result is False
-    assert mock_httpx_post.call_count == 1
+    mock_httpx_post.assert_called_once_with(
+        url='http://test.example.com',
+        data={'file_id': file_id},
+        headers={
+            'Authorization': 'Bearer valid-token',
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -92,9 +104,9 @@ async def test_check_permission__http_error__raise(
 
     # act
     with pytest.raises(HttpClientError):
-
-        # assert
-        await http_client.check_file_permission(user, file_id)
+        await http_client.check_file_permission(
+            user=user, file_id=file_id,
+        )
 
 
 @pytest.mark.asyncio
@@ -117,9 +129,9 @@ async def test_check_permission__timeout__raise(
 
     # act
     with pytest.raises(HttpTimeoutError):
-
-        # assert
-        await http_client.check_file_permission(user, file_id)
+        await http_client.check_file_permission(
+            user=user, file_id=file_id,
+        )
 
 
 @pytest.mark.asyncio
@@ -142,12 +154,18 @@ async def test_check_permission__cookie_token__true(
 
     # act
     result = await http_client.check_file_permission(
-        user, file_id,
+        user=user, file_id=file_id,
     )
 
     # assert
     assert result is True
-    assert mock_httpx_post.call_count == 1
+    mock_httpx_post.assert_called_once_with(
+        url='http://test.example.com',
+        data={'file_id': file_id},
+        headers={
+            'X-Guest-Authorization': 'session-token',
+        },
+    )
 
 
 @pytest.mark.asyncio
@@ -170,12 +188,16 @@ async def test_check_permission__no_auth__false(
 
     # act
     result = await http_client.check_file_permission(
-        user, file_id,
+        user=user, file_id=file_id,
     )
 
     # assert
     assert result is False
-    assert mock_httpx_post.call_count == 1
+    mock_httpx_post.assert_called_once_with(
+        url='http://test.example.com',
+        data={'file_id': file_id},
+        headers={},
+    )
 
 
 @pytest.mark.asyncio
@@ -198,12 +220,18 @@ async def test_check_permission__server_error__false(
 
     # act
     result = await http_client.check_file_permission(
-        user, file_id,
+        user=user, file_id=file_id,
     )
 
     # assert
     assert result is False
-    assert mock_httpx_post.call_count == 1
+    mock_httpx_post.assert_called_once_with(
+        url='http://test.example.com',
+        data={'file_id': file_id},
+        headers={
+            'Authorization': 'Bearer valid-token',
+        },
+    )
 
 
 # --- SharedClientHolder ---

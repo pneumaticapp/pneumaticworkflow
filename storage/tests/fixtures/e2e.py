@@ -1,160 +1,6 @@
-from collections.abc import Iterator
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-
-
-@pytest.fixture
-def e2e_client(test_client):
-    """E2E test client."""
-    return test_client
-
-
-@pytest.fixture
-def mock_auth_middleware(mocker) -> Iterator[MagicMock]:
-    """Mock authentication middleware."""
-    # Mock PneumaticToken.data to return valid token data
-    mock_token_data = mocker.patch(
-        'src.shared_kernel.auth.token_auth.PneumaticToken.data',
-    )
-    mock_token_data.return_value = {'user_id': 1, 'account_id': 1}
-
-    # Mock Redis client to avoid connection issues
-    mock_redis_get = mocker.patch(
-        'src.shared_kernel.auth.redis_client.RedisAuthClient.get',
-    )
-    mock_redis_get.return_value = {'user_id': 1, 'account_id': 1}
-
-    return mock_token_data
-
-
-@pytest.fixture
-def mock_http_client(mocker) -> Iterator[AsyncMock]:
-    """Mock HTTP client."""
-    mock = mocker.patch(
-        'src.infra.http_client.HttpClient.check_file_permission',
-        new_callable=AsyncMock,
-    )
-    mock.return_value = True
-    return mock
-
-
-@pytest.fixture
-def mock_storage_service(mocker) -> Iterator[AsyncMock]:
-    """Mock storage service."""
-    mock_session = mocker.patch('aioboto3.Session')
-    mock_s3_client = AsyncMock()
-    mock_session.return_value.client.return_value.__aenter__.return_value = (
-        mock_s3_client
-    )
-    return mock_s3_client
-
-
-@pytest.fixture
-def mock_redis_client(mocker) -> Iterator[MagicMock]:
-    """Mock Redis client."""
-    mock = mocker.patch(
-        'src.shared_kernel.auth.redis_client.RedisAuthClient.get',
-    )
-    mock.return_value = {'user_id': 1, 'account_id': 1}
-    return mock
-
-
-@pytest.fixture
-def mock_db_session(mocker) -> Iterator[AsyncMock]:
-    """Mock database session."""
-    mock = mocker.patch('src.shared_kernel.di.container.get_db_session')
-    mock_session = AsyncMock()
-    mock.return_value = mock_session
-    return mock_session
-
-
-@pytest.fixture
-def mock_unit_of_work(mocker) -> Iterator[AsyncMock]:
-    """Mock unit of work."""
-    mock = mocker.patch('src.shared_kernel.uow.unit_of_work.UnitOfWork')
-    mock_uow = AsyncMock()
-    mock.return_value = mock_uow
-    return mock_uow
-
-
-@pytest.fixture
-def mock_upload_use_case(mocker) -> Iterator[AsyncMock]:
-    """Mock upload use case."""
-    mock = mocker.patch(
-        'src.application.use_cases.file_upload.UploadFileUseCase.execute',
-    )
-    mock_response = MagicMock()
-    mock_response.file_id = '12345678-1234-5678-1234-567812345679'
-    mock_response.public_url = (
-        'http://localhost:8000/'
-        '12345678-1234-5678-1234-567812345679'
-    )
-    mock.return_value = mock_response
-    return mock
-
-
-@pytest.fixture
-def mock_download_use_case(mocker) -> Iterator[AsyncMock]:
-    """Mock download use case."""
-    mock_metadata = mocker.patch(
-        'src.application.use_cases.file_download.'
-        'DownloadFileUseCase.get_metadata',
-        new_callable=AsyncMock,
-    )
-    mock_stream = mocker.patch(
-        'src.application.use_cases.file_download.'
-        'DownloadFileUseCase.get_stream',
-        new_callable=AsyncMock,
-    )
-    mock_file_record = MagicMock()
-    mock_file_record.file_id = '12345678-1234-5678-1234-567812345678'
-    mock_file_record.filename = 'test.txt'
-    mock_file_record.content_type = 'text/plain'
-    mock_file_record.size = 12
-    mock_file_record.user_id = 1
-    mock_file_record.account_id = 1
-
-    mock_metadata.return_value = mock_file_record
-    mock_stream.return_value = AsyncIteratorMock(b'test content')
-    return mock_metadata
-
-
-@pytest.fixture
-def auth_headers() -> dict[str, str]:
-    """Authenticate headers."""
-    return {'Authorization': 'Bearer valid-token'}
-
-
-@pytest.fixture
-def session_cookies() -> dict[str, str]:
-    """Session cookies."""
-    return {'token': 'session-token'}
-
-
-@pytest.fixture
-def mock_upload_response() -> MagicMock:
-    """Mock upload response."""
-    response = MagicMock()
-    response.file_id = '12345678-1234-5678-1234-567812345679'
-    response.public_url = (
-        'http://localhost:8000/'
-        '12345678-1234-5678-1234-567812345679'
-    )
-    return response
-
-
-@pytest.fixture
-def mock_file_record() -> MagicMock:
-    """Mock file record."""
-    record = MagicMock()
-    record.file_id = '12345678-1234-5678-1234-567812345679'
-    record.filename = 'test_file.txt'
-    record.content_type = 'text/plain'
-    record.size = 1024
-    record.user_id = 1
-    record.account_id = 1
-    return record
 
 
 class AsyncIteratorMock:
@@ -175,10 +21,86 @@ class AsyncIteratorMock:
 
 
 @pytest.fixture
-def mock_download_response() -> tuple[MagicMock, AsyncIteratorMock]:
+def e2e_client(test_client):
+    """E2E test client."""
+    return test_client
+
+
+@pytest.fixture
+def mock_auth_middleware(mocker) -> MagicMock:
+    """Mock authentication middleware."""
+    mock_token_data = mocker.patch(
+        'src.shared_kernel.auth.token_auth'
+        '.PneumaticToken.data',
+    )
+    mock_token_data.return_value = {
+        'user_id': 1, 'account_id': 1,
+    }
+
+    mock_redis_get = mocker.patch(
+        'src.shared_kernel.auth.redis_client'
+        '.RedisAuthClient.get',
+    )
+    mock_redis_get.return_value = {
+        'user_id': 1, 'account_id': 1,
+    }
+
+    return mock_token_data
+
+
+@pytest.fixture
+def mock_http_client(mocker) -> AsyncMock:
+    """Mock HTTP client for e2e tests."""
+    mock = mocker.patch(
+        'src.infra.http_client'
+        '.HttpClient.check_file_permission',
+        new_callable=AsyncMock,
+    )
+    mock.return_value = True
+    return mock
+
+
+@pytest.fixture
+def mock_storage_service(mocker) -> AsyncMock:
+    """Mock storage service for e2e tests."""
+    mock_session = mocker.patch('aioboto3.Session')
+    mock_s3_client = AsyncMock()
+    mock_session.return_value.client \
+        .return_value.__aenter__.return_value = (
+            mock_s3_client
+        )
+    return mock_s3_client
+
+
+@pytest.fixture
+def auth_headers() -> dict[str, str]:
+    """Authenticate headers."""
+    return {'Authorization': 'Bearer valid-token'}
+
+
+@pytest.fixture
+def mock_upload_response() -> MagicMock:
+    """Mock upload response."""
+    response = MagicMock()
+    response.file_id = (
+        '12345678-1234-5678-1234-567812345679'
+    )
+    response.public_url = (
+        'http://localhost:8000/'
+        '12345678-1234-5678-1234-567812345679'
+    )
+    return response
+
+
+@pytest.fixture
+def mock_download_response() -> tuple[
+    MagicMock, AsyncIteratorMock,
+]:
     """Mock download response."""
     record = MagicMock()
-    record.file_id = '12345678-1234-5678-1234-567812345679'
+    record.file_id = (
+        '12345678-1234-5678-1234-567812345679'
+    )
     record.filename = 'test_file.txt'
     record.content_type = 'text/plain'
     record.size = 1024
