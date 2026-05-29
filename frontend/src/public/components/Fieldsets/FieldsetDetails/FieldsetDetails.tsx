@@ -39,6 +39,7 @@ import { useDatasetOptions } from '../../TemplateEdit/ExtraFields/utils/useDatas
 
 import { normalizeFieldsForUI } from './fieldsetFieldMappers';
 
+import { useCheckDevice } from '../../../hooks/useCheckDevice';
 
 import { TFieldsetDetailsProps } from './types';
 import styles from './FieldsetDetails.css';
@@ -60,6 +61,7 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
   const fieldset = useSelector(getCurrentFieldset);
   const isLoading = useSelector(isCurrentFieldsetLoading);
   const accountId = useSelector(getAccountId);
+  const { isDesktop } = useCheckDevice();
 
 
   const [localFields, setLocalFields] = useState<IExtraField[]>([]);
@@ -362,7 +364,7 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
                 mode={EExtraFieldMode.Kickoff}
                 showDropdown
                 datasetOptions={datasetOptions}
-                labelPosition={localLabelPosition}
+                labelPosition={isDesktop ? localLabelPosition : EFieldLabelPosition.Top}
               />
             ))}
           </div>

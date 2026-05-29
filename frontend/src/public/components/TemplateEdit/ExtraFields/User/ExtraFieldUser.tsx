@@ -10,8 +10,10 @@ import { trackInviteTeamInPage } from '../../../../utils/analytics';
 import { getInputNameBackground } from '../utils/getInputNameBackground';
 import { ArrowDropdownIcon } from '../../../icons';
 import { FieldWithName } from '../utils/FieldWithName';
+import { FieldLabel } from '../utils/FieldLabel';
 import { getFieldValidator } from '../utils/getFieldValidator';
 import { EExtraFieldMode, ETaskPerformerType } from '../../../../types/template';
+import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { isArrayWithItems } from '../../../../utils/helpers';
 import { IWorkflowExtraFieldProps } from '..';
 import { getNotDeletedUsers, getUserFullName } from '../../../../utils/users';
@@ -122,26 +124,48 @@ export function ExtraFieldUser({
       }
     };
 
+    const isLabelLeft = labelPosition === EFieldLabelPosition.Left;
+
     return (
-      <div className={classnames(inputStyles['dropdown-container'])} data-autofocus-first-field>
-        <div className={fieldNameClassName}>
-          <div className={styles['kick-off-input__name-readonly']}>{field.name}</div>
-          {isRequired && <span className={styles['kick-off-required-sign']} />}
+      <div
+        className={classnames(
+          inputStyles['dropdown-container'],
+          isLabelLeft && styles['kick-off-input__field_label-left'],
+        )}
+        data-autofocus-first-field
+      >
+        {isLabelLeft ? (
+          <FieldLabel
+            name={field.name}
+            isRequired={isRequired || false}
+            isDisabled={isDisabled}
+            mode={mode}
+            labelBackgroundColor={labelBackgroundColor}
+            handleChangeName={handleChangeName}
+            className={styles['kick-off-input__name_label-left_centered']}
+          />
+        ) : (
+          <div className={fieldNameClassName}>
+            <div className={styles['kick-off-input__name-readonly']}>{field.name}</div>
+            {isRequired && <span className={styles['kick-off-required-sign']} />}
+          </div>
+        )}
+        <div {...(isLabelLeft && { className: inputStyles['user-dropdown-wrapper_label-left'] })}>
+          <UsersDropdown
+            options={selectionsDropdownOption}
+            onChange={handleUserDropdownChange}
+            placeholder={description}
+            isDisabled={isDisabled}
+            value={selectionsDropdownOption.find(
+              (item) =>
+                item.value === `${EOptionTypes.User}-${field.userId}` ||
+                item.value === `${EOptionTypes.Group}-${field.groupId}`,
+            )}
+            onClickInvite={() => trackInviteTeamInPage('From users field')}
+            inviteLabel={formatMessage({ id: 'template.invite-team-member' })}
+            onUsersInvited={onUsersInvited}
+          />
         </div>
-        <UsersDropdown
-          options={selectionsDropdownOption}
-          onChange={handleUserDropdownChange}
-          placeholder={description}
-          isDisabled={isDisabled}
-          value={selectionsDropdownOption.find(
-            (item) =>
-              item.value === `${EOptionTypes.User}-${field.userId}` ||
-              item.value === `${EOptionTypes.Group}-${field.groupId}`,
-          )}
-          onClickInvite={() => trackInviteTeamInPage('From users field')}
-          inviteLabel={formatMessage({ id: 'template.invite-team-member' })}
-          onUsersInvited={onUsersInvited}
-        />
       </div>
     );
   };

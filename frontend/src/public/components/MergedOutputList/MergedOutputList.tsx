@@ -4,6 +4,7 @@ import { EFieldLabelPosition } from '../../types/fieldset';
 import { ExtraFieldIntl } from '../TemplateEdit/ExtraFields';
 import { FieldsetFieldGroup } from '../FieldsetFieldGroup';
 import { buildRuntimeMergedOutputParts } from '../TemplateEdit/TaskOutputFlow/mergeTaskOutputFlow';
+import { useCheckDevice } from '../../hooks/useCheckDevice';
 import { IMergedOutputListProps } from './types';
 
 export function MergedOutputList({
@@ -15,6 +16,7 @@ export function MergedOutputList({
   fieldClassName,
   accountId,
 }: IMergedOutputListProps) {
+  const { isDesktop } = useCheckDevice();
   const parts = buildRuntimeMergedOutputParts(fields, fieldsets);
 
   return (
@@ -49,7 +51,7 @@ export function MergedOutputList({
             labelBackgroundColor={labelBackgroundColor}
             accountId={accountId}
             fieldClassName={fieldClassName}
-            labelPosition={part.data.labelPosition}
+            labelPosition={isDesktop ? part.data.labelPosition : EFieldLabelPosition.Top}
           />
           );
         }

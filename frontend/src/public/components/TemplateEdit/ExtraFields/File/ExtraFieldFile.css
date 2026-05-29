@@ -130,6 +130,11 @@
   height: 100%;
 }
 
+.file-content-wrapper_label-left {
+  flex: 1;
+  min-width: 0;
+}
+
 .extra-field-file__ref {
   position: absolute;
   z-index: -1;

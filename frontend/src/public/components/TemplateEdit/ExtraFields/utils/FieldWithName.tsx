@@ -38,6 +38,7 @@ interface IKickoffFormFieldWithNameProps {
   labelPosition: EFieldLabelPosition;
   labelClassName?: string;
   onClick?(): void;
+  editorClassName?: string;
   onNumericKeyDown?(event: KeyboardEvent<HTMLInputElement>): void;
   isNumericField?: boolean;
 }
@@ -79,6 +80,7 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
       labelClassName,
       onNumericKeyDown,
       isNumericField,
+      editorClassName,
     },
     ref,
   ) => {
@@ -163,6 +165,7 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
             errorMessage={fieldNameError}
             innerRef={descriptionInputRef}
             accountId={accountId}
+            editorClassName={editorClassName}
             onKeyDown={onNumericKeyDown}
             isNumericField={isNumericField}
           />

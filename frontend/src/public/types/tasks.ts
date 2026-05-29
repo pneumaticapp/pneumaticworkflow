@@ -21,6 +21,7 @@ export type TaskWithTsp<T> = Omit<T, keyof TaskWithDateFields> & TaskWithTspFiel
 
 export type TFormatTaskDates = {
   output?: IExtraField[];
+  fieldsets?: IFieldsetData[];
   subWorkflows?: WorkflowWithTsp<IWorkflow>[] | null;
   dueDateTsp?: number | null;
   dateStartedTsp?: number;

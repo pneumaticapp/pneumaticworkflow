@@ -49,6 +49,7 @@ export function LexicalEditorContent({
   onCancel,
   submitIcon,
   cancelIcon,
+  editorClassName,
   withControls = false,
 }: ILexicalEditorContentProps): React.ReactElement {
   const showMentions = withMentions && Boolean(mentions?.length);
@@ -60,6 +61,7 @@ export function LexicalEditorContent({
         styles['editor'],
         multiline && styles['editor-multiline'],
         isUploading && styles['editor-uploading'],
+        editorClassName,
       )}
     >
       <Loader isLoading={isUploading} />

@@ -29,6 +29,7 @@ export function ExtraFieldFile({
   editField,
   isDisabled = false,
   accountId,
+  labelBackgroundColor,
   labelPosition,
 }: IWorkflowExtraFieldProps) {
   const { useCallback, useState, useEffect, createRef } = React;
@@ -164,34 +165,55 @@ export function ExtraFieldFile({
   };
 
   const renderProcessView = () => {
+    const isLabelLeft = labelPosition === EFieldLabelPosition.Left;
+
     return (
-      <div className={styles['extra-field-file__container']} data-autofocus-first-field={true}>
-        <div>
-          <div className={styles['extra-field-file__field-name']}>{name}</div>
-          {isRequired && <span className={kickoffStyles['kick-off-required-sign']} />}
-        </div>
-
-        <ExtraFieldFilesGrid
-          attachments={filesToUpload}
-          deleteFile={handleDeleteFile}
-          isUploading={isUploading}
-          isEdit
-        />
-
-        <input
-          className={styles['extra-field-file__ref']}
-          multiple
-          onChange={handleUploadFile}
-          ref={uploadFieldRef}
-          type="file"
-        />
-        <div className={styles['extra-field-file__upload-button-conteiner']}>
-          <Button
-            label={formatMessage({ id: 'file-upload.label-upload-button' })}
-            size="sm"
-            buttonStyle="transparent-black"
-            onClick={handleOpenUploadWindow}
+      <div
+        className={classnames(
+          styles['extra-field-file__container'],
+          isLabelLeft && kickoffStyles['kick-off-input__field_label-left'],
+        )}
+        data-autofocus-first-field={true}
+      >
+        {isLabelLeft ? (
+          <FieldLabel
+            name={name}
+            isRequired={isRequired || false}
+            isDisabled={isDisabled}
+            mode={mode}
+            labelBackgroundColor={labelBackgroundColor}
+            handleChangeName={handleChangeName}
+            className={kickoffStyles['kick-off-input__name_label-left_aligned-start']}
           />
+        ) : (
+          <div>
+            <div className={styles['extra-field-file__field-name']}>{name}</div>
+            {isRequired && <span className={kickoffStyles['kick-off-required-sign']} />}
+          </div>
+        )}
+        <div {...(isLabelLeft && { className: styles['file-content-wrapper_label-left'] })}>
+          <ExtraFieldFilesGrid
+            attachments={filesToUpload}
+            deleteFile={handleDeleteFile}
+            isUploading={isUploading}
+            isEdit
+          />
+
+          <input
+            className={styles['extra-field-file__ref']}
+            multiple
+            onChange={handleUploadFile}
+            ref={uploadFieldRef}
+            type="file"
+          />
+          <div className={styles['extra-field-file__upload-button-conteiner']}>
+            <Button
+              label={formatMessage({ id: 'file-upload.label-upload-button' })}
+              size="sm"
+              buttonStyle="transparent-black"
+              onClick={handleOpenUploadWindow}
+            />
+          </div>
         </div>
       </div>
     );
