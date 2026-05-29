@@ -1,5 +1,7 @@
 """Redis client for authentication."""
 
+import builtins
+import io
 import pickle
 from typing import Any
 
@@ -13,6 +15,59 @@ from src.shared_kernel.exceptions import (
     RedisConnectionError,
     RedisOperationError,
 )
+
+# Types that Django's django_redis PickleSerializer can produce
+# for PneumaticToken auth data (dict, list, str, int, bool, None).
+_SAFE_BUILTINS = frozenset({
+    'dict', 'list', 'set', 'frozenset', 'tuple',
+    'str', 'bytes', 'int', 'float', 'bool',
+})
+
+
+class _RestrictedUnpickler(pickle.Unpickler):
+    """Unpickler that blocks arbitrary code execution.
+
+    Only allows instantiation of safe built-in types.
+    Rejects any class with __reduce__-based RCE payloads
+    (os.system, subprocess, exec, eval, etc.).
+
+    Compatible with django_redis PickleSerializer output.
+    """
+
+    def find_class(self, module: str, name: str) -> type:
+        if module == 'builtins' and name in _SAFE_BUILTINS:
+            return getattr(builtins, name)
+        raise pickle.UnpicklingError(
+            f'Unsafe class blocked: {module}.{name}',
+        )
+
+
+def _safe_loads(data: bytes) -> Any:
+    """Deserialize pickle data using RestrictedUnpickler."""
+    return _RestrictedUnpickler(io.BytesIO(data)).load()
+
+
+def _validate_auth_data(data: Any) -> dict[str, Any] | None:
+    """Validate deserialized auth data matches expected structure.
+
+    Django PneumaticToken stores two types of values:
+    - encrypted_token → dict with user_id, account_id, etc.
+    - user_pk → list of encrypted token strings
+
+    Returns validated data or None if structure is invalid.
+    """
+    # Token data: dict with user_id key
+    if isinstance(data, dict):
+        if 'user_id' not in data:
+            return None
+        return data
+
+    # User token list: list of token hex strings
+    if isinstance(data, list) and all(
+        isinstance(item, str) for item in data
+    ):
+        return data
+    return None
 
 
 class RedisAuthClient:
@@ -35,9 +90,8 @@ class RedisAuthClient:
             value = await self._client.get(f'{settings.KEY_PREFIX_REDIS}{key}')
             if value is None:
                 return None
-            # Note: pickle.loads can be unsafe with untrusted data
-            # In production, consider using a safer serialization method
-            return pickle.loads(value)  # noqa: S301
+            deserialized = _safe_loads(value)
+            return _validate_auth_data(deserialized)
         except redis.ConnectionError as e:
             raise RedisConnectionError(
                 details=MSG_EXT_011.format(details=str(e)),
