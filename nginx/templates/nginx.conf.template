@@ -1,3 +1,7 @@
+# Use case: HTTP only (no SSL).
+# SERVER_ADDRESS is an IP address or localhost.
+# Serves backend on port 8001 and frontend on port 80 over plain HTTP.
+
 include /etc/nginx/includes/worker.conf;
 
 http {
@@ -5,7 +9,7 @@ http {
     include /etc/nginx/includes/http_base.conf;
 
     ##
-    # Backend server
+    # Backend
     ##
 
     server {
@@ -31,18 +35,12 @@ http {
         server_name pneumatic-nginx;
 
         location / {
-            proxy_pass http://backend;
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection 'upgrade';
-            proxy_set_header Host $host;
-            proxy_set_header REMOTE_ADDR $remote_addr;
-            proxy_cache_bypass $http_upgrade;
+            include /etc/nginx/includes/proxy_to_private_backend.conf;
         }
     }
 
     ##
-    # Frontend server
+    # Frontend
     ##
 
     server {
@@ -54,5 +52,4 @@ http {
 
         include /etc/nginx/includes/location_frontend_common.conf;
     }
-
 }

@@ -3,6 +3,7 @@ import * as Sentry from '@sentry/react';
 import { setSentryCapture } from './sentryCapture';
 import { DEV_SENTRY_DSN, PROD_SENTRY_DSN } from '../constants/defaultValues';
 import { TEnvironment } from './getConfig';
+import { envSentryRelease } from '../constants/enviroment';
 
 export type TSentryApp = 'main' | 'forms';
 
@@ -20,8 +21,8 @@ export const initSentry = (
   const dsn = sentryDsnMap[env];
   if (!dsn) return;
 
-  const release = typeof process.env.SENTRY_RELEASE === 'string'
-    ? process.env.SENTRY_RELEASE
+  const release = typeof envSentryRelease === 'string'
+    ? envSentryRelease
     : undefined;
 
   Sentry.init({
