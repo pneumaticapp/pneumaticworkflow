@@ -200,6 +200,7 @@ async def download_file(
                 if range_match.group(2)
                 else total_size - 1
             )
+            end = min(end, total_size - 1)
             if start > total_size - 1 or start > end:
                 return StreamingResponse(
                     iter(['']),

@@ -93,6 +93,8 @@ class Command(BaseCommand):
         total = attachments.count()
         self.stdout.write(f'Found {total} records ready to be synced.')
 
+        conn = None
+        cursor = None
         try:
             if not dry_run:
                 conn = self.get_file_db_connection()
@@ -115,6 +117,11 @@ class Command(BaseCommand):
                     conn.close()
                     return
         except psycopg2.Error as e:
+            if not dry_run:
+                if cursor:
+                    cursor.close()
+                if conn:
+                    conn.close()
             self.stdout.write(self.style.ERROR(
                 f"Could not connect to file database: {e}",
             ))

@@ -195,6 +195,48 @@ def test_download__range_header__return_206(
     assert response.headers['accept-ranges'] == 'bytes'
 
 
+def test_download__range_header_exceeds_size__return_capped(
+    e2e_client,
+    mock_auth_middleware,
+    mock_http_client,
+    mock_storage_service,
+    auth_headers,
+    mock_download_use_case_get_metadata,
+    mock_download_use_case_get_stream,
+):
+    # arrange
+    file_record = FileRecord(
+        file_id='12345678-1234-5678-1234-567812345678',
+        filename='video.mp4',
+        content_type='video/mp4',
+        size=100,
+        user_id=1,
+        account_id=1,
+        created_at=datetime(2024, 1, 1, tzinfo=UTC),
+    )
+
+    async def partial_stream():
+        yield b'partial'
+
+    mock_download_use_case_get_metadata.return_value = file_record
+    mock_download_use_case_get_stream.return_value = partial_stream()
+
+    # act
+    response = e2e_client.get(
+        '/12345678-1234-5678-1234-567812345678',
+        headers={
+            **auth_headers,
+            'Range': 'bytes=0-99999',
+        },
+    )
+
+    # assert
+    assert response.status_code == 206
+    assert response.headers['content-range'] == 'bytes 0-99/100'
+    assert response.headers['content-length'] == '100'
+    assert response.headers['accept-ranges'] == 'bytes'
+
+
 def test_download__invalid_range_header__return_416(
     e2e_client,
     mock_auth_middleware,
