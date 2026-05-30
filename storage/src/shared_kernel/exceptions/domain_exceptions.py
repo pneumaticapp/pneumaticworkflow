@@ -77,7 +77,8 @@ class FileAccessDeniedError(BaseAppError):
         error_code = DOMAIN_ERROR_CODES['FILE_ACCESS_DENIED']
         display_user = user_id if user_id is not None else 'anonymous'
         message = MSG_FILE_005.format(
-            user_id=display_user, file_id=file_id,
+            user_id=display_user,
+            file_id=file_id,
         )
 
         custom_error_code = error_code.__class__(

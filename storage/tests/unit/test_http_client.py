@@ -4,7 +4,6 @@ from unittest.mock import AsyncMock
 
 import httpx
 import pytest
-
 from src.infra.http_client import SharedClientHolder
 from src.shared_kernel.auth.user_types import UserType
 from src.shared_kernel.exceptions import (
@@ -21,7 +20,6 @@ async def test_check_permission__valid_token__true(
     http_client,
     mock_httpx_post,
 ):
-
     # arrange
     file_id = '12345678-1234-5678-1234-567812345678'
     user = AuthUser(
@@ -36,7 +34,8 @@ async def test_check_permission__valid_token__true(
 
     # act
     result = await http_client.check_file_permission(
-        user=user, file_id=file_id,
+        user=user,
+        file_id=file_id,
     )
 
     # assert
@@ -55,7 +54,6 @@ async def test_check_permission__denied__false(
     http_client,
     mock_httpx_post,
 ):
-
     # arrange
     file_id = '12345678-1234-5678-1234-567812345678'
     user = AuthUser(
@@ -70,7 +68,8 @@ async def test_check_permission__denied__false(
 
     # act
     result = await http_client.check_file_permission(
-        user=user, file_id=file_id,
+        user=user,
+        file_id=file_id,
     )
 
     # assert
@@ -89,7 +88,6 @@ async def test_check_permission__http_error__raise(
     http_client,
     mock_httpx_post,
 ):
-
     # arrange
     file_id = '12345678-1234-5678-1234-567812345678'
     user = AuthUser(
@@ -105,7 +103,8 @@ async def test_check_permission__http_error__raise(
     # act
     with pytest.raises(HttpClientError):
         await http_client.check_file_permission(
-            user=user, file_id=file_id,
+            user=user,
+            file_id=file_id,
         )
 
 
@@ -114,7 +113,6 @@ async def test_check_permission__timeout__raise(
     http_client,
     mock_httpx_post,
 ):
-
     # arrange
     file_id = '12345678-1234-5678-1234-567812345678'
     user = AuthUser(
@@ -130,7 +128,8 @@ async def test_check_permission__timeout__raise(
     # act
     with pytest.raises(HttpTimeoutError):
         await http_client.check_file_permission(
-            user=user, file_id=file_id,
+            user=user,
+            file_id=file_id,
         )
 
 
@@ -139,7 +138,6 @@ async def test_check_permission__cookie_token__true(
     http_client,
     mock_httpx_post,
 ):
-
     # arrange
     file_id = '12345678-1234-5678-1234-567812345678'
     user = AuthUser(
@@ -154,7 +152,8 @@ async def test_check_permission__cookie_token__true(
 
     # act
     result = await http_client.check_file_permission(
-        user=user, file_id=file_id,
+        user=user,
+        file_id=file_id,
     )
 
     # assert
@@ -173,7 +172,6 @@ async def test_check_permission__no_auth__false(
     http_client,
     mock_httpx_post,
 ):
-
     # arrange
     file_id = '12345678-1234-5678-1234-567812345678'
     user = AuthUser(
@@ -188,7 +186,8 @@ async def test_check_permission__no_auth__false(
 
     # act
     result = await http_client.check_file_permission(
-        user=user, file_id=file_id,
+        user=user,
+        file_id=file_id,
     )
 
     # assert
@@ -205,7 +204,6 @@ async def test_check_permission__server_error__false(
     http_client,
     mock_httpx_post,
 ):
-
     # arrange
     file_id = '12345678-1234-5678-1234-567812345678'
     user = AuthUser(
@@ -220,7 +218,8 @@ async def test_check_permission__server_error__false(
 
     # act
     result = await http_client.check_file_permission(
-        user=user, file_id=file_id,
+        user=user,
+        file_id=file_id,
     )
 
     # assert
@@ -240,7 +239,6 @@ async def test_check_permission__server_error__false(
 def test_get__creates_client_with_timeout(
     reset_shared_client_holder,
 ):
-
     # act
     client = SharedClientHolder.get()
 
@@ -252,7 +250,6 @@ def test_get__creates_client_with_timeout(
 def test_get__singleton__same_instance(
     reset_shared_client_holder,
 ):
-
     # act
     client1 = SharedClientHolder.get()
     client2 = SharedClientHolder.get()
@@ -264,7 +261,6 @@ def test_get__singleton__same_instance(
 def test_timeout_constant__properly_defined(
     reset_shared_client_holder,
 ):
-
     # act
     timeout = SharedClientHolder._TIMEOUT
 
@@ -278,7 +274,6 @@ def test_timeout_constant__properly_defined(
 async def test_close__has_instance__cleanup(
     reset_shared_client_holder,
 ):
-
     # arrange
     SharedClientHolder.get()
     assert SharedClientHolder._instance is not None
@@ -294,6 +289,5 @@ async def test_close__has_instance__cleanup(
 async def test_close__no_instance__no_error(
     reset_shared_client_holder,
 ):
-
     # act — no error
     await SharedClientHolder.close()

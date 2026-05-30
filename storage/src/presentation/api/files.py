@@ -176,7 +176,9 @@ async def download_file(
         range_header=range_header,
     )
 
-    quoted_filename = urllib.parse.quote(file_record.filename)
+    quoted_filename = urllib.parse.quote(
+        file_record.filename or 'unnamed_file'
+    )
     headers = {
         'Content-Disposition': (
             f"attachment; filename*=utf-8''{quoted_filename}"
@@ -200,15 +202,13 @@ async def download_file(
             )
             if start > total_size - 1 or start > end:
                 return StreamingResponse(
-                    iter([""]),
+                    iter(['']),
                     status_code=416,
                     headers={'Content-Range': f'bytes */{total_size}'},
                 )
             content_length = end - start + 1
             status_code = 206
-            headers['Content-Range'] = (
-                f'bytes {start}-{end}/{total_size}'
-            )
+            headers['Content-Range'] = f'bytes {start}-{end}/{total_size}'
             headers['Content-Length'] = str(content_length)
         else:
             headers['Content-Length'] = str(total_size)

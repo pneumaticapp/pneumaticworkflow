@@ -1,5 +1,6 @@
 """Application configuration settings."""
 
+import json
 from functools import lru_cache
 from typing import Literal
 
@@ -28,13 +29,15 @@ class Settings(BaseSettings):
         """Parse CORS origins from comma-separated string or list."""
         if isinstance(v, str) and not v.startswith('['):
             return [i.strip() for i in v.split(',')]
-        if isinstance(v, (list, str)):
+        if isinstance(v, list):
             return v
+        if isinstance(v, str):
+            return json.loads(v)
         raise ValueError(v)
 
     # Database
     POSTGRES_USER: str = 'pneumatic'
-    POSTGRES_PASSWORD: str = 'pneumatic'
+    POSTGRES_PASSWORD: str = 'pneumatic'  # noqa: S105
     POSTGRES_DB: str = 'pneumatic'
     POSTGRES_HOST: str = 'localhost'
     POSTGRES_PORT: int = 5432
@@ -51,7 +54,7 @@ class Settings(BaseSettings):
     # SeaweedFS S3 (when STORAGE_TYPE='local')
     SEAWEEDFS_S3_ENDPOINT: str = 'http://seaweedfs-filer:8333'
     SEAWEEDFS_S3_ACCESS_KEY: str = 'any-access-key-will-work'
-    SEAWEEDFS_S3_SECRET_KEY: str = 'any-secret-key-will-work'
+    SEAWEEDFS_S3_SECRET_KEY: str = 'any-secret-key-will-work'  # noqa: S105
     SEAWEEDFS_S3_REGION: str = 'us-east-1'
     SEAWEEDFS_S3_USE_SSL: bool = False
 

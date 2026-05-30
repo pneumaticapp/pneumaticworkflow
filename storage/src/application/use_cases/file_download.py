@@ -46,9 +46,9 @@ class DownloadFileUseCase:
         return file_record
 
     async def get_stream(
-            self,
-            file_record: FileRecord,
-            range_header: str | None = None,
+        self,
+        file_record: FileRecord,
+        range_header: str | None = None,
     ) -> AsyncIterator[bytes]:
         """Get file stream after permissions are verified.
 

@@ -23,8 +23,8 @@ class SharedClientHolder:
     _instance: httpx.AsyncClient | None = None
     # Explicit timeouts (seconds)
     _TIMEOUT = httpx.Timeout(
-        timeout=30.0,   # total request timeout
-        connect=10.0,   # connection timeout
+        timeout=30.0,  # total request timeout
+        connect=10.0,  # connection timeout
     )
 
     @classmethod
@@ -96,7 +96,7 @@ class HttpClient:
         except httpx.TimeoutException as e:
             raise HttpTimeoutError(
                 url=self.base_url,
-                timeout=SharedClientHolder._TIMEOUT.read,
+                timeout=SharedClientHolder._TIMEOUT.read or 30.0,
                 details=str(e),
             ) from e
         except httpx.RequestError as e:

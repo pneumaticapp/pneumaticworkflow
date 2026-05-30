@@ -5,7 +5,6 @@ from datetime import UTC, datetime
 from unittest.mock import AsyncMock
 
 import pytest
-
 from src.application.dto.file_dtos import (
     DownloadFileQuery,
     UploadFileCommand,
@@ -28,7 +27,6 @@ from src.shared_kernel.exceptions import (
 )
 from src.shared_kernel.uow import UnitOfWork
 
-
 # --- UploadFileUseCase ---
 
 
@@ -37,7 +35,6 @@ async def test_upload__full_integration__ok(
     async_session,
     mock_aioboto3_session,
 ):
-
     # arrange
     repository = FileRecordRepository(
         session=async_session,
@@ -60,9 +57,7 @@ async def test_upload__full_integration__ok(
     )
     mock_s3_client = AsyncMock()
     (
-        mock_aioboto3_session.return_value
-        .client.return_value
-        .__aenter__
+        mock_aioboto3_session.return_value.client.return_value.__aenter__
     ).return_value = mock_s3_client
 
     # act
@@ -121,7 +116,6 @@ async def test_upload__diff_types__ok(
     async_session,
     mock_aioboto3_session,
 ):
-
     # arrange
     repository = FileRecordRepository(
         session=async_session,
@@ -144,9 +138,7 @@ async def test_upload__diff_types__ok(
     )
     mock_s3_client = AsyncMock()
     (
-        mock_aioboto3_session.return_value
-        .client.return_value
-        .__aenter__
+        mock_aioboto3_session.return_value.client.return_value.__aenter__
     ).return_value = mock_s3_client
 
     # act
@@ -175,7 +167,6 @@ async def test_download__full_integration__ok(
     async_session,
     mock_aioboto3_session,
 ):
-
     # arrange
     repository = FileRecordRepository(
         session=async_session,
@@ -186,9 +177,7 @@ async def test_download__full_integration__ok(
         storage_service=storage_service,
     )
     file_record = FileRecord(
-        file_id=(
-            '12345678-1234-5678-1234-567812345678'
-        ),
+        file_id=('12345678-1234-5678-1234-567812345678'),
         filename='test_file.txt',
         content_type='text/plain',
         size=17,
@@ -200,9 +189,7 @@ async def test_download__full_integration__ok(
     await async_session.commit()
 
     query = DownloadFileQuery(
-        file_id=(
-            '12345678-1234-5678-1234-567812345678'
-        ),
+        file_id=('12345678-1234-5678-1234-567812345678'),
         user_id=1,
     )
     mock_s3_client = AsyncMock()
@@ -216,9 +203,7 @@ async def test_download__full_integration__ok(
         'Body': mock_body,
     }
     (
-        mock_aioboto3_session.return_value
-        .client.return_value
-        .__aenter__
+        mock_aioboto3_session.return_value.client.return_value.__aenter__
     ).return_value = mock_s3_client
 
     # act
@@ -231,9 +216,7 @@ async def test_download__full_integration__ok(
 
     # assert
     assert result_record is not None
-    assert result_record.file_id == (
-        '12345678-1234-5678-1234-567812345678'
-    )
+    assert result_record.file_id == ('12345678-1234-5678-1234-567812345678')
     assert result_record.filename == 'test_file.txt'
     assert result_stream is not None
 
@@ -248,7 +231,6 @@ async def test_download__not_found__raise_error(
     async_session,
     mock_aioboto3_session,
 ):
-
     # arrange
     repository = FileRecordRepository(
         session=async_session,
@@ -259,9 +241,7 @@ async def test_download__not_found__raise_error(
         storage_service=storage_service,
     )
     query = DownloadFileQuery(
-        file_id=(
-            '00000000-0000-0000-0000-000000000000'
-        ),
+        file_id=('00000000-0000-0000-0000-000000000000'),
         user_id=1,
     )
 

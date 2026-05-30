@@ -190,7 +190,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
 
             # If authentication is required and user is anonymous
             if self.require_auth and request.state.user.is_anonymous:
-                raise AuthenticationError
+                raise AuthenticationError  # noqa: TRY301
 
             return await call_next(request)
         except AuthenticationError as exc:

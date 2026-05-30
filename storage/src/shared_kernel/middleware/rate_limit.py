@@ -34,9 +34,7 @@ class _SlidingWindow:
     def count_in_window(self, now: float, window: int) -> int:
         """Count requests within the time window."""
         cutoff = now - window
-        self.timestamps = [
-            ts for ts in self.timestamps if ts > cutoff
-        ]
+        self.timestamps = [ts for ts in self.timestamps if ts > cutoff]
         return len(self.timestamps)
 
     def record(self, now: float) -> None:
@@ -58,10 +56,19 @@ def _classify_route(path: str, method: str) -> str | None:
     """
     if method == 'POST' and path == '/upload':
         return 'upload'
-    if method == 'GET' and path not in {
-        '/', '/upload', '/docs', '/redoc',
-        '/openapi.json', '/health',
-    } and len(path) > 1:
+    if (
+        method == 'GET'
+        and path
+        not in {
+            '/',
+            '/upload',
+            '/docs',
+            '/redoc',
+            '/openapi.json',
+            '/health',
+        }
+        and len(path) > 1
+    ):
         # GET /{file_id} pattern
         return 'download'
     return None
@@ -72,7 +79,7 @@ def _get_client_ip(request: Request) -> str:
     forwarded = request.headers.get('x-forwarded-for')
     if forwarded:
         return forwarded.split(',')[0].strip()
-    return request.client.host if request.client else '0.0.0.0'
+    return request.client.host if request.client else '0.0.0.0'  # noqa: S104
 
 
 class RateLimitMiddleware(BaseHTTPMiddleware):
@@ -98,7 +105,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         self._enabled = enabled
         # {bucket:ip -> SlidingWindow}
         self._windows: dict[
-            str, _SlidingWindow,
+            str,
+            _SlidingWindow,
         ] = defaultdict(_SlidingWindow)
 
     async def dispatch(
@@ -123,7 +131,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         window = self._windows[key]
         current = window.count_in_window(
-            now, limit.window_seconds,
+            now,
+            limit.window_seconds,
         )
 
         if current >= limit.max_requests:

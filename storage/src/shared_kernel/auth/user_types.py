@@ -1,9 +1,9 @@
 """User types enum."""
 
-from enum import Enum
+from enum import StrEnum
 
 
-class UserType(str, Enum):
+class UserType(StrEnum):
     """User authentication types."""
 
     AUTHENTICATED = 'authenticated'  # Regular authorized user

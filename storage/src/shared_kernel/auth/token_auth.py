@@ -81,6 +81,7 @@ class PneumaticToken:
         try:
             encrypted_token = await cls.encrypt(token)
             redis_client = get_redis_client()
-            return await redis_client.get(encrypted_token)
+            data = await redis_client.get(encrypted_token)
+            return data if isinstance(data, dict) else None
         except (ValueError, KeyError, TypeError):
             return None

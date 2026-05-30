@@ -1,0 +1,50 @@
+default_stages: [pre-commit]
+default_language_version:
+  python: python3.7
+repos:
+  - repo: local
+    hooks:
+      # --- BACKEND HOOKS ---
+      - id: ruff-backend
+        name: ruff check (backend)
+        types: [python]
+        language: system
+        entry: ruff check --config backend/ruff.toml
+        files: ^backend/
+        exclude: 'migrations|settings\.py|messages\.py|wsgi\.py|asgi\.py'
+
+      - id: py_codestyle-backend
+        name: py_codestyle (backend)
+        types: [python]
+        language: system
+        entry: pycodestyle backend/ --config backend/pycodestyle.ini
+        files: ^backend/
+        exclude: 'migrations|settings\.py|messages\.py|wsgi\.py|asgi\.py'
+
+      # --- STORAGE HOOKS ---
+      - id: ruff-check-storage
+        name: ruff check (storage)
+        entry: ruff check --config storage/ruff.toml --no-cache
+        language: system
+        types: [python]
+        files: ^storage/
+        require_serial: true
+        exclude: 'alembic|migrations'
+
+      - id: ruff-format-storage
+        name: ruff format (storage)
+        entry: ruff format --config storage/ruff.toml --no-cache
+        language: system
+        types: [python]
+        files: ^storage/
+        require_serial: true
+        exclude: 'alembic|migrations'
+
+      - id: mypy-check-storage
+        name: mypy (storage)
+        entry: mypy --config-file storage/mypy.ini storage/src/
+        language: system
+        types: [python]
+        files: ^storage/
+        pass_filenames: false
+        exclude: 'alembic|migrations'

@@ -7,7 +7,6 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.orm import sessionmaker
-
 from src.shared_kernel.database.base import Base
 
 
@@ -16,7 +15,9 @@ async def test_engine():
     """Create test database engine once per session."""
     database_url = 'sqlite+aiosqlite:///:memory:'
     engine = create_async_engine(
-        database_url, echo=False, future=True,
+        database_url,
+        echo=False,
+        future=True,
     )
 
     async with engine.begin() as conn:

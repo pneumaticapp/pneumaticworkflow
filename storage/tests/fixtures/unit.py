@@ -6,11 +6,6 @@ from unittest.mock import AsyncMock, MagicMock, Mock
 import pytest
 from botocore.exceptions import ClientError
 from fastapi import Request
-from starlette.applications import Starlette
-from starlette.responses import PlainTextResponse, Response
-from starlette.routing import Route
-from starlette.testclient import TestClient
-
 from src.infra.http_client import HttpClient, SharedClientHolder
 from src.infra.repositories.file_record_repository import (
     FileRecordRepository,
@@ -33,6 +28,10 @@ from src.shared_kernel.middleware.rate_limit import _RateLimit
 from src.shared_kernel.middleware.security_headers import (
     SecurityHeadersMiddleware,
 )
+from starlette.applications import Starlette
+from starlette.responses import PlainTextResponse, Response
+from starlette.routing import Route
+from starlette.testclient import TestClient
 
 # --- auth_middleware fixtures ---
 
@@ -144,10 +143,12 @@ def fast_rate_limits():
     """Low limits for fast rate limit testing."""
     return {
         'upload': _RateLimit(
-            max_requests=2, window_seconds=60,
+            max_requests=2,
+            window_seconds=60,
         ),
         'download': _RateLimit(
-            max_requests=3, window_seconds=60,
+            max_requests=3,
+            window_seconds=60,
         ),
     }
 
@@ -359,8 +360,7 @@ def mock_redis_from_url(mocker):
 def mock_redis_auth_client_get(mocker):
     """Mock for RedisAuthClient.get."""
     return mocker.patch(
-        'src.shared_kernel.auth.redis_client'
-        '.RedisAuthClient.get',
+        'src.shared_kernel.auth.redis_client.RedisAuthClient.get',
     )
 
 
@@ -376,8 +376,7 @@ def mock_get_db_session(mocker):
 def mock_upload_use_case_execute(mocker):
     """Mock for UploadFileUseCase.execute."""
     return mocker.patch(
-        'src.application.use_cases.file_upload'
-        '.UploadFileUseCase.execute',
+        'src.application.use_cases.file_upload.UploadFileUseCase.execute',
     )
 
 
@@ -405,8 +404,7 @@ def mock_download_use_case_get_stream(mocker):
 def mock_pneumatic_token_data(mocker):
     """Mock for PneumaticToken.data."""
     return mocker.patch(
-        'src.shared_kernel.auth.token_auth'
-        '.PneumaticToken.data',
+        'src.shared_kernel.auth.token_auth.PneumaticToken.data',
     )
 
 
@@ -414,8 +412,7 @@ def mock_pneumatic_token_data(mocker):
 def mock_http_client_check_permission(mocker):
     """Mock for HttpClient.check_file_permission."""
     return mocker.patch(
-        'src.infra.http_client'
-        '.HttpClient.check_file_permission',
+        'src.infra.http_client.HttpClient.check_file_permission',
         new_callable=AsyncMock,
     )
 
@@ -440,6 +437,5 @@ def mock_auth_middleware_authenticate_token(mocker):
 def mock_auth_middleware_pneumatic_token_data(mocker):
     """Mock for PneumaticToken.data in auth middleware."""
     return mocker.patch(
-        'src.shared_kernel.middleware.auth_middleware'
-        '.PneumaticToken.data',
+        'src.shared_kernel.middleware.auth_middleware.PneumaticToken.data',
     )

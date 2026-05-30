@@ -33,7 +33,8 @@ async def get_db_session() -> AsyncGenerator[AsyncSession, None]:
 
 
 async def get_storage_service() -> AsyncGenerator[
-    StorageService, None,
+    StorageService,
+    None,
 ]:
     """Get storage service singleton."""
     yield await StorageServiceHolder.get()

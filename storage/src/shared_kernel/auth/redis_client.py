@@ -19,10 +19,20 @@ from src.shared_kernel.exceptions import (
 
 # Types that Django's django_redis PickleSerializer can produce
 # for PneumaticToken auth data (dict, list, str, int, bool, None).
-_SAFE_BUILTINS = frozenset({
-    'dict', 'list', 'set', 'frozenset', 'tuple',
-    'str', 'bytes', 'int', 'float', 'bool',
-})
+_SAFE_BUILTINS = frozenset(
+    {
+        'dict',
+        'list',
+        'set',
+        'frozenset',
+        'tuple',
+        'str',
+        'bytes',
+        'int',
+        'float',
+        'bool',
+    }
+)
 
 
 class _RestrictedUnpickler(pickle.Unpickler):
@@ -42,12 +52,12 @@ class _RestrictedUnpickler(pickle.Unpickler):
         raise pickle.UnpicklingError(msg)
 
 
-def _safe_loads(data: bytes) -> Any:
+def _safe_loads(data: bytes) -> Any:  # noqa: ANN401
     """Deserialize pickle data using RestrictedUnpickler."""
     return _RestrictedUnpickler(io.BytesIO(data)).load()
 
 
-def _validate_auth_data(data: Any) -> dict[str, Any] | list[str] | None:
+def _validate_auth_data(data: Any) -> dict[str, Any] | list[str] | None:  # noqa: ANN401
     """Validate deserialized auth data matches expected structure.
 
     Django PneumaticToken stores two types of values:
@@ -63,9 +73,7 @@ def _validate_auth_data(data: Any) -> dict[str, Any] | list[str] | None:
         return data
 
     # User token list: list of token hex strings
-    if isinstance(data, list) and all(
-        isinstance(item, str) for item in data
-    ):
+    if isinstance(data, list) and all(isinstance(item, str) for item in data):
         return data
     return None
 
@@ -81,7 +89,7 @@ class RedisAuthClient:
 
         """
         # Settings match Django: KEY_PREFIX = '' for auth cache
-        self._client = redis.from_url(redis_url)
+        self._client = redis.from_url(redis_url)  # type: ignore[no-untyped-call]
 
     async def get(self, key: str) -> dict[str, Any] | list[str] | None:
         """Get value from cache."""

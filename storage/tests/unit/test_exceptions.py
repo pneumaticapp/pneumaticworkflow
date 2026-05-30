@@ -3,7 +3,6 @@
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
-
 from src.shared_kernel.exceptions import (
     VALIDATION_ERROR_CODES,
     AuthenticationError,
@@ -33,7 +32,6 @@ from src.shared_kernel.exceptions import (
 
 
 def test_error_code__create__ok():
-
     # act
     error_code = ErrorCode(
         code='TEST_001',
@@ -50,7 +48,6 @@ def test_error_code__create__ok():
 
 
 def test_error_code__with_details__ok():
-
     # act
     error_code = ErrorCode(
         code='TEST_002',
@@ -68,7 +65,6 @@ def test_error_code__with_details__ok():
 
 
 def test_error_response__create__ok():
-
     # act
     response = ErrorResponse(
         error_code='TEST_001',
@@ -83,7 +79,6 @@ def test_error_response__create__ok():
 
 
 def test_error_response__to_dict__all_fields():
-
     # arrange
     response = ErrorResponse(
         error_code='TEST_001',
@@ -107,7 +102,6 @@ def test_error_response__to_dict__all_fields():
 
 
 def test_error_response__to_dict__no_optional():
-
     # arrange
     response = ErrorResponse(
         error_code='TEST_001',
@@ -128,7 +122,6 @@ def test_error_response__to_dict__no_optional():
 
 
 def test_base_app_error__create__ok():
-
     # arrange
     error_code = ErrorCode(
         code='TEST_001',
@@ -149,7 +142,6 @@ def test_base_app_error__create__ok():
 
 
 def test_base_app_error__to_response__ok():
-
     # arrange
     error_code = ErrorCode(
         code='TEST_001',
@@ -178,31 +170,22 @@ def test_base_app_error__to_response__ok():
 
 
 def test_file_not_found__create__ok():
-
     # act
     exc = DomainFileNotFoundError(
-        file_id=(
-            '12345678-1234-5678-1234-567812345678'
-        ),
+        file_id=('12345678-1234-5678-1234-567812345678'),
     )
 
     # assert
     assert exc.error_code.code == 'FILE_001'
-    assert (
-        "'12345678-1234-5678-1234-567812345678'"
-        in exc.error_code.message
-    )
+    assert "'12345678-1234-5678-1234-567812345678'" in exc.error_code.message
     assert exc.http_status == 404
     assert exc.error_type == ErrorType.DOMAIN
 
 
 def test_file_not_found__with_account__ok():
-
     # act
     exc = DomainFileNotFoundError(
-        file_id=(
-            '12345678-1234-5678-1234-567812345678'
-        ),
+        file_id=('12345678-1234-5678-1234-567812345678'),
         account_id=123,
     )
 
@@ -213,12 +196,9 @@ def test_file_not_found__with_account__ok():
 
 
 def test_file_access_denied__create__ok():
-
     # act
     exc = FileAccessDeniedError(
-        file_id=(
-            '12345678-1234-5678-1234-567812345678'
-        ),
+        file_id=('12345678-1234-5678-1234-567812345678'),
         user_id=456,
     )
 
@@ -230,12 +210,9 @@ def test_file_access_denied__create__ok():
 
 
 def test_file_access_denied__none_user__anonymous():
-
     # act
     exc = FileAccessDeniedError(
-        file_id=(
-            '12345678-1234-5678-1234-567812345678'
-        ),
+        file_id=('12345678-1234-5678-1234-567812345678'),
         user_id=None,
     )
 
@@ -246,10 +223,10 @@ def test_file_access_denied__none_user__anonymous():
 
 
 def test_file_size_exceeded__create__ok():
-
     # act
     exc = FileSizeExceededError(
-        size=1000, max_size=500,
+        size=1000,
+        max_size=500,
     )
 
     # assert
@@ -264,7 +241,6 @@ def test_file_size_exceeded__create__ok():
 
 
 def test_storage__upload_failed__ok():
-
     # act
     exc = StorageError.upload_failed('Connection timeout')
 
@@ -275,7 +251,6 @@ def test_storage__upload_failed__ok():
 
 
 def test_storage__download_failed__ok():
-
     # act
     exc = StorageError.download_failed('File corrupted')
 
@@ -286,7 +261,6 @@ def test_storage__download_failed__ok():
 
 
 def test_storage__bucket_create_failed__ok():
-
     # act
     exc = StorageError.bucket_create_failed(
         'Insufficient permissions',
@@ -299,7 +273,6 @@ def test_storage__bucket_create_failed__ok():
 
 
 def test_storage__file_not_found__ok():
-
     # act
     exc = StorageError.file_not_found_in_storage(
         file_path='path/to/file.txt',
@@ -314,7 +287,6 @@ def test_storage__file_not_found__ok():
 
 
 def test_storage__file_not_found__with_details():
-
     # act
     exc = StorageError.file_not_found_in_storage(
         file_path='doc.pdf',
@@ -330,7 +302,6 @@ def test_storage__file_not_found__with_details():
 
 
 def test_storage__delete_failed__ok():
-
     # act
     exc = StorageError.delete_failed('Access denied')
 
@@ -341,7 +312,6 @@ def test_storage__delete_failed__ok():
 
 
 def test_storage__delete_no_details__unknown():
-
     # act
     exc = StorageError.delete_failed()
 
@@ -350,7 +320,6 @@ def test_storage__delete_no_details__unknown():
 
 
 def test_storage__upload_no_details__unknown():
-
     # act
     exc = StorageError.upload_failed()
 
@@ -359,7 +328,6 @@ def test_storage__upload_no_details__unknown():
 
 
 def test_storage__download_no_details__unknown():
-
     # act
     exc = StorageError.download_failed()
 
@@ -368,18 +336,14 @@ def test_storage__download_no_details__unknown():
 
 
 def test_storage__bucket_no_details__unknown():
-
     # act
     exc = StorageError.bucket_create_failed()
 
     # assert
-    assert exc.details == (
-        'Bucket creation failed: Unknown error'
-    )
+    assert exc.details == ('Bucket creation failed: Unknown error')
 
 
 def test_storage__invalid_key__raise_key_error():
-
     # act
     with pytest.raises(KeyError):
         StorageError('NONEXISTENT_KEY')
@@ -389,7 +353,6 @@ def test_storage__invalid_key__raise_key_error():
 
 
 def test_db_connection_error__create__ok():
-
     # act
     exc = DatabaseConnectionError('Connection failed')
 
@@ -400,7 +363,6 @@ def test_db_connection_error__create__ok():
 
 
 def test_db_operation_error__create__ok():
-
     # act
     exc = DatabaseOperationError(
         operation='SELECT',
@@ -415,7 +377,6 @@ def test_db_operation_error__create__ok():
 
 
 def test_db_constraint_error__create__ok():
-
     # act
     exc = DatabaseConstraintError(
         constraint='unique_constraint',
@@ -430,7 +391,6 @@ def test_db_constraint_error__create__ok():
 
 
 def test_db_error__base_class__ok():
-
     # act
     exc = DatabaseError(
         error_code_key='DATABASE_CONNECTION_ERROR',
@@ -447,7 +407,6 @@ def test_db_error__base_class__ok():
 
 
 def test_redis_connection_error__create__ok():
-
     # act
     exc = RedisConnectionError('Redis unavailable')
 
@@ -458,7 +417,6 @@ def test_redis_connection_error__create__ok():
 
 
 def test_redis_operation_error__create__ok():
-
     # act
     exc = RedisOperationError(
         operation='GET',
@@ -472,10 +430,10 @@ def test_redis_operation_error__create__ok():
 
 
 def test_http_client_error__create__ok():
-
     # act
     exc = HttpClientError(
-        'http://example.com', details='Request failed',
+        'http://example.com',
+        details='Request failed',
     )
 
     # assert
@@ -485,7 +443,6 @@ def test_http_client_error__create__ok():
 
 
 def test_http_client_error__with_status__ok():
-
     # act
     exc = HttpClientError(
         'http://example.com',
@@ -500,7 +457,6 @@ def test_http_client_error__with_status__ok():
 
 
 def test_http_timeout_error__create__ok():
-
     # act
     exc = HttpTimeoutError(
         url='http://example.com',
@@ -515,7 +471,6 @@ def test_http_timeout_error__create__ok():
 
 
 def test_external_service__base_class__ok():
-
     # act
     exc = ExternalServiceError(
         error_code_key='REDIS_CONNECTION_ERROR',
@@ -532,7 +487,6 @@ def test_external_service__base_class__ok():
 
 
 def test_permission_denied__create__ok():
-
     # act
     exc = PermissionDeniedError('Access denied')
 
@@ -543,7 +497,6 @@ def test_permission_denied__create__ok():
 
 
 def test_validation__invalid_file_size__ok():
-
     # arrange
     error_code = VALIDATION_ERROR_CODES['INVALID_FILE_SIZE']
 
@@ -560,7 +513,6 @@ def test_validation__invalid_file_size__ok():
 
 
 def test_authentication_error__create__ok():
-
     # act
     exc = AuthenticationError('Auth failed')
 
@@ -574,7 +526,6 @@ def test_authentication_error__create__ok():
 
 
 def test_create_error_response__all_fields__ok():
-
     # act
     response = create_error_response(
         error_code='TEST_001',
@@ -591,7 +542,6 @@ def test_create_error_response__all_fields__ok():
 
 
 def test_register_handlers__registers__ok():
-
     # arrange
     app = FastAPI()
 
@@ -608,7 +558,6 @@ def test_register_handlers__registers__ok():
 
 
 def test_handler__file_not_found__404():
-
     # arrange
     app = FastAPI()
     register_exception_handlers(app)
@@ -632,7 +581,6 @@ def test_handler__file_not_found__404():
 
 
 def test_handler__auth_error__401():
-
     # arrange
     app = FastAPI()
     register_exception_handlers(app)

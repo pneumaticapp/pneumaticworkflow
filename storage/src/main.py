@@ -1,5 +1,6 @@
 """FastAPI application entry point."""
 
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
 import uvicorn
@@ -23,7 +24,7 @@ settings = get_settings()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     """Application lifespan event handlers."""
     # Initialize shared HTTP client
     get_shared_client()
@@ -32,6 +33,7 @@ async def lifespan(app: FastAPI):
     await StorageServiceHolder.close()
     await close_redis_client()
     await close_shared_client()
+
 
 # Create application
 app = FastAPI(
@@ -66,13 +68,13 @@ app.add_middleware(
 
 # Rate limiting middleware (disabled in debug/test mode)
 app.add_middleware(
-    RateLimitMiddleware,  # type: ignore[arg-type]
+    RateLimitMiddleware,
     enabled=not settings.DEBUG,
 )
 
 # Security headers middleware
 app.add_middleware(
-    SecurityHeadersMiddleware,  # type: ignore[arg-type]
+    SecurityHeadersMiddleware,
     include_hsts=settings.CONFIG == 'Production',
 )
 
@@ -85,7 +87,7 @@ app.include_router(files_router)
 if __name__ == '__main__':
     uvicorn.run(
         'src.main:app',
-        host='0.0.0.0',
+        host='0.0.0.0',  # noqa: S104
         port=settings.PORT,
         reload=settings.CONFIG != 'Production',
         workers=1 if settings.CONFIG != 'Production' else settings.WORKERS,

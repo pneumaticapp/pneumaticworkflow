@@ -1,11 +1,11 @@
 """Base exception classes."""
 
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 from typing import Any
 
 
-class ErrorType(str, Enum):
+class ErrorType(StrEnum):
     """Error types."""
 
     VALIDATION = 'validation'

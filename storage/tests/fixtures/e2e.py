@@ -30,19 +30,19 @@ def e2e_client(test_client):
 def mock_auth_middleware(mocker) -> MagicMock:
     """Mock authentication middleware."""
     mock_token_data = mocker.patch(
-        'src.shared_kernel.auth.token_auth'
-        '.PneumaticToken.data',
+        'src.shared_kernel.auth.token_auth.PneumaticToken.data',
     )
     mock_token_data.return_value = {
-        'user_id': 1, 'account_id': 1,
+        'user_id': 1,
+        'account_id': 1,
     }
 
     mock_redis_get = mocker.patch(
-        'src.shared_kernel.auth.redis_client'
-        '.RedisAuthClient.get',
+        'src.shared_kernel.auth.redis_client.RedisAuthClient.get',
     )
     mock_redis_get.return_value = {
-        'user_id': 1, 'account_id': 1,
+        'user_id': 1,
+        'account_id': 1,
     }
 
     return mock_token_data
@@ -52,8 +52,7 @@ def mock_auth_middleware(mocker) -> MagicMock:
 def mock_http_client(mocker) -> AsyncMock:
     """Mock HTTP client for e2e tests."""
     mock = mocker.patch(
-        'src.infra.http_client'
-        '.HttpClient.check_file_permission',
+        'src.infra.http_client.HttpClient.check_file_permission',
         new_callable=AsyncMock,
     )
     mock.return_value = True
@@ -65,10 +64,9 @@ def mock_storage_service(mocker) -> AsyncMock:
     """Mock storage service for e2e tests."""
     mock_session = mocker.patch('aioboto3.Session')
     mock_s3_client = AsyncMock()
-    mock_session.return_value.client \
-        .return_value.__aenter__.return_value = (
-            mock_s3_client
-        )
+    mock_session.return_value.client.return_value.__aenter__.return_value = (
+        mock_s3_client
+    )
     return mock_s3_client
 
 
@@ -82,25 +80,21 @@ def auth_headers() -> dict[str, str]:
 def mock_upload_response() -> MagicMock:
     """Mock upload response."""
     response = MagicMock()
-    response.file_id = (
-        '12345678-1234-5678-1234-567812345679'
-    )
+    response.file_id = '12345678-1234-5678-1234-567812345679'
     response.public_url = (
-        'http://localhost:8000/'
-        '12345678-1234-5678-1234-567812345679'
+        'http://localhost:8000/12345678-1234-5678-1234-567812345679'
     )
     return response
 
 
 @pytest.fixture
 def mock_download_response() -> tuple[
-    MagicMock, AsyncIteratorMock,
+    MagicMock,
+    AsyncIteratorMock,
 ]:
     """Mock download response."""
     record = MagicMock()
-    record.file_id = (
-        '12345678-1234-5678-1234-567812345679'
-    )
+    record.file_id = '12345678-1234-5678-1234-567812345679'
     record.filename = 'test_file.txt'
     record.content_type = 'text/plain'
     record.size = 1024

@@ -3,13 +3,11 @@
 from unittest.mock import AsyncMock, call
 
 import pytest
-
 from src.infra.repositories.storage_service import (
     StorageService,
     StorageServiceHolder,
 )
 from src.shared_kernel.exceptions import StorageError
-
 
 # --- StorageServiceHolder singleton ---
 
@@ -19,7 +17,6 @@ async def test_holder_get__first_call__creates(
     reset_storage_holder,
     mock_storage_settings,
 ):
-
     # act
     instance = await StorageServiceHolder.get()
 
@@ -33,7 +30,6 @@ async def test_holder_get__second_call__same(
     reset_storage_holder,
     mock_storage_settings,
 ):
-
     # act
     first = await StorageServiceHolder.get()
     second = await StorageServiceHolder.get()
@@ -46,7 +42,6 @@ async def test_holder_get__second_call__same(
 async def test_holder_close__no_instance__no_error(
     reset_storage_holder,
 ):
-
     # act — no exception
     await StorageServiceHolder.close()
 
@@ -56,7 +51,6 @@ async def test_holder_close__has_instance__sets_none(
     reset_storage_holder,
     mock_storage_settings,
 ):
-
     # arrange
     instance = await StorageServiceHolder.get()
     instance.close = AsyncMock()
@@ -74,7 +68,6 @@ async def test_holder_get__after_close__creates_new(
     reset_storage_holder,
     mock_storage_settings,
 ):
-
     # arrange
     first = await StorageServiceHolder.get()
     first.close = AsyncMock()
@@ -94,7 +87,6 @@ async def test_holder_get__after_close__creates_new(
 async def test_get_client__first_call__creates(
     mock_storage_settings,
 ):
-
     # arrange
     service = StorageService()
     mock_client = AsyncMock()
@@ -116,7 +108,6 @@ async def test_get_client__first_call__creates(
 async def test_get_client__second_call__reuses(
     mock_storage_settings,
 ):
-
     # arrange
     service = StorageService()
     mock_client = AsyncMock()
@@ -139,7 +130,6 @@ async def test_get_client__second_call__reuses(
 async def test_close__with_client__cleans_up(
     mock_storage_settings,
 ):
-
     # arrange
     service = StorageService()
     mock_client = AsyncMock()
@@ -156,7 +146,9 @@ async def test_close__with_client__cleans_up(
 
     # assert
     mock_ctx.__aexit__.assert_called_once_with(
-        None, None, None,
+        None,
+        None,
+        None,
     )
     assert service._s3_client is None
     assert service._s3_context is None
@@ -166,7 +158,6 @@ async def test_close__with_client__cleans_up(
 async def test_close__no_client__no_error(
     mock_storage_settings,
 ):
-
     # arrange
     service = StorageService()
 
@@ -178,56 +169,34 @@ async def test_close__no_client__no_error(
 
 
 def test_init__local__seaweedfs_params(mocker):
-
     # arrange
     mock_settings = mocker.patch(
-        'src.infra.repositories.storage_service'
-        '.get_settings',
+        'src.infra.repositories.storage_service.get_settings',
     )
     mock_settings.return_value.STORAGE_TYPE = 'local'
     mock_settings.return_value.BUCKET_PREFIX = 'test'
-    mock_settings.return_value.SEAWEEDFS_S3_ENDPOINT = (
-        'http://sw'
-    )
-    mock_settings.return_value.SEAWEEDFS_S3_ACCESS_KEY = (
-        'ak'
-    )
-    mock_settings.return_value.SEAWEEDFS_S3_SECRET_KEY = (
-        'sk'
-    )
-    mock_settings.return_value.SEAWEEDFS_S3_REGION = (
-        'us-east-1'
-    )
-    mock_settings.return_value.SEAWEEDFS_S3_USE_SSL = (
-        False
-    )
+    mock_settings.return_value.SEAWEEDFS_S3_ENDPOINT = 'http://sw'
+    mock_settings.return_value.SEAWEEDFS_S3_ACCESS_KEY = 'ak'
+    mock_settings.return_value.SEAWEEDFS_S3_SECRET_KEY = 'sk'
+    mock_settings.return_value.SEAWEEDFS_S3_REGION = 'us-east-1'
+    mock_settings.return_value.SEAWEEDFS_S3_USE_SSL = False
 
     # act
     service = StorageService()
 
     # assert
-    assert (
-        service._client_params['endpoint_url']
-        == 'http://sw'
-    )
-    assert (
-        service._client_params['aws_access_key_id']
-        == 'ak'
-    )
+    assert service._client_params['endpoint_url'] == 'http://sw'
+    assert service._client_params['aws_access_key_id'] == 'ak'
 
 
 def test_init__google__gcs_params(mocker):
-
     # arrange
     mock_settings = mocker.patch(
-        'src.infra.repositories.storage_service'
-        '.get_settings',
+        'src.infra.repositories.storage_service.get_settings',
     )
     mock_settings.return_value.STORAGE_TYPE = 'google'
     mock_settings.return_value.BUCKET_PREFIX = 'test'
-    mock_settings.return_value.GCS_S3_ENDPOINT = (
-        'https://gcs'
-    )
+    mock_settings.return_value.GCS_S3_ENDPOINT = 'https://gcs'
     mock_settings.return_value.GCS_S3_ACCESS_KEY = 'gak'
     mock_settings.return_value.GCS_S3_SECRET_KEY = 'gsk'
     mock_settings.return_value.GCS_S3_REGION = 'us-east-1'
@@ -236,17 +205,13 @@ def test_init__google__gcs_params(mocker):
     service = StorageService()
 
     # assert
-    assert (
-        service._client_params['endpoint_url']
-        == 'https://gcs'
-    )
+    assert service._client_params['endpoint_url'] == 'https://gcs'
     assert service._config.signature_version == 's3'
 
 
 def test_init__pool_connections__is_20(
     mock_storage_settings,
 ):
-
     # act
     service = StorageService()
 
@@ -261,7 +226,6 @@ def test_init__pool_connections__is_20(
 async def test_upload__ok__no_error(
     storage_service_with_mock_s3,
 ):
-
     # arrange
     svc, mock_s3 = storage_service_with_mock_s3
     mock_s3.upload_fileobj = AsyncMock()
@@ -288,7 +252,6 @@ async def test_upload__ok__no_error(
 async def test_upload__with_content_type__extra_args(
     storage_service_with_mock_s3,
 ):
-
     # arrange
     svc, mock_s3 = storage_service_with_mock_s3
     mock_s3.upload_fileobj = AsyncMock()
@@ -315,7 +278,6 @@ async def test_upload__with_content_type__extra_args(
 async def test_upload__no_content_type__empty_extra(
     storage_service_with_mock_s3,
 ):
-
     # arrange
     svc, mock_s3 = storage_service_with_mock_s3
     mock_s3.upload_fileobj = AsyncMock()
@@ -343,7 +305,6 @@ async def test_upload__no_bucket__create_and_retry(
     storage_service_with_mock_s3,
     make_client_error,
 ):
-
     # arrange
     svc, mock_s3 = storage_service_with_mock_s3
     error = make_client_error('NoSuchBucket')
@@ -390,7 +351,6 @@ async def test_upload__bucket_create_fail__raise(
     storage_service_with_mock_s3,
     make_client_error,
 ):
-
     # arrange
     svc, mock_s3 = storage_service_with_mock_s3
     no_bucket = make_client_error('NoSuchBucket')
@@ -421,7 +381,6 @@ async def test_upload__access_denied__raise(
     storage_service_with_mock_s3,
     make_client_error,
 ):
-
     # arrange
     svc, mock_s3 = storage_service_with_mock_s3
     error = make_client_error('AccessDenied')
@@ -449,7 +408,6 @@ async def test_download__no_such_key__not_found(
     storage_service_with_mock_s3,
     make_client_error,
 ):
-
     # arrange
     svc, mock_s3 = storage_service_with_mock_s3
     svc._chunk_size = 1024
@@ -473,7 +431,6 @@ async def test_download__internal_err__raise(
     storage_service_with_mock_s3,
     make_client_error,
 ):
-
     # arrange
     svc, mock_s3 = storage_service_with_mock_s3
     svc._chunk_size = 1024
@@ -496,7 +453,6 @@ async def test_download__internal_err__raise(
 async def test_download__with_range__range_in_kwargs(
     storage_service_with_mock_s3,
 ):
-
     # arrange
     svc, mock_s3 = storage_service_with_mock_s3
     svc._chunk_size = 1024
@@ -534,7 +490,6 @@ async def test_download__with_range__range_in_kwargs(
 async def test_delete__ok__no_error(
     storage_service_with_mock_s3,
 ):
-
     # arrange
     svc, mock_s3 = storage_service_with_mock_s3
     mock_s3.delete_object = AsyncMock()
@@ -557,7 +512,6 @@ async def test_delete__client_error__raise(
     storage_service_with_mock_s3,
     make_client_error,
 ):
-
     # arrange
     svc, mock_s3 = storage_service_with_mock_s3
     error = make_client_error('InternalError')

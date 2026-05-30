@@ -37,12 +37,8 @@ class StorageService:
         if self._storage_type == 'local':
             self._client_params = {
                 'service_name': 's3',
-                'endpoint_url': (
-                    self._settings.SEAWEEDFS_S3_ENDPOINT
-                ),
-                'aws_access_key_id': (
-                    self._settings.SEAWEEDFS_S3_ACCESS_KEY
-                ),
+                'endpoint_url': (self._settings.SEAWEEDFS_S3_ENDPOINT),
+                'aws_access_key_id': (self._settings.SEAWEEDFS_S3_ACCESS_KEY),
                 'region_name': self._settings.SEAWEEDFS_S3_REGION,
                 'use_ssl': self._settings.SEAWEEDFS_S3_USE_SSL,
                 'config': self._config,
@@ -54,21 +50,17 @@ class StorageService:
             self._client_params = {
                 'service_name': 's3',
                 'endpoint_url': self._settings.GCS_S3_ENDPOINT,
-                'aws_access_key_id': (
-                    self._settings.GCS_S3_ACCESS_KEY
-                ),
-                'aws_secret_access_key': (
-                    self._settings.GCS_S3_SECRET_KEY
-                ),
+                'aws_access_key_id': (self._settings.GCS_S3_ACCESS_KEY),
+                'aws_secret_access_key': (self._settings.GCS_S3_SECRET_KEY),
                 'region_name': self._settings.GCS_S3_REGION,
                 'config': self._config,
             }
 
         # Persistent S3 client (lazy-initialized)
-        self._s3_client = None
-        self._s3_context = None
+        self._s3_client: typing.Any | None = None
+        self._s3_context: typing.Any | None = None
 
-    async def _get_client(self):
+    async def _get_client(self) -> typing.Any:  # noqa: ANN401
         """Get or create persistent S3 client.
 
         Returns:
@@ -151,7 +143,7 @@ class StorageService:
                         Key=file_path,
                         ExtraArgs=extra_args,
                     )
-                    return
+                    return  # noqa: TRY300
                 except ClientError as create_e:
                     raise StorageError.bucket_create_failed(
                         details=str(create_e),

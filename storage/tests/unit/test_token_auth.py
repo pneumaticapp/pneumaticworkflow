@@ -4,7 +4,6 @@ from unittest.mock import AsyncMock
 
 import pytest
 import redis.asyncio as redis
-
 from src.shared_kernel.auth.token_auth import (
     PneumaticToken,
     _compute_pbkdf2,
@@ -18,14 +17,12 @@ async def test_data__valid_token__return_data(
     mock_get_redis_client,
     mocker,
 ):
-
     # arrange
     token = 'test-token'
     expected_data = {'user_id': 1, 'account_id': 2}
     encrypted_token = 'encrypted-token-hash'
     encrypt_mock = mocker.patch(
-        'src.shared_kernel.auth.token_auth'
-        '.PneumaticToken.encrypt',
+        'src.shared_kernel.auth.token_auth.PneumaticToken.encrypt',
         return_value=encrypted_token,
     )
     mock_redis = AsyncMock()
@@ -48,13 +45,11 @@ async def test_data__no_data_found__return_none(
     mock_get_redis_client,
     mocker,
 ):
-
     # arrange
     token = 'test-token'
     encrypted_token = 'encrypted-token-hash'
     encrypt_mock = mocker.patch(
-        'src.shared_kernel.auth.token_auth'
-        '.PneumaticToken.encrypt',
+        'src.shared_kernel.auth.token_auth.PneumaticToken.encrypt',
         return_value=encrypted_token,
     )
     mock_redis = AsyncMock()
@@ -77,13 +72,11 @@ async def test_data__redis_error__raise_exception(
     mock_get_redis_client,
     mocker,
 ):
-
     # arrange
     token = 'test-token'
     encrypted_token = 'encrypted-token-hash'
     encrypt_mock = mocker.patch(
-        'src.shared_kernel.auth.token_auth'
-        '.PneumaticToken.encrypt',
+        'src.shared_kernel.auth.token_auth.PneumaticToken.encrypt',
         return_value=encrypted_token,
     )
     mock_redis = AsyncMock()
@@ -107,13 +100,16 @@ async def test_data__redis_error__raise_exception(
 
 
 def test_compute_pbkdf2__deterministic(clear_pbkdf2_cache):
-
     # act
     first = _compute_pbkdf2(
-        token='token', salt='salt', iterations=1,
+        token='token',
+        salt='salt',
+        iterations=1,
     )
     second = _compute_pbkdf2(
-        token='token', salt='salt', iterations=1,
+        token='token',
+        salt='salt',
+        iterations=1,
     )
 
     # assert
@@ -123,13 +119,16 @@ def test_compute_pbkdf2__deterministic(clear_pbkdf2_cache):
 def test_compute_pbkdf2__different_tokens(
     clear_pbkdf2_cache,
 ):
-
     # act
     hash1 = _compute_pbkdf2(
-        token='token-a', salt='salt', iterations=1,
+        token='token-a',
+        salt='salt',
+        iterations=1,
     )
     hash2 = _compute_pbkdf2(
-        token='token-b', salt='salt', iterations=1,
+        token='token-b',
+        salt='salt',
+        iterations=1,
     )
 
     # assert
@@ -139,13 +138,16 @@ def test_compute_pbkdf2__different_tokens(
 def test_compute_pbkdf2__different_salts(
     clear_pbkdf2_cache,
 ):
-
     # act
     hash1 = _compute_pbkdf2(
-        token='token', salt='salt-a', iterations=1,
+        token='token',
+        salt='salt-a',
+        iterations=1,
     )
     hash2 = _compute_pbkdf2(
-        token='token', salt='salt-b', iterations=1,
+        token='token',
+        salt='salt-b',
+        iterations=1,
     )
 
     # assert
@@ -155,10 +157,11 @@ def test_compute_pbkdf2__different_salts(
 def test_compute_pbkdf2__returns_hex_string(
     clear_pbkdf2_cache,
 ):
-
     # act
     result = _compute_pbkdf2(
-        token='token', salt='salt', iterations=1,
+        token='token',
+        salt='salt',
+        iterations=1,
     )
 
     # assert
@@ -168,13 +171,16 @@ def test_compute_pbkdf2__returns_hex_string(
 
 
 def test_compute_pbkdf2__cache_hit(clear_pbkdf2_cache):
-
     # act
     _compute_pbkdf2(
-        token='tok', salt='salt', iterations=1,
+        token='tok',
+        salt='salt',
+        iterations=1,
     )
     _compute_pbkdf2(
-        token='tok', salt='salt', iterations=1,
+        token='tok',
+        salt='salt',
+        iterations=1,
     )
     info = _compute_pbkdf2.cache_info()
 
@@ -186,13 +192,16 @@ def test_compute_pbkdf2__cache_hit(clear_pbkdf2_cache):
 def test_compute_pbkdf2__cache_miss_diff_args(
     clear_pbkdf2_cache,
 ):
-
     # act
     _compute_pbkdf2(
-        token='tok-a', salt='salt', iterations=1,
+        token='tok-a',
+        salt='salt',
+        iterations=1,
     )
     _compute_pbkdf2(
-        token='tok-b', salt='salt', iterations=1,
+        token='tok-b',
+        salt='salt',
+        iterations=1,
     )
     info = _compute_pbkdf2.cache_info()
 
@@ -209,11 +218,8 @@ async def test_encrypt__returns_hex(
     clear_pbkdf2_cache,
     mock_get_settings,
 ):
-
     # arrange
-    mock_get_settings.return_value.DJANGO_SECRET_KEY = (
-        'secret'
-    )
+    mock_get_settings.return_value.DJANGO_SECRET_KEY = 'secret'
     mock_get_settings.return_value.AUTH_TOKEN_ITERATIONS = 1
 
     # act
@@ -230,15 +236,11 @@ async def test_encrypt__calls_pbkdf2_hmac(
     mock_get_settings,
     mocker,
 ):
-
     # arrange
-    mock_get_settings.return_value.DJANGO_SECRET_KEY = (
-        'secret'
-    )
+    mock_get_settings.return_value.DJANGO_SECRET_KEY = 'secret'
     mock_get_settings.return_value.AUTH_TOKEN_ITERATIONS = 1
     spy = mocker.patch(
-        'src.shared_kernel.auth.token_auth'
-        '.hashlib.pbkdf2_hmac',
+        'src.shared_kernel.auth.token_auth.hashlib.pbkdf2_hmac',
         wraps=__import__('hashlib').pbkdf2_hmac,
     )
 
@@ -259,11 +261,8 @@ async def test_encrypt__cached_on_repeat(
     clear_pbkdf2_cache,
     mock_get_settings,
 ):
-
     # arrange
-    mock_get_settings.return_value.DJANGO_SECRET_KEY = (
-        'secret'
-    )
+    mock_get_settings.return_value.DJANGO_SECRET_KEY = 'secret'
     mock_get_settings.return_value.AUTH_TOKEN_ITERATIONS = 1
 
     # act
@@ -284,11 +283,9 @@ async def test_data__value_error__returns_none(
     mock_get_redis_client,
     mocker,
 ):
-
     # arrange
     mocker.patch(
-        'src.shared_kernel.auth.token_auth'
-        '.PneumaticToken.encrypt',
+        'src.shared_kernel.auth.token_auth.PneumaticToken.encrypt',
         side_effect=ValueError('bad value'),
     )
 
@@ -304,11 +301,9 @@ async def test_data__key_error__returns_none(
     mock_get_redis_client,
     mocker,
 ):
-
     # arrange
     mocker.patch(
-        'src.shared_kernel.auth.token_auth'
-        '.PneumaticToken.encrypt',
+        'src.shared_kernel.auth.token_auth.PneumaticToken.encrypt',
         side_effect=KeyError('missing'),
     )
 
@@ -324,11 +319,9 @@ async def test_data__type_error__returns_none(
     mock_get_redis_client,
     mocker,
 ):
-
     # arrange
     mocker.patch(
-        'src.shared_kernel.auth.token_auth'
-        '.PneumaticToken.encrypt',
+        'src.shared_kernel.auth.token_auth.PneumaticToken.encrypt',
         side_effect=TypeError('wrong type'),
     )
 
@@ -344,11 +337,8 @@ async def test_encrypt__empty_string__returns_hex(
     clear_pbkdf2_cache,
     mock_get_settings,
 ):
-
     # arrange
-    mock_get_settings.return_value.DJANGO_SECRET_KEY = (
-        'secret'
-    )
+    mock_get_settings.return_value.DJANGO_SECRET_KEY = 'secret'
     mock_get_settings.return_value.AUTH_TOKEN_ITERATIONS = 1
 
     # act

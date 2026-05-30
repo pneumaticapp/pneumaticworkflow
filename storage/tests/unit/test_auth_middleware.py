@@ -4,13 +4,11 @@ import json
 from unittest.mock import AsyncMock
 
 import pytest
-
 from src.shared_kernel.auth.user_types import UserType
 from src.shared_kernel.middleware.auth_middleware import AuthUser
 
 
 def test_auth_user__valid_data__ok():
-
     # act
     user = AuthUser(
         auth_type=UserType.AUTHENTICATED,
@@ -29,12 +27,10 @@ async def test_authenticate_token__valid_token__return_user(
     auth_middleware,
     mocker,
 ):
-
     # arrange
     token = 'valid-token'
     token_data_mock = mocker.patch(
-        'src.shared_kernel.middleware.'
-        'auth_middleware.PneumaticToken.data',
+        'src.shared_kernel.middleware.auth_middleware.PneumaticToken.data',
         new_callable=AsyncMock,
         return_value={'user_id': 1, 'account_id': 2},
     )
@@ -54,12 +50,10 @@ async def test_authenticate_token__invalid__return_none(
     auth_middleware,
     mocker,
 ):
-
     # arrange
     token = 'invalid-token'
     token_data_mock = mocker.patch(
-        'src.shared_kernel.middleware.auth_middleware'
-        '.PneumaticToken.data',
+        'src.shared_kernel.middleware.auth_middleware.PneumaticToken.data',
         new_callable=AsyncMock,
         return_value=None,
     )
@@ -77,12 +71,10 @@ async def test_authenticate_token__exception__return_none(
     auth_middleware,
     mocker,
 ):
-
     # arrange
     token = 'error-token'
     token_data_mock = mocker.patch(
-        'src.shared_kernel.middleware.auth_middleware'
-        '.PneumaticToken.data',
+        'src.shared_kernel.middleware.auth_middleware.PneumaticToken.data',
         new_callable=AsyncMock,
         side_effect=ValueError('Token error'),
     )
@@ -102,14 +94,12 @@ async def test_dispatch__valid_token__return_ok(
     auth_mw_call_next,
     mocker,
 ):
-
     # arrange
     auth_mw_request.headers = {
         'Authorization': 'Bearer valid-token',
     }
     token_data_mock = mocker.patch(
-        'src.shared_kernel.middleware'
-        '.auth_middleware.PneumaticToken.data',
+        'src.shared_kernel.middleware.auth_middleware.PneumaticToken.data',
         new_callable=AsyncMock,
         return_value={'user_id': 1, 'account_id': 2},
     )
@@ -134,13 +124,11 @@ async def test_dispatch__session_token__return_ok(
     auth_mw_call_next,
     mocker,
 ):
-
     # arrange
     auth_mw_request.headers = {}
     auth_mw_request.cookies = {'token': 'session-token'}
     token_data_mock = mocker.patch(
-        'src.shared_kernel.middleware.auth_middleware'
-        '.PneumaticToken.data',
+        'src.shared_kernel.middleware.auth_middleware.PneumaticToken.data',
         new_callable=AsyncMock,
         return_value={'user_id': 3, 'account_id': 4},
     )
@@ -164,7 +152,6 @@ async def test_dispatch__no_auth_required__anonymous(
     auth_mw_request,
     auth_mw_call_next,
 ):
-
     # arrange
     auth_mw_request.headers = {}
     auth_mw_request.cookies = {}
@@ -186,7 +173,6 @@ async def test_dispatch__auth_required_no_token__401(
     auth_mw_request,
     auth_mw_call_next,
 ):
-
     # arrange
     auth_mw_request.headers = {}
     auth_mw_request.cookies = {}

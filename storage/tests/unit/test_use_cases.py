@@ -5,7 +5,6 @@ from datetime import UTC, datetime
 from unittest.mock import ANY, AsyncMock, Mock
 
 import pytest
-
 from src.application.dto.file_dtos import (
     DownloadFileQuery,
     UploadFileCommand,
@@ -29,7 +28,6 @@ async def test_upload__valid_command__return_response(
     mock_storage_service,
     mock_repository,
 ):
-
     # arrange
     command = UploadFileCommand(
         file_stream=io.BytesIO(b'test content'),
@@ -88,7 +86,6 @@ async def test_upload__storage_error__raise(
     mock_storage_service,
     mock_repository,
 ):
-
     # arrange
     command = UploadFileCommand(
         file_stream=io.BytesIO(b'test content'),
@@ -105,8 +102,8 @@ async def test_upload__storage_error__raise(
         'test-bucket',
         '12345678-1234-5678-1234-567812345678',
     )
-    mock_storage_service.upload_file.side_effect = (
-        StorageError.upload_failed('Upload failed')
+    mock_storage_service.upload_file.side_effect = StorageError.upload_failed(
+        'Upload failed'
     )
     use_case = UploadFileUseCase(
         file_repository=mock_repository,
@@ -128,7 +125,6 @@ async def test_get_metadata__valid__return_record(
     mock_storage_service,
     mock_repository,
 ):
-
     # arrange
     query = DownloadFileQuery(
         file_id='12345678-1234-5678-1234-567812345678',
@@ -166,10 +162,10 @@ async def test_get_metadata__not_found__raise(
     mock_storage_service,
     mock_repository,
 ):
-
     # arrange
     query = DownloadFileQuery(
-        file_id='missing-file-id', user_id=1,
+        file_id='missing-file-id',
+        user_id=1,
     )
     mock_repository.get_by_id.return_value = None
     use_case = DownloadFileUseCase(
@@ -187,7 +183,6 @@ async def test_get_stream__valid__return_stream(
     mock_storage_service,
     mock_repository,
 ):
-
     # arrange
     file_record = FileRecord(
         file_id='12345678-1234-5678-1234-567812345678',

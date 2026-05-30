@@ -3,44 +3,35 @@
 from unittest.mock import AsyncMock
 
 import pytest
-
 from src.infra.repositories.storage_service import (
     StorageService,
 )
 
 
 def test_get_storage_path__valid_account__return_pair():
-
     # arrange
     service = StorageService()
 
     # act
     bucket_name, file_path = service.get_storage_path(
         account_id=1,
-        file_id=(
-            '12345678-1234-5678-1234-567812345678'
-        ),
+        file_id=('12345678-1234-5678-1234-567812345678'),
     )
 
     # assert
     assert '1' in bucket_name
-    assert file_path == (
-        '12345678-1234-5678-1234-567812345678'
-    )
+    assert file_path == ('12345678-1234-5678-1234-567812345678')
 
 
 @pytest.mark.asyncio
 async def test_upload__valid_data__ok(
     mock_aioboto3_session,
 ):
-
     # arrange
     service = StorageService()
     mock_s3_client = AsyncMock()
     (
-        mock_aioboto3_session.return_value
-        .client.return_value
-        .__aenter__
+        mock_aioboto3_session.return_value.client.return_value.__aenter__
     ).return_value = mock_s3_client
 
     # act
@@ -64,7 +55,6 @@ async def test_upload__valid_data__ok(
 async def test_download__valid_file__return_content(
     mock_aioboto3_session,
 ):
-
     # arrange
     service = StorageService()
     mock_s3_client = AsyncMock()
@@ -78,9 +68,7 @@ async def test_download__valid_file__return_content(
         'Body': mock_body,
     }
     (
-        mock_aioboto3_session.return_value
-        .client.return_value
-        .__aenter__
+        mock_aioboto3_session.return_value.client.return_value.__aenter__
     ).return_value = mock_s3_client
 
     # act
@@ -103,7 +91,6 @@ async def test_download__valid_file__return_content(
 async def test_download__chunked__return_all_chunks(
     mock_aioboto3_session,
 ):
-
     # arrange
     service = StorageService()
     mock_s3_client = AsyncMock()
@@ -118,14 +105,13 @@ async def test_download__chunked__return_all_chunks(
         'Body': mock_body,
     }
     (
-        mock_aioboto3_session.return_value
-        .client.return_value
-        .__aenter__
+        mock_aioboto3_session.return_value.client.return_value.__aenter__
     ).return_value = mock_s3_client
 
     # act
     chunks = [
-        chunk async for chunk in service.download_file(
+        chunk
+        async for chunk in service.download_file(
             bucket_name='test-bucket',
             file_path='large-file.txt',
         )

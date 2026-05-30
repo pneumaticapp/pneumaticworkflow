@@ -4,19 +4,17 @@ import time
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
-from starlette.requests import Request
-from starlette.responses import Response
-
 from src.shared_kernel.middleware.rate_limit import (
     RateLimitMiddleware,
     _classify_route,
     _get_client_ip,
     _SlidingWindow,
 )
+from starlette.requests import Request
+from starlette.responses import Response
 
 
 def test_classify_route__upload_post__upload():
-
     # act
     result = _classify_route('/upload', 'POST')
 
@@ -25,10 +23,10 @@ def test_classify_route__upload_post__upload():
 
 
 def test_classify_route__file_get__download():
-
     # act
     result = _classify_route(
-        '/12345678-1234-5678-1234-567812345678', 'GET',
+        '/12345678-1234-5678-1234-567812345678',
+        'GET',
     )
 
     # assert
@@ -36,7 +34,6 @@ def test_classify_route__file_get__download():
 
 
 def test_classify_route__upload_get__none():
-
     # act
     result = _classify_route('/upload', 'GET')
 
@@ -45,7 +42,6 @@ def test_classify_route__upload_get__none():
 
 
 def test_classify_route__root_get__none():
-
     # act
     result = _classify_route('/', 'GET')
 
@@ -54,7 +50,6 @@ def test_classify_route__root_get__none():
 
 
 def test_classify_route__random_post__none():
-
     # act
     result = _classify_route('/random', 'POST')
 
@@ -63,7 +58,6 @@ def test_classify_route__random_post__none():
 
 
 def test_classify_route__health_get__none():
-
     # act
     result = _classify_route('/health', 'GET')
 
@@ -72,7 +66,6 @@ def test_classify_route__health_get__none():
 
 
 def test_get_client_ip__no_proxy__use_client_host():
-
     # arrange
     request = MagicMock(spec=Request)
     request.headers = {}
@@ -87,7 +80,6 @@ def test_get_client_ip__no_proxy__use_client_host():
 
 
 def test_get_client_ip__x_forwarded__first_ip():
-
     # arrange
     request = MagicMock(spec=Request)
     request.headers = {
@@ -102,7 +94,6 @@ def test_get_client_ip__x_forwarded__first_ip():
 
 
 def test_get_client_ip__single_forwarded__use_it():
-
     # arrange
     request = MagicMock(spec=Request)
     request.headers = {'x-forwarded-for': '203.0.113.5'}
@@ -115,7 +106,6 @@ def test_get_client_ip__single_forwarded__use_it():
 
 
 def test_get_client_ip__no_client__fallback():
-
     # arrange
     request = MagicMock(spec=Request)
     request.headers = {}
@@ -129,7 +119,6 @@ def test_get_client_ip__no_client__fallback():
 
 
 def test_sliding_window__empty__zero_count():
-
     # arrange
     window = _SlidingWindow()
 
@@ -141,7 +130,6 @@ def test_sliding_window__empty__zero_count():
 
 
 def test_sliding_window__one_request__count_one():
-
     # arrange
     window = _SlidingWindow()
     now = time.monotonic()
@@ -155,7 +143,6 @@ def test_sliding_window__one_request__count_one():
 
 
 def test_sliding_window__expired__count_zero():
-
     # arrange
     window = _SlidingWindow()
     old = time.monotonic() - 120
@@ -170,7 +157,6 @@ def test_sliding_window__expired__count_zero():
 
 
 def test_sliding_window__mixed__count_recent_only():
-
     # arrange
     window = _SlidingWindow()
     now = time.monotonic()
@@ -190,10 +176,10 @@ async def test_dispatch__under_limit__pass(
     fast_rate_limits,
     make_rate_request,
 ):
-
     # arrange
     mw = RateLimitMiddleware(
-        app=AsyncMock(), rate_limits=fast_rate_limits,
+        app=AsyncMock(),
+        rate_limits=fast_rate_limits,
     )
     request = make_rate_request()
     expected = Response(status_code=200)
@@ -212,10 +198,10 @@ async def test_dispatch__over_limit__return_429(
     fast_rate_limits,
     make_rate_request,
 ):
-
     # arrange
     mw = RateLimitMiddleware(
-        app=AsyncMock(), rate_limits=fast_rate_limits,
+        app=AsyncMock(),
+        rate_limits=fast_rate_limits,
     )
     call_next_mock = AsyncMock(
         return_value=Response(status_code=200),
@@ -239,10 +225,10 @@ async def test_dispatch__different_ips__independent(
     fast_rate_limits,
     make_rate_request,
 ):
-
     # arrange
     mw = RateLimitMiddleware(
-        app=AsyncMock(), rate_limits=fast_rate_limits,
+        app=AsyncMock(),
+        rate_limits=fast_rate_limits,
     )
     call_next_mock = AsyncMock(
         return_value=Response(status_code=200),
@@ -266,10 +252,10 @@ async def test_dispatch__non_limited_route__pass(
     fast_rate_limits,
     make_rate_request,
 ):
-
     # arrange
     mw = RateLimitMiddleware(
-        app=AsyncMock(), rate_limits=fast_rate_limits,
+        app=AsyncMock(),
+        rate_limits=fast_rate_limits,
     )
     call_next_mock = AsyncMock(
         return_value=Response(status_code=200),
@@ -291,10 +277,10 @@ async def test_dispatch__429_has_retry_after(
     fast_rate_limits,
     make_rate_request,
 ):
-
     # arrange
     mw = RateLimitMiddleware(
-        app=AsyncMock(), rate_limits=fast_rate_limits,
+        app=AsyncMock(),
+        rate_limits=fast_rate_limits,
     )
     call_next_mock = AsyncMock(
         return_value=Response(status_code=200),
@@ -317,10 +303,10 @@ async def test_dispatch__download_higher_limit(
     fast_rate_limits,
     make_rate_request,
 ):
-
     # arrange
     mw = RateLimitMiddleware(
-        app=AsyncMock(), rate_limits=fast_rate_limits,
+        app=AsyncMock(),
+        rate_limits=fast_rate_limits,
     )
     call_next_mock = AsyncMock(
         return_value=Response(status_code=200),
@@ -330,13 +316,15 @@ async def test_dispatch__download_higher_limit(
     # act — 3 downloads OK, 4th blocked
     for _ in range(3):
         req = make_rate_request(
-            path='/some-file-id', method='GET',
+            path='/some-file-id',
+            method='GET',
         )
         resp = await mw.dispatch(req, call_next_mock)
         responses.append(resp)
 
     req = make_rate_request(
-        path='/some-file-id', method='GET',
+        path='/some-file-id',
+        method='GET',
     )
     response = await mw.dispatch(req, call_next_mock)
 
