@@ -17,9 +17,8 @@ repos:
         name: py_codestyle (backend)
         types: [python]
         language: system
-        entry: pycodestyle backend/ --config backend/pycodestyle.ini
+        entry: pycodestyle --config backend/pycodestyle.ini
         files: ^backend/
-        pass_filenames: false
         exclude: 'migrations|settings\.py|messages\.py|wsgi\.py|asgi\.py'
 
       # --- STORAGE HOOKS ---

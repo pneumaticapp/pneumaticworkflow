@@ -147,6 +147,16 @@ class UserAdminChangeForm(UserChangeForm):
                     new_values=[file_url],
                 )
             except FileServiceException as ex:
+                if self.instance.id:
+                    db_instance = UserModel.objects.filter(
+                        id=self.instance.id,
+                    ).first()
+                    if db_instance:
+                        self.instance.photo = db_instance.photo
+                    else:
+                        self.instance.photo = None
+                else:
+                    self.instance.photo = None
                 capture_sentry_message(
                     message='User photo upload failed',
                     data={
