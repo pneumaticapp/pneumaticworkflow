@@ -59,9 +59,6 @@ class DownloadFileUseCase:
         Returns:
             AsyncIterator[bytes]: File byte stream.
 
-        Raises:
-            DomainFileNotFoundError: If file not found.
-
         """
         # Get S3 download paths from StorageService
         bucket_name, file_path = self._storage_service.get_storage_path(

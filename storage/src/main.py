@@ -1,5 +1,6 @@
 """FastAPI application entry point."""
 
+import contextlib
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
@@ -30,9 +31,12 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
     get_shared_client()
     yield
     # Close services on shutdown
-    await StorageServiceHolder.close()
-    await close_redis_client()
-    await close_shared_client()
+    with contextlib.suppress(Exception):
+        await StorageServiceHolder.close()
+    with contextlib.suppress(Exception):
+        await close_redis_client()
+    with contextlib.suppress(Exception):
+        await close_shared_client()
 
 
 # Create application

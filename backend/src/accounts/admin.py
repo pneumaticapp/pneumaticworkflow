@@ -122,6 +122,7 @@ class UserAdminChangeForm(UserChangeForm):
 
     def save(self, commit=True):
         photo_file = self.cleaned_data.get('photo_file')
+        old_photo = self.instance.photo
         if photo_file:
             try:
                 file_service = FileServiceClient(user=self.instance)
@@ -134,6 +135,17 @@ class UserAdminChangeForm(UserChangeForm):
                     access_type=StorageAccessType.ACCOUNT,
                 )
                 self.instance.photo = file_url
+
+                from src.storage.utils import sync_account_file_fields
+                old_values = []
+                if old_photo and old_photo != file_url:
+                    old_values.append(old_photo)
+                sync_account_file_fields(
+                    account=self.instance.account,
+                    user=self.instance,
+                    old_values=old_values,
+                    new_values=[file_url],
+                )
             except FileServiceException as ex:
                 capture_sentry_message(
                     message='User photo upload failed',

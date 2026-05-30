@@ -12,7 +12,7 @@ exclude = [
     "dist",
     ".env",
     "staticfiles",
-    "__pychache__",
+    "__pycache__",
     ".mypy_cache",
     ".ruff_cache",
     "migrations",

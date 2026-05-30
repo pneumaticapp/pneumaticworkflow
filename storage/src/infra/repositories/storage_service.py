@@ -136,6 +136,12 @@ class StorageService:
             if e.response['Error']['Code'] == 'NoSuchBucket':
                 try:
                     await s3.create_bucket(Bucket=bucket_name)
+                except ClientError as create_e:
+                    raise StorageError.bucket_create_failed(
+                        details=str(create_e),
+                    ) from create_e
+
+                try:
                     file_stream.seek(0)
                     await s3.upload_fileobj(
                         Fileobj=file_stream,
@@ -144,10 +150,10 @@ class StorageService:
                         ExtraArgs=extra_args,
                     )
                     return  # noqa: TRY300
-                except ClientError as create_e:
-                    raise StorageError.bucket_create_failed(
-                        details=str(create_e),
-                    ) from create_e
+                except ClientError as upload_e:
+                    raise StorageError.upload_failed(
+                        details=str(upload_e),
+                    ) from upload_e
 
             raise StorageError.upload_failed(
                 details=str(e),

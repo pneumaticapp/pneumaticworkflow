@@ -8,6 +8,7 @@ from src.accounts.models import (
 )
 from src.storage.services.exceptions import FileServiceException
 from src.storage.services.file_service import FileServiceClient
+from src.storage.utils import sync_account_file_fields
 from src.utils.logging import (
     SentryLogLevel,
     capture_sentry_message,
@@ -47,6 +48,7 @@ class ContactAdminForm(ModelForm):
             return super().save(commit=commit)
 
         user = self.cleaned_data['user']
+        old_photo = self.instance.photo
         try:
             file_service = FileServiceClient(user=user)
             file_url = file_service.upload_file_with_attachment(
@@ -56,6 +58,15 @@ class ContactAdminForm(ModelForm):
                 account=self.instance.account,
             )
             self.instance.photo = file_url
+            old_values = []
+            if old_photo and old_photo != file_url:
+                old_values.append(old_photo)
+            sync_account_file_fields(
+                account=self.instance.account,
+                user=user,
+                old_values=old_values,
+                new_values=[file_url],
+            )
         except FileServiceException as ex:
             capture_sentry_message(
                 message='Contact photo upload failed',

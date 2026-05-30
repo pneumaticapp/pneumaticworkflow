@@ -194,6 +194,14 @@ def test_put__photo_unchanged__no_sync_called(api_client, mocker):
         'first_name': 'Updated',
         'photo': 'https://my.lovely.photo.jpg',
     }
+    mocker.patch.object(
+        StripeService,
+        attribute='__init__',
+        return_value=None,
+    )
+    mocker.patch(
+        'src.payment.stripe.service.StripeService.update_customer',
+    )
     sync_account_file_fields_mock = mocker.patch(
         'src.accounts.views.user.sync_account_file_fields',
     )
