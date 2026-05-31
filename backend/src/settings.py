@@ -11,7 +11,6 @@ https://docs.djangoproject.com/en/2.2/ref/settings/
 import datetime
 import os
 from os import environ as env
-from urllib.parse import urlparse
 
 from configurations import Configuration, values
 from corsheaders.defaults import default_headers
@@ -60,17 +59,20 @@ class Common(Configuration):
 
     # Frontend
     FRONTEND_URL = env.get('FRONTEND_URL')
+    if not FRONTEND_URL:
+        raise Exception(
+            'FRONTEND_URL is not set. '
+            'Please define FRONTEND_URL in your .env file.',
+        )
     EXPIRED_INVITE_PAGE = f'{FRONTEND_URL}/auth/expired-invite'
 
     # Forms
-    # If FORMS_URL is not set, auto-derive from FRONTEND_URL (path-based mode).
-    # Supports both modes:
-    #   - Path-based:  FORMS_URL=https://mycompany.com/forms (default)
-    #   - Subdomain:   FORMS_URL=https://form.mycompany.com (explicit)
-    FORMS_URL = (
-        env.get('FORMS_URL')
-        or (f'{FRONTEND_URL}/forms' if FRONTEND_URL else None)
-    )
+    FORMS_URL = env.get('FORMS_URL')
+    if not FORMS_URL:
+        raise Exception(
+            'FORMS_URL is not set. '
+            'Please define FORMS_URL in your .env file.',
+        )
 
     # Auth
     AUTH_USER_MODEL = 'accounts.User'
@@ -82,8 +84,15 @@ class Common(Configuration):
     USER_TRANSFER_TOKEN_LIFETIME_IN_DAYS = 7
 
     BACKEND_URL = env.get('BACKEND_URL')
+    if not BACKEND_URL:
+        raise Exception(
+            'BACKEND_URL is not set. '
+            'Please define BACKEND_URL in your .env file.',
+        )
     BACKEND_HOST = BACKEND_URL.split('//')[1].split(':')[0]
-    ALLOWED_HOSTS = [BACKEND_HOST]
+    FRONTEND_HOST = FRONTEND_URL.split('//')[1].split(':')[0]
+    FORMS_HOST = FORMS_URL.split('//')[1].split(':')[0]
+    ALLOWED_HOSTS = [BACKEND_HOST, FRONTEND_HOST, FORMS_HOST]
     EXTRA_ALLOWED_HOSTS = env.get("ALLOWED_HOSTS")
     if EXTRA_ALLOWED_HOSTS:
         ALLOWED_HOSTS.extend(EXTRA_ALLOWED_HOSTS.split(' '))
@@ -117,10 +126,9 @@ class Common(Configuration):
     # A list of origins echoed back to the client in the
     # Access-Control-Allow-Origin header. Defaults to [].
     CORS_ORIGIN_WHITELIST = [FRONTEND_URL]
-    if FORMS_URL:
-        _forms_origin = f"{urlparse(FORMS_URL).scheme}://{urlparse(FORMS_URL).netloc}"
-        if _forms_origin != FRONTEND_URL:
-            CORS_ORIGIN_WHITELIST.append(_forms_origin)
+    if FRONTEND_URL not in FORMS_URL:
+        # Add if FORMS_URL customized
+        CORS_ORIGIN_WHITELIST.append(FORMS_URL)
     EXTRA_CORS_ORIGIN_WHITELIST = env.get('CORS_ORIGIN_WHITELIST')
     if EXTRA_CORS_ORIGIN_WHITELIST:
         CORS_ORIGIN_WHITELIST.extend(EXTRA_CORS_ORIGIN_WHITELIST.split(' '))
@@ -356,8 +364,8 @@ class Common(Configuration):
     ]
 
     # reCaptcha
-    DRF_RECAPTCHA_SITE_KEY = env.get('RECAPTCHA_SITE_KEY', 'key')
-    DRF_RECAPTCHA_SECRET_KEY = env.get('RECAPTCHA_SECRET_KEY', 'key')
+    DRF_RECAPTCHA_SITE_KEY = env.get('RECAPTCHA_SITE_KEY') or 'key'
+    DRF_RECAPTCHA_SECRET_KEY = env.get('RECAPTCHA_SECRET_KEY') or 'key'
     DRF_RECAPTCHA_TESTING = env.get('RECAPTCHA_TESTING', 'yes') == 'yes'
 
     # Firebase Credentials
