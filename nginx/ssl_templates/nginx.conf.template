@@ -21,8 +21,8 @@ http {
 
     server {
         listen 8001 ssl;
-        ssl_certificate     /etc/keys/${SERVER_ADDRESS}/fullchain.pem;
-        ssl_certificate_key /etc/keys/${SERVER_ADDRESS}/privkey.pem;
+        ssl_certificate     /etc/keys/live/${SERVER_ADDRESS}/fullchain.pem;
+        ssl_certificate_key /etc/keys/live/${SERVER_ADDRESS}/privkey.pem;
 
         root /var/www/html;
         index index.html index.nginx-debian.html;
@@ -54,8 +54,8 @@ http {
 
     server {
         listen 443 ssl;
-        ssl_certificate     /etc/keys/${SERVER_ADDRESS}/fullchain.pem;
-        ssl_certificate_key /etc/keys/${SERVER_ADDRESS}/privkey.pem;
+        ssl_certificate     /etc/keys/live/${SERVER_ADDRESS}/fullchain.pem;
+        ssl_certificate_key /etc/keys/live/${SERVER_ADDRESS}/privkey.pem;
 
         root /var/www/html;
         index index.html index.nginx-debian.html;
@@ -63,5 +63,13 @@ http {
         server_name ${SERVER_ADDRESS};
 
         include /etc/nginx/includes/location_frontend_common.conf;
+    }
+
+    # HTTP server for ACME challenge only (Certbot)
+    server {
+        listen 80;
+        server_name ${SERVER_ADDRESS};
+
+        include /etc/nginx/includes/location_acme_challenge.conf;
     }
 }

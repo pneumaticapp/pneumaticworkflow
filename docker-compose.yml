@@ -488,6 +488,20 @@ services:
       - frontend
     restart: always
 
+  certbot:
+    image: certbot/certbot:latest
+    container_name: pneumatic-certbot
+    environment:
+      SERVER_ADDRESS: ${SERVER_ADDRESS:-localhost}
+      CERTBOT_EMAIL: ${CERTBOT_EMAIL:-}
+      CERTBOT_ENABLE: ${CERTBOT_ENABLE:-no}
+      FORM_DOMAIN: ${FORM_DOMAIN:-}
+    volumes:
+      - ./nginx/keys/:/etc/letsencrypt/  # certbot stores live/, archive/, renewal/ inside nginx/keys/
+      - ./nginx/www/:/var/www/certbot/
+    profiles:
+      - certbot   # does not start with regular docker compose up
+
 networks:
   pneumatic:
 

@@ -50,6 +50,7 @@ http {
 
         server_name ${SERVER_ADDRESS};
 
+        include /etc/nginx/includes/location_acme_challenge.conf;
         include /etc/nginx/includes/location_frontend_common.conf;
     }
 }
