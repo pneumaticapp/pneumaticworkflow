@@ -12,7 +12,6 @@ import { ExtraFieldFilesGrid } from './ExtraFieldFilesGrid';
 import { logger } from '../../../../utils/logger';
 
 import { IWorkflowExtraFieldProps } from '..';
-import AutosizeInput from 'react-input-autosize';
 import { validateKickoffFieldName } from '../../../../utils/validators';
 import { IntlMessages } from '../../../IntlMessages';
 import kickoffStyles from '../../KickoffRedux/KickoffRedux.css';
@@ -35,7 +34,7 @@ export function ExtraFieldFile({
   const { useCallback, useState, useEffect, createRef } = React;
   const [isUploading, setUploadingState] = useState(false);
   const [filesToUpload, setFilesToUploadState] = useState<TUploadedFile[]>(field.attachments || []);
-  const fieldNameInputRef = React.useRef<HTMLInputElement | null>(null);
+  const fieldNameInputRef = React.useRef<HTMLTextAreaElement | null>(null);
   const [isFocused, setIsFocused] = React.useState(false);
   const { formatMessage } = useIntl();
   useEffect(() => {
@@ -49,7 +48,7 @@ export function ExtraFieldFile({
   const uploadFieldRef = createRef<HTMLInputElement>();
 
   const handleChangeName = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       editField({ name: e.target.value });
     },
     [editField],
@@ -103,26 +102,26 @@ export function ExtraFieldFile({
         />
       ) : (
         <div className={styles['extra-field-file__input--template']}>
-          <AutosizeInput
-            inputRef={(ref) => (fieldNameInputRef.current = ref)}
-            inputClassName={classnames(
-              styles['extra-field-file__input-name--template'],
-              !isKickoffFieldNameValid && styles['extra-field-file__input-name-error--template'],
-            )}
-            onChange={handleChangeName}
-            placeholder={namePlaceholder}
-            type="text"
-            value={name}
-            disabled={isDisabled}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            onKeyDown={(event) => {
-              if (event.key === 'Enter') {
-                setIsFocused(false);
-                event.currentTarget.blur();
-              }
-            }}
-          />
+            <textarea
+              ref={(ref) => (fieldNameInputRef.current = ref)}
+              className={classnames(
+                styles['extra-field-file__input-name--template'],
+                !isKickoffFieldNameValid && styles['extra-field-file__input-name-error--template'],
+              )}
+              onChange={handleChangeName}
+              placeholder={namePlaceholder}
+              value={name}
+              disabled={isDisabled}
+              rows={1}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  setIsFocused(false);
+                  event.currentTarget.blur();
+                }
+              }}
+            />
           {isRequired && <span className={kickoffStyles['kick-off-required-sign']} />}
           {!isFocused && mode === EExtraFieldMode.Kickoff && (
             <button

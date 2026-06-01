@@ -16,14 +16,20 @@
 .kickoff-create-field-name {
   position: relative;
   display: inline-flex;
+  align-items: flex-end;
+  gap: 2px;
   max-width: 100%;
 }
 
 .kickoff-create-field-name-input {
   padding: 0 4px 0 0;
-  max-width: calc(100% - 5px);
-  line-height: 20px;
+  min-width: 0;
+  resize: none;
   border: none;
+  field-sizing: content;
+  overflow-wrap: break-word;
+
+  @mixin text-base;
 
   &:focus {
     outline: none;

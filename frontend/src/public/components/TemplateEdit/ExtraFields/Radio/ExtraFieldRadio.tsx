@@ -2,7 +2,6 @@
 /* prettier-ignore */
 import * as React from 'react';
 import classnames from 'classnames';
-import AutosizeInput from 'react-input-autosize';
 
 import { getEmptySelection } from '../../KickoffRedux/utils/getEmptySelection';
 import { validateCheckboxAndRadioField, validateKickoffFieldName } from '../../../../utils/validators';
@@ -23,7 +22,6 @@ import fieldStyles from './ExtraFieldRadio.css';
 import { useState } from 'react';
 
 const DEFAULT_OPTION_INPUT_WIDTH = 120;
-const DEFAULT_FIELD_INPUT_WIDTH = 120;
 
 export function ExtraFieldRadio({
   field,
@@ -40,17 +38,13 @@ export function ExtraFieldRadio({
 }: IWorkflowExtraFieldProps) {
   const selectionItems = field.selections as IExtraFieldSelection[];
   const selectionValues = field.selections as string[];
-  const fieldNameInputRef = React.useRef<HTMLInputElement | null>(null);
+  const fieldNameInputRef = React.useRef<HTMLTextAreaElement | null>(null);
   const optionInputsRefs = React.useRef<HTMLInputElement[]>([]);
   const [isFocused, setIsFocused] = React.useState(false);
 
   React.useEffect(() => {
     optionInputsRefs.current.forEach((input) => fitInputWidth(input, DEFAULT_OPTION_INPUT_WIDTH));
   }, [selectionItems]);
-
-  React.useEffect(() => {
-    fitInputWidth(fieldNameInputRef.current, DEFAULT_FIELD_INPUT_WIDTH);
-  }, []);
 
   const [activeOptionIndex, setActiveOptionIndex] = useState<number | null>(null);
   const [duplicateErrors, setDuplicateErrors] = useState<Record<string, string>>(
@@ -90,17 +84,17 @@ export function ExtraFieldRadio({
           />
         ) : (
           <div className={fieldNameClassName}>
-            <AutosizeInput
-              inputRef={(ref) => (fieldNameInputRef.current = ref)}
-              inputClassName={classnames(
+            <textarea
+              ref={(ref) => (fieldNameInputRef.current = ref)}
+              className={classnames(
                 fieldStyles['kickoff-create-field-name-input'],
                 !isKickoffFieldNameValid && fieldStyles['kickoff-create-field-name-input_error'],
               )}
               onChange={handleChangeName}
               placeholder={namePlaceholder}
-              type="text"
               value={name}
               disabled={isDisabled}
+              rows={1}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
               onKeyDown={(event) => {
@@ -195,8 +189,7 @@ export function ExtraFieldRadio({
   };
 
   const handleChangeName = React.useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      fitInputWidth(e.target, DEFAULT_FIELD_INPUT_WIDTH);
+    (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
       editField({ name: e.target.value });
     },
     [editField],
