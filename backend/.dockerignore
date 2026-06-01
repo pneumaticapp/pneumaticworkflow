@@ -44,9 +44,6 @@ Thumbs.db
 staticfiles/
 tmp/
 
-# Google credentials (should be mounted, not baked in)
-google_api_credentials.json
-
 # Pre-commit
 .pre-commit-config.yaml
 
