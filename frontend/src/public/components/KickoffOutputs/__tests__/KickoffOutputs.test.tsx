@@ -2,8 +2,9 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 
 import { KickoffOutputs, EKickoffOutputsViewModes } from '../KickoffOutputs';
-import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../types/template';
-import { EFieldLabelPosition } from '../../../types/fieldset';
+import { makeExtraField } from '../../../__stubs__/fields.factory';
+import { makeFieldsetData } from '../../../__stubs__/fieldsets.factory';
+import { EExtraFieldType, IExtraField } from '../../../types/template';
 import { Attachments } from '../../Attachments';
 
 type TOutputMockProps = Pick<IExtraField, 'apiName' | 'name'>;
@@ -34,26 +35,6 @@ describe('KickoffOutputs', () => {
     jest.clearAllMocks();
   });
 
-  const makeField = (overrides: Partial<IExtraField> = {}): IExtraField => ({
-    apiName: `field-${Math.random()}`,
-    name: 'Field',
-    type: EExtraFieldType.String,
-    order: 0,
-    userId: null,
-    groupId: null,
-    ...overrides,
-  });
-
-  const makeFieldset = (overrides: Partial<IFieldsetData> = {}): IFieldsetData => ({
-    id: Math.floor(Math.random() * 1000),
-    apiName: `fieldset-${Math.random()}`,
-    name: 'Fieldset',
-    description: '',
-    order: 0,
-    fields: [],
-    labelPosition: EFieldLabelPosition.Top,
-    ...overrides,
-  });
 
   const getAttachmentsProps = () => {
     const mock = Attachments as jest.Mock;
@@ -77,17 +58,17 @@ describe('KickoffOutputs', () => {
   });
 
   it('interleaves plain fields and fieldsets in a single list ordered by `order` descending', () => {
-    const fieldA = makeField({ apiName: 'fa', order: 1, value: 'av' });
-    const fieldB = makeField({ apiName: 'fb', order: 4, value: 'bv' });
-    const fsM = makeFieldset({
+    const fieldA = makeExtraField({ apiName: 'fa', order: 1, value: 'av' });
+    const fieldB = makeExtraField({ apiName: 'fb', order: 4, value: 'bv' });
+    const fsM = makeFieldsetData({
       apiName: 'fs-m',
       order: 3,
-      fields: [makeField({ apiName: 'fs-m-1', value: 'mv' })],
+      fields: [makeExtraField({ apiName: 'fs-m-1', value: 'mv' })],
     });
-    const fsN = makeFieldset({
+    const fsN = makeFieldsetData({
       apiName: 'fs-n',
       order: 2,
-      fields: [makeField({ apiName: 'fs-n-1', value: 'nv' })],
+      fields: [makeExtraField({ apiName: 'fs-n-1', value: 'nv' })],
     });
 
     render(React.createElement(KickoffOutputs, {
@@ -106,14 +87,14 @@ describe('KickoffOutputs', () => {
   });
 
   it('in full mode renders fieldset group: name, description and only non-empty fields', () => {
-    const fieldset = makeFieldset({
+    const fieldset = makeFieldsetData({
       name: 'Contacts',
       description: 'Reachout details',
       order: 1,
       fields: [
-        makeField({ apiName: 'email', name: 'Email', value: 'a@b.com', order: 1 }),
-        makeField({ apiName: 'phone', name: 'Phone', value: '', order: 2 }),
-        makeField({ apiName: 'city', name: 'City', value: 'NY', order: 3 }),
+        makeExtraField({ apiName: 'email', name: 'Email', value: 'a@b.com', order: 1 }),
+        makeExtraField({ apiName: 'phone', name: 'Phone', order: 2 }),
+        makeExtraField({ apiName: 'city', name: 'City', value: 'NY', order: 3 }),
       ],
     });
 
@@ -132,7 +113,7 @@ describe('KickoffOutputs', () => {
   });
 
   it('renders a file field inside a fieldset that has no value but has attachments', () => {
-    const fileField = makeField({
+    const fileField = makeExtraField({
       apiName: 'doc',
       name: 'Document',
       type: EExtraFieldType.File,
@@ -140,7 +121,7 @@ describe('KickoffOutputs', () => {
       attachments: [{ id: 1, url: 'doc.pdf', name: 'doc.pdf', size: 10 }],
     });
 
-    const fieldset = makeFieldset({
+    const fieldset = makeFieldsetData({
       name: 'Docs',
       fields: [fileField],
     });
@@ -155,13 +136,13 @@ describe('KickoffOutputs', () => {
   });
 
   it('in truncated mode renders fieldset group title and only the first field', () => {
-    const fieldset = makeFieldset({
+    const fieldset = makeFieldsetData({
       name: 'Profile',
       order: 5,
       fields: [
-        makeField({ apiName: 'first', name: 'First', value: 'one' }),
-        makeField({ apiName: 'second', name: 'Second', value: 'two' }),
-        makeField({ apiName: 'third', name: 'Third', value: 'three' }),
+        makeExtraField({ apiName: 'first', name: 'First', value: 'one' }),
+        makeExtraField({ apiName: 'second', name: 'Second', value: 'two' }),
+        makeExtraField({ apiName: 'third', name: 'Third', value: 'three' }),
       ],
     });
 
@@ -179,10 +160,9 @@ describe('KickoffOutputs', () => {
   });
 
   it('in truncated mode does not crash on a fieldset with an empty fields list', () => {
-    const fieldset = makeFieldset({
+    const fieldset = makeFieldsetData({
       name: 'Empty Group',
       order: 1,
-      fields: [],
     });
 
     expect(() =>
@@ -204,24 +184,22 @@ describe('KickoffOutputs', () => {
       const attachment2 = { id: 2, url: 'file2.png', name: 'file2.png', size: 200 };
       const attachment3 = { id: 3, url: 'file3.doc', name: 'file3.doc', size: 300 };
 
-      const fileOutput = makeField({
+      const fileOutput = makeExtraField({
         type: EExtraFieldType.File,
         order: 2,
         attachments: [attachment1],
       });
 
-      const stringOutput = makeField({
-        type: EExtraFieldType.String,
-        order: 0,
+      const stringOutput = makeExtraField({
         value: 'some text',
       });
 
-      const fieldset = makeFieldset({
+      const fieldset = makeFieldsetData({
         order: 1,
         fields: [
-          makeField({ type: EExtraFieldType.File, attachments: [attachment2] }),
-          makeField({ type: EExtraFieldType.String, value: 'ignored' }),
-          makeField({ type: EExtraFieldType.File, attachments: [attachment3] }),
+          makeExtraField({ type: EExtraFieldType.File, attachments: [attachment2] }),
+          makeExtraField({ value: 'ignored' }),
+          makeExtraField({ type: EExtraFieldType.File, attachments: [attachment3] }),
         ],
       });
 

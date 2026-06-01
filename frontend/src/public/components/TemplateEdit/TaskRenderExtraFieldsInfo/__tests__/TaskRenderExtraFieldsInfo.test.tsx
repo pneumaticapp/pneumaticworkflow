@@ -2,20 +2,13 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { useSelector } from 'react-redux';
 
-import { EExtraFieldType, IExtraField, ITaskFieldset } from '../../../../types/template';
+import { makeExtraField } from '../../../../__stubs__/fields.factory';
+import { IExtraField, ITaskFieldset } from '../../../../types/template';
 import { TaskRenderExtraFieldsInfo } from '../TaskRenderExtraFieldsInfo';
 
-const makeField = (apiName: string): IExtraField => ({
+const makeField = (apiName: string) => makeExtraField({
   apiName,
   name: apiName,
-  type: EExtraFieldType.String,
-  order: 0,
-  isRequired: false,
-  isHidden: false,
-  userId: null,
-  groupId: null,
-  description: '',
-  selections: [],
 });
 
 const makeTaskFieldset = (apiName: string): ITaskFieldset => ({ apiName, order: 0 });

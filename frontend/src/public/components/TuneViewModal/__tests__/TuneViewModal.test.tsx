@@ -4,7 +4,8 @@ import userEvent from '@testing-library/user-event';
 import { IntlProvider } from 'react-intl';
 import { enMessages } from '../../../lang/locales/en_US';
 
-import { TTransformedTask, TRuntimeMergedOutputPart, EExtraFieldType, IExtraField } from '../../../types/template';
+import { TTransformedTask, TRuntimeMergedOutputPart, IExtraField } from '../../../types/template';
+import { makeExtraField } from '../../../__stubs__/fields.factory';
 import { EFieldLabelPosition } from '../../../types/fieldset';
 
 const mockDispatch = jest.fn();
@@ -86,13 +87,8 @@ jest.mock('../../TemplateEdit/TooltipRichContent', () => ({
 
 import { TuneViewModal } from '../TuneViewModal';
 
-const makeField = (overrides: Partial<IExtraField> = {}): IExtraField => ({
-  apiName: 'field-1',
+const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
   name: 'Field 1',
-  type: EExtraFieldType.String,
-  order: 0,
-  userId: null,
-  groupId: null,
   ...overrides,
 });
 

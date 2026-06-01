@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { ITemplateTask, IFieldsetData } from '../../../../types/template';
-import { EFieldLabelPosition } from '../../../../types/fieldset';
+import { makeFieldsetData } from '../../../../__stubs__/fieldsets.factory';
 import { ETaskFormParts } from '../../types';
 
 jest.mock('react', () => {
@@ -96,15 +96,7 @@ describe('TaskItem', () => {
     ...overrides,
   });
 
-  const fieldsetData: IFieldsetData = {
-    id: 100,
-    apiName: 'fs-1',
-    name: 'My Fieldset',
-    description: '',
-    order: 0,
-    labelPosition: EFieldLabelPosition.Top,
-    fields: [],
-  };
+  const fieldsetData = makeFieldsetData({ id: 100, name: 'My Fieldset' });
 
   beforeEach(() => {
     jest.clearAllMocks();

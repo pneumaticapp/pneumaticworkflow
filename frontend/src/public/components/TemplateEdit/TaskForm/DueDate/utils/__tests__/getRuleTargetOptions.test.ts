@@ -1,5 +1,6 @@
 import { EExtraFieldType, IFieldsetData, IKickoff, ITemplateTask } from '../../../../../../types/template';
-import { EFieldLabelPosition } from '../../../../../../types/fieldset';
+import { makeExtraField } from '../../../../../../__stubs__/fields.factory';
+import { makeFieldsetData } from '../../../../../../__stubs__/fieldsets.factory';
 import { createEmptyTaskDueDate } from '../../../../../../utils/dueDate/createEmptyTaskDueDate';
 import { getRuleTargetOptions } from '../getRuleTargetOptions';
 
@@ -35,16 +36,6 @@ const makeKickoff = (overrides: Partial<IKickoff> = {}): IKickoff => ({
   ...overrides,
 });
 
-const makeFieldsetData = (overrides: Partial<IFieldsetData> = {}): IFieldsetData => ({
-  id: 1,
-  apiName: 'fs-1',
-  name: 'Fieldset 1',
-  description: '',
-  order: 0,
-  fields: [],
-  labelPosition: EFieldLabelPosition.Top,
-  ...overrides,
-});
 
 describe('getRuleTargetOptions', () => {
   beforeEach(() => {
@@ -72,30 +63,8 @@ describe('getRuleTargetOptions', () => {
     const fieldsetData = makeFieldsetData({
       apiName: fieldsetApiName,
       fields: [
-        {
-          apiName: 'date-field',
-          name: 'Date Field',
-          type: EExtraFieldType.Date,
-          order: 0,
-          isRequired: false,
-          isHidden: false,
-          userId: null,
-          groupId: null,
-          description: '',
-          selections: [],
-        },
-        {
-          apiName: 'string-field',
-          name: 'String Field',
-          type: EExtraFieldType.String,
-          order: 1,
-          isRequired: false,
-          isHidden: false,
-          userId: null,
-          groupId: null,
-          description: '',
-          selections: [],
-        },
+        makeExtraField({ apiName: 'date-field', name: 'Date Field', type: EExtraFieldType.Date }),
+        makeExtraField({ apiName: 'string-field', name: 'String Field', order: 1 }),
       ],
     });
 

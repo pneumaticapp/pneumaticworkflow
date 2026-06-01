@@ -2,7 +2,9 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../../types/template';
+import { makeExtraField } from '../../../../__stubs__/fields.factory';
+import { makeFieldsetData as makeFieldsetDataBase } from '../../../../__stubs__/fieldsets.factory';
+import { IFieldsetData } from '../../../../types/template';
 import { EFieldLabelPosition } from '../../../../types/fieldset';
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { Dropdown } from '../../../UI';
@@ -25,36 +27,26 @@ jest.mock('../../../icons/FieldsetIcon', () => ({
   FieldsetIcon: () => null,
 }));
 
-const makeFieldsetData = (
+const makeFieldsetLocalData = (
   id: number,
   apiName: string,
   name: string,
   order: number,
-): IFieldsetData => ({
+): IFieldsetData => makeFieldsetDataBase({
   id,
   apiName,
   name,
-  description: '',
-  order,
-  labelPosition: EFieldLabelPosition.Top,
-  fields: [],
-  rulesCount: 0,
-} as IFieldsetData);
+  ...(order !== 0 && { order }),
+});
 
 const getDropdownProps = (): IDropdownProps => {
   const calls = (Dropdown as jest.Mock).mock.calls;
   return calls[calls.length - 1][0];
 };
 
-const makeField = (apiName: string): IExtraField => ({
+const makeField = (apiName: string) => makeExtraField({
   apiName,
   name: `Field ${apiName}`,
-  type: EExtraFieldType.String,
-  order: 0,
-  isRequired: false,
-  isHidden: false,
-  userId: null,
-  groupId: null,
 });
 
 const formatMsg = (id: string, defaultMessage?: string) =>
@@ -109,9 +101,9 @@ describe('FieldsetIconPicker', () => {
 
   it('renders fieldsets sorted by order property', () => {
     const map = new Map<string, IFieldsetData>([
-      ['fs-a', makeFieldsetData(1, 'fs-a', 'Alpha', 2)],
-      ['fs-b', makeFieldsetData(2, 'fs-b', 'Zeta', 0)],
-      ['fs-c', makeFieldsetData(3, 'fs-c', 'Beta', 1)],
+      ['fs-a', makeFieldsetLocalData(1, 'fs-a', 'Alpha', 2)],
+      ['fs-b', makeFieldsetLocalData(2, 'fs-b', 'Zeta', 0)],
+      ['fs-c', makeFieldsetLocalData(3, 'fs-c', 'Beta', 1)],
     ]);
 
     render(React.createElement(FieldsetIconPicker, makeProps({ fieldsetsByApiName: map })));
@@ -126,7 +118,7 @@ describe('FieldsetIconPicker', () => {
     const onSelectFieldset = jest.fn();
     const onRemoveFieldset = jest.fn();
     const map = new Map<string, IFieldsetData>([
-      ['fs-1', makeFieldsetData(1, 'fs-1', 'My Fieldset', 0)],
+      ['fs-1', makeFieldsetLocalData(1, 'fs-1', 'My Fieldset', 0)],
     ]);
 
     render(
@@ -152,7 +144,7 @@ describe('FieldsetIconPicker', () => {
     const onSelectFieldset = jest.fn();
     const onRemoveFieldset = jest.fn();
     const map = new Map<string, IFieldsetData>([
-      ['fs-1', makeFieldsetData(1, 'fs-1', 'My Fieldset', 0)],
+      ['fs-1', makeFieldsetLocalData(1, 'fs-1', 'My Fieldset', 0)],
     ]);
 
     render(
@@ -176,7 +168,7 @@ describe('FieldsetIconPicker', () => {
 
   it('selected fieldset renders checkbox in checked state', () => {
     const map = new Map<string, IFieldsetData>([
-      ['fs-1', makeFieldsetData(1, 'fs-1', 'My Fieldset', 0)],
+      ['fs-1', makeFieldsetLocalData(1, 'fs-1', 'My Fieldset', 0)],
     ]);
 
     render(
@@ -195,7 +187,7 @@ describe('FieldsetIconPicker', () => {
 
   it('unselected fieldset renders checkbox in unchecked state', () => {
     const map = new Map<string, IFieldsetData>([
-      ['fs-1', makeFieldsetData(1, 'fs-1', 'My Fieldset', 0)],
+      ['fs-1', makeFieldsetLocalData(1, 'fs-1', 'My Fieldset', 0)],
     ]);
 
     render(
@@ -214,7 +206,7 @@ describe('FieldsetIconPicker', () => {
 
   it('background catalog load does not show loading text when list is not empty', () => {
     const map = new Map<string, IFieldsetData>([
-      ['fs-1', makeFieldsetData(1, 'fs-1', 'My Set', 0)],
+      ['fs-1', makeFieldsetLocalData(1, 'fs-1', 'My Set', 0)],
     ]);
 
     render(
@@ -231,16 +223,11 @@ describe('FieldsetIconPicker', () => {
   });
 
   it('meta line shows "<fieldsCount> fields · <rulesCount> rules" with real numbers', () => {
-    const fieldset: IFieldsetData = {
-      id: 1,
-      apiName: 'fs-1',
+    const fieldset: IFieldsetData = makeFieldsetDataBase({
       name: 'My Set',
-      description: '',
-      order: 0,
-      labelPosition: EFieldLabelPosition.Top,
       fields: [makeField('a'), makeField('b'), makeField('c')],
       rulesCount: 5,
-    };
+    });
     const map = new Map<string, IFieldsetData>([['fs-1', fieldset]]);
 
     render(React.createElement(FieldsetIconPicker, makeProps({ fieldsetsByApiName: map })));

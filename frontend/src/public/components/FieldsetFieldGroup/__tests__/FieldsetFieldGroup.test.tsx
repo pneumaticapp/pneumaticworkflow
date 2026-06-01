@@ -3,7 +3,8 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { FieldsetFieldGroup } from '../FieldsetFieldGroup';
-import { EExtraFieldType, EExtraFieldMode, IExtraField } from '../../../types/template';
+import { makeExtraField } from '../../../__stubs__/fields.factory';
+import { EExtraFieldMode, IExtraField } from '../../../types/template';
 import { EInputNameBackgroundColor } from '../../../types/workflow';
 import { EFieldLabelPosition } from '../../../types/fieldset';
 
@@ -26,15 +27,10 @@ jest.mock('../../TemplateEdit/ExtraFields', () => ({
   )),
 }));
 
-const makeField = (apiName: string, order = 0): IExtraField => ({
+const makeField = (apiName: string, order = 0) => makeExtraField({
   apiName,
   name: `Field ${apiName}`,
-  type: EExtraFieldType.String,
-  order,
-  isRequired: false,
-  isHidden: false,
-  userId: null,
-  groupId: null,
+  ...(order !== 0 && { order }),
 });
 
 const baseProps = {

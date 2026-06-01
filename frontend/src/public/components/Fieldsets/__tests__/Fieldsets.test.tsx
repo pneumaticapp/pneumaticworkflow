@@ -14,7 +14,8 @@ import {
   setTemplateId,
 } from '../../../redux/fieldsets/slice';
 import { intlMock } from '../../../__stubs__/intlMock';
-import { EFieldsetsSorting, IFieldsetListItem, EFieldLabelPosition } from '../../../types/fieldset';
+import { EFieldsetsSorting, IFieldsetListItem } from '../../../types/fieldset';
+import { makeFieldsetListItem } from '../../../__stubs__/fieldsets.factory';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
 jest.mock('../../../utils/history', () => ({
@@ -75,20 +76,6 @@ describe('Fieldsets', () => {
     history: history as any,
   });
 
-  const makeFieldset = (overrides: Partial<IFieldsetListItem> = {}): IFieldsetListItem => ({
-    id: 1,
-    apiName: 'fs-1',
-    name: 'Test Fieldset',
-    description: '',
-    labelPosition: EFieldLabelPosition.Top,
-    layout: 'vertical',
-    order: 0,
-    kickoffId: null,
-    taskId: null,
-    rules: [],
-    fields: [],
-    ...overrides,
-  });
 
   const getAddCardButtonProps = () => {
     const mock = AddCardButton as unknown as jest.Mock;
@@ -157,7 +144,7 @@ describe('Fieldsets', () => {
           ...defaultState.fieldsets,
           isLoading: true,
           fieldsetsList: {
-            items: [makeFieldset()],
+            items: [makeFieldsetListItem()],
             count: 1,
             offset: 0,
           },
@@ -174,8 +161,8 @@ describe('Fieldsets', () => {
   describe('Fieldset cards rendering', () => {
     it('renders FieldsetCard for each fieldset with templateId', () => {
       const fieldsets = [
-        makeFieldset({ id: 1, name: 'FS1' }),
-        makeFieldset({ id: 2, apiName: 'fs-2', name: 'FS2' }),
+        makeFieldsetListItem({ id: 1, name: 'FS1' }),
+        makeFieldsetListItem({ id: 2, apiName: 'fs-2', name: 'FS2' }),
       ];
       const stateWithData = {
         fieldsets: {
@@ -224,7 +211,7 @@ describe('Fieldsets', () => {
         fieldsets: {
           ...defaultState.fieldsets,
           fieldsetsList: {
-            items: [makeFieldset()],
+            items: [makeFieldsetListItem()],
             count: 10,
             offset: 2,
           },

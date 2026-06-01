@@ -5,8 +5,9 @@ import { IntlProvider } from 'react-intl';
 import { enMessages } from '../../../lang/locales/en_US';
 
 import { WorkflowEditPopup } from '../WorkflowEditPopup';
-import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../types/template';
-import { EFieldLabelPosition } from '../../../types/fieldset';
+import { IExtraField, IFieldsetData } from '../../../types/template';
+import { makeExtraField } from '../../../__stubs__/fields.factory';
+import { makeFieldsetData } from '../../../__stubs__/fieldsets.factory';
 import { MergedOutputList } from '../../MergedOutputList';
 import { InputWithVariables } from '../../TemplateEdit/InputWithVariables';
 import { intlMock } from '../../../__stubs__/intlMock';
@@ -61,23 +62,13 @@ jest.mock('../../icons', () => ({
   PlayLogoIcon: () => null,
 }));
 
-const makeField = (overrides: Partial<IExtraField> = {}): IExtraField => ({
+const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
   apiName: `f-${Math.random()}`,
-  name: 'Field',
-  type: EExtraFieldType.String,
-  order: 0,
-  userId: null,
-  groupId: null,
   ...overrides,
 });
 
-const makeFieldset = (overrides: Partial<IFieldsetData> & { fields: IExtraField[] }): IFieldsetData => ({
-  id: 1,
-  apiName: 'fs-1',
+const makeFieldset = (overrides: Partial<IFieldsetData> & { fields: IExtraField[] }) => makeFieldsetData({
   name: 'Fieldset',
-  description: '',
-  order: 0,
-  labelPosition: EFieldLabelPosition.Top,
   ...overrides,
 });
 

@@ -6,7 +6,8 @@ import { FeedItemHeader } from '../FeedItemHeader';
 import { KickoffOutputs } from '../../KickoffOutputs';
 import { EWorkflowLogEvent, EWorkflowStatus } from '../../../types/workflow';
 import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../types/template';
-import { EFieldLabelPosition } from '../../../types/fieldset';
+import { makeExtraField } from '../../../__stubs__/fields.factory';
+import { makeFieldsetData } from '../../../__stubs__/fieldsets.factory';
 import { IHighlightsItem } from '../../../types/highlights';
 import { Ellipsis } from '../Ellipsis';
 
@@ -47,13 +48,8 @@ describe('FeedItemHeader', () => {
     jest.clearAllMocks();
   });
 
-  const makeField = (overrides: Partial<IExtraField> = {}): IExtraField => ({
+  const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
     apiName: `field-${Math.random()}`,
-    name: 'Field',
-    type: EExtraFieldType.String,
-    order: 0,
-    userId: null,
-    groupId: null,
     ...overrides,
   });
 
@@ -91,17 +87,11 @@ describe('FeedItemHeader', () => {
       ];
 
       const kickoffFieldsets: IFieldsetData[] = [
-        {
-          id: 1,
-          apiName: 'fs-1',
-          name: 'Fieldset 1',
-          description: '',
-          order: 0,
-          labelPosition: EFieldLabelPosition.Top,
+        makeFieldsetData({
           fields: [
             makeField({ apiName: 'fs1-f1', order: 1, value: 'fieldset value' }),
           ],
-        },
+        }),
       ];
 
       const props = makeBaseProps({
@@ -136,13 +126,8 @@ describe('FeedItemHeader', () => {
   });
 
   describe('Fieldsets handling in highlights', () => {
-    const makeFieldset = (overrides: Partial<IFieldsetData> & { fields: IExtraField[] }): IFieldsetData => ({
-      id: 1,
-      apiName: 'fs-1',
+    const makeFieldset = (overrides: Partial<IFieldsetData> & { fields: IExtraField[] }) => makeFieldsetData({
       name: 'Test Fieldset',
-      description: '',
-      order: 0,
-      labelPosition: EFieldLabelPosition.Top,
       ...overrides,
     });
 

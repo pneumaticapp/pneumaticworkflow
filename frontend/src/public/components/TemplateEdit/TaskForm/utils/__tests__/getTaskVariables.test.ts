@@ -2,7 +2,8 @@ import { createElement } from 'react';
 import { render, screen } from '@testing-library/react';
 
 import { EExtraFieldType, IFieldsetData, IKickoff, ITemplateTask } from '../../../../../types/template';
-import { EFieldLabelPosition } from '../../../../../types/fieldset';
+import { makeExtraField } from '../../../../../__stubs__/fields.factory';
+import { makeFieldsetData } from '../../../../../__stubs__/fieldsets.factory';
 import { createEmptyTaskDueDate } from '../../../../../utils/dueDate/createEmptyTaskDueDate';
 import { TTaskVariable } from '../../../types';
 import {
@@ -21,17 +22,12 @@ import {
 const mockKikoff: IKickoff = {
   description: 'Kickoff description',
   fields: [
-    {
+    makeExtraField({
       name: 'Client name',
-      type: EExtraFieldType.String,
-      isRequired: false,
       description: 'Enter client name',
       apiName: 'client-name-3967',
-      selections: [],
       order: 1,
-      userId: null,
-      groupId: null,
-    },
+    }),
   ],
   fieldsets: [],
 };
@@ -46,17 +42,11 @@ const mockTask1: ITemplateTask = {
   requireCompletionByAll: true,
   skipForStarter: false,
   fields: [
-    {
+    makeExtraField({
       name: 'Large Text Field',
       type: EExtraFieldType.Text,
-      isRequired: false,
-      description: '',
       apiName: 'large-text-field-8622',
-      selections: [],
-      order: 0,
-      userId: null,
-      groupId: null,
-    },
+    }),
   ],
   delay: null,
   rawDueDate: createEmptyTaskDueDate(),
@@ -78,17 +68,13 @@ const mockTask2: ITemplateTask = {
   requireCompletionByAll: false,
   skipForStarter: false,
   fields: [
-    {
+    makeExtraField({
       name: 'Reasons',
       type: EExtraFieldType.Text,
       isRequired: true,
       description: 'Enter reasons of client requesting',
       apiName: 'reasons-3969',
-      selections: [],
-      order: 0,
-      userId: null,
-      groupId: null,
-    },
+    }),
   ],
   delay: null,
   rawDueDate: createEmptyTaskDueDate(),
@@ -100,38 +86,24 @@ const mockTask2: ITemplateTask = {
   fieldsets: [],
 };
 
-const mockFieldsetData: IFieldsetData = {
+const mockFieldsetData: IFieldsetData = makeFieldsetData({
   id: 99,
   apiName: 'fs-99',
   name: 'Extra Set',
-  description: '',
-  order: 0,
-  labelPosition: EFieldLabelPosition.Top,
   fields: [
-    {
+    makeExtraField({
       name: 'Assignee',
       type: EExtraFieldType.User,
-      isRequired: false,
-      description: '',
       apiName: 'assignee-fs',
-      selections: [],
-      order: 0,
-      userId: null,
-      groupId: null,
-    },
-    {
+    }),
+    makeExtraField({
       name: 'Kickoff date',
       type: EExtraFieldType.Date,
-      isRequired: false,
-      description: '',
       apiName: 'kickoff-date-fs',
-      selections: [],
       order: 1,
-      userId: null,
-      groupId: null,
-    },
+    }),
   ],
-};
+});
 
 const mockFieldsetsById = new Map<string, IFieldsetData>([[mockFieldsetData.apiName, mockFieldsetData]]);
 
@@ -209,17 +181,10 @@ describe('getTaskVariables', () => {
       order: 0,
       name: 'Inline Set',
       fields: [
-        {
+        makeExtraField({
           apiName: 'inline-field-1',
           name: 'Inline Field',
-          type: EExtraFieldType.String,
-          isRequired: false,
-          description: '',
-          selections: [],
-          order: 0,
-          userId: null,
-          groupId: null,
-        },
+        }),
       ],
     };
     const taskWithInline: ITemplateTask = {
@@ -391,75 +356,44 @@ describe('useWorkflowNameVariables', () => {
   }
 
   it('includes 4 system variables plus single-line kickoff and fieldset fields, filters out multi-line types', () => {
-    const fieldsetData: IFieldsetData = {
+    const fieldsetData: IFieldsetData = makeFieldsetData({
       id: 100,
       apiName: 'fs-name',
       name: 'Name Set',
-      description: '',
-      order: 0,
-      labelPosition: EFieldLabelPosition.Top,
       fields: [
-        {
+        makeExtraField({
           apiName: 'fs-date',
           name: 'FS Date',
           type: EExtraFieldType.Date,
-          isRequired: false,
-          description: '',
-          selections: [],
-          order: 0,
-          userId: null,
-          groupId: null,
-        },
-        {
+        }),
+        makeExtraField({
           apiName: 'fs-number',
           name: 'FS Number',
           type: EExtraFieldType.Number,
-          isRequired: false,
-          description: '',
-          selections: [],
           order: 1,
-          userId: null,
-          groupId: null,
-        },
-        {
+        }),
+        makeExtraField({
           apiName: 'fs-text',
           name: 'FS Text',
           type: EExtraFieldType.Text,
-          isRequired: false,
-          description: '',
-          selections: [],
           order: 2,
-          userId: null,
-          groupId: null,
-        },
+        }),
       ],
-    };
+    });
 
     const kickoff: IKickoff = {
       description: '',
       fields: [
-        {
+        makeExtraField({
           apiName: 'kickoff-string',
           name: 'Kickoff String',
-          type: EExtraFieldType.String,
-          isRequired: false,
-          description: '',
-          selections: [],
-          order: 0,
-          userId: null,
-          groupId: null,
-        },
-        {
+        }),
+        makeExtraField({
           apiName: 'kickoff-text',
           name: 'Kickoff Text',
           type: EExtraFieldType.Text,
-          isRequired: false,
-          description: '',
-          selections: [],
           order: 1,
-          userId: null,
-          groupId: null,
-        },
+        }),
       ],
       fieldsets: [{ apiName: 'fs-name', order: 0 }],
     };

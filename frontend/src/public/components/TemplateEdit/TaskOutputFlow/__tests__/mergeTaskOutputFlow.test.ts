@@ -1,5 +1,6 @@
-import { IExtraField, IFieldsetData, ITaskFieldset } from '../../../../types/template';
-import { EFieldLabelPosition } from '../../../../types/fieldset';
+import { ITaskFieldset } from '../../../../types/template';
+import { makeExtraField } from '../../../../__stubs__/fields.factory';
+import { makeFieldsetData } from '../../../../__stubs__/fieldsets.factory';
 import {
   buildMergedTaskOutputRows,
   buildRuntimeMergedOutputParts,
@@ -19,26 +20,11 @@ const assertRowsDefined = (
   return rows;
 };
 
-const field = (apiName: string, order: number): IExtraField => ({
-  apiName,
-  name: apiName,
-  type: 'string' as IExtraField['type'],
-  order,
-  isRequired: false,
-  isHidden: false,
-  userId: null,
-  groupId: null,
-});
+const field = (apiName: string, order: number) =>
+  makeExtraField({ apiName, name: apiName, order });
 
-const fs = (id: number, order: number): IFieldsetData => ({
-  id,
-  apiName: `fs-${id}`,
-  name: `FS ${id}`,
-  description: '',
-  fields: [],
-  order,
-  labelPosition: EFieldLabelPosition.Top,
-});
+const fs = (id: number, order: number) =>
+  makeFieldsetData({ id, apiName: `fs-${id}`, name: `FS ${id}`, order });
 
 const taskFs = (apiName: string, order: number): ITaskFieldset => ({ apiName, order });
 

@@ -3,13 +3,13 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { intlMock } from '../../../../__stubs__/intlMock';
+import { makeExtraField } from '../../../../__stubs__/fields.factory';
+import { makeFieldsetData } from '../../../../__stubs__/fieldsets.factory';
 import {
-  EExtraFieldType,
   IExtraField,
   IFieldsetData,
   ITemplateTask,
 } from '../../../../types/template';
-import { EFieldLabelPosition } from '../../../../types/fieldset';
 
 jest.mock('../../ExtraFields/utils/useDatasetOptions', () => ({
   useDatasetOptions: jest.fn(() => []),
@@ -155,43 +155,16 @@ describe('OutputFormTaskMerged', () => {
     ...overrides,
   });
 
-  const makeField = (overrides: Partial<IExtraField> = {}): IExtraField => ({
-    apiName: 'f-1',
+  const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
     name: 'Field 1',
-    type: EExtraFieldType.String,
-    order: 0,
-    isRequired: false,
-    isHidden: false,
-    userId: null,
-    groupId: null,
-    description: '',
-    selections: [],
     ...overrides,
   });
 
-  const makeFieldsetData = (overrides: Partial<IFieldsetData> = {}): IFieldsetData => ({
-    id: 1,
-    apiName: 'fs-1',
-    name: 'Fieldset 1',
-    description: '',
-    order: 0,
-    fields: [],
-    labelPosition: EFieldLabelPosition.Top,
-    ...overrides,
-  });
-
-  const NEW_FIELD: IExtraField = {
+  const NEW_FIELD: IExtraField = makeExtraField({
     apiName: 'new-field',
     name: 'New Field',
-    type: EExtraFieldType.String,
     order: -1,
-    isRequired: false,
-    isHidden: false,
-    userId: null,
-    groupId: null,
-    description: '',
-    selections: [],
-  };
+  });
 
   const renderForm = (props: {
     task: ITemplateTask;

@@ -1,8 +1,9 @@
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { MergedOutputList } from '../MergedOutputList';
-import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../types/template';
-import { EFieldLabelPosition } from '../../../types/fieldset';
+import { makeExtraField } from '../../../__stubs__/fields.factory';
+import { makeFieldsetData } from '../../../__stubs__/fieldsets.factory';
+import { IExtraField } from '../../../types/template';
 import { EInputNameBackgroundColor } from '../../../types/workflow';
 
 jest.mock('../../TemplateEdit/ExtraFields', () => ({
@@ -17,26 +18,7 @@ jest.mock('../../FieldsetFieldGroup', () => ({
   )),
 }));
 
-const makeField = (apiName: string, order: number): IExtraField => ({
-  apiName,
-  name: apiName,
-  type: EExtraFieldType.String,
-  order,
-  isRequired: false,
-  isHidden: false,
-  userId: null,
-  groupId: null,
-});
 
-const makeFieldset = (id: number, name: string, order: number): IFieldsetData => ({
-  id,
-  apiName: `fs-${id}`,
-  name,
-  description: '',
-  fields: [],
-  order,
-  labelPosition: EFieldLabelPosition.Top,
-});
 
 const baseProps = {
   onEditField: jest.fn(() => jest.fn()),
@@ -51,8 +33,11 @@ describe('MergedOutputList', () => {
   });
 
   it('renders fields and fieldsets interleaved by order', () => {
-    const fields = [makeField('field-a', 1), makeField('field-b', 3)];
-    const fieldsets = [makeFieldset(10, 'Fieldset Middle', 2)];
+    const fields = [
+      makeExtraField({ apiName: 'field-a', name: 'field-a', order: 1 }),
+      makeExtraField({ apiName: 'field-b', name: 'field-b', order: 3 }),
+    ];
+    const fieldsets = [makeFieldsetData({ id: 10, apiName: 'fs-10', name: 'Fieldset Middle', order: 2 })];
 
     const { container } = render(
       <MergedOutputList {...baseProps} fields={fields} fieldsets={fieldsets} />,
@@ -67,7 +52,7 @@ describe('MergedOutputList', () => {
   });
 
   it('renders only fields when no fieldsets provided', () => {
-    const fields = [makeField('solo', 0)];
+    const fields = [makeExtraField({ apiName: 'solo', name: 'solo' })];
 
     render(<MergedOutputList {...baseProps} fields={fields} />);
 
@@ -76,7 +61,7 @@ describe('MergedOutputList', () => {
   });
 
   it('renders only fieldsets when fields array is empty', () => {
-    const fieldsets = [makeFieldset(1, 'Only FS', 0)];
+    const fieldsets = [makeFieldsetData({ name: 'Only FS' })];
 
     render(<MergedOutputList {...baseProps} fields={[]} fieldsets={fieldsets} />);
 

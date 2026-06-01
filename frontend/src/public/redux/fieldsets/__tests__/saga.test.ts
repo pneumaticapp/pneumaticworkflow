@@ -15,7 +15,8 @@ import {
 import { initialState } from '../slice';
 import { history } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
-import { EFieldsetsSorting, EFieldLabelPosition } from '../../../types/fieldset';
+import { EFieldsetsSorting } from '../../../types/fieldset';
+import { makeFieldsetTemplate } from '../../../__stubs__/fieldsets.factory';
 import { isRequestCanceled } from '../../../utils/isRequestCanceled';
 
 jest.mock('../../../utils/getConfig', () => ({
@@ -135,20 +136,13 @@ describe('loadCurrentFieldsetSaga', () => {
   const FIELDSET_TEMPLATE_ID = 15;
   const FIELDSET_ID = 5;
 
-  const makeFieldset = (overrides = {}) => ({
-    id: FIELDSET_ID,
-    templateId: FIELDSET_TEMPLATE_ID,
-    name: 'Test Fieldset',
-    description: '',
-    labelPosition: EFieldLabelPosition.Top,
-    layout: 'one_column',
-    order: 0,
-    kickoffId: null,
-    taskId: null,
-    rules: [],
-    fields: [],
-    ...overrides,
-  });
+  const makeFieldset = (overrides = {}) =>
+    makeFieldsetTemplate({
+      id: FIELDSET_ID,
+      templateId: FIELDSET_TEMPLATE_ID,
+      name: 'Test Fieldset',
+      ...overrides,
+    });
 
   const makeMockState = (templateId: number | null) => ({
     fieldsets: {

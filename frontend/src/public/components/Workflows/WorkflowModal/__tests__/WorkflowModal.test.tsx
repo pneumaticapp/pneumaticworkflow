@@ -6,12 +6,12 @@ import { enMessages } from '../../../../lang/locales/en_US';
 import { WorkflowModal } from '../WorkflowModal';
 import { KickoffOutputs } from '../../../KickoffOutputs';
 import { EditKickoffContainer } from '../../../KickoffEdit';
+import { makeExtraField } from '../../../../__stubs__/fields.factory';
+import { makeFieldsetData } from '../../../../__stubs__/fieldsets.factory';
 import {
-  EExtraFieldType,
   IExtraField,
   IFieldsetData,
 } from '../../../../types/template';
-import { EFieldLabelPosition } from '../../../../types/fieldset';
 import {
   EWorkflowStatus,
   EWorkflowsLogSorting,
@@ -122,23 +122,13 @@ jest.mock('../../utils/getWorkflowProgressColor', () => ({
   getWorkflowProgressColor: jest.fn(() => 'green'),
 }));
 
-const makeField = (overrides: Partial<IExtraField> = {}): IExtraField => ({
+const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
   apiName: `f-${Math.random().toString(36).slice(2, 6)}`,
-  name: 'Field',
-  type: EExtraFieldType.String,
-  order: 0,
-  userId: null,
-  groupId: null,
   ...overrides,
 });
 
-const makeFieldset = (overrides: Partial<IFieldsetData> & { fields: IExtraField[] }): IFieldsetData => ({
-  id: 1,
-  apiName: 'fs-1',
+const makeFieldset = (overrides: Partial<IFieldsetData> & { fields: IExtraField[] }) => makeFieldsetData({
   name: 'Fieldset',
-  description: '',
-  order: 0,
-  labelPosition: EFieldLabelPosition.Top,
   ...overrides,
 });
 

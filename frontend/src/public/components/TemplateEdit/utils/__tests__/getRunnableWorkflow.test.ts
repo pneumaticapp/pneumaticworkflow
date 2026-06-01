@@ -1,5 +1,6 @@
-import { ETaskPerformerType, EExtraFieldType, ITemplateResponse, ETemplateOwnerType, ETemplateOwnerRole, IKickoff, IFieldsetData, IExtraField } from '../../../../types/template';
-import { EFieldLabelPosition } from '../../../../types/fieldset';
+import { ETaskPerformerType, EExtraFieldType, ITemplateResponse, ETemplateOwnerType, ETemplateOwnerRole, IKickoff, IFieldsetData } from '../../../../types/template';
+import { makeExtraField } from '../../../../__stubs__/fields.factory';
+import { makeFieldsetData } from '../../../../__stubs__/fieldsets.factory';
 import { getRunnableWorkflow, loadFieldsetsData, loadDatasetsMap } from '../getRunnableWorkflow';
 import { getFieldsets } from '../../../../api/fieldsets/getFieldsets';
 import { getDataset } from '../../../../api/datasets/getDataset';
@@ -234,16 +235,7 @@ describe('getRunnableWorkflow.', () => {
       kickoff: {
         description: '',
         fields: [
-          {
-            apiName: 'field-ds',
-            name: 'DS Field',
-            type: EExtraFieldType.Checkbox,
-            order: 0,
-            userId: null,
-            groupId: null,
-            dataset: 5,
-            selections: [],
-          },
+          makeExtraField({ apiName: 'field-ds', name: 'DS Field', type: EExtraFieldType.Checkbox, dataset: 5 }),
         ],
         fieldsets: [],
       },
@@ -261,15 +253,12 @@ describe('getRunnableWorkflow.', () => {
       kickoff: {
         description: '',
         fields: [
-          {
+          makeExtraField({
             apiName: 'field-obj',
             name: 'Obj Field',
             type: EExtraFieldType.Checkbox,
-            order: 0,
-            userId: null,
-            groupId: null,
             selections: [{ value: 'A', apiName: 'sel-1' }, { value: 'B', apiName: 'sel-2' }],
-          },
+          }),
         ],
         fieldsets: [],
       },
@@ -286,15 +275,7 @@ describe('getRunnableWorkflow.', () => {
       kickoff: {
         description: '',
         fields: [
-          {
-            apiName: 'field-str',
-            name: 'Str Field',
-            type: EExtraFieldType.Checkbox,
-            order: 0,
-            userId: null,
-            groupId: null,
-            selections: ['A', 'B'],
-          },
+          makeExtraField({ apiName: 'field-str', name: 'Str Field', type: EExtraFieldType.Checkbox, selections: ['A', 'B'] }),
         ],
         fieldsets: [],
       },
@@ -311,16 +292,7 @@ describe('getRunnableWorkflow.', () => {
       kickoff: {
         description: '',
         fields: [
-          {
-            apiName: 'field-miss',
-            name: 'Missing DS',
-            type: EExtraFieldType.Checkbox,
-            order: 0,
-            userId: null,
-            groupId: null,
-            dataset: 99,
-            selections: [],
-          },
+          makeExtraField({ apiName: 'field-miss', name: 'Missing DS', type: EExtraFieldType.Checkbox, dataset: 99 }),
         ],
         fieldsets: [],
       },
@@ -387,32 +359,16 @@ describe('getRunnableWorkflow.', () => {
   });
 
   it('loadDatasetsMap dedups dataset id shared by a kickoff field and a fieldset field', async () => {
-    const makeFieldWithDataset = (apiName: string, name: string, datasetId: number): IExtraField => ({
-      apiName,
-      name,
-      type: EExtraFieldType.Checkbox,
-      order: 0,
-      isRequired: false,
-      dataset: datasetId,
-      selections: [],
-      userId: null,
-      groupId: null,
-    });
     const kickoff: IKickoff = {
       description: '',
-      fields: [makeFieldWithDataset('k-f', 'K', 7)],
+      fields: [makeExtraField({ apiName: 'k-f', name: 'K', type: EExtraFieldType.Checkbox, dataset: 7 })],
       fieldsets: [],
     };
     const fieldsets: IFieldsetData[] = [
-      {
-        id: 1,
-        apiName: 'fs-1',
+      makeFieldsetData({
         name: 'FS',
-        description: '',
-        order: 0,
-        labelPosition: EFieldLabelPosition.Top,
-        fields: [makeFieldWithDataset('fs-f', 'F', 7)],
-      },
+        fields: [makeExtraField({ apiName: 'fs-f', name: 'F', type: EExtraFieldType.Checkbox, dataset: 7 })],
+      }),
     ];
     (getDataset as jest.Mock).mockResolvedValue({ items: [{ value: 'A' }, { value: 'B' }] });
 
@@ -425,40 +381,24 @@ describe('getRunnableWorkflow.', () => {
 
   it('getRunnableWorkflow applies datasetsMap and normalizes selections for fieldset fields', () => {
     const datasetsMap = { 5: ['X', 'Y'] };
-    const fieldWithDataset: IExtraField = {
+    const fieldWithDataset = makeExtraField({
       apiName: 'fs-f-ds',
       name: 'DS',
       type: EExtraFieldType.Checkbox,
-      order: 0,
-      isRequired: false,
       dataset: 5,
-      selections: [],
-      userId: null,
-      groupId: null,
-    };
-    const fieldWithObjectSelections: IExtraField = {
+    });
+    const fieldWithObjectSelections = makeExtraField({
       apiName: 'fs-f-obj',
       name: 'Obj',
       type: EExtraFieldType.Checkbox,
       order: 1,
-      isRequired: false,
       selections: [
         { value: 'P', apiName: 's-1' },
         { value: 'Q', apiName: 's-2' },
       ],
-      userId: null,
-      groupId: null,
-    };
+    });
     const loadedFieldsets: IFieldsetData[] = [
-      {
-        id: 1,
-        apiName: 'fs-1',
-        name: 'FS',
-        description: '',
-        order: 0,
-        labelPosition: EFieldLabelPosition.Top,
-        fields: [fieldWithDataset, fieldWithObjectSelections],
-      },
+      makeFieldsetData({ name: 'FS', fields: [fieldWithDataset, fieldWithObjectSelections] }),
     ];
 
     const result = assertNonNull(

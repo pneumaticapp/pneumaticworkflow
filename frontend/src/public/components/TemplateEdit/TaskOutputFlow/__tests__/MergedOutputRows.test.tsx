@@ -2,8 +2,9 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../../types/template';
-import { EFieldLabelPosition } from '../../../../types/fieldset';
+import { makeExtraField } from '../../../../__stubs__/fields.factory';
+import { makeFieldsetData as makeFieldsetDataBase } from '../../../../__stubs__/fieldsets.factory';
+import { IExtraField, IFieldsetData } from '../../../../types/template';
 import { intlMock } from '../../../../__stubs__/intlMock';
 import { MergedOutputRows, IMergedOutputRowsProps } from '../MergedOutputRows';
 import { TMergedTaskOutputRow } from '../mergeTaskOutputFlow';
@@ -61,29 +62,17 @@ jest.mock('../FieldsetFlowRowDropdown', () => ({
     ),
 }));
 
-const makeField = (apiName: string): IExtraField => ({
+const makeField = (apiName: string) => makeExtraField({
   apiName,
   name: `Field ${apiName}`,
-  type: EExtraFieldType.String,
-  order: 0,
-  isRequired: false,
-  isHidden: false,
-  userId: null,
-  groupId: null,
-  description: '',
-  selections: [],
 });
 
-const makeFieldsetData = (apiName: string, fieldsCount: number): IFieldsetData => ({
-  id: 1,
-  apiName,
-  name: `Fieldset ${apiName}`,
-  description: '',
-  order: 0,
-  labelPosition: EFieldLabelPosition.Top,
-  fields: Array.from({ length: fieldsCount }, (_, i) => makeField(`${apiName}-field-${i}`)),
-  rulesCount: 0,
-} as IFieldsetData);
+const makeFieldsetData = (apiName: string, fieldsCount: number): IFieldsetData =>
+  makeFieldsetDataBase({
+    apiName,
+    name: `Fieldset ${apiName}`,
+    fields: Array.from({ length: fieldsCount }, (_, i) => makeField(`${apiName}-field-${i}`)),
+  });
 
 const fieldRow = (apiName: string): TMergedTaskOutputRow => ({
   kind: 'field',

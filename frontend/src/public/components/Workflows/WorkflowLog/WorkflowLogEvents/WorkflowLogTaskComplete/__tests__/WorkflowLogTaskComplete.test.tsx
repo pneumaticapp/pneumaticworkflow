@@ -5,8 +5,9 @@ import { enMessages } from '../../../../../../lang/locales/en_US';
 
 import { WorkflowLogTaskComplete } from '../WorkflowLogTaskComplete';
 import { KickoffOutputs } from '../../../../../KickoffOutputs';
-import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../../../../types/template';
-import { EFieldLabelPosition } from '../../../../../../types/fieldset';
+import { makeExtraField } from '../../../../../../__stubs__/fields.factory';
+import { makeFieldsetData } from '../../../../../../__stubs__/fieldsets.factory';
+import { IExtraField, IFieldsetData } from '../../../../../../types/template';
 import { IWorkflowLogTask } from '../../../../../../types/workflow';
 
 jest.mock('../../../../../KickoffOutputs', () => ({
@@ -41,25 +42,14 @@ jest.mock('../../../../../../utils/helpers', () => {
   return { isArrayWithItems: actual.isArrayWithItems };
 });
 
-const makeField = (overrides: Partial<IExtraField> = {}): IExtraField => ({
-  apiName: 'f-1',
-  name: 'Field',
-  type: EExtraFieldType.String,
+const makeField = (overrides: Partial<IExtraField> = {}) => makeExtraField({
   value: 'val',
-  order: 0,
-  userId: null,
-  groupId: null,
   ...overrides,
 });
 
-const makeFieldset = (overrides: Partial<IFieldsetData> = {}): IFieldsetData => ({
-  id: 1,
-  apiName: 'fs-1',
+const makeFieldset = (overrides: Partial<IFieldsetData> = {}) => makeFieldsetData({
   name: 'Fieldset',
-  description: '',
   fields: [makeField()],
-  order: 0,
-  labelPosition: EFieldLabelPosition.Top,
   ...overrides,
 });
 

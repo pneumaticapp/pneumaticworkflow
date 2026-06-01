@@ -8,37 +8,9 @@ import fieldsetsReducer, {
   loadFieldsetsCatalogFailed,
   loadFieldsetsCatalogSuccess,
 } from '../slice';
-import { IFieldsetListItem, IFieldsetTemplate, EFieldLabelPosition } from '../../../types/fieldset';
+import { IFieldsetListItem } from '../../../types/fieldset';
+import { makeFieldsetListItem, makeFieldsetTemplate } from '../../../__stubs__/fieldsets.factory';
 import { IFieldsetsStore } from '../../../types/redux';
-
-const createMockFieldsetItem = (id: number, name: string): IFieldsetListItem => ({
-  id,
-  apiName: `fieldset-${id}`,
-  name,
-  description: '',
-  labelPosition: EFieldLabelPosition.Top,
-  layout: 'vertical',
-  order: id,
-  kickoffId: null,
-  taskId: null,
-  rules: [],
-  fields: [],
-});
-
-const makeFieldsetTemplate = (overrides: Partial<IFieldsetTemplate> = {}): IFieldsetTemplate => ({
-  id: 1,
-  templateId: 10,
-  name: 'Fieldset One',
-  description: 'Desc',
-  labelPosition: EFieldLabelPosition.Top,
-  layout: 'vertical',
-  order: 0,
-  kickoffId: null,
-  taskId: null,
-  rules: [],
-  fields: [],
-  ...overrides,
-});
 
 const makeStateWithList = (items: IFieldsetListItem[], overrides: Partial<IFieldsetsStore> = {}): IFieldsetsStore => ({
   ...initialState,
@@ -55,8 +27,8 @@ describe('fieldsets slice', () => {
           count: 2,
           offset: 0,
           items: [
-            createMockFieldsetItem(1, 'Fieldset from template A'),
-            createMockFieldsetItem(2, 'Another fieldset from template A'),
+            makeFieldsetListItem({ name: 'Fieldset from template A' }),
+            makeFieldsetListItem({ id: 2, name: 'Another fieldset from template A' }),
           ],
         },
       };
@@ -71,8 +43,8 @@ describe('fieldsets slice', () => {
 
     it('keeps existing items when offset > 0 (pagination)', () => {
       const existingItems = [
-        createMockFieldsetItem(1, 'Fieldset 1'),
-        createMockFieldsetItem(2, 'Fieldset 2'),
+        makeFieldsetListItem({ name: 'Fieldset 1' }),
+        makeFieldsetListItem({ id: 2, name: 'Fieldset 2' }),
       ];
       const stateWithData: IFieldsetsStore = {
         ...initialState,
@@ -93,7 +65,7 @@ describe('fieldsets slice', () => {
 
   describe('setCurrentFieldset', () => {
     it('writes fieldset to currentFieldset and updates name/description in list', () => {
-      const item = createMockFieldsetItem(5, 'Old Name');
+      const item = makeFieldsetListItem({ id: 5, name: 'Old Name' });
       const state = makeStateWithList([item]);
       const updated = makeFieldsetTemplate({ id: 5, name: 'New Name', description: 'New Desc' });
 
@@ -105,7 +77,7 @@ describe('fieldsets slice', () => {
     });
 
     it('does not crash or add phantom item when id is not in the list', () => {
-      const state = makeStateWithList([createMockFieldsetItem(1, 'Existing')]);
+      const state = makeStateWithList([makeFieldsetListItem({ name: 'Existing' })]);
       const fieldset = makeFieldsetTemplate({ id: 999 });
 
       const result = fieldsetsReducer(state, setCurrentFieldset(fieldset));
@@ -120,7 +92,7 @@ describe('fieldsets slice', () => {
     it('applies provided fields when id matches', () => {
       const state: IFieldsetsStore = {
         ...initialState,
-        currentFieldset: makeFieldsetTemplate({ id: 5, name: 'Old' }),
+        currentFieldset: makeFieldsetTemplate({ id: 5, name: 'Old', description: 'Desc' }),
       };
 
       const result = fieldsetsReducer(state, updateFieldsetAction({ id: 5, name: 'Updated' }));
@@ -169,7 +141,7 @@ describe('fieldsets slice', () => {
 
   describe('removeFieldsetFromList', () => {
     it('removes item by id and decrements count', () => {
-      const items = [createMockFieldsetItem(1, 'A'), createMockFieldsetItem(2, 'B')];
+      const items = [makeFieldsetListItem({ name: 'A' }), makeFieldsetListItem({ id: 2, name: 'B' })];
       const state = makeStateWithList(items);
 
       const result = fieldsetsReducer(state, removeFieldsetFromList(1));
@@ -199,7 +171,7 @@ describe('fieldsets slice', () => {
   describe('loadFieldsetsCatalogSuccess', () => {
     it('writes catalogAllFieldsets and resets isCatalogLoading', () => {
       const state: IFieldsetsStore = { ...initialState, isCatalogLoading: true };
-      const items = [createMockFieldsetItem(1, 'A'), createMockFieldsetItem(2, 'B')];
+      const items = [makeFieldsetListItem({ name: 'A' }), makeFieldsetListItem({ id: 2, name: 'B' })];
 
       const result = fieldsetsReducer(state, loadFieldsetsCatalogSuccess(items));
 

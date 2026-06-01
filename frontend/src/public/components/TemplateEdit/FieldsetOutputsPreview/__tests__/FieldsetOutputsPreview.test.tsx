@@ -2,32 +2,25 @@ import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
-import { EExtraFieldType, IFieldsetData, ITaskFieldset } from '../../../../types/template';
-import { EFieldLabelPosition } from '../../../../types/fieldset';
+import { IFieldsetData, ITaskFieldset } from '../../../../types/template';
+import { makeExtraField } from '../../../../__stubs__/fields.factory';
+import { makeFieldsetData as makeFieldsetDataBase } from '../../../../__stubs__/fieldsets.factory';
 import { FieldsetOutputsPreview } from '../FieldsetOutputsPreview';
 
 const makeTaskFieldset = (apiName: string, order = 0): ITaskFieldset => ({ apiName, order });
 
-const makeFieldsetData = (apiName: string, fieldsCount: number): IFieldsetData => ({
-  id: 1,
-  apiName,
-  name: `Fieldset ${apiName}`,
-  description: '',
-  order: 0,
-  labelPosition: EFieldLabelPosition.Top,
-  fields: Array.from({ length: fieldsCount }, (_, i) => ({
-    apiName: `field-${apiName}-${i}`,
-    name: `Field ${i}`,
-    type: EExtraFieldType.String,
-    order: i,
-    isRequired: false,
-    isHidden: false,
-    userId: null,
-    groupId: null,
-    description: '',
-    selections: [],
-  })),
-});
+const makeFieldsetData = (apiName: string, fieldsCount: number): IFieldsetData =>
+  makeFieldsetDataBase({
+    apiName,
+    name: `Fieldset ${apiName}`,
+    fields: Array.from({ length: fieldsCount }, (_, i) =>
+      makeExtraField({
+        apiName: `field-${apiName}-${i}`,
+        name: `Field ${i}`,
+        order: i,
+      }),
+    ),
+  });
 
 describe('FieldsetOutputsPreview', () => {
   const getFieldsetButton = (fieldsetName: string) =>

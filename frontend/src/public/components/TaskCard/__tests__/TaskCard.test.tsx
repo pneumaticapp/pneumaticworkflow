@@ -3,8 +3,9 @@ import { render, screen, waitFor, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
 import { TaskCard, ETaskCardViewMode } from '../TaskCard';
-import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../types/template';
-import { EFieldLabelPosition } from '../../../types/fieldset';
+import { makeExtraField } from '../../../__stubs__/fields.factory';
+import { makeFieldsetData } from '../../../__stubs__/fieldsets.factory';
+import { IExtraField, IFieldsetData } from '../../../types/template';
 import { ETaskStatus } from '../../../redux/actions';
 import { EWorkflowStatus, EWorkflowsLogSorting } from '../../../types/workflow';
 import { IAuthUser, ELoggedState } from '../../../types/redux';
@@ -161,15 +162,6 @@ jest.mock('../../icons', () => ({
   ReturnToIcon: () => <svg />,
 }));
 
-const makeField = (overrides = {}) => ({
-  apiName: `f-${Math.random()}`,
-  name: 'Field',
-  type: EExtraFieldType.String,
-  order: 0,
-  userId: null,
-  groupId: null,
-  ...overrides,
-});
 
 const baseTask = {
   id: 1,
@@ -291,11 +283,11 @@ describe('TaskCard', () => {
 
   it('renders MergedOutputList and passes fields and fieldsets', async () => {
     const fieldsets = [
-      { id: 1, apiName: 'fs-1', name: 'FS', description: '', fields: [], order: 2, labelPosition: EFieldLabelPosition.Top },
+      makeFieldsetData({ name: 'FS', order: 2 }),
     ];
     const task = {
       ...baseTask,
-      output: [makeField({ apiName: 'a', order: 1 })],
+      output: [makeExtraField({ apiName: 'a', order: 1 })],
       fieldsets,
     };
 
@@ -319,7 +311,7 @@ describe('TaskCard', () => {
   it('passes empty fieldsets when task has no fieldsets', async () => {
     const task = {
       ...baseTask,
-      output: [makeField({ apiName: 'a', order: 0 })],
+      output: [makeExtraField({ apiName: 'a' })],
     };
 
     render(<TaskCard {...baseProps} task={task} />);
@@ -342,9 +334,9 @@ describe('TaskCard', () => {
     const task = {
       ...baseTask,
       output: [
-        makeField({ apiName: 'hidden', isHidden: true }),
-        makeField({ apiName: 'visible-1', isHidden: false }),
-        makeField({ apiName: 'visible-2' }),
+        makeExtraField({ apiName: 'hidden', isHidden: true }),
+        makeExtraField({ apiName: 'visible-1' }),
+        makeExtraField({ apiName: 'visible-2' }),
       ],
     };
 
@@ -366,7 +358,7 @@ describe('TaskCard', () => {
     const { fieldsetsStorage } = require('../utils/storageOutputs');
 
     const fieldsets = [
-      { id: 1, apiName: 'fs-1', name: 'FS', description: '', fields: [makeField({ apiName: 'f-1' })], order: 0, labelPosition: EFieldLabelPosition.Top },
+      makeFieldsetData({ name: 'FS', fields: [makeExtraField({ apiName: 'f-1' })] }),
     ];
     const task = { ...baseTask, output: [], fieldsets };
     render(<TaskCard {...baseProps} task={task} />);
@@ -388,35 +380,25 @@ describe('TaskCard', () => {
   it('restores fieldset values from localStorage draft and merges them with server data', async () => {
     const { fieldsetsStorage } = require('../utils/storageOutputs');
 
-    const storageFs: IFieldsetData = {
-      id: 1,
-      apiName: 'fs-1',
+    const storageFs: IFieldsetData = makeFieldsetData({
       name: 'FS-1',
-      description: '',
       order: 1,
-      labelPosition: EFieldLabelPosition.Top,
-      fields: [makeField({ apiName: 'email', value: 'draft@x.com' })],
-    };
+      fields: [makeExtraField({ apiName: 'email', value: 'draft@x.com' })],
+    });
     (fieldsetsStorage.get as jest.Mock).mockReturnValue([storageFs]);
 
-    const serverFs1: IFieldsetData = {
-      id: 1,
-      apiName: 'fs-1',
+    const serverFs1: IFieldsetData = makeFieldsetData({
       name: 'FS-1',
-      description: '',
       order: 1,
-      labelPosition: EFieldLabelPosition.Top,
-      fields: [makeField({ apiName: 'email', value: 'server@x.com' })],
-    };
-    const serverFs2: IFieldsetData = {
+      fields: [makeExtraField({ apiName: 'email', value: 'server@x.com' })],
+    });
+    const serverFs2: IFieldsetData = makeFieldsetData({
       id: 2,
       apiName: 'fs-2',
       name: 'FS-2',
-      description: '',
       order: 2,
-      labelPosition: EFieldLabelPosition.Top,
-      fields: [makeField({ apiName: 'phone', value: 'server-phone' })],
-    };
+      fields: [makeExtraField({ apiName: 'phone', value: 'server-phone' })],
+    });
 
     const task = { ...baseTask, output: [], fieldsets: [serverFs1, serverFs2] };
     render(<TaskCard {...baseProps} task={task} />);
@@ -439,26 +421,19 @@ describe('TaskCard', () => {
   it('ignores a foreign fieldset from the draft that does not belong to the current task', async () => {
     const { fieldsetsStorage } = require('../utils/storageOutputs');
 
-    const strangerFs: IFieldsetData = {
+    const strangerFs: IFieldsetData = makeFieldsetData({
       id: 999,
       apiName: 'fs-stranger',
       name: 'Stranger',
-      description: '',
-      order: 0,
-      labelPosition: EFieldLabelPosition.Top,
-      fields: [makeField({ apiName: 'wrong', value: 'wrong' })],
-    };
+      fields: [makeExtraField({ apiName: 'wrong', value: 'wrong' })],
+    });
     (fieldsetsStorage.get as jest.Mock).mockReturnValue([strangerFs]);
 
-    const serverFs: IFieldsetData = {
-      id: 1,
-      apiName: 'fs-1',
+    const serverFs: IFieldsetData = makeFieldsetData({
       name: 'FS-1',
-      description: '',
       order: 1,
-      labelPosition: EFieldLabelPosition.Top,
-      fields: [makeField({ apiName: 'email' })],
-    };
+      fields: [makeExtraField({ apiName: 'email' })],
+    });
 
     const task = { ...baseTask, output: [], fieldsets: [serverFs] };
     render(<TaskCard {...baseProps} task={task} />);
@@ -484,39 +459,29 @@ describe('TaskCard', () => {
     (fieldsetsStorage.get as jest.Mock).mockImplementation((id: number) => {
       if (id === 100) {
         return [
-          {
-            id: 1,
+          makeFieldsetData({
             apiName: 'fs',
             name: 'FS',
-            description: '',
-            order: 0,
-            fields: [makeField({ apiName: 'k', value: 'draft-A' })],
-          },
+            fields: [makeExtraField({ apiName: 'k', value: 'draft-A' })],
+          }),
         ];
       }
       if (id === 200) {
         return [
-          {
-            id: 1,
+          makeFieldsetData({
             apiName: 'fs',
             name: 'FS',
-            description: '',
-            order: 0,
-            fields: [makeField({ apiName: 'k', value: 'draft-B' })],
-          },
+            fields: [makeExtraField({ apiName: 'k', value: 'draft-B' })],
+          }),
         ];
       }
       return undefined;
     });
 
-    const serverFs = (value: string): IFieldsetData => ({
-      id: 1,
+    const serverFs = (value: string): IFieldsetData => makeFieldsetData({
       apiName: 'fs',
       name: 'FS',
-      description: '',
-      order: 0,
-      labelPosition: EFieldLabelPosition.Top,
-      fields: [makeField({ apiName: 'k', value })],
+      fields: [makeExtraField({ apiName: 'k', value })],
     });
 
     const taskA = { ...baseTask, id: 100, output: [], fieldsets: [serverFs('server-A')] };
@@ -543,29 +508,23 @@ describe('TaskCard', () => {
   it('on Complete click submits a combined payload: plain outputs + fields of all fieldsets', async () => {
     const setTaskCompleted = jest.fn();
     const fieldsets: IFieldsetData[] = [
-      {
-        id: 1,
-        apiName: 'fs-1',
+      makeFieldsetData({
         name: 'FS-1',
-        description: '',
         order: 2,
-        labelPosition: EFieldLabelPosition.Top,
-        fields: [makeField({ apiName: 'a' }), makeField({ apiName: 'b' })],
-      },
-      {
+        fields: [makeExtraField({ apiName: 'a' }), makeExtraField({ apiName: 'b' })],
+      }),
+      makeFieldsetData({
         id: 2,
         apiName: 'fs-2',
         name: 'FS-2',
-        description: '',
         order: 3,
-        labelPosition: EFieldLabelPosition.Top,
-        fields: [makeField({ apiName: 'c' })],
-      },
+        fields: [makeExtraField({ apiName: 'c' })],
+      }),
     ];
     const task = {
       ...baseTask,
       id: 42,
-      output: [makeField({ apiName: 'top' })],
+      output: [makeExtraField({ apiName: 'top' })],
       fieldsets,
     };
 
@@ -594,15 +553,10 @@ describe('TaskCard', () => {
 
   it('renders the outputs block when the task has only fieldsets and no plain fields', async () => {
     const fieldsets: IFieldsetData[] = [
-      {
-        id: 1,
-        apiName: 'fs',
+      makeFieldsetData({
         name: 'FS',
-        description: '',
-        order: 0,
-        labelPosition: EFieldLabelPosition.Top,
-        fields: [makeField({ apiName: 'k' })],
-      },
+        fields: [makeExtraField({ apiName: 'k' })],
+      }),
     ];
     const task = { ...baseTask, output: [], fieldsets };
 
@@ -626,17 +580,12 @@ describe('TaskCard', () => {
   it('does not render the outputs block in Completed status even if fieldsets are present', async () => {
     const task = {
       ...baseTask,
-      output: [makeField({ apiName: 'a' })],
+      output: [makeExtraField({ apiName: 'a' })],
       fieldsets: [
-        {
-          id: 1,
-          apiName: 'fs',
+        makeFieldsetData({
           name: 'FS',
-          description: '',
-          order: 0,
-          labelPosition: EFieldLabelPosition.Top,
-          fields: [makeField({ apiName: 'k' })],
-        },
+          fields: [makeExtraField({ apiName: 'k' })],
+        }),
       ] as IFieldsetData[],
     };
 
@@ -652,15 +601,10 @@ describe('TaskCard', () => {
     const { fieldsetsStorage } = require('../utils/storageOutputs');
 
     const fieldsets: IFieldsetData[] = [
-      {
-        id: 1,
-        apiName: 'fs-1',
+      makeFieldsetData({
         name: 'FS-1',
-        description: '',
-        order: 0,
-        labelPosition: EFieldLabelPosition.Top,
-        fields: [makeField({ apiName: 'email', value: 'old@x.com' })],
-      },
+        fields: [makeExtraField({ apiName: 'email', value: 'old@x.com' })],
+      }),
     ];
     const task = { ...baseTask, id: 42, output: [], fieldsets };
 

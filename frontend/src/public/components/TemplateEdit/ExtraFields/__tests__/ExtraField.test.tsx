@@ -5,7 +5,8 @@ import { enMessages } from '../../../../lang/locales/en_US';
 
 import { ExtraFieldIntl } from '../index';
 import { ExtraFieldDropdown } from '../utils/ExtraFieldDropdown';
-import { EExtraFieldMode, EExtraFieldType } from '../../../../types/template';
+import { makeExtraField } from '../../../../__stubs__/fields.factory';
+import { EExtraFieldMode } from '../../../../types/template';
 import { EFieldLabelPosition } from '../../../../types/fieldset';
 
 jest.mock('react-redux', () => ({
@@ -38,14 +39,10 @@ jest.mock('../File', () => ({ ExtraFieldFile: () => <div /> }));
 jest.mock('../User', () => ({ ExtraFieldUser: () => <div /> }));
 jest.mock('../Number', () => ({ ExtraFieldNumber: () => <div /> }));
 
-const baseField = {
+const baseField = makeExtraField({
   apiName: 'f1',
   name: 'Field 1',
-  type: EExtraFieldType.String,
-  order: 0,
-  userId: null,
-  groupId: null,
-};
+});
 
 const baseProps = {
   field: baseField,

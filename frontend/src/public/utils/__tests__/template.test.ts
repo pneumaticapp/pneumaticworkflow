@@ -5,14 +5,14 @@ import {
   ITemplateResponse,
   ITemplate,
   EExtraFieldType,
-  IExtraField,
+  IFieldsetData,
 } from '../../types/template';
 import { ESubscriptionPlan } from '../../types/account';
 import { TUserListItem, EUserStatus } from '../../types/user';
 import { getNormalizedTemplate, mapTemplateRequest, getEmptyKickoff, cleanTemplateReferences, collectFieldApiNames } from '../template';
 import { EConditionAction, EConditionOperators, EConditionLogicOperations, TConditionRule } from '../../components/TemplateEdit/TaskForm/Conditions/types';
-import { IFieldsetData } from '../../types/template';
-import { EFieldLabelPosition } from '../../types/fieldset';
+import { makeExtraField } from '../../__stubs__/fields.factory';
+import { makeFieldsetData } from '../../__stubs__/fieldsets.factory';
 
 const emptyFieldsetsMap: ReadonlyMap<string, IFieldsetData> = new Map();
 
@@ -384,7 +384,7 @@ describe('template utilities', () => {
         wfNameTemplate: 'Name: {{valid-field}} and {{invalid-field}} and {{template-name}}',
         kickoff: {
           ...getEmptyKickoff(),
-          fields: [{ apiName: 'valid-field', type: EExtraFieldType.Text, name: 'Valid Field', order: 1 } as unknown as IExtraField],
+          fields: [makeExtraField({ apiName: 'valid-field', type: EExtraFieldType.Text, name: 'Valid Field', order: 1 })],
         },
         tasks: [
           {
@@ -392,7 +392,7 @@ describe('template utilities', () => {
             name: 'Task {{invalid-field}} and {{valid-field}}',
             description: 'Desc {{workflow-starter}} and {{invalid-field}}',
             number: 1,
-            fields: [{ apiName: 'valid-task-field', type: EExtraFieldType.Text, name: 'Valid Task Field', order: 1 } as unknown as IExtraField],
+            fields: [makeExtraField({ apiName: 'valid-task-field', type: EExtraFieldType.Text, name: 'Valid Task Field', order: 1 })],
           },
           {
             ...createMockTemplate().tasks[0],
@@ -415,19 +415,19 @@ describe('template utilities', () => {
     });
 
     it('preserves kickoff fieldset field references in wfNameTemplate', () => {
-      const fieldsetFields: IExtraField[] = [
-        { apiName: 'fieldset-field-1', type: EExtraFieldType.Text, name: 'Fieldset Field 1', order: 1 } as unknown as IExtraField,
-        { apiName: 'fieldset-field-2', type: EExtraFieldType.Text, name: 'Fieldset Field 2', order: 2 } as unknown as IExtraField,
+      const fieldsetFields = [
+        makeExtraField({ apiName: 'fieldset-field-1', type: EExtraFieldType.Text, name: 'Fieldset Field 1', order: 1 }),
+        makeExtraField({ apiName: 'fieldset-field-2', type: EExtraFieldType.Text, name: 'Fieldset Field 2', order: 2 }),
       ];
       const fieldsetsMap = new Map<string, IFieldsetData>([
-        ['my-fieldset', { id: 1, apiName: 'my-fieldset', name: 'My Fieldset', description: '', order: 0, labelPosition: EFieldLabelPosition.Top, fields: fieldsetFields }],
+        ['my-fieldset', makeFieldsetData({ apiName: 'my-fieldset', name: 'My Fieldset', fields: fieldsetFields })],
       ]);
 
       const template = createMockTemplate({
         wfNameTemplate: 'Name: {{direct-field}} and {{fieldset-field-1}} and {{fieldset-field-2}} and {{invalid-field}} and {{date}}',
         kickoff: {
           ...getEmptyKickoff(),
-          fields: [{ apiName: 'direct-field', type: EExtraFieldType.Text, name: 'Direct', order: 1 } as unknown as IExtraField],
+          fields: [makeExtraField({ apiName: 'direct-field', type: EExtraFieldType.Text, name: 'Direct', order: 1 })],
           fieldsets: [{ apiName: 'my-fieldset', order: 1 }],
         },
       });
@@ -457,7 +457,7 @@ describe('template utilities', () => {
         ],
         kickoff: {
           ...getEmptyKickoff(),
-          fields: [{ apiName: 'valid-field', type: EExtraFieldType.Text, name: 'Valid', order: 1 } as unknown as IExtraField],
+          fields: [makeExtraField({ apiName: 'valid-field', type: EExtraFieldType.Text, name: 'Valid', order: 1 })],
         },
       });
 
@@ -485,7 +485,7 @@ describe('template utilities', () => {
       const template = createMockTemplate({
         kickoff: {
           ...getEmptyKickoff(),
-          fields: [{ apiName: 'valid-user-field', type: EExtraFieldType.User, name: 'Valid User', order: 1 } as unknown as IExtraField],
+          fields: [makeExtraField({ apiName: 'valid-user-field', type: EExtraFieldType.User, name: 'Valid User', order: 1 })],
         },
         tasks: [
           {
@@ -507,7 +507,7 @@ describe('template utilities', () => {
       const template = createMockTemplate({
         kickoff: {
           ...getEmptyKickoff(),
-          fields: [{ apiName: 'valid-date-field', type: EExtraFieldType.Date, name: 'Valid Date', order: 1 } as unknown as IExtraField],
+          fields: [makeExtraField({ apiName: 'valid-date-field', type: EExtraFieldType.Date, name: 'Valid Date', order: 1 })],
         },
         tasks: [
           {
@@ -641,18 +641,18 @@ describe('template utilities', () => {
     });
 
     it('collects apiNames from direct fields and fieldset fields', () => {
-      const fields: IExtraField[] = [
-        { apiName: 'direct-field', type: EExtraFieldType.Text, name: 'Direct', order: 0, userId: null, groupId: null },
+      const fields = [
+        makeExtraField({ apiName: 'direct-field', type: EExtraFieldType.Text, name: 'Direct' }),
       ];
       const fieldsets = [{ apiName: 'my-fs', order: 0 }];
       const fieldsetsMap = new Map<string, IFieldsetData>([
-        ['my-fs', {
-          id: 1, apiName: 'my-fs', name: 'FS', description: '', order: 0, labelPosition: EFieldLabelPosition.Top,
+        ['my-fs', makeFieldsetData({
+          apiName: 'my-fs', name: 'FS',
           fields: [
-            { apiName: 'fs-field-1', type: EExtraFieldType.String, name: 'F1', order: 0, userId: null, groupId: null },
-            { apiName: 'fs-field-2', type: EExtraFieldType.Number, name: 'F2', order: 1, userId: null, groupId: null },
+            makeExtraField({ apiName: 'fs-field-1', name: 'F1' }),
+            makeExtraField({ apiName: 'fs-field-2', type: EExtraFieldType.Number, name: 'F2', order: 1 }),
           ],
-        }],
+        })],
       ]);
       const validApiNames = new Set<string>();
 

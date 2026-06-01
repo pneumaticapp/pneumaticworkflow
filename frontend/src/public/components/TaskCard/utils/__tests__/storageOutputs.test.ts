@@ -1,34 +1,11 @@
 import { outputStorage, fieldsetsStorage } from '../storageOutputs';
-import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../../types/template';
-import { EFieldLabelPosition } from '../../../../types/fieldset';
+import { makeExtraField } from '../../../../__stubs__/fields.factory';
+import { makeFieldsetData } from '../../../../__stubs__/fieldsets.factory';
+import { IExtraField, IFieldsetData } from '../../../../types/template';
 
 const OUTPUT_STORAGE_KEY = 'tasks_outputs';
 const FIELDSETS_STORAGE_KEY = 'tasks_fieldsets_outputs';
 
-const makeField = (apiName: string, overrides: Partial<IExtraField> = {}): IExtraField => ({
-  apiName,
-  name: `Field ${apiName}`,
-  type: EExtraFieldType.String,
-  order: 0,
-  userId: null,
-  groupId: null,
-  ...overrides,
-});
-
-const makeFieldset = (
-  apiName: string,
-  fields: IExtraField[],
-  overrides: Partial<IFieldsetData> = {},
-): IFieldsetData => ({
-  id: 1,
-  apiName,
-  name: `Fieldset ${apiName}`,
-  description: '',
-  order: 0,
-  fields,
-  labelPosition: EFieldLabelPosition.Top,
-  ...overrides,
-});
 
 describe('storageOutputs', () => {
   beforeEach(() => {
@@ -36,8 +13,10 @@ describe('storageOutputs', () => {
   });
 
   it('keeps outputStorage and fieldsetsStorage isolated from each other', () => {
-    const outputs: IExtraField[] = [makeField('plain', { value: 'plain-value' })];
-    const fieldsets: IFieldsetData[] = [makeFieldset('fs-1', [makeField('fs-field', { value: 'fs-value' })])];
+    const outputs: IExtraField[] = [makeExtraField({ apiName: 'plain', name: 'Field plain', value: 'plain-value' })];
+    const fieldsets: IFieldsetData[] = [
+      makeFieldsetData({ apiName: 'fs-1', name: 'Fieldset fs-1', fields: [makeExtraField({ apiName: 'fs-field', name: 'Field fs-field', value: 'fs-value' })] }),
+    ];
 
     outputStorage.save(1, outputs);
     fieldsetsStorage.save(1, fieldsets);
@@ -53,19 +32,24 @@ describe('storageOutputs', () => {
 
   it('save → get round-trip preserves the real fieldset structure 1-to-1', () => {
     const fieldsets: IFieldsetData[] = [
-      makeFieldset(
-        'contacts',
-        [
-          makeField('email', { value: 'a@b.com', type: EExtraFieldType.String }),
-          makeField('phone', { value: '+1', type: EExtraFieldType.String, isRequired: true }),
+      makeFieldsetData({
+        apiName: 'contacts',
+        name: 'Contacts',
+        description: 'Reachout details',
+        order: 1,
+        id: 42,
+        fields: [
+          makeExtraField({ apiName: 'email', name: 'Field email', value: 'a@b.com' }),
+          makeExtraField({ apiName: 'phone', name: 'Field phone', value: '+1', isRequired: true }),
         ],
-        { id: 42, name: 'Contacts', description: 'Reachout details', order: 1 },
-      ),
-      makeFieldset(
-        'address',
-        [makeField('city', { value: 'NY' })],
-        { id: 43, order: 2 },
-      ),
+      }),
+      makeFieldsetData({
+        apiName: 'address',
+        name: 'Fieldset address',
+        id: 43,
+        order: 2,
+        fields: [makeExtraField({ apiName: 'city', name: 'Field city', value: 'NY' })],
+      }),
     ];
 
     fieldsetsStorage.save(7, fieldsets);
@@ -74,8 +58,8 @@ describe('storageOutputs', () => {
   });
 
   it('subsequent save for the same taskId replaces the entry without duplicating', () => {
-    fieldsetsStorage.save(1, [makeFieldset('fs', [makeField('a', { value: 'v1' })])]);
-    fieldsetsStorage.save(1, [makeFieldset('fs', [makeField('a', { value: 'v2' })])]);
+    fieldsetsStorage.save(1, [makeFieldsetData({ apiName: 'fs', name: 'Fieldset fs', fields: [makeExtraField({ apiName: 'a', name: 'Field a', value: 'v1' })] })]);
+    fieldsetsStorage.save(1, [makeFieldsetData({ apiName: 'fs', name: 'Fieldset fs', fields: [makeExtraField({ apiName: 'a', name: 'Field a', value: 'v2' })] })]);
 
     const raw = localStorage.getItem(FIELDSETS_STORAGE_KEY);
     if (raw === null) {
@@ -95,8 +79,8 @@ describe('storageOutputs', () => {
   });
 
   it('remove deletes only the entry for the given taskId, leaving other tasks intact', () => {
-    const fs1: IFieldsetData[] = [makeFieldset('fs-1', [makeField('a', { value: 'task-1-value' })])];
-    const fs2: IFieldsetData[] = [makeFieldset('fs-2', [makeField('b', { value: 'task-2-value' })])];
+    const fs1: IFieldsetData[] = [makeFieldsetData({ apiName: 'fs-1', name: 'Fieldset fs-1', fields: [makeExtraField({ apiName: 'a', name: 'Field a', value: 'task-1-value' })] })];
+    const fs2: IFieldsetData[] = [makeFieldsetData({ apiName: 'fs-2', name: 'Fieldset fs-2', fields: [makeExtraField({ apiName: 'b', name: 'Field b', value: 'task-2-value' })] })];
 
     fieldsetsStorage.save(1, fs1);
     fieldsetsStorage.save(2, fs2);

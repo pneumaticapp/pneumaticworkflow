@@ -3,6 +3,7 @@ import { render } from '@testing-library/react';
 import { useSelector } from 'react-redux';
 
 import { ExtraFieldUser, IExtraFieldUserProps } from '../ExtraFieldUser';
+import { makeExtraField } from '../../../../../__stubs__/fields.factory';
 import { EExtraFieldMode, EExtraFieldType } from '../../../../../types/template';
 import { EUserDropdownOptionType } from '../../../../../types/user';
 import { UsersDropdown } from '../../../../UI/form/UsersDropdown';
@@ -59,14 +60,9 @@ describe('ExtraFieldUser', () => {
     return mock.mock.calls[mock.mock.calls.length - 1][0];
   };
 
-  const createBaseField = (overrides = {}) => ({
-    apiName: 'field-1',
+  const createBaseField = (overrides = {}) => makeExtraField({
     name: 'User Field',
-    description: '',
     type: EExtraFieldType.User,
-    userId: null,
-    groupId: null,
-    isRequired: false,
     ...overrides,
   });
 

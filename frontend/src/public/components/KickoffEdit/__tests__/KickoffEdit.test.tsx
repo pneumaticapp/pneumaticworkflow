@@ -4,8 +4,9 @@ import { IntlProvider } from 'react-intl';
 import { enMessages } from '../../../lang/locales/en_US';
 
 import { EditKickoff } from '../KickoffEdit';
-import { EExtraFieldType, IExtraField, IFieldsetData } from '../../../types/template';
-import { EFieldLabelPosition } from '../../../types/fieldset';
+import { makeExtraField } from '../../../__stubs__/fields.factory';
+import { makeFieldsetData } from '../../../__stubs__/fieldsets.factory';
+import { IExtraField, IFieldsetData } from '../../../types/template';
 import { MergedOutputList } from '../../MergedOutputList';
 
 jest.mock('../../MergedOutputList', () => ({
@@ -33,23 +34,15 @@ jest.mock('../../UI/Buttons/Button', () => ({
     }, props.label),
 }));
 
-const makeField = (apiName: string, order: number, overrides: Partial<IExtraField> = {}): IExtraField => ({
+const makeField = (apiName: string, order: number, overrides: Partial<IExtraField> = {}) => makeExtraField({
   apiName,
   name: apiName,
-  type: EExtraFieldType.String,
-  order,
-  userId: null,
-  groupId: null,
+  ...(order !== 0 && { order }),
   ...overrides,
 });
 
-const makeFieldset = (overrides: Partial<IFieldsetData> & { fields: IExtraField[] }): IFieldsetData => ({
-  id: 1,
-  apiName: 'fs-1',
+const makeFieldset = (overrides: Partial<IFieldsetData> & { fields: IExtraField[] }) => makeFieldsetData({
   name: 'Fieldset',
-  description: '',
-  order: 0,
-  labelPosition: EFieldLabelPosition.Top,
   ...overrides,
 });
 

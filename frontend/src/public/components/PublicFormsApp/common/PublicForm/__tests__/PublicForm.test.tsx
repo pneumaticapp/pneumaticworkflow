@@ -4,7 +4,7 @@ import { useDispatch } from 'react-redux';
 
 import { PublicForm } from '../PublicForm';
 import { getPublicForm } from '../../../../../api/getPublicForm';
-import { EExtraFieldType } from '../../../../../types/template';
+import { makeExtraField } from '../../../../../__stubs__/fields.factory';
 
 jest.mock('../../../../../api/getPublicForm', () => ({
   getPublicForm: jest.fn(),
@@ -32,13 +32,8 @@ jest.mock('../../../../../constants/enviroment', () => ({
   isEnvCaptcha: false,
 }));
 
-const makeField = (overrides = {}) => ({
+const makeField = (overrides = {}) => makeExtraField({
   apiName: `f-${Math.random()}`,
-  name: 'Field',
-  type: EExtraFieldType.String,
-  order: 0,
-  userId: null,
-  groupId: null,
   ...overrides,
 });
 
