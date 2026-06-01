@@ -10,6 +10,7 @@ import { mainHandler, oAuthHandler, apiProxy } from './handlers';
 import { authMiddleware, verificateAccountMiddleware, forwardForSubdomain } from './middleware';
 import { getConfig, serverConfigToBrowser } from '../public/utils/getConfig';
 import { ERoutes } from '../public/constants/routes';
+import { FORMS_PATH_PREFIX } from '../public/utils/identifyAppPart/constants';
 import { setPublicAuthCookie } from './utils/cookie';
 import { getUserPublic } from './middleware/utils/getUserPublic';
 import { mapToCamelCase } from '../public/utils/mappers';
@@ -95,7 +96,14 @@ export function initServer() {
     return null;
   });
 
-  app.use(forwardForSubdomain([formSubdomain], formsRouter));
+  // Path-based forms: domain.com/forms/* (always available)
+  app.use(FORMS_PATH_PREFIX, formsRouter);
+
+  // Subdomain forms: form.domain.com/* (if FORM_DOMAIN is set)
+  if (formSubdomain) {
+    app.use(forwardForSubdomain([formSubdomain], formsRouter));
+  }
+
   app.get(ERoutes.AccountVerificationLink, verificateAccountMiddleware);
   app.get(ERoutes.OAuthGoogle, oAuthHandler(urls.getGoogleAuthUri, urls.getGoogleAuthToken));
   app.get(ERoutes.OAuthMicrosoft, oAuthHandler(urls.getMicrosoftAuthUri, urls.getMicrosoftAuthToken));
