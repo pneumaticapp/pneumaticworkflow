@@ -21,6 +21,8 @@ import {
   PasteAttachmentPlugin,
   DecoratorNavigationPlugin,
   CopyAttachmentPlugin,
+  DisableRichTextFormattingPlugin,
+  PlainTextPastePlugin,
 } from '../../plugins';
 import { EditorControls } from '../EditorControls/EditorControls';
 import { EditorToolbar } from '../EditorToolbar/EditorToolbar';
@@ -50,8 +52,11 @@ export function LexicalEditorContent({
   submitIcon,
   cancelIcon,
   withControls = false,
+  plainText = false,
+  templateVariables,
 }: ILexicalEditorContentProps): React.ReactElement {
   const showMentions = withMentions && Boolean(mentions?.length);
+  const showRichTextPlugins = !plainText;
 
   return (
     <div
@@ -98,20 +103,22 @@ export function LexicalEditorContent({
       )}
 
       <HistoryPlugin />
-      <ListPlugin />
+      {showRichTextPlugins && <ListPlugin />}
       <SetEditorRefPlugin editorRef={editorRef} />
       {withControls && onSubmit ? (
         <SubmitOnKeyPlugin onSubmit={onSubmit} />
       ) : null}
       <OnChangePlugin ignoreSelectionChange onChange={onChange} />
-      <MarkdownShortcutPlugin transformers={ELEMENT_TRANSFORMERS} />
+      {showRichTextPlugins && <MarkdownShortcutPlugin transformers={ELEMENT_TRANSFORMERS} />}
+      {plainText && <DisableRichTextFormattingPlugin />}
+      {plainText && <PlainTextPastePlugin templateVariables={templateVariables} />}
 
-      <LinkPlugin />
-      <LinkTooltipPlugin />
+      {showRichTextPlugins && <LinkPlugin />}
+      {showRichTextPlugins && <LinkTooltipPlugin />}
       <VariableTooltipPlugin />
       {withChecklists && <ChecklistPlugin />}
-      <InsertAttachmentPlugin />
-      <CopyAttachmentPlugin />
+      {showRichTextPlugins && <InsertAttachmentPlugin />}
+      {showRichTextPlugins && <CopyAttachmentPlugin />}
       <DecoratorNavigationPlugin />
       {onPasteFiles ? (
         <PasteAttachmentPlugin onPasteFiles={onPasteFiles} />
