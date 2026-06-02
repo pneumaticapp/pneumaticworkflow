@@ -1085,3 +1085,353 @@ def test_send_dataset_deleted__ok(mocker):
     )
     uuid_mock.assert_called_once()
     now_mock.assert_called_once()
+def test_send_task_completed_websocket__ok(mocker):
+
+    # arrange
+    user_id = 12
+    task_data = {'task': 'completed_data'}
+    send_mock = mocker.patch(
+        'src.notifications.services.websockets.'
+        'WebSocketService._send',
+    )
+
+    service = WebSocketService(
+        logging=True,
+        logo_lg='https://logo.com',
+        account_id=123,
+    )
+
+    # act
+    service.send_task_completed_websocket(
+        user_id=user_id,
+        task_data=task_data,
+        sync=True,
+    )
+
+    # assert
+    send_mock.assert_called_once_with(
+        method_name=NotificationMethod.task_completed,
+        group_name=f'events_{user_id}',
+        data=task_data,
+        sync=True,
+    )
+
+
+def test_send_event_created__ok(mocker):
+
+    # arrange
+    user_id = 12
+    data = {'event': 'data'}
+    send_mock = mocker.patch(
+        'src.notifications.services.websockets.'
+        'WebSocketService._send',
+    )
+
+    service = WebSocketService(
+        logging=True,
+        logo_lg='https://logo.com',
+        account_id=123,
+    )
+
+    # act
+    service.send_event_created(
+        user_id=user_id,
+        data=data,
+        sync=True,
+    )
+
+    # assert
+    send_mock.assert_called_once_with(
+        method_name=NotificationMethod.event_created,
+        group_name=f'events_{user_id}',
+        data=data,
+        sync=True,
+    )
+
+
+def test_send_event_updated__ok(mocker):
+
+    # arrange
+    user_id = 12
+    data = {'event': 'updated_data'}
+    send_mock = mocker.patch(
+        'src.notifications.services.websockets.'
+        'WebSocketService._send',
+    )
+
+    service = WebSocketService(
+        logging=True,
+        logo_lg='https://logo.com',
+        account_id=123,
+    )
+
+    # act
+    service.send_event_updated(
+        user_id=user_id,
+        data=data,
+        sync=False,
+    )
+
+    # assert
+    send_mock.assert_called_once_with(
+        method_name=NotificationMethod.event_updated,
+        group_name=f'events_{user_id}',
+        data=data,
+        sync=False,
+    )
+
+
+def test_send_new_task_websocket__ok(mocker):
+
+    # arrange
+    user_id = 12
+    task_data = {'task': 'data'}
+    send_mock = mocker.patch(
+        'src.notifications.services.websockets.'
+        'WebSocketService._send',
+    )
+
+    service = WebSocketService(
+        logging=True,
+        logo_lg='https://logo.com',
+        account_id=123,
+    )
+
+    # act
+    service.send_new_task_websocket(
+        user_id=user_id,
+        task_data=task_data,
+        sync=True,
+    )
+
+    # assert
+    send_mock.assert_called_once_with(
+        method_name=NotificationMethod.task_created,
+        group_name=f'events_{user_id}',
+        data=task_data,
+        sync=True,
+    )
+
+
+def test_send_task_deleted__ok(mocker):
+
+    # arrange
+    user_id = 12
+    task_data = {'task': 'deleted_data'}
+    send_mock = mocker.patch(
+        'src.notifications.services.websockets.'
+        'WebSocketService._send',
+    )
+
+    service = WebSocketService(
+        logging=True,
+        logo_lg='https://logo.com',
+        account_id=123,
+    )
+
+    # act
+    service.send_task_deleted(
+        user_id=user_id,
+        task_data=task_data,
+        sync=True,
+    )
+
+    # assert
+    send_mock.assert_called_once_with(
+        method_name=NotificationMethod.task_deleted,
+        group_name=f'events_{user_id}',
+        data=task_data,
+        sync=True,
+    )
+
+
+def test_send_group_created__ok(mocker):
+
+    # arrange
+    user_id = 12
+    group_data = {'group': 'created_data'}
+    send_mock = mocker.patch(
+        'src.notifications.services.websockets.'
+        'WebSocketService._send',
+    )
+
+    service = WebSocketService(
+        logging=True,
+        logo_lg='https://logo.com',
+        account_id=123,
+    )
+
+    # act
+    service.send_group_created(
+        user_id=user_id,
+        group_data=group_data,
+        sync=True,
+    )
+
+    # assert
+    send_mock.assert_called_once_with(
+        method_name=NotificationMethod.group_created,
+        group_name=f'events_{user_id}',
+        data=group_data,
+        sync=True,
+    )
+
+
+def test_send_group_updated__ok(mocker):
+
+    # arrange
+    user_id = 12
+    group_data = {'group': 'updated_data'}
+    send_mock = mocker.patch(
+        'src.notifications.services.websockets.'
+        'WebSocketService._send',
+    )
+
+    service = WebSocketService(
+        logging=True,
+        logo_lg='https://logo.com',
+        account_id=123,
+    )
+
+    # act
+    service.send_group_updated(
+        user_id=user_id,
+        group_data=group_data,
+        sync=False,
+    )
+
+    # assert
+    send_mock.assert_called_once_with(
+        method_name=NotificationMethod.group_updated,
+        group_name=f'events_{user_id}',
+        data=group_data,
+        sync=False,
+    )
+
+
+def test_send_group_deleted__ok(mocker):
+
+    # arrange
+    user_id = 12
+    group_data = {'group': 'deleted_data'}
+    send_mock = mocker.patch(
+        'src.notifications.services.websockets.'
+        'WebSocketService._send',
+    )
+
+    service = WebSocketService(
+        logging=True,
+        logo_lg='https://logo.com',
+        account_id=123,
+    )
+
+    # act
+    service.send_group_deleted(
+        user_id=user_id,
+        group_data=group_data,
+        sync=True,
+    )
+
+    # assert
+    send_mock.assert_called_once_with(
+        method_name=NotificationMethod.group_deleted,
+        group_name=f'events_{user_id}',
+        data=group_data,
+        sync=True,
+    )
+
+
+def test_send_user_created__ok(mocker):
+
+    # arrange
+    user_id = 12
+    user_data = {'user': 'created_data'}
+    send_mock = mocker.patch(
+        'src.notifications.services.websockets.'
+        'WebSocketService._send',
+    )
+
+    service = WebSocketService(
+        logging=True,
+        logo_lg='https://logo.com',
+        account_id=123,
+    )
+
+    # act
+    service.send_user_created(
+        user_id=user_id,
+        user_data=user_data,
+        sync=True,
+    )
+
+    # assert
+    send_mock.assert_called_once_with(
+        method_name=NotificationMethod.user_created,
+        group_name=f'events_{user_id}',
+        data=user_data,
+        sync=True,
+    )
+
+
+def test_send_user_updated__ok(mocker):
+
+    # arrange
+    user_id = 12
+    user_data = {'user': 'updated_data'}
+    send_mock = mocker.patch(
+        'src.notifications.services.websockets.'
+        'WebSocketService._send',
+    )
+
+    service = WebSocketService(
+        logging=True,
+        logo_lg='https://logo.com',
+        account_id=123,
+    )
+
+    # act
+    service.send_user_updated(
+        user_id=user_id,
+        user_data=user_data,
+        sync=False,
+    )
+
+    # assert
+    send_mock.assert_called_once_with(
+        method_name=NotificationMethod.user_updated,
+        group_name=f'events_{user_id}',
+        data=user_data,
+        sync=False,
+    )
+
+
+def test_send_user_deleted__ok(mocker):
+
+    # arrange
+    user_id = 12
+    user_data = {'user': 'deleted_data'}
+    send_mock = mocker.patch(
+        'src.notifications.services.websockets.'
+        'WebSocketService._send',
+    )
+
+    service = WebSocketService(
+        logging=True,
+        logo_lg='https://logo.com',
+        account_id=123,
+    )
+
+    # act
+    service.send_user_deleted(
+        user_id=user_id,
+        user_data=user_data,
+        sync=True,
+    )
+
+    # assert
+    send_mock.assert_called_once_with(
+        method_name=NotificationMethod.user_deleted,
+        group_name=f'events_{user_id}',
+        data=user_data,
+        sync=True,
+    )
