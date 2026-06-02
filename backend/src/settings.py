@@ -60,10 +60,20 @@ class Common(Configuration):
 
     # Frontend
     FRONTEND_URL = env.get('FRONTEND_URL')
+    if not FRONTEND_URL:
+        raise Exception(
+            'FRONTEND_URL is not set. '
+            'Please define FRONTEND_URL in your .env file.',
+        )
     EXPIRED_INVITE_PAGE = f'{FRONTEND_URL}/auth/expired-invite'
 
     # Forms
     FORMS_URL = env.get('FORMS_URL')
+    if not FORMS_URL:
+        raise Exception(
+            'FORMS_URL is not set. '
+            'Please define FORMS_URL in your .env file.',
+        )
 
     # File Service
     FILE_SERVICE_URL = env.get('FILE_SERVICE_URL')
@@ -92,8 +102,15 @@ class Common(Configuration):
     USER_TRANSFER_TOKEN_LIFETIME_IN_DAYS = 7
 
     BACKEND_URL = env.get('BACKEND_URL')
+    if not BACKEND_URL:
+        raise Exception(
+            'BACKEND_URL is not set. '
+            'Please define BACKEND_URL in your .env file.',
+        )
     BACKEND_HOST = BACKEND_URL.split('//')[1].split(':')[0]
-    ALLOWED_HOSTS = [BACKEND_HOST]
+    FRONTEND_HOST = FRONTEND_URL.split('//')[1].split(':')[0]
+    FORMS_HOST = FORMS_URL.split('//')[1].split(':')[0]
+    ALLOWED_HOSTS = [BACKEND_HOST, FRONTEND_HOST, FORMS_HOST]
     EXTRA_ALLOWED_HOSTS = env.get("ALLOWED_HOSTS")
     if EXTRA_ALLOWED_HOSTS:
         ALLOWED_HOSTS.extend(EXTRA_ALLOWED_HOSTS.split(' '))
@@ -126,7 +143,10 @@ class Common(Configuration):
     # A list of origins that are authorized to make cross-site HTTP requests.
     # A list of origins echoed back to the client in the
     # Access-Control-Allow-Origin header. Defaults to [].
-    CORS_ORIGIN_WHITELIST = [FRONTEND_URL, FORMS_URL]
+    CORS_ORIGIN_WHITELIST = [FRONTEND_URL]
+    if FRONTEND_URL not in FORMS_URL:
+        # Add if FORMS_URL customized
+        CORS_ORIGIN_WHITELIST.append(FORMS_URL)
     EXTRA_CORS_ORIGIN_WHITELIST = env.get('CORS_ORIGIN_WHITELIST')
     if EXTRA_CORS_ORIGIN_WHITELIST:
         CORS_ORIGIN_WHITELIST.extend(EXTRA_CORS_ORIGIN_WHITELIST.split(' '))
@@ -364,8 +384,8 @@ class Common(Configuration):
     ]
 
     # reCaptcha
-    DRF_RECAPTCHA_SITE_KEY = env.get('RECAPTCHA_SITE_KEY', 'key')
-    DRF_RECAPTCHA_SECRET_KEY = env.get('RECAPTCHA_SECRET_KEY', 'key')
+    DRF_RECAPTCHA_SITE_KEY = env.get('RECAPTCHA_SITE_KEY') or 'key'
+    DRF_RECAPTCHA_SECRET_KEY = env.get('RECAPTCHA_SECRET_KEY') or 'key'
     DRF_RECAPTCHA_TESTING = env.get('RECAPTCHA_TESTING', 'yes') == 'yes'
 
     # Firebase Credentials

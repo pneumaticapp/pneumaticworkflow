@@ -1,6 +1,7 @@
-# Use case: SSL enabled, standard setup (domain without custom form subdomain).
-# SERVER_ADDRESS is a domain name with a Let's Encrypt certificate.
-# Serves backend on port 8001 over HTTPS and frontend on port 443 over HTTPS.
+# Use case: SSL enabled with a custom form subdomain (FORM_DOMAIN is set).
+# SERVER_ADDRESS and FORM_DOMAIN each have their own Let's Encrypt certificate.
+# Serves backend on port 8001 over HTTPS, frontend on port 443, and the form
+# subdomain on port 443 as a separate virtual host.
 
 include /etc/nginx/includes/worker.conf;
 
@@ -66,40 +67,20 @@ http {
     }
 
     ##
-    # File service server
+    # Form
     ##
-
-    upstream file-service {
-      server pneumatic-file-service:8000;
-    }
 
     server {
         listen 443 ssl;
-        ssl_certificate     /etc/keys/${FILE_DOMAIN}.crt;
-        ssl_certificate_key /etc/keys/${FILE_DOMAIN}.key;
+        ssl_certificate     /etc/keys/${FORM_DOMAIN}/fullchain.pem;
+        ssl_certificate_key /etc/keys/${FORM_DOMAIN}/privkey.pem;
 
         root /var/www/html;
         index index.html index.nginx-debian.html;
 
-        server_name ${FILE_DOMAIN};
-        client_max_body_size 100m;
+        server_name ${FORM_DOMAIN};
 
-        location / {
-            proxy_pass http://file-service;
-            proxy_http_version 1.1;
-            proxy_set_header Upgrade $http_upgrade;
-            proxy_set_header Connection 'upgrade';
-            proxy_set_header Host $host;
-            proxy_set_header X-Real-IP $remote_addr;
-            proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_cache_bypass $http_upgrade;
-        }
+        include /etc/nginx/includes/location_frontend_common.conf;
 
-        location /robots.txt {
-            alias /var/www/robots.txt;
-        }
-        location = /502.html {
-            alias /var/www/html/502.html;
-        }
     }
 }

@@ -36,6 +36,7 @@ export interface IBrowserConfig {
       measurementId: string;
     };
   };
+  featureFlags: Record<string, string | undefined>;
 }
 
 interface IConfig {
@@ -123,6 +124,17 @@ export function getConfig(): TConfig {
           measurementId: FIREBASE_MEASUREMENT_ID,
         },
       },
+      featureFlags: Object.fromEntries(
+        [
+          'CAPTCHA', 'GOOGLE_AUTH', 'MS_AUTH', 'SSO_AUTH', 'SIGNUP', 'BILLING',
+          'AI', 'PUSH', 'STORAGE', 'ANALYTICS', 'SSO_PROVIDER', 'LANGUAGE_CODE',
+          'BACKEND_URL', 'SENTRY_DSN', 'WSS_URL', 'HOST', 'ANALYTICS_ID',
+          'RECAPTCHA_SITE_KEY', 'GOOGLE_CLIENT_ID', 'FIREBASE_VAPID_KEY',
+          'FIREBASE_API_KEY', 'FIREBASE_AUTH_DOMAIN', 'FIREBASE_PROJECT_ID',
+          'FIREBASE_STORAGE_BUCKET', 'FIREBASE_SENDER_ID', 'FIREBASE_APP_ID',
+          'FIREBASE_MEASUREMENT_ID', 'SENTRY_RELEASE',
+        ].map(key => [key, process.env[key]])
+      ),
     },
   );
 }
