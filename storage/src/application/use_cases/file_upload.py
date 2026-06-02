@@ -5,8 +5,8 @@ from uuid import uuid4
 
 from src.application.dto import UploadFileCommand, UploadFileUseCaseResponse
 from src.domain.entities import FileRecord
+from src.infra.adapters.storage_service import StorageService
 from src.infra.repositories import FileRecordRepository
-from src.infra.repositories.storage_service import StorageService
 from src.shared_kernel.uow import UnitOfWork
 
 

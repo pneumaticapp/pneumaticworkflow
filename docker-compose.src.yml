@@ -168,6 +168,8 @@ services:
       CORS_ORIGIN_WHITELIST: "http://localhost:8000"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
       FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://file-service:8000}
+      # Migration only: direct DB access for sync_files_to_file_service / run_file_migration.
+      # Can be removed after all accounts are migrated to file-service.
       FILE_POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
       FILE_POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
       FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
@@ -296,6 +298,8 @@ services:
       CORS_ORIGIN_WHITELIST: "http://localhost:8000"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
       FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://file-service:8000}
+      # Migration only: direct DB access for sync_files_to_file_service / run_file_migration.
+      # Can be removed after all accounts are migrated to file-service.
       FILE_POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
       FILE_POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
       FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
@@ -417,6 +421,8 @@ services:
       CORS_ORIGIN_WHITELIST: "http://localhost:8000"
       ENABLE_LOGGING: ${ENABLE_LOGGING:-no}
       FILE_SERVICE_URL: ${FILE_SERVICE_URL:-http://file-service:8000}
+      # Migration only: direct DB access for sync_files_to_file_service / run_file_migration.
+      # Can be removed after all accounts are migrated to file-service.
       FILE_POSTGRES_USER: ${FILE_POSTGRES_USER:-pneumatic}
       FILE_POSTGRES_PASSWORD: ${FILE_POSTGRES_PASSWORD:-pneumatic}
       FILE_POSTGRES_DB: ${FILE_POSTGRES_DB:-pneumatic}
@@ -568,9 +574,8 @@ services:
     image: chrislusf/seaweedfs:3.95
     container_name: pneumatic-seaweedfs-master
     command: master -ip=seaweedfs-master -port=9333
-    ports:
-      - "9333:9333"
-      - "19333:19333"
+    expose:
+      - 9333
     volumes:
       - seaweedfs_master_data:/data
     networks:
@@ -585,9 +590,8 @@ services:
       - -port=8080
       - -ip=seaweedfs-volume
       - -publicUrl=localhost:8080
-    ports:
-      - "8080:8080"
-      - "18080:18080"
+    expose:
+      - 8080
     depends_on:
       - seaweedfs-master
     volumes:
@@ -600,9 +604,10 @@ services:
     container_name: pneumatic-seaweedfs-filer
     command: filer -master="seaweedfs-master:9333" -s3 -s3.port=8333
     ports:
-      - "8888:8888"
-      - "8333:8333"
-      - "18888:18888"
+      # TODO(production): REMOVE — exposes unauthenticated Filer UI to the internet
+      - "8888:8888"  # DEV ONLY: Filer Web UI for browsing files
+    expose:
+      - 8333
     depends_on:
       - seaweedfs-master
       - seaweedfs-volume

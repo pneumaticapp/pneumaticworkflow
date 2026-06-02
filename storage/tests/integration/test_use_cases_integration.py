@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 from unittest.mock import AsyncMock
 
 import pytest
+
 from src.application.dto.file_dtos import (
     DownloadFileQuery,
     UploadFileCommand,
@@ -16,11 +17,11 @@ from src.application.use_cases.file_upload import (
     UploadFileUseCase,
 )
 from src.domain.entities.file_record import FileRecord
+from src.infra.adapters.storage_service import (
+    StorageService,
+)
 from src.infra.repositories.file_record_repository import (
     FileRecordRepository,
-)
-from src.infra.repositories.storage_service import (
-    StorageService,
 )
 from src.shared_kernel.exceptions import (
     DomainFileNotFoundError,

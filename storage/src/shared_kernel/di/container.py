@@ -10,11 +10,13 @@ from src.application.use_cases import (
     DownloadFileUseCase,
     UploadFileUseCase,
 )
+from src.infra.adapters import (
+    StorageService,
+    StorageServiceHolder,
+)
 from src.infra.http_client import HttpClient
 from src.infra.repositories import (
     FileRecordRepository,
-    StorageService,
-    StorageServiceHolder,
 )
 from src.shared_kernel.config import Settings, get_settings
 from src.shared_kernel.database import get_async_session

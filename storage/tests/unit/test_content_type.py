@@ -1,6 +1,7 @@
 """Tests for Content-Type sanitization."""
 
 import pytest
+
 from src.shared_kernel.security import sanitize_content_type
 
 # --- Allowed types passthrough ---

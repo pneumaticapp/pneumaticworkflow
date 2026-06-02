@@ -4,14 +4,15 @@ import time
 from unittest.mock import AsyncMock, MagicMock
 
 import pytest
+from starlette.requests import Request
+from starlette.responses import Response
+
 from src.shared_kernel.middleware.rate_limit import (
     RateLimitMiddleware,
     _classify_route,
     _get_client_ip,
     _SlidingWindow,
 )
-from starlette.requests import Request
-from starlette.responses import Response
 
 
 def test_classify_route__upload_post__upload():

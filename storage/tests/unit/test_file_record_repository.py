@@ -4,6 +4,7 @@ from unittest.mock import ANY, AsyncMock, Mock
 
 import pytest
 from sqlalchemy.exc import IntegrityError, OperationalError
+
 from src.shared_kernel.exceptions import (
     DatabaseConnectionError,
     DatabaseConstraintError,

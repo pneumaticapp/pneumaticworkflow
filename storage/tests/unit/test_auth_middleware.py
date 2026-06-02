@@ -4,6 +4,7 @@ import json
 from unittest.mock import AsyncMock
 
 import pytest
+
 from src.shared_kernel.auth.user_types import UserType
 from src.shared_kernel.middleware.auth_middleware import AuthUser
 

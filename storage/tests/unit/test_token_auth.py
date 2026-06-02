@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock
 
 import pytest
 import redis.asyncio as redis
+
 from src.shared_kernel.auth.token_auth import (
     PneumaticToken,
     _compute_pbkdf2,

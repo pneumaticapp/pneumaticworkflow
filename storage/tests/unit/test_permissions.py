@@ -1,6 +1,7 @@
 """Tests for permission classes."""
 
 import pytest
+
 from src.shared_kernel.auth.user_types import UserType
 from src.shared_kernel.exceptions import PermissionDeniedError
 from src.shared_kernel.permissions import (

@@ -17,7 +17,7 @@ settings = get_settings()
 # Create async engine
 engine = create_async_engine(
     settings.database_url,
-    echo='debug' if settings.DEBUG else False,
+    echo=False,
     future=True,
     pool_size=20,
     max_overflow=10,

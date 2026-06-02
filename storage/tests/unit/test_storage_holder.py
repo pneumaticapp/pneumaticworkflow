@@ -3,7 +3,8 @@
 from unittest.mock import AsyncMock, call
 
 import pytest
-from src.infra.repositories.storage_service import (
+
+from src.infra.adapters.storage_service import (
     StorageService,
     StorageServiceHolder,
 )

@@ -1,5 +1,6 @@
 """Storage service for file operations."""
 
+import asyncio
 import typing
 from collections.abc import AsyncGenerator
 
@@ -241,15 +242,20 @@ class StorageServiceHolder:
     """Singleton holder for StorageService.
 
     Follows the SharedClientHolder pattern used by HttpClient.
+    Uses asyncio.Lock to prevent race condition on first init.
     """
 
     _instance: StorageService | None = None
+    _lock: asyncio.Lock = asyncio.Lock()
 
     @classmethod
     async def get(cls) -> StorageService:
         """Get or create StorageService singleton."""
         if cls._instance is None:
-            cls._instance = StorageService()
+            async with cls._lock:
+                # Double-checked locking
+                if cls._instance is None:
+                    cls._instance = StorageService()
         return cls._instance
 
     @classmethod

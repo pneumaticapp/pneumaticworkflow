@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.orm import sessionmaker
+
 from src.shared_kernel.database.base import Base
 
 

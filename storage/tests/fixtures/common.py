@@ -5,6 +5,7 @@ from unittest.mock import AsyncMock, Mock
 
 import pytest
 from fastapi.testclient import TestClient
+
 from src.domain.entities import FileRecord
 from src.main import app
 from src.shared_kernel.config import Settings

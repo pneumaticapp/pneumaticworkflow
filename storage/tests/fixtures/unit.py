@@ -6,13 +6,18 @@ from unittest.mock import AsyncMock, MagicMock, Mock
 import pytest
 from botocore.exceptions import ClientError
 from fastapi import Request
+from starlette.applications import Starlette
+from starlette.responses import PlainTextResponse, Response
+from starlette.routing import Route
+from starlette.testclient import TestClient
+
+from src.infra.adapters.storage_service import (
+    StorageService,
+    StorageServiceHolder,
+)
 from src.infra.http_client import HttpClient, SharedClientHolder
 from src.infra.repositories.file_record_repository import (
     FileRecordRepository,
-)
-from src.infra.repositories.storage_service import (
-    StorageService,
-    StorageServiceHolder,
 )
 from src.shared_kernel.auth.redis_client import (
     RedisAuthClient,
@@ -28,10 +33,6 @@ from src.shared_kernel.middleware.rate_limit import _RateLimit
 from src.shared_kernel.middleware.security_headers import (
     SecurityHeadersMiddleware,
 )
-from starlette.applications import Starlette
-from starlette.responses import PlainTextResponse, Response
-from starlette.routing import Route
-from starlette.testclient import TestClient
 
 # --- auth_middleware fixtures ---
 

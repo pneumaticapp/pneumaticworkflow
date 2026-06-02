@@ -8,8 +8,8 @@ import uvicorn
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from src.infra.adapters import StorageServiceHolder
 from src.infra.http_client import close_shared_client, get_shared_client
-from src.infra.repositories import StorageServiceHolder
 from src.presentation.api import files_router
 from src.shared_kernel.auth import close_redis_client
 from src.shared_kernel.config import get_settings

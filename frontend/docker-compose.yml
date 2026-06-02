@@ -508,7 +508,8 @@ services:
     container_name: pneumatic-seaweedfs-filer
     command: filer -master="seaweedfs-master:9333" -s3 -s3.port=8333
     ports:
-      - "8888:8888"
+      # TODO(production): REMOVE — exposes unauthenticated Filer UI to the internet
+      - "8888:8888"  # DEV ONLY
       - "8333:8333"
       - "18888:18888"
     depends_on:

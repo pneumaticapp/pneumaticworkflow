@@ -4,6 +4,7 @@ from unittest.mock import AsyncMock
 
 import httpx
 import pytest
+
 from src.infra.http_client import SharedClientHolder
 from src.shared_kernel.auth.user_types import UserType
 from src.shared_kernel.exceptions import (

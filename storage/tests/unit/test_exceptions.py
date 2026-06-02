@@ -3,6 +3,7 @@
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
+
 from src.shared_kernel.exceptions import (
     VALIDATION_ERROR_CODES,
     AuthenticationError,

@@ -124,7 +124,7 @@ max-branches = 8
 max-complexity = 10
 
 [lint.isort]
-known-first-party = ["storage"]
+known-first-party = ["src"]
 combine-as-imports = true
 force-wrap-aliases = true
 

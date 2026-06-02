@@ -1,7 +1,6 @@
 """Application DTOs for file operations."""
 
 from dataclasses import dataclass
-from datetime import datetime
 from typing import IO
 
 
@@ -32,17 +31,3 @@ class DownloadFileQuery:
     file_id: str  # Unique file identifier
     user_id: int | None
     range_header: str | None = None
-
-
-@dataclass(frozen=True)
-class FileInfoResponse:
-    """File information response."""
-
-    id: int
-    file_id: str
-    filename: str
-    size: int
-    content_type: str
-    user_id: int | None
-    account_id: int
-    created_at: datetime

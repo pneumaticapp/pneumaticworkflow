@@ -109,5 +109,10 @@ class HttpClient:
             return response.status_code == HTTPStatus.NO_CONTENT
 
     async def close(self) -> None:
-        """Close HTTP client."""
-        # No-op since we use a shared global client managed by lifespan
+        """Close HTTP client (intentionally no-op).
+
+        The underlying httpx.AsyncClient is a shared singleton
+        managed by SharedClientHolder via the app lifespan handler.
+        Individual HttpClient instances obtained through DI do not
+        own the connection and must not close it.
+        """

@@ -12,6 +12,7 @@ from pydantic import ValidationError
 from src.shared_kernel.exceptions.base_exceptions import (
     BaseAppError,
     ErrorResponse,
+    ErrorType,
 )
 from src.shared_kernel.exceptions.error_codes import (
     INFRA_ERROR_CODES,
@@ -23,6 +24,16 @@ logger = logging.getLogger(__name__)
 
 def register_exception_handlers(app: FastAPI) -> None:
     """Register universal exception handlers."""
+    # Error types whose details may contain sensitive internals
+    # (SQL queries, S3 paths, Redis keys) and must be hidden
+    # from clients in production.
+    sensitive_error_types = frozenset(
+        {
+            ErrorType.INFRASTRUCTURE,
+            ErrorType.EXTERNAL_SERVICE,
+            ErrorType.INTERNAL,
+        }
+    )
 
     @app.exception_handler(BaseAppError)
     async def base_app_exception_handler(
@@ -30,7 +41,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         exc: BaseAppError,
     ) -> JSONResponse:
         """Handle base application exceptions."""
-        # Log error
+        # Log full details (always, regardless of mode)
         logger.error(
             'Application exception: %s - %s',
             exc.error_code.code,
@@ -44,11 +55,20 @@ def register_exception_handlers(app: FastAPI) -> None:
             },
         )
 
+        # In production, mask details for infrastructure errors
+        # to prevent leaking SQL, S3 paths, or Redis keys.
+        debug_mode = getattr(app, 'debug', False)
+        details = exc.details
+        if not debug_mode and exc.error_type in sensitive_error_types:
+            details = None
+
         # Create error response
         error_response = exc.to_response(
             timestamp=datetime.now(tz=UTC).isoformat(),
             request_id=getattr(request.state, 'request_id', None),
         )
+        # Override details after to_response (which uses exc.details)
+        error_response.details = details
 
         return JSONResponse(
             status_code=exc.http_status,

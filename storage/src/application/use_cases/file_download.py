@@ -4,8 +4,8 @@ from collections.abc import AsyncIterator
 
 from src.application.dto import DownloadFileQuery
 from src.domain.entities import FileRecord
+from src.infra.adapters.storage_service import StorageService
 from src.infra.repositories import FileRecordRepository
-from src.infra.repositories.storage_service import StorageService
 from src.shared_kernel.exceptions import DomainFileNotFoundError
 
 

@@ -75,8 +75,8 @@ http {
 
     server {
         listen 443 ssl;
-        ssl_certificate     /etc/keys/${FILE_DOMAIN}.crt;
-        ssl_certificate_key /etc/keys/${FILE_DOMAIN}.key;
+        ssl_certificate     /etc/keys/${FILE_DOMAIN}/fullchain.pem;
+        ssl_certificate_key /etc/keys/${FILE_DOMAIN}/privkey.pem;
 
         root /var/www/html;
         index index.html index.nginx-debian.html;
