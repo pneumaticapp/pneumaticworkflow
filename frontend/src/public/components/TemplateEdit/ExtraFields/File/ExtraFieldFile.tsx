@@ -30,7 +30,7 @@ export function ExtraFieldFile({
   accountId,
   labelBackgroundColor,
   labelPosition,
-}: IWorkflowExtraFieldProps) {
+}: IWorkflowExtraFieldProps): JSX.Element {
   const { useCallback, useState, useEffect, createRef } = React;
   const [isUploading, setUploadingState] = useState(false);
   const [filesToUpload, setFilesToUploadState] = useState<TUploadedFile[]>(field.attachments || []);
@@ -227,5 +227,5 @@ export function ExtraFieldFile({
     return fieldsMap[mode];
   };
 
-  return renderFileField();
+  return <>{renderFileField()}</>;
 }

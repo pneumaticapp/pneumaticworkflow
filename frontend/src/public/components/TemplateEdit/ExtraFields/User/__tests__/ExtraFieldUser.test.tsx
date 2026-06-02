@@ -1,12 +1,28 @@
+/**
+ * ExtraFieldUser — компонент пользовательского поля.
+ * Тип: ExtraField с двумя режимами (Kickoff / ProcessRun).
+ * Путь: ExtraFields/User/ExtraFieldUser.tsx
+ *
+ * Контракт:
+ * - ProcessRun: UsersDropdown с опциями пользователей/групп
+ * - Value matching: userId → user option, groupId → group option
+ * - Selection: onChange устанавливает userId/groupId и сбрасывает другой
+ * - label-left: Left → FieldLabel с centered, Top → static div
+ */
 import * as React from 'react';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { useSelector } from 'react-redux';
 
 import { ExtraFieldUser, IExtraFieldUserProps } from '../ExtraFieldUser';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
+import { intlMock } from '../../../../../__stubs__/intlMock';
 import { EExtraFieldMode, EExtraFieldType } from '../../../../../types/template';
-import { EUserDropdownOptionType } from '../../../../../types/user';
-import { UsersDropdown } from '../../../../UI/form/UsersDropdown';
+import { EUserDropdownOptionType, TUserListItem, EUserStatus } from '../../../../../types/user';
+
+import { FieldLabel } from '../../utils/FieldLabel';
+import { EFieldLabelPosition } from '../../../../../types/fieldset';
+
+// --- Мок конфигурации ---
 
 jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
@@ -14,6 +30,7 @@ jest.mock('react-redux', () => ({
 }));
 
 jest.mock('react-intl', () => ({
+  ...jest.requireActual('react-intl'),
   useIntl: () => ({ formatMessage: ({ id }: { id: string }) => id }),
 }));
 
@@ -33,17 +50,34 @@ jest.mock('react-input-autosize', () => ({
 
 jest.mock('../../../../../utils/users', () => ({
   getNotDeletedUsers: jest.fn((users) => users),
-  getUserFullName: jest.fn((user) => `User ${user.id}`),
+  getUserFullName: jest.fn((user: { id: number }) => `User ${user.id}`),
 }));
 
 jest.mock('../../../../../utils/analytics', () => ({
   trackInviteTeamInPage: jest.fn(),
 }));
 
+jest.mock('../../utils/FieldLabel', () => ({
+  FieldLabel: jest.fn(() => null),
+}));
+
+// --- Тесты ---
+
 describe('ExtraFieldUser', () => {
   const mockEditField = jest.fn();
 
-  const mockUsers = [{ id: 1, firstName: 'User1', email: 'user1@test.com' }];
+  const mockUsers: TUserListItem[] = [{
+    id: 1,
+    firstName: 'User1',
+    lastName: '',
+    email: 'user1@test.com',
+    phone: '',
+    photo: '',
+    type: 'user',
+    status: EUserStatus.Active,
+    isAdmin: false,
+    isAccountOwner: false,
+  }];
   const mockGroups = [{ id: 1, name: 'Group1' }];
 
   beforeEach(() => {
@@ -54,8 +88,9 @@ describe('ExtraFieldUser', () => {
     });
   });
 
-  const getDropdownProps = (): any => {
-    const mock = UsersDropdown as unknown as jest.Mock;
+  // Хелпер для prop-drilling assertions через мокнутый UsersDropdown
+  const getDropdownProps = () => {
+    const { UsersDropdown: mock } = require('../../../../UI/form/UsersDropdown');
     if (!mock.mock.calls.length) return null;
     return mock.mock.calls[mock.mock.calls.length - 1][0];
   };
@@ -66,17 +101,20 @@ describe('ExtraFieldUser', () => {
     ...overrides,
   });
 
+  // Типизированные базовые пропсы для всех рендеров
+  const baseProps: IExtraFieldUserProps = {
+    field: createBaseField(),
+    mode: EExtraFieldMode.ProcessRun,
+    editField: mockEditField,
+    users: mockUsers,
+    intl: intlMock,
+    accountId: 1,
+    labelPosition: EFieldLabelPosition.Top,
+  };
+
   describe('Value matching logic', () => {
     it('selects user option when field.userId matches and field.groupId is null, avoiding group ID collisions', () => {
-      render(
-        React.createElement(ExtraFieldUser, {
-          field: createBaseField({ userId: 1 }),
-          mode: EExtraFieldMode.ProcessRun,
-          editField: mockEditField,
-          users: mockUsers,
-          intl: { formatMessage: () => '' },
-        } as unknown as IExtraFieldUserProps)
-      );
+      render(<ExtraFieldUser {...baseProps} field={createBaseField({ userId: 1 })} />);
 
       const props = getDropdownProps();
       expect(props.value).toBeDefined();
@@ -85,15 +123,7 @@ describe('ExtraFieldUser', () => {
     });
 
     it('selects group option when field.groupId matches and field.userId is null, avoiding user ID collisions', () => {
-      render(
-        React.createElement(ExtraFieldUser, {
-          field: createBaseField({ groupId: 1 }),
-          mode: EExtraFieldMode.ProcessRun,
-          editField: mockEditField,
-          users: mockUsers,
-          intl: { formatMessage: () => '' },
-        } as unknown as IExtraFieldUserProps)
-      );
+      render(<ExtraFieldUser {...baseProps} field={createBaseField({ groupId: 1 })} />);
 
       const props = getDropdownProps();
       expect(props.value).toBeDefined();
@@ -102,15 +132,7 @@ describe('ExtraFieldUser', () => {
     });
 
     it('returns undefined value when neither userId nor groupId are set', () => {
-      render(
-        React.createElement(ExtraFieldUser, {
-          field: createBaseField(),
-          mode: EExtraFieldMode.ProcessRun,
-          editField: mockEditField,
-          users: mockUsers,
-          intl: { formatMessage: () => '' },
-        } as unknown as IExtraFieldUserProps)
-      );
+      render(<ExtraFieldUser {...baseProps} />);
 
       const props = getDropdownProps();
       expect(props.value).toBeUndefined();
@@ -119,15 +141,7 @@ describe('ExtraFieldUser', () => {
 
   describe('Selection handling', () => {
     it('sets userId and clears groupId when a user is selected from dropdown', () => {
-      render(
-        React.createElement(ExtraFieldUser, {
-          field: createBaseField(),
-          mode: EExtraFieldMode.ProcessRun,
-          editField: mockEditField,
-          users: mockUsers,
-          intl: { formatMessage: () => '' },
-        } as unknown as IExtraFieldUserProps)
-      );
+      render(<ExtraFieldUser {...baseProps} />);
 
       const props = getDropdownProps();
       props.onChange({
@@ -144,15 +158,7 @@ describe('ExtraFieldUser', () => {
     });
 
     it('sets groupId and clears userId when a group is selected from dropdown', () => {
-      render(
-        React.createElement(ExtraFieldUser, {
-          field: createBaseField(),
-          mode: EExtraFieldMode.ProcessRun,
-          editField: mockEditField,
-          users: mockUsers,
-          intl: { formatMessage: () => '' },
-        } as unknown as IExtraFieldUserProps)
-      );
+      render(<ExtraFieldUser {...baseProps} />);
 
       const props = getDropdownProps();
       props.onChange({
@@ -166,6 +172,31 @@ describe('ExtraFieldUser', () => {
         groupId: 1,
         userId: null,
       });
+    });
+  });
+
+  // --- label-left ветвления ---
+
+  describe('label-left support', () => {
+    it('ProcessRun + labelPosition=Left: renders FieldLabel with centered class', () => {
+      render(<ExtraFieldUser {...baseProps} labelPosition={EFieldLabelPosition.Left} />);
+
+      const fieldLabelMock = FieldLabel as jest.Mock;
+      expect(fieldLabelMock).toHaveBeenCalledTimes(1);
+      expect(fieldLabelMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          className: expect.stringContaining('centered'),
+        }),
+        {},
+      );
+    });
+
+    it('ProcessRun + labelPosition=Top: renders static name div, no FieldLabel', () => {
+      render(<ExtraFieldUser {...baseProps} labelPosition={EFieldLabelPosition.Top} />);
+
+      const fieldLabelMock = FieldLabel as jest.Mock;
+      expect(fieldLabelMock).not.toHaveBeenCalled();
+      expect(screen.getByText('User Field')).toBeInTheDocument();
     });
   });
 });

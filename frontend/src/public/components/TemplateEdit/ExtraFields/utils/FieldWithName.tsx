@@ -1,5 +1,6 @@
 import classnames from 'classnames';
-import React, {
+import * as React from 'react';
+import {
   ChangeEvent,
   forwardRef,
   KeyboardEvent,
@@ -137,7 +138,7 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
     );
 
     return (
-      <div className={fieldContainerClassName} data-autofocus-first-field>
+      <div className={fieldContainerClassName} data-autofocus-first-field aria-label="field-container">
         <FieldLabel
           name={name}
           isRequired={isRequired}

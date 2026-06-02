@@ -49,7 +49,7 @@ export function ExtraFieldCreatable({
   labelPosition,
   innerRef,
   datasetName,
-}: IWorkflowExtraFieldProps) {
+}: IWorkflowExtraFieldProps): JSX.Element {
   const { isRequired } = field;
   const optionInputsRefs = React.useRef<HTMLInputElement[]>([]);
 
@@ -295,5 +295,5 @@ export function ExtraFieldCreatable({
     return fieldsMap[mode];
   };
 
-  return renderDropdownField();
+  return <>{renderDropdownField()}</>;
 }

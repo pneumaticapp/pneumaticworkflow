@@ -1,5 +1,6 @@
 import classnames from 'classnames';
-import React, { ChangeEvent, useCallback, useMemo, useRef, useState } from 'react';
+import * as React from 'react';
+import { ChangeEvent, useCallback, useMemo, useRef, useState } from 'react';
 import TextareaAutosize from 'react-textarea-autosize';
 
 import { validateKickoffFieldName } from '../../../../utils/validators';
@@ -79,7 +80,7 @@ export function FieldLabel({
             minRows={1}
             className={styles['kick-off-input__name-textarea']}
           />
-          {isRequired && <span className={styles['kick-off-required-sign']} />}
+          {isRequired && <span aria-label="required" className={styles['kick-off-required-sign']} />}
           {!isFocused && (
             <button
               type="button"
@@ -94,7 +95,7 @@ export function FieldLabel({
       ) : (
         <>
           <div className={styles['kick-off-input__name-readonly']}>{name}</div>
-          {isRequired && <span className={styles['kick-off-required-sign']} />}
+          {isRequired && <span aria-label="required" className={styles['kick-off-required-sign']} />}
         </>
       )}
     </div>

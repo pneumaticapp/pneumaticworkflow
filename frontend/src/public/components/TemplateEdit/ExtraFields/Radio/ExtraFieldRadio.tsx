@@ -35,7 +35,7 @@ export function ExtraFieldRadio({
   datasetName,
   labelPosition,
   labelBackgroundColor,
-}: IWorkflowExtraFieldProps) {
+}: IWorkflowExtraFieldProps): JSX.Element {
   const selectionItems = field.selections as IExtraFieldSelection[];
   const selectionValues = field.selections as string[];
   const fieldNameInputRef = React.useRef<HTMLTextAreaElement | null>(null);
@@ -289,5 +289,5 @@ export function ExtraFieldRadio({
     return fieldsMap[mode];
   };
 
-  return renderField();
+  return <>{renderField()}</>;
 }

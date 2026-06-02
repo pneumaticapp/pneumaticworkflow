@@ -31,7 +31,7 @@ export function ExtraFieldDate({
   labelBackgroundColor,
   labelPosition,
   innerRef,
-}: IWorkflowExtraFieldProps) {
+}: IWorkflowExtraFieldProps): JSX.Element {
   const handleChangeName = React.useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       editField({ name: e.target.value });
@@ -126,5 +126,5 @@ export function ExtraFieldDate({
     return fieldsMap[mode];
   };
 
-  return renderField();
+  return <>{renderField()}</>;
 }

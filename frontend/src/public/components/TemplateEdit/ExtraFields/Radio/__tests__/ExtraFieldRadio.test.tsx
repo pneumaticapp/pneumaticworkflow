@@ -1,27 +1,43 @@
+/**
+ * ExtraFieldRadio — компонент радио-поля.
+ * Тип: ExtraField с двумя режимами (Kickoff / ProcessRun).
+ * Путь: ExtraFields/Radio/ExtraFieldRadio.tsx
+ *
+ * Контракт label-left:
+ * - Kickoff + Left → FieldLabel, className label-left на OutputFieldContent
+ * - ProcessRun + Left → FieldLabel с aligned-start
+ * - Top → inline textarea / static div, FieldLabel не рендерится
+ */
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 
 import { ExtraFieldRadio } from '../ExtraFieldRadio';
 import { OutputFieldContent } from '../../utils/OutputFieldContent';
+import { FieldLabel } from '../../utils/FieldLabel';
 import { RadioButton } from '../../../../UI/Fields/RadioButton';
+import { IWorkflowExtraFieldProps } from '../../types';
 import { intlMock } from '../../../../../__stubs__/intlMock';
-import { EExtraFieldMode } from '../../../../../types/template';
+import { makeExtraField } from '../../../../../__stubs__/fields.factory';
+import { EExtraFieldMode, EExtraFieldType, IExtraFieldSelection } from '../../../../../types/template';
+import { EFieldLabelPosition } from '../../../../../types/fieldset';
+
+// --- Мок конфигурации ---
 
 jest.mock('../../utils/OutputFieldContent', () => ({
-  OutputFieldContent: jest.fn(({ children }: any) =>
+  OutputFieldContent: jest.fn(({ children }: { children: React.ReactNode }) =>
     React.createElement('div', { 'data-testid': 'output-field-content' }, children),
   ),
 }));
 
 jest.mock('../../../../UI/Fields/RadioButton', () => ({
-  RadioButton: jest.fn(({ title }: any) =>
+  RadioButton: jest.fn(({ title }: { title: string }) =>
     React.createElement('span', { 'data-testid': `radio-${title}` }, title),
   ),
 }));
 
 jest.mock('react-input-autosize', () => ({
   __esModule: true,
-  default: jest.fn(({ value, onChange, placeholder }: any) =>
+  default: jest.fn(({ value, onChange, placeholder }: { value: string; onChange: () => void; placeholder: string }) =>
     React.createElement('input', { value: value || '', onChange, placeholder }),
   ),
 }));
@@ -53,38 +69,43 @@ jest.mock('../../../KickoffRedux/utils/getEmptySelection', () => ({
   getEmptySelection: jest.fn(() => ({ id: 'empty', value: '', isSelected: false, apiName: 'empty' })),
 }));
 
+jest.mock('../../utils/FieldLabel', () => ({
+  FieldLabel: jest.fn(() => null),
+}));
+
+// --- Тесты ---
+
 describe('ExtraFieldRadio', () => {
   const mockEditField = jest.fn();
 
-  const kickoffField = {
+  const kickoffSelections: IExtraFieldSelection[] = [
+    { key: 1, value: 'Red', isSelected: false, apiName: 'opt-1' },
+    { key: 2, value: 'Blue', isSelected: false, apiName: 'opt-2' },
+  ];
+
+  const processRunSelections = ['Red', 'Blue', 'Green'];
+
+  const kickoffField = makeExtraField({
     name: 'Color',
-    value: '',
-    type: 'radio' as any,
-    apiName: 'color',
-    order: 0,
-    isRequired: false,
-    userId: 1,
-    groupId: 1,
-    dataset: null,
-    selections: [
-      { id: 1, value: 'Red', isSelected: false, apiName: 'opt-1' },
-      { id: 2, value: 'Blue', isSelected: false, apiName: 'opt-2' },
-    ],
-  };
+    type: EExtraFieldType.Radio,
+    selections: kickoffSelections,
+  });
 
-  const processRunField = {
-    ...kickoffField,
-    selections: ['Red', 'Blue', 'Green'],
+  const processRunField = makeExtraField({
+    name: 'Color',
+    type: EExtraFieldType.Radio,
+    selections: processRunSelections,
     value: 'Red',
-  };
+  });
 
-  const baseKickoffProps = {
-    field: kickoffField as any,
-    intl: intlMock as any,
+  const baseKickoffProps: IWorkflowExtraFieldProps = {
+    field: kickoffField,
+    intl: intlMock,
     editField: mockEditField,
     mode: EExtraFieldMode.Kickoff,
     isDisabled: false,
     accountId: 1,
+    labelPosition: EFieldLabelPosition.Top,
   };
 
   beforeEach(() => {
@@ -92,13 +113,13 @@ describe('ExtraFieldRadio', () => {
   });
 
   it('Kickoff: renders OutputFieldContent as wrapper for options', () => {
-    render(React.createElement(ExtraFieldRadio as any, baseKickoffProps));
+    render(<ExtraFieldRadio {...baseKickoffProps} />);
 
     expect(screen.getByTestId('output-field-content')).toBeInTheDocument();
   });
 
   it('Kickoff: passes field, editField, isDisabled to OutputFieldContent', () => {
-    render(React.createElement(ExtraFieldRadio as any, baseKickoffProps));
+    render(<ExtraFieldRadio {...baseKickoffProps} />);
 
     const mock = OutputFieldContent as jest.Mock;
     expect(mock).toHaveBeenCalledTimes(1);
@@ -113,16 +134,84 @@ describe('ExtraFieldRadio', () => {
   });
 
   it('ProcessRun: renders RadioButton for each string selection', () => {
-    render(React.createElement(ExtraFieldRadio as any, {
-      ...baseKickoffProps,
-      field: processRunField as any,
-      mode: EExtraFieldMode.ProcessRun,
-    }));
+    render(
+      <ExtraFieldRadio
+        {...baseKickoffProps}
+        field={processRunField}
+        mode={EExtraFieldMode.ProcessRun}
+      />,
+    );
 
-    const mock = RadioButton as unknown as jest.Mock;
+    const mock = RadioButton as jest.Mock;
     expect(mock).toHaveBeenCalledTimes(3);
     expect(mock).toHaveBeenCalledWith(expect.objectContaining({ title: 'Red' }), {});
     expect(mock).toHaveBeenCalledWith(expect.objectContaining({ title: 'Blue' }), {});
     expect(mock).toHaveBeenCalledWith(expect.objectContaining({ title: 'Green' }), {});
+  });
+
+  // --- label-left ветвления ---
+
+  describe('label-left support', () => {
+    it('Kickoff + labelPosition=Left: renders FieldLabel', () => {
+      render(<ExtraFieldRadio {...baseKickoffProps} labelPosition={EFieldLabelPosition.Left} />);
+
+      const fieldLabelMock = FieldLabel as jest.Mock;
+      expect(fieldLabelMock).toHaveBeenCalledTimes(1);
+    });
+
+    it('Kickoff + labelPosition=Top: no FieldLabel', () => {
+      render(<ExtraFieldRadio {...baseKickoffProps} labelPosition={EFieldLabelPosition.Top} />);
+
+      const fieldLabelMock = FieldLabel as jest.Mock;
+      expect(fieldLabelMock).not.toHaveBeenCalled();
+    });
+
+    it('Kickoff + labelPosition=Left: passes className with label-left to OutputFieldContent', () => {
+      render(<ExtraFieldRadio {...baseKickoffProps} labelPosition={EFieldLabelPosition.Left} />);
+
+      const mock = OutputFieldContent as jest.Mock;
+      expect(mock).toHaveBeenCalledTimes(1);
+      expect(mock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          className: expect.stringContaining('label-left'),
+        }),
+        {},
+      );
+    });
+
+    it('ProcessRun + labelPosition=Left: renders FieldLabel with aligned-start class', () => {
+      render(
+        <ExtraFieldRadio
+          {...baseKickoffProps}
+          field={processRunField}
+          mode={EExtraFieldMode.ProcessRun}
+          labelPosition={EFieldLabelPosition.Left}
+        />,
+      );
+
+      const fieldLabelMock = FieldLabel as jest.Mock;
+      expect(fieldLabelMock).toHaveBeenCalledTimes(1);
+      expect(fieldLabelMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          className: expect.stringContaining('aligned-start'),
+        }),
+        {},
+      );
+    });
+
+    it('ProcessRun + labelPosition=Top: renders static name div, no FieldLabel', () => {
+      render(
+        <ExtraFieldRadio
+          {...baseKickoffProps}
+          field={processRunField}
+          mode={EExtraFieldMode.ProcessRun}
+          labelPosition={EFieldLabelPosition.Top}
+        />,
+      );
+
+      const fieldLabelMock = FieldLabel as jest.Mock;
+      expect(fieldLabelMock).not.toHaveBeenCalled();
+      expect(screen.getByText('Color')).toBeInTheDocument();
+    });
   });
 });

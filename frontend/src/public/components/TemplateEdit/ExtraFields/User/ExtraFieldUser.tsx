@@ -39,7 +39,7 @@ export function ExtraFieldUser({
   labelBackgroundColor,
   labelPosition,
   innerRef,
-}: IExtraFieldUserProps) {
+}: IExtraFieldUserProps): JSX.Element {
   const { formatMessage } = useIntl();
 
   const users: ReturnType<typeof getUsers> = getNotDeletedUsers(useSelector(getUsers));

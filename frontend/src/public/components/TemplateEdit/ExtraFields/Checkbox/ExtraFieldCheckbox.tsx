@@ -42,7 +42,7 @@ export function ExtraFieldCheckbox({
   datasetName,
   labelPosition,
   labelBackgroundColor,
-}: IWorkflowExtraFieldProps) {
+}: IWorkflowExtraFieldProps): JSX.Element {
   const selectionItems = field.selections as IExtraFieldSelection[];
   const selectionValues = field.selections as string[];
   const selectedOptions = normalizeCheckboxValue(value);
@@ -304,5 +304,5 @@ export function ExtraFieldCheckbox({
     return fieldsMap[mode];
   };
 
-  return renderField();
+  return <>{renderField()}</>;
 }
