@@ -172,7 +172,7 @@ def test_force_delay_workflow__task_has_existing_delay__update_delay(mocker):
     )
     mocker.patch(
         'src.processes.services.workflow_action'
-        '.send_removed_task_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
     service = WorkflowActionService(user=owner, workflow=workflow)
     date_arg = timezone.now() + timedelta(hours=2)
@@ -208,7 +208,7 @@ def test_force_delay_workflow__task_no_delay__create_delay(mocker):
     )
     mocker.patch(
         'src.processes.services.workflow_action.'
-        'send_removed_task_notification.delay',
+        'send_task_deleted_notification.delay',
     )
     service = WorkflowActionService(user=owner, workflow=workflow)
     date_arg = timezone.now() + timedelta(hours=2)
@@ -246,7 +246,7 @@ def test_force_delay_workflow__multiple_recipients__send_notifications(mocker):
     )
     send_removed_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'send_removed_task_notification.delay',
+        'send_task_deleted_notification.delay',
     )
     service = WorkflowActionService(user=owner, workflow=workflow)
     date_arg = timezone.now() + timedelta(hours=1)
@@ -291,7 +291,7 @@ def test_terminate_workflow__has_active_tasks__send_removed_notification(
     owner = create_test_owner(account=account)
     workflow = create_test_workflow(user=owner)
     send_removed_mock = mocker.patch(
-        'src.processes.services.workflow_action.send_removed_task_'
+        'src.processes.services.workflow_action.send_task_deleted_'
         'notification.delay',
     )
     mocker.patch(
@@ -327,7 +327,7 @@ def test_terminate_workflow__no_active_tasks__ok(mocker):
     workflow.tasks.update(status=TaskStatus.PENDING)
     send_removed_mock = mocker.patch(
         'src.processes.services.workflow_action.'
-        'send_removed_task_notification.delay',
+        'send_task_deleted_notification.delay',
     )
     deactivate_mock = mocker.patch(
         'src.processes.services.workflow_action.GuestJWTAuthService'
@@ -645,7 +645,7 @@ def test_force_complete_workflow__has_active_tasks__send_removed_notif(
         '.workflow_ended_event',
     )
     send_removed_mock = mocker.patch(
-        'src.processes.services.workflow_action.send_removed_task_'
+        'src.processes.services.workflow_action.send_task_deleted_'
         'notification.delay',
     )
     service = WorkflowActionService(user=owner, workflow=workflow)
@@ -2063,13 +2063,13 @@ def test_complete_task__user_performer__ok(mocker):
     partial_update_mock = mocker.patch(
         'src.processes.services.tasks.task.TaskService.partial_update',
     )
-    send_removed_task_notification_mock = mocker.patch(
+    send_task_completed_websocket_mock = mocker.patch(
         'src.processes.services.workflow_action'
-        '.send_removed_task_notification.delay',
+        '.send_task_completed_websocket.delay',
     )
-    send_complete_task_notification_mock = mocker.patch(
+    send_task_completed_notification_mock = mocker.patch(
         'src.processes.services.workflow_action'
-        '.send_complete_task_notification.delay',
+        '.send_task_completed_notification.delay',
     )
     task_complete_event_mock = mocker.patch(
         'src.processes.services.workflow_action.WorkflowEventService'
@@ -2113,12 +2113,12 @@ def test_complete_task__user_performer__ok(mocker):
         date_started=task.date_started,
         force_save=True,
     )
-    send_removed_task_notification_mock.assert_called_once_with(
+    send_task_completed_websocket_mock.assert_called_once_with(
         task_id=task.id,
         recipients=[(user.id, user.email)],
         account_id=task.account_id,
     )
-    send_complete_task_notification_mock.assert_called_once_with(
+    send_task_completed_notification_mock.assert_called_once_with(
         logging=account.log_api_requests,
         author_id=owner.id,
         account_id=account.id,
@@ -2159,11 +2159,11 @@ def test_complete_task__by_user__ok(mocker):
     )
     mocker.patch(
         'src.processes.services.workflow_action'
-        '.send_removed_task_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
     mocker.patch(
         'src.processes.services.workflow_action'
-        '.send_complete_task_notification.delay',
+        '.send_task_completed_notification.delay',
     )
     task_complete_event_mock = mocker.patch(
         'src.processes.services.workflow_action.WorkflowEventService'
@@ -2224,11 +2224,11 @@ def test_complete_task__exist_webhook_subscription__send_webhook(mocker):
     )
     mocker.patch(
         'src.processes.services.workflow_action'
-        '.send_removed_task_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
     mocker.patch(
         'src.processes.services.workflow_action'
-        '.send_complete_task_notification.delay',
+        '.send_task_completed_notification.delay',
     )
     mocker.patch(
         'src.processes.services.workflow_action.WorkflowEventService'
@@ -2890,9 +2890,9 @@ def test_complete_task_for_user__workflow_delayed__raise_exception(mocker):
         'src.processes.services.workflow_action.WorkflowActionService'
         '.complete_task',
     )
-    send_removed_task_notification_mock = mocker.patch(
+    send_task_deleted_notification_mock = mocker.patch(
         'src.processes.services.workflow_action'
-        '.send_removed_task_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
 
     service = WorkflowActionService(user=owner, workflow=workflow)
@@ -2907,7 +2907,7 @@ def test_complete_task_for_user__workflow_delayed__raise_exception(mocker):
     partial_update_mock.assert_not_called()
     task_can_be_completed_mock.assert_not_called()
     complete_task_mock.assert_not_called()
-    send_removed_task_notification_mock.assert_not_called()
+    send_task_deleted_notification_mock.assert_not_called()
 
 
 def test_complete_task_for_user__workflow_completed__raise_exception(mocker):
@@ -2934,9 +2934,9 @@ def test_complete_task_for_user__workflow_completed__raise_exception(mocker):
         'src.processes.services.workflow_action.WorkflowActionService'
         '.complete_task',
     )
-    send_removed_task_notification_mock = mocker.patch(
+    send_task_deleted_notification_mock = mocker.patch(
         'src.processes.services.workflow_action'
-        '.send_removed_task_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
 
     service = WorkflowActionService(user=owner, workflow=workflow)
@@ -2951,7 +2951,7 @@ def test_complete_task_for_user__workflow_completed__raise_exception(mocker):
     partial_update_mock.assert_not_called()
     task_can_be_completed_mock.assert_not_called()
     complete_task_mock.assert_not_called()
-    send_removed_task_notification_mock.assert_not_called()
+    send_task_deleted_notification_mock.assert_not_called()
 
 
 @pytest.mark.parametrize('status', TaskStatus.INACTIVE_STATUS)
@@ -2990,9 +2990,9 @@ def test_complete_task_for_user__task_inactive__raise_exception(
         'src.processes.services.workflow_action.WorkflowActionService'
         '.complete_task',
     )
-    send_removed_task_notification_mock = mocker.patch(
+    send_task_deleted_notification_mock = mocker.patch(
         'src.processes.services.workflow_action'
-        '.send_removed_task_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
 
     service = WorkflowActionService(user=owner, workflow=workflow)
@@ -3007,7 +3007,7 @@ def test_complete_task_for_user__task_inactive__raise_exception(
     partial_update_mock.assert_not_called()
     task_can_be_completed_mock.assert_not_called()
     complete_task_mock.assert_not_called()
-    send_removed_task_notification_mock.assert_not_called()
+    send_task_deleted_notification_mock.assert_not_called()
 
 
 def test_complete_task_for_user__performer_complete_task__raise_exception(
@@ -3048,9 +3048,9 @@ def test_complete_task_for_user__performer_complete_task__raise_exception(
         'src.processes.services.workflow_action.WorkflowActionService'
         '.complete_task',
     )
-    send_removed_task_notification_mock = mocker.patch(
+    send_task_deleted_notification_mock = mocker.patch(
         'src.processes.services.workflow_action'
-        '.send_removed_task_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
     service = WorkflowActionService(user=owner, workflow=workflow)
 
@@ -3064,7 +3064,7 @@ def test_complete_task_for_user__performer_complete_task__raise_exception(
     partial_update_mock.assert_not_called()
     task_can_be_completed_mock.assert_not_called()
     complete_task_mock.assert_not_called()
-    send_removed_task_notification_mock.assert_not_called()
+    send_task_deleted_notification_mock.assert_not_called()
 
 
 def test_complete_task_for_user__user_not_performer__raise(mocker):
@@ -3097,9 +3097,9 @@ def test_complete_task_for_user__user_not_performer__raise(mocker):
         'src.processes.services.workflow_action.WorkflowActionService'
         '.complete_task',
     )
-    send_removed_task_notification_mock = mocker.patch(
+    send_task_deleted_notification_mock = mocker.patch(
         'src.processes.services.workflow_action'
-        '.send_removed_task_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
     service = WorkflowActionService(user=user, workflow=workflow)
 
@@ -3113,7 +3113,7 @@ def test_complete_task_for_user__user_not_performer__raise(mocker):
     partial_update_mock.assert_not_called()
     task_can_be_completed_mock.assert_not_called()
     complete_task_mock.assert_not_called()
-    send_removed_task_notification_mock.assert_not_called()
+    send_task_deleted_notification_mock.assert_not_called()
 
 
 def test_complete_task_for_user__checklist_incomplete__raise_exception(
@@ -3142,9 +3142,9 @@ def test_complete_task_for_user__checklist_incomplete__raise_exception(
         'src.processes.services.workflow_action.WorkflowActionService'
         '.complete_task',
     )
-    send_removed_task_notification_mock = mocker.patch(
+    send_task_deleted_notification_mock = mocker.patch(
         'src.processes.services.workflow_action'
-        '.send_removed_task_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
     checklists_completed_mock = mocker.patch(
         'src.processes.services.workflow_action.Task.checklists_completed',
@@ -3163,7 +3163,7 @@ def test_complete_task_for_user__checklist_incomplete__raise_exception(
     partial_update_mock.assert_not_called()
     task_can_be_completed_mock.assert_not_called()
     complete_task_mock.assert_not_called()
-    send_removed_task_notification_mock.assert_not_called()
+    send_task_deleted_notification_mock.assert_not_called()
 
 
 def test_complete_task_for_user__sub_wf_running__raise_exception(mocker):
@@ -3195,9 +3195,9 @@ def test_complete_task_for_user__sub_wf_running__raise_exception(mocker):
         'src.processes.services.workflow_action.WorkflowActionService'
         '.complete_task',
     )
-    send_removed_task_notification_mock = mocker.patch(
+    send_task_deleted_notification_mock = mocker.patch(
         'src.processes.services.workflow_action'
-        '.send_removed_task_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
     service = WorkflowActionService(user=owner, workflow=workflow)
 
@@ -3211,7 +3211,7 @@ def test_complete_task_for_user__sub_wf_running__raise_exception(mocker):
     partial_update_mock.assert_not_called()
     task_can_be_completed_mock.assert_not_called()
     complete_task_mock.assert_not_called()
-    send_removed_task_notification_mock.assert_not_called()
+    send_task_deleted_notification_mock.assert_not_called()
 
 
 def test_complete_task_for_user__account_owner_no_performer__force_complete(
@@ -3241,9 +3241,9 @@ def test_complete_task_for_user__account_owner_no_performer__force_complete(
         'src.processes.services.workflow_action.WorkflowActionService'
         '.complete_task',
     )
-    send_removed_task_notification_mock = mocker.patch(
+    send_task_deleted_notification_mock = mocker.patch(
         'src.processes.services.workflow_action'
-        '.send_removed_task_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
 
     service = WorkflowActionService(user=owner, workflow=workflow)
@@ -3257,7 +3257,7 @@ def test_complete_task_for_user__account_owner_no_performer__force_complete(
     partial_update_mock.assert_not_called()
     task_can_be_completed_mock.assert_not_called()
     complete_task_mock.assert_called_once_with(task=task, by_user=True)
-    send_removed_task_notification_mock.assert_not_called()
+    send_task_deleted_notification_mock.assert_not_called()
 
 
 def test_complete_task_for_user__user_performer_last_completion__ok(
@@ -3293,9 +3293,9 @@ def test_complete_task_for_user__user_performer_last_completion__ok(
         'src.processes.services.workflow_action.WorkflowActionService'
         '.complete_task',
     )
-    send_removed_task_notification_mock = mocker.patch(
+    send_task_deleted_notification_mock = mocker.patch(
         'src.processes.services.workflow_action'
-        '.send_removed_task_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
 
     service = WorkflowActionService(user=user, workflow=workflow)
@@ -3309,7 +3309,7 @@ def test_complete_task_for_user__user_performer_last_completion__ok(
     partial_update_mock.assert_not_called()
     task_can_be_completed_mock.assert_called_once_with(task)
     complete_task_mock.assert_called_once_with(task=task, by_user=True)
-    send_removed_task_notification_mock.assert_not_called()
+    send_task_deleted_notification_mock.assert_not_called()
 
 
 def test_complete_task_for_user__user_performer_first_completion__ok(
@@ -3345,9 +3345,9 @@ def test_complete_task_for_user__user_performer_first_completion__ok(
         'src.processes.services.workflow_action.WorkflowActionService'
         '.complete_task',
     )
-    send_removed_task_notification_mock = mocker.patch(
+    send_task_completed_websocket_mock = mocker.patch(
         'src.processes.services.workflow_action'
-        '.send_removed_task_notification.delay',
+        '.send_task_completed_websocket.delay',
     )
     current_date = timezone.now()
     mocker.patch(
@@ -3367,10 +3367,10 @@ def test_complete_task_for_user__user_performer_first_completion__ok(
     task_performer.refresh_from_db()
     assert task_performer.date_completed == current_date
     assert task_performer.is_completed is True
-    send_removed_task_notification_mock.assert_called_once_with(
+    send_task_completed_websocket_mock.assert_called_once_with(
         task_id=task.id,
         recipients=[(user.id, user.email)],
-        account_id=account.id,
+        account_id=task.account_id,
     )
     complete_task_mock.assert_not_called()
 
@@ -3408,9 +3408,9 @@ def test_complete_task_for_user__guest_performer_first_completion__ok(
         'src.processes.services.workflow_action.WorkflowActionService'
         '.complete_task',
     )
-    send_removed_task_notification_mock = mocker.patch(
+    send_task_deleted_notification_mock = mocker.patch(
         'src.processes.services.workflow_action'
-        '.send_removed_task_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
     current_date = timezone.now()
     mocker.patch(
@@ -3430,7 +3430,7 @@ def test_complete_task_for_user__guest_performer_first_completion__ok(
     task_performer.refresh_from_db()
     assert task_performer.date_completed == current_date
     assert task_performer.is_completed is True
-    send_removed_task_notification_mock.assert_not_called()
+    send_task_deleted_notification_mock.assert_not_called()
     complete_task_mock.assert_not_called()
 
 
@@ -4180,7 +4180,7 @@ def test__deactivate_task__no_action_active__send_removed_notification(
         return_value=(None, False),
     )
     send_removed_mock = mocker.patch(
-        'src.processes.services.workflow_action.send_removed_task_'
+        'src.processes.services.workflow_action.send_task_deleted_'
         'notification.delay',
     )
     service = WorkflowActionService(user=owner, workflow=workflow)

@@ -1,20 +1,15 @@
 /* eslint-disable */
 /* prettier-ignore */
-import { EventChannel } from 'redux-saga';
-import { all, call, fork, put, select, take, takeEvery } from 'redux-saga/effects';
+import { all, call, fork, put, select, takeEvery } from 'redux-saga/effects';
 import uniqBy from 'lodash.uniqby';
 
 import { getNotifications, TGetNotificationsResponse } from '../../api/getNotifications';
 import { removeNotificationItem } from '../../api/removeNotificationItem';
 import { markNotificationsAsRead } from '../../api/markNotificationsAsRead';
-import { parseCookies } from '../../utils/cookie';
-import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { isArrayWithItems } from '../../utils/helpers';
-import { mergePaths } from '../../utils/urls';
 import { TRemoveNotificationItem } from '../actions';
 import { getNotificationsStore } from '../selectors/notifications';
-import { createWebSocketChannel } from '../utils/createWebSocketChannel';
 import { TNotificationsListItem } from '../../types';
 
 import {
@@ -27,7 +22,6 @@ import {
   changeUnreadNotificationsCount,
 } from './actions';
 import { getUnreadNotificationsCount } from '../../api/getUnreadNotificationsCount';
-import { envWssURL } from '../../constants/enviroment';
 import { NotificationManager } from '../../components/UI/Notifications';
 
 function* fetchNotificationsAsRead() {
@@ -132,32 +126,6 @@ function* watchRemoveNotification() {
 
 function* watchChangeList() {
   yield takeEvery(ENotificationsActions.ChangeList, handleChangeList);
-}
-
-export function* watchNewNotifications() {
-  const {
-    api: { wsPublicUrl, urls },
-  } = getBrowserConfigEnv();
-
-  const apiUrl = `${urls.wsNotifications}?auth_token=${parseCookies(document.cookie).token}`;
-  const url = mergePaths(envWssURL || wsPublicUrl, apiUrl);
-  const channel: EventChannel<TNotificationsListItem> = yield call(createWebSocketChannel, url);
-
-  while (true) {
-    const newNotification: TNotificationsListItem = yield take(channel);
-    const {
-      items: currentNotificationsList,
-      totalItemsCount,
-      unreadItemsCount,
-      isNotificationsListOpen,
-    }: ReturnType<typeof getNotificationsStore> = yield select(getNotificationsStore);
-    const newNotficationsListItems = [newNotification, ...currentNotificationsList];
-    yield put(changeNotificationsList({ items: newNotficationsListItems, count: totalItemsCount + 1 }));
-
-    if (!isNotificationsListOpen) {
-      yield put(changeUnreadNotificationsCount(unreadItemsCount + 1));
-    }
-  }
 }
 
 export function* rootSaga() {
