@@ -35,6 +35,7 @@ export interface IRichEditorBaseProps {
   title?: string;
   foregroundColor?: TForegroundColor;
   stripPastedFormatting?: boolean;
+  plainText?: boolean;
   templateVariables?: TTaskVariable[];
   submitIcon?: ReactNode;
   cancelIcon?: ReactNode;
@@ -78,4 +79,6 @@ export interface ILexicalEditorContentProps {
   submitIcon?: ReactNode;
   cancelIcon?: ReactNode;
   withControls?: boolean;
+  plainText?: boolean;
+  templateVariables?: TTaskVariable[];
 }

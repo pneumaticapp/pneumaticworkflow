@@ -34,16 +34,43 @@ function createVariableNodeFromApiName(
   return $createVariableNode(getVariablePayload(apiName, templateVariables));
 }
 
+function createGlobalVariableRegex(): RegExp {
+  return new RegExp(variableRegex.source, `${variableRegex.flags}g`);
+}
+
+export function isKnownVariableApiName(
+  apiName: string,
+  templateVariables?: TTaskVariable[],
+): boolean {
+  const normalized = apiName.trim();
+  if (normalized === '') return false;
+
+  return templateVariables?.some((variable) => variable.apiName === normalized) ?? false;
+}
+
+export function removeUnknownVariableTokens(
+  text: string,
+  templateVariables?: TTaskVariable[],
+): string {
+  return text.replace(createGlobalVariableRegex(), (match, apiName: string) =>
+    (isKnownVariableApiName(apiName, templateVariables) ? match : ''),
+  );
+}
+
+function findVariableMatches(text: string): InlineMatch[] {
+  const reVar = createGlobalVariableRegex();
+  return [...text.matchAll(reVar)].map((match) => ({
+    type: 'variable' as const,
+    index: match.index!,
+    end: match.index! + match[0].length,
+    match,
+  }));
+}
+
 function findAllInlineMatches(text: string): InlineMatch[] {
-  const reVar = new RegExp(variableRegex.source, `${variableRegex.flags}g`);
   const reMention = new RegExp(mentionsRegex.source, `${mentionsRegex.flags}g`);
   const list: InlineMatch[] = [
-    ...[...text.matchAll(reVar)].map((match) => ({
-      type: 'variable' as const,
-      index: match.index!,
-      end: match.index! + match[0].length,
-      match,
-    })),
+    ...findVariableMatches(text),
     ...[...text.matchAll(reMention)].map((match) => ({
       type: 'mention' as const,
       index: match.index!,
@@ -74,11 +101,17 @@ function matchToNode(item: InlineMatch, templateVariables?: TTaskVariable[]): Le
   return $createTextNode(item.match[0]);
 }
 
+export interface IParseTextWithVariablesOptions {
+  /** When true, only `{{variable}}` tokens are parsed; mentions and markdown are ignored */
+  variablesOnly?: boolean;
+}
+
 export function parseTextWithVariables(
   text: string,
   templateVariables?: TTaskVariable[],
+  options?: IParseTextWithVariablesOptions,
 ): LexicalNode[] {
-  const matches = findAllInlineMatches(text);
+  const matches = options?.variablesOnly ? findVariableMatches(text) : findAllInlineMatches(text);
   if (matches.length === 0) {
     return [$createTextNode(text)];
   }

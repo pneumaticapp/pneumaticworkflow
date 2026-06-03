@@ -15,9 +15,6 @@ jest.mock('../../../RichEditor', () => ({
   ),
 }));
 
-jest.mock('../../../../utils/escapeMarkdown', () => ({
-  escapeMarkdown: (v: string | undefined) => v ?? '',
-}));
 
 describe('InputWithVariables', () => {
   const baseProps = {

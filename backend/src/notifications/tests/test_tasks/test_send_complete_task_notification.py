@@ -6,7 +6,7 @@ from src.accounts.models import Notification
 from src.notifications.enums import NotificationMethod
 from src.notifications.services.push import PushNotificationService
 from src.notifications.tasks import (
-    _send_complete_task_notification,
+    _send_task_completed_notification,
 )
 from src.processes.tests.fixtures import (
     create_test_account,
@@ -17,7 +17,7 @@ from src.processes.tests.fixtures import (
 pytestmark = pytest.mark.django_db
 
 
-def test_send_complete_task_notification__call_services(mocker):
+def test_send_task_completed_notification__call_services(mocker):
 
     # arrange
     logo_lg = 'https://photo.com/logo.jpg'
@@ -44,15 +44,15 @@ def test_send_complete_task_notification__call_services(mocker):
     )
     push_notification_mock = mocker.patch(
         'src.notifications.services.push.'
-        'PushNotificationService.send_complete_task',
+        'PushNotificationService.send_task_completed',
     )
     ws_notification_mock = mocker.patch(
         'src.notifications.services.websockets.'
-        'WebSocketService.send_complete_task',
+        'WebSocketService.send_task_completed',
     )
 
     # act
-    _send_complete_task_notification(
+    _send_task_completed_notification(
         logging=account.log_api_requests,
         author_id=account_owner.id,
         account_id=account.id,
@@ -97,7 +97,7 @@ def test_send_complete_task_notification__call_services(mocker):
     )
 
 
-def test_send_complete_task_notification__ok(api_client, mocker):
+def test_send_task_completed_notification__ok(api_client, mocker):
 
     # arrange
     logo_lg = 'https://photo.com/logo.jpg'
@@ -122,7 +122,7 @@ def test_send_complete_task_notification__ok(api_client, mocker):
     )
 
     # act
-    _send_complete_task_notification(
+    _send_task_completed_notification(
         logging=account.log_api_requests,
         author_id=account_owner.id,
         account_id=account.id,
@@ -147,7 +147,7 @@ def test_send_complete_task_notification__ok(api_client, mocker):
         user_email=user_email,
         account_id=account.id,
         notification=notification,
-        method_name=NotificationMethod.complete_task,
+        method_name=NotificationMethod.task_completed,
         workflow_name=workflow_name,
         task_id=task.id,
         task_name=task.name,

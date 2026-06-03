@@ -1,0 +1,1 @@
+export { PlainTextPastePlugin } from './PlainTextPastePlugin';

@@ -23,7 +23,12 @@ import { useAttachmentUpload, usePasteUpload } from './hooks';
 import type { IRichEditorHandle, IRichEditorProps } from './types';
 import { lexicalTheme } from './theme';
 import { LEXICAL_NODES } from './nodes';
-import { applyMarkdownToEditor, convertLexicalToMarkdown } from './converters';
+import {
+  applyMarkdownToEditor,
+  applyPlainTextToEditor,
+  convertLexicalToMarkdown,
+  convertLexicalToPlainText,
+} from './converters';
 import { prepareChecklistsForAPI } from '../../utils/checklists/prepareChecklistsForAPI';
 import { LinkPluginProvider } from './plugins';
 import { LexicalEditorContent } from './components/LexicalEditorContent/LexicalEditorContent';
@@ -62,6 +67,7 @@ export const RichEditor = forwardRef<
     onCancel,
     submitIcon,
     cancelIcon,
+    plainText = false,
   },
   ref,
 ) {
@@ -69,6 +75,22 @@ export const RichEditor = forwardRef<
   const editorContainerRef = useRef<HTMLDivElement | null>(null);
   const templateVariablesRef = useRef(templateVariables);
   templateVariablesRef.current = templateVariables;
+  const plainTextRef = useRef(plainText);
+  plainTextRef.current = plainText;
+
+  const applyContentToEditor = useCallback((editor: LexicalEditor, content: string): void => {
+    const options = {
+      tag: 'history-merge' as const,
+      templateVariables: templateVariablesRef.current,
+    };
+
+    if (plainTextRef.current) {
+      applyPlainTextToEditor(editor, content, options);
+      return;
+    }
+
+    applyMarkdownToEditor(editor, content, options);
+  }, []);
 
   const initialConfig = {
     namespace: 'RichEditor',
@@ -80,10 +102,7 @@ export const RichEditor = forwardRef<
     editorState:
       defaultValue != null && defaultValue.trim() !== ''
         ? (editor: LexicalEditor) => {
-          applyMarkdownToEditor(editor, defaultValue, {
-            tag: 'history-merge',
-            templateVariables: templateVariablesRef.current,
-          });
+          applyContentToEditor(editor, defaultValue);
         }
         : undefined,
   };
@@ -123,14 +142,16 @@ export const RichEditor = forwardRef<
 
   const onChange = useCallback(
     (editorState: EditorState): void => {
-      const markdown = convertLexicalToMarkdown(editorState);
+      const content = plainTextRef.current
+        ? convertLexicalToPlainText(editorState)
+        : convertLexicalToMarkdown(editorState);
 
       if (handleChangeChecklists) {
-        const checklistsData = prepareChecklistsForAPI(markdown);
+        const checklistsData = prepareChecklistsForAPI(content);
         handleChangeChecklists(checklistsData);
       }
 
-      handleChange(markdown);
+      handleChange(content);
     },
     [handleChange, handleChangeChecklists],
   );
@@ -191,14 +212,11 @@ export const RichEditor = forwardRef<
     });
   }, []);
 
-  const replaceContent = useCallback((markdown: string): void => {
+  const replaceContent = useCallback((content: string): void => {
     const editor = editorRef.current;
     if (!editor) return;
-    applyMarkdownToEditor(editor, markdown, {
-      tag: 'history-merge',
-      templateVariables: templateVariablesRef.current,
-    });
-  }, []);
+    applyContentToEditor(editor, content);
+  }, [applyContentToEditor]);
 
   useImperativeHandle(
     ref,
@@ -207,8 +225,8 @@ export const RichEditor = forwardRef<
         editorRef.current?.focus();
       },
       insertVariable(apiName: string, variableTitle: string, subtitle: string): void {
-        if (!apiName?.trim() || !variableTitle?.trim() || !subtitle?.trim()) return;
-        insertVariableToEditor(apiName, variableTitle, subtitle);
+        if (!apiName?.trim() || !variableTitle?.trim()) return;
+        insertVariableToEditor(apiName, variableTitle, subtitle ?? '');
       },
       getEditor(): LexicalEditor | undefined {
         return editorRef.current ?? undefined;
@@ -255,6 +273,8 @@ export const RichEditor = forwardRef<
             cancelIcon={cancelIcon}
             editorClassName={editorClassName}
             withControls={Boolean(onSubmit)}
+            plainText={plainText}
+            templateVariables={templateVariables}
           />
         </LinkPluginProvider>
       </LexicalComposer>

@@ -8,7 +8,6 @@ class NotificationMethod:
     new_task = 'new_task'
     new_task_websocket = 'new_task_websocket'
     returned_task = 'returned_task'
-    removed_task = 'removed_task'
     task_reminder = 'task_reminder'
     overdue_task = 'overdue_task'
     complete_task = 'complete_task'
@@ -33,6 +32,13 @@ class NotificationMethod:
     user_created = 'user_created'
     user_updated = 'user_updated'
     user_deleted = 'user_deleted'
+    task_completed = 'task_completed'
+    task_completed_websocket = 'task_completed_websocket'
+    task_created = 'task_created'
+    task_deleted = 'task_deleted'
+    event_created = 'event_created'
+    event_updated = 'event_updated'
+    notification_created = 'notification_created'
     dataset_created = 'dataset_created'
     dataset_updated = 'dataset_updated'
     dataset_deleted = 'dataset_deleted'
@@ -47,7 +53,6 @@ class NotificationMethod:
         new_task,
         new_task_websocket,
         returned_task,
-        removed_task,
         task_reminder,
         overdue_task,
         complete_task,
@@ -72,6 +77,13 @@ class NotificationMethod:
         user_created,
         user_updated,
         user_deleted,
+        task_completed,
+        task_completed_websocket,
+        task_created,
+        task_deleted,
+        event_created,
+        event_updated,
+        notification_created,
         dataset_created,
         dataset_updated,
         dataset_deleted,
