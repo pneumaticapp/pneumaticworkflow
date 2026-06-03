@@ -6,8 +6,8 @@ from django.utils.dateparse import parse_duration
 
 from src.notifications.tasks import (
     send_new_task_notification,
-    send_task_deleted_notification,
     send_new_task_websocket,
+    send_task_deleted_notification,
 )
 from src.processes.models.workflows.checklist import (
     ChecklistSelection,

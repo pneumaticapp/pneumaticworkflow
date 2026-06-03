@@ -1,5 +1,4 @@
 import uniqBy from 'lodash.uniqby';
-import { EventChannel } from 'redux-saga';
 
 import {
   all,
@@ -55,19 +54,14 @@ import {
 import { loadCurrentTask } from '../task/actions';
 import { ETaskListCompletionStatus, ITaskListItem, ITemplateStep, TTaskListItemResponse } from '../../types/tasks';
 import { getErrorMessage } from '../../utils/getErrorMessage';
+import { mapTasksToISOStringToRedux } from '../../utils/mappers';
 import { getTemplateSteps } from '../../api/getTemplateSteps';
-import { parseCookies } from '../../utils/cookie';
-import { getBrowserConfigEnv } from '../../utils/getConfig';
-import { mergePaths } from '../../utils/urls';
-import { createWebSocketChannel } from '../utils/createWebSocketChannel';
-import { getTaskListWithNewTask } from './utils/getTaskListWithNewTask';
 import { checkShouldInsertNewTask } from './utils/checkShouldInsertNewTask';
+import { getTaskListWithNewTask } from './utils/getTaskListWithNewTask';
 import { handleLoadTemplateVariables } from '../templates/saga';
 import { ETaskListStatus } from '../../components/Tasks/types';
 import { setCurrentTask } from '../actions';
 import { getCurrentTask } from '../selectors/task';
-import { envWssURL } from '../../constants/enviroment';
-import { mapTasksToISOStringToRedux } from '../../utils/mappers';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { getTemplatesTitlesByTasks, TGetTemplatesTitlesByTasksResponse } from '../../api/getTemplatesTitlesByTasks';
 import { TLoadFilterStepsPayload, TShiftTaskListPayload } from './types';
@@ -274,27 +268,7 @@ export function* watchShiftTaskList() {
   yield takeLatest(shiftTaskList.type, handleShiftTaskList);
 }
 
-export function* watchNewTask() {
-  const {
-    api: { wsPublicUrl, urls },
-  } = getBrowserConfigEnv();
-  const url = mergePaths(
-    envWssURL || wsPublicUrl,
-    `${urls.wsNewTask}?auth_token=${parseCookies(document.cookie).token}`,
-  );
-  const channel: EventChannel<ITaskListItem> = yield call(createWebSocketChannel, url);
-
-  while (true) {
-    const newTask: ITaskListItem = yield take(channel);
-    const handlerAction: TChannelAction = {
-      type: ETaskListActions.ChannelAction,
-      handler: () => handleAddTask(newTask),
-    };
-    yield put(handlerAction);
-  }
-}
-
-function* handleAddTask(newTask: ITaskListItem) {
+export function* handleAddTask(newTask: ITaskListItem) {
   const totalTasksCount: ReturnType<typeof getTotalTasksCount> = yield select(getTotalTasksCount);
   if (totalTasksCount !== null) {
     yield put(changeTasksCount(totalTasksCount + 1));
@@ -321,28 +295,7 @@ function* handleAddTask(newTask: ITaskListItem) {
   }
 }
 
-export function* watchRemoveTask() {
-  const {
-    api: { wsPublicUrl, urls },
-  } = getBrowserConfigEnv();
-  const url = mergePaths(
-    envWssURL || wsPublicUrl,
-    `${urls.wsRemovedTask}?auth_token=${parseCookies(document.cookie).token}`,
-  );
-  const channel: EventChannel<ITaskListItem> = yield call(createWebSocketChannel, url);
-
-  while (true) {
-    const removedTask: ITaskListItem = yield take(channel);
-    yield put({
-      type: ETaskListActions.ChannelAction,
-      handler: () => {
-        return handleRemoveTask(removedTask.id);
-      },
-    });
-  }
-}
-
-function* handleRemoveTask(taskId: number) {
+export function* handleRemoveTask(taskId: number) {
   const totalTasksCount: ReturnType<typeof getTotalTasksCount> = yield select(getTotalTasksCount);
   if (totalTasksCount !== null) {
     yield put(changeTasksCount(totalTasksCount - 1));

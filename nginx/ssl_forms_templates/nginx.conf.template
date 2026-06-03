@@ -1,0 +1,86 @@
+# Use case: SSL enabled with a custom form subdomain (FORM_DOMAIN is set).
+# SERVER_ADDRESS and FORM_DOMAIN each have their own Let's Encrypt certificate.
+# Serves backend on port 8001 over HTTPS, frontend on port 443, and the form
+# subdomain on port 443 as a separate virtual host.
+
+include /etc/nginx/includes/worker.conf;
+
+http {
+
+    include /etc/nginx/includes/http_base.conf;
+
+    ##
+    # SSL Settings
+    ##
+
+    ssl_protocols TLSv1.2 TLSv1.3;
+    ssl_prefer_server_ciphers on;
+
+    ##
+    # Backend
+    ##
+
+    server {
+        listen 8001 ssl;
+        ssl_certificate     /etc/keys/${SERVER_ADDRESS}/fullchain.pem;
+        ssl_certificate_key /etc/keys/${SERVER_ADDRESS}/privkey.pem;
+
+        root /var/www/html;
+        index index.html index.nginx-debian.html;
+
+        server_name ${SERVER_ADDRESS};
+
+        location / {
+            include /etc/nginx/includes/proxy_to_backend.conf;
+        }
+        include /etc/nginx/includes/location_static.conf;
+    }
+
+    # for frontend private http API requests
+    server {
+        listen 80;
+        root /var/www/html;
+        index index.html index.htm index.nginx-debian.html;
+
+        server_name pneumatic-nginx;
+
+        location / {
+            include /etc/nginx/includes/proxy_to_private_backend.conf;
+        }
+    }
+
+    ##
+    # Frontend
+    ##
+
+    server {
+        listen 443 ssl;
+        ssl_certificate     /etc/keys/${SERVER_ADDRESS}/fullchain.pem;
+        ssl_certificate_key /etc/keys/${SERVER_ADDRESS}/privkey.pem;
+
+        root /var/www/html;
+        index index.html index.nginx-debian.html;
+
+        server_name ${SERVER_ADDRESS};
+
+        include /etc/nginx/includes/location_frontend_common.conf;
+    }
+
+    ##
+    # Form
+    ##
+
+    server {
+        listen 443 ssl;
+        ssl_certificate     /etc/keys/${FORM_DOMAIN}/fullchain.pem;
+        ssl_certificate_key /etc/keys/${FORM_DOMAIN}/privkey.pem;
+
+        root /var/www/html;
+        index index.html index.nginx-debian.html;
+
+        server_name ${FORM_DOMAIN};
+
+        include /etc/nginx/includes/location_frontend_common.conf;
+
+    }
+}

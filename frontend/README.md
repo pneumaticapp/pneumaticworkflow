@@ -9,7 +9,6 @@ BACKEND_PRIVATE_URL=http://localhost:8001
 BACKEND_URL=http://localhost:8001
 FRONTEND_URL=http://localhost
 WSS_URL=ws://localhost:8001
-FORM_DOMAIN=form.localhost
 ```
 
 ### Installation
