@@ -1,4 +1,4 @@
-from datetime import timedelta
+﻿from datetime import timedelta
 
 import pytest
 from channels.testing import WebsocketCommunicator
