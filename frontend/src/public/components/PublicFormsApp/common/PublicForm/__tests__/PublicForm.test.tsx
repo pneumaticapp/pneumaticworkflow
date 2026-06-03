@@ -7,6 +7,7 @@ import { PublicForm } from '../PublicForm';
 import { getPublicForm } from '../../../../../api/getPublicForm';
 import { runPublicForm } from '../../../../../api/runPublicForm';
 import { MergedOutputList } from '../../../../MergedOutputList';
+import { NotificationManager } from '../../../../UI/Notifications';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
 import { makeFieldsetData } from '../../../../../__stubs__/fieldsets.factory';
 import { IExtraField, IFieldsetData } from '../../../../../types/template';
@@ -351,6 +352,38 @@ describe('PublicForm', () => {
         '',
         expect.objectContaining({
           'fs-edit-1': 'new-value',
+        }),
+      );
+    });
+  });
+
+  describe('Submit: error handling', () => {
+    it('forwards backend validation error message to notification', async () => {
+      const backendError = {
+        code: 'validation_error',
+        message: 'The sum of the fields in this field set must equal "6"',
+      };
+
+      (getPublicForm as jest.Mock).mockResolvedValue(
+        makePublicFormResponse({
+          fields: [makeExtraField({ apiName: 'k1', value: 'filled' })],
+        }),
+      );
+      (runPublicForm as jest.Mock).mockRejectedValue(backendError);
+
+      render(React.createElement(PublicForm, { type: 'shared' }));
+
+      const submitButton = await screen.findByRole('button', { name: SUBMIT_LABEL });
+      userEvent.click(submitButton);
+
+      await waitFor(() => {
+        expect(NotificationManager.notifyApiError).toHaveBeenCalledTimes(1);
+      });
+
+      expect(NotificationManager.notifyApiError).toHaveBeenCalledWith(
+        backendError,
+        expect.objectContaining({
+          message: 'The sum of the fields in this field set must equal "6"',
         }),
       );
     });

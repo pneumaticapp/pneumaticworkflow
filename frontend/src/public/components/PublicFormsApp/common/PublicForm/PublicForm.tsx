@@ -14,6 +14,7 @@ import { EInputNameBackgroundColor } from '../../../../types/workflow';
 import { getPublicForm } from '../../../../api/getPublicForm';
 import { EPublicFormState, IPublicForm } from '../types';
 import { logger } from '../../../../utils/logger';
+import { getErrorMessage } from '../../../../utils/getErrorMessage';
 import { MergedOutputList } from '../../../MergedOutputList';
 
 import { runPublicForm } from '../../../../api/runPublicForm';
@@ -110,7 +111,7 @@ export function PublicForm({ type }: IPublicFormsAppProps) {
 
       setFormState(EPublicFormState.Submitted);
     } catch (error) {
-      NotificationManager.notifyApiError(error, { message: 'public-form.submit-failed' });
+      NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
       logger.error('Failed to run public form', error);
       setFormState(EPublicFormState.WaitingForAction);
     }
