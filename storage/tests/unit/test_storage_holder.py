@@ -172,7 +172,7 @@ async def test_close__no_client__no_error(
 def test_init__local__seaweedfs_params(mocker):
     # arrange
     mock_settings = mocker.patch(
-        'src.infra.repositories.storage_service.get_settings',
+        'src.infra.adapters.storage_service.get_settings',
     )
     mock_settings.return_value.STORAGE_TYPE = 'local'
     mock_settings.return_value.BUCKET_PREFIX = 'test'
@@ -193,7 +193,7 @@ def test_init__local__seaweedfs_params(mocker):
 def test_init__google__gcs_params(mocker):
     # arrange
     mock_settings = mocker.patch(
-        'src.infra.repositories.storage_service.get_settings',
+        'src.infra.adapters.storage_service.get_settings',
     )
     mock_settings.return_value.STORAGE_TYPE = 'google'
     mock_settings.return_value.BUCKET_PREFIX = 'test'

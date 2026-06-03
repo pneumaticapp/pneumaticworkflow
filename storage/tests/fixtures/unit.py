@@ -204,7 +204,7 @@ def reset_shared_client_holder():
 def mock_storage_settings(mocker):
     """Mock get_settings for StorageService with standard params."""
     mock_settings = mocker.patch(
-        'src.infra.repositories.storage_service.get_settings',
+        'src.infra.adapters.storage_service.get_settings',
     )
     mock_settings.return_value.STORAGE_TYPE = 'local'
     mock_settings.return_value.BUCKET_PREFIX = 'test'

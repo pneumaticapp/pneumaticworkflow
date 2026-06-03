@@ -24,7 +24,7 @@ from src.storage.utils import (
 pytestmark = pytest.mark.django_db
 
 _FILE_SERVICE_URL = 'https://example.com'
-_FILE_DOMAIN = 'example.com'
+_FILE_SERVICE_HOST_PATH = 'example.com'
 
 
 class TestExtractFileIdsFromText:
@@ -33,7 +33,7 @@ class TestExtractFileIdsFromText:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_file_ids_from_text('')
 
@@ -44,7 +44,7 @@ class TestExtractFileIdsFromText:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_file_ids_from_text(None)
 
@@ -61,7 +61,7 @@ class TestExtractFileIdsFromText:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_file_ids_from_text(text)
 
@@ -78,7 +78,7 @@ class TestExtractFileIdsFromText:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_file_ids_from_text(text)
 
@@ -92,7 +92,7 @@ class TestExtractFileIdsFromText:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_file_ids_from_text(text)
 
@@ -109,7 +109,7 @@ class TestExtractFileIdsFromText:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_file_ids_from_text(text)
 
@@ -128,7 +128,7 @@ class TestExtractFileIdsFromText:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_file_ids_from_text(text)
 
@@ -142,7 +142,7 @@ class TestExtractFileIdsFromText:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_file_ids_from_text(text)
 
@@ -156,7 +156,7 @@ class TestExtractFileIdsFromText:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_file_ids_from_text(text)
 
@@ -170,7 +170,7 @@ class TestExtractFileIdsFromText:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_file_ids_from_text(text)
 
@@ -187,7 +187,7 @@ class TestExtractFileIdsFromValues:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_file_ids_from_values(values)
 
@@ -201,7 +201,7 @@ class TestExtractFileIdsFromValues:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_file_ids_from_values(values)
 
@@ -218,7 +218,7 @@ class TestExtractFileIdsFromValues:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_file_ids_from_values(values)
 
@@ -232,7 +232,7 @@ class TestExtractFileIdsFromValues:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_file_ids_from_values(values)
 
@@ -249,7 +249,7 @@ class TestExtractFileIdsFromValues:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_file_ids_from_values(values)
 
@@ -265,7 +265,7 @@ class TestExtractFileIdsFromValues:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_file_ids_from_values(values)
 
@@ -291,7 +291,7 @@ class TestSyncAccountFileFields:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             sync_account_file_fields(
                 account=account,
@@ -326,7 +326,7 @@ class TestSyncAccountFileFields:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             sync_account_file_fields(
                 account=account,
@@ -361,7 +361,7 @@ class TestSyncAccountFileFields:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             sync_account_file_fields(
                 account=account,
@@ -397,7 +397,7 @@ class TestSyncAccountFileFields:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             sync_account_file_fields(
                 account=account,
@@ -430,7 +430,7 @@ class TestSyncAccountFileFields:
         new_values = ['https://other.com/not_file_service']
 
         # act
-        with override_settings(FILE_DOMAIN=None):
+        with override_settings(FILE_SERVICE_HOST_PATH=None):
             sync_account_file_fields(
                 account=account,
                 user=user,
@@ -464,7 +464,7 @@ class TestRefreshAttachments:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             new_file_ids = refresh_attachments(source=task, user=user)
 
@@ -487,7 +487,7 @@ class TestRefreshAttachments:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             new_file_ids = refresh_attachments(source=workflow, user=user)
 
@@ -516,7 +516,7 @@ class TestRefreshAttachments:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             new_file_ids = refresh_attachments(source=task, user=user)
 
@@ -546,7 +546,7 @@ class TestRefreshAttachments:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             new_file_ids = refresh_attachments(source=task, user=user)
 
@@ -577,7 +577,7 @@ class TestRefreshAttachments:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             new_file_ids = refresh_attachments(source=task, user=user)
 
@@ -620,7 +620,7 @@ class TestRefreshAttachments:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             new_file_ids = refresh_attachments(source=task, user=user)
 
@@ -646,7 +646,7 @@ class TestRefreshAttachments:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             new_file_ids = refresh_attachments(source=workflow, user=user)
 
@@ -682,7 +682,7 @@ class TestRefreshAttachments:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             new_file_ids = refresh_attachments(source=template, user=user)
 
@@ -745,7 +745,7 @@ class TestExtractAllFileIdsFromSource:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_all_file_ids_from_source(task)
 
@@ -764,7 +764,7 @@ class TestExtractAllFileIdsFromSource:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_all_file_ids_from_source(workflow)
 
@@ -782,7 +782,7 @@ class TestExtractAllFileIdsFromSource:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_all_file_ids_from_source(task)
 
@@ -796,7 +796,7 @@ class TestExtractAllFileIdsFromSource:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_all_file_ids_from_source(user.account)
 
@@ -817,7 +817,7 @@ class TestExtractAllFileIdsFromSource:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_all_file_ids_from_source(task)
 
@@ -835,7 +835,7 @@ class TestExtractAllFileIdsFromSource:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_all_file_ids_from_source(task)
 
@@ -857,7 +857,7 @@ class TestExtractAllFileIdsFromSource:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_all_file_ids_from_source(workflow)
 
@@ -887,7 +887,7 @@ class TestExtractAllFileIdsFromSource:
         # act
         with override_settings(
                 FILES_BASE_URL=_FILE_SERVICE_URL,
-                FILE_DOMAIN=_FILE_DOMAIN,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
         ):
             result = extract_all_file_ids_from_source(template)
 

@@ -77,11 +77,11 @@ class Common(Configuration):
 
     # File Service
     FILE_SERVICE_URL = env.get('FILE_SERVICE_URL')
-    FILE_DOMAIN = None
+    FILE_SERVICE_HOST_PATH = None
     if FILE_SERVICE_URL:
         parsed = urlparse(FILE_SERVICE_URL)
-        FILE_DOMAIN = parsed.netloc
-        
+        FILE_SERVICE_HOST_PATH = parsed.netloc + parsed.path.rstrip('/')
+
     FILE_POSTGRES_DB = env.get('FILE_POSTGRES_DB')
     FILE_POSTGRES_USER = env.get('FILE_POSTGRES_USER')
     FILE_POSTGRES_PASSWORD = env.get('FILE_POSTGRES_PASSWORD')

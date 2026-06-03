@@ -403,7 +403,7 @@ def test_retrieve__kickoff_field_with_selections__ok(api_client):
     assert field_data['selections'][0] == selection.value
 
 
-@override_settings(FILE_DOMAIN='files.example.com')
+@override_settings(FILE_SERVICE_HOST_PATH='example.com/files')
 def test_retrieve__kickoff_field_with_attachments__ok(api_client):
 
     # arrange
@@ -431,9 +431,9 @@ def test_retrieve__kickoff_field_with_attachments__ok(api_client):
             'kickoff': {
                 field_template.api_name: [
                     '[first_file.txt]'
-                    '(https://files.example.com/firstfile123)',
+                    '(https://example.com/files/firstfile123)',
                     '[second_file.txt]'
-                    '(https://files.example.com/secfile456)',
+                    '(https://example.com/files/secfile456)',
                 ],
             },
         },

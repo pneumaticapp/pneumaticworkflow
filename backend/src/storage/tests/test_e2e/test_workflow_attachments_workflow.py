@@ -19,8 +19,8 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture(autouse=True)
 def file_domain_workflow_e2e(settings):
-    settings.FILE_SERVICE_URL = 'https://files.example.com'
-    settings.FILE_DOMAIN = 'files.example.com'
+    settings.FILE_SERVICE_URL = 'https://example.com/files'
+    settings.FILE_SERVICE_HOST_PATH = 'example.com/files'
 
 
 class TestWorkflowAttachmentsE2E:
@@ -43,7 +43,7 @@ class TestWorkflowAttachmentsE2E:
         workflow.members.add(member)
         workflow.description = (
             'Workflow file: '
-            '[file](https://files.example.com/workflow_e2e_123)'
+            '[file](https://example.com/files/workflow_e2e_123)'
         )
         workflow.save()
 
@@ -86,7 +86,7 @@ class TestWorkflowAttachmentsE2E:
         kickoff = workflow.kickoff_instance
         kickoff.clear_description = (
             'Kickoff file: '
-            '[doc](https://files.example.com/kickoff_e2e_456)'
+            '[doc](https://example.com/files/kickoff_e2e_456)'
         )
         kickoff.save()
 
@@ -135,7 +135,7 @@ class TestWorkflowAttachmentsE2E:
         task1.taskperformer_set.create(user=performer1)
         task2.taskperformer_set.create(user=performer2)
         workflow.description = (
-            'File: [f](https://files.example.com/wf_performers_e2e)'
+            'File: [f](https://example.com/files/wf_performers_e2e)'
         )
         workflow.save()
 
@@ -173,7 +173,7 @@ class TestWorkflowAttachmentsE2E:
 
         # act
         workflow.description = (
-            'Updated: [f](https://files.example.com/wf_new_e2e)'
+            'Updated: [f](https://example.com/files/wf_new_e2e)'
         )
         workflow.save()
         new_file_ids = refresh_attachments(source=workflow, user=owner)
@@ -196,7 +196,7 @@ class TestWorkflowAttachmentsE2E:
         owner = create_test_admin()
         workflow = create_test_workflow(user=owner, tasks_count=1)
         workflow.description = (
-            'File: [f](https://files.example.com/wf_remove_e2e)'
+            'File: [f](https://example.com/files/wf_remove_e2e)'
         )
         workflow.save()
         refresh_attachments(source=workflow, user=owner)
@@ -232,7 +232,7 @@ class TestWorkflowAttachmentsE2E:
         workflow = create_test_workflow(user=owner, tasks_count=1)
         workflow.members.add(member1)
         workflow.description = (
-            'File: [f](https://files.example.com/wf_member_e2e)'
+            'File: [f](https://example.com/files/wf_member_e2e)'
         )
         workflow.save()
         refresh_attachments(source=workflow, user=owner)
@@ -274,8 +274,8 @@ class TestWorkflowAttachmentsE2E:
         workflow.members.add(member)
         workflow.description = (
             'Files: '
-            '[a](https://files.example.com/wf_multi_1_e2e) '
-            '[b](https://files.example.com/wf_multi_2_e2e)'
+            '[a](https://example.com/files/wf_multi_1_e2e) '
+            '[b](https://example.com/files/wf_multi_2_e2e)'
         )
         workflow.save()
 
@@ -302,7 +302,7 @@ class TestWorkflowAttachmentsE2E:
         owner = create_test_admin()
         workflow = create_test_workflow(user=owner, tasks_count=1)
         workflow.description = (
-            'File: [f](https://files.example.com/wf_owner_e2e)'
+            'File: [f](https://example.com/files/wf_owner_e2e)'
         )
         workflow.save()
 
@@ -328,7 +328,7 @@ class TestWorkflowAttachmentsE2E:
         other_user = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
         workflow.description = (
-            'File: [f](https://files.example.com/wf_no_access_e2e)'
+            'File: [f](https://example.com/files/wf_no_access_e2e)'
         )
         workflow.save()
 
@@ -357,7 +357,7 @@ class TestWorkflowAttachmentsE2E:
         workflow = create_test_workflow(user=owner1, tasks_count=1)
         workflow.owners.add(owner1, owner2)
         workflow.description = (
-            'File: [f](https://files.example.com/wf_owners_e2e)'
+            'File: [f](https://example.com/files/wf_owners_e2e)'
         )
         workflow.save()
 
@@ -390,7 +390,7 @@ class TestWorkflowAttachmentsE2E:
         owner = create_test_admin()
         workflow = create_test_workflow(user=owner, tasks_count=1)
         workflow.description = (
-            'File: [f](https://files.example.com/wf_old_e2e)'
+            'File: [f](https://example.com/files/wf_old_e2e)'
         )
         workflow.save()
         refresh_attachments(source=workflow, user=owner)
@@ -398,7 +398,7 @@ class TestWorkflowAttachmentsE2E:
 
         # act
         workflow.description = (
-            'File: [f](https://files.example.com/wf_new_replace_e2e)'
+            'File: [f](https://example.com/files/wf_new_replace_e2e)'
         )
         workflow.save()
         refresh_attachments(source=workflow, user=owner)

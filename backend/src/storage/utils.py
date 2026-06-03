@@ -23,17 +23,18 @@ def _get_file_service_link_pattern(
         anchored: bool = False,
 ) -> Optional[re.Pattern]:
     """
-    Build regex for file service markdown links;
+    Build regex for file service markdown links and images;
     optional ^...$ for full match.
     Groups: (1) link label, (2) full URL, (3) file_id.
+    Supports: [name](url), ![name](url), ![name](url "title")
     """
-    file_domain = settings.FILE_DOMAIN
+    file_domain = settings.FILE_SERVICE_HOST_PATH
     if not file_domain:
         return None
     core = (
-        rf'\[([^\]]+)\]\('
+        rf'!?\[([^\]]+)\]\('
         rf'(https?://[^/\s]*{re.escape(file_domain)}'
-        rf'/([a-zA-Z0-9_-]{{8,64}})(?:[^\s)]*)?)\)'
+        rf'/([a-zA-Z0-9_-]{{8,64}})[^)]*)\)'
     )
     if anchored:
         core = '^' + core + '$'
@@ -45,12 +46,12 @@ def _get_file_service_plain_url_pattern() -> Optional[re.Pattern]:
     Build regex for a single plain file service URL (URLField value).
     Full string match: optional query/fragment after file_id.
     """
-    file_domain = settings.FILE_DOMAIN
+    file_domain = settings.FILE_SERVICE_HOST_PATH
     if not file_domain:
         return None
     core = (
         rf'^https?://[^/\s]*{re.escape(file_domain)}'
-        rf'/([a-zA-Z0-9_-]{{8,64}})(?:[^\s]*)?$'
+        rf'/([a-zA-Z0-9_-]{{8,64}})[^\s]*$'
     )
     return re.compile(core)
 
@@ -92,7 +93,8 @@ def extract_file_ids_from_text(text: str) -> List[str]:
     Searches for file service links in format:
     - Markdown links: [filename](url_with_file_id)
 
-    Only extracts file_ids from file service domain (settings.FILE_DOMAIN).
+    Only extracts file_ids from file service domain
+    (settings.FILE_SERVICE_HOST_PATH).
     External links (Google Drive, Dropbox, etc.) are ignored.
 
     Args:

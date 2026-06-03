@@ -22,8 +22,8 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture(autouse=True)
 def file_domain_comment_e2e(settings):
-    settings.FILE_SERVICE_URL = 'https://files.example.com'
-    settings.FILE_DOMAIN = 'files.example.com'
+    settings.FILE_SERVICE_URL = 'https://example.com/files'
+    settings.FILE_SERVICE_HOST_PATH = 'example.com/files'
 
 
 class TestCommentAttachmentsE2E:
@@ -61,7 +61,7 @@ class TestCommentAttachmentsE2E:
             type=WorkflowEventType.COMMENT,
             text=(
                 'Please review this file: '
-                '[file](https://files.example.com/task_comment_e2e_123)'
+                '[file](https://example.com/files/task_comment_e2e_123)'
             ),
         )
 
@@ -125,7 +125,7 @@ class TestCommentAttachmentsE2E:
             type=WorkflowEventType.COMMENT,
             text=(
                 'Workflow file: '
-                '[file](https://files.example.com/workflow_comment_e2e_456)'
+                '[file](https://example.com/files/workflow_comment_e2e_456)'
             ),
         )
 
@@ -200,7 +200,7 @@ class TestCommentAttachmentsE2E:
             type=WorkflowEventType.COMMENT,
             text=(
                 'Group file: '
-                '[file](https://files.example.com/group_comment_e2e_789)'
+                '[file](https://example.com/files/group_comment_e2e_789)'
             ),
         )
 
@@ -255,8 +255,8 @@ class TestCommentAttachmentsE2E:
             type=WorkflowEventType.COMMENT,
             text=(
                 'Multiple files: '
-                '[a](https://files.example.com/multi_comment_1_e2e) '
-                '[b](https://files.example.com/multi_comment_2_e2e)'
+                '[a](https://example.com/files/multi_comment_1_e2e) '
+                '[b](https://example.com/files/multi_comment_2_e2e)'
             ),
         )
 
@@ -307,7 +307,7 @@ class TestCommentAttachmentsE2E:
             type=WorkflowEventType.COMMENT,
             text=(
                 'Private file: '
-                '[file](https://files.example.com/private_comment_e2e)'
+                '[file](https://example.com/files/private_comment_e2e)'
             ),
         )
 
@@ -346,7 +346,7 @@ class TestCommentAttachmentsE2E:
             type=WorkflowEventType.COMMENT,
             text=(
                 'Inherited file: '
-                '[file](https://files.example.com/inherited_comment_e2e)'
+                '[file](https://example.com/files/inherited_comment_e2e)'
             ),
         )
 
@@ -403,7 +403,7 @@ class TestCommentAttachmentsE2E:
         # act
         comment_event.text = (
             'Updated comment: '
-            '[file](https://files.example.com/updated_comment_e2e)'
+            '[file](https://example.com/files/updated_comment_e2e)'
         )
         comment_event.save()
         new_file_ids = _refresh_workflow_event_attachments(

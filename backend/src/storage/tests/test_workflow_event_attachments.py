@@ -143,7 +143,7 @@ class TestRefreshWorkflowEventAttachments:
 
     @override_settings(
         FILE_SERVICE_URL='https://files.pneumatic.app',
-        FILE_DOMAIN='files.pneumatic.app',
+        FILE_SERVICE_HOST_PATH='pneumatic.app/files',
     )
     def test_refresh_workflow_event_attachments__all_attached_elsewhere__false(
         self,

@@ -23,8 +23,8 @@ pytestmark = pytest.mark.django_db
 
 @pytest.fixture(autouse=True)
 def file_domain_template_e2e(settings):
-    settings.FILE_SERVICE_URL = 'https://files.example.com'
-    settings.FILE_DOMAIN = 'files.example.com'
+    settings.FILE_SERVICE_URL = 'https://example.com/files'
+    settings.FILE_SERVICE_HOST_PATH = 'example.com/files'
 
 
 class TestTemplateAttachmentsE2E:
@@ -45,7 +45,7 @@ class TestTemplateAttachmentsE2E:
         template = create_test_template(owner, is_active=True)
         template.description = (
             'Template file: '
-            '[file](https://files.example.com/template_e2e_123)'
+            '[file](https://example.com/files/template_e2e_123)'
         )
         template.save()
 
@@ -82,7 +82,7 @@ class TestTemplateAttachmentsE2E:
             name='Kickoff field',
             description=(
                 'Field file: '
-                '[x](https://files.example.com/kickoff_tpl_e2e_789)'
+                '[x](https://example.com/files/kickoff_tpl_e2e_789)'
             ),
             type=FieldType.STRING,
             kickoff=kickoff,
@@ -127,7 +127,7 @@ class TestTemplateAttachmentsE2E:
             type=OwnerType.USER,
         )
         template.description = (
-            'File: [f](https://files.example.com/tmpl_owners_e2e)'
+            'File: [f](https://example.com/files/tmpl_owners_e2e)'
         )
         template.save()
 
@@ -163,7 +163,7 @@ class TestTemplateAttachmentsE2E:
 
         # act
         template.description = (
-            'Updated: [f](https://files.example.com/tmpl_new_e2e)'
+            'Updated: [f](https://example.com/files/tmpl_new_e2e)'
         )
         template.save()
         new_file_ids = refresh_attachments(source=template, user=owner)
@@ -186,7 +186,7 @@ class TestTemplateAttachmentsE2E:
         owner = create_test_admin()
         template = create_test_template(owner, is_active=True)
         template.description = (
-            'File: [f](https://files.example.com/tmpl_remove_e2e)'
+            'File: [f](https://example.com/files/tmpl_remove_e2e)'
         )
         template.save()
         refresh_attachments(source=template, user=owner)
@@ -218,7 +218,7 @@ class TestTemplateAttachmentsE2E:
         )
         template = create_test_template(owner1, is_active=True)
         template.description = (
-            'File: [f](https://files.example.com/tmpl_owner_e2e)'
+            'File: [f](https://example.com/files/tmpl_owner_e2e)'
         )
         template.save()
         refresh_attachments(source=template, user=owner1)
@@ -264,8 +264,8 @@ class TestTemplateAttachmentsE2E:
         template = create_test_template(owner, is_active=True)
         template.description = (
             'Files: '
-            '[a](https://files.example.com/tmpl_multi_1_e2e) '
-            '[b](https://files.example.com/tmpl_multi_2_e2e)'
+            '[a](https://example.com/files/tmpl_multi_1_e2e) '
+            '[b](https://example.com/files/tmpl_multi_2_e2e)'
         )
         template.save()
 
@@ -293,7 +293,7 @@ class TestTemplateAttachmentsE2E:
         other_user = create_test_user(account=owner.account)
         template = create_test_template(owner, is_active=True)
         template.description = (
-            'File: [f](https://files.example.com/tmpl_no_access_e2e)'
+            'File: [f](https://example.com/files/tmpl_no_access_e2e)'
         )
         template.save()
 
@@ -322,7 +322,7 @@ class TestTemplateAttachmentsE2E:
         owner = create_test_admin()
         template = create_test_template(owner, is_active=True)
         template.description = (
-            'File: [f](https://files.example.com/tmpl_old_e2e)'
+            'File: [f](https://example.com/files/tmpl_old_e2e)'
         )
         template.save()
         refresh_attachments(source=template, user=owner)
@@ -332,7 +332,7 @@ class TestTemplateAttachmentsE2E:
 
         # act
         template.description = (
-            'File: [f](https://files.example.com/tmpl_new_replace_e2e)'
+            'File: [f](https://example.com/files/tmpl_new_replace_e2e)'
         )
         template.save()
         refresh_attachments(source=template, user=owner)
@@ -366,7 +366,7 @@ class TestTemplateAttachmentsE2E:
             type=OwnerType.USER,
         )
         template.description = (
-            'File: [f](https://files.example.com/tmpl_remove_owner_e2e)'
+            'File: [f](https://example.com/files/tmpl_remove_owner_e2e)'
         )
         template.save()
         refresh_attachments(source=template, user=owner1)
@@ -426,7 +426,7 @@ class TestTemplateAttachmentsE2E:
             type=OwnerType.GROUP,
         )
         template.description = (
-            'File: [f](https://files.example.com/tmpl_group_owner_e2e)'
+            'File: [f](https://example.com/files/tmpl_group_owner_e2e)'
         )
         template.save()
 
@@ -489,7 +489,7 @@ class TestTemplateAttachmentsE2E:
             type=OwnerType.GROUP,
         )
         template.description = (
-            'File: [f](https://files.example.com/tmpl_mixed_owners_e2e)'
+            'File: [f](https://example.com/files/tmpl_mixed_owners_e2e)'
         )
         template.save()
 

@@ -203,7 +203,8 @@ class TaskFieldService(BaseWorkflowService):
 
         Args:
             raw_value: List of "[filename](url)" where url must be from
-                FILE_DOMAIN; parsed via parse_single_file_service_link.
+                FILE_SERVICE_HOST_PATH; parsed via
+                parse_single_file_service_link.
                 Required field with empty
                 list or only whitespace items raises.
 

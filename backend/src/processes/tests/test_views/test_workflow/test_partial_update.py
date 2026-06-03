@@ -598,7 +598,7 @@ class TestPartialUpdateWorkflow:
         assert response.data['details']['reason'] == MSG_PW_0023
         assert response.data['details']['api_name'] == required_field.api_name
 
-    @override_settings(FILE_DOMAIN='files.example.com')
+    @override_settings(FILE_SERVICE_HOST_PATH='example.com/files')
     def test_partial_update__file_field__ok(self, api_client):
 
         # arrange
@@ -640,10 +640,10 @@ class TestPartialUpdateWorkflow:
 
         api_client.token_authenticate(user)
         first_link = (
-            '[first_file_cena](https://files.example.com/first_file_cena)'
+            '[first_file_cena](https://example.com/files/first_file_cena)'
         )
         second_link = (
-            '[second_file_nhoj](https://files.example.com/second_file_nhoj)'
+            '[second_file_nhoj](https://example.com/files/second_file_nhoj)'
         )
         response = api_client.post(
             f'/templates/{template.id}/run',
@@ -690,7 +690,7 @@ class TestPartialUpdateWorkflow:
             '{{%s}} His name is...!!!' % file_field.api_name
         )
 
-    @override_settings(FILE_DOMAIN='files.example.com')
+    @override_settings(FILE_SERVICE_HOST_PATH='example.com/files')
     def test_partial_update__attach_one_more_with_all_in_list__ok(
         self,
         api_client,
@@ -733,11 +733,11 @@ class TestPartialUpdateWorkflow:
         )
         first_link = (
             '[first_attach_cena_txt]'
-            '(https://files.example.com/first_attach_cena_txt)'
+            '(https://example.com/files/first_attach_cena_txt)'
         )
         second_link = (
             '[second_attach_nhoj_txt]'
-            '(https://files.example.com/second_attach_nhoj_txt)'
+            '(https://example.com/files/second_attach_nhoj_txt)'
         )
 
         response = api_client.post(

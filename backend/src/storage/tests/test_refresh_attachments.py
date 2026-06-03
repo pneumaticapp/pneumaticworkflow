@@ -24,7 +24,7 @@ class TestExtractFileIdsFromText:
 
     @override_settings(
         FILE_SERVICE_URL='https://files.pneumatic.app',
-        FILE_DOMAIN='files.pneumatic.app',
+        FILE_SERVICE_HOST_PATH='pneumatic.app/files',
     )
     def test_extract_file_ids_from_text__single_link__list_with_one_id(self):
         # arrange
@@ -38,7 +38,7 @@ class TestExtractFileIdsFromText:
 
     @override_settings(
         FILE_SERVICE_URL='https://files.pneumatic.app',
-        FILE_DOMAIN='files.pneumatic.app',
+        FILE_SERVICE_HOST_PATH='pneumatic.app/files',
     )
     def test_extract_file_ids_from_text__multiple_links__set_of_internal_ids(
         self,
@@ -69,7 +69,7 @@ class TestExtractFileIdsFromText:
 
     @override_settings(
         FILE_SERVICE_URL='https://files.pneumatic.app',
-        FILE_DOMAIN='files.pneumatic.app',
+        FILE_SERVICE_HOST_PATH='pneumatic.app/files',
     )
     def test_extract_file_ids_from_text__external_links__ignored(self):
         # arrange
@@ -90,7 +90,7 @@ class TestRefreshAttachmentsForText:
 
     @override_settings(
         FILE_SERVICE_URL='https://files.pneumatic.app',
-        FILE_DOMAIN='files.pneumatic.app',
+        FILE_SERVICE_HOST_PATH='pneumatic.app/files',
     )
     @patch('src.storage.utils.AttachmentService')
     @patch('src.storage.utils.Attachment.objects')
@@ -133,7 +133,7 @@ class TestRefreshAttachmentsForText:
 
     @override_settings(
         FILE_SERVICE_URL='https://files.pneumatic.app',
-        FILE_DOMAIN='files.pneumatic.app',
+        FILE_SERVICE_HOST_PATH='pneumatic.app/files',
     )
     @patch('src.storage.utils.AttachmentService')
     @patch('src.storage.utils.Attachment.objects')
@@ -202,7 +202,7 @@ class TestRefreshAttachmentsForText:
 
     @override_settings(
         FILE_SERVICE_URL='https://files.pneumatic.app',
-        FILE_DOMAIN='files.pneumatic.app',
+        FILE_SERVICE_HOST_PATH='pneumatic.app/files',
     )
     def test_refresh_for_event__rollback__recalc_from_db(
         self,
@@ -261,7 +261,7 @@ class TestRefreshAttachmentsForText:
 
     @override_settings(
         FILE_SERVICE_URL='https://files.pneumatic.app',
-        FILE_DOMAIN='files.pneumatic.app',
+        FILE_SERVICE_HOST_PATH='pneumatic.app/files',
     )
     def test_refresh_for_event__rollback_no_att__false(
         self,
@@ -320,7 +320,7 @@ class TestRefreshAttachmentsForText:
 
     @override_settings(
         FILE_SERVICE_URL='https://files.pneumatic.app',
-        FILE_DOMAIN='files.pneumatic.app',
+        FILE_SERVICE_HOST_PATH='pneumatic.app/files',
     )
     def test_refresh_for_event__value_error__recalc(
         self,
@@ -379,7 +379,7 @@ class TestRefreshAttachmentsForText:
 
     @override_settings(
         FILE_SERVICE_URL='https://files.pneumatic.app',
-        FILE_DOMAIN='files.pneumatic.app',
+        FILE_SERVICE_HOST_PATH='pneumatic.app/files',
     )
     def test_refresh_for_event__rollback_existent__recalc(
         self,

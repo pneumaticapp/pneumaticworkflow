@@ -1829,7 +1829,7 @@ def test_get_valid_checkbox_value__many_values__ok(mocker):
     clear_markdown_mock.assert_called_once_with(value)
 
 
-@override_settings(FILE_DOMAIN='example.com')
+@override_settings(FILE_SERVICE_HOST_PATH='example.com')
 def test__get_valid_checkbox_value__not_list__raise_exception(mocker):
 
     """raw_value is not a list — raises TaskFieldException"""
@@ -1931,7 +1931,7 @@ def test__get_valid_checkbox_value__not_in_allowed__raise_exception(mocker):
     get_selections_values_mock.assert_called_once_with()
 
 
-@override_settings(FILE_DOMAIN='example.com')
+@override_settings(FILE_SERVICE_HOST_PATH='example.com')
 def test_get_valid_file_value__one_file__ok():
 
     # arrange
@@ -1960,7 +1960,7 @@ def test_get_valid_file_value__one_file__ok():
     assert field_data.clear_value == full_url
 
 
-@override_settings(FILE_DOMAIN='example.com')
+@override_settings(FILE_SERVICE_HOST_PATH='example.com')
 def test_get_valid_file_value__multiple_files__ok():
 
     # arrange
@@ -2049,7 +2049,7 @@ def test_get_valid_file_value__not_list__raise_exception():
     assert ex.value.api_name == task_field.api_name
 
 
-@override_settings(FILE_DOMAIN='example.com')
+@override_settings(FILE_SERVICE_HOST_PATH='example.com')
 def test_get_valid_file_value__external_domain_link__raise_exception():
 
     # arrange
@@ -2075,7 +2075,7 @@ def test_get_valid_file_value__external_domain_link__raise_exception():
     assert ex.value.api_name == field.api_name
 
 
-@override_settings(FILE_DOMAIN='example.com')
+@override_settings(FILE_SERVICE_HOST_PATH='example.com')
 def test_get_valid_file_value__invalid_attach_id__raise_exception():
 
     # arrange
