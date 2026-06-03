@@ -17,41 +17,52 @@ export function MergedOutputList({
   accountId,
 }: IMergedOutputListProps) {
   const { isDesktop } = useCheckDevice();
-  const parts = buildRuntimeMergedOutputParts(fields, fieldsets);
+  const mergedOutputs = buildRuntimeMergedOutputParts(fields, fieldsets);
 
   return (
     <>
-      {parts.map((part) => {
-        if (part.kind === 'field') {
+      {mergedOutputs.map((mergedOutput) => {
+        if (mergedOutput.kind === 'field') {
+          const fieldData = mergedOutput.field;
+          const { apiName: fieldApiName, name: fieldName, description: fieldDescription } = fieldData;
+
           return (
             <ExtraFieldIntl
-              key={part.field.apiName}
-              field={{ ...part.field }}
-              editField={onEditField(part.field.apiName)}
+              key={fieldApiName}
+              field={{ ...fieldData }}
+              editField={onEditField(fieldApiName)}
               showDropdown={false}
               mode={EExtraFieldMode.ProcessRun}
               labelBackgroundColor={labelBackgroundColor}
-              namePlaceholder={part.field.name}
-              descriptionPlaceholder={part.field.description}
+              namePlaceholder={fieldName}
+              descriptionPlaceholder={fieldDescription}
               wrapperClassName={fieldClassName}
               accountId={accountId}
               labelPosition={EFieldLabelPosition.Top}
             />
           );
         }
-        if (part.kind === 'fieldset') {
+        if (mergedOutput.kind === 'fieldset') {
+          const {
+            apiName: fieldsetApiName,
+            name: fieldsetName,
+            description: fieldsetDescription,
+            fields: fieldsetFields,
+            labelPosition: fieldsetLabelPosition,
+          } = mergedOutput.data;
+
           return (
           <FieldsetFieldGroup
-            key={part.data.apiName}
-            title={part.data.name}
-            description={part.data.description}
-            fields={part.data.fields}
+            key={fieldsetApiName}
+            title={fieldsetName}
+            description={fieldsetDescription}
+            fields={fieldsetFields}
             onEditField={onEditFieldsetField}
             mode={EExtraFieldMode.ProcessRun}
             labelBackgroundColor={labelBackgroundColor}
             accountId={accountId}
             fieldClassName={fieldClassName}
-            labelPosition={isDesktop ? part.data.labelPosition : EFieldLabelPosition.Top}
+            labelPosition={isDesktop ? fieldsetLabelPosition : EFieldLabelPosition.Top}
           />
           );
         }

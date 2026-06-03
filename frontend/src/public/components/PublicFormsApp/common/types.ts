@@ -1,12 +1,14 @@
-/* eslint-disable */
-/* prettier-ignore */
-import { IKickoff } from '../../../types/template';
+import { IKickoff, IFieldsetData } from '../../../types/template';
+
+export interface IPublicFormKickoff extends Omit<IKickoff, 'fieldsets'> {
+  fieldsets: IFieldsetData[];
+}
 
 export interface IPublicForm {
   accountId: number;
   name: string;
   description: string;
-  kickoff: IKickoff;
+  kickoff: IPublicFormKickoff;
   showCaptcha: boolean;
 }
 
