@@ -1,0 +1,1 @@
+export { DisableRichTextFormattingPlugin } from './DisableRichTextFormattingPlugin';

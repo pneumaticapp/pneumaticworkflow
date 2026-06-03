@@ -1,6 +1,11 @@
 import type { TTaskVariable } from '../../../TemplateEdit/types';
 import { EExtraFieldType } from '../../../../types/template';
-import { createVariableTransformer, getVariablePayload } from '../variableMarkdown';
+import {
+  createVariableTransformer,
+  getVariablePayload,
+  isKnownVariableApiName,
+  removeUnknownVariableTokens,
+} from '../variableMarkdown';
 
 /**
  * parseTextWithVariables and createVariableTransformer use $createTextNode, $createVariableNode,
@@ -45,6 +50,22 @@ describe('variableMarkdown', () => {
         title: 'Variable Two',
         subtitle: undefined,
       });
+    });
+  });
+
+  describe('isKnownVariableApiName', () => {
+    const list: TTaskVariable[] = [
+      { apiName: 'date', title: 'Date', type: EExtraFieldType.Text },
+    ];
+
+    it('matches template list by apiName', () => {
+      expect(isKnownVariableApiName('date', list)).toBe(true);
+      expect(isKnownVariableApiName('unknown', list)).toBe(false);
+    });
+
+    it('removeUnknownVariableTokens strips unknown and keeps known', () => {
+      expect(removeUnknownVariableTokens('Hi {{unknown}} {{date}}', list)).toBe('Hi  {{date}}');
+      expect(removeUnknownVariableTokens('{{unknown}}', list)).toBe('');
     });
   });
 
