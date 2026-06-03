@@ -61,7 +61,6 @@ UserModel = get_user_model()
 
 __all__ = [
     'send_comment_notification',
-    'send_complete_task_notification',
     'send_completed_workflow_notification',
     'send_dataset_created_notification',
     'send_dataset_deleted_notification',
@@ -98,7 +97,6 @@ __all__ = [
     'send_vacation_delegation_notification',
     'send_verification_notification',
     'send_workflow_comment_watched',
-    'send_workflow_event',
     'send_workflows_digest_notification',
 ]
 

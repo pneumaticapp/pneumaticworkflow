@@ -1,4 +1,4 @@
-from datetime import timedelta
+﻿from datetime import timedelta
 
 import pytest
 from channels.testing import WebsocketCommunicator
@@ -196,6 +196,20 @@ def test_async_send__ok(mocker):
 def test_send__sync__ok(mocker):
 
     # arrange
+    uuid_mock = 'test-uuid-123'
+    timestamp_mock = 1234567890.0
+
+    mocker.patch(
+        'src.notifications.services.websockets.uuid.uuid4',
+        return_value=(
+            mocker.Mock(spec=['__str__'], __str__=lambda x: uuid_mock)
+        ),
+    )
+    mocker.patch(
+        'src.notifications.services.websockets.timezone.now',
+        return_value=mocker.Mock(timestamp=lambda: timestamp_mock),
+    )
+
     sync_send_mock = mocker.patch(
         'src.notifications.services.websockets.'
         'WebSocketService._sync_send',
@@ -220,13 +234,32 @@ def test_send__sync__ok(mocker):
     # assert
     sync_send_mock.assert_called_once_with(
         group_name=group_name,
-        data=data,
+        data={
+            'id': uuid_mock,
+            'date_created_tsp': timestamp_mock,
+            'type': NotificationMethod.overdue_task,
+            'data': data,
+        },
     )
 
 
 def test_send__async__ok(mocker):
 
     # arrange
+    uuid_mock = 'test-uuid-456'
+    timestamp_mock = 1234567891.0
+
+    mocker.patch(
+        'src.notifications.services.websockets.uuid.uuid4',
+        return_value=(
+            mocker.Mock(spec=['__str__'], __str__=lambda x: uuid_mock)
+        ),
+    )
+    mocker.patch(
+        'src.notifications.services.websockets.timezone.now',
+        return_value=mocker.Mock(timestamp=lambda: timestamp_mock),
+    )
+
     async_send_mock = mocker.patch(
         'src.notifications.services.websockets.'
         'WebSocketService._async_send',
@@ -250,7 +283,12 @@ def test_send__async__ok(mocker):
     # assert
     async_send_mock.assert_called_once_with(
         group_name=group_name,
-        data=data,
+        data={
+            'id': uuid_mock,
+            'date_created_tsp': timestamp_mock,
+            'type': NotificationMethod.overdue_task,
+            'data': data,
+        },
     )
 
 
@@ -328,8 +366,8 @@ def test_send_overdue_task__type_user__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.overdue_task,
-        group_name=f'notifications_{user_id}',
+        method_name=NotificationMethod.notification_created,
+        group_name=f'events_{user_id}',
         data=data,
         sync=True,
     )
@@ -396,8 +434,8 @@ def test_send_resume_workflow__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.resume_workflow,
-        group_name=f'notifications_{user_id}',
+        method_name=NotificationMethod.notification_created,
+        group_name=f'events_{user_id}',
         data=data,
         sync=True,
     )
@@ -435,8 +473,8 @@ def test_send_delay_workflow__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.delay_workflow,
-        group_name=f'notifications_{user_id}',
+        method_name=NotificationMethod.notification_created,
+        group_name=f'events_{user_id}',
         data=data,
         sync=False,
     )
@@ -476,8 +514,8 @@ def test_send_due_date_changed__type_user__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.due_date_changed,
-        group_name=f'notifications_{user_id}',
+        method_name=NotificationMethod.notification_created,
+        group_name=f'events_{user_id}',
         data=data,
         sync=True,
     )
@@ -557,7 +595,7 @@ async def test_consumer_send_notification__received(mocker, api_client):
     )
     communicator = WebsocketCommunicator(
         application,
-        f'/ws/notifications/?auth_token={token}',
+        f'/ws/events?auth_token={token}',
     )
     await communicator.connect()
 
@@ -571,10 +609,14 @@ async def test_consumer_send_notification__received(mocker, api_client):
     response = await communicator.receive_json_from()
 
     # assert
-    assert response['id'] == notification.id
-    assert response['text'] == notification.text
-    assert response['author'] == invited.id
-    assert response['workflow']['id'] == workflow.id
+    assert 'id' in response
+    assert 'date_created_tsp' in response
+    assert response['type'] == NotificationMethod.notification_created
+    assert 'data' in response
+    assert response['data']['id'] == notification.id
+    assert response['data']['text'] == notification.text
+    assert response['data']['author'] == invited.id
+    assert response['data']['workflow']['id'] == workflow.id
 
     await communicator.disconnect()
     ws_auth_patch.assert_called_once_with(token)
@@ -590,7 +632,7 @@ async def test_consumer__connection__ok(mocker):
     user_patch.return_value = user
     communicator = WebsocketCommunicator(
         application,
-        '/ws/notifications/?auth_token=123456',
+        '/ws/events?auth_token=123456',
     )
 
     connected, _ = await communicator.connect()
@@ -610,7 +652,7 @@ async def test_consumer__incorrect_token__deny_connection(mocker):
     user_patch.side_effect = ObjectDoesNotExist()
     communicator = WebsocketCommunicator(
         application,
-        '/ws/notifications/?auth_token=123456',
+        '/ws/events?auth_token=123456',
     )
 
     connected, _ = await communicator.connect()
@@ -628,7 +670,7 @@ async def test_consumer__without_token__deny_connection(mocker):
     )
     communicator = WebsocketCommunicator(
         application,
-        '/ws/notifications/',
+        '/ws/events',
     )
 
     connected, _ = await communicator.connect()
@@ -650,7 +692,7 @@ async def test_consumer__ping_pong__ok(mocker, api_client):
     user_patch.return_value = user
     communicator = WebsocketCommunicator(
         application,
-        '/ws/notifications/?auth_token=123456',
+        '/ws/events?auth_token=123456',
     )
     await communicator.connect()
 
@@ -696,8 +738,8 @@ def test_send_urgent__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.urgent,
-        group_name=f'notifications_{user_id}',
+        method_name=NotificationMethod.notification_created,
+        group_name=f'events_{user_id}',
         data=data,
         sync=True,
     )
@@ -735,8 +777,8 @@ def test_send_not_urgent__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.not_urgent,
-        group_name=f'notifications_{user_id}',
+        method_name=NotificationMethod.notification_created,
+        group_name=f'events_{user_id}',
         data=data,
         sync=True,
     )
@@ -774,8 +816,8 @@ def test_send_mention__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.mention,
-        group_name=f'notifications_{user_id}',
+        method_name=NotificationMethod.notification_created,
+        group_name=f'events_{user_id}',
         data=data,
         sync=True,
     )
@@ -813,8 +855,8 @@ def test_send_comment__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.comment,
-        group_name=f'notifications_{user_id}',
+        method_name=NotificationMethod.notification_created,
+        group_name=f'events_{user_id}',
         data=data,
         sync=True,
     )
@@ -852,8 +894,8 @@ def test_send_system__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.system,
-        group_name=f'notifications_{user_id}',
+        method_name=NotificationMethod.notification_created,
+        group_name=f'events_{user_id}',
         data=data,
         sync=True,
     )
@@ -891,15 +933,15 @@ def test_send_reaction__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.reaction,
-        group_name=f'notifications_{user_id}',
+        method_name=NotificationMethod.notification_created,
+        group_name=f'events_{user_id}',
         data=data,
         sync=True,
     )
     slz_mock.assert_called_once_with(notification)
 
 
-def test_send_complete_task__ok(mocker):
+def test_send_task_completed__ok(mocker):
 
     # arrange
     user_id = 12
@@ -921,7 +963,7 @@ def test_send_complete_task__ok(mocker):
     )
 
     # act
-    service.send_complete_task(
+    service.send_task_completed(
         user_id=user_id,
         notification=notification,
         sync=True,
@@ -929,162 +971,14 @@ def test_send_complete_task__ok(mocker):
 
     # assert
     send_mock.assert_called_once_with(
-        method_name=NotificationMethod.complete_task,
-        group_name=f'notifications_{user_id}',
+        method_name=NotificationMethod.notification_created,
+        group_name=f'events_{user_id}',
         data=data,
         sync=True,
     )
     slz_mock.assert_called_once_with(notification)
 
 
-def test_send_dataset_created__ok(mocker):
-
-    """send_dataset_created routes to EventsConsumer with correct payload"""
-
-    # arrange
-    user_id = 42
-    dataset_data = {'id': 1, 'name': 'My Dataset', 'items': []}
-    send_mock = mocker.patch(
-        'src.notifications.services.websockets.'
-        'WebSocketService._send',
-    )
-    uuid_mock = mocker.patch(
-        'src.notifications.services.websockets.uuid.uuid4',
-        return_value='fixed-uuid',
-    )
-    now_mock = mocker.patch(
-        'src.notifications.services.websockets.timezone.now',
-        return_value=mocker.Mock(
-            timestamp=mocker.Mock(return_value=1000.0),
-        ),
-    )
-    service = WebSocketService(
-        logging=True,
-        logo_lg='https://logo.com',
-        account_id=123,
-    )
-
-    # act
-    service.send_dataset_created(
-        user_id=user_id,
-        dataset_data=dataset_data,
-        sync=True,
-    )
-
-    # assert
-    send_mock.assert_called_once_with(
-        method_name=NotificationMethod.dataset_created,
-        group_name=f'events_{user_id}',
-        data={
-            'id': 'fixed-uuid',
-            'date_created_tsp': 1000.0,
-            'type': NotificationMethod.dataset_created,
-            'data': dataset_data,
-        },
-        sync=True,
-    )
-    uuid_mock.assert_called_once()
-    now_mock.assert_called_once()
-
-
-def test_send_dataset_updated__ok(mocker):
-
-    """send_dataset_updated routes to EventsConsumer with correct payload"""
-
-    # arrange
-    user_id = 42
-    dataset_data = {'id': 1, 'name': 'Updated Name', 'items': []}
-    send_mock = mocker.patch(
-        'src.notifications.services.websockets.'
-        'WebSocketService._send',
-    )
-    uuid_mock = mocker.patch(
-        'src.notifications.services.websockets.uuid.uuid4',
-        return_value='fixed-uuid',
-    )
-    now_mock = mocker.patch(
-        'src.notifications.services.websockets.timezone.now',
-        return_value=mocker.Mock(
-            timestamp=mocker.Mock(return_value=2000.0),
-        ),
-    )
-    service = WebSocketService(
-        logging=True,
-        logo_lg='https://logo.com',
-        account_id=123,
-    )
-
-    # act
-    service.send_dataset_updated(
-        user_id=user_id,
-        dataset_data=dataset_data,
-        sync=True,
-    )
-
-    # assert
-    send_mock.assert_called_once_with(
-        method_name=NotificationMethod.dataset_updated,
-        group_name=f'events_{user_id}',
-        data={
-            'id': 'fixed-uuid',
-            'date_created_tsp': 2000.0,
-            'type': NotificationMethod.dataset_updated,
-            'data': dataset_data,
-        },
-        sync=True,
-    )
-    uuid_mock.assert_called_once()
-    now_mock.assert_called_once()
-
-
-def test_send_dataset_deleted__ok(mocker):
-
-    """send_dataset_deleted routes to EventsConsumer with correct payload"""
-
-    # arrange
-    user_id = 42
-    dataset_data = {'id': 1, 'name': 'Deleted Dataset', 'items': []}
-    send_mock = mocker.patch(
-        'src.notifications.services.websockets.'
-        'WebSocketService._send',
-    )
-    uuid_mock = mocker.patch(
-        'src.notifications.services.websockets.uuid.uuid4',
-        return_value='fixed-uuid',
-    )
-    now_mock = mocker.patch(
-        'src.notifications.services.websockets.timezone.now',
-        return_value=mocker.Mock(
-            timestamp=mocker.Mock(return_value=3000.0),
-        ),
-    )
-    service = WebSocketService(
-        logging=True,
-        logo_lg='https://logo.com',
-        account_id=123,
-    )
-
-    # act
-    service.send_dataset_deleted(
-        user_id=user_id,
-        dataset_data=dataset_data,
-        sync=True,
-    )
-
-    # assert
-    send_mock.assert_called_once_with(
-        method_name=NotificationMethod.dataset_deleted,
-        group_name=f'events_{user_id}',
-        data={
-            'id': 'fixed-uuid',
-            'date_created_tsp': 3000.0,
-            'type': NotificationMethod.dataset_deleted,
-            'data': dataset_data,
-        },
-        sync=True,
-    )
-    uuid_mock.assert_called_once()
-    now_mock.assert_called_once()
 def test_send_task_completed_websocket__ok(mocker):
 
     # arrange
@@ -1433,5 +1327,104 @@ def test_send_user_deleted__ok(mocker):
         method_name=NotificationMethod.user_deleted,
         group_name=f'events_{user_id}',
         data=user_data,
+        sync=True,
+    )
+
+
+def test_send_dataset_created__ok(mocker):
+
+    """send_dataset_created routes to EventsConsumer with correct payload"""
+
+    # arrange
+    user_id = 42
+    dataset_data = {'id': 1, 'name': 'My Dataset', 'items': []}
+    send_mock = mocker.patch(
+        'src.notifications.services.websockets.'
+        'WebSocketService._send',
+    )
+    service = WebSocketService(
+        logging=True,
+        logo_lg='https://logo.com',
+        account_id=123,
+    )
+
+    # act
+    service.send_dataset_created(
+        user_id=user_id,
+        dataset_data=dataset_data,
+        sync=True,
+    )
+
+    # assert
+    send_mock.assert_called_once_with(
+        method_name=NotificationMethod.dataset_created,
+        group_name=f'events_{user_id}',
+        data=dataset_data,
+        sync=True,
+    )
+
+
+def test_send_dataset_updated__ok(mocker):
+
+    """send_dataset_updated routes to EventsConsumer with correct payload"""
+
+    # arrange
+    user_id = 42
+    dataset_data = {'id': 1, 'name': 'Updated Name', 'items': []}
+    send_mock = mocker.patch(
+        'src.notifications.services.websockets.'
+        'WebSocketService._send',
+    )
+    service = WebSocketService(
+        logging=True,
+        logo_lg='https://logo.com',
+        account_id=123,
+    )
+
+    # act
+    service.send_dataset_updated(
+        user_id=user_id,
+        dataset_data=dataset_data,
+        sync=True,
+    )
+
+    # assert
+    send_mock.assert_called_once_with(
+        method_name=NotificationMethod.dataset_updated,
+        group_name=f'events_{user_id}',
+        data=dataset_data,
+        sync=True,
+    )
+
+
+def test_send_dataset_deleted__ok(mocker):
+
+    """send_dataset_deleted routes to EventsConsumer with correct payload"""
+
+    # arrange
+    user_id = 42
+    dataset_data = {'id': 1, 'name': 'Deleted Dataset', 'items': []}
+    send_mock = mocker.patch(
+        'src.notifications.services.websockets.'
+        'WebSocketService._send',
+    )
+    service = WebSocketService(
+        logging=True,
+        logo_lg='https://logo.com',
+        account_id=123,
+    )
+
+    # act
+    service.send_dataset_deleted(
+        user_id=user_id,
+        dataset_data=dataset_data,
+        sync=True,
+    )
+
+    # assert
+    send_mock.assert_called_once_with(
+        method_name=NotificationMethod.dataset_deleted,
+        group_name=f'events_{user_id}',
+        data=dataset_data,
         sync=True,
     )
