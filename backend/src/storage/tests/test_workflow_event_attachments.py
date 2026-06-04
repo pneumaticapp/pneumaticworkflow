@@ -142,7 +142,7 @@ class TestRefreshWorkflowEventAttachments:
         mock_event.save.assert_not_called()
 
     @override_settings(
-        FILE_SERVICE_URL='https://files.pneumatic.app',
+        FILE_SERVICE_URL='https://pneumatic.app/files',
         FILE_SERVICE_HOST_PATH='pneumatic.app/files',
     )
     def test_refresh_workflow_event_attachments__all_attached_elsewhere__false(
@@ -167,7 +167,7 @@ class TestRefreshWorkflowEventAttachments:
         event2.task = task
         event2.type = WorkflowEventType.COMMENT
         event2.text = (
-            f"[doc.pdf](https://files.pneumatic.app/{shared_file_id})"
+            f"[doc.pdf](https://pneumatic.app/files/{shared_file_id})"
         )
         event2.with_attachments = True
         event2.save()

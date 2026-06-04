@@ -1013,7 +1013,6 @@ def test_retrieve__complete_task__field_user__ok(api_client):
     assert field_data['api_name'] == field.api_name
     # TODO Replace in https://my.pneumatic.app/workflows/18137/
     assert field_data['value'] == user.get_full_name()
-    assert field_data['attachments'] == []
     assert field_data['order'] == field.order
     assert field_data['user_id'] == user.id
 
@@ -1083,7 +1082,6 @@ def test_retrieve__complete_task__field_date__ok(api_client):
     assert field_data['description'] == field.description
     assert field_data['api_name'] == field.api_name
     assert field_data['value'] == str(6516313)
-    assert field_data['attachments'] == []
     assert field_data['order'] == field.order
 
 

@@ -1,12 +1,10 @@
 import { commonRequest } from './commonRequest';
 import { getBrowserConfigEnv } from '../utils/getConfig';
 import { mapRequestBody } from '../utils/mappers';
-import { TUploadedFile } from '../utils/uploadFiles';
 
 export interface ISendTaskCommentResponse {
   text: string;
   process: number;
-  attachments: TUploadedFile[];
 }
 
 export interface ISendTaskCommentConfig {

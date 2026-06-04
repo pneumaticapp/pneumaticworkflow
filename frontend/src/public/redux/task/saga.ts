@@ -53,7 +53,7 @@ import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getAuthUser, getUsers, getUserTimezone } from '../selectors/user';
 import { removeOutputFromLocalStorage } from '../../components/TaskCard/utils/storageOutputs';
 import { ETaskCardViewMode } from '../../components/TaskCard';
-import { deleteRemovedFilesFromFields } from '../../api/deleteRemovedFilesFromFields';
+
 import { TChannelAction } from '../tasks/saga';
 import { getCurrentTask, getTaskPerformers, getTaskStore } from '../selectors/task';
 import { addTaskPerformer } from '../../api/addTaskPerformer';
@@ -297,7 +297,6 @@ export function* setTaskCompleted({ payload: { taskId, output, viewMode } }: TSe
   }
 
   try {
-    yield deleteRemovedFilesFromFields(output);
 
     const mappedOutput = mapOutputToCompleteTask(output);
 

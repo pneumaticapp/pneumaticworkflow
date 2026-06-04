@@ -100,7 +100,7 @@ import {
   getLastLoadedTemplateIdForTable,
 } from '../selectors/workflows';
 import { getCurrentTask } from '../selectors/task';
-import { getEditKickoff, mapFilesToRequest } from '../../utils/workflows';
+import { getEditKickoff } from '../../utils/workflows';
 import { getErrorMessage } from '../../utils/getErrorMessage';
 import { getWorkflows } from '../../api/getWorkflows';
 import { getWorkflow } from '../../api/getWorkflow';
@@ -116,7 +116,7 @@ import { editWorkflow, IEditWorkflowResponse } from '../../api/editWorkflow';
 import { getTemplatesTitles, TGetTemplatesTitlesResponse } from '../../api/getTemplatesTitles';
 import { IKickoff, ITemplateResponse, TTemplatePreset } from '../../types/template';
 import { getWorkflowLogStore } from '../selectors/workflowLog';
-import { deleteRemovedFilesFromFields } from '../../api/deleteRemovedFilesFromFields';
+
 import { TChannelAction } from '../tasks/saga';
 import { ITemplateStep } from '../../types/tasks';
 import { getTemplateSteps } from '../../api/getTemplateSteps';
@@ -402,7 +402,6 @@ function* editWorkflowInWork({ payload }: PayloadAction<TEditWorkflowPayload>) {
   if (name) yield put(setIsSavingWorkflowName(true));
   if (kickoff) yield put(setIsSavingKickoff(true));
 
-  yield deleteRemovedFilesFromFields(payload.kickoff?.fields);
 
   try {
     yield put(setGeneralLoaderVisibility(true));

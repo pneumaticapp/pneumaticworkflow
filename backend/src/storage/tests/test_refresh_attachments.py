@@ -23,12 +23,12 @@ pytestmark = pytest.mark.django_db
 class TestExtractFileIdsFromText:
 
     @override_settings(
-        FILE_SERVICE_URL='https://files.pneumatic.app',
+        FILE_SERVICE_URL='https://pneumatic.app/files',
         FILE_SERVICE_HOST_PATH='pneumatic.app/files',
     )
     def test_extract_file_ids_from_text__single_link__list_with_one_id(self):
         # arrange
-        text = "[document.pdf](https://files.pneumatic.app/abc123def456)"
+        text = "[document.pdf](https://pneumatic.app/files/abc123def456)"
 
         # act
         file_ids = extract_file_ids_from_text(text)
@@ -37,7 +37,7 @@ class TestExtractFileIdsFromText:
         assert file_ids == ['abc123def456']
 
     @override_settings(
-        FILE_SERVICE_URL='https://files.pneumatic.app',
+        FILE_SERVICE_URL='https://pneumatic.app/files',
         FILE_SERVICE_HOST_PATH='pneumatic.app/files',
     )
     def test_extract_file_ids_from_text__multiple_links__set_of_internal_ids(
@@ -46,8 +46,8 @@ class TestExtractFileIdsFromText:
         # arrange
         text = """
         Documents:
-        [contract.pdf](https://files.pneumatic.app/abc12345)
-        [specification.docx](https://files.pneumatic.app/def45678)
+        [contract.pdf](https://pneumatic.app/files/abc12345)
+        [specification.docx](https://pneumatic.app/files/def45678)
         [external.pdf](https://drive.google.com/d/xyz789)
         """
 
@@ -68,13 +68,13 @@ class TestExtractFileIdsFromText:
         assert file_ids == []
 
     @override_settings(
-        FILE_SERVICE_URL='https://files.pneumatic.app',
+        FILE_SERVICE_URL='https://pneumatic.app/files',
         FILE_SERVICE_HOST_PATH='pneumatic.app/files',
     )
     def test_extract_file_ids_from_text__external_links__ignored(self):
         # arrange
         text = """
-        [internal.pdf](https://files.pneumatic.app/internal123)
+        [internal.pdf](https://pneumatic.app/files/internal123)
         [external.pdf](https://drive.google.com/d/external456)
         [sharepoint.docx](https://company.sharepoint.com/doc.docx)
         """
@@ -89,7 +89,7 @@ class TestExtractFileIdsFromText:
 class TestRefreshAttachmentsForText:
 
     @override_settings(
-        FILE_SERVICE_URL='https://files.pneumatic.app',
+        FILE_SERVICE_URL='https://pneumatic.app/files',
         FILE_SERVICE_HOST_PATH='pneumatic.app/files',
     )
     @patch('src.storage.utils.AttachmentService')
@@ -108,7 +108,7 @@ class TestRefreshAttachmentsForText:
         mock_filter.exclude.return_value.delete.return_value = (0, {})
         mock_service = Mock()
         mock_service_class.return_value = mock_service
-        text = "[test.pdf](https://files.pneumatic.app/test12345)"
+        text = "[test.pdf](https://pneumatic.app/files/test12345)"
         mock_task = Mock()
 
         # act
@@ -132,7 +132,7 @@ class TestRefreshAttachmentsForText:
         )
 
     @override_settings(
-        FILE_SERVICE_URL='https://files.pneumatic.app',
+        FILE_SERVICE_URL='https://pneumatic.app/files',
         FILE_SERVICE_HOST_PATH='pneumatic.app/files',
     )
     @patch('src.storage.utils.AttachmentService')
@@ -158,7 +158,7 @@ class TestRefreshAttachmentsForText:
         mock_service = Mock()
         mock_service_class.return_value = mock_service
         mock_service.bulk_create_for_event.return_value = []
-        text = "[doc.pdf](https://files.pneumatic.app/dup_file_123)"
+        text = "[doc.pdf](https://pneumatic.app/files/dup_file_123)"
 
         # act
         new_file_ids, has_attachments = refresh_attachments_for_event(
@@ -201,7 +201,7 @@ class TestRefreshAttachmentsForText:
         mock_attachment_objects.filter.assert_called()
 
     @override_settings(
-        FILE_SERVICE_URL='https://files.pneumatic.app',
+        FILE_SERVICE_URL='https://pneumatic.app/files',
         FILE_SERVICE_HOST_PATH='pneumatic.app/files',
     )
     def test_refresh_for_event__rollback__recalc_from_db(
@@ -240,7 +240,7 @@ class TestRefreshAttachmentsForText:
         filter_mock.exists.return_value = True
         text = (
             "[doc.pdf]"
-            "(https://files.pneumatic.app/new_file_id)"
+            "(https://pneumatic.app/files/new_file_id)"
         )
 
         # act
@@ -260,7 +260,7 @@ class TestRefreshAttachmentsForText:
         clear_permissions_mock.assert_called_once_with([])
 
     @override_settings(
-        FILE_SERVICE_URL='https://files.pneumatic.app',
+        FILE_SERVICE_URL='https://pneumatic.app/files',
         FILE_SERVICE_HOST_PATH='pneumatic.app/files',
     )
     def test_refresh_for_event__rollback_no_att__false(
@@ -299,7 +299,7 @@ class TestRefreshAttachmentsForText:
         filter_mock.exists.return_value = False
         text = (
             "[doc.pdf]"
-            "(https://files.pneumatic.app/some_file)"
+            "(https://pneumatic.app/files/some_file)"
         )
 
         # act
@@ -319,7 +319,7 @@ class TestRefreshAttachmentsForText:
         clear_permissions_mock.assert_called_once_with([])
 
     @override_settings(
-        FILE_SERVICE_URL='https://files.pneumatic.app',
+        FILE_SERVICE_URL='https://pneumatic.app/files',
         FILE_SERVICE_HOST_PATH='pneumatic.app/files',
     )
     def test_refresh_for_event__value_error__recalc(
@@ -358,7 +358,7 @@ class TestRefreshAttachmentsForText:
         filter_mock.exists.return_value = True
         text = (
             "[f.pdf]"
-            "(https://files.pneumatic.app/val_err_file)"
+            "(https://pneumatic.app/files/val_err_file)"
         )
 
         # act
@@ -378,7 +378,7 @@ class TestRefreshAttachmentsForText:
         clear_permissions_mock.assert_called_once_with([])
 
     @override_settings(
-        FILE_SERVICE_URL='https://files.pneumatic.app',
+        FILE_SERVICE_URL='https://pneumatic.app/files',
         FILE_SERVICE_HOST_PATH='pneumatic.app/files',
     )
     def test_refresh_for_event__rollback_existent__recalc(
@@ -419,9 +419,9 @@ class TestRefreshAttachmentsForText:
         filter_mock.exists.return_value = False
         text = (
             "[a.pdf]"
-            "(https://files.pneumatic.app/existing_file_1) "
+            "(https://pneumatic.app/files/existing_file_1) "
             "[b.pdf]"
-            "(https://files.pneumatic.app/new_file_2)"
+            "(https://pneumatic.app/files/new_file_2)"
         )
 
         # act
