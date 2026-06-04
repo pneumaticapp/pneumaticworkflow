@@ -158,10 +158,7 @@
       "vacationDeactivate": "/accounts/user/deactivate-vacation",
       "vacationUserActivate": "/accounts/users/:id/activate-vacation",
       "vacationUserDeactivate": "/accounts/users/:id/deactivate-vacation",
-      "wsNotifications": "/ws/notifications",
-      "wsNewTask": "/ws/workflows/new-task",
-      "wsRemovedTask": "/ws/workflows/removed-task",
-      "wsWorkflowsEvent": "/ws/workflows/events"
+      "wsEvents": "/ws/events"
     }
   },
   "exposedToBrowser": [

@@ -65,8 +65,7 @@ import { REDIRECT_URL_STORAGE_KEY } from '../../constants/storageKeys';
 import { getUTMParams, IUserUtm } from '../../views/user/utils/utmParams';
 import { clearAppFilters, setGeneralLoaderVisibility } from '../general/actions';
 import { getQueryStringParams, history } from '../../utils/history';
-import { watchNewTask, watchRemoveTask } from '../tasks/saga';
-import { watchNewNotifications } from '../notifications/saga';
+import { watchWsEvents } from '../realtime/watchWsEvents';
 import { TUploadedFile, uploadUserAvatar } from '../../utils/uploadFiles';
 import { changePhotoProfile } from '../../api/changePhotoProfile';
 import { ELoggedState, IAuthUser } from '../../types/redux';
@@ -91,7 +90,6 @@ import { getCustomerPortalLink } from '../../api/getCustomerPortalLink';
 import { setSentryUser } from '../../utils/sentryUser';
 import { createTemplateFromName } from './utils/createTemplateFromName';
 import { ITemplate } from '../../types/template';
-import { watchNewWorkflowsEvent } from '../workflows/saga';
 import { removeLocalStorage } from '../../utils/localStorage';
 import { isEnvBilling } from '../../constants/enviroment';
 import { activateVacation, deactivateVacation } from '../../api/vacation';
@@ -460,10 +458,6 @@ export function* handleDeleteUserPhoto() {
   }
 }
 
-function* handleWatchUserWSEvents() {
-  yield all([fork(watchNewTask), fork(watchRemoveTask), fork(watchNewNotifications), fork(watchNewWorkflowsEvent)]);
-}
-
 export function handleSetRedirectUrl({ payload: redirectUrl }: TSetRedirectUrl) {
   sessionStorage.setItem(REDIRECT_URL_STORAGE_KEY, redirectUrl);
 }
@@ -686,6 +680,10 @@ export function* watchSetRedirectUrl() {
 
 export function* watchSetUserToken() {
   yield takeEvery(EAuthActions.SetToken, handleSetUserToken);
+}
+
+function* handleWatchUserWSEvents() {
+  yield fork(watchWsEvents);
 }
 
 export function* watchUserWSEvents() {
