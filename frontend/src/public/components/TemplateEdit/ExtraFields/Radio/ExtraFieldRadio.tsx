@@ -213,7 +213,7 @@ export function ExtraFieldRadio({
 
     return (
       <li key={selectionValue} className={fieldStyles['kickoff-set-field-option']}>
-        <RadioButton id={selectionValue} title={selectionValue} onChange={handleToggleOption(selectionValue)} checked={isChecked} />
+        <RadioButton id={`${field.apiName}-${selectionValue}`} title={selectionValue} onChange={handleToggleOption(selectionValue)} checked={isChecked} />
       </li>
     );
   };
