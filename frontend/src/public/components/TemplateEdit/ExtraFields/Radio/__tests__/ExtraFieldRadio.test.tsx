@@ -6,7 +6,9 @@ import { ExtraFieldRadio } from '../ExtraFieldRadio';
 import { OutputFieldContent } from '../../utils/OutputFieldContent';
 import { RadioButton } from '../../../../UI/Fields/RadioButton';
 import { intlMock } from '../../../../../__stubs__/intlMock';
-import { EExtraFieldMode } from '../../../../../types/template';
+import { EExtraFieldMode, EExtraFieldType } from '../../../../../types/template';
+import { IWorkflowExtraFieldProps } from '../../types';
+import { makeExtraField } from '../../../../../__stubs__/fields.factory';
 
 jest.mock('../../utils/OutputFieldContent', () => ({
   OutputFieldContent: jest.fn(({ children }: any) =>
@@ -125,5 +127,53 @@ describe('ExtraFieldRadio', () => {
     expect(mock).toHaveBeenCalledWith(expect.objectContaining({ title: 'Red' }), {});
     expect(mock).toHaveBeenCalledWith(expect.objectContaining({ title: 'Blue' }), {});
     expect(mock).toHaveBeenCalledWith(expect.objectContaining({ title: 'Green' }), {});
+  });
+
+  describe('unique radio grouping across multiple fields', () => {
+    it('ProcessRun: two fields with identical selections receive unique RadioButton ids', () => {
+      const sharedSelections = ['Red', 'Blue'];
+
+      const field1 = makeExtraField({
+        apiName: 'radio-1',
+        name: 'Color',
+        type: EExtraFieldType.Radio,
+        selections: sharedSelections,
+        value: 'Red',
+      });
+
+      const field2 = makeExtraField({
+        apiName: 'radio-2',
+        name: 'Color',
+        type: EExtraFieldType.Radio,
+        selections: sharedSelections,
+        value: null,
+      });
+
+      const commonProps: Omit<IWorkflowExtraFieldProps, 'field'> = {
+        intl: intlMock,
+        editField: mockEditField,
+        mode: EExtraFieldMode.ProcessRun,
+        isDisabled: false,
+        accountId: 1,
+      };
+
+      // @ts-expect-error master version returns ReactNode; after fieldsets merge this becomes JSX.Element and labelPosition must be added
+      render(<ExtraFieldRadio {...commonProps} field={field1} />);
+      // @ts-expect-error master version returns ReactNode; after fieldsets merge this becomes JSX.Element and labelPosition must be added
+      render(<ExtraFieldRadio {...commonProps} field={field2} />);
+
+      const mock = RadioButton as jest.Mock;
+      expect(mock).toHaveBeenCalledTimes(4);
+      const allIds = mock.mock.calls.map((call: [Record<string, unknown>]) => call[0].id as string);
+
+      const uniqueIds = new Set(allIds);
+      expect(uniqueIds.size).toBe(allIds.length);
+
+      const field1Ids = allIds.filter((id: string) => id.includes('radio-1'));
+      expect(field1Ids).toHaveLength(sharedSelections.length);
+
+      const field2Ids = allIds.filter((id: string) => id.includes('radio-2'));
+      expect(field2Ids).toHaveLength(sharedSelections.length);
+    });
   });
 });
