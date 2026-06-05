@@ -11,7 +11,7 @@ export async function getPages() {
   try {
     return await serverApi.get<IPages>(urls.getPages);
   } catch (error) {
-    logger.error('failed to get pages: ', error);
+    logger.info('failed to get pages: ', error);
   }
 
   return null;
