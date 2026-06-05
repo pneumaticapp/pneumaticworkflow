@@ -20,7 +20,7 @@ export async function getUserPublic(req: Request, token: string, userAgent?: str
 
     return user;
   } catch (error) {
-    logger.error('failed to get account context: ', error);
+    logger.info('failed to get account context: ', error);
 
     throw error;
   }
