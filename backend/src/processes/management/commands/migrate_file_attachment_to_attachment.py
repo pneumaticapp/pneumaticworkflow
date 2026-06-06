@@ -5,6 +5,7 @@ from django.db import transaction
 from src.processes.models.workflows.attachment import FileAttachment
 from src.storage.enums import AccessType, SourceType
 from src.storage.models import Attachment
+from src.storage.services.attachments import AttachmentService
 
 logger = logging.getLogger(__name__)
 
@@ -100,7 +101,7 @@ class Command(BaseCommand):
 
                 if not dry_run:
                     with transaction.atomic():
-                        Attachment.objects.create(
+                        attachment = Attachment.objects.create(
                             file_id=attr.file_id,
                             access_type=access_type,
                             source_type=source_type,
@@ -111,6 +112,13 @@ class Command(BaseCommand):
                             event_id=attr.event_id,
                             output_id=attr.output_id,
                         )
+                        if access_type == AccessType.RESTRICTED:
+                            service = AttachmentService(
+                                user=None,
+                            )
+                            service.assign_permissions(
+                                attachment,
+                            )
                 created += 1
 
                 if (created + skipped) % 100 == 0:

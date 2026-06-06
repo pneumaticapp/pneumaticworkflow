@@ -144,7 +144,7 @@ class Common(Configuration):
     # A list of origins echoed back to the client in the
     # Access-Control-Allow-Origin header. Defaults to [].
     CORS_ORIGIN_WHITELIST = [FRONTEND_URL]
-    if FRONTEND_URL not in FORMS_URL:
+    if FRONTEND_URL != FORMS_URL:
         # Add if FORMS_URL customized
         CORS_ORIGIN_WHITELIST.append(FORMS_URL)
     EXTRA_CORS_ORIGIN_WHITELIST = env.get('CORS_ORIGIN_WHITELIST')

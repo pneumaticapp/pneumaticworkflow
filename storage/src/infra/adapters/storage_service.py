@@ -261,6 +261,7 @@ class StorageServiceHolder:
     @classmethod
     async def close(cls) -> None:
         """Close StorageService and release S3 connections."""
-        if cls._instance is not None:
-            await cls._instance.close()
-            cls._instance = None
+        async with cls._lock:
+            if cls._instance is not None:
+                await cls._instance.close()
+                cls._instance = None
