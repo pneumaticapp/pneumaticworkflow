@@ -555,7 +555,7 @@ services:
       - redis
     networks:
       - pneumatic
-    restart: unless-stopped
+    restart: always
 
   file-postgres:
     image: postgres:15-bookworm
@@ -570,7 +570,7 @@ services:
       - file_postgres_data:/var/lib/postgresql/data
     networks:
       - pneumatic
-    restart: unless-stopped
+    restart: always
 
   seaweedfs-master:
     image: chrislusf/seaweedfs:3.95
@@ -582,6 +582,7 @@ services:
       - seaweedfs_master_data:/data
     networks:
       - pneumatic
+    restart: always
 
   seaweedfs-volume:
     image: chrislusf/seaweedfs:3.95
@@ -600,14 +601,12 @@ services:
       - seaweedfs_volume_data:/data
     networks:
       - pneumatic
+    restart: always
 
   seaweedfs-filer:
     image: chrislusf/seaweedfs:3.95
     container_name: pneumatic-seaweedfs-filer
     command: filer -master="seaweedfs-master:9333" -s3 -s3.port=8333
-    ports:
-      # TODO(production): REMOVE — exposes unauthenticated Filer UI to the internet
-      - "8888:8888"  # DEV ONLY: Filer Web UI for browsing files
     expose:
       - 8333
     depends_on:
@@ -618,6 +617,7 @@ services:
       - seaweedfs_filer_data:/data
     networks:
       - pneumatic
+    restart: always
 
 networks:
   pneumatic:

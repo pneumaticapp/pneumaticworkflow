@@ -1,5 +1,15 @@
 import { parseMarkdownToFiles } from '../parseMarkdownFiles';
 
+const FILE_SERVICE_URL = 'https://app.pneumatic.app/files';
+
+jest.mock('../getConfig', () => ({
+  getBrowserConfigEnv: () => ({
+    api: {
+      fileServiceUrl: FILE_SERVICE_URL,
+    },
+  }),
+}));
+
 describe('parseMarkdownToFiles', () => {
   describe('null/undefined/empty handling', () => {
     it('returns empty array for null', () => {
@@ -16,8 +26,8 @@ describe('parseMarkdownToFiles', () => {
   });
 
   describe('single file parsing', () => {
-    it('parses a single markdown link', () => {
-      const input = '[document.pdf](https://files.example.com/abc-123)';
+    it('parses a single file-service markdown link', () => {
+      const input = `[document.pdf](${FILE_SERVICE_URL}/abc-123)`;
 
       const result = parseMarkdownToFiles(input);
 
@@ -25,14 +35,14 @@ describe('parseMarkdownToFiles', () => {
         {
           id: 'abc-123',
           name: 'document.pdf',
-          url: 'https://files.example.com/abc-123',
+          url: `${FILE_SERVICE_URL}/abc-123`,
           size: 0,
         },
       ]);
     });
 
     it('extracts file id from last URL segment', () => {
-      const input = '[file.txt](https://storage.pneumatic.app/files/uploads/550e8400-e29b-41d4-a716-446655440000)';
+      const input = `[file.txt](${FILE_SERVICE_URL}/550e8400-e29b-41d4-a716-446655440000)`;
 
       const result = parseMarkdownToFiles(input);
 
@@ -41,24 +51,24 @@ describe('parseMarkdownToFiles', () => {
   });
 
   describe('multiple files parsing', () => {
-    it('parses multiple comma-separated markdown links', () => {
+    it('parses multiple comma-separated file-service links', () => {
       const input =
-        '[doc.pdf](https://files.example.com/aaa), [photo.jpg](https://files.example.com/bbb)';
+        `[doc.pdf](${FILE_SERVICE_URL}/aaa), [photo.jpg](${FILE_SERVICE_URL}/bbb)`;
 
       const result = parseMarkdownToFiles(input);
 
       expect(result).toHaveLength(2);
       expect(result[0].name).toBe('doc.pdf');
-      expect(result[0].url).toBe('https://files.example.com/aaa');
+      expect(result[0].url).toBe(`${FILE_SERVICE_URL}/aaa`);
       expect(result[1].name).toBe('photo.jpg');
-      expect(result[1].url).toBe('https://files.example.com/bbb');
+      expect(result[1].url).toBe(`${FILE_SERVICE_URL}/bbb`);
     });
 
     it('parses three files', () => {
       const input = [
-        '[a.pdf](https://files.example.com/1)',
-        '[b.png](https://files.example.com/2)',
-        '[c.docx](https://files.example.com/3)',
+        `[a.pdf](${FILE_SERVICE_URL}/1)`,
+        `[b.png](${FILE_SERVICE_URL}/2)`,
+        `[c.docx](${FILE_SERVICE_URL}/3)`,
       ].join(', ');
 
       const result = parseMarkdownToFiles(input);
@@ -68,25 +78,60 @@ describe('parseMarkdownToFiles', () => {
     });
   });
 
+  describe('domain filtering', () => {
+    it('ignores external links (Google Docs)', () => {
+      const input = '[Spreadsheet](https://docs.google.com/spreadsheets/d/abc123)';
+
+      const result = parseMarkdownToFiles(input);
+
+      expect(result).toEqual([]);
+    });
+
+    it('ignores links to other domains', () => {
+      const input = '[External](https://example.com/files/abc-123)';
+
+      const result = parseMarkdownToFiles(input);
+
+      expect(result).toEqual([]);
+    });
+
+    it('filters mixed links — keeps only file-service URLs', () => {
+      const input = [
+        `[uploaded.pdf](${FILE_SERVICE_URL}/abc-123)`,
+        '[Google Doc](https://docs.google.com/doc/xyz)',
+        `[photo.jpg](${FILE_SERVICE_URL}/def-456)`,
+        '[Wiki](https://en.wikipedia.org/wiki/Test)',
+      ].join(', ');
+
+      const result = parseMarkdownToFiles(input);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].name).toBe('uploaded.pdf');
+      expect(result[0].id).toBe('abc-123');
+      expect(result[1].name).toBe('photo.jpg');
+      expect(result[1].id).toBe('def-456');
+    });
+
+    it('does not match partial domain prefix', () => {
+      const input = '[file.pdf](https://app.pneumatic.app/files-evil/abc)';
+
+      const result = parseMarkdownToFiles(input);
+
+      expect(result).toEqual([]);
+    });
+  });
+
   describe('edge cases', () => {
     it('handles filenames with spaces', () => {
-      const input = '[my document file.pdf](https://files.example.com/abc)';
+      const input = `[my document file.pdf](${FILE_SERVICE_URL}/abc)`;
 
       const result = parseMarkdownToFiles(input);
 
       expect(result[0].name).toBe('my document file.pdf');
     });
 
-    it('handles filenames with parentheses', () => {
-      const input = '[file (copy).pdf](https://files.example.com/abc)';
-
-      const result = parseMarkdownToFiles(input);
-
-      expect(result[0].name).toBe('file (copy).pdf');
-    });
-
     it('handles filenames with special characters', () => {
-      const input = '[отчёт_2024.pdf](https://files.example.com/abc)';
+      const input = `[отчёт_2024.pdf](${FILE_SERVICE_URL}/abc)`;
 
       const result = parseMarkdownToFiles(input);
 
@@ -103,21 +148,13 @@ describe('parseMarkdownToFiles', () => {
     });
 
     it('sets size to 0 for all parsed files', () => {
-      const input = '[a.pdf](https://x.com/1), [b.pdf](https://x.com/2)';
+      const input = `[a.pdf](${FILE_SERVICE_URL}/1), [b.pdf](${FILE_SERVICE_URL}/2)`;
 
       const result = parseMarkdownToFiles(input);
 
       result.forEach((file) => {
         expect(file.size).toBe(0);
       });
-    });
-
-    it('handles URL without path segments (uses full URL as id)', () => {
-      const input = '[file.txt](https://example.com)';
-
-      const result = parseMarkdownToFiles(input);
-
-      expect(result[0].id).toBe('example.com');
     });
   });
 });

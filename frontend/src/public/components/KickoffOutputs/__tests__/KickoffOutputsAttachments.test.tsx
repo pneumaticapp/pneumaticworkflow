@@ -6,6 +6,12 @@ import { TUploadedFile } from '../../../utils/uploadFiles';
 import { parseMarkdownToFiles } from '../../../utils/parseMarkdownFiles';
 import { flatten, isArrayWithItems } from '../../../utils/helpers';
 
+jest.mock('../../../utils/getConfig', () => ({
+  getBrowserConfigEnv: () => ({
+    api: { fileServiceUrl: 'https://example.com' },
+  }),
+}));
+
 /*
  * KickoffOutputs has deep dependency tree (react-intl, RichText, etc.)
  * and the isOnlyAttachmentsShown branch returns early before hooks.

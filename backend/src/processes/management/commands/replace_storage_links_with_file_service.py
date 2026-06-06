@@ -131,40 +131,41 @@ class Command(BaseCommand):
         def process_text_fields(qs, fields):
             count = 0
             for item in qs.iterator(chunk_size=batch_size):
-                item_updated = False
+                changed_fields = []
                 for field in fields:
                     val = getattr(item, field, None)
                     if isinstance(val, str) and val:
+                        new_val = val
                         for old_url, new_url in url_mapping.items():
-                            if old_url in val:
-                                val = val.replace(old_url, new_url)
-                                item_updated = True
-                        if item_updated:
-                            setattr(item, field, val)
+                            if old_url in new_val:
+                                new_val = new_val.replace(old_url, new_url)
+                        if new_val != val:
+                            setattr(item, field, new_val)
+                            changed_fields.append(field)
 
-                if item_updated:
+                if changed_fields:
                     if not dry_run:
                         with transaction.atomic():
-                            item.save(update_fields=fields)
+                            item.save(update_fields=changed_fields)
                     count += 1
             return count
 
         def process_json_fields(qs, fields):
             count = 0
             for item in qs.iterator(chunk_size=batch_size):
-                item_updated = False
+                changed_fields = []
                 for field in fields:
                     val = getattr(item, field, None)
                     if val is not None:
                         new_val, upd = self.replace_in_json(val, url_mapping)
                         if upd:
                             setattr(item, field, new_val)
-                            item_updated = True
+                            changed_fields.append(field)
 
-                if item_updated:
+                if changed_fields:
                     if not dry_run:
                         with transaction.atomic():
-                            item.save(update_fields=fields)
+                            item.save(update_fields=changed_fields)
                     count += 1
             return count
 

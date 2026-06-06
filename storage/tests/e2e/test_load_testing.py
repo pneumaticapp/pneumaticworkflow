@@ -1,5 +1,6 @@
 """Tests for load and stress testing scenarios."""
 
+import threading
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from unittest.mock import MagicMock
@@ -7,6 +8,29 @@ from unittest.mock import MagicMock
 import httpx
 
 from tests.fixtures.e2e import AsyncIteratorMock
+
+
+def _make_upload_side_effect(prefix):
+    """Thread-safe side_effect for upload mock.
+
+    Each call gets a unique file_id based on thread-local index,
+    avoiding race conditions from shared return_value mutation.
+    """
+    _counter = {'value': 0}
+    _lock = threading.Lock()
+
+    def _side_effect(*args, **kwargs):
+        with _lock:
+            idx = _counter['value']
+            _counter['value'] += 1
+        return MagicMock(
+            file_id=f'{prefix}-1234-5678-1234-{idx:012d}',
+            public_url=(
+                f'http://localhost:8000/{prefix}-1234-5678-1234-{idx:012d}'
+            ),
+        )
+
+    return _side_effect
 
 
 def test_concurrent_uploads__100_reqs__under_30s(
@@ -23,15 +47,12 @@ def test_concurrent_uploads__100_reqs__under_30s(
     errors = []
     start_time = time.time()
 
+    mock_upload_use_case_execute.side_effect = _make_upload_side_effect(
+        '12345678',
+    )
+
     def upload_file(i):
         try:
-            mock_upload_use_case_execute.return_value = MagicMock(
-                file_id=(f'12345678-1234-5678-1234-{i:012d}'),
-                public_url=(
-                    f'http://localhost:8000/12345678-1234-5678-1234-{i:012d}'
-                ),
-            )
-
             response = e2e_client.post(
                 '/upload',
                 files={
@@ -93,19 +114,23 @@ def test_concurrent_downloads__50_reqs__under_15s(
     errors = []
     start_time = time.time()
 
+    def _metadata_side_effect(*args, **kwargs):
+        mock_record = MagicMock()
+        mock_record.file_id = '22345678-1234-5678-1234-000000000000'
+        mock_record.filename = 'load_test.txt'
+        mock_record.content_type = 'text/plain'
+        mock_record.size = 20
+        mock_record.user_id = 1
+        return mock_record
+
+    def _stream_side_effect(*args, **kwargs):
+        return AsyncIteratorMock(b'load test content')
+
+    mock_download_use_case_get_metadata.side_effect = _metadata_side_effect
+    mock_download_use_case_get_stream.side_effect = _stream_side_effect
+
     def download_file(i):
         try:
-            mock_record = MagicMock()
-            mock_record.file_id = f'22345678-1234-5678-1234-{i:012d}'
-            mock_record.filename = f'load_test_{i}.txt'
-            mock_record.content_type = 'text/plain'
-            mock_record.size = 20
-            mock_record.user_id = 1
-            mock_download_use_case_get_metadata.return_value = mock_record
-            mock_download_use_case_get_stream.return_value = AsyncIteratorMock(
-                f'load test content {i}'.encode(),
-            )
-
             response = e2e_client.get(
                 f'/22345678-1234-5678-1234-{i:012d}',
                 headers=auth_headers,
@@ -161,15 +186,27 @@ def test_mixed_workload__100_cycles__under_60s(
     errors = []
     start_time = time.time()
 
+    mock_upload_use_case_execute.side_effect = _make_upload_side_effect(
+        '32345678',
+    )
+
+    def _metadata_side_effect(*args, **kwargs):
+        mock_record = MagicMock()
+        mock_record.file_id = '32345678-1234-5678-1234-000000000000'
+        mock_record.filename = 'mixed.txt'
+        mock_record.content_type = 'text/plain'
+        mock_record.size = 25
+        mock_record.user_id = 1
+        return mock_record
+
+    def _stream_side_effect(*args, **kwargs):
+        return AsyncIteratorMock(b'mixed content')
+
+    mock_download_use_case_get_metadata.side_effect = _metadata_side_effect
+    mock_download_use_case_get_stream.side_effect = _stream_side_effect
+
     def upload_download_cycle(i):
         try:
-            mock_upload_use_case_execute.return_value = MagicMock(
-                file_id=(f'32345678-1234-5678-1234-{i:012d}'),
-                public_url=(
-                    f'http://localhost:8000/32345678-1234-5678-1234-{i:012d}'
-                ),
-            )
-
             upload_resp = e2e_client.post(
                 '/upload',
                 files={
@@ -191,17 +228,6 @@ def test_mixed_workload__100_cycles__under_60s(
                     )
                 )
                 return
-
-            mock_record = MagicMock()
-            mock_record.file_id = f'32345678-1234-5678-1234-{i:012d}'
-            mock_record.filename = f'mixed_{i}.txt'
-            mock_record.content_type = 'text/plain'
-            mock_record.size = 25
-            mock_record.user_id = 1
-            mock_download_use_case_get_metadata.return_value = mock_record
-            mock_download_use_case_get_stream.return_value = AsyncIteratorMock(
-                f'mixed content {i}'.encode(),
-            )
 
             dl_resp = e2e_client.get(
                 f'/32345678-1234-5678-1234-{i:012d}',
@@ -260,15 +286,12 @@ def test_extreme_concurrency__500_reqs__stable(
     errors = []
     start_time = time.time()
 
+    mock_upload_use_case_execute.side_effect = _make_upload_side_effect(
+        '42345678',
+    )
+
     def extreme_upload(i):
         try:
-            mock_upload_use_case_execute.return_value = MagicMock(
-                file_id=(f'42345678-1234-5678-1234-{i:012d}'),
-                public_url=(
-                    f'http://localhost:8000/42345678-1234-5678-1234-{i:012d}'
-                ),
-            )
-
             response = e2e_client.post(
                 '/upload',
                 files={

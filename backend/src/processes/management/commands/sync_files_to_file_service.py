@@ -150,11 +150,13 @@ class Command(BaseCommand):
 
                 if not dry_run:
                     try:
+                        cursor.execute("SAVEPOINT sp")
                         cursor.execute(
                             "SELECT file_id FROM files WHERE file_id = %s",
                             (file_id,),
                         )
                         if cursor.fetchone() is not None:
+                            cursor.execute("RELEASE SAVEPOINT sp")
                             skipped += 1
                             continue
 
@@ -168,6 +170,7 @@ class Command(BaseCommand):
                             file_id, size, content_type, filename, user_id,
                             attr.account_id, created_at,
                         ))
+                        cursor.execute("RELEASE SAVEPOINT sp")
                         synced += 1
 
                         if synced % batch_size == 0:
@@ -178,7 +181,7 @@ class Command(BaseCommand):
 
                     except psycopg2.Error as e:
                         logger.error("Error syncing %s: %s", file_id, e)
-                        conn.rollback()
+                        cursor.execute("ROLLBACK TO SAVEPOINT sp")
                         errors += 1
                 else:
                     synced += 1

@@ -8,9 +8,11 @@ from starlette.requests import Request
 from starlette.responses import Response
 
 from src.shared_kernel.middleware.rate_limit import (
+    _CLEANUP_INTERVAL_SECONDS,
     RateLimitMiddleware,
     _classify_route,
     _get_client_ip,
+    _RateLimit,
     _SlidingWindow,
 )
 
@@ -332,3 +334,60 @@ async def test_dispatch__download_higher_limit(
     # assert
     assert all(r.status_code == 200 for r in responses)
     assert response.status_code == 429
+
+
+def test_evict_stale__removes_expired_windows():
+    """Stale windows are removed after cleanup interval."""
+    # arrange
+
+    mw = RateLimitMiddleware(
+        app=AsyncMock(),
+        rate_limits={
+            'upload': _RateLimit(max_requests=10, window_seconds=60),
+        },
+    )
+    now = time.monotonic()
+    # Simulate old entries
+    for i in range(100):
+        key = f'upload:10.0.0.{i}'
+        win = _SlidingWindow()
+        win.record(now - 200)  # 200s ago, well past 60s window
+        mw._windows[key] = win
+
+    assert len(mw._windows) == 100
+
+    # act — force cleanup by advancing past interval
+    mw._last_cleanup = now - _CLEANUP_INTERVAL_SECONDS - 1
+    mw._maybe_evict_stale(now)
+
+    # assert
+    assert len(mw._windows) == 0
+
+
+def test_evict_stale__keeps_recent_windows():
+    """Recent windows survive eviction."""
+    # arrange
+
+    mw = RateLimitMiddleware(
+        app=AsyncMock(),
+        rate_limits={
+            'upload': _RateLimit(max_requests=10, window_seconds=60),
+        },
+    )
+    now = time.monotonic()
+    # Old entry
+    old_win = _SlidingWindow()
+    old_win.record(now - 200)
+    mw._windows['upload:10.0.0.1'] = old_win
+    # Recent entry
+    new_win = _SlidingWindow()
+    new_win.record(now - 5)
+    mw._windows['upload:10.0.0.2'] = new_win
+
+    # act
+    mw._last_cleanup = now - _CLEANUP_INTERVAL_SECONDS - 1
+    mw._maybe_evict_stale(now)
+
+    # assert
+    assert 'upload:10.0.0.1' not in mw._windows
+    assert 'upload:10.0.0.2' in mw._windows

@@ -12,6 +12,12 @@ jest.mock('../../../../../utils/uploadFiles', () => ({
   MAX_FILE_SIZE: 100 * 1024 * 1024,
 }));
 
+jest.mock('../../../../../utils/getConfig', () => ({
+  getBrowserConfigEnv: () => ({
+    api: { fileServiceUrl: 'https://files.example.com' },
+  }),
+}));
+
 jest.mock('../../../../../utils/logger', () => ({
   logger: { error: jest.fn(), info: jest.fn(), warn: jest.fn() },
 }));

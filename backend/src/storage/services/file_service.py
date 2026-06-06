@@ -94,7 +94,7 @@ class FileServiceClient:
                 method=method,
                 url=url,
                 headers=headers,
-                timeout=30,
+                timeout=10,
                 **kwargs,
             )
         except requests.exceptions.RequestException as ex:

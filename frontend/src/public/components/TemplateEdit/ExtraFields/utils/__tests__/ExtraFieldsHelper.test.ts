@@ -2,6 +2,12 @@ import { ExtraFieldsHelper } from '../ExtraFieldsHelper';
 import { EExtraFieldType, IExtraField } from '../../../../../types/template';
 import { TUploadedFile } from '../../../../../utils/uploadFiles';
 
+jest.mock('../../../../../utils/getConfig', () => ({
+  getBrowserConfigEnv: () => ({
+    api: { fileServiceUrl: 'https://files.example.com' },
+  }),
+}));
+
 const createFileField = (overrides: Partial<IExtraField> = {}): IExtraField => ({
   apiName: 'field-abc123',
   name: 'File Field',

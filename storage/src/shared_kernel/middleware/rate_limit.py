@@ -82,6 +82,9 @@ def _get_client_ip(request: Request) -> str:
     return request.client.host if request.client else '0.0.0.0'  # noqa: S104
 
 
+_CLEANUP_INTERVAL_SECONDS = 60
+
+
 class RateLimitMiddleware(BaseHTTPMiddleware):
     """Rate limiting middleware using sliding window."""
 
@@ -108,6 +111,11 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
             str,
             _SlidingWindow,
         ] = defaultdict(_SlidingWindow)
+        self._max_window_seconds = max(
+            (lim.window_seconds for lim in self._limits.values()),
+            default=60,
+        )
+        self._last_cleanup = time.monotonic()
 
     async def dispatch(
         self,
@@ -128,6 +136,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         client_ip = _get_client_ip(request)
         key = f'{bucket}:{client_ip}'
         now = time.monotonic()
+
+        self._maybe_evict_stale(now)
 
         window = self._windows[key]
         current = window.count_in_window(
@@ -150,3 +160,21 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         window.record(now)
         return await call_next(request)
+
+    def _maybe_evict_stale(self, now: float) -> None:
+        """Remove windows with no recent activity.
+
+        Runs at most once per _CLEANUP_INTERVAL_SECONDS to avoid
+        scanning the dict on every request.
+        """
+        if now - self._last_cleanup < _CLEANUP_INTERVAL_SECONDS:
+            return
+        self._last_cleanup = now
+        cutoff = now - self._max_window_seconds
+        stale_keys = [
+            key
+            for key, win in self._windows.items()
+            if not win.timestamps or win.timestamps[-1] <= cutoff
+        ]
+        for key in stale_keys:
+            del self._windows[key]

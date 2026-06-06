@@ -21,6 +21,12 @@ jest.mock('../../Attachments', () => {
   };
 });
 
+jest.mock('../../../utils/getConfig', () => ({
+  getBrowserConfigEnv: () => ({
+    api: { fileServiceUrl: 'https://files.example.com' },
+  }),
+}));
+
 describe('FileOutput', () => {
   const formatMsg = (id: string) => intlMock.formatMessage({ id });
   const UNFILLED = formatMsg('template.kick-off-form-unfilled-value');

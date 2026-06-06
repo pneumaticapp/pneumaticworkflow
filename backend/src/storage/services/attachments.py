@@ -5,7 +5,7 @@ from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import IntegrityError, models, transaction
 from guardian.models import UserObjectPermission
-from guardian.shortcuts import assign_perm, remove_perm
+from guardian.shortcuts import assign_perm
 
 from src.generics.base.service import BaseModelService
 from src.permissions.models import GroupObjectPermission
@@ -105,18 +105,14 @@ class AttachmentService(BaseModelService):
 
         # Clear existing so removed performers lose access when we reassign
         ctype = ContentType.objects.get_for_model(Attachment)
-        for uop in UserObjectPermission.objects.filter(
-                content_type=ctype,
-                object_pk=str(self.instance.pk),
-        ).select_related('user'):
-            remove_perm(
-                'storage.access_attachment',
-                uop.user,
-                self.instance,
-            )
+        obj_pk = str(self.instance.pk)
+        UserObjectPermission.objects.filter(
+            content_type=ctype,
+            object_pk=obj_pk,
+        ).delete()
         GroupObjectPermission.objects.filter(
             content_type=ctype,
-            object_pk=str(self.instance.pk),
+            object_pk=obj_pk,
         ).delete()
 
         users_set = set()
@@ -203,18 +199,14 @@ class AttachmentService(BaseModelService):
 
         # Clear existing so removed owners lose access when we reassign
         ctype = ContentType.objects.get_for_model(Attachment)
-        for uop in UserObjectPermission.objects.filter(
-                content_type=ctype,
-                object_pk=str(self.instance.pk),
-        ).select_related('user'):
-            remove_perm(
-                'storage.access_attachment',
-                uop.user,
-                self.instance,
-            )
+        obj_pk = str(self.instance.pk)
+        UserObjectPermission.objects.filter(
+            content_type=ctype,
+            object_pk=obj_pk,
+        ).delete()
         GroupObjectPermission.objects.filter(
             content_type=ctype,
-            object_pk=str(self.instance.pk),
+            object_pk=obj_pk,
         ).delete()
 
         # Assign permissions to template owners (exclude soft-deleted)
@@ -265,18 +257,14 @@ class AttachmentService(BaseModelService):
 
         # Clear existing so removed participants lose access when we reassign
         ctype = ContentType.objects.get_for_model(Attachment)
-        for uop in UserObjectPermission.objects.filter(
-                content_type=ctype,
-                object_pk=str(self.instance.pk),
-        ).select_related('user'):
-            remove_perm(
-                'storage.access_attachment',
-                uop.user,
-                self.instance,
-            )
+        obj_pk = str(self.instance.pk)
+        UserObjectPermission.objects.filter(
+            content_type=ctype,
+            object_pk=obj_pk,
+        ).delete()
         GroupObjectPermission.objects.filter(
             content_type=ctype,
-            object_pk=str(self.instance.pk),
+            object_pk=obj_pk,
         ).delete()
 
         # Assign permissions to workflow participants
