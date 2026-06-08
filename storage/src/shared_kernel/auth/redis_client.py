@@ -66,9 +66,10 @@ def _validate_auth_data(data: Any) -> dict[str, Any] | list[str] | None:  # noqa
 
     Returns validated data or None if structure is invalid.
     """
-    # Token data: dict with user_id key
+    # Token data: dict with user_id key (regular token)
+    # or dict with account_id key only (public/embed token)
     if isinstance(data, dict):
-        if 'user_id' not in data:
+        if 'user_id' not in data and 'account_id' not in data:
             return None
         return data
 

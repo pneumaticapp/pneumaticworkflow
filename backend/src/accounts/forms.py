@@ -68,6 +68,7 @@ class ContactAdminForm(ModelForm):
                 new_values=[file_url],
             )
         except FileServiceException as ex:
+            self.instance.photo = old_photo
             capture_sentry_message(
                 message='Contact photo upload failed',
                 data={

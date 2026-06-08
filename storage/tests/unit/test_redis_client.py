@@ -221,14 +221,27 @@ def test_validate__none__return_none():
     assert result is None
 
 
-def test_validate__dict_no_user_id__return_none():
+def test_validate__dict_no_known_keys__return_none():
     # act
     result = _validate_auth_data(
-        {'account_id': 1, 'some_field': 'value'},
+        {'some_field': 'value'},
     )
 
     # assert
     assert result is None
+
+
+def test_validate__dict_account_id_only__return_dict():
+    """Public/embed token data has account_id but no user_id."""
+
+    # arrange
+    data = {'account_id': 1688}
+
+    # act
+    result = _validate_auth_data(data)
+
+    # assert
+    assert result == data
 
 
 def test_validate__list_non_strings__return_none():
