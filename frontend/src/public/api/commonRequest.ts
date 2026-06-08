@@ -9,6 +9,7 @@ import { identifyAppPartOnClient } from '../utils/identifyAppPart/identifyAppPar
 import { getCurrentToken } from '../utils/auth';
 import { envBackendURL } from '../constants/enviroment';
 import { isRequestCanceled } from '../utils/isRequestCanceled';
+import { TResponseErrorData } from './types';
 
 export type TRequestType = 'public' | 'local';
 export type TResponseType = 'json' | 'text' | 'empty';
@@ -36,6 +37,20 @@ const axiosInstance: AxiosInstance = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+
+export function getResponseErrorMessage(data: TResponseErrorData): string {
+  if (typeof data === 'string') {
+    return data;
+  }
+
+  if (data && typeof data === 'object') {
+    if (typeof data.detail === 'string') return data.detail;
+    if (typeof data.message === 'string') return data.message;
+  }
+
+  return 'No error details provided by server';
+}
 
 axiosInstance.interceptors.request.use(
   (config) => {
@@ -89,7 +104,9 @@ axiosInstance.interceptors.response.use(
 
     const data = error.response?.data;
     const payload = typeof data === 'string' ? { error: data } : data ?? {};
-    return Promise.reject(Object.assign(new Error(), payload, { status: error.response?.status }));
+    const errorMessage = getResponseErrorMessage(data);
+
+    return Promise.reject(Object.assign(new Error(errorMessage), payload, { status: error.response?.status }));
   },
 );
 
