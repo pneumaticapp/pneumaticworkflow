@@ -1,11 +1,11 @@
 import { Request, Response } from 'express';
 
 import { verificateAccountMiddleware } from '../verificateAccountMiddleware';
-import { logger } from '../../../public/utils/logger';
+import { logServerError } from '../../utils/expectedErrors';
 import { serverApi } from '../../utils';
 
-jest.mock('../../../public/utils/logger', () => ({
-  logger: { error: jest.fn(), info: jest.fn() },
+jest.mock('../../utils/expectedErrors', () => ({
+  logServerError: jest.fn(),
 }));
 jest.mock('../../utils', () => ({ serverApi: { get: jest.fn() } }));
 jest.mock('../../../public/constants/routes', () => ({
@@ -41,7 +41,7 @@ describe('verificateAccountMiddleware', () => {
     expect(res.redirect).toHaveBeenCalledWith('/auth/signin/');
   });
 
-  it('logs with info level (not error) when API call fails', async () => {
+  it('uses logServerError (not logger.error) when API call fails', async () => {
     const apiError = new Error('Token is invalid');
     (serverApi.get as jest.Mock).mockRejectedValue(apiError);
     const req: MockRequest = { query: { token: 'invalid-token' } };
@@ -49,9 +49,8 @@ describe('verificateAccountMiddleware', () => {
 
     await verificateAccountMiddleware(req as Request, res as Response);
 
-    expect(logger.info).toHaveBeenCalledTimes(1);
-    expect(logger.info).toHaveBeenCalledWith(apiError);
-    expect(logger.error).not.toHaveBeenCalled();
+    expect(logServerError).toHaveBeenCalledTimes(1);
+    expect(logServerError).toHaveBeenCalledWith(apiError);
   });
 
   it('redirects to login even when API call fails', async () => {

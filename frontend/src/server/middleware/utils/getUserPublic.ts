@@ -1,6 +1,6 @@
 import { Request } from 'express';
 
-import { logger } from '../../../public/utils/logger';
+import { logServerError } from '../../utils/expectedErrors';
 import { serverApi } from '../../utils';
 import { getAuthHeader } from '../../utils/getAuthHeader';
 import { IAuthenticatedUser } from '../../utils/types';
@@ -20,7 +20,7 @@ export async function getUserPublic(req: Request, token: string, userAgent?: str
 
     return user;
   } catch (error) {
-    logger.info('failed to get account context: ', error);
+    logServerError('failed to get account context: ', error);
 
     throw error;
   }

@@ -1,9 +1,9 @@
 import { getPages } from '../utils/getPages';
-import { logger } from '../../../public/utils/logger';
+import { logServerError } from '../../utils/expectedErrors';
 import { serverApi } from '../../utils';
 
-jest.mock('../../../public/utils/logger', () => ({
-  logger: { error: jest.fn(), info: jest.fn() },
+jest.mock('../../utils/expectedErrors', () => ({
+  logServerError: jest.fn(),
 }));
 jest.mock('../../utils', () => ({ serverApi: { get: jest.fn() } }));
 jest.mock('../../../public/utils/getConfig', () => ({
@@ -26,15 +26,14 @@ describe('getPages', () => {
     expect(serverApi.get).toHaveBeenCalledWith('/pages');
   });
 
-  it('logs with info level (not error) when API call fails', async () => {
+  it('uses logServerError (not logger.error) when API call fails', async () => {
     const apiError = new Error('Not Found');
     (serverApi.get as jest.Mock).mockRejectedValue(apiError);
 
     await getPages();
 
-    expect(logger.info).toHaveBeenCalledTimes(1);
-    expect(logger.info).toHaveBeenCalledWith('failed to get pages: ', apiError);
-    expect(logger.error).not.toHaveBeenCalled();
+    expect(logServerError).toHaveBeenCalledTimes(1);
+    expect(logServerError).toHaveBeenCalledWith('failed to get pages: ', apiError);
   });
 
   it('returns null when API call fails', async () => {

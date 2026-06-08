@@ -1,11 +1,9 @@
-
-
 import { getUser } from '../utils/getUser';
-import { logger } from '../../../public/utils/logger';
+import { logServerError } from '../../utils/expectedErrors';
 import { serverApi } from '../../utils';
 
-jest.mock('../../../public/utils/logger', () => ({
-  logger: { error: jest.fn(), info: jest.fn() },
+jest.mock('../../utils/expectedErrors', () => ({
+  logServerError: jest.fn(),
 }));
 jest.mock('../../utils', () => ({ serverApi: { get: jest.fn() } }));
 jest.mock('../../utils/getAuthHeader', () => ({
@@ -45,15 +43,14 @@ describe('getUser', () => {
     );
   });
 
-  it('logs with info level (not error) when API call fails', async () => {
+  it('uses logServerError (not logger.error) when API call fails', async () => {
     const apiError = new Error('token_not_valid');
     (serverApi.get as jest.Mock).mockRejectedValue(apiError);
 
     await expect(getUser(req as GetUserRequest, 'invalid-token')).rejects.toThrow('token_not_valid');
 
-    expect(logger.info).toHaveBeenCalledTimes(1);
-    expect(logger.info).toHaveBeenCalledWith('failed to get user context: ', apiError);
-    expect(logger.error).not.toHaveBeenCalled();
+    expect(logServerError).toHaveBeenCalledTimes(1);
+    expect(logServerError).toHaveBeenCalledWith('failed to get user context: ', apiError);
   });
 
   it('re-throws the original error after logging', async () => {
