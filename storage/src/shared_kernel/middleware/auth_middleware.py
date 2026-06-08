@@ -84,7 +84,11 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
         self.security = HTTPBearer(auto_error=False)
         self.require_auth = require_auth
 
+        # Cookie strategies: 'file_service_auth' is set by Django middleware
+        # for browser-native requests (img src, video src, direct links).
+        # 'token' kept for backward compatibility.
         self.auth_strategies = [
+            ('file_service_auth', 'cookie', self.authenticate_token),
             ('token', 'cookie', self.authenticate_token),
             ('guest-token', 'cookie', self.authenticate_guest_token),
             ('public-token', 'cookie', self.authenticate_public_token),
@@ -116,8 +120,6 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
     async def authenticate_guest_token(self, token: str) -> AuthUser | None:
         """Authenticate guest token."""
         try:
-            # This would need a function to get user data from Django
-            # For now, we'll return None and implement later
             guest_token = GuestToken(token=token)
             if guest_token.payload:
                 return AuthUser(

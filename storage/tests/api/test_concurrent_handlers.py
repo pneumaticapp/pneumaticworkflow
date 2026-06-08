@@ -6,6 +6,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from unittest.mock import MagicMock
 
 import httpx
+import pytest
 
 from tests.fixtures.e2e import AsyncIteratorMock
 
@@ -33,6 +34,7 @@ def _make_upload_side_effect(prefix):
     return _side_effect
 
 
+@pytest.mark.slow
 def test_concurrent_uploads__100_reqs__under_30s(
     e2e_client,
     mock_auth_middleware,
@@ -99,6 +101,7 @@ def test_concurrent_uploads__100_reqs__under_30s(
         assert resp_time < 25, f'Req {i} took {resp_time:.2f}s'
 
 
+@pytest.mark.slow
 def test_concurrent_downloads__50_reqs__under_15s(
     e2e_client,
     mock_auth_middleware,
@@ -170,6 +173,7 @@ def test_concurrent_downloads__50_reqs__under_15s(
         assert resp_time < 12, f'Req {i} took {resp_time:.2f}s'
 
 
+@pytest.mark.slow
 def test_mixed_workload__100_cycles__under_60s(
     e2e_client,
     mock_auth_middleware,
@@ -272,6 +276,7 @@ def test_mixed_workload__100_cycles__under_60s(
         assert cycle_time < 55, f'Cycle {i}: {cycle_time:.2f}s'
 
 
+@pytest.mark.slow
 def test_extreme_concurrency__500_reqs__stable(
     e2e_client,
     mock_auth_middleware,

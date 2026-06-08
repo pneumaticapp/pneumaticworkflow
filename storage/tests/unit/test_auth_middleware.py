@@ -189,3 +189,33 @@ async def test_dispatch__auth_required_no_token__401(
     response_data = json.loads(response.body.decode())
     assert response_data['error_code'] == 'AUTH_001'
     assert response_data['error_type'] == 'authentication'
+
+
+@pytest.mark.asyncio
+async def test_dispatch__file_service_auth_cookie__return_ok(
+    auth_middleware,
+    auth_mw_request,
+    auth_mw_call_next,
+    mocker,
+):
+    """Cookie 'file_service_auth' set by Django middleware should work."""
+    # arrange
+    auth_mw_request.headers = {}
+    auth_mw_request.cookies = {'file_service_auth': 'django-token'}
+    token_data_mock = mocker.patch(
+        'src.shared_kernel.middleware.auth_middleware.PneumaticToken.data',
+        new_callable=AsyncMock,
+        return_value={'user_id': 5, 'account_id': 6},
+    )
+
+    # act
+    response = await auth_middleware.dispatch(
+        auth_mw_request,
+        auth_mw_call_next,
+    )
+
+    # assert
+    assert response.status_code == 200
+    assert auth_mw_request.state.user.user_id == 5
+    assert auth_mw_request.state.user.account_id == 6
+    token_data_mock.assert_called_once_with('django-token')

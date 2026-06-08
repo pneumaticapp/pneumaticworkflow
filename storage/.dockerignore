@@ -32,3 +32,6 @@ docker-compose.yml
 
 .env.local
 .env.development
+
+tests/
+conftest.py

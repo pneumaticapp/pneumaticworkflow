@@ -130,8 +130,9 @@ export class FileAttachmentNode extends DecoratorNode<React.ReactElement> {
     return div;
   }
 
+  // eslint-disable-next-line class-methods-use-this
   updateDOM(): false {
-    return (this.getType(), false);
+    return false;
   }
 
   getTextContent(): string {

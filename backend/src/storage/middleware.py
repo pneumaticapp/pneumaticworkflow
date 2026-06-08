@@ -26,6 +26,11 @@ class FileServiceAuthMiddleware(MiddlewareMixin):
         if not auth_token:
             return response
 
+        # Skip if cookie already matches (avoid redundant Set-Cookie headers)
+        existing_token = request.COOKIES.get('file_service_auth')
+        if existing_token == auth_token:
+            return response
+
         # Get domain from FRONTEND_URL
         domain = self._get_cookie_domain()
 
@@ -34,6 +39,8 @@ class FileServiceAuthMiddleware(MiddlewareMixin):
             key='file_service_auth',
             value=auth_token,
             domain=domain,
+            path='/files/',
+            max_age=86400,  # 24 hours
             secure=not settings.DEBUG,
             httponly=True,
             samesite='Lax',

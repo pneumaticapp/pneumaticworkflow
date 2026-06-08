@@ -9,6 +9,7 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
 
+from src.shared_kernel.config import get_settings
 from src.shared_kernel.exceptions.base_exceptions import (
     BaseAppError,
     ErrorResponse,
@@ -57,7 +58,7 @@ def register_exception_handlers(app: FastAPI) -> None:
 
         # In production, mask details for infrastructure errors
         # to prevent leaking SQL, S3 paths, or Redis keys.
-        debug_mode = getattr(app, 'debug', False)
+        debug_mode = get_settings().DEBUG
         details = exc.details
         if not debug_mode and exc.error_type in sensitive_error_types:
             details = None
@@ -161,7 +162,7 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
 
         # Check debug mode
-        debug_mode = getattr(app, 'debug', False)
+        debug_mode = get_settings().DEBUG
 
         error_response = ErrorResponse(
             error_code=error_code.code,

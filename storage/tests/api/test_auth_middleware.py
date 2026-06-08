@@ -93,3 +93,35 @@ def test_auth__invalid_session__return_401(
 
     # assert
     assert response.status_code == 401
+
+
+def test_auth__file_service_auth_cookie__passes(
+    e2e_client,
+    mock_auth_middleware,
+    mock_http_client,
+    mock_storage_service,
+    mock_download_use_case_get_metadata,
+    mock_download_use_case_get_stream,
+):
+    """Cookie set by Django FileServiceAuthMiddleware should authenticate."""
+    # arrange
+    cookies = {'file_service_auth': 'valid-django-token'}
+    file_record = MagicMock()
+    file_record.file_id = '12345678-1234-5678-1234-567812345678'
+    file_record.filename = 'test.txt'
+    file_record.content_type = 'text/plain'
+    file_record.size = 12
+    file_record.user_id = 1
+    mock_download_use_case_get_metadata.return_value = file_record
+    mock_download_use_case_get_stream.return_value = AsyncIteratorMock(
+        b'test content'
+    )
+
+    # act
+    response = e2e_client.get(
+        '/12345678-1234-5678-1234-567812345678',
+        cookies=cookies,
+    )
+
+    # assert
+    assert response.status_code != 401

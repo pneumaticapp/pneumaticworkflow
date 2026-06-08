@@ -42,7 +42,7 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 # Create application
 app = FastAPI(
     title='Pneumatic Files Service',
-    description='File proxy microservice with Google Cloud Storage',
+    description='File storage microservice (SeaweedFS / GCS)',
     version='0.1.0',
     openapi_url='/openapi.json' if settings.CONFIG != 'Production' else None,
     docs_url='/docs' if settings.CONFIG != 'Production' else None,
