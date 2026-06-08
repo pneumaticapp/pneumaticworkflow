@@ -8,6 +8,8 @@ import { BoldPlusIcon } from '../../../icons';
 import { ETaskPerformerType } from '../../../../types/template';
 import { getUserById } from '../../../UserData/utils/getUserById';
 
+import { isUsersDropdownOptionSelected } from './usersDropdownOptionValue';
+
 import styles from './UsersDropdown.css';
 
 export enum EOptionTypes {
@@ -149,7 +151,7 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
 
     if (formatOptionLabel) return formatOptionLabel(option, formatOptionLabelMeta);
 
-    const isSelected = !!formatOptionLabelMeta.selectValue.find((item: any) => item.value === option.value);
+    const isSelected = isUsersDropdownOptionSelected(formatOptionLabelMeta.selectValue, option);
 
     const renderLabel = () => {
       const currentUser: TUserListItem | TUsersDropdownOption | null =
@@ -194,6 +196,8 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
       </div>
     );
   };
+
+  console.log(normalizedOptions);
 
   return (
     <DropdownList

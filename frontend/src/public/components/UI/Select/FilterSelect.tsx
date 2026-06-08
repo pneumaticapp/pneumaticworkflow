@@ -54,6 +54,7 @@ interface IFilterSelectCommonProps<
   Icon?(props: SVGAttributes<SVGElement>): JSX.Element;
   renderPlaceholder(options: TOption[]): string | JSX.Element;
   positionFixed?: boolean;
+  getOptionSelectionKey?: (option: TOption) => TOptionId;
 }
 
 interface IFilterSelectMultiOptionsProps {
@@ -107,8 +108,10 @@ export function FilterSelect<
     selectedOption,
     renderPlaceholder,
     positionFixed = false,
+    getOptionSelectionKey,
   } = props;
   const allOptions = flatGroupedOptions || options;
+  const getSelectionKey = getOptionSelectionKey ?? ((option: TOption) => option[optionIdKey]);
   const [searchText, setSearchText] = useState('');
   const [isSelectAll, setIsSelectAll] = useState(false);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -124,6 +127,7 @@ export function FilterSelect<
     }
 
     const optionId = option[optionIdKey];
+    const selectionKey = getSelectionKey(option);
 
     if (!isMultiple) {
       onChange(optionId);
@@ -131,13 +135,13 @@ export function FilterSelect<
       return;
     }
 
-    const newIsChecked = !selectedOptions.includes(optionId);
+    const newIsChecked = !selectedOptions.includes(selectionKey);
 
     const newSelectedOptions = newIsChecked
-      ? [...selectedOptions, optionId]
-      : selectedOptions.filter((selectedOptionElement) => selectedOptionElement !== optionId);
+      ? [...selectedOptions, selectionKey]
+      : selectedOptions.filter((selectedOptionElement) => selectedOptionElement !== selectionKey);
 
-    const mapSelectedOption = allOptions.filter((item) => newSelectedOptions.includes(item[optionIdKey]));
+    const mapSelectedOption = allOptions.filter((item) => newSelectedOptions.includes(getSelectionKey(item)));
 
     onChange(newSelectedOptions, mapSelectedOption);
 
@@ -254,7 +258,7 @@ export function FilterSelect<
         if (!isSelectAll) {
           setIsSelectAll(true);
           onChange(
-            allOptions.map((option) => option[optionIdKey]),
+            allOptions.map((option) => getSelectionKey(option)),
             allOptions,
           );
         } else {
@@ -312,7 +316,7 @@ export function FilterSelect<
             >
               {isMultiple && typeof option !== 'string' ? (
                 <Checkbox
-                  checked={selectedOptions.includes(option[optionIdKey])}
+                  checked={selectedOptions.includes(getSelectionKey(option))}
                   title={label}
                   onClick={(e) => e.stopPropagation()}
                   onChange={() => {}}
