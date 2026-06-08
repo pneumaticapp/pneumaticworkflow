@@ -25,11 +25,27 @@ describe('isExpectedError', () => {
     expect(isExpectedError(errorMessage)).toBe(false);
   });
 
-  it('handles non-string error values', () => {
+  it('returns false for non-string primitives', () => {
     expect(isExpectedError(null)).toBe(false);
     expect(isExpectedError(undefined)).toBe(false);
     expect(isExpectedError(42)).toBe(false);
+  });
+
+  it('matches pattern in Error.message', () => {
     expect(isExpectedError(new Error('token_not_valid'))).toBe(true);
+  });
+
+  it('matches expected patterns in plain objects (json: true body)', () => {
+    expect(isExpectedError({ code: 'token_not_valid', detail: 'Given token not valid' })).toBe(true);
+    expect(isExpectedError({ message: 'Token is invalid.' })).toBe(true);
+    expect(isExpectedError({ message: 'Token is expired.' })).toBe(true);
+    expect(isExpectedError({ detail: 'Request was throttled. Expected available in 5 seconds.' })).toBe(true);
+  });
+
+  it('returns false for plain objects without expected patterns', () => {
+    expect(isExpectedError({ detail: 'Not found.' })).toBe(false);
+    expect(isExpectedError({ error: 'Server Error' })).toBe(false);
+    expect(isExpectedError({})).toBe(false);
   });
 });
 
@@ -62,6 +78,16 @@ describe('logServerError', () => {
     logServerError('prefix: ', '{"message":"Token is expired."}');
 
     expect(logger.info).toHaveBeenCalledTimes(1);
+    expect(logger.error).not.toHaveBeenCalled();
+  });
+
+  it('uses logger.info when error is a plain object with expected pattern (json: true)', () => {
+    const error = { code: 'token_not_valid', detail: 'Given token not valid' };
+
+    logServerError('failed to get user context: ', error);
+
+    expect(logger.info).toHaveBeenCalledTimes(1);
+    expect(logger.info).toHaveBeenCalledWith('failed to get user context: ', error);
     expect(logger.error).not.toHaveBeenCalled();
   });
 

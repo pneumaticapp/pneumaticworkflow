@@ -16,7 +16,17 @@ const EXPECTED_ERROR_PATTERNS = [
 const EXPECTED_ERROR_REGEX = new RegExp(EXPECTED_ERROR_PATTERNS.join('|'));
 
 export function isExpectedError(error: TLoggerArgs[number]): boolean {
-  return EXPECTED_ERROR_REGEX.test(String(error));
+  let errorString: string;
+
+  if (error instanceof Error) {
+    errorString = error.message;
+  } else if (typeof error === 'object' && error !== null) {
+    errorString = JSON.stringify(error);
+  } else {
+    errorString = String(error);
+  }
+
+  return EXPECTED_ERROR_REGEX.test(errorString);
 }
 
 /**
