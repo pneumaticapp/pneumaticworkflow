@@ -10,7 +10,7 @@ export async function verificateAccountMiddleware(req: Request, res: Response) {
     const url = ERoutes.AccountVerification.replace(':token', token as string);
     await serverApi.get(url, {}, true);
   } catch (e) {
-    logger.error(e);
+    logger.info(e);
   }
 
   return res.redirect(ERoutes.Login);

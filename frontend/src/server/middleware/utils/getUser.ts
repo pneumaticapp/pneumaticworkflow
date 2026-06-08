@@ -21,7 +21,7 @@ export async function getUser(req: Request, token: string, userAgent?: string) {
 
     return user;
   } catch (error) {
-    logger.error('failed to get user context: ', error);
+    logger.info('failed to get user context: ', error);
 
     throw error;
   }
