@@ -1,6 +1,22 @@
 import * as React from 'react';
 import { render } from '@testing-library/react';
 import { RichText, IRichTextProps } from '../RichText';
+
+jest.mock('react-dom/server', () => ({
+  __esModule: true,
+  default: {
+    renderToStaticMarkup: jest.fn((element: React.ReactElement) => {
+      const props = element?.props as { name?: string; src?: string };
+      if (props?.name) {
+        return `<span>${props.name}</span>`;
+      }
+      if (props?.src) {
+        return `<video src="${props.src}" />`;
+      }
+      return '<mock />';
+    }),
+  },
+}));
 import { intlMock } from '../../../__stubs__/intlMock';
 import { EExtraFieldType } from '../../../types/template';
 import { TTaskVariable } from '../../TemplateEdit/types';
@@ -145,5 +161,82 @@ describe('RichText', () => {
     const { container } = render(<RichText {...props} />);
     expect(container.textContent).toContain('Client name');
     expect(container.textContent).not.toContain('{{client-name-3967}}');
+  });
+
+  it('renders file attachment with ] in filename', () => {
+    const props: IRichTextProps = {
+      text: '![report\\[Q1\\].pdf](https://example.com/f "entityType:file")',
+      isMarkdownMode: true,
+    };
+
+    const { container } = render(<RichText {...props} />);
+
+    expect(container.textContent).toContain('report[Q1].pdf');
+    expect(container.innerHTML).not.toContain('![report');
+  });
+
+  it('renders file attachment with unescaped brackets in filename', () => {
+    const props: IRichTextProps = {
+      text: '![report[Q1].pdf](https://example.com/f "entityType:file")',
+      isMarkdownMode: true,
+    };
+
+    const { container } = render(<RichText {...props} />);
+
+    expect(container.textContent).toContain('report[Q1].pdf');
+    expect(container.innerHTML).not.toContain('![report');
+  });
+
+  it('renders file attachment with [ and ] in filename', () => {
+    const props: IRichTextProps = {
+      text: '![file\\[1\\].pdf](https://example.com/f "entityType:file")',
+      isMarkdownMode: true,
+    };
+
+    const { container } = render(<RichText {...props} />);
+
+    expect(container.textContent).toContain('file[1].pdf');
+    expect(container.innerHTML).not.toContain('![file');
+  });
+
+  it('renders regular link with ] in link text', () => {
+    const props: IRichTextProps = {
+      text: '[click \\[here\\]](https://example.com)',
+      isMarkdownMode: true,
+    };
+
+    const { container } = render(<RichText {...props} />);
+    const link = container.querySelector('a[href="https://example.com"]');
+
+    expect(link).not.toBeNull();
+    expect(link?.textContent).toBe('click [here]');
+    expect(container.innerHTML).not.toContain('[click \\[here\\]]');
+  });
+
+  it('renders regular link with nested brackets in link text', () => {
+    const props: IRichTextProps = {
+      text: '[ewfer[ergerg]ergerg](http://localhost:8000/templates/edit/19755/)',
+      isMarkdownMode: true,
+    };
+
+    const { container } = render(<RichText {...props} />);
+    const link = container.querySelector('a[href="http://localhost:8000/templates/edit/19755/"]');
+
+    expect(link).not.toBeNull();
+    expect(link?.textContent).toBe('ewfer[ergerg]ergerg');
+    expect(container.innerHTML).not.toContain('[ewfer[ergerg]');
+  });
+
+  it('renders image attachment with ] in alt text', () => {
+    const props: IRichTextProps = {
+      text: '![img\\[v2\\]](https://example.com/img.png "entityType:image")',
+      isMarkdownMode: true,
+    };
+
+    const { container } = render(<RichText {...props} />);
+    const image = container.querySelector('img[src="https://example.com/img.png"]');
+
+    expect(image).not.toBeNull();
+    expect(container.innerHTML).not.toContain('![img');
   });
 });
