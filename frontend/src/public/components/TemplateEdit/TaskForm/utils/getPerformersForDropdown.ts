@@ -3,7 +3,7 @@ import { EExtraFieldType, ETaskPerformerType, ITemplateTask, ITemplateTaskPerfor
 import { TUserListItem } from '../../../../types/user';
 import { getUserFullName } from '../../../../utils/users';
 import { TTaskVariable } from '../../types';
-import { EOptionTypes, TUsersDropdownOption } from '../../../UI/form/UsersDropdown';
+import { EOptionTypes, TUsersDropdownOption, getUsersDropdownOptionValue } from '../../../UI/form/UsersDropdown';
 import { IGroup } from '../../../../redux/team/types';
 
 export function getPerformersForDropdown(
@@ -22,7 +22,7 @@ export function getPerformersForDropdown(
     type: ETaskPerformerType.User,
     sourceId: String(user.id),
     label: getUserFullName(user),
-    value: String(user.id),
+    value: getUsersDropdownOptionValue(EOptionTypes.User, user.id),
   }));
 
   const outputUsersPerformers: TUsersDropdownOption[] = variables
@@ -46,7 +46,7 @@ export function getPerformersForDropdown(
     type: ETaskPerformerType.UserGroup,
     sourceId: String(group.id),
     label: group.name,
-    value: String(group.id),
+    value: getUsersDropdownOptionValue(EOptionTypes.Group, group.id),
   }));
 
   const workflowStarterPerformers: Omit<ITemplateTaskPerformer, 'apiName'> & TUsersDropdownOption = {
