@@ -197,8 +197,6 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
     );
   };
 
-  console.log(normalizedOptions);
-
   return (
     <DropdownList
       isMulti={isMulti}

@@ -95,8 +95,6 @@ export function PerformerFilterSelect() {
   const isOneFilterId = filterIds.length === 1;
   const filterType = isOneFilterId && performersIdsFilter.length === 1 ? 'userType' : 'groupType';
 
-  console.log(performersGroupOptions, performersOptions);
-
   return (
     <div className={styles['performer-filter']}>
       <FilterSelect
