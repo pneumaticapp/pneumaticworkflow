@@ -187,8 +187,10 @@ async def test_dispatch__auth_required_no_token__401(
     # assert
     assert response.status_code == 401
     response_data = json.loads(response.body.decode())
-    assert response_data['error_code'] == 'AUTH_001'
-    assert response_data['error_type'] == 'authentication'
+    assert response_data['code'] == 'AUTH_001'
+    assert 'error_type' not in response_data
+    assert 'timestamp' not in response_data
+    assert 'request_id' not in response_data
 
 
 @pytest.mark.asyncio

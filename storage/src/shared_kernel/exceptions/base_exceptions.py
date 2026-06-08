@@ -30,28 +30,30 @@ class ErrorCode:
 
 @dataclass
 class ErrorResponse:
-    """Standard error response."""
+    """Standard error response.
 
-    error_code: str
+    Format is unified with the Django/DRF backend:
+    {code, message, details?: {reason: str}}
+    """
+
+    code: str
     message: str
-    error_type: str
     details: str | None = None
-    timestamp: str | None = None
-    request_id: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
-        """Convert to dictionary."""
-        result = {
-            'error_code': self.error_code,
+        """Convert to dictionary.
+
+        Returns backend-compatible format:
+        - code: error code string (e.g. 'FILE_001')
+        - message: human-readable message
+        - details: optional dict with 'reason' key
+        """
+        result: dict[str, Any] = {
+            'code': self.code,
             'message': self.message,
-            'error_type': self.error_type,
         }
         if self.details:
-            result['details'] = self.details
-        if self.timestamp:
-            result['timestamp'] = self.timestamp
-        if self.request_id:
-            result['request_id'] = self.request_id
+            result['details'] = {'reason': self.details}
         return result
 
 
@@ -90,19 +92,12 @@ class BaseAppError(Exception):
         """Get error type."""
         return self.error_code.error_type
 
-    def to_response(self, **kwargs: str | int | None) -> ErrorResponse:
+    def to_response(self) -> ErrorResponse:
         """Convert to error response."""
-        # Convert all kwargs values to strings for ErrorResponse
-        str_kwargs = {
-            key: str(value) if value is not None else None
-            for key, value in kwargs.items()
-        }
         return ErrorResponse(
-            error_code=self.error_code.code,
+            code=self.error_code.code,
             message=self.error_code.message,
-            error_type=self.error_type.value,
             details=self.details,
-            **str_kwargs,
         )
 
     def __str__(self) -> str:

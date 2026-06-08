@@ -2,7 +2,6 @@
 
 import logging
 from collections.abc import Awaitable, Callable
-from datetime import UTC, datetime
 
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
@@ -200,10 +199,7 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
             return await call_next(request)
         except AuthenticationError as exc:
             # Convert exception to HTTP response using existing logic
-            error_response = exc.to_response(
-                timestamp=datetime.now(tz=UTC).isoformat(),
-                request_id=getattr(request.state, 'request_id', None),
-            )
+            error_response = exc.to_response()
             return JSONResponse(
                 status_code=exc.http_status,
                 content=error_response.to_dict(),

@@ -487,6 +487,16 @@ export const enMessages = {
   'Unknown Error': 'Oops, looks like something went wrong... Our engineering team has already been notified',
   'Something Went Wrong': 'Oops, looks like something went wrong... Our engineering team has already been notified',
 
+  'file-service.file-not-found': 'File not found',
+  'file-service.access-denied': 'File access denied',
+  'file-service.size-exceeded': 'File size exceeds the limit',
+  'file-service.auth-failed': 'Authentication failed',
+  'file-service.permission-denied': 'You do not have permission to perform this action',
+  'file-service.invalid-file-size': 'Invalid file size',
+  'file-service.missing-required-field': 'Required field is missing',
+  'file-service.upload-failed': 'File upload failed. Please try again',
+  'file-service.download-failed': 'File download failed. Please try again',
+
   'top-notifications.none': "You're up to date",
 
   'wizard.next': 'Next',

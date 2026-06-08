@@ -451,3 +451,176 @@ def test_upload__diff_content_types__return_ok(
     data = response.json()
     assert 'public_url' in data
     assert 'file_id' in data
+
+
+# --- Error body contract tests (backend-compatible format) ---
+
+
+def test_upload__no_auth__error_body_format(e2e_client):
+    """401 response body must use unified format."""
+    # act
+    response = e2e_client.post(
+        '/upload',
+        files={
+            'file': (
+                'test.txt',
+                b'test file content',
+                'text/plain',
+            ),
+        },
+    )
+
+    # assert
+    assert response.status_code == 401
+    data = response.json()
+    assert 'code' in data
+    assert 'message' in data
+    assert 'error_type' not in data
+    assert 'timestamp' not in data
+    assert 'request_id' not in data
+
+
+def test_upload__no_file_with_auth__error_body_format(
+    e2e_client,
+    mock_auth_middleware,
+    auth_headers,
+):
+    """422 response body must use unified format."""
+    # act
+    response = e2e_client.post(
+        '/upload',
+        headers=auth_headers,
+    )
+
+    # assert
+    assert response.status_code == 422
+    data = response.json()
+    assert 'code' in data
+    assert 'message' in data
+    assert 'error_type' not in data
+    assert 'timestamp' not in data
+    assert 'request_id' not in data
+
+
+def test_download__not_found__error_body_format(
+    e2e_client,
+    mock_auth_middleware,
+    mock_http_client,
+    auth_headers,
+    mock_download_use_case_get_metadata,
+):
+    """404 response body must contain code=FILE_001 in unified format."""
+    # arrange
+    mock_download_use_case_get_metadata.side_effect = DomainFileNotFoundError(
+        file_id='00000000-0000-0000-0000-000000000000',
+    )
+
+    # act
+    response = e2e_client.get(
+        '/00000000-0000-0000-0000-000000000000',
+        headers=auth_headers,
+    )
+
+    # assert
+    assert response.status_code == 404
+    data = response.json()
+    assert data['code'] == 'FILE_001'
+    assert 'message' in data
+    assert 'error_type' not in data
+    assert 'timestamp' not in data
+    assert 'request_id' not in data
+
+
+def test_download__no_permission__error_body_format(
+    e2e_client,
+    mock_auth_middleware,
+    auth_headers,
+    mock_http_client_check_permission,
+    mock_download_use_case_get_metadata,
+):
+    """403 response body must use unified format."""
+    # arrange
+    file_record = MagicMock()
+    file_record.file_id = '12345678-1234-5678-1234-567812345678'
+    file_record.filename = 'test_file.txt'
+    file_record.content_type = 'text/plain'
+    file_record.size = 12
+    file_record.user_id = 999
+    file_record.account_id = 1
+    mock_download_use_case_get_metadata.return_value = file_record
+    mock_http_client_check_permission.return_value = False
+
+    # act
+    response = e2e_client.get(
+        '/12345678-1234-5678-1234-567812345678',
+        headers=auth_headers,
+    )
+
+    # assert
+    assert response.status_code == 403
+    data = response.json()
+    assert 'code' in data
+    assert 'message' in data
+    assert 'error_type' not in data
+    assert 'timestamp' not in data
+
+
+def test_download__no_auth__error_body_format(e2e_client):
+    """401 on download must use unified format."""
+    # act
+    response = e2e_client.get(
+        '/12345678-1234-5678-1234-567812345678',
+    )
+
+    # assert
+    assert response.status_code == 401
+    data = response.json()
+    assert 'code' in data
+    assert 'message' in data
+    assert 'error_type' not in data
+    assert 'timestamp' not in data
+    assert 'request_id' not in data
+
+
+def test_error_body__allowed_keys_only(
+    e2e_client,
+    mock_auth_middleware,
+    mock_http_client,
+    auth_headers,
+    mock_download_use_case_get_metadata,
+):
+    """Error response must only contain {code, message, details}."""
+    # arrange
+    mock_download_use_case_get_metadata.side_effect = DomainFileNotFoundError(
+        file_id='00000000-0000-0000-0000-000000000000',
+    )
+
+    # act
+    response = e2e_client.get(
+        '/00000000-0000-0000-0000-000000000000',
+        headers=auth_headers,
+    )
+
+    # assert
+    data = response.json()
+    allowed_keys = {'code', 'message', 'details'}
+    assert set(data.keys()).issubset(allowed_keys)
+
+
+def test_error_body__details_is_dict_when_present(
+    e2e_client,
+    mock_auth_middleware,
+    auth_headers,
+):
+    """When details exist in error, they must be {reason: str}."""
+    # act
+    response = e2e_client.post(
+        '/upload',
+        headers=auth_headers,
+    )
+
+    # assert
+    data = response.json()
+    if 'details' in data:
+        assert isinstance(data['details'], dict)
+        assert 'reason' in data['details']

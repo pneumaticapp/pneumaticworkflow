@@ -1,5 +1,7 @@
 """Tests for exception system."""
 
+from unittest.mock import MagicMock, patch
+
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
@@ -25,7 +27,6 @@ from src.shared_kernel.exceptions import (
     RedisConnectionError,
     RedisOperationError,
     StorageError,
-    create_error_response,
     register_exception_handlers,
 )
 
@@ -68,46 +69,37 @@ def test_error_code__with_details__ok():
 def test_error_response__create__ok():
     # act
     response = ErrorResponse(
-        error_code='TEST_001',
+        code='TEST_001',
         message='Test error',
-        error_type='validation',
     )
 
     # assert
-    assert response.error_code == 'TEST_001'
+    assert response.code == 'TEST_001'
     assert response.message == 'Test error'
-    assert response.error_type == 'validation'
 
 
 def test_error_response__to_dict__all_fields():
     # arrange
     response = ErrorResponse(
-        error_code='TEST_001',
+        code='TEST_001',
         message='Test error',
-        error_type='validation',
         details='Test details',
-        timestamp='2023-01-01T00:00:00',
-        request_id='test-123',
     )
 
     # act
     result = response.to_dict()
 
     # assert
-    assert result['error_code'] == 'TEST_001'
+    assert result['code'] == 'TEST_001'
     assert result['message'] == 'Test error'
-    assert result['error_type'] == 'validation'
-    assert result['details'] == 'Test details'
-    assert result['timestamp'] == '2023-01-01T00:00:00'
-    assert result['request_id'] == 'test-123'
+    assert result['details'] == {'reason': 'Test details'}
 
 
 def test_error_response__to_dict__no_optional():
     # arrange
     response = ErrorResponse(
-        error_code='TEST_001',
+        code='TEST_001',
         message='Test error',
-        error_type='validation',
     )
 
     # act
@@ -115,8 +107,79 @@ def test_error_response__to_dict__no_optional():
 
     # assert
     assert 'details' not in result
+    assert 'error_type' not in result
     assert 'timestamp' not in result
     assert 'request_id' not in result
+
+
+def test_error_response__to_dict__details_as_dict():
+    """Details should be serialized as {reason: str} for backend compat."""
+    # arrange
+    response = ErrorResponse(
+        code='FILE_003',
+        message='File size exceeds limit',
+        details='File size 200MB exceeds limit 100MB',
+    )
+
+    # act
+    result = response.to_dict()
+
+    # assert
+    assert result['details'] == {
+        'reason': 'File size 200MB exceeds limit 100MB',
+    }
+
+
+def test_error_response__to_dict__backend_compatible_keys():
+    """Response format must match Django/DRF: {code, message, details?}."""
+    # arrange
+    response = ErrorResponse(
+        code='VAL_001',
+        message='Invalid file size',
+        details='Size must be positive',
+    )
+
+    # act
+    result = response.to_dict()
+
+    # assert - must have exactly these keys
+    assert set(result.keys()) == {'code', 'message', 'details'}
+    assert result['code'] == 'VAL_001'
+    assert result['message'] == 'Invalid file size'
+    assert result['details'] == {'reason': 'Size must be positive'}
+
+
+def test_error_response__to_dict__no_error_type_in_output():
+    """error_type must NOT appear in serialized output."""
+    # arrange
+    response = ErrorResponse(
+        code='AUTH_001',
+        message='Auth failed',
+    )
+
+    # act
+    result = response.to_dict()
+
+    # assert
+    assert 'error_type' not in result
+    assert 'timestamp' not in result
+    assert 'request_id' not in result
+
+
+def test_error_response__to_dict__no_details__key_absent():
+    """When details is None, details key should not be in dict."""
+    # arrange
+    response = ErrorResponse(
+        code='FILE_001',
+        message='File not found',
+    )
+
+    # act
+    result = response.to_dict()
+
+    # assert
+    assert 'details' not in result
+    assert set(result.keys()) == {'code', 'message'}
 
 
 # --- BaseAppError ---
@@ -153,18 +216,56 @@ def test_base_app_error__to_response__ok():
     exception = BaseAppError(error_code, details='Test details')
 
     # act
-    response = exception.to_response(
-        timestamp='2023-01-01T00:00:00',
-        request_id='test-123',
-    )
+    response = exception.to_response()
 
     # assert
-    assert response.error_code == 'TEST_001'
+    assert response.code == 'TEST_001'
     assert response.message == 'Test error'
-    assert response.error_type == 'validation'
     assert response.details == 'Test details'
-    assert response.timestamp == '2023-01-01T00:00:00'
-    assert response.request_id == 'test-123'
+
+
+def test_base_app_error__to_response__to_dict__backend_format():
+    """Full pipeline: BaseAppError -> to_response() -> to_dict()."""
+    # arrange
+    error_code = ErrorCode(
+        code='FILE_003',
+        message='File size exceeds limit',
+        error_type=ErrorType.VALIDATION,
+        http_status=413,
+    )
+    exception = BaseAppError(error_code, details='200MB exceeds 100MB')
+
+    # act
+    result = exception.to_response().to_dict()
+
+    # assert
+    assert result == {
+        'code': 'FILE_003',
+        'message': 'File size exceeds limit',
+        'details': {'reason': '200MB exceeds 100MB'},
+    }
+
+
+def test_base_app_error__to_response__no_details():
+    """to_response() without details omits details key."""
+    # arrange
+    error_code = ErrorCode(
+        code='AUTH_001',
+        message='Authentication failed',
+        error_type=ErrorType.AUTHENTICATION,
+        http_status=401,
+    )
+    exception = BaseAppError(error_code)
+
+    # act
+    result = exception.to_response().to_dict()
+
+    # assert
+    assert result == {
+        'code': 'AUTH_001',
+        'message': 'Authentication failed',
+    }
+    assert 'details' not in result
 
 
 # --- Domain exceptions ---
@@ -523,25 +624,6 @@ def test_authentication_error__create__ok():
     assert exc.http_status == 401
 
 
-# --- Exception handlers ---
-
-
-def test_create_error_response__all_fields__ok():
-    # act
-    response = create_error_response(
-        error_code='TEST_001',
-        message='Test error',
-        error_type='validation',
-        details='Test details',
-        timestamp='2023-01-01T00:00:00',
-    )
-
-    # assert
-    assert response['error_code'] == 'TEST_001'
-    assert response['message'] == 'Test error'
-    assert response['details'] == 'Test details'
-
-
 def test_register_handlers__registers__ok():
     # arrange
     app = FastAPI()
@@ -577,8 +659,10 @@ def test_handler__file_not_found__404():
     # assert
     assert response.status_code == 404
     data = response.json()
-    assert data['error_code'] == 'FILE_001'
-    assert data['error_type'] == 'domain'
+    assert data['code'] == 'FILE_001'
+    assert 'error_type' not in data
+    assert 'timestamp' not in data
+    assert 'request_id' not in data
 
 
 def test_handler__auth_error__401():
@@ -598,5 +682,181 @@ def test_handler__auth_error__401():
     # assert
     assert response.status_code == 401
     data = response.json()
-    assert data['error_code'] == 'AUTH_001'
-    assert data['error_type'] == 'authentication'
+    assert data['code'] == 'AUTH_001'
+    assert 'error_type' not in data
+    assert 'timestamp' not in data
+    assert 'request_id' not in data
+
+
+def test_handler__domain_error__backend_format():
+    """Domain error response: {code, message}, no error_type."""
+    # arrange
+    app = FastAPI()
+    register_exception_handlers(app)
+
+    @app.get('/test')
+    async def test_endpoint():
+        raise DomainFileNotFoundError('test-id')
+
+    client = TestClient(app)
+
+    # act
+    response = client.get('/test')
+    data = response.json()
+
+    # assert
+    assert response.status_code == 404
+    assert data['code'] == 'FILE_001'
+    assert 'message' in data
+    assert 'error_type' not in data
+    assert 'timestamp' not in data
+    assert 'request_id' not in data
+
+
+def test_handler__validation_error__details_as_dict():
+    """Validation error details should be {reason: str}."""
+    # arrange
+    app = FastAPI()
+    register_exception_handlers(app)
+
+    @app.get('/test')
+    async def test_endpoint():
+        raise FileSizeExceededError(size=200, max_size=100)
+
+    client = TestClient(app)
+
+    # act
+    response = client.get('/test')
+    data = response.json()
+
+    # assert
+    assert response.status_code == 413
+    assert data['code'] == 'FILE_003'
+    if 'details' in data:
+        assert isinstance(data['details'], dict)
+        assert 'reason' in data['details']
+
+
+def test_handler__unhandled_exception__backend_format():
+    """Generic 500 errors must also follow {code, message} format."""
+    # arrange
+
+    mock_settings = MagicMock()
+    mock_settings.DEBUG = False
+
+    app = FastAPI()
+    register_exception_handlers(app)
+
+    @app.get('/test')
+    async def test_endpoint():
+        raise RuntimeError('unexpected')
+
+    client = TestClient(app, raise_server_exceptions=False)
+
+    # act
+    with patch(
+        'src.shared_kernel.exceptions.exception_handler.get_settings',
+        return_value=mock_settings,
+    ):
+        response = client.get('/test')
+    data = response.json()
+
+    # assert
+    assert response.status_code == 500
+    assert 'code' in data
+    assert 'message' in data
+    assert 'error_type' not in data
+    assert 'timestamp' not in data
+    assert 'request_id' not in data
+
+
+def test_handler__permission_error__backend_format():
+    """Permission error: {code: PERM_001, ...}."""
+    # arrange
+    app = FastAPI()
+    register_exception_handlers(app)
+
+    @app.get('/test')
+    async def test_endpoint():
+        raise PermissionDeniedError('forbidden')
+
+    client = TestClient(app)
+
+    # act
+    response = client.get('/test')
+    data = response.json()
+
+    # assert
+    assert response.status_code == 403
+    assert data['code'] == 'PERM_001'
+    assert 'error_type' not in data
+
+
+def test_handler__storage_error__backend_format():
+    """Storage error: infrastructure errors masked in prod."""
+    # arrange
+    app = FastAPI()
+    register_exception_handlers(app)
+
+    @app.get('/test')
+    async def test_endpoint():
+        raise StorageError.upload_failed('timeout')
+
+    client = TestClient(app)
+
+    # act
+    response = client.get('/test')
+    data = response.json()
+
+    # assert
+    assert response.status_code == 503
+    assert data['code'] == 'STORAGE_002'
+    assert 'error_type' not in data
+    assert 'timestamp' not in data
+    assert 'request_id' not in data
+
+
+def test_handler__file_access_denied__backend_format():
+    """File access denied: {code: FILE_002}."""
+    # arrange
+    app = FastAPI()
+    register_exception_handlers(app)
+
+    @app.get('/test')
+    async def test_endpoint():
+        raise FileAccessDeniedError(
+            file_id='test-file',
+            user_id=1,
+        )
+
+    client = TestClient(app)
+
+    # act
+    response = client.get('/test')
+    data = response.json()
+
+    # assert
+    assert response.status_code == 403
+    assert data['code'] == 'FILE_002'
+    assert 'error_type' not in data
+
+
+def test_handler__response_keys__only_code_message_details():
+    """All error responses must have only {code, message} or
+    {code, message, details} — no extra fields."""
+    # arrange
+    app = FastAPI()
+    register_exception_handlers(app)
+
+    @app.get('/test')
+    async def test_endpoint():
+        raise DomainFileNotFoundError('test-id')
+
+    client = TestClient(app)
+
+    # act
+    data = client.get('/test').json()
+
+    # assert
+    allowed_keys = {'code', 'message', 'details'}
+    assert set(data.keys()).issubset(allowed_keys)

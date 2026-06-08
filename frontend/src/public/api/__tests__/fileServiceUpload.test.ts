@@ -90,4 +90,41 @@ describe('fileServiceUpload', () => {
     expect(result.fileId).toBe('blob-id');
     expect(mockedCommonRequest).toHaveBeenCalledTimes(1);
   });
+
+  it('propagates file service error with code FILE_003 in payload', async () => {
+    const apiError = Object.assign(new Error('File size exceeds limit'), {
+      name: 'ApiError',
+      data: { code: 'FILE_003', message: 'File size exceeds limit' },
+      status: 413,
+    });
+    mockedCommonRequest.mockRejectedValue(apiError);
+
+    const file = new File(['large'], 'big.zip', { type: 'application/zip' });
+
+    await expect(
+      uploadFileToFileService({ file, filename: 'big.zip' }),
+    ).rejects.toMatchObject({
+      message: 'File size exceeds limit',
+      data: { code: 'FILE_003' },
+    });
+  });
+
+  it('propagates permission error PERM_001 from file service', async () => {
+    const apiError = Object.assign(new Error('Permission denied'), {
+      name: 'ApiError',
+      data: { code: 'PERM_001', message: 'Permission denied' },
+      status: 403,
+    });
+    mockedCommonRequest.mockRejectedValue(apiError);
+
+    const file = new File(['data'], 'secret.pdf', { type: 'application/pdf' });
+
+    await expect(
+      uploadFileToFileService({ file, filename: 'secret.pdf' }),
+    ).rejects.toMatchObject({
+      message: 'Permission denied',
+      data: { code: 'PERM_001' },
+      status: 403,
+    });
+  });
 });

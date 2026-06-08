@@ -1,8 +1,6 @@
 """Universal exception handler."""
 
 import logging
-from datetime import UTC, datetime
-from typing import Any
 
 from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
@@ -64,10 +62,7 @@ def register_exception_handlers(app: FastAPI) -> None:
             details = None
 
         # Create error response
-        error_response = exc.to_response(
-            timestamp=datetime.now(tz=UTC).isoformat(),
-            request_id=getattr(request.state, 'request_id', None),
-        )
+        error_response = exc.to_response()
         # Override details after to_response (which uses exc.details)
         error_response.details = details
 
@@ -96,12 +91,9 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
 
         error_response = ErrorResponse(
-            error_code=error_code.code,
+            code=error_code.code,
             message=error_code.message,
-            error_type=error_code.error_type.value,
             details=details,
-            timestamp=datetime.now(tz=UTC).isoformat(),
-            request_id=getattr(request.state, 'request_id', None),
         )
 
         return JSONResponse(
@@ -129,12 +121,9 @@ def register_exception_handlers(app: FastAPI) -> None:
         )
 
         error_response = ErrorResponse(
-            error_code=error_code.code,
+            code=error_code.code,
             message=error_code.message,
-            error_type=error_code.error_type.value,
             details=details,
-            timestamp=datetime.now(tz=UTC).isoformat(),
-            request_id=getattr(request.state, 'request_id', None),
         )
 
         return JSONResponse(
@@ -165,44 +154,12 @@ def register_exception_handlers(app: FastAPI) -> None:
         debug_mode = get_settings().DEBUG
 
         error_response = ErrorResponse(
-            error_code=error_code.code,
+            code=error_code.code,
             message=error_code.message,
-            error_type=error_code.error_type.value,
             details=str(exc) if debug_mode else None,
-            timestamp=datetime.now(tz=UTC).isoformat(),
-            request_id=getattr(request.state, 'request_id', None),
         )
 
         return JSONResponse(
             status_code=error_code.http_status,
             content=error_response.to_dict(),
         )
-
-
-def create_error_response(
-    error_code: str,
-    message: str,
-    error_type: str,
-    details: str | None = None,
-    **kwargs: str | int | None,
-) -> dict[str, Any]:
-    """Create standardized error response."""
-    response = {
-        'error_code': error_code,
-        'message': message,
-        'error_type': error_type,
-    }
-
-    if details:
-        response['details'] = details
-
-    # Convert kwargs values to strings for response
-    str_kwargs = {
-        key: str(value) if value is not None else None
-        for key, value in kwargs.items()
-    }
-    # Filter out None values for response.update
-    filtered_kwargs = {k: v for k, v in str_kwargs.items() if v is not None}
-    response.update(filtered_kwargs)
-
-    return response
