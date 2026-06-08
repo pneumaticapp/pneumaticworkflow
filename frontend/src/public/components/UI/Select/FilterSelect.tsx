@@ -1,4 +1,5 @@
-import React, { ChangeEvent, ReactNode, SVGAttributes, useState } from 'react';
+import * as React from 'react';
+import { ChangeEvent, ReactNode, SVGAttributes, useState } from 'react';
 import classnames from 'classnames';
 import * as PerfectScrollbar from 'react-perfect-scrollbar';
 import { DropdownItem, DropdownMenu, DropdownToggle, Dropdown } from 'reactstrap';
@@ -12,6 +13,9 @@ import { Checkbox, InputField } from '..';
 import styles from './Select.css';
 
 const ScrollBar = PerfectScrollbar as unknown as Function;
+
+const DROPDOWN_SKELETON_ROW_COUNT = 5;
+const DROPDOWN_SKELETON_WIDTHS = ['80%', '60%', '80%', '60%', '70%'];
 
 type TOptionId = number | string | null;
 export type TOptionBase<IdKey extends string, LabelKey extends string> = {
@@ -149,7 +153,7 @@ export function FilterSelect<
   };
 
   const renderSearchInput = () => {
-    if (!isSearchShown) {
+    if (!isSearchShown || isLoading) {
       return null;
     }
 
@@ -345,11 +349,29 @@ export function FilterSelect<
     setSearchText('');
   };
 
-  if (isLoading) {
-    const loaderClassName = classnames('dropdown-menu-right ml-sm-4 dropdown');
+  const renderDropdownSkeleton = () => (
+    <div className={styles['dropdown-menu__skeleton']}>
+      {Array.from({ length: DROPDOWN_SKELETON_ROW_COUNT }, (_, index) => (
+        <div
+          key={index}
+          className={classnames(
+            styles['dropdown-menu__skeleton-item'],
+            index === DROPDOWN_SKELETON_ROW_COUNT - 1 && styles['dropdown-menu__skeleton-item_last'],
+          )}
+        >
+          <Skeleton display="block" height="2.4rem" width={DROPDOWN_SKELETON_WIDTHS[index]} />
+        </div>
+      ))}
+    </div>
+  );
 
-    return <Skeleton className={loaderClassName} />;
-  }
+  const renderDropdownContent = () => {
+    if (isLoading) {
+      return renderDropdownSkeleton();
+    }
+
+    return renderDropdownList();
+  };
 
   return (
     <OutsideClickHandler disabled={!isDropdownOpen} onOutsideClick={handleToggleDropdown}>
@@ -423,7 +445,7 @@ export function FilterSelect<
             className={styles['dropdown-menu__scrollbar']}
             options={{ suppressScrollX: true, wheelPropagation: false }}
           >
-            {renderDropdownList()}
+            {renderDropdownContent()}
           </ScrollBar>
         </DropdownMenu>
       </Dropdown>
