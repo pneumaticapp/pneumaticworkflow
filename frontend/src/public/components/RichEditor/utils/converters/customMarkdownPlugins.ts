@@ -9,8 +9,8 @@ import { ECustomEditorEntities } from '../types';
 import { getAttachmentEntityType } from '../getAttachmentEntityType';
 import { ContentToken } from 'remarkable/lib';
 import {
-  ATTACHMENT_MARKDOWN_INLINE_RE,
-  GENERAL_MARKDOWN_LINK_RE,
+  parseAttachmentMarkdownFromStart,
+  parseGeneralMarkdownLinkFromStart,
   unescapeMarkdownLinkText,
 } from './markdownLinkText';
 
@@ -144,8 +144,8 @@ export const linksRemarkablePlugin = (remarkable: Remarkable) => {
       }
 
       const slice = state.src.slice(state.pos);
-      const attachmentMatch = ATTACHMENT_MARKDOWN_INLINE_RE.exec(slice);
-      const generalMatch = attachmentMatch ? null : GENERAL_MARKDOWN_LINK_RE.exec(slice);
+      const attachmentMatch = parseAttachmentMarkdownFromStart(slice);
+      const generalMatch = attachmentMatch ? null : parseGeneralMarkdownLinkFromStart(slice);
       const match = attachmentMatch ?? generalMatch;
 
       if (!match) {
