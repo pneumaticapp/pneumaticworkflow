@@ -1,6 +1,6 @@
 """Tests for StorageService and StorageServiceHolder."""
 
-from unittest.mock import AsyncMock, call
+from unittest.mock import AsyncMock, Mock, call
 
 import pytest
 
@@ -301,6 +301,7 @@ async def test_upload__no_content_type__empty_extra(
     )
 
 
+@pytest.mark.filterwarnings('ignore::RuntimeWarning')
 @pytest.mark.asyncio
 async def test_upload__no_bucket__create_and_retry(
     storage_service_with_mock_s3,
@@ -314,6 +315,7 @@ async def test_upload__no_bucket__create_and_retry(
     )
     mock_s3.create_bucket = AsyncMock()
     stream = AsyncMock()
+    stream.seek = Mock()
 
     # act — no exception
     await svc.upload_file(

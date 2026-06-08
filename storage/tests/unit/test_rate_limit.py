@@ -82,11 +82,11 @@ def test_get_client_ip__no_proxy__use_client_host():
     assert result == '192.168.1.1'
 
 
-def test_get_client_ip__x_forwarded__first_ip():
+def test_get_client_ip__x_real_ip__use_it():
     # arrange
     request = MagicMock(spec=Request)
     request.headers = {
-        'x-forwarded-for': '10.0.0.1, 172.16.0.1',
+        'x-real-ip': '10.0.0.1',
     }
 
     # act
@@ -96,16 +96,31 @@ def test_get_client_ip__x_forwarded__first_ip():
     assert result == '10.0.0.1'
 
 
-def test_get_client_ip__single_forwarded__use_it():
+def test_get_client_ip__x_real_ip_with_spaces__stripped():
     # arrange
     request = MagicMock(spec=Request)
-    request.headers = {'x-forwarded-for': '203.0.113.5'}
+    request.headers = {'x-real-ip': ' 203.0.113.5 '}
 
     # act
     result = _get_client_ip(request)
 
     # assert
     assert result == '203.0.113.5'
+
+
+def test_get_client_ip__x_forwarded_only__ignored():
+    """X-Forwarded-For is ignored; only X-Real-IP is trusted."""
+    # arrange
+    request = MagicMock(spec=Request)
+    request.headers = {'x-forwarded-for': '10.0.0.1, 172.16.0.1'}
+    request.client = MagicMock()
+    request.client.host = '192.168.1.1'
+
+    # act
+    result = _get_client_ip(request)
+
+    # assert — falls through to client.host since x-real-ip is absent
+    assert result == '192.168.1.1'
 
 
 def test_get_client_ip__no_client__fallback():

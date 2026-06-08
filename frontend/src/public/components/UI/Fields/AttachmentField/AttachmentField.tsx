@@ -18,6 +18,8 @@ import { getImageDimensions } from './utils/getImageDimensions';
 import styles from './AttachmentField.css';
 import commonStyles from '../common/styles.css';
 
+const IMAGE_EXTENSION_RE = /\.(jpe?g|png|gif|svg|webp)$/i;
+
 type TInputFieldSize = 'sm' | 'md' | 'lg';
 
 export interface IAttachmentFieldProps {
@@ -81,6 +83,10 @@ export function AttachmentField({
   const [filesToUploadState, setFilesToUploadState] = React.useState<TUploadedFile[]>(uploadedFiles);
 
   React.useEffect(() => {
+    setFilesToUploadState(uploadedFiles);
+  }, [uploadedFiles]);
+
+  React.useEffect(() => {
     // clear file input value after uploading
     const { current } = uploadFieldRef;
 
@@ -122,7 +128,7 @@ export function AttachmentField({
 
           return '';
         } catch (error) {
-          return error.message;
+          return error instanceof Error ? error.message : String(error);
         }
       },
     ];
@@ -130,10 +136,12 @@ export function AttachmentField({
     try {
       setUploadingState(true);
       const newUploadedFiles = await uploadFiles(files, validators);
-      const newFileWithThumbnailUrl = newUploadedFiles.map((item) => {
+      const successFiles = newUploadedFiles.filter((item) => !item.error);
+      const newFileWithThumbnailUrl = successFiles.map((item) => {
+        const isImage = acceptedType === 'image' || IMAGE_EXTENSION_RE.test(item.name);
         return {
           ...item,
-          thumbnailUrl: `${item.url}`,
+          thumbnailUrl: isImage ? item.url : undefined,
         };
       });
 

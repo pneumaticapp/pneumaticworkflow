@@ -52,5 +52,5 @@ class PublicAuthService:
         # Get data from Redis
         redis_client = get_redis_client()
         token_str = str(token)
-        data = await redis_client.get(f'{token_str}')
+        data = await redis_client.get(token_str)
         return data if isinstance(data, dict) else None

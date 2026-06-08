@@ -17,6 +17,8 @@ from src.application.use_cases.file_download import (
 from src.application.use_cases.file_upload import UploadFileUseCase
 from src.domain.entities.file_record import FileRecord
 from src.shared_kernel.exceptions import (
+    DatabaseError,
+    DatabaseOperationError,
     DomainFileNotFoundError,
     StorageError,
 )
@@ -116,6 +118,95 @@ async def test_upload__storage_error__raise(
     # act
     with pytest.raises(StorageError):
         await use_case.execute(command=command)
+
+
+@pytest.mark.asyncio
+async def test_upload__db_error__cleanup_s3(
+    mock_storage_service,
+    mock_repository,
+):
+    # arrange
+    command = UploadFileCommand(
+        file_stream=io.BytesIO(b'test content'),
+        filename='test.txt',
+        content_type='text/plain',
+        size=12,
+        user_id=1,
+        account_id=1,
+    )
+    mock_uow = AsyncMock()
+    mock_uow.__aenter__.return_value = mock_uow
+    mock_uow.__aexit__.return_value = None
+    mock_storage_service.get_storage_path.return_value = (
+        'test-bucket',
+        '12345678-1234-5678-1234-567812345678',
+    )
+    mock_repository.create.side_effect = DatabaseOperationError(
+        operation='create',
+        details='DB insert failed',
+    )
+    use_case = UploadFileUseCase(
+        file_repository=mock_repository,
+        storage_service=mock_storage_service,
+        unit_of_work=mock_uow,
+        fastapi_base_url='http://localhost:8000',
+    )
+
+    # act
+    with pytest.raises(DatabaseError, match='Database operation failed'):
+        await use_case.execute(command=command)
+
+    # assert
+    mock_storage_service.delete_file.assert_called_once_with(
+        bucket_name='test-bucket',
+        file_path='12345678-1234-5678-1234-567812345678',
+    )
+
+
+@pytest.mark.asyncio
+async def test_upload__db_error_cleanup_fails__raise_db_err(
+    mock_storage_service,
+    mock_repository,
+):
+    # arrange
+    command = UploadFileCommand(
+        file_stream=io.BytesIO(b'test content'),
+        filename='test.txt',
+        content_type='text/plain',
+        size=12,
+        user_id=1,
+        account_id=1,
+    )
+    mock_uow = AsyncMock()
+    mock_uow.__aenter__.return_value = mock_uow
+    mock_uow.__aexit__.return_value = None
+    mock_storage_service.get_storage_path.return_value = (
+        'test-bucket',
+        '12345678-1234-5678-1234-567812345678',
+    )
+    mock_repository.create.side_effect = DatabaseOperationError(
+        operation='create',
+        details='DB insert failed',
+    )
+    mock_storage_service.delete_file.side_effect = RuntimeError(
+        'S3 cleanup failed',
+    )
+    use_case = UploadFileUseCase(
+        file_repository=mock_repository,
+        storage_service=mock_storage_service,
+        unit_of_work=mock_uow,
+        fastapi_base_url='http://localhost:8000',
+    )
+
+    # act
+    with pytest.raises(DatabaseError, match='Database operation failed'):
+        await use_case.execute(command=command)
+
+    # assert
+    mock_storage_service.delete_file.assert_called_once_with(
+        bucket_name='test-bucket',
+        file_path='12345678-1234-5678-1234-567812345678',
+    )
 
 
 # --- DownloadFileUseCase ---

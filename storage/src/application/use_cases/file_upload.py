@@ -1,5 +1,6 @@
 """File upload use case."""
 
+import logging
 from datetime import UTC, datetime
 from uuid import uuid4
 
@@ -7,7 +8,10 @@ from src.application.dto import UploadFileCommand, UploadFileUseCaseResponse
 from src.domain.entities import FileRecord
 from src.infra.adapters.storage_service import StorageService
 from src.infra.repositories import FileRecordRepository
+from src.shared_kernel.exceptions import DatabaseError
 from src.shared_kernel.uow import UnitOfWork
+
+logger = logging.getLogger(__name__)
 
 
 class UploadFileUseCase:
@@ -76,12 +80,22 @@ class UploadFileUseCase:
         try:
             async with self._unit_of_work:
                 await self._file_repository.create(file_record)
-        except Exception:
-            # Clean up S3 if DB operation fails
-            await self._storage_service.delete_file(
-                bucket_name=bucket_name,
-                file_path=file_path,
-            )
+        except DatabaseError:
+            # Clean up S3 if DB operation fails.
+            # Wrap in try/except so a cleanup failure doesn't mask
+            # the original DatabaseError (would leave an orphan file
+            # AND lose the real error).
+            try:
+                await self._storage_service.delete_file(
+                    bucket_name=bucket_name,
+                    file_path=file_path,
+                )
+            except Exception:
+                logger.exception(
+                    'Failed to clean up S3 file %s/%s after DB error',
+                    bucket_name,
+                    file_path,
+                )
             raise
 
         # Generate public download URL

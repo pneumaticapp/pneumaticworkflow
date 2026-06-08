@@ -50,6 +50,13 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+
+@app.get('/health', include_in_schema=False)
+async def health_check() -> dict[str, str]:
+    """Health check endpoint for Docker container."""
+    return {'status': 'ok'}
+
+
 # CORS configuration
 app.add_middleware(
     CORSMiddleware,

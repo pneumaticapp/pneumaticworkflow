@@ -1,6 +1,9 @@
 """Database ORM models."""
 
-from sqlalchemy import BigInteger, Column, DateTime, Integer, String
+from datetime import datetime
+
+from sqlalchemy import BigInteger, DateTime, Integer, String
+from sqlalchemy.orm import Mapped, mapped_column
 from sqlalchemy.sql import func
 
 from .base import Base
@@ -11,18 +14,15 @@ class FileRecordORM(Base):
 
     __tablename__ = 'files'
 
-    file_id = Column(
-        String,
-        primary_key=True,
-        nullable=False,
+    file_id: Mapped[str] = mapped_column(String, primary_key=True)
+    size: Mapped[int] = mapped_column(BigInteger)
+    content_type: Mapped[str | None] = mapped_column(String, nullable=True)
+    filename: Mapped[str | None] = mapped_column(String, nullable=True)
+    user_id: Mapped[int | None] = mapped_column(
+        Integer, index=True, nullable=True
     )
-    size = Column(BigInteger, nullable=False)
-    content_type = Column(String, nullable=False)
-    filename = Column(String, nullable=False)
-    user_id = Column(Integer, nullable=True, index=True)
-    account_id = Column(Integer, nullable=False, index=True)
-    created_at = Column(
+    account_id: Mapped[int] = mapped_column(Integer, index=True)
+    created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
-        nullable=False,
     )

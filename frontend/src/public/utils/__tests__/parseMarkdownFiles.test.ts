@@ -157,4 +157,40 @@ describe('parseMarkdownToFiles', () => {
       });
     });
   });
+
+  describe('URL cleaning', () => {
+    it('strips query parameters from file URL', () => {
+      const input = `[file.pdf](${FILE_SERVICE_URL}/abc-123?token=xyz&v=2)`;
+
+      const result = parseMarkdownToFiles(input);
+
+      expect(result[0].id).toBe('abc-123');
+    });
+
+    it('strips hash fragment from file URL', () => {
+      const input = `[file.pdf](${FILE_SERVICE_URL}/abc-123#section)`;
+
+      const result = parseMarkdownToFiles(input);
+
+      expect(result[0].id).toBe('abc-123');
+    });
+
+    it('strips both query and hash from file URL', () => {
+      const input = `[file.pdf](${FILE_SERVICE_URL}/abc-123?token=x#top)`;
+
+      const result = parseMarkdownToFiles(input);
+
+      expect(result[0].id).toBe('abc-123');
+    });
+
+    it('preserves original URL with query in the url field', () => {
+      const fullUrl = `${FILE_SERVICE_URL}/abc-123?token=xyz`;
+      const input = `[file.pdf](${fullUrl})`;
+
+      const result = parseMarkdownToFiles(input);
+
+      expect(result[0].url).toBe(fullUrl);
+      expect(result[0].id).toBe('abc-123');
+    });
+  });
 });

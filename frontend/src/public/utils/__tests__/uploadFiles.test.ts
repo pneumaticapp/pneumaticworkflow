@@ -1,5 +1,4 @@
-/* eslint-disable */
-/* prettier-ignore */
+// <reference types="jest" />
 import { uploadFiles, getThumbnail, MAX_FILE_SIZE } from '../uploadFiles';
 
 const mockUploadFileToFileService = jest.fn();
@@ -19,8 +18,9 @@ jest.mock('../getErrorMessage', () => ({
   getErrorMessage: jest.fn((err: Error) => err.message),
 }));
 
+let idCounter = 0;
 jest.mock('../createId', () => ({
-  createUniqueId: jest.fn(() => 'generated-id'),
+  createUniqueId: jest.fn(() => `generated-id-${++idCounter}`),
 }));
 
 let mockIsEnvStorage = true;
@@ -29,24 +29,30 @@ jest.mock('../../constants/enviroment', () => ({
 }));
 
 import { NotificationManager } from '../../components/UI/Notifications';
+
 const mockNotificationManager = NotificationManager as jest.Mocked<typeof NotificationManager>;
 
 describe('uploadFiles', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     mockIsEnvStorage = true;
+    idCounter = 0;
   });
 
   describe('getThumbnail', () => {
     it('returns null if uploaded file is not image', async () => {
       const mockTextFile = new File(['file contents'], 'fileName.txt', { type: 'text/plain' });
+
       const thumbnail = await getThumbnail(mockTextFile);
+
       expect(thumbnail).toBe(null);
     });
 
     it('returns file as-is for SVG', async () => {
       const svg = new File(['<svg></svg>'], 'icon.svg', { type: 'image/svg+xml' });
+
       const result = await getThumbnail(svg);
+
       expect(result).toBe(svg);
     });
   });
@@ -57,8 +63,8 @@ describe('uploadFiles', () => {
         publicUrl: 'https://cdn.example.com/a.pdf',
         fileId: 'file-abc',
       });
-
       const file = new File(['content'], 'report.pdf', { type: 'application/pdf' });
+
       const result = await uploadFiles([file]);
 
       expect(mockUploadFileToFileService).toHaveBeenCalledTimes(1);
@@ -74,15 +80,15 @@ describe('uploadFiles', () => {
       }]);
     });
 
-    it('uploads multiple files in parallel', async () => {
+    it('uploads multiple files', async () => {
       mockUploadFileToFileService
         .mockResolvedValueOnce({ publicUrl: 'https://cdn/1.pdf', fileId: 'id-1' })
         .mockResolvedValueOnce({ publicUrl: 'https://cdn/2.pdf', fileId: 'id-2' });
-
       const files = [
         new File(['a'], 'file1.pdf', { type: 'application/pdf' }),
         new File(['b'], 'file2.pdf', { type: 'application/pdf' }),
       ];
+
       const result = await uploadFiles(files);
 
       expect(mockUploadFileToFileService).toHaveBeenCalledTimes(2);
@@ -90,8 +96,26 @@ describe('uploadFiles', () => {
     });
   });
 
+  describe('chunked upload', () => {
+    it('uploads in chunks of 3', async () => {
+      const callOrder: number[] = [];
+      mockUploadFileToFileService.mockImplementation(async () => {
+        callOrder.push(Date.now());
+        return { publicUrl: 'https://cdn/f', fileId: `id-${callOrder.length}` };
+      });
+      const files = Array.from({ length: 5 }, (_, i) =>
+        new File([`content-${i}`], `file${i}.pdf`, { type: 'application/pdf' }),
+      );
+
+      const result = await uploadFiles(files);
+
+      expect(mockUploadFileToFileService).toHaveBeenCalledTimes(5);
+      expect(result).toHaveLength(5);
+    });
+  });
+
   describe('validation', () => {
-    it('rejects files over MAX_FILE_SIZE', async () => {
+    it('returns error object for files over MAX_FILE_SIZE', async () => {
       const bigContent = new ArrayBuffer(MAX_FILE_SIZE + 1);
       const bigFile = new File([bigContent], 'huge.zip', { type: 'application/zip' });
 
@@ -101,10 +125,13 @@ describe('uploadFiles', () => {
       expect(mockNotificationManager.warning).toHaveBeenCalledWith({
         message: 'file-upload.max-file-size-error',
       });
-      expect(result).toEqual([]);
+      expect(result).toHaveLength(1);
+      expect(result[0].error).toBe('Max file size exceeded');
+      expect(result[0].url).toBe('');
+      expect(result[0].name).toBe('huge.zip');
     });
 
-    it('runs custom validators and rejects on failure', async () => {
+    it('returns error object when custom validator rejects', async () => {
       const validator = jest.fn().mockResolvedValue('Custom error');
       const file = new File(['data'], 'bad.exe', { type: 'application/octet-stream' });
 
@@ -115,7 +142,8 @@ describe('uploadFiles', () => {
       expect(mockNotificationManager.warning).toHaveBeenCalledWith({
         message: 'Custom error',
       });
-      expect(result).toEqual([]);
+      expect(result).toHaveLength(1);
+      expect(result[0].error).toBe('Custom error');
     });
 
     it('passes files when custom validator returns empty string', async () => {
@@ -130,52 +158,60 @@ describe('uploadFiles', () => {
 
       expect(mockUploadFileToFileService).toHaveBeenCalledTimes(1);
       expect(result).toHaveLength(1);
+      expect(result[0].error).toBeUndefined();
     });
   });
 
   describe('storage disabled', () => {
-    it('shows warning and returns empty when isEnvStorage is false', async () => {
+    it('returns error object when isEnvStorage is false', async () => {
       mockIsEnvStorage = false;
-
       const file = new File(['data'], 'file.pdf', { type: 'application/pdf' });
+
       const result = await uploadFiles([file]);
 
       expect(mockUploadFileToFileService).not.toHaveBeenCalled();
       expect(mockNotificationManager.warning).toHaveBeenCalledWith({
         message: 'file-upload.error-storage',
       });
-      expect(result).toEqual([]);
+      expect(result).toHaveLength(1);
+      expect(result[0].error).toBe('Storage disabled');
+      expect(result[0].url).toBe('');
     });
   });
 
   describe('error handling', () => {
-    it('catches upload error and shows notification', async () => {
+    it('returns error object on upload failure', async () => {
       const error = new Error('Network error');
       mockUploadFileToFileService.mockRejectedValue(error);
-
       const file = new File(['data'], 'fail.pdf', { type: 'application/pdf' });
+
       const result = await uploadFiles([file]);
 
       expect(mockNotificationManager.notifyApiError).toHaveBeenCalledWith(
         error,
         { message: 'Network error' },
       );
-      expect(result).toEqual([]);
+      expect(result).toHaveLength(1);
+      expect(result[0].error).toBe('Network error');
+      expect(result[0].url).toBe('');
+      expect(result[0].name).toBe('fail.pdf');
     });
 
-    it('filters out failed uploads from results', async () => {
+    it('includes both success and error results', async () => {
       mockUploadFileToFileService
         .mockResolvedValueOnce({ publicUrl: 'https://cdn/ok.pdf', fileId: 'ok-id' })
         .mockRejectedValueOnce(new Error('fail'));
-
       const files = [
         new File(['a'], 'ok.pdf', { type: 'application/pdf' }),
         new File(['b'], 'fail.pdf', { type: 'application/pdf' }),
       ];
+
       const result = await uploadFiles(files);
 
-      expect(result).toHaveLength(1);
+      expect(result).toHaveLength(2);
       expect(result[0].id).toBe('ok-id');
+      expect(result[0].error).toBeUndefined();
+      expect(result[1].error).toBe('fail');
     });
   });
 
@@ -185,15 +221,15 @@ describe('uploadFiles', () => {
         publicUrl: 'https://cdn/blob',
         fileId: 'blob-id',
       });
-
       const blob = new Blob(['blob-data'], { type: 'image/png' });
+
       const result = await uploadFiles([blob]);
 
       expect(mockUploadFileToFileService).toHaveBeenCalledWith({
         file: blob,
-        filename: 'generated-id',
+        filename: 'generated-id-1',
       });
-      expect(result[0].name).toBe('generated-id');
+      expect(result[0].name).toBe('generated-id-1');
     });
   });
 });

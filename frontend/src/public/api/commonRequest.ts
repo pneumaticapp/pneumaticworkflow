@@ -13,6 +13,20 @@ import { isRequestCanceled } from '../utils/isRequestCanceled';
 export type TRequestType = 'public' | 'local' | 'fileService';
 export type TResponseType = 'json' | 'text' | 'empty';
 
+export class ApiError extends Error {
+  status?: number;
+
+  data?: unknown;
+
+  constructor(message: string, payload: unknown, status?: number) {
+    super(message);
+    this.name = 'ApiError';
+    this.data = payload;
+    this.status = status;
+    Object.setPrototypeOf(this, ApiError.prototype);
+  }
+}
+
 interface ICommonRequestOptions {
   type: TRequestType;
   successStatusCodes: number[];
@@ -31,7 +45,6 @@ const DEFAULT_OPTIONS: ICommonRequestOptions = {
 
 const axiosInstance: AxiosInstance = axios.create({
   timeout: ETimeouts.Default,
-  withCredentials: true,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -93,9 +106,12 @@ axiosInstance.interceptors.response.use(
 
     const data = error.response?.data;
     const payload = typeof data === 'string' ? { error: data } : data ?? {};
-    return Promise.reject(Object.assign(new Error(), payload, { status: error.response?.status }));
+    const message = payload.message || payload.error || error.message;
+    return Promise.reject(new ApiError(message, payload, error.response?.status));
   },
 );
+
+let cachedRequestBaseUrlsMap: { [key in TRequestType]: string } | null = null;
 
 export async function commonRequest(
   rawUrl: string,
@@ -114,23 +130,29 @@ export async function commonRequest<T>(
   params: Partial<AxiosRequestConfig> = {},
   options: Partial<ICommonRequestOptions> = {},
 ): Promise<T | void> {
-  const {
-    api: { publicUrl, urls, fileServiceUrl },
-  } = getBrowserConfigEnv();
+  if (!cachedRequestBaseUrlsMap) {
+    const {
+      api: { publicUrl, fileServiceUrl },
+    } = getBrowserConfigEnv();
+    cachedRequestBaseUrlsMap = {
+      public: envBackendURL || publicUrl,
+      local: '',
+      fileService: fileServiceUrl,
+    };
+  }
+
   const { type, shouldThrow, successStatusCodes, timeOut } = { ...DEFAULT_OPTIONS, ...options };
-  const requestBaseUrlsMap: { [key in TRequestType]: string } = {
-    public: envBackendURL || publicUrl,
-    local: '',
-    fileService: fileServiceUrl,
-  };
+  const requestBaseUrlsMap = cachedRequestBaseUrlsMap;
 
   try {
+    const { api: { urls } } = getBrowserConfigEnv();
     const url = (urls as { [key in string]: string })[rawUrl] || rawUrl;
     const fullUrl = mergePaths(requestBaseUrlsMap[type], url);
 
     const config: AxiosRequestConfig = {
       ...params,
       timeout: timeOut,
+      withCredentials: type !== 'fileService',
       responseType: options.responseType === 'text' || options.responseType === 'empty' ? 'text' : 'json',
       validateStatus: (status) => successStatusCodes.includes(status),
     };

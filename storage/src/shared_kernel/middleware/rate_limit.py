@@ -16,6 +16,8 @@ from starlette.middleware.base import (
 from starlette.requests import Request
 from starlette.responses import JSONResponse, Response
 
+from src.shared_kernel.config import get_settings
+
 
 @dataclass
 class _RateLimit:
@@ -42,11 +44,19 @@ class _SlidingWindow:
         self.timestamps.append(now)
 
 
-# Route patterns → limits
-_RATE_LIMITS: dict[str, _RateLimit] = {
-    'upload': _RateLimit(max_requests=10, window_seconds=60),
-    'download': _RateLimit(max_requests=100, window_seconds=60),
-}
+def _get_default_limits() -> dict[str, _RateLimit]:
+    """Get default rate limits from settings."""
+    settings = get_settings()
+    return {
+        'upload': _RateLimit(
+            max_requests=settings.RATE_LIMIT_UPLOAD_REQUESTS,
+            window_seconds=settings.RATE_LIMIT_UPLOAD_WINDOW,
+        ),
+        'download': _RateLimit(
+            max_requests=settings.RATE_LIMIT_DOWNLOAD_REQUESTS,
+            window_seconds=settings.RATE_LIMIT_DOWNLOAD_WINDOW,
+        ),
+    }
 
 
 def _classify_route(path: str, method: str) -> str | None:
@@ -75,10 +85,14 @@ def _classify_route(path: str, method: str) -> str | None:
 
 
 def _get_client_ip(request: Request) -> str:
-    """Extract client IP, respecting X-Forwarded-For."""
-    forwarded = request.headers.get('x-forwarded-for')
-    if forwarded:
-        return forwarded.split(',')[0].strip()
+    """Extract client IP securely.
+
+    Relies on X-Real-IP set by Nginx ($remote_addr).
+    Ignores X-Forwarded-For which can be spoofed by clients.
+    """
+    real_ip = request.headers.get('x-real-ip')
+    if real_ip:
+        return real_ip.strip()
     return request.client.host if request.client else '0.0.0.0'  # noqa: S104
 
 
@@ -104,7 +118,7 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
 
         """
         super().__init__(app)
-        self._limits = rate_limits or _RATE_LIMITS
+        self._limits = rate_limits or _get_default_limits()
         self._enabled = enabled
         # {bucket:ip -> SlidingWindow}
         self._windows: dict[

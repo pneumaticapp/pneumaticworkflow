@@ -13,7 +13,7 @@ from src.shared_kernel.exceptions import StorageError
 
 
 class StorageService:
-    """Storage service supporting both S3 and Google Cloud Storage.
+    """Storage service supporting both local (SeaweedFS) and GCS.
 
     Uses a persistent S3 client for connection reuse across
     requests instead of creating a new client per operation.

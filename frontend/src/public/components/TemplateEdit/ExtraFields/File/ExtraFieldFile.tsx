@@ -64,7 +64,8 @@ export function ExtraFieldFile({
     try {
       setUploadingState(true);
       const uploadedFiles = await uploadFiles(files);
-      const newUploadedFiles = [...filesToUpload, ...(uploadedFiles as TUploadedFile[])];
+      const successFiles = uploadedFiles.filter((file) => !file.error);
+      const newUploadedFiles = [...filesToUpload, ...(successFiles as TUploadedFile[])];
       const newUploadedFilesIds = newUploadedFiles.filter((file) => !file.isRemoved).map((file) => `[${file.name}](${file.url})`);
 
       setFilesToUploadState(newUploadedFiles);

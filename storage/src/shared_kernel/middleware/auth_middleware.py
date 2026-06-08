@@ -1,5 +1,6 @@
 """Authentication middleware."""
 
+import logging
 from collections.abc import Awaitable, Callable
 from datetime import UTC, datetime
 
@@ -15,6 +16,8 @@ from src.shared_kernel.auth import (
 from src.shared_kernel.auth.guest_token import GuestToken
 from src.shared_kernel.auth.user_types import UserType
 from src.shared_kernel.exceptions import AuthenticationError
+
+logger = logging.getLogger(__name__)
 
 
 class AuthUser:
@@ -105,9 +108,9 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                     account_id=token_data['account_id'],
                     token=token,
                 )
-        except (ValueError, KeyError, TypeError):
+        except (ValueError, KeyError, TypeError) as e:
             # Handle specific authentication errors
-            pass
+            logger.warning('Auth strategy %s failed: %s', 'token', e)
         return None
 
     async def authenticate_guest_token(self, token: str) -> AuthUser | None:
@@ -127,9 +130,9 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                     else None,
                     token=token,
                 )
-        except (ValueError, KeyError, TypeError):
+        except (ValueError, KeyError, TypeError) as e:
             # Handle specific guest token errors
-            pass
+            logger.warning('Auth strategy %s failed: %s', 'guest-token', e)
         return None
 
     async def authenticate_public_token(
@@ -150,9 +153,9 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
                         account_id=auth_data['account_id'],
                         token=str(token),
                     )
-        except (ValueError, KeyError, TypeError):
+        except (ValueError, KeyError, TypeError) as e:
             # Handle specific public token errors
-            pass
+            logger.warning('Auth strategy %s failed: %s', 'public-token', e)
         return None
 
     async def try_authenticate(self, request: Request) -> AuthUser | None:

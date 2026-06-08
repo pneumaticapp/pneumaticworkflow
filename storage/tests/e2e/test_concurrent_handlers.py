@@ -1,4 +1,4 @@
-"""Tests for load and stress testing scenarios."""
+"""Tests for concurrent request handling (mocked I/O)."""
 
 import threading
 import time
@@ -334,7 +334,7 @@ def test_extreme_concurrency__500_reqs__stable(
     success_count = len(
         [r for r in results if r[1] == 200],
     )
-    success_rate = success_count / num_requests
-    assert success_rate > 0.8, f'Success rate {success_rate:.2%} too low'
-    error_rate = len(errors) / num_requests
-    assert error_rate < 0.2, f'Error rate {error_rate:.2%} too high'
+    total = success_count + len(errors)
+    success_rate = success_count / total
+    assert success_rate > 0.99, f'Success rate {success_rate:.2%} too low'
+    assert len(errors) == 0, f'{len(errors)} transport errors: {errors[:5]}'

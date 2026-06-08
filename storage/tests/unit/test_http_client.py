@@ -244,8 +244,8 @@ def test_get__creates_client_with_timeout(
     client = SharedClientHolder.get()
 
     # assert
-    assert client.timeout.read == 30.0
-    assert client.timeout.connect == 10.0
+    assert client.timeout.read == 10.0
+    assert client.timeout.connect == 5.0
 
 
 def test_get__singleton__same_instance(
@@ -267,8 +267,8 @@ def test_timeout_constant__properly_defined(
 
     # assert
     assert isinstance(timeout, httpx.Timeout)
-    assert timeout.read == 30.0
-    assert timeout.connect == 10.0
+    assert timeout.read == 10.0
+    assert timeout.connect == 5.0
 
 
 @pytest.mark.asyncio

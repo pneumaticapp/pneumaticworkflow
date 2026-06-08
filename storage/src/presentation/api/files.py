@@ -50,6 +50,7 @@ router = APIRouter(prefix='', tags=['files'])
 # Pre-compiled patterns for secure_filename
 _RE_UNSAFE_CHARS = re.compile(r'[^\w.\- ]', re.UNICODE)
 _RE_WHITESPACE = re.compile(r'[\s_]+')
+_RE_RANGE = re.compile(r'bytes=(\d+)-(\d*)')
 
 
 def secure_filename(filename: str | None) -> str:
@@ -192,7 +193,7 @@ async def download_file(
 
     if range_header:
         # Parse "bytes=START-END" (END is optional)
-        range_match = re.match(r'bytes=(\d+)-(\d*)', range_header)
+        range_match = _RE_RANGE.match(range_header)
         if range_match:
             start = int(range_match.group(1))
             end = (
@@ -203,7 +204,7 @@ async def download_file(
             end = min(end, total_size - 1)
             if start > total_size - 1 or start > end:
                 return StreamingResponse(
-                    iter(['']),
+                    iter([b'']),
                     status_code=416,
                     headers={'Content-Range': f'bytes */{total_size}'},
                 )

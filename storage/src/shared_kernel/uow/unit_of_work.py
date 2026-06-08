@@ -1,9 +1,8 @@
 """Unit of Work implementation."""
 
 import typing
-from typing import Any
 
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.ext.asyncio import AsyncSession, AsyncSessionTransaction
 
 
 class UnitOfWork:
@@ -17,7 +16,7 @@ class UnitOfWork:
 
         """
         self._session = session
-        self._transaction: Any | None = None
+        self._transaction: AsyncSessionTransaction | None = None
 
     async def __aenter__(self) -> typing.Self:
         """Start transaction."""

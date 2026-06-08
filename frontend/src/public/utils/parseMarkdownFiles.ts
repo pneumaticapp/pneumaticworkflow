@@ -25,7 +25,7 @@ export function parseMarkdownToFiles(markdownValue: string | null | undefined): 
     const [, name, url] = match;
 
     if (fileServiceUrl && (url === fileServiceUrl || url.startsWith(`${fileServiceUrl}/`))) {
-      const fileId = url.split('/').pop() || url;
+      const fileId = url.split('?')[0].split('#')[0].split('/').pop() || url;
 
       files.push({
         id: fileId,

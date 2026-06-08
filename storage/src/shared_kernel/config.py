@@ -4,7 +4,7 @@ import json
 from functools import lru_cache
 from typing import Literal
 
-from pydantic import field_validator
+from pydantic import field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,11 +17,19 @@ class Settings(BaseSettings):
     )
 
     # Application
-    DEBUG: bool = True
+    DEBUG: bool = False
     CONFIG: str = 'Development'
     WORKERS: int = 1
     PORT: int = 8000
+    FRONTEND_URL: str | None = None
+    FORMS_URL: str | None = None
     ALLOWED_ORIGINS: list[str] = ['http://localhost:3000']
+
+    @field_validator('FASTAPI_BASE_URL', 'BACKEND_PRIVATE_URL', mode='after')
+    @classmethod
+    def strip_trailing_slash(cls, v: str) -> str:
+        """Strip trailing slash from URLs."""
+        return v.rstrip('/')
 
     @field_validator('ALLOWED_ORIGINS', mode='before')
     @classmethod
@@ -34,6 +42,15 @@ class Settings(BaseSettings):
         if isinstance(v, str):
             return json.loads(v)
         raise ValueError(v)
+
+    @model_validator(mode='after')
+    def append_frontend_urls(self) -> 'Settings':
+        """Add frontend/forms URLs to CORS origins."""
+        if self.FRONTEND_URL and self.FRONTEND_URL not in self.ALLOWED_ORIGINS:
+            self.ALLOWED_ORIGINS.append(self.FRONTEND_URL)
+        if self.FORMS_URL and self.FORMS_URL not in self.ALLOWED_ORIGINS:
+            self.ALLOWED_ORIGINS.append(self.FORMS_URL)
+        return self
 
     # Database
     POSTGRES_USER: str = 'pneumatic'
@@ -58,6 +75,12 @@ class Settings(BaseSettings):
     SEAWEEDFS_S3_REGION: str = 'us-east-1'
     SEAWEEDFS_S3_USE_SSL: bool = False
 
+    # Rate limits
+    RATE_LIMIT_UPLOAD_REQUESTS: int = 10
+    RATE_LIMIT_UPLOAD_WINDOW: int = 60
+    RATE_LIMIT_DOWNLOAD_REQUESTS: int = 100
+    RATE_LIMIT_DOWNLOAD_WINDOW: int = 60
+
     # File service
     FASTAPI_BASE_URL: str = 'http://localhost:8002'
     BUCKET_PREFIX: str = 'pneumatic-dev-test'
@@ -70,18 +93,18 @@ class Settings(BaseSettings):
 
     # Django secret key for token decoding
     DJANGO_SECRET_KEY: str  # Required, no default (security)
+    # AUTH_TOKEN_ITERATIONS = 1 is a trade-off.
+    # Must match Django backend. Security relies
+    # on Redis access control.
     AUTH_TOKEN_ITERATIONS: int = 1
 
     # Django backend base URL
-    BACKEND_PRIVATE_URL: str = 'http://localhost:8001/'
+    BACKEND_PRIVATE_URL: str = 'http://localhost:8001'
 
     @property
     def check_permission_url(self) -> str:
         """Generate permission check URL."""
-        return (
-            f'{self.BACKEND_PRIVATE_URL.rstrip("/")}'
-            '/attachments/check-permission'
-        )
+        return f'{self.BACKEND_PRIVATE_URL}/attachments/check-permission'
 
     @property
     def database_url(self) -> str:
