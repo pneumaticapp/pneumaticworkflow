@@ -14,8 +14,20 @@ jest.mock('../logger', () => ({
   logger: { error: jest.fn() },
 }));
 
+const FS_ERROR_MAPPER: Record<string, string> = {
+  FILE_001: 'file-service.file-not-found',
+  FILE_002: 'file-service.access-denied',
+  FILE_003: 'file-service.size-exceeded',
+  AUTH_001: 'file-service.auth-failed',
+  PERM_001: 'file-service.permission-denied',
+};
+
 jest.mock('../getErrorMessage', () => ({
-  getErrorMessage: jest.fn((err: Error) => err.message),
+  getErrorMessage: jest.fn((err: any) => {
+    // Simulate normalizeToCustomError: unwrap ApiError.data
+    const code = err?.data?.code || err?.code;
+    return FS_ERROR_MAPPER[code] || err?.message || 'Something Went Wrong';
+  }),
 }));
 
 let idCounter = 0;
@@ -212,6 +224,47 @@ describe('uploadFiles', () => {
       expect(result[0].id).toBe('ok-id');
       expect(result[0].error).toBeUndefined();
       expect(result[1].error).toBe('fail');
+    });
+
+    it('handles file service error with code FILE_003 (size exceeded) via ApiError', async () => {
+      // Simulates real ApiError shape from axios interceptor:
+      // ApiError.data = {code, message} (response payload)
+      const fsError = Object.assign(new Error('File size exceeds limit'), {
+        name: 'ApiError',
+        data: { code: 'FILE_003', message: 'File size exceeds limit' },
+        status: 413,
+      });
+      mockUploadFileToFileService.mockRejectedValue(fsError);
+      const file = new File(['data'], 'big.zip', { type: 'application/zip' });
+
+      const result = await uploadFiles([file]);
+
+      expect(mockNotificationManager.notifyApiError).toHaveBeenCalledWith(
+        fsError,
+        { message: 'file-service.size-exceeded' },
+      );
+      expect(result).toHaveLength(1);
+      expect(result[0].error).toBe('file-service.size-exceeded');
+      expect(result[0].url).toBe('');
+    });
+
+    it('handles file service auth error AUTH_001 via ApiError', async () => {
+      const fsError = Object.assign(new Error('Authentication failed'), {
+        name: 'ApiError',
+        data: { code: 'AUTH_001', message: 'Authentication failed' },
+        status: 401,
+      });
+      mockUploadFileToFileService.mockRejectedValue(fsError);
+      const file = new File(['data'], 'secret.pdf', { type: 'application/pdf' });
+
+      const result = await uploadFiles([file]);
+
+      expect(mockNotificationManager.notifyApiError).toHaveBeenCalledWith(
+        fsError,
+        { message: 'file-service.auth-failed' },
+      );
+      expect(result).toHaveLength(1);
+      expect(result[0].error).toBe('file-service.auth-failed');
     });
   });
 

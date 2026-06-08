@@ -39,7 +39,6 @@ from .error_messages import (
     MSG_EXT_014,
 )
 from .exception_handler import (
-    create_error_response,
     register_exception_handlers,
 )
 from .external_service_exceptions import (
@@ -86,6 +85,5 @@ __all__ = [
     'RedisConnectionError',
     'RedisOperationError',
     'StorageError',
-    'create_error_response',
     'register_exception_handlers',
 ]
