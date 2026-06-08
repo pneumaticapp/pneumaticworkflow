@@ -4,10 +4,13 @@ import { $createTextNode, $isTextNode } from 'lexical';
 import {
   escapeMarkdownLinkText,
   GENERAL_MARKDOWN_LINK_IMPORT_RE,
+  GENERAL_MARKDOWN_LINK_LINE_RE,
+  getMarkdownLinkMatchEndIndex,
+  parseGeneralMarkdownLinkFromStart,
   unescapeMarkdownLinkText,
 } from '../utils/converters/markdownLinkText';
 
-const LINK_LINE_RE = new RegExp(`^${GENERAL_MARKDOWN_LINK_IMPORT_RE.source}$`);
+const LINK_LINE_RE = GENERAL_MARKDOWN_LINK_LINE_RE;
 
 const ATTACHMENT_ENTITY_TYPES = new Set(['image', 'video', 'file']);
 
@@ -33,14 +36,22 @@ export const MARKDOWN_LINK: TextMatchTransformer = {
   },
   importRegExp: GENERAL_MARKDOWN_LINK_IMPORT_RE,
   regExp: LINK_LINE_RE,
+  getEndIndex: (textNode, match) =>
+    getMarkdownLinkMatchEndIndex(
+      textNode.getTextContent(),
+      match.index ?? 0,
+      parseGeneralMarkdownLinkFromStart,
+    ),
   replace: (textNode, match) => {
-    const attachmentEntityType = match[4];
+    const parsedMatch =
+      parseGeneralMarkdownLinkFromStart(textNode.getTextContent()) ?? match;
+    const attachmentEntityType = parsedMatch[4];
     if (attachmentEntityType != null && ATTACHMENT_ENTITY_TYPES.has(attachmentEntityType)) {
       return;
     }
 
-    const linkText = unescapeMarkdownLinkText(match[1] ?? '');
-    const linkUrl = (match[2] ?? '').trim();
+    const linkText = unescapeMarkdownLinkText(parsedMatch[1] ?? '');
+    const linkUrl = (parsedMatch[2] ?? '').trim();
     const linkNode = $createLinkNode(linkUrl);
     const linkTextNode = $createTextNode(linkText);
     linkTextNode.setFormat(textNode.getFormat());

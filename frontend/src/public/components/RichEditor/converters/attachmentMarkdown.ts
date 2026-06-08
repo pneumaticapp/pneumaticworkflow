@@ -15,6 +15,8 @@ import { buildAttachmentMarkdownString } from '../nodes/attachments/attachmentMa
 import {
   ATTACHMENT_MARKDOWN_INLINE_RE,
   ATTACHMENT_MARKDOWN_LINE_RE,
+  getMarkdownLinkMatchEndIndex,
+  parseAttachmentMarkdownFromStart,
   unescapeMarkdownLinkText,
 } from '../utils/converters/markdownLinkText';
 import { ECustomEditorEntities } from '../utils/types';
@@ -95,8 +97,16 @@ export const ATTACHMENT_INLINE: TextMatchTransformer = {
   dependencies: [ImageAttachmentNode, VideoAttachmentNode, FileAttachmentNode],
   importRegExp: ATTACHMENT_IMPORT_RE,
   regExp: ATTACHMENT_IMPORT_RE,
+  getEndIndex: (textNode, match) =>
+    getMarkdownLinkMatchEndIndex(
+      textNode.getTextContent(),
+      match.index ?? 0,
+      parseAttachmentMarkdownFromStart,
+    ),
   replace: (replaceNode, match) => {
-    const node = createAttachmentNodeFromMatch(match);
+    const parsedMatch =
+      parseAttachmentMarkdownFromStart(replaceNode.getTextContent()) ?? match;
+    const node = createAttachmentNodeFromMatch(parsedMatch);
     replaceNode.replace(node);
     const next = node.getNextSibling();
     if (next && $isTextNode(next)) {
