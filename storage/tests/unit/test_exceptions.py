@@ -757,7 +757,7 @@ def test_handler__unhandled_exception__backend_format():
     with patch(
         'src.shared_kernel.exceptions.exception_handler.get_settings',
         return_value=mock_settings,
-    ):
+    ) as get_settings_mock:
         response = client.get('/test')
     data = response.json()
 
@@ -768,6 +768,7 @@ def test_handler__unhandled_exception__backend_format():
     assert 'error_type' not in data
     assert 'timestamp' not in data
     assert 'request_id' not in data
+    get_settings_mock.assert_called()
 
 
 def test_handler__permission_error__backend_format():
@@ -860,3 +861,160 @@ def test_handler__response_keys__only_code_message_details():
     # assert
     allowed_keys = {'code', 'message', 'details'}
     assert set(data.keys()).issubset(allowed_keys)
+
+
+def test_handler__browser_get_404__redirect_to_error_page():
+    """Browser GET → 404 → redirect to /error/."""
+    # arrange
+    app = FastAPI()
+    register_exception_handlers(app)
+
+    @app.get('/test')
+    async def test_endpoint():
+        raise DomainFileNotFoundError('test-id')
+
+    client = TestClient(app, follow_redirects=False)
+
+    mock_settings = MagicMock()
+    mock_settings.FRONTEND_URL = 'https://app.example.com'
+
+    # act
+    with patch(
+        'src.shared_kernel.browser_utils.get_settings',
+        return_value=mock_settings,
+    ) as get_settings_mock:
+        response = client.get(
+            '/test',
+            headers={'accept': 'text/html'},
+        )
+
+    # assert
+    assert response.status_code == 302
+    assert response.headers['location'] == 'https://app.example.com/error/'
+    get_settings_mock.assert_called()
+
+
+def test_handler__browser_get_403__redirect_to_error_page():
+    """Browser GET → 403 → redirect to /error/."""
+    # arrange
+    app = FastAPI()
+    register_exception_handlers(app)
+
+    @app.get('/test')
+    async def test_endpoint():
+        raise FileAccessDeniedError(
+            file_id='test-file',
+            user_id=1,
+        )
+
+    client = TestClient(app, follow_redirects=False)
+
+    mock_settings = MagicMock()
+    mock_settings.FRONTEND_URL = 'https://app.example.com'
+
+    # act
+    with patch(
+        'src.shared_kernel.browser_utils.get_settings',
+        return_value=mock_settings,
+    ) as get_settings_mock:
+        response = client.get(
+            '/test',
+            headers={'accept': 'text/html'},
+        )
+
+    # assert
+    assert response.status_code == 302
+    assert response.headers['location'] == 'https://app.example.com/error/'
+    get_settings_mock.assert_called()
+
+
+def test_handler__browser_get_401__redirect_to_login():
+    """Browser GET → 401 → redirect to login with redirectUrl."""
+    # arrange
+    app = FastAPI()
+    register_exception_handlers(app)
+
+    @app.get('/test')
+    async def test_endpoint():
+        raise AuthenticationError
+
+    client = TestClient(app, follow_redirects=False)
+
+    mock_settings = MagicMock()
+    mock_settings.FRONTEND_URL = 'https://app.example.com'
+
+    # act
+    with patch(
+        'src.shared_kernel.browser_utils.get_settings',
+        return_value=mock_settings,
+    ) as get_settings_mock:
+        response = client.get(
+            '/test',
+            headers={'accept': 'text/html'},
+        )
+
+    # assert
+    assert response.status_code == 302
+    location = response.headers['location']
+    assert 'auth/signin' in location
+    assert 'redirectUrl=' in location
+    get_settings_mock.assert_called()
+
+
+def test_handler__browser_get_500__redirect_to_error_page():
+    """Browser GET → 500 → redirect to /error/."""
+    # arrange
+    app = FastAPI()
+    register_exception_handlers(app)
+
+    @app.get('/test')
+    async def test_endpoint():
+        raise RuntimeError('unexpected')
+
+    client = TestClient(
+        app,
+        raise_server_exceptions=False,
+        follow_redirects=False,
+    )
+
+    mock_settings = MagicMock()
+    mock_settings.FRONTEND_URL = 'https://app.example.com'
+
+    # act
+    with patch(
+        'src.shared_kernel.browser_utils.get_settings',
+        return_value=mock_settings,
+    ) as browser_settings_mock:
+        response = client.get(
+            '/test',
+            headers={'accept': 'text/html'},
+        )
+
+    # assert
+    assert response.status_code == 302
+    assert response.headers['location'] == 'https://app.example.com/error/'
+    browser_settings_mock.assert_called()
+
+
+def test_handler__api_get_404__returns_json():
+    """API GET (Accept: json) → 404 → still returns JSON, not redirect."""
+    # arrange
+    app = FastAPI()
+    register_exception_handlers(app)
+
+    @app.get('/test')
+    async def test_endpoint():
+        raise DomainFileNotFoundError('test-id')
+
+    client = TestClient(app)
+
+    # act
+    response = client.get(
+        '/test',
+        headers={'accept': 'application/json'},
+    )
+
+    # assert
+    assert response.status_code == 404
+    data = response.json()
+    assert data['code'] == 'FILE_001'

@@ -14,6 +14,10 @@ from src.shared_kernel.auth import (
 )
 from src.shared_kernel.auth.guest_token import GuestToken
 from src.shared_kernel.auth.user_types import UserType
+from src.shared_kernel.browser_utils import (
+    is_browser_navigation,
+    redirect_to_login,
+)
 from src.shared_kernel.exceptions import AuthenticationError
 
 logger = logging.getLogger(__name__)
@@ -194,6 +198,9 @@ class AuthenticationMiddleware(BaseHTTPMiddleware):
 
             # If authentication is required and user is anonymous
             if self.require_auth and request.state.user.is_anonymous:
+                # Browser navigation gets redirect to login page
+                if is_browser_navigation(request):
+                    return redirect_to_login(request)
                 raise AuthenticationError  # noqa: TRY301
 
             return await call_next(request)

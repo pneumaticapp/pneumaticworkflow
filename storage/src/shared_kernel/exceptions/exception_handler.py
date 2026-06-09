@@ -6,7 +6,14 @@ from fastapi import FastAPI, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from pydantic import ValidationError
+from starlette.responses import Response
+from starlette.status import HTTP_401_UNAUTHORIZED
 
+from src.shared_kernel.browser_utils import (
+    is_browser_navigation,
+    redirect_to_error_page,
+    redirect_to_login,
+)
 from src.shared_kernel.config import get_settings
 from src.shared_kernel.exceptions.base_exceptions import (
     BaseAppError,
@@ -38,7 +45,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     async def base_app_exception_handler(
         request: Request,
         exc: BaseAppError,
-    ) -> JSONResponse:
+    ) -> Response:
         """Handle base application exceptions."""
         # Log full details (always, regardless of mode)
         logger.error(
@@ -53,6 +60,12 @@ def register_exception_handlers(app: FastAPI) -> None:
                 'request_method': request.method,
             },
         )
+
+        # Browser navigation gets redirect instead of JSON
+        if is_browser_navigation(request):
+            if exc.http_status == HTTP_401_UNAUTHORIZED:
+                return redirect_to_login(request)
+            return redirect_to_error_page()
 
         # In production, mask details for infrastructure errors
         # to prevent leaking SQL, S3 paths, or Redis keys.
@@ -135,7 +148,7 @@ def register_exception_handlers(app: FastAPI) -> None:
     async def general_exception_handler(
         request: Request,
         exc: Exception,
-    ) -> JSONResponse:
+    ) -> Response:
         """Handle general exceptions."""
         error_code = INFRA_ERROR_CODES['INTERNAL_SERVER_ERROR']
 
@@ -149,6 +162,10 @@ def register_exception_handlers(app: FastAPI) -> None:
                 'request_method': request.method,
             },
         )
+
+        # Browser navigation gets redirect to error page
+        if is_browser_navigation(request):
+            return redirect_to_error_page()
 
         # Check debug mode
         debug_mode = get_settings().DEBUG
