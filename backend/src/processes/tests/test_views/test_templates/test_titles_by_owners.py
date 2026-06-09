@@ -2,10 +2,9 @@ import pytest
 
 from src.accounts.enums import BillingPlanType
 from src.processes.enums import OwnerRole, OwnerType, FieldType
-from src.processes.models.templates.fields import FieldTemplate, \
-    FieldTemplateSelection
-from src.processes.models.templates.fieldset import (
-    FieldsetTemplateKickoff,
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateSelection,
 )
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (

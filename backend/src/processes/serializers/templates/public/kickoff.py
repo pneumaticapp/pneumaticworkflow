@@ -8,8 +8,6 @@ from src.processes.models.templates.kickoff import Kickoff
 from src.processes.serializers.templates.field import (
     PublicFieldTemplateSerializer,
 )
-from src.processes.serializers.templates.fieldset_link import \
-    FieldsetTemplateKickoffListSerializer
 
 
 class PublicKickoffSerializer(ModelSerializer):

@@ -248,11 +248,6 @@ class TaskUpdateVersionService(
 
         fieldset_api_names = set()
         for fieldset_data in data or []:
-            task_link = next(
-                link for link in fieldset_data['task_links']
-                if link['task_api_name'] == self.instance.api_name
-            )
-            order = task_link['order']
             fieldset, _ = FieldSet.objects.update_or_create(
                 workflow=self.instance.workflow,
                 task=self.instance,
@@ -261,7 +256,7 @@ class TaskUpdateVersionService(
                     'account_id': self.instance.account_id,
                     'name': fieldset_data['name'],
                     'description': fieldset_data['description'],
-                    'order': order,
+                    'order': fieldset_data['order'],
                     'label_position': fieldset_data['label_position'],
                     'layout': fieldset_data['layout'],
                 },

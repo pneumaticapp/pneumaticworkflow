@@ -37,7 +37,8 @@ from src.processes.enums import (
     SystemVariable,
     TemplateOrdering,
     TemplateType,
-    WorkflowApiStatus, TaskStatus,
+    WorkflowApiStatus,
+    TaskStatus,
 )
 from src.processes.messages import template as messages
 from src.processes.models.templates.fields import FieldTemplate
@@ -53,7 +54,7 @@ from src.processes.serializers.templates.kickoff import (
 )
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
-    CreateOrUpdateRelatedMixin,
+    CreateOrUpdateRelatedMixin, FieldsetMixin,
 )
 from src.processes.serializers.templates.owner import (
     TemplateOwnerSerializer,
@@ -92,6 +93,7 @@ class TemplateSerializer(
     AdditionalValidationMixin,
     CreateOrUpdateInstanceMixin,
     CreateOrUpdateRelatedMixin,
+    FieldsetMixin,
     ModelSerializer,
 ):
     """
@@ -475,7 +477,9 @@ class TemplateSerializer(
     ) -> dict:
         if isinstance(data, dict):
             data['fields'] = data.get('fields', [])
-            data['fieldsets'] = data.get('fieldsets', [])
+            data['fieldsets'] = self.get_draft_fieldsets(
+                data.get('fieldsets')
+            )
         else:
             data = {
                 'fields': [],
@@ -507,6 +511,10 @@ class TemplateSerializer(
                 else:
                     task['parents'] = []
                     task['ancestors'] = []
+                task['fieldsets'] = self.get_draft_fieldsets(
+                    task.get('fieldsets')
+                )
+
             if not self.instance:
                 self.instance = Template.objects.create(
                     account=user.account,
@@ -633,9 +641,6 @@ class TemplateSerializer(
                 'template': instance,
             },
         )
-        fieldsets_links_raw = validated_data['kickoff'].pop(
-            'fieldsettemplatekickoff_set', None,
-        )
         self.create_or_update_related_one(
             slz_cls=KickoffSerializer,
             data=validated_data['kickoff'],
@@ -648,35 +653,10 @@ class TemplateSerializer(
                 'template': instance,
             },
         )
-        if fieldsets_links_raw is not None:
-            fieldsets_links = [
-                {
-                    'api_name': link['fieldset']['api_name'],
-                    'order': link['order'],
-                }
-                for link in fieldsets_links_raw
-            ]
-            FieldSetTemplateService.create_or_update_kickoff_links(
-                kickoff=instance.kickoff_instance,
-                template=instance,
-                fieldsets_links=fieldsets_links,
-            )
         parents_by_tasks = get_tasks_parents(validated_data['tasks'])
         tasks_api_names = set(parents_by_tasks.keys())
         ancestors_by_tasks = get_tasks_ancestors(parents_by_tasks)
-        tasks_fieldsets = {}
-        for task_data in validated_data['tasks']:
-            fieldsets_raw = task_data.pop(
-                'fieldsettemplatetasktemplate_set', None,
-            )
-            if fieldsets_raw is not None:
-                tasks_fieldsets[task_data['api_name']] = [
-                    {
-                        'api_name': link['fieldset']['api_name'],
-                        'order': link['order'],
-                    }
-                    for link in fieldsets_raw
-                ]
+
         self.create_or_update_related(
             data=validated_data['tasks'],
             ancestors_data={
@@ -690,7 +670,6 @@ class TemplateSerializer(
                 'tasks_api_names': tasks_api_names,
                 'parents_by_tasks': parents_by_tasks,
                 'ancestors_by_tasks': ancestors_by_tasks,
-                'tasks_fieldsets': tasks_fieldsets,
                 'all_tasks_data': validated_data['tasks'],
             },
         )
@@ -735,9 +714,6 @@ class TemplateSerializer(
                 'template': instance,
             },
         )
-        fieldsets_links_raw = validated_data['kickoff'].pop(
-            'fieldsettemplatekickoff_set', None,
-        )
         self.create_or_update_related_one(
             slz_cls=KickoffSerializer,
             data=validated_data['kickoff'],
@@ -750,35 +726,9 @@ class TemplateSerializer(
                 'template': instance,
             },
         )
-        if fieldsets_links_raw is not None:
-            fieldsets_links = [
-                {
-                    'api_name': link['fieldset']['api_name'],
-                    'order': link['order'],
-                }
-                for link in fieldsets_links_raw
-            ]
-            FieldSetTemplateService.create_or_update_kickoff_links(
-                kickoff=instance.kickoff_instance,
-                template=instance,
-                fieldsets_links=fieldsets_links,
-            )
         parents_by_tasks = get_tasks_parents(validated_data['tasks'])
         tasks_api_names = set(parents_by_tasks.keys())
         ancestors_by_tasks = get_tasks_ancestors(parents_by_tasks)
-        tasks_fieldsets = {}
-        for task_data in validated_data['tasks']:
-            fieldsets_raw = task_data.pop(
-                'fieldsettemplatetasktemplate_set', None,
-            )
-            if fieldsets_raw is not None:
-                tasks_fieldsets[task_data['api_name']] = [
-                    {
-                        'api_name': link['fieldset']['api_name'],
-                        'order': link['order'],
-                    }
-                    for link in fieldsets_raw
-                ]
         self.create_or_update_related(
             data=validated_data['tasks'],
             ancestors_data={
@@ -792,7 +742,6 @@ class TemplateSerializer(
                 'tasks_api_names': tasks_api_names,
                 'parents_by_tasks': parents_by_tasks,
                 'ancestors_by_tasks': ancestors_by_tasks,
-                'tasks_fieldsets': tasks_fieldsets,
                 'all_tasks_data': validated_data['tasks'],
             },
         )

@@ -16,7 +16,7 @@ from src.processes.enums import (
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.fields import FieldTemplateSelection
 from src.processes.models.templates.fieldset import (
-    FieldsetTemplateKickoff,
+    FieldsetTemplate,
 )
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.template import Template

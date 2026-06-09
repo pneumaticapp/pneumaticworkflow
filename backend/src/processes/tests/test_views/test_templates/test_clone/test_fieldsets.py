@@ -8,9 +8,7 @@ from src.processes.enums import (
 )
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
-    FieldsetTemplateKickoff,
     FieldsetTemplateRule,
-    FieldsetTemplateTaskTemplate,
 )
 from src.processes.models.templates.fields import (
     FieldTemplate,
@@ -281,13 +279,6 @@ def test_clone__no_kickoff_task_links__ok(api_client):
         task=task,
         name='Linked fieldset',
     )
-    # Verify original has links
-    assert FieldsetTemplateKickoff.objects.filter(
-        fieldset=fieldset,
-    ).exists()
-    assert FieldsetTemplateTaskTemplate.objects.filter(
-        fieldset=fieldset,
-    ).exists()
 
     # act
     response = api_client.post(f'/templates/{template.id}/clone')
@@ -295,7 +286,9 @@ def test_clone__no_kickoff_task_links__ok(api_client):
     # assert
     assert response.status_code == 200
     new_template_id = response.data['id']
-    fieldset_clone = FieldsetTemplate.objects.get(template_id=new_template_id)
+    fieldset_clone = FieldsetTemplate.objects.get(
+        template_id=new_template_id,
+    )
 
     assert not FieldsetTemplateKickoff.objects.filter(
         fieldset=fieldset_clone,

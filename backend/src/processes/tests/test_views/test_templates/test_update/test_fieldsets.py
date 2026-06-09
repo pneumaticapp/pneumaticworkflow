@@ -5,10 +5,7 @@ from src.processes.enums import (
     OwnerType,
     PerformerType,
 )
-from src.processes.models.templates.fieldset import (
-    FieldsetTemplateKickoff,
-    FieldsetTemplateTaskTemplate,
-)
+from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_fieldset_template,
@@ -25,9 +22,6 @@ def test_update__kickoff_with_one_fieldset__ok(
     mocker,
     api_client,
 ):
-
-    """ Updating a template with one fieldset linked to kickoff
-        creates a FieldsetTemplateKickoff record. """
 
     # arrange
     account = create_test_account()
@@ -115,7 +109,7 @@ def test_update__kickoff_with_one_fieldset__ok(
             },
         ],
     }
-    assert FieldsetTemplateKickoff.objects.get(
+    assert FieldsetTemplate.objects.get(
         kickoff=kickoff,
         fieldset=fieldset,
         order=3,

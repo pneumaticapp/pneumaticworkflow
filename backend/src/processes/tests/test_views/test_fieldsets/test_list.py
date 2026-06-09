@@ -9,7 +9,6 @@ from src.accounts.messages import MSG_A_0035, MSG_A_0037, MSG_A_0041
 from src.processes.enums import (
     FieldSetRuleType,
 )
-from src.processes.messages import template as messages
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
@@ -25,7 +24,7 @@ pytestmark = pytest.mark.django_db
 
 
 def test_list_fieldsets__all_data__ok(api_client):
-    """List fieldsets for existing template"""
+    """List fieldsets returning all fields including title and order"""
 
     # arrange
     account = create_test_account()
@@ -40,6 +39,8 @@ def test_list_fieldsets__all_data__ok(api_client):
         account=account,
         template=template,
         name='Kickoff Fieldset',
+        title='Fieldset Title',
+        order=3,
         rule_type=rule_type,
         rule_value=rule_value,
     )
@@ -49,9 +50,7 @@ def test_list_fieldsets__all_data__ok(api_client):
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
-    )
+    response = api_client.get('/templates/fieldsets')
 
     # assert
     assert response.status_code == 200
@@ -60,6 +59,8 @@ def test_list_fieldsets__all_data__ok(api_client):
     assert item_1['id'] == fieldset.id
     assert item_1['api_name'] == fieldset.api_name
     assert item_1['name'] == fieldset.name
+    assert item_1['title'] == 'Fieldset Title'
+    assert item_1['order'] == 3
     assert item_1['description'] == ''
     assert item_1['template_id'] == template.id
     assert item_1['layout'] == fieldset.layout
@@ -87,7 +88,7 @@ def test_list_fieldsets__all_data__ok(api_client):
 
 def test_list_fieldsets__tasks_and_kickoff_fieldset__ok(api_client):
 
-    """List fieldsets for existing template"""
+    """List fieldsets with tasks and kickoff links"""
 
     # arrange
     account = create_test_account()
@@ -117,9 +118,7 @@ def test_list_fieldsets__tasks_and_kickoff_fieldset__ok(api_client):
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
-    )
+    response = api_client.get('/templates/fieldsets')
 
     # assert
     assert response.status_code == 200
@@ -141,7 +140,7 @@ def test_list_fieldsets__tasks_and_kickoff_fieldset__ok(api_client):
 
 
 def test_list_fieldsets__pagination__ok(api_client):
-    """List fieldsets for existing template"""
+    """Paginated list returns correct count and slice"""
 
     # arrange
     account = create_test_account()
@@ -150,7 +149,6 @@ def test_list_fieldsets__pagination__ok(api_client):
         user=user,
         tasks_count=1,
     )
-    template.tasks.first()
     fieldset_1 = create_test_fieldset_template(
         account=account,
         template=template,
@@ -168,7 +166,7 @@ def test_list_fieldsets__pagination__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
+        '/templates/fieldsets',
         data={'limit': 2, 'offset': 1},
     )
 
@@ -185,7 +183,7 @@ def test_list_fieldsets__pagination__ok(api_client):
 
 
 def test_list_fieldsets__different_accounts__ok(api_client):
-    """List fieldsets filtered by account"""
+    """List fieldsets filtered by account — other accounts excluded"""
 
     # arrange
     account_1 = create_test_account(name='Account 1')
@@ -217,45 +215,7 @@ def test_list_fieldsets__different_accounts__ok(api_client):
     api_client.token_authenticate(user=user_1)
 
     # act
-    response = api_client.get(
-        f'/templates/{template_1.id}/fieldsets',
-    )
-
-    # assert
-    assert response.status_code == 200
-    assert len(response.data) == 1
-    assert response.data[0]['id'] == fieldset_1.id
-
-
-def test_list_fieldsets__different_templates__ok(api_client):
-    """List fieldsets filtered by template_id"""
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template_1 = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    fieldset_1 = create_test_fieldset_template(
-        account=account,
-        template=template_1,
-    )
-    template_2 = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    create_test_fieldset_template(
-        account=account,
-        template=template_2,
-    )
-
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.get(
-        f'/templates/{template_1.id}/fieldsets',
-    )
+    response = api_client.get('/templates/fieldsets')
 
     # assert
     assert response.status_code == 200
@@ -264,7 +224,7 @@ def test_list_fieldsets__different_templates__ok(api_client):
 
 
 def test_list_fieldsets__rule_with_fields__ok(api_client):
-    """List fieldsets for existing template returning rules mapping fields"""
+    """List fieldsets returning rules mapping to fields"""
 
     # arrange
     account = create_test_account()
@@ -289,9 +249,7 @@ def test_list_fieldsets__rule_with_fields__ok(api_client):
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
-    )
+    response = api_client.get('/templates/fieldsets')
 
     # assert
     assert response.status_code == 200
@@ -306,16 +264,8 @@ def test_list_fieldsets__rule_with_fields__ok(api_client):
 def test_list_fieldsets__unauthenticated__unauthorized(api_client):
     """Unauthenticated request returns 401"""
 
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-
     # act
-    response = api_client.get(f'/templates/{template.id}/fieldsets')
+    response = api_client.get('/templates/fieldsets')
 
     # assert
     assert response.status_code == 401
@@ -330,15 +280,11 @@ def test_list_fieldsets__expired_sub__permission_denied(api_client):
         plan_expiration=timezone.now() - timedelta(days=1),
     )
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
 
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(f'/templates/{template.id}/fieldsets')
+    response = api_client.get('/templates/fieldsets')
 
     # assert
     assert response.status_code == 403
@@ -351,15 +297,11 @@ def test_list_fieldsets__billing_plan__permission_denied(api_client):
     # arrange
     account = create_test_account(plan=None)
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
 
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(f'/templates/{template.id}/fieldsets')
+    response = api_client.get('/templates/fieldsets')
 
     # assert
     assert response.status_code == 403
@@ -381,15 +323,11 @@ def test_list_fieldsets__users_overlimit__permission_denied(api_client):
     )
     account.active_users = 2
     account.save()
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
 
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(f'/templates/{template.id}/fieldsets')
+    response = api_client.get('/templates/fieldsets')
 
     # assert
     assert response.status_code == 403
@@ -401,59 +339,43 @@ def test_list_fieldsets__non_admin__permission_denied(api_client):
 
     # arrange
     account = create_test_account()
-    owner = create_test_owner(account=account)
-    template = create_test_template(
-        user=owner,
-        tasks_count=1,
-    )
+    create_test_owner(account=account)
     user = create_test_not_admin(account=account)
 
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(f'/templates/{template.id}/fieldsets')
+    response = api_client.get('/templates/fieldsets')
 
     # assert
     assert response.status_code == 403
 
 
-def test_list_fieldsets__not_tpl_owner__permission_denied(api_client):
-    """Template admin owner permission denied returns 403"""
+def test_list_fieldsets__admin__ok(api_client):
+    """Admin (non-owner) user can list fieldsets"""
 
     # arrange
     account = create_test_account()
-    owner = create_test_owner(account=account)
+    create_test_owner(account=account)
+    user = create_test_admin(account=account)
     template = create_test_template(
-        user=owner,
+        user=user,
         tasks_count=1,
     )
-    user = create_test_admin(account=account)
+    fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+    )
 
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(f'/templates/{template.id}/fieldsets')
+    response = api_client.get('/templates/fieldsets')
 
     # assert
-    assert response.status_code == 403
-    assert response.data['detail'] == messages.MSG_PT_0023
-
-
-def test_list_fieldsets__not_existing_tpl__not_found(api_client):
-    """Non-existent template returns 404"""
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    nonexistent_id = 999999
-
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.get(f'/templates/{nonexistent_id}/fieldsets')
-
-    # assert
-    assert response.status_code == 404
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['id'] == fieldset.id
 
 
 def test_list_fieldsets__no_ordering__ok(api_client):
@@ -495,9 +417,7 @@ def test_list_fieldsets__no_ordering__ok(api_client):
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
-    )
+    response = api_client.get('/templates/fieldsets')
 
     # assert
     assert response.status_code == 200
@@ -540,7 +460,7 @@ def test_list_fieldsets__ordering_name_asc__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
+        '/templates/fieldsets',
         data={'ordering': 'name'},
     )
 
@@ -588,7 +508,7 @@ def test_list_fieldsets__ordering_name_desc__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
+        '/templates/fieldsets',
         data={'ordering': '-name'},
     )
 
@@ -646,7 +566,7 @@ def test_list_fieldsets__ordering_date_asc__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
+        '/templates/fieldsets',
         data={'ordering': 'date'},
     )
 
@@ -701,7 +621,7 @@ def test_list_fieldsets__ordering_date_desc__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
+        '/templates/fieldsets',
         data={'ordering': '-date'},
     )
 
@@ -740,9 +660,7 @@ def test_list_fieldsets__no_pagination__ok(api_client):
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
-    )
+    response = api_client.get('/templates/fieldsets')
 
     # assert
     assert response.status_code == 200
@@ -750,9 +668,7 @@ def test_list_fieldsets__no_pagination__ok(api_client):
     assert len(response.data) == 2
 
 
-def test_list_fieldsets__ordering_invalid__validation_error(
-    api_client,
-):
+def test_list_fieldsets__ordering_invalid__validation_error(api_client):
 
     """ Invalid ordering value returns validation error """
 
@@ -772,7 +688,7 @@ def test_list_fieldsets__ordering_invalid__validation_error(
 
     # act
     response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
+        '/templates/fieldsets',
         data={'ordering': 'foobar'},
     )
 
@@ -815,7 +731,7 @@ def test_list_fieldsets__ordering_empty__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
+        '/templates/fieldsets',
         data={'ordering': ''},
     )
 
@@ -852,9 +768,7 @@ def test_list_fieldsets__soft_deleted__ok(api_client):
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
-    )
+    response = api_client.get('/templates/fieldsets')
 
     # assert
     assert response.status_code == 200

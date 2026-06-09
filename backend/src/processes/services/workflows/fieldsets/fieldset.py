@@ -35,8 +35,9 @@ class FieldSetService(BaseModelService):
             task=task,
             api_name=instance_template.api_name,
             name=instance_template.name,
+            title=instance_template.title,
             description=instance_template.description,
-            order=kwargs['order'],
+            order=instance_template.order,
             label_position=instance_template.label_position,
             layout=instance_template.layout,
         )

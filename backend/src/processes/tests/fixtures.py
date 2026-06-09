@@ -50,7 +50,6 @@ from src.processes.models.templates.conditions import (
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
     FieldsetTemplateRule,
-    FieldsetTemplateTaskTemplate, FieldsetTemplateKickoff,
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.kickoff import Kickoff
@@ -836,6 +835,7 @@ def create_test_fieldset_template(
     kickoff: Optional[Kickoff] = None,
     task: Optional[TaskTemplate] = None,
     name: str = 'Test Fieldset',
+    title: str = '',
     description: str = '',
     order: int = 0,
     label_position: LabelPosition.LITERALS = LabelPosition.TOP,
@@ -851,23 +851,16 @@ def create_test_fieldset_template(
         account=account,
         template=template,
         name=name,
+        title=title,
         description=description,
+        order=order,
         label_position=label_position,
         layout=layout,
         api_name=api_name,
+        task=task,
+        kickoff=kickoff,
+        is_shared=False
     )
-    if task:
-        FieldsetTemplateTaskTemplate.objects.create(
-            fieldset=fieldset,
-            task=task,
-            order=order,
-        )
-    if kickoff:
-        FieldsetTemplateKickoff.objects.create(
-            fieldset=fieldset,
-            kickoff=kickoff,
-            order=order,
-        )
     if rule_type:
         FieldsetTemplateRule.objects.create(
             fieldset=fieldset,
@@ -886,6 +879,56 @@ def create_test_fieldset_template(
         type=field_type,
         fieldset=fieldset,
         template=template,
+        order=1,
+        api_name=f'{fieldset.api_name}-field-1',
+        account=account,
+    )
+    return fieldset
+
+
+def create_test_shared_fieldset(
+    account: Account,
+    name: str = 'Test Fieldset',
+    title: str = '',
+    description: str = '',
+    order: int = 0,
+    label_position: LabelPosition.LITERALS = LabelPosition.TOP,
+    layout: FieldSetLayout.LITERALS = FieldSetLayout.VERTICAL,
+    rule_type: Optional[FieldSetRuleType.LITERALS] = None,
+    rule_value: Optional[str] = None,
+    api_name: Optional[str] = None,
+) -> FieldsetTemplate:
+
+    """Creating fieldset templates."""
+
+    fieldset = FieldsetTemplate.objects.create(
+        account=account,
+        name=name,
+        title=title,
+        description=description,
+        order=order,
+        label_position=label_position,
+        layout=layout,
+        api_name=api_name,
+        is_shared=True
+    )
+    if rule_type:
+        FieldsetTemplateRule.objects.create(
+            fieldset=fieldset,
+            account=account,
+            api_name=f'{fieldset.api_name}-rule-1',
+            type=rule_type,
+            value=rule_value,
+        )
+    if rule_type == FieldSetRuleType.SUM_EQUAL:
+        field_type = FieldType.NUMBER
+    else:
+        field_type = FieldType.STRING
+
+    FieldTemplate.objects.create(
+        name='Fieldset field',
+        type=field_type,
+        fieldset=fieldset,
         order=1,
         api_name=f'{fieldset.api_name}-field-1',
         account=account,

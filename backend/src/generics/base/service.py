@@ -53,7 +53,7 @@ class BaseModelService:
     def create(
         self,
         **kwargs,
-    ) -> Model:
+    ):
         with transaction.atomic():
             self._create_instance(**kwargs)
             self._create_related(**kwargs)
@@ -69,7 +69,7 @@ class BaseModelService:
         self,
         force_save=False,
         **update_kwargs,
-    ) -> Model:
+    ):
 
         self.update_fields.update(update_kwargs.keys())
         for field_name, value in update_kwargs.items():

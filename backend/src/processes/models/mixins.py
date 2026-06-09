@@ -348,6 +348,8 @@ class BaseFieldSetMixin(FieldMetaMixin):
         abstract = True
 
     name = models.TextField(max_length=1000)
+    title =  models.TextField(blank=True, default='')
+    order = models.IntegerField(default=0)
     description = models.TextField(blank=True, default='')
     layout = models.CharField(
         max_length=200,

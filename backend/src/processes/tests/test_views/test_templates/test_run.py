@@ -43,8 +43,7 @@ from src.processes.models.templates.conditions import (
     RuleTemplate,
 )
 from src.processes.models.templates.fieldset import (
-    FieldsetTemplateKickoff,
-    FieldsetTemplateTaskTemplate,
+    FieldsetTemplate,
 )
 from src.processes.models.templates.fields import (
     FieldTemplate,

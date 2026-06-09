@@ -33,8 +33,7 @@ from src.processes.models.templates.fields import (
     FieldTemplateSelection,
 )
 from src.processes.models.templates.fieldset import (
-    FieldsetTemplateKickoff,
-    FieldsetTemplateTaskTemplate,
+    FieldsetTemplate,
 )
 from src.processes.models.templates.raw_performer import RawPerformerTemplate
 from src.processes.models.templates.task import TaskTemplate

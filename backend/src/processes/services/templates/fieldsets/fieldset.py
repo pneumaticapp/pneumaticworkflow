@@ -1,22 +1,28 @@
+from copy import deepcopy
 from typing import Dict, List, Optional
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
 from src.generics.base.service import BaseModelService
 from src.processes.enums import LabelPosition, FieldSetLayout
-from src.processes.models.templates.fieldset import FieldsetTemplate, \
-    FieldsetTemplateKickoff, FieldsetTemplateTaskTemplate
-from src.processes.models.templates.kickoff import Kickoff
-from src.processes.models.templates.template import Template
-from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.fields import FieldTemplate
+from src.processes.models.templates.fieldset import (
+    FieldsetTemplate,
+    FieldsetTemplateRule,
+)
+from src.processes.serializers.templates.fieldset import \
+    SharedFieldsetTemplateSerializer
 from src.processes.services.exceptions import (
     FieldsetTemplateInUseException,
+    FieldsetTemplateInUseException2,
 )
 from src.processes.services.templates.field_template import (
     FieldTemplateService,
 )
 from src.processes.services.templates.fieldsets.fieldset_rule import \
     FieldsetTemplateRuleService
+from src.processes.utils.common import create_api_name
+
 
 UserModel = get_user_model()
 
@@ -27,7 +33,13 @@ class FieldSetTemplateService(BaseModelService):
         self,
         name: str,
         template_id: int,
+        is_shared: bool,
+        order: int = 0,
+        title: str = '',
         description: str = '',
+        kickoff_id: Optional[int] = None,
+        task_id: Optional[int] = None,
+        shared_fieldset_id: Optional[int] = None,
         api_name: Optional[str] = None,
         label_position: LabelPosition.LITERALS = LabelPosition.TOP,
         layout: FieldSetLayout.LITERALS = FieldSetLayout.VERTICAL,
@@ -36,15 +48,46 @@ class FieldSetTemplateService(BaseModelService):
         create_kwargs = {
             'template_id': template_id,
             'account': self.account,
+            'order': order,
             'name': name,
+            'title': title,
             'description': description,
             'label_position': label_position,
             'layout': layout,
+            'kickoff_id': kickoff_id,
+            'task_id': task_id,
+            'shared_fieldset_id': shared_fieldset_id,
+            'is_shared': is_shared,
         }
         if api_name:
             create_kwargs['api_name'] = api_name
         self.instance = FieldsetTemplate.objects.create(**create_kwargs)
         return self.instance
+
+    def create_shared_fieldset(
+        self,
+        name: str,
+        title: str = '',
+        description: str = '',
+        api_name: Optional[str] = None,
+        label_position: LabelPosition.LITERALS = LabelPosition.TOP,
+        layout: FieldSetLayout.LITERALS = FieldSetLayout.VERTICAL,
+        **kwargs,
+    ):
+
+        """ Creates a shared FieldSetTemplate
+            that is not linked to a template. """
+
+        return super().create(
+            name=name,
+            title=title,
+            description=description,
+            api_name=api_name,
+            label_position=label_position,
+            layout=layout,
+            is_shared=True,
+            **kwargs,
+        )
 
     def _create_related(
         self,
@@ -125,6 +168,9 @@ class FieldSetTemplateService(BaseModelService):
         **update_kwargs,
     ) -> FieldsetTemplate:
 
+        if self.instance.is_shared and self.instance.child_fieldsets.exists():
+            raise FieldsetTemplateInUseException2
+
         rules_data = update_kwargs.pop('rules', None)
         fields_data = update_kwargs.pop('fields', None)
         with transaction.atomic():
@@ -141,20 +187,101 @@ class FieldSetTemplateService(BaseModelService):
             self._validate_rules()
             return self.instance
 
+    def partial_update_instance(
+        self,
+        **update_kwargs,
+    ) -> FieldsetTemplate:
+
+        with transaction.atomic():
+            if update_kwargs:
+                self.instance = super().partial_update(
+                    force_save=True,
+                    **update_kwargs,
+                )
+            return self.instance
+
+
     def delete(self) -> None:
-        kickoffs_exists = (
-            FieldsetTemplateKickoff.objects
-            .filter(fieldset=self.instance)
-            .exists()
-        )
-        tasks_exists = (
-            FieldsetTemplateTaskTemplate.objects
-            .filter(fieldset=self.instance)
-            .exists()
-        )
-        if kickoffs_exists or tasks_exists:
+        if self.instance.is_shared and self.instance.child_fieldsets.exists():
             raise FieldsetTemplateInUseException
         self.instance.delete()
+
+    def _replace_api_names(self, shared_fieldset_data: dict) -> dict:
+
+        fieldset_data = deepcopy(shared_fieldset_data)
+        fieldset_data['api_name'] = create_api_name(
+            FieldsetTemplate.api_name_prefix
+        )
+        fields_map: Dict[str, str] = {}
+        updated_fields_data = []
+        for field_data in fieldset_data.get('fields', []):
+            new_api_name = create_api_name(
+                FieldTemplate.api_name_prefix
+            )
+            fields_map[field_data['api_name']] = new_api_name
+            field_data['api_name'] = new_api_name
+            updated_fields_data.append(field_data)
+        fieldset_data['fields'] = updated_fields_data
+
+        updated_rules_data = []
+        for rule_data in fieldset_data.get('rules', []):
+            rule_data['api_name'] = create_api_name(
+                FieldsetTemplateRule.api_name_prefix
+            )
+            rule_data['fields'] = [
+                fields_map[old_api_name]
+                for old_api_name in rule_data.get('fields', [])
+            ]
+            updated_rules_data.append(rule_data)
+        fieldset_data['rules'] = updated_rules_data
+        return fieldset_data
+
+    def get_new_fieldset_data(
+        self,
+        shared_fieldset_data: dict,
+        api_name: Optional[str] = None,
+        title: Optional[str] = None,
+        description: Optional[str] = None,
+    )-> dict:
+
+        fieldset_data = self._replace_api_names(shared_fieldset_data)
+        if api_name:
+            fieldset_data['api_name'] = api_name
+        if title:
+            fieldset_data['title'] = title
+        if description:
+            fieldset_data['description'] = description
+        return fieldset_data
+
+    def create_from_shared(
+        self,
+        shared_fieldset_data: dict,
+        shared_fieldset_id: int,
+        template_id: int,
+        order: int = 0,
+        kickoff_id: Optional[int] = None,
+        task_id: Optional[int] = None,
+        api_name: Optional[str] = None,
+        title: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> FieldsetTemplate:
+
+        fieldset_data = self.get_new_fieldset_data(
+            shared_fieldset_data=shared_fieldset_data,
+            api_name=api_name,
+            title=title,
+            description=description,
+        )
+
+        return self.create(
+            **fieldset_data,
+            is_shared=True,
+            shared_fieldset_id=shared_fieldset_id,
+            order=order,
+            kickoff_id=kickoff_id,
+            task_id=task_id,
+            template_id=template_id,
+        )
 
     def create_rules(
         self,
@@ -204,56 +331,17 @@ class FieldSetTemplateService(BaseModelService):
 
         self.instance.rules.exclude(id__in=rules_ids).delete()
 
-    @classmethod
-    def create_or_update_kickoff_links(
-        cls,
-        fieldsets_links: List[dict],
-        template: Template,
-        kickoff: Optional[Kickoff] = None,
-    ):
-        api_names = {e['api_name'] for e in fieldsets_links}
-        for fieldset_link in fieldsets_links:
-            fieldset_template = FieldsetTemplate.objects.get(
-                template=template,
-                api_name=fieldset_link['api_name'],
-            )
-            FieldsetTemplateKickoff.objects.update_or_create(
-                fieldset=fieldset_template,
-                kickoff=kickoff,
-                defaults={
-                    'order': fieldset_link['order'],
-                },
-            )
-        (
-            FieldsetTemplateKickoff.objects
-            .filter(kickoff=kickoff)
-            .exclude(fieldset__api_name__in=api_names)
-            .delete()
-        )
 
-    @classmethod
-    def create_or_update_tasks_links(
-        cls,
-        fieldsets_links: List[dict],
-        template: Template,
-        task: Optional[TaskTemplate] = None,
-    ):
-        api_names = {e['api_name'] for e in fieldsets_links}
-        for fieldset_link in fieldsets_links:
-            fieldset_template = FieldsetTemplate.objects.get(
-                template=template,
-                api_name=fieldset_link['api_name'],
+    @staticmethod
+    def to_json(fieldset: FieldsetTemplate) -> dict:
+        if fieldset.is_shared:
+            from src.processes.serializers.templates.fieldset import (
+                SharedFieldsetTemplateSerializer,
             )
-            FieldsetTemplateTaskTemplate.objects.update_or_create(
-                fieldset=fieldset_template,
-                task=task,
-                defaults={
-                    'order': fieldset_link['order'],
-                },
+            slz_cls = SharedFieldsetTemplateSerializer
+        else:
+            from src.processes.serializers.templates.fieldset import (
+                FieldsetTemplateSerializer,
             )
-        (
-            FieldsetTemplateTaskTemplate.objects
-            .filter(task=task)
-            .exclude(fieldset__api_name__in=api_names)
-            .delete()
-        )
+            slz_cls = FieldsetTemplateSerializer
+        return dict(slz_cls(fieldset).data)

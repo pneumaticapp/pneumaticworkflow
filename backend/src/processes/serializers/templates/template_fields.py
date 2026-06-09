@@ -1,13 +1,11 @@
 from typing import Any, Dict
 
-from rest_framework.fields import CharField
 from rest_framework.serializers import (
     ModelSerializer,
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.fieldset import (
-    FieldsetTemplateTaskTemplate,
-    FieldsetTemplateKickoff,
+    FieldsetTemplate,
 )
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.template import Template
@@ -31,13 +29,14 @@ class FieldTemplateOnlyFieldsSerializer(ModelSerializer):
         )
 
 
-class FieldsetTemplateKickoffListSerializer(ModelSerializer):
+class FieldsetTemplateOnlyFieldsSerializer(ModelSerializer):
 
     class Meta:
-        model = FieldsetTemplateKickoff
+        model = FieldsetTemplate
         fields = (
             'order',
             'name',
+            'title',
             'description',
             'fields',
             'api_name',
@@ -45,44 +44,7 @@ class FieldsetTemplateKickoffListSerializer(ModelSerializer):
             'layout',
         )
 
-    name = CharField(source='fieldset.name')
-    description = CharField(source='fieldset.description')
-    api_name = CharField(source='fieldset.api_name')
-    label_position = CharField(
-        source='fieldset.label_position',
-    )
-    layout = CharField(source='fieldset.layout')
-    fields = FieldTemplateOnlyFieldsSerializer(
-        source='fieldset.fields',
-        many=True,
-    )
-
-
-class FieldsetTaskTemplateOnlyFieldsSerializer(ModelSerializer):
-
-    class Meta:
-        model = FieldsetTemplateTaskTemplate
-        fields = (
-            'order',
-            'name',
-            'description',
-            'fields',
-            'api_name',
-            'label_position',
-            'layout',
-        )
-
-    name = CharField(source='fieldset.name')
-    description = CharField(source='fieldset.description')
-    api_name = CharField(source='fieldset.api_name')
-    label_position = CharField(
-        source='fieldset.label_position',
-    )
-    layout = CharField(source='fieldset.layout')
-    fields = FieldTemplateOnlyFieldsSerializer(
-        source='fieldset.fields',
-        many=True,
-    )
+    fields = FieldTemplateOnlyFieldsSerializer(many=True)
 
 
 class KickoffOnlyFieldsSerializer(ModelSerializer):
@@ -99,8 +61,7 @@ class KickoffOnlyFieldsSerializer(ModelSerializer):
         default=[],
         read_only=True,
     )
-    fieldsets = FieldsetTemplateKickoffListSerializer(
-        source='fieldsettemplatekickoff_set',
+    fieldsets = FieldsetTemplateOnlyFieldsSerializer(
         many=True,
         default=[],
         read_only=True,
@@ -131,8 +92,7 @@ class TemplateTaskOnlyFieldsSerializer(ModelSerializer):
         default=[],
         read_only=True,
     )
-    fieldsets = FieldsetTaskTemplateOnlyFieldsSerializer(
-        source='fieldsettemplatetasktemplate_set',
+    fieldsets = FieldsetTemplateOnlyFieldsSerializer(
         many=True,
         default=[],
         read_only=True,

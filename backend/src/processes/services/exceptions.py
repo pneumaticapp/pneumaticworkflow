@@ -223,11 +223,14 @@ class FieldsetTemplateServiceException(BaseServiceException):
     pass
 
 
-class FieldsetTemplateInUseException(
-    FieldsetTemplateServiceException,
-):
+class FieldsetTemplateInUseException(FieldsetTemplateServiceException):
 
     default_message = fs_messages.MSG_FS_0001
+
+
+class FieldsetTemplateInUseException2(FieldsetTemplateServiceException):
+
+    default_message = fs_messages.MSG_FS_0009
 
 
 class FieldTemplateServiceException(BaseServiceException):
@@ -248,3 +251,8 @@ class FieldTemplateUserMustBeRequired(FieldTemplateServiceException):
 class FieldsetServiceException(BaseServiceException):
 
     pass
+
+
+class SharedFieldsetNotFoundException(FieldsetServiceException):
+
+    default_message = fs_messages.MSG_FS_0008

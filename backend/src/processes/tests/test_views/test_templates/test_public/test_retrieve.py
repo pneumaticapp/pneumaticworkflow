@@ -10,7 +10,7 @@ from src.processes.enums import (
 from src.processes.models.templates.fields import FieldTemplate, \
     FieldTemplateSelection
 from src.processes.models.templates.fieldset import (
-    FieldsetTemplateKickoff,
+    FieldsetTemplate,
 )
 from src.processes.tests.fixtures import (
     create_test_template,
