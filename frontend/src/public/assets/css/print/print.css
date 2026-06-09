@@ -49,10 +49,7 @@
   }
 
   body.workflow-modal-print-mode [id='pneumatic-frontend'] {
-    visibility: hidden !important;
-    overflow: visible !important;
-    height: auto !important;
-    background: #fff !important;
+    display: none !important;
   }
 
   body.workflow-modal-print-mode .processes-inwork-popup,
