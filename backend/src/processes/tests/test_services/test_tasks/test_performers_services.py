@@ -54,6 +54,8 @@ from src.processes.tests.fixtures import (
     create_test_admin,
     create_test_group,
     create_test_guest,
+    create_test_not_admin,
+    create_test_owner,
     create_test_template,
     create_test_user,
     create_test_workflow,
@@ -3672,3 +3674,304 @@ class TestGroupPerformerService:
         # status, so can_be_completed returns False
         workflow_action_service_init_mock.assert_not_called()
         complete_task_mock.assert_not_called()
+
+
+class TestReassignPermissionsCalledFromActions:
+    """
+    Verify that all performer service _create_actions and _delete_actions
+    call reassign_restricted_permissions_for_task.
+    These are regression tests for the permission fix.
+    """
+
+    # --- TaskPerformersService ---
+
+    def test_task_performers__create_actions__calls_reassign(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        request_user = create_test_owner(account=account)
+        user_performer = create_test_not_admin(
+            account=account,
+            email='perf_reassign_c@test.test',
+        )
+        workflow = create_test_workflow(request_user)
+        task = workflow.tasks.get(number=1)
+        send_notification_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'send_new_task_notification.delay',
+        )
+        reassign_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'reassign_restricted_permissions_for_task',
+        )
+
+        # act
+        TaskPerformersService._create_actions(
+            task=task,
+            user=user_performer,
+            request_user=request_user,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
+        )
+
+        # assert
+        reassign_mock.assert_called_once_with(
+            task=task,
+            user=request_user,
+        )
+        send_notification_mock.assert_called_once()
+
+    def test_task_performers__delete_actions__calls_reassign(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        request_user = create_test_owner(account=account)
+        user_performer = create_test_not_admin(
+            account=account,
+            email='perf_reassign_d@test.test',
+        )
+        workflow = create_test_workflow(request_user)
+        task = workflow.tasks.get(number=1)
+        task.taskperformer_set.create(
+            user=user_performer,
+            is_completed=False,
+        )
+        performer_deleted_event_mock = mocker.patch(
+            'src.processes.services.events.'
+            'WorkflowEventService.performer_deleted_event',
+        )
+        send_deleted_notification_mock = mocker.patch(
+            'src.notifications.tasks'
+            '.send_task_deleted_notification.delay',
+        )
+        reassign_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'reassign_restricted_permissions_for_task',
+        )
+
+        # act
+        TaskPerformersService._delete_actions(
+            task=task,
+            user=user_performer,
+            request_user=request_user,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
+        )
+
+        # assert
+        reassign_mock.assert_called_once_with(
+            task=task,
+            user=request_user,
+        )
+        performer_deleted_event_mock.assert_called_once()
+        send_deleted_notification_mock.assert_called_once()
+
+    # --- GuestPerformersService ---
+
+    def test_guest_performers__create_actions__calls_reassign(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        request_user = create_test_owner(account=account)
+        guest = create_test_guest(account=account)
+        workflow = create_test_workflow(request_user)
+        task = workflow.tasks.get(number=1)
+        get_str_token_mock = mocker.patch(
+            'src.authentication.services.guest_auth.'
+            'GuestJWTAuthService.get_str_token',
+            return_value='token_str',
+        )
+        send_guest_new_task_mock = mocker.patch(
+            'src.notifications.tasks.send_guest_new_task.delay',
+        )
+        guest_invite_sent_mock = mocker.patch(
+            'src.analysis.services.AnalyticService.'
+            'users_guest_invite_sent',
+        )
+        guest_invited_mock = mocker.patch(
+            'src.analysis.services.AnalyticService.'
+            'users_guest_invited',
+        )
+        activate_cache_mock = mocker.patch(
+            'src.authentication.services.guest_auth.'
+            'GuestJWTAuthService.activate_task_guest_cache',
+        )
+        reassign_mock = mocker.patch(
+            'src.processes.services.tasks.guests.'
+            'reassign_restricted_permissions_for_task',
+        )
+
+        # act
+        GuestPerformersService._create_actions(
+            task=task,
+            user=guest,
+            request_user=request_user,
+            current_url='/page',
+            is_superuser=False,
+        )
+
+        # assert
+        reassign_mock.assert_called_once_with(
+            task=task,
+            user=request_user,
+        )
+        get_str_token_mock.assert_called_once()
+        send_guest_new_task_mock.assert_called_once()
+        guest_invite_sent_mock.assert_called_once()
+        guest_invited_mock.assert_called_once()
+        activate_cache_mock.assert_called_once()
+
+    def test_guest_performers__delete_actions__calls_reassign(self, mocker):
+
+        # arrange
+        account = create_test_account()
+        request_user = create_test_owner(account=account)
+        guest = create_test_guest(account=account)
+        user_performer_stay = create_test_not_admin(
+            account=account,
+            email='stay@test.test',
+        )
+        workflow = create_test_workflow(request_user)
+        task = workflow.tasks.get(number=1)
+        task.taskperformer_set.create(
+            user=user_performer_stay,
+            is_completed=False,
+        )
+        task.taskperformer_set.create(
+            user=guest,
+            is_completed=False,
+            directly_status=DirectlyStatus.DELETED,
+        )
+        performer_deleted_event_mock = mocker.patch(
+            'src.processes.services.events.'
+            'WorkflowEventService.performer_deleted_event',
+        )
+        send_deleted_notification_mock = mocker.patch(
+            'src.notifications.tasks'
+            '.send_task_deleted_notification.delay',
+        )
+        deactivate_cache_mock = mocker.patch(
+            'src.authentication.services.guest_auth.'
+            'GuestJWTAuthService.deactivate_task_guest_cache',
+        )
+        reassign_mock = mocker.patch(
+            'src.processes.services.tasks.guests.'
+            'reassign_restricted_permissions_for_task',
+        )
+
+        # act
+        GuestPerformersService._delete_actions(
+            task=task,
+            user=guest,
+            request_user=request_user,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
+        )
+
+        # assert
+        reassign_mock.assert_called_once_with(
+            task=task,
+            user=request_user,
+        )
+        performer_deleted_event_mock.assert_called_once()
+        send_deleted_notification_mock.assert_not_called()
+        deactivate_cache_mock.assert_called_once()
+
+    # --- GroupPerformerService ---
+
+    def test_group__create_group_actions__calls_reassign(
+        self, mocker,
+    ):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_admin(account=account)
+        user2 = create_test_not_admin(
+            account=account,
+            email='g2@test.test',
+        )
+        group = create_test_group(account, users=[user2])
+        workflow = create_test_workflow(user=user)
+        task = workflow.tasks.get(number=1)
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
+        )
+        group_created_event_mock = mocker.patch(
+            'src.processes.services.events.'
+            'WorkflowEventService.performer_group_created_event',
+        )
+        send_notification_mock = mocker.patch(
+            'src.processes.services.tasks.performers.'
+            'send_new_task_notification.delay',
+        )
+        send_websocket_mock = mocker.patch(
+            'src.notifications.tasks'
+            '.send_new_task_websocket.delay',
+        )
+        reassign_mock = mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'reassign_restricted_permissions_for_task',
+        )
+
+        # act
+        service._create_group_actions(group=group)
+
+        # assert
+        reassign_mock.assert_called_once_with(
+            task=task,
+            user=user,
+        )
+        group_created_event_mock.assert_called_once()
+        send_notification_mock.assert_called_once()
+        send_websocket_mock.assert_not_called()
+
+    def test_group__delete_group_actions__calls_reassign(
+        self, mocker,
+    ):
+
+        # arrange
+        account = create_test_account()
+        user = create_test_admin(account=account)
+        user2 = create_test_not_admin(
+            account=account,
+            email='g2d@test.test',
+        )
+        group = create_test_group(account, users=[user2])
+        workflow = create_test_workflow(user=user)
+        task = workflow.tasks.get(number=1)
+        task.taskperformer_set.create(
+            user=user2,
+            is_completed=False,
+        )
+        service = GroupPerformerService(
+            user=user,
+            task=task,
+            is_superuser=False,
+            auth_type=AuthTokenType.USER,
+        )
+        group_deleted_event_mock = mocker.patch(
+            'src.processes.services.events.'
+            'WorkflowEventService.performer_group_deleted_event',
+        )
+        send_deleted_notification_mock = mocker.patch(
+            'src.notifications.tasks'
+            '.send_task_deleted_notification.delay',
+        )
+        reassign_mock = mocker.patch(
+            'src.processes.services.tasks.groups.'
+            'reassign_restricted_permissions_for_task',
+        )
+
+        # act
+        service._delete_group_actions(group=group)
+
+        # assert
+        reassign_mock.assert_called_once_with(
+            task=task,
+            user=user,
+        )
+        group_deleted_event_mock.assert_called_once()
+        send_deleted_notification_mock.assert_not_called()

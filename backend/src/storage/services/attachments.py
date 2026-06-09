@@ -118,7 +118,7 @@ class AttachmentService(BaseModelService):
         users_set = set()
 
         # Get task performers via intermediate model
-        task_performers = task.taskperformer_set.all()
+        task_performers = task.taskperformer_set.exclude_directly_deleted()
         for performer in task_performers:
             if performer.user:
                 users_set.add(performer.user)
@@ -499,6 +499,10 @@ class AttachmentService(BaseModelService):
                     user = UserModel.objects.get(id=user_id)
                 except UserModel.DoesNotExist:
                     return False
+
+            # Inactive users should not have access to restricted files
+            if not user.is_active:
+                return False
 
             ctype = ContentType.objects.get_for_model(Attachment)
             perm_codename = 'access_attachment'
