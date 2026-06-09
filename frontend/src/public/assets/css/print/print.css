@@ -71,7 +71,12 @@
     display: none !important;
   }
 
-  .processes-inwork-popup {
+  html body .processes-inwork-popup {
+    visibility: hidden !important;
+    display: none !important;
+  }
+
+  body.workflow-modal-print-mode .processes-inwork-popup {
     position: absolute !important;
     z-index: 2147483647 !important;
     top: 0 !important;
@@ -89,7 +94,7 @@
     opacity: 1 !important;
   }
 
-  .processes-inwork-popup .modal-dialog {
+  body.workflow-modal-print-mode .processes-inwork-popup .modal-dialog {
     position: static !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -100,7 +105,7 @@
     transform: none !important;
   }
 
-  .processes-inwork-popup .modal-content {
+  body.workflow-modal-print-mode .processes-inwork-popup .modal-content {
     overflow: visible !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -112,44 +117,44 @@
     box-shadow: none !important;
   }
 
-  .processes-inwork-popup .modal-content > div,
-  .processes-inwork-popup .modal-body {
+  body.workflow-modal-print-mode .processes-inwork-popup .modal-content > div,
+  body.workflow-modal-print-mode .processes-inwork-popup .modal-body {
     overflow: visible !important;
     height: auto !important;
     min-height: 0 !important;
   }
 
-  .processes-inwork-popup .modal-body {
+  body.workflow-modal-print-mode .processes-inwork-popup .modal-body {
     padding: 0 !important;
     background: #fff !important;
     border-radius: 0 !important;
   }
 
-  .processes-inwork-popup a {
+  body.workflow-modal-print-mode .processes-inwork-popup a {
     color: inherit !important;
     text-decoration: none !important;
   }
 
-  .processes-inwork-popup [class*='popup-header'],
-  .processes-inwork-popup [class*='inwork-popup-content'] {
+  body.workflow-modal-print-mode .processes-inwork-popup [class*='popup-header'],
+  body.workflow-modal-print-mode .processes-inwork-popup [class*='inwork-popup-content'] {
     background: #fff !important;
     border-radius: 0 !important;
   }
 
-  .processes-inwork-popup [class*='popup-header'] {
+  body.workflow-modal-print-mode .processes-inwork-popup [class*='popup-header'] {
     padding: 0 !important;
     min-height: 0 !important;
   }
 
-  .processes-inwork-popup [class*='progress-container-desktop'] {
+  body.workflow-modal-print-mode .processes-inwork-popup [class*='progress-container-desktop'] {
     display: flex !important;
   }
 
-  .processes-inwork-popup [class*='progress-container-mobile'] {
+  body.workflow-modal-print-mode .processes-inwork-popup [class*='progress-container-mobile'] {
     display: none !important;
   }
 
-  .processes-inwork-popup [class*='process-log-item'],
+  body.workflow-modal-print-mode .processes-inwork-popup [class*='process-log-item'],
   [class*='container'] [class*='process-log-item'] {
     break-inside: avoid;
     page-break-inside: avoid;
