@@ -93,7 +93,7 @@ describe('AppRoutes Redirect Logic', () => {
     // arrange
     sessionStorage.setItem(
       REDIRECT_URL_STORAGE_KEY,
-      'https://files.pneumatic.app/abc-123',
+      'https://pneumatic.app/files/abc-123',
     );
 
     // act
@@ -103,7 +103,7 @@ describe('AppRoutes Redirect Logic', () => {
 
     // assert
     expect(window.location.replace).toHaveBeenCalledWith(
-      'https://files.pneumatic.app/abc-123',
+      'https://pneumatic.app/files/abc-123',
     );
     expect(sessionStorage.getItem(REDIRECT_URL_STORAGE_KEY)).toBe('');
     // Must render normal routes (not blank page) for file downloads

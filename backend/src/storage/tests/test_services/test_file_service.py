@@ -295,7 +295,7 @@ class TestFileServiceClient:
         mock_response = Mock()
         mock_response.ok = True
         mock_response.json.return_value = {
-            'public_url': 'https://files.pneumatic.app/test_file_123',
+            'public_url': 'https://pneumatic.app/files/test_file_123',
             'file_id': 'test_file_123',
         }
         mock_requests.request.return_value = mock_response
@@ -313,7 +313,7 @@ class TestFileServiceClient:
         )
 
         # assert
-        assert public_url == 'https://files.pneumatic.app/test_file_123'
+        assert public_url == 'https://pneumatic.app/files/test_file_123'
         mock_attachment_service_class.assert_called_once_with(user=user)
         mock_attachment_service.create.assert_called_once_with(
             file_id='test_file_123',
@@ -354,7 +354,7 @@ class TestFileServiceClient:
         mock_response = Mock()
         mock_response.ok = True
         mock_response.json.return_value = {
-            'public_url': 'https://files.pneumatic.app/test_file_456',
+            'public_url': 'https://pneumatic.app/files/test_file_456',
             'file_id': 'test_file_456',
         }
         mock_requests.request.return_value = mock_response
@@ -374,7 +374,7 @@ class TestFileServiceClient:
         )
 
         # assert
-        assert public_url == 'https://files.pneumatic.app/test_file_456'
+        assert public_url == 'https://pneumatic.app/files/test_file_456'
         mock_attachment_service.create.assert_called_once_with(
             file_id='test_file_456',
             account=account,
@@ -436,7 +436,7 @@ class TestFileServiceClient:
         mock_response = Mock()
         mock_response.ok = True
         mock_response.json.return_value = {
-            'public_url': 'https://files.pneumatic.app/f123',
+            'public_url': 'https://pneumatic.app/files/f123',
         }
         mock_requests.request.return_value = mock_response
 

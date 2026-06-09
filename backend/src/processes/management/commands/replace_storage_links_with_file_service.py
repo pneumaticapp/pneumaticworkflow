@@ -47,7 +47,11 @@ class Command(BaseCommand):
     def replace_in_json(self, obj, url_mapping):
         updated = False
         if isinstance(obj, str):
-            for old_url, new_url in url_mapping.items():
+            for old_url, new_url in sorted(
+                url_mapping.items(),
+                key=lambda x: len(x[0]),
+                reverse=True,
+            ):
                 if old_url in obj:
                     obj = obj.replace(old_url, new_url)
                     updated = True
@@ -142,9 +146,15 @@ class Command(BaseCommand):
                     val = getattr(item, field, None)
                     if isinstance(val, str) and val:
                         new_val = val
-                        for old_url, new_url in url_mapping.items():
+                        for old_url, new_url in sorted(
+                            url_mapping.items(),
+                            key=lambda x: len(x[0]),
+                            reverse=True,
+                        ):
                             if old_url in new_val:
-                                new_val = new_val.replace(old_url, new_url)
+                                new_val = new_val.replace(
+                                    old_url, new_url,
+                                )
                         if new_val != val:
                             setattr(item, field, new_val)
                             changed_fields.append(field)

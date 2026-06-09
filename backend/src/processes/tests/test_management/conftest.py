@@ -13,7 +13,7 @@ from src.storage.models import Attachment
 GCS_API = 'https://storage.googleapis.com'
 GCS_CLOUD = 'https://storage.cloud.google.com'
 BUCKET = 'test-bucket'
-FS_DOMAIN = 'https://files.pneumatic.app'
+FS_DOMAIN = 'https://pneumatic.app/files'
 
 
 def gcs_url(file_key, bucket=BUCKET, base=GCS_API):

@@ -360,6 +360,46 @@ def test_replace__bucket_path__global_mapping(
     assert FS_DOMAIN in task.description
 
 
+def test_replace__exact_url_priority_over_base_bucket(
+    create_fa_with_file_id,
+    run_replace,
+):
+    """Exact attachment URL must match before base bucket URL.
+
+    Without longest-match-first ordering, the shorter base
+    bucket URL ``https://storage.googleapis.com/{bucket}``
+    could replace first, leaving the raw (unencoded) filename
+    in the result instead of the properly encoded file_id.
+    """
+
+    # arrange
+    user = create_test_admin()
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=1,
+    )
+    file_id = 'PqRsTu_Картинка.png'
+    url = gcs_url(file_id)
+    create_fa_with_file_id(
+        account=user.account,
+        file_id=file_id,
+        url=url,
+    )
+    task = workflow.tasks.first()
+    task.description = f'See {url}'
+    task.save(update_fields=['description'])
+
+    # act
+    run_replace(account_id=user.account.id)
+
+    # assert — must use encoded file_id, not raw filename
+    task.refresh_from_db()
+    assert GCS_API not in task.description
+    assert 'Картинка' not in task.description
+    assert '%D0%9A%D0%B0%D1%80' in task.description
+    assert FS_DOMAIN in task.description
+
+
 def test_replace__file_attachment_processed_last(
     create_fa_with_file_id,
     run_replace,
