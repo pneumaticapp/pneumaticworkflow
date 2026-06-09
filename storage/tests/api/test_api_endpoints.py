@@ -607,6 +607,122 @@ def test_error_body__allowed_keys_only(
     assert set(data.keys()).issubset(allowed_keys)
 
 
+def test_download__legacy_gcs_file_id__return_content(
+    e2e_client,
+    mock_auth_middleware,
+    mock_http_client,
+    mock_storage_service,
+    auth_headers,
+    mock_download_use_case_get_metadata,
+    mock_download_use_case_get_stream,
+):
+    """Legacy GCS file_id (non-UUID string) must be accepted."""
+    # arrange
+    legacy_file_id = 'VumcsgTMmIiSagrYrvDdMFUBbWhUYN_pic.png'
+    file_record = FileRecord(
+        file_id=legacy_file_id,
+        filename='pic.png',
+        content_type='image/png',
+        size=2048,
+        user_id=1,
+        account_id=1,
+        created_at=datetime(2024, 1, 1, tzinfo=UTC),
+    )
+
+    async def file_stream():
+        yield b'fake-png-content'
+
+    mock_download_use_case_get_metadata.return_value = file_record
+    mock_download_use_case_get_stream.return_value = file_stream()
+
+    # act
+    response = e2e_client.get(
+        f'/{legacy_file_id}',
+        headers=auth_headers,
+    )
+
+    # assert
+    assert response.status_code == 200
+    mock_download_use_case_get_metadata.assert_called_once()
+
+
+def test_download__uuid_file_id__return_content(
+    e2e_client,
+    mock_auth_middleware,
+    mock_http_client,
+    mock_storage_service,
+    auth_headers,
+    mock_download_use_case_get_metadata,
+    mock_download_use_case_get_stream,
+):
+    """New UUID-based file_id must still work."""
+    # arrange
+    uuid_file_id = '550e8400-e29b-41d4-a716-446655440000'
+    file_record = FileRecord(
+        file_id=uuid_file_id,
+        filename='document.pdf',
+        content_type='application/pdf',
+        size=4096,
+        user_id=1,
+        account_id=1,
+        created_at=datetime(2024, 1, 1, tzinfo=UTC),
+    )
+
+    async def file_stream():
+        yield b'fake-pdf-content'
+
+    mock_download_use_case_get_metadata.return_value = file_record
+    mock_download_use_case_get_stream.return_value = file_stream()
+
+    # act
+    response = e2e_client.get(
+        f'/{uuid_file_id}',
+        headers=auth_headers,
+    )
+
+    # assert
+    assert response.status_code == 200
+    mock_download_use_case_get_metadata.assert_called_once()
+
+
+def test_download__legacy_file_id_with_dots__return_content(
+    e2e_client,
+    mock_auth_middleware,
+    mock_http_client,
+    mock_storage_service,
+    auth_headers,
+    mock_download_use_case_get_metadata,
+    mock_download_use_case_get_stream,
+):
+    """Legacy file_id containing dots must be accepted."""
+    # arrange
+    legacy_file_id = 'ZfcsxZayjl9XST5mA0zdpqZ2zomLGM_report.final.v2.pdf'
+    file_record = FileRecord(
+        file_id=legacy_file_id,
+        filename='report.final.v2.pdf',
+        content_type='application/pdf',
+        size=8192,
+        user_id=1,
+        account_id=1,
+        created_at=datetime(2024, 1, 1, tzinfo=UTC),
+    )
+
+    async def file_stream():
+        yield b'fake-pdf'
+
+    mock_download_use_case_get_metadata.return_value = file_record
+    mock_download_use_case_get_stream.return_value = file_stream()
+
+    # act
+    response = e2e_client.get(
+        f'/{legacy_file_id}',
+        headers=auth_headers,
+    )
+
+    # assert
+    assert response.status_code == 200
+
+
 def test_error_body__details_is_dict_when_present(
     e2e_client,
     mock_auth_middleware,
@@ -624,3 +740,146 @@ def test_error_body__details_is_dict_when_present(
     if 'details' in data:
         assert isinstance(data['details'], dict)
         assert 'reason' in data['details']
+
+
+# --- P0: Legacy file_id acceptance (extended) ---
+
+
+@pytest.mark.parametrize(
+    ('file_id', 'description'),
+    [
+        (
+            '550e8400-e29b-41d4-a716-446655440000',
+            'standard UUID',
+        ),
+        (
+            'VumcsgTMmIiSagrYrvDdMFUBbWhUYN_pic.png',
+            'legacy GCS key with extension',
+        ),
+        (
+            'AbCdEfGh',
+            'minimal 8-char file_id',
+        ),
+        (
+            'a' * 64,
+            'long 64-char file_id',
+        ),
+        (
+            'file-with-dashes_and_underscores.tar.gz',
+            'file_id with multiple dots and mixed separators',
+        ),
+    ],
+)
+def test_download__various_file_id_formats__accepted(
+    file_id,
+    description,
+    e2e_client,
+    mock_auth_middleware,
+    mock_http_client,
+    mock_storage_service,
+    auth_headers,
+    mock_download_use_case_get_metadata,
+    mock_download_use_case_get_stream,
+):
+    """Download route must accept various file_id formats."""
+    # arrange
+    file_record = FileRecord(
+        file_id=file_id,
+        filename='test.bin',
+        content_type='application/octet-stream',
+        size=100,
+        user_id=1,
+        account_id=1,
+        created_at=datetime(2024, 1, 1, tzinfo=UTC),
+    )
+
+    async def file_stream():
+        yield b'content'
+
+    mock_download_use_case_get_metadata.return_value = file_record
+    mock_download_use_case_get_stream.return_value = file_stream()
+
+    # act
+    response = e2e_client.get(
+        f'/{file_id}',
+        headers=auth_headers,
+    )
+
+    # assert
+    assert response.status_code == 200, f'Failed for {description}: {file_id}'
+
+
+def test_download__url_encoded_legacy_id__decoded_by_fastapi(
+    e2e_client,
+    mock_auth_middleware,
+    mock_http_client,
+    mock_storage_service,
+    auth_headers,
+    mock_download_use_case_get_metadata,
+    mock_download_use_case_get_stream,
+):
+    """URL-encoded file_id in path must be decoded by FastAPI."""
+    # arrange
+    decoded_id = 'NiihssB_Screencast 2023.webm'
+    encoded_path = 'NiihssB_Screencast%202023.webm'
+    file_record = FileRecord(
+        file_id=decoded_id,
+        filename='Screencast 2023.webm',
+        content_type='video/webm',
+        size=5000,
+        user_id=1,
+        account_id=1,
+        created_at=datetime(2024, 1, 1, tzinfo=UTC),
+    )
+
+    async def file_stream():
+        yield b'video-content'
+
+    mock_download_use_case_get_metadata.return_value = file_record
+    mock_download_use_case_get_stream.return_value = file_stream()
+
+    # act
+    response = e2e_client.get(
+        f'/{encoded_path}',
+        headers=auth_headers,
+    )
+
+    # assert
+    assert response.status_code == 200
+    call_args = mock_download_use_case_get_metadata.call_args
+    query = call_args[0][0]
+    assert query.file_id == decoded_id
+
+
+def test_download__legacy_id__permission_check_receives_string(
+    e2e_client,
+    mock_auth_middleware,
+    auth_headers,
+    mock_http_client_check_permission,
+    mock_download_use_case_get_metadata,
+):
+    """Permission check must receive file_id as string, not UUID."""
+    # arrange
+    legacy_id = 'VumcsgTMmIiSagrYrvDd_report.pdf'
+    file_record = MagicMock()
+    file_record.file_id = legacy_id
+    file_record.filename = 'report.pdf'
+    file_record.content_type = 'application/pdf'
+    file_record.size = 1024
+    file_record.user_id = 999
+    file_record.account_id = 1
+    mock_download_use_case_get_metadata.return_value = file_record
+    mock_http_client_check_permission.return_value = False
+
+    # act
+    response = e2e_client.get(
+        f'/{legacy_id}',
+        headers=auth_headers,
+    )
+
+    # assert
+    assert response.status_code == 403
+    mock_http_client_check_permission.assert_called_once()
+    call_kwargs = mock_http_client_check_permission.call_args
+    assert isinstance(call_kwargs.kwargs['file_id'], str)
+    assert call_kwargs.kwargs['file_id'] == legacy_id

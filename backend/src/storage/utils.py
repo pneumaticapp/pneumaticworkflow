@@ -1,5 +1,6 @@
 import re
 from typing import List, Optional, Tuple
+from urllib.parse import quote, unquote
 
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -34,7 +35,7 @@ def _get_file_service_link_pattern(
     core = (
         rf'!?\[([^\]]+)\]\('
         rf'(https?://[^/\s]*{re.escape(file_domain)}'
-        rf'/([a-zA-Z0-9_-]{{8,64}})[^)]*)\)'
+        rf'/([a-zA-Z0-9_.%-]{{8,512}})[^)]*)\)'
     )
     if anchored:
         core = '^' + core + '$'
@@ -51,7 +52,7 @@ def _get_file_service_plain_url_pattern() -> Optional[re.Pattern]:
         return None
     core = (
         rf'^https?://[^/\s]*{re.escape(file_domain)}'
-        rf'/([a-zA-Z0-9_-]{{8,64}})[^\s]*$'
+        rf'/([a-zA-Z0-9_.%-]{{8,512}})[^\s]*$'
     )
     return re.compile(core)
 
@@ -66,7 +67,7 @@ def _extract_file_id_from_plain_url(value: str) -> Optional[str]:
         return None
     match = pattern.match(value.strip())
     if match:
-        return match.group(1)
+        return unquote(match.group(1))
     return None
 
 
@@ -82,7 +83,7 @@ def parse_single_file_service_link(text: str) -> Optional[Tuple[str, str]]:
         return None
     match = pattern.match(text.strip())
     if match:
-        return (match.group(2), match.group(3))
+        return (match.group(2), unquote(match.group(3)))
     return None
 
 
@@ -107,7 +108,7 @@ def extract_file_ids_from_text(text: str) -> List[str]:
     if not text or pattern is None:
         return []
     matches = pattern.findall(text)
-    file_ids = [m[2] for m in matches]
+    file_ids = [unquote(m[2]) for m in matches]
     return list(dict.fromkeys(file_ids))
 
 
@@ -141,7 +142,7 @@ def get_file_service_file_url(file_id: str) -> Optional[str]:
     base = getattr(settings, 'FILE_SERVICE_URL', None)
     if not base or not file_id:
         return None
-    return f"{base.rstrip('/')}/{file_id}"
+    return f"{base.rstrip('/')}/{quote(file_id, safe='')}"
 
 
 def sync_storage_attachments_for_scope(
