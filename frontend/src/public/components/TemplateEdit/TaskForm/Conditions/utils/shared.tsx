@@ -42,6 +42,7 @@ export const OPERATORS_WITHOUT_VALUE = [
   EConditionOperators.NotExist,
   EConditionOperators.Completed,
   EConditionOperators.Skipped,
+  EConditionOperators.CompletedOrSkipped,
 ];
 
 export const handleAddNewCondition = ({

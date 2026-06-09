@@ -117,6 +117,10 @@
   }
 }
 
+.condition-rule__operator-menu {
+  min-width: max-content;
+}
+
 .condition-rule__value {
   flex-basis: 0;
   flex-grow: 1;
