@@ -1,32 +1,163 @@
-/* stylelint-disable declaration-no-important */
+/* stylelint-disable declaration-no-important, selector-pseudo-class-no-unknown */
 @media print {
-    html,
-    body {
-      overflow: visible !important;
-      height: auto !important;
-    }
-  
-    [id='pneumatic-frontend'] {
-      overflow: visible !important;
-      height: auto !important;
-    }
-  
-    main .container-fluid .row {
-      display: flex !important;
-    }
-  
-    * {
-      print-color-adjust: exact;
-      -webkit-print-color-adjust: exact;
-      scrollbar-width: none;
-    }
-    
-    *::-webkit-scrollbar {
-      display: none;
-    }
+  @page {
+    margin: 14mm;
+  }
 
-    .no-print {
-      display: none !important;
-    }
+  html,
+  body {
+    overflow: visible !important;
+    height: auto !important;
+    background: #fff !important;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  [id='pneumatic-frontend'] {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  main .container-fluid .row {
+    display: flex !important;
+  }
+
+  * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    scrollbar-width: none;
+  }
+
+  *::-webkit-scrollbar {
+    display: none;
+  }
+
+  html body .no-print,
+  html body .no-print *,
+  html body .modal-backdrop {
+    visibility: hidden !important;
+    display: none !important;
+  }
+
+  body.workflow-modal-print-mode {
+    margin: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  body.workflow-modal-print-mode [id='pneumatic-frontend'] {
+    visibility: hidden !important;
+    overflow: visible !important;
+    height: auto !important;
+    background: #fff !important;
+  }
+
+  body.workflow-modal-print-mode .processes-inwork-popup,
+  body.workflow-modal-print-mode .processes-inwork-popup * {
+    visibility: visible !important;
+  }
+
+  body.workflow-modal-print-mode .processes-inwork-popup .no-print,
+  body.workflow-modal-print-mode .processes-inwork-popup .no-print *,
+  body.workflow-modal-print-mode .processes-inwork-popup [class*='close-icon'],
+  body.workflow-modal-print-mode .processes-inwork-popup [class*='action-buttons'],
+  body.workflow-modal-print-mode .processes-inwork-popup [class*='popup-body-controls'],
+  body.workflow-modal-print-mode .processes-inwork-popup [class*='popup-title__edit'],
+  body.workflow-modal-print-mode .processes-inwork-popup [class*='comment-field'] {
+    visibility: hidden !important;
+    display: none !important;
+  }
+
+  .processes-inwork-popup {
+    position: absolute !important;
+    z-index: 2147483647 !important;
+    top: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
+    left: 0 !important;
+    overflow: visible !important;
+    display: block !important;
+    width: 100% !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    padding: 0 !important;
+    background: #fff !important;
+    opacity: 1 !important;
+  }
+
+  .processes-inwork-popup .modal-dialog {
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: auto !important;
+    max-width: none !important;
+    height: auto !important;
+    min-height: 0 !important;
+    transform: none !important;
+  }
+
+  .processes-inwork-popup .modal-content {
+    overflow: visible !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    height: auto !important;
+    min-height: 0 !important;
+    background: #fff !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+  }
+
+  .processes-inwork-popup .modal-content > div,
+  .processes-inwork-popup .modal-body {
+    overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  .processes-inwork-popup .modal-body {
+    padding: 0 !important;
+    background: #fff !important;
+    border-radius: 0 !important;
+  }
+
+  .processes-inwork-popup a {
+    color: inherit !important;
+    text-decoration: none !important;
+  }
+
+  .processes-inwork-popup [class*='popup-header'],
+  .processes-inwork-popup [class*='inwork-popup-content'] {
+    background: #fff !important;
+    border-radius: 0 !important;
+  }
+
+  .processes-inwork-popup [class*='popup-header'] {
+    padding: 0 !important;
+    min-height: 0 !important;
+  }
+
+  .processes-inwork-popup [class*='progress-container-desktop'] {
+    display: flex !important;
+  }
+
+  .processes-inwork-popup [class*='progress-container-mobile'] {
+    display: none !important;
+  }
+
+  .processes-inwork-popup [class*='process-log-item'],
+  [class*='container'] [class*='process-log-item'] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  [class*='left-area'],
+  [class*='cards__item'] {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
 }
-  
