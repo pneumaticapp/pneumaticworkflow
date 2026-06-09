@@ -8,6 +8,11 @@ import { TMentionData } from '../../types';
 import { ECustomEditorEntities } from '../types';
 import { getAttachmentEntityType } from '../getAttachmentEntityType';
 import { ContentToken } from 'remarkable/lib';
+import {
+  parseAttachmentMarkdownFromStart,
+  parseGeneralMarkdownLinkFromStart,
+  unescapeMarkdownLinkText,
+} from './markdownLinkText';
 
 export type TVariableToken = {
   title: string;
@@ -138,15 +143,17 @@ export const linksRemarkablePlugin = (remarkable: Remarkable) => {
         return false;
       }
 
-      const regEx =
-        /^!?\[([^\]]*)\]\((.*?)\s*(?:"(?:attachment_id:(\d*))?(?:\s+)?(?:entityType:([^"\s]*))?(?:[^"]*)?")?\s*\)/;
-      const match = regEx.exec(state.src.slice(state.pos));
+      const slice = state.src.slice(state.pos);
+      const attachmentMatch = parseAttachmentMarkdownFromStart(slice);
+      const generalMatch = attachmentMatch ? null : parseGeneralMarkdownLinkFromStart(slice);
+      const match = attachmentMatch ?? generalMatch;
 
       if (!match) {
         return false;
       }
 
-      const [matchString, name, url, id, type] = match;
+      const [matchString, nameRaw, url, id, type] = match;
+      const name = unescapeMarkdownLinkText(nameRaw);
 
       // valid match found, now we need to advance cursor
       state.pos += matchString.length;

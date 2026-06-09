@@ -12,17 +12,22 @@ import {
   $isFileAttachmentNode,
 } from '../nodes/attachments';
 import { buildAttachmentMarkdownString } from '../nodes/attachments/attachmentMarkdownFormat';
+import {
+  ATTACHMENT_MARKDOWN_INLINE_RE,
+  ATTACHMENT_MARKDOWN_LINE_RE,
+  getMarkdownLinkMatchEndIndex,
+  parseAttachmentMarkdownFromStart,
+  unescapeMarkdownLinkText,
+} from '../utils/converters/markdownLinkText';
 import { ECustomEditorEntities } from '../utils/types';
 
 type TAttachmentEntityType = ECustomEditorEntities.Image | ECustomEditorEntities.Video | ECustomEditorEntities.File;
 
-/** Full-line match for block-level import (line is only the image). Name allows escaped ] and \. */
-const ATTACHMENT_RE =
-  /^!?\[((?:[^\]\\]|\\.)*)\]\((.*?)\s*"(?:attachment_id:(\d*)\s*)?entityType:(image|video|file)[^"]*"\)?$/;
+/** Full-line match for block-level import (line is only the attachment). */
+const ATTACHMENT_RE = ATTACHMENT_MARKDOWN_LINE_RE;
 
-/** Inline match when line was merged by normalizeMarkdown (image inside a line). */
-export const ATTACHMENT_IMPORT_RE =
-  /!?\[((?:[^\]\\]|\\.)*)\]\((.*?)\s*"(?:attachment_id:(\d*)\s*)?entityType:(image|video|file)[^"]*"\)?/;
+/** Inline match when line was merged by normalizeMarkdown (attachment inside a line). */
+export const ATTACHMENT_IMPORT_RE = ATTACHMENT_MARKDOWN_INLINE_RE;
 
 const nodeCreators = {
   [ECustomEditorEntities.Image]: $createImageAttachmentNode,
@@ -33,8 +38,7 @@ const nodeCreators = {
 function createAttachmentNodeFromMatch(
   match: RegExpMatchArray | string[],
 ): ReturnType<typeof $createImageAttachmentNode> {
-  const nameRaw = match[1] ?? '';
-  const name = nameRaw.replace(/\\(.)/g, (_, c) => c);
+  const name = unescapeMarkdownLinkText(match[1] ?? '');
   const urlRaw = (match[2] ?? '').trim();
   // Use URL as-is to avoid corrupting presigned/signed URLs (e.g. S3) where
   // decoding %26, %3D, %2B in query params would alter the signature.
@@ -93,8 +97,16 @@ export const ATTACHMENT_INLINE: TextMatchTransformer = {
   dependencies: [ImageAttachmentNode, VideoAttachmentNode, FileAttachmentNode],
   importRegExp: ATTACHMENT_IMPORT_RE,
   regExp: ATTACHMENT_IMPORT_RE,
+  getEndIndex: (textNode, match) =>
+    getMarkdownLinkMatchEndIndex(
+      textNode.getTextContent(),
+      match.index ?? 0,
+      parseAttachmentMarkdownFromStart,
+    ),
   replace: (replaceNode, match) => {
-    const node = createAttachmentNodeFromMatch(match);
+    const parsedMatch =
+      parseAttachmentMarkdownFromStart(replaceNode.getTextContent()) ?? match;
+    const node = createAttachmentNodeFromMatch(parsedMatch);
     replaceNode.replace(node);
     const next = node.getNextSibling();
     if (next && $isTextNode(next)) {
