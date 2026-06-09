@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('accounts', '0142_vacation_fields'),
-        ('processes', '0252_add_manager_performer_type'),
+        ('processes', '0253_add_completed_or_skipped_predicate'),
     ]
 
     operations = [

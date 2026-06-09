@@ -84,7 +84,7 @@ export const getUserMenuItems = (
     },
     {
       id: 'help-center',
-      to: 'https://support.pneumatic.app/en/',
+      to: 'https://support.pneumatic.app/',
       label: 'menu.help-center',
       subsSlug: 'help-center',
       newWindow: true,
