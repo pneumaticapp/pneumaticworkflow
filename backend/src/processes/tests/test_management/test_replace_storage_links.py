@@ -471,3 +471,206 @@ def test_replace__no_file_service_domain__raises():
             file_service_domain='',
             stdout=StringIO(),
         )
+
+
+# ── URL encoding (P4) ───────────────────────────────────────
+
+
+def test_replace__cyrillic_file_id__url_encoded(
+    create_fa_with_file_id,
+    run_replace,
+):
+    """File_id with cyrillic chars must be URL-encoded."""
+    # arrange
+    user = create_test_admin()
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=1,
+    )
+    file_id = 'NiihssB_Рисунок.odg'
+    url = gcs_url(file_id)
+    create_fa_with_file_id(
+        account=user.account,
+        file_id=file_id,
+        url=url,
+    )
+    event = create_test_event(
+        workflow=workflow,
+        user=user,
+    )
+    event.text = f'File: {url}'
+    event.save(update_fields=['text'])
+
+    # act
+    run_replace(account_id=user.account.id)
+
+    # assert
+    event.refresh_from_db()
+    assert 'Рисунок' not in event.text
+    assert '%D0%A0%D0%B8%D1%81' in event.text
+    assert FS_DOMAIN in event.text
+
+
+def test_replace__file_id_with_spaces__url_encoded(
+    create_fa_with_file_id,
+    run_replace,
+):
+    """File_id with spaces must be URL-encoded."""
+    # arrange
+    user = create_test_admin()
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=1,
+    )
+    file_id = 'Zfcsx_Screencast 2023-08-16.webm'
+    url = gcs_url(file_id)
+    create_fa_with_file_id(
+        account=user.account,
+        file_id=file_id,
+        url=url,
+    )
+    event = create_test_event(
+        workflow=workflow,
+        user=user,
+    )
+    event.text = f'File: {url}'
+    event.save(update_fields=['text'])
+
+    # act
+    run_replace(account_id=user.account.id)
+
+    # assert
+    event.refresh_from_db()
+    assert '%20' in event.text
+    assert FS_DOMAIN in event.text
+
+
+def test_replace__ascii_file_id__not_encoded(
+    create_fa_with_file_id,
+    run_replace,
+):
+    """ASCII-only file_id must NOT be encoded (stays readable)."""
+    # arrange
+    user = create_test_admin()
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=1,
+    )
+    file_id = 'VumcsgTMm_pic.png'
+    url = gcs_url(file_id)
+    create_fa_with_file_id(
+        account=user.account,
+        file_id=file_id,
+        url=url,
+    )
+    event = create_test_event(
+        workflow=workflow,
+        user=user,
+    )
+    event.text = f'File: {url}'
+    event.save(update_fields=['text'])
+
+    # act
+    run_replace(account_id=user.account.id)
+
+    # assert
+    event.refresh_from_db()
+    expected_url = f'{FS_DOMAIN}/{file_id}'
+    assert expected_url in event.text
+
+
+def test_replace__cyrillic_thumbnail__url_encoded(
+    create_fa_with_file_id,
+    run_replace,
+):
+    """Thumbnail URL with cyrillic file_id must also be encoded."""
+    # arrange
+    user = create_test_admin()
+    file_id = 'AbcDefGh_Фото.jpg'
+    thumb_url = gcs_url(f'{file_id}_thumb')
+    create_fa_with_file_id(
+        account=user.account,
+        file_id=file_id,
+        thumbnail_url=thumb_url,
+    )
+
+    # act
+    run_replace(account_id=user.account.id)
+
+    # assert
+    fa = FileAttachment.objects.get(file_id=file_id)
+    assert 'Фото' not in (fa.thumbnail_url or '')
+    assert GCS_API not in (fa.thumbnail_url or '')
+
+
+def test_replace__encoded_idempotent__second_run_safe(
+    create_fa_with_file_id,
+    run_replace,
+):
+    """Double run with encoded URLs must not double-encode."""
+    # arrange
+    user = create_test_admin()
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=1,
+    )
+    file_id = 'NiihssB_Документ.pdf'
+    url = gcs_url(file_id)
+    create_fa_with_file_id(
+        account=user.account,
+        file_id=file_id,
+        url=url,
+    )
+    event = create_test_event(
+        workflow=workflow,
+        user=user,
+    )
+    event.text = f'File: {url}'
+    event.save(update_fields=['text'])
+
+    # act
+    run_replace(account_id=user.account.id)
+    event.refresh_from_db()
+
+    run_replace(account_id=user.account.id)
+    event.refresh_from_db()
+    second_text = event.text
+
+    # assert: no double encoding (%25 would mean % was re-encoded)
+    assert '%25' not in second_text
+    assert FS_DOMAIN in second_text
+
+
+def test_replace__json_field_with_cyrillic__encoded(
+    create_fa_with_file_id,
+    run_replace,
+):
+    """JSON fields with cyrillic file_id URLs must be encoded."""
+    # arrange
+    user = create_test_admin()
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=1,
+    )
+    file_id = 'XyzUvwRs_Отчёт.xlsx'
+    url = gcs_url(file_id)
+    create_fa_with_file_id(
+        account=user.account,
+        file_id=file_id,
+        url=url,
+    )
+    event = create_test_event(
+        workflow=workflow,
+        user=user,
+    )
+    event.task_json = {'attachments': [{'url': url}]}
+    event.save(update_fields=['task_json'])
+
+    # act
+    run_replace(account_id=user.account.id)
+
+    # assert
+    event.refresh_from_db()
+    json_str = str(event.task_json)
+    assert 'Отчёт' not in json_str
+    assert FS_DOMAIN in json_str

@@ -19,6 +19,7 @@ from src.storage.utils import (
     get_attachment_description_fields,
     refresh_attachments,
     sync_account_file_fields,
+    get_file_service_file_url,
 )
 
 pytestmark = pytest.mark.django_db
@@ -176,6 +177,323 @@ class TestExtractFileIdsFromText:
 
         # assert
         assert 'file-id_with-special_123456' in result
+
+    def test_extract_file_ids__file_id_with_dot__ok(self):
+        """Legacy GCS file_id with dot (extension) must be captured."""
+        # arrange
+        text = (
+            '[pic.png](https://example.com/'
+            'VumcsgTMmIiSagrYrvDdMFUBbWhUYN_pic.png)'
+        )
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
+        ):
+            result = extract_file_ids_from_text(text)
+
+        # assert
+        assert 'VumcsgTMmIiSagrYrvDdMFUBbWhUYN_pic.png' in result
+
+    def test_extract_file_ids__file_id_with_multiple_dots__ok(self):
+        """File_id with multiple dots must be fully captured."""
+        # arrange
+        text = (
+            '[report](https://example.com/'
+            'ZfcsxZayjl_report.final.v2.pdf)'
+        )
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
+        ):
+            result = extract_file_ids_from_text(text)
+
+        # assert
+        assert 'ZfcsxZayjl_report.final.v2.pdf' in result
+
+    def test_extract_file_ids__image_markdown_with_dot__ok(self):
+        """Image markdown ![name](url) with dotted file_id."""
+        # arrange
+        text = '![photo](https://example.com/AbcDefGhIj_photo.jpg)'
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
+        ):
+            result = extract_file_ids_from_text(text)
+
+        # assert
+        assert 'AbcDefGhIj_photo.jpg' in result
+
+    def test_extract_file_ids__uuid_without_dots__still_works(self):
+        """UUID-based file_id (no dots) still captured correctly."""
+        # arrange
+        uuid_id = '550e8400-e29b-41d4-a716-446655440000'
+        text = f'[doc](https://example.com/{uuid_id})'
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
+        ):
+            result = extract_file_ids_from_text(text)
+
+        # assert
+        assert uuid_id in result
+
+
+class TestExtractFileIdsFromValuesDotSupport:
+
+    def test_plain_url__file_id_with_dot__extracts(self):
+        """Plain URL with dotted file_id must be extracted."""
+        # arrange
+        values = [
+            'https://example.com/VumcsgTMmIiSagrYrvDd_pic.png',
+        ]
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
+        ):
+            result = extract_file_ids_from_values(values)
+
+        # assert
+        assert result == ['VumcsgTMmIiSagrYrvDd_pic.png']
+
+    def test_plain_url__file_id_with_multiple_dots__extracts(self):
+        """Plain URL with multi-dotted file_id must be extracted."""
+        # arrange
+        values = [
+            'https://example.com/ZfcsxZayjl_report.final.v2.pdf',
+        ]
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
+        ):
+            result = extract_file_ids_from_values(values)
+
+        # assert
+        assert result == ['ZfcsxZayjl_report.final.v2.pdf']
+
+
+class TestExtractFileIdsDotEdgeCases:
+    """Extended edge cases for dot support in file_id regex (P2)."""
+
+    def test_extract__mixed_uuid_and_legacy_in_same_text__ok(self):
+        """Both UUID and dotted legacy file_ids in same text."""
+        # arrange
+        uuid_id = '550e8400-e29b-41d4-a716-446655440000'
+        legacy_id = 'VumcsgTMmIiSagrYrvDd_pic.png'
+        text = (
+            f'New: [doc](https://example.com/{uuid_id}) '
+            f'Old: [pic](https://example.com/{legacy_id})'
+        )
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
+        ):
+            result = extract_file_ids_from_text(text)
+
+        # assert
+        assert len(result) == 2
+        assert uuid_id in result
+        assert legacy_id in result
+
+    def test_extract__multiple_dotted_ids_in_text__all_captured(self):
+        """Multiple different dotted file_ids are all captured."""
+        # arrange
+        text = (
+            '[a](https://example.com/AbcDefGh_photo.jpg) '
+            '[b](https://example.com/XyzUvwRs_doc.pdf) '
+            '[c](https://example.com/MnoPqrSt_data.csv)'
+        )
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
+        ):
+            result = extract_file_ids_from_text(text)
+
+        # assert
+        assert len(result) == 3
+        assert 'AbcDefGh_photo.jpg' in result
+        assert 'XyzUvwRs_doc.pdf' in result
+        assert 'MnoPqrSt_data.csv' in result
+
+    def test_extract__image_with_title_and_dot__ok(self):
+        """Image markdown with title attribute and dotted file_id."""
+        # arrange
+        text = (
+            '![photo](https://example.com/'
+            'AbcDefGhIj_photo.jpg "My Photo")'
+        )
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
+        ):
+            result = extract_file_ids_from_text(text)
+
+        # assert
+        assert 'AbcDefGhIj_photo.jpg' in result
+
+    def test_extract__boundary_8_chars_with_dot__ok(self):
+        """Minimum length file_id (8 chars) with dot."""
+        # arrange
+        text = '[f](https://example.com/abc.defg)'
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
+        ):
+            result = extract_file_ids_from_text(text)
+
+        # assert
+        assert 'abc.defg' in result
+
+    def test_extract__7_chars_with_dot__not_matched(self):
+        """Below minimum length (7 chars) even with dot."""
+        # arrange
+        text = '[f](https://example.com/ab.defg)'
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
+        ):
+            result = extract_file_ids_from_text(text)
+
+        # assert
+        assert result == []
+
+    def test_extract__dot_only_extension__captured_correctly(self):
+        """File_id like 'prefix_file.tar.gz' captured fully."""
+        # arrange
+        text = (
+            '[archive](https://example.com/'
+            'LongPrefixHere_file.tar.gz)'
+        )
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
+        ):
+            result = extract_file_ids_from_text(text)
+
+        # assert
+        assert 'LongPrefixHere_file.tar.gz' in result
+
+    def test_extract__encoded_cyrillic__decoded_to_match_db(self):
+        """URL-encoded cyrillic file_id must be decoded via unquote."""
+        # arrange
+        text = (
+            '[Рисунок](https://example.com/'
+            'NiihssB_%D0%A0%D0%B8%D1%81%D1%83'
+            '%D0%BD%D0%BE%D0%BA.odg)'
+        )
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
+        ):
+            result = extract_file_ids_from_text(text)
+
+        # assert — decoded to match DB value
+        assert 'NiihssB_Рисунок.odg' in result
+
+    def test_extract__encoded_spaces__decoded_to_match_db(self):
+        """URL-encoded spaces must be decoded to match DB value."""
+        # arrange
+        text = (
+            '[video](https://example.com/'
+            'Zfcsx_Screencast%202023-08-16.webm)'
+        )
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
+        ):
+            result = extract_file_ids_from_text(text)
+
+        # assert
+        assert 'Zfcsx_Screencast 2023-08-16.webm' in result
+
+    def test_extract__mixed_encoded_and_plain__both_decoded(self):
+        """Mix of encoded cyrillic and plain UUID, both extracted."""
+        # arrange
+        uuid_id = '550e8400-e29b-41d4-a716-446655440000'
+        text = (
+            f'[doc](https://example.com/{uuid_id}) '
+            '[pic](https://example.com/'
+            'AbcDefGh_%D0%A4%D0%BE%D1%82%D0%BE.jpg)'
+        )
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
+        ):
+            result = extract_file_ids_from_text(text)
+
+        # assert
+        assert len(result) == 2
+        assert uuid_id in result
+        assert 'AbcDefGh_Фото.jpg' in result
+
+
+class TestExtractEncodedFromValues:
+
+    def test_plain_url__encoded_cyrillic__decoded(self):
+        """Plain URL with encoded cyrillic must be decoded."""
+        # arrange
+        values = [
+            'https://example.com/'
+            'NiihssB_%D0%A0%D0%B8%D1%81%D1%83'
+            '%D0%BD%D0%BE%D0%BA.odg',
+        ]
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
+        ):
+            result = extract_file_ids_from_values(values)
+
+        # assert
+        assert result == ['NiihssB_Рисунок.odg']
+
+    def test_plain_url__encoded_spaces__decoded(self):
+        """Plain URL with encoded spaces must be decoded."""
+        # arrange
+        values = [
+            'https://example.com/'
+            'Zfcsx_Screencast%202023-08-16.webm',
+        ]
+
+        # act
+        with override_settings(
+                FILES_BASE_URL=_FILE_SERVICE_URL,
+                FILE_SERVICE_HOST_PATH=_FILE_SERVICE_HOST_PATH,
+        ):
+            result = extract_file_ids_from_values(values)
+
+        # assert
+        assert result == ['Zfcsx_Screencast 2023-08-16.webm']
 
 
 class TestExtractFileIdsFromValues:
@@ -893,3 +1211,70 @@ class TestExtractAllFileIdsFromSource:
 
         # assert
         assert 'kickoff_tpl_777' in result
+
+
+class TestGetFileServiceFileUrl:
+    """P6: get_file_service_file_url must URL-encode file_id."""
+
+    def test_cyrillic_file_id__url_encoded(self):
+        """Cyrillic chars in file_id must be percent-encoded."""
+        # act
+        with override_settings(FILE_SERVICE_URL='https://files.app'):
+            result = get_file_service_file_url('NiihssB_Рисунок.odg')
+
+        # assert
+        assert result is not None
+        assert 'Рисунок' not in result
+        assert '%D0%A0%D0%B8%D1%81' in result
+
+    def test_spaces_in_file_id__url_encoded(self):
+        """Spaces in file_id must be percent-encoded."""
+        # act
+        with override_settings(FILE_SERVICE_URL='https://files.app'):
+            result = get_file_service_file_url(
+                'Zfcsx_Screencast 2023-08-16.webm',
+            )
+
+        # assert
+        assert result is not None
+        assert ' ' not in result
+        assert '%20' in result
+
+    def test_uuid_file_id__not_encoded(self):
+        """UUID file_id (ASCII) must stay readable."""
+        # act
+        with override_settings(FILE_SERVICE_URL='https://files.app'):
+            result = get_file_service_file_url(
+                '550e8400-e29b-41d4-a716-446655440000',
+            )
+
+        # assert
+        assert result == (
+            'https://files.app/'
+            '550e8400-e29b-41d4-a716-446655440000'
+        )
+
+    def test_legacy_ascii_file_id__not_encoded(self):
+        """Legacy ASCII file_id must stay readable."""
+        # act
+        with override_settings(FILE_SERVICE_URL='https://files.app'):
+            result = get_file_service_file_url('VumcsgTMm_pic.png')
+
+        # assert
+        assert result == 'https://files.app/VumcsgTMm_pic.png'
+
+    def test_empty_file_id__returns_none(self):
+        # act
+        with override_settings(FILE_SERVICE_URL='https://files.app'):
+            result = get_file_service_file_url('')
+
+        # assert
+        assert result is None
+
+    def test_no_service_url__returns_none(self):
+        # act
+        with override_settings(FILE_SERVICE_URL=None):
+            result = get_file_service_file_url('some-file-id')
+
+        # assert
+        assert result is None

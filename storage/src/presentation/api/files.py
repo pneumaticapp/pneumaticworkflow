@@ -2,7 +2,6 @@
 
 import re
 import urllib.parse
-import uuid
 from typing import Annotated
 
 from fastapi import (
@@ -10,6 +9,7 @@ from fastapi import (
     Depends,
     File,
     Header,
+    Path,
     UploadFile,
 )
 from fastapi.responses import StreamingResponse
@@ -124,7 +124,7 @@ async def upload_file(
 
 @router.get('/{file_id}', dependencies=[Depends(authenticated_no_public)])
 async def download_file(
-    file_id: uuid.UUID,
+    file_id: Annotated[str, Path(min_length=1, max_length=512)],
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     use_case: Annotated[DownloadFileUseCase, Depends(get_download_use_case)],
     http_client: Annotated[HttpClient, Depends(get_http_client)],
@@ -146,9 +146,8 @@ async def download_file(
         FileAccessDeniedError: If access is denied.
 
     """
-    file_id_str = str(file_id)
     query = DownloadFileQuery(
-        file_id=file_id_str,
+        file_id=file_id,
         user_id=current_user.user_id,
         range_header=range_header,
     )
@@ -166,10 +165,10 @@ async def download_file(
         # Check permissions only for non-owners (saves backend request)
         has_access = await http_client.check_file_permission(
             user=current_user,
-            file_id=file_id_str,
+            file_id=file_id,
         )
         if not has_access:
-            raise FileAccessDeniedError(file_id_str, current_user.user_id)
+            raise FileAccessDeniedError(file_id, current_user.user_id)
 
     # Load the file stream only if access is granted
     file_stream = await use_case.get_stream(

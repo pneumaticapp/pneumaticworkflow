@@ -1,4 +1,5 @@
 import logging
+from urllib.parse import quote
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from django.conf import settings
@@ -99,10 +100,15 @@ class Command(BaseCommand):
             file_id__isnull=False,
         )
         for fa in attachments.iterator(chunk_size=batch_size):
+            encoded_id = quote(fa.file_id, safe='')
             if fa.url:
-                url_mapping[fa.url] = f"{fs_domain}/{fa.file_id}"
+                url_mapping[fa.url] = (
+                    f"{fs_domain}/{encoded_id}"
+                )
             if fa.thumbnail_url:
-                url_mapping[fa.thumbnail_url] = f"{fs_domain}/{fa.file_id}"
+                url_mapping[fa.thumbnail_url] = (
+                    f"{fs_domain}/{encoded_id}"
+                )
 
         # 2. Add base bucket paths mapped to new fs_domain
         base_accounts = Account.objects.filter(id__in=account_ids)
