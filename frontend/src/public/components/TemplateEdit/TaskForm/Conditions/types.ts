@@ -62,6 +62,7 @@ export enum EConditionOperators {
   MoreThan = 'more_than',
   LessThan = 'less_than',
   Completed = 'completed',
+  Skipped = 'skipped',
 }
 
 export enum EConditionLogicOperations {
