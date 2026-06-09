@@ -58,52 +58,64 @@ class Migration(migrations.Migration):
                 SELECT jsonb_set(
                     td.draft,
                     '{tasks}',
-                    jsonb_agg(
-                        CASE
-                            WHEN jsonb_typeof(task->'conditions') = 'array' THEN
-                                jsonb_set(
-                                    task,
-                                    '{conditions}',
-                                    (
-                                        SELECT jsonb_agg(
-                                            CASE
-                                                WHEN jsonb_typeof(cond->'rules') = 'array' THEN
-                                                    jsonb_set(
-                                                        cond,
-                                                        '{rules}',
-                                                        (
-                                                            SELECT jsonb_agg(
-                                                                CASE
-                                                                    WHEN jsonb_typeof(rule->'predicates') = 'array' THEN
-                                                                        jsonb_set(
-                                                                            rule,
-                                                                            '{predicates}',
-                                                                            (
-                                                                                SELECT jsonb_agg(
-                                                                                    CASE
-                                                                                        WHEN (pred->>'operator') = 'completed'
-                                                                                         AND (pred->>'field_type') = 'task'
-                                                                                        THEN jsonb_set(pred, '{operator}', '"completed_or_skipped"')
-                                                                                        ELSE pred
-                                                                                    END
-                                                                                )
-                                                                                FROM jsonb_array_elements(rule->'predicates') AS pred
-                                                                            )
+                    COALESCE(
+                        jsonb_agg(
+                            CASE
+                                WHEN jsonb_typeof(task->'conditions') = 'array' THEN
+                                    jsonb_set(
+                                        task,
+                                        '{conditions}',
+                                        COALESCE(
+                                            (
+                                                SELECT jsonb_agg(
+                                                    CASE
+                                                        WHEN jsonb_typeof(cond->'rules') = 'array' THEN
+                                                            jsonb_set(
+                                                                cond,
+                                                                '{rules}',
+                                                                COALESCE(
+                                                                    (
+                                                                        SELECT jsonb_agg(
+                                                                            CASE
+                                                                                WHEN jsonb_typeof(rule->'predicates') = 'array' THEN
+                                                                                    jsonb_set(
+                                                                                        rule,
+                                                                                        '{predicates}',
+                                                                                        COALESCE(
+                                                                                            (
+                                                                                                SELECT jsonb_agg(
+                                                                                                    CASE
+                                                                                                        WHEN (pred->>'operator') = 'completed'
+                                                                                                         AND (pred->>'field_type') = 'task'
+                                                                                                        THEN jsonb_set(pred, '{operator}', '"completed_or_skipped"')
+                                                                                                        ELSE pred
+                                                                                                    END
+                                                                                                )
+                                                                                                FROM jsonb_array_elements(rule->'predicates') AS pred
+                                                                                            ),
+                                                                                            '[]'::jsonb
+                                                                                        )
+                                                                                    )
+                                                                                ELSE rule
+                                                                            END
                                                                         )
-                                                                    ELSE rule
-                                                                END
+                                                                        FROM jsonb_array_elements(cond->'rules') AS rule
+                                                                    ),
+                                                                    '[]'::jsonb
+                                                                )
                                                             )
-                                                            FROM jsonb_array_elements(cond->'rules') AS rule
-                                                        )
-                                                    )
-                                                ELSE cond
-                                            END
+                                                        ELSE cond
+                                                    END
+                                                )
+                                                FROM jsonb_array_elements(task->'conditions') AS cond
+                                            ),
+                                            '[]'::jsonb
                                         )
-                                        FROM jsonb_array_elements(task->'conditions') AS cond
                                     )
-                                )
-                            ELSE task
-                        END
+                                ELSE task
+                            END
+                        ),
+                        '[]'::jsonb
                     )
                 )
                 FROM jsonb_array_elements(td.draft->'tasks') AS task
