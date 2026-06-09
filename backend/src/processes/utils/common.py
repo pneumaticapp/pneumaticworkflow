@@ -166,6 +166,11 @@ def get_tasks_parents(tasks_data: List[Dict]) -> dict:
 
     """ Find and return task parents api_names """
 
+    allowed_operators = {
+        PredicateOperator.COMPLETED,
+        PredicateOperator.SKIPPED,
+        PredicateOperator.COMPLETED_OR_SKIPPED,
+    }
     parents_by_tasks = {}
     available_api_names = {
         e['api_name'] for e in tasks_data if e.get('api_name')
@@ -181,7 +186,7 @@ def get_tasks_parents(tasks_data: List[Dict]) -> dict:
                     for p in rule.get('predicates', ()):
                         try:
                             if (
-                                p['operator'] == PredicateOperator.COMPLETED
+                                p['operator'] in allowed_operators
                                 and p['field_type'] == PredicateType.TASK
                                 and p['field'] in available_api_names
                             ):
