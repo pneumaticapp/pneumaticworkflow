@@ -36,6 +36,9 @@ export const getLastLoadedTemplateIdForTable = (state: IApplicationState): strin
 export const getWorkflowTemplateListItems = (state: IApplicationState): ITemplateFilterItem[] =>
   state.workflows.workflowsSettings.templateList.items;
 
+export const getWorkflowTemplateListIsLoading = (state: IApplicationState): boolean =>
+  state.workflows.workflowsSettings.templateList.isLoading;
+
 export const getWorkflowsStatus = (state: IApplicationState): EWorkflowsStatus =>
   state.workflows.workflowsSettings.values.statusFilter;
 

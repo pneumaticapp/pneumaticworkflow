@@ -103,9 +103,13 @@ export function PerformerFilterSelect() {
         isSearchShown
         placeholderText={formatMessage({ id: 'workflows.filter-no-user' })}
         searchPlaceholder={formatMessage({ id: 'sorting.search-placeholder' })}
-        selectedOptions={[...performersGroupIdsFilter, ...performersIdsFilter]}
+        selectedOptions={[
+          ...performersGroupIdsFilter.map((id) => `${ETemplateOwnerType.UserGroup}-${id}`),
+          ...performersIdsFilter.map((id) => `${ETemplateOwnerType.User}-${id}`),
+        ]}
         optionIdKey="id"
         optionLabelKey="displayName"
+        getOptionSelectionKey={(opt) => `${opt.type}-${opt.id}`}
         options={[...performersGroupOptions, ...performersOptions]}
         onChange={(_, options: any) => {
           const performers = options

@@ -31,6 +31,8 @@ const mapStateToProps = ({
     sorting,
     filterTemplates: templateList.items,
     filterSteps: templateStepList.items,
+    areFilterTemplatesLoading: templateList.isLoading,
+    areFilterStepsLoading: templateStepList.isLoading,
     templateIdFilter,
     taskApiNameFilter,
     completionStatus,

@@ -2,7 +2,7 @@ import * as React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 
 import { TaskCard, ETaskCardViewMode } from '../TaskCard';
-import { EExtraFieldType, IExtraField } from '../../../types/template';
+import { EExtraFieldType, ETemplateOwnerType, IExtraField } from '../../../types/template';
 import { ETaskStatus } from '../../../redux/actions';
 import { EWorkflowStatus, EWorkflowsLogSorting } from '../../../types/workflow';
 
@@ -23,9 +23,23 @@ jest.mock('../../../hooks/useCheckDevice', () => ({
   useCheckDevice: () => ({ isMobile: false, isDesktop: true }),
 }));
 
+jest.mock('react-redux', () => ({
+  useSelector: (selector: () => unknown) => selector(),
+}));
+
+jest.mock('../../../redux/selectors/groups', () => ({
+  getRegularGroupsList: () => [{ id: 5, name: 'Group Five', type: 'regular' }],
+}));
+
+const mockUsersDropdown = jest.fn((_props?: unknown) => null);
+
 jest.mock('../../UI/form/UsersDropdown', () => ({
-  UsersDropdown: () => null,
+  UsersDropdown: (props: unknown) => {
+    mockUsersDropdown(props);
+    return null;
+  },
   EOptionTypes: { User: 'user', Group: 'group' },
+  getUsersDropdownOptionValue: (optionType: string, id: number | string) => `${optionType}-${id}`,
 }));
 
 jest.mock('../../../utils/history', () => ({
@@ -251,6 +265,53 @@ const baseProps = {
 describe('TaskCard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
+  });
+
+  describe('Performer dropdown', () => {
+    it('does not cross-select user and group performers with the same id', async () => {
+      const task = {
+        ...baseTask,
+        performers: [
+          { sourceId: 5, type: ETemplateOwnerType.User, label: 'John Doe' },
+        ],
+      };
+
+      render(
+        <TaskCard
+          {...baseProps}
+          task={task}
+          authUser={{ ...baseAuthUser, isAdmin: true }}
+          users={[
+            {
+              id: 5,
+              firstName: 'John',
+              lastName: 'Doe',
+              email: 'john@test.com',
+              status: 'active',
+            } as any,
+          ]}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(mockUsersDropdown).toHaveBeenCalled();
+      });
+
+      const lastCall = mockUsersDropdown.mock.calls[mockUsersDropdown.mock.calls.length - 1];
+      const dropdownProps = lastCall?.[0] as {
+        value: Array<{ optionType: string; id: number }>;
+        options: Array<{ optionType: string; id: number; value: string }>;
+      };
+
+      expect(dropdownProps.value).toHaveLength(1);
+      expect(dropdownProps.value[0]).toMatchObject({ optionType: 'user', id: 5 });
+
+      const userOption = dropdownProps.options.find((option) => option.optionType === 'user' && option.id === 5);
+      const groupOption = dropdownProps.options.find((option) => option.optionType === 'group' && option.id === 5);
+
+      expect(userOption?.value).toBe('user-5');
+      expect(groupOption?.value).toBe('group-5');
+    });
   });
 
   describe('Filtering output fields by isHidden', () => {
