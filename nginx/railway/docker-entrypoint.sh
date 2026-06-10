@@ -8,6 +8,11 @@ if [ -z "$NAMESERVER" ]; then
   echo "ERROR: no nameserver found in /etc/resolv.conf" >&2
   exit 1
 fi
+
+# Nginx requires IPv6 addresses wrapped in brackets (e.g. [fd12::10])
+case "$NAMESERVER" in
+  *:*) NAMESERVER="[$NAMESERVER]" ;;
+esac
 export NAMESERVER
 
 # Default PORT if not set
