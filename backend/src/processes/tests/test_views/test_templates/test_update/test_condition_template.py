@@ -476,6 +476,359 @@ def test_update__predicate_to_type_kickoff_completed__ok(
     assert predicate.operator == PredicateOperator.COMPLETED
 
 
+def test_update__predicate_to_type_task_skipped__ok(
+    mocker,
+    api_client,
+):
+    # arrange
+    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    user = create_test_user(account=account)
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    template = create_test_template(
+        user=user,
+        tasks_count=3,
+        is_active=True,
+    )
+    first_task = template.tasks.order_by('number').first()
+    second_task = template.tasks.get(number=2)
+    third_task = template.tasks.get(number=3)
+
+    # START_TASK condition on third_task with COMPLETED on first_task
+    # to establish first_task as an ancestor of third_task
+    start_condition = ConditionTemplate.objects.create(
+        action=ConditionAction.START_TASK,
+        order=1,
+        task=third_task,
+        template=template,
+    )
+    start_rule = RuleTemplate.objects.create(
+        condition=start_condition,
+        template=template,
+    )
+    PredicateTemplate.objects.create(
+        rule=start_rule,
+        operator=PredicateOperator.COMPLETED,
+        field_type=PredicateType.TASK,
+        field=first_task.api_name,
+        value=None,
+        template=template,
+    )
+
+    # SKIP_TASK condition on third_task (will be updated to use SKIPPED)
+    skip_condition = ConditionTemplate.objects.create(
+        action=ConditionAction.SKIP_TASK,
+        order=2,
+        task=third_task,
+        template=template,
+    )
+    skip_rule = RuleTemplate.objects.create(
+        condition=skip_condition,
+        template=template,
+    )
+    predicate = PredicateTemplate.objects.create(
+        rule=skip_rule,
+        operator=PredicateOperator.COMPLETED,
+        field_type=PredicateType.TASK,
+        field=first_task.api_name,
+        value=None,
+        template=template,
+    )
+
+    start_request_data = {
+        'api_name': start_condition.api_name,
+        'order': start_condition.order,
+        'action': ConditionAction.START_TASK,
+        'rules': [
+            {
+                'api_name': start_rule.api_name,
+                'predicates': [
+                    {
+                        'api_name': start_rule.predicates.first().api_name,
+                        'field_type': PredicateType.TASK,
+                        'operator': PredicateOperator.COMPLETED,
+                        'field': first_task.api_name,
+                        'value': None,
+                    },
+                ],
+            },
+        ],
+    }
+    skip_request_data = {
+        'api_name': skip_condition.api_name,
+        'order': skip_condition.order,
+        'action': ConditionAction.SKIP_TASK,
+        'rules': [
+            {
+                'api_name': skip_rule.api_name,
+                'predicates': [
+                    {
+                        'api_name': predicate.api_name,
+                        'field_type': PredicateType.TASK,
+                        'operator': PredicateOperator.SKIPPED,
+                        'field': first_task.api_name,
+                        'value': None,
+                    },
+                ],
+            },
+        ],
+    }
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data={
+            'id': template.id,
+            'name': template.name,
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {'id': template.kickoff_instance.id},
+            'tasks': [
+                {
+                    'id': first_task.id,
+                    'number': first_task.number,
+                    'name': first_task.name,
+                    'api_name': first_task.api_name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+                {
+                    'id': second_task.id,
+                    'number': second_task.number,
+                    'name': second_task.name,
+                    'api_name': second_task.api_name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+                {
+                    'id': third_task.id,
+                    'number': third_task.number,
+                    'name': third_task.name,
+                    'api_name': third_task.api_name,
+                    'conditions': [
+                        start_request_data,
+                        skip_request_data,
+                    ],
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    condition_data = response.data['tasks'][2]['conditions'][1]
+    predicate_data = condition_data['rules'][0]['predicates'][0]
+    assert predicate_data['field_type'] == PredicateType.TASK
+    assert predicate_data['api_name'] == predicate.api_name
+    assert predicate_data['operator'] == PredicateOperator.SKIPPED
+    assert predicate_data['value'] is None
+    assert predicate_data['field'] == first_task.api_name
+
+    predicate.refresh_from_db()
+    assert predicate.field_type == PredicateType.TASK
+    assert predicate.operator == PredicateOperator.SKIPPED
+
+
+def test_update__predicate_to_type_task_completed_or_skipped__ok(
+    mocker,
+    api_client,
+):
+    # arrange
+    account = create_test_account(plan=BillingPlanType.UNLIMITED)
+    user = create_test_user(account=account)
+    mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    template = create_test_template(
+        user=user,
+        tasks_count=3,
+        is_active=True,
+    )
+    first_task = template.tasks.order_by('number').first()
+    second_task = template.tasks.get(number=2)
+    third_task = template.tasks.get(number=3)
+
+    # START_TASK condition on third_task with COMPLETED on first_task
+    # to establish first_task as an ancestor of third_task
+    start_condition = ConditionTemplate.objects.create(
+        action=ConditionAction.START_TASK,
+        order=1,
+        task=third_task,
+        template=template,
+    )
+    start_rule = RuleTemplate.objects.create(
+        condition=start_condition,
+        template=template,
+    )
+    PredicateTemplate.objects.create(
+        rule=start_rule,
+        operator=PredicateOperator.COMPLETED,
+        field_type=PredicateType.TASK,
+        field=first_task.api_name,
+        value=None,
+        template=template,
+    )
+
+    # SKIP_TASK condition on third_task
+    # (will be updated to use COMPLETED_OR_SKIPPED)
+    skip_condition = ConditionTemplate.objects.create(
+        action=ConditionAction.SKIP_TASK,
+        order=2,
+        task=third_task,
+        template=template,
+    )
+    skip_rule = RuleTemplate.objects.create(
+        condition=skip_condition,
+        template=template,
+    )
+    predicate = PredicateTemplate.objects.create(
+        rule=skip_rule,
+        operator=PredicateOperator.COMPLETED,
+        field_type=PredicateType.TASK,
+        field=first_task.api_name,
+        value=None,
+        template=template,
+    )
+
+    start_request_data = {
+        'api_name': start_condition.api_name,
+        'order': start_condition.order,
+        'action': ConditionAction.START_TASK,
+        'rules': [
+            {
+                'api_name': start_rule.api_name,
+                'predicates': [
+                    {
+                        'api_name': start_rule.predicates.first().api_name,
+                        'field_type': PredicateType.TASK,
+                        'operator': PredicateOperator.COMPLETED,
+                        'field': first_task.api_name,
+                        'value': None,
+                    },
+                ],
+            },
+        ],
+    }
+    skip_request_data = {
+        'api_name': skip_condition.api_name,
+        'order': skip_condition.order,
+        'action': ConditionAction.SKIP_TASK,
+        'rules': [
+            {
+                'api_name': skip_rule.api_name,
+                'predicates': [
+                    {
+                        'api_name': predicate.api_name,
+                        'field_type': PredicateType.TASK,
+                        'operator': PredicateOperator.COMPLETED_OR_SKIPPED,
+                        'field': first_task.api_name,
+                        'value': None,
+                    },
+                ],
+            },
+        ],
+    }
+    api_client.token_authenticate(user)
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data={
+            'id': template.id,
+            'name': template.name,
+            'is_active': True,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {'id': template.kickoff_instance.id},
+            'tasks': [
+                {
+                    'id': first_task.id,
+                    'number': first_task.number,
+                    'name': first_task.name,
+                    'api_name': first_task.api_name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+                {
+                    'id': second_task.id,
+                    'number': second_task.number,
+                    'name': second_task.name,
+                    'api_name': second_task.api_name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+                {
+                    'id': third_task.id,
+                    'number': third_task.number,
+                    'name': third_task.name,
+                    'api_name': third_task.api_name,
+                    'conditions': [
+                        start_request_data,
+                        skip_request_data,
+                    ],
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+
+    # assert
+    assert response.status_code == 200
+    condition_data = response.data['tasks'][2]['conditions'][1]
+    predicate_data = condition_data['rules'][0]['predicates'][0]
+    assert predicate_data['field_type'] == PredicateType.TASK
+    assert predicate_data['api_name'] == predicate.api_name
+    assert predicate_data['operator'] == PredicateOperator.COMPLETED_OR_SKIPPED
+    assert predicate_data['value'] is None
+    assert predicate_data['field'] == first_task.api_name
+
+    predicate.refresh_from_db()
+    assert predicate.field_type == PredicateType.TASK
+    assert predicate.operator == PredicateOperator.COMPLETED_OR_SKIPPED
+
+
 def test_update__predicate_to_type_number__ok(
     mocker,
     api_client,

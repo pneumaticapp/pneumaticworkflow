@@ -374,7 +374,7 @@ def create_test_template(
                 )
                 PredicateTemplate.objects.create(
                     rule=rule,
-                    operator=PredicateOperator.COMPLETED,
+                    operator=PredicateOperator.COMPLETED_OR_SKIPPED,
                     field_type=PredicateType.TASK,
                     field=parents[0],
                     value=None,

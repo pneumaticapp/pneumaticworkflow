@@ -81,7 +81,7 @@ export const conditionsByFieldTypeMap: { [key in EExtraFieldType]: EConditionOpe
     EConditionOperators.Exist,
     EConditionOperators.NotExist,
   ],
-  [EStartingType.Task]: [EConditionOperators.Completed],
+  [EStartingType.Task]: [EConditionOperators.Completed, EConditionOperators.Skipped, EConditionOperators.CompletedOrSkipped],
   [EStartingType.Kickoff]: [EConditionOperators.Completed],
 };
 
@@ -95,6 +95,8 @@ export const labelByOperatorMap: { [key in EConditionOperators]: string } = {
   [EConditionOperators.LessThan]: 'templates.conditions.less-than',
   [EConditionOperators.MoreThan]: 'templates.conditions.more-than',
   [EConditionOperators.Completed]: 'templates.conditions.completed',
+  [EConditionOperators.Skipped]: 'templates.conditions.skipped',
+  [EConditionOperators.CompletedOrSkipped]: 'templates.conditions.completed-or-skipped',
 };
 
 export function getDropdownOperators(
