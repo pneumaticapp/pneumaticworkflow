@@ -131,7 +131,6 @@ class WorkflowViewSet(
         ):
             extra_fields = [
                 'kickoff__output__selections',
-                'kickoff__output__attachments',
             ]
         else:
             extra_fields = None
