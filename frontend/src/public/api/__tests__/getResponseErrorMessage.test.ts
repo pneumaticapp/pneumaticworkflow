@@ -16,8 +16,6 @@ jest.mock('../../utils/auth', () => ({ getCurrentToken: jest.fn() }));
 jest.mock('../../constants/enviroment', () => ({ envBackendURL: '' }));
 jest.mock('../../utils/isRequestCanceled', () => ({ isRequestCanceled: jest.fn().mockReturnValue(false) }));
 
-import { getResponseErrorMessage } from '../commonRequest';
-
 jest.mock('axios', () => {
   const mockRequest = jest.fn().mockRejectedValue(new Error('not configured'));
   const mockInstance = Object.assign(mockRequest, {
@@ -35,6 +33,7 @@ jest.mock('axios', () => {
   };
 });
 
+import '../commonRequest';
 import axios from 'axios';
 
 const mockedAxios = axios as jest.Mocked<typeof axios>;
@@ -60,65 +59,56 @@ describe('response interceptor: Error.message for Sentry', () => {
     jest.clearAllMocks();
   });
 
-  it('rejected Error contains detail from DRF response in .message', async () => {
-    const error = makeAxiosError({ detail: 'Not found.' }, 404);
-
-    await expect(responseErrorHandler(error)).rejects.toMatchObject({
-      message: 'Not found.',
-      status: 404,
-    });
-  });
-
-  it('rejected Error contains message field when detail is absent', async () => {
-    const error = makeAxiosError({ message: 'Validation failed' }, 400);
+  it('uses message from payload when present', async () => {
+    const error = makeAxiosError({ message: 'Validation failed', code: 'ERR_001' }, 400);
 
     await expect(responseErrorHandler(error)).rejects.toMatchObject({
       message: 'Validation failed',
+      code: 'ERR_001',
       status: 400,
     });
   });
 
-  it('rejected Error contains plain text from response.data in .message', async () => {
+  it('falls back to JSON.stringify with status when payload has no message field', async () => {
+    const error = makeAxiosError({ detail: 'Not found.' }, 404);
+
+    await expect(responseErrorHandler(error)).rejects.toMatchObject({
+      message: JSON.stringify({ detail: 'Not found.', status: 404 }),
+      detail: 'Not found.',
+      status: 404,
+    });
+  });
+
+  it('uses plain text from response.data as Error.error property', async () => {
     const error = makeAxiosError('Internal Server Error', 500);
 
     await expect(responseErrorHandler(error)).rejects.toMatchObject({
-      message: 'Internal Server Error',
+      error: 'Internal Server Error',
       status: 500,
     });
   });
 
-  it('rejected Error contains non-empty fallback when data has no detail/message', async () => {
+  it('falls back to JSON.stringify with status when payload has no message or detail', async () => {
     const error = makeAxiosError({ code: 'ERR_001' }, 422);
+
+    const rejected = responseErrorHandler(error);
+    await expect(rejected).rejects.toHaveProperty('message', JSON.stringify({ code: 'ERR_001', status: 422 }));
+  });
+
+  it('never produces empty Error.message', async () => {
+    const error = makeAxiosError({}, 500);
 
     await expect(responseErrorHandler(error)).rejects.toHaveProperty('message');
     await expect(responseErrorHandler(error)).rejects.not.toHaveProperty('message', '');
   });
-});
 
-const FALLBACK = 'No error details provided by server';
+  it('preserves all payload properties on the rejected Error', async () => {
+    const error = makeAxiosError({ code: 'ERR_002', details: { name: 'url', reason: 'invalid' } }, 400);
 
-describe('getResponseErrorMessage', () => {
-  it('returns string as-is when data is a string', () => {
-    expect(getResponseErrorMessage('Server error')).toBe('Server error');
-  });
-
-  it('returns detail from object (DRF standard)', () => {
-    expect(getResponseErrorMessage({ detail: 'Not found.' })).toBe('Not found.');
-  });
-
-  it('returns message when detail is absent', () => {
-    expect(getResponseErrorMessage({ message: 'Validation error' })).toBe('Validation error');
-  });
-
-  it('prioritizes detail over message', () => {
-    expect(getResponseErrorMessage({ detail: 'Detail text', message: 'Message text' })).toBe('Detail text');
-  });
-
-  it.each([
-    ['empty object', {}],
-    ['undefined', undefined],
-    ['null', null],
-  ])('returns fallback when data is %s', (_label, data) => {
-    expect(getResponseErrorMessage(data)).toBe(FALLBACK);
+    await expect(responseErrorHandler(error)).rejects.toMatchObject({
+      code: 'ERR_002',
+      details: { name: 'url', reason: 'invalid' },
+      status: 400,
+    });
   });
 });
