@@ -5,7 +5,6 @@ import { NotificationManager } from '../components/UI/Notifications';
 import { getErrorMessage } from './getErrorMessage';
 import { uploadFileToFileService } from '../api/fileServiceUpload';
 import { createUniqueId } from './createId';
-import { isEnvStorage } from '../constants/enviroment';
 
 export type TUploadedFile = {
   id: string;
@@ -22,7 +21,6 @@ const UPLOAD_BATCH_LIMIT = 3;
 const MAX_THUMBNAIL_WIDTH_OR_HEIGHT = 160;
 
 // Internal error markers (not displayed to users — NotificationManager shows localized messages)
-const UPLOAD_ERROR_STORAGE_DISABLED = 'Storage disabled';
 const UPLOAD_ERROR_FILE_TOO_LARGE = 'Max file size exceeded';
 const UPLOAD_ERROR_VALIDATION = 'Validation failed';
 
@@ -39,10 +37,7 @@ export const uploadFiles = async (
   const uploadFile = async (file: Blob | File): Promise<TUploadedFile> => {
     const filename = file instanceof File ? file.name : createUniqueId('file-xxxyxx');
 
-    if (!isEnvStorage) {
-      NotificationManager.warning({ message: 'file-upload.error-storage' });
-      return { id: createUniqueId('error-'), name: filename, url: '', size: file.size, error: UPLOAD_ERROR_STORAGE_DISABLED };
-    }
+
 
     if (file.size > MAX_FILE_SIZE) {
       NotificationManager.warning({ message: 'file-upload.max-file-size-error' });

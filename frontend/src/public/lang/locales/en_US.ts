@@ -1350,7 +1350,6 @@ export const enMessages = {
 
   'legacy-template': '(Legacy Template)',
   'file-upload.label-upload-button': 'Upload file',
-  'file-upload.error-storage': 'Saving files is not available, configure file storage',
   'file-upload.error': 'Failed to upload file',
   'file-upload.max-file-size-error': 'Maximum file size is 100 MB',
   'file-upload.wrong-dimension':

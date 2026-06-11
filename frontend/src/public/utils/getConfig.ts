@@ -127,7 +127,7 @@ export function getConfig(): TConfig {
       featureFlags: Object.fromEntries(
         [
           'CAPTCHA', 'GOOGLE_AUTH', 'MS_AUTH', 'SSO_AUTH', 'SIGNUP', 'BILLING',
-          'AI', 'PUSH', 'STORAGE', 'ANALYTICS', 'SSO_PROVIDER', 'LANGUAGE_CODE',
+          'AI', 'PUSH', 'ANALYTICS', 'SSO_PROVIDER', 'LANGUAGE_CODE',
           'BACKEND_URL', 'SENTRY_DSN', 'WSS_URL', 'HOST', 'ANALYTICS_ID',
           'RECAPTCHA_SITE_KEY', 'GOOGLE_CLIENT_ID', 'FIREBASE_VAPID_KEY',
           'FIREBASE_API_KEY', 'FIREBASE_AUTH_DOMAIN', 'FIREBASE_PROJECT_ID',

@@ -1233,7 +1233,6 @@ export const ruMessages = {
   'notification-warning-no': 'Нет',
   'legacy-template': '(Устаревший шаблон)',
   'file-upload.label-upload-button': 'Загрузить файл',
-  'file-upload.error-storage': 'Сохранение файлов недоступно, настройте хранилище файлов',
   'file-upload.error': 'Не удалось загрузить файл',
   'file-upload.max-file-size-error': 'Максимальный размер файла составляет 100 МБ',
   'file-upload.wrong-dimension':

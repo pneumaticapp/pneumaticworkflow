@@ -138,10 +138,6 @@ services:
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER:-}
       FIREBASE_PUSH_APPLICATION_CREDENTIALS: ${FIREBASE_PUSH_APPLICATION_CREDENTIALS:-/pneumatic_backend/firebase-push.json}
-      STORAGE: ${STORAGE:-no}
-      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-}
-      GCLOUD_BUCKET_NAME: ${GCLOUD_BUCKET_NAME:-pneumatic}
-      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-/pneumatic_backend/google_api_credentials.json}
       SENTRY_DSN: ${SENTRY_DSN:-}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}
@@ -253,10 +249,6 @@ services:
       PUSH: ${PUSH:-no}
       PUSH_PROVIDER: ${PUSH_PROVIDER:-}
       FIREBASE_PUSH_APPLICATION_CREDENTIALS: ${FIREBASE_PUSH_APPLICATION_CREDENTIALS:-/pneumatic_backend/firebase-push.json}
-      STORAGE: ${STORAGE:-no}
-      STORAGE_PROVIDER: ${STORAGE_PROVIDER:-}
-      GCLOUD_BUCKET_NAME: ${GCLOUD_BUCKET_NAME:-pneumatic}
-      GOOGLE_APPLICATION_CREDENTIALS: ${GOOGLE_APPLICATION_CREDENTIALS:-/pneumatic_backend/google_api_credentials.json}
       SENTRY_DSN: ${SENTRY_DSN:-}
       POSTGRES_HOST: ${POSTGRES_HOST:-postgres}
       POSTGRES_USER: ${POSTGRES_USER:-postgres_user}

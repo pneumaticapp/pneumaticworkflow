@@ -35,11 +35,6 @@ jest.mock('../createId', () => ({
   createUniqueId: jest.fn(() => `generated-id-${++idCounter}`),
 }));
 
-let mockIsEnvStorage = true;
-jest.mock('../../constants/enviroment', () => ({
-  get isEnvStorage() { return mockIsEnvStorage; },
-}));
-
 import { NotificationManager } from '../../components/UI/Notifications';
 
 const mockNotificationManager = NotificationManager as jest.Mocked<typeof NotificationManager>;
@@ -47,7 +42,6 @@ const mockNotificationManager = NotificationManager as jest.Mocked<typeof Notifi
 describe('uploadFiles', () => {
   beforeEach(() => {
     jest.clearAllMocks();
-    mockIsEnvStorage = true;
     idCounter = 0;
   });
 
@@ -174,22 +168,7 @@ describe('uploadFiles', () => {
     });
   });
 
-  describe('storage disabled', () => {
-    it('returns error object when isEnvStorage is false', async () => {
-      mockIsEnvStorage = false;
-      const file = new File(['data'], 'file.pdf', { type: 'application/pdf' });
 
-      const result = await uploadFiles([file]);
-
-      expect(mockUploadFileToFileService).not.toHaveBeenCalled();
-      expect(mockNotificationManager.warning).toHaveBeenCalledWith({
-        message: 'file-upload.error-storage',
-      });
-      expect(result).toHaveLength(1);
-      expect(result[0].error).toBe('Storage disabled');
-      expect(result[0].url).toBe('');
-    });
-  });
 
   describe('error handling', () => {
     it('returns error object on upload failure', async () => {
