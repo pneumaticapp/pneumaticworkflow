@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 import { InView } from 'react-intersection-observer';
@@ -13,6 +14,8 @@ import { getUserFullName } from '../../../../../utils/users';
 import { RichText } from '../../../../RichText';
 import { Attachments } from '../../../../Attachments';
 import { UserData } from '../../../../UserData';
+import { getUserById } from '../../../../UserData/utils/getUserById';
+import { getUsers } from '../../../../../redux/selectors/user';
 import {
   AddEmojiIcon,
   CommentDeleteIcon,
@@ -59,6 +62,7 @@ export function WorkflowLogTaskComment({
   mentions,
 }: TWorkflowLogTaskCommentProps) {
   const { formatMessage } = useIntl();
+  const users = useSelector(getUsers);
 
   const clickRef = useRef<HTMLButtonElement>(null);
   const [isShowTooltipEmoji, setIsShowTooltipEmoji] = useState(false);
@@ -263,15 +267,10 @@ export function WorkflowLogTaskComment({
     return (
       <ul className={styles['comment__watch-list']}>
         {list.map((userWatch) => {
-          return (
-            <UserData userId={userWatch as number}>
-              {(user) => {
-                if (!user) return null;
-                const userName = getUserFullName(user);
+          const user = getUserById(users, userWatch.id);
 
-                return <li>{userName}</li>;
-              }}
-            </UserData>
+          return (
+            <li key={userWatch.id}>{user ? getUserFullName(user) : null}</li>
           );
         })}
       </ul>
@@ -279,10 +278,11 @@ export function WorkflowLogTaskComment({
   };
 
   const renderReaction = () => {
-    return Object.entries(reactions).map(([value, users]) => {
+    return Object.entries(reactions).map(([value, reactedUserIds]) => {
       return (
         <Tooltip
-          content={renderListUsers(users)}
+          key={value}
+          content={renderListUsers(reactedUserIds)}
           containerClassName={classnames(styles['comment__footer-item'], workflowModal && styles['is-modal'])}
         >
           <button

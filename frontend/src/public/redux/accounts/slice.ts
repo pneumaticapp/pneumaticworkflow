@@ -192,6 +192,26 @@ const accountsSlice = createSlice({
     closeCreateUserModal: (state) => {
       state.isCreateUserModalOpen = false;
     },
+
+    upsertUserFromWs: (state, action: PayloadAction<TUserListItem>) => {
+      const user = action.payload;
+      const upsertList = (list: TUserListItem[]) => {
+        const hasUser = list.some((item) => item.id === user.id);
+        if (!hasUser) {
+          return [...list, user];
+        }
+        return list.map((item) => (item.id === user.id ? { ...item, ...user } : item));
+      };
+
+      state.users = upsertList(state.users);
+      state.team.list = upsertList(state.team.list);
+    },
+
+    removeUserFromWs: (state, action: PayloadAction<number>) => {
+      const removeFromList = (list: TUserListItem[]) => list.filter((item) => item.id !== action.payload);
+      state.users = removeFromList(state.users);
+      state.team.list = removeFromList(state.team.list);
+    },
   },
 });
 
@@ -242,6 +262,8 @@ export const {
   closeCreateUserModal,
   changeUserManager,
   changeUserReports,
+  upsertUserFromWs,
+  removeUserFromWs,
 } = accountsSlice.actions;
 
 export default accountsSlice.reducer;

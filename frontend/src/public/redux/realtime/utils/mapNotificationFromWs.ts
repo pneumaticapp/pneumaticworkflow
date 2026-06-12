@@ -1,14 +1,27 @@
 import type { TNotificationsListItem } from '../../../types';
 import { toISOStringFromTsp } from '../../../utils/dateTime';
 
-import type { INotificationWsEnvelope } from '../wsPayloads';
+import type { IWsNotificationCreatedData } from '../types';
+import { isNotificationDataType } from '../types';
 
-export function mapRealtimeEnvelopeToNotificationItem(envelope: INotificationWsEnvelope): TNotificationsListItem | null {
+export type TNotificationMappingEnvelope = {
+  [Type in IWsNotificationCreatedData['type']]: {
+    type: Type;
+    data: Extract<IWsNotificationCreatedData, { type: Type }>;
+  };
+}[IWsNotificationCreatedData['type']];
+
+function mapNotificationEnvelopeToListItem(
+  envelope: TNotificationMappingEnvelope,
+): TNotificationsListItem | null {
   switch (envelope.type) {
     case 'comment':
     case 'mention':
     case 'reaction': {
       const { data } = envelope;
+      if (data.author === null || !data.task || !data.workflow || data.text === null) {
+        return null;
+      }
       return {
         id: data.id,
         status: data.status,
@@ -27,12 +40,15 @@ export function mapRealtimeEnvelopeToNotificationItem(envelope: INotificationWsE
         status: data.status,
         datetime: toISOStringFromTsp(data.datetimeTsp),
         type: 'system',
-        text: data.text,
+        text: data.text ?? '',
       };
     }
     case 'urgent':
     case 'not_urgent': {
       const { data } = envelope;
+      if (data.author === null || !data.task || !data.workflow) {
+        return null;
+      }
       return {
         id: data.id,
         status: data.status,
@@ -46,6 +62,9 @@ export function mapRealtimeEnvelopeToNotificationItem(envelope: INotificationWsE
     }
     case 'overdue_task': {
       const { data } = envelope;
+      if (!data.task || !data.workflow) {
+        return null;
+      }
       return {
         id: data.id,
         status: data.status,
@@ -55,8 +74,11 @@ export function mapRealtimeEnvelopeToNotificationItem(envelope: INotificationWsE
         task: data.task,
       };
     }
-    case 'delay_workflow': {
+    case 'snooze_workflow': {
       const { data } = envelope;
+      if (data.author === null || !data.task?.delay || !data.workflow) {
+        return null;
+      }
       return {
         id: data.id,
         status: data.status,
@@ -76,6 +98,9 @@ export function mapRealtimeEnvelopeToNotificationItem(envelope: INotificationWsE
     }
     case 'resume_workflow': {
       const { data } = envelope;
+      if (data.author === null || !data.task || !data.workflow) {
+        return null;
+      }
       return {
         id: data.id,
         status: data.status,
@@ -88,7 +113,10 @@ export function mapRealtimeEnvelopeToNotificationItem(envelope: INotificationWsE
     }
     case 'due_date_changed': {
       const { data } = envelope;
-      const {dueDateTsp} = data.task;
+      const { dueDateTsp } = data.task ?? {};
+      if (!data.task || !data.workflow || data.author === null) {
+        return null;
+      }
       return {
         id: data.id,
         status: data.status,
@@ -104,7 +132,43 @@ export function mapRealtimeEnvelopeToNotificationItem(envelope: INotificationWsE
         },
       };
     }
+    case 'complete_task': {
+      const { data } = envelope;
+      if (!data.task || !data.workflow || data.author === null) {
+        return null;
+      }
+      return {
+        id: data.id,
+        status: data.status,
+        datetime: toISOStringFromTsp(data.datetimeTsp),
+        type: 'complete_task',
+        author: data.author,
+        text: null,
+        workflow: data.workflow,
+        task: data.task,
+      };
+    }
     default:
       return null;
   }
+}
+
+export function mapNotificationCreatedDataToListItem(
+  data: IWsNotificationCreatedData,
+): TNotificationsListItem | null {
+  if (!isNotificationDataType(data.type)) {
+    return null;
+  }
+
+  return mapNotificationEnvelopeToListItem({
+    type: data.type,
+    data,
+  } as TNotificationMappingEnvelope);
+}
+
+/** @deprecated Use mapNotificationCreatedDataToListItem for notification_created payloads */
+export function mapRealtimeEnvelopeToNotificationItem(
+  envelope: TNotificationMappingEnvelope,
+): TNotificationsListItem | null {
+  return mapNotificationEnvelopeToListItem(envelope);
 }

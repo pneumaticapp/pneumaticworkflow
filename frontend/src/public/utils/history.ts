@@ -1,4 +1,5 @@
 import { createBrowserHistory } from 'history';
+import { matchPath } from 'react-router-dom';
 
 import { ERoutes } from '../constants/routes';
 
@@ -17,6 +18,21 @@ export const checkSomeRouteIsActive = (...routes: ERoutes[]) => {
 
 export const checkSomeRouteMatchesLocation = (location: string, routes: ERoutes[]) => {
   return getRoutesRegExps(...routes).some(route => route.test(location));
+};
+
+export const getRouteParamId = (
+  route: ERoutes,
+  pathname: string = history.location.pathname,
+): number | null => {
+  const match = matchPath(pathname, { path: route, exact: true });
+  const id = (match?.params as { id: string })?.id;
+
+  if (!id) {
+    return null;
+  }
+
+  const numericId = Number(id);
+  return Number.isNaN(numericId) ? null : numericId;
 };
 
 export const isCreateTemplate = () => history.location.pathname.includes(ERoutes.TemplatesCreate);
