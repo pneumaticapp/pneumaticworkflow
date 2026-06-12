@@ -535,13 +535,6 @@ services:
       KEY_PREFIX_REDIS: ${FILE_KEY_PREFIX_REDIS:-:1:}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
       AUTH_TOKEN_ITERATIONS: ${FILE_AUTH_TOKEN_ITERATIONS:-1}
-    volumes:
-      - file_service_media:/app/media
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
-      interval: 10s
-      timeout: 5s
-      retries: 3
     depends_on:
       file-postgres:
         condition: service_healthy
@@ -564,7 +557,7 @@ services:
       timeout: 5s
       retries: 5
     volumes:
-      - file_postgres_data:/var/lib/postgresql/data
+      - ./file-postgres/data:/var/lib/postgresql/data:rw
     networks:
       - pneumatic
     restart: unless-stopped
@@ -576,7 +569,7 @@ services:
     expose:
       - 9333
     volumes:
-      - seaweedfs_master_data:/data
+      - ./seaweedfs/master/data:/data:rw
     networks:
       - pneumatic
 
@@ -594,7 +587,7 @@ services:
     depends_on:
       - seaweedfs-master
     volumes:
-      - seaweedfs_volume_data:/data
+      - ./seaweedfs/volume/data:/data:rw
     networks:
       - pneumatic
 
@@ -610,7 +603,7 @@ services:
     volumes:
       - ./storage/seaweedfs/filer.toml:/etc/seaweedfs/filer.toml
       - ./storage/seaweedfs/s3.json:/etc/seaweedfs/s3.json:ro
-      - seaweedfs_filer_data:/data
+      - ./seaweedfs/filer/data:/data:rw
     networks:
       - pneumatic
 
@@ -620,8 +613,3 @@ networks:
 volumes:
   backend-staticfiles:
   backend-socket:
-  file_postgres_data:
-  file_service_media:
-  seaweedfs_master_data:
-  seaweedfs_volume_data:
-  seaweedfs_filer_data:
