@@ -600,14 +600,14 @@ export function TaskCard({
         className={classnames(styles['container'], viewMode === ETaskCardViewMode.Guest && styles['container_guest'])}
       >
         {renderHeader()}
-        <p className={styles['description']}>
+        <div className={styles['description']}>
           <RichText
             text={task.description}
             interactiveChecklists
             renderExtensions={[...createChecklistExtension(task), ...createProgressbarExtension(task)]}
             hideIcon
           />
-        </p>
+        </div>
         <div className={styles['info']}>
           <div className={styles['performers']}>
             {renderPerformersControllers()}
