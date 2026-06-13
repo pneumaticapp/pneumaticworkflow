@@ -6,6 +6,9 @@ from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import IsAuthenticated
 from src.storage.models import Attachment
 from src.storage.paginations import AttachmentListPagination
+from src.storage.permissions import (
+    IsAuthenticatedOrPublicTemplate,
+)
 from src.storage.serializers import (
     AttachmentCheckPermissionSerializer,
     AttachmentListFilterSerializer,
@@ -26,20 +29,20 @@ class AttachmentViewSet(
     """
 
     serializer_class = AttachmentSerializer
-    permission_classes = (IsAuthenticated,)
     queryset = Attachment.objects.all()
 
+    action_serializer_classes = {
+        'check_permission': AttachmentCheckPermissionSerializer,
+        'list': AttachmentListSerializer,
+    }
     action_paginator_classes = {
         'list': AttachmentListPagination,
     }
 
-    def get_serializer_class(self):
-        """Returns serializer class depending on action."""
+    def get_permissions(self):
         if self.action == 'check_permission':
-            return AttachmentCheckPermissionSerializer
-        if self.action == 'list':
-            return AttachmentListSerializer
-        return AttachmentSerializer
+            return (IsAuthenticatedOrPublicTemplate(),)
+        return (IsAuthenticated(),)
 
     @action(
         methods=['POST'],
@@ -60,14 +63,25 @@ class AttachmentViewSet(
         slz = self.get_serializer(data=request.data)
         slz.is_valid(raise_exception=True)
 
-        file_id = slz.validated_data['file_id']
+        public_template = getattr(request, 'public_template', None)
+        if request.user.is_authenticated:
+            user = request.user
+            user_id = user.id
+            account_id = user.account_id
+        else:
+            user = None
+            user_id = None
+            account_id = (
+                public_template.account_id
+                if public_template else None
+            )
 
-        # Use service to check permissions
-        service = AttachmentService(user=request.user)
+        service = AttachmentService(user=user)
         has_permission = service.check_user_permission(
-            user_id=request.user.id,
-            account_id=request.user.account_id,
-            file_id=file_id,
+            user_id=user_id,
+            account_id=account_id,
+            file_id=slz.validated_data['file_id'],
+            public_template=public_template,
         )
 
         if has_permission:

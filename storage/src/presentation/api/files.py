@@ -2,6 +2,7 @@
 
 import re
 import urllib.parse
+from http import HTTPStatus
 from typing import Annotated
 
 from fastapi import (
@@ -22,6 +23,7 @@ from src.application.use_cases import (
     DownloadFileUseCase,
     UploadFileUseCase,
 )
+from src.domain.entities.file_record import FileRecord
 from src.infra.http_client import HttpClient
 from src.presentation.dto import FileUploadResponse
 from src.shared_kernel.auth.dependencies import (
@@ -39,10 +41,7 @@ from src.shared_kernel.exceptions import (
     FileAccessDeniedError,
     FileSizeExceededError,
 )
-from src.shared_kernel.permissions import (
-    authenticated_no_public,
-    is_authenticated,
-)
+from src.shared_kernel.permissions import is_authenticated
 from src.shared_kernel.security import sanitize_content_type
 
 router = APIRouter(prefix='', tags=['files'])
@@ -122,7 +121,7 @@ async def upload_file(
     )
 
 
-@router.get('/{file_id}', dependencies=[Depends(authenticated_no_public)])
+@router.get('/{file_id}', dependencies=[Depends(is_authenticated)])
 async def download_file(
     file_id: Annotated[str, Path(min_length=1, max_length=512)],
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
@@ -156,10 +155,7 @@ async def download_file(
     file_record = await use_case.get_metadata(query)
 
     # Check file owner (optimization: owner always has access)
-    is_owner = (
-        current_user.user_id is not None
-        and file_record.user_id == current_user.user_id
-    )
+    is_owner = _check_file_ownership(current_user, file_record)
 
     if not is_owner:
         # Check permissions only for non-owners (saves backend request)
@@ -176,6 +172,45 @@ async def download_file(
         range_header=range_header,
     )
 
+    status_code, headers = _build_response_headers(
+        file_record=file_record,
+        range_header=range_header,
+    )
+    if status_code == HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE:
+        return StreamingResponse(
+            iter([b'']),
+            status_code=HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE,
+            headers=headers,
+        )
+
+    return StreamingResponse(
+        file_stream,
+        status_code=status_code,
+        media_type=file_record.content_type,
+        headers=headers,
+    )
+
+
+def _check_file_ownership(
+    current_user: AuthenticatedUser,
+    file_record: FileRecord,
+) -> bool:
+    """Check if current user owns the file."""
+    if current_user.user_id is not None:
+        return file_record.user_id == current_user.user_id
+    # Public/Guest tokens can access files uploaded by Public/Guest
+    # tokens (user_id=None) in the same account
+    return (
+        file_record.user_id is None
+        and file_record.account_id == current_user.account_id
+    )
+
+
+def _build_response_headers(
+    file_record: FileRecord,
+    range_header: str | None,
+) -> tuple[int, dict[str, str]]:
+    """Build status code and response headers for file download."""
     quoted_filename = urllib.parse.quote(
         file_record.filename or 'unnamed_file'
     )
@@ -186,39 +221,27 @@ async def download_file(
         'Accept-Ranges': 'bytes',
         'X-Content-Type-Options': 'nosniff',
     }
-
-    status_code = 200
     total_size = file_record.size
 
-    if range_header:
-        # Parse "bytes=START-END" (END is optional)
-        range_match = _RE_RANGE.match(range_header)
-        if range_match:
-            start = int(range_match.group(1))
-            end = (
-                int(range_match.group(2))
-                if range_match.group(2)
-                else total_size - 1
-            )
-            end = min(end, total_size - 1)
-            if start > total_size - 1 or start > end:
-                return StreamingResponse(
-                    iter([b'']),
-                    status_code=416,
-                    headers={'Content-Range': f'bytes */{total_size}'},
-                )
-            content_length = end - start + 1
-            status_code = 206
-            headers['Content-Range'] = f'bytes {start}-{end}/{total_size}'
-            headers['Content-Length'] = str(content_length)
-        else:
-            headers['Content-Length'] = str(total_size)
-    else:
+    if not range_header:
         headers['Content-Length'] = str(total_size)
+        return 200, headers
 
-    return StreamingResponse(
-        file_stream,
-        status_code=status_code,
-        media_type=file_record.content_type,
-        headers=headers,
-    )
+    range_match = _RE_RANGE.match(range_header)
+    if not range_match:
+        headers['Content-Length'] = str(total_size)
+        return 200, headers
+
+    start = int(range_match.group(1))
+    end = int(range_match.group(2)) if range_match.group(2) else total_size - 1
+    end = min(end, total_size - 1)
+    if start > total_size - 1 or start > end:
+        return (
+            HTTPStatus.REQUESTED_RANGE_NOT_SATISFIABLE,
+            {'Content-Range': f'bytes */{total_size}'},
+        )
+
+    content_length = end - start + 1
+    headers['Content-Range'] = f'bytes {start}-{end}/{total_size}'
+    headers['Content-Length'] = str(content_length)
+    return 206, headers

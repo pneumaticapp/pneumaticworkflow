@@ -770,6 +770,67 @@ class TestAttachmentServiceTemplatePermissions:
             file_id=attachment.file_id,
         )
 
+    def test_check_user_permission__public_template__ok(self):
+        # arrange
+        owner = create_test_admin()
+        template = create_test_template(
+            user=owner,
+            is_active=True,
+            is_public=True,
+        )
+        attachment = create_test_attachment(
+            account=owner.account,
+            file_id='public_template_file',
+            access_type=AccessType.RESTRICTED,
+            source_type=SourceType.TEMPLATE,
+            template=template,
+        )
+        service = AttachmentService()
+
+        # act
+        result = service.check_user_permission(
+            user_id=None,
+            account_id=owner.account_id,
+            file_id=attachment.file_id,
+            public_template=template,
+        )
+
+        # assert
+        assert result is True
+
+    def test_check_user_permission__public_template__no_access(self):
+        # arrange
+        owner = create_test_admin()
+        template = create_test_template(
+            user=owner,
+            is_active=True,
+            is_public=True,
+        )
+        other_template = create_test_template(
+            user=owner,
+            is_active=True,
+            is_public=True,
+        )
+        attachment = create_test_attachment(
+            account=owner.account,
+            file_id='public_template_other_file',
+            access_type=AccessType.RESTRICTED,
+            source_type=SourceType.TEMPLATE,
+            template=other_template,
+        )
+        service = AttachmentService()
+
+        # act
+        result = service.check_user_permission(
+            user_id=None,
+            account_id=owner.account_id,
+            file_id=attachment.file_id,
+            public_template=template,
+        )
+
+        # assert
+        assert result is False
+
 
 class TestAttachmentServiceAccountPermissions:
     """Tests for account-level attachment permissions."""

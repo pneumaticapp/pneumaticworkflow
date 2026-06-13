@@ -1,4 +1,4 @@
-from typing import Iterable, List
+from typing import Iterable, List, Optional
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
@@ -469,13 +469,15 @@ class AttachmentService(BaseModelService):
 
     def check_user_permission(
         self,
-        user_id: int,
-        account_id: int,
+        user_id: Optional[int],
+        account_id: Optional[int],
         file_id: str,
+        public_template: Optional[Template] = None,
     ) -> bool:
         """
         Checks user permission to access file.
         Uses django-guardian for object-level permission checks.
+        Allows access for public templates.
         """
         try:
             attachment = Attachment.objects.get(file_id=file_id)
@@ -490,6 +492,18 @@ class AttachmentService(BaseModelService):
             return account_id == attachment.account_id
 
         if attachment.access_type == AccessType.RESTRICTED:
+            # Check public template access first
+            if (
+                public_template is not None
+                and public_template.account_id == attachment.account_id
+                and attachment.source_type == SourceType.TEMPLATE
+                and attachment.template_id == public_template.id
+            ):
+                return True
+
+            if user_id is None:
+                return False
+
             # Use django-guardian for permission check
             # Use self.user if available to avoid permission cache issues
             if hasattr(self, 'user') and self.user and self.user.id == user_id:
