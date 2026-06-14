@@ -325,12 +325,8 @@
   }
 
   :global(body.workflow-modal-print-mode .processes-inwork-popup) {
-    position: absolute !important;
-    z-index: 2147483647 !important;
-    top: 0 !important;
-    right: auto !important;
-    left: 0 !important;
-    bottom: auto !important;
+    position: static !important;
+    z-index: auto !important;
     padding: 0 !important;
     display: block !important;
     overflow: visible !important;
@@ -340,6 +336,15 @@
     min-height: 0 !important;
     background: white !important;
     opacity: 1 !important;
+
+    :global(.modal) {
+      position: static !important;
+      overflow: visible !important;
+      width: auto !important;
+      max-width: none !important;
+      height: auto !important;
+      max-height: none !important;
+    }
 
     :global(.modal-dialog) {
       position: static !important;
@@ -355,9 +360,11 @@
     :global(.modal-content) {
       margin: 0 !important;
       padding: 0 !important;
+      display: block !important;
       overflow: visible !important;
       height: auto !important;
       min-height: 0 !important;
+      max-height: none !important;
       background: white !important;
       border: 0 !important;
       border-radius: 0 !important;
@@ -365,10 +372,12 @@
     }
 
     :global(.modal-content > div),
+    :global(.modal-content > form),
     :global(.modal-body) {
       overflow: visible !important;
       height: auto !important;
       min-height: 0 !important;
+      max-height: none !important;
     }
 
     :global(.modal-body) {
