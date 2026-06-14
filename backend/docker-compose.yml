@@ -384,7 +384,7 @@ services:
       - backend
     networks:
       - pneumatic
-    restart: unless-stopped
+    restart: always
 
   file-postgres:
     image: postgres:15-bookworm
@@ -399,7 +399,7 @@ services:
       - ../file-postgres/data:/var/lib/postgresql/data:rw
     networks:
       - pneumatic
-    restart: unless-stopped
+    restart: always
 
   seaweedfs-master:
     image: chrislusf/seaweedfs:3.95

@@ -43,18 +43,12 @@ async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
 app = FastAPI(
     title='Pneumatic Files Service',
     description='File storage microservice (SeaweedFS / GCS)',
-    version='0.1.0',
+    version='1.0.0',
     openapi_url='/openapi.json' if settings.CONFIG != 'Production' else None,
     docs_url='/docs' if settings.CONFIG != 'Production' else None,
     redoc_url='/redoc' if settings.CONFIG != 'Production' else None,
     lifespan=lifespan,
 )
-
-
-@app.get('/health', include_in_schema=False)
-async def health_check() -> dict[str, str]:
-    """Health check endpoint for Docker container."""
-    return {'status': 'ok'}
 
 
 # CORS configuration

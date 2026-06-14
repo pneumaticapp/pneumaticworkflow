@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "pneumatic-files"
 version = "1.0.0"
-description = "File proxy microservice with Google Cloud Storage"
+description = "File storage microservice (SeaweedFS / Google Cloud Storage)"
 authors = ["Pneumatic Team"]
 
 [tool.poetry.dependencies]

@@ -541,6 +541,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_started
+    expose:
+      - 8000
     networks:
       - pneumatic
     restart: always
