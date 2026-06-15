@@ -3960,7 +3960,7 @@ def test_check__group__not_exist__group_set__fail():
 # region task / kickoff
 
 
-def test_check__task_completed__return_true():
+def test_check_task_completed__completed__return_true():
 
     """Check returns True when the referenced task has completed status."""
 
@@ -3995,7 +3995,7 @@ def test_check__task_completed__return_true():
     assert result is True
 
 
-def test_check__task_not_completed__return_false():
+def test_check_task_completed__not_completed__return_false():
 
     """Check returns False when the referenced task has not completed."""
 
@@ -4028,7 +4028,215 @@ def test_check__task_not_completed__return_false():
     assert result is False
 
 
-def test_check__kickoff_completed__return_true():
+def test_check_task_completed__skipped__return_false():
+
+    """Check returns False when the referenced task has skipped status."""
+
+    # arrange
+    owner = create_test_owner()
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task_1 = workflow.tasks.get(number=1)
+    task_1.status = TaskStatus.SKIPPED
+    task_1.save()
+    task_2 = workflow.tasks.get(number=2)
+    condition = Condition.objects.create(
+        task=task_2,
+        action=ConditionAction.SKIP_TASK,
+        order=1,
+    )
+    rule = Rule.objects.create(condition=condition)
+    Predicate.objects.create(
+        rule=rule,
+        operator=PredicateOperator.COMPLETED,
+        field_type=PredicateType.TASK,
+        field=task_1.api_name,
+        value=None,
+    )
+
+    # act
+    result = ConditionCheckService.check(
+        condition=condition,
+        workflow_id=workflow.id,
+    )
+
+    # assert
+    assert result is False
+
+
+def test_check_task_skipped__skipped__return_true():
+
+    """Check returns True when the referenced task has skipped status."""
+
+    # arrange
+    owner = create_test_owner()
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task_1 = workflow.tasks.get(number=1)
+    task_1.status = TaskStatus.SKIPPED
+    task_1.save()
+    task_2 = workflow.tasks.get(number=2)
+    condition = Condition.objects.create(
+        task=task_2,
+        action=ConditionAction.SKIP_TASK,
+        order=1,
+    )
+    rule = Rule.objects.create(condition=condition)
+    Predicate.objects.create(
+        rule=rule,
+        operator=PredicateOperator.SKIPPED,
+        field_type=PredicateType.TASK,
+        field=task_1.api_name,
+        value=None,
+    )
+
+    # act
+    result = ConditionCheckService.check(
+        condition=condition,
+        workflow_id=workflow.id,
+    )
+
+    # assert
+    assert result is True
+
+
+def test_check_task_skipped__not_skipped__return_false():
+
+    """Check returns True when the referenced task has skipped status."""
+
+    # arrange
+    owner = create_test_owner()
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task_1 = workflow.tasks.get(number=1)
+    task_1.status = TaskStatus.COMPLETED
+    task_1.save()
+    task_2 = workflow.tasks.get(number=2)
+    condition = Condition.objects.create(
+        task=task_2,
+        action=ConditionAction.SKIP_TASK,
+        order=1,
+    )
+    rule = Rule.objects.create(condition=condition)
+    Predicate.objects.create(
+        rule=rule,
+        operator=PredicateOperator.SKIPPED,
+        field_type=PredicateType.TASK,
+        field=task_1.api_name,
+        value=None,
+    )
+
+    # act
+    result = ConditionCheckService.check(
+        condition=condition,
+        workflow_id=workflow.id,
+    )
+
+    # assert
+    assert result is False
+
+
+def test_check_task_completed_or_skipped__skipped__return_true():
+
+    """Check returns True when the referenced task has skipped status."""
+
+    # arrange
+    owner = create_test_owner()
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task_1 = workflow.tasks.get(number=1)
+    task_1.status = TaskStatus.SKIPPED
+    task_1.save()
+    task_2 = workflow.tasks.get(number=2)
+    condition = Condition.objects.create(
+        task=task_2,
+        action=ConditionAction.SKIP_TASK,
+        order=1,
+    )
+    rule = Rule.objects.create(condition=condition)
+    Predicate.objects.create(
+        rule=rule,
+        operator=PredicateOperator.COMPLETED_OR_SKIPPED,
+        field_type=PredicateType.TASK,
+        field=task_1.api_name,
+        value=None,
+    )
+
+    # act
+    result = ConditionCheckService.check(
+        condition=condition,
+        workflow_id=workflow.id,
+    )
+
+    # assert
+    assert result is True
+
+
+def test_check_task_completed_or_skipped__completed__return_true():
+
+    """Check returns True when the referenced task has completed status."""
+
+    # arrange
+    owner = create_test_owner()
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task_1 = workflow.tasks.get(number=1)
+    task_1.status = TaskStatus.COMPLETED
+    task_1.save()
+    task_2 = workflow.tasks.get(number=2)
+    condition = Condition.objects.create(
+        task=task_2,
+        action=ConditionAction.SKIP_TASK,
+        order=1,
+    )
+    rule = Rule.objects.create(condition=condition)
+    Predicate.objects.create(
+        rule=rule,
+        operator=PredicateOperator.COMPLETED_OR_SKIPPED,
+        field_type=PredicateType.TASK,
+        field=task_1.api_name,
+        value=None,
+    )
+
+    # act
+    result = ConditionCheckService.check(
+        condition=condition,
+        workflow_id=workflow.id,
+    )
+
+    # assert
+    assert result is True
+
+
+def test_check_task_completed_or_skipped__pending__return_false():
+
+    """Check returns False when the referenced task is still pending."""
+
+    # arrange
+    owner = create_test_owner()
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    task_1 = workflow.tasks.get(number=1)
+    task_2 = workflow.tasks.get(number=2)
+    condition = Condition.objects.create(
+        task=task_2,
+        action=ConditionAction.SKIP_TASK,
+        order=1,
+    )
+    rule = Rule.objects.create(condition=condition)
+    Predicate.objects.create(
+        rule=rule,
+        operator=PredicateOperator.COMPLETED_OR_SKIPPED,
+        field_type=PredicateType.TASK,
+        field=task_1.api_name,
+        value=None,
+    )
+
+    # act
+    result = ConditionCheckService.check(
+        condition=condition,
+        workflow_id=workflow.id,
+    )
+
+    # assert
+    assert result is False
+
+
+def test_check_kickoff_completed__return_true():
 
     """Check returns True when predicate type is kickoff (always completed)."""
 
@@ -4058,5 +4266,3 @@ def test_check__kickoff_completed__return_true():
 
     # assert
     assert result is True
-
-# endregion

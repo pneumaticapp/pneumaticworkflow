@@ -261,3 +261,15 @@
   @mixin text-small-extra bold;
   @mixin text-truncate;
 }
+
+.dropdown-menu__skeleton {
+  padding: 0.4rem 1.2rem;
+}
+
+.dropdown-menu__skeleton-item {
+  margin-bottom: 0.8rem;
+}
+
+.dropdown-menu__skeleton-item_last {
+  margin-bottom: 0;
+}

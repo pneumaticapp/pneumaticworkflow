@@ -31,6 +31,7 @@ window['__pneumaticConfig'] = {
         getUsers: '/accounts/users',
         createUser: '/accounts/users',
         getUsersPublic: '/accounts/public/users',
+        getPublicAccount: '/accounts/public/account',
         getActiveUsersCount: '/accounts/users/active-count',
         getWorkflowsDuration: '/workflows/duration',
         getWorkflowsSuccessRate: '/workflows/success-rate',

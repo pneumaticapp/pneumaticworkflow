@@ -8,7 +8,7 @@ import { TUserListItem } from '../../../types/user';
 import { ETaskPerformerType, ITemplateTask, ITemplateTaskPerformer } from '../../../types/template';
 import { TTaskVariable } from '../types';
 import { trackInviteTeamInPage } from '../../../utils/analytics';
-import { TUsersDropdownOption, UsersDropdown } from '../../UI/form/UsersDropdown';
+import { EOptionTypes, TUsersDropdownOption, UsersDropdown, getUsersDropdownOptionValue } from '../../UI/form/UsersDropdown';
 import { getUserFullName } from '../../../utils/users';
 import { getPerformersForDropdown } from './utils/getPerformersForDropdown';
 import { EBgColorTypes, UserPerformer } from '../../UI/UserPerformer';
@@ -41,12 +41,23 @@ export function TaskPerformers({ task, tasks, users, variables, setCurrentTask }
     task,
     tasks,
   );
-  const selectedPerformerOption = rawPerformers.map((user) => {
+  const selectedPerformerOption = rawPerformers.map((performer) => {
+    const getPerformerValue = () => {
+      if (performer.type === ETaskPerformerType.Manager) {
+        return `manager-${performer.sourceId}`;
+      }
+      if (performer.type === ETaskPerformerType.UserGroup) {
+        return getUsersDropdownOptionValue(EOptionTypes.Group, performer.sourceId ?? '');
+      }
+      if (performer.type === ETaskPerformerType.User) {
+        return getUsersDropdownOptionValue(EOptionTypes.User, performer.sourceId ?? '');
+      }
+      return String(performer.sourceId);
+    };
+
     return {
-      ...user,
-      value: user.type === ETaskPerformerType.Manager
-        ? `manager-${user.sourceId}`
-        : String(user.sourceId),
+      ...performer,
+      value: getPerformerValue(),
     };
   });
 
