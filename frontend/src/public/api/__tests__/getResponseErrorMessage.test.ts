@@ -54,6 +54,15 @@ function makeAxiosError(data: unknown, status: number): AxiosError {
   } as AxiosError;
 }
 
+function makeNetworkError(message: string): AxiosError {
+  return {
+    message,
+    isAxiosError: true,
+    name: 'AxiosError',
+    toJSON: () => ({}),
+  } as AxiosError;
+}
+
 describe('response interceptor: Error.message for Sentry', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -110,5 +119,26 @@ describe('response interceptor: Error.message for Sentry', () => {
       details: { name: 'url', reason: 'invalid' },
       status: 400,
     });
+  });
+
+  it('uses Axios error.message when response is absent (network error)', async () => {
+    const error = makeNetworkError('Network Error');
+
+    await expect(responseErrorHandler(error)).rejects.toHaveProperty('message', 'Network Error');
+  });
+
+  it('uses Axios error.message on timeout (no response)', async () => {
+    const error = makeNetworkError('timeout of 10000ms exceeded');
+
+    await expect(responseErrorHandler(error)).rejects.toHaveProperty('message', 'timeout of 10000ms exceeded');
+  });
+
+  it('never produces empty message for network errors without response', async () => {
+    const error = makeNetworkError('');
+
+    const rejected = responseErrorHandler(error);
+    await expect(rejected).rejects.toHaveProperty('message');
+    await expect(responseErrorHandler(error)).rejects.not.toHaveProperty('message', '');
+    await expect(responseErrorHandler(error)).rejects.not.toHaveProperty('message', '{}');
   });
 });
