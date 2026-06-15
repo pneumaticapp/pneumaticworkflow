@@ -65,13 +65,13 @@ def test_fill__url_encoded__decodes_correctly(
 ):
     # arrange
     user = create_test_admin()
-    encoded = '%D0%A4%D0%B0%D0%B9%D0%BB%20(1).pdf'
+    encoded = 'File%20(1).pdf'
     url = f'{GCS_API}/{BUCKET}/{encoded}'
     create_fa(
         account=user.account,
         file_key=encoded,
         url=url,
-        name='Файл (1).pdf',
+        name='File (1).pdf',
     )
 
     # act
@@ -79,9 +79,9 @@ def test_fill__url_encoded__decodes_correctly(
 
     # assert
     fa = FileAttachment.objects.get(
-        name='Файл (1).pdf',
+        name='File (1).pdf',
     )
-    assert fa.file_id == 'Файл (1).pdf'
+    assert fa.file_id == 'File (1).pdf'
 
 
 # -- Skip cases ---------------------------------------------------

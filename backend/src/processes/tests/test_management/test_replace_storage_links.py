@@ -378,7 +378,7 @@ def test_replace__exact_url_priority_over_base_bucket(
         user=user,
         tasks_count=1,
     )
-    file_id = 'PqRsTu_Картинка.png'
+    file_id = 'PqRsTu_Picture (1).png'
     url = gcs_url(file_id)
     create_fa_with_file_id(
         account=user.account,
@@ -395,8 +395,8 @@ def test_replace__exact_url_priority_over_base_bucket(
     # assert — must use encoded file_id, not raw filename
     task.refresh_from_db()
     assert GCS_API not in task.description
-    assert 'Картинка' not in task.description
-    assert '%D0%9A%D0%B0%D1%80' in task.description
+    assert 'Picture (1)' not in task.description
+    assert 'Picture%20%281%29' in task.description
     assert FS_DOMAIN in task.description
 
 
@@ -516,18 +516,18 @@ def test_replace__no_file_service_domain__raises():
 # ── URL encoding (P4) ───────────────────────────────────────
 
 
-def test_replace__cyrillic_file_id__url_encoded(
+def test_replace__special_chars_file_id__url_encoded(
     create_fa_with_file_id,
     run_replace,
 ):
-    """File_id with cyrillic chars must be URL-encoded."""
+    """File_id with special chars must be URL-encoded."""
     # arrange
     user = create_test_admin()
     workflow = create_test_workflow(
         user=user,
         tasks_count=1,
     )
-    file_id = 'NiihssB_Рисунок.odg'
+    file_id = 'NiihssB_Drawing (v2).odg'
     url = gcs_url(file_id)
     create_fa_with_file_id(
         account=user.account,
@@ -546,8 +546,8 @@ def test_replace__cyrillic_file_id__url_encoded(
 
     # assert
     event.refresh_from_db()
-    assert 'Рисунок' not in event.text
-    assert '%D0%A0%D0%B8%D1%81' in event.text
+    assert 'Drawing (v2)' not in event.text
+    assert 'Drawing%20%28v2%29' in event.text
     assert FS_DOMAIN in event.text
 
 
@@ -619,14 +619,14 @@ def test_replace__ascii_file_id__not_encoded(
     assert expected_url in event.text
 
 
-def test_replace__cyrillic_thumbnail__url_encoded(
+def test_replace__special_thumbnail__url_encoded(
     create_fa_with_file_id,
     run_replace,
 ):
-    """Thumbnail URL with cyrillic file_id must also be encoded."""
+    """Thumbnail URL with special chars in file_id must also be encoded."""
     # arrange
     user = create_test_admin()
-    file_id = 'AbcDefGh_Фото.jpg'
+    file_id = 'AbcDefGh_Photo (1).jpg'
     thumb_url = gcs_url(f'{file_id}_thumb')
     create_fa_with_file_id(
         account=user.account,
@@ -639,7 +639,7 @@ def test_replace__cyrillic_thumbnail__url_encoded(
 
     # assert
     fa = FileAttachment.objects.get(file_id=file_id)
-    assert 'Фото' not in (fa.thumbnail_url or '')
+    assert 'Photo (1)' not in (fa.thumbnail_url or '')
     assert GCS_API not in (fa.thumbnail_url or '')
 
 
@@ -654,7 +654,7 @@ def test_replace__encoded_idempotent__second_run_safe(
         user=user,
         tasks_count=1,
     )
-    file_id = 'NiihssB_Документ.pdf'
+    file_id = 'NiihssB_Document (v1).pdf'
     url = gcs_url(file_id)
     create_fa_with_file_id(
         account=user.account,
@@ -681,18 +681,18 @@ def test_replace__encoded_idempotent__second_run_safe(
     assert FS_DOMAIN in second_text
 
 
-def test_replace__json_field_with_cyrillic__encoded(
+def test_replace__json_field_with_special_chars__encoded(
     create_fa_with_file_id,
     run_replace,
 ):
-    """JSON fields with cyrillic file_id URLs must be encoded."""
+    """JSON fields with special chars in file_id URLs must be encoded."""
     # arrange
     user = create_test_admin()
     workflow = create_test_workflow(
         user=user,
         tasks_count=1,
     )
-    file_id = 'XyzUvwRs_Отчёт.xlsx'
+    file_id = 'XyzUvwRs_Report (Q1).xlsx'
     url = gcs_url(file_id)
     create_fa_with_file_id(
         account=user.account,
@@ -712,5 +712,5 @@ def test_replace__json_field_with_cyrillic__encoded(
     # assert
     event.refresh_from_db()
     json_str = str(event.task_json)
-    assert 'Отчёт' not in json_str
+    assert 'Report (Q1)' not in json_str
     assert FS_DOMAIN in json_str

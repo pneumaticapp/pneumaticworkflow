@@ -239,4 +239,88 @@ describe('RichText', () => {
     expect(image).not.toBeNull();
     expect(container.innerHTML).not.toContain('![img');
   });
+
+  describe('file-service URLs (no extension in URL)', () => {
+    const FILE_SERVICE_URL = 'https://app.pneumatic.app/files';
+
+    it('renders image as <img> when filename has image extension (.png)', () => {
+      const props: IRichTextProps = {
+        text: `[screenshot.png](${FILE_SERVICE_URL}/abc-123)`,
+        isMarkdownMode: true,
+      };
+
+      const { container } = render(<RichText {...props} />);
+      const image = container.querySelector(`img[src="${FILE_SERVICE_URL}/abc-123"]`);
+
+      expect(image).not.toBeNull();
+    });
+
+    it('renders image as <img> when filename has .jpg extension', () => {
+      const props: IRichTextProps = {
+        text: `[photo.jpg](${FILE_SERVICE_URL}/def-456)`,
+        isMarkdownMode: true,
+      };
+
+      const { container } = render(<RichText {...props} />);
+      const image = container.querySelector(`img[src="${FILE_SERVICE_URL}/def-456"]`);
+
+      expect(image).not.toBeNull();
+    });
+
+    it('renders document as DocumentAttachment when filename has .pdf extension', () => {
+      const props: IRichTextProps = {
+        text: `[report.pdf](${FILE_SERVICE_URL}/ghi-789)`,
+        isMarkdownMode: true,
+      };
+
+      const { container } = render(<RichText {...props} />);
+      const image = container.querySelector('img');
+
+      expect(image).toBeNull();
+      expect(container.textContent).toContain('report.pdf');
+    });
+
+    it('renders document as DocumentAttachment when filename has .docx extension', () => {
+      const props: IRichTextProps = {
+        text: `[document.docx](${FILE_SERVICE_URL}/jkl-012)`,
+        isMarkdownMode: true,
+      };
+
+      const { container } = render(<RichText {...props} />);
+      const image = container.querySelector('img');
+
+      expect(image).toBeNull();
+      expect(container.textContent).toContain('document.docx');
+    });
+
+    it('renders plain link when filename has no extension', () => {
+      const props: IRichTextProps = {
+        text: `[no-extension-file](${FILE_SERVICE_URL}/mno-345)`,
+        isMarkdownMode: true,
+      };
+
+      const { container } = render(<RichText {...props} />);
+      const link = container.querySelector(`a[href="${FILE_SERVICE_URL}/mno-345"]`);
+
+      expect(link).not.toBeNull();
+      expect(link?.textContent).toBe('no-extension-file');
+    });
+
+    it('renders mixed content with images and documents correctly', () => {
+      const props: IRichTextProps = {
+        text: [
+          `[photo.png](${FILE_SERVICE_URL}/aaa)`,
+          `[report.pdf](${FILE_SERVICE_URL}/bbb)`,
+        ].join('\n'),
+        isMarkdownMode: true,
+      };
+
+      const { container } = render(<RichText {...props} />);
+      const images = container.querySelectorAll('img');
+
+      expect(images).toHaveLength(1);
+      expect(images[0].getAttribute('src')).toBe(`${FILE_SERVICE_URL}/aaa`);
+      expect(container.textContent).toContain('report.pdf');
+    });
+  });
 });

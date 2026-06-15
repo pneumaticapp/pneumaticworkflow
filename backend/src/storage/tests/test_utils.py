@@ -396,13 +396,12 @@ class TestExtractFileIdsDotEdgeCases:
         # assert
         assert 'LongPrefixHere_file.tar.gz' in result
 
-    def test_extract__encoded_cyrillic__decoded_to_match_db(self):
-        """URL-encoded cyrillic file_id must be decoded via unquote."""
+    def test_extract__encoded_special_chars__decoded_to_match_db(self):
+        """URL-encoded special chars in file_id must be decoded via unquote."""
         # arrange
         text = (
-            '[Рисунок](https://example.com/'
-            'NiihssB_%D0%A0%D0%B8%D1%81%D1%83'
-            '%D0%BD%D0%BE%D0%BA.odg)'
+            '[Drawing](https://example.com/'
+            'NiihssB_Drawing%20%28v2%29.odg)'
         )
 
         # act
@@ -413,7 +412,7 @@ class TestExtractFileIdsDotEdgeCases:
             result = extract_file_ids_from_text(text)
 
         # assert — decoded to match DB value
-        assert 'NiihssB_Рисунок.odg' in result
+        assert 'NiihssB_Drawing (v2).odg' in result
 
     def test_extract__encoded_spaces__decoded_to_match_db(self):
         """URL-encoded spaces must be decoded to match DB value."""
@@ -434,13 +433,13 @@ class TestExtractFileIdsDotEdgeCases:
         assert 'Zfcsx_Screencast 2023-08-16.webm' in result
 
     def test_extract__mixed_encoded_and_plain__both_decoded(self):
-        """Mix of encoded cyrillic and plain UUID, both extracted."""
+        """Mix of encoded special chars and plain UUID, both extracted."""
         # arrange
         uuid_id = '550e8400-e29b-41d4-a716-446655440000'
         text = (
             f'[doc](https://example.com/{uuid_id}) '
             '[pic](https://example.com/'
-            'AbcDefGh_%D0%A4%D0%BE%D1%82%D0%BE.jpg)'
+            'AbcDefGh_Photo%20%281%29.jpg)'
         )
 
         # act
@@ -453,18 +452,17 @@ class TestExtractFileIdsDotEdgeCases:
         # assert
         assert len(result) == 2
         assert uuid_id in result
-        assert 'AbcDefGh_Фото.jpg' in result
+        assert 'AbcDefGh_Photo (1).jpg' in result
 
 
 class TestExtractEncodedFromValues:
 
-    def test_plain_url__encoded_cyrillic__decoded(self):
-        """Plain URL with encoded cyrillic must be decoded."""
+    def test_plain_url__encoded_special_chars__decoded(self):
+        """Plain URL with encoded special chars must be decoded."""
         # arrange
         values = [
             'https://example.com/'
-            'NiihssB_%D0%A0%D0%B8%D1%81%D1%83'
-            '%D0%BD%D0%BE%D0%BA.odg',
+            'NiihssB_Drawing%20%28v2%29.odg',
         ]
 
         # act
@@ -475,7 +473,7 @@ class TestExtractEncodedFromValues:
             result = extract_file_ids_from_values(values)
 
         # assert
-        assert result == ['NiihssB_Рисунок.odg']
+        assert result == ['NiihssB_Drawing (v2).odg']
 
     def test_plain_url__encoded_spaces__decoded(self):
         """Plain URL with encoded spaces must be decoded."""
@@ -1216,16 +1214,16 @@ class TestExtractAllFileIdsFromSource:
 class TestGetFileServiceFileUrl:
     """P6: get_file_service_file_url must URL-encode file_id."""
 
-    def test_cyrillic_file_id__url_encoded(self):
-        """Cyrillic chars in file_id must be percent-encoded."""
+    def test_special_chars_file_id__url_encoded(self):
+        """Special chars in file_id must be percent-encoded."""
         # act
         with override_settings(FILE_SERVICE_URL='https://files.app'):
-            result = get_file_service_file_url('NiihssB_Рисунок.odg')
+            result = get_file_service_file_url('NiihssB_Drawing (v2).odg')
 
         # assert
         assert result is not None
-        assert 'Рисунок' not in result
-        assert '%D0%A0%D0%B8%D1%81' in result
+        assert 'Drawing (v2)' not in result
+        assert 'Drawing%20%28v2%29' in result
 
     def test_spaces_in_file_id__url_encoded(self):
         """Spaces in file_id must be percent-encoded."""

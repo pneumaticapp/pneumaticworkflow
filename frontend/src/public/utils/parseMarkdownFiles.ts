@@ -1,17 +1,18 @@
 import { TUploadedFile } from './uploadFiles';
 import { getBrowserConfigEnv } from './getConfig';
+import { getAttachmentTypeByFilename } from '../components/Attachments/utils/getAttachmentType';
 
 /**
- * Парсит markdown строку и извлекает файловые ссылки в формате TUploadedFile[].
- * Формат markdown: [filename](url)
- * Фильтрует только ссылки, принадлежащие файл-сервису (по fileServiceUrl из конфигурации).
+ * Parses a markdown string and extracts file-service links as TUploadedFile[].
+ * Format: [filename](url)
+ * Only includes links belonging to the file-service (matched via fileServiceUrl from config).
  *
  * @example
  * parseMarkdownToFiles("[doc.pdf](https://app.pneumatic.app/files/abc-123)")
  * // → [{ id: 'abc-123', name: 'doc.pdf', url: '...', size: 0 }]
  *
  * parseMarkdownToFiles("[Google](https://docs.google.com/...)")
- * // → [] (не файл-сервис)
+ * // → [] (not a file-service link)
  */
 export function parseMarkdownToFiles(markdownValue: string | null | undefined): TUploadedFile[] {
   if (!markdownValue) return [];
@@ -26,12 +27,14 @@ export function parseMarkdownToFiles(markdownValue: string | null | undefined): 
 
     if (fileServiceUrl && (url === fileServiceUrl || url.startsWith(`${fileServiceUrl}/`))) {
       const fileId = url.split('?')[0].split('#')[0].split('/').filter(Boolean).pop() || url;
+      const isImage = getAttachmentTypeByFilename(name) === 'image';
 
       files.push({
         id: fileId,
         name,
         url,
         size: 0,
+        thumbnailUrl: isImage ? url : undefined,
       });
     }
 

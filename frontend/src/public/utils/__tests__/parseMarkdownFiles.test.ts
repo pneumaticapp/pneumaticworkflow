@@ -37,6 +37,7 @@ describe('parseMarkdownToFiles', () => {
           name: 'document.pdf',
           url: `${FILE_SERVICE_URL}/abc-123`,
           size: 0,
+          thumbnailUrl: undefined,
         },
       ]);
     });
@@ -60,8 +61,10 @@ describe('parseMarkdownToFiles', () => {
       expect(result).toHaveLength(2);
       expect(result[0].name).toBe('doc.pdf');
       expect(result[0].url).toBe(`${FILE_SERVICE_URL}/aaa`);
+      expect(result[0].thumbnailUrl).toBeUndefined();
       expect(result[1].name).toBe('photo.jpg');
       expect(result[1].url).toBe(`${FILE_SERVICE_URL}/bbb`);
+      expect(result[1].thumbnailUrl).toBe(`${FILE_SERVICE_URL}/bbb`);
     });
 
     it('parses three files', () => {
@@ -131,11 +134,11 @@ describe('parseMarkdownToFiles', () => {
     });
 
     it('handles filenames with special characters', () => {
-      const input = `[отчёт_2024.pdf](${FILE_SERVICE_URL}/abc)`;
+      const input = `[report_(Q1)_2024.pdf](${FILE_SERVICE_URL}/abc)`;
 
       const result = parseMarkdownToFiles(input);
 
-      expect(result[0].name).toBe('отчёт_2024.pdf');
+      expect(result[0].name).toBe('report_(Q1)_2024.pdf');
     });
 
     it('returns empty array for plain text without markdown links', () => {
@@ -191,6 +194,64 @@ describe('parseMarkdownToFiles', () => {
 
       expect(result[0].url).toBe(fullUrl);
       expect(result[0].id).toBe('abc-123');
+    });
+  });
+
+  describe('thumbnailUrl detection', () => {
+    it.each([
+      ['photo.jpg', true],
+      ['image.jpeg', true],
+      ['logo.png', true],
+      ['icon.gif', true],
+      ['vector.svg', true],
+      ['banner.webp', true],
+      ['IMAGE.JPG', true],
+      ['photo.PNG', true],
+    ])('sets thumbnailUrl for image file %s', (filename, _isImage) => {
+      const input = `[${filename}](${FILE_SERVICE_URL}/abc-123)`;
+
+      const result = parseMarkdownToFiles(input);
+
+      expect(result[0].thumbnailUrl).toBe(`${FILE_SERVICE_URL}/abc-123`);
+    });
+
+    it.each([
+      ['document.pdf'],
+      ['report.docx'],
+      ['data.xlsx'],
+      ['archive.zip'],
+      ['script.js'],
+      ['readme.txt'],
+    ])('does not set thumbnailUrl for non-image file %s', (filename) => {
+      const input = `[${filename}](${FILE_SERVICE_URL}/abc-123)`;
+
+      const result = parseMarkdownToFiles(input);
+
+      expect(result[0].thumbnailUrl).toBeUndefined();
+    });
+
+    it('sets thumbnailUrl only for image files in mixed list', () => {
+      const input = [
+        `[report.pdf](${FILE_SERVICE_URL}/1)`,
+        `[photo.jpg](${FILE_SERVICE_URL}/2)`,
+        `[data.csv](${FILE_SERVICE_URL}/3)`,
+        `[logo.png](${FILE_SERVICE_URL}/4)`,
+      ].join(', ');
+
+      const result = parseMarkdownToFiles(input);
+
+      expect(result[0].thumbnailUrl).toBeUndefined();
+      expect(result[1].thumbnailUrl).toBe(`${FILE_SERVICE_URL}/2`);
+      expect(result[2].thumbnailUrl).toBeUndefined();
+      expect(result[3].thumbnailUrl).toBe(`${FILE_SERVICE_URL}/4`);
+    });
+
+    it('handles image filename with underscores and thumbnailUrl', () => {
+      const input = `[photo_report-final.jpg](${FILE_SERVICE_URL}/abc)`;
+
+      const result = parseMarkdownToFiles(input);
+
+      expect(result[0].thumbnailUrl).toBe(`${FILE_SERVICE_URL}/abc`);
     });
   });
 });

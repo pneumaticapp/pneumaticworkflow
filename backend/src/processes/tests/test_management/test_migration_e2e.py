@@ -694,12 +694,12 @@ def test_e2e__url_encoded_filename__preserved(
 ):
     # arrange
     user = create_test_admin()
-    encoded = '%D0%A4%D0%B0%D0%B9%D0%BB%20(1).pdf'
+    encoded = 'File%20(1).pdf'
     create_fa(
         account=user.account,
         file_key=encoded,
         url=gcs_url(encoded),
-        name='Файл (1).pdf',
+        name='File (1).pdf',
     )
 
     # act
@@ -707,9 +707,9 @@ def test_e2e__url_encoded_filename__preserved(
 
     # assert
     fa = FileAttachment.objects.get(
-        name='Файл (1).pdf',
+        name='File (1).pdf',
     )
-    assert fa.file_id == 'Файл (1).pdf'
+    assert fa.file_id == 'File (1).pdf'
 
 
 def test_e2e__dry_run__full_pipeline__no_side_effects(
