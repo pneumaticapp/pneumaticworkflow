@@ -8,7 +8,7 @@ from fastapi.testclient import TestClient
 
 from src.domain.entities import FileRecord
 from src.main import app
-from src.shared_kernel.config import Settings
+from src.shared_kernel.config import BaseAppSettings
 
 
 @pytest.fixture(scope='session')
@@ -20,11 +20,10 @@ def event_loop() -> Generator:
 
 
 @pytest.fixture
-def test_settings() -> Settings:
+def test_settings() -> BaseAppSettings:
     """Test settings."""
-    return Settings(
+    return BaseAppSettings(
         DEBUG=True,
-        CONFIG='Test',
         POSTGRES_DB='test_db',
         POSTGRES_HOST='localhost',
         POSTGRES_PORT=5432,

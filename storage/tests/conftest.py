@@ -2,6 +2,7 @@
 
 import os
 
+os.environ['CONFIG'] = 'Testing'
 os.environ['DEBUG'] = 'True'
 
 pytest_plugins = [

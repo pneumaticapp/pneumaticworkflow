@@ -30,7 +30,7 @@ from src.shared_kernel.auth.dependencies import (
     AuthenticatedUser,
     get_current_user,
 )
-from src.shared_kernel.config import Settings
+from src.shared_kernel.config import BaseAppSettings
 from src.shared_kernel.di import (
     get_download_use_case,
     get_http_client,
@@ -78,7 +78,7 @@ async def upload_file(
     file: Annotated[UploadFile, File(...)],
     current_user: Annotated[AuthenticatedUser, Depends(get_current_user)],
     use_case: Annotated[UploadFileUseCase, Depends(get_upload_use_case)],
-    settings: Annotated[Settings, Depends(get_settings_dep)],
+    settings: Annotated[BaseAppSettings, Depends(get_settings_dep)],
 ) -> FileUploadResponse:
     """Upload file to storage.
 

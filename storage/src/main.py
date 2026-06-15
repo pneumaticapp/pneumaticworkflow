@@ -44,9 +44,10 @@ app = FastAPI(
     title='Pneumatic Files Service',
     description='File storage microservice (SeaweedFS / GCS)',
     version='1.0.0',
-    openapi_url='/openapi.json' if settings.CONFIG != 'Production' else None,
-    docs_url='/docs' if settings.CONFIG != 'Production' else None,
-    redoc_url='/redoc' if settings.CONFIG != 'Production' else None,
+    root_path=settings.root_path,
+    openapi_url='/openapi.json',
+    docs_url='/docs',
+    redoc_url='/redoc',
     lifespan=lifespan,
 )
 
@@ -71,16 +72,16 @@ app.add_middleware(
     require_auth=True,
 )
 
-# Rate limiting middleware (disabled in debug/test mode)
+# Rate limiting middleware
 app.add_middleware(
     RateLimitMiddleware,
-    enabled=not settings.DEBUG,
+    enabled=settings.RATE_LIMIT_ENABLED,
 )
 
 # Security headers middleware
 app.add_middleware(
     SecurityHeadersMiddleware,
-    include_hsts=settings.CONFIG == 'Production',
+    include_hsts=settings.HSTS_ENABLED,
 )
 
 # Register exception handlers
@@ -94,6 +95,6 @@ if __name__ == '__main__':
         'src.main:app',
         host='0.0.0.0',  # noqa: S104
         port=settings.PORT,
-        reload=settings.CONFIG != 'Production',
-        workers=1 if settings.CONFIG != 'Production' else settings.WORKERS,
+        reload=settings.RELOAD,
+        workers=settings.WORKERS,
     )

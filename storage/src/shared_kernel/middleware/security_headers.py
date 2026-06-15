@@ -23,7 +23,15 @@ from starlette.responses import Response
 _SECURITY_HEADERS: dict[str, str] = {
     'X-Content-Type-Options': 'nosniff',
     'X-Frame-Options': 'DENY',
-    'Content-Security-Policy': "default-src 'none'",
+    'Content-Security-Policy': (
+        "default-src 'self'; "
+        "script-src 'unsafe-inline' https://cdn.jsdelivr.net; "
+        "style-src 'unsafe-inline' https://cdn.jsdelivr.net "
+        'https://fonts.googleapis.com; '
+        'font-src https://fonts.gstatic.com; '
+        "img-src 'self' data: https://fastapi.tiangolo.com; "
+        'worker-src blob:;'
+    ),
     'X-XSS-Protection': '1; mode=block',
     'Referrer-Policy': 'strict-origin-when-cross-origin',
     'Permissions-Policy': 'camera=(), microphone=(), geolocation=()',

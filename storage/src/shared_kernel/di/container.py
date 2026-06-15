@@ -18,12 +18,12 @@ from src.infra.http_client import HttpClient
 from src.infra.repositories import (
     FileRecordRepository,
 )
-from src.shared_kernel.config import Settings, get_settings
+from src.shared_kernel.config import BaseAppSettings, get_settings
 from src.shared_kernel.database import get_async_session
 from src.shared_kernel.uow import UnitOfWork
 
 
-def get_settings_dep() -> Settings:
+def get_settings_dep() -> BaseAppSettings:
     """Get settings."""
     return get_settings()
 
@@ -44,7 +44,7 @@ async def get_storage_service() -> AsyncGenerator[
 
 async def get_upload_use_case(
     session: Annotated[AsyncSession, Depends(get_db_session)],
-    settings: Annotated[Settings, Depends(get_settings_dep)],
+    settings: Annotated[BaseAppSettings, Depends(get_settings_dep)],
     storage_service: Annotated[StorageService, Depends(get_storage_service)],
 ) -> UploadFileUseCase:
     """Get upload use case."""

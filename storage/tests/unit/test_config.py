@@ -3,7 +3,7 @@
 import pytest
 from pydantic import ValidationError
 
-from src.shared_kernel.config import Settings
+from src.shared_kernel.config import BaseAppSettings
 
 
 def test_settings__no_secret_key__raise_error(monkeypatch):
@@ -15,12 +15,12 @@ def test_settings__no_secret_key__raise_error(monkeypatch):
         ValidationError,
         match='DJANGO_SECRET_KEY',
     ):
-        Settings(_env_file=None)
+        BaseAppSettings(_env_file=None)
 
 
 def test_settings__with_secret_key__ok():
     # arrange
-    settings = Settings(
+    settings = BaseAppSettings(
         DJANGO_SECRET_KEY='test-secret-key',
     )
 
@@ -33,7 +33,7 @@ def test_settings__with_secret_key__ok():
 
 def test_settings__cors_string__parsed_list():
     # arrange
-    settings = Settings(
+    settings = BaseAppSettings(
         DJANGO_SECRET_KEY='test-key',
         ALLOWED_ORIGINS='http://a.com,http://b.com',
     )
@@ -50,7 +50,7 @@ def test_settings__cors_string__parsed_list():
 
 def test_settings__cors_list__unchanged():
     # arrange
-    settings = Settings(
+    settings = BaseAppSettings(
         DJANGO_SECRET_KEY='test-key',
         ALLOWED_ORIGINS=['http://a.com', 'http://b.com'],
     )
@@ -67,7 +67,7 @@ def test_settings__cors_list__unchanged():
 
 def test_settings__trailing_slash__stripped():
     # arrange
-    settings = Settings(
+    settings = BaseAppSettings(
         DJANGO_SECRET_KEY='test-key',
         FASTAPI_BASE_URL='http://localhost:8000/',
         BACKEND_PRIVATE_URL='http://backend:8001/',
@@ -80,7 +80,7 @@ def test_settings__trailing_slash__stripped():
 
 def test_settings__no_trailing_slash__unchanged():
     # arrange
-    settings = Settings(
+    settings = BaseAppSettings(
         DJANGO_SECRET_KEY='test-key',
         FASTAPI_BASE_URL='http://localhost:8000',
     )
@@ -94,7 +94,7 @@ def test_settings__no_trailing_slash__unchanged():
 
 def test_settings__check_permission_url__no_double_slash():
     # arrange
-    settings = Settings(
+    settings = BaseAppSettings(
         DJANGO_SECRET_KEY='test-key',
         BACKEND_PRIVATE_URL='http://backend:8001/',
     )
@@ -108,7 +108,7 @@ def test_settings__check_permission_url__no_double_slash():
 
 def test_settings__frontend_url__appended_to_cors():
     # arrange
-    settings = Settings(
+    settings = BaseAppSettings(
         DJANGO_SECRET_KEY='test-key',
         ALLOWED_ORIGINS=['http://a.com'],
         FRONTEND_URL='http://frontend.com',
@@ -124,7 +124,7 @@ def test_settings__frontend_url__appended_to_cors():
 
 def test_settings__frontend_url_already_in_cors__no_dup():
     # arrange
-    settings = Settings(
+    settings = BaseAppSettings(
         DJANGO_SECRET_KEY='test-key',
         ALLOWED_ORIGINS=['http://frontend.com'],
         FRONTEND_URL='http://frontend.com',
