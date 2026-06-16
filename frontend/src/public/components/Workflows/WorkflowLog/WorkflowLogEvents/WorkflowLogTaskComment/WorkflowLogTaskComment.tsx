@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 import { InView } from 'react-intersection-observer';
@@ -12,6 +12,7 @@ import { EWorkflowStatus, IWorkflowLogItem } from '../../../../../types/workflow
 import { getUserFullName } from '../../../../../utils/users';
 import { RichText } from '../../../../RichText';
 import { Attachments } from '../../../../Attachments';
+import { parseMarkdownToFiles } from '../../../../../utils/parseMarkdownFiles';
 import { UserData } from '../../../../UserData';
 import {
   AddEmojiIcon,
@@ -46,7 +47,6 @@ export function WorkflowLogTaskComment({
   reactions,
   userId,
   created,
-  attachments,
   task,
   isOnlyAttachmentsShown = false,
   workflowModal,
@@ -58,6 +58,8 @@ export function WorkflowLogTaskComment({
   mentions,
 }: TWorkflowLogTaskCommentProps) {
   const { formatMessage } = useIntl();
+
+  const parsedAttachments = useMemo(() => parseMarkdownToFiles(text), [text]);
 
   const clickRef = useRef<HTMLButtonElement>(null);
   const [isShowTooltipEmoji, setIsShowTooltipEmoji] = useState(false);
@@ -237,7 +239,7 @@ export function WorkflowLogTaskComment({
             />
           ))}
 
-        {isOnlyAttachmentsShown && <Attachments attachments={attachments} isEdit={false} />}
+        {isOnlyAttachmentsShown && <Attachments attachments={parsedAttachments} isEdit={false} />}
       </>
     );
   };
@@ -383,7 +385,7 @@ export enum ECommentStatus {
 
 export type TWorkflowLogTaskCommentProps = Pick<
   IWorkflowLogItem,
-  'id' | 'text' | 'userId' | 'status' | 'created' | 'attachments' | 'watched' | 'reactions' | 'task'
+  'id' | 'text' | 'userId' | 'status' | 'created' | 'watched' | 'reactions' | 'task'
 > & {
   currentUserId: number;
   workflowModal: boolean;

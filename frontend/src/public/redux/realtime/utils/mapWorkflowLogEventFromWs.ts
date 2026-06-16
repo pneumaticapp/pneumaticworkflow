@@ -41,7 +41,6 @@ export function mapWsEnvelopeToWorkflowLogItem(envelope: IRealtimeWsEnvelope): I
       delay: null,
       targetUserId: null,
       targetGroupId: null,
-      attachments: [],
       watched: [],
       reactions: {},
     };
@@ -84,7 +83,6 @@ export function mapWsEnvelopeToWorkflowLogItem(envelope: IRealtimeWsEnvelope): I
       delay: null,
       targetUserId: null,
       targetGroupId: null,
-      attachments: [],
       watched,
       reactions,
     };

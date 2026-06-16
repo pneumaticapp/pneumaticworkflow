@@ -1,6 +1,6 @@
 import { TUploadedFile } from './uploadFiles';
 import { getBrowserConfigEnv } from './getConfig';
-import { getAttachmentTypeByFilename } from '../components/Attachments/utils/getAttachmentType';
+import { getAttachmentTypeByFilename, getAttachmentTypeByUrl } from '../components/Attachments/utils/getAttachmentType';
 
 /**
  * Parses a markdown string and extracts file-service links as TUploadedFile[].
@@ -18,16 +18,20 @@ export function parseMarkdownToFiles(markdownValue: string | null | undefined): 
   if (!markdownValue) return [];
 
   const { api: { fileServiceUrl } = { fileServiceUrl: '' } } = getBrowserConfigEnv() || {};
-  const regex = /\[([^\]]+)\]\(([^)]+)\)/g;
+  // Matches both [name](url) and ![name](url) / ![name](url "title")
+  const regex = /!?\[([^\]]+)\]\(([^)"]+)(?:\s+"[^"]*")?\)/g;
   const files: TUploadedFile[] = [];
   let match = regex.exec(markdownValue);
 
   while (match !== null) {
-    const [, name, url] = match;
+    const [, name, rawUrl] = match;
+    const url = rawUrl.trim();
 
     if (fileServiceUrl && (url === fileServiceUrl || url.startsWith(`${fileServiceUrl}/`))) {
       const fileId = url.split('?')[0].split('#')[0].split('/').filter(Boolean).pop() || url;
-      const isImage = getAttachmentTypeByFilename(name) === 'image';
+      const isImageByName = getAttachmentTypeByFilename(name) === 'image';
+      const isImageByUrl = getAttachmentTypeByUrl(url) === 'image';
+      const isImage = isImageByName || isImageByUrl;
 
       files.push({
         id: fileId,

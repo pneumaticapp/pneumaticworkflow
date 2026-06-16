@@ -254,4 +254,64 @@ describe('parseMarkdownToFiles', () => {
       expect(result[0].thumbnailUrl).toBe(`${FILE_SERVICE_URL}/abc`);
     });
   });
+
+  describe('image markdown syntax (![name](url))', () => {
+    it('parses ![name](url) image markdown', () => {
+      const input = `![photo.jpg](${FILE_SERVICE_URL}/abc-123)`;
+
+      const result = parseMarkdownToFiles(input);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('photo.jpg');
+      expect(result[0].url).toBe(`${FILE_SERVICE_URL}/abc-123`);
+      expect(result[0].thumbnailUrl).toBe(`${FILE_SERVICE_URL}/abc-123`);
+    });
+
+    it('parses ![name](url "title") with title attribute', () => {
+      const input = `![screenshot.png](${FILE_SERVICE_URL}/abc-123 "attachment_id:42 entityType:image")`;
+
+      const result = parseMarkdownToFiles(input);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('screenshot.png');
+      expect(result[0].url).toBe(`${FILE_SERVICE_URL}/abc-123`);
+      expect(result[0].thumbnailUrl).toBe(`${FILE_SERVICE_URL}/abc-123`);
+    });
+
+    it('strips title from non-image ![name](url "title")', () => {
+      const input = `![report.pdf](${FILE_SERVICE_URL}/abc-123 "attachment_id:42 entityType:file")`;
+
+      const result = parseMarkdownToFiles(input);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].name).toBe('report.pdf');
+      expect(result[0].url).toBe(`${FILE_SERVICE_URL}/abc-123`);
+      expect(result[0].thumbnailUrl).toBeUndefined();
+    });
+
+    it('parses mix of [link](url) and ![image](url "title")', () => {
+      const input = [
+        `[doc.pdf](${FILE_SERVICE_URL}/1)`,
+        `![photo.jpg](${FILE_SERVICE_URL}/2 "attachment_id:5 entityType:image")`,
+      ].join('\n');
+
+      const result = parseMarkdownToFiles(input);
+
+      expect(result).toHaveLength(2);
+      expect(result[0].name).toBe('doc.pdf');
+      expect(result[0].thumbnailUrl).toBeUndefined();
+      expect(result[1].name).toBe('photo.jpg');
+      expect(result[1].url).toBe(`${FILE_SERVICE_URL}/2`);
+      expect(result[1].thumbnailUrl).toBe(`${FILE_SERVICE_URL}/2`);
+    });
+
+    it('handles title with special characters', () => {
+      const input = `![image.png](${FILE_SERVICE_URL}/abc "attachment_id:123 entityType:image")`;
+
+      const result = parseMarkdownToFiles(input);
+
+      expect(result[0].url).toBe(`${FILE_SERVICE_URL}/abc`);
+      expect(result[0].thumbnailUrl).toBe(`${FILE_SERVICE_URL}/abc`);
+    });
+  });
 });

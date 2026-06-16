@@ -101,7 +101,6 @@ export interface IWorkflowLogItem {
   delay: IWorkflowDelay | null;
   targetUserId: number | null;
   targetGroupId: number | null;
-  attachments: [];
   watched: { date: string; userId: Pick<IAccount, 'id'> }[];
   reactions: { [value: string]: Pick<IAccount, 'id'>[] };
 }
