@@ -7,7 +7,7 @@ import { ESubscriptionPlan } from '../../../types/account';
 import { createViewerApiName } from '../../../utils/createId';
 import { trackInviteTeamInPage } from '../../../utils/analytics';
 import { getNotDeletedUsers, getUserFullName } from '../../../utils/users';
-import { EOptionTypes, TUsersDropdownOption, UsersDropdown } from '../../UI/form/UsersDropdown';
+import { EOptionTypes, TUsersDropdownOption, UsersDropdown, getUsersDropdownOptionValue } from '../../UI/form/UsersDropdown';
 import { getIsUserSubsribed, getSubscriptionPlan, getUsers } from '../../../redux/selectors/user';
 import {
   ETaskPerformerType,
@@ -55,7 +55,7 @@ export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers 
       optionType: EOptionTypes.Group,
       type: ETaskPerformerType.UserGroup,
       label: group.name,
-      value: `${EOptionTypes.Group}-${group.id}`,
+      value: getUsersDropdownOptionValue(EOptionTypes.Group, group.id),
     };
   });
 
@@ -66,7 +66,7 @@ export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers 
       lastName: '',
       optionType: EOptionTypes.User,
       label: getUserFullName(item),
-      value: `${EOptionTypes.User}-${item.id}`,
+      value: getUsersDropdownOptionValue(EOptionTypes.User, item.id),
     };
   });
 
@@ -80,7 +80,7 @@ export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers 
       ...item,
       optionType: EOptionTypes.User,
       label: getUserFullName(item),
-      value: `${EOptionTypes.User}-${item.id}`,
+      value: getUsersDropdownOptionValue(EOptionTypes.User, item.id),
     };
   });
 
@@ -89,7 +89,7 @@ export function TemplateViewers({ templateViewers = [], onChangeTemplateViewers 
       ...item,
       optionType: EOptionTypes.Group,
       label: item.name,
-      value: `${EOptionTypes.Group}-${item.id}`,
+      value: getUsersDropdownOptionValue(EOptionTypes.Group, item.id),
     };
   });
 

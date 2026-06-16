@@ -133,13 +133,27 @@ export function ConditionValueField({
   function renderUserField() {
     interface IDropdownUser extends TUserListItem {
       label: string;
+      entityType: 'user' | 'group';
+      value: string;
     }
 
     const activeUsers = users.filter((user) => user.status === EUserStatus.Active);
-    const labelUsers = activeUsers.map((user) => ({ ...user, label: getUserFullName(user), entityType: 'user' }));
-    const labelGroups = groups.map((group) => ({ ...group, label: group.name, entityType: 'group' }));
+    const labelUsers = activeUsers.map((user) => ({
+      ...user,
+      label: getUserFullName(user),
+      entityType: 'user' as const,
+      value: `user-${user.id}`,
+    }));
+    const labelGroups = groups.map((group) => ({
+      ...group,
+      label: group.name,
+      entityType: 'group' as const,
+      value: `group-${group.id}`,
+    }));
     const dropdownEntities = [...labelGroups, ...labelUsers];
-    const selectedEntity = dropdownEntities.find((user) => user.id === Number(rule.value)) || null;
+    const selectedEntity = dropdownEntities.find(
+      (entity) => entity.id === Number(rule.value) && entity.entityType === rule.fieldType,
+    ) || null;
 
     return (
       <DropdownList
@@ -157,7 +171,7 @@ export function ConditionValueField({
           context === 'menu'
             ? getFormattedDropdownOption({
                 label: option.label,
-                isSelected: option.id === rule.value,
+                isSelected: option.id === rule.value && option.entityType === rule.fieldType,
                 isTooltip: true,
               })
             : option.label

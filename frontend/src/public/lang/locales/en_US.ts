@@ -757,6 +757,8 @@ export const enMessages = {
   'templates.conditions.less-than': 'Less than',
   'templates.conditions.more-than': 'More than',
   'templates.conditions.completed': 'Completed',
+  'templates.conditions.skipped': 'Skipped',
+  'templates.conditions.completed-or-skipped': 'Completed or Skipped',
   'templates.conditions.field-placeholder': 'if',
   'templates.conditions.operator-placeholder': 'is',
   'templates.conditions.value-placeholder': 'value',
