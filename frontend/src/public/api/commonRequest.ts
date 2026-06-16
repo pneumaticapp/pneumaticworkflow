@@ -18,11 +18,16 @@ export class ApiError extends Error {
 
   data?: unknown;
 
+  [key: string]: unknown;
+
   constructor(message: string, payload: unknown, status?: number) {
     super(message);
     this.name = 'ApiError';
     this.data = payload;
     this.status = status;
+    if (payload && typeof payload === 'object') {
+      Object.assign(this, payload);
+    }
     Object.setPrototypeOf(this, ApiError.prototype);
   }
 }
@@ -106,7 +111,10 @@ axiosInstance.interceptors.response.use(
 
     const data = error.response?.data;
     const payload = typeof data === 'string' ? { error: data } : data ?? {};
-    const message = payload.message || payload.error || error.message;
+    const hasPayloadData = Object.keys(payload).length > 0;
+    const message = payload.message || payload.error
+      || (hasPayloadData ? JSON.stringify({ ...payload, status: error.response?.status }) : null)
+      || error.message || 'Request failed';
     return Promise.reject(new ApiError(message, payload, error.response?.status));
   },
 );

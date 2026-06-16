@@ -134,3 +134,10 @@
   margin-bottom: 3.2rem;
   padding: 0;
 }
+
+@media print {
+  :global(body.workflow-modal-print-mode) .process-log-item {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}

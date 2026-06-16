@@ -97,7 +97,7 @@ export const WorkflowLog = ({
     }
 
     return (
-      <div className={styles['popup-body-controls']}>
+      <div className={classnames(styles['popup-body-controls'], 'no-print')}>
         <div className={styles['popup-body-controls__inner']}>
           <div className={styles['popup-body-controls-general']}>
             <Tabs
