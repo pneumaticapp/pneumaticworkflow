@@ -99,6 +99,8 @@ class FieldTemplateSelection(
     template = models.ForeignKey(
         Template,
         on_delete=models.CASCADE,
+        null=True,
+        blank=True,
         related_name='selections',
     )
     field_template = models.ForeignKey(

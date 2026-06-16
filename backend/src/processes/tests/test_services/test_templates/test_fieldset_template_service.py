@@ -1051,8 +1051,8 @@ def test_delete__used_by_task__raise_exception():
         template=template,
         account=account,
         name='Fieldset',
+        task=task_template,
     )
-    fieldset.tasks.add(task_template)
     service = FieldSetTemplateService(
         user=user,
         is_superuser=False,

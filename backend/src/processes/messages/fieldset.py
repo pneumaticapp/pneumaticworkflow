@@ -23,3 +23,9 @@ MSG_FS_0006 = _(
 MSG_FS_0007 = _(
     'Either "task" or "kickoff" must be provided to create a fieldset.',
 )
+MSG_FS_0008 = _(
+    'Shared fieldset template with the specified id was not found.',
+)
+MSG_FS_0009 = _(
+    'Cannot change a fieldset template that is used in templates.',
+)

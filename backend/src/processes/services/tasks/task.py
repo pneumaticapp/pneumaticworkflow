@@ -13,8 +13,7 @@ from src.processes.enums import (
 from src.processes.models.templates.checklist import (
     ChecklistTemplateSelection,
 )
-from src.processes.models.templates.fieldset import \
-    FieldsetTemplateTaskTemplate
+from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.workflows.conditions import (
     Condition,
@@ -207,9 +206,9 @@ class TaskService(
 
     def create_fields_from_template(self, instance_template: TaskTemplate):
         active_fieldset_ids = (
-            FieldsetTemplateTaskTemplate.objects
+            FieldsetTemplate.objects
             .filter(task=instance_template)
-            .values_list('fieldset_id', flat=True)
+            .values_list('id', flat=True)
         )
         for field_template in instance_template.fields.exclude(
             fieldset__in=active_fieldset_ids,
@@ -226,21 +225,20 @@ class TaskService(
         self,
         instance_template: TaskTemplate,
     ):
-        fieldset_through_records = (
-            FieldsetTemplateTaskTemplate.objects
+        fieldsets = (
+            FieldsetTemplate.objects
             .filter(task=instance_template)
-            .select_related('fieldset')
-            .prefetch_related('fieldset__rules', 'fieldset__fields')
+            .prefetch_related('rules', 'fields')
             .order_by('order')
         )
-        for fieldset_through in fieldset_through_records:
+        for fieldset in fieldsets:
             service = FieldSetService(user=self.user)
             service.create(
-                instance_template=fieldset_through.fieldset,
+                instance_template=fieldset,
                 account_id=self.instance.workflow.account_id,
                 workflow=self.instance.workflow,
                 task=self.instance,
-                order=fieldset_through.order,
+                order=fieldset.order,
                 skip_value=True,
             )
 

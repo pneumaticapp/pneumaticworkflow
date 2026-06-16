@@ -1,11 +1,11 @@
 import pytest
 
 from src.accounts.enums import BillingPlanType
-from src.processes.enums import OwnerRole, OwnerType, FieldType
-from src.processes.models.templates.fields import FieldTemplate, \
-    FieldTemplateSelection
-from src.processes.models.templates.fieldset import (
-    FieldsetTemplateKickoff,
+from src.processes.enums import OwnerRole, OwnerType, FieldType, \
+    FieldSetRuleType
+from src.processes.models.templates.fields import (
+    FieldTemplate,
+    FieldTemplateSelection,
 )
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.tests.fixtures import (
@@ -464,16 +464,16 @@ def test_titles_by_owners__kickoff_fieldset__ok(api_client):
         account=user.account,
         template=template,
         kickoff=kickoff,
-        name='Personal Info',
+        title='Personal',
         description='Enter your personal information',
         api_name='fieldset-personal',
         order=5,
-    )
-    fieldset_link = FieldsetTemplateKickoff.objects.get(
-        fieldset=fieldset,
-        kickoff=kickoff,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='1',
     )
     fieldset_field = fieldset.fields.first()
+    rule = fieldset.rules.all().first()
+    rule.fields.add(fieldset_field)
     api_client.token_authenticate(user)
 
     # act
@@ -484,17 +484,30 @@ def test_titles_by_owners__kickoff_fieldset__ok(api_client):
     fieldsets = response.data[0]['kickoff']['fieldsets']
     assert len(fieldsets) == 1
     fieldset_data = fieldsets[0]
-    assert fieldset_data['order'] == fieldset_link.order
+    assert fieldset_data['order'] == fieldset.order
     assert fieldset_data['name'] == fieldset.name
+    assert fieldset_data['title'] == fieldset.title
     assert fieldset_data['description'] == fieldset.description
     assert fieldset_data['api_name'] == fieldset.api_name
     assert fieldset_data['label_position'] == fieldset.label_position
     assert fieldset_data['layout'] == fieldset.layout
+    assert len(fieldset_data['rules']) == 1
+
+    rule_data = fieldset_data['rules'][0]
+    assert rule_data['type'] == rule.type
+    assert rule_data['value'] == rule.value
+    assert rule_data['api_name'] == rule.api_name
+    assert rule_data['fields'] == [fieldset_field.api_name]
+
     assert len(fieldset_data['fields']) == 1
     field_data = fieldset_data['fields'][0]
     assert field_data['api_name'] == fieldset_field.api_name
     assert field_data['name'] == fieldset_field.name
+    assert field_data['description'] == ''
     assert field_data['type'] == fieldset_field.type
+    assert field_data['is_required'] == fieldset_field.is_required
+    assert field_data['is_hidden'] == fieldset_field.is_hidden
+    assert field_data['default'] == fieldset_field.default
     assert field_data['order'] == fieldset_field.order
 
 
@@ -540,25 +553,15 @@ def test_titles_by_owners__kickoff_fieldsets_ordered(
         account=user.account,
         template=template,
         kickoff=kickoff,
-        name='Second Fieldset',
         api_name='fieldset-second',
         order=2,
-    )
-    link_2 = FieldsetTemplateKickoff.objects.get(
-        fieldset=fieldset_2,
-        kickoff=kickoff,
     )
     fieldset_1 = create_test_fieldset_template(
         account=user.account,
         template=template,
         kickoff=kickoff,
-        name='First Fieldset',
         api_name='fieldset-first',
         order=1,
-    )
-    link_1 = FieldsetTemplateKickoff.objects.get(
-        fieldset=fieldset_1,
-        kickoff=kickoff,
     )
     api_client.token_authenticate(user)
 
@@ -569,7 +572,7 @@ def test_titles_by_owners__kickoff_fieldsets_ordered(
     assert response.status_code == 200
     fieldsets = response.data[0]['kickoff']['fieldsets']
     assert len(fieldsets) == 2
-    assert fieldsets[0]['order'] == link_1.order
+    assert fieldsets[0]['order'] == fieldset_1.order
     assert fieldsets[0]['api_name'] == fieldset_1.api_name
-    assert fieldsets[1]['order'] == link_2.order
+    assert fieldsets[1]['order'] == fieldset_2.order
     assert fieldsets[1]['api_name'] == fieldset_2.api_name

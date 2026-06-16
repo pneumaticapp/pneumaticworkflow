@@ -12,13 +12,13 @@ from src.processes.serializers.templates.field import (
     FieldTemplateListSerializer,
     FieldTemplateSerializer,
 )
-from src.processes.serializers.templates.fieldset_link import (
-    FieldsetTemplateKickoffSerializer,
-    FieldsetTemplateKickoffListSerializer,
+from src.processes.serializers.templates.fieldset import (
+    FieldsetTemplateSerializer,
 )
 from src.processes.serializers.templates.mixins import (
     CreateOrUpdateInstanceMixin,
     CreateOrUpdateRelatedMixin,
+    FieldsetMixin,
 )
 
 
@@ -27,6 +27,7 @@ class KickoffSerializer(
     CreateOrUpdateRelatedMixin,
     CustomValidationErrorMixin,
     AdditionalValidationMixin,
+    FieldsetMixin,
     ModelSerializer,
 ):
 
@@ -42,8 +43,7 @@ class KickoffSerializer(
         }
 
     fields = FieldTemplateSerializer(many=True, required=False, default=list)
-    fieldsets = FieldsetTemplateKickoffSerializer(
-        source='fieldsettemplatekickoff_set',
+    fieldsets = FieldsetTemplateSerializer(
         many=True,
         required=False,
         allow_empty=True,
@@ -60,19 +60,24 @@ class KickoffSerializer(
 
     def create(self, validated_data: Dict[str, Any]):
         self.additional_validate(validated_data)
-        validated_data.pop('fieldsettemplatekickoff_set', None)
+        template = self.context['template']
         instance = self.create_or_update_instance(
             validated_data={
-                'template': self.context['template'],
+                'template': template,
                 'account':  self.context.get('account'),
                 **validated_data,
             },
+        )
+        self.create_or_update_fieldsets(
+            fieldsets_data=validated_data.pop('fieldsets', []),
+            template=template,
+            kickoff=instance,
         )
         self.create_or_update_related(
             data=validated_data.get('fields'),
             ancestors_data={
                 'kickoff': instance,
-                'template': self.context['template'],
+                'template': template,
             },
             slz_cls=FieldTemplateSerializer,
             slz_context={
@@ -88,21 +93,25 @@ class KickoffSerializer(
         validated_data: Dict[str, Any],
     ):
         self.additional_validate(validated_data)
-        validated_data.pop('fieldsettemplatekickoff_set', None)
+        template = self.context['template']
         instance = self.create_or_update_instance(
             instance=instance,
             validated_data={
-                'template': self.context['template'],
+                'template': template,
                 'account':  self.context.get('account'),
                 **validated_data,
             },
         )
-
+        self.create_or_update_fieldsets(
+            fieldsets_data=validated_data.pop('fieldsets', []),
+            template=template,
+            kickoff=instance,
+        )
         self.create_or_update_related(
             data=validated_data.get('fields'),
             ancestors_data={
                 'kickoff': instance.id,
-                'template': self.context['template'],
+                'template': template,
             },
             slz_cls=FieldTemplateSerializer,
             slz_context={
@@ -123,10 +132,7 @@ class KickoffListSerializer(ModelSerializer):
         )
 
     fields = FieldTemplateListSerializer(many=True)
-    fieldsets = FieldsetTemplateKickoffListSerializer(
-        source='fieldsettemplatekickoff_set',
-        many=True,
-    )
+    fieldsets = FieldsetTemplateSerializer(many=True)
 
     def to_representation(self, instance):
         # TODO Delete when the Template <-> Kickoff relation becomes o2o

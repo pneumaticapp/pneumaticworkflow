@@ -8,8 +8,8 @@ from src.processes.models.templates.kickoff import Kickoff
 from src.processes.serializers.templates.field import (
     PublicFieldTemplateSerializer,
 )
-from src.processes.serializers.templates.fieldset_link import \
-    FieldsetTemplateKickoffListSerializer
+from src.processes.serializers.templates.fieldset import \
+    FieldsetTemplateSerializer
 
 
 class PublicKickoffSerializer(ModelSerializer):
@@ -24,10 +24,7 @@ class PublicKickoffSerializer(ModelSerializer):
 
     description = CharField(allow_blank=True, default='')
     fields = PublicFieldTemplateSerializer(many=True, required=False)
-    fieldsets = FieldsetTemplateKickoffListSerializer(
-        source='fieldsettemplatekickoff_set',
-        many=True,
-    )
+    fieldsets = FieldsetTemplateSerializer(many=True, required=False)
 
     def to_representation(self, data: Dict[str, Any]):
         data = super().to_representation(data)

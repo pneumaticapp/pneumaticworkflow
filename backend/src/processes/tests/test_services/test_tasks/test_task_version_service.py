@@ -2450,7 +2450,6 @@ def test__update_fieldsets__data_provided__ok(mocker):
     user = create_test_owner()
     workflow = create_test_workflow(user=user, tasks_count=2)
     task_1 = workflow.tasks.get(number=1)
-    task_2 = workflow.tasks.get(number=2)
     old_fieldset = create_test_fieldset(
         workflow=workflow,
         task=task_1,
@@ -2465,17 +2464,9 @@ def test__update_fieldsets__data_provided__ok(mocker):
         {
             'api_name': 'fieldset-1',
             'name': 'New Fieldset',
+            'title': 'Test title',
             'description': 'Test description',
-            'task_links': [
-                {
-                    'task_api_name': task_1.api_name,
-                    'order': 2,
-                },
-                {
-                    'task_api_name': task_2.api_name,
-                    'order': 1,
-                },
-            ],
+            'order': 2,
             'label_position': LabelPosition.TOP,
             'layout': FieldSetLayout.VERTICAL,
             'rules': [

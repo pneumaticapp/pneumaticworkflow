@@ -13,9 +13,6 @@ from src.processes.models.templates.checklist import (
     ChecklistTemplate,
     ChecklistTemplateSelection,
 )
-from src.processes.models.templates.fieldset import (
-    FieldsetTemplateTaskTemplate,
-)
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.raw_due_date import RawDueDateTemplate
 from src.processes.models.workflows.fields import TaskField
@@ -2108,16 +2105,12 @@ def test_create_fields_from_template__deleted_fieldsets__skip(
     user = create_test_owner()
     template = create_test_template(user=user, tasks_count=1)
     template_task = template.tasks.get(number=1)
-    fieldset_deleted = create_test_fieldset_template(
+    create_test_fieldset_template(
         account=user.account,
         template=template,
         task=template_task,
         name='Deleted fieldset',
         order=0,
-    )
-    FieldsetTemplateTaskTemplate.objects.filter(
-        fieldset=fieldset_deleted,
-        task=template_task,
     ).delete()
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)

@@ -12,6 +12,7 @@ class FieldSetSerializer(serializers.ModelSerializer):
             'id',
             'api_name',
             'name',
+            'title',
             'description',
             'order',
             'label_position',
