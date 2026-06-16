@@ -650,7 +650,7 @@ export function TaskCard({
           task.isReadOnlyViewer && styles['complete-form_readonly']
         )}>
           {helpTextLocal && (
-            <button type="button" className={styles['help-trigger']} onClick={() => setIsHelpModalOpen(true)}>
+            <button type="button" className={classnames(styles['help-trigger'], 'no-print')} onClick={() => setIsHelpModalOpen(true)}>
               <span className={styles['help-trigger__label']}>
                 {formatMessage({ id: 'task.help', defaultMessage: 'Help' })}
               </span>

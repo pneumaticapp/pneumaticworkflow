@@ -89,6 +89,11 @@
   @media (--mobile) {
     width: 100%;
   }
+
+  @media print {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
 }
 
 .search-field {
