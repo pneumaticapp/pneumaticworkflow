@@ -1,11 +1,16 @@
 import { getUserPublic } from '../utils/getUserPublic';
-import { logServerError } from '../../utils/expectedErrors';
+import { logServerError, LOG_PREFIX_ACCOUNT_CONTEXT } from '../../utils/expectedErrors';
+import { logger } from '../../../public/utils/logger';
 import { serverApi } from '../../utils';
 
 type GetUserPublicRequest = Parameters<typeof getUserPublic>[0];
 
 jest.mock('../../utils/expectedErrors', () => ({
+  ...jest.requireActual('../../utils/expectedErrors'),
   logServerError: jest.fn(),
+}));
+jest.mock('../../../public/utils/logger', () => ({
+  logger: { info: jest.fn(), error: jest.fn() },
 }));
 jest.mock('../../utils', () => ({ serverApi: { get: jest.fn() } }));
 jest.mock('../../utils/getAuthHeader', () => ({
@@ -40,14 +45,26 @@ describe('getUserPublic', () => {
     );
   });
 
-  it('uses logServerError (not logger.error) when API call fails', async () => {
-    const apiError = new Error('Not Found');
-    (serverApi.get as jest.Mock).mockRejectedValue(apiError);
+  it('uses logger.info for expected auth error (401 credentials not provided)', async () => {
+    const authError = { detail: 'Authentication credentials were not provided.' };
+    (serverApi.get as jest.Mock).mockRejectedValue(authError);
 
-    await expect(getUserPublic(req as GetUserPublicRequest, 'invalid-token')).rejects.toThrow('Not Found');
+    await expect(getUserPublic(req as GetUserPublicRequest, 'invalid-token')).rejects.toBe(authError);
+
+    expect(logger.info).toHaveBeenCalledTimes(1);
+    expect(logger.info).toHaveBeenCalledWith(LOG_PREFIX_ACCOUNT_CONTEXT, authError);
+    expect(logServerError).not.toHaveBeenCalled();
+  });
+
+  it('uses logServerError for unexpected errors', async () => {
+    const unexpectedError = new Error('Internal Server Error');
+    (serverApi.get as jest.Mock).mockRejectedValue(unexpectedError);
+
+    await expect(getUserPublic(req as GetUserPublicRequest, 'bad-token')).rejects.toBe(unexpectedError);
 
     expect(logServerError).toHaveBeenCalledTimes(1);
-    expect(logServerError).toHaveBeenCalledWith('failed to get account context: ', apiError);
+    expect(logServerError).toHaveBeenCalledWith(LOG_PREFIX_ACCOUNT_CONTEXT, unexpectedError);
+    expect(logger.info).not.toHaveBeenCalled();
   });
 
   it('re-throws the original error after logging', async () => {
