@@ -92,10 +92,15 @@ class AttachmentListQuery(SqlQueryObject):
             field_mappings.append(f'a.{db_column}')
         fields = ', '.join(field_mappings)
         sql = f"""
-            SELECT {fields}
+            SELECT DISTINCT ON (a.file_id) {fields}
             FROM storage_attachment a
             {self._get_where()}
-            ORDER BY a.id DESC
+            ORDER BY a.file_id, a.id DESC
+        """
+        # Wrap to apply pagination with the desired final ordering
+        sql = f"""
+            SELECT * FROM ({sql}) sub
+            ORDER BY sub.id DESC
             LIMIT %(limit)s {self._get_offset()}
         """
         return sql, self.params
@@ -107,7 +112,7 @@ class AttachmentListQuery(SqlQueryObject):
         return f"""
             SELECT
                 1 AS id,
-                COUNT(a.id) AS count
+                COUNT(DISTINCT a.file_id) AS count
             FROM storage_attachment a
             {self._get_where()}
         """

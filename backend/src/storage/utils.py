@@ -520,14 +520,33 @@ def reassign_restricted_permissions_for_task(
 ) -> None:
     """
     Reassign restricted permissions for all attachments linked to task.
+    Also grants access on template-level attachments (inheritance:
+    template files are visible to all workflow task performers).
     Call after task performers change so new performers get access.
     """
     service = AttachmentService(user=user)
+
+    # 1. Reassign permissions for task-level attachments (full reset)
     for att in Attachment.objects.filter(
             task=task,
             access_type=AccessType.RESTRICTED,
     ):
         service.reassign_restricted_permissions(att)
+
+    # 2. Additive permissions for template-level attachments.
+    #    Template files are shared across all workflows from the template,
+    #    so we only ADD permissions (never clear others' access).
+    template_id = task.workflow.template_id
+    if template_id:
+        template_attachments = Attachment.objects.filter(
+            template_id=template_id,
+            source_type=SourceType.TEMPLATE,
+            access_type=AccessType.RESTRICTED,
+        )
+        service.assign_task_permissions_for_attachments(
+            task=task,
+            attachments=template_attachments,
+        )
 
 
 def get_attachment_description_fields(source: models.Model) -> List[str]:

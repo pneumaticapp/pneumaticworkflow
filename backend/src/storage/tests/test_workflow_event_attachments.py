@@ -145,12 +145,12 @@ class TestRefreshWorkflowEventAttachments:
         FILE_SERVICE_URL='https://pneumatic.app/files',
         FILE_SERVICE_HOST_PATH='pneumatic.app/files',
     )
-    def test_refresh_workflow_event_attachments__all_attached_elsewhere__false(
+    def test_refresh_event_atts__same_file_diff_event__creates(
         self,
     ):
-        # arrange: file_id already attached to event1; event2 has same link
-        # in text. bulk_create_for_event fails for all (IntegrityError),
-        # has_attachments must be False for event2
+        # arrange: file_id attached to event1; event2 has same link.
+        # Since each event is a separate scope, event2 gets its own
+        # Attachment record for the same file_id.
         user = create_test_user()
         workflow = create_test_workflow(user=user, tasks_count=1)
         task = workflow.tasks.first()
@@ -175,10 +175,10 @@ class TestRefreshWorkflowEventAttachments:
         # act
         result = _refresh_workflow_event_attachments(event2, user)
 
-        # assert
-        assert result == []
+        # assert — new attachment created for event2 scope
+        assert result == [shared_file_id]
         event2.refresh_from_db()
-        assert event2.with_attachments is False
+        assert event2.with_attachments is True
 
 
 class TestSourceTypeFromEvent:

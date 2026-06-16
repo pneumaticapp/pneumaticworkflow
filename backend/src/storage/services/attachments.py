@@ -4,6 +4,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
 from django.db import IntegrityError, models, transaction
+from django.db.models import Q
 from guardian.models import UserObjectPermission
 from guardian.shortcuts import assign_perm
 
@@ -87,6 +88,110 @@ class AttachmentService(BaseModelService):
             self._assign_template_permissions()
         elif self.instance.source_type == SourceType.WORKFLOW:
             self._assign_workflow_permissions()
+
+    def assign_task_permissions_for_attachments(
+        self,
+        task: Task,
+        attachments: Iterable[Attachment],
+    ) -> None:
+        """
+        Additively grant task participants access to given attachments.
+
+        Unlike _assign_task_permissions (which clears + reassigns for a
+        single task-level attachment), this method only ADDS permissions
+        without removing existing ones. Used for template-level attachments
+        that are shared across multiple workflows — clearing would revoke
+        access granted by other workflows.
+
+        Optimized: uses bulk_create(ignore_conflicts=True) to assign
+        permissions in 2-3 queries instead of NxM individual calls.
+        """
+
+        # Reload task to get latest performers
+        task = Task.objects.prefetch_related(
+            'taskperformer_set__user',
+            'taskperformer_set__group',
+            'workflow__owners',
+            'workflow__members',
+        ).get(id=task.id)
+
+        users_set = set()
+        groups_set = set()
+
+        # Collect task performers (single pass)
+        task_performers = task.taskperformer_set.exclude_directly_deleted()
+        for performer in task_performers:
+            if performer.user:
+                users_set.add(performer.user)
+            if performer.group:
+                groups_set.add(performer.group)
+
+        # Collect workflow owners and members
+        workflow = task.workflow
+        for owner in workflow.owners.all():
+            users_set.add(owner)
+        for member in workflow.members.all():
+            users_set.add(member)
+
+        # Collect template owners (user + group)
+        if workflow.template_id:
+            template_owners = TemplateOwner.objects.filter(
+                template_id=workflow.template_id,
+                is_deleted=False,
+            ).select_related('user', 'group')
+            for to in template_owners:
+                if to.type == OwnerType.USER and to.user:
+                    users_set.add(to.user)
+                elif to.type == OwnerType.GROUP and to.group:
+                    groups_set.add(to.group)
+
+        if not users_set and not groups_set:
+            return
+
+        ctype = ContentType.objects.get_for_model(Attachment)
+        perm = Permission.objects.get(
+            content_type=ctype,
+            codename='access_attachment',
+        )
+
+        att_pks = [str(att.pk) for att in attachments]
+        if not att_pks:
+            return
+
+        with transaction.atomic():
+            # Bulk user permissions (1 query instead of NxM)
+            if users_set:
+                user_perms = [
+                    UserObjectPermission(
+                        user=user,
+                        permission=perm,
+                        content_type=ctype,
+                        object_pk=obj_pk,
+                    )
+                    for user in users_set
+                    for obj_pk in att_pks
+                ]
+                UserObjectPermission.objects.bulk_create(
+                    user_perms,
+                    ignore_conflicts=True,
+                )
+
+            # Bulk group permissions (1 query instead of GxM)
+            if groups_set:
+                group_perms = [
+                    GroupObjectPermission(
+                        group=group,
+                        permission=perm,
+                        content_type=ctype,
+                        object_pk=obj_pk,
+                    )
+                    for group in groups_set
+                    for obj_pk in att_pks
+                ]
+                GroupObjectPermission.objects.bulk_create(
+                    group_perms,
+                    ignore_conflicts=True,
+                )
 
     def _assign_task_permissions(self):
         """Assigns permissions for task."""
@@ -351,6 +456,22 @@ class AttachmentService(BaseModelService):
         assign_perm (django-guardian requires object with pk).
         Returns list of created attachments.
         """
+        # Skip file_ids that already have a live attachment in this scope
+        scope_filter = {'account': source.account}
+        if isinstance(source, Task):
+            scope_filter['task'] = source
+        elif isinstance(source, Template):
+            scope_filter['template'] = source
+        elif isinstance(source, Workflow):
+            scope_filter['workflow'] = source
+        existing = set(
+            Attachment.objects.filter(
+                file_id__in=file_ids,
+                **scope_filter,
+            ).values_list('file_id', flat=True),
+        )
+        file_ids = [fid for fid in file_ids if fid not in existing]
+
         created_attachments = []
         for file_id in file_ids:
             attachment_data = {
@@ -415,6 +536,22 @@ class AttachmentService(BaseModelService):
         Create attachments one-by-one so each is persisted before
         assign_perm (django-guardian requires object with pk).
         """
+        # Skip file_ids already present in this scope
+        scope_filter = {'account': account}
+        if task is not None:
+            scope_filter['task'] = task
+        elif workflow is not None:
+            scope_filter['workflow'] = workflow
+        elif template is not None:
+            scope_filter['template'] = template
+        existing = set(
+            Attachment.objects.filter(
+                file_id__in=file_ids,
+                **scope_filter,
+            ).values_list('file_id', flat=True),
+        )
+        file_ids = [fid for fid in file_ids if fid not in existing]
+
         created_attachments = []
         for file_id in file_ids:
             try:
@@ -447,6 +584,15 @@ class AttachmentService(BaseModelService):
         Create attachments for WorkflowEvent one-by-one so each is persisted
         before assign_perm (django-guardian requires object with pk).
         """
+        # Skip file_ids already attached to this event
+        existing = set(
+            Attachment.objects.filter(
+                file_id__in=file_ids,
+                event=event,
+            ).values_list('file_id', flat=True),
+        )
+        file_ids = [fid for fid in file_ids if fid not in existing]
+
         created_attachments = []
         for file_id in file_ids:
             try:
@@ -476,68 +622,74 @@ class AttachmentService(BaseModelService):
     ) -> bool:
         """
         Checks user permission to access file.
-        Uses django-guardian for object-level permission checks.
-        Allows access for public templates.
-        """
-        try:
-            attachment = Attachment.objects.get(file_id=file_id)
-        except Attachment.DoesNotExist:
-            return False
 
-        # Check access type
-        if attachment.access_type == AccessType.PUBLIC:
+        A single file_id may have multiple Attachment records (one per
+        scope).  Access is granted if ANY live attachment permits it.
+
+        Optimized: all checks are pushed into SQL (no Python-side
+        iteration over Attachment objects).
+        """
+
+        base_qs = Attachment.objects.filter(file_id=file_id)
+
+        # Phase 1: single EXISTS — PUBLIC / ACCOUNT / public template
+        fast_q = Q(access_type=AccessType.PUBLIC)
+        if account_id is not None:
+            fast_q |= Q(
+                access_type=AccessType.ACCOUNT,
+                account_id=account_id,
+            )
+        if public_template is not None:
+            fast_q |= Q(
+                access_type=AccessType.RESTRICTED,
+                source_type=SourceType.TEMPLATE,
+                template_id=public_template.id,
+                account_id=public_template.account_id,
+            )
+        if base_qs.filter(fast_q).exists():
             return True
 
-        if attachment.access_type == AccessType.ACCOUNT:
-            return account_id == attachment.account_id
+        # Phase 2: RESTRICTED — guardian object-level permissions
+        if user_id is None:
+            return False
 
-        if attachment.access_type == AccessType.RESTRICTED:
-            # Check public template access first
-            if (
-                public_template is not None
-                and public_template.account_id == attachment.account_id
-                and attachment.source_type == SourceType.TEMPLATE
-                and attachment.template_id == public_template.id
-            ):
-                return True
+        # Fetch only PKs of RESTRICTED attachments (no full objects)
+        restricted_pks = list(
+            base_qs.filter(
+                access_type=AccessType.RESTRICTED,
+            ).values_list('id', flat=True),
+        )
+        if not restricted_pks:
+            return False
 
-            if user_id is None:
+        # Resolve user (deferred until actually needed)
+        if hasattr(self, 'user') and self.user and self.user.id == user_id:
+            user = self.user
+        else:
+            try:
+                user = UserModel.objects.get(id=user_id)
+            except UserModel.DoesNotExist:
                 return False
 
-            # Use django-guardian for permission check
-            # Use self.user if available to avoid permission cache issues
-            if hasattr(self, 'user') and self.user and self.user.id == user_id:
-                user = self.user
-            else:
-                try:
-                    user = UserModel.objects.get(id=user_id)
-                except UserModel.DoesNotExist:
-                    return False
+        if not user.is_active:
+            return False
 
-            # Inactive users should not have access to restricted files
-            if not user.is_active:
-                return False
+        ctype = ContentType.objects.get_for_model(Attachment)
+        perm_codename = 'access_attachment'
+        str_pks = [str(pk) for pk in restricted_pks]
 
-            ctype = ContentType.objects.get_for_model(Attachment)
-            perm_codename = 'access_attachment'
-            obj_pk = str(attachment.pk)
+        if UserObjectPermission.objects.filter(
+            user=user,
+            object_pk__in=str_pks,
+            permission__content_type=ctype,
+            permission__codename=perm_codename,
+        ).exists():
+            return True
 
-            has_user_perm = UserObjectPermission.objects.filter(
-                user=user,
-                object_pk=obj_pk,
-                permission__content_type=ctype,
-                permission__codename=perm_codename,
-            ).exists()
-
-            if has_user_perm:
-                return True
-
-            user_group_ids = user.user_groups.values_list('id', flat=True)
-            return GroupObjectPermission.objects.filter(
-                group_id__in=user_group_ids,
-                object_pk=obj_pk,
-                permission__content_type=ctype,
-                permission__codename=perm_codename,
-            ).exists()
-
-        return False
+        user_group_ids = user.user_groups.values_list('id', flat=True)
+        return GroupObjectPermission.objects.filter(
+            group_id__in=user_group_ids,
+            object_pk__in=str_pks,
+            permission__content_type=ctype,
+            permission__codename=perm_codename,
+        ).exists()

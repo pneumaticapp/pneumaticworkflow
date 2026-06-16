@@ -18,7 +18,6 @@ class Attachment(SoftDeleteModel, AccountBaseMixin):
             ('access_attachment', 'Can access attachment'),
         )
         indexes = [
-            models.Index(fields=['file_id']),
             models.Index(fields=['source_type', 'account']),
             models.Index(
                 fields=['is_deleted', 'access_type', 'account'],
@@ -32,8 +31,8 @@ class Attachment(SoftDeleteModel, AccountBaseMixin):
 
     file_id = models.CharField(
         max_length=512,
-        unique=True,
-        help_text='Unique file identifier in the file service',
+        db_index=True,
+        help_text='File identifier in the file service',
     )
     access_type = models.CharField(
         max_length=20,

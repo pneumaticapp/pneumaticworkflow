@@ -20,7 +20,7 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('is_deleted', models.BooleanField(default=False)),
-                ('file_id', models.CharField(help_text='Unique file identifier in the file service', max_length=512, unique=True)),
+                ('file_id', models.CharField(db_index=True, help_text='File identifier in the file service', max_length=512)),
                 ('access_type', models.CharField(choices=[('public', 'Public'), ('account', 'Account'), ('restricted', 'Restricted')], default='account', help_text='File access type', max_length=20)),
                 ('source_type', models.CharField(choices=[('Account', 'Account'), ('Workflow', 'Workflow'), ('Task', 'Task'), ('Template', 'Template')], help_text='File source type', max_length=20)),
                 ('account', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='accounts.Account')),
@@ -37,10 +37,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddIndex(
             model_name='attachment',
-            index=models.Index(fields=['file_id'], name='storage_att_file_id_50242f_idx'),
-        ),
-        migrations.AddIndex(
-            model_name='attachment',
             index=models.Index(fields=['source_type', 'account'], name='storage_att_source__a020ca_idx'),
         ),
         migrations.AddIndex(
@@ -50,5 +46,19 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name='attachment',
             index=models.Index(fields=['is_deleted', 'access_type'], name='storage_att_del_acc_idx'),
+        ),
+        # Scoped uniqueness: one file_id per entity (scope).
+        # Django ORM UniqueConstraint does not support NULLS NOT DISTINCT,
+        # so we use raw SQL (same pattern as processes_search_content_unique).
+        migrations.RunSQL(
+            sql="""
+                CREATE UNIQUE INDEX storage_attachment_scoped_unique
+                ON storage_attachment (
+                    file_id, template_id, task_id,
+                    workflow_id, event_id, output_id
+                )
+                NULLS NOT DISTINCT
+                WHERE is_deleted = FALSE;
+            """,
         ),
     ]

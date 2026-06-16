@@ -4,15 +4,19 @@ from guardian.models import UserObjectPermission
 from guardian.shortcuts import assign_perm
 
 from src.permissions.models import GroupObjectPermission
+from src.processes.enums import PerformerType
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
     create_test_attachment,
+    create_test_group,
     create_test_workflow,
 )
 from src.storage.enums import AccessType, SourceType
 from src.storage.models import Attachment
 from src.storage.services.attachments import AttachmentService
+from src.storage.utils import reassign_restricted_permissions_for_task
 
 pytestmark = pytest.mark.django_db
 
@@ -459,3 +463,238 @@ class TestAttachmentDeleteGuardianCleanup:
             object_pk=obj_pk,
             content_type=ctype,
         ).exists()
+
+
+class TestTemplateFileInheritance:
+    """Tests for template file permission inheritance:
+    when reassign_restricted_permissions_for_task is called,
+    task participants get guardian permissions on template-level
+    attachments from the same template."""
+
+    def test_check_perm__tpl_inherit_performer__ok(self):
+        """After reassign, task performer should have guardian
+        permission on template attachment."""
+
+        # arrange
+        owner = create_test_admin(email='owner@pneumatic.app')
+        performer = create_test_admin(
+            email='performer@pneumatic.app',
+            account=owner.account,
+        )
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        task = workflow.tasks.first()
+        workflow.members.add(performer)
+        attachment = create_test_attachment(
+            account=owner.account,
+            source_type=SourceType.TEMPLATE,
+            template=workflow.template,
+        )
+        reassign_restricted_permissions_for_task(
+            task=task,
+            user=owner,
+        )
+        service = AttachmentService(user=performer)
+
+        # act
+        result = service.check_user_permission(
+            user_id=performer.id,
+            account_id=performer.account_id,
+            file_id=attachment.file_id,
+        )
+
+        # assert
+        assert result is True
+
+    def test_check_perm__tpl_inherit_outsider__denied(self):
+        """User not in task/workflow should NOT get access."""
+
+        # arrange
+        owner = create_test_admin(email='owner@pneumatic.app')
+        outsider = create_test_admin(
+            email='outsider@pneumatic.app',
+            account=owner.account,
+        )
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        task = workflow.tasks.first()
+        attachment = create_test_attachment(
+            account=owner.account,
+            source_type=SourceType.TEMPLATE,
+            template=workflow.template,
+        )
+        reassign_restricted_permissions_for_task(
+            task=task,
+            user=owner,
+        )
+        service = AttachmentService(user=outsider)
+
+        # act
+        result = service.check_user_permission(
+            user_id=outsider.id,
+            account_id=outsider.account_id,
+            file_id=attachment.file_id,
+        )
+
+        # assert
+        assert result is False
+
+    def test_check_perm__tpl_inherit_wf_owner__ok(self):
+        """Workflow owner should get access to template files."""
+
+        # arrange
+        owner = create_test_admin()
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        task = workflow.tasks.first()
+        attachment = create_test_attachment(
+            account=owner.account,
+            source_type=SourceType.TEMPLATE,
+            template=workflow.template,
+        )
+        reassign_restricted_permissions_for_task(
+            task=task,
+            user=owner,
+        )
+        service = AttachmentService(user=owner)
+
+        # act
+        result = service.check_user_permission(
+            user_id=owner.id,
+            account_id=owner.account_id,
+            file_id=attachment.file_id,
+        )
+
+        # assert
+        assert result is True
+
+    def test_check_perm__tpl_inherit_group__ok(self):
+        """User in a group that is a task performer should get
+        access to template files via group permission."""
+
+        # arrange
+        owner = create_test_admin(email='owner@pneumatic.app')
+        group_member = create_test_admin(
+            email='group_member@pneumatic.app',
+            account=owner.account,
+        )
+        group = create_test_group(
+            account=owner.account,
+            users=[group_member],
+        )
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        task = workflow.tasks.first()
+        TaskPerformer.objects.create(
+            task=task,
+            group=group,
+            type=PerformerType.GROUP,
+        )
+        attachment = create_test_attachment(
+            account=owner.account,
+            source_type=SourceType.TEMPLATE,
+            template=workflow.template,
+        )
+        reassign_restricted_permissions_for_task(
+            task=task,
+            user=owner,
+        )
+        service = AttachmentService(user=group_member)
+
+        # act
+        result = service.check_user_permission(
+            user_id=group_member.id,
+            account_id=group_member.account_id,
+            file_id=attachment.file_id,
+        )
+
+        # assert
+        assert result is True
+
+    def test_check_perm__tpl_inherit_cross_acc__denied(self):
+        """User from a different account should NOT get access
+        to template files."""
+
+        # arrange
+        owner = create_test_admin()
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        task = workflow.tasks.first()
+        other_account = create_test_account()
+        outsider = create_test_admin(
+            email='outsider@other.app',
+            account=other_account,
+        )
+        attachment = create_test_attachment(
+            account=owner.account,
+            source_type=SourceType.TEMPLATE,
+            template=workflow.template,
+        )
+        reassign_restricted_permissions_for_task(
+            task=task,
+            user=owner,
+        )
+        service = AttachmentService(user=outsider)
+
+        # act
+        result = service.check_user_permission(
+            user_id=outsider.id,
+            account_id=outsider.account_id,
+            file_id=attachment.file_id,
+        )
+
+        # assert
+        assert result is False
+
+    def test_reassign__no_tpl_attachments__ok(self):
+        """reassign should not fail when template has no
+        restricted attachments."""
+
+        # arrange
+        owner = create_test_admin()
+        workflow = create_test_workflow(user=owner, tasks_count=1)
+        task = workflow.tasks.first()
+
+        # act
+        reassign_restricted_permissions_for_task(
+            task=task,
+            user=owner,
+        )
+
+        # assert
+        assert True
+
+    def test_check_perm__tpl_inherit_cross_task__ok(self):
+        """Performer of task 2 should also get access to template
+        files after reassign on task 2 (template files are shared
+        across all tasks in a workflow)."""
+
+        # arrange
+        owner = create_test_admin(email='owner@pneumatic.app')
+        performer_t2 = create_test_admin(
+            email='performer_t2@pneumatic.app',
+            account=owner.account,
+        )
+        workflow = create_test_workflow(user=owner, tasks_count=2)
+        task_2 = workflow.tasks.all()[1]
+        TaskPerformer.objects.create(
+            task=task_2,
+            user=performer_t2,
+            type=PerformerType.USER,
+        )
+        workflow.members.add(performer_t2)
+        attachment = create_test_attachment(
+            account=owner.account,
+            source_type=SourceType.TEMPLATE,
+            template=workflow.template,
+        )
+        reassign_restricted_permissions_for_task(
+            task=task_2,
+            user=owner,
+        )
+        service = AttachmentService(user=performer_t2)
+
+        # act
+        result = service.check_user_permission(
+            user_id=performer_t2.id,
+            account_id=performer_t2.account_id,
+            file_id=attachment.file_id,
+        )
+
+        # assert
+        assert result is True
