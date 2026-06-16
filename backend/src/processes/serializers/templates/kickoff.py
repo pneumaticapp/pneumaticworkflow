@@ -72,6 +72,7 @@ class KickoffSerializer(
             fieldsets_data=validated_data.pop('fieldsets', []),
             template=template,
             kickoff=instance,
+            user=self.context['user'],
         )
         self.create_or_update_related(
             data=validated_data.get('fields'),
@@ -106,6 +107,7 @@ class KickoffSerializer(
             fieldsets_data=validated_data.pop('fieldsets', []),
             template=template,
             kickoff=instance,
+            user=self.context['user'],
         )
         self.create_or_update_related(
             data=validated_data.get('fields'),

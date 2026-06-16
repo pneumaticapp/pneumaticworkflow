@@ -256,6 +256,7 @@ class FieldsetMixin:
     def create_or_update_fieldsets(
         fieldsets_data: List[Dict],
         template: Template,
+        user: UserModel,
         task: Optional[TaskTemplate] = None,
         kickoff: Optional[Kickoff] = None,
     ):
@@ -275,7 +276,10 @@ class FieldsetMixin:
                     update_kwargs['description'] = fieldset_data['description']
 
                 if update_kwargs:
-                    service = FieldSetTemplateService(instance=fieldset)
+                    service = FieldSetTemplateService(
+                        instance=fieldset,
+                        user=user,
+                    )
                     service.partial_update_instance(
                         order=fieldset_data['order'],
                         title=fieldset_data.get('title'),
@@ -284,7 +288,7 @@ class FieldsetMixin:
                 fieldsets_api_names.add(fieldset.api_name)
             else:
                 shared_fieldset = fieldset_data['shared_fieldset_id']
-                service = FieldSetTemplateService(account=template.account)
+                service = FieldSetTemplateService(user=user)
                 fieldset = service.create_from_shared(
                     shared_fieldset_data=FieldSetTemplateService.to_json(
                         shared_fieldset,

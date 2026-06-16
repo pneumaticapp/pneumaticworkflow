@@ -26,13 +26,13 @@ from src.processes.tests.fixtures import (
     create_test_account,
     create_test_owner,
     create_test_template,
-    create_test_workflow,
+    create_test_workflow, create_test_fieldset_template,
 )
 
 pytestmark = pytest.mark.django_db
 
 
-def test__create_instance__with_kickoff__ok(mocker):
+def test__create_instance__with_kickoff__ok():
 
     """
     Call with kickoff
@@ -44,18 +44,18 @@ def test__create_instance__with_kickoff__ok(mocker):
     template = create_test_template(user=user, tasks_count=1)
     workflow = create_test_workflow(user=user, template=template)
     kickoff = workflow.kickoff_instance
+    workflow.tasks.first()
+    order = 11
     fieldset_template = FieldsetTemplate.objects.create(
         template=template,
         account=account,
-        name='Fieldset',
-        description='Description',
+        order=order,
     )
     service = FieldSetService(
         user=user,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    order = 11
 
     # act
     service._create_instance(
@@ -66,21 +66,20 @@ def test__create_instance__with_kickoff__ok(mocker):
     )
 
     # assert
-    assert service.instance is not None
+    assert service.instance.account == account
     assert service.instance.workflow_id == workflow.id
-    assert service.instance.kickoff_id == kickoff.id
     assert service.instance.task is None
+    assert service.instance.kickoff == kickoff
     assert service.instance.api_name == fieldset_template.api_name
-    assert service.instance.name == 'Fieldset'
-    assert service.instance.description == 'Description'
+    assert service.instance.name == fieldset_template.name
+    assert service.instance.title == fieldset_template.title
+    assert service.instance.description == fieldset_template.description
     assert service.instance.order == order
+    assert service.instance.label_position == fieldset_template.label_position
+    assert service.instance.layout == fieldset_template.layout
 
 
 def test__create_instance__with_task__ok():
-
-    """
-    Call with task
-    """
 
     # arrange
     account = create_test_account()
@@ -88,32 +87,37 @@ def test__create_instance__with_task__ok():
     template = create_test_template(user=user, tasks_count=1)
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.first()
-    fieldset_template = FieldsetTemplate.objects.create(
+    order = 11
+    fieldset_template = create_test_fieldset_template(
         template=template,
         account=account,
-        name='Fieldset',
+        order=order,
     )
     service = FieldSetService(
         user=user,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
-    order = 11
 
     # act
     service._create_instance(
         instance_template=fieldset_template,
         workflow=workflow,
         task=task,
-        order=order,
     )
 
     # assert
-    assert service.instance is not None
-    assert service.instance.workflow_id == workflow.id
-    assert service.instance.task_id == task.id
-    assert service.instance.order == order
+    assert service.instance.account == account
+    assert service.instance.workflow == workflow
+    assert service.instance.task == task
     assert service.instance.kickoff is None
+    assert service.instance.api_name == fieldset_template.api_name
+    assert service.instance.name == fieldset_template.name
+    assert service.instance.title == fieldset_template.title
+    assert service.instance.description == fieldset_template.description
+    assert service.instance.order == order
+    assert service.instance.label_position == fieldset_template.label_position
+    assert service.instance.layout == fieldset_template.layout
 
 
 def test__create_instance__no_kickoff_no_task__raise_exception():

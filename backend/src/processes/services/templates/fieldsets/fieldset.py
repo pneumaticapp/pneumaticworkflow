@@ -203,6 +203,8 @@ class FieldSetTemplateService(BaseModelService):
     def delete(self) -> None:
         if self.instance.is_shared and self.instance.child_fieldsets.exists():
             raise FieldsetTemplateInUseException
+        if self.instance.kickoff_id or self.instance.task_id:
+            raise FieldsetTemplateInUseException
         self.instance.delete()
 
     def _replace_api_names(self, shared_fieldset_data: dict) -> dict:
@@ -291,7 +293,6 @@ class FieldSetTemplateService(BaseModelService):
             user=self.user,
             is_superuser=self.is_superuser,
             auth_type=self.auth_type,
-            account=self.account,
         )
         for rule_data in rules_data:
             service.create(
@@ -314,7 +315,6 @@ class FieldSetTemplateService(BaseModelService):
                     user=self.user,
                     is_superuser=self.is_superuser,
                     auth_type=self.auth_type,
-                    account=self.account,
                     instance=existing_rules[rule_id],
                 )
                 service.partial_update(**rule_data)
@@ -324,7 +324,6 @@ class FieldSetTemplateService(BaseModelService):
                     user=self.user,
                     is_superuser=self.is_superuser,
                     auth_type=self.auth_type,
-                    account=self.account,
                 )
                 rule = service.create(
                     fieldset_id=self.instance.id,

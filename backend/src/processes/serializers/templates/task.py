@@ -430,6 +430,7 @@ class TaskTemplateSerializer(
             fieldsets_data=validated_data.pop('fieldsets', []),
             template=template,
             task=instance,
+            user=self.context['user'],
         )
         self.create_or_update_related(
             data=validated_data.get('fields'),
@@ -545,6 +546,7 @@ class TaskTemplateSerializer(
             fieldsets_data=validated_data.pop('fieldsets', []),
             template=template,
             task=instance,
+            user=self.context['user'],
         )
         if raw_due_date_created:
             AnalyticService.templates_task_due_date_created(

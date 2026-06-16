@@ -2092,9 +2092,7 @@ def test_set_due_date_directly__default__ok(mocker):
     )
 
 
-def test_create_fields_from_template__deleted_fieldsets__skip(
-    mocker,
-):
+def test_create_fields_from_template__deleted_fieldsets__skip(mocker):
 
     """
     Field inside an active fieldset is excluded,
@@ -2105,13 +2103,12 @@ def test_create_fields_from_template__deleted_fieldsets__skip(
     user = create_test_owner()
     template = create_test_template(user=user, tasks_count=1)
     template_task = template.tasks.get(number=1)
-    create_test_fieldset_template(
+    fieldset = create_test_fieldset_template(
         account=user.account,
         template=template,
         task=template_task,
-        name='Deleted fieldset',
-        order=0,
-    ).delete()
+    )
+    fieldset.delete()
     workflow = create_test_workflow(user=user, template=template)
     task = workflow.tasks.get(number=1)
     task_field_service_init_mock = mocker.patch.object(
