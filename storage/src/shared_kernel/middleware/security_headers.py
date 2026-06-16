@@ -3,7 +3,7 @@
 Adds OWASP-recommended security headers to every response:
 - X-Content-Type-Options: nosniff
 - X-Frame-Options: DENY
-- Content-Security-Policy: default-src 'none'
+- Content-Security-Policy: default-src 'self' (relaxed for API docs)
 - Strict-Transport-Security (HSTS)
 - X-XSS-Protection (legacy, but still recommended)
 - Referrer-Policy

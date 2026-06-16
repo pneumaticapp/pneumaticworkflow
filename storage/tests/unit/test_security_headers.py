@@ -22,7 +22,15 @@ def test_headers__csp__default_none(sec_headers_client):
     response = sec_headers_client.get('/')
 
     # assert
-    assert response.headers['Content-Security-Policy'] == "default-src 'none'"
+    assert response.headers['Content-Security-Policy'] == (
+        "default-src 'self'; "
+        "script-src 'unsafe-inline' https://cdn.jsdelivr.net; "
+        "style-src 'unsafe-inline' https://cdn.jsdelivr.net "
+        'https://fonts.googleapis.com; '
+        'font-src https://fonts.gstatic.com; '
+        "img-src 'self' data: https://fastapi.tiangolo.com; "
+        'worker-src blob:;'
+    )
 
 
 def test_headers__xss_protection__enabled(sec_headers_client):
