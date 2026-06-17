@@ -5,3 +5,11 @@
   flex-direction: column;
   height: 100%;
 }
+
+@media print {
+  /* stylelint-disable declaration-no-important */
+  .main-layout {
+    overflow: visible !important;
+    height: auto !important;
+  }
+}

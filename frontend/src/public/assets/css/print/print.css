@@ -1,32 +1,65 @@
-/* stylelint-disable declaration-no-important */
+/* stylelint-disable declaration-no-important, selector-pseudo-class-no-unknown */
 @media print {
-    html,
-    body {
-      overflow: visible !important;
-      height: auto !important;
-    }
-  
-    [id='pneumatic-frontend'] {
-      overflow: visible !important;
-      height: auto !important;
-    }
-  
-    main .container-fluid .row {
-      display: flex !important;
-    }
-  
-    * {
-      print-color-adjust: exact;
-      -webkit-print-color-adjust: exact;
-      scrollbar-width: none;
-    }
-    
-    *::-webkit-scrollbar {
-      display: none;
-    }
+  @page {
+    margin: 14mm;
+  }
 
-    .no-print {
-      display: none !important;
-    }
+  html,
+  body {
+    overflow: visible !important;
+    height: auto !important;
+    background: #fff !important;
+  }
+
+  body {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+  }
+
+  [id='pneumatic-frontend'] {
+    overflow: visible !important;
+    height: auto !important;
+  }
+
+  main .container-fluid .row {
+    display: flex !important;
+  }
+
+  * {
+    print-color-adjust: exact;
+    -webkit-print-color-adjust: exact;
+    scrollbar-width: none;
+  }
+
+  *::-webkit-scrollbar {
+    display: none;
+  }
+
+  html body .no-print,
+  html body .no-print *,
+  html body .modal-backdrop {
+    visibility: hidden !important;
+    display: none !important;
+  }
+
+  body.workflow-modal-print-mode {
+    margin: 0 !important;
+    overflow: visible !important;
+    background: #fff !important;
+  }
+
+  body.workflow-modal-print-mode [id='pneumatic-frontend'] {
+    display: none !important;
+  }
+
+  body:not(.workflow-modal-print-mode) .modal {
+    display: none !important;
+  }
+
+  #intercom-container,
+  .intercom-lightweight-app,
+  .intercom-messenger-frame,
+  .Toastify {
+    display: none !important;
+  }
 }
-  

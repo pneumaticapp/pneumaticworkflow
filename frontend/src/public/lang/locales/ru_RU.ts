@@ -611,6 +611,8 @@ export const ruMessages = {
   'template.kick-off-form-delete-component': 'Удалить',
   'template.kick-off-form-workflow-name': 'Название процесса:',
   'templates.conditions.completed': 'Завершено',
+  'templates.conditions.skipped': 'Пропущено',
+  'templates.conditions.completed-or-skipped': 'Завершено или пропущено',
   'templates.conditions.starting-order': 'порядок запуска',
   'templates.conditions.starting-order.kick-off': 'Входные данные',
   'templates.conditions.variables-completed': 'Заполненные переменные',

@@ -120,6 +120,7 @@ export function Predicate({
                 }}
                 isClearable={false}
                 options={dropdownOperators}
+                classNames={{ menu: () => styles['condition-rule__operator-menu'] }}
                 formatOptionLabel={(option: IDropdownOperator, { context }) =>
                   context === 'menu'
                     ? getFormattedDropdownOption({

@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { serverApi } from '../utils';
-import { logger } from '../../public/utils/logger';
+import { logServerError } from '../utils/expectedErrors';
 import { ERoutes } from '../../public/constants/routes';
 import { setAuthCookie } from '../utils/cookie';
 
@@ -35,8 +35,8 @@ export function oAuthHandler(getAuthUri: string, getAuthTokenUri: string) {
         setAuthCookie(req, res, tokenResponse);
   
         return res.redirect(ERoutes.Main);
-      } catch (err) {
-        logger.error(err);
+      } catch (error) {
+        logServerError(error);
       }
   
       return res.redirect(ERoutes.Register);
@@ -47,8 +47,8 @@ export function oAuthHandler(getAuthUri: string, getAuthTokenUri: string) {
 
       const { auth_uri: redirectUri }: IAuthURIResponse = JSON.parse(responseData);
       return res.send(JSON.stringify({ redirectUri }));
-    } catch(err) {
-      logger.error(err);
+    } catch(error) {
+      logServerError(error);
     }
   
     return res.redirect(ERoutes.Register);
