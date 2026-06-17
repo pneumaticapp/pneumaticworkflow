@@ -87,8 +87,8 @@ describe('mapWsEnvelopeToWorkflowLogItem', () => {
       task: null,
       delay: null,
       attachments: [],
-      watched: [{ date: '2024-01-01T01:00:00Z', userId: { id: 3 } }],
-      reactions: { '👍': [{ id: 3 }] },
+      watched: [{ date: '2024-01-01T01:00:00Z', userId: 3 }],
+      reactions: { '👍': [3] },
     };
 
     const result = mapWsEnvelopeToWorkflowLogItem({
