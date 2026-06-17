@@ -1,17 +1,12 @@
-# ruff: noqa: PLC0415
-from rest_framework.fields import CharField, SerializerMethodField
-from rest_framework.serializers import (
-    IntegerField,
-    ModelSerializer,
-)
-
+from rest_framework.fields import CharField
+from rest_framework.serializers import ModelSerializer
 from src.generics.fields import (
-    RelatedApiNameListField,
+    RelatedApiNameListField, AccountPrimaryKeyRelatedField,
 )
 from src.generics.mixins.serializers import CustomValidationErrorMixin
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
-    FieldsetTemplateRule, FieldsetTemplateKickoff,
+    FieldsetTemplateRule,
 )
 from src.processes.serializers.templates.field import (
     FieldTemplateSerializer,
@@ -41,27 +36,37 @@ class FieldsetTemplateRuleSerializer(
 
 
 class FieldsetTemplateSerializer(
-    CustomValidationErrorMixin,
     ModelSerializer,
+    CustomValidationErrorMixin,
 ):
 
     class Meta:
         model = FieldsetTemplate
         fields = (
-            'id',
-            'name',
+            'title',
+            'order',
             'description',
+            'api_name',
+            'shared_fieldset_id',
+            'name',
             'label_position',
             'layout',
             'rules',
             'fields',
-            'api_name',
-            'tasks',
-            'kickoff',
-            'template_id',
         )
 
-    id = IntegerField(required=False)
+        read_only_fields = (
+            'name',
+            'label_position',
+            'layout',
+            'rules',
+            'fields',
+        )
+
+    shared_fieldset_id = AccountPrimaryKeyRelatedField(
+        queryset=FieldsetTemplate.objects.all(),
+        required=True,
+    )
     api_name = CharField(required=False, max_length=200)
     rules = FieldsetTemplateRuleSerializer(
         many=True,
@@ -73,24 +78,36 @@ class FieldsetTemplateSerializer(
         required=False,
         default=list,
     )
-    tasks = SerializerMethodField()
-    kickoff = SerializerMethodField()
 
-    def get_kickoff(self, instance: FieldsetTemplate):
-        through = FieldsetTemplateKickoff.objects.filter(
-            fieldset=instance,
-        ).first()
-        if through:
-            return through.kickoff_id
-        return None
 
-    def get_tasks(self, instance):
-        # Resolve cyclic imports with TemplateTaskOnlyFieldsSerializer
-        from src.processes.serializers.templates.task import (
-            TemplateStepNameSerializer,
+class SharedFieldsetTemplateSerializer(
+    CustomValidationErrorMixin,
+    ModelSerializer,
+):
+
+    class Meta:
+        model = FieldsetTemplate
+        fields = (
+            'id',
+            'title',
+            'order',
+            'description',
+            'api_name',
+            'name',
+            'label_position',
+            'layout',
+            'rules',
+            'fields',
         )
-        return TemplateStepNameSerializer(
-            instance=instance.tasks.all(),
-            many=True,
-            default=list,
-        ).data
+
+    rules = FieldsetTemplateRuleSerializer(
+        many=True,
+        required=False,
+        default=list,
+    )
+    fields = FieldTemplateSerializer(
+        many=True,
+        required=False,
+        default=list,
+    )
+    api_name = CharField(required=False, max_length=200)

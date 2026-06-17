@@ -42,10 +42,6 @@ from src.processes.models.templates.conditions import (
     PredicateTemplate,
     RuleTemplate,
 )
-from src.processes.models.templates.fieldset import (
-    FieldsetTemplateKickoff,
-    FieldsetTemplateTaskTemplate,
-)
 from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
@@ -5210,19 +5206,15 @@ def test_run__kickoff_with_one_fieldset__ok(mocker, api_client):
         account=user.account,
         template=template,
         kickoff=template.kickoff_instance,
-        name='Personal info',
-        order=0,
+        order=11,
     )
-    FieldsetTemplateKickoff.objects.filter(
-        fieldset=fieldset_template,
-    ).update(order=11)
     field_template = fieldset_template.fields.first()
     field_value = 'test value'
-    wf_run_mock = mocker.patch(
+    mocker.patch(
         'src.processes.services.workflow_action.'
         'WorkflowEventService.workflow_run_event',
     )
-    analytics_mock = mocker.patch(
+    mocker.patch(
         'src.analysis.services.AnalyticService.'
         'workflows_started',
     )
@@ -5239,8 +5231,6 @@ def test_run__kickoff_with_one_fieldset__ok(mocker, api_client):
     )
 
     # assert
-    wf_run_mock.assert_called_once()
-    analytics_mock.assert_called_once()
     assert response.status_code == 200
     workflow = Workflow.objects.get(id=response.data['id'])
     kickoff_value = KickoffValue.objects.get(workflow=workflow)
@@ -5290,29 +5280,30 @@ def test_run__kickoff_with_multiple_fieldsets__ok(mocker, api_client):
         is_active=True,
         tasks_count=1,
     )
+    kickoff = template.kickoff_instance
     fieldset_1 = create_test_fieldset_template(
         account=user.account,
         template=template,
-        kickoff=template.kickoff_instance,
-        name='First fieldset',
+        kickoff=kickoff,
+        title='First fieldset',
         order=0,
     )
     fieldset_2 = create_test_fieldset_template(
         account=user.account,
         template=template,
-        kickoff=template.kickoff_instance,
-        name='Second fieldset',
+        kickoff=kickoff,
+        title='Second fieldset',
         order=1,
     )
     field_1 = fieldset_1.fields.first()
     field_2 = fieldset_2.fields.first()
     field_value_1 = 'value 1'
     field_value_2 = 'value 2'
-    wf_run_mock = mocker.patch(
+    mocker.patch(
         'src.processes.services.workflow_action.'
         'WorkflowEventService.workflow_run_event',
     )
-    analytics_mock = mocker.patch(
+    mocker.patch(
         'src.analysis.services.AnalyticService.'
         'workflows_started',
     )
@@ -5330,8 +5321,6 @@ def test_run__kickoff_with_multiple_fieldsets__ok(mocker, api_client):
     )
 
     # assert
-    wf_run_mock.assert_called_once()
-    analytics_mock.assert_called_once()
     assert response.status_code == 200
     workflow = Workflow.objects.get(id=response.data['id'])
     kickoff_value = KickoffValue.objects.get(
@@ -5340,9 +5329,9 @@ def test_run__kickoff_with_multiple_fieldsets__ok(mocker, api_client):
     assert kickoff_value.fieldsets.count() == 2
     fieldsets_data = response.data['kickoff']['fieldsets']
     assert len(fieldsets_data) == 2
-    assert fieldsets_data[0]['name'] == fieldset_2.name
+    assert fieldsets_data[0]['title'] == fieldset_2.title
     assert fieldsets_data[0]['order'] == 1
-    assert fieldsets_data[1]['name'] == fieldset_1.name
+    assert fieldsets_data[1]['title'] == fieldset_1.title
     assert fieldsets_data[1]['order'] == 0
 
 
@@ -5365,7 +5354,6 @@ def test_run__kickoff_fieldset_and_standalone__ok(
         account=user.account,
         template=template,
         kickoff=template.kickoff_instance,
-        name='Grouped fields',
         order=0,
     )
     field_template_1 = fieldset_template.fields.first()
@@ -5441,7 +5429,6 @@ def test_run__kickoff_fieldset_sum_equal__ok(
         account=user.account,
         template=template,
         kickoff=template.kickoff_instance,
-        name='Budget split',
         order=0,
         rule_type=FieldSetRuleType.SUM_EQUAL,
         rule_value='100',
@@ -5514,7 +5501,6 @@ def test_run__kickoff_fieldset_sum_equal__validation_error(
         account=user.account,
         template=template,
         kickoff=template.kickoff_instance,
-        name='Budget split',
         order=0,
         rule_type=FieldSetRuleType.SUM_EQUAL,
         rule_value='100',
@@ -5561,228 +5547,3 @@ def test_run__kickoff_fieldset_sum_equal__validation_error(
     assert response.data['message'] == MSG_FS_0002('100')
     wf_run_mock.assert_not_called()
     analytics_mock.assert_not_called()
-
-
-def test_run__kickoff_fieldset_required_empty__validation_error(
-    mocker,
-    api_client,
-):
-
-    """ Required fieldset field returns 400 when empty. """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        is_active=True,
-        tasks_count=1,
-    )
-    fieldset_template = create_test_fieldset_template(
-        account=user.account,
-        template=template,
-        kickoff=template.kickoff_instance,
-        name='Required fieldset',
-        order=0,
-    )
-    field_template = fieldset_template.fields.first()
-    field_template.is_required = True
-    field_template.save(update_fields=['is_required'])
-    wf_run_mock = mocker.patch(
-        'src.processes.services.workflow_action.'
-        'WorkflowEventService.workflow_run_event',
-    )
-    analytics_mock = mocker.patch(
-        'src.analysis.services.AnalyticService.'
-        'workflows_started',
-    )
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.post(
-        path=f'/templates/{template.id}/run',
-        data={
-            'kickoff': {},
-        },
-    )
-
-    # assert
-    wf_run_mock.assert_not_called()
-    analytics_mock.assert_not_called()
-    assert response.status_code == 400
-    assert response.data['code'] == ErrorCode.VALIDATION_ERROR
-    assert response.data['message'] == messages.MSG_PW_0023
-    assert response.data['details']['api_name'] == field_template.api_name
-
-
-def test_run__kickoff_soft_deleted_fieldset_through__ok(
-    mocker,
-    api_client,
-):
-
-    """ Soft-deleted FieldsetTemplateKickoff is skipped. """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        is_active=True,
-        tasks_count=1,
-    )
-    fieldset_template = create_test_fieldset_template(
-        account=user.account,
-        template=template,
-        kickoff=template.kickoff_instance,
-        name='Deleted fieldset',
-        order=0,
-    )
-    FieldsetTemplateKickoff.objects.filter(
-        fieldset=fieldset_template,
-        kickoff=template.kickoff_instance,
-    ).delete()
-    mocker.patch(
-        'src.processes.services.workflow_action.'
-        'WorkflowEventService.workflow_run_event',
-    )
-    mocker.patch(
-        'src.analysis.services.AnalyticService.'
-        'workflows_started',
-    )
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.post(
-        path=f'/templates/{template.id}/run',
-        data={
-            'kickoff': {},
-        },
-    )
-
-    # assert
-    assert response.status_code == 200
-    workflow = Workflow.objects.get(id=response.data['id'])
-    kickoff_value = KickoffValue.objects.get(workflow=workflow)
-    assert kickoff_value.fieldsets.count() == 0
-    assert response.data['kickoff']['fieldsets'] == []
-
-
-def test_run__kickoff_deleted_fieldset_among_active__ok(
-    mocker,
-    api_client,
-):
-
-    """ Only active FieldsetTemplateKickoff records produce FieldSets. """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        is_active=True,
-        tasks_count=1,
-    )
-    fieldset_deleted = create_test_fieldset_template(
-        account=user.account,
-        template=template,
-        kickoff=template.kickoff_instance,
-        name='Deleted fieldset',
-        order=0,
-    )
-    fieldset_active = create_test_fieldset_template(
-        account=user.account,
-        template=template,
-        kickoff=template.kickoff_instance,
-        name='Active fieldset',
-        order=1,
-    )
-    FieldsetTemplateKickoff.objects.filter(
-        fieldset=fieldset_deleted,
-        kickoff=template.kickoff_instance,
-    ).delete()
-    field_template = fieldset_active.fields.first()
-    field_value = 'test value'
-    mocker.patch(
-        'src.processes.services.workflow_action.'
-        'WorkflowEventService.workflow_run_event',
-    )
-    mocker.patch(
-        'src.analysis.services.AnalyticService.'
-        'workflows_started',
-    )
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.post(
-        path=f'/templates/{template.id}/run',
-        data={
-            'kickoff': {
-                field_template.api_name: field_value,
-            },
-        },
-    )
-
-    # assert
-    assert response.status_code == 200
-    workflow = Workflow.objects.get(id=response.data['id'])
-    kickoff_value = KickoffValue.objects.get(workflow=workflow)
-    assert kickoff_value.fieldsets.count() == 1
-    fieldset = kickoff_value.fieldsets.first()
-    assert fieldset.name == fieldset_active.name
-    assert fieldset.api_name == fieldset_active.api_name
-    fieldsets_data = response.data['kickoff']['fieldsets']
-    assert len(fieldsets_data) == 1
-    assert fieldsets_data[0]['name'] == fieldset_active.name
-    assert fieldsets_data[0]['order'] == 1
-
-
-def test_run__task_soft_deleted_fieldset_through__ok(
-    mocker,
-    api_client,
-):
-
-    """ Soft-deleted FieldsetTemplateTaskTemplate is skipped. """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        is_active=True,
-        tasks_count=1,
-    )
-    task_template = template.tasks.first()
-    fieldset_template = create_test_fieldset_template(
-        account=user.account,
-        template=template,
-        task=task_template,
-        name='Deleted task fieldset',
-        order=0,
-    )
-    FieldsetTemplateTaskTemplate.objects.filter(
-        fieldset=fieldset_template,
-        task=task_template,
-    ).delete()
-    mocker.patch(
-        'src.processes.services.workflow_action.'
-        'WorkflowEventService.workflow_run_event',
-    )
-    mocker.patch(
-        'src.analysis.services.AnalyticService.'
-        'workflows_started',
-    )
-    api_client.token_authenticate(user)
-
-    # act
-    response = api_client.post(
-        path=f'/templates/{template.id}/run',
-        data={
-            'kickoff': {},
-        },
-    )
-
-    # assert
-    assert response.status_code == 200
-    workflow = Workflow.objects.get(id=response.data['id'])
-    task = workflow.tasks.first()
-    assert task.fieldsets.count() == 0

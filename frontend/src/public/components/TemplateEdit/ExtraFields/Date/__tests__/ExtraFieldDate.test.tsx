@@ -1,12 +1,3 @@
-/**
- * ExtraFieldDate — компонент поля даты.
- * Тестируем ТОЛЬКО ProcessRun label-left ветвления.
- * Kickoff делегирует через FieldWithName (покрыто отдельно).
- *
- * Контракт ProcessRun label-left:
- * - Left → FieldLabel с centered классом + date wrapper с _label-left
- * - Top → static name div, FieldLabel не рендерится
- */
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 
@@ -17,8 +8,6 @@ import { intlMock } from '../../../../../__stubs__/intlMock';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
 import { EExtraFieldMode, EExtraFieldType } from '../../../../../types/template';
 import { EFieldLabelPosition } from '../../../../../types/fieldset';
-
-// --- Мок конфигурации ---
 
 jest.mock('../../utils/FieldLabel', () => ({
   FieldLabel: jest.fn(() => null),
@@ -52,8 +41,6 @@ jest.mock('../../../../../utils/dateTime', () => ({
   toTspDate: jest.fn(() => ''),
 }));
 
-// --- Тесты ---
-
 describe('ExtraFieldDate', () => {
   const mockEditField = jest.fn();
 
@@ -72,7 +59,6 @@ describe('ExtraFieldDate', () => {
   });
 
   describe('label-left support', () => {
-    // ProcessRun + Left → FieldLabel с centered
     it('ProcessRun + labelPosition=Left: renders FieldLabel with centered class', () => {
       render(<ExtraFieldDate {...baseProps} labelPosition={EFieldLabelPosition.Left} />);
 
@@ -86,7 +72,6 @@ describe('ExtraFieldDate', () => {
       );
     });
 
-    // ProcessRun + Top → static name div, no FieldLabel
     it('ProcessRun + labelPosition=Top: renders static name div, no FieldLabel', () => {
       render(<ExtraFieldDate {...baseProps} labelPosition={EFieldLabelPosition.Top} />);
 

@@ -3,7 +3,7 @@ from django.db.models import Q
 from rest_framework import serializers
 
 from src.generics.serializers import CustomValidationErrorMixin
-from src.processes.models.templates.fieldset import FieldsetTemplateKickoff
+from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.workflows.fieldset import FieldSet
 from src.processes.models.workflows.fields import TaskField
@@ -83,23 +83,20 @@ class KickoffValueSerializer(
             clear_description=clear_description,
         )
         workflow = validated_data['workflow']
-        fieldset_through_records = (
-            FieldsetTemplateKickoff.objects
+        fieldset_templates = (
+            FieldsetTemplate.objects
             .filter(kickoff=kickoff)
-            .select_related('fieldset')
-            .prefetch_related('fieldset__rules', 'fieldset__fields')
+            .prefetch_related('rules', 'fields')
             .order_by('order')
         )
         try:
-            for fieldset_through in fieldset_through_records:
-                fieldset_template = fieldset_through.fieldset
+            for fieldset_template in fieldset_templates:
                 service = FieldSetService(user=self.context['user'])
                 service.create(
                     instance_template=fieldset_template,
                     account_id=workflow.account_id,
                     workflow=workflow,
                     kickoff=instance,
-                    order=fieldset_through.order,
                     fields_data=fields_data,
                 )
                 try:

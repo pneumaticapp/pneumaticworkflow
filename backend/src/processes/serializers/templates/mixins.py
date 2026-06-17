@@ -3,9 +3,17 @@ from typing import Any, Dict, List, Optional, Set
 
 from django.contrib.auth import get_user_model
 from django.db import IntegrityError, transaction
+from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.serializers import Serializer
 
 from src.processes.messages.template import MSG_PT_0041
+from src.processes.models.templates.kickoff import Kickoff
+from src.processes.models.templates.task import TaskTemplate
+from src.processes.models.templates.template import Template
+from src.processes.models.templates.fieldset import FieldsetTemplate
+from src.processes.services.templates.fieldsets.fieldset import (
+    FieldSetTemplateService,
+)
 from src.utils.validation import raise_validation_error
 
 UserModel = get_user_model()
@@ -240,3 +248,93 @@ class CustomValidationApiNameMixin:
                     new_api_name=value,
                 ),
             )
+
+
+class FieldsetMixin:
+
+    @staticmethod
+    def create_or_update_fieldsets(
+        fieldsets_data: List[Dict],
+        template: Template,
+        user: UserModel,
+        task: Optional[TaskTemplate] = None,
+        kickoff: Optional[Kickoff] = None,
+    ):
+        instance = task or kickoff
+        existing_fieldsets = {f.api_name: f for f in instance.fieldsets.all()}
+        fieldsets_api_names = set()
+        for fieldset_data in fieldsets_data:
+            fieldset_api_name = fieldset_data.pop('api_name', None)
+            if fieldset_api_name and fieldset_api_name in existing_fieldsets:
+                fieldset = existing_fieldsets[fieldset_api_name]
+                update_kwargs = {}
+                if fieldset.order != fieldset_data['order']:
+                    update_kwargs['order'] = fieldset_data['order']
+                if fieldset.title != fieldset_data['title']:
+                    update_kwargs['title'] = fieldset_data['title']
+                if fieldset.description != fieldset_data['description']:
+                    update_kwargs['description'] = fieldset_data['description']
+
+                if update_kwargs:
+                    service = FieldSetTemplateService(
+                        instance=fieldset,
+                        user=user,
+                    )
+                    service.partial_update_instance(
+                        order=fieldset_data['order'],
+                        title=fieldset_data.get('title'),
+                        description=fieldset_data.get('description'),
+                    )
+                fieldsets_api_names.add(fieldset.api_name)
+            else:
+                shared_fieldset = fieldset_data['shared_fieldset_id']
+                service = FieldSetTemplateService(user=user)
+                fieldset = service.create_from_shared(
+                    shared_fieldset_data=FieldSetTemplateService.to_json(
+                        shared_fieldset,
+                    ),
+                    shared_fieldset_id=shared_fieldset.id,
+                    template_id=template.id,
+                    task_id=task.id if task else None,
+                    kickoff_id=kickoff.id if kickoff else None,
+                    order=fieldset_data['order'],
+                    api_name=fieldset_data.get('api_name'),
+                    title=fieldset_data.get('title'),
+                    description=fieldset_data.get('description'),
+                )
+                fieldsets_api_names.add(fieldset.api_name)
+        instance.fieldsets.exclude(api_name__in=fieldsets_api_names).delete()
+
+    def get_draft_fieldsets(self, fieldsets_data: Any):
+        result = []
+        if isinstance(fieldsets_data, list):
+            for fieldset_data in fieldsets_data:
+                if fieldset_data.get('fields'):
+                    result.append(fieldset_data)
+                    # Fieldset already done
+                    continue
+                try:
+                    shared_fieldset_id = int(fieldset_data.get(
+                        'shared_fieldset_id',
+                    ))
+                    shared_fieldset = FieldsetTemplate.objects.get(
+                        id=shared_fieldset_id,
+                        is_shared=True,
+                    )
+                except (TypeError, ValueError, ObjectDoesNotExist):
+                    # Remove invalid or not existent fieldset
+                    continue
+                order = fieldset_data.get('order', 0)
+                service = FieldSetTemplateService()
+                new_fieldset_data = service.get_new_fieldset_data(
+                    shared_fieldset_data=FieldSetTemplateService.to_json(
+                        shared_fieldset,
+                    ),
+                    api_name=fieldset_data.get('api_name'),
+                    title=fieldset_data.get('title'),
+                    description=fieldset_data.get('description'),
+                )
+                new_fieldset_data['order'] = order
+                new_fieldset_data['shared_fieldset_id'] = shared_fieldset_id
+                result.append(new_fieldset_data)
+        return result

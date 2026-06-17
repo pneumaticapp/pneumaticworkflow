@@ -50,7 +50,7 @@ def test_destroy__ok(api_client, mocker):
 
     # act
     response = api_client.delete(
-        f'/templates/fieldsets/{fieldset.id}',
+        f'/fieldsets/{fieldset.id}',
     )
 
     # assert
@@ -90,7 +90,7 @@ def test_destroy__unauthenticated__unauthorized(api_client, mocker):
     )
     # act
     response = api_client.delete(
-        f'/templates/fieldsets/{fieldset.id}',
+        f'/fieldsets/{fieldset.id}',
     )
 
     # assert
@@ -130,7 +130,7 @@ def test_destroy__expired_sub__permission_denied(api_client, mocker):
     )
     # act
     response = api_client.delete(
-        f'/templates/fieldsets/{fieldset.id}',
+        f'/fieldsets/{fieldset.id}',
     )
 
     # assert
@@ -168,7 +168,7 @@ def test_destroy__billing_plan__permission_denied(api_client, mocker):
     )
     # act
     response = api_client.delete(
-        f'/templates/fieldsets/{fieldset.id}',
+        f'/fieldsets/{fieldset.id}',
     )
 
     # assert
@@ -215,7 +215,7 @@ def test_destroy__users_overlimit__permission_denied(api_client, mocker):
     )
     # act
     response = api_client.delete(
-        f'/templates/fieldsets/{fieldset.id}',
+        f'/fieldsets/{fieldset.id}',
     )
 
     # assert
@@ -254,7 +254,7 @@ def test_destroy__non_admin__permission_denied(api_client, mocker):
     )
     # act
     response = api_client.delete(
-        f'/templates/fieldsets/{fieldset.id}',
+        f'/fieldsets/{fieldset.id}',
     )
 
     # assert
@@ -295,7 +295,7 @@ def test_destroy__service_exception__validation_error(api_client, mocker):
 
     # act
     response = api_client.delete(
-        f'/templates/fieldsets/{fieldset.id}',
+        f'/fieldsets/{fieldset.id}',
     )
 
     # assert
@@ -331,7 +331,7 @@ def test_destroy__not_existing__not_found(api_client, mocker):
     )
     # act
     response = api_client.delete(
-        f'/templates/fieldsets/{nonexistent_id}',
+        f'/fieldsets/{nonexistent_id}',
     )
 
     # assert

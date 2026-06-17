@@ -5,7 +5,7 @@ import userEvent from '@testing-library/user-event';
 import { TaskCard, ETaskCardViewMode } from '../TaskCard';
 import { makeExtraField } from '../../../__stubs__/fields.factory';
 import { makeFieldsetData } from '../../../__stubs__/fieldsets.factory';
-import { IExtraField, IFieldsetData } from '../../../types/template';
+import {ETemplateOwnerType, IExtraField, IFieldsetData } from '../../../types/template';
 import { ETaskStatus } from '../../../redux/actions';
 import { EWorkflowStatus, EWorkflowsLogSorting } from '../../../types/workflow';
 import { IAuthUser, ELoggedState } from '../../../types/redux';
@@ -13,10 +13,11 @@ import { EUserStatus } from '../../../types/user';
 import { ESubscriptionPlan } from '../../../types/account';
 import { MergedOutputList } from '../../MergedOutputList';
 import { intlMock } from '../../../__stubs__/intlMock';
+import type { TUsersDropdownOption } from '../../UI/form/UsersDropdown';
 
 jest.mock('react-redux', () => ({
   ...jest.requireActual('react-redux'),
-  useSelector: jest.fn().mockReturnValue([]),
+  useSelector: <T,>(selector: () => T) => selector(),
 }));
 
 jest.mock('../../MergedOutputList', () => ({
@@ -44,9 +45,24 @@ jest.mock('../../../hooks/useCheckDevice', () => ({
   useCheckDevice: () => ({ isMobile: false, isDesktop: true }),
 }));
 
+jest.mock('../../../redux/selectors/groups', () => ({
+  getRegularGroupsList: () => [{ id: 5, name: 'Group Five', type: 'regular' }],
+}));
+
+type TMockDropdownProps = {
+  value: TUsersDropdownOption[];
+  options: TUsersDropdownOption[];
+};
+
+const mockUsersDropdown = jest.fn((_props?: TMockDropdownProps) => null);
+
 jest.mock('../../UI/form/UsersDropdown', () => ({
-  UsersDropdown: () => null,
+  UsersDropdown: (props: TMockDropdownProps) => {
+    mockUsersDropdown(props);
+    return null;
+  },
   EOptionTypes: { User: 'user', Group: 'group' },
+  getUsersDropdownOptionValue: (optionType: string, id: number | string) => `${optionType}-${id}`,
 }));
 
 jest.mock('../../../utils/history', () => ({
@@ -632,5 +648,52 @@ describe('TaskCard', () => {
     expect(savedFieldsets[0].fields[0].value).toBe('new@x.com');
 
     jest.useRealTimers();
+  });
+
+  describe('Performer dropdown', () => {
+    it('does not cross-select user and group performers with the same id', async () => {
+      const task = {
+        ...baseTask,
+        performers: [
+          { sourceId: 5, type: ETemplateOwnerType.User, label: 'John Doe' },
+        ],
+      };
+
+      render(
+        <TaskCard
+          {...baseProps}
+          task={task}
+          authUser={{ ...baseAuthUser, isAdmin: true }}
+          users={[
+            {
+              id: 5,
+              firstName: 'John',
+              lastName: 'Doe',
+              email: 'john@test.com',
+              status: 'active',
+            } as any,
+          ]}
+        />,
+      );
+
+      await waitFor(() => {
+        expect(mockUsersDropdown).toHaveBeenCalled();
+      });
+
+      const lastCall = mockUsersDropdown.mock.calls[mockUsersDropdown.mock.calls.length - 1];
+      const dropdownProps = lastCall?.[0] as {
+        value: Array<{ optionType: string; id: number }>;
+        options: Array<{ optionType: string; id: number; value: string }>;
+      };
+
+      expect(dropdownProps.value).toHaveLength(1);
+      expect(dropdownProps.value[0]).toMatchObject({ optionType: 'user', id: 5 });
+
+      const userOption = dropdownProps.options.find((option) => option.optionType === 'user' && option.id === 5);
+      const groupOption = dropdownProps.options.find((option) => option.optionType === 'group' && option.id === 5);
+
+      expect(userOption?.value).toBe('user-5');
+      expect(groupOption?.value).toBe('group-5');
+    });
   });
 });

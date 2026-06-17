@@ -1,13 +1,3 @@
-/**
- * ExtraFieldRadio — компонент радио-поля.
- * Тип: ExtraField с двумя режимами (Kickoff / ProcessRun).
- * Путь: ExtraFields/Radio/ExtraFieldRadio.tsx
- *
- * Контракт label-left:
- * - Kickoff + Left → FieldLabel, className label-left на OutputFieldContent
- * - ProcessRun + Left → FieldLabel с aligned-start
- * - Top → inline textarea / static div, FieldLabel не рендерится
- */
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 
@@ -20,8 +10,6 @@ import { intlMock } from '../../../../../__stubs__/intlMock';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
 import { EExtraFieldMode, EExtraFieldType, IExtraFieldSelection } from '../../../../../types/template';
 import { EFieldLabelPosition } from '../../../../../types/fieldset';
-
-// --- Мок конфигурации ---
 
 jest.mock('../../utils/OutputFieldContent', () => ({
   OutputFieldContent: jest.fn(({ children }: { children: React.ReactNode }) =>
@@ -72,8 +60,6 @@ jest.mock('../../../KickoffRedux/utils/getEmptySelection', () => ({
 jest.mock('../../utils/FieldLabel', () => ({
   FieldLabel: jest.fn(() => null),
 }));
-
-// --- Тесты ---
 
 describe('ExtraFieldRadio', () => {
   const mockEditField = jest.fn();
@@ -149,14 +135,19 @@ describe('ExtraFieldRadio', () => {
     expect(mock).toHaveBeenCalledWith(expect.objectContaining({ title: 'Green' }), {});
   });
 
-  // --- label-left ветвления ---
-
   describe('label-left support', () => {
     it('Kickoff + labelPosition=Left: renders FieldLabel', () => {
       render(<ExtraFieldRadio {...baseKickoffProps} labelPosition={EFieldLabelPosition.Left} />);
 
       const fieldLabelMock = FieldLabel as jest.Mock;
       expect(fieldLabelMock).toHaveBeenCalledTimes(1);
+      expect(fieldLabelMock).toHaveBeenCalledWith(
+        expect.objectContaining({
+          name: 'Color',
+          mode: EExtraFieldMode.Kickoff,
+        }),
+        {},
+      );
     });
 
     it('Kickoff + labelPosition=Top: no FieldLabel', () => {
@@ -212,6 +203,53 @@ describe('ExtraFieldRadio', () => {
       const fieldLabelMock = FieldLabel as jest.Mock;
       expect(fieldLabelMock).not.toHaveBeenCalled();
       expect(screen.getByText('Color')).toBeInTheDocument();
+    });
+  });
+
+  describe('unique radio grouping across multiple fields', () => {
+    it('ProcessRun: two fields with identical selections receive unique RadioButton ids', () => {
+      const sharedSelections = ['Red', 'Blue'];
+
+      const field1 = makeExtraField({
+        apiName: 'radio-1',
+        name: 'Color',
+        type: EExtraFieldType.Radio,
+        selections: sharedSelections,
+        value: 'Red',
+      });
+
+      const field2 = makeExtraField({
+        apiName: 'radio-2',
+        name: 'Color',
+        type: EExtraFieldType.Radio,
+        selections: sharedSelections,
+        value: null,
+      });
+
+      const commonProps: Omit<IWorkflowExtraFieldProps, 'field'> = {
+        intl: intlMock,
+        editField: mockEditField,
+        mode: EExtraFieldMode.ProcessRun,
+        isDisabled: false,
+        accountId: 1,
+        labelPosition: EFieldLabelPosition.Top,
+      };
+
+      render(<ExtraFieldRadio {...commonProps} field={field1} />);
+      render(<ExtraFieldRadio {...commonProps} field={field2} />);
+
+      const mock = RadioButton as jest.Mock;
+      expect(mock).toHaveBeenCalledTimes(4);
+      const allIds = mock.mock.calls.map((call: [Record<string, unknown>]) => call[0].id as string);
+
+      const uniqueIds = new Set(allIds);
+      expect(uniqueIds.size).toBe(allIds.length);
+
+      const field1Ids = allIds.filter((id: string) => id.includes('radio-1'));
+      expect(field1Ids).toHaveLength(sharedSelections.length);
+
+      const field2Ids = allIds.filter((id: string) => id.includes('radio-2'));
+      expect(field2Ids).toHaveLength(sharedSelections.length);
     });
   });
 });

@@ -19,10 +19,9 @@ from src.processes.services.templates.fieldsets.fieldset import (
 )
 from src.processes.tests.fixtures import (
     create_test_account,
-    create_test_fieldset_template,
     create_test_not_admin,
     create_test_owner,
-    create_test_template,
+    create_test_shared_fieldset,
 )
 from src.utils.validation import ErrorCode
 
@@ -36,10 +35,6 @@ def test_partial_update__all_fields__ok(api_client, mocker):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
     field_api_name = 'f1'
     fieldset_api_name = 'fs1'
     data = {
@@ -65,9 +60,8 @@ def test_partial_update__all_fields__ok(api_client, mocker):
             },
         ],
     }
-    fieldset = create_test_fieldset_template(
+    fieldset = create_test_shared_fieldset(
         account=account,
-        template=template,
         name=data['name'],
         description=data['description'],
         label_position=data['label_position'],
@@ -92,7 +86,7 @@ def test_partial_update__all_fields__ok(api_client, mocker):
 
     # act
     response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
+        f'/fieldsets/{fieldset.id}',
         data=data,
     )
 
@@ -101,8 +95,6 @@ def test_partial_update__all_fields__ok(api_client, mocker):
     assert response.data['id'] == fieldset.id
     assert response.data['name'] == data['name']
     assert response.data['description'] == data['description']
-    assert response.data['template_id'] == template.id
-    assert response.data['tasks'] == []
     assert response.data['label_position'] == data['label_position']
     assert response.data['layout'] == data['layout']
     assert response.data['api_name'] == data['api_name']
@@ -140,13 +132,8 @@ def test_partial_update__name__ok(api_client, mocker):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    fieldset = create_test_fieldset_template(
+    fieldset = create_test_shared_fieldset(
         account=account,
-        template=template,
     )
     data = {
         'name': 'Updated Name',
@@ -164,7 +151,7 @@ def test_partial_update__name__ok(api_client, mocker):
 
     # act
     response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
+        f'/fieldsets/{fieldset.id}',
         data=data,
     )
 
@@ -192,13 +179,8 @@ def test_partial_update__with_rule_fields__ok(api_client, mocker):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    fieldset = create_test_fieldset_template(
+    fieldset = create_test_shared_fieldset(
         account=account,
-        template=template,
     )
     field_api_name = 'f1'
     data = {
@@ -248,7 +230,7 @@ def test_partial_update__with_rule_fields__ok(api_client, mocker):
 
     # act
     response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
+        f'/fieldsets/{fieldset.id}',
         data=data,
     )
 
@@ -278,13 +260,8 @@ def test_partial_update__clear_fields__ok(api_client, mocker):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    fieldset = create_test_fieldset_template(
+    fieldset = create_test_shared_fieldset(
         account=account,
-        template=template,
     )
     data = {
         'name': 'Updated Fieldset',
@@ -313,7 +290,7 @@ def test_partial_update__clear_fields__ok(api_client, mocker):
 
     # act
     response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
+        f'/fieldsets/{fieldset.id}',
         data=data,
     )
 
@@ -337,14 +314,8 @@ def test_partial_update__unauthenticated__unauthorized(api_client, mocker):
 
     # arrange
     account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    fieldset = create_test_fieldset_template(
+    fieldset = create_test_shared_fieldset(
         account=account,
-        template=template,
     )
     data = {
         'name': 'Updated Fieldset',
@@ -360,7 +331,7 @@ def test_partial_update__unauthenticated__unauthorized(api_client, mocker):
     )
     # act
     response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
+        f'/fieldsets/{fieldset.id}',
         data=data,
     )
 
@@ -380,13 +351,8 @@ def test_partial_update__expired_sub__permission_denied(api_client, mocker):
         plan_expiration=timezone.now() - timedelta(days=1),
     )
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    fieldset = create_test_fieldset_template(
+    fieldset = create_test_shared_fieldset(
         account=account,
-        template=template,
     )
     data = {
         'name': 'Updated Fieldset',
@@ -403,7 +369,7 @@ def test_partial_update__expired_sub__permission_denied(api_client, mocker):
 
     # act
     response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
+        f'/fieldsets/{fieldset.id}',
         data=data,
     )
 
@@ -421,13 +387,8 @@ def test_partial_update__billing_plan__permission_denied(api_client, mocker):
     # arrange
     account = create_test_account(plan=None)
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    fieldset = create_test_fieldset_template(
+    fieldset = create_test_shared_fieldset(
         account=account,
-        template=template,
     )
     data = {
         'name': 'Updated Fieldset',
@@ -444,7 +405,7 @@ def test_partial_update__billing_plan__permission_denied(api_client, mocker):
 
     # act
     response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
+        f'/fieldsets/{fieldset.id}',
         data=data,
     )
 
@@ -471,13 +432,8 @@ def test_partial_update__users_limit__permission_denied(api_client, mocker):
     )
     account.active_users = 2
     account.save()
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    fieldset = create_test_fieldset_template(
+    fieldset = create_test_shared_fieldset(
         account=account,
-        template=template,
     )
     data = {
         'name': 'Updated Fieldset',
@@ -494,7 +450,7 @@ def test_partial_update__users_limit__permission_denied(api_client, mocker):
 
     # act
     response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
+        f'/fieldsets/{fieldset.id}',
         data=data,
     )
 
@@ -511,14 +467,9 @@ def test_partial_update__non_admin__permission_denied(api_client, mocker):
 
     # arrange
     account = create_test_account()
-    owner = create_test_owner(account=account)
-    template = create_test_template(
-        user=owner,
-        tasks_count=1,
-    )
-    fieldset = create_test_fieldset_template(
+    create_test_owner(account=account)
+    fieldset = create_test_shared_fieldset(
         account=account,
-        template=template,
     )
     user = create_test_not_admin(account=account)
     data = {
@@ -536,7 +487,7 @@ def test_partial_update__non_admin__permission_denied(api_client, mocker):
 
     # act
     response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
+        f'/fieldsets/{fieldset.id}',
         data=data,
     )
 
@@ -553,13 +504,8 @@ def test_partial_update__invalid_name__validation_error(api_client, mocker):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    fieldset = create_test_fieldset_template(
+    fieldset = create_test_shared_fieldset(
         account=account,
-        template=template,
     )
     data = {
         'name': '',
@@ -576,7 +522,7 @@ def test_partial_update__invalid_name__validation_error(api_client, mocker):
 
     # act
     response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
+        f'/fieldsets/{fieldset.id}',
         data=data,
     )
 
@@ -596,13 +542,8 @@ def test_partial_update__invalid_layout__validation_error(api_client, mocker):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    fieldset = create_test_fieldset_template(
+    fieldset = create_test_shared_fieldset(
         account=account,
-        template=template,
     )
     data = {
         'layout': 'invalid_layout',
@@ -619,7 +560,7 @@ def test_partial_update__invalid_layout__validation_error(api_client, mocker):
 
     # act
     response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
+        f'/fieldsets/{fieldset.id}',
         data=data,
     )
 
@@ -642,13 +583,8 @@ def test_partial_update__invalid_label_position__validation_error(
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    fieldset = create_test_fieldset_template(
+    fieldset = create_test_shared_fieldset(
         account=account,
-        template=template,
     )
     data = {
         'label_position': 'invalid_position',
@@ -665,7 +601,7 @@ def test_partial_update__invalid_label_position__validation_error(
 
     # act
     response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
+        f'/fieldsets/{fieldset.id}',
         data=data,
     )
 
@@ -687,13 +623,8 @@ def test_partial_update__service_exception__validation_error(
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    fieldset = create_test_fieldset_template(
+    fieldset = create_test_shared_fieldset(
         account=account,
-        template=template,
     )
     data = {
         'name': 'Updated Fieldset',
@@ -712,7 +643,7 @@ def test_partial_update__service_exception__validation_error(
 
     # act
     response = api_client.patch(
-        f'/templates/fieldsets/{fieldset.id}',
+        f'/fieldsets/{fieldset.id}',
         data=data,
     )
 
@@ -755,7 +686,7 @@ def test_partial_update__not_existing_fieldset__not_found(api_client, mocker):
     )
     # act
     response = api_client.patch(
-        f'/templates/fieldsets/{nonexistent_id}',
+        f'/fieldsets/{nonexistent_id}',
         data=data,
     )
 

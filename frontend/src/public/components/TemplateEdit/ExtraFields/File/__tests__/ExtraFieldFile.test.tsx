@@ -1,11 +1,3 @@
-/**
- * ExtraFieldFile — компонент файлового поля.
- * Тестируем ТОЛЬКО label-left ветвления (новый функционал).
- *
- * Контракт label-left:
- * - Kickoff + Left → FieldLabel, Kickoff + Top → inline textarea
- * - ProcessRun + Left → FieldLabel с aligned-start, ProcessRun + Top → static div
- */
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 
@@ -16,8 +8,6 @@ import { intlMock } from '../../../../../__stubs__/intlMock';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
 import { EExtraFieldMode, EExtraFieldType } from '../../../../../types/template';
 import { EFieldLabelPosition } from '../../../../../types/fieldset';
-
-// --- Мок конфигурации ---
 
 jest.mock('../../utils/FieldLabel', () => ({
   FieldLabel: jest.fn(() => null),
@@ -56,12 +46,9 @@ jest.mock('../../../../../utils/logger', () => ({
   logger: { error: jest.fn(), info: jest.fn() },
 }));
 
-// --- Тесты ---
-
 describe('ExtraFieldFile', () => {
   const mockEditField = jest.fn();
 
-  // Правило 48: makeExtraField с минимальными overrides
   const baseProps: IWorkflowExtraFieldProps = {
     field: makeExtraField({ name: 'Attachment', type: EExtraFieldType.File }),
     intl: intlMock,
@@ -77,7 +64,6 @@ describe('ExtraFieldFile', () => {
   });
 
   describe('label-left support', () => {
-    // Kickoff + Left → FieldLabel вызван
     it('Kickoff + labelPosition=Left: renders FieldLabel', () => {
       render(<ExtraFieldFile {...baseProps} labelPosition={EFieldLabelPosition.Left} />);
 
@@ -85,7 +71,6 @@ describe('ExtraFieldFile', () => {
       expect(fieldLabelMock).toHaveBeenCalledTimes(1);
     });
 
-    // Kickoff + Top → FieldLabel не вызван
     it('Kickoff + labelPosition=Top: no FieldLabel', () => {
       render(<ExtraFieldFile {...baseProps} labelPosition={EFieldLabelPosition.Top} />);
 
@@ -93,7 +78,6 @@ describe('ExtraFieldFile', () => {
       expect(fieldLabelMock).not.toHaveBeenCalled();
     });
 
-    // ProcessRun + Left → FieldLabel с aligned-start
     it('ProcessRun + labelPosition=Left: renders FieldLabel with aligned-start class', () => {
       render(
         <ExtraFieldFile
@@ -113,7 +97,6 @@ describe('ExtraFieldFile', () => {
       );
     });
 
-    // ProcessRun + Top → static name div
     it('ProcessRun + labelPosition=Top: renders static name div, no FieldLabel', () => {
       render(
         <ExtraFieldFile

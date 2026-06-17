@@ -3,7 +3,7 @@ import { ChangeEvent, ReactNode, useCallback } from 'react';
 import classnames from 'classnames';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
-import { EOptionTypes, UsersDropdown } from '../../../UI/form/UsersDropdown';
+import { EOptionTypes, UsersDropdown, getUsersDropdownOptionValue } from '../../../UI/form/UsersDropdown';
 import { getUsers } from '../../../../redux/selectors/user';
 import { EUserDropdownOptionType, TUserListItem } from '../../../../types/user';
 import { trackInviteTeamInPage } from '../../../../utils/analytics';
@@ -91,7 +91,7 @@ export function ExtraFieldUser({
         ...item,
         optionType: EOptionTypes.User,
         label: getUserFullName(item),
-        value: `${EOptionTypes.User}-${item.id}`,
+        value: getUsersDropdownOptionValue(EOptionTypes.User, item.id),
       };
     });
     const groupsDropdownOption = groups.map((item) => {
@@ -99,7 +99,7 @@ export function ExtraFieldUser({
         ...item,
         optionType: EOptionTypes.Group,
         label: item.name,
-        value: `${EOptionTypes.Group}-${item.id}`,
+        value: getUsersDropdownOptionValue(EOptionTypes.Group, item.id),
         type: ETaskPerformerType.UserGroup,
       };
     });
@@ -158,8 +158,8 @@ export function ExtraFieldUser({
             isDisabled={isDisabled}
             value={selectionsDropdownOption.find(
               (item) =>
-                item.value === `${EOptionTypes.User}-${field.userId}` ||
-                item.value === `${EOptionTypes.Group}-${field.groupId}`,
+                item.value === getUsersDropdownOptionValue(EOptionTypes.User, field.userId ?? '') ||
+                item.value === getUsersDropdownOptionValue(EOptionTypes.Group, field.groupId ?? ''),
             )}
             onClickInvite={() => trackInviteTeamInPage('From users field')}
             inviteLabel={formatMessage({ id: 'template.invite-team-member' })}

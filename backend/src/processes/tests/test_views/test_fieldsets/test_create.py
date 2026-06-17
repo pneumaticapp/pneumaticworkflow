@@ -12,7 +12,6 @@ from src.processes.enums import (
     LabelPosition,
     FieldSetRuleType, FieldType,
 )
-from src.processes.messages import template as messages
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
     FieldsetTemplateRule,
@@ -51,6 +50,7 @@ def test_create_fieldset__all_fields__ok(api_client, mocker):
 
     data = {
         'name': 'All Fields Fieldset',
+        'title': 'All Fields Title',
         'description': 'Description',
         'label_position': LabelPosition.LEFT,
         'layout': FieldSetLayout.HORIZONTAL,
@@ -77,6 +77,7 @@ def test_create_fieldset__all_fields__ok(api_client, mocker):
         account=account,
         template=template,
         name=data['name'],
+        title=data['title'],
         description=data['description'],
         label_position=data['label_position'],
         layout=data['layout'],
@@ -107,25 +108,21 @@ def test_create_fieldset__all_fields__ok(api_client, mocker):
     )
 
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.template.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.create',
         return_value=fieldset,
     )
 
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.post(
-        f'/templates/{template.id}/fieldsets',
-        data=data,
-    )
+    response = api_client.post('/fieldsets', data=data)
 
     # assert
     assert response.status_code == 201
     assert response.data['id'] == fieldset.id
     assert response.data['name'] == data['name']
+    assert response.data['title'] == data['title']
     assert response.data['description'] == data['description']
-    assert response.data['template_id'] == template.id
-    assert response.data['tasks'] == []
     assert response.data['label_position'] == data['label_position']
     assert response.data['layout'] == data['layout']
     assert response.data['api_name'] == data['api_name']
@@ -144,8 +141,8 @@ def test_create_fieldset__all_fields__ok(api_client, mocker):
         auth_type=AuthTokenType.USER,
     )
     fieldset_service_create_mock.assert_called_once_with(
-        template_id=template.id,
         name=data['name'],
+        title=data['title'],
         description=data['description'],
         layout=data['layout'],
         label_position=data['label_position'],
@@ -170,7 +167,6 @@ def test_create_fieldset__min_data__ok(api_client, mocker):
         'name': 'Minimal Fieldset',
     }
 
-    # mock FieldSetTemplateService
     fieldset_service_init_mock = mocker.patch.object(
         FieldSetTemplateService,
         attribute='__init__',
@@ -182,17 +178,14 @@ def test_create_fieldset__min_data__ok(api_client, mocker):
         name='Minimal Fieldset',
     )
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.template.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.create',
         return_value=fieldset,
     )
 
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.post(
-        f'/templates/{template.id}/fieldsets',
-        data=data,
-    )
+    response = api_client.post('/fieldsets', data=data)
 
     # assert
     assert response.status_code == 201
@@ -202,7 +195,6 @@ def test_create_fieldset__min_data__ok(api_client, mocker):
         auth_type=AuthTokenType.USER,
     )
     fieldset_service_create_mock.assert_called_once_with(
-        template_id=template.id,
         name='Minimal Fieldset',
         rules=[],
         fields=[],
@@ -223,7 +215,6 @@ def test_create_fieldset__set_api_name__ok(api_client, mocker):
         'api_name': 'fs1',
     }
 
-    # mock FieldSetTemplateService
     fieldset_service_init_mock = mocker.patch.object(
         FieldSetTemplateService,
         attribute='__init__',
@@ -235,27 +226,24 @@ def test_create_fieldset__set_api_name__ok(api_client, mocker):
         name='Minimal Fieldset',
     )
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.template.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.create',
         return_value=fieldset,
     )
 
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.post(
-        f'/templates/{template.id}/fieldsets',
-        data=data,
-    )
+    response = api_client.post('/fieldsets', data=data)
 
     # assert
     assert response.status_code == 201
+    assert response.data['title'] == ''
     fieldset_service_init_mock.assert_called_once_with(
         user=user,
         is_superuser=False,
         auth_type=AuthTokenType.USER,
     )
     fieldset_service_create_mock.assert_called_once_with(
-        template_id=template.id,
         name=data['name'],
         api_name=data['api_name'],
         rules=[],
@@ -303,7 +291,6 @@ def test_create_fieldset__rule_with_one_field__ok(api_client, mocker):
         ],
     }
 
-    # mock FieldSetTemplateService
     fieldset_service_init_mock = mocker.patch.object(
         FieldSetTemplateService,
         attribute='__init__',
@@ -330,17 +317,14 @@ def test_create_fieldset__rule_with_one_field__ok(api_client, mocker):
     rule.fields.add(field)
 
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.template.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.create',
         return_value=fieldset,
     )
 
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.post(
-        f'/templates/{template.id}/fieldsets',
-        data=data,
-    )
+    response = api_client.post('/fieldsets', data=data)
 
     # assert
     assert response.status_code == 201
@@ -354,7 +338,6 @@ def test_create_fieldset__rule_with_one_field__ok(api_client, mocker):
         auth_type=AuthTokenType.USER,
     )
     fieldset_service_create_mock.assert_called_once_with(
-        template_id=template.id,
         name=data['name'],
         rules=data['rules'],
         fields=data['fields'],
@@ -401,7 +384,6 @@ def test_create_fieldset__rule_with_two_fields__ok(api_client, mocker):
         ],
     }
 
-    # mock FieldSetTemplateService
     fieldset_service_init_mock = mocker.patch.object(
         FieldSetTemplateService,
         attribute='__init__',
@@ -434,17 +416,14 @@ def test_create_fieldset__rule_with_two_fields__ok(api_client, mocker):
     rule.fields.set([field_1, field_2])
 
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.template.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.create',
         return_value=fieldset,
     )
 
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.post(
-        f'/templates/{template.id}/fieldsets',
-        data=data,
-    )
+    response = api_client.post('/fieldsets', data=data)
 
     # assert
     assert response.status_code == 201
@@ -461,7 +440,6 @@ def test_create_fieldset__rule_with_two_fields__ok(api_client, mocker):
         auth_type=AuthTokenType.USER,
     )
     fieldset_service_create_mock.assert_called_once_with(
-        template_id=template.id,
         name=data['name'],
         rules=data['rules'],
         fields=data['fields'],
@@ -473,12 +451,6 @@ def test_create_fieldset__unauthenticated__unauthorized(api_client, mocker):
     """Unauthenticated request returns 401"""
 
     # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
     data = {
         'name': 'New Fieldset',
     }
@@ -489,14 +461,11 @@ def test_create_fieldset__unauthenticated__unauthorized(api_client, mocker):
         return_value=None,
     )
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.template.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.create',
     )
 
     # act
-    response = api_client.post(
-        f'/templates/{template.id}/fieldsets',
-        data=data,
-    )
+    response = api_client.post('/fieldsets', data=data)
 
     # assert
     assert response.status_code == 401
@@ -514,10 +483,6 @@ def test_create_fieldset__expired_sub__permission_denied(api_client, mocker):
         plan_expiration=timezone.now() - timedelta(days=1),
     )
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
     data = {
         'name': 'New Fieldset',
     }
@@ -528,16 +493,13 @@ def test_create_fieldset__expired_sub__permission_denied(api_client, mocker):
         return_value=None,
     )
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.template.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.create',
     )
 
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.post(
-        f'/templates/{template.id}/fieldsets',
-        data=data,
-    )
+    response = api_client.post('/fieldsets', data=data)
 
     # assert
     assert response.status_code == 403
@@ -553,10 +515,6 @@ def test_create_fieldset__billing_plan__permission_denied(api_client, mocker):
     # arrange
     account = create_test_account(plan=None)
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
     data = {
         'name': 'New Fieldset',
     }
@@ -566,15 +524,12 @@ def test_create_fieldset__billing_plan__permission_denied(api_client, mocker):
         return_value=None,
     )
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.template.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.create',
     )
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.post(
-        f'/templates/{template.id}/fieldsets',
-        data=data,
-    )
+    response = api_client.post('/fieldsets', data=data)
 
     # assert
     assert response.status_code == 403
@@ -599,10 +554,6 @@ def test_create_fieldset__users_limit__permission_denied(api_client, mocker):
     )
     account.active_users = 2
     account.save()
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
     data = {
         'name': 'New Fieldset',
     }
@@ -614,15 +565,12 @@ def test_create_fieldset__users_limit__permission_denied(api_client, mocker):
     )
 
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.template.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.create',
     )
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.post(
-        f'/templates/{template.id}/fieldsets',
-        data=data,
-    )
+    response = api_client.post('/fieldsets', data=data)
 
     # assert
     assert response.status_code == 403
@@ -637,11 +585,7 @@ def test_create_fieldset__non_admin__permission_denied(api_client, mocker):
 
     # arrange
     account = create_test_account()
-    owner = create_test_owner(account=account)
-    template = create_test_template(
-        user=owner,
-        tasks_count=1,
-    )
+    create_test_owner(account=account)
     user = create_test_not_admin(account=account)
     data = {
         'name': 'New Fieldset',
@@ -653,15 +597,12 @@ def test_create_fieldset__non_admin__permission_denied(api_client, mocker):
     )
 
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.template.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.create',
     )
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.post(
-        f'/templates/{template.id}/fieldsets',
-        data=data,
-    )
+    response = api_client.post('/fieldsets', data=data)
 
     # assert
     assert response.status_code == 403
@@ -669,43 +610,53 @@ def test_create_fieldset__non_admin__permission_denied(api_client, mocker):
     fieldset_service_create_mock.assert_not_called()
 
 
-def test_create_fieldset__not_tpl_owner__permission_denied(api_client, mocker):
+def test_create_fieldset__admin__ok(api_client, mocker):
 
-    """ Template admin owner permission denied returns 403 """
+    """ Admin (non-owner) user can create fieldset """
 
     # arrange
     account = create_test_account()
-    owner = create_test_owner(account=account)
+    create_test_owner(account=account)
+    user = create_test_admin(account=account)
     template = create_test_template(
-        user=owner,
+        user=user,
         tasks_count=1,
     )
-    user = create_test_admin(account=account)
     data = {
         'name': 'New Fieldset',
     }
+    fieldset = FieldsetTemplate.objects.create(
+        account=account,
+        template=template,
+        name=data['name'],
+    )
     fieldset_service_init_mock = mocker.patch.object(
         FieldSetTemplateService,
         attribute='__init__',
         return_value=None,
     )
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.template.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.create',
+        return_value=fieldset,
     )
 
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.post(
-        f'/templates/{template.id}/fieldsets',
-        data=data,
-    )
+    response = api_client.post('/fieldsets', data=data)
 
     # assert
-    assert response.status_code == 403
-    assert response.data['detail'] == messages.MSG_PT_0023
-    fieldset_service_init_mock.assert_not_called()
-    fieldset_service_create_mock.assert_not_called()
+    assert response.status_code == 201
+    fieldset_service_init_mock.assert_called_once_with(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    fieldset_service_create_mock.assert_called_once_with(
+        name=data['name'],
+        rules=[],
+        fields=[],
+    )
 
 
 def test_create_fieldset__blank_name__validation_error(api_client, mocker):
@@ -715,14 +666,8 @@ def test_create_fieldset__blank_name__validation_error(api_client, mocker):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
     data = {
     }
-
-    fieldset = mocker.Mock(id=1, api_name='dummy')
 
     fieldset_service_init_mock = mocker.patch.object(
         FieldSetTemplateService,
@@ -731,16 +676,12 @@ def test_create_fieldset__blank_name__validation_error(api_client, mocker):
     )
 
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.template.FieldSetTemplateService.create',
-        return_value=fieldset,
+        'src.processes.views.fieldset.FieldSetTemplateService.create',
     )
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.post(
-        f'/templates/{template.id}/fieldsets',
-        data=data,
-    )
+    response = api_client.post('/fieldsets', data=data)
 
     # assert
     assert response.status_code == 400
@@ -758,10 +699,6 @@ def test_create_fieldset__invalid_layout__validation_error(api_client, mocker):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
     data = {
         'name': 'Test Fieldset',
         'layout': 'invalid_layout',
@@ -773,15 +710,12 @@ def test_create_fieldset__invalid_layout__validation_error(api_client, mocker):
     )
 
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.template.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.create',
     )
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.post(
-        f'/templates/{template.id}/fieldsets',
-        data=data,
-    )
+    response = api_client.post('/fieldsets', data=data)
 
     # assert
     assert response.status_code == 400
@@ -802,10 +736,6 @@ def test_create_fieldset__invalid_label_position__validation_error(
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
     data = {
         'name': 'Test Fieldset',
         'label_position': 'invalid_position',
@@ -817,15 +747,12 @@ def test_create_fieldset__invalid_label_position__validation_error(
     )
 
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.template.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.create',
     )
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.post(
-        f'/templates/{template.id}/fieldsets',
-        data=data,
-    )
+    response = api_client.post('/fieldsets', data=data)
 
     # assert
     assert response.status_code == 400
@@ -845,33 +772,25 @@ def test_create_fieldset__service_exception__validation_error(
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
     data = {
         'name': 'Test Fieldset',
     }
     error_message = 'Service error occurred'
 
-    # mock FieldSetTemplateService
     fieldset_service_init_mock = mocker.patch.object(
         FieldSetTemplateService,
         attribute='__init__',
         return_value=None,
     )
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.template.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.create',
         side_effect=BaseServiceException(message=error_message),
     )
 
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.post(
-        f'/templates/{template.id}/fieldsets',
-        data=data,
-    )
+    response = api_client.post('/fieldsets', data=data)
 
     # assert
     assert response.status_code == 400
@@ -882,42 +801,7 @@ def test_create_fieldset__service_exception__validation_error(
         auth_type=AuthTokenType.USER,
     )
     fieldset_service_create_mock.assert_called_once_with(
-        template_id=template.id,
         name='Test Fieldset',
         rules=[],
         fields=[],
     )
-
-
-def test_create_fieldset__not_existing_tpl__not_found(api_client, mocker):
-
-    """ Non-existent template returns 404 """
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    nonexistent_id = 999999
-    data = {
-        'name': 'New Fieldset',
-    }
-    fieldset_service_init_mock = mocker.patch.object(
-        FieldSetTemplateService,
-        attribute='__init__',
-        return_value=None,
-    )
-
-    fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.template.FieldSetTemplateService.create',
-    )
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.post(
-        f'/templates/{nonexistent_id}/fieldsets',
-        data=data,
-    )
-
-    # assert
-    assert response.status_code == 404
-    fieldset_service_init_mock.assert_not_called()
-    fieldset_service_create_mock.assert_not_called()

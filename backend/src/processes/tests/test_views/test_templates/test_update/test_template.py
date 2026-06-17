@@ -40,7 +40,7 @@ from src.processes.tests.fixtures import (
     create_test_template,
     create_test_user,
     create_test_workflow,
-    create_test_fieldset_template,
+    create_test_fieldset_template, create_test_shared_fieldset,
 )
 
 pytestmark = pytest.mark.django_db
@@ -2843,9 +2843,10 @@ def test_update__wf_name_template_with_fieldset_field__ok(
     template = create_test_template(user=user, tasks_count=1)
     task = template.tasks.first()
     kickoff = template.kickoff_instance
+    shared_fieldset = create_test_shared_fieldset(account=account)
     fieldset = create_test_fieldset_template(
         account=account,
-        template=template,
+        shared_fieldset=shared_fieldset,
     )
     field = fieldset.fields.first()
     mocker.patch(
@@ -2870,7 +2871,7 @@ def test_update__wf_name_template_with_fieldset_field__ok(
             'id': kickoff.id,
             'fieldsets': [
                 {
-                    'api_name': fieldset.api_name,
+                    'shared_fieldset_id': shared_fieldset.id,
                     'order': 1,
                 },
             ],

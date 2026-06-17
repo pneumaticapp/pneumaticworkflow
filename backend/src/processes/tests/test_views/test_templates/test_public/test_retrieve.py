@@ -5,19 +5,16 @@ from src.authentication.tokens import (
     PublicToken,
 )
 from src.processes.enums import (
-    FieldType,
+    FieldType, FieldSetRuleType,
 )
 from src.processes.models.templates.fields import FieldTemplate, \
     FieldTemplateSelection
-from src.processes.models.templates.fieldset import (
-    FieldsetTemplateKickoff,
-)
 from src.processes.tests.fixtures import (
     create_test_template,
     create_test_fieldset_template,
     create_test_owner,
     create_test_dataset,
-    create_test_account,
+    create_test_account, create_test_shared_fieldset,
 )
 
 pytestmark = pytest.mark.django_db
@@ -445,14 +442,9 @@ class TestRetrievePublicTemplate:
             account=account,
             template=template,
             kickoff=kickoff,
-            name='Personal Info',
             description='Enter info',
             api_name='fieldset-personal',
             order=5,
-        )
-        fieldset_link = FieldsetTemplateKickoff.objects.get(
-            fieldset=fieldset,
-            kickoff=kickoff,
         )
         fieldset_field = fieldset.fields.first()
         auth_header_value = (
@@ -486,7 +478,7 @@ class TestRetrievePublicTemplate:
         fieldsets = response.data['kickoff']['fieldsets']
         assert len(fieldsets) == 1
         fieldset_data = fieldsets[0]
-        assert fieldset_data['order'] == fieldset_link.order
+        assert fieldset_data['order'] == fieldset.order
         assert fieldset_data['name'] == fieldset.name
         assert fieldset_data['description'] == fieldset.description
         assert fieldset_data['api_name'] == fieldset.api_name
@@ -573,25 +565,13 @@ class TestRetrievePublicTemplate:
             account=account,
             template=template,
             kickoff=kickoff,
-            name='Second Fieldset',
-            api_name='fieldset-second',
             order=2,
-        )
-        link_2 = FieldsetTemplateKickoff.objects.get(
-            fieldset=fieldset_2,
-            kickoff=kickoff,
         )
         fieldset_1 = create_test_fieldset_template(
             account=account,
             template=template,
             kickoff=kickoff,
-            name='First Fieldset',
-            api_name='fieldset-first',
             order=1,
-        )
-        link_1 = FieldsetTemplateKickoff.objects.get(
-            fieldset=fieldset_1,
-            kickoff=kickoff,
         )
         auth_header_value = (
             f'Token {template.public_id}'
@@ -623,9 +603,9 @@ class TestRetrievePublicTemplate:
         assert response.status_code == 200
         fieldsets = response.data['kickoff']['fieldsets']
         assert len(fieldsets) == 2
-        assert fieldsets[0]['order'] == link_1.order
+        assert fieldsets[0]['order'] == fieldset_1.order
         assert fieldsets[0]['api_name'] == fieldset_1.api_name
-        assert fieldsets[1]['order'] == link_2.order
+        assert fieldsets[1]['order'] == fieldset_2.order
         assert fieldsets[1]['api_name'] == fieldset_2.api_name
         get_token_mock.assert_called_once()
         get_template_mock.assert_called_once_with(token)
@@ -866,20 +846,21 @@ class TestRetrieveEmbedTemplate:
             tasks_count=1,
         )
         kickoff = template.kickoff_instance
+        shared_fieldset = create_test_shared_fieldset(
+            account=account,
+            rule_type=FieldSetRuleType.SUM_EQUAL,
+        )
         fieldset = create_test_fieldset_template(
+            shared_fieldset=shared_fieldset,
             account=account,
             template=template,
             kickoff=kickoff,
-            name='Personal Info',
-            description='Enter info',
             api_name='fieldset-personal',
             order=5,
         )
-        fieldset_link = FieldsetTemplateKickoff.objects.get(
-            fieldset=fieldset,
-            kickoff=kickoff,
-        )
         fieldset_field = fieldset.fields.first()
+        rule = fieldset.rules.first()
+        rule.fields.add(fieldset_field)
         auth_header_value = (
             f'Token {template.embed_id}'
         )
@@ -911,12 +892,14 @@ class TestRetrieveEmbedTemplate:
         fieldsets = response.data['kickoff']['fieldsets']
         assert len(fieldsets) == 1
         fieldset_data = fieldsets[0]
-        assert fieldset_data['order'] == fieldset_link.order
+        assert fieldset_data['order'] == fieldset.order
         assert fieldset_data['name'] == fieldset.name
+        assert fieldset_data['title'] == fieldset.title
         assert fieldset_data['description'] == fieldset.description
         assert fieldset_data['api_name'] == fieldset.api_name
         assert fieldset_data['label_position'] == fieldset.label_position
         assert fieldset_data['layout'] == fieldset.layout
+        assert fieldset_data['shared_fieldset_id'] == shared_fieldset.id
         assert len(fieldset_data['fields']) == 1
         field_data = fieldset_data['fields'][0]
         assert field_data['api_name'] == fieldset_field.api_name
@@ -998,25 +981,15 @@ class TestRetrieveEmbedTemplate:
             account=account,
             template=template,
             kickoff=kickoff,
-            name='Second Fieldset',
             api_name='fieldset-second',
             order=2,
-        )
-        link_2 = FieldsetTemplateKickoff.objects.get(
-            fieldset=fieldset_2,
-            kickoff=kickoff,
         )
         fieldset_1 = create_test_fieldset_template(
             account=account,
             template=template,
             kickoff=kickoff,
-            name='First Fieldset',
             api_name='fieldset-first',
             order=1,
-        )
-        link_1 = FieldsetTemplateKickoff.objects.get(
-            fieldset=fieldset_1,
-            kickoff=kickoff,
         )
         auth_header_value = (
             f'Token {template.embed_id}'
@@ -1048,9 +1021,9 @@ class TestRetrieveEmbedTemplate:
         assert response.status_code == 200
         fieldsets = response.data['kickoff']['fieldsets']
         assert len(fieldsets) == 2
-        assert fieldsets[0]['order'] == link_1.order
+        assert fieldsets[0]['order'] == fieldset_1.order
         assert fieldsets[0]['api_name'] == fieldset_1.api_name
-        assert fieldsets[1]['order'] == link_2.order
+        assert fieldsets[1]['order'] == fieldset_2.order
         assert fieldsets[1]['api_name'] == fieldset_2.api_name
         get_token_mock.assert_called_once()
         get_template_mock.assert_called_once_with(token)

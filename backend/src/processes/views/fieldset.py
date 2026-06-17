@@ -7,13 +7,18 @@ from src.accounts.permissions import (
     UsersOverlimitedPermission,
 )
 from src.generics.exceptions import BaseServiceException
+from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.permissions import UserIsAuthenticated
+from src.processes.filters import FieldSetFilter
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
 )
 from src.processes.serializers.templates.fieldset import (
-    FieldsetTemplateSerializer,
+    SharedFieldsetTemplateSerializer,
+)
+from src.processes.serializers.templates.template import (
+    FieldsetTemplateFilterSerializer,
 )
 from src.processes.services.templates.fieldsets.fieldset import (
     FieldSetTemplateService,
@@ -21,11 +26,16 @@ from src.processes.services.templates.fieldsets.fieldset import (
 from src.utils.validation import raise_validation_error
 
 
-class FieldsetTemplateViewSet(
+class SharedFieldsetTemplateViewSet(
     CustomViewSetMixin,
     GenericViewSet,
 ):
-    serializer_class = FieldsetTemplateSerializer
+    serializer_class = SharedFieldsetTemplateSerializer
+    filter_backends = (PneumaticFilterBackend,)
+
+    action_filterset_classes = {
+        'list': FieldSetFilter,
+    }
 
     def get_serializer_context(self, **kwargs):
         context = super().get_serializer_context(**kwargs)
@@ -51,6 +61,27 @@ class FieldsetTemplateViewSet(
             .select_related('template')
             .on_account(user.account_id)
         )
+
+    def list(self, request, *args, **kwargs):
+        filter_slz = FieldsetTemplateFilterSerializer(data=request.GET)
+        filter_slz.is_valid(raise_exception=True)
+        queryset = self.filter_queryset(self.get_queryset())
+        return self.paginated_response(queryset)
+
+    def create(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        service = FieldSetTemplateService(
+            user=request.user,
+            is_superuser=request.is_superuser,
+            auth_type=request.token_type,
+        )
+        try:
+            fieldset = service.create(**serializer.validated_data)
+        except BaseServiceException as ex:
+            raise_validation_error(message=ex.message)
+        response_serializer = SharedFieldsetTemplateSerializer(fieldset)
+        return self.response_created(response_serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
         fieldset = self.get_object()
@@ -79,7 +110,7 @@ class FieldsetTemplateViewSet(
         except BaseServiceException as ex:
             raise_validation_error(message=ex.message)
         fieldset.refresh_from_db()
-        response_serializer = FieldsetTemplateSerializer(fieldset)
+        response_serializer = SharedFieldsetTemplateSerializer(fieldset)
         return self.response_ok(response_serializer.data)
 
     def destroy(self, request, *args, **kwargs):

@@ -54,6 +54,7 @@ def test__create_instance__default_params__ok():
     service._create_instance(
         name=name,
         template_id=template.id,
+        is_shared=False,
     )
 
     # assert
@@ -92,6 +93,7 @@ def test__create_instance__all_params__ok():
     service._create_instance(
         name=name,
         template_id=template.id,
+        is_shared=False,
         description=description,
         label_position=label_position,
         layout=layout,
@@ -942,7 +944,7 @@ def test_delete__not_in_use__ok():
 def test_delete__used_by_kickoff_deleted_record__ok():
 
     """
-    Not in use → deleted
+    Fieldset previously linked to kickoff but now cleared → deleted
     """
 
     # arrange
@@ -954,9 +956,11 @@ def test_delete__used_by_kickoff_deleted_record__ok():
         template=template,
         account=account,
         name='Fieldset',
+        kickoff=kickoff,
     )
-    fieldset.kickoffs.add(kickoff)
-    fieldset.kickoffs.clear()
+    fieldset.kickoff = None
+    fieldset.save(update_fields=['kickoff'])
+    fieldset.refresh_from_db()
     service = FieldSetTemplateService(
         user=user,
         is_superuser=False,
@@ -974,7 +978,7 @@ def test_delete__used_by_kickoff_deleted_record__ok():
 def test_delete__used_by_task_deleted_record__ok():
 
     """
-    Not in use → deleted
+    Fieldset previously linked to task but now cleared → deleted
     """
 
     # arrange
@@ -986,9 +990,11 @@ def test_delete__used_by_task_deleted_record__ok():
         template=template,
         account=account,
         name='Fieldset',
+        task=task,
     )
-    fieldset.tasks.add(task)
-    fieldset.tasks.clear()
+    fieldset.task = None
+    fieldset.save(update_fields=['task'])
+    fieldset.refresh_from_db()
     service = FieldSetTemplateService(
         user=user,
         is_superuser=False,
@@ -1006,7 +1012,7 @@ def test_delete__used_by_task_deleted_record__ok():
 def test_delete__used_by_kickoff__raise_exception():
 
     """
-    In use by kickoff → exception
+    In use by kickoff (kickoff_id is set) → exception
     """
 
     # arrange
@@ -1018,8 +1024,8 @@ def test_delete__used_by_kickoff__raise_exception():
         template=template,
         account=account,
         name='Fieldset',
+        kickoff=kickoff,
     )
-    fieldset.kickoffs.add(kickoff)
     service = FieldSetTemplateService(
         user=user,
         is_superuser=False,
@@ -1051,8 +1057,8 @@ def test_delete__used_by_task__raise_exception():
         template=template,
         account=account,
         name='Fieldset',
+        task=task_template,
     )
-    fieldset.tasks.add(task_template)
     service = FieldSetTemplateService(
         user=user,
         is_superuser=False,

@@ -41,7 +41,6 @@ class FieldSet(
         blank=True,
         related_name='fieldsets',
     )
-    order = models.IntegerField(default=0)
 
     objects = BaseSoftDeleteManager.from_queryset(FieldSetQuerySet)()
 

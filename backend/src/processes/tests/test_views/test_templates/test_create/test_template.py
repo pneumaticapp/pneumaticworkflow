@@ -32,22 +32,20 @@ from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
 )
-from src.processes.models.templates.fieldset import (
-    FieldsetTemplateKickoff,
-    FieldsetTemplateTaskTemplate,
-)
 from src.processes.models.templates.raw_performer import RawPerformerTemplate
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
 from src.processes.services.templates.integrations import (
     TemplateIntegrationsService,
 )
+from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
     create_test_group,
     create_test_not_admin,
     create_test_owner,
+    create_test_shared_fieldset,
     create_test_template,
     create_test_user,
 )
@@ -3842,7 +3840,7 @@ def test_create__kickoff_with_one_fieldset__ok(
 ):
 
     """ Creating a template with one fieldset linked to kickoff
-        calls create_or_update_kickoff_links with correct data. """
+        creates FieldsetTemplate linked to the kickoff. """
 
     # arrange
     account = create_test_account()
@@ -3861,11 +3859,7 @@ def test_create__kickoff_with_one_fieldset__ok(
         'src.processes.views.template.'
         'AnalyticService.templates_kickoff_created',
     )
-    service_mock = mocker.patch(
-        'src.processes.serializers.templates.template.'
-        'FieldSetTemplateService.create_or_update_kickoff_links',
-    )
-    fieldset_api_name = 'fieldset-test-1'
+    shared = create_test_shared_fieldset(account=account)
     request_data = {
         'name': 'Template with fieldset',
         'owners': [
@@ -3879,7 +3873,7 @@ def test_create__kickoff_with_one_fieldset__ok(
         'kickoff': {
             'fieldsets': [
                 {
-                    'api_name': fieldset_api_name,
+                    'shared_fieldset_id': shared.id,
                     'order': 1,
                 },
             ],
@@ -3909,13 +3903,15 @@ def test_create__kickoff_with_one_fieldset__ok(
     template = Template.objects.get(id=response.data['id'])
     kickoff = template.kickoff_instance
     assert kickoff is not None
-    service_mock.assert_called_once_with(
+    fieldset = FieldsetTemplate.objects.get(
         kickoff=kickoff,
-        template=template,
-        fieldsets_links=[
-            {'api_name': fieldset_api_name, 'order': 1},
-        ],
+        shared_fieldset=shared,
     )
+    assert fieldset.order == 1
+    assert fieldset.name == shared.name
+    kickoff_data = response.data['kickoff']
+    assert len(kickoff_data['fieldsets']) == 1
+    assert kickoff_data['fieldsets'][0]['shared_fieldset_id'] == shared.id
 
 
 def test_create__kickoff_with_empty_fieldsets__no_links_created(
@@ -3980,7 +3976,7 @@ def test_create__kickoff_with_empty_fieldsets__no_links_created(
     assert response.status_code == 200
     template = Template.objects.get(id=response.data['id'])
     kickoff = template.kickoff_instance
-    assert FieldsetTemplateKickoff.objects.filter(
+    assert FieldsetTemplate.objects.filter(
         kickoff=kickoff,
     ).count() == 0
 
@@ -4045,7 +4041,7 @@ def test_create__kickoff_without_fieldsets_key__no_links_created(
     assert response.status_code == 200
     template = Template.objects.get(id=response.data['id'])
     kickoff = template.kickoff_instance
-    assert FieldsetTemplateKickoff.objects.filter(
+    assert FieldsetTemplate.objects.filter(
         kickoff=kickoff,
     ).count() == 0
 
@@ -4056,7 +4052,7 @@ def test_create__task_with_one_fieldset__ok(
 ):
 
     """ Creating a template with one fieldset linked to a task
-        calls create_or_update_tasks_links with correct data. """
+        creates FieldsetTemplate linked to the task. """
 
     # arrange
     account = create_test_account()
@@ -4071,11 +4067,7 @@ def test_create__task_with_one_fieldset__ok(
         'src.processes.views.template.'
         'AnalyticService.templates_kickoff_created',
     )
-    service_mock = mocker.patch(
-        'src.processes.serializers.templates.task.'
-        'FieldSetTemplateService.create_or_update_tasks_links',
-    )
-    fieldset_api_name = 'fieldset-task-1'
+    shared = create_test_shared_fieldset(account=account)
     request_data = {
         'name': 'Template with task fieldset',
         'owners': [
@@ -4099,7 +4091,7 @@ def test_create__task_with_one_fieldset__ok(
                 ],
                 'fieldsets': [
                     {
-                        'api_name': fieldset_api_name,
+                        'shared_fieldset_id': shared.id,
                         'order': 1,
                     },
                 ],
@@ -4118,22 +4110,21 @@ def test_create__task_with_one_fieldset__ok(
     template = Template.objects.get(id=response.data['id'])
     task = template.tasks.first()
     assert task is not None
-    service_mock.assert_called_once_with(
+    fieldset = FieldsetTemplate.objects.get(
         task=task,
-        template=template,
-        fieldsets_links=[
-            {'api_name': fieldset_api_name, 'order': 1},
-        ],
+        shared_fieldset=shared,
     )
+    assert fieldset.order == 1
+    assert fieldset.name == shared.name
+    task_data = response.data['tasks'][0]
+    assert len(task_data['fieldsets']) == 1
+    assert task_data['fieldsets'][0]['shared_fieldset_id'] == shared.id
 
 
 def test_create__task_with_empty_fieldsets__no_links_created(
     mocker,
     api_client,
 ):
-
-    """ Creating a template with empty fieldsets list in task does not
-        create any FieldsetTemplateTaskTemplate records. """
 
     # arrange
     account = create_test_account()
@@ -4184,7 +4175,7 @@ def test_create__task_with_empty_fieldsets__no_links_created(
     assert response.status_code == 200
     template = Template.objects.get(id=response.data['id'])
     task = template.tasks.first()
-    assert FieldsetTemplateTaskTemplate.objects.filter(
+    assert FieldsetTemplate.objects.filter(
         task=task,
     ).count() == 0
 
@@ -4245,6 +4236,6 @@ def test_create__task_without_fieldsets_key__no_links_created(
     assert response.status_code == 200
     template = Template.objects.get(id=response.data['id'])
     task = template.tasks.first()
-    assert FieldsetTemplateTaskTemplate.objects.filter(
+    assert FieldsetTemplate.objects.filter(
         task=task,
     ).count() == 0

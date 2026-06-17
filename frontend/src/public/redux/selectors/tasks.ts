@@ -19,3 +19,9 @@ export const getTasksSorting = (state: IApplicationState): ETaskListSorting | ET
 export const getTotalTasksCount = (state: IApplicationState): number | null => {
   return state.tasks.tasksCount;
 };
+
+export const getTasksFilterTemplatesIsLoading = (state: IApplicationState): boolean =>
+  state.tasks.tasksSettings.templateList.isLoading;
+
+export const getTasksFilterStepsIsLoading = (state: IApplicationState): boolean =>
+  state.tasks.tasksSettings.templateStepList.isLoading;

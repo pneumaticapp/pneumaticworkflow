@@ -57,6 +57,7 @@ const initMockConfig = () => {
   const realConfig = utils.getConfig();
   return {
     ...realConfig,
+    formSubdomain: '',
     api: {
       ...realConfig.api,
       urls: realConfig.api?.urls || {},

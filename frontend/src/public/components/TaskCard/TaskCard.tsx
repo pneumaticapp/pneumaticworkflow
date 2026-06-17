@@ -46,7 +46,7 @@ import { IAuthUser, IWorkflowLog } from '../../types/redux';
 import { WorkflowLog } from '../Workflows/WorkflowLog';
 import { DoneInfoIcon, InfoIcon, PlayLogoIcon, ReturnTaskInfoIcon, ReturnToIcon } from '../icons';
 import { WorkflowLogSkeleton } from '../Workflows/WorkflowLog/WorkflowLogSkeleton';
-import { EOptionTypes, TUsersDropdownOption, UsersDropdown } from '../UI/form/UsersDropdown';
+import { EOptionTypes, TUsersDropdownOption, UsersDropdown, getUsersDropdownOptionValue } from '../UI/form/UsersDropdown';
 import { TUserListItem } from '../../types/user';
 import { trackInviteTeamInPage } from '../../utils/analytics';
 import { Tooltip } from '../UI';
@@ -300,19 +300,22 @@ export function TaskCard({
         ...item,
         optionType: EOptionTypes.User,
         label: getUserFullName(item),
-        value: String(item.id),
+        value: getUsersDropdownOptionValue(EOptionTypes.User, item.id),
       };
     });
 
     const mapPerformersDropdownValue = users.filter((user) =>
-      task.performers.find(({ sourceId }) => user.id === sourceId),
+      task.performers.find(
+        ({ sourceId, type }) =>
+          Number(sourceId) === user.id && type === ETemplateOwnerType.User,
+      ),
     );
     const performerDropdownValue = mapPerformersDropdownValue.map((item) => {
       return {
         ...item,
         optionType: EOptionTypes.User,
         label: getUserFullName(item),
-        value: String(item.id),
+        value: getUsersDropdownOptionValue(EOptionTypes.User, item.id),
       };
     });
 
@@ -322,12 +325,15 @@ export function TaskCard({
         optionType: EOptionTypes.Group,
         type: ETaskPerformerType.UserGroup,
         label: group.name,
-        value: String(group.id),
+        value: getUsersDropdownOptionValue(EOptionTypes.Group, group.id),
       };
     });
 
-    const mapGroupDropdownValue = groups.filter((user) =>
-      task.performers.find(({ sourceId }) => Number(sourceId) === user.id),
+    const mapGroupDropdownValue = groups.filter((group) =>
+      task.performers.find(
+        ({ sourceId, type }) =>
+          Number(sourceId) === group.id && type === ETemplateOwnerType.UserGroup,
+      ),
     );
 
     const performerGroupDropdownValue = mapGroupDropdownValue.map((group) => {
@@ -335,7 +341,7 @@ export function TaskCard({
         ...group,
         optionType: EOptionTypes.Group,
         label: group.name,
-        value: String(group.id),
+        value: getUsersDropdownOptionValue(EOptionTypes.Group, group.id),
       };
     });
 

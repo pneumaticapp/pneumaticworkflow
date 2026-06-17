@@ -3,16 +3,13 @@ import pytest
 from src.processes.enums import (
     OwnerRole,
     OwnerType,
-    PerformerType,
+    PerformerType, FieldSetRuleType,
 )
-from src.processes.models.templates.fieldset import (
-    FieldsetTemplateKickoff,
-    FieldsetTemplateTaskTemplate,
-)
+from src.processes.models.templates.fieldset import FieldsetTemplate
 from src.processes.tests.fixtures import (
     create_test_account,
-    create_test_fieldset_template,
     create_test_owner,
+    create_test_shared_fieldset,
     create_test_template,
 )
 
@@ -21,29 +18,25 @@ pytestmark = pytest.mark.django_db
 # Kickoff fieldsets
 
 
-def test_update__kickoff_with_one_fieldset__ok(
+def test_update__kickoff_create_fieldset__ok(
     mocker,
     api_client,
 ):
 
-    """ Updating a template with one fieldset linked to kickoff
-        creates a FieldsetTemplateKickoff record. """
-
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user,
-        is_active=True,
-        tasks_count=1,
-    )
+    template = create_test_template(user, is_active=True, tasks_count=1)
     kickoff = template.kickoff_instance
     task = template.tasks.first()
-    fieldset = create_test_fieldset_template(
+    shared = create_test_shared_fieldset(
         account=account,
-        template=template,
-        api_name='fieldset-update-1',
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='100',
     )
+    field = shared.fields.first()
+    rule = shared.rules.first()
+    field.rules.add(rule)
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
@@ -54,72 +47,88 @@ def test_update__kickoff_with_one_fieldset__ok(
         'integrations.TemplateIntegrationsService.template_updated',
     )
     mocker.patch(
-        'src.processes.views.template.'
-        'AnalyticService.templates_updated',
+        'src.processes.views.template.AnalyticService.templates_updated',
     )
     mocker.patch(
         'src.processes.views.template.'
         'AnalyticService.templates_kickoff_updated',
     )
-    request_data = {
-        'id': template.id,
-        'is_active': True,
-        'name': 'Updated template',
-        'owners': [
-            {
-                'type': OwnerType.USER,
-                'source_id': user.id,
-                'role': OwnerRole.OWNER,
-            },
-        ],
-        'kickoff': {
-            'id': kickoff.id,
-            'fieldsets': [
-                {
-                    'api_name': fieldset.api_name,
-                    'order': 3,
-                },
-            ],
-        },
-        'tasks': [
-            {
-                'id': task.id,
-                'api_name': task.api_name,
-                'number': task.number,
-                'name': task.name,
-                'raw_performers': [
-                    {
-                        'type': PerformerType.USER,
-                        'source_id': user.id,
-                    },
-                ],
-            },
-        ],
-    }
     api_client.token_authenticate(user)
 
     # act
     response = api_client.put(
         path=f'/templates/{template.id}',
-        data=request_data,
+        data={
+            'id': template.id,
+            'is_active': True,
+            'name': 'Updated template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'id': kickoff.id,
+                'fieldsets': [
+                    {
+                        'shared_fieldset_id': shared.id,
+                        'order': 3,
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
     assert response.status_code == 200
-    assert response.data['kickoff'] == {
-        'fields': [],
-        'fieldsets': [
-            {
-                'api_name': fieldset.api_name,
-                'order': 3,
-            },
-        ],
-    }
-    assert FieldsetTemplateKickoff.objects.get(
-        kickoff=kickoff,
-        fieldset=fieldset,
+    fieldsets = response.data['kickoff']['fieldsets']
+    assert len(fieldsets) == 1
+    fieldset_data = fieldsets[0]
+    assert fieldset_data['shared_fieldset_id'] == shared.id
+    assert fieldset_data['order'] == 3
+    assert fieldset_data['name'] == shared.name
+    assert fieldset_data['title'] == shared.title
+    assert fieldset_data['description'] == shared.description
+    assert fieldset_data['label_position'] == shared.label_position
+    assert fieldset_data['layout'] == shared.layout
+    assert fieldset_data['api_name']
+    assert fieldset_data['api_name'] != shared.api_name
+    assert len(fieldset_data['fields']) == 1
+    field_data = fieldset_data['fields'][0]
+    assert field_data['name'] == field.name
+    assert field_data['description'] == ''
+    assert field_data['type'] == field.type
+    assert field_data['is_required'] == field.is_required
+    assert field_data['is_hidden'] == field.is_hidden
+    assert field_data['order'] == field.order
+    assert field_data['default'] == field.default
+    assert field_data['api_name']
+    assert len(fieldset_data['rules']) == 1
+    rule_data = fieldset_data['rules'][0]
+    assert rule_data['type'] == FieldSetRuleType.SUM_EQUAL
+    assert rule_data['value'] == '100'
+    assert rule_data['api_name']
+    assert rule_data['fields'] == [field_data['api_name']]
+    assert kickoff.fieldsets.filter(
+        shared_fieldset_id=shared.id,
         order=3,
-    )
+    ).exists()
 
 
 def test_update__kickoff_create_two_fieldsets__ok(
@@ -128,28 +137,16 @@ def test_update__kickoff_create_two_fieldsets__ok(
 ):
 
     """ Updating a template with multiple fieldsets linked to
-        kickoff creates multiple FieldsetTemplateKickoff records. """
+        kickoff creates multiple child fieldset records. """
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user,
-        is_active=True,
-        tasks_count=1,
-    )
+    template = create_test_template(user, is_active=True, tasks_count=1)
     kickoff = template.kickoff_instance
     task = template.tasks.first()
-    fieldset_1 = create_test_fieldset_template(
-        account=account,
-        template=template,
-        api_name='fieldset-x',
-    )
-    fieldset_2 = create_test_fieldset_template(
-        account=account,
-        template=template,
-        api_name='fieldset-y',
-    )
+    shared_1 = create_test_shared_fieldset(account=account)
+    shared_2 = create_test_shared_fieldset(account=account)
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
@@ -160,83 +157,68 @@ def test_update__kickoff_create_two_fieldsets__ok(
         'integrations.TemplateIntegrationsService.template_updated',
     )
     mocker.patch(
-        'src.processes.views.template.'
-        'AnalyticService.templates_updated',
+        'src.processes.views.template.AnalyticService.templates_updated',
     )
     mocker.patch(
         'src.processes.views.template.'
         'AnalyticService.templates_kickoff_updated',
     )
-    request_data = {
-        'id': template.id,
-        'is_active': True,
-        'name': 'Updated template',
-        'owners': [
-            {
-                'type': OwnerType.USER,
-                'source_id': user.id,
-                'role': OwnerRole.OWNER,
-            },
-        ],
-        'kickoff': {
-            'id': kickoff.id,
-            'fieldsets': [
-                {
-                    'api_name': fieldset_1.api_name,
-                    'order': 0,
-                },
-                {
-                    'api_name': fieldset_2.api_name,
-                    'order': 1,
-                },
-            ],
-        },
-        'tasks': [
-            {
-                'id': task.id,
-                'api_name': task.api_name,
-                'number': task.number,
-                'name': task.name,
-                'raw_performers': [
-                    {
-                        'type': PerformerType.USER,
-                        'source_id': user.id,
-                    },
-                ],
-            },
-        ],
-    }
     api_client.token_authenticate(user)
 
     # act
     response = api_client.put(
         path=f'/templates/{template.id}',
-        data=request_data,
+        data={
+            'id': template.id,
+            'is_active': True,
+            'name': 'Updated template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'id': kickoff.id,
+                'fieldsets': [
+                    {
+                        'shared_fieldset_id': shared_1.id,
+                        'order': 0,
+                    },
+                    {
+                        'shared_fieldset_id': shared_2.id,
+                        'order': 1,
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
     assert response.status_code == 200
-    assert response.data['kickoff'] == {
-        'fields': [],
-        'fieldsets': [
-            {
-                'api_name': fieldset_1.api_name,
-                'order': 0,
-            },
-            {
-                'api_name': fieldset_2.api_name,
-                'order': 1,
-            },
-        ],
-    }
-    assert FieldsetTemplateKickoff.objects.filter(
-        fieldset=fieldset_1,
-        kickoff=kickoff,
+    fieldsets = response.data['kickoff']['fieldsets']
+    assert len(fieldsets) == 2
+    assert kickoff.fieldsets.filter(
+        shared_fieldset_id=shared_1.id,
         order=0,
     ).count() == 1
-    assert FieldsetTemplateKickoff.objects.filter(
-        fieldset=fieldset_2,
-        kickoff=kickoff,
+    assert kickoff.fieldsets.filter(
+        shared_fieldset_id=shared_2.id,
         order=1,
     ).count() == 1
 
@@ -249,21 +231,20 @@ def test_update__kickoff_replace_fieldset__ok(
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user,
-        is_active=True,
-        tasks_count=1,
-    )
+    template = create_test_template(user, is_active=True, tasks_count=1)
     kickoff = template.kickoff_instance
     task = template.tasks.first()
-    fieldset_1 = create_test_fieldset_template(
+    shared_1 = create_test_shared_fieldset(account=account)
+    shared_2 = create_test_shared_fieldset(account=account)
+    # create an existing child fieldset linked to kickoff from shared_1
+    existing = FieldsetTemplate.objects.create(
         account=account,
         template=template,
         kickoff=kickoff,
-    )
-    fieldset_2 = create_test_fieldset_template(
-        account=account,
-        template=template,
+        name=shared_1.name,
+        shared_fieldset_id=shared_1.id,
+        is_shared=True,
+        order=0,
     )
     mocker.patch(
         'src.processes.services.templates.'
@@ -275,74 +256,63 @@ def test_update__kickoff_replace_fieldset__ok(
         'integrations.TemplateIntegrationsService.template_updated',
     )
     mocker.patch(
-        'src.processes.views.template.'
-        'AnalyticService.templates_updated',
+        'src.processes.views.template.AnalyticService.templates_updated',
     )
     mocker.patch(
         'src.processes.views.template.'
         'AnalyticService.templates_kickoff_updated',
     )
-    request_data = {
-        'id': template.id,
-        'is_active': True,
-        'name': 'Updated template',
-        'owners': [
-            {
-                'type': OwnerType.USER,
-                'source_id': user.id,
-                'role': OwnerRole.OWNER,
-            },
-        ],
-        'kickoff': {
-            'id': kickoff.id,
-            'fieldsets': [
-                {
-                    'api_name': fieldset_2.api_name,
-                    'order': 2,
-                },
-            ],
-        },
-        'tasks': [
-            {
-                'id': task.id,
-                'api_name': task.api_name,
-                'number': task.number,
-                'name': task.name,
-                'raw_performers': [
-                    {
-                        'type': PerformerType.USER,
-                        'source_id': user.id,
-                    },
-                ],
-            },
-        ],
-    }
     api_client.token_authenticate(user)
 
     # act
     response = api_client.put(
         path=f'/templates/{template.id}',
-        data=request_data,
+        data={
+            'id': template.id,
+            'is_active': True,
+            'name': 'Updated template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'id': kickoff.id,
+                'fieldsets': [
+                    {
+                        'shared_fieldset_id': shared_2.id,
+                        'order': 2,
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
     assert response.status_code == 200
-    assert response.data['kickoff'] == {
-        'fields': [],
-        'fieldsets': [
-            {
-                'api_name': fieldset_2.api_name,
-                'order': 2,
-            },
-        ],
-    }
-    assert FieldsetTemplateKickoff.objects.filter(
-        fieldset=fieldset_1,
-        kickoff=kickoff,
-    ).count() == 0
-    assert FieldsetTemplateKickoff.objects.filter(
-        fieldset=fieldset_2,
-        kickoff=kickoff,
+    fieldsets = response.data['kickoff']['fieldsets']
+    assert len(fieldsets) == 1
+    assert fieldsets[0]['shared_fieldset_id'] == shared_2.id
+    assert fieldsets[0]['order'] == 2
+    assert not kickoff.fieldsets.filter(id=existing.id).exists()
+    assert kickoff.fieldsets.filter(
+        shared_fieldset_id=shared_2.id,
         order=2,
     ).count() == 1
 
@@ -355,17 +325,18 @@ def test_update__kickoff_remove_fieldset__ok(
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user,
-        is_active=True,
-        tasks_count=1,
-    )
+    template = create_test_template(user, is_active=True, tasks_count=1)
     kickoff = template.kickoff_instance
     task = template.tasks.first()
-    fieldset = create_test_fieldset_template(
+    shared = create_test_shared_fieldset(account=account)
+    existing = FieldsetTemplate.objects.create(
         account=account,
         template=template,
         kickoff=kickoff,
+        name=shared.name,
+        shared_fieldset_id=shared.id,
+        is_shared=True,
+        order=0,
     )
     mocker.patch(
         'src.processes.services.templates.'
@@ -377,62 +348,53 @@ def test_update__kickoff_remove_fieldset__ok(
         'integrations.TemplateIntegrationsService.template_updated',
     )
     mocker.patch(
-        'src.processes.views.template.'
-        'AnalyticService.templates_updated',
+        'src.processes.views.template.AnalyticService.templates_updated',
     )
     mocker.patch(
         'src.processes.views.template.'
         'AnalyticService.templates_kickoff_updated',
     )
-    request_data = {
-        'id': template.id,
-        'is_active': True,
-        'name': 'Updated template',
-        'owners': [
-            {
-                'type': OwnerType.USER,
-                'source_id': user.id,
-                'role': OwnerRole.OWNER,
-            },
-        ],
-        'kickoff': {
-            'id': kickoff.id,
-            'fieldsets': [],
-        },
-        'tasks': [
-            {
-                'id': task.id,
-                'api_name': task.api_name,
-                'number': task.number,
-                'name': task.name,
-                'raw_performers': [
-                    {
-                        'type': PerformerType.USER,
-                        'source_id': user.id,
-                    },
-                ],
-            },
-        ],
-    }
     api_client.token_authenticate(user)
 
     # act
     response = api_client.put(
         path=f'/templates/{template.id}',
-        data=request_data,
+        data={
+            'id': template.id,
+            'is_active': True,
+            'name': 'Updated template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'id': kickoff.id,
+                'fieldsets': [],
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
     assert response.status_code == 200
-    assert response.data['kickoff'] == {
-        'fields': [],
-        'fieldsets': [],
-    }
-    fieldset.refresh_from_db()
-    assert FieldsetTemplateKickoff.objects.filter(
-        fieldset=fieldset,
-        kickoff=kickoff,
-    ).count() == 0
+    assert response.data['kickoff']['fieldsets'] == []
+    assert not kickoff.fieldsets.filter(id=existing.id).exists()
 
 
 def test_update__kickoff_skip_fieldsets__no_fieldsets_created(
@@ -441,16 +403,12 @@ def test_update__kickoff_skip_fieldsets__no_fieldsets_created(
 ):
 
     """ Updating a template without fieldsets key in kickoff does not
-        create any FieldsetTemplateKickoff records. """
+        create any kickoff fieldset records. """
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user,
-        is_active=True,
-        tasks_count=1,
-    )
+    template = create_test_template(user, is_active=True, tasks_count=1)
     kickoff = template.kickoff_instance
     task = template.tasks.first()
     mocker.patch(
@@ -463,83 +421,75 @@ def test_update__kickoff_skip_fieldsets__no_fieldsets_created(
         'integrations.TemplateIntegrationsService.template_updated',
     )
     mocker.patch(
-        'src.processes.views.template.'
-        'AnalyticService.templates_updated',
+        'src.processes.views.template.AnalyticService.templates_updated',
     )
     mocker.patch(
         'src.processes.views.template.'
         'AnalyticService.templates_kickoff_updated',
     )
-    request_data = {
-        'id': template.id,
-        'is_active': True,
-        'name': 'Updated template',
-        'owners': [
-            {
-                'type': OwnerType.USER,
-                'source_id': user.id,
-                'role': OwnerRole.OWNER,
-            },
-        ],
-        'kickoff': {
-            'id': kickoff.id,
-        },
-        'tasks': [
-            {
-                'id': task.id,
-                'api_name': task.api_name,
-                'number': task.number,
-                'name': task.name,
-                'raw_performers': [
-                    {
-                        'type': PerformerType.USER,
-                        'source_id': user.id,
-                    },
-                ],
-            },
-        ],
-    }
     api_client.token_authenticate(user)
 
     # act
     response = api_client.put(
         path=f'/templates/{template.id}',
-        data=request_data,
+        data={
+            'id': template.id,
+            'is_active': True,
+            'name': 'Updated template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'id': kickoff.id,
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
     assert response.status_code == 200
-    assert FieldsetTemplateKickoff.objects.filter(
-        kickoff=kickoff,
-    ).count() == 0
+    assert kickoff.fieldsets.count() == 0
 
 
 # Task fieldsets
 
 
-def test_update__task_with_one_fieldset__ok(
+def test_update__task_create_fieldset__ok(
     mocker,
     api_client,
 ):
 
-    """ Updating a template with one fieldset linked to a task
-        creates a FieldsetTemplateTaskTemplate record. """
-
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user,
-        is_active=True,
-        tasks_count=1,
-    )
+    template = create_test_template(user, is_active=True, tasks_count=1)
     kickoff = template.kickoff_instance
     task = template.tasks.first()
-    fieldset = create_test_fieldset_template(
+    shared = create_test_shared_fieldset(
         account=account,
-        template=template,
-        api_name='fieldset-task-update-1',
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='200',
     )
+    field = shared.fields.first()
+    rule = shared.rules.first()
+    field.rules.add(rule)
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
@@ -550,69 +500,81 @@ def test_update__task_with_one_fieldset__ok(
         'integrations.TemplateIntegrationsService.template_updated',
     )
     mocker.patch(
-        'src.processes.views.template.'
-        'AnalyticService.templates_updated',
+        'src.processes.views.template.AnalyticService.templates_updated',
     )
     mocker.patch(
         'src.processes.views.template.'
         'AnalyticService.templates_kickoff_updated',
     )
-    request_data = {
-        'id': template.id,
-        'is_active': True,
-        'name': 'Updated template',
-        'owners': [
-            {
-                'type': OwnerType.USER,
-                'source_id': user.id,
-                'role': OwnerRole.OWNER,
-            },
-        ],
-        'kickoff': {
-            'id': kickoff.id,
-        },
-        'tasks': [
-            {
-                'id': task.id,
-                'api_name': task.api_name,
-                'number': task.number,
-                'name': task.name,
-                'raw_performers': [
-                    {
-                        'type': PerformerType.USER,
-                        'source_id': user.id,
-                    },
-                ],
-                'fieldsets': [
-                    {
-                        'api_name': fieldset.api_name,
-                        'order': 2,
-                    },
-                ],
-            },
-        ],
-    }
     api_client.token_authenticate(user)
 
     # act
     response = api_client.put(
         path=f'/templates/{template.id}',
-        data=request_data,
+        data={
+            'id': template.id,
+            'is_active': True,
+            'name': 'Updated template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'id': kickoff.id,
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'fieldsets': [
+                        {
+                            'shared_fieldset_id': shared.id,
+                            'order': 2,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
     assert response.status_code == 200
-    assert response.data['tasks'][0]['fieldsets'] == [
-        {
-            'api_name': fieldset.api_name,
-            'order': 2,
-        },
-    ]
-    assert FieldsetTemplateTaskTemplate.objects.get(
-        task=task,
-        fieldset=fieldset,
+    fieldsets = response.data['tasks'][0]['fieldsets']
+    assert len(fieldsets) == 1
+    fieldset_data = fieldsets[0]
+    assert fieldset_data['shared_fieldset_id'] == shared.id
+    assert fieldset_data['order'] == 2
+    assert len(fieldset_data['fields']) == 1
+    field_data = fieldset_data['fields'][0]
+    assert field_data['name'] == field.name
+    assert field_data['description'] == ''
+    assert field_data['type'] == field.type
+    assert field_data['is_required'] == field.is_required
+    assert field_data['is_hidden'] == field.is_hidden
+    assert field_data['order'] == field.order
+    assert field_data['default'] == field.default
+    assert field_data['api_name']
+    assert len(fieldset_data['rules']) == 1
+    rule_data = fieldset_data['rules'][0]
+    assert rule_data['type'] == FieldSetRuleType.SUM_EQUAL
+    assert rule_data['value'] == '200'
+    assert rule_data['api_name']
+    assert rule_data['fields'] == [field_data['api_name']]
+    assert task.fieldsets.filter(
+        shared_fieldset_id=shared.id,
         order=2,
-    )
+    ).exists()
 
 
 def test_update__task_create_two_fieldsets__ok(
@@ -621,28 +583,16 @@ def test_update__task_create_two_fieldsets__ok(
 ):
 
     """ Updating a template with multiple fieldsets linked to a task
-        creates multiple FieldsetTemplateTaskTemplate records. """
+        creates multiple child fieldset records. """
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user,
-        is_active=True,
-        tasks_count=1,
-    )
+    template = create_test_template(user, is_active=True, tasks_count=1)
     task = template.tasks.first()
     kickoff = template.kickoff_instance
-    fieldset_1 = create_test_fieldset_template(
-        account=account,
-        template=template,
-        api_name='fieldset-x',
-    )
-    fieldset_2 = create_test_fieldset_template(
-        account=account,
-        template=template,
-        api_name='fieldset-y',
-    )
+    shared_1 = create_test_shared_fieldset(account=account)
+    shared_2 = create_test_shared_fieldset(account=account)
     mocker.patch(
         'src.processes.services.templates.'
         'integrations.TemplateIntegrationsService.'
@@ -653,82 +603,70 @@ def test_update__task_create_two_fieldsets__ok(
         'integrations.TemplateIntegrationsService.template_updated',
     )
     mocker.patch(
-        'src.processes.views.template.'
-        'AnalyticService.templates_updated',
+        'src.processes.views.template.AnalyticService.templates_updated',
     )
     mocker.patch(
         'src.processes.views.template.'
         'AnalyticService.templates_kickoff_updated',
     )
-    request_data = {
-        'id': template.id,
-        'is_active': True,
-        'name': 'Updated template',
-        'owners': [
-            {
-                'type': OwnerType.USER,
-                'source_id': user.id,
-                'role': OwnerRole.OWNER,
-            },
-        ],
-        'kickoff': {
-            'id': kickoff.id,
-        },
-        'tasks': [
-            {
-                'id': task.id,
-                'api_name': task.api_name,
-                'number': task.number,
-                'name': task.name,
-                'raw_performers': [
-                    {
-                        'type': PerformerType.USER,
-                        'source_id': user.id,
-                    },
-                ],
-                'fieldsets': [
-                    {
-                        'api_name': fieldset_1.api_name,
-                        'order': 1,
-                    },
-                    {
-                        'api_name': fieldset_2.api_name,
-                        'order': 0,
-                    },
-                ],
-            },
-        ],
-    }
     api_client.token_authenticate(user)
 
     # act
     response = api_client.put(
         path=f'/templates/{template.id}',
-        data=request_data,
+        data={
+            'id': template.id,
+            'is_active': True,
+            'name': 'Updated template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'id': kickoff.id,
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'fieldsets': [
+                        {
+                            'shared_fieldset_id': shared_1.id,
+                            'order': 1,
+                        },
+                        {
+                            'shared_fieldset_id': shared_2.id,
+                            'order': 0,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
     assert response.status_code == 200
-    assert response.data['tasks'][0]['fieldsets'] == [
-        {
-            'api_name': fieldset_2.api_name,
-            'order': 0,
-        },
-        {
-            'api_name': fieldset_1.api_name,
-            'order': 1,
-        },
-    ]
-    assert FieldsetTemplateTaskTemplate.objects.get(
-        task=task,
-        fieldset=fieldset_1,
+    fieldsets = response.data['tasks'][0]['fieldsets']
+    assert len(fieldsets) == 2
+    assert task.fieldsets.filter(
+        shared_fieldset_id=shared_1.id,
         order=1,
-    )
-    assert FieldsetTemplateTaskTemplate.objects.get(
-        task=task,
-        fieldset=fieldset_2,
+    ).count() == 1
+    assert task.fieldsets.filter(
+        shared_fieldset_id=shared_2.id,
         order=0,
-    )
+    ).count() == 1
 
 
 def test_update__task_replace_fieldset__ok(
@@ -739,21 +677,20 @@ def test_update__task_replace_fieldset__ok(
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user,
-        is_active=True,
-        tasks_count=1,
-    )
+    template = create_test_template(user, is_active=True, tasks_count=1)
     kickoff = template.kickoff_instance
     task = template.tasks.first()
-    fieldset_1 = create_test_fieldset_template(
+    shared_1 = create_test_shared_fieldset(account=account)
+    shared_2 = create_test_shared_fieldset(account=account)
+    # create an existing child fieldset linked to task from shared_1
+    existing = FieldsetTemplate.objects.create(
         account=account,
         template=template,
         task=task,
-    )
-    fieldset_2 = create_test_fieldset_template(
-        account=account,
-        template=template,
+        name=shared_1.name,
+        shared_fieldset_id=shared_1.id,
+        is_shared=True,
+        order=0,
     )
     mocker.patch(
         'src.processes.services.templates.'
@@ -765,72 +702,63 @@ def test_update__task_replace_fieldset__ok(
         'integrations.TemplateIntegrationsService.template_updated',
     )
     mocker.patch(
-        'src.processes.views.template.'
-        'AnalyticService.templates_updated',
+        'src.processes.views.template.AnalyticService.templates_updated',
     )
     mocker.patch(
         'src.processes.views.template.'
         'AnalyticService.templates_kickoff_updated',
     )
-    request_data = {
-        'id': template.id,
-        'is_active': True,
-        'name': 'Updated template',
-        'owners': [
-            {
-                'type': OwnerType.USER,
-                'source_id': user.id,
-                'role': OwnerRole.OWNER,
-            },
-        ],
-        'kickoff': {
-            'id': kickoff.id,
-        },
-        'tasks': [
-            {
-                'id': task.id,
-                'api_name': task.api_name,
-                'number': task.number,
-                'name': task.name,
-                'raw_performers': [
-                    {
-                        'type': PerformerType.USER,
-                        'source_id': user.id,
-                    },
-                ],
-                'fieldsets': [
-                    {
-                        'api_name': fieldset_2.api_name,
-                        'order': 2,
-                    },
-                ],
-            },
-        ],
-    }
     api_client.token_authenticate(user)
 
     # act
     response = api_client.put(
         path=f'/templates/{template.id}',
-        data=request_data,
+        data={
+            'id': template.id,
+            'is_active': True,
+            'name': 'Updated template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'id': kickoff.id,
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'fieldsets': [
+                        {
+                            'shared_fieldset_id': shared_2.id,
+                            'order': 2,
+                        },
+                    ],
+                },
+            ],
+        },
     )
 
     # assert
     assert response.status_code == 200
-    assert response.data['tasks'][0]['fieldsets'] == [
-        {
-            'api_name': fieldset_2.api_name,
-            'order': 2,
-        },
-    ]
-    fieldset_1.refresh_from_db()
-    assert FieldsetTemplateTaskTemplate.objects.filter(
-        task=task,
-        fieldset=fieldset_1,
-    ).count() == 0
-    assert FieldsetTemplateTaskTemplate.objects.filter(
-        task=task,
-        fieldset=fieldset_2,
+    fieldsets = response.data['tasks'][0]['fieldsets']
+    assert len(fieldsets) == 1
+    assert fieldsets[0]['shared_fieldset_id'] == shared_2.id
+    assert fieldsets[0]['order'] == 2
+    assert not task.fieldsets.filter(id=existing.id).exists()
+    assert task.fieldsets.filter(
+        shared_fieldset_id=shared_2.id,
         order=2,
     ).count() == 1
 
@@ -843,17 +771,18 @@ def test_update__tasks_remove_fieldset__ok(
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user,
-        is_active=True,
-        tasks_count=1,
-    )
+    template = create_test_template(user, is_active=True, tasks_count=1)
     kickoff = template.kickoff_instance
     task = template.tasks.first()
-    fieldset = create_test_fieldset_template(
+    shared = create_test_shared_fieldset(account=account)
+    existing = FieldsetTemplate.objects.create(
         account=account,
         template=template,
         task=task,
+        name=shared.name,
+        shared_fieldset_id=shared.id,
+        is_shared=True,
+        order=0,
     )
     mocker.patch(
         'src.processes.services.templates.'
@@ -865,58 +794,53 @@ def test_update__tasks_remove_fieldset__ok(
         'integrations.TemplateIntegrationsService.template_updated',
     )
     mocker.patch(
-        'src.processes.views.template.'
-        'AnalyticService.templates_updated',
+        'src.processes.views.template.AnalyticService.templates_updated',
     )
     mocker.patch(
         'src.processes.views.template.'
         'AnalyticService.templates_kickoff_updated',
     )
-    request_data = {
-        'id': template.id,
-        'is_active': True,
-        'name': 'Updated template',
-        'owners': [
-            {
-                'type': OwnerType.USER,
-                'source_id': user.id,
-                'role': OwnerRole.OWNER,
-            },
-        ],
-        'kickoff': {
-            'id': kickoff.id,
-        },
-        'tasks': [
-            {
-                'id': task.id,
-                'api_name': task.api_name,
-                'number': task.number,
-                'name': task.name,
-                'raw_performers': [
-                    {
-                        'type': PerformerType.USER,
-                        'source_id': user.id,
-                    },
-                ],
-                'fieldsets': [],
-            },
-        ],
-    }
     api_client.token_authenticate(user)
 
     # act
     response = api_client.put(
         path=f'/templates/{template.id}',
-        data=request_data,
+        data={
+            'id': template.id,
+            'is_active': True,
+            'name': 'Updated template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'id': kickoff.id,
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'fieldsets': [],
+                },
+            ],
+        },
     )
 
     # assert
     assert response.status_code == 200
     assert response.data['tasks'][0]['fieldsets'] == []
-    assert FieldsetTemplateTaskTemplate.objects.filter(
-        task=task,
-        fieldset=fieldset,
-    ).count() == 0
+    assert not task.fieldsets.filter(id=existing.id).exists()
 
 
 def test_update__task_with_empty_fieldsets__no_create_fieldsets(
@@ -925,16 +849,12 @@ def test_update__task_with_empty_fieldsets__no_create_fieldsets(
 ):
 
     """ Updating a template with empty fieldsets list in task does not
-        create any FieldsetTemplateTaskTemplate records. """
+        create any task fieldset records. """
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user,
-        is_active=True,
-        tasks_count=1,
-    )
+    template = create_test_template(user, is_active=True, tasks_count=1)
     kickoff = template.kickoff_instance
     task = template.tasks.first()
     mocker.patch(
@@ -947,51 +867,49 @@ def test_update__task_with_empty_fieldsets__no_create_fieldsets(
         'integrations.TemplateIntegrationsService.template_updated',
     )
     mocker.patch(
-        'src.processes.views.template.'
-        'AnalyticService.templates_updated',
+        'src.processes.views.template.AnalyticService.templates_updated',
     )
     mocker.patch(
         'src.processes.views.template.'
         'AnalyticService.templates_kickoff_updated',
     )
-    request_data = {
-        'id': template.id,
-        'is_active': True,
-        'name': 'Updated template',
-        'owners': [
-            {
-                'type': OwnerType.USER,
-                'source_id': user.id,
-                'role': OwnerRole.OWNER,
-            },
-        ],
-        'kickoff': {
-            'id': kickoff.id,
-        },
-        'tasks': [
-            {
-                'id': task.id,
-                'api_name': task.api_name,
-                'number': task.number,
-                'name': task.name,
-                'raw_performers': [
-                    {
-                        'type': PerformerType.USER,
-                        'source_id': user.id,
-                    },
-                ],
-                'fieldsets': [],
-            },
-        ],
-    }
     api_client.token_authenticate(user)
 
     # act
     response = api_client.put(
         path=f'/templates/{template.id}',
-        data=request_data,
+        data={
+            'id': template.id,
+            'is_active': True,
+            'name': 'Updated template',
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'id': kickoff.id,
+            },
+            'tasks': [
+                {
+                    'id': task.id,
+                    'api_name': task.api_name,
+                    'number': task.number,
+                    'name': task.name,
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'fieldsets': [],
+                },
+            ],
+        },
     )
 
     # assert
     assert response.status_code == 200
-    assert FieldsetTemplateTaskTemplate.objects.filter(task=task).count() == 0
+    assert task.fieldsets.count() == 0

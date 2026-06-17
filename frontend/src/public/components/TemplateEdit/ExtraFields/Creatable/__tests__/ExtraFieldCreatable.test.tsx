@@ -1,15 +1,3 @@
-/**
- * ExtraFieldCreatable — компонент dropdown-поля.
- * Тип: ExtraField с двумя режимами (Kickoff / ProcessRun).
- * Путь: ExtraFields/Creatable/ExtraFieldCreatable.tsx
- *
- * Контракт label-left:
- * - Kickoff + Left → FieldWithName получает labelClassName с _centered
- * - Kickoff + Top → labelClassName НЕ передаётся
- * - Kickoff + Left → options обёрнуты в wrapper с _label-left
- * - ProcessRun + Left → FieldLabel с _centered классом
- * - ProcessRun + Top → static name div, FieldLabel не рендерится
- */
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 
@@ -22,8 +10,6 @@ import { intlMock } from '../../../../../__stubs__/intlMock';
 import { makeExtraField } from '../../../../../__stubs__/fields.factory';
 import { EExtraFieldMode, EExtraFieldType, IExtraFieldSelection } from '../../../../../types/template';
 import { EFieldLabelPosition } from '../../../../../types/fieldset';
-
-// --- Мок конфигурации ---
 
 jest.mock('../../utils/OutputFieldContent', () => ({
   OutputFieldContent: jest.fn(({ children }: { children: React.ReactNode }) =>
@@ -65,7 +51,6 @@ jest.mock('../../../../IntlMessages', () => ({
   IntlMessages: jest.fn(() => null),
 }));
 
-// FieldWithName — prop-drilling мок (правило 42)
 jest.mock('../../utils/FieldWithName', () => {
   const React = require('react');
   return {
@@ -73,7 +58,6 @@ jest.mock('../../utils/FieldWithName', () => {
   };
 });
 
-// FieldLabel — prop-drilling мок (правило 42)
 jest.mock('../../utils/FieldLabel', () => ({
   FieldLabel: jest.fn(() => null),
 }));
@@ -82,12 +66,8 @@ jest.mock('../../../KickoffRedux/utils/getEmptySelection', () => ({
   getEmptySelection: jest.fn(() => ({ id: 'empty', value: '', isSelected: false, apiName: 'empty' })),
 }));
 
-// --- Тесты ---
-
 describe('ExtraFieldCreatable', () => {
   const mockEditField = jest.fn();
-
-  // Получаем мок FieldWithName через require (ForwardRef → jest.Mock каст невозможен)
   const getFieldWithNameMock = (): jest.Mock =>
     require('../../utils/FieldWithName').FieldWithName;
 
@@ -125,8 +105,6 @@ describe('ExtraFieldCreatable', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
-
-  // --- Существующие тесты (переписаны без any) ---
 
   it('Kickoff: renders OutputFieldContent as wrapper for options', () => {
     render(<ExtraFieldCreatable {...baseKickoffProps} />);
@@ -172,11 +150,7 @@ describe('ExtraFieldCreatable', () => {
     );
   });
 
-  // --- label-left ветвления ---
-  // Kickoff делегирует через FieldWithName, ProcessRun использует FieldLabel напрямую
-
   describe('label-left support', () => {
-    // Kickoff + Left → FieldWithName получает labelClassName с centered
     it('Kickoff + labelPosition=Left: passes labelClassName with centered class to FieldWithName', () => {
       render(<ExtraFieldCreatable {...baseKickoffProps} labelPosition={EFieldLabelPosition.Left} />);
 
@@ -190,7 +164,6 @@ describe('ExtraFieldCreatable', () => {
       );
     });
 
-    // Kickoff + Top → FieldWithName без labelClassName
     it('Kickoff + labelPosition=Top: does NOT pass labelClassName to FieldWithName', () => {
       render(<ExtraFieldCreatable {...baseKickoffProps} labelPosition={EFieldLabelPosition.Top} />);
 
@@ -202,7 +175,6 @@ describe('ExtraFieldCreatable', () => {
       );
     });
 
-    // ProcessRun + Left → FieldLabel с centered классом
     it('ProcessRun + labelPosition=Left: renders FieldLabel with centered class', () => {
       render(
         <ExtraFieldCreatable
@@ -223,7 +195,6 @@ describe('ExtraFieldCreatable', () => {
       );
     });
 
-    // ProcessRun + Top → readonly name div, FieldLabel не вызван
     it('ProcessRun + labelPosition=Top: renders readonly name div, no FieldLabel', () => {
       render(
         <ExtraFieldCreatable

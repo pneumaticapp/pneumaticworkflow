@@ -96,6 +96,19 @@ describe('getPerformersForDropdown', () => {
       expect(managerOptions).toHaveLength(0);
     });
 
+    it('generates unique values for user and group with the same id', () => {
+      const users = [{ id: 5, firstName: 'John', lastName: 'Doe' } as any];
+      const groups = [{ id: 5, name: 'Team A', type: 'regular' } as any];
+
+      const result = getPerformersForDropdown(users, groups, [], intlMock.formatMessage);
+
+      const userOption = result.find((option) => option.optionType === EOptionTypes.User);
+      const groupOption = result.find((option) => option.optionType === EOptionTypes.Group);
+
+      expect(userOption?.value).toBe('user-5');
+      expect(groupOption?.value).toBe('group-5');
+    });
+
     it('Manager option has a unique value with manager- prefix', () => {
       const currentTask = makeTask({ apiName: 'task-2', number: 2 });
       const tasks = [makeTask(), currentTask];

@@ -1,14 +1,3 @@
-/**
- * ExtraFieldUser — компонент пользовательского поля.
- * Тип: ExtraField с двумя режимами (Kickoff / ProcessRun).
- * Путь: ExtraFields/User/ExtraFieldUser.tsx
- *
- * Контракт:
- * - ProcessRun: UsersDropdown с опциями пользователей/групп
- * - Value matching: userId → user option, groupId → group option
- * - Selection: onChange устанавливает userId/groupId и сбрасывает другой
- * - label-left: Left → FieldLabel с centered, Top → static div
- */
 import * as React from 'react';
 import { render, screen } from '@testing-library/react';
 import { useSelector } from 'react-redux';
@@ -21,8 +10,6 @@ import { EUserDropdownOptionType, TUserListItem, EUserStatus } from '../../../..
 
 import { FieldLabel } from '../../utils/FieldLabel';
 import { EFieldLabelPosition } from '../../../../../types/fieldset';
-
-// --- Мок конфигурации ---
 
 jest.mock('react-redux', () => ({
   useSelector: jest.fn(),
@@ -37,6 +24,7 @@ jest.mock('react-intl', () => ({
 jest.mock('../../../../UI/form/UsersDropdown', () => ({
   UsersDropdown: jest.fn(() => null),
   EOptionTypes: { User: 'user', Group: 'group' },
+  getUsersDropdownOptionValue: (optionType: string, id: number | string) => `${optionType}-${id}`,
 }));
 
 jest.mock('../../utils/FieldWithName', () => ({
@@ -60,8 +48,6 @@ jest.mock('../../../../../utils/analytics', () => ({
 jest.mock('../../utils/FieldLabel', () => ({
   FieldLabel: jest.fn(() => null),
 }));
-
-// --- Тесты ---
 
 describe('ExtraFieldUser', () => {
   const mockEditField = jest.fn();
@@ -88,7 +74,6 @@ describe('ExtraFieldUser', () => {
     });
   });
 
-  // Хелпер для prop-drilling assertions через мокнутый UsersDropdown
   const getDropdownProps = () => {
     const { UsersDropdown: mock } = require('../../../../UI/form/UsersDropdown');
     if (!mock.mock.calls.length) return null;
@@ -101,7 +86,6 @@ describe('ExtraFieldUser', () => {
     ...overrides,
   });
 
-  // Типизированные базовые пропсы для всех рендеров
   const baseProps: IExtraFieldUserProps = {
     field: createBaseField(),
     mode: EExtraFieldMode.ProcessRun,
@@ -174,8 +158,6 @@ describe('ExtraFieldUser', () => {
       });
     });
   });
-
-  // --- label-left ветвления ---
 
   describe('label-left support', () => {
     it('ProcessRun + labelPosition=Left: renders FieldLabel with centered class', () => {

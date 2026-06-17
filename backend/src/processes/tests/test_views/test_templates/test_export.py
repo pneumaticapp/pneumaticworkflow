@@ -217,9 +217,6 @@ def test_export__fieldsets__ok(api_client):
         account=account,
         template=template,
         kickoff=kickoff,
-        name='Kickoff Fieldset',
-        description='Kickoff fieldset desc',
-        api_name='fieldset-kickoff-1',
         order=0,
     )
 
@@ -227,9 +224,6 @@ def test_export__fieldsets__ok(api_client):
         account=account,
         template=template,
         task=task,
-        name='Task Fieldset',
-        description='Task fieldset desc',
-        api_name='fieldset-task-1',
         order=1,
     )
 

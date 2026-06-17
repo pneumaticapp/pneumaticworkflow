@@ -5,122 +5,182 @@ from src.processes.enums import (
     FieldSetRuleType,
     FieldType,
     LabelPosition,
+    OwnerRole,
+    OwnerType,
+    PerformerType,
 )
-from src.processes.models.templates.fieldset import (
-    FieldsetTemplate,
-    FieldsetTemplateKickoff,
-    FieldsetTemplateRule,
-    FieldsetTemplateTaskTemplate,
+from src.processes.tests.fixtures import (
+    create_test_shared_fieldset,
+    create_test_owner,
+    create_test_account,
 )
 from src.processes.models.templates.fields import (
     FieldTemplate,
     FieldTemplateSelection,
 )
-from src.processes.tests.fixtures import (
-    create_test_account,
-    create_test_fieldset_template,
-    create_test_owner,
-    create_test_template,
-)
 
 pytestmark = pytest.mark.django_db
 
 
-def test_clone__fieldset_copied__ok(api_client):
-
-    """Cloning a template copies its FieldsetTemplate
-    to the new template with correct attributes."""
+def test_clone__kickoff_and_task_fieldsets__ok(api_client):
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    api_client.token_authenticate(user)
-    template = create_test_template(user=user, tasks_count=1)
-    fieldset = create_test_fieldset_template(
+    shared = create_test_shared_fieldset(
         account=account,
-        template=template,
         name='My Fieldset',
         description='Some description',
-        label_position=LabelPosition.LEFT,
-        layout=FieldSetLayout.HORIZONTAL,
+        label_position=LabelPosition.TOP,
+        layout=FieldSetLayout.VERTICAL,
     )
+    api_client.token_authenticate(user)
+
+    create_response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': False,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'fieldsets': [
+                    {
+                        'shared_fieldset_id': shared.id,
+                        'order': 1,
+                        'title': 'My Fieldset Title',
+                        'description': 'My Fieldset Description',
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'Step 1',
+                    'api_name': 'task-1',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                    'fieldsets': [
+                        {
+                            'shared_fieldset_id': shared.id,
+                            'order': 2,
+                            'title': 'My Fieldset Title 2',
+                            'description': 'My Fieldset Description 2',
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+    assert create_response.status_code == 200
+    template_id = create_response.data['id']
 
     # act
-    response = api_client.post(f'/templates/{template.id}/clone')
+    response = api_client.post(f'/templates/{template_id}/clone')
 
     # assert
     assert response.status_code == 200
-    new_template_id = response.data['id']
-    assert new_template_id != template.id
+    assert response.data['id'] != template_id
 
-    field_clones = FieldsetTemplate.objects.filter(
-        template_id=new_template_id,
-    )
-    assert field_clones.count() == 1
-    fieldset_clone = field_clones.first()
-    assert fieldset_clone.name == fieldset.name
-    assert fieldset_clone.api_name == fieldset.api_name
-    assert fieldset_clone.description == fieldset.description
-    assert fieldset_clone.label_position == fieldset.label_position
-    assert fieldset_clone.layout == fieldset.layout
-    assert fieldset_clone.account_id == account.id
+    assert len(response.data['kickoff']['fieldsets']) == 1
+    clone_fieldsets_1 = response.data['kickoff']['fieldsets'][0]
+    assert clone_fieldsets_1['name'] == shared.name
+    assert clone_fieldsets_1['title'] == 'My Fieldset Title'
+    assert clone_fieldsets_1['description'] == 'My Fieldset Description'
+    assert clone_fieldsets_1['label_position'] == LabelPosition.TOP
+    assert clone_fieldsets_1['layout'] == FieldSetLayout.VERTICAL
+    assert clone_fieldsets_1['order'] == 1
+    assert isinstance(clone_fieldsets_1['fields'], list)
+    assert clone_fieldsets_1['rules'] == []
+    assert clone_fieldsets_1['shared_fieldset_id'] == shared.id
+
+    assert len(response.data['tasks'][0]['fieldsets']) == 1
+    clone_fieldsets_2 = response.data['tasks'][0]['fieldsets'][0]
+    assert clone_fieldsets_2['name'] == shared.name
+    assert clone_fieldsets_2['title'] == 'My Fieldset Title 2'
+    assert clone_fieldsets_2['description'] == 'My Fieldset Description 2'
+    assert clone_fieldsets_2['label_position'] == LabelPosition.TOP
+    assert clone_fieldsets_2['layout'] == FieldSetLayout.VERTICAL
+    assert clone_fieldsets_2['order'] == 2
+    assert isinstance(clone_fieldsets_2['fields'], list)
+    assert clone_fieldsets_2['rules'] == []
+    assert clone_fieldsets_2['shared_fieldset_id'] == shared.id
 
 
 def test_clone__fieldset_with_fields__ok(api_client):
 
-    """Cloning copies FieldTemplate records
-    belonging to the fieldset."""
+    """Cloning copies field records belonging to the fieldset."""
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
+    shared = create_test_shared_fieldset(account=account)
     api_client.token_authenticate(user)
-    template = create_test_template(user=user, tasks_count=1)
-    fieldset = create_test_fieldset_template(
-        account=account,
-        template=template,
-        name='Fieldset with fields',
+
+    create_response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': False,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'fieldsets': [
+                    {
+                        'shared_fieldset_id': shared.id,
+                        'order': 1,
+                        'title': 'Fields Fieldset Title',
+                        'description': 'Fields Fieldset Description',
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'Step 1',
+                    'api_name': 'task-1',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
-    field_1 = fieldset.fields.first()
-    # fixture creates one STRING field; add a second one
-    field_2 = FieldTemplate.objects.create(
-        template=template,
-        fieldset=fieldset,
-        account=account,
-        name='Second field',
-        type=FieldType.NUMBER,
-        order=2,
-        is_required=False,
-        is_hidden=True,
-    )
+    assert create_response.status_code == 200
+    template_id = create_response.data['id']
 
     # act
-    response = api_client.post(f'/templates/{template.id}/clone')
+    response = api_client.post(f'/templates/{template_id}/clone')
 
     # assert
     assert response.status_code == 200
-    new_template_id = response.data['id']
-    fieldset_clone = FieldsetTemplate.objects.get(template_id=new_template_id)
-    field_clones = FieldTemplate.objects.filter(
-        fieldset=fieldset_clone,
-    ).order_by('order')
-    assert field_clones.count() == 2
-
-    field_1_clone = field_clones[0]
-    assert field_1_clone.name == field_1.name
-    assert field_1_clone.api_name == field_1.api_name
-    assert field_1_clone.type == field_1.type
-    assert field_1_clone.order == field_1.order
-    assert field_1_clone.template_id == new_template_id
-    assert field_1_clone.kickoff is None
-    assert field_1_clone.task is None
-
-    field_2_clone = field_clones[1]
-    assert field_2_clone.name == field_2.name
-    assert field_2_clone.api_name == field_2.api_name
-    assert field_2_clone.type == field_2.type
-    assert field_2_clone.order == field_2.order
-    assert field_2_clone.is_hidden == field_2.is_hidden
+    field = shared.fields.first()
+    fields = response.data['kickoff']['fieldsets'][0]['fields']
+    assert len(fields) == 1
+    assert fields[0]['name'] == field.name
+    assert fields[0]['description'] == (field.description or '')
+    assert fields[0]['type'] == field.type
+    assert fields[0]['is_required'] == field.is_required
+    assert fields[0]['is_hidden'] == field.is_hidden
+    assert fields[0]['order'] == field.order
+    assert fields[0]['default'] == field.default
 
 
 def test_clone__fieldset_with_selections__ok(api_client):
@@ -131,178 +191,223 @@ def test_clone__fieldset_with_selections__ok(api_client):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    api_client.token_authenticate(user)
-    template = create_test_template(user=user, tasks_count=1)
-    fieldset = create_test_fieldset_template(
-        account=account,
-        template=template,
+    shared = create_test_shared_fieldset(
+        account=user.account,
         name='Fieldset with dropdown',
     )
-    # Replace the default STRING field with a DROPDOWN + selections
-    fieldset.fields.all().delete()
+    shared.fields.all().delete()
     field = FieldTemplate.objects.create(
-        template=template,
-        fieldset=fieldset,
-        account=account,
+        fieldset=shared,
+        account=user.account,
         name='Dropdown field',
         type=FieldType.DROPDOWN,
         order=1,
     )
-    selection_1 = FieldTemplateSelection.objects.create(
-        template=template,
+    FieldTemplateSelection.objects.create(
         field_template=field,
         value='Option A',
     )
-    selection_2 = FieldTemplateSelection.objects.create(
-        template=template,
+    FieldTemplateSelection.objects.create(
         field_template=field,
         value='Option B',
     )
+    api_client.token_authenticate(user)
+
+    create_response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': False,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'fieldsets': [
+                    {
+                        'shared_fieldset_id': shared.id,
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'Step 1',
+                    'api_name': 'task-1',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+    assert create_response.status_code == 200
+    template_id = create_response.data['id']
 
     # act
-    response = api_client.post(f'/templates/{template.id}/clone')
+    response = api_client.post(f'/templates/{template_id}/clone')
 
     # assert
     assert response.status_code == 200
-    new_template_id = response.data['id']
-    fieldset_clone = FieldsetTemplate.objects.get(template_id=new_template_id)
-    field_clone = FieldTemplate.objects.get(fieldset=fieldset_clone)
-    selections_clone = FieldTemplateSelection.objects.filter(
-        field_template=field_clone,
-    ).order_by('value')
-    assert selections_clone.count() == 2
-    assert selections_clone[0].value == selection_1.value
-    assert selections_clone[0].template_id == new_template_id
-    assert selections_clone[0].api_name == selection_1.api_name
-
-    assert selections_clone[1].value == selection_2.value
-    assert selections_clone[1].template_id == new_template_id
-    assert selections_clone[1].api_name == selection_2.api_name
+    field = response.data['kickoff']['fieldsets'][0]['fields'][0]
+    assert field['type'] == FieldType.DROPDOWN
+    selections = field['selections']
+    assert len(selections) == 2
+    assert selections[0]['value'] == 'Option A'
+    assert selections[1]['value'] == 'Option B'
 
 
 def test_clone__fieldset_with_rules__ok(api_client):
 
-    """Cloning copies FieldsetTemplateRule records
-    and preserves the rule-field M2M relationships."""
+    """Cloning copies rules and preserves the rule-field relationships."""
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    api_client.token_authenticate(user)
-    template = create_test_template(user=user, tasks_count=1)
-    fieldset = create_test_fieldset_template(
-        account=account,
-        template=template,
+    shared = create_test_shared_fieldset(
+        account=user.account,
         name='Fieldset with rules',
         rule_type=FieldSetRuleType.SUM_EQUAL,
         rule_value='100',
     )
-    # fixture creates a NUMBER field + rule; link them via M2M
-    field = fieldset.fields.first()
-    rule = fieldset.rules.first()
+    field = shared.fields.first()
+    rule = shared.rules.first()
     field.rules.add(rule)
+    api_client.token_authenticate(user)
+
+    create_response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': False,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'fieldsets': [
+                    {
+                        'shared_fieldset_id': shared.id,
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'Step 1',
+                    'api_name': 'task-1',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+    assert create_response.status_code == 200
+    template_id = create_response.data['id']
 
     # act
-    response = api_client.post(f'/templates/{template.id}/clone')
+    response = api_client.post(f'/templates/{template_id}/clone')
 
     # assert
     assert response.status_code == 200
-    new_template_id = response.data['id']
-    fieldset_clone = FieldsetTemplate.objects.get(template_id=new_template_id)
-
-    rules_clone = FieldsetTemplateRule.objects.filter(fieldset=fieldset_clone)
-    assert rules_clone.count() == 1
-    rule_clone = rules_clone.first()
-    assert rule_clone.type == rule.type
-    assert rule_clone.value == rule.value
-    assert rule_clone.id != rule.id
-    assert rule_clone.api_name == rule.api_name
-
-    field_clone = FieldTemplate.objects.get(fieldset=fieldset_clone)
-    assert list(field_clone.rules.all()) == [rule_clone]
+    fieldset = response.data['kickoff']['fieldsets'][0]
+    rules = fieldset['rules']
+    assert len(rules) == 1
+    rule_data = rules[0]
+    assert rule_data['type'] == FieldSetRuleType.SUM_EQUAL
+    assert rule_data['value'] == '100'
+    clone_field_api_names = [f['api_name'] for f in fieldset['fields']]
+    assert len(clone_field_api_names) == 1
+    assert rule_data['fields'] == clone_field_api_names
 
 
-def test_clone__multiple_fieldsets__ok(api_client):
+def test_clone__kickoff_multiple_fieldsets__ok(api_client):
 
-    """Cloning a template with multiple fieldsets
-    copies all of them."""
+    """Cloning a template with multiple fieldsets copies all of them."""
 
     # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
+    user = create_test_owner()
     api_client.token_authenticate(user)
-    template = create_test_template(user=user, tasks_count=1)
-    fs_1 = create_test_fieldset_template(
-        account=account,
-        template=template,
+
+    shared_1 = create_test_shared_fieldset(
+        account=user.account,
         name='Fieldset One',
     )
-    fs_2 = create_test_fieldset_template(
-        account=account,
-        template=template,
+    shared_2 = create_test_shared_fieldset(
+        account=user.account,
         name='Fieldset Two',
     )
 
-    # act
-    response = api_client.post(f'/templates/{template.id}/clone')
-
-    # assert
-    assert response.status_code == 200
-    new_template_id = response.data['id']
-    fieldset_clones = FieldsetTemplate.objects.filter(
-        template_id=new_template_id,
-    ).order_by('name')
-    assert fieldset_clones.count() == 2
-    assert fieldset_clones[0].name == fs_1.name
-    assert fieldset_clones[0].api_name == fs_1.api_name
-    assert fieldset_clones[0].fields.count() == 1
-
-    assert fieldset_clones[1].name == fs_2.name
-    assert fieldset_clones[1].api_name == fs_2.api_name
-    assert fieldset_clones[1].fields.count() == 1
-
-
-def test_clone__no_kickoff_task_links__ok(api_client):
-
-    """Cloning does NOT create FieldsetTemplateKickoff
-    or FieldsetTemplateTaskTemplate records."""
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    api_client.token_authenticate(user)
-    template = create_test_template(user=user, tasks_count=1)
-    task = template.tasks.first()
-    kickoff = template.kickoff_instance
-    fieldset = create_test_fieldset_template(
-        account=account,
-        template=template,
-        kickoff=kickoff,
-        task=task,
-        name='Linked fieldset',
+    create_response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': False,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'fieldsets': [
+                    {
+                        'shared_fieldset_id': shared_1.id,
+                        'order': 1,
+                        'title': 'Fieldset One Title',
+                        'description': 'Fieldset One Description',
+                    },
+                    {
+                        'shared_fieldset_id': shared_2.id,
+                        'order': 2,
+                        'title': 'Fieldset Two Title',
+                        'description': 'Fieldset Two Description',
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'Step 1',
+                    'api_name': 'task-1',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
     )
-    # Verify original has links
-    assert FieldsetTemplateKickoff.objects.filter(
-        fieldset=fieldset,
-    ).exists()
-    assert FieldsetTemplateTaskTemplate.objects.filter(
-        fieldset=fieldset,
-    ).exists()
+    assert create_response.status_code == 200
+    template_id = create_response.data['id']
 
     # act
-    response = api_client.post(f'/templates/{template.id}/clone')
+    response = api_client.post(f'/templates/{template_id}/clone')
 
     # assert
     assert response.status_code == 200
-    new_template_id = response.data['id']
-    fieldset_clone = FieldsetTemplate.objects.get(template_id=new_template_id)
-
-    assert not FieldsetTemplateKickoff.objects.filter(
-        fieldset=fieldset_clone,
-    ).exists()
-    assert not FieldsetTemplateTaskTemplate.objects.filter(
-        fieldset=fieldset_clone,
-    ).exists()
+    fieldsets = response.data['kickoff']['fieldsets']
+    assert len(fieldsets) == 2
+    fieldset_1 = fieldsets[0]
+    assert fieldset_1['name'] == shared_1.name
+    fieldset_2 = fieldsets[1]
+    assert fieldset_2['name'] == shared_2.name
 
 
 def test_clone__no_fieldsets__ok(api_client):
@@ -311,68 +416,129 @@ def test_clone__no_fieldsets__ok(api_client):
     and creates no fieldsets on the clone."""
 
     # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
+    user = create_test_owner()
     api_client.token_authenticate(user)
-    template = create_test_template(user=user, tasks_count=1)
+
+    create_response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': False,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {},
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'Step 1',
+                    'api_name': 'task-1',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+    assert create_response.status_code == 200
+    template_id = create_response.data['id']
 
     # act
-    response = api_client.post(f'/templates/{template.id}/clone')
+    response = api_client.post(f'/templates/{template_id}/clone')
 
     # assert
     assert response.status_code == 200
-    new_template_id = response.data['id']
-    assert not (
-        FieldsetTemplate.objects.filter(template_id=new_template_id).exists()
-    )
+    assert response.data['kickoff']['fieldsets'] == []
 
 
 def test_clone__fieldset_rule_multi_fields__ok(api_client):
 
-    """Cloning preserves a rule linked to multiple fields
-    via M2M."""
+    """Cloning preserves a rule linked to multiple fields."""
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    api_client.token_authenticate(user)
-    template = create_test_template(user=user, tasks_count=1)
-    fieldset = create_test_fieldset_template(
+    shared = create_test_shared_fieldset(
         account=account,
-        template=template,
-        name='Multi-field rule fieldset',
         rule_type=FieldSetRuleType.SUM_EQUAL,
         rule_value='200',
     )
-    field_1 = fieldset.fields.first()
-    # fixture creates one NUMBER field; add a second one
+    shared.fields.all().delete()
+    field_1 = FieldTemplate.objects.create(
+        fieldset=shared,
+        account=user.account,
+        name='Amount A',
+        type=FieldType.NUMBER,
+        order=3,
+    )
     field_2 = FieldTemplate.objects.create(
-        template=template,
-        fieldset=fieldset,
-        account=account,
+        fieldset=shared,
+        account=user.account,
         name='Amount B',
         type=FieldType.NUMBER,
         order=2,
     )
-    rule = fieldset.rules.first()
-    # Link both fields to the rule
-    for field in fieldset.fields.all():
-        field.rules.add(rule)
+    rule = shared.rules.first()
+    field_1.rules.add(rule)
+    field_2.rules.add(rule)
+
+    api_client.token_authenticate(user)
+    create_response = api_client.post(
+        path='/templates',
+        data={
+            'name': 'Template',
+            'is_active': False,
+            'owners': [
+                {
+                    'type': OwnerType.USER,
+                    'source_id': user.id,
+                    'role': OwnerRole.OWNER,
+                },
+            ],
+            'kickoff': {
+                'fieldsets': [
+                    {
+                        'shared_fieldset_id': shared.id,
+                        'order': 1,
+                        'title': 'Multi-field Fieldset Title',
+                        'description': 'Multi-field Fieldset Description',
+                    },
+                ],
+            },
+            'tasks': [
+                {
+                    'number': 1,
+                    'name': 'Step 1',
+                    'api_name': 'task-1',
+                    'raw_performers': [
+                        {
+                            'type': PerformerType.USER,
+                            'source_id': user.id,
+                        },
+                    ],
+                },
+            ],
+        },
+    )
+    assert create_response.status_code == 200
+    template_id = create_response.data['id']
 
     # act
-    response = api_client.post(f'/templates/{template.id}/clone')
+    response = api_client.post(f'/templates/{template_id}/clone')
 
     # assert
     assert response.status_code == 200
-    new_template_id = response.data['id']
-    fieldset_clone = FieldsetTemplate.objects.get(template_id=new_template_id)
-
-    rule_clone = FieldsetTemplateRule.objects.get(fieldset=fieldset_clone)
-    assert rule_clone.value == rule.value
-    assert rule_clone.type == rule.type
-    assert rule_clone.api_name == rule.api_name
-
-    rule_fields = rule_clone.fields.order_by('order')
-    assert rule_fields.count() == 2
-    assert rule_fields[0].api_name == field_1.api_name
-    assert rule_fields[1].api_name == field_2.api_name
+    clone_fieldsets = response.data['kickoff']['fieldsets'][0]
+    rule_data = clone_fieldsets['rules'][0]
+    assert rule_data['type'] == FieldSetRuleType.SUM_EQUAL
+    assert rule_data['value'] == '200'
+    clone_fields = clone_fieldsets['fields']
+    clone_field_api_names = [f['api_name'] for f in clone_fields]
+    assert set(rule_data['fields']) == set(clone_field_api_names)

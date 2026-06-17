@@ -9,11 +9,10 @@ from src.accounts.messages import MSG_A_0035, MSG_A_0037, MSG_A_0041
 from src.processes.enums import (
     FieldSetRuleType,
 )
-from src.processes.messages import template as messages
 from src.processes.tests.fixtures import (
     create_test_account,
     create_test_admin,
-    create_test_fieldset_template,
+    create_test_shared_fieldset,
     create_test_not_admin,
     create_test_owner,
     create_test_template,
@@ -25,21 +24,21 @@ pytestmark = pytest.mark.django_db
 
 
 def test_list_fieldsets__all_data__ok(api_client):
-    """List fieldsets for existing template"""
+    """List fieldsets returning all fields including title and order"""
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
+    create_test_template(
         user=user,
         tasks_count=1,
     )
     rule_type = FieldSetRuleType.SUM_EQUAL
     rule_value = '10'
-    fieldset = create_test_fieldset_template(
+    fieldset = create_test_shared_fieldset(
         account=account,
-        template=template,
-        name='Kickoff Fieldset',
+        title='Fieldset Title',
+        order=3,
         rule_type=rule_type,
         rule_value=rule_value,
     )
@@ -49,9 +48,7 @@ def test_list_fieldsets__all_data__ok(api_client):
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
-    )
+    response = api_client.get('/fieldsets')
 
     # assert
     assert response.status_code == 200
@@ -60,11 +57,11 @@ def test_list_fieldsets__all_data__ok(api_client):
     assert item_1['id'] == fieldset.id
     assert item_1['api_name'] == fieldset.api_name
     assert item_1['name'] == fieldset.name
+    assert item_1['title'] == 'Fieldset Title'
+    assert item_1['order'] == 3
     assert item_1['description'] == ''
-    assert item_1['template_id'] == template.id
     assert item_1['layout'] == fieldset.layout
     assert item_1['label_position'] == fieldset.label_position
-    assert item_1['tasks'] == []
 
     assert len(item_1['rules']) == 1
     rules_data = item_1['rules']
@@ -85,90 +82,63 @@ def test_list_fieldsets__all_data__ok(api_client):
     assert 'selections' not in fields_data[0]
 
 
-def test_list_fieldsets__tasks_and_kickoff_fieldset__ok(api_client):
+def test_list_fieldsets__shared_fieldset_has_rules_and_fields__ok(api_client):
 
-    """List fieldsets for existing template"""
+    """List shared fieldsets returns rules and fields"""
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=2,
-    )
-    kickoff = template.kickoff_instance
-    template_task_1 = template.tasks.get(number=1)
-    template_task_2 = template.tasks.get(number=2)
     rule_type = FieldSetRuleType.SUM_EQUAL
     rule_value = '10'
-    fieldset = create_test_fieldset_template(
+    fieldset = create_test_shared_fieldset(
         account=account,
-        template=template,
-        name='Kickoff Fieldset',
-        task=template_task_1,
-        kickoff=kickoff,
         rule_type=rule_type,
         rule_value=rule_value,
     )
-    fieldset.tasks.add(template_task_2)
-    fieldset.fields.get()
-    fieldset.rules.get()
+    field = fieldset.fields.get()
+    rule = fieldset.rules.get()
 
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
-    )
+    response = api_client.get('/fieldsets')
 
     # assert
     assert response.status_code == 200
     data = response.data[0]
     assert data['id'] == fieldset.id
-    assert data['kickoff'] == kickoff.id
-    assert data['tasks'] == [
-        {
-            'number': template_task_1.number,
-            'name': template_task_1.name,
-            'api_name': template_task_1.api_name,
-        },
-        {
-            'number': template_task_2.number,
-            'name': template_task_2.name,
-            'api_name': template_task_2.api_name,
-        },
-    ]
+    assert len(data['rules']) == 1
+    assert data['rules'][0]['api_name'] == rule.api_name
+    assert len(data['fields']) == 1
+    assert data['fields'][0]['api_name'] == field.api_name
 
 
 def test_list_fieldsets__pagination__ok(api_client):
-    """List fieldsets for existing template"""
+    """Paginated list returns correct count and slice"""
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
+    create_test_template(
         user=user,
         tasks_count=1,
     )
-    template.tasks.first()
-    fieldset_1 = create_test_fieldset_template(
+    fieldset_1 = create_test_shared_fieldset(
         account=account,
-        template=template,
     )
-    fieldset_2 = create_test_fieldset_template(
+    fieldset_2 = create_test_shared_fieldset(
         account=account,
-        template=template,
     )
-    create_test_fieldset_template(
+    create_test_shared_fieldset(
         account=account,
-        template=template,
     )
 
     api_client.token_authenticate(user=user)
 
     # act
     response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
+        '/fieldsets',
         data={'limit': 2, 'offset': 1},
     )
 
@@ -185,77 +155,32 @@ def test_list_fieldsets__pagination__ok(api_client):
 
 
 def test_list_fieldsets__different_accounts__ok(api_client):
-    """List fieldsets filtered by account"""
+    """List fieldsets filtered by account — other accounts excluded"""
 
     # arrange
     account_1 = create_test_account(name='Account 1')
     user_1 = create_test_owner(account=account_1)
-    template_1 = create_test_template(
+    create_test_template(
         user=user_1,
         tasks_count=1,
     )
-    fieldset_1 = create_test_fieldset_template(
+    fieldset_1 = create_test_shared_fieldset(
         account=account_1,
-        template=template_1,
-        name='Account 1 Fieldset',
     )
 
     account_2 = create_test_account(name='Account 2')
-    user_2 = create_test_owner(
+    create_test_owner(
         account=account_2,
         email='owner2@pneumatic.app',
     )
-    template_2 = create_test_template(
-        user=user_2,
-        tasks_count=1,
-    )
-    create_test_fieldset_template(
+    create_test_shared_fieldset(
         account=account_2,
-        template=template_2,
     )
 
     api_client.token_authenticate(user=user_1)
 
     # act
-    response = api_client.get(
-        f'/templates/{template_1.id}/fieldsets',
-    )
-
-    # assert
-    assert response.status_code == 200
-    assert len(response.data) == 1
-    assert response.data[0]['id'] == fieldset_1.id
-
-
-def test_list_fieldsets__different_templates__ok(api_client):
-    """List fieldsets filtered by template_id"""
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template_1 = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    fieldset_1 = create_test_fieldset_template(
-        account=account,
-        template=template_1,
-    )
-    template_2 = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-    create_test_fieldset_template(
-        account=account,
-        template=template_2,
-    )
-
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.get(
-        f'/templates/{template_1.id}/fieldsets',
-    )
+    response = api_client.get('/fieldsets')
 
     # assert
     assert response.status_code == 200
@@ -264,21 +189,19 @@ def test_list_fieldsets__different_templates__ok(api_client):
 
 
 def test_list_fieldsets__rule_with_fields__ok(api_client):
-    """List fieldsets for existing template returning rules mapping fields"""
+    """List fieldsets returning rules mapping to fields"""
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
+    create_test_template(
         user=user,
         tasks_count=1,
     )
     rule_type = FieldSetRuleType.SUM_EQUAL
     rule_value = '10'
-    fieldset = create_test_fieldset_template(
+    fieldset = create_test_shared_fieldset(
         account=account,
-        template=template,
-        name='Kickoff Fieldset',
         rule_type=rule_type,
         rule_value=rule_value,
     )
@@ -289,9 +212,7 @@ def test_list_fieldsets__rule_with_fields__ok(api_client):
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
-    )
+    response = api_client.get('/fieldsets')
 
     # assert
     assert response.status_code == 200
@@ -306,16 +227,8 @@ def test_list_fieldsets__rule_with_fields__ok(api_client):
 def test_list_fieldsets__unauthenticated__unauthorized(api_client):
     """Unauthenticated request returns 401"""
 
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
-
     # act
-    response = api_client.get(f'/templates/{template.id}/fieldsets')
+    response = api_client.get('/fieldsets')
 
     # assert
     assert response.status_code == 401
@@ -330,15 +243,11 @@ def test_list_fieldsets__expired_sub__permission_denied(api_client):
         plan_expiration=timezone.now() - timedelta(days=1),
     )
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
 
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(f'/templates/{template.id}/fieldsets')
+    response = api_client.get('/fieldsets')
 
     # assert
     assert response.status_code == 403
@@ -351,15 +260,11 @@ def test_list_fieldsets__billing_plan__permission_denied(api_client):
     # arrange
     account = create_test_account(plan=None)
     user = create_test_owner(account=account)
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
 
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(f'/templates/{template.id}/fieldsets')
+    response = api_client.get('/fieldsets')
 
     # assert
     assert response.status_code == 403
@@ -381,15 +286,11 @@ def test_list_fieldsets__users_overlimit__permission_denied(api_client):
     )
     account.active_users = 2
     account.save()
-    template = create_test_template(
-        user=user,
-        tasks_count=1,
-    )
 
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(f'/templates/{template.id}/fieldsets')
+    response = api_client.get('/fieldsets')
 
     # assert
     assert response.status_code == 403
@@ -401,59 +302,42 @@ def test_list_fieldsets__non_admin__permission_denied(api_client):
 
     # arrange
     account = create_test_account()
-    owner = create_test_owner(account=account)
-    template = create_test_template(
-        user=owner,
-        tasks_count=1,
-    )
+    create_test_owner(account=account)
     user = create_test_not_admin(account=account)
 
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(f'/templates/{template.id}/fieldsets')
+    response = api_client.get('/fieldsets')
 
     # assert
     assert response.status_code == 403
 
 
-def test_list_fieldsets__not_tpl_owner__permission_denied(api_client):
-    """Template admin owner permission denied returns 403"""
+def test_list_fieldsets__admin__ok(api_client):
+    """Admin (non-owner) user can list fieldsets"""
 
     # arrange
     account = create_test_account()
-    owner = create_test_owner(account=account)
-    template = create_test_template(
-        user=owner,
+    create_test_owner(account=account)
+    user = create_test_admin(account=account)
+    create_test_template(
+        user=user,
         tasks_count=1,
     )
-    user = create_test_admin(account=account)
+    fieldset = create_test_shared_fieldset(
+        account=account,
+    )
 
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(f'/templates/{template.id}/fieldsets')
+    response = api_client.get('/fieldsets')
 
     # assert
-    assert response.status_code == 403
-    assert response.data['detail'] == messages.MSG_PT_0023
-
-
-def test_list_fieldsets__not_existing_tpl__not_found(api_client):
-    """Non-existent template returns 404"""
-
-    # arrange
-    account = create_test_account()
-    user = create_test_owner(account=account)
-    nonexistent_id = 999999
-
-    api_client.token_authenticate(user=user)
-
-    # act
-    response = api_client.get(f'/templates/{nonexistent_id}/fieldsets')
-
-    # assert
-    assert response.status_code == 404
+    assert response.status_code == 200
+    assert len(response.data) == 1
+    assert response.data[0]['id'] == fieldset.id
 
 
 def test_list_fieldsets__no_ordering__ok(api_client):
@@ -463,30 +347,27 @@ def test_list_fieldsets__no_ordering__ok(api_client):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
+    create_test_template(
         user=user,
         tasks_count=1,
     )
     now = timezone.now()
-    fieldset_1 = create_test_fieldset_template(
+    fieldset_1 = create_test_shared_fieldset(
         account=account,
-        template=template,
         name='Oldest',
     )
     FieldsetTemplate.objects.filter(id=fieldset_1.id).update(
         date_created=now - timedelta(days=2),
     )
-    fieldset_2 = create_test_fieldset_template(
+    fieldset_2 = create_test_shared_fieldset(
         account=account,
-        template=template,
         name='Middle',
     )
     FieldsetTemplate.objects.filter(id=fieldset_2.id).update(
         date_created=now - timedelta(days=1),
     )
-    fieldset_3 = create_test_fieldset_template(
+    fieldset_3 = create_test_shared_fieldset(
         account=account,
-        template=template,
         name='Newest',
     )
     FieldsetTemplate.objects.filter(id=fieldset_3.id).update(
@@ -495,9 +376,7 @@ def test_list_fieldsets__no_ordering__ok(api_client):
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
-    )
+    response = api_client.get('/fieldsets')
 
     # assert
     assert response.status_code == 200
@@ -517,30 +396,27 @@ def test_list_fieldsets__ordering_name_asc__ok(api_client):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
+    create_test_template(
         user=user,
         tasks_count=1,
     )
-    fieldset_1 = create_test_fieldset_template(
+    fieldset_1 = create_test_shared_fieldset(
         account=account,
-        template=template,
         name='Alpha',
     )
-    fieldset_2 = create_test_fieldset_template(
+    fieldset_2 = create_test_shared_fieldset(
         account=account,
-        template=template,
         name='Beta',
     )
-    fieldset_3 = create_test_fieldset_template(
+    fieldset_3 = create_test_shared_fieldset(
         account=account,
-        template=template,
         name='Gamma',
     )
     api_client.token_authenticate(user=user)
 
     # act
     response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
+        '/fieldsets',
         data={'ordering': 'name'},
     )
 
@@ -565,30 +441,27 @@ def test_list_fieldsets__ordering_name_desc__ok(api_client):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
+    create_test_template(
         user=user,
         tasks_count=1,
     )
-    fieldset_1 = create_test_fieldset_template(
+    fieldset_1 = create_test_shared_fieldset(
         account=account,
-        template=template,
         name='Alpha',
     )
-    fieldset_2 = create_test_fieldset_template(
+    fieldset_2 = create_test_shared_fieldset(
         account=account,
-        template=template,
         name='Beta',
     )
-    fieldset_3 = create_test_fieldset_template(
+    fieldset_3 = create_test_shared_fieldset(
         account=account,
-        template=template,
         name='Gamma',
     )
     api_client.token_authenticate(user=user)
 
     # act
     response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
+        '/fieldsets',
         data={'ordering': '-name'},
     )
 
@@ -613,30 +486,27 @@ def test_list_fieldsets__ordering_date_asc__ok(api_client):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
+    create_test_template(
         user=user,
         tasks_count=1,
     )
     now = timezone.now()
-    fieldset_1 = create_test_fieldset_template(
+    fieldset_1 = create_test_shared_fieldset(
         account=account,
-        template=template,
         name='Oldest',
     )
     FieldsetTemplate.objects.filter(id=fieldset_1.id).update(
         date_created=now - timedelta(days=2),
     )
-    fieldset_2 = create_test_fieldset_template(
+    fieldset_2 = create_test_shared_fieldset(
         account=account,
-        template=template,
         name='Middle',
     )
     FieldsetTemplate.objects.filter(id=fieldset_2.id).update(
         date_created=now - timedelta(days=1),
     )
-    fieldset_3 = create_test_fieldset_template(
+    fieldset_3 = create_test_shared_fieldset(
         account=account,
-        template=template,
         name='Newest',
     )
     FieldsetTemplate.objects.filter(id=fieldset_3.id).update(
@@ -646,7 +516,7 @@ def test_list_fieldsets__ordering_date_asc__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
+        '/fieldsets',
         data={'ordering': 'date'},
     )
 
@@ -668,30 +538,27 @@ def test_list_fieldsets__ordering_date_desc__ok(api_client):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
+    create_test_template(
         user=user,
         tasks_count=1,
     )
     now = timezone.now()
-    fieldset_1 = create_test_fieldset_template(
+    fieldset_1 = create_test_shared_fieldset(
         account=account,
-        template=template,
         name='Oldest',
     )
     FieldsetTemplate.objects.filter(id=fieldset_1.id).update(
         date_created=now - timedelta(days=2),
     )
-    fieldset_2 = create_test_fieldset_template(
+    fieldset_2 = create_test_shared_fieldset(
         account=account,
-        template=template,
         name='Middle',
     )
     FieldsetTemplate.objects.filter(id=fieldset_2.id).update(
         date_created=now - timedelta(days=1),
     )
-    fieldset_3 = create_test_fieldset_template(
+    fieldset_3 = create_test_shared_fieldset(
         account=account,
-        template=template,
         name='Newest',
     )
     FieldsetTemplate.objects.filter(id=fieldset_3.id).update(
@@ -701,7 +568,7 @@ def test_list_fieldsets__ordering_date_desc__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
+        '/fieldsets',
         data={'ordering': '-date'},
     )
 
@@ -723,26 +590,22 @@ def test_list_fieldsets__no_pagination__ok(api_client):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
+    create_test_template(
         user=user,
         tasks_count=1,
     )
-    create_test_fieldset_template(
+    create_test_shared_fieldset(
         account=account,
-        template=template,
         name='First',
     )
-    create_test_fieldset_template(
+    create_test_shared_fieldset(
         account=account,
-        template=template,
         name='Second',
     )
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
-    )
+    response = api_client.get('/fieldsets')
 
     # assert
     assert response.status_code == 200
@@ -750,29 +613,26 @@ def test_list_fieldsets__no_pagination__ok(api_client):
     assert len(response.data) == 2
 
 
-def test_list_fieldsets__ordering_invalid__validation_error(
-    api_client,
-):
+def test_list_fieldsets__ordering_invalid__validation_error(api_client):
 
     """ Invalid ordering value returns validation error """
 
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
+    create_test_template(
         user=user,
         tasks_count=1,
     )
-    create_test_fieldset_template(
+    create_test_shared_fieldset(
         account=account,
-        template=template,
         name='First',
     )
     api_client.token_authenticate(user=user)
 
     # act
     response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
+        '/fieldsets',
         data={'ordering': 'foobar'},
     )
 
@@ -790,22 +650,20 @@ def test_list_fieldsets__ordering_empty__ok(api_client):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
+    create_test_template(
         user=user,
         tasks_count=1,
     )
     now = timezone.now()
-    fieldset_1 = create_test_fieldset_template(
+    fieldset_1 = create_test_shared_fieldset(
         account=account,
-        template=template,
         name='First',
     )
     FieldsetTemplate.objects.filter(id=fieldset_1.id).update(
         date_created=now - timedelta(days=1),
     )
-    fieldset_2 = create_test_fieldset_template(
+    fieldset_2 = create_test_shared_fieldset(
         account=account,
-        template=template,
         name='Second',
     )
     FieldsetTemplate.objects.filter(id=fieldset_2.id).update(
@@ -815,7 +673,7 @@ def test_list_fieldsets__ordering_empty__ok(api_client):
 
     # act
     response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
+        '/fieldsets',
         data={'ordering': ''},
     )
 
@@ -837,13 +695,12 @@ def test_list_fieldsets__soft_deleted__ok(api_client):
     # arrange
     account = create_test_account()
     user = create_test_owner(account=account)
-    template = create_test_template(
+    create_test_template(
         user=user,
         tasks_count=1,
     )
-    fieldset = create_test_fieldset_template(
+    fieldset = create_test_shared_fieldset(
         account=account,
-        template=template,
         name='Deleted Fieldset',
     )
     FieldsetTemplate.objects.filter(id=fieldset.id).update(
@@ -852,9 +709,7 @@ def test_list_fieldsets__soft_deleted__ok(api_client):
     api_client.token_authenticate(user=user)
 
     # act
-    response = api_client.get(
-        f'/templates/{template.id}/fieldsets',
-    )
+    response = api_client.get('/fieldsets')
 
     # assert
     assert response.status_code == 200
