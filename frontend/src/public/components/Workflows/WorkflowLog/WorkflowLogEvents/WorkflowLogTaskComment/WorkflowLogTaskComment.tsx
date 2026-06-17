@@ -292,7 +292,7 @@ export function WorkflowLogTaskComment({
             className={styles['comment__footer-item']}
           >
             <div className={styles['comment__footer-item-emoji']}>{value}</div>
-            <span>{users.length}</span>
+            <span>{reactedUserIds.length}</span>
           </button>
         </Tooltip>
       );

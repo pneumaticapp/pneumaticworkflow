@@ -55,7 +55,11 @@ const groupsSlice = createSlice({
     updateGroupSuccess: (state, action: PayloadAction<IGroup>) => {
       const { id } = action.payload;
       state.list = state.list.map((group) => (group.id === id ? action.payload : group));
-      state.currentGroup.data = action.payload;
+
+      if (state.currentGroup.data?.id === id) {
+        state.currentGroup.data = action.payload;
+      }
+
       state.isLoading = false;
     },
 
