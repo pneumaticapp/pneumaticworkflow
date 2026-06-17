@@ -26,7 +26,7 @@ import {
 } from '../../../../icons';
 import { RichEditor } from '../../../../RichEditor';
 import { type TMentionData } from '../../../../RichEditor/types';
-import { IAccount, TUserListItem } from '../../../../../types/user';
+import { TUserListItem } from '../../../../../types/user';
 import { useStatePromise } from '../../../../../hooks/useStatePromise';
 import { TUploadedFile } from '../../../../../utils/uploadFiles';
 import { IEditComment } from '../../../../../api/workflows/editComment';
@@ -90,7 +90,7 @@ export function WorkflowLogTaskComment({
   const handleReactionComment = (value: string) => {
     if (workflowStatus === EWorkflowStatus.Finished) return;
 
-    if (value in reactions && reactions[value].indexOf(currentUserId as Pick<IAccount, 'id'>) !== -1) {
+    if (value in reactions && reactions[value].includes(currentUserId)) {
       deleteReactionComment({ id, value });
     } else {
       createReactionComment({ id, value });
@@ -263,14 +263,14 @@ export function WorkflowLogTaskComment({
     return typeMap[type];
   };
 
-  const renderListUsers = (list: Pick<IAccount, 'id'>[]) => {
+  const renderListUsers = (userIds: number[]) => {
     return (
       <ul className={styles['comment__watch-list']}>
-        {list.map((userWatch) => {
-          const user = getUserById(users, userWatch.id);
+        {userIds.map((listedUserId) => {
+          const user = getUserById(users, listedUserId);
 
           return (
-            <li key={userWatch.id}>{user ? getUserFullName(user) : null}</li>
+            <li key={listedUserId}>{user ? getUserFullName(user) : null}</li>
           );
         })}
       </ul>
@@ -292,7 +292,7 @@ export function WorkflowLogTaskComment({
             className={styles['comment__footer-item']}
           >
             <div className={styles['comment__footer-item-emoji']}>{value}</div>
-            <span>{users.length}</span>
+            <span>{reactedUserIds.length}</span>
           </button>
         </Tooltip>
       );
