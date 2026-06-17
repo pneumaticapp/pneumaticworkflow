@@ -81,6 +81,10 @@ interface IWorkflowModalState {
   fieldsetFields: IFieldsetData[];
 }
 
+const syncWorkflowModalPrintMode = (isOpen: boolean) => {
+  document.body.classList.toggle('workflow-modal-print-mode', isOpen);
+};
+
 export class WorkflowModal extends React.Component<IWorkflowModalProps, IWorkflowModalState> {
   private processProgress: number | undefined;
 
@@ -92,8 +96,11 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps, IWorkflo
     };
   }
 
+
+
   public componentDidMount() {
-    const { workflow, setWorkflowEdit } = this.props;
+    const { workflow, setWorkflowEdit, isOpen } = this.props;
+    syncWorkflowModalPrintMode(isOpen);
     if (!workflow) {
       return;
     }
@@ -105,7 +112,11 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps, IWorkflo
   }
 
   public componentDidUpdate(prevProps: IWorkflowModalStoreProps) {
-    const { workflow, setWorkflowEdit } = this.props;
+    const { workflow, setWorkflowEdit, isOpen } = this.props;
+
+    if (prevProps.isOpen !== isOpen) {
+      syncWorkflowModalPrintMode(isOpen);
+    }
     if (!workflow) {
       return;
     }
@@ -124,6 +135,10 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps, IWorkflo
 
   private static getFieldsetsFromProps(props: IWorkflowModalProps): IFieldsetData[] {
     return (props.workflow?.kickoff?.fieldsets || []).map((fs) => ({ ...fs, fields: [...fs.fields] }));
+  }
+
+  public componentWillUnmount() {
+    syncWorkflowModalPrintMode(false);
   }
 
   private calculateWorkflowProgress = () => {
@@ -204,7 +219,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps, IWorkflo
                 &nbsp;&nbsp;
                 <button
                   type="button"
-                  className={styles['popup-title__edit']}
+                  className={classnames(styles['popup-title__edit'], 'no-print')}
                   onClick={() => setIsEditWorkflowName(true)}
                   aria-label="Edit workflow name"
                 >
@@ -393,7 +408,7 @@ export class WorkflowModal extends React.Component<IWorkflowModalProps, IWorkflo
     return (
       <>
         <div className={classnames(styles['popup-header'])}>
-          <ModalCloseIcon onClick={this.closeModal} className={styles['close-icon']} />
+          <ModalCloseIcon onClick={this.closeModal} className={classnames(styles['close-icon'], 'no-print')} />
 
           <div className={styles['header-popup-body']}>
             <div className={styles['popup-general-info-container']}>

@@ -13,20 +13,28 @@ const EXPECTED_ERROR_PATTERNS = [
   'Request was throttled',
 ];
 
+/**
+ * Documented 401 response from /accounts/public/account for invalid/inactive shareKey.
+ * Handled locally in getUserPublic (not added to global filter to avoid masking
+ * real auth failures in getUser, getPages, oauthHandler).
+ */
+export const EXPECTED_AUTH_ERROR = 'Authentication credentials were not provided';
+export const LOG_PREFIX_ACCOUNT_CONTEXT = 'failed to get account context: ';
+
 const EXPECTED_ERROR_REGEX = new RegExp(EXPECTED_ERROR_PATTERNS.join('|'));
 
-export function isExpectedError(error: TLoggerArgs[number]): boolean {
-  let errorString: string;
-
+export function errorToString(error: TLoggerArgs[number]): string {
   if (error instanceof Error) {
-    errorString = error.message;
-  } else if (typeof error === 'object' && error !== null) {
-    errorString = JSON.stringify(error);
-  } else {
-    errorString = String(error);
+    return error.message;
+  } if (typeof error === 'object' && error !== null) {
+    return JSON.stringify(error);
   }
 
-  return EXPECTED_ERROR_REGEX.test(errorString);
+  return String(error);
+}
+
+export function isExpectedError(error: TLoggerArgs[number]): boolean {
+  return EXPECTED_ERROR_REGEX.test(errorToString(error));
 }
 
 /**

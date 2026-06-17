@@ -330,6 +330,7 @@ export const NotificationsList = ({
         <div
           className={classnames(
             styles['container'],
+            'no-print',
             !isClosing ? styles['container_opened'] : styles['container_closed'],
             withPaywall && styles['container_with-paywall'],
           )}
