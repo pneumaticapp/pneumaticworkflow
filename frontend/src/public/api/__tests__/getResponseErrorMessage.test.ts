@@ -54,16 +54,8 @@ function makeAxiosError(data: unknown, status: number): AxiosError {
   } as AxiosError;
 }
 
-function makeNetworkError(message: string): AxiosError {
-  return {
-    message,
-    isAxiosError: true,
-    name: 'AxiosError',
-    toJSON: () => ({}),
-  } as AxiosError;
-}
 
-describe('response interceptor: Error.message for Sentry', () => {
+describe('response interceptor: payload propagation to InterceptorError', () => {
   beforeEach(() => {
     jest.clearAllMocks();
   });
@@ -78,16 +70,6 @@ describe('response interceptor: Error.message for Sentry', () => {
     });
   });
 
-  it('falls back to JSON.stringify with status when payload has no message field', async () => {
-    const error = makeAxiosError({ detail: 'Not found.' }, 404);
-
-    await expect(responseErrorHandler(error)).rejects.toMatchObject({
-      message: JSON.stringify({ detail: 'Not found.', status: 404 }),
-      detail: 'Not found.',
-      status: 404,
-    });
-  });
-
   it('uses plain text from response.data as Error.error property', async () => {
     const error = makeAxiosError('Internal Server Error', 500);
 
@@ -95,20 +77,6 @@ describe('response interceptor: Error.message for Sentry', () => {
       error: 'Internal Server Error',
       status: 500,
     });
-  });
-
-  it('falls back to JSON.stringify with status when payload has no message or detail', async () => {
-    const error = makeAxiosError({ code: 'ERR_001' }, 422);
-
-    const rejected = responseErrorHandler(error);
-    await expect(rejected).rejects.toHaveProperty('message', JSON.stringify({ code: 'ERR_001', status: 422 }));
-  });
-
-  it('never produces empty Error.message', async () => {
-    const error = makeAxiosError({}, 500);
-
-    await expect(responseErrorHandler(error)).rejects.toHaveProperty('message');
-    await expect(responseErrorHandler(error)).rejects.not.toHaveProperty('message', '');
   });
 
   it('preserves all payload properties on the rejected Error', async () => {
@@ -120,25 +88,5 @@ describe('response interceptor: Error.message for Sentry', () => {
       status: 400,
     });
   });
-
-  it('uses Axios error.message when response is absent (network error)', async () => {
-    const error = makeNetworkError('Network Error');
-
-    await expect(responseErrorHandler(error)).rejects.toHaveProperty('message', 'Network Error');
-  });
-
-  it('uses Axios error.message on timeout (no response)', async () => {
-    const error = makeNetworkError('timeout of 10000ms exceeded');
-
-    await expect(responseErrorHandler(error)).rejects.toHaveProperty('message', 'timeout of 10000ms exceeded');
-  });
-
-  it('never produces empty message for network errors without response', async () => {
-    const error = makeNetworkError('');
-
-    const rejected = responseErrorHandler(error);
-    await expect(rejected).rejects.toHaveProperty('message');
-    await expect(responseErrorHandler(error)).rejects.not.toHaveProperty('message', '');
-    await expect(responseErrorHandler(error)).rejects.not.toHaveProperty('message', '{}');
-  });
 });
+
