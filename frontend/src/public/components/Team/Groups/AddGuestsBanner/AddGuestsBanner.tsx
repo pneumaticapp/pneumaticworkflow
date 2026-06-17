@@ -12,7 +12,7 @@ export function AddGuestsBanner() {
       lsKey={ADD_GUESTS_BANNER_LS_KEY}
       text={formatMessage({ id: 'team.add-groups-banner-text' })}
       buttonText={formatMessage({ id: 'team.add-groups-banner-button' })}
-      link="https://support.pneumatic.app/en/articles/10837733-user-groups"
+      link="https://support.pneumatic.app/articles/10837733-user-groups"
     />
   );
 }
