@@ -76,7 +76,7 @@ IGuestControllerProps
         <div className={styles['help']}>
           {formatMessage({id: 'task.add-guest-help-text'})}{' '}
           <a
-            href="https://support.pneumatic.app/en/articles/6145048-free-external-users"
+            href="https://support.pneumatic.app/articles/6145048-free-external-users"
             target="_blank"
             className={styles['link']}
           >
