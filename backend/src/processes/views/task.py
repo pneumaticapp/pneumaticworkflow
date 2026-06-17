@@ -22,6 +22,7 @@ from src.generics.mixins.views import (
     CustomViewSetMixin,
 )
 from src.generics.permissions import (
+    DenyAll,
     IsAuthenticated,
     UserIsAuthenticated,
 )
@@ -200,7 +201,7 @@ class TaskViewSet(
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
             )
-        return super().get_permissions()
+        return (DenyAll(),)
 
     action_serializer_classes = {
         'retrieve': TaskSerializer,

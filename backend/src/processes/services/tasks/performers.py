@@ -28,6 +28,9 @@ from src.processes.services.workflow_action import (
     WorkflowEventService,
 )
 from src.storage.utils import reassign_restricted_permissions_for_task
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 UserModel = get_user_model()
 
@@ -168,7 +171,8 @@ class TaskPerformersService(BasePerformersService):
             is_superuser=is_superuser,
         )
         if not task.get_active_delay():
-            task.workflow.members.add(user)
+            # Guardian: grant view to new performer
+            WorkflowPermissionService.grant_view(user, task.workflow)
             task_performer_users = (
                 UserModel.objects
                 .get_users_taskperformer_groups(task=task)

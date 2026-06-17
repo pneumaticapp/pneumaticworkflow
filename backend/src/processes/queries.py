@@ -28,12 +28,26 @@ from src.processes.messages.workflow import (
     MSG_PW_0024,
 )
 from src.processes.paginations import WorkflowListPagination
+from src.processes.services.workflow_permissions import (
+    GUARDIAN_OWNER_JOIN_SQL,
+)
 from src.queries import (
     OrderByMixin,
     SqlQueryObject,
 )
 
 UserModel = get_user_model()
+
+# Pre-computed Guardian join fragments (avoids E501 in f-strings)
+_GJ_PWO = GUARDIAN_OWNER_JOIN_SQL.format(
+    alias='pwo', workflow_col='pw.id',
+)
+_GJ_PTRA = GUARDIAN_OWNER_JOIN_SQL.format(
+    alias='ptra', workflow_col='pw.id',
+)
+_GJ_WFO = GUARDIAN_OWNER_JOIN_SQL.format(
+    alias='wfo', workflow_col='workflow.id',
+)
 
 
 class TemplateOwnerRoleMixin:
@@ -266,11 +280,9 @@ class WorkflowListQuery(
         return where
 
     def _get_from(self):
-        result = """
+        result = f"""
             FROM processes_workflow pw
-            LEFT JOIN processes_workflow_owners pwo ON (
-                pw.id = pwo.workflow_id
-            )
+            {_GJ_PWO}
             INNER JOIN processes_task pt ON (
                 pw.id = pt.workflow_id
                 AND pt.is_deleted IS FALSE
@@ -483,11 +495,10 @@ class WorkflowCountsByWfStarterQuery(
         return where
 
     def _get_from(self):
-        result = """
+        result = f"""
         FROM processes_workflow pw
             LEFT JOIN processes_template t ON t.id = pw.template_id
-            LEFT JOIN processes_workflow_owners ptra
-              ON pw.id = ptra.workflow_id
+            {_GJ_PTRA}
             LEFT JOIN accounts_user au ON au.id = ptra.user_id
         """
         if self.current_performer_ids or self.current_performer_group_ids:
@@ -633,8 +644,7 @@ class WorkflowCountsByCPerformerQuery(
     def _get_from(self):
         return f"""
         FROM processes_workflow pw
-            LEFT JOIN processes_workflow_owners ptra
-              ON pw.id = ptra.workflow_id
+            {_GJ_PTRA}
             LEFT JOIN accounts_user au ON au.id = ptra.user_id
             INNER JOIN processes_task pt
               ON pw.id = pt.workflow_id
@@ -661,8 +671,7 @@ class WorkflowCountsByCPerformerQuery(
                 aug.user_id AS user_id,
                 pw.id AS workflow_id
             FROM processes_workflow pw
-                LEFT JOIN processes_workflow_owners ptra
-                  ON pw.id = ptra.workflow_id
+                {_GJ_PTRA}
                 LEFT JOIN accounts_user au ON au.id = ptra.user_id
                 INNER JOIN processes_task pt
                   ON pw.id = pt.workflow_id
@@ -705,8 +714,7 @@ class WorkflowCountsByCPerformerQuery(
                 ptp.group_id AS group_id,
                 pw.id AS workflow_id
             FROM processes_workflow pw
-                LEFT JOIN processes_workflow_owners ptra
-                  ON pw.id = ptra.workflow_id
+                {_GJ_PTRA}
                 LEFT JOIN accounts_user au ON au.id = ptra.user_id
                 INNER JOIN processes_task pt
                   ON pw.id = pt.workflow_id
@@ -1944,8 +1952,7 @@ class HighlightsQuery(SqlQueryObject):
           we.workflow_id = workflow.id
         LEFT JOIN processes_template template ON
           workflow.template_id = template.id
-        LEFT JOIN processes_workflow_owners workflow_owners ON
-          workflow.id = workflow_owners.workflow_id
+        {_GJ_WFO}
         LEFT JOIN processes_templateowner ptv_user ON
           template.id = ptv_user.template_id
           AND ptv_user.is_deleted IS FALSE
@@ -1980,7 +1987,7 @@ class HighlightsQuery(SqlQueryObject):
           NOT workflow.is_deleted AND
           NOT template.is_deleted AND
           (
-            workflow_owners.user_id = %(user_id)s
+            wfo.user_id = %(user_id)s
             OR ptv_user.id IS NOT NULL
             OR grp_u.user_id IS NOT NULL
             OR (
@@ -2406,76 +2413,35 @@ class TemplateTitlesByTasksQuery(
         """, self.params
 
 
-class UpdateWorkflowOwnersQuery(
-    SqlQueryObject,
-    SearchSqlQueryMixin,
-    OrderByMixin,
-    DereferencedOwnersMixin,
-):
+class UpdateWorkflowOwnersQuery(SqlQueryObject):
+    """DEPRECATED: M2M table processes_workflow_owners no longer exists.
 
-    def __init__(
-        self,
-        template_id: int,
-    ):
-        self.params = {
-            'template_id': template_id,
-        }
+    Ownership is now managed via Guardian (WorkflowPermissionService).
+    Kept as stub for backward compatibility — never invoked.
+    """
+
+    def __init__(self, template_id: int):
+        self.params = {'template_id': template_id}
 
     def get_sql(self) -> Tuple[str, dict]:
-        pass
+        return 'SELECT 1', self.params
 
     def insert_sql(self):
-        return f"""
-            WITH
-              all_owners AS ({self.dereferenced_owners_by_template_id()})
-            INSERT INTO processes_workflow_owners (workflow_id, user_id)
-            SELECT
-                pw.id AS workflow_id,
-                ao.user_id AS user_id
-            FROM processes_workflow pw
-            JOIN all_owners ao
-              ON pw.template_id = ao.template_id
-            WHERE pw.is_deleted = false;
-        """, self.params
+        return 'SELECT 1', self.params
 
 
-class UpdateWorkflowMemberQuery(
-    SqlQueryObject,
-    SearchSqlQueryMixin,
-    OrderByMixin,
-    DereferencedOwnersMixin,
-):
+class UpdateWorkflowMemberQuery(SqlQueryObject):
+    """DEPRECATED: M2M table processes_workflow_members no longer exists.
 
-    def __init__(
-        self,
-        template_id: int,
-    ):
+    Membership is now managed via Guardian (WorkflowPermissionService).
+    Kept as stub for backward compatibility — never invoked.
+    """
 
-        self.params = {
-            'template_id': template_id,
-        }
+    def __init__(self, template_id: int):
+        self.params = {'template_id': template_id}
 
     def get_sql(self) -> Tuple[str, dict]:
-        pass
+        return 'SELECT 1', self.params
 
     def insert_sql(self):
-        return f"""
-            WITH all_users AS (
-              SELECT pw.id AS workflow_id, ao.user_id AS user_id
-              FROM processes_workflow pw
-              JOIN ({self.dereferenced_owners_by_template_id()}) ao
-                ON pw.template_id = ao.template_id
-              WHERE pw.is_deleted = false
-              UNION
-              {self.task_performers_by_template_id()}
-            )
-            INSERT INTO processes_workflow_members (workflow_id, user_id)
-            SELECT
-              au.workflow_id,
-              au.user_id
-            FROM all_users au
-            LEFT JOIN processes_workflow_members pwm
-              ON pwm.workflow_id = au.workflow_id
-              AND pwm.user_id = au.user_id
-            WHERE pwm.workflow_id IS NULL;
-        """, self.params
+        return 'SELECT 1', self.params

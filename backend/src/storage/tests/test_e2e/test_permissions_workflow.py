@@ -18,6 +18,9 @@ from src.processes.tests.fixtures import (
 )
 from src.storage.enums import AccessType, SourceType
 from src.storage.services.attachments import AttachmentService
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -319,7 +322,7 @@ class TestPermissionsWorkflowE2E:
         owner = create_test_admin()
         member = create_test_user(account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=2)
-        workflow.members.add(member)
+        WorkflowPermissionService.grant_view(member, workflow)
         task1 = workflow.tasks.first()
         task2 = workflow.tasks.last()
 

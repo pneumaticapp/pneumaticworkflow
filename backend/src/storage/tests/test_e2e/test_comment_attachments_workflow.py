@@ -16,6 +16,9 @@ from src.storage.enums import AccessType, SourceType
 from src.storage.models import Attachment
 from src.storage.services.attachments import AttachmentService
 from src.storage.utils import _refresh_workflow_event_attachments
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -116,7 +119,9 @@ class TestCommentAttachmentsE2E:
             email='member2@test.pneumatic.app',
         )
         workflow = create_test_workflow(user=owner, tasks_count=1)
-        workflow.members.add(member1, member2)
+        WorkflowPermissionService.grant_view_bulk(
+            [member1.id, member2.id], workflow,
+        )
         comment_event = WorkflowEvent.objects.create(
             workflow=workflow,
             task=None,  # Workflow-level comment
@@ -335,7 +340,7 @@ class TestCommentAttachmentsE2E:
         performer = create_test_user(account=owner.account)
         member = create_test_user(email='tt@gmail.com', account=owner.account)
         workflow = create_test_workflow(user=owner, tasks_count=1)
-        workflow.members.add(member)
+        WorkflowPermissionService.grant_view(member, workflow)
         task = workflow.tasks.first()
         task.taskperformer_set.create(user=performer)
         comment_event = WorkflowEvent.objects.create(

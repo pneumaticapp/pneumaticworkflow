@@ -23,7 +23,6 @@ from src.accounts.queries import (
     DeleteUserFromTaskPerformerQuery,
     DeleteUserFromTemplateConditionsQuery,
     DeleteUserFromTemplateOwnerQuery,
-    DeleteUserFromWorkflowMembersQuery,
     DeleteUserGroupFromConditionsQuery,
     DeleteUserGroupFromRawPerformerQuery,
     DeleteUserGroupFromRawPerformerTemplateQuery,
@@ -50,8 +49,10 @@ from src.processes.models.templates.template import Template
 from src.processes.models.workflows.conditions import Predicate
 from src.processes.models.workflows.raw_performer import RawPerformer
 from src.processes.models.workflows.task import TaskPerformer
+from django.contrib.contenttypes.models import ContentType
+from guardian.models import UserObjectPermission
 from src.processes.models.workflows.workflow import Workflow
-from src.processes.queries import UpdateWorkflowOwnersQuery
+from src.processes.tasks.update_workflow import update_workflow_owners
 from src.processes.tasks.tasks import complete_tasks
 
 UserModel = get_user_model()
@@ -321,17 +322,22 @@ class ReassignService:
                 ).update(user=self.new_user)
 
     def _reassign_in_workflow_members(self):
+        """Transfer Guardian view_workflow permissions from old to new user."""
         if self.old_user and self.new_user:
-            delete_query = DeleteUserFromWorkflowMembersQuery(
-                user_to_delete=self.old_user.id,
-                user_to_substitution=self.new_user.id,
+            ct = ContentType.objects.get_for_model(Workflow)
+            # Transfer all workflow permissions from old to new user
+            old_perms = UserObjectPermission.objects.filter(
+                user=self.old_user,
+                content_type=ct,
             )
-            RawSqlExecutor.execute(*delete_query.get_sql())
-
-            Workflow.members.through.objects.filter(
-                user_id=self.old_user.id,
-                workflow__account=self.account,
-            ).update(user_id=self.new_user.id)
+            for perm in old_perms:
+                UserObjectPermission.objects.get_or_create(
+                    user=self.new_user,
+                    permission=perm.permission,
+                    content_type=perm.content_type,
+                    object_pk=perm.object_pk,
+                )
+            old_perms.delete()
 
     def _affected_template_ids(self):
         affected_template_ids = []
@@ -355,20 +361,10 @@ class ReassignService:
         return affected_template_ids
 
     def _reassign_in_workflow_owners(self, affected_template_ids: list):
+        """Rebuild Guardian manage_workflow permissions via celery task."""
         if not affected_template_ids:
             return
-
-        with transaction.atomic():
-            Workflow.owners.through.objects.filter(
-                workflow__template_id__in=affected_template_ids,
-                workflow__account=self.account,
-            ).delete()
-
-            for template_id in affected_template_ids:
-                query = UpdateWorkflowOwnersQuery(
-                    template_id=template_id,
-                )
-                RawSqlExecutor.execute(*query.insert_sql())
+        update_workflow_owners.delay(template_ids=affected_template_ids)
 
     def _reassign_in_template_conditions(self):
         if self.old_group:

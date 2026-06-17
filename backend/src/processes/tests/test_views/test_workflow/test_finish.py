@@ -23,6 +23,9 @@ from src.processes.tests.fixtures import (
     create_test_workflow,
 )
 from src.utils.validation import ErrorCode
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -282,7 +285,7 @@ class TestFinishWorkflow:
             is_account_owner=False,
             is_admin=True,
         )
-        workflow.members.add(another_user)
+        WorkflowPermissionService.grant_view(another_user, workflow)
         api_client.token_authenticate(another_user)
 
         # act

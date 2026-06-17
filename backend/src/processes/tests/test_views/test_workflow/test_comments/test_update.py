@@ -24,6 +24,9 @@ from src.processes.tests.fixtures import (
     create_test_workflow,
 )
 from src.utils.validation import ErrorCode
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 datetime_format = '%Y-%m-%dT%H:%M:%S.%fZ'
@@ -151,7 +154,7 @@ def test_update__admin__ok(api_client, mocker):
     workflow = create_test_workflow(owner)
     task = workflow.tasks.get(number=1)
     task.performers.add(user)
-    workflow.members.add(user)
+    WorkflowPermissionService.grant_view(user, workflow)
     task = workflow.tasks.get(number=1)
     event = WorkflowEventService.comment_created_event(
         text='Some comment',
@@ -220,7 +223,7 @@ def test_update__not_admin__ok(api_client, mocker):
     workflow = create_test_workflow(owner)
     task = workflow.tasks.get(number=1)
     task.performers.add(user)
-    workflow.members.add(user)
+    WorkflowPermissionService.grant_view(user, workflow)
     task = workflow.tasks.get(number=1)
     event = WorkflowEventService.comment_created_event(
         text='Some comment',

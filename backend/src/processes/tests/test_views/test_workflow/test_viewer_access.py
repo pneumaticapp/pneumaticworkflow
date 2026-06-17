@@ -16,6 +16,9 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 UserModel = get_user_model()
 
@@ -491,7 +494,7 @@ class TestWorkflowViewerAccess:
             task=task,
             user=performer_user,
         )
-        workflow.members.add(performer_user)
+        WorkflowPermissionService.grant_view(performer_user, workflow)
 
         api_client.token_authenticate(performer_user)
         url = reverse('workflows-detail', args=[workflow.id])
@@ -523,7 +526,7 @@ class TestWorkflowViewerAccess:
             is_admin=False,
             is_account_owner=False,
         )
-        workflow.members.add(member_user)
+        WorkflowPermissionService.grant_view(member_user, workflow)
 
         api_client.token_authenticate(member_user)
         url = reverse('workflows-detail', args=[workflow.id])
@@ -562,7 +565,7 @@ class TestWorkflowViewerAccess:
             is_admin=False,
             is_account_owner=False,
         )
-        workflow.members.add(member_user)
+        WorkflowPermissionService.grant_view(member_user, workflow)
 
         api_client.token_authenticate(member_user)
         url = reverse('workflows-detail', args=[workflow.id])

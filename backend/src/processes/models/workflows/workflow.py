@@ -29,6 +29,10 @@ class Workflow(
 
     class Meta:
         ordering = ['-date_created']
+        permissions = [
+            ('view_workflow', 'Can view workflow'),
+            ('manage_workflow', 'Can manage workflow lifecycle'),
+        ]
 
     name = models.TextField()
     name_template = models.TextField(null=True, blank=True)
@@ -50,15 +54,9 @@ class Workflow(
         help_text='Template is deleted',
         default=False,
     )
-    members = models.ManyToManyField(
-        UserModel,
-        related_name='workflows',
-    )
-    owners = models.ManyToManyField(
-        UserModel,
-        related_name='owners',
-        verbose_name='owners',
-    )
+    # NOTE: members/owners M2M fields removed — replaced by Guardian
+    # object-level permissions (view_workflow, manage_workflow).
+    # See: WorkflowPermissionService
     workflow_starter = models.ForeignKey(
         UserModel,
         on_delete=models.SET_NULL,

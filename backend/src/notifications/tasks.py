@@ -49,6 +49,9 @@ from src.processes.models.workflows.task import (
     TaskPerformer,
 )
 from src.processes.models.workflows.workflow import Workflow
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 from src.processes.serializers.workflows.events import (
     WorkflowEventSerializer,
 )
@@ -1136,12 +1139,15 @@ def _send_event_created(
     """ Send ws when workflow event created """
 
     users = (
-        Workflow.members.through.objects.filter(
-            workflow_id=data['workflow_id'],
-            user__status=UserStatus.ACTIVE,
+        UserModel.objects
+        .filter(
+            id__in=WorkflowPermissionService.get_viewer_ids(
+                Workflow.objects.get(id=data['workflow_id']),
+            ),
+            status=UserStatus.ACTIVE,
         )
-        .order_by('user_id')
-        .values_list('user_id', 'user__email')
+        .order_by('id')
+        .values_list('id', 'email')
     )
     for (user_id, user_email) in users:
         _send_notification(
@@ -1191,12 +1197,15 @@ def _send_event_updated(
     """ Send ws when workflow event updated """
 
     users = (
-        Workflow.members.through.objects.filter(
-            workflow_id=data['workflow_id'],
-            user__status=UserStatus.ACTIVE,
+        UserModel.objects
+        .filter(
+            id__in=WorkflowPermissionService.get_viewer_ids(
+                Workflow.objects.get(id=data['workflow_id']),
+            ),
+            status=UserStatus.ACTIVE,
         )
-        .order_by('user_id')
-        .values_list('user_id', 'user__email')
+        .order_by('id')
+        .values_list('id', 'email')
     )
     for (user_id, user_email) in users:
         _send_notification(

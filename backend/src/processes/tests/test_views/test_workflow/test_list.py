@@ -56,6 +56,9 @@ from src.processes.tests.fixtures import (
     create_test_workflow,
 )
 from src.services.markdown import MarkdownService
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 from src.utils.validation import ErrorCode
 
 pytestmark = pytest.mark.django_db
@@ -1950,7 +1953,7 @@ def test_list__filter_multiple_current_performer__ok(api_client):
 
     workflow1 = create_test_workflow(user=user1)
     workflow2 = create_test_workflow(user=user2)
-    workflow2.owners.add(user1)
+    WorkflowPermissionService.grant_manage(user1, workflow2)
     api_client.token_authenticate(user1)
 
     # act
@@ -2064,9 +2067,9 @@ def test_list__filter_multiple_workflow_starter__ok(api_client):
     user2 = create_test_user(account=account, email='test3@pneumatic.app')
     create_test_workflow(user=user)
     workflow1 = create_test_workflow(user=user1)
-    workflow1.owners.add(user)
+    WorkflowPermissionService.grant_manage(user, workflow1)
     workflow2 = create_test_workflow(user=user2)
-    workflow2.owners.add(user)
+    WorkflowPermissionService.grant_manage(user, workflow2)
     api_client.token_authenticate(user)
 
     # act
@@ -2668,7 +2671,7 @@ def test_list__legacy_template_on_freemium__ok(api_client):
     another_user = create_invited_user(user)
     workflow_1 = create_test_workflow(user)
     workflow_2 = create_test_workflow(another_user)
-    workflow_2.owners.add(user)
+    WorkflowPermissionService.grant_manage(user, workflow_2)
     api_client.token_authenticate(user)
     api_client.delete(f'/templates/{workflow_1.template.id}')
 

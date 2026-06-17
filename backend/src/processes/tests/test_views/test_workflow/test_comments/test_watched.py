@@ -1,4 +1,5 @@
 import pytest
+from guardian.shortcuts import remove_perm
 
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
@@ -22,6 +23,9 @@ from src.processes.tests.fixtures import (
     create_test_workflow,
 )
 from src.utils.validation import ErrorCode
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -36,7 +40,7 @@ def test_watched__account_owner__ok(api_client, mocker):
         is_account_owner=False,
     )
     workflow = create_test_workflow(user)
-    workflow.members.remove(owner)
+    remove_perm('view_workflow', owner, workflow)
     task = workflow.tasks.get(number=1)
     event = WorkflowEventService.comment_created_event(
         text='Some comment',
@@ -68,7 +72,7 @@ def test_watched__account_owner__ok(api_client, mocker):
         is_superuser=False,
     )
     comment_watched_mock.assert_called_once()
-    assert not workflow.members.filter(id=owner.id).exists()
+    assert not WorkflowPermissionService.has_view(owner, workflow)
 
 
 def test_watched__workflow_member__ok(api_client, mocker):
@@ -81,7 +85,7 @@ def test_watched__workflow_member__ok(api_client, mocker):
         is_account_owner=False,
     )
     workflow = create_test_workflow(owner)
-    workflow.members.add(user)
+    WorkflowPermissionService.grant_view(user, workflow)
     task = workflow.tasks.get(number=1)
     event = WorkflowEventService.comment_created_event(
         text='Some comment',

@@ -56,6 +56,9 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 datetime_format = '%Y-%m-%dT%H:%M:%S.%fZ'
@@ -226,7 +229,7 @@ def test_events__not_admin_user__ok(api_client):
         email='no@admin.com',
     )
     workflow = create_test_workflow(owner)
-    workflow.members.add(user)
+    WorkflowPermissionService.grant_view(user, workflow)
 
     task_1 = workflow.tasks.get(number=1)
     WorkflowEventService.task_started_event(task_1)

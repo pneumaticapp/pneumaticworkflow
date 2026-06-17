@@ -4,16 +4,15 @@ from celery import shared_task
 from django.db import transaction
 
 from src.authentication.enums import AuthTokenType
-from src.executor import RawSqlExecutor
 from src.processes.enums import WorkflowStatus
 from src.processes.models.templates.template import (
     Template,
     TemplateVersion,
 )
+from src.processes.models.workflows.task import TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
-from src.processes.queries import (
-    UpdateWorkflowMemberQuery,
-    UpdateWorkflowOwnersQuery,
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
 )
 from src.processes.services.workflows.workflow_version import (
     WorkflowUpdateVersionService,
@@ -50,7 +49,10 @@ def _update_workflows(
                 template_owner_ids = Template.objects.filter(
                     id=workflow.template_id,
                 ).get_owners_as_users()
-                workflow.owners.set(template_owner_ids)
+                # Guardian: set owners for completed workflow
+                WorkflowPermissionService.set_owners(
+                    workflow, list(template_owner_ids),
+                )
             else:
                 version_service = WorkflowUpdateVersionService(
                     instance=workflow,
@@ -86,16 +88,40 @@ def update_workflows(**kwargs):
     },
 )
 def update_workflow_owners(template_ids: List[int]):
-    with transaction.atomic():
-        Workflow.owners.through.objects.filter(
-            workflow__template_id__in=template_ids,
-        ).delete()
-        for template_id in template_ids:
-            query_workflow = UpdateWorkflowOwnersQuery(
-                template_id=template_id,
-            )
-            RawSqlExecutor.execute(*query_workflow.insert_sql())
-            query_member = UpdateWorkflowMemberQuery(
-                template_id=template_id,
-            )
-            RawSqlExecutor.execute(*query_member.insert_sql())
+    """Rebuild Guardian permissions when template owners change.
+
+    For each workflow belonging to the given templates:
+    1. Set manage_workflow + view_workflow for current template owners
+    2. Grant view_workflow to all task performers
+    """
+    for template_id in template_ids:
+        template_owner_ids = list(
+            Template.objects.filter(
+                id=template_id,
+            ).get_owners_as_users(),
+        )
+        workflows = Workflow.objects.filter(
+            template_id=template_id,
+            is_deleted=False,
+        )
+        for workflow in workflows:
+            with transaction.atomic():
+                # Set owners (clears old manage + sets new manage + view)
+                WorkflowPermissionService.set_owners(
+                    workflow, template_owner_ids,
+                )
+                # Grant view to all task performers
+                performer_ids = list(
+                    TaskPerformer.objects
+                    .filter(
+                        task__workflow=workflow,
+                        task__is_deleted=False,
+                    )
+                    .exclude_directly_deleted()
+                    .get_user_ids_set(),
+                )
+                viewer_only = set(performer_ids) - set(template_owner_ids)
+                if viewer_only:
+                    WorkflowPermissionService.grant_view_bulk(
+                        list(viewer_only), workflow,
+                    )

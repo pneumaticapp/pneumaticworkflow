@@ -1,3 +1,4 @@
+import contextlib
 from typing import Iterable, List, Optional
 
 from django.contrib.auth import get_user_model
@@ -17,6 +18,9 @@ from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
 from src.storage.enums import AccessType, SourceType
 from src.storage.models import Attachment
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 UserModel = get_user_model()
 
@@ -111,8 +115,6 @@ class AttachmentService(BaseModelService):
         task = Task.objects.prefetch_related(
             'taskperformer_set__user',
             'taskperformer_set__group',
-            'workflow__owners',
-            'workflow__members',
         ).get(id=task.id)
 
         users_set = set()
@@ -126,12 +128,12 @@ class AttachmentService(BaseModelService):
             if performer.group:
                 groups_set.add(performer.group)
 
-        # Collect workflow owners and members
+        # Collect workflow viewers from Guardian
         workflow = task.workflow
-        for owner in workflow.owners.all():
-            users_set.add(owner)
-        for member in workflow.members.all():
-            users_set.add(member)
+        viewer_ids = WorkflowPermissionService.get_viewer_ids(workflow)
+        for uid in viewer_ids:
+            with contextlib.suppress(UserModel.DoesNotExist):
+                users_set.add(UserModel.objects.get(id=uid))
 
         # Collect template owners (user + group)
         if workflow.template_id:
@@ -203,8 +205,6 @@ class AttachmentService(BaseModelService):
         task = Task.objects.prefetch_related(
             'taskperformer_set__user',
             'taskperformer_set__group',
-            'workflow__owners',
-            'workflow__members',
             'workflow__template',
         ).get(id=task.id)
 
@@ -228,16 +228,13 @@ class AttachmentService(BaseModelService):
             if performer.user:
                 users_set.add(performer.user)
 
-        # Get workflow owners and members
+        # Get workflow viewers from Guardian
         workflow = task.workflow
         if workflow:
-            workflow_owners = workflow.owners.all()
-            for owner in workflow_owners:
-                users_set.add(owner)
-
-            workflow_members = workflow.members.all()
-            for member in workflow_members:
-                users_set.add(member)
+            viewer_ids = WorkflowPermissionService.get_viewer_ids(workflow)
+            for uid in viewer_ids:
+                with contextlib.suppress(UserModel.DoesNotExist):
+                    users_set.add(UserModel.objects.get(id=uid))
 
             # Get template owners
             if workflow.template:
@@ -353,10 +350,8 @@ class AttachmentService(BaseModelService):
         if not workflow:
             return
 
-        # Reload workflow from DB to get latest ManyToMany fields
+        # Reload workflow from DB
         workflow = Workflow.objects.prefetch_related(
-            'owners',
-            'members',
             'template',
         ).get(id=workflow.id)
 
@@ -383,14 +378,11 @@ class AttachmentService(BaseModelService):
                 if performer.user:
                     users_set.add(performer.user)
 
-        # Get owners from workflow (if assigned)
-        workflow_owners = workflow.owners.all()
-        for owner in workflow_owners:
-            users_set.add(owner)
-
-        workflow_members = workflow.members.all()
-        for member in workflow_members:
-            users_set.add(member)
+        # Get viewers from Guardian (owners + members)
+        viewer_ids = WorkflowPermissionService.get_viewer_ids(workflow)
+        for uid in viewer_ids:
+            with contextlib.suppress(UserModel.DoesNotExist):
+                users_set.add(UserModel.objects.get(id=uid))
 
         # Also get owners from template (primary source)
         if workflow.template:

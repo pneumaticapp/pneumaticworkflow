@@ -521,7 +521,14 @@ class Task(
         Notification.objects.exclude_users(
             union_user_ids,
         ).by_task(self.id).delete()
-        self.workflow.members.add(*created_performers_user_ids)
+        # Guardian: grant view to newly created performers
+        if created_performers_user_ids:
+            from src.processes.services.workflow_permissions import (
+                WorkflowPermissionService,
+            )
+            WorkflowPermissionService.grant_view_bulk(
+                created_performers_user_ids, self.workflow,
+            )
         return (
             created_performers_user_ids,
             created_performers_group_ids,

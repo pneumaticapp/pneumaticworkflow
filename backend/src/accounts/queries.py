@@ -316,8 +316,8 @@ class DeleteUserFromTemplateOwnerQuery(BaseDeleteTemplateOwnerQuery):
 
 class DeleteUserFromWorkflowMembersQuery(SqlQueryObject):
 
-    """ Deletes membership records for user_to_delete
-        where user_to_substitution exists in workflow """
+    """ Deletes view_workflow permissions for user_to_delete
+        where user_to_substitution has view_workflow for the same workflow """
 
     def __init__(
         self,
@@ -329,12 +329,28 @@ class DeleteUserFromWorkflowMembersQuery(SqlQueryObject):
 
     def get_sql(self):
         return """
-        DELETE FROM processes_workflow_members
+        DELETE FROM guardian_userobjectpermission
         WHERE
           user_id = %(user_to_delete)s AND
-          workflow_id IN (
-            SELECT workflow_id FROM processes_workflow_members
+          permission_id = (
+            SELECT id FROM auth_permission
+            WHERE codename = 'view_workflow'
+            AND content_type_id = (
+                SELECT id FROM django_content_type
+                WHERE app_label = 'processes' AND model = 'workflow'
+            )
+          ) AND
+          object_pk IN (
+            SELECT object_pk FROM guardian_userobjectpermission
             WHERE user_id = %(user_to_substitution)s
+            AND permission_id = (
+                SELECT id FROM auth_permission
+                WHERE codename = 'view_workflow'
+                AND content_type_id = (
+                    SELECT id FROM django_content_type
+                    WHERE app_label = 'processes' AND model = 'workflow'
+                )
+            )
           )
         """, {
             'user_to_delete': self.user_to_delete,
@@ -344,8 +360,9 @@ class DeleteUserFromWorkflowMembersQuery(SqlQueryObject):
 
 class DeleteUserFromWorkflowOwnersQuery(SqlQueryObject):
 
-    """ Deletes ownership records for user_to_delete
-        where user_to_substitution exists in workflow """
+    """ Deletes manage_workflow permissions for
+        user_to_delete where user_to_substitution
+        has manage_workflow for the same workflow """
 
     def __init__(
         self,
@@ -357,12 +374,28 @@ class DeleteUserFromWorkflowOwnersQuery(SqlQueryObject):
 
     def get_sql(self):
         return """
-        DELETE FROM processes_workflow_owners
+        DELETE FROM guardian_userobjectpermission
         WHERE
           user_id = %(user_to_delete)s AND
-          workflow_id IN (
-            SELECT workflow_id FROM processes_workflow_owners
+          permission_id = (
+            SELECT id FROM auth_permission
+            WHERE codename = 'manage_workflow'
+            AND content_type_id = (
+                SELECT id FROM django_content_type
+                WHERE app_label = 'processes' AND model = 'workflow'
+            )
+          ) AND
+          object_pk IN (
+            SELECT object_pk FROM guardian_userobjectpermission
             WHERE user_id = %(user_to_substitution)s
+            AND permission_id = (
+                SELECT id FROM auth_permission
+                WHERE codename = 'manage_workflow'
+                AND content_type_id = (
+                    SELECT id FROM django_content_type
+                    WHERE app_label = 'processes' AND model = 'workflow'
+                )
+            )
           )
         """, {
             'user_to_delete': self.user_to_delete,

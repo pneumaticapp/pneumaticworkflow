@@ -22,6 +22,9 @@ from src.processes.services.workflow_action import (
     WorkflowEventService,
 )
 from src.storage.utils import reassign_restricted_permissions_for_task
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 UserModel = get_user_model()
 
@@ -152,7 +155,10 @@ class GroupPerformerService(BasePerformerService2):
         )
         users = group_users - task_performer_users
         if users and not self.task.get_active_delay():
-            self.task.workflow.members.add(*users)
+            # Guardian: grant view to group users
+            WorkflowPermissionService.grant_view_bulk(
+                users, self.task.workflow,
+            )
             if self.user.id in users:
                 send_new_task_websocket.delay(
                     logging=self.user.account.log_api_requests,

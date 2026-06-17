@@ -46,6 +46,9 @@ from src.storage.services.attachments import (
     clear_guardian_permissions_for_attachment_ids,
 )
 from src.storage.utils import refresh_attachments
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 UserModel = get_user_model()
 
@@ -649,10 +652,11 @@ class CommentService(BaseModelService):
         workflow = self.instance.workflow
         mentioned_users_ids = ()
         if self.instance.text:
-            # Only new mentioned users
+            # Exclude users who already have view access via Guardian
+            exclude_ids = WorkflowPermissionService.get_viewer_ids(workflow)
             mentioned_users_ids = self._get_mentioned_users_ids(
                 text=self.instance.text,
-                exclude_ids=workflow.members.values_list('id', flat=True),
+                exclude_ids=exclude_ids,
             )
         return mentioned_users_ids
 
@@ -707,7 +711,10 @@ class CommentService(BaseModelService):
                 self._get_new_comment_recipients(task)
             )
             if mentioned_users_ids:
-                workflow.members.add(*mentioned_users_ids)
+                # Guardian: grant view to mentioned users
+                WorkflowPermissionService.grant_view_bulk(
+                    mentioned_users_ids, workflow,
+                )
                 send_mention_notification.delay(
                     logging=self.user.account.log_api_requests,
                     logo_lg=self.user.account.logo_lg,
@@ -771,7 +778,10 @@ class CommentService(BaseModelService):
             refresh_attachments(source=self.instance, user=self.user)
             new_mentioned_users_ids = self._get_updated_comment_recipients()
             if new_mentioned_users_ids:
-                self.instance.workflow.members.add(*new_mentioned_users_ids)
+                # Guardian: grant view to newly mentioned users
+                WorkflowPermissionService.grant_view_bulk(
+                    new_mentioned_users_ids, self.instance.workflow,
+                )
                 send_mention_notification.delay(
                     logging=self.user.account.log_api_requests,
                     logo_lg=self.user.account.logo_lg,

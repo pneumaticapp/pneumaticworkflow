@@ -115,6 +115,7 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
                 owners__role=OwnerRole.OWNER,
                 owners__type=OwnerType.GROUP,
                 owners__group__users__id=user_id,
+                owners__group__is_deleted=False,
                 owners__is_deleted=False,
             ),
         ).distinct()
@@ -130,6 +131,7 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
                 owners__role=OwnerRole.VIEWER,
                 owners__type=OwnerType.GROUP,
                 owners__group__users__id=user_id,
+                owners__group__is_deleted=False,
                 owners__is_deleted=False,
             ),
         ).distinct()
@@ -145,6 +147,7 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
                 owners__role=OwnerRole.STARTER,
                 owners__type=OwnerType.GROUP,
                 owners__group__users__id=user_id,
+                owners__group__is_deleted=False,
                 owners__is_deleted=False,
             ),
         ).distinct()
@@ -158,6 +161,7 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
             ) | Q(
                 owners__type=OwnerType.GROUP,
                 owners__group__users__id=user_id,
+                owners__group__is_deleted=False,
                 owners__is_deleted=False,
             ),
         ).distinct()
@@ -174,6 +178,7 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
             owners__type=OwnerType.GROUP,
             owners__group__users__isnull=False,
             owners__group__users__id__isnull=False,
+            owners__group__is_deleted=False,
             owners__is_deleted=False,
         ).prefetch_related('owners__group__users').values_list(
             'owners__group__users__id', flat=True,
@@ -472,6 +477,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             | Q(
                 template__owners__role=OwnerRole.OWNER,
                 template__owners__group__users__id=user_id,
+                template__owners__group__is_deleted=False,
                 template__owners__is_deleted=False,
             ),
         ).distinct()
@@ -486,6 +492,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             | Q(
                 template__owners__role=OwnerRole.VIEWER,
                 template__owners__group__users__id=user_id,
+                template__owners__group__is_deleted=False,
                 template__owners__is_deleted=False,
             ),
         ).distinct()
@@ -500,6 +507,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             | Q(
                 template__owners__role=OwnerRole.STARTER,
                 template__owners__group__users__id=user_id,
+                template__owners__group__is_deleted=False,
                 template__owners__is_deleted=False,
             ),
         ).distinct()
@@ -511,6 +519,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
                 template__owners__is_deleted=False,
             ) | Q(
                 template__owners__group__users__id=user_id,
+                template__owners__group__is_deleted=False,
                 template__owners__is_deleted=False,
             ),
         ).distinct()
@@ -524,6 +533,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             Q(
                 template__owners__type=OwnerType.GROUP,
                 template__owners__group__users__id=user_id,
+                template__owners__group__is_deleted=False,
             )
         )
         access_q = (
@@ -536,7 +546,12 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
         return self.exclude_legacy().filter(base_owner_q & access_q).distinct()
 
     def with_member(self, user_id: int):
-        return self.filter(members=user_id)
+        from src.processes.services.workflow_permissions import (
+            WorkflowPermissionService,
+        )
+        return self.filter(
+            WorkflowPermissionService.viewer_q(user_id),
+        )
 
     def exclude_onboarding(self):
         return self.filter(
@@ -633,11 +648,6 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             TaskPerformer,
         )
         prefetch_args = [
-            Prefetch(
-                lookup='owners',
-                to_attr='owners_ids',
-                queryset=UserModel.objects.order_by('id').only('id'),
-            ),
             Prefetch(
                 lookup='template',
                 queryset=Template.objects.only(
@@ -746,7 +756,10 @@ class TasksQuerySet(TasksBaseQuerySet):
                 ),
             ) & Q(
                 (
-                    Q(taskperformer__group__users__id=user_id) |
+                    Q(
+                        taskperformer__group__users__id=user_id,
+                        taskperformer__group__is_deleted=False,
+                    ) |
                     Q(taskperformer__user_id=user_id)
                 ) &
                 Q(
@@ -1191,7 +1204,15 @@ class ChecklistTemplateSelectionQuerySet(BaseQuerySet):
 class ChecklistQuerySet(BaseQuerySet):
 
     def with_workflow_member(self, user_id: int):
-        return self.filter(task__workflow__members=user_id)
+        from src.processes.services.workflow_permissions import (
+            WorkflowPermissionService,
+        )
+        return self.filter(
+            Q(task__workflow__members=user_id)
+            | WorkflowPermissionService.viewer_q(
+                user_id, pk_field='task__workflow_id',
+            ),
+        )
 
 
 class ChecklistSelectionQuerySet(BaseQuerySet):

@@ -22,6 +22,7 @@ from src.generics.filters import PneumaticFilterBackend
 from src.generics.mixins.views import CustomViewSetMixin
 from src.generics.paginations import DefaultPagination
 from src.generics.permissions import (
+    DenyAll,
     IsAuthenticated,
     UserIsAuthenticated,
 )
@@ -232,7 +233,7 @@ class WorkflowViewSet(
                 ExpiredSubscriptionPermission(),
                 BillingPlanPermission(),
             )
-        return super().get_permissions()
+        return (DenyAll(),)
 
     def list(self, request, *args, **kwargs):
         filter_slz = WorkflowListFilterSerializer(data=request.GET)

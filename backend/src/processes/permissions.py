@@ -20,6 +20,9 @@ from src.processes.models.workflows.task import (
     TaskPerformer,
 )
 from src.processes.models.workflows.workflow import Workflow
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 
 class TemplateAdminOwnerPermission(BasePermission):
@@ -104,9 +107,13 @@ class TemplateFieldsPermission(BasePermission):
                 ) | Q(
                     owners__type=OwnerType.GROUP,
                     owners__group__users__id=user.id,
+                    owners__group__is_deleted=False,
                     owners__is_deleted=False,
                     owners__role__in=(OwnerRole.OWNER, OwnerRole.VIEWER),
-                ) | Q(workflows__members=user.id),
+                ) | Q(workflows__members=user.id)
+                | WorkflowPermissionService.viewer_q(
+                    user.id, pk_field='workflows__pk',
+                ),
             ).exists()
         )
 
@@ -227,8 +234,11 @@ class WorkflowMemberPermission(BasePermission):
             account_id=user.account_id,
         ).filter(
             Q(tasks__taskperformer__user_id=user.id)
-            | Q(tasks__taskperformer__group__users__id=user.id)
-            | Q(members=user.id),
+            | Q(
+                tasks__taskperformer__group__users__id=user.id,
+                tasks__taskperformer__group__is_deleted=False,
+            )
+            | WorkflowPermissionService.viewer_q(user.id),
         ).exists()
 
 
@@ -327,8 +337,14 @@ class TaskWorkflowMemberPermission(BasePermission):
             account_id=user.account_id,
         ).filter(
             Q(workflow__tasks__taskperformer__user_id=user.id)
-            | Q(workflow__tasks__taskperformer__group__users__id=user.id)
-            | Q(workflow__members=user.id),
+            | Q(
+                workflow__tasks__taskperformer__group__users__id=user.id,
+                workflow__tasks__taskperformer__group__is_deleted=False,
+            )
+            | Q(workflow__members=user.id)
+            | WorkflowPermissionService.viewer_q(
+                user.id, pk_field='workflow_id',
+            ),
         ).exists()
 
         if has_access:
@@ -394,10 +410,12 @@ class TaskCommentPermission(BasePermission):
         )
 
         is_workflow_member = base_qst.filter(
-            Q(members=user_id)
-            | Q(owners=user_id)
-            | Q(tasks__taskperformer__user_id=user_id)
-            | Q(tasks__taskperformer__group__users__id=user_id),
+            Q(tasks__taskperformer__user_id=user_id)
+            | Q(
+                tasks__taskperformer__group__users__id=user_id,
+                tasks__taskperformer__group__is_deleted=False,
+            )
+            | WorkflowPermissionService.viewer_q(user_id),
         ).exists()
         if is_workflow_member:
             return True
@@ -437,10 +455,12 @@ class WorkflowCommentPermission(BasePermission):
         base_qst = Workflow.objects.by_id(workflow_id).on_account(account_id)
 
         is_workflow_member = base_qst.filter(
-            Q(members=user_id)
-            | Q(owners=user_id)
-            | Q(tasks__taskperformer__user_id=user.id)
-            | Q(tasks__taskperformer__group__users__id=user_id),
+            Q(tasks__taskperformer__user_id=user.id)
+            | Q(
+                tasks__taskperformer__group__users__id=user_id,
+                tasks__taskperformer__group__is_deleted=False,
+            )
+            | WorkflowPermissionService.viewer_q(user_id),
         ).exists()
         if is_workflow_member:
             return True
@@ -611,9 +631,15 @@ class CommentReactionPermission(BasePermission):
 
         # Check workflow members
         is_member = qst.filter(
-            Q(workflow__members=user.id) |
-            Q(workflow__tasks__taskperformer__user_id=user.id) |
-            Q(workflow__tasks__taskperformer__group__users=user.id),
+            Q(workflow__members=user.id)
+            | Q(workflow__tasks__taskperformer__user_id=user.id)
+            | Q(
+                workflow__tasks__taskperformer__group__users=user.id,
+                workflow__tasks__taskperformer__group__is_deleted=False,
+            )
+            | WorkflowPermissionService.viewer_q(
+                user.id, pk_field='workflow_id',
+            ),
         ).exists()
         if is_member:
             return True
@@ -665,6 +691,7 @@ class TemplatePresetPermission(BasePermission):
                 ) | Q(
                     type=OwnerType.GROUP,
                     group__users__id=user.id,
+                    group__is_deleted=False,
                     role=OwnerRole.OWNER,
                     is_deleted=False,
                 ),
