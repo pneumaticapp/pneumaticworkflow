@@ -13,6 +13,8 @@ from src.processes.models.templates.fieldset import (
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.services.exceptions import (
     FieldsetTemplateInUseException,
+    FieldsetTemplateSharedIdMissing,
+    FieldsetTemplateTemplateIdMissing,
 )
 from src.processes.services.templates.field_template import (
     FieldTemplateService,
@@ -43,6 +45,11 @@ def test__create_instance__default_params__ok():
     account = create_test_account()
     user = create_test_owner(account=account)
     template = create_test_template(user=user, tasks_count=1)
+    shared_fieldset = FieldsetTemplate.objects.create(
+        account=account,
+        name='Shared FS',
+        is_shared=True,
+    )
     service = FieldSetTemplateService(
         user=user,
         is_superuser=False,
@@ -55,6 +62,7 @@ def test__create_instance__default_params__ok():
         name=name,
         template_id=template.id,
         is_shared=False,
+        shared_fieldset_id=shared_fieldset.id,
     )
 
     # assert
@@ -62,6 +70,7 @@ def test__create_instance__default_params__ok():
     assert service.instance.name == name
     assert service.instance.api_name
     assert service.instance.template_id == template.id
+    assert service.instance.shared_fieldset_id == shared_fieldset.id
     assert service.instance.account_id == account.id
     assert service.instance.description == ''
     assert service.instance.label_position == LabelPosition.TOP
@@ -78,6 +87,11 @@ def test__create_instance__all_params__ok():
     account = create_test_account()
     user = create_test_owner(account=account)
     template = create_test_template(user=user, tasks_count=1)
+    shared_fieldset = FieldsetTemplate.objects.create(
+        account=account,
+        name='Shared FS',
+        is_shared=True,
+    )
     service = FieldSetTemplateService(
         user=user,
         is_superuser=False,
@@ -94,6 +108,7 @@ def test__create_instance__all_params__ok():
         name=name,
         template_id=template.id,
         is_shared=False,
+        shared_fieldset_id=shared_fieldset.id,
         description=description,
         label_position=label_position,
         layout=layout,
@@ -103,10 +118,139 @@ def test__create_instance__all_params__ok():
     # assert
     assert service.instance.name == name
     assert service.instance.template_id == template.id
+    assert service.instance.shared_fieldset_id == shared_fieldset.id
     assert service.instance.description == description
     assert service.instance.label_position == label_position
     assert service.instance.layout == layout
     assert service.instance.api_name == api_name
+
+
+def test__create_instance__shared_fieldset__ok():
+
+    """
+    Call with default parameters
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    name = 'Test fieldset'
+
+    # act
+    service._create_instance(
+        name=name,
+        is_shared=True,
+    )
+
+    # assert
+    assert service.instance is not None
+    assert service.instance.name == name
+    assert service.instance.is_shared is True
+    assert service.instance.template_id is None
+    assert service.instance.title == ''
+    assert service.instance.description == ''
+    assert service.instance.kickoff_id is None
+    assert service.instance.task_id is None
+    assert service.instance.shared_fieldset_id is None
+    assert service.instance.api_name
+    assert service.instance.account_id == account.id
+    assert service.instance.label_position == LabelPosition.TOP
+    assert service.instance.layout == FieldSetLayout.VERTICAL
+
+
+def test__create_instance__is_shared_api_name_provided__ok():
+
+    """
+    is_shared=True, api_name provided
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    name = 'Shared fieldset'
+    api_name = 'fs-custom-1'
+
+    # act
+    service._create_instance(
+        name=name,
+        is_shared=True,
+        api_name=api_name,
+    )
+
+    # assert
+    assert service.instance.api_name == api_name
+    assert service.instance.is_shared is True
+    assert service.instance.template_id is None
+
+
+def test__create_instance__not_shared_no_template_id__raise_exception():
+
+    """
+    is_shared=False, template_id missing
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    shared_fieldset = FieldsetTemplate.objects.create(
+        account=account,
+        name='Shared FS',
+        is_shared=True,
+    )
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    with pytest.raises(FieldsetTemplateTemplateIdMissing) as ex:
+        service._create_instance(
+            name='Fieldset',
+            is_shared=False,
+            shared_fieldset_id=shared_fieldset.id,
+        )
+
+    # assert
+    assert ex.value.message == fs_messages.MSG_FS_0011
+
+
+def test__create_instance__not_shared_no_shared_fieldset_id__raise_exception():
+
+    """
+    is_shared=False, shared_fieldset_id missing
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+
+    # act
+    with pytest.raises(FieldsetTemplateSharedIdMissing) as ex:
+        service._create_instance(
+            name='Fieldset',
+            is_shared=False,
+            template_id=template.id,
+        )
+
+    # assert
+    assert ex.value.message == fs_messages.MSG_FS_0010
 
 
 def test__create_fields__with_data__ok(mocker):
@@ -1073,3 +1217,816 @@ def test_delete__used_by_task__raise_exception():
     # assert
     assert ex.value.message == fs_messages.MSG_FS_0001
     assert FieldsetTemplate.objects.filter(id=fieldset.id).exists()
+
+
+def test_create_shared_fieldset__ok():
+
+    """
+    Default params
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    name = 'My Shared Fieldset'
+
+    # act
+    result = service.create_shared_fieldset(name=name)
+
+    # assert
+    assert result.name == name
+    assert result.is_shared is True
+    assert result.title == ''
+    assert result.description == ''
+    assert result.label_position == LabelPosition.TOP
+    assert result.layout == FieldSetLayout.VERTICAL
+    assert result.api_name
+    assert result.template_id is None
+
+
+def test__create_shared_fieldset__all_params__ok():
+
+    """
+    All params provided
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    name = 'Custom Fieldset'
+    title = 'Custom Title'
+    description = 'Custom description'
+    api_name = 'fs-custom'
+    label_position = LabelPosition.LEFT
+    layout = FieldSetLayout.HORIZONTAL
+
+    # act
+    result = service.create_shared_fieldset(
+        name=name,
+        title=title,
+        description=description,
+        api_name=api_name,
+        label_position=label_position,
+        layout=layout,
+    )
+
+    # assert
+    assert result.name == name
+    assert result.title == title
+    assert result.description == description
+    assert result.api_name == api_name
+    assert result.label_position == label_position
+    assert result.layout == layout
+    assert result.is_shared is True
+
+
+def test__replace_api_names__fields_and_rules__ok(mocker):
+
+    """
+    Default params, fields and rules present
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    old_field_api = 'old-field-1'
+    shared_fieldset_data = {
+        'api_name': 'old-fs',
+        'fields': [{'api_name': old_field_api, 'name': 'F 1'}],
+        'rules': [{'api_name': 'old-rule-1', 'fields': [old_field_api]}],
+    }
+    new_fs_api = 'new-fs-1'
+    new_field_api = 'new-field-1'
+    new_rule_api = 'new-rule-1'
+    create_api_name_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset.create_api_name',
+        side_effect=[new_fs_api, new_field_api, new_rule_api],
+    )
+
+    # act
+    result = service._replace_api_names(
+        shared_fieldset_data=shared_fieldset_data,
+    )
+
+    # assert
+    assert result['api_name'] == new_fs_api
+    assert result['fields'][0]['api_name'] == new_field_api
+    assert result['rules'][0]['api_name'] == new_rule_api
+    assert result['rules'][0]['fields'][0] == new_field_api
+    assert create_api_name_mock.call_count == 3
+    create_api_name_mock.assert_has_calls(
+        [
+            mocker.call(FieldsetTemplate.api_name_prefix),
+            mocker.call(FieldTemplate.api_name_prefix),
+            mocker.call(FieldsetTemplateRule.api_name_prefix),
+        ],
+        any_order=True,
+    )
+
+
+def test__replace_api_names__no_fields_key__ok(mocker):
+
+    """
+    No fields key
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    shared_fieldset_data = {'api_name': 'old-fs'}
+    create_api_name_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset.create_api_name',
+        return_value='new-fs-1',
+    )
+
+    # act
+    result = service._replace_api_names(
+        shared_fieldset_data=shared_fieldset_data,
+    )
+
+    # assert
+    assert result['fields'] == []
+    create_api_name_mock.assert_called_once_with(
+        FieldsetTemplate.api_name_prefix,
+    )
+
+
+def test__replace_api_names__empty_fields__ok(mocker):
+
+    """
+    Fields is empty list
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    shared_fieldset_data = {'api_name': 'old-fs', 'fields': []}
+    create_api_name_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset.create_api_name',
+        return_value='new-fs-1',
+    )
+
+    # act
+    result = service._replace_api_names(
+        shared_fieldset_data=shared_fieldset_data,
+    )
+
+    # assert
+    assert result['fields'] == []
+    create_api_name_mock.assert_called_once_with(
+        FieldsetTemplate.api_name_prefix,
+    )
+
+
+def test__replace_api_names__no_rules_key__ok(mocker):
+
+    """
+    No rules key
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    shared_fieldset_data = {'api_name': 'old-fs', 'fields': []}
+    create_api_name_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset.create_api_name',
+        return_value='new-fs-1',
+    )
+
+    # act
+    result = service._replace_api_names(
+        shared_fieldset_data=shared_fieldset_data,
+    )
+
+    # assert
+    assert result['rules'] == []
+    create_api_name_mock.assert_called_once_with(
+        FieldsetTemplate.api_name_prefix,
+    )
+
+
+def test__replace_api_names__empty_rules__ok(mocker):
+
+    """
+    Rules is empty list
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    shared_fieldset_data = {'api_name': 'old-fs', 'rules': []}
+    create_api_name_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset.create_api_name',
+        return_value='new-fs-1',
+    )
+
+    # act
+    result = service._replace_api_names(
+        shared_fieldset_data=shared_fieldset_data,
+    )
+
+    # assert
+    assert result['rules'] == []
+    create_api_name_mock.assert_called_once_with(
+        FieldsetTemplate.api_name_prefix,
+    )
+
+
+def test__replace_api_names__original_not_mutated__ok(mocker):
+
+    """
+    Original dict not mutated
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    old_field_api = 'old-field-1'
+    shared_fieldset_data = {
+        'api_name': 'old-fs',
+        'fields': [{'api_name': old_field_api, 'name': 'F 1'}],
+        'rules': [],
+    }
+    create_api_name_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset.create_api_name',
+        side_effect=['new-fs', 'new-field'],
+    )
+
+    # act
+    service._replace_api_names(shared_fieldset_data=shared_fieldset_data)
+
+    # assert
+    assert shared_fieldset_data['api_name'] == 'old-fs'
+    assert shared_fieldset_data['fields'][0]['api_name'] == old_field_api
+    assert create_api_name_mock.call_count == 2
+
+
+def test__get_new_fieldset_data__default_params__ok(mocker):
+
+    """
+    Default params
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    shared_fieldset_data = {'api_name': 'old-fs'}
+    replace_api_names_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset.'
+        'FieldSetTemplateService._replace_api_names',
+        return_value={'api_name': 'mocked-api', 'order': 3},
+    )
+
+    # act
+    result = service.get_new_fieldset_data(
+        shared_fieldset_data=shared_fieldset_data,
+    )
+
+    # assert
+    assert 'order' not in result
+    replace_api_names_mock.assert_called_once_with(shared_fieldset_data)
+
+
+def test__get_new_fieldset_data__api_name_provided__ok(mocker):
+
+    """
+    api_name provided
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    shared_fieldset_data = {'api_name': 'old-fs'}
+    override_api_name = 'custom-api'
+    replace_api_names_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset.'
+        'FieldSetTemplateService._replace_api_names',
+        return_value={'api_name': 'mocked-api'},
+    )
+
+    # act
+    result = service.get_new_fieldset_data(
+        shared_fieldset_data=shared_fieldset_data,
+        api_name=override_api_name,
+    )
+
+    # assert
+    assert result['api_name'] == override_api_name
+    replace_api_names_mock.assert_called_once_with(shared_fieldset_data)
+
+
+def test__get_new_fieldset_data__api_name_omitted__ok(mocker):
+
+    """
+    api_name omitted
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    shared_fieldset_data = {'api_name': 'old-fs'}
+    mocked_api_name = 'mocked-api'
+    replace_api_names_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset.'
+        'FieldSetTemplateService._replace_api_names',
+        return_value={'api_name': mocked_api_name},
+    )
+
+    # act
+    result = service.get_new_fieldset_data(
+        shared_fieldset_data=shared_fieldset_data,
+    )
+
+    # assert
+    assert result['api_name'] == mocked_api_name
+    replace_api_names_mock.assert_called_once_with(shared_fieldset_data)
+
+
+def test__get_new_fieldset_data__title_provided__ok(mocker):
+
+    """
+    title provided
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    shared_fieldset_data = {'api_name': 'old-fs'}
+    override_title = 'Custom Title'
+    replace_api_names_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset.'
+        'FieldSetTemplateService._replace_api_names',
+        return_value={'api_name': 'api', 'title': 'Original'},
+    )
+
+    # act
+    result = service.get_new_fieldset_data(
+        shared_fieldset_data=shared_fieldset_data,
+        title=override_title,
+    )
+
+    # assert
+    assert result['title'] == override_title
+    replace_api_names_mock.assert_called_once_with(shared_fieldset_data)
+
+
+def test__get_new_fieldset_data__title_omitted__ok(mocker):
+
+    """
+    title omitted
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    shared_fieldset_data = {'api_name': 'old-fs'}
+    original_title = 'Original Title'
+    replace_api_names_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset.'
+        'FieldSetTemplateService._replace_api_names',
+        return_value={'api_name': 'api', 'title': original_title},
+    )
+
+    # act
+    result = service.get_new_fieldset_data(
+        shared_fieldset_data=shared_fieldset_data,
+    )
+
+    # assert
+    assert result['title'] == original_title
+    replace_api_names_mock.assert_called_once_with(shared_fieldset_data)
+
+
+def test__get_new_fieldset_data__description_provided__ok(mocker):
+
+    """
+    description provided
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    shared_fieldset_data = {'api_name': 'old-fs'}
+    override_description = 'New description'
+    replace_api_names_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset.'
+        'FieldSetTemplateService._replace_api_names',
+        return_value={'api_name': 'api', 'description': 'Old desc'},
+    )
+
+    # act
+    result = service.get_new_fieldset_data(
+        shared_fieldset_data=shared_fieldset_data,
+        description=override_description,
+    )
+
+    # assert
+    assert result['description'] == override_description
+    replace_api_names_mock.assert_called_once_with(shared_fieldset_data)
+
+
+def test__get_new_fieldset_data__description_omitted__ok(mocker):
+
+    """
+    description omitted
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    shared_fieldset_data = {'api_name': 'old-fs'}
+    original_description = 'Original description'
+    replace_api_names_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset.'
+        'FieldSetTemplateService._replace_api_names',
+        return_value={'api_name': 'api', 'description': original_description},
+    )
+
+    # act
+    result = service.get_new_fieldset_data(
+        shared_fieldset_data=shared_fieldset_data,
+    )
+
+    # assert
+    assert result['description'] == original_description
+    replace_api_names_mock.assert_called_once_with(shared_fieldset_data)
+
+
+def test__get_new_fieldset_data__order_present__removed(mocker):
+
+    """
+    order present in data
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    shared_fieldset_data = {'api_name': 'old-fs', 'order': 5}
+    replace_api_names_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset.'
+        'FieldSetTemplateService._replace_api_names',
+        return_value={'api_name': 'api', 'order': 5},
+    )
+
+    # act
+    result = service.get_new_fieldset_data(
+        shared_fieldset_data=shared_fieldset_data,
+    )
+
+    # assert
+    assert 'order' not in result
+    replace_api_names_mock.assert_called_once_with(shared_fieldset_data)
+
+
+def test__get_new_fieldset_data__no_order__ok(mocker):
+
+    """
+    order absent in data
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    shared_fieldset_data = {'api_name': 'old-fs'}
+    replace_api_names_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset.'
+        'FieldSetTemplateService._replace_api_names',
+        return_value={'api_name': 'api'},
+    )
+
+    # act
+    result = service.get_new_fieldset_data(
+        shared_fieldset_data=shared_fieldset_data,
+    )
+
+    # assert
+    assert 'order' not in result
+    replace_api_names_mock.assert_called_once_with(shared_fieldset_data)
+
+
+def test__create_from_shared__default_params__ok(mocker):
+
+    """
+    Default optional params
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    shared_fieldset_data = {'api_name': 'old-fs', 'name': 'Fieldset'}
+    shared_fieldset_id = 42
+    fieldset_data_from_mock = {'api_name': 'new-fs', 'name': 'Fieldset'}
+    get_new_fieldset_data_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset.'
+        'FieldSetTemplateService.get_new_fieldset_data',
+        return_value=fieldset_data_from_mock,
+    )
+    create_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset.'
+        'FieldSetTemplateService.create',
+        return_value=mocker.Mock(),
+    )
+
+    # act
+    result = service.create_from_shared(
+        shared_fieldset_data=shared_fieldset_data,
+        shared_fieldset_id=shared_fieldset_id,
+        template_id=template.id,
+    )
+
+    # assert
+    assert result is create_mock.return_value
+    get_new_fieldset_data_mock.assert_called_once_with(
+        shared_fieldset_data=shared_fieldset_data,
+        api_name=None,
+        title=None,
+        description=None,
+    )
+    create_mock.assert_called_once_with(
+        api_name='new-fs',
+        name='Fieldset',
+        is_shared=True,
+        shared_fieldset_id=shared_fieldset_id,
+        order=0,
+        kickoff_id=None,
+        task_id=None,
+        template_id=template.id,
+    )
+
+
+def test__create_from_shared__all_params__ok(mocker):
+
+    """
+    All params provided
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    kickoff = template.kickoff_instance
+    task = template.tasks.get(number=1)
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+    )
+    shared_fieldset_data = {'api_name': 'old-fs', 'name': 'Fieldset'}
+    shared_fieldset_id = 10
+    api_name = 'custom-api'
+    title = 'Custom Title'
+    description = 'Custom desc'
+    order = 3
+    fieldset_data_from_mock = {'api_name': api_name, 'name': 'Fieldset'}
+    get_new_fieldset_data_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset.'
+        'FieldSetTemplateService.get_new_fieldset_data',
+        return_value=fieldset_data_from_mock,
+    )
+    create_mock = mocker.patch(
+        'src.processes.services.templates.fieldsets.fieldset.'
+        'FieldSetTemplateService.create',
+        return_value=mocker.Mock(),
+    )
+
+    # act
+    result = service.create_from_shared(
+        shared_fieldset_data=shared_fieldset_data,
+        shared_fieldset_id=shared_fieldset_id,
+        template_id=template.id,
+        order=order,
+        kickoff_id=kickoff.id,
+        task_id=task.id,
+        api_name=api_name,
+        title=title,
+        description=description,
+    )
+
+    # assert
+    assert result is create_mock.return_value
+    get_new_fieldset_data_mock.assert_called_once_with(
+        shared_fieldset_data=shared_fieldset_data,
+        api_name=api_name,
+        title=title,
+        description=description,
+    )
+    create_mock.assert_called_once_with(
+        api_name=api_name,
+        name='Fieldset',
+        is_shared=True,
+        shared_fieldset_id=shared_fieldset_id,
+        order=order,
+        kickoff_id=kickoff.id,
+        task_id=task.id,
+        template_id=template.id,
+    )
+
+
+def test__partial_update_instance__no_kwargs__ok():
+
+    """
+    No kwargs
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+    )
+    original_name = fieldset.name
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=fieldset,
+    )
+
+    # act
+    result = service.partial_update_instance()
+
+    # assert
+    assert result is fieldset
+    fieldset.refresh_from_db()
+    assert fieldset.name == original_name
+
+
+def test__partial_update_instance__kwargs_provided__ok():
+
+    """
+    kwargs provided
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+    )
+    new_name = 'Updated Fieldset Name'
+    service = FieldSetTemplateService(
+        user=user,
+        is_superuser=False,
+        auth_type=AuthTokenType.USER,
+        instance=fieldset,
+    )
+
+    # act
+    result = service.partial_update_instance(name=new_name)
+
+    # assert
+    assert result is not None
+    fieldset.refresh_from_db()
+    assert fieldset.name == new_name
+
+
+def test__to_json__is_shared__ok(mocker):
+
+    """
+    is_shared=True
+    """
+
+    # arrange
+    account = create_test_account()
+    fieldset = FieldsetTemplate.objects.create(
+        account=account,
+        name='Shared FS',
+        is_shared=True,
+    )
+    serializer_data = {'id': fieldset.id, 'name': 'Shared FS'}
+    shared_fs_slz_mock = mocker.patch(
+        'src.processes.serializers.templates.fieldset.'
+        'SharedFieldsetTemplateSerializer',
+    )
+    shared_fs_slz_mock.return_value.data = serializer_data
+
+    # act
+    result = FieldSetTemplateService.to_json(fieldset=fieldset)
+
+    # assert
+    assert result == serializer_data
+    shared_fs_slz_mock.assert_called_once_with(fieldset)
+
+
+def test__to_json__not_shared__ok(mocker):
+
+    """
+    is_shared=False
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(user=user, tasks_count=1)
+    fieldset = create_test_fieldset_template(
+        account=account,
+        template=template,
+    )
+    serializer_data = {'id': fieldset.id, 'name': fieldset.name}
+    fieldset_template_serializer_mock = mocker.patch(
+        'src.processes.serializers.templates.fieldset.'
+        'FieldsetTemplateSerializer',
+    )
+    fieldset_template_serializer_mock.return_value.data = serializer_data
+
+    # act
+    result = FieldSetTemplateService.to_json(fieldset=fieldset)
+
+    # assert
+    assert result == serializer_data
+    fieldset_template_serializer_mock.assert_called_once_with(fieldset)

@@ -14,6 +14,8 @@ from src.processes.models.templates.fieldset import (
 from src.processes.services.exceptions import (
     FieldsetTemplateInUseException,
     FieldsetTemplateInUseException2,
+    FieldsetTemplateSharedIdMissing,
+    FieldsetTemplateTemplateIdMissing,
 )
 from src.processes.services.templates.field_template import (
     FieldTemplateService,
@@ -31,8 +33,8 @@ class FieldSetTemplateService(BaseModelService):
     def _create_instance(
         self,
         name: str,
-        template_id: int,
         is_shared: bool,
+        template_id: Optional[int] = None,
         order: int = 0,
         title: str = '',
         description: str = '',
@@ -44,6 +46,13 @@ class FieldSetTemplateService(BaseModelService):
         layout: FieldSetLayout.LITERALS = FieldSetLayout.VERTICAL,
         **kwargs,
     ):
+
+        if not is_shared:
+            if not template_id:
+                raise FieldsetTemplateTemplateIdMissing
+            if not shared_fieldset_id:
+                raise FieldsetTemplateSharedIdMissing
+
         create_kwargs = {
             'template_id': template_id,
             'account': self.account,

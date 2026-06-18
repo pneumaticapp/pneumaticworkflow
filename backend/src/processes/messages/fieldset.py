@@ -29,3 +29,5 @@ MSG_FS_0008 = _(
 MSG_FS_0009 = _(
     'Cannot change a fieldset template that is used in templates.',
 )
+MSG_FS_0010 = _('shared_fieldset_id is required for a template fieldset.')
+MSG_FS_0011 = _('template_id is required for a template fieldset.')
