@@ -6,7 +6,6 @@ import { ECommentType, EWorkflowLogEvent } from '../../types/workflow';
 import {
   CommentIcon,
   ProcessCompleteIcon,
-  ProcessFinishIcon,
   ProcessStartIcon,
   TaskCompleteIcon,
   TaskReturnIcon,
@@ -17,6 +16,7 @@ import {
   AlarmIcon,
   AlarmCrossedIcon,
   ClockIcon,
+  WorkflowEndedIcon,
 } from '../icons';
 import { IHighlightsItem } from '../../types/highlights';
 import { getDueInData } from '../DueIn/utils/getDueInData';
@@ -70,7 +70,7 @@ export function FeedItemIcon({ className, type, task }: IFeedItemIconProps) {
       tooltipMessage: formatMessage({ id: 'workflow-highlights.icon-process-completed' }),
     },
     [EWorkflowLogEvent.WorkflowFinished]: {
-      icon: <ProcessFinishIcon className={className} size="sm" />,
+      icon: <WorkflowEndedIcon />,
       tooltipMessage: formatMessage({ id: 'workflow-highlights.icon-process-finished' }),
     },
     [EWorkflowLogEvent.TaskComplete]: {
