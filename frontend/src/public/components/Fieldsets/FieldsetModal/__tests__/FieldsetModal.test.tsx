@@ -124,7 +124,7 @@ describe('FieldsetModal', () => {
     it('dispatches createFieldsetAction on valid submit', () => {
       (useSelector as jest.Mock).mockImplementation((selector) => selector(createOpenState));
 
-      render(React.createElement(FieldsetModal, { type: EFieldsetModalType.Create, templateId: 5 }));
+      render(React.createElement(FieldsetModal, { type: EFieldsetModalType.Create }));
 
       const input = getNameInput();
       userEvent.type(input, 'New FS');
@@ -133,7 +133,7 @@ describe('FieldsetModal', () => {
       userEvent.click(submitBtn);
 
       expect(mockDispatch).toHaveBeenCalledWith(
-        createFieldsetAction({ name: 'New FS', templateId: 5 }),
+        createFieldsetAction({ name: 'New FS' }),
       );
       expect(mockDispatch).toHaveBeenCalledWith(closeCreateModal());
       expect(mockDispatch).toHaveBeenCalledTimes(2);
@@ -165,8 +165,8 @@ describe('FieldsetModal', () => {
 
       render(React.createElement(FieldsetModal, { type: EFieldsetModalType.Edit }));
 
-      const input = getNameInput() as HTMLInputElement;
-      expect(input.value).toBe('Original Name');
+      const input = getNameInput();
+      expect(input).toHaveValue('Original Name');
     });
   });
 
@@ -175,7 +175,7 @@ describe('FieldsetModal', () => {
       (validateFieldsetName as jest.Mock).mockReturnValue('Name is required');
       (useSelector as jest.Mock).mockImplementation((selector) => selector(createOpenState));
 
-      render(React.createElement(FieldsetModal, { type: EFieldsetModalType.Create, templateId: 5 }));
+      render(React.createElement(FieldsetModal, { type: EFieldsetModalType.Create }));
 
       const input = getNameInput();
       userEvent.type(input, 'bad name');
@@ -192,7 +192,7 @@ describe('FieldsetModal', () => {
       (validateFieldsetName as jest.Mock).mockReturnValue('Name is required');
       (useSelector as jest.Mock).mockImplementation((selector) => selector(createOpenState));
 
-      render(React.createElement(FieldsetModal, { type: EFieldsetModalType.Create, templateId: 5 }));
+      render(React.createElement(FieldsetModal, { type: EFieldsetModalType.Create }));
 
       const input = getNameInput();
       userEvent.type(input, 'bad name');
@@ -214,7 +214,7 @@ describe('FieldsetModal', () => {
     it('submit is disabled when Create input is empty', () => {
       (useSelector as jest.Mock).mockImplementation((selector) => selector(createOpenState));
 
-      render(React.createElement(FieldsetModal, { type: EFieldsetModalType.Create, templateId: 5 }));
+      render(React.createElement(FieldsetModal, { type: EFieldsetModalType.Create }));
 
       const submitBtn = getSubmitButton(CREATE_LABEL);
       expect(submitBtn).toBeDisabled();
@@ -246,7 +246,7 @@ describe('FieldsetModal', () => {
     it('dispatches closeCreateModal on Cancel click', () => {
       (useSelector as jest.Mock).mockImplementation((selector) => selector(createOpenState));
 
-      render(React.createElement(FieldsetModal, { type: EFieldsetModalType.Create, templateId: 5 }));
+      render(React.createElement(FieldsetModal, { type: EFieldsetModalType.Create }));
 
       const cancelBtn = getSubmitButton(CANCEL_LABEL);
       userEvent.click(cancelBtn);
@@ -262,7 +262,7 @@ describe('FieldsetModal', () => {
       (useSelector as jest.Mock).mockImplementation((selector) => selector(createOpenState));
 
       const { rerender } = render(
-        React.createElement(FieldsetModal, { type: EFieldsetModalType.Create, templateId: 5 }),
+        React.createElement(FieldsetModal, { type: EFieldsetModalType.Create }),
       );
 
       const input = getNameInput();
@@ -275,13 +275,13 @@ describe('FieldsetModal', () => {
 
       (useSelector as jest.Mock).mockImplementation((selector) => selector(defaultState));
       rerender(
-        React.createElement(FieldsetModal, { type: EFieldsetModalType.Create, templateId: 5 }),
+        React.createElement(FieldsetModal, { type: EFieldsetModalType.Create }),
       );
 
       (validateFieldsetName as jest.Mock).mockReturnValue('');
       (useSelector as jest.Mock).mockImplementation((selector) => selector(createOpenState));
       rerender(
-        React.createElement(FieldsetModal, { type: EFieldsetModalType.Create, templateId: 5 }),
+        React.createElement(FieldsetModal, { type: EFieldsetModalType.Create }),
       );
 
       expect(screen.queryByTestId('error-message')).not.toBeInTheDocument();

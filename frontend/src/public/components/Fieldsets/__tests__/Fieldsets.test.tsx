@@ -167,12 +167,12 @@ describe('Fieldsets', () => {
   });
 
   describe('Modals', () => {
-    it('renders FieldsetModal for Create (with MOCK_TEMPLATE_ID) and Edit', () => {
+    it('renders FieldsetModal for Create and Edit', () => {
       render(React.createElement(Fieldsets));
 
       const mock = FieldsetModal as jest.Mock;
       expect(mock).toHaveBeenCalledTimes(2);
-      expect(mock).toHaveBeenCalledWith(expect.objectContaining({ type: 'create', templateId: 1 }), {});
+      expect(mock).toHaveBeenCalledWith(expect.objectContaining({ type: 'create' }), {});
       expect(mock).toHaveBeenCalledWith(expect.objectContaining({ type: 'edit' }), {});
     });
   });

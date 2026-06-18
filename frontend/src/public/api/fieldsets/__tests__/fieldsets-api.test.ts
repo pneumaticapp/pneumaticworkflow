@@ -37,7 +37,6 @@ describe('fieldsets API clients', () => {
       (commonRequest as jest.Mock).mockResolvedValue(mockResponse);
 
       const params = {
-        templateId: 42,
         name: 'New Fieldset',
         description: 'Desc',
         rules: [],
@@ -46,10 +45,9 @@ describe('fieldsets API clients', () => {
 
       const result = await createFieldset(params);
 
-      const expectedUrl = MOCK_URLS.templateFieldsets.replace(':id', '42');
       expect(commonRequest).toHaveBeenCalledTimes(1);
       expect(commonRequest).toHaveBeenCalledWith(
-        expectedUrl,
+        MOCK_URLS.fieldsets,
         {
           method: 'POST',
           data: expect.any(String),

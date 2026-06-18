@@ -72,7 +72,6 @@ export interface IGetFieldsetParams {
 }
 
 export interface ICreateFieldsetParams {
-  templateId: number;
   name: string;
   description?: string;
   rules?: Omit<IFieldsetTemplateRule, 'id'>[];

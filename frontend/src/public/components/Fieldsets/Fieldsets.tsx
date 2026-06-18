@@ -62,7 +62,7 @@ export function Fieldsets() {
           <FieldsetCard key={fieldset.id} {...fieldset} templateId={MOCK_TEMPLATE_ID} />
         ))}
       </InfiniteScroll>
-      <FieldsetModal type={EFieldsetModalType.Create} templateId={MOCK_TEMPLATE_ID} />
+      <FieldsetModal type={EFieldsetModalType.Create} />
       <FieldsetModal type={EFieldsetModalType.Edit} />
     </div>
   );
