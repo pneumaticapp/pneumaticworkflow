@@ -1,4 +1,4 @@
-import { IAccount, TUserId } from './user';
+import { TUserId } from './user';
 import { TUploadedFile } from '../utils/uploadFiles';
 import { ITask, ITemplateStep, TaskWithTsp } from './tasks';
 import {
@@ -104,8 +104,8 @@ export interface IWorkflowLogItem {
   targetUserId: number | null;
   targetGroupId: number | null;
   attachments: [];
-  watched: { date: string; userId: Pick<IAccount, 'id'> }[];
-  reactions: { [value: string]: Pick<IAccount, 'id'>[] };
+  watched: { date: string; userId: number }[];
+  reactions: { [value: string]: number[] };
 }
 
 export interface IWorkflowDelay {
