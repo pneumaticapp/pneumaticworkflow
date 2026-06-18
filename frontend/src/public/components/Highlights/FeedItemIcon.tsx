@@ -70,7 +70,7 @@ export function FeedItemIcon({ className, type, task }: IFeedItemIconProps) {
       tooltipMessage: formatMessage({ id: 'workflow-highlights.icon-process-completed' }),
     },
     [EWorkflowLogEvent.WorkflowFinished]: {
-      icon: <WorkflowEndedIcon />,
+      icon: <WorkflowEndedIcon className={className} />,
       tooltipMessage: formatMessage({ id: 'workflow-highlights.icon-process-finished' }),
     },
     [EWorkflowLogEvent.TaskComplete]: {
