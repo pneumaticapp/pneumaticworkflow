@@ -81,6 +81,7 @@ export function createWebSocketChannel(url: string) {
         clearInterval(heartbeatInterval);
         heartbeatInterval = null;
       }
+      ws.shouldRemove = true;
       ws.close();
     };
   });
