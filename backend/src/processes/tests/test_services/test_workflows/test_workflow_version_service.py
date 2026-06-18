@@ -63,6 +63,7 @@ from src.processes.services.workflow_permissions import (
 from src.processes.tests.guardian_helpers import (
     assert_guardian_manage,
     assert_guardian_view,
+    assert_no_guardian_view,
 )
 
 UserModel = get_user_model()
@@ -804,8 +805,8 @@ class TestWorkflowUpdateVersionService:
 
         # assert
         workflow.refresh_from_db()
-        assert WorkflowPermissionService.has_view(user_2, workflow)
-        assert_guardian_view(workflow, user_2)
+        assert not WorkflowPermissionService.has_view(user_2, workflow)
+        assert_no_guardian_view(workflow, user_2)
 
     def test_update_from_version__prev_task_checklist__not_changed(
         self,

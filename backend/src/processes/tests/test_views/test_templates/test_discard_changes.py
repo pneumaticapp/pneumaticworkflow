@@ -22,9 +22,7 @@ from src.processes.tests.fixtures import (
     create_test_template,
     create_test_user,
 )
-from src.processes.services.workflow_permissions import (
-    WorkflowPermissionService,
-)
+
 
 pytestmark = pytest.mark.django_db
 
@@ -79,7 +77,7 @@ def test_discard_changes__active_template__not_change(api_client):
     template = Template.objects.get(id=template_id)
     assert template.name == request_data['name']
     assert template.description == request_data['description']
-    assert len(WorkflowPermissionService.get_owner_ids(template)) == 1
+    assert template.owners.count() == 1
     assert template.owners.first().user_id == user.id
     assert template.is_active is True
     assert template.tasks.count() == 1
@@ -196,7 +194,7 @@ def test_discard_changes__draft_template__discard_changes(api_client):
     template = Template.objects.get(id=template_id)
     assert template.name == request_data['name']
     assert template.description == request_data['description']
-    assert len(WorkflowPermissionService.get_owner_ids(template)) == 1
+    assert template.owners.count() == 1
     assert template.owners.first().user_id == user.id
     assert template.is_active is True
 

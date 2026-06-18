@@ -914,7 +914,7 @@ class TestUpdateTemplate:
         assert response_update.data['is_active'] is False
         template.refresh_from_db()
         assert template.is_active is False
-        assert len(WorkflowPermissionService.get_owner_ids(template)) == 1
+        assert template.owners.count() == 1
         assert template.owners.filter(
             type=OwnerType.USER, user_id=user.id,
         ).exists()
@@ -2022,7 +2022,7 @@ class TestUpdateTemplate:
         assert response_data['owners'][1]['source_id'] == str(owner.id)
         assert response_data['owners'][1]['type'] == OwnerType.USER
         template = Template.objects.get(id=response_data['id'])
-        assert len(WorkflowPermissionService.get_owner_ids(template)) == 2
+        assert template.owners.count() == 2
         assert template.owners.filter(
             type=OwnerType.USER, user_id=non_admin.id,
         ).exists()
@@ -2113,7 +2113,7 @@ class TestUpdateTemplate:
         assert response_data['owners'][1]['source_id'] == str(owner.id)
         assert response_data['owners'][1]['type'] == OwnerType.USER
         template = Template.objects.get(id=response_data['id'])
-        assert len(WorkflowPermissionService.get_owner_ids(template)) == 2
+        assert template.owners.count() == 2
         assert template.owners.filter(
             type=OwnerType.USER, user_id=non_admin.id,
         ).exists()

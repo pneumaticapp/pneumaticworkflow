@@ -148,6 +148,9 @@ class TaskPerformersService(BasePerformersService):
             user=request_user,
         )
 
+        # Guardian: recalculate view permissions after performer removal
+        WorkflowPermissionService.set_viewers(task.workflow)
+
     @classmethod
     def _create_actions(
         cls,

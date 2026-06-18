@@ -28,26 +28,44 @@ from src.processes.messages.workflow import (
     MSG_PW_0024,
 )
 from src.processes.paginations import WorkflowListPagination
-from src.processes.services.workflow_permissions import (
-    GUARDIAN_OWNER_JOIN_SQL,
-)
 from src.queries import (
     OrderByMixin,
     SqlQueryObject,
 )
 
+
 UserModel = get_user_model()
 
-# Pre-computed Guardian join fragments (avoids E501 in f-strings)
-_GJ_PWO = GUARDIAN_OWNER_JOIN_SQL.format(
-    alias='pwo', workflow_col='pw.id',
-)
-_GJ_PTRA = GUARDIAN_OWNER_JOIN_SQL.format(
-    alias='ptra', workflow_col='pw.id',
-)
-_GJ_WFO = GUARDIAN_OWNER_JOIN_SQL.format(
-    alias='wfo', workflow_col='workflow.id',
-)
+
+class GuardianOwnerJoinMixin:
+    """Generates Guardian-based workflow owner JOIN SQL.
+
+    Replaces the old: LEFT JOIN processes_workflow_owners
+    The guardian_userobjectpermission table has a `user_id` column
+    just like the old M2M table, so WHERE clauses like
+    `{alias}.user_id` work as before.
+    """
+
+    @staticmethod
+    def _guardian_owner_join(alias: str, workflow_col: str) -> str:
+        return f"""
+            LEFT JOIN guardian_userobjectpermission {alias} ON (
+                {alias}.object_pk = CAST({workflow_col} AS VARCHAR)
+                AND {alias}.content_type_id = (
+                    SELECT id FROM django_content_type
+                    WHERE app_label = 'processes' AND model = 'workflow'
+                )
+                AND {alias}.permission_id = (
+                    SELECT id FROM auth_permission
+                    WHERE codename = 'manage_workflow'
+                    AND content_type_id = (
+                        SELECT id FROM django_content_type
+                        WHERE app_label = 'processes'
+                          AND model = 'workflow'
+                    )
+                )
+            )
+        """
 
 
 class TemplateOwnerRoleMixin:
@@ -81,6 +99,7 @@ class TemplateOwnerRoleMixin:
 
 
 class WorkflowListQuery(
+    GuardianOwnerJoinMixin,
     TemplateOwnerRoleMixin,
     SqlQueryObject,
     SearchSqlQueryMixin,
@@ -282,7 +301,7 @@ class WorkflowListQuery(
     def _get_from(self):
         result = f"""
             FROM processes_workflow pw
-            {_GJ_PWO}
+            {self._guardian_owner_join('pwo', 'pw.id')}
             INNER JOIN processes_task pt ON (
                 pw.id = pt.workflow_id
                 AND pt.is_deleted IS FALSE
@@ -383,6 +402,7 @@ class WorkflowListQuery(
 
 
 class WorkflowCountsByWfStarterQuery(
+    GuardianOwnerJoinMixin,
     TemplateOwnerRoleMixin,
     SqlQueryObject,
 ):
@@ -498,7 +518,7 @@ class WorkflowCountsByWfStarterQuery(
         result = f"""
         FROM processes_workflow pw
             LEFT JOIN processes_template t ON t.id = pw.template_id
-            {_GJ_PTRA}
+            {self._guardian_owner_join('ptra', 'pw.id')}
             LEFT JOIN accounts_user au ON au.id = ptra.user_id
         """
         if self.current_performer_ids or self.current_performer_group_ids:
@@ -544,6 +564,7 @@ class WorkflowCountsByWfStarterQuery(
 
 
 class WorkflowCountsByCPerformerQuery(
+    GuardianOwnerJoinMixin,
     TemplateOwnerRoleMixin,
     SqlQueryObject,
 ):
@@ -644,7 +665,7 @@ class WorkflowCountsByCPerformerQuery(
     def _get_from(self):
         return f"""
         FROM processes_workflow pw
-            {_GJ_PTRA}
+            {self._guardian_owner_join('ptra', 'pw.id')}
             LEFT JOIN accounts_user au ON au.id = ptra.user_id
             INNER JOIN processes_task pt
               ON pw.id = pt.workflow_id
@@ -671,7 +692,7 @@ class WorkflowCountsByCPerformerQuery(
                 aug.user_id AS user_id,
                 pw.id AS workflow_id
             FROM processes_workflow pw
-                {_GJ_PTRA}
+                {self._guardian_owner_join('ptra', 'pw.id')}
                 LEFT JOIN accounts_user au ON au.id = ptra.user_id
                 INNER JOIN processes_task pt
                   ON pw.id = pt.workflow_id
@@ -714,7 +735,7 @@ class WorkflowCountsByCPerformerQuery(
                 ptp.group_id AS group_id,
                 pw.id AS workflow_id
             FROM processes_workflow pw
-                {_GJ_PTRA}
+                {self._guardian_owner_join('ptra', 'pw.id')}
                 LEFT JOIN accounts_user au ON au.id = ptra.user_id
                 INNER JOIN processes_task pt
                   ON pw.id = pt.workflow_id
@@ -1860,7 +1881,7 @@ class TemplateStepsQuery(
         """, self.params
 
 
-class HighlightsQuery(SqlQueryObject):
+class HighlightsQuery(GuardianOwnerJoinMixin, SqlQueryObject):
     event_types = (
         WorkflowEventType.COMMENT,
         WorkflowEventType.TASK_COMPLETE,
@@ -1936,7 +1957,7 @@ class HighlightsQuery(SqlQueryObject):
         self.sql_params['starter_type_user'] = OwnerType.USER
         self.sql_params['starter_type_group'] = OwnerType.GROUP
         self.sql_params['role_starter'] = OwnerRole.STARTER
-        subquery = """
+        subquery = f"""
         SELECT DISTINCT ON (we.workflow_id)
           we.id,
           we.type,
@@ -1952,7 +1973,7 @@ class HighlightsQuery(SqlQueryObject):
           we.workflow_id = workflow.id
         LEFT JOIN processes_template template ON
           workflow.template_id = template.id
-        {_GJ_WFO}
+          {self._guardian_owner_join('wfo', 'workflow.id')}
         LEFT JOIN processes_templateowner ptv_user ON
           template.id = ptv_user.template_id
           AND ptv_user.is_deleted IS FALSE
@@ -2411,37 +2432,3 @@ class TemplateTitlesByTasksQuery(
             GROUP BY t.id
             ORDER BY count DESC, t.name ASC
         """, self.params
-
-
-class UpdateWorkflowOwnersQuery(SqlQueryObject):
-    """DEPRECATED: M2M table processes_workflow_owners no longer exists.
-
-    Ownership is now managed via Guardian (WorkflowPermissionService).
-    Kept as stub for backward compatibility — never invoked.
-    """
-
-    def __init__(self, template_id: int):
-        self.params = {'template_id': template_id}
-
-    def get_sql(self) -> Tuple[str, dict]:
-        return 'SELECT 1', self.params
-
-    def insert_sql(self):
-        return 'SELECT 1', self.params
-
-
-class UpdateWorkflowMemberQuery(SqlQueryObject):
-    """DEPRECATED: M2M table processes_workflow_members no longer exists.
-
-    Membership is now managed via Guardian (WorkflowPermissionService).
-    Kept as stub for backward compatibility — never invoked.
-    """
-
-    def __init__(self, template_id: int):
-        self.params = {'template_id': template_id}
-
-    def get_sql(self) -> Tuple[str, dict]:
-        return 'SELECT 1', self.params
-
-    def insert_sql(self):
-        return 'SELECT 1', self.params

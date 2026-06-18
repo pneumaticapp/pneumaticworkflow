@@ -134,6 +134,9 @@ class GroupPerformerService(BasePerformerService2):
             user=self.user,
         )
 
+        # Guardian: recalculate view permissions after group removal
+        WorkflowPermissionService.set_viewers(self.task.workflow)
+
     def _create_group_actions(self, group: UserGroup) -> None:
         WorkflowEventService.performer_group_created_event(
             user=self.user,

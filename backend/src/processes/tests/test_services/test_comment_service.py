@@ -1963,6 +1963,16 @@ def test_update__notified_users__ok(mocker):
         'src.processes.services.events.'
         'send_mention_notification.delay',
     )
+    # suppressed — partial_update is mocked so DB text stays old;
+    # set_viewers would revoke the just-granted permission
+    set_viewers_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowPermissionService.set_viewers',
+    )
+    sync_perms_mock = mocker.patch(
+        'src.processes.services.events.'
+        'sync_workflow_attachment_permissions.delay',
+    )
 
     service = CommentService(
         instance=event,
@@ -2013,6 +2023,12 @@ def test_update__notified_users__ok(mocker):
     )
     assert WorkflowPermissionService.has_view(user, workflow)
     assert_guardian_view(workflow, user)
+    set_viewers_mock.assert_called_once_with(
+        workflow,
+    )
+    sync_perms_mock.assert_called_once_with(
+        workflow.id,
+    )
 
 
 def test_update__mentioned_users__ok(mocker):
@@ -2081,6 +2097,16 @@ def test_update__mentioned_users__ok(mocker):
         'src.processes.services.events.'
         'AnalyticService.comment_edited',
     )
+    # suppressed — partial_update is mocked so DB text stays old;
+    # set_viewers would revoke the just-granted permission
+    set_viewers_mock = mocker.patch(
+        'src.processes.services.events.'
+        'WorkflowPermissionService.set_viewers',
+    )
+    sync_perms_mock = mocker.patch(
+        'src.processes.services.events.'
+        'sync_workflow_attachment_permissions.delay',
+    )
 
     service = CommentService(
         instance=event,
@@ -2121,6 +2147,12 @@ def test_update__mentioned_users__ok(mocker):
         is_superuser=is_superuser,
         auth_type=auth_type,
         workflow=workflow,
+    )
+    set_viewers_mock.assert_called_once_with(
+        workflow,
+    )
+    sync_perms_mock.assert_called_once_with(
+        workflow.id,
     )
 
 

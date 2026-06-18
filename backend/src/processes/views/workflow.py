@@ -64,6 +64,9 @@ from src.processes.services.exceptions import (
 )
 from src.processes.services.tasks.exceptions import TaskFieldException
 from src.processes.services.workflow_action import WorkflowActionService
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 from src.utils.validation import raise_validation_error
 from src.webhooks.enums import HookEvent
 
@@ -115,7 +118,7 @@ class WorkflowViewSet(
         queryset = Workflow.objects.on_account(user.account_id)
         if self.action == 'webhook_example':
             queryset = queryset.filter(
-                owners=user.id,
+                WorkflowPermissionService.manager_q(user.id),
             ).order_by('-date_created')
         return self.prefetch_queryset(queryset)
 

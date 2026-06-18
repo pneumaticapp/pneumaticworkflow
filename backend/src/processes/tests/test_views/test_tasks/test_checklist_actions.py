@@ -186,7 +186,7 @@ class TestChecklistRetrieve:
         assert not WorkflowPermissionService.has_view(user_2, workflow)
         assert not task.performers.filter(id=user_2.id).exists()
 
-    def test_retrieve__deleted_performer__ok(
+    def test_retrieve__deleted_performer__not_found(
         self,
         api_client,
     ):
@@ -229,8 +229,8 @@ class TestChecklistRetrieve:
         # act
         response = api_client.get(f'/v2/tasks/checklists/{checklist.id}')
 
-        # assert
-        assert response.status_code == 200
+        # assert — deleted performer loses view access (permission revocation)
+        assert response.status_code == 404
 
 
 class TestChecklistMark:

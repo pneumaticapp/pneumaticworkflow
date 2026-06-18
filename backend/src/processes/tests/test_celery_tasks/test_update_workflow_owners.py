@@ -338,11 +338,11 @@ def test__delete_group_owner_other_template_unchanged__ok():
     update_workflow_owners([template_2.id])
 
     # assert
-    assert len(WorkflowPermissionService.get_owner_ids(template)) == 1
+    assert template.owners.count() == 1
     assert template.owners.get(group_id=group.id)
     assert len(WorkflowPermissionService.get_owner_ids(workflow)) == 1
     assert WorkflowPermissionService.has_manage(user, workflow)
-    assert len(WorkflowPermissionService.get_owner_ids(template_2)) == 0
+    assert template_2.owners.count() == 0
     assert len(WorkflowPermissionService.get_owner_ids(workflow_2)) == 0
 
 
@@ -405,15 +405,11 @@ def test__delete_group_owner_different_account_unchanged__ok():
     update_workflow_owners([template_account_another.id])
 
     # assert
-    assert len(WorkflowPermissionService.get_owner_ids(template)) == 1
+    assert template.owners.count() == 1
     assert template.owners.get(group_id=group.id)
     assert len(WorkflowPermissionService.get_owner_ids(workflow)) == 1
     assert WorkflowPermissionService.has_manage(user, workflow)
-    assert len(
-        WorkflowPermissionService.get_owner_ids(
-            template_account_another,
-        ),
-    ) == 0
+    assert template_account_another.owners.count() == 0
     assert len(
         WorkflowPermissionService.get_owner_ids(
             workflow_account_another,

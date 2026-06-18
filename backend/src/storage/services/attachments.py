@@ -1,4 +1,4 @@
-import contextlib
+
 from typing import Iterable, List, Optional
 
 from django.contrib.auth import get_user_model
@@ -131,9 +131,10 @@ class AttachmentService(BaseModelService):
         # Collect workflow viewers from Guardian
         workflow = task.workflow
         viewer_ids = WorkflowPermissionService.get_viewer_ids(workflow)
-        for uid in viewer_ids:
-            with contextlib.suppress(UserModel.DoesNotExist):
-                users_set.add(UserModel.objects.get(id=uid))
+        if viewer_ids:
+            users_set.update(
+                UserModel.objects.filter(id__in=viewer_ids),
+            )
 
         # Collect template owners (user + group)
         if workflow.template_id:
@@ -232,9 +233,10 @@ class AttachmentService(BaseModelService):
         workflow = task.workflow
         if workflow:
             viewer_ids = WorkflowPermissionService.get_viewer_ids(workflow)
-            for uid in viewer_ids:
-                with contextlib.suppress(UserModel.DoesNotExist):
-                    users_set.add(UserModel.objects.get(id=uid))
+            if viewer_ids:
+                users_set.update(
+                    UserModel.objects.filter(id__in=viewer_ids),
+                )
 
             # Get template owners
             if workflow.template:
@@ -380,9 +382,10 @@ class AttachmentService(BaseModelService):
 
         # Get viewers from Guardian (owners + members)
         viewer_ids = WorkflowPermissionService.get_viewer_ids(workflow)
-        for uid in viewer_ids:
-            with contextlib.suppress(UserModel.DoesNotExist):
-                users_set.add(UserModel.objects.get(id=uid))
+        if viewer_ids:
+            users_set.update(
+                UserModel.objects.filter(id__in=viewer_ids),
+            )
 
         # Also get owners from template (primary source)
         if workflow.template:

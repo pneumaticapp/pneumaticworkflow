@@ -45,6 +45,7 @@ from src.services.markdown import MarkdownService
 from src.storage.services.attachments import (
     clear_guardian_permissions_for_attachment_ids,
 )
+from src.storage.tasks import sync_workflow_attachment_permissions
 from src.storage.utils import refresh_attachments
 from src.processes.services.workflow_permissions import (
     WorkflowPermissionService,
@@ -791,8 +792,14 @@ class CommentService(BaseModelService):
                     users_ids=new_mentioned_users_ids,
                     text=self.instance.text,
                 )
+            # Recalculate view permissions: revoke access from users
+            # whose mentions were removed during edit
+            WorkflowPermissionService.set_viewers(self.instance.workflow)
 
         self._send_event_updated()
+        sync_workflow_attachment_permissions.delay(
+            self.instance.workflow_id,
+        )
         AnalyticService.comment_edited(
             text=clear_text,
             user=self.user,
@@ -819,7 +826,12 @@ class CommentService(BaseModelService):
             text=None,
             force_save=True,
         )
+        # Recalculate: deleted comment → mentions no longer count
+        WorkflowPermissionService.set_viewers(self.instance.workflow)
         self._send_event_updated()
+        sync_workflow_attachment_permissions.delay(
+            self.instance.workflow_id,
+        )
         AnalyticService.comment_deleted(
             text=self.instance.clear_text,
             user=self.user,

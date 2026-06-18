@@ -9,7 +9,6 @@ from src.processes.models.templates.template import (
     Template,
     TemplateVersion,
 )
-from src.processes.models.workflows.task import TaskPerformer
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.workflow_permissions import (
     WorkflowPermissionService,
@@ -18,6 +17,7 @@ from src.processes.services.workflows.workflow_version import (
     WorkflowUpdateVersionService,
 )
 from src.processes.tasks.tasks import UserModel
+from src.storage.tasks import sync_workflow_attachment_permissions
 
 
 def _update_workflows(
@@ -92,7 +92,11 @@ def update_workflow_owners(template_ids: List[int]):
 
     For each workflow belonging to the given templates:
     1. Set manage_workflow + view_workflow for current template owners
-    2. Grant view_workflow to all task performers
+    2. Re-sync view_workflow for all entitled users (performers,
+       mentioned users) — also REVOKES view from users who lost
+       access (e.g. removed from a group)
+    3. Sync attachment permissions (async) so removed owners
+       lose access_attachment along with manage_workflow
     """
     for template_id in template_ids:
         template_owner_ids = list(
@@ -110,18 +114,9 @@ def update_workflow_owners(template_ids: List[int]):
                 WorkflowPermissionService.set_owners(
                     workflow, template_owner_ids,
                 )
-                # Grant view to all task performers
-                performer_ids = list(
-                    TaskPerformer.objects
-                    .filter(
-                        task__workflow=workflow,
-                        task__is_deleted=False,
-                    )
-                    .exclude_directly_deleted()
-                    .get_user_ids_set(),
-                )
-                viewer_only = set(performer_ids) - set(template_owner_ids)
-                if viewer_only:
-                    WorkflowPermissionService.grant_view_bulk(
-                        list(viewer_only), workflow,
-                    )
+                # Full re-sync: grant view to entitled users AND
+                # revoke view from users who lost all access sources
+                # (e.g. removed from performer group, template owners)
+                WorkflowPermissionService.set_viewers(workflow)
+            # Sync attachment permissions after workflow perms are updated
+            sync_workflow_attachment_permissions.delay(workflow.id)

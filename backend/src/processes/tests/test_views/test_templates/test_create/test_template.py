@@ -48,9 +48,6 @@ from src.processes.tests.fixtures import (
     create_test_user,
 )
 from src.utils.validation import ErrorCode
-from src.processes.services.workflow_permissions import (
-    WorkflowPermissionService,
-)
 
 pytestmark = pytest.mark.django_db
 
@@ -128,7 +125,7 @@ def test_create__only_required_fields__defaults_ok(
     assert response_data['wf_name_template'] is None
     template = Template.objects.get(id=response_data['id'])
     assert template.tasks.first().account_id == user.account_id
-    assert len(WorkflowPermissionService.get_owner_ids(template)) == 1
+    assert template.owners.count() == 1
     assert template.name == request_data['name']
     assert template.description == ''
     assert template.is_active == request_data['is_active']
@@ -233,7 +230,7 @@ def test_create__only_required_fields_with_group__defaults_ok(
     assert response_data['wf_name_template'] is None
     template = Template.objects.get(id=response_data['id'])
     assert template.tasks.first().account_id == user.account_id
-    assert len(WorkflowPermissionService.get_owner_ids(template)) == 2
+    assert template.owners.count() == 2
     assert template.name == request_data['name']
     assert template.description == ''
     assert template.is_active == request_data['is_active']
@@ -645,7 +642,7 @@ def test_create__draft__ok(
     assert response_data['tasks'] == request_data['tasks']
 
     template = Template.objects.get(id=response_data['id'])
-    assert len(WorkflowPermissionService.get_owner_ids(template)) == 1
+    assert template.owners.count() == 1
     assert template.owners.first().user_id == user.id
     assert template.name == 'New template'
     assert template.is_active is False
@@ -2546,7 +2543,7 @@ def test_create__admin_in_template_owners__ok(
     assert response_data['owners'][1]['source_id'] == str(admin_user.id)
     assert response_data['owners'][1]['type'] == OwnerType.USER
     template = Template.objects.get(id=response_data['id'])
-    assert len(WorkflowPermissionService.get_owner_ids(template)) == 2
+    assert template.owners.count() == 2
     assert template.owners.filter(user_id=admin_user.id).exists()
     template_create_mock.assert_called_once()
     kickoff_create_mock.assert_called_once()
@@ -2628,7 +2625,7 @@ def test_create__account_owner_in_template_owners__ok(
     assert response_data['owners'][1]['source_id'] == str(another_owner.id)
     assert response_data['owners'][1]['type'] == OwnerType.USER
     template = Template.objects.get(id=response_data['id'])
-    assert len(WorkflowPermissionService.get_owner_ids(template)) == 2
+    assert template.owners.count() == 2
     assert template.owners.filter(user_id=another_owner.id).exists()
     template_create_mock.assert_called_once()
     kickoff_create_mock.assert_called_once()
@@ -2780,7 +2777,7 @@ def test_create__draft_invalid_template_owners_format__set_default(
     # assert
     assert response.status_code == 200
     template = Template.objects.get(id=response.data['id'])
-    assert len(WorkflowPermissionService.get_owner_ids(template)) == 1
+    assert template.owners.count() == 1
     assert template.owners.first().user_id == user.id
     template_create_mock.assert_called_once()
     kickoff_create_mock.assert_called_once()
@@ -2844,7 +2841,7 @@ def test_create__draft_another_acc_users_in_template_owners__set_default(
     assert response.data['owners'][0]['source_id'] == str(user.id)
     assert response.data['owners'][0]['type'] == OwnerType.USER
     template = Template.objects.get(id=response.data['id'])
-    assert len(WorkflowPermissionService.get_owner_ids(template)) == 1
+    assert template.owners.count() == 1
     assert template.owners.first().user_id == user.id
     template_create_mock.assert_called_once()
     kickoff_create_mock.assert_called_once()

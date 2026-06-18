@@ -1,7 +1,10 @@
 from typing import Optional
 
 from django.contrib.auth import get_user_model
+from django.contrib.contenttypes.models import ContentType
 from django.db import transaction
+
+from guardian.models import UserObjectPermission
 
 from src.accounts.models import UserGroup
 from src.accounts.queries import (
@@ -49,8 +52,6 @@ from src.processes.models.templates.template import Template
 from src.processes.models.workflows.conditions import Predicate
 from src.processes.models.workflows.raw_performer import RawPerformer
 from src.processes.models.workflows.task import TaskPerformer
-from django.contrib.contenttypes.models import ContentType
-from guardian.models import UserObjectPermission
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.tasks.update_workflow import update_workflow_owners
 from src.processes.tasks.tasks import complete_tasks
@@ -330,12 +331,19 @@ class ReassignService:
                 user=self.old_user,
                 content_type=ct,
             )
-            for perm in old_perms:
-                UserObjectPermission.objects.get_or_create(
+            perms_to_create = [
+                UserObjectPermission(
                     user=self.new_user,
-                    permission=perm.permission,
-                    content_type=perm.content_type,
+                    permission_id=perm.permission_id,
+                    content_type_id=perm.content_type_id,
                     object_pk=perm.object_pk,
+                )
+                for perm in old_perms
+            ]
+            if perms_to_create:
+                UserObjectPermission.objects.bulk_create(
+                    perms_to_create,
+                    ignore_conflicts=True,
                 )
             old_perms.delete()
 

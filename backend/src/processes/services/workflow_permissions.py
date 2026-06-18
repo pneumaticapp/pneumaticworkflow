@@ -1,41 +1,31 @@
-from typing import Iterable, Set
+import re
+from typing import Iterable, Set, TYPE_CHECKING
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import Permission
 from django.contrib.contenttypes.models import ContentType
-from django.db.models import Q, Subquery
+from django.db.models import IntegerField, Q, Subquery
+from django.db.models.functions import Cast
 
 from guardian.models import UserObjectPermission
 from guardian.shortcuts import assign_perm, get_users_with_perms
 
+from src.processes.enums import (
+    CommentStatus,
+    DirectlyStatus,
+    PerformerType,
+    WorkflowEventType,
+)
+
 UserModel = get_user_model()
+
+if TYPE_CHECKING:
+    from src.processes.models.workflows.workflow import Workflow
+
+MENTION_RE = re.compile(r'\[.*?\|\s*([0-9]+)\]')
 
 PERM_VIEW = 'processes.view_workflow'
 PERM_MANAGE = 'processes.manage_workflow'
-
-# Raw SQL fragment: Guardian-based workflow owner join.
-# Replaces: LEFT JOIN processes_workflow_owners
-#   {alias} ON pw.id = {alias}.workflow_id
-# The guardian_userobjectpermission table has
-# `user_id` column just like the old M2M table,
-# so WHERE clauses like `{alias}.user_id` work.
-GUARDIAN_OWNER_JOIN_SQL = """
-    LEFT JOIN guardian_userobjectpermission {alias} ON (
-        {alias}.object_pk = CAST({workflow_col} AS VARCHAR)
-        AND {alias}.content_type_id = (
-            SELECT id FROM django_content_type
-            WHERE app_label = 'processes' AND model = 'workflow'
-        )
-        AND {alias}.permission_id = (
-            SELECT id FROM auth_permission
-            WHERE codename = 'manage_workflow'
-            AND content_type_id = (
-                SELECT id FROM django_content_type
-                WHERE app_label = 'processes' AND model = 'workflow'
-            )
-        )
-    )
-"""
 
 
 class WorkflowPermissionService:
@@ -55,7 +45,7 @@ class WorkflowPermissionService:
     # ── Write operations ──────────────────────────────────
 
     @classmethod
-    def grant_view(cls, user, workflow) -> None:
+    def grant_view(cls, user: UserModel, workflow: 'Workflow') -> None:
         """Grant view access to a single user.
 
         Replaces: workflow.members.add(user)
@@ -63,7 +53,7 @@ class WorkflowPermissionService:
         assign_perm(PERM_VIEW, user, workflow)
 
     @classmethod
-    def grant_manage(cls, user, workflow) -> None:
+    def grant_manage(cls, user: UserModel, workflow: 'Workflow') -> None:
         """Grant manage + view access to a single user.
 
         Replaces: workflow.owners.add(user)
@@ -73,7 +63,11 @@ class WorkflowPermissionService:
         assign_perm(PERM_MANAGE, user, workflow)
 
     @classmethod
-    def grant_view_bulk(cls, user_ids: Iterable[int], workflow) -> None:
+    def grant_view_bulk(
+        cls,
+        user_ids: Iterable[int],
+        workflow: 'Workflow',
+    ) -> None:
         """Bulk-grant view access.
 
         Replaces: workflow.members.add(*user_ids)
@@ -100,7 +94,7 @@ class WorkflowPermissionService:
         )
 
     @classmethod
-    def set_owners(cls, workflow, user_ids: Iterable[int]) -> None:
+    def set_owners(cls, workflow: 'Workflow', user_ids: Iterable[int]) -> None:
         """Replace all owners for a workflow.
 
         Replaces: workflow.owners.set(user_ids)
@@ -143,15 +137,141 @@ class WorkflowPermissionService:
                 ignore_conflicts=True,
             )
 
+    @classmethod
+    def set_viewers(cls, workflow: 'Workflow') -> None:
+        """Recalculate view_workflow permissions for a workflow.
+
+        Collects all user IDs who SHOULD have view access from:
+        1. Template owners (always have view via manage)
+        2. Active task performers (direct users + group members)
+        3. Users mentioned in non-deleted comments
+
+        Removes view_workflow for users not in this set.
+        Adds view_workflow for users who should have it.
+        """
+        from src.processes.models.workflows.task import TaskPerformer  # noqa: PLC0415
+
+        entitled_ids = set()
+
+        # 1. Template owners (they have manage → always need view)
+        if workflow.template_id:
+            from src.processes.models.templates.template import Template  # noqa: PLC0415
+            entitled_ids.update(
+                Template.objects.filter(
+                    id=workflow.template_id,
+                ).get_owners_as_users(),
+            )
+
+        # 2. Active task performers (user + group members)
+        active_performers = (
+            TaskPerformer.objects
+            .filter(
+                task__workflow=workflow,
+                task__is_deleted=False,
+            )
+            .exclude(
+                directly_status=DirectlyStatus.DELETED,
+            )
+        )
+        # Direct user performers
+        entitled_ids.update(
+            active_performers
+            .filter(type=PerformerType.USER, user_id__isnull=False)
+            .values_list('user_id', flat=True),
+        )
+        # Group performer members
+        from src.accounts.models import UserGroup  # noqa: PLC0415
+        group_ids = list(
+            active_performers
+            .filter(type=PerformerType.GROUP, group_id__isnull=False)
+            .values_list('group_id', flat=True),
+        )
+        if group_ids:
+            entitled_ids.update(
+                UserGroup.objects
+                .filter(id__in=group_ids, is_deleted=False)
+                .values_list('users__id', flat=True),
+            )
+
+        # 3. Users mentioned in non-deleted comments
+        entitled_ids.update(
+            cls._get_mentioned_user_ids(workflow),
+        )
+
+        # Discard None (from empty group memberships etc.)
+        entitled_ids.discard(None)
+
+        ct = ContentType.objects.get_for_model(workflow)
+        view_perm = Permission.objects.get(
+            codename='view_workflow',
+            content_type=ct,
+        )
+        object_pk = str(workflow.pk)
+
+        # Remove view from users who lost all access sources
+        UserObjectPermission.objects.filter(
+            permission=view_perm,
+            content_type=ct,
+            object_pk=object_pk,
+        ).exclude(
+            user_id__in=entitled_ids,
+        ).delete()
+
+        # Add view for users who should have it but don't yet
+        existing_ids = set(
+            UserObjectPermission.objects.filter(
+                permission=view_perm,
+                content_type=ct,
+                object_pk=object_pk,
+            ).values_list('user_id', flat=True),
+        )
+        new_ids = entitled_ids - existing_ids
+        if new_ids:
+            UserObjectPermission.objects.bulk_create(
+                [
+                    UserObjectPermission(
+                        user_id=uid,
+                        permission=view_perm,
+                        content_type=ct,
+                        object_pk=object_pk,
+                    )
+                    for uid in new_ids
+                ],
+                ignore_conflicts=True,
+            )
+
+    @classmethod
+    def _get_mentioned_user_ids(cls, workflow: 'Workflow') -> Set[int]:
+        """Extract user IDs mentioned in non-deleted comments.
+
+        Mention format: [Display Name| 123]
+        """
+        from src.processes.models.workflows.event import WorkflowEvent  # noqa: PLC0415
+        comments = (
+            WorkflowEvent.objects
+            .filter(
+                workflow=workflow,
+                type=WorkflowEventType.COMMENT,
+                text__isnull=False,
+            )
+            .exclude(status=CommentStatus.DELETED)
+            .values_list('text', flat=True)
+        )
+        mentioned_ids = set()
+        for text in comments:
+            ids = MENTION_RE.findall(text)
+            mentioned_ids.update(int(uid) for uid in ids)
+        return mentioned_ids
+
     # ── Read operations ───────────────────────────────────
 
     @classmethod
-    def has_view(cls, user, workflow) -> bool:
+    def has_view(cls, user: UserModel, workflow: 'Workflow') -> bool:
         """Check if user can view workflow.
 
         Uses direct UOP query instead of user.has_perm() because
-        Guardian's group permission check is incompatible with
-        custom UserGroup model (expects auth.Group).
+        ObjectPermissionBackend's group check is incompatible with
+        custom GroupObjectPermission model (UserGroup FK vs auth.Group).
         """
         return UserObjectPermission.objects.filter(
             user=user,
@@ -161,12 +281,12 @@ class WorkflowPermissionService:
         ).exists()
 
     @classmethod
-    def has_manage(cls, user, workflow) -> bool:
+    def has_manage(cls, user: UserModel, workflow: 'Workflow') -> bool:
         """Check if user can manage workflow lifecycle.
 
         Uses direct UOP query instead of user.has_perm() because
-        Guardian's group permission check is incompatible with
-        custom UserGroup model (expects auth.Group).
+        ObjectPermissionBackend's group check is incompatible with
+        custom GroupObjectPermission model (UserGroup FK vs auth.Group).
         """
         return UserObjectPermission.objects.filter(
             user=user,
@@ -176,7 +296,7 @@ class WorkflowPermissionService:
         ).exists()
 
     @classmethod
-    def get_viewer_ids(cls, workflow) -> Set[int]:
+    def get_viewer_ids(cls, workflow: 'Workflow') -> Set[int]:
         """Get all user IDs who can view this workflow.
 
         Replaces: workflow.members.values_list('id', flat=True)
@@ -190,7 +310,7 @@ class WorkflowPermissionService:
         )
 
     @classmethod
-    def get_owner_ids(cls, workflow) -> list:
+    def get_owner_ids(cls, workflow: 'Workflow') -> list:
         """Get sorted list of user IDs who can manage this workflow.
 
         Replaces: workflow.owners.values_list('id', flat=True)
@@ -210,15 +330,21 @@ class WorkflowPermissionService:
         """Return a Subquery of workflow PKs that user has permission for.
 
         Uses direct query on guardian_userobjectpermission table.
+        Cast object_pk (varchar) to integer so PostgreSQL can
+        compare with workflow.id without type mismatch.
         """
-        from src.processes.models.workflows.workflow import Workflow  # noqa: PLC0415
+        from src.processes.models.workflows.workflow import (  # noqa: PLC0415
+            Workflow,
+        )
         ct = ContentType.objects.get_for_model(Workflow)
         return Subquery(
             UserObjectPermission.objects.filter(
                 user_id=user_id,
                 permission__codename=codename,
                 content_type=ct,
-            ).values('object_pk'),
+            ).annotate(
+                object_pk_int=Cast('object_pk', IntegerField()),
+            ).values('object_pk_int'),
         )
 
     @classmethod

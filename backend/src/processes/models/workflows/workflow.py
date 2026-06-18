@@ -29,6 +29,7 @@ class Workflow(
 
     class Meta:
         ordering = ['-date_created']
+        default_permissions = ('add', 'change', 'delete')
         permissions = [
             ('view_workflow', 'Can view workflow'),
             ('manage_workflow', 'Can manage workflow lifecycle'),

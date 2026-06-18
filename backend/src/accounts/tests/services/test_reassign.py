@@ -27,6 +27,9 @@ from src.processes.tests.fixtures import (
     create_test_user,
     create_test_workflow,
 )
+from src.processes.services.workflow_permissions import (
+    WorkflowPermissionService,
+)
 
 pytestmark = pytest.mark.django_db
 
@@ -1226,23 +1229,15 @@ class TestReassignService:
 
     def test_reassign_in_workflow_members__with_old_and_new_user__ok(
         self,
-        mocker,
     ):
         # arrange
         account = create_test_account(name='test_account')
         old_user = create_test_user(account=account, email='old@example.com')
         new_user = create_test_user(account=account, email='new@example.com')
+        workflow = create_test_workflow(user=old_user, tasks_count=1)
 
-        uop_filter_mock = mocker.patch(
-            'guardian.models.UserObjectPermission.objects.filter',
-        )
-        mock_perm = mocker.MagicMock()
-        mock_qs = mocker.MagicMock()
-        mock_qs.__iter__ = mocker.MagicMock(return_value=iter([mock_perm]))
-        uop_filter_mock.return_value = mock_qs
-        get_or_create_mock = mocker.patch(
-            'guardian.models.UserObjectPermission.objects.get_or_create',
-        )
+        # Grant old_user view permission
+        WorkflowPermissionService.grant_view_bulk([old_user.id], workflow)
 
         service = ReassignService(old_user=old_user, new_user=new_user)
 
@@ -1250,14 +1245,8 @@ class TestReassignService:
         service._reassign_in_workflow_members()
 
         # assert
-        uop_filter_mock.assert_called_once()
-        get_or_create_mock.assert_called_once_with(
-            user=new_user,
-            permission=mock_perm.permission,
-            content_type=mock_perm.content_type,
-            object_pk=mock_perm.object_pk,
-        )
-        uop_filter_mock.return_value.delete.assert_called_once()
+        assert not WorkflowPermissionService.has_view(old_user, workflow)
+        assert WorkflowPermissionService.has_view(new_user, workflow)
 
     def test_reassign_in_template_conditions__with_old_and_new_user__ok(self):
         # arrange
@@ -1478,7 +1467,7 @@ class TestReassignService:
         account = create_test_account(name='test_account')
         old_user = create_test_admin(account=account, email='old@example.com')
         new_user = create_test_admin(account=account, email='new@example.com')
-        workflow = create_test_workflow(old_user, tasks_count=1)
+        workflow = create_test_workflow(user=old_user, tasks_count=1)
         task = workflow.tasks.get(number=1)
         condition = Condition.objects.create(
             task=task,
@@ -1615,7 +1604,7 @@ class TestReassignService:
         account = create_test_account(name='test_account')
         old_user = create_test_admin(account=account, email='old@example.com')
         new_group = create_test_group(account, name='new_group')
-        workflow = create_test_workflow(old_user, tasks_count=1)
+        workflow = create_test_workflow(user=old_user, tasks_count=1)
         task = workflow.tasks.get(number=1)
         condition = Condition.objects.create(
             task=task,

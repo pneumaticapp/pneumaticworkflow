@@ -1208,8 +1208,7 @@ class ChecklistQuerySet(BaseQuerySet):
             WorkflowPermissionService,
         )
         return self.filter(
-            Q(task__workflow__members=user_id)
-            | WorkflowPermissionService.viewer_q(
+            WorkflowPermissionService.viewer_q(
                 user_id, pk_field='task__workflow_id',
             ),
         )
