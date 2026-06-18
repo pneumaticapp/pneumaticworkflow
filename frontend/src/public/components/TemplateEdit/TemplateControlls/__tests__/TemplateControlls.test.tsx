@@ -15,6 +15,7 @@ import {
   loadFieldsetsData,
 } from '../../utils/getRunnableWorkflow';
 import { discardTemplateChanges } from '../../../../redux/actions';
+import { getTemplate } from '../../../../__stubs__/templates';
 
 jest.mock('../../../../utils/history', () => ({
   history: { push: jest.fn() },
@@ -27,7 +28,7 @@ jest.mock('../../../../redux/actions', () => ({
 }));
 
 jest.mock('react-router-dom', () => ({
-  Link: ({ children }: any) => children,
+  Link: ({ children }: { children: React.ReactNode }) => children,
 }));
 
 jest.mock('rc-switch', () => ({ __esModule: true, default: () => null }));
@@ -116,23 +117,9 @@ jest.mock('../../../../utils/routes/getLinkToHighlightsByTemplate', () => ({
   getLinkToHighlightsByTemplate: jest.fn(() => '/'),
 }));
 
-const makeTemplate = (id: number | undefined) => ({
-  id,
-  name: 'Test Template',
-  owners: [],
-  isActive: true,
-  isPublic: false,
-  finalizable: false,
-  completionNotification: false,
-  reminderNotification: false,
-  kickoff: { description: '', fields: [], fieldsets: [] },
-  tasks: [],
-  fieldsets: [],
-} as any);
-
 describe('TemplateControlls — fieldset logic', () => {
-  const makeProps = (overrides: Partial<ITemplateControllsProps> = {}): ITemplateControllsProps => ({
-    template: makeTemplate(10),
+  const makeProps = (overrides: Partial<ITemplateControllsProps> = {}) => ({
+    template: getTemplate('5'),
     templateStatus: ETemplateStatus.Saved,
     isSubscribed: false,
     cloneTemplate: jest.fn(),
@@ -149,89 +136,18 @@ describe('TemplateControlls — fieldset logic', () => {
     jest.clearAllMocks();
   });
 
-  it('renders button with text template.more-show-fieldsets', () => {
-    render(React.createElement(TemplateControlls, makeProps()));
-
-    expect(
-      screen.getByRole('button', { name: formatMsg('template.more-show-fieldsets') }),
-    ).toBeInTheDocument();
-  });
-
-  it('click with templateId=10 calls history.push once with fieldsets route', () => {
-    render(React.createElement(TemplateControlls, makeProps({ template: makeTemplate(10) })));
-
-    userEvent.click(
-      screen.getByRole('button', { name: formatMsg('template.more-show-fieldsets') }),
-    );
-
-    const expectedUrl = ERoutes.TemplateFieldsets.replace(':templateId', '10');
-    expect(history.push).toHaveBeenCalledTimes(1);
-    expect(history.push).toHaveBeenCalledWith(expectedUrl);
-  });
-
-  it('click without templateId calls patchTemplate once with changedFields: {}', () => {
-    const patchTemplate = jest.fn();
-
-    render(
-      React.createElement(
-        TemplateControlls,
-        makeProps({ template: makeTemplate(undefined), patchTemplate }),
-      ),
-    );
-
-    userEvent.click(
-      screen.getByRole('button', { name: formatMsg('template.more-show-fieldsets') }),
-    );
-
-    expect(patchTemplate).toHaveBeenCalledTimes(1);
-    expect(patchTemplate).toHaveBeenCalledWith(
-      expect.objectContaining({ changedFields: {} }),
-    );
-  });
-
-  it('after a successful draft patch, onSuccess redirects to the fieldsets page using the new id from the URL', () => {
-    const patchTemplate = jest.fn();
-
-    const originalLocation = window.location;
-    Object.defineProperty(window, 'location', {
-      writable: true,
-      value: { pathname: '/templates/edit/42' },
-    });
-
-    try {
-      render(
-        React.createElement(
-          TemplateControlls,
-          makeProps({ template: makeTemplate(undefined), patchTemplate }),
-        ),
-      );
-
-      userEvent.click(
-        screen.getByRole('button', { name: formatMsg('template.more-show-fieldsets') }),
-      );
-
-      const onSuccess = (patchTemplate.mock.calls[0][0] as { onSuccess: () => void }).onSuccess;
-      onSuccess();
-
-      const expectedUrl = ERoutes.TemplateFieldsets.replace(':templateId', '42');
-      expect(history.push).toHaveBeenCalledTimes(1);
-      expect(history.push).toHaveBeenCalledWith(expectedUrl);
-    } finally {
-      Object.defineProperty(window, 'location', { writable: true, value: originalLocation });
-    }
-  });
 
   it('clicking Run on an active saved template runs the chain loadFieldsets → loadDatasets → getRunnable → openModal', async () => {
     const openRunWorkflowModal = jest.fn();
-    const loadedFieldsets = [{ apiName: 'fs-1' }] as any[];
-    const datasetsMap = { ds1: ['v1'] } as any;
-    const runnableWorkflow = { kickoff: {}, tasks: [] } as any;
+    const loadedFieldsets = [{ apiName: 'fs-1' }];
+    const datasetsMap = { ds1: ['v1'] };
+    const runnableWorkflow = { kickoff: {}, tasks: [] };
 
     (loadFieldsetsData as jest.Mock).mockResolvedValue(loadedFieldsets);
     (loadDatasetsMap as jest.Mock).mockResolvedValue(datasetsMap);
     (getRunnableWorkflow as jest.Mock).mockReturnValue(runnableWorkflow);
 
-    const template = makeTemplate(10);
+    const template = getTemplate('5');
     template.isActive = true;
 
     render(
@@ -246,7 +162,7 @@ describe('TemplateControlls — fieldset logic', () => {
     await waitFor(() => expect(openRunWorkflowModal).toHaveBeenCalledTimes(1));
 
     expect(loadFieldsetsData).toHaveBeenCalledTimes(1);
-    expect(loadFieldsetsData).toHaveBeenCalledWith(template.kickoff, 10);
+    expect(loadFieldsetsData).toHaveBeenCalledWith(template.kickoff, 5);
 
     expect(loadDatasetsMap).toHaveBeenCalledTimes(1);
     expect(loadDatasetsMap).toHaveBeenCalledWith(template.kickoff, loadedFieldsets);
@@ -261,7 +177,7 @@ describe('TemplateControlls — fieldset logic', () => {
     const mockDispatch = jest.fn();
     (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
 
-    const template = makeTemplate(1);
+    const template = getTemplate('1');
     template.isActive = false;
 
     render(React.createElement(TemplateControlls, makeProps({ template })));

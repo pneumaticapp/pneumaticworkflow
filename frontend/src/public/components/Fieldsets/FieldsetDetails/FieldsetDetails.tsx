@@ -77,7 +77,7 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
 
   const [hasUnsavedSettingsChanges, setHasUnsavedSettingsChanges] = useState(false);
 
-  const fieldsetListRoute = ERoutes.TemplateFieldsets.replace(':templateId', matchTemplateId);
+  const fieldsetListRoute = ERoutes.Fieldsets;
 
 
 

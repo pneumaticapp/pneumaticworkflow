@@ -60,7 +60,6 @@ export interface IGetFieldsetsResponse {
 }
 
 export interface IGetFieldsetsParams {
-  templateId: number;
   ordering?: string;
   limit?: number;
   offset?: number;

@@ -3,17 +3,14 @@ import { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
-import { RouteComponentProps } from 'react-router-dom';
 
 import InfiniteScroll from 'react-infinite-scroll-component';
-import { history } from '../../utils/history';
-import { ERoutes } from '../../constants/routes';
 
 import { IFieldsetListItem } from '../../types/fieldset';
 
 import { PageTitle } from '../PageTitle';
 import { EPageTitle } from '../../constants/defaultValues';
-import { openCreateModal, loadFieldsets, setTemplateId } from '../../redux/fieldsets/slice';
+import { openCreateModal, loadFieldsets } from '../../redux/fieldsets/slice';
 import { getFieldsetsListSelection, getFieldsetsIsLoading, getFieldsetsSorting } from '../../redux/selectors/fieldsets';
 import { AddCardButton } from '../UI';
 import { AIPlusIcon } from '../icons';
@@ -23,30 +20,20 @@ import { FieldsetCard } from './FieldsetCard';
 
 import styles from './Fieldsets.css';
 
-interface IFieldsetsRouteParams {
-  templateId: string;
-}
+const MOCK_TEMPLATE_ID = 1;
 
-type TFieldsetsProps = RouteComponentProps<IFieldsetsRouteParams>;
 
-export function Fieldsets({ match }: TFieldsetsProps) {
+export function Fieldsets() {
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
-  const numericTemplateId = Number(match.params.templateId);
 
   const { items: fieldsetsList, count, offset } = useSelector(getFieldsetsListSelection) || { items: [], count: 0, offset: 0 };
   const isLoading = useSelector(getFieldsetsIsLoading);
   const fieldsetsSorting = useSelector(getFieldsetsSorting);
 
   useEffect(() => {
-    if (Number.isNaN(numericTemplateId)) {
-      history.push(ERoutes.Templates);
-      return;
-    }
-
-    dispatch(setTemplateId(numericTemplateId));
-    dispatch(loadFieldsets({ offset: 0, templateId: numericTemplateId }));
-  }, [dispatch, fieldsetsSorting, numericTemplateId]);
+    dispatch(loadFieldsets({ offset: 0 }));
+  }, [dispatch, fieldsetsSorting]);
 
   const handleOpenCreateModal = () => {
     dispatch(openCreateModal());
@@ -57,13 +44,13 @@ export function Fieldsets({ match }: TFieldsetsProps) {
       <PageTitle titleId={EPageTitle.Fieldsets} withUnderline={false} />
       <InfiniteScroll
         dataLength={fieldsetsList.length}
-        next={() => dispatch(loadFieldsets({ offset: offset + 1, templateId: numericTemplateId }))}
+        next={() => dispatch(loadFieldsets({ offset: offset + 1 }))}
         loader={null}
         hasMore={count > fieldsetsList.length || isLoading}
         className={classnames(styles['cards-wrapper'], { [styles['container-loading']]: isLoading })}
         scrollableTarget="app-container"
       >
-        {isLoading && fieldsetsList.length === 0 && <div className="loading" />}
+        {isLoading && fieldsetsList.length === 0 && <div className="loading" data-testid="fieldsets-loading" />}
         <AddCardButton
           className={styles['card']}
           onClick={handleOpenCreateModal}
@@ -72,10 +59,10 @@ export function Fieldsets({ match }: TFieldsetsProps) {
           icon={<AIPlusIcon />}
         />
         {fieldsetsList.map((fieldset: IFieldsetListItem) => (
-          <FieldsetCard key={fieldset.id} {...fieldset} templateId={numericTemplateId} />
+          <FieldsetCard key={fieldset.id} {...fieldset} templateId={MOCK_TEMPLATE_ID} />
         ))}
       </InfiniteScroll>
-      <FieldsetModal type={EFieldsetModalType.Create} templateId={numericTemplateId} />
+      <FieldsetModal type={EFieldsetModalType.Create} templateId={MOCK_TEMPLATE_ID} />
       <FieldsetModal type={EFieldsetModalType.Edit} />
     </div>
   );

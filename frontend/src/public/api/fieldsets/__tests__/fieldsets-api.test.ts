@@ -1,7 +1,8 @@
 
 const MOCK_URLS = {
+  fieldsets: '/fieldsets',
+  fieldset: '/templates/fieldsets/:id',
   templateFieldsets: '/templates/:id/fieldsets',
-  fieldset: '/fieldsets/:id',
 };
 
 jest.mock('../../../utils/getConfig', () => ({
@@ -45,9 +46,10 @@ describe('fieldsets API clients', () => {
 
       const result = await createFieldset(params);
 
+      const expectedUrl = MOCK_URLS.templateFieldsets.replace(':id', '42');
       expect(commonRequest).toHaveBeenCalledTimes(1);
       expect(commonRequest).toHaveBeenCalledWith(
-        '/templates/42/fieldsets',
+        expectedUrl,
         {
           method: 'POST',
           data: expect.any(String),
@@ -75,9 +77,10 @@ describe('fieldsets API clients', () => {
       const abortController = new AbortController();
       const result = await getFieldset({ id: 5, signal: abortController.signal });
 
+      const expectedUrl = MOCK_URLS.fieldset.replace(':id', '5');
       expect(commonRequest).toHaveBeenCalledTimes(1);
       expect(commonRequest).toHaveBeenCalledWith(
-        '/fieldsets/5',
+        expectedUrl,
         {
           method: 'GET',
           signal: abortController.signal,
@@ -92,11 +95,11 @@ describe('fieldsets API clients', () => {
     it('builds URL without query params when ordering/limit/offset are absent', async () => {
       (commonRequest as jest.Mock).mockResolvedValue({ count: 0, results: [] });
 
-      await getFieldsets({ templateId: 10 });
+      await getFieldsets({});
 
       expect(commonRequest).toHaveBeenCalledTimes(1);
       expect(commonRequest).toHaveBeenCalledWith(
-        '/templates/10/fieldsets',
+        MOCK_URLS.fieldsets,
         expect.objectContaining({ method: 'GET' }),
         { shouldThrow: true },
       );
@@ -105,7 +108,7 @@ describe('fieldsets API clients', () => {
     it('adds limit and offset to query string', async () => {
       (commonRequest as jest.Mock).mockResolvedValue({ count: 0, results: [] });
 
-      await getFieldsets({ templateId: 10, limit: 30, offset: 0 });
+      await getFieldsets({ limit: 30, offset: 0 });
 
       expect(commonRequest).toHaveBeenCalledTimes(1);
       const calledUrl = (commonRequest as jest.Mock).mock.calls[0][0] as string;
@@ -121,7 +124,7 @@ describe('fieldsets API clients', () => {
     ])('maps %s to backend ordering %s', async (sorting, expected) => {
       (commonRequest as jest.Mock).mockResolvedValue({ count: 0, results: [] });
 
-      await getFieldsets({ templateId: 10, ordering: sorting });
+      await getFieldsets({ ordering: sorting });
 
       expect(commonRequest).toHaveBeenCalledTimes(1);
       const calledUrl = (commonRequest as jest.Mock).mock.calls[0][0] as string;
@@ -131,7 +134,7 @@ describe('fieldsets API clients', () => {
     it('passes unknown ordering as fallback', async () => {
       (commonRequest as jest.Mock).mockResolvedValue({ count: 0, results: [] });
 
-      await getFieldsets({ templateId: 10, ordering: 'custom-sort' });
+      await getFieldsets({ ordering: 'custom-sort' });
 
       expect(commonRequest).toHaveBeenCalledTimes(1);
       const calledUrl = (commonRequest as jest.Mock).mock.calls[0][0] as string;
@@ -143,7 +146,6 @@ describe('fieldsets API clients', () => {
       const abortController = new AbortController();
 
       await getFieldsets({
-        templateId: 10,
         ordering: EFieldsetsSorting.DateDesc,
         limit: 20,
         offset: 40,
@@ -178,9 +180,10 @@ describe('fieldsets API clients', () => {
         signal: abortController.signal,
       });
 
+      const expectedUrl = MOCK_URLS.fieldset.replace(':id', '7');
       expect(commonRequest).toHaveBeenCalledTimes(1);
       expect(commonRequest).toHaveBeenCalledWith(
-        '/fieldsets/7',
+        expectedUrl,
         {
           method: 'PATCH',
           data: expect.any(String),
@@ -205,9 +208,10 @@ describe('fieldsets API clients', () => {
 
       await deleteFieldset({ id: 99 });
 
+      const expectedUrl = MOCK_URLS.fieldset.replace(':id', '99');
       expect(commonRequest).toHaveBeenCalledTimes(1);
       expect(commonRequest).toHaveBeenCalledWith(
-        '/fieldsets/99',
+        expectedUrl,
         { method: 'DELETE' },
         { shouldThrow: true, responseType: 'empty' },
       );

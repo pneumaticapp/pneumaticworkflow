@@ -21,6 +21,10 @@ jest.mock('../../../components/UI', () => ({
   Loader: () => require('react').createElement('div', { 'data-testid': 'loader' }),
 }));
 
+jest.mock('../../../layout', () => ({
+  TemplatesLayout: ({ children }: { children: React.ReactNode }) => children,
+}));
+
 describe('FieldsetsView — fieldsets routing contract', () => {
 
   const renderWithRoute = (url: string) => {
@@ -44,8 +48,8 @@ describe('FieldsetsView — fieldsets routing contract', () => {
     expect(screen.queryByTestId('fieldsets-list')).not.toBeInTheDocument();
   });
 
-  it('renders Fieldsets list (not FieldsetDetails) for /templates/1/fieldsets/', () => {
-    renderWithRoute('/templates/1/fieldsets/');
+  it('renders Fieldsets list (not FieldsetDetails) for /fieldsets/', () => {
+    renderWithRoute('/fieldsets/');
 
     expect(screen.getByTestId('fieldsets-list')).toBeInTheDocument();
     expect(screen.queryByTestId('fieldset-details')).not.toBeInTheDocument();

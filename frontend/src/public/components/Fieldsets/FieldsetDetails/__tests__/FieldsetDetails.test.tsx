@@ -252,7 +252,7 @@ describe('FieldsetDetails', () => {
 
     it('redirects to fieldsets list on invalid id', () => {
       render(React.createElement(FieldsetDetails, makeProps('xyz', '5')));
-      const expectedRoute = ERoutes.TemplateFieldsets.replace(':templateId', '5');
+      const expectedRoute = ERoutes.Fieldsets;
       expect(history.push).toHaveBeenCalledTimes(1);
       expect(history.push).toHaveBeenCalledWith(expectedRoute);
     });
@@ -308,7 +308,7 @@ describe('FieldsetDetails', () => {
       act(() => { props.onDelete(); });
       expect(deleteFieldsetAction).toHaveBeenCalledTimes(1);
       expect(mockDispatch).toHaveBeenCalledWith(deleteFieldsetAction({ id: 10 }));
-      const expectedRoute = ERoutes.TemplateFieldsets.replace(':templateId', '5');
+      const expectedRoute = ERoutes.Fieldsets;
       expect(history.push).toHaveBeenCalledTimes(1);
       expect(history.push).toHaveBeenCalledWith(expectedRoute);
     });

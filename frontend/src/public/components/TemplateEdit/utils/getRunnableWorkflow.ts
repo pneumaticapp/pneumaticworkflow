@@ -55,7 +55,7 @@ export async function loadFieldsetsData(kickoff: IKickoff, templateId: number): 
 
     const selectedApiNames = new Set(TemplateKickoffFieldsets.map((fieldset) => fieldset.apiName));
 
-    const response = await getFieldsets({ templateId, limit: 1000 });
+    const response = await getFieldsets({ limit: 1000 });
 
     const catalogFieldsets = response.results.filter((fieldset) => selectedApiNames.has(fieldset.apiName));
 

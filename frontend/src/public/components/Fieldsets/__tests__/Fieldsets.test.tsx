@@ -1,17 +1,14 @@
 import * as React from 'react';
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { useDispatch, useSelector } from 'react-redux';
 
 import { Fieldsets } from '../Fieldsets';
 import { FieldsetCard } from '../FieldsetCard';
 import { FieldsetModal } from '../FieldsetModal/FieldsetModal';
 import { AddCardButton } from '../../UI';
-import { history } from '../../../utils/history';
-import { ERoutes } from '../../../constants/routes';
 import {
   openCreateModal,
   loadFieldsets,
-  setTemplateId,
 } from '../../../redux/fieldsets/slice';
 import { intlMock } from '../../../__stubs__/intlMock';
 import { EFieldsetsSorting, IFieldsetListItem } from '../../../types/fieldset';
@@ -25,7 +22,6 @@ jest.mock('../../../utils/history', () => ({
 jest.mock('../../../redux/fieldsets/slice', () => ({
   openCreateModal: jest.fn(() => ({ type: 'fieldsets/openCreateModal' })),
   loadFieldsets: jest.fn((p) => ({ type: 'fieldsets/loadFieldsets', payload: p })),
-  setTemplateId: jest.fn((p) => ({ type: 'fieldsets/setTemplateId', payload: p })),
 }));
 
 jest.mock('react-infinite-scroll-component', () => ({
@@ -65,18 +61,6 @@ describe('Fieldsets', () => {
   const formatMsg = (id: string) => intlMock.formatMessage({ id });
   const NEW_FIELDSET_TITLE = formatMsg('fieldsets.new-fieldset.title');
 
-  const makeProps = (templateId: string = '5') => ({
-    match: { params: { templateId }, isExact: true, path: '', url: '' },
-    location: {
-      pathname: `/templates/${templateId}/fieldsets/`,
-      search: '',
-      hash: '',
-      state: undefined,
-    },
-    history: history as any,
-  });
-
-
   const getAddCardButtonProps = () => {
     const mock = AddCardButton as unknown as jest.Mock;
     const lastCall = mock.mock.calls[mock.mock.calls.length - 1];
@@ -103,23 +87,11 @@ describe('Fieldsets', () => {
     (useSelector as jest.Mock).mockImplementation((selector) => selector(defaultState));
   });
 
-  describe('URL parameter validation', () => {
-    it('redirects to /templates/ when templateId is NaN', () => {
-      render(React.createElement(Fieldsets, makeProps('abc')));
+  describe('Initial load', () => {
+    it('dispatches loadFieldsets on mount', () => {
+      render(React.createElement(Fieldsets));
 
-      expect(history.push).toHaveBeenCalledTimes(1);
-      expect(history.push).toHaveBeenCalledWith(ERoutes.Templates);
-      expect(setTemplateId).not.toHaveBeenCalled();
-      expect(loadFieldsets).not.toHaveBeenCalled();
-    });
-
-    it('dispatches setTemplateId and loadFieldsets when templateId is valid', () => {
-      render(React.createElement(Fieldsets, makeProps('5')));
-
-      expect(history.push).not.toHaveBeenCalled();
-      expect(mockDispatch).toHaveBeenCalledWith(setTemplateId(5));
-      expect(mockDispatch).toHaveBeenCalledWith(loadFieldsets({ offset: 0, templateId: 5 }));
-      expect(mockDispatch).toHaveBeenCalledTimes(2);
+      expect(mockDispatch).toHaveBeenCalledWith(loadFieldsets({ offset: 0 }));
     });
   });
 
@@ -133,9 +105,9 @@ describe('Fieldsets', () => {
       };
       (useSelector as jest.Mock).mockImplementation((selector) => selector(loadingState));
 
-      const { container } = render(React.createElement(Fieldsets, makeProps('5')));
+      render(React.createElement(Fieldsets));
 
-      expect(container.querySelector('.loading')).toBeInTheDocument();
+      expect(screen.getByTestId('fieldsets-loading')).toBeInTheDocument();
     });
 
     it('does not show loading indicator when isLoading=true but list is not empty', () => {
@@ -152,14 +124,14 @@ describe('Fieldsets', () => {
       };
       (useSelector as jest.Mock).mockImplementation((selector) => selector(loadingWithDataState));
 
-      const { container } = render(React.createElement(Fieldsets, makeProps('5')));
+      render(React.createElement(Fieldsets));
 
-      expect(container.querySelector('.loading')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('fieldsets-loading')).not.toBeInTheDocument();
     });
   });
 
   describe('Fieldset cards rendering', () => {
-    it('renders FieldsetCard for each fieldset with templateId', () => {
+    it('renders FieldsetCard for each fieldset with MOCK_TEMPLATE_ID', () => {
       const fieldsets = [
         makeFieldsetListItem({ id: 1, name: 'FS1' }),
         makeFieldsetListItem({ id: 2, apiName: 'fs-2', name: 'FS2' }),
@@ -172,18 +144,18 @@ describe('Fieldsets', () => {
       };
       (useSelector as jest.Mock).mockImplementation((selector) => selector(stateWithData));
 
-      render(React.createElement(Fieldsets, makeProps('5')));
+      render(React.createElement(Fieldsets));
 
       const mock = FieldsetCard as jest.Mock;
       expect(mock).toHaveBeenCalledTimes(2);
-      expect(mock).toHaveBeenCalledWith(expect.objectContaining({ id: 1, name: 'FS1', templateId: 5 }), {});
-      expect(mock).toHaveBeenCalledWith(expect.objectContaining({ id: 2, name: 'FS2', templateId: 5 }), {});
+      expect(mock).toHaveBeenCalledWith(expect.objectContaining({ id: 1, name: 'FS1', templateId: 1 }), {});
+      expect(mock).toHaveBeenCalledWith(expect.objectContaining({ id: 2, name: 'FS2', templateId: 1 }), {});
     });
   });
 
   describe('Create new fieldset', () => {
     it('dispatches openCreateModal when AddCardButton is clicked', () => {
-      render(React.createElement(Fieldsets, makeProps('5')));
+      render(React.createElement(Fieldsets));
 
       const addCardProps = getAddCardButtonProps();
       expect(addCardProps.title).toBe(NEW_FIELDSET_TITLE);
@@ -195,18 +167,18 @@ describe('Fieldsets', () => {
   });
 
   describe('Modals', () => {
-    it('renders FieldsetModal for Create (with templateId) and Edit', () => {
-      render(React.createElement(Fieldsets, makeProps('5')));
+    it('renders FieldsetModal for Create (with MOCK_TEMPLATE_ID) and Edit', () => {
+      render(React.createElement(Fieldsets));
 
       const mock = FieldsetModal as jest.Mock;
       expect(mock).toHaveBeenCalledTimes(2);
-      expect(mock).toHaveBeenCalledWith(expect.objectContaining({ type: 'create', templateId: 5 }), {});
+      expect(mock).toHaveBeenCalledWith(expect.objectContaining({ type: 'create', templateId: 1 }), {});
       expect(mock).toHaveBeenCalledWith(expect.objectContaining({ type: 'edit' }), {});
     });
   });
 
   describe('Pagination', () => {
-    it('next() loads next page with offset+1 and templateId', () => {
+    it('next() loads next page with offset+1', () => {
       const stateWithOffset = {
         fieldsets: {
           ...defaultState.fieldsets,
@@ -219,7 +191,7 @@ describe('Fieldsets', () => {
       };
       (useSelector as jest.Mock).mockImplementation((selector) => selector(stateWithOffset));
 
-      render(React.createElement(Fieldsets, makeProps('5')));
+      render(React.createElement(Fieldsets));
 
       mockDispatch.mockClear();
 
@@ -227,15 +199,15 @@ describe('Fieldsets', () => {
       scrollProps.next();
 
       expect(mockDispatch).toHaveBeenCalledTimes(1);
-      expect(mockDispatch).toHaveBeenCalledWith(loadFieldsets({ offset: 3, templateId: 5 }));
+      expect(mockDispatch).toHaveBeenCalledWith(loadFieldsets({ offset: 3 }));
     });
   });
 
   describe('Sorting change', () => {
     it('reloads list when sorting changes', () => {
-      const { rerender } = render(React.createElement(Fieldsets, makeProps('5')));
+      const { rerender } = render(React.createElement(Fieldsets));
 
-      expect(mockDispatch).toHaveBeenCalledWith(loadFieldsets({ offset: 0, templateId: 5 }));
+      expect(mockDispatch).toHaveBeenCalledWith(loadFieldsets({ offset: 0 }));
       mockDispatch.mockClear();
       (loadFieldsets as unknown as jest.Mock).mockClear();
 
@@ -247,9 +219,9 @@ describe('Fieldsets', () => {
       };
       (useSelector as jest.Mock).mockImplementation((selector) => selector(newSortingState));
 
-      rerender(React.createElement(Fieldsets, makeProps('5')));
+      rerender(React.createElement(Fieldsets));
 
-      expect(mockDispatch).toHaveBeenCalledWith(loadFieldsets({ offset: 0, templateId: 5 }));
+      expect(mockDispatch).toHaveBeenCalledWith(loadFieldsets({ offset: 0 }));
     });
   });
 });

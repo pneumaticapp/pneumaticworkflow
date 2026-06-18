@@ -33,7 +33,7 @@ describe('fieldsets slice', () => {
         },
       };
 
-      const result = fieldsetsReducer(stateWithData, loadFieldsets({ offset: 0, templateId: 999 }));
+      const result = fieldsetsReducer(stateWithData, loadFieldsets({ offset: 0 }));
 
       expect(result.fieldsetsList.items).toEqual([]);
       expect(result.fieldsetsList.count).toBe(0);
@@ -55,7 +55,7 @@ describe('fieldsets slice', () => {
         },
       };
 
-      const result = fieldsetsReducer(stateWithData, loadFieldsets({ offset: 1, templateId: 123 }));
+      const result = fieldsetsReducer(stateWithData, loadFieldsets({ offset: 1 }));
 
       expect(result.fieldsetsList.items).toHaveLength(2);
       expect(result.fieldsetsList.items).toEqual(existingItems);

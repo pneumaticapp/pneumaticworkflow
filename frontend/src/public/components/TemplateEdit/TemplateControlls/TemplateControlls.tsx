@@ -104,22 +104,6 @@ export function TemplateControlls({
 
   const isSavedTemplate = React.useMemo(() => Boolean(templateId), [templateId]);
 
-  const handleFieldsetsClick = () => {
-    if (templateId) {
-      history.push(ERoutes.TemplateFieldsets.replace(':templateId', String(templateId)));
-      return;
-    }
-
-    patchTemplate({
-      changedFields: {},
-      onSuccess: () => {
-        const match = window.location.pathname.match(/\/templates\/edit\/(\d+)/);
-        if (match) {
-          history.push(ERoutes.TemplateFieldsets.replace(':templateId', match[1]));
-        }
-      },
-    });
-  };
 
   const handleRunProcess = async () => {
     if (!template.id) return;
@@ -296,15 +280,6 @@ export function TemplateControlls({
     <>
       {renderDeleteTemplateModal()}
       {templateId && renderLeavingGuard()}
-      <div className={styles['settings-block']}>
-        <button
-          type="button"
-          onClick={handleFieldsetsClick}
-          className={styles['switch-label']}
-        >
-          {formatMessage({ id: 'template.more-show-fieldsets' })}
-        </button>
-      </div>
 
       <div className={styles['settings-block']}>
         <ShowMore label={formatMessage({ id: 'template.owners' })} isInitiallyVisible={isCreateTemplate()}>

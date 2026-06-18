@@ -4,10 +4,6 @@ import { MemoryRouter } from 'react-router-dom';
 
 import { TemplateView } from '../Template';
 
-jest.mock('../../Fieldsets', () => ({
-  FieldsetsView: () => React.createElement('div', { 'data-testid': 'fieldsets-view' }, 'FieldsetsView'),
-}));
-
 jest.mock('@loadable/component', () => ({
   __esModule: true,
   default: () => {
@@ -26,7 +22,7 @@ jest.mock('../../../components/UI', () => ({
   Loader: () => React.createElement('div', { 'data-testid': 'loader' }),
 }));
 
-describe('TemplateView — fieldsets routing contract', () => {
+describe('TemplateView — routing contract', () => {
 
   const renderWithRoute = (url: string) => {
     return render(
@@ -42,24 +38,9 @@ describe('TemplateView — fieldsets routing contract', () => {
     jest.clearAllMocks();
   });
 
-  it('renders FieldsetsView (not TemplateEdit) for /templates/1/fieldsets/', () => {
-    renderWithRoute('/templates/1/fieldsets/');
-
-    expect(screen.getByTestId('fieldsets-view')).toBeInTheDocument();
-    expect(screen.queryByTestId('template-edit')).not.toBeInTheDocument();
-  });
-
-  it('renders FieldsetsView for nested /templates/1/fieldsets/2/', () => {
-    renderWithRoute('/templates/1/fieldsets/2/');
-
-    expect(screen.getByTestId('fieldsets-view')).toBeInTheDocument();
-    expect(screen.queryByTestId('template-edit')).not.toBeInTheDocument();
-  });
-
   it('renders TemplateEdit (not FieldsetsView) for /templates/1/', () => {
     renderWithRoute('/templates/1/');
 
     expect(screen.getByTestId('template-edit')).toBeInTheDocument();
-    expect(screen.queryByTestId('fieldsets-view')).not.toBeInTheDocument();
   });
 });

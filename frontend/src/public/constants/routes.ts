@@ -51,7 +51,7 @@ export enum ERoutes {
   Tenants = '/tenants/',
   Datasets = '/datasets/',
   DatasetDetail = '/datasets/:id/',
-  TemplateFieldsets = '/templates/:templateId/fieldsets/',
+  Fieldsets = '/fieldsets/',
   TemplateFieldsetDetail = '/templates/:templateId/fieldsets/:id/',
 }
 

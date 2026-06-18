@@ -8,9 +8,9 @@ export function getFieldsets(config: IGetFieldsetsParams) {
     api: { urls },
   } = getBrowserConfigEnv();
 
-  const { signal, templateId } = config;
+  const { signal } = config;
   const queryString = getFieldsetsQueryString(config);
-  const baseUrl = urls.templateFieldsets.replace(':id', String(templateId));
+  const baseUrl = urls.fieldsets;
   const url = queryString ? `${baseUrl}?${queryString}` : baseUrl;
 
   return commonRequest<IGetFieldsetsResponse>(

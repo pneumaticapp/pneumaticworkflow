@@ -39,9 +39,9 @@ import {
   loadFieldsetsCatalogFailed,
 } from './slice';
 
-function getFieldsetsRoute(templateId: number | null): string {
-  if (!templateId) return ERoutes.Templates;
-  return ERoutes.TemplateFieldsets.replace(':templateId', String(templateId));
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function getFieldsetsRoute(_templateId?: number | null): string {
+  return ERoutes.Fieldsets;
 }
 
 function getFieldsetDetailRoute(templateId: number | null, fieldsetId: number): string {
@@ -53,14 +53,13 @@ function getFieldsetDetailRoute(templateId: number | null, fieldsetId: number): 
 
 export function* loadFieldsetsSaga({ payload }: ReturnType<typeof loadFieldsets>) {
   const abortController = new AbortController();
-  const { offset, templateId } = payload;
+  const { offset } = payload;
 
   try {
     const fieldsetsStore: ReturnType<typeof getFieldsetsStore> = yield select(getFieldsetsStore);
     const { fieldsetsList, fieldsetsListSorting } = fieldsetsStore;
 
     const data: IGetFieldsetsResponse = yield call(getFieldsets, {
-      templateId,
       offset: offset * LIMIT_LOAD_FIELDSETS,
       limit: LIMIT_LOAD_FIELDSETS,
       ordering: fieldsetsListSorting,
@@ -186,13 +185,12 @@ function* watchDeleteFieldset() {
   yield takeEvery(deleteFieldsetAction.type, deleteFieldsetSaga);
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function* loadFieldsetsCatalogSaga({ payload }: ReturnType<typeof loadFieldsetsCatalog>) {
   const abortController = new AbortController();
-  const { templateId } = payload;
 
   try {
     const data: IGetFieldsetsResponse = yield call(getFieldsets, {
-      templateId,
       limit: 1000,
       signal: abortController.signal,
     });

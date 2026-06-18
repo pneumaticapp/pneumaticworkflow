@@ -67,12 +67,11 @@ describe('loadFieldsetsSaga', () => {
   });
 
   const runLoadFieldsets = async (
-    templateId: number,
     offset: number = 0,
   ) => {
     const dispatched: IDispatchedAction[] = [];
     const mockState = makeMockState();
-    const action = loadFieldsets({ templateId, offset });
+    const action = loadFieldsets({ offset });
 
     function* wrapper() {
       yield call(loadFieldsetsSaga, action);
@@ -98,7 +97,7 @@ describe('loadFieldsetsSaga', () => {
       const error404 = { status: 404, message: 'Not found' };
       (getFieldsets as jest.Mock).mockRejectedValue(error404);
 
-      const dispatched = await runLoadFieldsets(9999);
+      const dispatched = await runLoadFieldsets();
 
       expect(getFieldsets).toHaveBeenCalledTimes(1);
 
@@ -115,7 +114,7 @@ describe('loadFieldsetsSaga', () => {
       const error500 = { status: 500, message: 'Internal server error' };
       (getFieldsets as jest.Mock).mockRejectedValue(error500);
 
-      const dispatched = await runLoadFieldsets(42);
+      const dispatched = await runLoadFieldsets();
 
       const failedAction = dispatched.find(
         (a) => a.type === loadFieldsetsFailed.type,
@@ -190,7 +189,7 @@ describe('loadCurrentFieldsetSaga', () => {
 
       expect(getFieldset).toHaveBeenCalledTimes(1);
 
-      const expectedRoute = ERoutes.TemplateFieldsets.replace(':templateId', String(URL_TEMPLATE_ID));
+      const expectedRoute = ERoutes.Fieldsets;
       expect(history.replace).toHaveBeenCalledTimes(1);
       expect(history.replace).toHaveBeenCalledWith(expectedRoute);
 
@@ -264,14 +263,13 @@ describe('loadFieldsetsSaga — additional cases', () => {
 
     const dispatched = await runSagaHelper(
       loadFieldsetsSaga,
-      loadFieldsets({ offset: 0, templateId: 10 }),
+      loadFieldsets({ offset: 0 }),
       { fieldsetsListSorting: EFieldsetsSorting.NameAsc },
     );
 
     expect(getFieldsets).toHaveBeenCalledTimes(1);
     expect(getFieldsets).toHaveBeenCalledWith(
       expect.objectContaining({
-        templateId: 10,
         offset: 0,
         limit: 30,
         ordering: EFieldsetsSorting.NameAsc,
@@ -294,7 +292,7 @@ describe('loadFieldsetsSaga — additional cases', () => {
 
     const dispatched = await runSagaHelper(
       loadFieldsetsSaga,
-      loadFieldsets({ offset: 0, templateId: 10 }),
+      loadFieldsets({ offset: 0 }),
     );
 
     expect(dispatched).toEqual([]);

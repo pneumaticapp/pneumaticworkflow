@@ -35,15 +35,15 @@ const fieldsetsSlice = createSlice({
   name: 'fieldsets',
   initialState,
   reducers: {
-    setTemplateId: (state, action: PayloadAction<number>) => {
-      state.templateId = action.payload;
-    },
-
-    loadFieldsets: (state, action: PayloadAction<{ offset: number; templateId: number }>) => {
+    loadFieldsets: (state, action: PayloadAction<{ offset: number }>) => {
       state.isLoading = true;
       if (action.payload.offset === 0) {
         state.fieldsetsList = { count: 0, offset: 0, items: [] };
       }
+    },
+
+    setTemplateId: (state, action: PayloadAction<number>) => {
+      state.templateId = action.payload;
     },
 
     loadFieldsetsSuccess: (state, action: PayloadAction<IFieldsetsList>) => {
@@ -137,10 +137,8 @@ const fieldsetsSlice = createSlice({
       state.fieldsetsList.count -= 1;
       state.isLoading = false;
     },
-
-    loadFieldsetsCatalog: (state, action: PayloadAction<{ templateId: number }>) => {
+    loadFieldsetsCatalog: (state, _action: PayloadAction<{ templateId: number }>) => {
       state.isCatalogLoading = true;
-      state.catalogLoadedForTemplateId = action.payload.templateId;
     },
 
     loadFieldsetsCatalogSuccess: (state, action: PayloadAction<IFieldsetListItem[]>) => {
@@ -156,10 +154,10 @@ const fieldsetsSlice = createSlice({
 });
 
 export const {
-  setTemplateId,
   loadFieldsets,
   loadFieldsetsSuccess,
   loadFieldsetsFailed,
+  setTemplateId,
   setSearchQuery,
   setFieldsetsListSorting,
   openCreateModal,
