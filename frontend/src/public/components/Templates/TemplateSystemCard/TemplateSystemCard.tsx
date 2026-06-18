@@ -5,6 +5,7 @@ import classNames from 'classnames';
 import { ISystemTemplate } from '../../../types/template';
 import { sanitizeText } from '../../../utils/strings';
 import { ERoutes } from '../../../constants/routes';
+import { RichText } from '../../RichText';
 
 import styles from '../Templates.css';
 
@@ -23,7 +24,9 @@ export const TemplateSystemCard = ({ id, name, color, description, icon }: ITemp
         <div className={styles['card__header']}>
           <div className={styles['card__title']}>{sanitizeText(name)}</div>
         </div>
-        <p className={styles['card__description']}>{description}</p>
+        {description && <div className={styles['card__description']}>
+          <RichText text={description} embedVideos={false} />
+        </div>}
         {icon && (
           <div className={styles['card__footer']}>
             <div className={styles['card__icon']}>

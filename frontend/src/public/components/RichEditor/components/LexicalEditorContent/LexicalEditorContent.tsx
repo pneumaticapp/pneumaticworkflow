@@ -8,7 +8,7 @@ import { LexicalErrorBoundary } from '@lexical/react/LexicalErrorBoundary';
 import { LinkPlugin } from '@lexical/react/LexicalLinkPlugin';
 import { ListPlugin } from '@lexical/react/LexicalListPlugin';
 import { MarkdownShortcutPlugin } from '@lexical/react/LexicalMarkdownShortcutPlugin';
-import { ELEMENT_TRANSFORMERS } from '@lexical/markdown';
+import { ELEMENT_TRANSFORMERS, TEXT_FORMAT_TRANSFORMERS } from '@lexical/markdown';
 
 import {
   InsertAttachmentPlugin,
@@ -30,6 +30,8 @@ import { Loader } from '../../../UI/Loader';
 import type { ILexicalEditorContentProps } from '../../types';
 
 import styles from './LexicalEditorContent.css';
+
+const MARKDOWN_SHORTCUT_TRANSFORMERS = [...ELEMENT_TRANSFORMERS, ...TEXT_FORMAT_TRANSFORMERS];
 
 
 
@@ -109,7 +111,7 @@ export function LexicalEditorContent({
         <SubmitOnKeyPlugin onSubmit={onSubmit} />
       ) : null}
       <OnChangePlugin ignoreSelectionChange onChange={onChange} />
-      {showRichTextPlugins && <MarkdownShortcutPlugin transformers={ELEMENT_TRANSFORMERS} />}
+      {showRichTextPlugins && <MarkdownShortcutPlugin transformers={MARKDOWN_SHORTCUT_TRANSFORMERS} />}
       {plainText && <DisableRichTextFormattingPlugin />}
       {plainText && <PlainTextPastePlugin templateVariables={templateVariables} />}
 

@@ -1,12 +1,10 @@
 import * as React from 'react';
-import { useState, useCallback, FormEvent, MouseEvent } from 'react';
+import { useState, FormEvent, MouseEvent } from 'react';
 import classnames from 'classnames';
-import Truncate from 'react-truncate';
 import { Form, Modal, ModalBody, ModalHeader } from 'reactstrap';
 import { useIntl } from 'react-intl';
 import Switch from 'rc-switch';
 
-import { ELLIPSIS_CHAR } from '../../constants/defaultValues';
 import { ERoutes } from '../../constants/routes';
 
 import { history } from '../../utils/history';
@@ -69,32 +67,12 @@ function WorkflowEditPopupComponent({
 
   const { formatMessage } = useIntl();
 
-  const descriptionLinesCount = 5;
-
   const [workflowName, changeWorkflowName] = useState(
     workflow.wfNameTemplate || `${reactElementToText(<DateFormat />)} — ${workflow.name}`,
   );
   const [kickoffState, setKickoffState] = useState(getInitialKickoff(workflow.kickoff));
 
   const [isUrgent, setIsUrgent] = useState(false);
-
-  const [textExpaned, setTextExpanded] = useState(false);
-  const expandText = useCallback(() => setTextExpanded(!textExpaned), [textExpaned]);
-
-  const ellispis = (
-    // eslint-disable-next-line jsx-a11y/anchor-is-valid
-    <a
-      href="#"
-      role="button"
-      tabIndex={0}
-      onClick={(e) => { e.preventDefault(); expandText(); }}
-      onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') expandText(); }}
-      className={styles['description_more']}
-    >
-      <span className={styles['more_delimeter']}>{ELLIPSIS_CHAR}</span>
-      <IntlMessages id="templates.description-more" />
-    </a>
-  );
 
   const handleEditField = (apiName: string) => (changedProps: Partial<IExtraField>) => {
     setKickoffState((prevKickoff) => {
@@ -146,20 +124,12 @@ function WorkflowEditPopupComponent({
           <div className={styles['popup-title__name']}>{workflow.name}</div>
         </div>
         {workflow.description && (
-          <div className={styles['popup-description']}>
-            <Truncate lines={!textExpaned && descriptionLinesCount} ellipsis={ellispis} trimWhitespace>
-              {/* eslint-disable react/no-array-index-key */}
-              {workflow.description.split('\n').map((el, i, arr) => {
-                const line = <span key={i}>{el}</span>;
-                if (i === arr.length - 1) {
-                  return line;
-                }
-
-                return [line, <br key={`${i}br`} />];
-              })}
-              {/* eslint-enable react/no-array-index-key */}
-            </Truncate>
-          </div>
+          <RichText
+            text={workflow.description}
+            embedVideos={false}
+            maxLines={5}
+            className={styles['popup-description']}
+          />
         )}
         <div className={styles['workflow-modal-info']}>
           <div className={styles['workflow-modal-info__stats']}>
