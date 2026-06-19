@@ -223,6 +223,16 @@ class FieldsetTemplateServiceException(BaseServiceException):
     pass
 
 
+class FieldsetTemplateSharedIdMissing(FieldsetTemplateServiceException):
+
+    default_message = fs_messages.MSG_FS_0010
+
+
+class FieldsetTemplateTemplateIdMissing(FieldsetTemplateServiceException):
+
+    default_message = fs_messages.MSG_FS_0011
+
+
 class FieldsetTemplateInUseException(FieldsetTemplateServiceException):
 
     default_message = fs_messages.MSG_FS_0001
