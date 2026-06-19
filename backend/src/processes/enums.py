@@ -71,12 +71,14 @@ class PerformerType:
     GROUP = 'group'
     WORKFLOW_STARTER = 'workflow_starter'
     FIELD = 'field'
+    MANAGER = 'manager'
 
     choices = (
         (USER, USER),
         (GROUP, GROUP),
         (WORKFLOW_STARTER, WORKFLOW_STARTER),
         (FIELD, FIELD),
+        (MANAGER, MANAGER),
     )
 
     filter_choices = (
@@ -248,6 +250,8 @@ class PredicateOperator:
     MORE_THAN = 'more_than'
     LESS_THAN = 'less_than'
     COMPLETED = 'completed'
+    COMPLETED_OR_SKIPPED = 'completed_or_skipped'
+    SKIPPED = 'skipped'
     CHOICES = (
         (EQUAL, 'Equal'),
         (NOT_EQUAL, 'Not equal'),
@@ -258,10 +262,12 @@ class PredicateOperator:
         (MORE_THAN, 'More than'),
         (LESS_THAN, 'Less than'),
         (COMPLETED, COMPLETED),
+        (SKIPPED, SKIPPED),
+        (COMPLETED_OR_SKIPPED, COMPLETED_OR_SKIPPED),
     )
     ALLOWED_OPERATORS = {
         PredicateType.KICKOFF: {COMPLETED},
-        PredicateType.TASK: {COMPLETED},
+        PredicateType.TASK: {COMPLETED, SKIPPED, COMPLETED_OR_SKIPPED},
         PredicateType.USER: {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST},
         PredicateType.GROUP: {EQUAL, NOT_EQUAL, EXIST, NOT_EXIST},
         PredicateType.FILE: {EXIST, NOT_EXIST},
@@ -316,7 +322,13 @@ class PredicateOperator:
             NOT_EXIST,
         },
     }
-    UNARY_OPERATORS = {EXIST, NOT_EXIST, COMPLETED}
+    UNARY_OPERATORS = {
+        EXIST,
+        NOT_EXIST,
+        COMPLETED,
+        SKIPPED,
+        COMPLETED_OR_SKIPPED,
+    }
 
 
 class ConditionAction:
@@ -587,6 +599,7 @@ class WorkflowEventType:
     TASK_PERFORMER_GROUP_CREATED = 20
     TASK_PERFORMER_GROUP_DELETED = 21
     TASK_DELAY = 22
+    TASK_DELEGATION = 23
 
     URGENT_TYPES = (
         URGENT,
@@ -607,6 +620,7 @@ class WorkflowEventType:
         NOT_URGENT,
         SUB_WORKFLOW_RUN,
         TASK_DELAY,
+        TASK_DELEGATION,
     )
 
     CHOICES = (
@@ -635,7 +649,34 @@ class WorkflowEventType:
         (TASK_PERFORMER_CREATED, 'Performer group added to task'),
         (TASK_PERFORMER_DELETED, 'Performer group deleted from task'),
         (TASK_DELAY, 'Task snoozed from template'),
+        (TASK_DELEGATION, 'Task delegated'),
     )
+
+    LITERALS = Literal[
+        RUN,
+        COMPLETE,
+        ENDED,
+        DELAY,
+        REVERT,
+        ENDED_BY_CONDITION,
+        URGENT,
+        NOT_URGENT,
+        FORCE_RESUME,
+        FORCE_DELAY,
+        TASK_START,
+        TASK_COMPLETE,
+        TASK_REVERT,
+        COMMENT,
+        TASK_SKIP,
+        TASK_SKIP_NO_PERFORMERS,
+        TASK_PERFORMER_CREATED,
+        TASK_PERFORMER_DELETED,
+        DUE_DATE_CHANGED,
+        SUB_WORKFLOW_RUN,
+        TASK_PERFORMER_GROUP_CREATED,
+        TASK_PERFORMER_GROUP_DELETED,
+        TASK_DELAY,
+    ]
 
 
 class WorkflowEventActionType:

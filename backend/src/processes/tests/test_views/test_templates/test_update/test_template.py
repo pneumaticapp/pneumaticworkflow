@@ -1,7 +1,11 @@
 import pytest
+from datetime import timedelta
+
+from django.utils import timezone
 from django.conf import settings
 
 from src.accounts.enums import BillingPlanType
+from src.accounts.messages import MSG_A_0035, MSG_A_0037, MSG_A_0041
 from src.accounts.services.user_transfer import (
     UserTransferService,
 )
@@ -31,6 +35,8 @@ from src.processes.tests.fixtures import (
     create_invited_user,
     create_test_account,
     create_test_group,
+    create_test_not_admin,
+    create_test_owner,
     create_test_template,
     create_test_user,
     create_test_workflow,
@@ -2404,3 +2410,422 @@ class TestUpdateTemplate:
             type=PerformerType.GROUP,
             group=group,
         )
+
+
+def test_update__unauthenticated__unauthorized(api_client):
+
+    """Unauthenticated user → 401"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    request_data = {
+        'name': template.name,
+        'is_active': False,
+        'kickoff': {},
+        'tasks': [],
+    }
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 401
+
+
+def test_update__expired_subscription__permission_denied(api_client):
+
+    """Expired subscription → 403"""
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.PREMIUM,
+        plan_expiration=timezone.now() - timedelta(days=1),
+    )
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+    request_data = {
+        'name': template.name,
+        'is_active': False,
+        'kickoff': {},
+        'tasks': [],
+    }
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == MSG_A_0035
+
+
+def test_update__billing_plan_limit__permission_denied(api_client):
+
+    """Billing plan limit exceeded → 403"""
+
+    # arrange
+    account = create_test_account(plan=None)
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+    request_data = {
+        'name': template.name,
+        'is_active': False,
+        'kickoff': {},
+        'tasks': [],
+    }
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == MSG_A_0041
+
+
+def test_update__users_overlimited__permission_denied(api_client):
+
+    """Users over limit → 403"""
+
+    # arrange
+    account = create_test_account(
+        plan=BillingPlanType.PREMIUM,
+        max_users=1,
+    )
+    user = create_test_owner(account=account)
+    create_test_not_admin(
+        account=account,
+        email='extra@pneumatic.app',
+    )
+    account.active_users = 2
+    account.save()
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+    request_data = {
+        'name': template.name,
+        'is_active': False,
+        'kickoff': {},
+        'tasks': [],
+    }
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 403
+    assert response.data['detail'] == MSG_A_0037
+
+
+def test_update__not_found__not_found(mocker, api_client):
+
+    """Template not found → 404"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    api_client.token_authenticate(user=user)
+    template_integrations_service_init_mock = mocker.patch.object(
+        TemplateIntegrationsService,
+        attribute='__init__',
+        return_value=None,
+    )
+    template_updated_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    nonexistent_id = 999999
+    request_data = {
+        'name': 'Template',
+        'is_active': False,
+        'kickoff': {},
+        'tasks': [],
+    }
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{nonexistent_id}',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 404
+    template_integrations_service_init_mock.assert_not_called()
+    template_updated_mock.assert_not_called()
+
+
+def test_update__missing_name__validation_error(mocker, api_client):
+
+    """Missing required field `name` → 400"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+    template_integrations_service_init_mock = mocker.patch.object(
+        TemplateIntegrationsService,
+        attribute='__init__',
+        return_value=None,
+    )
+    template_updated_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    task_api_name = template.tasks.first().api_name
+    request_data = {
+        'is_active': True,
+        'kickoff': {},
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id,
+                'role': OwnerRole.OWNER,
+            },
+        ],
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'Step',
+                'api_name': task_api_name,
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
+    }
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 400
+    template_integrations_service_init_mock.assert_not_called()
+    template_updated_mock.assert_not_called()
+
+
+def test_update__missing_tasks__validation_error(mocker, api_client):
+
+    """Missing required field `tasks` → 400"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+    template_integrations_service_init_mock = mocker.patch.object(
+        TemplateIntegrationsService,
+        attribute='__init__',
+        return_value=None,
+    )
+    template_updated_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    request_data = {
+        'name': 'Updated Template',
+        'is_active': True,
+        'kickoff': {},
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id,
+                'role': OwnerRole.OWNER,
+            },
+        ],
+    }
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 400
+    template_integrations_service_init_mock.assert_not_called()
+    template_updated_mock.assert_not_called()
+
+
+def test_update__invalid_owners__validation_error(mocker, api_client):
+
+    """Invalid `owners` value → 400"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+    template_integrations_service_init_mock = mocker.patch.object(
+        TemplateIntegrationsService,
+        attribute='__init__',
+        return_value=None,
+    )
+    template_updated_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    task_api_name = template.tasks.first().api_name
+    request_data = {
+        'name': 'Updated Template',
+        'is_active': True,
+        'kickoff': {},
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': 999999,
+                'role': OwnerRole.OWNER,
+            },
+        ],
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'Step',
+                'api_name': task_api_name,
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
+    }
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 400
+    template_integrations_service_init_mock.assert_not_called()
+    template_updated_mock.assert_not_called()
+
+
+def test_update__inactive_template__analytics_skipped(mocker, api_client):
+
+    """template.is_active=False → analytics not triggered"""
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    template = create_test_template(
+        user=user,
+        is_active=True,
+        tasks_count=1,
+    )
+    api_client.token_authenticate(user=user)
+    template_integrations_service_init_mock = mocker.patch.object(
+        TemplateIntegrationsService,
+        attribute='__init__',
+        return_value=None,
+    )
+    template_updated_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.template_updated',
+    )
+    api_request_mock = mocker.patch(
+        'src.processes.services.templates.'
+        'integrations.TemplateIntegrationsService.api_request',
+    )
+    templates_kickoff_updated_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_kickoff_updated',
+    )
+    templates_updated_mock = mocker.patch(
+        'src.processes.views.template.'
+        'AnalyticService.templates_updated',
+    )
+    task_api_name = template.tasks.first().api_name
+    request_data = {
+        'name': 'Updated Template',
+        'is_active': False,
+        'kickoff': {},
+        'owners': [
+            {
+                'type': OwnerType.USER,
+                'source_id': user.id,
+                'role': OwnerRole.OWNER,
+            },
+        ],
+        'tasks': [
+            {
+                'number': 1,
+                'name': 'Step',
+                'api_name': task_api_name,
+                'raw_performers': [
+                    {
+                        'type': PerformerType.USER,
+                        'source_id': user.id,
+                    },
+                ],
+            },
+        ],
+    }
+
+    # act
+    response = api_client.put(
+        path=f'/templates/{template.id}',
+        data=request_data,
+    )
+
+    # assert
+    assert response.status_code == 200
+    template_integrations_service_init_mock.assert_called_once_with(
+        account=user.account,
+        is_superuser=False,
+        user=user,
+    )
+    template_updated_mock.assert_called_once()
+    api_request_mock.assert_not_called()
+    templates_kickoff_updated_mock.assert_not_called()
+    templates_updated_mock.assert_not_called()

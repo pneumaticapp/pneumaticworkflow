@@ -92,9 +92,44 @@ def test_create_instance__all_fields__ok(mocker):
     assert task.description_template == description
     assert task.number == 1
     assert task.require_completion_by_all is True
+    assert task.skip_for_starter is False
     assert task.is_urgent is True
     assert task.checklists_total == 2
     clear_mock.assert_called_once_with(description)
+
+
+def test_create_instance__skip_flag_true__ok(mocker):
+
+    # arrange
+    user = create_test_user()
+    template = create_test_template(user=user, tasks_count=1)
+    template_task = template.tasks.get(number=1)
+    template_task.skip_for_starter = True
+    template_task.save(
+        update_fields=['skip_for_starter'],
+    )
+    workflow = create_test_workflow(user, template=template)
+    workflow.tasks.delete()
+    clear_description = 'clear'
+    mocker.patch(
+        'src.services.markdown.MarkdownService.clear',
+        return_value=clear_description,
+    )
+    service = TaskService(
+        user=user,
+        instance=None,
+    )
+
+    # act
+    service._create_instance(
+        instance_template=template_task,
+        workflow=workflow,
+    )
+
+    # assert
+    task = service.instance
+    assert task.skip_for_starter is True
+    assert task.require_completion_by_all is False
 
 
 def test_get_task_due_date__raw_due_date_not_exist__return_none():

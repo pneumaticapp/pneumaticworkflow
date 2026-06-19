@@ -4,13 +4,15 @@ import Switch from 'rc-switch';
 import { debounce } from 'throttle-debounce';
 import { useIntl } from 'react-intl';
 
-import { EUserStatus, TUserListItem } from '../../../types/user';
+import { EUserStatus, TUserListItem, isUserAbsent } from '../../../types/user';
 import { IntlMessages } from '../../IntlMessages';
 import { Avatar } from '../../UI/Avatar';
 import { getUserFullName } from '../../../utils/users';
 import { getDate } from '../../../utils/strings';
 import { Dropdown, Header, TDropdownOption } from '../../UI';
 import { AddUserIcon, MoreIcon, RemoveUserIcon, TrashIcon } from '../../icons';
+import { SelectManagerModal } from '../SelectManagerModal';
+import { SelectReportsModal } from '../SelectReportsModal';
 
 import styles from './Users.css';
 
@@ -20,7 +22,10 @@ export interface ITeamUserProps {
   isSubscribed?: boolean;
   resendInvite(): Promise<void>;
   handleToggleAdmin(user: TUserListItem): () => Promise<void>;
+  handleChangeUserManager(userId: number, managerId: number | null, callbacks?: { onSuccess?: () => void; onError?: () => void }): void;
+  handleChangeUserReports(userId: number, reportIds: number[], callbacks?: { onSuccess?: () => void; onError?: () => void }): void;
   openModal(): void;
+  openVacationModal(): void;
 }
 
 export function TeamUser(props: ITeamUserProps) {
@@ -31,10 +36,17 @@ export function TeamUser(props: ITeamUserProps) {
     resendInvite,
     isCurrentUser,
     isSubscribed,
+    handleChangeUserManager,
+    handleChangeUserReports,
     openModal,
+    openVacationModal,
   } = props;
 
   const { formatMessage } = useIntl();
+  const [isManagerModalOpen, setIsManagerModalOpen] = React.useState(false);
+  const [isReportsModalOpen, setIsReportsModalOpen] = React.useState(false);
+  const [isManagerSaving, setIsManagerSaving] = React.useState(false);
+  const [isReportsSaving, setIsReportsSaving] = React.useState(false);
   const isUserActive = status === EUserStatus.Active;
 
   const resendInviteDebounced = React.useCallback(debounce(700, resendInvite), [resendInvite]);
@@ -45,6 +57,22 @@ export function TeamUser(props: ITeamUserProps) {
       onClick: resendInviteDebounced,
       isHidden: isUserActive,
       Icon: AddUserIcon,
+    },
+    {
+      label: 'Manager',
+      onClick: () => setIsManagerModalOpen(true),
+      isHidden: !isUserActive,
+    },
+    {
+      label: 'Reports',
+      onClick: () => setIsReportsModalOpen(true),
+      isHidden: !isUserActive,
+    },
+    {
+      label: formatMessage({ id: 'team.card-vacation-settings' }),
+      onClick: openVacationModal,
+      isHidden: !isUserActive,
+      Icon: undefined, // Or a suitable icon from standard library
     },
     {
       label: isUserActive
@@ -63,6 +91,11 @@ export function TeamUser(props: ITeamUserProps) {
         <>
           <Header size="6" tag="p" className={styles['card-header']}>
             {getUserFullName(user)}
+            {isUserAbsent(user) && (
+              <span className={styles['card-absent-badge']} data-testid="absent-badge">
+                {formatMessage({ id: 'team.card-absent-badge' })}
+              </span>
+            )}
           </Header>
           <p className={styles['card-subheader']}>
             <strong>{formatMessage({ id: 'team.user-id' }, { id: user.id })}</strong>{' '}
@@ -144,12 +177,64 @@ export function TeamUser(props: ITeamUserProps) {
   };
 
   return (
-    <div className={styles['card-wrapper']}>
-      <div className={classnames(styles['card'])}>
-        <Avatar user={user} containerClassName={styles['card-avatar']} size="lg" />
-        {renderDetails()}
-        {renderControllers()}
+    <>
+      <div className={styles['card-wrapper']}>
+        <div className={classnames(styles['card'])}>
+          <Avatar user={user} containerClassName={styles['card-avatar']} size="lg" />
+          {renderDetails()}
+          {renderControllers()}
+        </div>
       </div>
-    </div>
+      {isManagerModalOpen && (
+        <SelectManagerModal
+          isOpen={isManagerModalOpen}
+          onClose={() => {
+            if (!isManagerSaving) {
+              setIsManagerModalOpen(false);
+            }
+          }}
+          onConfirm={(managerId) => {
+            setIsManagerSaving(true);
+            handleChangeUserManager(user.id, managerId, {
+              onSuccess: () => {
+                setIsManagerSaving(false);
+                setIsManagerModalOpen(false);
+              },
+              onError: () => {
+                setIsManagerSaving(false);
+              },
+            });
+          }}
+          currentUserId={user.id}
+          currentManagerId={user.managerId || null}
+          isLoading={isManagerSaving}
+        />
+      )}
+      {isReportsModalOpen && (
+        <SelectReportsModal
+          isOpen={isReportsModalOpen}
+          onClose={() => {
+            if (!isReportsSaving) {
+              setIsReportsModalOpen(false);
+            }
+          }}
+          onConfirm={(reportIds) => {
+            setIsReportsSaving(true);
+            handleChangeUserReports(user.id, reportIds, {
+              onSuccess: () => {
+                setIsReportsSaving(false);
+                setIsReportsModalOpen(false);
+              },
+              onError: () => {
+                setIsReportsSaving(false);
+              },
+            });
+          }}
+          currentUserId={user.id}
+          currentReportIds={user.reportIds || []}
+          isLoading={isReportsSaving}
+        />
+      )}
+    </>
   );
 }

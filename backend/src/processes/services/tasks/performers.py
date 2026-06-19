@@ -6,7 +6,7 @@ from src.authentication.enums import AuthTokenType
 from src.notifications.tasks import (
     send_new_task_notification,
     send_new_task_websocket,
-    send_removed_task_notification,
+    send_task_deleted_notification,
 )
 from src.processes.enums import PerformerType
 from src.processes.messages.workflow import (
@@ -18,6 +18,10 @@ from src.processes.services.tasks.base import (
 )
 from src.processes.services.tasks.exceptions import (
     PerformersServiceException,
+    GroupPerformerServiceException,
+)
+from src.processes.services.tasks.groups import (
+    GroupPerformerService,
 )
 from src.processes.services.workflow_action import (
     WorkflowActionService,
@@ -81,6 +85,24 @@ class TaskPerformersService(BasePerformersService):
             auth_type=auth_type,
             is_superuser=is_superuser,
         )
+
+        schedule = user.vacation
+        sub_group_id = schedule.substitute_group_id if schedule else None
+        if sub_group_id:
+            try:
+                group_service = GroupPerformerService(
+                    user=request_user,
+                    task=task,
+                    is_superuser=is_superuser,
+                    auth_type=auth_type,
+                )
+                group_service.delete_performer(
+                    group_id=sub_group_id,
+                    run_actions=False,
+                )
+            except GroupPerformerServiceException:
+                pass
+
         if task.can_be_completed():
             first_completed_user = (
                 task.taskperformer_set.completed()
@@ -111,7 +133,7 @@ class TaskPerformersService(BasePerformersService):
                 .user_ids_set()
             )
             if user.id not in task_performers:
-                send_removed_task_notification.delay(
+                send_task_deleted_notification.delay(
                     task_id=task.id,
                     recipients=[(user.id, user.email)],
                     account_id=task.account_id,

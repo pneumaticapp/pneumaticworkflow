@@ -5,7 +5,7 @@ import { injectIntl, IntlShape } from 'react-intl';
 import classNames from 'classnames';
 
 import { EMoveDirections, EInputNameBackgroundColor } from '../../../types/workflow';
-import { EExtraFieldType, IExtraField } from '../../../types/template';
+import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../types/template';
 import { isArrayWithItems } from '../../../utils/helpers';
 import { getNormalizeFieldsOrders, moveWorkflowField } from '../../../utils/workflows';
 
@@ -17,6 +17,7 @@ import { getEmptyField } from '../KickoffRedux/utils/getEmptyField';
 
 import styles from './OutputForm.css';
 import stylesTaskForm from '../TaskForm/TaskForm.css';
+import { useDatasetOptions } from '../ExtraFields/utils/useDatasetOptions';
 
 export interface IOutputFormOwnProps {
   fields: IExtraField[];
@@ -37,6 +38,7 @@ export function OutputForm({ fields, onOutputChange, intl, isDisabled, show, acc
   }, [outputRef]);
 
   const sortedFields = [...fields].sort((a, b) => b.order - a.order);
+  const datasetOptions = useDatasetOptions(fields);
 
   const isFormEmpty = !isArrayWithItems(fields);
 
@@ -98,6 +100,8 @@ export function OutputForm({ fields, onOutputChange, intl, isDisabled, show, acc
               moveFieldUp={() => handleMoveField(index, EMoveDirections.Up)}
               moveFieldDown={() => handleMoveField(index, EMoveDirections.Down)}
               editField={handleEditField(field.apiName)}
+              mode={EExtraFieldMode.Kickoff}
+              datasetOptions={datasetOptions}
               isDisabled={isDisabled}
               innerRef={outputRef}
               accountId={accountId}

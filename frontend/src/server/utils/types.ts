@@ -1,3 +1,5 @@
+import { logger } from '../../public/utils/logger';
+
 export interface IAuthenticatedUser {
   id: string;
   email: string;
@@ -10,6 +12,8 @@ export interface IAuthenticatedUser {
   date_joined: string;
   is_account_owner: boolean;
   is_admin: boolean;
+  manager_id: number | null;
+  subordinates_ids: number[];
 }
 
 export interface IAuthenticatedAccount {
@@ -22,3 +26,5 @@ export interface IAuthenticatedAccount {
   owner_email: string;
   billing_plan: string | null;
 }
+
+export type TLoggerArgs = Parameters<typeof logger.error>;

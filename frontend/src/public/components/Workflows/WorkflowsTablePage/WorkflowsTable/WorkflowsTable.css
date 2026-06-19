@@ -219,6 +219,7 @@
 
 .container__actions--wide-table {
   position: sticky;
+  z-index: 5;
   left: 0;
   margin-bottom: 1.6rem;
   padding: 0 2.4rem 0 3.2rem;

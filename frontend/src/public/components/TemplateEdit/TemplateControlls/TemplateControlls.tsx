@@ -21,7 +21,7 @@ import {
   TPatchTemplatePayload,
   discardTemplateChanges,
 } from '../../../redux/actions';
-import { getRunnableWorkflow } from '../utils/getRunnableWorkflow';
+import { getRunnableWorkflow, loadDatasetsMap } from '../utils/getRunnableWorkflow';
 import { ETemplateStatus } from '../../../types/redux';
 import { IRunWorkflow } from '../../WorkflowEditPopup/types';
 import { WarningPopup } from '../../UI/WarningPopup';
@@ -100,8 +100,15 @@ export function TemplateControlls({
   const starters = owners.filter((o: ITemplateOwner) => o.role === ETemplateOwnerRole.Starter);
   const pureOwners = owners.filter((o: ITemplateOwner) => o.role === ETemplateOwnerRole.Owner);
 
-  const runnableWorkflow = getRunnableWorkflow(template);
   const isSavedTemplate = React.useMemo(() => Boolean(templateId), [templateId]);
+
+  const handleRunProcess = async () => {
+    const datasetsMap = await loadDatasetsMap(template.kickoff);
+    const runnableWorkflow = getRunnableWorkflow(template, datasetsMap);
+    if (runnableWorkflow) {
+      openRunWorkflowModal(runnableWorkflow);
+    }
+  };
 
   const handleChangeIsActive = (value: ITemplate['isActive'], redirectUrl?: string) => {
     if (!value) {
@@ -245,8 +252,8 @@ export function TemplateControlls({
               showEnableTemplateButton && styles['run-button_non-active'],
             )}
             type="button"
-            onClick={() => runnableWorkflow && openRunWorkflowModal(runnableWorkflow)}
-            disabled={templateStatus !== ETemplateStatus.Saved || !runnableWorkflow}
+            onClick={handleRunProcess}
+            disabled={templateStatus !== ETemplateStatus.Saved || !isTemplateActive}
             label={formatMessage({ id: 'templates.run-workflow' })}
             buttonStyle="transparent-black"
           />

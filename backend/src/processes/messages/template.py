@@ -10,7 +10,9 @@ MSG_PT_0004 = lambda name: _(
     'Some fields referenced in the conditions of task "{name}" do not exist.',
 ).format(name=name)
 
-MSG_PT_0005 = _('Selections can\'t be empty on radio or checkbox fields.')
+MSG_PT_0005 = _(
+    'You must provide either a "selections" or a "dataset" for the field.',
+)
 MSG_PT_0006 = _('A field with a type \'User\' should be required.')
 MSG_PT_0007 = _('Workflow template name is empty.')
 MSG_PT_0008 = _('Some of fields in "workflow template name" don\'t exist.')
@@ -105,12 +107,12 @@ MSG_PT_0044 = lambda task, operator, field_type: format_lazy(
     operator=operator,
     field_type=field_type,
 )
-MSG_PT_0045 = lambda task, selection_api_name: format_lazy(
+MSG_PT_0045 = lambda task, selection_value: format_lazy(
     _(
-        'Task "{task}": selection "{selection_api_name}" doesn\'t exist '
+        'Task "{task}": selection "{selection_value}" doesn\'t exist '
         'or can\'t be used in this condition.',
     ),
-    selection_api_name=selection_api_name,
+    selection_value=selection_value,
     task=task,
 )
 # Translators: Condition operator not provided
@@ -179,9 +181,9 @@ MSG_PT_0053 = lambda name, api_name: format_lazy(
 )
 MSG_PT_0054 = lambda name, field_name, api_name, value: format_lazy(
     _(
-        'Task "{name}": Option "{value}" of output field "{field_name}" '
-        'contains a duplicate api_name "{api_name}". '
-        'Change the api_name or recreate the option.',
+        'Task "{name}": The output field "{field_name}" '
+        'contains a duplicate value in option "{value}". '
+        'Please use a unique value.',
     ),
     name=name,
     field_name=field_name,
@@ -243,7 +245,8 @@ MSG_PT_0063 = _('The value must be a number.')
 MSG_PT_0064 = lambda name: format_lazy(
     _(
         'Task condition "{name}": '
-        'Only the "completed" operator is allowed for the "start_task" action',
+        'Only the "completed", "skipped", or "completed_or_skipped" '
+        'operators are allowed for the "start_task" action',
     ),
     name=name,
 )
@@ -281,4 +284,31 @@ MSG_PT_0068 = lambda name: format_lazy(
 MSG_PT_0069 = _('Permission denied. You do not have access to this template.')
 MSG_PT_0070 = _(
     'Permission denied. You are not a template owner or viewer.',
+)
+MSG_PT_0071 = _(
+    'You should set the source step for performer '
+    'with the type "manager".',
+)
+MSG_PT_0072 = lambda name: format_lazy(
+    _(
+        'Task "{name}": Manager performer '
+        'cannot reference its own step.',
+    ),
+    name=name,
+)
+MSG_PT_0073 = lambda name, step_name: format_lazy(
+    _(
+        'Task "{name}": Manager performer references '
+        'a non-existent step "{step_name}".',
+    ),
+    name=name,
+    step_name=step_name,
+)
+MSG_PT_0074 = lambda name, step_name: format_lazy(
+    _(
+        'Task "{name}": Disable "Required completion by all" '
+        'on step "{step_name}" to use Manager performer.',
+    ),
+    name=name,
+    step_name=step_name,
 )

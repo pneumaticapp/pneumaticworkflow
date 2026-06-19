@@ -1,0 +1,219 @@
+import { all, call, fork, put, takeEvery, takeLatest, takeLeading, select } from 'redux-saga/effects';
+import { PayloadAction } from '@reduxjs/toolkit';
+
+import uniqBy from 'lodash.uniqby';
+import { NotificationManager } from '../../components/UI/Notifications';
+import { getErrorMessage } from '../../utils/getErrorMessage';
+import { logger } from '../../utils/logger';
+import { history } from '../../utils/history';
+import { ERoutes } from '../../constants/routes';
+import { isRequestCanceled } from '../../utils/isRequestCanceled';
+
+import { IDataset, IGetDatasetsResponse, ICreateDatasetParams, IUpdateDatasetParams, EDatasetsSorting } from '../../types/dataset';
+import { TDeleteDatasetPayload } from './types';
+import { generateCloneName } from './utils';
+import { LIMIT_LOAD_DATASETS } from '../../constants/defaultValues';
+import { getDatasetsStore } from '../selectors/datasets';
+import { getDatasets } from '../../api/datasets/getDatasets';
+import { getDataset } from '../../api/datasets/getDataset';
+import { createDataset } from '../../api/datasets/createDataset';
+import { updateDataset } from '../../api/datasets/updateDataset';
+import { deleteDataset } from '../../api/datasets/deleteDataset';
+
+import {
+  loadDatasets,
+  loadDatasetsSuccess,
+  loadDatasetsFailed,
+  loadAllDatasets,
+  loadAllDatasetsSuccess,
+  loadAllDatasetsFailed,
+  loadCurrentDataset,
+  loadCurrentDatasetSuccess,
+  loadCurrentDatasetFailed,
+  setCurrentDataset,
+  createDatasetAction,
+  cloneDatasetAction,
+  updateDatasetAction,
+  deleteDatasetAction,
+  removeDatasetFromList,
+  loadDatasetForMap,
+  saveDatasetToMap,
+} from './slice';
+
+function* loadDatasetsSaga({ payload: offset = 0 }: ReturnType<typeof loadDatasets>) {
+  const abortController = new AbortController();
+
+  try {
+    const datasetsStore: ReturnType<typeof getDatasetsStore> = yield select(getDatasetsStore);
+    const { datasetsList, datasetsListSorting } = datasetsStore;
+
+    const data: IGetDatasetsResponse = yield call(getDatasets, {
+      offset: offset * LIMIT_LOAD_DATASETS,
+      limit: LIMIT_LOAD_DATASETS,
+      ordering: datasetsListSorting,
+      signal: abortController.signal,
+    });
+    
+    const results = data.results || [];
+    const count = data.count || 0;
+
+    const items = offset > 0 ? uniqBy([...datasetsList.items, ...results], 'id') : results;
+
+    yield put(loadDatasetsSuccess({ count, offset, items }));
+  } catch (error) {
+    if (isRequestCanceled(error)) return;
+    yield put(loadDatasetsFailed());
+    NotificationManager.warning({ message: getErrorMessage(error) });
+    logger.error('failed to load datasets', error);
+  } finally {
+    abortController.abort();
+  }
+}
+
+function* loadAllDatasetsSaga() {
+  try {
+    const data: IGetDatasetsResponse = yield getDatasets({
+      limit: 9999, 
+      ordering: EDatasetsSorting.NameAsc, 
+    });
+    
+    yield put(loadAllDatasetsSuccess(data.results || []));
+  } catch (error) {
+    yield put(loadAllDatasetsFailed());
+    logger.error('failed to load all datasets', error);
+  }
+}
+
+
+function* loadDatasetForMapSaga({ payload: id }: PayloadAction<number>) {
+  try {
+    const dataset: IDataset = yield getDataset({ id });
+    yield put(saveDatasetToMap(dataset));
+  } catch (error) {
+    logger.error('failed to load dataset for map', error);
+  }
+}
+
+function* loadCurrentDatasetSaga({ payload: { id } }: PayloadAction<{ id: number }>) {
+  const abortController = new AbortController();
+
+  try {
+    const currentDataset: IDataset = yield call(getDataset, { id, signal: abortController.signal });
+    yield put(loadCurrentDatasetSuccess(currentDataset));
+  } catch (error) {
+    if (isRequestCanceled(error)) return;
+    yield put(loadCurrentDatasetFailed());
+    history.push(ERoutes.Datasets);
+    NotificationManager.warning({ message: getErrorMessage(error) });
+    logger.error('failed to load current dataset', error);
+  } finally {
+    abortController.abort();
+  }
+}
+
+function* createDatasetSaga({ payload }: PayloadAction<ICreateDatasetParams>) {
+  try {
+    const createdDataset: IDataset = yield createDataset(payload);
+    yield put(loadCurrentDatasetSuccess(createdDataset));
+    history.push(ERoutes.DatasetDetail.replace(':id', String(createdDataset.id)));
+  } catch (error) {
+    NotificationManager.warning({ message: getErrorMessage(error) });
+    logger.error('failed to create dataset', error);
+  }
+}
+
+function* cloneDatasetSaga({ payload: { id } }: PayloadAction<{ id: number }>) {
+  try {
+    const originalDataset: IDataset = yield getDataset({ id });
+    const baseName = originalDataset.name;
+
+    const allDatasets: IGetDatasetsResponse = yield getDatasets({ limit: 9999 });
+    const existingNames = (allDatasets.results || []).map((dataset) => dataset.name);
+    const cloneName = generateCloneName(baseName, existingNames);
+
+    const clonedDataset: IDataset = yield createDataset({
+      name: cloneName,
+      description: originalDataset.description,
+      items: originalDataset.items.map((item) => ({ value: item.value, order: item.order })),
+    });
+
+    yield put(loadCurrentDatasetSuccess(clonedDataset));
+    history.push(ERoutes.DatasetDetail.replace(':id', String(clonedDataset.id)));
+  } catch (error) {
+    NotificationManager.warning({ message: getErrorMessage(error) });
+    logger.error('failed to clone dataset', error);
+  }
+}
+
+function* updateDatasetSaga({ payload }: PayloadAction<IUpdateDatasetParams>) {
+  const abortController = new AbortController();
+
+  try {
+    const updatedDataset: IDataset = yield call(updateDataset, { ...payload, signal: abortController.signal });
+    yield put(setCurrentDataset(updatedDataset));
+  } catch (error) {
+    if (isRequestCanceled(error)) return;
+    yield put(loadCurrentDatasetFailed());
+    NotificationManager.warning({ message: getErrorMessage(error) });
+    logger.error('failed to update dataset', error);
+  } finally {
+    abortController.abort();
+  }
+}
+
+function* deleteDatasetSaga({ payload: { id, onSuccess } }: PayloadAction<TDeleteDatasetPayload>) {
+  try {
+    yield deleteDataset({ id });
+    yield put(removeDatasetFromList(id));
+    onSuccess?.();
+  } catch (error) {
+    yield put(loadDatasetsFailed());
+    NotificationManager.warning({ message: getErrorMessage(error) });
+    logger.error('failed to delete dataset', error);
+  }
+}
+
+function* watchLoadDatasets() {
+  yield takeLatest(loadDatasets.type, loadDatasetsSaga);
+}
+
+function* watchLoadAllDatasets() {
+  yield takeLeading(loadAllDatasets.type, loadAllDatasetsSaga);
+}
+
+function* watchLoadCurrentDataset() {
+  yield takeLatest(loadCurrentDataset.type, loadCurrentDatasetSaga);
+}
+
+function* watchLoadDatasetForMap() {
+  yield takeEvery(loadDatasetForMap.type, loadDatasetForMapSaga);
+}
+
+function* watchCreateDataset() {
+  yield takeEvery(createDatasetAction.type, createDatasetSaga);
+}
+
+function* watchCloneDataset() {
+  yield takeEvery(cloneDatasetAction.type, cloneDatasetSaga);
+}
+
+function* watchUpdateDataset() {
+  yield takeLatest(updateDatasetAction.type, updateDatasetSaga);
+}
+
+function* watchDeleteDataset() {
+  yield takeEvery(deleteDatasetAction.type, deleteDatasetSaga);
+}
+
+export function* rootSaga() {
+  yield all([
+    fork(watchLoadDatasets),
+    fork(watchLoadAllDatasets),
+    fork(watchLoadCurrentDataset),
+    fork(watchLoadDatasetForMap),
+    fork(watchCreateDataset),
+    fork(watchCloneDataset),
+    fork(watchUpdateDataset),
+    fork(watchDeleteDataset),
+  ]);
+}

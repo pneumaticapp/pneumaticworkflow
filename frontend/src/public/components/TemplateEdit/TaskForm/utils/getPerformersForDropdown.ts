@@ -1,9 +1,9 @@
 import { IntlShape } from 'react-intl';
-import { EExtraFieldType, ETaskPerformerType, ITemplateTaskPerformer } from '../../../../types/template';
+import { EExtraFieldType, ETaskPerformerType, ITemplateTask, ITemplateTaskPerformer } from '../../../../types/template';
 import { TUserListItem } from '../../../../types/user';
 import { getUserFullName } from '../../../../utils/users';
 import { TTaskVariable } from '../../types';
-import { EOptionTypes, TUsersDropdownOption } from '../../../UI/form/UsersDropdown';
+import { EOptionTypes, TUsersDropdownOption, getUsersDropdownOptionValue } from '../../../UI/form/UsersDropdown';
 import { IGroup } from '../../../../redux/team/types';
 
 export function getPerformersForDropdown(
@@ -11,6 +11,8 @@ export function getPerformersForDropdown(
   groups: IGroup[],
   variables: TTaskVariable[],
   formatMessage: IntlShape['formatMessage'],
+  currentTask?: ITemplateTask,
+  tasks?: ITemplateTask[],
 ): TUsersDropdownOption[] {
   const userPeformers: (Omit<ITemplateTaskPerformer, 'apiName'> & TUsersDropdownOption)[] = users.map((user) => ({
     id: user.id,
@@ -20,7 +22,7 @@ export function getPerformersForDropdown(
     type: ETaskPerformerType.User,
     sourceId: String(user.id),
     label: getUserFullName(user),
-    value: String(user.id),
+    value: getUsersDropdownOptionValue(EOptionTypes.User, user.id),
   }));
 
   const outputUsersPerformers: TUsersDropdownOption[] = variables
@@ -44,7 +46,7 @@ export function getPerformersForDropdown(
     type: ETaskPerformerType.UserGroup,
     sourceId: String(group.id),
     label: group.name,
-    value: String(group.id),
+    value: getUsersDropdownOptionValue(EOptionTypes.Group, group.id),
   }));
 
   const workflowStarterPerformers: Omit<ITemplateTaskPerformer, 'apiName'> & TUsersDropdownOption = {
@@ -58,5 +60,24 @@ export function getPerformersForDropdown(
     value: String(null),
   };
 
-  return [workflowStarterPerformers, ...groupsPerformers, ...outputUsersPerformers, ...userPeformers];
+  const managerPerformers: TUsersDropdownOption[] = (tasks || [])
+    .filter((step) => !currentTask || step.apiName !== currentTask.apiName)
+    .map((step) => ({
+      id: 0,
+      optionType: EOptionTypes.Manager,
+      firstName: '',
+      lastName: '',
+      type: ETaskPerformerType.Manager,
+      sourceId: step.apiName,
+      label: formatMessage({ id: 'tasks.task-manager-of-step' }, { step: step.name }),
+      value: `manager-${step.apiName}`,
+    }));
+
+  return [
+    workflowStarterPerformers,
+    ...managerPerformers,
+    ...groupsPerformers,
+    ...outputUsersPerformers,
+    ...userPeformers,
+  ];
 }

@@ -12,7 +12,8 @@ from src.notifications.tasks import (
     send_comment_notification,
     send_mention_notification,
     send_reaction_notification,
-    send_workflow_event,
+    send_event_created,
+    send_event_updated,
 )
 from src.processes.enums import (
     CommentStatus,
@@ -58,7 +59,7 @@ class WorkflowEventService:
         """ Send workflow event websocket """
 
         data = WorkflowEventSerializer(instance=event).data
-        send_workflow_event.delay(
+        send_event_created.delay(
             logging=event.account.log_api_requests,
             logo_lg=event.account.logo_lg,
             account_id=event.account_id,
@@ -573,6 +574,33 @@ class WorkflowEventService:
             cls._after_create_actions(event)
         return event
 
+    @classmethod
+    def task_delegation_event(
+        cls,
+        task: Task,
+        user: UserModel,
+        substitute_group: UserGroup,
+        after_create_actions: bool = True,
+    ) -> WorkflowEvent:
+
+        event = WorkflowEvent.objects.create(
+            type=WorkflowEventType.TASK_DELEGATION,
+            account=task.account,
+            task=task,
+            task_json=TaskEventJsonSerializer(
+                instance=task,
+                context={
+                    'event_type': WorkflowEventType.TASK_DELEGATION,
+                },
+            ).data,
+            workflow=task.workflow,
+            target_user_id=user.id,
+            target_group_id=substitute_group.id,
+        )
+        if after_create_actions:
+            cls._after_create_actions(event)
+        return event
+
 
 class CommentService(BaseModelService):
 
@@ -649,9 +677,9 @@ class CommentService(BaseModelService):
             )
         return mentioned_users_ids
 
-    def _send_workflow_event(self):
+    def _send_event_updated(self):
         data = WorkflowEventSerializer(instance=self.instance).data
-        send_workflow_event.delay(
+        send_event_updated.delay(
             logging=self.instance.account.log_api_requests,
             logo_lg=self.instance.account.logo_lg,
             account_id=self.instance.account_id,
@@ -791,7 +819,7 @@ class CommentService(BaseModelService):
                     text=self.instance.text,
                 )
 
-        self._send_workflow_event()
+        self._send_event_updated()
         AnalyticService.comment_edited(
             text=clear_text,
             user=self.user,
@@ -815,7 +843,7 @@ class CommentService(BaseModelService):
             text=None,
             force_save=True,
         )
-        self._send_workflow_event()
+        self._send_event_updated()
         AnalyticService.comment_deleted(
             text=self.instance.clear_text,
             user=self.user,
@@ -859,7 +887,7 @@ class CommentService(BaseModelService):
                 is_superuser=self.is_superuser,
                 auth_type=self.auth_type,
             )
-            self._send_workflow_event()
+            self._send_event_updated()
             # Don't send reactions to yourself
             if self.user.id != self.instance.user_id:
                 send_reaction_notification.delay(
@@ -896,4 +924,4 @@ class CommentService(BaseModelService):
                 is_superuser=self.is_superuser,
                 auth_type=self.auth_type,
             )
-            self._send_workflow_event()
+            self._send_event_updated()

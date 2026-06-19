@@ -21,13 +21,14 @@ import { runWorkflowModal } from './runWorkflowModal';
 import { webhooks } from './webhooks';
 import { tenants } from './tenants';
 import { EAuthActions } from './actions';
-import { groups } from './groups';
+import groups from './groups/slice';
 
 import pages from './pages/slice';
 import team from './team/slice';
 import workflows from './workflows/slice';
 import accounts from './accounts/slice';
 import tasks from './tasks/slice';
+import datasets from './datasets/slice';
 
 
 export const reducers = combineReducers({
@@ -53,6 +54,7 @@ export const reducers = combineReducers({
   runWorkflowModal,
   webhooks,
   tenants,
+  datasets,
   pages,
 });
 

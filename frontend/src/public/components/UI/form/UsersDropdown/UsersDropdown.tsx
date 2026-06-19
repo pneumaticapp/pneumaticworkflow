@@ -3,10 +3,12 @@ import { useIntl } from 'react-intl';
 import { ActionMeta, FormatOptionLabelMeta } from 'react-select';
 
 import { TDropdownOptionBase, IDropdownListProps, DropdownList, Checkbox, Avatar, TAvatarUser } from '../..';
-import { TUserListItem } from '../../../../types/user';
+import { TUserListItem, isUserAbsent } from '../../../../types/user';
 import { BoldPlusIcon } from '../../../icons';
 import { ETaskPerformerType } from '../../../../types/template';
 import { getUserById } from '../../../UserData/utils/getUserById';
+
+import { isUsersDropdownOptionSelected } from './usersDropdownOptionValue';
 
 import styles from './UsersDropdown.css';
 
@@ -15,6 +17,7 @@ export enum EOptionTypes {
   User = ETaskPerformerType.User,
   Starter = ETaskPerformerType.WorkflowStarter,
   Field = ETaskPerformerType.OutputUser,
+  Manager = ETaskPerformerType.Manager,
   InviteUsers = 'invite-users',
   AllUsers = 'all-users',
 }
@@ -39,6 +42,8 @@ export interface IUsersDropdownProps<TOption extends TUsersDropdownOption> exten
   onUsersInvited?(invitedUsers: any): void;
   onClickInvite(): void;
   onClickAllUsers?(value: boolean): void;
+  errorMessage?: string;
+  isRequired?: boolean;
 }
 
 export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
@@ -58,6 +63,8 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
   isMulti,
   onClickAllUsers,
   value,
+  errorMessage,
+  isRequired,
   ...restProps
 }: IUsersDropdownProps<TOption>) {
   const { formatMessage } = useIntl();
@@ -144,7 +151,7 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
 
     if (formatOptionLabel) return formatOptionLabel(option, formatOptionLabelMeta);
 
-    const isSelected = !!formatOptionLabelMeta.selectValue.find((item: any) => item.value === option.value);
+    const isSelected = isUsersDropdownOptionSelected(formatOptionLabelMeta.selectValue, option);
 
     const renderLabel = () => {
       const currentUser: TUserListItem | TUsersDropdownOption | null =
@@ -160,7 +167,14 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
               isEmpty={option.optionType !== EOptionTypes.User && option.optionType !== EOptionTypes.Group}
             />
           )}
-          <p>{option.label}</p>
+          <p className={styles['user-option__label']}>
+            {option.label}
+            {isUserAbsent(currentUser as TUserListItem) && (
+              <span className={styles['user-option__badge']}>
+                {(currentUser as TUserListItem)?.vacation?.absenceStatus === 'sick_leave' ? ' 🏥' : ' ✈️'}
+              </span>
+            )}
+          </p>
         </div>
       );
     };
@@ -192,6 +206,8 @@ export function UsersDropdownComponent<TOption extends TUsersDropdownOption>({
       formatOptionLabel={handleFormatOptionLabel}
       className={className}
       value={value}
+      errorMessage={errorMessage}
+      isRequired={isRequired}
       {...restProps}
     />
   );

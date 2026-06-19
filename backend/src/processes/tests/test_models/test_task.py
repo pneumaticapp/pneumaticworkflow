@@ -9,15 +9,18 @@ from src.processes.enums import (
     FieldType,
     PerformerType,
     TaskStatus,
+    WorkflowEventType,
 )
-from src.processes.models.workflows.fields import TaskField
+from src.processes.models.workflows.fields import TaskField, FieldSelection
 from src.processes.models.workflows.task import Delay, TaskPerformer
 from src.processes.tests.fixtures import (
     create_test_account,
+    create_test_event,
     create_test_group,
     create_test_owner,
     create_test_not_admin,
     create_test_workflow,
+    create_test_dataset,
 )
 
 pytestmark = pytest.mark.django_db
@@ -260,6 +263,7 @@ def test_get_raw_performer__with_user_id__ok(mocker):
         field=None,
         api_name=api_name,
         type=PerformerType.USER,
+        source_task_api_name=None,
     )
 
 
@@ -299,6 +303,7 @@ def test_get_raw_performer__with_group_id__ok(mocker):
         field=None,
         api_name=api_name,
         type=PerformerType.GROUP,
+        source_task_api_name=None,
     )
 
 
@@ -338,6 +343,7 @@ def test_get_raw_performer__with_field__ok(mocker):
         field=field_mock,
         api_name=api_name,
         type=PerformerType.FIELD,
+        source_task_api_name=None,
     )
 
 
@@ -375,6 +381,7 @@ def test_get_raw_performer__workflow_starter_no_user__ok(mocker):
         field=None,
         api_name=api_name,
         type=PerformerType.WORKFLOW_STARTER,
+        source_task_api_name=None,
     )
 
 
@@ -487,7 +494,7 @@ def test_reset_delay__delay_without_pk__skip():
     assert delay.pk is None
 
 
-def test_webhook_payload__normal__ok(mocker):
+def test_webhook_payload__ok(mocker):
     """
     Returns dict with task data and workflow payload merged
     """
@@ -520,6 +527,48 @@ def test_webhook_payload__normal__ok(mocker):
     task_serializer_mock.assert_called_once_with(instance=task)
     workflow_webhook_payload_mock.assert_called_once_with()
     assert result == {'task': {**task_data, **workflow_payload}}
+
+
+def test_webhook_payload__field_with_dataset_and_selections__ok(mocker):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    dataset = create_test_dataset(account=account, items_count=1)
+    dataset_item = dataset.items.get(order=1)
+    workflow = create_test_workflow(user=user, tasks_count=1)
+    task = workflow.tasks.get(number=1)
+    field = TaskField.objects.create(
+        type=FieldType.DROPDOWN,
+        name='dropdown',
+        task=task,
+        value=dataset_item.value,
+        workflow=workflow,
+        account=account,
+        dataset=dataset,
+    )
+    selection = FieldSelection.objects.create(
+        field=field,
+        value='Selection value',
+    )
+    task = workflow.tasks.get(number=1)
+    workflow_payload = {'workflow_id': workflow.id}
+    workflow_webhook_payload_mock = mocker.patch(
+        'src.processes.models.workflows.workflow'
+        '.Workflow.webhook_payload',
+        return_value=workflow_payload,
+    )
+
+    # act
+    result = task.webhook_payload()
+
+    # assert
+    workflow_webhook_payload_mock.assert_called_once_with()
+    field_data = result['task']['output'][0]
+    assert field_data['id'] == field.id
+    assert field_data['type'] == field.type
+    assert field_data['selections'] == [selection.value, dataset_item.value]
+    assert field_data['value'] == dataset_item.value
 
 
 def test_get_default_performer__workflow_starter_set__ok():
@@ -795,6 +844,7 @@ def test_add_raw_performer__with_user__ok(mocker):
         group_id=None,
         user_id=None,
         field=None,
+        source_task_api_name=None,
     )
     raw_performer_mock.save.assert_called_once_with()
     assert result is raw_performer_mock
@@ -835,6 +885,7 @@ def test_add_raw_performer__with_user_id__ok(mocker):
         group_id=None,
         user_id=user.id,
         field=None,
+        source_task_api_name=None,
     )
     raw_performer_mock.save.assert_called_once_with()
     assert result is raw_performer_mock
@@ -877,6 +928,7 @@ def test_add_raw_performer__with_group_id__ok(mocker):
         group_id=group_id,
         user_id=None,
         field=None,
+        source_task_api_name=None,
     )
     raw_performer_mock.save.assert_called_once_with()
     assert result is raw_performer_mock
@@ -919,6 +971,7 @@ def test_add_raw_performer__with_field__ok(mocker):
         group_id=None,
         user_id=None,
         field=field_mock,
+        source_task_api_name=None,
     )
     raw_performer_mock.save.assert_called_once_with()
     assert result is raw_performer_mock
@@ -959,6 +1012,7 @@ def test_add_raw_performer__workflow_starter_no_user__ok(mocker):
         group_id=None,
         user_id=None,
         field=None,
+        source_task_api_name=None,
     )
     raw_performer_mock.save.assert_called_once_with()
     assert result is raw_performer_mock
@@ -1687,6 +1741,7 @@ def test_update_raw_performers_from_tmpl__new_performers__bulk_created(
         group_id=None,
         field=None,
         api_name=new_api_name,
+        source_task_api_name=None,
     )
     bulk_create_mock.assert_called_once_with([real_rp])
 
@@ -1771,6 +1826,52 @@ def test_update_raw_performers_from_tmpl__orphans__deleted(
     assert not task.raw_performers.filter(
         api_name=orphan_api_name,
     ).exists()
+
+
+def test_update_raw_performers_from_tmpl__dict_manager__source_preserved():
+    """
+    MANAGER performer from dict input preserves source_task_api_name
+    through the versioning/update path.
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=2,
+    )
+    task_1 = workflow.tasks.get(number=1)
+    task_2 = workflow.tasks.get(number=2)
+
+    # Clear existing raw performers on task_2
+    task_2.raw_performers.all().delete()
+
+    template_dict = {
+        'raw_performers': [
+            {
+                'api_name': 'raw-performer-mgr-1',
+                'type': PerformerType.MANAGER,
+                'user_id': None,
+                'group_id': None,
+                'field': None,
+                'source_task_api_name': task_1.api_name,
+            },
+        ],
+    }
+
+    # act
+    task_2.update_raw_performers_from_task_template(
+        task_template=template_dict,
+    )
+
+    # assert
+    mgr_raw = task_2.raw_performers.filter(
+        type=PerformerType.MANAGER,
+    ).first()
+    assert mgr_raw is not None
+    assert mgr_raw.source_task_api_name == task_1.api_name
+    assert mgr_raw.api_name == 'raw-performer-mgr-1'
 
 
 def test_update_performers__single_user_raw_performer__ok():
@@ -2017,3 +2118,222 @@ def test_update_performers__return_value__ok():
     assert isinstance(created_group_ids, list)
     assert isinstance(del_user_ids, list)
     assert isinstance(del_group_ids, list)
+
+
+def test_add_raw_performer__manager_with_source_api_name__ok():
+    """
+    MANAGER type with source_task_api_name saves correctly
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=2,
+    )
+    task = workflow.tasks.get(number=2)
+    source_api = workflow.tasks.get(number=1).api_name
+
+    # act
+    raw_performer = task.add_raw_performer(
+        performer_type=PerformerType.MANAGER,
+        source_task_api_name=source_api,
+    )
+
+    # assert
+    assert raw_performer.source_task_api_name == source_api
+    assert raw_performer.type == PerformerType.MANAGER
+
+
+def test_add_raw_performer__user_without_source_api_name__none():
+    """
+    USER type without source_task_api_name — stays None (backward compat)
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=1,
+    )
+    task = workflow.tasks.get(number=1)
+
+    # act
+    raw_performer = task.add_raw_performer(
+        user=user,
+        performer_type=PerformerType.USER,
+    )
+
+    # assert
+    assert raw_performer.source_task_api_name is None
+    assert raw_performer.type == PerformerType.USER
+
+
+def test_delete_raw_performer__manager__deletes_only_target():
+    """
+    Two MANAGER performers on one task — deleting by
+    source_task_api_name removes only the targeted one
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=3,
+    )
+    task_1 = workflow.tasks.get(number=1)
+    task_2 = workflow.tasks.get(number=2)
+    task_3 = workflow.tasks.get(number=3)
+
+    task_3.add_raw_performer(
+        performer_type=PerformerType.MANAGER,
+        source_task_api_name=task_1.api_name,
+    )
+    task_3.add_raw_performer(
+        performer_type=PerformerType.MANAGER,
+        source_task_api_name=task_2.api_name,
+    )
+    assert task_3.raw_performers.filter(
+        type=PerformerType.MANAGER,
+    ).count() == 2
+
+    # act
+    deleted_count = task_3.delete_raw_performer(
+        performer_type=PerformerType.MANAGER,
+        source_task_api_name=task_1.api_name,
+    )
+
+    # assert
+    assert deleted_count == 1
+    remaining = task_3.raw_performers.filter(
+        type=PerformerType.MANAGER,
+    )
+    assert remaining.count() == 1
+    assert remaining.first().source_task_api_name == (
+        task_2.api_name
+    )
+
+
+def test_delete_raw_performer__manager_no_source__deletes_nothing():
+    """
+    MANAGER without source_task_api_name — no rows match,
+    nothing is deleted (safe no-op)
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=2,
+    )
+    task_1 = workflow.tasks.get(number=1)
+    task_2 = workflow.tasks.get(number=2)
+
+    task_2.add_raw_performer(
+        performer_type=PerformerType.MANAGER,
+        source_task_api_name=task_1.api_name,
+    )
+    assert task_2.raw_performers.filter(
+        type=PerformerType.MANAGER,
+    ).count() == 1
+
+    # act
+    deleted_count = task_2.delete_raw_performer(
+        performer_type=PerformerType.MANAGER,
+    )
+
+    # assert
+    assert deleted_count == 0
+    assert task_2.raw_performers.filter(
+        type=PerformerType.MANAGER,
+    ).count() == 1
+
+
+def test_add_raw_performer__manager_no_source__raise_exception():
+    """
+    MANAGER without source_task_api_name raises Exception
+    because the manager can never be resolved without
+    knowing which step's completer to look up.
+    """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    workflow = create_test_workflow(
+        user=user,
+        tasks_count=2,
+    )
+    task = workflow.tasks.get(number=2)
+
+    # act
+    with pytest.raises(Exception) as ex:
+        task.add_raw_performer(
+            performer_type=PerformerType.MANAGER,
+        )
+
+    # assert
+    assert str(ex.value) == 'Manager performer requires source_task_api_name'
+
+
+def test_update_performers__stale_mgr_after_revert__clears():
+    """
+    When source task is reverted, _resolve_manager returns None.
+    update_performers must clear the stale task_performer_id so
+    _delete_orphaned_performers removes the orphaned TaskPerformer.
+    """
+
+    # arrange
+    account = create_test_account()
+    owner = create_test_owner(account=account)
+    subordinate = create_test_not_admin(
+        email='sub@pneumatic.app',
+        account=account,
+    )
+    manager = create_test_not_admin(
+        email='mgr@pneumatic.app',
+        account=account,
+    )
+    subordinate.manager = manager
+    subordinate.save()
+
+    workflow = create_test_workflow(user=owner, tasks_count=2)
+    source_task = workflow.tasks.get(number=1)
+    target_task = workflow.tasks.get(number=2)
+
+    source_task.status = TaskStatus.COMPLETED
+    source_task.date_completed = timezone.now()
+    source_task.save()
+    create_test_event(
+        workflow=workflow,
+        user=subordinate,
+        type_event=WorkflowEventType.TASK_COMPLETE,
+        task=source_task,
+    )
+
+    target_task.raw_performers.all().delete()
+    target_task.taskperformer_set.all().delete()
+    mgr_raw = target_task.add_raw_performer(
+        performer_type=PerformerType.MANAGER,
+        source_task_api_name=source_task.api_name,
+    )
+    target_task.update_performers()
+
+    mgr_raw.refresh_from_db()
+    assert mgr_raw.task_performer_id is not None
+    assert target_task.taskperformer_set.filter(user=manager).exists()
+
+    source_task.status = TaskStatus.ACTIVE
+    source_task.date_completed = None
+    source_task.save()
+
+    # act
+    target_task.update_performers()
+
+    # assert
+    mgr_raw.refresh_from_db()
+    assert mgr_raw.task_performer_id is None
+    assert not target_task.taskperformer_set.filter(user=manager).exists()

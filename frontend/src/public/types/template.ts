@@ -61,6 +61,7 @@ export interface ITemplateTask {
   delay: string | null;
   rawDueDate: IDueDate;
   requireCompletionByAll: boolean;
+  skipForStarter: boolean;
   rawPerformers: ITemplateTaskPerformer[];
   fields: IExtraField[];
   uuid: string;
@@ -121,6 +122,7 @@ export enum ETaskPerformerType {
   OutputUser = 'field',
   WorkflowStarter = 'workflow_starter',
   UserGroup = 'group',
+  Manager = 'manager',
 }
 
 export interface ITemplateResponse extends Omit<ITemplate, 'id' | 'tasks' | 'tasksCount' | 'performersCount'> {
@@ -212,7 +214,8 @@ export interface IExtraField {
   name: string;
   type: EExtraFieldType;
   value?: TExtraFieldValue;
-  selections?: IExtraFieldSelection[];
+  selections?: IExtraFieldSelection[] | string[];
+  dataset?: number | null;
   attachments?: TUploadedFile[];
   order: number;
   userId: number | null;
@@ -297,6 +300,7 @@ export type TTemplateWithTasksOnly = Pick<ITemplate, 'name'> & {
 export interface RawPerformer {
   type: ETemplateOwnerType;
   sourceId: number;
+  label?: string;
 }
 
 export type TOrderedFields = {
@@ -316,3 +320,12 @@ export type TTemplatePreset = {
 };
 
 export type TAddTemplatePreset = Omit<TTemplatePreset, 'id' | 'author' | 'dateCreatedTsp'>;
+
+export enum ETemplatesTab {
+  Templates = 'templates',
+  Datasets = 'datasets',
+}
+
+export interface ITemplatesLayoutProps {
+  children: JSX.Element;
+}

@@ -39,6 +39,8 @@ import {
   TLogoutUser,
   TMakeStripePayment,
   makeStripePayment,
+  TVacationActivate,
+  vacationSuccess,
 } from './actions';
 
 import { resendVerification } from '../../api/resendVerification';
@@ -46,7 +48,7 @@ import { ERoutes } from '../../constants/routes';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { setJwtCookie, removeAuthCookies } from '../../utils/authCookie';
 import { setOAuthRegistrationCompleted } from '../../api/setOAuthRegistrationCompleted';
-import { TUserInvited } from '../../types/user';
+import { TUserInvited, IUserResponse } from '../../types/user';
 import { getAuthUser, getInvitedUser } from '../selectors/user';
 import { getOAuthId, getOAuthType } from '../../utils/auth';
 import { editProfile, IUpdateUserRequest, IUpdateUserResponse, TUpdateUserMappedResponse } from '../../api/editProfile';
@@ -63,8 +65,7 @@ import { REDIRECT_URL_STORAGE_KEY } from '../../constants/storageKeys';
 import { getUTMParams, IUserUtm } from '../../views/user/utils/utmParams';
 import { clearAppFilters, setGeneralLoaderVisibility } from '../general/actions';
 import { getQueryStringParams, history } from '../../utils/history';
-import { watchNewTask, watchRemoveTask } from '../tasks/saga';
-import { watchNewNotifications } from '../notifications/saga';
+import { watchWsEvents } from '../realtime/watchWsEvents';
 import { TUploadedFile, uploadUserAvatar } from '../../utils/uploadFiles';
 import { changePhotoProfile } from '../../api/changePhotoProfile';
 import { ELoggedState, IAuthUser } from '../../types/redux';
@@ -78,6 +79,7 @@ import {
 } from './utils/superuserReturnRoute';
 import { IMakePaymentResponse, makePayment } from '../../api/makePayment';
 import { fetchPlan } from '../accounts/saga';
+import { changeUserReports } from '../accounts/slice';
 import { getAbsolutePath } from '../../utils/getAbsolutePath';
 import { ICardSetupResponse, cardSetup } from '../../api/cardSetup';
 import { confirmPaymentDetailsProvided } from './utils/confirmPaymentDetailsProvided';
@@ -88,9 +90,9 @@ import { getCustomerPortalLink } from '../../api/getCustomerPortalLink';
 import { setSentryUser } from '../../utils/sentryUser';
 import { createTemplateFromName } from './utils/createTemplateFromName';
 import { ITemplate } from '../../types/template';
-import { watchNewWorkflowsEvent } from '../workflows/saga';
 import { removeLocalStorage } from '../../utils/localStorage';
 import { isEnvBilling } from '../../constants/enviroment';
+import { activateVacation, deactivateVacation } from '../../api/vacation';
 
 export function* authenticateUser(redirectUrl?: string, isRegister: boolean = false) {
   try {
@@ -312,24 +314,34 @@ export function* logout(action: TLogoutUser) {
 }
 
 export const updateUserAsync = (body: IUpdateUserRequest) =>
-  editProfile(body)
-    .then((authUser) => authUser)
-    .catch((error) => error);
+  editProfile(body);
 
 export function* editCurrentProfile({ payload }: TEditUser) {
+  const { onSuccess, onError, ...body } = payload;
   try {
-    const result: IUpdateUserResponse | void = yield call(updateUserAsync, payload);
+    const result: IUpdateUserResponse | void = yield call(updateUserAsync, body);
     if (!result) {
       return;
     }
+
     NotificationManager.success({
       message: 'user-account.edit-profile-success',
     });
-    yield put(editCurrentUserSuccess(mapToCamelCase(result) as TUpdateUserMappedResponse));
+    const mapped = mapToCamelCase(result) as TUpdateUserMappedResponse;
+    yield put(editCurrentUserSuccess(mapped));
+
+    // Sync accounts store when subordinatesIds were changed so the
+    // Team page reflects the update without a full refetch.
+    if (body.subordinatesIds) {
+      const { authUser }: ReturnType<typeof getAuthUser> = yield select(getAuthUser);
+      yield put(changeUserReports({ id: authUser.id, reportIds: body.subordinatesIds }));
+    }
+    onSuccess?.();
   } catch (err) {
     yield put(profileEditFailed());
-    NotificationManager.notifyApiError(err, { message: 'user-account.edit-account-fail' });
+    NotificationManager.notifyApiError(err, { message: getErrorMessage(err) });
     logger.error('edit profile error', err);
+    onError?.();
   }
 }
 
@@ -450,10 +462,6 @@ export function* handleDeleteUserPhoto() {
   } finally {
     yield put(setGeneralLoaderVisibility(false));
   }
-}
-
-function* handleWatchUserWSEvents() {
-  yield all([fork(watchNewTask), fork(watchRemoveTask), fork(watchNewNotifications), fork(watchNewWorkflowsEvent)]);
 }
 
 export function handleSetRedirectUrl({ payload: redirectUrl }: TSetRedirectUrl) {
@@ -590,6 +598,36 @@ function* redirectToCustomerPortalSaga() {
   }
 }
 
+export function* handleVacationActivate({ payload }: TVacationActivate) {
+  try {
+    const result: IUserResponse = yield call(activateVacation, payload);
+    if (result) {
+      yield put(vacationSuccess({
+        vacation: result.vacation || null,
+      }));
+      NotificationManager.success({ message: 'user-info.vacation.activated-success' });
+    }
+  } catch (error) {
+    logger.error('vacation activate error', error);
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+  }
+}
+
+export function* handleVacationDeactivate() {
+  try {
+    const result: IUserResponse = yield call(deactivateVacation);
+    if (result) {
+      yield put(vacationSuccess({
+        vacation: result.vacation || null,
+      }));
+      NotificationManager.success({ message: 'user-info.vacation.deactivated-success' });
+    }
+  } catch (error) {
+    logger.error('vacation deactivate error', error);
+    NotificationManager.notifyApiError(error, { message: getErrorMessage(error) });
+  }
+}
+
 export function* watchAuthUser() {
   yield takeEvery(EAuthActions.AuthUser, authUserSaga);
 }
@@ -650,6 +688,10 @@ export function* watchSetUserToken() {
   yield takeEvery(EAuthActions.SetToken, handleSetUserToken);
 }
 
+function* handleWatchUserWSEvents() {
+  yield fork(watchWsEvents);
+}
+
 export function* watchUserWSEvents() {
   yield takeEvery(EAuthActions.WatchUserWSEvents, handleWatchUserWSEvents);
 }
@@ -686,6 +728,14 @@ export function* watchRedirectToCustomerPortal() {
   yield takeEvery(EAuthActions.RedirectToCustomerPortal, redirectToCustomerPortalSaga);
 }
 
+export function* watchVacationActivate() {
+  yield takeEvery(EAuthActions.VacationActivate, handleVacationActivate);
+}
+
+export function* watchVacationDeactivate() {
+  yield takeEvery(EAuthActions.VacationDeactivate, handleVacationDeactivate);
+}
+
 export function* rootSaga() {
   yield all([
     fork(watchLoginUser),
@@ -712,5 +762,7 @@ export function* rootSaga() {
     fork(watchMakeStripePayment),
     fork(watchOnAfterPaymentDetailsProvided),
     fork(watchRedirectToCustomerPortal),
+    fork(watchVacationActivate),
+    fork(watchVacationDeactivate),
   ]);
 }

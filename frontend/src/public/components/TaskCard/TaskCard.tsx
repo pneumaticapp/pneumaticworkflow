@@ -46,7 +46,7 @@ import { IAuthUser, IWorkflowLog } from '../../types/redux';
 import { WorkflowLog } from '../Workflows/WorkflowLog';
 import { DoneInfoIcon, InfoIcon, PlayLogoIcon, ReturnTaskInfoIcon, ReturnToIcon } from '../icons';
 import { WorkflowLogSkeleton } from '../Workflows/WorkflowLog/WorkflowLogSkeleton';
-import { EOptionTypes, TUsersDropdownOption, UsersDropdown } from '../UI/form/UsersDropdown';
+import { EOptionTypes, TUsersDropdownOption, UsersDropdown, getUsersDropdownOptionValue } from '../UI/form/UsersDropdown';
 import { TUserListItem } from '../../types/user';
 import { trackInviteTeamInPage } from '../../utils/analytics';
 import { Tooltip } from '../UI';
@@ -61,7 +61,7 @@ import { DateFormat } from '../UI/DateFormat';
 import UserDataWithGroup from '../UserDataWithGroup';
 import { HelpModal } from './HelpModal/HelpModal';
 import { ReturnModal } from './ReturnModal';
-import { getGroupsList } from '../../redux/selectors/groups';
+import { getRegularGroupsList } from '../../redux/selectors/groups';
 
 import styles from './TaskCard.css';
 
@@ -111,6 +111,7 @@ export function TaskCard({
   accountId,
   users,
   authUser,
+  helpText,
   changeTaskWorkflowLog,
   setCurrentTask,
   setTaskCompleted,
@@ -129,7 +130,7 @@ export function TaskCard({
   const { formatMessage } = useIntl();
   const { isMobile } = useCheckDevice();
 
-  const groups = useSelector(getGroupsList);
+  const groups = useSelector(getRegularGroupsList);
   const saveOutputsToStorageDebounced = debounce(300, addOrUpdateStorageOutput);
 
   const guestsControllerRef = useRef<React.ElementRef<typeof GuestController> | null>(null);
@@ -139,7 +140,7 @@ export function TaskCard({
   const [isReturnModalOpen, setIsReturnModalOpen] = useState(false);
   const [isHelpModalOpen, setIsHelpModalOpen] = useState(false);
 
-  const helpText = workflow?.description ?? workflow?.description ?? null;
+  const helpTextLocal = helpText ?? workflow?.description ?? null;
 
   useEffect(() => {
     autoFocusFirstField(wrapperRef.current);
@@ -242,6 +243,23 @@ export function TaskCard({
     ].every(Boolean);
 
     return task.performers.map((performer) => {
+      if (performer.type === ETemplateOwnerType.UserGroup && performer.label) {
+        return (
+          <UserPerformer
+            key={performer.sourceId}
+            user={{
+              ...performer,
+              sourceId: String(performer.sourceId),
+              value: String(performer.sourceId),
+            }}
+            bgColor={EBgColorTypes.Light}
+            {...(isPossibleToRemovePerformer && {
+              onClick: () => removeTaskPerformer({ taskId: task.id, userId: performer }),
+            })}
+          />
+        );
+      }
+
       return (
         <UserDataWithGroup key={performer.sourceId} idItem={performer.sourceId} type={performer.type}>
           {(user) => {
@@ -274,19 +292,22 @@ export function TaskCard({
         ...item,
         optionType: EOptionTypes.User,
         label: getUserFullName(item),
-        value: String(item.id),
+        value: getUsersDropdownOptionValue(EOptionTypes.User, item.id),
       };
     });
 
     const mapPerformersDropdownValue = users.filter((user) =>
-      task.performers.find(({ sourceId }) => user.id === sourceId),
+      task.performers.find(
+        ({ sourceId, type }) =>
+          Number(sourceId) === user.id && type === ETemplateOwnerType.User,
+      ),
     );
     const performerDropdownValue = mapPerformersDropdownValue.map((item) => {
       return {
         ...item,
         optionType: EOptionTypes.User,
         label: getUserFullName(item),
-        value: String(item.id),
+        value: getUsersDropdownOptionValue(EOptionTypes.User, item.id),
       };
     });
 
@@ -296,12 +317,15 @@ export function TaskCard({
         optionType: EOptionTypes.Group,
         type: ETaskPerformerType.UserGroup,
         label: group.name,
-        value: String(group.id),
+        value: getUsersDropdownOptionValue(EOptionTypes.Group, group.id),
       };
     });
 
-    const mapGroupDropdownValue = groups.filter((user) =>
-      task.performers.find(({ sourceId }) => Number(sourceId) === user.id),
+    const mapGroupDropdownValue = groups.filter((group) =>
+      task.performers.find(
+        ({ sourceId, type }) =>
+          Number(sourceId) === group.id && type === ETemplateOwnerType.UserGroup,
+      ),
     );
 
     const performerGroupDropdownValue = mapGroupDropdownValue.map((group) => {
@@ -309,7 +333,7 @@ export function TaskCard({
         ...group,
         optionType: EOptionTypes.Group,
         label: group.name,
-        value: String(group.id),
+        value: getUsersDropdownOptionValue(EOptionTypes.Group, group.id),
       };
     });
 
@@ -345,23 +369,23 @@ export function TaskCard({
       <>
         {authUser.isAdmin && !task.isReadOnlyViewer && (
           <UsersDropdown
-            isMulti
-            controlSize="sm"
-            className={styles['responsible']}
-            placeholder={formatMessage({ id: 'user.search-field-placeholder' })}
-            options={[...performerGroupDropdownOption, ...performerDropdownOption]}
-            value={[...performerDropdownValue, ...performerGroupDropdownValue]}
-            onChange={onAddTaskPerformer}
-            onChangeSelected={onRemoveTaskPerformer}
-            onUsersInvited={onUsersInvited}
-            onClickInvite={() => trackInviteTeamInPage('Task card')}
-            inviteLabel={formatMessage({ id: 'template.invite-team-member' })}
-            title={formatMessage({ id: 'task.add-performer' })}
-          />
+              isMulti
+              controlSize="sm"
+              className={classnames(styles['responsible'], 'no-print')} 
+              placeholder={formatMessage({ id: 'user.search-field-placeholder' })}
+              options={[...performerGroupDropdownOption, ...performerDropdownOption]}
+              value={[...performerDropdownValue, ...performerGroupDropdownValue]}
+              onChange={onAddTaskPerformer}
+              onChangeSelected={onRemoveTaskPerformer}
+              onUsersInvited={onUsersInvited}
+              onClickInvite={() => trackInviteTeamInPage('Task card')}
+              inviteLabel={formatMessage({ id: 'template.invite-team-member' })}
+              title={formatMessage({ id: 'task.add-performer' })}
+            />
         )}
 
         {viewMode !== ETaskCardViewMode.Guest && !task.isReadOnlyViewer && (
-          <GuestController ref={guestsControllerRef} taskId={task.id} className={styles['guest-dropdown']} />
+          <GuestController ref={guestsControllerRef} taskId={task.id} className={classnames(styles['guest-dropdown'], 'no-print')} />
         )}
       </>
     );
@@ -479,7 +503,7 @@ export function TaskCard({
     );
 
     return (
-      <div className={styles['buttons']}>
+      <div className={classnames(styles['buttons'], 'no-print')}>
         <div className={styles['buttons__complete']}>
           {isEmbeddedWorkflowsComplete ? (
             renderCompleteButton(!isEmbeddedWorkflowsComplete)
@@ -576,20 +600,20 @@ export function TaskCard({
         onClose={() => setIsReturnModalOpen(false)}
         onConfirm={handleReturnTask}
       />
-      {helpText && <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} helpText={helpText} />}
+      {helpTextLocal && <HelpModal isOpen={isHelpModalOpen} onClose={() => setIsHelpModalOpen(false)} helpText={helpTextLocal} />}
       <div
         ref={wrapperRef}
         className={classnames(styles['container'], viewMode === ETaskCardViewMode.Guest && styles['container_guest'])}
       >
         {renderHeader()}
-        <p className={styles['description']}>
+        <div className={styles['description']}>
           <RichText
             text={task.description}
             interactiveChecklists
             renderExtensions={[...createChecklistExtension(task), ...createProgressbarExtension(task)]}
             hideIcon
           />
-        </p>
+        </div>
         <div className={styles['info']}>
           <div className={styles['performers']}>
             {renderPerformersControllers()}
@@ -625,8 +649,8 @@ export function TaskCard({
           styles['complete-form'],
           task.isReadOnlyViewer && styles['complete-form_readonly']
         )}>
-          {helpText && (
-            <button type="button" className={styles['help-trigger']} onClick={() => setIsHelpModalOpen(true)}>
+          {helpTextLocal && (
+            <button type="button" className={classnames(styles['help-trigger'], 'no-print')} onClick={() => setIsHelpModalOpen(true)}>
               <span className={styles['help-trigger__label']}>
                 {formatMessage({ id: 'task.help', defaultMessage: 'Help' })}
               </span>

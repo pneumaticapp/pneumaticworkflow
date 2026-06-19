@@ -44,7 +44,7 @@ def test_after_create_actions(mocker):
     data = WorkflowEventSerializer(event).data
     send_workflow_event_mock = mocker.patch(
         'src.processes.services.events.'
-        'send_workflow_event.delay',
+        'send_event_created.delay',
     )
 
     # act

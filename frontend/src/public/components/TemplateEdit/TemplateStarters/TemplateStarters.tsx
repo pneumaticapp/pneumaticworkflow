@@ -2,12 +2,12 @@ import React from 'react';
 import { useIntl } from 'react-intl';
 import { useSelector } from 'react-redux';
 
-import { IApplicationState } from '../../../types/redux';
+import { getRegularGroupsList } from '../../../redux/selectors/groups';
 import { ESubscriptionPlan } from '../../../types/account';
 import { createStarterApiName } from '../../../utils/createId';
 import { trackInviteTeamInPage } from '../../../utils/analytics';
 import { getNotDeletedUsers, getUserFullName } from '../../../utils/users';
-import { EOptionTypes, TUsersDropdownOption, UsersDropdown } from '../../UI/form/UsersDropdown';
+import { EOptionTypes, TUsersDropdownOption, UsersDropdown, getUsersDropdownOptionValue } from '../../UI/form/UsersDropdown';
 import { getIsUserSubsribed, getSubscriptionPlan, getUsers } from '../../../redux/selectors/user';
 import {
   ETaskPerformerType,
@@ -32,7 +32,7 @@ export function TemplateStarters({ templateStarters = [], onChangeTemplateStarte
 
   const isSubscribed = useSelector(getIsUserSubsribed);
   const billingPlan = useSelector(getSubscriptionPlan);
-  const groups = useSelector((state: IApplicationState) => state.groups.list);
+  const groups = useSelector(getRegularGroupsList);
 
   const users = getNotDeletedUsers(useSelector(getUsers));
   const mapUsersDropdownValue = users.filter((user) =>
@@ -55,7 +55,7 @@ export function TemplateStarters({ templateStarters = [], onChangeTemplateStarte
       optionType: EOptionTypes.Group,
       type: ETaskPerformerType.UserGroup,
       label: group.name,
-      value: `${EOptionTypes.Group}-${group.id}`,
+      value: getUsersDropdownOptionValue(EOptionTypes.Group, group.id),
     };
   });
 
@@ -66,7 +66,7 @@ export function TemplateStarters({ templateStarters = [], onChangeTemplateStarte
       lastName: '',
       optionType: EOptionTypes.User,
       label: getUserFullName(item),
-      value: `${EOptionTypes.User}-${item.id}`,
+      value: getUsersDropdownOptionValue(EOptionTypes.User, item.id),
     };
   });
 
@@ -80,7 +80,7 @@ export function TemplateStarters({ templateStarters = [], onChangeTemplateStarte
       ...item,
       optionType: EOptionTypes.User,
       label: getUserFullName(item),
-      value: `${EOptionTypes.User}-${item.id}`,
+      value: getUsersDropdownOptionValue(EOptionTypes.User, item.id),
     };
   });
 
@@ -89,7 +89,7 @@ export function TemplateStarters({ templateStarters = [], onChangeTemplateStarte
       ...item,
       optionType: EOptionTypes.Group,
       label: item.name,
-      value: `${EOptionTypes.Group}-${item.id}`,
+      value: getUsersDropdownOptionValue(EOptionTypes.Group, item.id),
     };
   });
 

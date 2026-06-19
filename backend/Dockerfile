@@ -25,3 +25,7 @@ COPY ./pyproject.toml ./poetry.lock /tmp/
 WORKDIR /pneumatic_backend
 RUN poetry config virtualenvs.create false && \
     poetry install --without dev --no-root --no-interaction --directory /tmp
+
+# Copy application source code (for production/Railway builds)
+# In local dev, docker-compose volume mounts override this layer
+COPY . .

@@ -90,7 +90,7 @@ export function StartAfterCondition({ startingOrder, conditions, variables, isSu
             ];
             return (
               <Predicate
-                key={rule.ruleApiName}
+                key={`${rule.ruleApiName}-${rule.predicateApiName}`}
                 rule={rule}
                 ruleIndex={ruleIndex}
                 accessConditions={accessConditions}
@@ -101,6 +101,7 @@ export function StartAfterCondition({ startingOrder, conditions, variables, isSu
                 dropdownOperators={dropdownOperators}
                 handleRemoveRule={handleRemoveRule}
                 options={options}
+                isCheckIs
               />
             );
           })}

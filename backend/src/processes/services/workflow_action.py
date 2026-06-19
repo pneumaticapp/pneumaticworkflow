@@ -11,11 +11,12 @@ from src.analysis.services import AnalyticService
 from src.authentication.enums import AuthTokenType
 from src.authentication.services.guest_auth import GuestJWTAuthService
 from src.notifications.tasks import (
-    send_complete_task_notification,
+    send_task_completed_notification,
+    send_task_completed_websocket,
     send_delayed_workflow_notification,
     send_new_task_notification,
     send_new_task_websocket,
-    send_removed_task_notification,
+    send_task_deleted_notification,
     send_resumed_workflow_notification,
     send_completed_workflow_notification,
 )
@@ -138,7 +139,7 @@ class WorkflowActionService:
                         account_id=self.account.id,
                         task_id=task.id,
                     )
-                send_removed_task_notification.delay(
+                send_task_deleted_notification.delay(
                     account_id=self.account.id,
                     task_id=task.id,
                     recipients=recipients,
@@ -203,7 +204,7 @@ class WorkflowActionService:
                 .not_completed()
                 .get_user_emails_and_ids_set(),
             )
-            send_removed_task_notification.delay(
+            send_task_deleted_notification.delay(
                 task_id=task.id,
                 task_data=task.get_data_for_list(),
                 recipients=recipients,
@@ -271,7 +272,7 @@ class WorkflowActionService:
                 .not_completed()
                 .get_user_emails_and_ids_set(),
             )
-            send_removed_task_notification.delay(
+            send_task_deleted_notification.delay(
                 task_id=task.id,
                 recipients=recipients,
                 account_id=task.account_id,
@@ -464,6 +465,20 @@ class WorkflowActionService:
             .by_workflow(self.workflow.id).with_tasks_after(task)
             .update(is_completed=False, date_completed=None)
         )
+        if task.skip_for_starter and task.require_completion_by_all:
+            starter = self.workflow.workflow_starter
+            if starter:
+                (
+                    TaskPerformer.objects
+                    .by_task(task.id)
+                    .exclude_directly_deleted()
+                    .by_user_or_group(starter.id)
+                    .update(
+                        is_completed=True,
+                        date_completed=timezone.now(),
+                    )
+                )
+
         # if task force snoozed then start task event already exists
         # but if task returned then
         if not task_start_event_already_exist:
@@ -479,6 +494,7 @@ class WorkflowActionService:
                 TaskPerformer.objects
                 .by_task(task.id)
                 .exclude_directly_deleted()
+                .not_completed()
                 .get_user_ids_emails_subscriber_set()
             )
 
@@ -615,6 +631,21 @@ class WorkflowActionService:
             delay=delay,
         )
 
+    def _skip_task_for_starter(
+        self,
+        task: Task,
+        is_returned: bool,
+    ):
+        WorkflowEventService.task_skip_event(task)
+        if is_returned and task.parents:
+            task.status = TaskStatus.PENDING
+            task.save(update_fields=['status'])
+            self._start_prev_tasks(task)
+        else:
+            task.status = TaskStatus.SKIPPED
+            task.save(update_fields=['status'])
+            self._start_next_tasks(parent_task=task)
+
     def start_task(
         self,
         task: Task,
@@ -642,16 +673,41 @@ class WorkflowActionService:
                 self._start_prev_tasks(task)
             else:
                 self._start_next_tasks(parent_task=task)
-        else:  # noqa: PLR5501
-            if is_returned:
-                self.continue_workflow(task=task, is_returned=is_returned)
+            return
+        if task.skip_for_starter and not self.workflow.is_external:
+            starter = self.workflow.workflow_starter
+            starter_perf = (
+                TaskPerformer.objects
+                .by_task(task.id)
+                .exclude_directly_deleted()
+                .by_user_or_group(starter.id)
+                .first()
+            )
+            if starter_perf:
+                if not task.require_completion_by_all:
+                    self._skip_task_for_starter(task, is_returned)
+                    return
+
+                has_other_performers = (
+                    TaskPerformer.objects
+                    .by_task(task.id)
+                    .exclude_directly_deleted()
+                    .exclude(pk=starter_perf.pk)
+                    .exists()
+                )
+                if not has_other_performers:
+                    self._skip_task_for_starter(task, is_returned)
+                    return
+
+        if is_returned:
+            self.continue_workflow(task=task, is_returned=is_returned)
+        else:
+            delay = task.get_active_delay()
+            if delay:
+                self.delay_task(task=task, delay=delay)
+                self._start_next_tasks()
             else:
-                delay = task.get_active_delay()
-                if delay:
-                    self.delay_task(task=task, delay=delay)
-                    self._start_next_tasks()
-                else:
-                    self.continue_workflow(task=task, is_returned=is_returned)
+                self.continue_workflow(task=task, is_returned=is_returned)
 
     def complete_task(self, task: Task, by_user: bool = False):
 
@@ -685,7 +741,7 @@ class WorkflowActionService:
             .order_by('id')
             .user_ids_emails_list()
         )
-        send_removed_task_notification.delay(
+        send_task_completed_websocket.delay(
             task_id=task.id,
             recipients=recipients,
             account_id=task.account_id,
@@ -699,7 +755,7 @@ class WorkflowActionService:
             .user_ids_emails_list()
         )
         if notification_recipients:
-            send_complete_task_notification.delay(
+            send_task_completed_notification.delay(
                 logging=self.account.log_api_requests,
                 author_id=self.user.id,
                 account_id=task.account_id,
@@ -822,7 +878,7 @@ class WorkflowActionService:
                     )
                     if not self.user.is_guest:
                         # Websocket notification
-                        send_removed_task_notification.delay(
+                        send_task_completed_websocket.delay(
                             task_id=task.id,
                             recipients=[(self.user.id, self.user.email)],
                             account_id=task.account_id,
@@ -940,7 +996,7 @@ class WorkflowActionService:
                         .not_completed()
                         .get_user_emails_and_ids_set(),
                     )
-                    send_removed_task_notification.delay(
+                    send_task_deleted_notification.delay(
                         task_id=task.id,
                         recipients=recipients,
                         account_id=task.account_id,

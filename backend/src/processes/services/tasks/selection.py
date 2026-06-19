@@ -27,5 +27,4 @@ class SelectionService(BaseWorkflowService):
             field_id=kwargs['field_id'],
             value=instance_template.value,
             api_name=instance_template.api_name,
-            is_selected=kwargs['is_selected'],
         )

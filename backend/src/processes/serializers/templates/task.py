@@ -71,6 +71,7 @@ class TaskTemplateSerializer(
             'number',
             'description',
             'require_completion_by_all',
+            'skip_for_starter',
             'delay',
             'fields',
             'conditions',
@@ -87,6 +88,7 @@ class TaskTemplateSerializer(
             'number',
             'description',
             'require_completion_by_all',
+            'skip_for_starter',
             'delay',
             'api_name',
             'template',
@@ -143,6 +145,32 @@ class TaskTemplateSerializer(
             context['account_user_ids'] = set(
                 self.context['account'].get_user_ids(include_invited=True),
             )
+        if PerformerType.MANAGER in performers_types:
+            all_tasks_data = self.context.get('all_tasks_data')
+            if all_tasks_data is not None:
+                context['template_tasks'] = {
+                    task_data['api_name']: {
+                        'name': task_data['name'],
+                        'require_completion_by_all': (
+                            task_data.get(
+                                'require_completion_by_all',
+                                False,
+                            )
+                        ),
+                    }
+                    for task_data in all_tasks_data
+                }
+            else:
+                template = self.context['template']
+                context['template_tasks'] = {
+                    task.api_name: {
+                        'name': task.name,
+                        'require_completion_by_all': (
+                            task.require_completion_by_all
+                        ),
+                    }
+                    for task in template.tasks.all()
+                }
         return context
 
     def _get_task_available_fields(

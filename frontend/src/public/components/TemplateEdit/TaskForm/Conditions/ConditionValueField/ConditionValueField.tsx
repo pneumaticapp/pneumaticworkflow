@@ -5,8 +5,7 @@ import classnames from 'classnames';
 import { useIntl } from 'react-intl';
 
 import { DropdownList } from '../../../../UI/DropdownList';
-import { EExtraFieldType, IExtraFieldSelection } from '../../../../../types/template';
-import { isArrayWithItems } from '../../../../../utils/helpers';
+import { EExtraFieldType } from '../../../../../types/template';
 import { Field } from '../../../../Field';
 import { EUserStatus, TUserListItem } from '../../../../../types/user';
 import { TTaskVariable } from '../../../types';
@@ -18,7 +17,8 @@ import { toTspDate } from '../../../../../utils/dateTime';
 import { getFormattedDropdownOption } from '../utils/getFormattedDropdownOption';
 import styles from '../Conditions.css';
 import { EStartingType } from '../utils/getDropdownOperators';
-import { IApplicationState } from '../../../../../types/redux';
+import { getRegularGroupsList } from '../../../../../redux/selectors/groups';
+import { useLazyDataset } from '../utils/useLazyDataset';
 
 interface IConditionValueFieldProps {
   variable: TTaskVariable | null;
@@ -37,13 +37,15 @@ export function ConditionValueField({
   isDisabled,
   changeRuleValue,
 }: IConditionValueFieldProps) {
+  const { formatMessage } = useIntl();
+  const groups = useSelector(getRegularGroupsList);
+  const datasetItems = useLazyDataset(variable)?.items;
+
   if (!variable || !operator) return null;
-  const groups = useSelector((state: IApplicationState) => state.groups.list);
   const isNoValueOperator = OPERATORS_WITHOUT_VALUE.includes(operator);
 
   if (isNoValueOperator) return null;
 
-  const { formatMessage } = useIntl();
   const isNumericField = true;
 
   const renderMap: { [key in EExtraFieldType]: () => ReactNode } & {
@@ -79,16 +81,29 @@ export function ConditionValueField({
   }
 
   function renderDropdownField() {
-    interface IDropdownSelection extends IExtraFieldSelection {
+    interface IDropdownSelection {
+      value: string;
       label: string;
     }
 
-    if (!isArrayWithItems(variable?.selections)) {
+    let dropdownSelections: IDropdownSelection[] = [];
+
+    if (variable?.datasetId) {
+      if (!datasetItems) return null;
+
+      dropdownSelections = datasetItems.map((item) => ({
+        value: item.value,
+        label: item.value,
+      }));
+
+    } else if (variable?.selections?.length) {
+      dropdownSelections = variable.selections.map((selectionValue) => ({ value: selectionValue, label: selectionValue }));
+    } else {
+
       return null;
     }
 
-    const dropdownSelections = variable!.selections.map((selection) => ({ ...selection, label: selection.value }));
-    const selectedSelection = dropdownSelections.find((selection) => selection.apiName === rule.value) || null;
+    const selectedSelection = dropdownSelections.find((selection) => selection.value === rule.value) || null;
 
     return (
       <DropdownList
@@ -97,7 +112,7 @@ export function ConditionValueField({
         placeholder={formatMessage({ id: 'templates.conditions.value-placeholder' })}
         value={selectedSelection}
         onChange={(option: IDropdownSelection) => {
-          changeRuleValue(option.apiName);
+          changeRuleValue(option.value);
         }}
         isClearable={false}
         options={dropdownSelections}
@@ -105,7 +120,7 @@ export function ConditionValueField({
           context === 'menu'
             ? getFormattedDropdownOption({
                 label: option.label,
-                isSelected: option.apiName === rule.value,
+                isSelected: option.value === rule.value,
                 isTooltip: true,
               })
             : option.label
@@ -118,13 +133,27 @@ export function ConditionValueField({
   function renderUserField() {
     interface IDropdownUser extends TUserListItem {
       label: string;
+      entityType: 'user' | 'group';
+      value: string;
     }
 
     const activeUsers = users.filter((user) => user.status === EUserStatus.Active);
-    const labelUsers = activeUsers.map((user) => ({ ...user, label: getUserFullName(user), entityType: 'user' }));
-    const labelGroups = groups.map((group) => ({ ...group, label: group.name, entityType: 'group' }));
+    const labelUsers = activeUsers.map((user) => ({
+      ...user,
+      label: getUserFullName(user),
+      entityType: 'user' as const,
+      value: `user-${user.id}`,
+    }));
+    const labelGroups = groups.map((group) => ({
+      ...group,
+      label: group.name,
+      entityType: 'group' as const,
+      value: `group-${group.id}`,
+    }));
     const dropdownEntities = [...labelGroups, ...labelUsers];
-    const selectedEntity = dropdownEntities.find((user) => user.id === Number(rule.value)) || null;
+    const selectedEntity = dropdownEntities.find(
+      (entity) => entity.id === Number(rule.value) && entity.entityType === rule.fieldType,
+    ) || null;
 
     return (
       <DropdownList
@@ -142,7 +171,7 @@ export function ConditionValueField({
           context === 'menu'
             ? getFormattedDropdownOption({
                 label: option.label,
-                isSelected: option.id === rule.value,
+                isSelected: option.id === rule.value && option.entityType === rule.fieldType,
                 isTooltip: true,
               })
             : option.label

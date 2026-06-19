@@ -20,6 +20,7 @@ jest.mock('react-intl', () => ({
 jest.mock('../../../../UI/form/UsersDropdown', () => ({
   UsersDropdown: jest.fn(() => null),
   EOptionTypes: { User: 'user', Group: 'group' },
+  getUsersDropdownOptionValue: (optionType: string, id: number | string) => `${optionType}-${id}`,
 }));
 
 jest.mock('../../utils/FieldWithName', () => ({
@@ -49,7 +50,7 @@ describe('ExtraFieldUser', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     (useSelector as jest.Mock).mockImplementation((selector) => {
-      if (typeof selector === 'function' && selector.name === 'getGroupsList') return mockGroups;
+      if (typeof selector === 'function' && selector.name === 'getRegularGroupsList') return mockGroups;
       return mockUsers;
     });
   });

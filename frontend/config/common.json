@@ -26,6 +26,7 @@
       "getUsers": "/accounts/users",
       "createUser": "/accounts/users",
       "getUsersPublic": "/accounts/public/users",
+      "getPublicAccount": "/accounts/public/account",
       "getActiveUsersCount": "/accounts/users/active-count",
       "getWorkflowsDuration": "/workflows/duration",
       "getWorkflowsSuccessRate": "/workflows/success-rate",
@@ -150,11 +151,14 @@
       "tenantsCount": "/tenants/count",
       "tenants": "/tenants",
       "tenantToken": "/tenants/:id/token",
+      "datasets": "/datasets",
+      "dataset": "/datasets/:id",
       "getFaq": "/faq",
-      "wsNotifications": "/ws/notifications",
-      "wsNewTask": "/ws/workflows/new-task",
-      "wsRemovedTask": "/ws/workflows/removed-task",
-      "wsWorkflowsEvent": "/ws/workflows/events"
+      "vacationActivate": "/accounts/user/activate-vacation",
+      "vacationDeactivate": "/accounts/user/deactivate-vacation",
+      "vacationUserActivate": "/accounts/users/:id/activate-vacation",
+      "vacationUserDeactivate": "/accounts/users/:id/deactivate-vacation",
+      "wsEvents": "/ws/events"
     }
   },
   "exposedToBrowser": [
@@ -166,6 +170,7 @@
     "mainPage",
     "formSubdomain",
     "recaptchaSecret",
-    "firebase"
+    "firebase",
+    "featureFlags"
   ]
 }

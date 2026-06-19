@@ -116,6 +116,55 @@ const accountsSlice = createSlice({
       });
     },
 
+    changeUserManager: (state, action: PayloadAction<{ id: number; managerId: number | null }>) => {
+      const { id: userId, managerId } = action.payload;
+
+      const updateList = (list: TUserListItem[]) => list.map(user => {
+        if (user.id === userId) return { ...user, managerId };
+        if (user.reportIds && user.reportIds.includes(userId) && user.id !== managerId) {
+          return { ...user, reportIds: user.reportIds.filter(id => id !== userId) };
+        }
+        if (user.id === managerId && (!user.reportIds || !user.reportIds.includes(userId))) {
+          return { ...user, reportIds: [...(user.reportIds || []), userId] };
+        }
+        return user;
+      });
+
+      state.team.list = updateList(state.team.list);
+      state.users = updateList(state.users);
+    },
+
+    changeUserReports: (state, action: PayloadAction<{ id: number; reportIds: number[] }>) => {
+      const { id: userId, reportIds } = action.payload;
+
+      const updateList = (list: TUserListItem[]) => list.map(user => {
+        if (user.id === userId) return { ...user, reportIds };
+
+        let newReportIds = user.reportIds;
+        if (user.id !== userId && user.reportIds) {
+          const filtered = user.reportIds.filter(rId => !reportIds.includes(rId));
+          if (filtered.length !== user.reportIds.length) {
+            newReportIds = filtered;
+          }
+        }
+
+        let newManagerId = user.managerId;
+        if (reportIds.includes(user.id)) {
+          newManagerId = userId;
+        } else if (user.managerId === userId && !reportIds.includes(user.id)) {
+          newManagerId = null;
+        }
+
+        if (newReportIds !== user.reportIds || newManagerId !== user.managerId) {
+          return { ...user, reportIds: newReportIds, managerId: newManagerId };
+        }
+        return user;
+      });
+
+      state.team.list = updateList(state.team.list);
+      state.users = updateList(state.users);
+    },
+
     openDeleteUserModal: (state, action: PayloadAction<TOpenDeleteUserModalPayload>) => {
       state.deleteUserModal.user = action.payload.user;
     },
@@ -143,6 +192,26 @@ const accountsSlice = createSlice({
     closeCreateUserModal: (state) => {
       state.isCreateUserModalOpen = false;
     },
+
+    upsertUserFromWs: (state, action: PayloadAction<TUserListItem>) => {
+      const user = action.payload;
+      const upsertList = (list: TUserListItem[]) => {
+        const hasUser = list.some((item) => item.id === user.id);
+        if (!hasUser) {
+          return [...list, user];
+        }
+        return list.map((item) => (item.id === user.id ? { ...item, ...user } : item));
+      };
+
+      state.users = upsertList(state.users);
+      state.team.list = upsertList(state.team.list);
+    },
+
+    removeUserFromWs: (state, action: PayloadAction<number>) => {
+      const removeFromList = (list: TUserListItem[]) => list.filter((item) => item.id !== action.payload);
+      state.users = removeFromList(state.users);
+      state.team.list = removeFromList(state.team.list);
+    },
   },
 });
 
@@ -159,6 +228,20 @@ export const loadPlan = createAction<void>('accounts/loadPlan');
 export const startTrialSubscriptionAction = createAction<void>('accounts/startTrialSubscriptionAction');
 export const startFreeSubscriptionAction = createAction<void>('accounts/startFreeSubscriptionAction');
 export const createUser = createAction<ICreateUserRequest>('accounts/createUser');
+type TChangeUserManagerPayload = {
+  id: number;
+  managerId: number | null;
+  onSuccess?: () => void;
+  onError?: () => void;
+};
+type TChangeUserReportsPayload = {
+  id: number;
+  reportIds: number[];
+  onSuccess?: () => void;
+  onError?: () => void;
+};
+export const loadChangeUserManager = createAction<TChangeUserManagerPayload>('accounts/loadChangeUserManager');
+export const loadChangeUserReports = createAction<TChangeUserReportsPayload>('accounts/loadChangeUserReports');
 
 export const {
   resetUsers,
@@ -177,6 +260,10 @@ export const {
   setIsLoading,
   openCreateUserModal,
   closeCreateUserModal,
+  changeUserManager,
+  changeUserReports,
+  upsertUserFromWs,
+  removeUserFromWs,
 } = accountsSlice.actions;
 
 export default accountsSlice.reducer;

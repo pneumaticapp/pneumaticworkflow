@@ -3,7 +3,7 @@ import { ChangeEvent, ReactNode, useCallback } from 'react';
 import classnames from 'classnames';
 import { useSelector } from 'react-redux';
 import { useIntl } from 'react-intl';
-import { EOptionTypes, UsersDropdown } from '../../../UI/form/UsersDropdown';
+import { EOptionTypes, UsersDropdown, getUsersDropdownOptionValue } from '../../../UI/form/UsersDropdown';
 import { getUsers } from '../../../../redux/selectors/user';
 import { EUserDropdownOptionType, TUserListItem } from '../../../../types/user';
 import { trackInviteTeamInPage } from '../../../../utils/analytics';
@@ -15,7 +15,7 @@ import { EExtraFieldMode, ETaskPerformerType } from '../../../../types/template'
 import { isArrayWithItems } from '../../../../utils/helpers';
 import { IWorkflowExtraFieldProps } from '..';
 import { getNotDeletedUsers, getUserFullName } from '../../../../utils/users';
-import { getGroupsList } from '../../../../redux/selectors/groups';
+import { getRegularGroupsList } from '../../../../redux/selectors/groups';
 import { IGroupDropdownOption } from '../../../../redux/team/types';
 
 import styles from '../../KickoffRedux/KickoffRedux.css';
@@ -40,7 +40,7 @@ export function ExtraFieldUser({
   const { formatMessage } = useIntl();
 
   const users: ReturnType<typeof getUsers> = getNotDeletedUsers(useSelector(getUsers));
-  const groups = useSelector(getGroupsList);
+  const groups = useSelector(getRegularGroupsList);
 
   const { description } = field;
 
@@ -87,7 +87,7 @@ export function ExtraFieldUser({
         ...item,
         optionType: EOptionTypes.User,
         label: getUserFullName(item),
-        value: `${EOptionTypes.User}-${item.id}`,
+        value: getUsersDropdownOptionValue(EOptionTypes.User, item.id),
       };
     });
     const groupsDropdownOption = groups.map((item) => {
@@ -95,7 +95,7 @@ export function ExtraFieldUser({
         ...item,
         optionType: EOptionTypes.Group,
         label: item.name,
-        value: `${EOptionTypes.Group}-${item.id}`,
+        value: getUsersDropdownOptionValue(EOptionTypes.Group, item.id),
         type: ETaskPerformerType.UserGroup,
       };
     });
@@ -133,8 +133,8 @@ export function ExtraFieldUser({
           isDisabled={isDisabled}
           value={selectionsDropdownOption.find(
             (item) =>
-              item.value === `${EOptionTypes.User}-${field.userId}` ||
-              item.value === `${EOptionTypes.Group}-${field.groupId}`,
+              item.value === getUsersDropdownOptionValue(EOptionTypes.User, field.userId ?? '') ||
+              item.value === getUsersDropdownOptionValue(EOptionTypes.Group, field.groupId ?? ''),
           )}
           onClickInvite={() => trackInviteTeamInPage('From users field')}
           inviteLabel={formatMessage({ id: 'template.invite-team-member' })}

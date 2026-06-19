@@ -37,6 +37,7 @@ const mockTask1: ITemplateTask = {
   number: 1,
   rawPerformers: [],
   requireCompletionByAll: true,
+  skipForStarter: false,
   fields: [
     {
       name: 'Large Text Field',
@@ -67,6 +68,7 @@ const mockTask2: ITemplateTask = {
   number: 2,
   rawPerformers: [],
   requireCompletionByAll: false,
+  skipForStarter: false,
   fields: [
     {
       name: 'Reasons',

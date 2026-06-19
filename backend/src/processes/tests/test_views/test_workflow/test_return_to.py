@@ -267,9 +267,9 @@ def test_return_to__ok(mocker, api_client):
 
     workflow.refresh_from_db()
 
-    send_removed_task_notification_mock = mocker.patch(
+    send_task_deleted_notification_mock = mocker.patch(
         'src.notifications.tasks'
-        '.send_removed_task_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
     delete_task_guest_cache_mock = mocker.patch(
         'src.authentication.services.guest_auth.'
@@ -324,7 +324,7 @@ def test_return_to__ok(mocker, api_client):
     assert task_1.is_active
     task_2.refresh_from_db()
     assert task_2.is_pending
-    send_removed_task_notification_mock.assert_called_once()
+    send_task_deleted_notification_mock.assert_called_once()
     send_new_task_notification_mock.assert_called_once()
     analysis_return_workflow_mock.assert_called_once_with(
         user=user,
@@ -529,7 +529,7 @@ def test_return_to__force_snooze_and_return_to__snooze_not_running_again(
 
     mocker.patch(
         'src.notifications.tasks'
-        '.send_removed_task_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
     mocker.patch(
         'src.processes.services.workflow_action.'
@@ -589,7 +589,7 @@ def test_return_to__force_snooze_and_resume__snooze_not_running_again(
 
     mocker.patch(
         'src.notifications.tasks'
-        '.send_removed_task_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
     mocker.patch(
         'src.processes.services.workflow_action.'
@@ -647,7 +647,7 @@ def test_return_to__task_skipped_by_kickoff_field__update_status_to_pending(
     )
     mocker.patch(
         'src.notifications.tasks'
-        '.send_removed_task_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
     mocker.patch(
         'src.authentication.services.guest_auth.'
@@ -703,7 +703,7 @@ def test_return_to__task_skipped_by_kickoff_field__update_status_to_pending(
         operator=PredicateOperator.EQUAL,
         field_type=field_template.type,
         field=field_template.api_name,
-        value=selection_template.api_name,
+        value=selection_template.value,
         template=template,
     )
 
@@ -715,7 +715,7 @@ def test_return_to__task_skipped_by_kickoff_field__update_status_to_pending(
         data={
             'name': 'Test name',
             'kickoff': {
-                field_template.api_name: [selection_template.api_name],
+                field_template.api_name: [selection_template.value],
             },
         },
     )
@@ -784,9 +784,9 @@ def test_return_to__completed_workflow__ok(
         'src.processes.tasks.webhooks.'
         'send_task_returned_webhook.delay',
     )
-    send_removed_task_notification_mock = mocker.patch(
+    send_task_deleted_notification_mock = mocker.patch(
         'src.notifications.tasks'
-        '.send_removed_task_notification.delay',
+        '.send_task_deleted_notification.delay',
     )
 
     # act
@@ -802,7 +802,7 @@ def test_return_to__completed_workflow__ok(
     assert workflow.is_running
     task_1.refresh_from_db()
     assert task_1.is_active
-    send_removed_task_notification_mock.assert_not_called()
+    send_task_deleted_notification_mock.assert_not_called()
     send_new_task_notification_mock.assert_called_once()
     delete_task_guest_cache_mock.assert_not_called()
     revert_task_webhook_mock.assert_not_called()

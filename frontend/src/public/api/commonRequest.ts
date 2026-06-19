@@ -9,6 +9,9 @@ import { identifyAppPartOnClient } from '../utils/identifyAppPart/identifyAppPar
 import { getCurrentToken } from '../utils/auth';
 import { envBackendURL } from '../constants/enviroment';
 import { isRequestCanceled } from '../utils/isRequestCanceled';
+import { isExpectedClientError } from '../utils/expectedClientErrors';
+
+export class InterceptorError extends Error {}
 
 export type TRequestType = 'public' | 'local';
 export type TResponseType = 'json' | 'text' | 'empty';
@@ -80,24 +83,53 @@ axiosInstance.interceptors.response.use(
     }
 
     if (error.response) {
-      logger.error('Response Error:', error.response.data);
+      const responseData = error.response.data;
+      if (isExpectedClientError(responseData)) {
+        logger.info('Response Error:', error.response.status, responseData);
+      } else {
+        logger.error('Response Error:', error.response.status, responseData);
+      }
     } else if (error.request) {
-      logger.error('Request Error:', error.request);
+      // Don't log error.request (XMLHttpRequest) — contains auth tokens via __sentry_xhr_v3__
+      // Don't log error.config.headers — contains Authorization Bearer token
+      logger.error('Request Error:', {
+        message: error.message,
+        code: error.code,
+        status: error.status,
+        method: error.config?.method,
+        url: error.config?.url,
+        baseURL: error.config?.baseURL,
+        timeout: error.config?.timeout,
+      });
     } else {
       logger.error('Error:', error.message);
     }
 
     const data = error.response?.data;
     const payload = typeof data === 'string' ? { error: data } : data ?? {};
-    return Promise.reject(Object.assign(new Error(), payload, { status: error.response?.status }));
+    const rejectedError = Object.assign(new InterceptorError(), payload, { status: error.response?.status });
+
+    return Promise.reject(rejectedError);
   },
 );
 
+export async function commonRequest(
+  rawUrl: string,
+  params: Partial<AxiosRequestConfig>,
+  options: Partial<ICommonRequestOptions> & { responseType: 'empty' },
+): Promise<void>;
+export async function commonRequest<T>(
+  rawUrl: string,
+  params?: Partial<AxiosRequestConfig>,
+  options?: Partial<ICommonRequestOptions>,
+): Promise<T>;
+
+/* eslint-disable consistent-return */
 export async function commonRequest<T>(
   rawUrl: string,
   params: Partial<AxiosRequestConfig> = {},
   options: Partial<ICommonRequestOptions> = {},
-): Promise<T> {
+): Promise<T | void> {
   const {
     api: { publicUrl, urls },
   } = getBrowserConfigEnv();
@@ -114,14 +146,14 @@ export async function commonRequest<T>(
     const config: AxiosRequestConfig = {
       ...params,
       timeout: timeOut,
-      responseType: options.responseType === 'text' ? 'text' : 'json',
+      responseType: options.responseType === 'text' || options.responseType === 'empty' ? 'text' : 'json',
       validateStatus: (status) => successStatusCodes.includes(status),
     };
 
     const response = await axiosInstance(fullUrl, config);
 
-    if (options.responseType === 'text') {
-      return response.data as T;
+    if (options.responseType === 'empty') {
+      return;
     }
 
     return response.data as T;
@@ -129,7 +161,10 @@ export async function commonRequest<T>(
     if (shouldThrow) {
       throw error;
     }
-    logger.error(error);
-    return undefined as unknown as T;
+    if (!(error instanceof InterceptorError)) {
+      logger.error(error);
+    }
+    
   }
 }
+/* eslint-enable consistent-return */

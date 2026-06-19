@@ -249,12 +249,10 @@ def test_fields__field_types_with_selections__ok(api_client, field_type):
     FieldSelection.objects.create(
         field=field,
         value='don\'t lovely value',
-        is_selected=True,
     )
     FieldSelection.objects.create(
         field=field,
-        value='don\'t lovely value',
-        is_selected=False,
+        value='lovely value',
     )
     api_client.token_authenticate(user)
 

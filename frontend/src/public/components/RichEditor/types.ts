@@ -12,6 +12,7 @@ export interface IRichEditorHandle {
   insertVariable(apiName: string, variableTitle: string, subtitle?: string): void;
   getEditor?(): LexicalEditor | undefined;
   clearContent(): void;
+  replaceContent(markdown: string): void;
 }
 
 export type TMentionData = {
@@ -33,6 +34,7 @@ export interface IRichEditorBaseProps {
   title?: string;
   foregroundColor?: TForegroundColor;
   stripPastedFormatting?: boolean;
+  plainText?: boolean;
   templateVariables?: TTaskVariable[];
   submitIcon?: ReactNode;
   cancelIcon?: ReactNode;
@@ -75,4 +77,6 @@ export interface ILexicalEditorContentProps {
   submitIcon?: ReactNode;
   cancelIcon?: ReactNode;
   withControls?: boolean;
+  plainText?: boolean;
+  templateVariables?: TTaskVariable[];
 }

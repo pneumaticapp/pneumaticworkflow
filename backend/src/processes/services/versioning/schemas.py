@@ -47,6 +47,7 @@ class FieldSchemaV1(serializers.ModelSerializer):
             'order',
             'default',
             'selections',
+            'dataset_id',
         )
 
     selections = SelectionSchemaV1(
@@ -139,6 +140,7 @@ class RawPerformerTemplateSchemaV1(serializers.ModelSerializer):
             'group_id',
             'api_name',
             'field',
+            'source_task_api_name',
         )
 
     field = RawPerformerTemplateFieldSchemaV1(allow_null=True, required=False)
@@ -190,6 +192,7 @@ class TaskSchemaV1(serializers.ModelSerializer):
             'clear_description',
             'number',
             'require_completion_by_all',
+            'skip_for_starter',
             'fields',
             'delay',
             'conditions',

@@ -1,26 +1,32 @@
 /**
- * E2E: Export workflows to Excel (.xlsx).
+ * E2E: Export workflows to Excel (.xlsx) or CSV (.csv).
  * Run after Playwright is configured: npx playwright test tests/e2e/workflows-export.spec.ts
  * Requires: app running (e.g. baseURL in playwright.config), authenticated user, at least one template.
  */
-import { test, expect } from '@playwright/test';
+import { test, expect, type Page } from '@playwright/test';
 
-test.describe('Workflows export to Excel', () => {
+async function openExportMenuAndChooseFormat(page: Page, formatLabel: RegExp) {
+  const exportToggle = page.getByRole('button', { name: /^export$|^Экспорт$/i });
+  await expect(exportToggle).toBeVisible();
+  await exportToggle.click();
+  const formatButton = page.getByRole('button', { name: formatLabel });
+  await expect(formatButton).toBeVisible();
+  await formatButton.click();
+}
+
+test.describe('Workflows export (Excel and CSV)', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/workflows');
     await page.waitForLoadState('networkidle');
   });
 
-  test('happy path: export button visible and click triggers export flow', async ({ page }) => {
-    const exportButton = page.getByRole('button', { name: /Export Excel/i });
-    await expect(exportButton).toBeVisible();
-
+  test('happy path: Excel export from menu triggers download or empty/error feedback', async ({ page }) => {
     const downloadPromise = page.waitForEvent('download', { timeout: 15000 }).catch(() => null);
 
-    await exportButton.click();
+    await openExportMenuAndChooseFormat(page, /Excel \(\.xlsx\)/i);
 
-    const loadingLabel = page.getByRole('button', { name: /Exporting/i });
-    await expect(loadingLabel).toBeVisible({ timeout: 2000 }).catch(() => {});
+    const loadingToggle = page.getByRole('button', { name: /Exporting|Экспорт/ });
+    await expect(loadingToggle).toBeVisible({ timeout: 2000 }).catch(() => {});
 
     const download = await downloadPromise;
     if (download) {
@@ -32,11 +38,23 @@ test.describe('Workflows export to Excel', () => {
     }
   });
 
-  test('empty result: warning shown when no workflows match filters', async ({ page }) => {
-    const exportButton = page.getByRole('button', { name: /Export Excel/i });
-    await expect(exportButton).toBeVisible();
+  test('happy path: CSV export from menu triggers download or empty/error feedback', async ({ page }) => {
+    const downloadPromise = page.waitForEvent('download', { timeout: 15000 }).catch(() => null);
 
-    await exportButton.click();
+    await openExportMenuAndChooseFormat(page, /CSV \(\.csv\)/i);
+
+    const download = await downloadPromise;
+    if (download) {
+      expect(download.suggestedFilename()).toBe('workflows.csv');
+    } else {
+      const errorNotification = page.getByText(/No workflows to export|Failed to export/i);
+      const hasEmptyOrError = await errorNotification.isVisible().catch(() => false);
+      expect(hasEmptyOrError || download).toBeTruthy();
+    }
+  });
+
+  test('empty result: warning shown when no workflows match filters', async ({ page }) => {
+    await openExportMenuAndChooseFormat(page, /Excel \(\.xlsx\)/i);
 
     await expect(
       page.getByText(/No workflows to export|No workflows match/i),

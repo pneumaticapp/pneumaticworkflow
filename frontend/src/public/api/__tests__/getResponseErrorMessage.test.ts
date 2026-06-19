@@ -1,0 +1,92 @@
+import { AxiosError, AxiosResponse } from 'axios';
+
+jest.mock('../../utils/logger', () => ({ logger: { error: jest.fn() } }));
+jest.mock('../../../server/utils/getAuthHeader', () => ({ getAuthHeader: jest.fn() }));
+jest.mock('../../utils/getConfig', () => ({
+  getBrowserConfigEnv: jest.fn().mockReturnValue({
+    api: { publicUrl: 'http://test', urls: {} },
+  }),
+}));
+jest.mock('../../utils/mappers', () => ({ mapToCamelCase: jest.fn((d: unknown) => d) }));
+jest.mock('../../utils/urls', () => ({ mergePaths: jest.fn((_b: string, u: string) => u) }));
+jest.mock('../../utils/identifyAppPart/identifyAppPartOnClient', () => ({
+  identifyAppPartOnClient: jest.fn().mockReturnValue('public'),
+}));
+jest.mock('../../utils/auth', () => ({ getCurrentToken: jest.fn() }));
+jest.mock('../../constants/enviroment', () => ({ envBackendURL: '' }));
+jest.mock('../../utils/isRequestCanceled', () => ({ isRequestCanceled: jest.fn().mockReturnValue(false) }));
+
+jest.mock('axios', () => {
+  const mockRequest = jest.fn().mockRejectedValue(new Error('not configured'));
+  const mockInstance = Object.assign(mockRequest, {
+    interceptors: {
+      request: { use: jest.fn() },
+      response: { use: jest.fn() },
+    },
+  });
+
+  return {
+    __esModule: true,
+    default: {
+      create: jest.fn().mockReturnValue(mockInstance),
+    },
+  };
+});
+
+import '../commonRequest';
+import axios from 'axios';
+
+const mockedAxios = axios as jest.Mocked<typeof axios>;
+const mockInstance = mockedAxios.create.mock.results[0].value;
+const responseErrorHandler = mockInstance.interceptors.response.use.mock.calls[0][1] as
+  (error: AxiosError) => Promise<never>;
+
+function makeAxiosError(data: unknown, status: number): AxiosError {
+  return {
+    response: {
+      data,
+      status,
+    } as AxiosResponse,
+    isAxiosError: true,
+    name: 'AxiosError',
+    message: `Request failed with status code ${status}`,
+    toJSON: () => ({}),
+  } as AxiosError;
+}
+
+
+describe('response interceptor: payload propagation to InterceptorError', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+  });
+
+  it('uses message from payload when present', async () => {
+    const error = makeAxiosError({ message: 'Validation failed', code: 'ERR_001' }, 400);
+
+    await expect(responseErrorHandler(error)).rejects.toMatchObject({
+      message: 'Validation failed',
+      code: 'ERR_001',
+      status: 400,
+    });
+  });
+
+  it('uses plain text from response.data as Error.error property', async () => {
+    const error = makeAxiosError('Internal Server Error', 500);
+
+    await expect(responseErrorHandler(error)).rejects.toMatchObject({
+      error: 'Internal Server Error',
+      status: 500,
+    });
+  });
+
+  it('preserves all payload properties on the rejected Error', async () => {
+    const error = makeAxiosError({ code: 'ERR_002', details: { name: 'url', reason: 'invalid' } }, 400);
+
+    await expect(responseErrorHandler(error)).rejects.toMatchObject({
+      code: 'ERR_002',
+      details: { name: 'url', reason: 'invalid' },
+      status: 400,
+    });
+  });
+});
+

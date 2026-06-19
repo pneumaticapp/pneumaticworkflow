@@ -263,8 +263,12 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
         is_active: Optional[bool] = None,
         is_public: Optional[bool] = None,
     ):
-        from src.processes.models.templates.owner import (
-            TemplateOwner,
+        from src.processes.models.templates.owner import TemplateOwner
+        from src.processes.models.templates.fields import FieldTemplate
+        from src.processes.models.templates.kickoff import Kickoff
+        from src.datasets.models import DatasetItem
+        from src.processes.models.templates.fields import (
+            FieldTemplateSelection,
         )
 
         query = TemplateListQuery(
@@ -280,11 +284,41 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
             .prefetch_related(
                 Prefetch(
                     'owners',
-                    queryset=TemplateOwner.objects.order_by('type', 'id'),
+                    queryset=(
+                        TemplateOwner.objects
+                        .order_by('type', 'id')
+                    ),
                 ),
-                'kickoff',
-                'kickoff__fields',
-                'kickoff__fields__selections',
+                Prefetch(
+                    lookup='kickoff',
+                    queryset=(
+                        Kickoff.objects.all().prefetch_related(
+                            Prefetch(
+                                lookup='fields',
+                                queryset=(
+                                    FieldTemplate.objects.prefetch_related(
+                                        Prefetch(
+                                            lookup='selections',
+                                            queryset=(
+                                                FieldTemplateSelection
+                                                .objects.order_by('id')
+                                            ),
+                                            to_attr='selections_values',
+                                        ),
+                                        Prefetch(
+                                            'dataset__items',
+                                            queryset=(
+                                                DatasetItem.objects
+                                                .order_by('order')
+                                            ),
+                                            to_attr='dataset_values',
+                                        ),
+                                    ).all().order_by('-order')
+                                ),
+                            ),
+                        )
+                    ),
+                ),
             )
         )
 
@@ -301,10 +335,13 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
         Returns templates where the user is a Template Owner
         (directly or via group membership).
         """
-        from src.processes.models.templates.owner import (
-            TemplateOwner,
+        from src.processes.models.templates.owner import TemplateOwner
+        from src.processes.models.templates.fields import FieldTemplate
+        from src.processes.models.templates.kickoff import Kickoff
+        from src.datasets.models import DatasetItem
+        from src.processes.models.templates.fields import (
+            FieldTemplateSelection,
         )
-
         query = TemplateListByOwnersQuery(
             user_id=user_id,
             account_id=account_id,
@@ -318,11 +355,41 @@ class TemplateQuerySet(WorkflowsBaseQuerySet):
             .prefetch_related(
                 Prefetch(
                     'owners',
-                    queryset=TemplateOwner.objects.order_by('type', 'id'),
+                    queryset=(
+                        TemplateOwner.objects
+                        .order_by('type', 'id')
+                    ),
                 ),
-                'kickoff',
-                'kickoff__fields',
-                'kickoff__fields__selections',
+                Prefetch(
+                    lookup='kickoff',
+                    queryset=(
+                        Kickoff.objects.all().prefetch_related(
+                            Prefetch(
+                                lookup='fields',
+                                queryset=(
+                                    FieldTemplate.objects.prefetch_related(
+                                        Prefetch(
+                                            lookup='selections',
+                                            queryset=(
+                                                FieldTemplateSelection
+                                                .objects.order_by('id')
+                                            ),
+                                            to_attr='selections_values',
+                                        ),
+                                        Prefetch(
+                                            'dataset__items',
+                                            queryset=(
+                                                DatasetItem.objects
+                                                .order_by('order')
+                                            ),
+                                            to_attr='dataset_values',
+                                        ),
+                                    ).all().order_by('-order')
+                                ),
+                            ),
+                        )
+                    ),
+                ),
             )
         )
 
@@ -592,6 +659,7 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
                             queryset=(
                                 TaskPerformer.objects
                                 .exclude_directly_deleted()
+                                .select_related('group')
                             ),
                         ),
                         Prefetch(
@@ -608,7 +676,9 @@ class WorkflowQuerySet(WorkflowsBaseQuerySet):
             ),
         ]
         if fields:
-            from src.processes.models.workflows.fields import TaskField
+            from src.processes.models.workflows.fields import (
+                TaskField,
+            )
             prefetch_args.append(
                 Prefetch(
                     lookup='fields',
@@ -686,7 +756,9 @@ class TasksQuerySet(TasksBaseQuerySet):
                     workflow__status=WorkflowStatus.RUNNING,
                 ),
             ) & ~Q(
-                taskperformer__directly_status=DirectlyStatus.DELETED,
+                taskperformer__directly_status__in=(
+                    DirectlyStatus.DELETED,
+                ),
             ),
         )
 
@@ -710,7 +782,9 @@ class TasksQuerySet(TasksBaseQuerySet):
                     workflow__status=WorkflowStatus.RUNNING,
                 ),
             ) & ~Q(
-                taskperformer__directly_status=DirectlyStatus.DELETED,
+                taskperformer__directly_status__in=(
+                    DirectlyStatus.DELETED,
+                ),
             ),
         )
 
@@ -723,8 +797,11 @@ class TasksQuerySet(TasksBaseQuerySet):
         )
 
     def exclude_directly_deleted(self):
+        """Exclude tasks where performer has DELETED directly_status."""
         return self.exclude(
-            taskperformer__directly_status=DirectlyStatus.DELETED,
+            taskperformer__directly_status__in=(
+                DirectlyStatus.DELETED,
+            ),
         )
 
     def apd_status(self):
@@ -759,6 +836,10 @@ class KickoffQuerySet(AccountBaseQuerySet):
     pass
 
 
+class KickoffValueQuerySet(AccountBaseQuerySet):
+    pass
+
+
 class FieldTemplateValuesQuerySet(BaseQuerySet):
 
     def by_ids(self, ids: List[int]):
@@ -766,9 +847,6 @@ class FieldTemplateValuesQuerySet(BaseQuerySet):
 
     def by_api_names(self, api_names: List[str]):
         return self.filter(api_name__in=api_names)
-
-    def selected(self):
-        return self.filter(is_selected=True)
 
 
 class FieldSelectionQuerySet(BaseQuerySet):
@@ -784,9 +862,6 @@ class FieldSelectionQuerySet(BaseQuerySet):
 
     def exclude_values(self, values: List[str]):
         return self.filter(~Q(value__in=values))
-
-    def selected(self):
-        return self.filter(is_selected=True)
 
 
 class SystemTemplateQuerySet(BaseQuerySet):
@@ -945,7 +1020,11 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
         return self.filter(directly_status=DirectlyStatus.NO_STATUS)
 
     def exclude_directly_deleted(self):
-        return self.exclude(directly_status=DirectlyStatus.DELETED)
+        return self.exclude(
+            directly_status__in=(
+                DirectlyStatus.DELETED,
+            ),
+        )
 
     def user_is_subscriber(self):
         return self.filter(
@@ -1002,11 +1081,15 @@ class TaskPerformerQuerySet(BaseHardQuerySet):
         return set(direct_users).union(set(group_users))
 
     def group_ids(self):
-        qst = self.filter(type='group').values_list('group_id', flat=True)
+        qst = self.filter(
+            type=PerformerType.GROUP,
+        ).values_list('group_id', flat=True)
         return tuple(elem for elem in qst)
 
     def user_ids(self):
-        qst = self.filter(type='user').values_list('user_id', flat=True)
+        qst = self.filter(
+            type=PerformerType.USER,
+        ).values_list('user_id', flat=True)
         return tuple(elem for elem in qst)
 
     def user_ids_set(self) -> set:

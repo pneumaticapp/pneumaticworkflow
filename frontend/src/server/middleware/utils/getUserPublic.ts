@@ -1,10 +1,16 @@
 import { Request } from 'express';
 
-import { logger } from '../../../public/utils/logger';
+import {
+  logServerError,
+  errorToString,
+  EXPECTED_AUTH_ERROR,
+  LOG_PREFIX_ACCOUNT_CONTEXT,
+} from '../../utils/expectedErrors';
 import { serverApi } from '../../utils';
 import { getAuthHeader } from '../../utils/getAuthHeader';
 import { IAuthenticatedUser } from '../../utils/types';
 import { EAppPart } from '../../../public/utils/identifyAppPart/types';
+import { logger } from '../../../public/utils/logger';
 
 export async function getUserPublic(req: Request, token: string, userAgent?: string) {
   try {
@@ -20,7 +26,11 @@ export async function getUserPublic(req: Request, token: string, userAgent?: str
 
     return user;
   } catch (error) {
-    logger.error('failed to get account context: ', error);
+    if (errorToString(error).includes(EXPECTED_AUTH_ERROR)) {
+      logger.info(LOG_PREFIX_ACCOUNT_CONTEXT, error);
+    } else {
+      logServerError(LOG_PREFIX_ACCOUNT_CONTEXT, error);
+    }
 
     throw error;
   }

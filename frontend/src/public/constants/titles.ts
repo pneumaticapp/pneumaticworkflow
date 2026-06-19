@@ -27,4 +27,5 @@ export const TITLES = {
   'Checkout': `Checkout ${PNEUMATIC_SUFFIX}`,
   'WorkflowHighlights': `Workflow Highlights ${PNEUMATIC_SUFFIX}`,
   'Integrations': `Integrations ${PNEUMATIC_SUFFIX}`,
+  'Datasets': `Datasets ${PNEUMATIC_SUFFIX}`, 
 };

@@ -15,13 +15,15 @@ import {
   getWorkflowsSearchText,
 } from '../redux/selectors/workflows';
 import { getAccountsUsers } from '../redux/selectors/accounts';
-import { getGroupsList } from '../redux/selectors/groups';
+import { getRegularGroupsList } from '../redux/selectors/groups';
 import { getTimezone } from '../redux/selectors/authUser';
 import {
   buildWorkflowsExportRows,
   buildWorkflowsXlsxBuffer,
   downloadWorkflowsExcel,
+  TWorkflowExportFormat,
 } from '../utils/workflows/exportWorkflowsToExcel';
+import { downloadWorkflowsCsv } from '../utils/workflows/exportWorkflowsToCsv';
 import { NotificationManager } from '../components/UI/Notifications';
 import { ALL_SYSTEM_FIELD_NAMES } from '../components/Workflows/WorkflowsTablePage/WorkflowsTable/constants';
 
@@ -59,71 +61,78 @@ export function useWorkflowsExport() {
   const performersGroupIdsFilter = useSelector(getWorkflowPerformersGroupsIdsFilter);
   const searchText = useSelector(getWorkflowsSearchText);
   const users = useSelector(getAccountsUsers);
-  const groups = useSelector(getGroupsList);
+  const groups = useSelector(getRegularGroupsList);
   const timezone = useSelector(getTimezone);
 
-  const handleExportClick = useCallback(async () => {
-    setIsExporting(true);
-    try {
-      const fields = selectedFields.length ? selectedFields : ALL_SYSTEM_FIELD_NAMES;
-      const items = await fetchAllWorkflowsForExport({
-        statusFilter,
-        sorting,
-        templatesIdsFilter,
-        tasksApiNamesFilter,
-        performersIdsFilter,
-        performersGroupIdsFilter,
-        workflowStartersIdsFilter,
-        searchText,
-        fields,
-      });
-
-      if (items.length === 0) {
-        NotificationManager.warning({
-          title: formatMessage({ id: 'workflows.export-excel-empty-title' }),
-          message: formatMessage({ id: 'workflows.export-excel-empty-message' }),
+  const handleExportClick = useCallback(
+    async (exportFormat: TWorkflowExportFormat) => {
+      setIsExporting(true);
+      try {
+        const fields = selectedFields.length ? selectedFields : ALL_SYSTEM_FIELD_NAMES;
+        const items = await fetchAllWorkflowsForExport({
+          statusFilter,
+          sorting,
+          templatesIdsFilter,
+          tasksApiNamesFilter,
+          performersIdsFilter,
+          performersGroupIdsFilter,
+          workflowStartersIdsFilter,
+          searchText,
+          fields,
         });
-        return;
-      }
 
-      const optionalFieldsFromWorkflow = items[0]?.fields ?? [];
-      const headerLabels = getExportHeaderLabels(formatMessage, optionalFieldsFromWorkflow);
-      const rows = buildWorkflowsExportRows({
-        workflows: items,
-        users,
-        groups,
-        selectedFields: fields,
-        optionalFieldsFromWorkflow,
-        timezone: timezone ?? undefined,
-        headerLabels,
-        multipleTasksLabel: formatMessage({ id: 'workflows.multiple-active-tasks' }),
-        deletedGroupFallbackTemplate: formatMessage(
-          { id: 'workflows.export-deleted-group' },
-          { id: '{id}' },
-        ),
-      });
-      const buffer = await buildWorkflowsXlsxBuffer(rows);
-      downloadWorkflowsExcel(buffer);
-    } catch (error) {
-      NotificationManager.notifyApiError(error, { message: 'workflows.export-excel-fail' });
-    } finally {
-      setIsExporting(false);
-    }
-  }, [
-    formatMessage,
-    selectedFields,
-    statusFilter,
-    sorting,
-    templatesIdsFilter,
-    tasksApiNamesFilter,
-    performersIdsFilter,
-    performersGroupIdsFilter,
-    workflowStartersIdsFilter,
-    searchText,
-    users,
-    groups,
-    timezone,
-  ]);
+        if (items.length === 0) {
+          NotificationManager.warning({
+            title: formatMessage({ id: 'workflows.export-excel-empty-title' }),
+            message: formatMessage({ id: 'workflows.export-excel-empty-message' }),
+          });
+          return;
+        }
+
+        const optionalFieldsFromWorkflow = items[0]?.fields ?? [];
+        const headerLabels = getExportHeaderLabels(formatMessage, optionalFieldsFromWorkflow);
+        const rows = buildWorkflowsExportRows({
+          workflows: items,
+          users,
+          groups,
+          selectedFields: fields,
+          optionalFieldsFromWorkflow,
+          timezone: timezone ?? undefined,
+          headerLabels,
+          multipleTasksLabel: formatMessage({ id: 'workflows.multiple-active-tasks' }),
+          deletedGroupFallbackTemplate: formatMessage(
+            { id: 'workflows.export-deleted-group' },
+            { id: '{id}' },
+          ),
+        });
+        if (exportFormat === 'csv') {
+          downloadWorkflowsCsv(rows);
+        } else {
+          const buffer = await buildWorkflowsXlsxBuffer(rows);
+          downloadWorkflowsExcel(buffer);
+        }
+      } catch (error) {
+        NotificationManager.notifyApiError(error, { message: 'workflows.export-excel-fail' });
+      } finally {
+        setIsExporting(false);
+      }
+    },
+    [
+      formatMessage,
+      selectedFields,
+      statusFilter,
+      sorting,
+      templatesIdsFilter,
+      tasksApiNamesFilter,
+      performersIdsFilter,
+      performersGroupIdsFilter,
+      workflowStartersIdsFilter,
+      searchText,
+      users,
+      groups,
+      timezone,
+    ],
+  );
 
   return { handleExportClick, isExporting };
 }

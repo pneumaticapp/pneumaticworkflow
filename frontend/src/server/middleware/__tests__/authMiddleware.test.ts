@@ -15,6 +15,8 @@ const req: any = {
   header: jest.fn(),
   get: jest.fn(),
   url: '/',
+  path: '/',
+  baseUrl: '',
   headers: {
     'user-agent': 'windows phone',
   },

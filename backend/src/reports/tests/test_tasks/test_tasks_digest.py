@@ -1,3 +1,8 @@
+# ruff: noqa: UP031
+from unittest.mock import PropertyMock
+from src.reports.entities import TemplateForTasksDigest
+from src.reports.services.tasks import SendTasksDigest
+
 from datetime import timedelta
 
 import pytest
@@ -35,6 +40,8 @@ def replica_mock(mocker):
 
 
 class TestSendTasksDigest:
+
+    # Deprecated cumulative tests
 
     def test_send(self, mocker, api_client):
 
@@ -712,3 +719,374 @@ class TestSendTasksDigest:
             },
             logo_lg=None,
         )
+
+
+def test_replace_api_name__no_vars__unchanged(mocker):
+
+    """task_name has no template variables —
+    string must be returned as-is."""
+
+    # arrange
+    fields_mock = mocker.patch.object(
+        TemplateForTasksDigest,
+        'fields',
+        new_callable=PropertyMock,
+        return_value={},
+    )
+    service = SendTasksDigest.__new__(SendTasksDigest)
+    template = TemplateForTasksDigest(
+        template_id=1,
+        template_name='Onboarding',
+    )
+    task_name = 'Review documents'
+
+    # act
+    result = service._replace_api_name(
+        task_name=task_name,
+        template=template,
+    )
+
+    # assert
+    assert result == 'Review documents'
+    fields_mock.assert_not_called()
+
+
+def test_replace_api_name__single_field_var__replaced(mocker):
+
+    """task_name has one field api_name variable —
+    substituted with field label."""
+
+    # arrange
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.reports.services.tasks.insert_fields_values_to_text',
+        return_value='Review Contract',
+    )
+    service = SendTasksDigest.__new__(SendTasksDigest)
+    template = TemplateForTasksDigest(
+        template_id=1,
+        template_name='Onboarding',
+    )
+    template._fields = {'field-abc123': 'Contract'}
+    task_name = 'Review {{ field-abc123 }}'
+
+    # act
+    result = service._replace_api_name(
+        task_name=task_name,
+        template=template,
+    )
+
+    # assert
+    assert result == 'Review Contract'
+    insert_fields_values_to_text_mock.assert_called_once_with(
+        text='Review {{ field-abc123 }}',
+        fields_values={'field-abc123': 'Contract'},
+    )
+
+
+def test_replace_api_name__multiple_field_vars__all_replaced(mocker):
+
+    """task_name has multiple field variables —
+    all are substituted."""
+
+    # arrange
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.reports.services.tasks.insert_fields_values_to_text',
+        return_value='Alpha and Beta',
+    )
+    service = SendTasksDigest.__new__(SendTasksDigest)
+    template = TemplateForTasksDigest(
+        template_id=1,
+        template_name='Onboarding',
+    )
+    template._fields = {'field-aaa': 'Alpha', 'field-bbb': 'Beta'}
+    task_name = '{{ field-aaa }} and {{ field-bbb }}'
+
+    # act
+    result = service._replace_api_name(
+        task_name=task_name,
+        template=template,
+    )
+
+    # assert
+    assert result == 'Alpha and Beta'
+    insert_fields_values_to_text_mock.assert_called_once_with(
+        text='{{ field-aaa }} and {{ field-bbb }}',
+        fields_values={'field-aaa': 'Alpha', 'field-bbb': 'Beta'},
+    )
+
+
+def test_replace_api_name__template_name__replaced(mocker):
+
+    """task_name has {{ template-name }} —
+    substituted with template.template_name."""
+
+    # arrange
+    fields_mock = mocker.patch.object(
+        TemplateForTasksDigest,
+        'fields',
+        new_callable=PropertyMock,
+        return_value={},
+    )
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.reports.services.tasks.insert_fields_values_to_text',
+        return_value='Task of Onboarding',
+    )
+    service = SendTasksDigest.__new__(SendTasksDigest)
+    template = TemplateForTasksDigest(
+        template_id=1,
+        template_name='Onboarding',
+    )
+    task_name = 'Task of {{ template-name }}'
+
+    # act
+    result = service._replace_api_name(
+        task_name=task_name,
+        template=template,
+    )
+
+    # assert
+    assert result == 'Task of Onboarding'
+    fields_mock.assert_called()
+    insert_fields_values_to_text_mock.assert_called_once_with(
+        text='Task of {{ template-name }}',
+        fields_values={'template-name': 'Onboarding'},
+    )
+
+
+@pytest.mark.parametrize(
+    'system_var',
+    ('date', 'workflow-starter', 'workflow-id'),
+)
+def test_replace_api_name__system_var__not_replaced(
+    mocker,
+    system_var,
+):
+
+    # arrange
+    fields_mock = mocker.patch.object(
+        TemplateForTasksDigest,
+        'fields',
+        new_callable=PropertyMock,
+        return_value={},
+    )
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.reports.services.tasks.insert_fields_values_to_text',
+        return_value='Deadline: date',
+    )
+    service = SendTasksDigest.__new__(SendTasksDigest)
+    template = TemplateForTasksDigest(
+        template_id=1,
+        template_name='Onboarding',
+    )
+    task_name = 'Deadline: {{ %s }}' % system_var
+
+    # act
+    result = service._replace_api_name(
+        task_name=task_name,
+        template=template,
+    )
+
+    # assert
+    assert result == 'Deadline: {{ %s }}' % system_var
+    fields_mock.assert_called()
+    insert_fields_values_to_text_mock.assert_not_called()
+
+
+def test_replace_api_name__field_and_template_name_var__both_replaced(mocker):
+
+    """task_name mixes a field var and {{ template-name }} —
+    both substituted correctly."""
+
+    # arrange
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.reports.services.tasks.insert_fields_values_to_text',
+        return_value='Contract for Sales',
+    )
+    service = SendTasksDigest.__new__(SendTasksDigest)
+    template = TemplateForTasksDigest(
+        template_id=1,
+        template_name='Sales',
+    )
+    template._fields = {'field-abc123': 'Contract'}
+    task_name = '{{ field-abc123 }} for {{ template-name }}'
+
+    # act
+    result = service._replace_api_name(
+        task_name=task_name,
+        template=template,
+    )
+
+    # assert
+    assert result == 'Contract for Sales'
+    insert_fields_values_to_text_mock.assert_called_once_with(
+        text='{{ field-abc123 }} for {{ template-name }}',
+        fields_values={
+            'field-abc123': 'Contract',
+            'template-name': 'Sales',
+        },
+    )
+
+
+def test_replace_api_name__unknown_var__not_replaced(mocker):
+
+    """task_name has api_name absent from template.fields —
+    falls back to var name."""
+
+    # arrange
+    fields_mock = mocker.patch.object(
+        TemplateForTasksDigest,
+        'fields',
+        new_callable=PropertyMock,
+        return_value={},
+    )
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.reports.services.tasks.insert_fields_values_to_text',
+        return_value='Review field-unknown',
+    )
+    service = SendTasksDigest.__new__(SendTasksDigest)
+    template = TemplateForTasksDigest(
+        template_id=1,
+        template_name='Onboarding',
+    )
+    task_name = 'Review {{ field-unknown }}'
+
+    # act
+    result = service._replace_api_name(
+        task_name=task_name,
+        template=template,
+    )
+
+    # assert
+    assert result == 'Review {{ field-unknown }}'
+    fields_mock.assert_called()
+    insert_fields_values_to_text_mock.assert_not_called()
+
+
+def test_replace_api_name__repeated_var__deduplicated(mocker):
+
+    """Same variable appears twice — fields_values has one entry,
+    both occurrences substituted."""
+
+    # arrange
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.reports.services.tasks.insert_fields_values_to_text',
+        return_value='Doc and Doc',
+    )
+    service = SendTasksDigest.__new__(SendTasksDigest)
+    template = TemplateForTasksDigest(
+        template_id=1,
+        template_name='Onboarding',
+    )
+    template._fields = {'field-abc123': 'Doc'}
+    task_name = '{{ field-abc123 }} and {{ field-abc123 }}'
+
+    # act
+    result = service._replace_api_name(
+        task_name=task_name,
+        template=template,
+    )
+
+    # assert
+    assert result == 'Doc and Doc'
+    insert_fields_values_to_text_mock.assert_called_once_with(
+        text='{{ field-abc123 }} and {{ field-abc123 }}',
+        fields_values={'field-abc123': 'Doc'},
+    )
+
+
+def test_replace_api_name__var_extra_spaces__replaced(mocker):
+
+    """VAR_PATTERN strips inner whitespace —
+    {{ field-abc123 }} with extra spaces is resolved."""
+
+    # arrange
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.reports.services.tasks.insert_fields_values_to_text',
+        return_value='Budget',
+    )
+    service = SendTasksDigest.__new__(SendTasksDigest)
+    template = TemplateForTasksDigest(
+        template_id=1,
+        template_name='Onboarding',
+    )
+    template._fields = {'field-abc123': 'Budget'}
+    task_name = '{{  field-abc123  }}'
+
+    # act
+    result = service._replace_api_name(
+        task_name=task_name,
+        template=template,
+    )
+
+    # assert
+    assert result == 'Budget'
+    insert_fields_values_to_text_mock.assert_called_once_with(
+        text='{{  field-abc123  }}',
+        fields_values={'field-abc123': 'Budget'},
+    )
+
+
+def test_replace_api_name__field_value_none__replaced_with_empty(mocker):
+
+    """Field value is None —
+    insert_fields_values_to_text replaces var with empty string."""
+
+    # arrange
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.reports.services.tasks.insert_fields_values_to_text',
+        return_value='Review ',
+    )
+    service = SendTasksDigest.__new__(SendTasksDigest)
+    template = TemplateForTasksDigest(
+        template_id=1,
+        template_name='Onboarding',
+    )
+    template._fields = {'field-abc123': None}
+    task_name = 'Review {{ field-abc123 }}'
+
+    # act
+    result = service._replace_api_name(
+        task_name=task_name,
+        template=template,
+    )
+
+    # assert
+    assert result == 'Review '
+    insert_fields_values_to_text_mock.assert_called_once_with(
+        text='Review {{ field-abc123 }}',
+        fields_values={'field-abc123': None},
+    )
+
+
+def test_replace_api_name__empty_task_name__unchanged(mocker):
+
+    """task_name is empty string — no variables found,
+    original value returned unchanged."""
+
+    # arrange
+    fields_mock = mocker.patch.object(
+        TemplateForTasksDigest,
+        'fields',
+        new_callable=PropertyMock,
+        return_value={},
+    )
+    insert_fields_values_to_text_mock = mocker.patch(
+        'src.reports.services.tasks.insert_fields_values_to_text',
+    )
+    service = SendTasksDigest.__new__(SendTasksDigest)
+    template = TemplateForTasksDigest(
+        template_id=1,
+        template_name='Onboarding',
+    )
+    task_name = ''
+
+    # act
+    result = service._replace_api_name(
+        task_name=task_name,
+        template=template,
+    )
+
+    # assert
+    assert result == ''
+    fields_mock.assert_not_called()
+    insert_fields_values_to_text_mock.assert_not_called()

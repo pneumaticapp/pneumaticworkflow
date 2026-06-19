@@ -15,6 +15,8 @@ from src.processes.enums import (
     PredicateOperator,
     PredicateType,
 )
+from src.datasets.models import Dataset
+
 
 UserModel = get_user_model()
 
@@ -37,6 +39,11 @@ class RawPerformerMixin(models.Model):
         UserGroup,
         on_delete=models.CASCADE,
         null=True,
+    )
+    source_task_api_name = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
     )
 
 
@@ -160,6 +167,7 @@ class TaskMixin(models.Model):
         validators=[MinValueValidator(1)],
     )
     require_completion_by_all = models.BooleanField(default=False)
+    skip_for_starter = models.BooleanField(default=False)
     revert_task = models.CharField(
         max_length=255,
         null=True,
@@ -187,6 +195,12 @@ class FieldMixin(AccountBaseMixin):
     is_required = models.BooleanField(default=False)
     order = models.IntegerField(default=0)
     is_hidden = models.BooleanField(default=False)
+    dataset = models.ForeignKey(
+        Dataset,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+    )
 
 
 class ConditionMixin(models.Model):
@@ -274,13 +288,17 @@ class TaskRawPerformersMixin:
         group: Optional[UserGroup] = None,
         field=None,
         performer_type: PerformerType = PerformerType.USER,
+        source_task_api_name: Optional[str] = None,
     ) -> int:
 
         """ Delete a raw_performer
             and returns the number of objects deleted """
 
         if (
-            performer_type != PerformerType.WORKFLOW_STARTER
+            performer_type not in (
+                PerformerType.WORKFLOW_STARTER,
+                PerformerType.MANAGER,
+            )
             and user is None and group is None and field is None
         ):
             raise Exception(
@@ -292,6 +310,7 @@ class TaskRawPerformersMixin:
             user=user,
             group=group,
             field=field,
+            source_task_api_name=source_task_api_name,
         ).delete()[0]
 
     def delete_raw_performers(self):

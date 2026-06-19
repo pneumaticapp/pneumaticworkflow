@@ -1,4 +1,4 @@
-export type { IExportWorkflowsToExcelConfig } from './types';
+export type { IExportWorkflowsToExcelConfig, TWorkflowExportFormat } from './types';
 export {
   buildWorkflowsExportRows,
   buildWorkflowsXlsxBuffer,

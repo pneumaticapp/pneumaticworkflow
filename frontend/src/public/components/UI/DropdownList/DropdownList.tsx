@@ -31,6 +31,8 @@ export interface IDropdownListProps<TOption extends TDropdownOptionBase>
   staticMenu?: boolean;
   placement?: TPlacement;
   onChange?: (value: any, action: any) => void;
+  errorMessage?: string;
+  isRequired?: boolean;
 }
 
 export function DropdownList<TOption extends TDropdownOptionBase>({
@@ -77,7 +79,12 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
     return (
       <div className={classnames('react-select', restProps.isDisabled && 'is-disabled', className)}>
         <div className={classnames(styles['dropdownlist-lg__control'], label && styles['is-label'])}>
-          {label && <p className={styles['dropdownlist-lg__label']}>{label}</p>}
+          {label && (
+            <p className={styles['dropdownlist-lg__label']}>
+              {label}
+              {restProps.isRequired && <span className={styles['is-required']}>*</span>}
+            </p>
+          )}
 
           <Select
             isMulti={isMulti}
@@ -89,8 +96,11 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
             classNamePrefix="react-select"
             components={componentsMap[controlSize]}
             onInputChange={handleInputChange}
+            className={classnames(restProps.errorMessage && styles['has-error'])}
             {...restProps}
           />
+          
+          {restProps.errorMessage && <p className={styles['error-text']}>{restProps.errorMessage}</p>}
         </div>
       </div>
     );
@@ -105,6 +115,12 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
         restProps.staticMenu && 'is-static',
       )}
     >
+      {label && (
+        <p className={styles['dropdownlist-lg__label']}>
+          {label}
+          {restProps.isRequired && <span className={styles['is-required']}>*</span>}
+        </p>
+      )}
       <OutsideClickHandler onOutsideClick={() => setIsOpen(false)}>
         <Select
           isMulti={isMulti}
@@ -122,6 +138,7 @@ export function DropdownList<TOption extends TDropdownOptionBase>({
           {...(restProps.staticMenu && { menuIsOpen: true })}
         />
       </OutsideClickHandler>
+      {restProps.errorMessage && <p className={styles['error-text']}>{restProps.errorMessage}</p>}
     </div>
   );
 }

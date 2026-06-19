@@ -636,6 +636,7 @@ class TemplateSerializer(
                 'tasks_api_names': tasks_api_names,
                 'parents_by_tasks': parents_by_tasks,
                 'ancestors_by_tasks': ancestors_by_tasks,
+                'all_tasks_data': validated_data['tasks'],
             },
         )
 
@@ -707,6 +708,7 @@ class TemplateSerializer(
                 'tasks_api_names': tasks_api_names,
                 'parents_by_tasks': parents_by_tasks,
                 'ancestors_by_tasks': ancestors_by_tasks,
+                'all_tasks_data': validated_data['tasks'],
             },
         )
 

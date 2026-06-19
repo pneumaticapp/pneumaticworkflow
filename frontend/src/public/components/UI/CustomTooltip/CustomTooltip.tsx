@@ -52,15 +52,16 @@ export const CustomTooltip = ({
   const hideTooltip = () => setIsTooltipOpenState(false);
 
   useEffect(() => {
-    if (target && target.current) {
-      target.current.addEventListener('mouseover', openTooltip);
-      target.current.addEventListener('mouseleave', hideTooltip);
+    const element = target.current;
+    if (element) {
+      element.addEventListener('mouseover', openTooltip);
+      element.addEventListener('mouseleave', hideTooltip);
     }
 
     return () => {
-      if (target && target.current) {
-        target.current.removeEventListener('mouseover', openTooltip);
-        target.current.removeEventListener('mouseleave', hideTooltip);
+      if (element) {
+        element.removeEventListener('mouseover', openTooltip);
+        element.removeEventListener('mouseleave', hideTooltip);
       }
     };
   }, [target.current]);
