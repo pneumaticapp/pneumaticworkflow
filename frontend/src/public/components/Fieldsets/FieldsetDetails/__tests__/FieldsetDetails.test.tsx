@@ -14,7 +14,6 @@ import {
   loadCurrentFieldset,
   resetCurrentFieldset,
   updateFieldsetAction,
-  setTemplateId,
 } from '../../../../redux/fieldsets/slice';
 import { ModifyDropdown, FilterSelect } from '../../../UI';
 import { ExtraFieldIntl } from '../../../TemplateEdit/ExtraFields';
@@ -23,7 +22,7 @@ import { getEmptyField } from '../../../TemplateEdit/KickoffRedux/utils/getEmpty
 import { getEditedFields } from '../../../TemplateEdit/ExtraFields/utils/getEditedFields';
 import { moveWorkflowField } from '../../../../utils/workflows';
 import { EExtraFieldType } from '../../../../types/template';
-import { EFieldLabelPosition } from '../../../../types/fieldset';
+import { makeFieldsetTemplate } from '../../../../__stubs__/fieldsets.factory';
 
 jest.mock('../../../../utils/history', () => ({
   history: { push: jest.fn(), location: { pathname: '/' }, listen: jest.fn() },
@@ -35,7 +34,6 @@ jest.mock('../../../../redux/fieldsets/slice', () => ({
   loadCurrentFieldset: jest.fn((p) => ({ type: 'fieldsets/loadCurrentFieldset', payload: p })),
   resetCurrentFieldset: jest.fn(() => ({ type: 'fieldsets/resetCurrentFieldset' })),
   updateFieldsetAction: jest.fn((p) => ({ type: 'fieldsets/updateFieldsetAction', payload: p })),
-  setTemplateId: jest.fn((p) => ({ type: 'fieldsets/setTemplateId', payload: p })),
 }));
 
 jest.mock('../../../UI', () => ({
@@ -162,10 +160,10 @@ describe('FieldsetDetails', () => {
   const ADD_RULE_TEXT = formatMsg('fieldsets.add-rule');
   const RULE_DELETE_TEXT = formatMsg('fieldsets.rule-delete');
 
-  const makeProps = (id: string = '10', templateId: string = '5'): TFieldsetDetailsProps => ({
-    match: { params: { id, templateId }, isExact: true, path: '', url: '' },
+  const makeProps = (id: string = '10'): TFieldsetDetailsProps => ({
+    match: { params: { id }, isExact: true, path: '', url: '' },
     location: {
-      pathname: `/templates/${templateId}/fieldsets/${id}/`,
+      pathname: `/fieldsets/${id}/`,
       search: '',
       hash: '',
       state: undefined,
@@ -204,20 +202,11 @@ describe('FieldsetDetails', () => {
   };
 
   const makeLoadedState = (fieldsetOverrides = {}) => {
-    const fieldset = {
+    const fieldset = makeFieldsetTemplate({
       id: 10,
-      templateId: 5,
-      name: 'Test Fieldset',
-      description: '',
-      labelPosition: EFieldLabelPosition.Top,
       layout: 'horizontal' as const,
-      order: 0,
-      kickoffId: null,
-      taskId: null,
-      rules: [],
-      fields: [],
       ...fieldsetOverrides,
-    };
+    });
     return {
       fieldsets: { currentFieldset: fieldset, isCurrentFieldsetLoading: false },
       authUser: { account: { id: 1 } },
@@ -242,25 +231,16 @@ describe('FieldsetDetails', () => {
   });
 
   describe('URL parameter validation', () => {
-    it('redirects to /templates/ on invalid templateId', () => {
-      render(React.createElement(FieldsetDetails, makeProps('10', 'abc')));
-      expect(history.push).toHaveBeenCalledTimes(1);
-      expect(history.push).toHaveBeenCalledWith(ERoutes.Templates);
-      expect(setTemplateId).not.toHaveBeenCalled();
-      expect(loadCurrentFieldset).not.toHaveBeenCalled();
-    });
-
     it('redirects to fieldsets list on invalid id', () => {
-      render(React.createElement(FieldsetDetails, makeProps('xyz', '5')));
+      render(React.createElement(FieldsetDetails, makeProps('xyz')));
       const expectedRoute = ERoutes.Fieldsets;
       expect(history.push).toHaveBeenCalledTimes(1);
       expect(history.push).toHaveBeenCalledWith(expectedRoute);
     });
 
-    it('dispatches setTemplateId and loadCurrentFieldset on valid params', () => {
-      render(React.createElement(FieldsetDetails, makeProps('10', '5')));
+    it('dispatches loadCurrentFieldset on valid params', () => {
+      render(React.createElement(FieldsetDetails, makeProps('10')));
       expect(history.push).not.toHaveBeenCalled();
-      expect(mockDispatch).toHaveBeenCalledWith(setTemplateId(5));
       expect(mockDispatch).toHaveBeenCalledWith(loadCurrentFieldset({ id: 10 }));
     });
   });
@@ -303,7 +283,7 @@ describe('FieldsetDetails', () => {
     });
 
     it('onDelete in ModifyDropdown dispatches deleteFieldsetAction and redirects', () => {
-      renderWithState(makeLoadedState({ id: 10 }), makeProps('10', '5'));
+      renderWithState(makeLoadedState({ id: 10 }), makeProps('10'));
       const props = getModifyDropdownProps();
       act(() => { props.onDelete(); });
       expect(deleteFieldsetAction).toHaveBeenCalledTimes(1);
@@ -314,9 +294,7 @@ describe('FieldsetDetails', () => {
     });
 
     it('skips loadCurrentFieldset when fieldset is already loaded with same id', () => {
-      renderWithState(makeLoadedState({ id: 10 }), makeProps('10', '5'));
-      expect(setTemplateId).toHaveBeenCalledTimes(1);
-      expect(mockDispatch).toHaveBeenCalledWith(setTemplateId(5));
+      renderWithState(makeLoadedState({ id: 10 }), makeProps('10'));
       expect(loadCurrentFieldset).not.toHaveBeenCalled();
     });
   });

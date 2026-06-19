@@ -15,7 +15,6 @@ export const makeFieldsetData = (overrides: Partial<IFieldsetData> = {}): IField
 
 export const makeFieldsetTemplate = (overrides: Partial<IFieldsetTemplate> = {}): IFieldsetTemplate => ({
   id: 1,
-  templateId: 1,
   name: 'Fieldset Template',
   description: '',
   labelPosition: EFieldLabelPosition.Top,

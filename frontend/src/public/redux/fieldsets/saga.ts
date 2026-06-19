@@ -15,7 +15,7 @@ import {
 } from '../../types/fieldset';
 import { TDeleteFieldsetPayload } from './types';
 import { LIMIT_LOAD_FIELDSETS } from '../../constants/defaultValues';
-import { getFieldsetsStore, getFieldsetsTemplateId } from '../selectors/fieldsets';
+import { getFieldsetsStore } from '../selectors/fieldsets';
 import { getFieldsets } from '../../api/fieldsets/getFieldsets';
 import { getFieldset } from '../../api/fieldsets/getFieldset';
 import { createFieldset } from '../../api/fieldsets/createFieldset';
@@ -39,15 +39,12 @@ import {
   loadFieldsetsCatalogFailed,
 } from './slice';
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function getFieldsetsRoute(_templateId?: number | null): string {
+function getFieldsetsRoute(): string {
   return ERoutes.Fieldsets;
 }
 
-function getFieldsetDetailRoute(templateId: number | null, fieldsetId: number): string {
-  if (!templateId) return ERoutes.Templates;
-  return ERoutes.TemplateFieldsetDetail
-    .replace(':templateId', String(templateId))
+function getFieldsetDetailRoute(fieldsetId: number): string {
+  return ERoutes.FieldsetDetail
     .replace(':id', String(fieldsetId));
 }
 
@@ -91,20 +88,11 @@ export function* loadCurrentFieldsetSaga({ payload: { id } }: PayloadAction<{ id
 
   try {
     const currentFieldset: IFieldsetTemplate = yield call(getFieldset, { id, signal: abortController.signal });
-    const urlTemplateId: number | null = yield select(getFieldsetsTemplateId);
-
-    if (urlTemplateId && currentFieldset.templateId !== urlTemplateId) {
-      yield put(loadCurrentFieldsetFailed());
-      history.replace(getFieldsetsRoute(urlTemplateId));
-      return;
-    }
-
     yield put(loadCurrentFieldsetSuccess(currentFieldset));
   } catch (error) {
     if (isRequestCanceled(error)) return;
     yield put(loadCurrentFieldsetFailed());
-    const templateId: number | null = yield select(getFieldsetsTemplateId);
-    history.push(getFieldsetsRoute(templateId));
+    history.push(getFieldsetsRoute());
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to load current fieldset', error);
   } finally {
@@ -116,11 +104,7 @@ function* createFieldsetSaga({ payload }: PayloadAction<ICreateFieldsetParams>) 
   try {
     const createdFieldset: IFieldsetTemplate = yield call(createFieldset, payload);
     yield put(loadCurrentFieldsetSuccess(createdFieldset));
-    const templateId: number | null = yield select(getFieldsetsTemplateId);
-    if (templateId) {
-      yield put(loadFieldsetsCatalog({ templateId }));
-    }
-    history.push(getFieldsetDetailRoute(templateId, createdFieldset.id));
+    history.push(getFieldsetDetailRoute(createdFieldset.id));
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
     logger.error('failed to create fieldset', error);
@@ -133,11 +117,6 @@ function* updateFieldsetSaga({ payload }: PayloadAction<IUpdateFieldsetParams>) 
   try {
     const updatedFieldset: IFieldsetTemplate = yield call(updateFieldset, { ...payload, signal: abortController.signal });
     yield put(setCurrentFieldset(updatedFieldset));
-
-    const templateId: number | null = yield select(getFieldsetsTemplateId);
-    if (templateId) {
-      yield put(loadFieldsetsCatalog({ templateId }));
-    }
   } catch (error) {
     if (isRequestCanceled(error)) return;
     yield put(loadCurrentFieldsetFailed());
@@ -152,11 +131,6 @@ export function* deleteFieldsetSaga({ payload: { id, onSuccess } }: PayloadActio
   try {
     yield call(deleteFieldset, { id });
     yield put(removeFieldsetFromList(id));
-
-    const templateId: number | null = yield select(getFieldsetsTemplateId);
-    if (templateId) {
-      yield put(loadFieldsetsCatalog({ templateId }));
-    }
     onSuccess?.();
   } catch (error) {
     yield put(loadFieldsetsFailed());
@@ -185,8 +159,7 @@ function* watchDeleteFieldset() {
   yield takeEvery(deleteFieldsetAction.type, deleteFieldsetSaga);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function* loadFieldsetsCatalogSaga({ payload }: ReturnType<typeof loadFieldsetsCatalog>) {
+function* loadFieldsetsCatalogSaga() {
   const abortController = new AbortController();
 
   try {

@@ -9,9 +9,7 @@ import {
   loadCurrentFieldset,
   resetCurrentFieldset,
   updateFieldsetAction,
-  setTemplateId,
 } from '../../../redux/fieldsets/slice';
-
 
 import { history } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
@@ -24,7 +22,6 @@ import { FieldsetDetailsSkeleton } from './FieldsetDetailsSkeleton';
 
 import { getCurrentFieldset, isCurrentFieldsetLoading } from '../../../redux/selectors/fieldsets';
 import { getAccountId } from '../../../redux/selectors/user';
-
 
 import { EExtraFieldMode, EExtraFieldType, IExtraField } from '../../../types/template';
 import { EInputNameBackgroundColor, EMoveDirections } from '../../../types/workflow';
@@ -53,16 +50,13 @@ const LABEL_POSITION_OPTIONS: { value: EFieldLabelPosition; labelKey: string }[]
   { value: EFieldLabelPosition.Left, labelKey: 'fieldsets.settings.label-position.left' },
 ];
 
-
-
-const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matchTemplateId } } }: TFieldsetDetailsProps) => {
+const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetDetailsProps) => {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
   const fieldset = useSelector(getCurrentFieldset);
   const isLoading = useSelector(isCurrentFieldsetLoading);
   const accountId = useSelector(getAccountId);
   const { isDesktop } = useCheckDevice();
-
 
   const [localFields, setLocalFields] = useState<IExtraField[]>([]);
   const datasetOptions = useDatasetOptions(localFields);
@@ -84,23 +78,15 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId, templateId: matc
 
   useEffect(() => {
     const id = Number(matchParamId);
-    const templateId = Number(matchTemplateId);
 
-    if (Number.isNaN(templateId)) {
-      history.push(ERoutes.Templates);
-      return;
-    }
     if (Number.isNaN(id)) {
       history.push(fieldsetListRoute);
       return;
     }
 
-    dispatch(setTemplateId(templateId));
     if (fieldset?.id === id) return;
     dispatch(loadCurrentFieldset({ id }));
-  }, [matchParamId, matchTemplateId]);
-
-
+  }, [matchParamId]);
 
   useEffect(() => {
     return () => {

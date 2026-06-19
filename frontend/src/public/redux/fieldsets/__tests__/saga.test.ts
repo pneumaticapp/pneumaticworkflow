@@ -10,7 +10,6 @@ import {
   loadFieldsets, loadFieldsetsSuccess, loadFieldsetsFailed,
   loadCurrentFieldset, loadCurrentFieldsetSuccess,
   removeFieldsetFromList,
-  loadFieldsetsCatalog,
 } from '../slice';
 import { initialState } from '../slice';
 import { history } from '../../../utils/history';
@@ -21,7 +20,7 @@ import { isRequestCanceled } from '../../../utils/isRequestCanceled';
 
 jest.mock('../../../utils/getConfig', () => ({
   getBrowserConfigEnv: jest.fn().mockReturnValue({
-    api: { urls: { templateFieldsets: '/templates/:id/fieldsets', fieldset: '/fieldsets/:id' } },
+    api: { urls: { fieldsets: '/fieldsets', fieldset: '/fieldsets/:id' } },
   }),
 }));
 
@@ -61,7 +60,6 @@ describe('loadFieldsetsSaga', () => {
     fieldsets: {
       fieldsetsList: { items: [], count: 0, offset: 0 },
       fieldsetsListSorting: '-date',
-      templateId: null,
       catalogLoadedForTemplateId: null,
     },
   });
@@ -131,35 +129,17 @@ describe('loadCurrentFieldsetSaga', () => {
     jest.clearAllMocks();
   });
 
-  const URL_TEMPLATE_ID = 20;
-  const FIELDSET_TEMPLATE_ID = 15;
   const FIELDSET_ID = 5;
 
   const makeFieldset = (overrides = {}) =>
     makeFieldsetTemplate({
       id: FIELDSET_ID,
-      templateId: FIELDSET_TEMPLATE_ID,
       name: 'Test Fieldset',
       ...overrides,
     });
 
-  const makeMockState = (templateId: number | null) => ({
-    fieldsets: {
-      fieldsetsList: { items: [], count: 0, offset: 0 },
-      fieldsetsListSorting: '-date',
-      templateId,
-      catalogLoadedForTemplateId: null,
-      currentFieldset: null,
-      isCurrentFieldsetLoading: false,
-    },
-  });
-
-  const runLoadCurrentFieldset = async (
-    fieldsetId: number,
-    urlTemplateId: number | null,
-  ) => {
+  const runLoadCurrentFieldset = async (fieldsetId: number) => {
     const dispatched: IDispatchedAction[] = [];
-    const mockState = makeMockState(urlTemplateId);
     const action = loadCurrentFieldset({ id: fieldsetId });
 
     function* wrapper() {
@@ -171,7 +151,7 @@ describe('loadCurrentFieldsetSaga', () => {
         dispatch: (dispatchedAction: IDispatchedAction) => {
           dispatched.push(dispatchedAction);
         },
-        getState: () => mockState,
+        getState: () => ({ fieldsets: { ...initialState } }),
       },
       wrapper,
     );
@@ -181,49 +161,33 @@ describe('loadCurrentFieldsetSaga', () => {
     return dispatched;
   };
 
-  describe('redirect on template ownership mismatch', () => {
-    it('redirects to fieldsets list when fieldset belongs to a different template', async () => {
-      (getFieldset as jest.Mock).mockResolvedValue(makeFieldset());
-
-      const dispatched = await runLoadCurrentFieldset(FIELDSET_ID, URL_TEMPLATE_ID);
-
-      expect(getFieldset).toHaveBeenCalledTimes(1);
-
-      const expectedRoute = ERoutes.Fieldsets;
-      expect(history.replace).toHaveBeenCalledTimes(1);
-      expect(history.replace).toHaveBeenCalledWith(expectedRoute);
-
-      const successAction = dispatched.find(
-        (a) => a.type === loadCurrentFieldsetSuccess.type,
-      );
-      expect(successAction).toBeUndefined();
-    });
-
-    it('does not redirect when fieldset belongs to the URL template', async () => {
-      const matchingFieldset = makeFieldset({ templateId: URL_TEMPLATE_ID });
-      (getFieldset as jest.Mock).mockResolvedValue(matchingFieldset);
-
-      const dispatched = await runLoadCurrentFieldset(FIELDSET_ID, URL_TEMPLATE_ID);
-
-      expect(getFieldset).toHaveBeenCalledTimes(1);
-      expect(history.replace).not.toHaveBeenCalled();
-
-      const successAction = dispatched.find(
-        (a) => a.type === loadCurrentFieldsetSuccess.type,
-      );
-      expect(successAction).toBeDefined();
-    });
-  });
-
-  it('dispatches success without template check when URL templateId is null', async () => {
-    const fieldset = makeFieldset({ templateId: 99 });
+  it('dispatches loadCurrentFieldsetSuccess on API success', async () => {
+    const fieldset = makeFieldset();
     (getFieldset as jest.Mock).mockResolvedValue(fieldset);
 
-    const dispatched = await runLoadCurrentFieldset(FIELDSET_ID, null);
+    const dispatched = await runLoadCurrentFieldset(FIELDSET_ID);
 
-    const successAction = dispatched.find((a) => a.type === loadCurrentFieldsetSuccess.type);
-    expect(successAction).toBeDefined();
+    expect(getFieldset).toHaveBeenCalledTimes(1);
     expect(history.replace).not.toHaveBeenCalled();
+
+    const successAction = dispatched.find(
+      (a) => a.type === loadCurrentFieldsetSuccess.type,
+    );
+    expect(successAction).toBeDefined();
+  });
+
+  it('redirects to fieldsets list on API error', async () => {
+    (getFieldset as jest.Mock).mockRejectedValue(new Error('Not found'));
+
+    const dispatched = await runLoadCurrentFieldset(FIELDSET_ID);
+
+    expect(history.push).toHaveBeenCalledTimes(1);
+    expect(history.push).toHaveBeenCalledWith(ERoutes.Fieldsets);
+
+    const successAction = dispatched.find(
+      (a) => a.type === loadCurrentFieldsetSuccess.type,
+    );
+    expect(successAction).toBeUndefined();
   });
 });
 
@@ -302,12 +266,12 @@ describe('loadFieldsetsSaga — additional cases', () => {
 describe('deleteFieldsetSaga', () => {
   beforeEach(() => { jest.clearAllMocks(); });
 
-  it('happy: removes from list, reloads catalog, calls onSuccess', async () => {
+  it('happy: removes from list, calls onSuccess', async () => {
     (deleteFieldset as jest.Mock).mockResolvedValue(undefined);
     const onSuccess = jest.fn();
 
     const dispatched: { type: string; payload?: unknown }[] = [];
-    const state = { fieldsets: { ...initialState, templateId: 10 } };
+    const state = { fieldsets: { ...initialState } };
 
     await runSaga(
       {
@@ -327,7 +291,6 @@ describe('deleteFieldsetSaga', () => {
     expect(dispatched).toEqual(
       expect.arrayContaining([
         expect.objectContaining({ type: removeFieldsetFromList.type, payload: 5 }),
-        expect.objectContaining({ type: loadFieldsetsCatalog.type }),
       ]),
     );
     expect(onSuccess).toHaveBeenCalledTimes(1);
@@ -338,7 +301,7 @@ describe('deleteFieldsetSaga', () => {
     const onSuccess = jest.fn();
 
     const dispatched: { type: string; payload?: unknown }[] = [];
-    const state = { fieldsets: { ...initialState, templateId: 10 } };
+    const state = { fieldsets: { ...initialState } };
 
     await runSaga(
       {

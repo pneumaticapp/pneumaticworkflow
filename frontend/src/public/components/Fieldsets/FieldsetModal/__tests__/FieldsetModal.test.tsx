@@ -14,7 +14,7 @@ import {
 } from '../../../../redux/fieldsets/slice';
 import { validateFieldsetName } from '../../../../utils/validators';
 import { intlMock } from '../../../../__stubs__/intlMock';
-import { EFieldLabelPosition } from '../../../../types/fieldset';
+import { makeFieldsetTemplate } from '../../../../__stubs__/fieldsets.factory';
 
 jest.mock('../../../../redux/fieldsets/slice', () => ({
   closeCreateModal: jest.fn(() => ({ type: 'fieldsets/closeCreateModal' })),
@@ -91,19 +91,11 @@ describe('FieldsetModal', () => {
     fieldsets: {
       ...defaultState.fieldsets,
       isEditModalOpen: true,
-      currentFieldset: {
+      currentFieldset: makeFieldsetTemplate({
         id: 10,
         name: 'Original Name',
         description: 'desc',
-        labelPosition: EFieldLabelPosition.Top,
-        layout: 'vertical' as const,
-        order: 0,
-        kickoffId: null,
-        taskId: null,
-        rules: [],
-        fields: [],
-        templateId: 5,
-      },
+      }),
     },
   };
 

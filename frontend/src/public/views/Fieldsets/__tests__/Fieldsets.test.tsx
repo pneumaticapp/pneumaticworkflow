@@ -41,8 +41,8 @@ describe('FieldsetsView — fieldsets routing contract', () => {
     jest.clearAllMocks();
   });
 
-  it('renders FieldsetDetails (not Fieldsets list) for /templates/1/fieldsets/2/', () => {
-    renderWithRoute('/templates/1/fieldsets/2/');
+  it('renders FieldsetDetails (not Fieldsets list) for /fieldsets/2/', () => {
+    renderWithRoute('/fieldsets/2/');
 
     expect(screen.getByTestId('fieldset-details')).toBeInTheDocument();
     expect(screen.queryByTestId('fieldsets-list')).not.toBeInTheDocument();

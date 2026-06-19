@@ -22,7 +22,7 @@ export const FieldsetsView = () => {
       <React.Suspense fallback={<div className="loading" />}>
         <Switch>
           <Route
-            path={ERoutes.TemplateFieldsetDetail}
+            path={ERoutes.FieldsetDetail}
             component={FieldsetDetails}
           />
           <Route

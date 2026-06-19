@@ -13,8 +13,8 @@ import {
 } from '../../../../redux/fieldsets/slice';
 import { history } from '../../../../utils/history';
 import { intlMock } from '../../../../__stubs__/intlMock';
-import { IFieldsetCardProps } from '../types';
-import { IFieldsetField, IFieldsetTemplateRule, EFieldLabelPosition } from '../../../../types/fieldset';
+import { IFieldsetField, IFieldsetTemplateRule } from '../../../../types/fieldset';
+import { makeFieldsetListItem } from '../../../../__stubs__/fieldsets.factory';
 
 jest.mock('../../../../utils/history', () => ({
   history: { push: jest.fn(), location: { pathname: '/' }, listen: jest.fn() },
@@ -72,22 +72,8 @@ describe('FieldsetCard', () => {
     ...overrides,
   });
 
-  const makeProps = (overrides: Partial<IFieldsetCardProps> = {}): IFieldsetCardProps => ({
-    id: 10,
-    apiName: 'fs-10',
-    name: 'Test Fieldset',
-    description: 'A test fieldset',
-    labelPosition: EFieldLabelPosition.Top,
-    layout: 'vertical',
-    order: 0,
-    kickoffId: null,
-    taskId: null,
-    rules: [],
-    fields: [],
-    templateId: 5,
-    ...overrides,
-  });
-
+  const makeProps = makeFieldsetListItem;
+  
   const getDropdownOptions = () => {
     const mock = Dropdown as unknown as jest.Mock;
     const lastCall = mock.mock.calls[mock.mock.calls.length - 1];
@@ -113,24 +99,24 @@ describe('FieldsetCard', () => {
 
   describe('Navigation', () => {
     it('navigates to detail page on title click', () => {
-      render(React.createElement(FieldsetCard, makeProps({ id: 10, templateId: 5 })));
+      render(React.createElement(FieldsetCard, makeProps({ id: 10 })));
 
       const titleLink = screen.getByRole('link');
       userEvent.click(titleLink);
 
       expect(history.push).toHaveBeenCalledTimes(1);
-      expect(history.push).toHaveBeenCalledWith('/templates/5/fieldsets/10/');
+      expect(history.push).toHaveBeenCalledWith('/fieldsets/10/');
     });
 
     it('navigates to detail page on Enter key', () => {
-      render(React.createElement(FieldsetCard, makeProps({ id: 10, templateId: 5 })));
+      render(React.createElement(FieldsetCard, makeProps({ id: 10 })));
 
       const titleLink = screen.getByRole('link');
       titleLink.focus();
       userEvent.keyboard('{Enter}');
 
       expect(history.push).toHaveBeenCalledTimes(1);
-      expect(history.push).toHaveBeenCalledWith('/templates/5/fieldsets/10/');
+      expect(history.push).toHaveBeenCalledWith('/fieldsets/10/');
     });
   });
 
@@ -145,7 +131,6 @@ describe('FieldsetCard', () => {
       expect(mockDispatch).toHaveBeenCalledWith(
         setCurrentFieldset({
           id: props.id,
-          templateId: props.templateId,
           name: props.name,
           description: props.description,
           labelPosition: props.labelPosition,

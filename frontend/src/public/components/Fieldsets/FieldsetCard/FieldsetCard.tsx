@@ -11,7 +11,7 @@ import { openEditModal, deleteFieldsetAction, setCurrentFieldset } from '../../.
 import { history } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
 import { sanitizeText } from '../../../utils/strings';
-import { IFieldsetCardProps } from './types';
+import { IFieldsetListItem } from '../../../types/fieldset';
 
 import styles from './FieldsetCard.css';
 
@@ -26,8 +26,7 @@ export function FieldsetCard({
   taskId,
   rules,
   fields,
-  templateId,
-}: IFieldsetCardProps) {
+}: IFieldsetListItem) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
@@ -43,7 +42,6 @@ export function FieldsetCard({
   const handleEditName = () => {
     dispatch(setCurrentFieldset({
       id,
-      templateId,
       name,
       description,
       labelPosition,
@@ -59,8 +57,7 @@ export function FieldsetCard({
 
   const handleCardClick = () => {
     history.push(
-      ERoutes.TemplateFieldsetDetail
-        .replace(':templateId', templateId.toString())
+      ERoutes.FieldsetDetail
         .replace(':id', id.toString()),
     );
   };

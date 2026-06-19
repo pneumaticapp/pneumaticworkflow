@@ -20,9 +20,6 @@ import { FieldsetCard } from './FieldsetCard';
 
 import styles from './Fieldsets.css';
 
-const MOCK_TEMPLATE_ID = 1;
-
-
 export function Fieldsets() {
   const dispatch = useDispatch();
   const { formatMessage } = useIntl();
@@ -59,7 +56,7 @@ export function Fieldsets() {
           icon={<AIPlusIcon />}
         />
         {fieldsetsList.map((fieldset: IFieldsetListItem) => (
-          <FieldsetCard key={fieldset.id} {...fieldset} templateId={MOCK_TEMPLATE_ID} />
+          <FieldsetCard key={fieldset.id} {...fieldset} />
         ))}
       </InfiniteScroll>
       <FieldsetModal type={EFieldsetModalType.Create} />

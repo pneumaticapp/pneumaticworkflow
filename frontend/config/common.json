@@ -154,7 +154,7 @@
       "datasets": "/datasets",
       "dataset": "/datasets/:id",
       "fieldsets": "/fieldsets",
-      "fieldset": "/templates/fieldsets/:id",
+      "fieldset": "/fieldsets/:id",
       "getFaq": "/faq",
       "vacationActivate": "/accounts/user/activate-vacation",
       "vacationDeactivate": "/accounts/user/deactivate-vacation",

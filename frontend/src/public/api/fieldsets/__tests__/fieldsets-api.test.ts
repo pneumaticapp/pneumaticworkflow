@@ -1,8 +1,7 @@
 
 const MOCK_URLS = {
   fieldsets: '/fieldsets',
-  fieldset: '/templates/fieldsets/:id',
-  templateFieldsets: '/templates/:id/fieldsets',
+  fieldset: '/fieldsets/:id',
 };
 
 jest.mock('../../../utils/getConfig', () => ({

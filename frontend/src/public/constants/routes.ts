@@ -52,7 +52,7 @@ export enum ERoutes {
   Datasets = '/datasets/',
   DatasetDetail = '/datasets/:id/',
   Fieldsets = '/fieldsets/',
-  TemplateFieldsetDetail = '/templates/:templateId/fieldsets/:id/',
+  FieldsetDetail = '/fieldsets/:id/',
 }
 
 export enum EPublicFormRoutes {

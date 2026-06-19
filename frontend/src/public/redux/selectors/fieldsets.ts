@@ -5,8 +5,6 @@ import { mapFieldsetTemplateToFieldsetData } from '../../utils/mapFieldsetTempla
 
 export const getFieldsetsStore = (state: IApplicationState): IFieldsetsStore => state.fieldsets;
 
-export const getFieldsetsTemplateId = (state: IApplicationState): number | null => state.fieldsets.templateId;
-
 export const getFieldsetsList = (state: IApplicationState): IFieldsetListItem[] => state.fieldsets.fieldsetsList.items;
 
 export const getFieldsetsListSelection = (state: IApplicationState): IFieldsetsList => state.fieldsets.fieldsetsList;

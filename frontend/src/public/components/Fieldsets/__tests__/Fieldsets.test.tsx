@@ -131,7 +131,7 @@ describe('Fieldsets', () => {
   });
 
   describe('Fieldset cards rendering', () => {
-    it('renders FieldsetCard for each fieldset with MOCK_TEMPLATE_ID', () => {
+    it('renders FieldsetCard for each fieldset', () => {
       const fieldsets = [
         makeFieldsetListItem({ id: 1, name: 'FS1' }),
         makeFieldsetListItem({ id: 2, apiName: 'fs-2', name: 'FS2' }),
@@ -148,8 +148,8 @@ describe('Fieldsets', () => {
 
       const mock = FieldsetCard as jest.Mock;
       expect(mock).toHaveBeenCalledTimes(2);
-      expect(mock).toHaveBeenCalledWith(expect.objectContaining({ id: 1, name: 'FS1', templateId: 1 }), {});
-      expect(mock).toHaveBeenCalledWith(expect.objectContaining({ id: 2, name: 'FS2', templateId: 1 }), {});
+      expect(mock).toHaveBeenCalledWith(expect.objectContaining({ id: 1, name: 'FS1' }), {});
+      expect(mock).toHaveBeenCalledWith(expect.objectContaining({ id: 2, name: 'FS2' }), {});
     });
   });
 
