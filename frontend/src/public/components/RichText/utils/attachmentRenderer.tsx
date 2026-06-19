@@ -25,7 +25,7 @@ export const createAttachmentRenderer = (
   hideIcon?: boolean,
 ) => {
   const renderLink = (url: string, name: string) => {
-    const defaultLinkHtml = `<a href="${url}" target="_blank">${name}<a/>`;
+    const defaultLinkHtml = `<a href="${url}" target="_blank">${name}</a>`;
     if (!embedVideoLinks) {
       return defaultLinkHtml;
     }

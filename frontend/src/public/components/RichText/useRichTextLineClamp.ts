@@ -15,15 +15,15 @@ export function useRichTextLineClamp(
       return undefined;
     }
 
+    const element = elementRef.current;
+
+    if (!element) {
+      setIsTruncated(false);
+
+      return undefined;
+    }
+
     const measureTruncation = () => {
-      const element = elementRef.current;
-
-      if (!element) {
-        setIsTruncated(false);
-
-        return;
-      }
-
       setIsTruncated(element.scrollHeight > element.clientHeight + 1);
     };
 
@@ -31,7 +31,21 @@ export function useRichTextLineClamp(
 
     const frameId = requestAnimationFrame(measureTruncation);
 
-    return () => cancelAnimationFrame(frameId);
+    const images = element.getElementsByTagName('img');
+    for (let i = 0; i < images.length; i += 1) {
+      const image = images[i];
+      if (!image.complete) {
+        image.addEventListener('load', measureTruncation);
+      }
+    }
+
+    return () => {
+      cancelAnimationFrame(frameId);
+      const imgs = element.getElementsByTagName('img');
+      for (let i = 0; i < imgs.length; i += 1) {
+        imgs[i].removeEventListener('load', measureTruncation);
+      }
+    };
   }, [elementRef, maxLines, isExpanded, text]);
 
   return isTruncated;
