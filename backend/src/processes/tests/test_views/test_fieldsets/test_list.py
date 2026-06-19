@@ -714,3 +714,24 @@ def test_list_fieldsets__soft_deleted__ok(api_client):
     # assert
     assert response.status_code == 200
     assert len(response.data) == 0
+
+
+def test_list_fieldsets__not_shared__empty_list(api_client):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    fieldset = create_test_shared_fieldset(
+        account=account,
+    )
+    fieldset.is_shared = False
+    fieldset.save()
+
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get('/fieldsets')
+
+    # assert
+    assert response.status_code == 200
+    assert len(response.data) == 0

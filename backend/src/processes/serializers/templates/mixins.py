@@ -11,7 +11,7 @@ from src.processes.models.templates.kickoff import Kickoff
 from src.processes.models.templates.task import TaskTemplate
 from src.processes.models.templates.template import Template
 from src.processes.models.templates.fieldset import FieldsetTemplate
-from src.processes.services.templates.fieldsets.fieldset import (
+from src.processes.services.fieldsets.fieldset import (
     FieldSetTemplateService,
 )
 from src.utils.validation import raise_validation_error

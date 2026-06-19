@@ -20,8 +20,9 @@ from src.processes.services.exceptions import (
 from src.processes.services.templates.field_template import (
     FieldTemplateService,
 )
-from src.processes.services.templates.fieldsets.fieldset_rule import \
-    FieldsetTemplateRuleService
+from src.processes.services.fieldsets.fieldset_rule import (
+    FieldsetTemplateRuleService,
+)
 from src.processes.utils.common import create_api_name
 
 
@@ -95,6 +96,36 @@ class FieldSetTemplateService(BaseModelService):
             layout=layout,
             is_shared=True,
             **kwargs,
+        )
+
+    def create_from_shared(
+        self,
+        shared_fieldset_data: dict,
+        shared_fieldset_id: int,
+        template_id: int,
+        order: int = 0,
+        kickoff_id: Optional[int] = None,
+        task_id: Optional[int] = None,
+        api_name: Optional[str] = None,
+        title: Optional[str] = None,
+        description: Optional[str] = None,
+    ) -> FieldsetTemplate:
+
+        fieldset_data = self.get_new_fieldset_data(
+            shared_fieldset_data=shared_fieldset_data,
+            api_name=api_name,
+            title=title,
+            description=description,
+        )
+
+        return self.create(
+            **fieldset_data,
+            is_shared=True,
+            shared_fieldset_id=shared_fieldset_id,
+            order=order,
+            kickoff_id=kickoff_id,
+            task_id=task_id,
+            template_id=template_id,
         )
 
     def _create_related(
@@ -263,36 +294,6 @@ class FieldSetTemplateService(BaseModelService):
             fieldset_data['description'] = description
         fieldset_data.pop('order', None)
         return fieldset_data
-
-    def create_from_shared(
-        self,
-        shared_fieldset_data: dict,
-        shared_fieldset_id: int,
-        template_id: int,
-        order: int = 0,
-        kickoff_id: Optional[int] = None,
-        task_id: Optional[int] = None,
-        api_name: Optional[str] = None,
-        title: Optional[str] = None,
-        description: Optional[str] = None,
-    ) -> FieldsetTemplate:
-
-        fieldset_data = self.get_new_fieldset_data(
-            shared_fieldset_data=shared_fieldset_data,
-            api_name=api_name,
-            title=title,
-            description=description,
-        )
-
-        return self.create(
-            **fieldset_data,
-            is_shared=True,
-            shared_fieldset_id=shared_fieldset_id,
-            order=order,
-            kickoff_id=kickoff_id,
-            task_id=task_id,
-            template_id=template_id,
-        )
 
     def create_rules(
         self,
