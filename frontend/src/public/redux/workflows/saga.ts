@@ -473,6 +473,39 @@ function* editWorkflowInWork({ payload }: PayloadAction<TEditWorkflowPayload>) {
         ),
       );
     }
+    if (name) {
+      if (task) {
+        const hasMainWorkflowMatch = payload.workflowId === task.workflow.id;
+        const hasSubWorkflowMatch = task.subWorkflows?.some((subWorkflow) => subWorkflow.id === payload.workflowId);
+
+        if (hasMainWorkflowMatch || hasSubWorkflowMatch) {
+          yield put(setCurrentTask({
+            ...task,
+            ...(hasMainWorkflowMatch && {
+              workflow: { ...task.workflow, name: formattedEditedWorkflow.name },
+            }),
+            ...(hasSubWorkflowMatch && {
+              subWorkflows: task.subWorkflows.map((subWorkflow) =>
+                subWorkflow.id === payload.workflowId
+                  ? { ...subWorkflow, name: formattedEditedWorkflow.name }
+                  : subWorkflow,
+              ),
+            }),
+          }));
+        }
+      }
+
+      yield all(
+        formattedWorkflow.tasks.map((localTask: IWorkflowTaskClient) =>
+          put(
+            patchTaskInList({
+              taskId: localTask.id,
+              task: { workflowName: formattedEditedWorkflow.name },
+            }),
+          ),
+        ),
+      );
+    }
     // yield put(loadWorkflowsList(0));
     yield updateDetailedWorkflow(payload.workflowId);
 
