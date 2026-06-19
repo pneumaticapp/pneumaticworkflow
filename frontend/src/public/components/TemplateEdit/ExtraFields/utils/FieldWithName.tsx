@@ -7,7 +7,6 @@ import React, {
   ReactNode,
   Ref,
   useCallback,
-  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -83,7 +82,6 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
     ref,
   ) => {
     const editInputRef = useRef<HTMLTextAreaElement | null>(null);
-    const nameRowRef = useRef<HTMLDivElement | null>(null);
     const [isFocused, setIsFocused] = useState(false);
 
     const descriptionInputRef = useCallback(
@@ -127,42 +125,6 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
 
     const isKickoffEditorMode = mode === EExtraFieldMode.Kickoff;
 
-    // #region agent log
-    useLayoutEffect(() => {
-      const row = nameRowRef.current;
-      const field = row?.parentElement;
-      if (!row || !field) {
-        return;
-      }
-      const rowRect = row.getBoundingClientRect();
-      const fieldRect = field.getBoundingClientRect();
-      const cs = window.getComputedStyle(row);
-      fetch('http://127.0.0.1:7525/ingest/986576ac-9a8a-47e1-ac79-a3af877cb162', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Debug-Session-Id': 'a8f3ff',
-        },
-        body: JSON.stringify({
-          sessionId: 'a8f3ff',
-          runId: 'post-fix',
-          hypothesisId: 'H1-H5',
-          location: 'FieldWithName.tsx:useLayoutEffect',
-          message: 'kickoff name row width vs field',
-          data: {
-            isKickoffEditorMode,
-            nameRowWidth: Math.round(rowRect.width),
-            fieldWidth: Math.round(fieldRect.width),
-            widthRatio: fieldRect.width > 0 ? rowRect.width / fieldRect.width : null,
-            computedWidth: cs.width,
-            alignSelf: cs.alignSelf,
-          },
-          timestamp: Date.now(),
-        }),
-      }).catch(() => {});
-    }, [isKickoffEditorMode, name, isFocused, mode]);
-    // #endregion
-
     const fieldNameClassName = useMemo(
       () =>
         classnames(
@@ -200,7 +162,7 @@ export const FieldWithName = forwardRef<HTMLInputElement, IKickoffFormFieldWithN
 
     return (
       <div className={styles['kick-off-input__field']} data-autofocus-first-field>
-        <div ref={nameRowRef} className={fieldNameClassName}>
+        <div className={fieldNameClassName}>
           {isKickoffEditorMode ? (
             <>
               <TextareaAutosize
