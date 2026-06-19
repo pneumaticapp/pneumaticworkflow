@@ -8,6 +8,7 @@ import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { mergePaths } from '../../utils/urls';
 import type { IRealtimeWsEnvelope } from './types';
 import { routeRealtimeEvent } from './utils/routeRealtimeEvent';
+import { logger } from '../../utils/logger';
 
 
 
@@ -22,6 +23,10 @@ export function* watchWsEvents() {
 
   while (true) {
     const envelope: IRealtimeWsEnvelope = yield take(channel);
-    yield call(routeRealtimeEvent, envelope);
+    try {
+      yield call(routeRealtimeEvent, envelope);
+    } catch (error) {
+      logger.error(`failed to route WebSocket event`, error);
+    }
   }
 }
