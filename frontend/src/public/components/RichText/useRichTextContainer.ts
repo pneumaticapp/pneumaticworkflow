@@ -27,9 +27,10 @@ export const useRichTextContainer = (
 
     const images = container.getElementsByTagName('img');
     for (let i = 0; i < images.length; i += 1) {
-      images[i].classList.add(styles['loading-image']);
-      images[i].onload = () => {
-        images[i].classList.remove(styles['loading-image']);
+      const image = images[i];
+      image.classList.add(styles['loading-image']);
+      image.onload = () => {
+        image.classList.remove(styles['loading-image']);
       };
     }
 
