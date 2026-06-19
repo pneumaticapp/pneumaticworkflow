@@ -28,10 +28,18 @@ export const useRichTextContainer = (
     const images = container.getElementsByTagName('img');
     for (let i = 0; i < images.length; i += 1) {
       const image = images[i];
-      image.classList.add(styles['loading-image']);
-      image.onload = () => {
+
+      if (image.complete && image.naturalWidth > 0) {
         image.classList.remove(styles['loading-image']);
-      };
+      } else {
+        image.classList.add(styles['loading-image']);
+        image.onload = () => {
+          image.classList.remove(styles['loading-image']);
+        };
+        image.onerror = () => {
+          image.classList.remove(styles['loading-image']);
+        };
+      }
     }
 
     container.addEventListener('click', handleClick);
