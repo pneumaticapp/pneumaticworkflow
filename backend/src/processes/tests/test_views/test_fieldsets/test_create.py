@@ -18,7 +18,7 @@ from src.processes.models.templates.fieldset import (
 )
 from src.processes.models.templates.fields import FieldTemplate
 
-from src.processes.services.templates.fieldsets.fieldset import (
+from src.processes.services.fieldsets.fieldset import (
     FieldSetTemplateService,
 )
 from src.processes.tests.fixtures import (
@@ -66,7 +66,7 @@ def test_create_fieldset__all_fields__ok(api_client, mocker):
         'rules': [
             {
                 'type': FieldSetRuleType.SUM_EQUAL,
-                'value': 'val',
+                'value': '10',
                 'api_name': 'r1',
                 'fields': [],
             },
@@ -97,7 +97,7 @@ def test_create_fieldset__all_fields__ok(api_client, mocker):
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,
-        value='val',
+        value='10',
         api_name='r1',
     )
     rule.fields.add(field)
@@ -108,7 +108,8 @@ def test_create_fieldset__all_fields__ok(api_client, mocker):
     )
 
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'create_shared_fieldset',
         return_value=fieldset,
     )
 
@@ -178,7 +179,8 @@ def test_create_fieldset__min_data__ok(api_client, mocker):
         name='Minimal Fieldset',
     )
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'create_shared_fieldset',
         return_value=fieldset,
     )
 
@@ -226,7 +228,8 @@ def test_create_fieldset__set_api_name__ok(api_client, mocker):
         name='Minimal Fieldset',
     )
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'create_shared_fieldset',
         return_value=fieldset,
     )
 
@@ -317,7 +320,8 @@ def test_create_fieldset__rule_with_one_field__ok(api_client, mocker):
     rule.fields.add(field)
 
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'create_shared_fieldset',
         return_value=fieldset,
     )
 
@@ -416,7 +420,8 @@ def test_create_fieldset__rule_with_two_fields__ok(api_client, mocker):
     rule.fields.set([field_1, field_2])
 
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'create_shared_fieldset',
         return_value=fieldset,
     )
 
@@ -461,7 +466,8 @@ def test_create_fieldset__unauthenticated__unauthorized(api_client, mocker):
         return_value=None,
     )
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'create_shared_fieldset',
     )
 
     # act
@@ -493,7 +499,8 @@ def test_create_fieldset__expired_sub__permission_denied(api_client, mocker):
         return_value=None,
     )
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'create_shared_fieldset',
     )
 
     api_client.token_authenticate(user=user)
@@ -524,7 +531,8 @@ def test_create_fieldset__billing_plan__permission_denied(api_client, mocker):
         return_value=None,
     )
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'create_shared_fieldset',
     )
     api_client.token_authenticate(user=user)
 
@@ -565,7 +573,8 @@ def test_create_fieldset__users_limit__permission_denied(api_client, mocker):
     )
 
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'create_shared_fieldset',
     )
     api_client.token_authenticate(user=user)
 
@@ -597,7 +606,8 @@ def test_create_fieldset__non_admin__permission_denied(api_client, mocker):
     )
 
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'create_shared_fieldset',
     )
     api_client.token_authenticate(user=user)
 
@@ -636,7 +646,8 @@ def test_create_fieldset__admin__ok(api_client, mocker):
         return_value=None,
     )
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'create_shared_fieldset',
         return_value=fieldset,
     )
 
@@ -676,7 +687,8 @@ def test_create_fieldset__blank_name__validation_error(api_client, mocker):
     )
 
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'create_shared_fieldset',
     )
     api_client.token_authenticate(user=user)
 
@@ -710,7 +722,8 @@ def test_create_fieldset__invalid_layout__validation_error(api_client, mocker):
     )
 
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'create_shared_fieldset',
     )
     api_client.token_authenticate(user=user)
 
@@ -747,7 +760,8 @@ def test_create_fieldset__invalid_label_position__validation_error(
     )
 
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'create_shared_fieldset',
     )
     api_client.token_authenticate(user=user)
 
@@ -783,7 +797,8 @@ def test_create_fieldset__service_exception__validation_error(
         return_value=None,
     )
     fieldset_service_create_mock = mocker.patch(
-        'src.processes.views.fieldset.FieldSetTemplateService.create',
+        'src.processes.views.fieldset.FieldSetTemplateService.'
+        'create_shared_fieldset',
         side_effect=BaseServiceException(message=error_message),
     )
 

@@ -14,7 +14,7 @@ from src.processes.enums import (
     FieldType,
 )
 from src.processes.models.templates.fieldset import FieldsetTemplateRule
-from src.processes.services.templates.fieldsets.fieldset import (
+from src.processes.services.fieldsets.fieldset import (
     FieldSetTemplateService,
 )
 from src.processes.tests.fixtures import (
@@ -37,6 +37,7 @@ def test_partial_update__all_fields__ok(api_client, mocker):
     user = create_test_owner(account=account)
     field_api_name = 'f1'
     fieldset_api_name = 'fs1'
+    rule_api_name = 'r1'
     data = {
         'name': 'Full Updated Fieldset',
         'description': 'Updated description',
@@ -46,7 +47,7 @@ def test_partial_update__all_fields__ok(api_client, mocker):
         'fields': [
             {
                 'name': 'Field 1',
-                'type': FieldType.TEXT,
+                'type': FieldType.NUMBER,
                 'order': 1,
                 'api_name': field_api_name,
             },
@@ -55,7 +56,7 @@ def test_partial_update__all_fields__ok(api_client, mocker):
             {
                 'type': FieldSetRuleType.SUM_EQUAL,
                 'value': '10',
-                'api_name': 'r1',
+                'api_name': rule_api_name,
                 'fields': [field_api_name],
             },
         ],
@@ -116,7 +117,7 @@ def test_partial_update__all_fields__ok(api_client, mocker):
     )
     fieldset_partial_update_mock.assert_called_once_with(
         name='Full Updated Fieldset',
-        api_name=fieldset_api_name,
+        api_name=fieldset.api_name,
         description='Updated description',
         layout=FieldSetLayout.HORIZONTAL,
         label_position=LabelPosition.LEFT,
@@ -687,6 +688,44 @@ def test_partial_update__not_existing_fieldset__not_found(api_client, mocker):
     # act
     response = api_client.patch(
         f'/fieldsets/{nonexistent_id}',
+        data=data,
+    )
+
+    # assert
+    assert response.status_code == 404
+    fieldset_service_init_mock.assert_not_called()
+    fieldset_partial_update_mock.assert_not_called()
+
+
+def test_partial_update__not_shared__not_found(api_client, mocker):
+
+    """ Partial update with minimal request data """
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    fieldset = create_test_shared_fieldset(
+        account=account,
+    )
+    fieldset.is_shared = False
+    fieldset.save()
+    data = {
+        'name': 'Updated Name',
+    }
+    fieldset_service_init_mock = mocker.patch.object(
+        FieldSetTemplateService,
+        attribute='__init__',
+        return_value=None,
+    )
+    fieldset_partial_update_mock = mocker.patch(
+        'src.processes.views.fieldset.FieldSetTemplateService.partial_update',
+        return_value=fieldset,
+    )
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.patch(
+        f'/fieldsets/{fieldset.id}',
         data=data,
     )
 

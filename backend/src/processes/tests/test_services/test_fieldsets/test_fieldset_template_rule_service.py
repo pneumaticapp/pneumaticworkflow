@@ -15,7 +15,7 @@ from src.processes.services.exceptions import (
     FieldsetTemplateRuleSumMaxFieldsNotNumber,
     FieldsetTemplateRuleSumMaxInvalidValue,
 )
-from src.processes.services.templates.fieldsets.fieldset_rule import (
+from src.processes.services.fieldsets.fieldset_rule import (
     FieldsetTemplateRuleService,
 )
 from src.processes.tests.fixtures import (
@@ -304,7 +304,7 @@ def test__validate__call_method_by_type__ok(mocker):
         instance=rule,
     )
     validate_sum_equal_mock = mocker.patch(
-        'src.processes.services.templates.fieldsets.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleService._validate_sum_equal',
     )
     kwargs = {'type': FieldSetRuleType.SUM_EQUAL}
@@ -581,7 +581,7 @@ def test_set_fields__fields_provided__set_fields(mocker):
     )
     service.instance = rule
     get_valid_fields_mock = mocker.patch(
-        'src.processes.services.templates.fieldsets'
+        'src.processes.services.fieldsets'
         '.fieldset_rule.FieldsetTemplateRuleService'
         '._get_valid_fields',
         return_value=[field],
@@ -631,7 +631,7 @@ def test_set_fields__fields_not_provided__clear_fields(mocker):
     )
     service.instance = rule
     get_valid_fields_mock = mocker.patch(
-        'src.processes.services.templates.fieldsets'
+        'src.processes.services.fieldsets'
         '.fieldset_rule.FieldsetTemplateRuleService'
         '._get_valid_fields',
     )
@@ -659,7 +659,7 @@ def test_create_related__fields_provided__ok(mocker):
         auth_type=AuthTokenType.USER,
     )
     set_fields_mock = mocker.patch(
-        'src.processes.services.templates.fieldsets'
+        'src.processes.services.fieldsets'
         '.fieldset_rule.FieldsetTemplateRuleService'
         '._set_fields',
     )
@@ -687,7 +687,7 @@ def test_create_related__fields_provided_empty_list__ok(mocker):
         auth_type=AuthTokenType.USER,
     )
     set_fields_mock = mocker.patch(
-        'src.processes.services.templates.fieldsets'
+        'src.processes.services.fieldsets'
         '.fieldset_rule.FieldsetTemplateRuleService'
         '._set_fields',
     )
@@ -714,7 +714,7 @@ def test_create_related__fields_not_provided__skip(mocker):
         auth_type=AuthTokenType.USER,
     )
     set_fields_mock = mocker.patch(
-        'src.processes.services.templates.fieldsets'
+        'src.processes.services.fieldsets'
         '.fieldset_rule.FieldsetTemplateRuleService'
         '._set_fields',
     )
@@ -754,19 +754,19 @@ def test_create__valid_data__ok(mocker):
     )
     service.instance = rule
     create_instance_mock = mocker.patch(
-        'src.processes.services.templates.fieldsets.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleService._create_instance',
     )
     create_related_mock = mocker.patch(
-        'src.processes.services.templates.fieldsets.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleService._create_related',
     )
     create_actions_mock = mocker.patch(
-        'src.processes.services.templates.fieldsets.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleService._create_actions',
     )
     validate_mock = mocker.patch(
-        'src.processes.services.templates.fieldsets.fieldset_rule.'
+        'src.processes.services.fieldsets.fieldset_rule.'
         'FieldsetTemplateRuleService._validate',
     )
 
@@ -816,12 +816,12 @@ def test_partial_update__with_fields__ok(mocker):
         instance=rule,
     )
     set_fields_mock = mocker.patch(
-        'src.processes.services.templates.fieldsets'
+        'src.processes.services.fieldsets'
         '.fieldset_rule.FieldsetTemplateRuleService'
         '._set_fields',
     )
     validate_mock = mocker.patch(
-        'src.processes.services.templates.fieldsets'
+        'src.processes.services.fieldsets'
         '.fieldset_rule.FieldsetTemplateRuleService'
         '._validate',
     )
@@ -867,17 +867,17 @@ def test_partial_update__without_fields__ok(mocker):
         instance=rule,
     )
     set_fields_mock = mocker.patch(
-        'src.processes.services.templates.fieldsets'
+        'src.processes.services.fieldsets'
         '.fieldset_rule.FieldsetTemplateRuleService'
         '._set_fields',
     )
     validate_mock = mocker.patch(
-        'src.processes.services.templates.fieldsets'
+        'src.processes.services.fieldsets'
         '.fieldset_rule.FieldsetTemplateRuleService'
         '._validate',
     )
     super_partial_mock = mocker.patch(
-        'src.processes.services.templates.fieldsets'
+        'src.processes.services.fieldsets'
         '.fieldset_rule.BaseModelService'
         '.partial_update',
         return_value=rule,

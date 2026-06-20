@@ -244,3 +244,25 @@ def test_retrieve__another_account__not_found(api_client):
 
     # assert
     assert response.status_code == 404
+
+
+def test_retrieve__not_shared__not_found(api_client):
+
+    # arrange
+    account = create_test_account()
+    user = create_test_owner(account=account)
+    fieldset = create_test_shared_fieldset(
+        account=account,
+        rule_type=FieldSetRuleType.SUM_EQUAL,
+        rule_value='10',
+    )
+    fieldset.is_shared = False
+    fieldset.save()
+
+    api_client.token_authenticate(user=user)
+
+    # act
+    response = api_client.get(f'/fieldsets/{fieldset.id}')
+
+    # assert
+    assert response.status_code == 404

@@ -20,7 +20,7 @@ from src.processes.serializers.templates.fieldset import (
 from src.processes.serializers.templates.template import (
     FieldsetTemplateFilterSerializer,
 )
-from src.processes.services.templates.fieldsets.fieldset import (
+from src.processes.services.fieldsets.fieldset import (
     FieldSetTemplateService,
 )
 from src.utils.validation import raise_validation_error
@@ -59,6 +59,7 @@ class SharedFieldsetTemplateViewSet(
         return (
             FieldsetTemplate.objects
             .select_related('template')
+            .shared()
             .on_account(user.account_id)
         )
 
@@ -77,11 +78,14 @@ class SharedFieldsetTemplateViewSet(
             auth_type=request.token_type,
         )
         try:
-            fieldset = service.create(**serializer.validated_data)
+            fieldset = service.create_shared_fieldset(
+                **serializer.validated_data,
+            )
         except BaseServiceException as ex:
             raise_validation_error(message=ex.message)
-        response_serializer = SharedFieldsetTemplateSerializer(fieldset)
-        return self.response_created(response_serializer.data)
+        else:
+            response_serializer = SharedFieldsetTemplateSerializer(fieldset)
+            return self.response_created(response_serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
         fieldset = self.get_object()

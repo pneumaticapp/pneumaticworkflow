@@ -1288,7 +1288,8 @@ class SearchContentQuerySet(AccountBaseQuerySet):
 
 class FieldsetTemplateQuerySet(AccountBaseQuerySet):
 
-    pass
+    def shared(self):
+        return self.filter(is_shared=True)
 
 
 class FieldsetTemplateRuleQuerySet(AccountBaseQuerySet):
