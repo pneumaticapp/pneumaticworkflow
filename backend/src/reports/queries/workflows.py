@@ -62,7 +62,7 @@ class OverviewQuery(
         LEFT JOIN processes_template pt ON pw.template_id = pt.id AND
           pt.is_deleted IS FALSE AND
           pt.type IN (%(type_user)s, %(type_generic)s)
-        {self._guardian_owner_join('pwo', 'pw.id')}
+        {self._guardian_owner_join('pwo', 'pw.id', self.params)}
         {self._get_template_owner_joins()}
         {self._get_template_viewer_joins()}
         LEFT JOIN overdue_workflows ow ON pw.id = ow.workflow_id
@@ -110,7 +110,7 @@ class OverviewNowQuery(
         LEFT JOIN processes_template pt ON pw.template_id = pt.id AND
           pt.is_deleted IS FALSE AND
           pt.type IN (%(type_user)s, %(type_generic)s)
-        {self._guardian_owner_join('pwo', 'pw.id')}
+        {self._guardian_owner_join('pwo', 'pw.id', self.params)}
         {self._get_template_owner_joins()}
         {self._get_template_viewer_joins()}
         LEFT JOIN overdue_workflows ow ON pw.id = ow.workflow_id
@@ -302,7 +302,7 @@ class WorkflowDigestQuery(
         FROM processes_template pt
         JOIN processes_workflow pw ON pt.id = pw.template_id
         {self._guardian_owner_join(
-            'pwo', 'pw.id'
+            'pwo', 'pw.id', self.params
         ).replace('LEFT JOIN', 'JOIN', 1)}
         JOIN accounts_user au ON pwo.user_id = au.id
         JOIN accounts_account aa ON au.account_id = aa.id

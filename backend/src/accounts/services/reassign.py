@@ -369,7 +369,7 @@ class ReassignService:
         return affected_template_ids
 
     def _reassign_in_workflow_owners(self, affected_template_ids: list):
-        """Rebuild Guardian manage_workflow permissions via celery task."""
+        """Rebuild Guardian change_workflow permissions via celery task."""
         if not affected_template_ids:
             return
         update_workflow_owners.delay(template_ids=affected_template_ids)

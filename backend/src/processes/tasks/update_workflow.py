@@ -91,12 +91,12 @@ def update_workflow_owners(template_ids: List[int]):
     """Rebuild Guardian permissions when template owners change.
 
     For each workflow belonging to the given templates:
-    1. Set manage_workflow + view_workflow for current template owners
+    1. Set change_workflow + view_workflow for current template owners
     2. Re-sync view_workflow for all entitled users (performers,
        mentioned users) — also REVOKES view from users who lost
        access (e.g. removed from a group)
     3. Sync attachment permissions (async) so removed owners
-       lose access_attachment along with manage_workflow
+       lose access_attachment along with change_workflow
     """
     for template_id in template_ids:
         template_owner_ids = list(

@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 MENTION_RE = re.compile(r'\[.*?\|\s*([0-9]+)\]')
 
 PERM_VIEW = 'processes.view_workflow'
-PERM_MANAGE = 'processes.manage_workflow'
+PERM_CHANGE = 'processes.change_workflow'
 
 
 class WorkflowPermissionService:
@@ -38,8 +38,9 @@ class WorkflowPermissionService:
 
     Permissions:
         view_workflow — read access (replaces members M2M)
-        manage_workflow — lifecycle actions: terminate, return_to, finish
-                         (replaces owners M2M)
+        change_workflow — lifecycle actions + edit: resume, snooze,
+                          finish, return_to, edit name/description
+                          (replaces owners M2M)
     """
 
     # ── Write operations ──────────────────────────────────
@@ -54,13 +55,13 @@ class WorkflowPermissionService:
 
     @classmethod
     def grant_manage(cls, user: UserModel, workflow: 'Workflow') -> None:
-        """Grant manage + view access to a single user.
+        """Grant change + view access to a single user.
 
         Replaces: workflow.owners.add(user)
-        Manage implies view — owner can always see their workflow.
+        Change implies view — owner can always see their workflow.
         """
         assign_perm(PERM_VIEW, user, workflow)
-        assign_perm(PERM_MANAGE, user, workflow)
+        assign_perm(PERM_CHANGE, user, workflow)
 
     @classmethod
     def grant_view_bulk(
@@ -102,7 +103,7 @@ class WorkflowPermissionService:
         """
         ct = ContentType.objects.get_for_model(workflow)
         manage_perm = Permission.objects.get(
-            codename='manage_workflow',
+            codename='change_workflow',
             content_type=ct,
         )
 
@@ -290,7 +291,7 @@ class WorkflowPermissionService:
         """
         return UserObjectPermission.objects.filter(
             user=user,
-            permission__codename='manage_workflow',
+            permission__codename='change_workflow',
             content_type=ContentType.objects.get_for_model(workflow),
             object_pk=str(workflow.pk),
         ).exists()
@@ -319,7 +320,7 @@ class WorkflowPermissionService:
         return list(
             get_users_with_perms(
                 workflow,
-                only_with_perms_in=['manage_workflow'],
+                only_with_perms_in=['change_workflow'],
             ).order_by('id').values_list('id', flat=True),
         )
 
@@ -367,6 +368,6 @@ class WorkflowPermissionService:
         """Return Q() filter for workflows user can manage."""
         return Q(**{
             f'{pk_field}__in': cls._get_perm_subquery(
-                user_id, 'manage_workflow',
+                user_id, 'change_workflow',
             ),
         })

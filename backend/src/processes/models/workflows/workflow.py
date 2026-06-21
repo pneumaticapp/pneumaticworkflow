@@ -29,11 +29,6 @@ class Workflow(
 
     class Meta:
         ordering = ['-date_created']
-        default_permissions = ('add', 'change', 'delete')
-        permissions = [
-            ('view_workflow', 'Can view workflow'),
-            ('manage_workflow', 'Can manage workflow lifecycle'),
-        ]
 
     name = models.TextField()
     name_template = models.TextField(null=True, blank=True)
@@ -56,7 +51,7 @@ class Workflow(
         default=False,
     )
     # NOTE: members/owners M2M fields removed — replaced by Guardian
-    # object-level permissions (view_workflow, manage_workflow).
+    # object-level permissions (view_workflow, change_workflow).
     # See: WorkflowPermissionService
     workflow_starter = models.ForeignKey(
         UserModel,

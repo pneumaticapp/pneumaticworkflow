@@ -44,26 +44,34 @@ class GuardianOwnerJoinMixin:
     The guardian_userobjectpermission table has a `user_id` column
     just like the old M2M table, so WHERE clauses like
     `{alias}.user_id` work as before.
+
+    Uses parameterized content_type_id and permission_id
+    instead of subqueries for better performance.
     """
 
     @staticmethod
-    def _guardian_owner_join(alias: str, workflow_col: str) -> str:
+    def _guardian_owner_join(
+        alias: str,
+        workflow_col: str,
+        params: dict,
+    ) -> str:
+        from django.contrib.auth.models import Permission
+        from django.contrib.contenttypes.models import ContentType
+
+        ct = ContentType.objects.get(
+            app_label='processes', model='workflow',
+        )
+        perm = Permission.objects.get(
+            codename='change_workflow',
+            content_type=ct,
+        )
+        params['_guardian_ct_id'] = ct.id
+        params['_guardian_perm_id'] = perm.id
         return f"""
             LEFT JOIN guardian_userobjectpermission {alias} ON (
                 {alias}.object_pk = CAST({workflow_col} AS VARCHAR)
-                AND {alias}.content_type_id = (
-                    SELECT id FROM django_content_type
-                    WHERE app_label = 'processes' AND model = 'workflow'
-                )
-                AND {alias}.permission_id = (
-                    SELECT id FROM auth_permission
-                    WHERE codename = 'manage_workflow'
-                    AND content_type_id = (
-                        SELECT id FROM django_content_type
-                        WHERE app_label = 'processes'
-                          AND model = 'workflow'
-                    )
-                )
+                AND {alias}.content_type_id = %(_guardian_ct_id)s
+                AND {alias}.permission_id = %(_guardian_perm_id)s
             )
         """
 
@@ -301,7 +309,7 @@ class WorkflowListQuery(
     def _get_from(self):
         result = f"""
             FROM processes_workflow pw
-            {self._guardian_owner_join('pwo', 'pw.id')}
+            {self._guardian_owner_join('pwo', 'pw.id', self.params)}
             INNER JOIN processes_task pt ON (
                 pw.id = pt.workflow_id
                 AND pt.is_deleted IS FALSE
@@ -518,7 +526,7 @@ class WorkflowCountsByWfStarterQuery(
         result = f"""
         FROM processes_workflow pw
             LEFT JOIN processes_template t ON t.id = pw.template_id
-            {self._guardian_owner_join('ptra', 'pw.id')}
+            {self._guardian_owner_join('ptra', 'pw.id', self.params)}
             LEFT JOIN accounts_user au ON au.id = ptra.user_id
         """
         if self.current_performer_ids or self.current_performer_group_ids:
@@ -665,7 +673,7 @@ class WorkflowCountsByCPerformerQuery(
     def _get_from(self):
         return f"""
         FROM processes_workflow pw
-            {self._guardian_owner_join('ptra', 'pw.id')}
+            {self._guardian_owner_join('ptra', 'pw.id', self.params)}
             LEFT JOIN accounts_user au ON au.id = ptra.user_id
             INNER JOIN processes_task pt
               ON pw.id = pt.workflow_id
@@ -692,7 +700,7 @@ class WorkflowCountsByCPerformerQuery(
                 aug.user_id AS user_id,
                 pw.id AS workflow_id
             FROM processes_workflow pw
-                {self._guardian_owner_join('ptra', 'pw.id')}
+                {self._guardian_owner_join('ptra', 'pw.id', self.params)}
                 LEFT JOIN accounts_user au ON au.id = ptra.user_id
                 INNER JOIN processes_task pt
                   ON pw.id = pt.workflow_id
@@ -735,7 +743,7 @@ class WorkflowCountsByCPerformerQuery(
                 ptp.group_id AS group_id,
                 pw.id AS workflow_id
             FROM processes_workflow pw
-                {self._guardian_owner_join('ptra', 'pw.id')}
+                {self._guardian_owner_join('ptra', 'pw.id', self.params)}
                 LEFT JOIN accounts_user au ON au.id = ptra.user_id
                 INNER JOIN processes_task pt
                   ON pw.id = pt.workflow_id
@@ -1973,7 +1981,7 @@ class HighlightsQuery(GuardianOwnerJoinMixin, SqlQueryObject):
           we.workflow_id = workflow.id
         LEFT JOIN processes_template template ON
           workflow.template_id = template.id
-          {self._guardian_owner_join('wfo', 'workflow.id')}
+          {self._guardian_owner_join('wfo', 'workflow.id', self.sql_params)}
         LEFT JOIN processes_templateowner ptv_user ON
           template.id = ptv_user.template_id
           AND ptv_user.is_deleted IS FALSE

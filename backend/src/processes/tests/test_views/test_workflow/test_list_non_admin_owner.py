@@ -507,7 +507,7 @@ class TestRoleChangeFromOwnerToViewer:
 
         template_owner.is_deleted = True
         template_owner.save()
-        remove_perm('manage_workflow', admin_user, workflow)
+        remove_perm('change_workflow', admin_user, workflow)
         remove_perm('view_workflow', admin_user, workflow)
         TemplateOwner.objects.create(
             role=OwnerRole.STARTER,
@@ -623,7 +623,7 @@ class TestNonAdminRoleChangeReadOnly:
 
         template_owner.is_deleted = True
         template_owner.save()
-        remove_perm('manage_workflow', non_admin_user, workflow)
+        remove_perm('change_workflow', non_admin_user, workflow)
         remove_perm('view_workflow', non_admin_user, workflow)
         TemplateOwner.objects.create(
             role=OwnerRole.STARTER,
