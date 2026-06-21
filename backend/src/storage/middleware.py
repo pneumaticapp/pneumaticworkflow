@@ -39,7 +39,7 @@ class FileServiceAuthMiddleware(MiddlewareMixin):
             key='file_service_auth',
             value=auth_token,
             domain=domain,
-            path='/files/',
+            path='/',
             max_age=86400,  # 24 hours
             secure=not settings.DEBUG,
             httponly=True,
