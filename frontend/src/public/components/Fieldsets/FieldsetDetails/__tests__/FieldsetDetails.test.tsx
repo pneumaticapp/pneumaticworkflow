@@ -22,7 +22,7 @@ import { getEmptyField } from '../../../TemplateEdit/KickoffRedux/utils/getEmpty
 import { getEditedFields } from '../../../TemplateEdit/ExtraFields/utils/getEditedFields';
 import { moveWorkflowField } from '../../../../utils/workflows';
 import { EExtraFieldType } from '../../../../types/template';
-import { makeFieldsetTemplate } from '../../../../__stubs__/fieldsets.factory';
+import { makeFieldsetCatalogItem, makeFieldsetTemplateRule } from '../../../../__stubs__/fieldsets.factory';
 
 jest.mock('../../../../utils/history', () => ({
   history: { push: jest.fn(), location: { pathname: '/' }, listen: jest.fn() },
@@ -202,7 +202,7 @@ describe('FieldsetDetails', () => {
   };
 
   const makeLoadedState = (fieldsetOverrides = {}) => {
-    const fieldset = makeFieldsetTemplate({
+    const fieldset = makeFieldsetCatalogItem({
       id: 10,
       layout: 'horizontal' as const,
       ...fieldsetOverrides,
@@ -302,7 +302,7 @@ describe('FieldsetDetails', () => {
   describe('Initial save bar state', () => {
     it('no save bars are visible on initial render', () => {
       const fields = [makeField({ apiName: 'f1', order: 1 })];
-      const rules = [{ id: 1, type: 'sum_equal', value: '100', fields: ['f1'] }];
+      const rules = [makeFieldsetTemplateRule({ apiName: 'rule-1', value: '100', fields: ['f1'] })];
       renderWithState(makeLoadedState({ fields, rules }));
 
       expect(screen.queryByText(UNSAVED_SETTINGS_HINT)).not.toBeInTheDocument();
@@ -346,7 +346,7 @@ describe('FieldsetDetails', () => {
         updateFieldsetAction(expect.objectContaining({
           id: 10,
           description: 'updated',
-          label_position: 'top',
+          labelPosition: 'top',
         })),
       );
       expect(screen.queryByText(UNSAVED_SETTINGS_HINT)).not.toBeInTheDocument();
@@ -538,7 +538,7 @@ describe('FieldsetDetails', () => {
       );
 
       const rulesPayload = getUpdateActionMock().mock.calls[0][0].rules;
-      expect(rulesPayload[0].id).toBeUndefined();
+      expect(rulesPayload[0].apiName).toBeUndefined();
 
       expect(screen.queryByText(UNSAVED_RULES_HINT)).not.toBeInTheDocument();
     });
@@ -556,7 +556,7 @@ describe('FieldsetDetails', () => {
     it('re-syncs local rules from store and hides save bar on external fieldset update', () => {
       const initialState = makeLoadedState({
         id: 10,
-        rules: [{ id: 1, type: 'sum_equal', value: 'old', fields: [] }],
+        rules: [makeFieldsetTemplateRule({ apiName: 'rule-1', value: 'old' })],
       });
       (useSelector as jest.Mock).mockImplementation((selector: (s: object) => unknown) =>
         selector(initialState),
@@ -570,7 +570,7 @@ describe('FieldsetDetails', () => {
 
       const updatedState = makeLoadedState({
         id: 10,
-        rules: [{ id: 2, type: 'sum_equal', value: 'fresh', fields: [] }],
+        rules: [makeFieldsetTemplateRule({ apiName: 'rule-2', value: 'fresh' })],
       });
       (useSelector as jest.Mock).mockImplementation((selector: (s: object) => unknown) =>
         selector(updatedState),

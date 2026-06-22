@@ -13,8 +13,8 @@ import {
 } from '../../../../redux/fieldsets/slice';
 import { history } from '../../../../utils/history';
 import { intlMock } from '../../../../__stubs__/intlMock';
-import { IFieldsetField, IFieldsetTemplateRule } from '../../../../types/fieldset';
-import { makeFieldsetListItem } from '../../../../__stubs__/fieldsets.factory';
+import { IFieldsetField } from '../../../../types/fieldset';
+import { makeFieldsetCatalogItem, makeFieldsetTemplateRule } from '../../../../__stubs__/fieldsets.factory';
 
 jest.mock('../../../../utils/history', () => ({
   history: { push: jest.fn(), location: { pathname: '/' }, listen: jest.fn() },
@@ -54,25 +54,16 @@ describe('FieldsetCard', () => {
   const RULES_STATS = (count: number) => intlMock.formatMessage({ id: 'fieldsets.stats.rules' }, { count });
 
   let fieldCounter = 0;
-  let ruleCounter = 0;
 
   const makeField = (overrides: Partial<IFieldsetField> = {}): IFieldsetField => ({
     type: 'string',
     name: 'Field',
     order: 0,
-    api_name: `f-${++fieldCounter}`,
+    apiName: `f-${++fieldCounter}`,
     ...overrides,
   });
 
-  const makeRule = (overrides: Partial<IFieldsetTemplateRule> = {}): IFieldsetTemplateRule => ({
-    id: ++ruleCounter,
-    type: 'sum_equal',
-    value: '100',
-    fields: [],
-    ...overrides,
-  });
-
-  const makeProps = makeFieldsetListItem;
+  const makeProps = makeFieldsetCatalogItem;
   
   const getDropdownOptions = () => {
     const mock = Dropdown as unknown as jest.Mock;
@@ -93,7 +84,6 @@ describe('FieldsetCard', () => {
   beforeEach(() => {
     jest.clearAllMocks();
     fieldCounter = 0;
-    ruleCounter = 0;
     (useDispatch as jest.Mock).mockReturnValue(mockDispatch);
   });
 
@@ -131,13 +121,13 @@ describe('FieldsetCard', () => {
       expect(mockDispatch).toHaveBeenCalledWith(
         setCurrentFieldset({
           id: props.id,
+          apiName: props.apiName,
           name: props.name,
           description: props.description,
           labelPosition: props.labelPosition,
           layout: props.layout,
           order: props.order,
-          kickoffId: props.kickoffId,
-          taskId: props.taskId,
+          title: props.title,
           rules: props.rules,
           fields: props.fields,
         }),
@@ -188,7 +178,7 @@ describe('FieldsetCard', () => {
     it('shows field count and rule count when both are > 0', () => {
       const props = makeProps({
         fields: [makeField(), makeField()],
-        rules: [makeRule()],
+        rules: [makeFieldsetTemplateRule()],
       });
       render(React.createElement(FieldsetCard, props));
 
@@ -211,7 +201,7 @@ describe('FieldsetCard', () => {
     });
 
     it('shows only rules count when fields are empty', () => {
-      render(React.createElement(FieldsetCard, makeProps({ fields: [], rules: [makeRule()] })));
+      render(React.createElement(FieldsetCard, makeProps({ fields: [], rules: [makeFieldsetTemplateRule()] })));
 
       expect(screen.getByText(RULES_STATS(1))).toBeInTheDocument();
       expect(screen.queryByText(FIELDS_STATS(0))).not.toBeInTheDocument();

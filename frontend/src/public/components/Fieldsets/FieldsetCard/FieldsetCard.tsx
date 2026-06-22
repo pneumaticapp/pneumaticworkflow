@@ -11,22 +11,22 @@ import { openEditModal, deleteFieldsetAction, setCurrentFieldset } from '../../.
 import { history } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
 import { sanitizeText } from '../../../utils/strings';
-import { IFieldsetListItem } from '../../../types/fieldset';
+import { IFieldsetCatalogItem } from '../../../types/fieldset';
 
 import styles from './FieldsetCard.css';
 
 export function FieldsetCard({
   id,
+  apiName,
   name,
   description,
   labelPosition,
   layout,
   order,
-  kickoffId,
-  taskId,
+  title,
   rules,
   fields,
-}: IFieldsetListItem) {
+}: IFieldsetCatalogItem) {
   const { formatMessage } = useIntl();
   const dispatch = useDispatch();
 
@@ -42,13 +42,13 @@ export function FieldsetCard({
   const handleEditName = () => {
     dispatch(setCurrentFieldset({
       id,
+      apiName,
       name,
       description,
       labelPosition,
       layout,
       order,
-      kickoffId,
-      taskId,
+      title,
       rules,
       fields,
     }));

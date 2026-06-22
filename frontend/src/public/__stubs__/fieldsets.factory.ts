@@ -1,4 +1,4 @@
-import { EFieldLabelPosition, IFieldsetTemplate, IFieldsetListItem } from '../types/fieldset';
+import { EFieldLabelPosition, IFieldsetCatalogItem, IFieldsetTemplateRule } from '../types/fieldset';
 import { IFieldsetData } from '../types/template';
 
 export const makeFieldsetData = (overrides: Partial<IFieldsetData> = {}): IFieldsetData => ({
@@ -13,21 +13,16 @@ export const makeFieldsetData = (overrides: Partial<IFieldsetData> = {}): IField
   ...overrides,
 });
 
-export const makeFieldsetTemplate = (overrides: Partial<IFieldsetTemplate> = {}): IFieldsetTemplate => ({
-  id: 1,
-  name: 'Fieldset Template',
-  description: '',
-  labelPosition: EFieldLabelPosition.Top,
-  layout: 'vertical',
-  order: 0,
-  kickoffId: null,
-  taskId: null,
-  rules: [],
+
+export const makeFieldsetTemplateRule = (overrides: Partial<IFieldsetTemplateRule> = {}): IFieldsetTemplateRule => ({
+  apiName: 'rule-1',
+  type: 'sum_equal',
+  value: '100',
   fields: [],
   ...overrides,
 });
 
-export const makeFieldsetListItem = (overrides: Partial<IFieldsetListItem> = {}): IFieldsetListItem => ({
+export const makeFieldsetCatalogItem = (overrides: Partial<IFieldsetCatalogItem> = {}): IFieldsetCatalogItem => ({
   id: 1,
   apiName: 'fs-1',
   name: 'Test Fieldset',
@@ -35,8 +30,7 @@ export const makeFieldsetListItem = (overrides: Partial<IFieldsetListItem> = {})
   labelPosition: EFieldLabelPosition.Top,
   layout: 'vertical',
   order: 0,
-  kickoffId: null,
-  taskId: null,
+  title: '',
   rules: [],
   fields: [],
   ...overrides,

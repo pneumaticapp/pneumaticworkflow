@@ -14,7 +14,7 @@ import {
 } from '../../../../redux/fieldsets/slice';
 import { validateFieldsetName } from '../../../../utils/validators';
 import { intlMock } from '../../../../__stubs__/intlMock';
-import { makeFieldsetTemplate } from '../../../../__stubs__/fieldsets.factory';
+import { makeFieldsetCatalogItem } from '../../../../__stubs__/fieldsets.factory';
 
 jest.mock('../../../../redux/fieldsets/slice', () => ({
   closeCreateModal: jest.fn(() => ({ type: 'fieldsets/closeCreateModal' })),
@@ -91,7 +91,7 @@ describe('FieldsetModal', () => {
     fieldsets: {
       ...defaultState.fieldsets,
       isEditModalOpen: true,
-      currentFieldset: makeFieldsetTemplate({
+      currentFieldset: makeFieldsetCatalogItem({
         id: 10,
         name: 'Original Name',
         description: 'desc',

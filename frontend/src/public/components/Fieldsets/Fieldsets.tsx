@@ -6,7 +6,7 @@ import classnames from 'classnames';
 
 import InfiniteScroll from 'react-infinite-scroll-component';
 
-import { IFieldsetListItem } from '../../types/fieldset';
+import { IFieldsetCatalogItem } from '../../types/fieldset';
 
 import { PageTitle } from '../PageTitle';
 import { EPageTitle } from '../../constants/defaultValues';
@@ -55,7 +55,7 @@ export function Fieldsets() {
           caption={formatMessage({ id: 'fieldsets.new-fieldset.caption' })}
           icon={<AIPlusIcon />}
         />
-        {fieldsetsList.map((fieldset: IFieldsetListItem) => (
+        {fieldsetsList.map((fieldset: IFieldsetCatalogItem) => (
           <FieldsetCard key={fieldset.id} {...fieldset} />
         ))}
       </InfiniteScroll>

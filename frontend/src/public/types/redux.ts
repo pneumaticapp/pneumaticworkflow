@@ -35,7 +35,7 @@ import { IMenuItem } from './menu';
 import { EWebhooksTypeEvent, IWebhook } from './webhooks';
 import { ETenantsSorting, ITenant } from './tenants';
 import { IDataset, IDatasetListItem, EDatasetsSorting, TDatasetItemsSortOrder } from './dataset';
-import { IFieldsetTemplate, IFieldsetListItem, EFieldsetsSorting } from './fieldset';
+import { IFieldsetCatalogItem, EFieldsetsSorting } from './fieldset';
 import { IPagesStore } from '../redux/pages/types';
 import { TeamPages, IGroup, UserInvite } from '../redux/team/types';
 
@@ -396,7 +396,7 @@ export type IDatasetsStore = {
 export interface IFieldsetsList {
   count: number;
   offset: number;
-  items: IFieldsetListItem[];
+  items: IFieldsetCatalogItem[];
 }
 
 export type IFieldsetsStore = {
@@ -408,10 +408,10 @@ export type IFieldsetsStore = {
   isCreateModalOpen: boolean;
   isEditModalOpen: boolean;
 
-  currentFieldset: IFieldsetTemplate | null;
+  currentFieldset: IFieldsetCatalogItem | null;
   isCurrentFieldsetLoading: boolean;
 
-  catalogAllFieldsets: IFieldsetListItem[];
+  catalogAllFieldsets: IFieldsetCatalogItem[];
   isCatalogLoading: boolean;
   catalogLoadedForTemplateId: number | null;
 };

@@ -1,5 +1,5 @@
 import { commonRequest } from '../commonRequest';
-import { IFieldsetTemplate, IGetFieldsetParams } from '../../types/fieldset';
+import { IFieldsetCatalogItem, IGetFieldsetParams } from '../../types/fieldset';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 
 export function getFieldset({ id, signal }: IGetFieldsetParams) {
@@ -9,7 +9,7 @@ export function getFieldset({ id, signal }: IGetFieldsetParams) {
 
   const url = urls.fieldset.replace(':id', String(id));
 
-  return commonRequest<IFieldsetTemplate>(
+  return commonRequest<IFieldsetCatalogItem>(
     url,
     {
       method: 'GET',

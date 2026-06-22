@@ -140,7 +140,7 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
     dispatch(updateFieldsetAction({
       id: fieldset.id,
       description: localDescription,
-      label_position: localLabelPosition,
+      labelPosition: localLabelPosition,
     }));
     setHasUnsavedSettingsChanges(false);
   };
@@ -189,7 +189,7 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
   // Rules handlers
   const handleAddRule = () => {
     const newRule: IFieldsetTemplateRule = {
-      id: -(Date.now()),  // temporary negative id for new rules
+      apiName: `temporary-${Date.now()}`,
       type: RULE_TYPES[0].value,
       value: '',
       fields: [],
@@ -229,10 +229,10 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
 
   const handleSaveRules = () => {
     if (!fieldset) return;
-    // Strip temporary negative ids for new rules so the backend creates them
-    const rulesPayload = localRules.map((rule) => ({
+    // Strip temporary api_names for new rules so the backend creates them
+    const rulesPayload = localRules.map(({ apiName, ...rule }) => ({
       ...rule,
-      id: rule.id > 0 ? rule.id : undefined,
+      ...(apiName.startsWith('temporary-') ? {} : { apiName }),
     }));
     dispatch(updateFieldsetAction({
       id: fieldset.id,
@@ -389,7 +389,7 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
         )}
 
         {localRules.map((rule, index) => (
-          <div key={rule.id} className={styles['rule-row']}>
+          <div key={rule.apiName} className={styles['rule-row']}>
             <select
               value={rule.type}
               onChange={(e) => handleEditRuleType(index, e.target.value)}
@@ -406,7 +406,7 @@ const FieldsetDetails = ({ match: { params: { id: matchParamId } } }: TFieldsetD
             <input
               type="text"
               className={styles['rule-value-input']}
-              value={rule.value}
+              value={rule.value ?? ''}
               placeholder={formatMessage({ id: 'fieldsets.rule-value-placeholder' })}
               onChange={(e) => handleEditRuleValue(index, e.target.value)}
             />

@@ -8,11 +8,11 @@ import fieldsetsReducer, {
   loadFieldsetsCatalogFailed,
   loadFieldsetsCatalogSuccess,
 } from '../slice';
-import { IFieldsetListItem } from '../../../types/fieldset';
-import { makeFieldsetListItem, makeFieldsetTemplate } from '../../../__stubs__/fieldsets.factory';
+import { IFieldsetCatalogItem } from '../../../types/fieldset';
+import { makeFieldsetCatalogItem, makeFieldsetTemplateRule } from '../../../__stubs__/fieldsets.factory';
 import { IFieldsetsStore } from '../../../types/redux';
 
-const makeStateWithList = (items: IFieldsetListItem[], overrides: Partial<IFieldsetsStore> = {}): IFieldsetsStore => ({
+const makeStateWithList = (items: IFieldsetCatalogItem[], overrides: Partial<IFieldsetsStore> = {}): IFieldsetsStore => ({
   ...initialState,
   fieldsetsList: { count: items.length, offset: 0, items },
   ...overrides,
@@ -27,8 +27,8 @@ describe('fieldsets slice', () => {
           count: 2,
           offset: 0,
           items: [
-            makeFieldsetListItem({ name: 'Fieldset from template A' }),
-            makeFieldsetListItem({ id: 2, name: 'Another fieldset from template A' }),
+            makeFieldsetCatalogItem({ name: 'Fieldset from template A' }),
+            makeFieldsetCatalogItem({ id: 2, name: 'Another fieldset from template A' }),
           ],
         },
       };
@@ -43,8 +43,8 @@ describe('fieldsets slice', () => {
 
     it('keeps existing items when offset > 0 (pagination)', () => {
       const existingItems = [
-        makeFieldsetListItem({ name: 'Fieldset 1' }),
-        makeFieldsetListItem({ id: 2, name: 'Fieldset 2' }),
+        makeFieldsetCatalogItem({ name: 'Fieldset 1' }),
+        makeFieldsetCatalogItem({ id: 2, name: 'Fieldset 2' }),
       ];
       const stateWithData: IFieldsetsStore = {
         ...initialState,
@@ -65,9 +65,9 @@ describe('fieldsets slice', () => {
 
   describe('setCurrentFieldset', () => {
     it('writes fieldset to currentFieldset and updates name/description in list', () => {
-      const item = makeFieldsetListItem({ id: 5, name: 'Old Name' });
+      const item = makeFieldsetCatalogItem({ id: 5, name: 'Old Name' });
       const state = makeStateWithList([item]);
-      const updated = makeFieldsetTemplate({ id: 5, name: 'New Name', description: 'New Desc' });
+      const updated = makeFieldsetCatalogItem({ id: 5, name: 'New Name', description: 'New Desc' });
 
       const result = fieldsetsReducer(state, setCurrentFieldset(updated));
 
@@ -77,8 +77,8 @@ describe('fieldsets slice', () => {
     });
 
     it('does not crash or add phantom item when id is not in the list', () => {
-      const state = makeStateWithList([makeFieldsetListItem({ name: 'Existing' })]);
-      const fieldset = makeFieldsetTemplate({ id: 999 });
+      const state = makeStateWithList([makeFieldsetCatalogItem({ name: 'Existing' })]);
+      const fieldset = makeFieldsetCatalogItem({ id: 999 });
 
       const result = fieldsetsReducer(state, setCurrentFieldset(fieldset));
 
@@ -92,7 +92,7 @@ describe('fieldsets slice', () => {
     it('applies provided fields when id matches', () => {
       const state: IFieldsetsStore = {
         ...initialState,
-        currentFieldset: makeFieldsetTemplate({ id: 5, name: 'Old', description: 'Desc' }),
+        currentFieldset: makeFieldsetCatalogItem({ id: 5, name: 'Old', description: 'Desc' }),
       };
 
       const result = fieldsetsReducer(state, updateFieldsetAction({ id: 5, name: 'Updated' }));
@@ -105,7 +105,7 @@ describe('fieldsets slice', () => {
     it('does NOT apply when id does not match', () => {
       const state: IFieldsetsStore = {
         ...initialState,
-        currentFieldset: makeFieldsetTemplate({ id: 5, name: 'Original' }),
+        currentFieldset: makeFieldsetCatalogItem({ id: 5, name: 'Original' }),
       };
 
       const result = fieldsetsReducer(state, updateFieldsetAction({ id: 999, name: 'Should Not Apply' }));
@@ -125,12 +125,12 @@ describe('fieldsets slice', () => {
     it('overwrites rules entirely', () => {
       const state: IFieldsetsStore = {
         ...initialState,
-        currentFieldset: makeFieldsetTemplate({
+        currentFieldset: makeFieldsetCatalogItem({
           id: 5,
-          rules: [{ id: 1, type: 'show', value: 'old', fields: [] }],
+          rules: [makeFieldsetTemplateRule({ apiName: 'rule-1', type: 'show', value: 'old' })],
         }),
       };
-      const newRules = [{ id: 2, type: 'hide', value: 'new', fields: ['f1'] }];
+      const newRules = [makeFieldsetTemplateRule({ apiName: 'rule-2', type: 'hide', value: 'new', fields: ['f1'] })];
 
       const result = fieldsetsReducer(state, updateFieldsetAction({ id: 5, rules: newRules }));
 
@@ -141,7 +141,7 @@ describe('fieldsets slice', () => {
 
   describe('removeFieldsetFromList', () => {
     it('removes item by id and decrements count', () => {
-      const items = [makeFieldsetListItem({ name: 'A' }), makeFieldsetListItem({ id: 2, name: 'B' })];
+      const items = [makeFieldsetCatalogItem({ name: 'A' }), makeFieldsetCatalogItem({ id: 2, name: 'B' })];
       const state = makeStateWithList(items);
 
       const result = fieldsetsReducer(state, removeFieldsetFromList(1));
@@ -171,7 +171,7 @@ describe('fieldsets slice', () => {
   describe('loadFieldsetsCatalogSuccess', () => {
     it('writes catalogAllFieldsets and resets isCatalogLoading', () => {
       const state: IFieldsetsStore = { ...initialState, isCatalogLoading: true };
-      const items = [makeFieldsetListItem({ name: 'A' }), makeFieldsetListItem({ id: 2, name: 'B' })];
+      const items = [makeFieldsetCatalogItem({ name: 'A' }), makeFieldsetCatalogItem({ id: 2, name: 'B' })];
 
       const result = fieldsetsReducer(state, loadFieldsetsCatalogSuccess(items));
 

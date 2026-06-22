@@ -1,7 +1,7 @@
 export interface IFieldsetTemplateRule {
-  id: number;
+  apiName: string;
   type: string;
-  value: string;
+  value: string | null;
   fields: string[];
 }
 
@@ -9,11 +9,11 @@ export interface IFieldsetField {
   type: string;
   name: string;
   description?: string;
-  is_required?: boolean;
-  is_hidden?: boolean;
-  selections?: { api_name: string; value: string }[];
+  isRequired?: boolean;
+  isHidden?: boolean;
+  selections?: { apiName: string; value: string }[];
   order: number;
-  api_name: string;
+  apiName: string;
   default?: string;
   dataset?: number | null;
 }
@@ -24,20 +24,7 @@ export enum EFieldLabelPosition {
 }
 export type TFieldSetLayout = 'horizontal' | 'vertical';
 
-export interface IFieldsetTemplate {
-  id: number;
-  name: string;
-  description: string;
-  labelPosition: EFieldLabelPosition;
-  layout: TFieldSetLayout;
-  order: number;
-  kickoffId: number | null;
-  taskId: number | null;
-  rules: IFieldsetTemplateRule[];
-  fields: IFieldsetField[];
-}
-
-export interface IFieldsetListItem {
+export interface IFieldsetCatalogItem {
   id: number;
   apiName: string;
   name: string;
@@ -45,8 +32,7 @@ export interface IFieldsetListItem {
   labelPosition: EFieldLabelPosition;
   layout: TFieldSetLayout;
   order: number;
-  kickoffId: number | null;
-  taskId: number | null;
+  title: string;
   rules: IFieldsetTemplateRule[];
   fields: IFieldsetField[];
 }
@@ -55,7 +41,7 @@ export interface IGetFieldsetsResponse {
   count: number;
   next: string | null;
   previous: string | null;
-  results: IFieldsetListItem[];
+  results: IFieldsetCatalogItem[];
 }
 
 export interface IGetFieldsetsParams {
@@ -72,19 +58,24 @@ export interface IGetFieldsetParams {
 
 export interface ICreateFieldsetParams {
   name: string;
+  apiName?: string;
+  title?: string;
   description?: string;
-  rules?: Omit<IFieldsetTemplateRule, 'id'>[];
-  fields?: Omit<IFieldsetField, 'api_name'>[];
+  order?: number;
+  labelPosition?: EFieldLabelPosition;
+  layout?: TFieldSetLayout;
+  rules?: Omit<IFieldsetTemplateRule, 'apiName'>[];
+  fields?: Omit<IFieldsetField, 'apiName'>[];
 }
 
 export interface IUpdateFieldsetParams {
   id: number;
   name?: string;
+  apiName?: string;
   description?: string;
   order?: number;
-  kickoff_id?: number | null;
-  task_id?: number | null;
-  label_position?: EFieldLabelPosition;
+  title?: string;
+  labelPosition?: EFieldLabelPosition;
   layout?: TFieldSetLayout;
   rules?: IFieldsetTemplateRule[];
   fields?: IFieldsetField[];

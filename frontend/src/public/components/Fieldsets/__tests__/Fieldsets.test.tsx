@@ -11,8 +11,8 @@ import {
   loadFieldsets,
 } from '../../../redux/fieldsets/slice';
 import { intlMock } from '../../../__stubs__/intlMock';
-import { EFieldsetsSorting, IFieldsetListItem } from '../../../types/fieldset';
-import { makeFieldsetListItem } from '../../../__stubs__/fieldsets.factory';
+import { EFieldsetsSorting, IFieldsetCatalogItem } from '../../../types/fieldset';
+import { makeFieldsetCatalogItem } from '../../../__stubs__/fieldsets.factory';
 import InfiniteScroll from 'react-infinite-scroll-component';
 
 jest.mock('../../../utils/history', () => ({
@@ -75,7 +75,7 @@ describe('Fieldsets', () => {
 
   const defaultState = {
     fieldsets: {
-      fieldsetsList: { items: [] as IFieldsetListItem[], count: 0, offset: 0 },
+      fieldsetsList: { items: [] as IFieldsetCatalogItem[], count: 0, offset: 0 },
       isLoading: false,
       fieldsetsListSorting: EFieldsetsSorting.DateDesc,
     },
@@ -116,7 +116,7 @@ describe('Fieldsets', () => {
           ...defaultState.fieldsets,
           isLoading: true,
           fieldsetsList: {
-            items: [makeFieldsetListItem()],
+            items: [makeFieldsetCatalogItem()],
             count: 1,
             offset: 0,
           },
@@ -133,8 +133,8 @@ describe('Fieldsets', () => {
   describe('Fieldset cards rendering', () => {
     it('renders FieldsetCard for each fieldset', () => {
       const fieldsets = [
-        makeFieldsetListItem({ id: 1, name: 'FS1' }),
-        makeFieldsetListItem({ id: 2, apiName: 'fs-2', name: 'FS2' }),
+        makeFieldsetCatalogItem({ id: 1, name: 'FS1' }),
+        makeFieldsetCatalogItem({ id: 2, apiName: 'fs-2', name: 'FS2' }),
       ];
       const stateWithData = {
         fieldsets: {
@@ -183,7 +183,7 @@ describe('Fieldsets', () => {
         fieldsets: {
           ...defaultState.fieldsets,
           fieldsetsList: {
-            items: [makeFieldsetListItem()],
+            items: [makeFieldsetCatalogItem()],
             count: 10,
             offset: 2,
           },

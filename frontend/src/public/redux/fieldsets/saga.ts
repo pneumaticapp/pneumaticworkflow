@@ -10,7 +10,7 @@ import { ERoutes } from '../../constants/routes';
 import { isRequestCanceled } from '../../utils/isRequestCanceled';
 
 import {
-  IFieldsetTemplate, IGetFieldsetsResponse,
+  IFieldsetCatalogItem, IGetFieldsetsResponse,
   ICreateFieldsetParams, IUpdateFieldsetParams,
 } from '../../types/fieldset';
 import { TDeleteFieldsetPayload } from './types';
@@ -87,7 +87,7 @@ export function* loadCurrentFieldsetSaga({ payload: { id } }: PayloadAction<{ id
   const abortController = new AbortController();
 
   try {
-    const currentFieldset: IFieldsetTemplate = yield call(getFieldset, { id, signal: abortController.signal });
+    const currentFieldset: IFieldsetCatalogItem = yield call(getFieldset, { id, signal: abortController.signal });
     yield put(loadCurrentFieldsetSuccess(currentFieldset));
   } catch (error) {
     if (isRequestCanceled(error)) return;
@@ -102,7 +102,7 @@ export function* loadCurrentFieldsetSaga({ payload: { id } }: PayloadAction<{ id
 
 function* createFieldsetSaga({ payload }: PayloadAction<ICreateFieldsetParams>) {
   try {
-    const createdFieldset: IFieldsetTemplate = yield call(createFieldset, payload);
+    const createdFieldset: IFieldsetCatalogItem = yield call(createFieldset, payload);
     yield put(loadCurrentFieldsetSuccess(createdFieldset));
     history.push(getFieldsetDetailRoute(createdFieldset.id));
   } catch (error) {
@@ -115,7 +115,7 @@ function* updateFieldsetSaga({ payload }: PayloadAction<IUpdateFieldsetParams>) 
   const abortController = new AbortController();
 
   try {
-    const updatedFieldset: IFieldsetTemplate = yield call(updateFieldset, { ...payload, signal: abortController.signal });
+    const updatedFieldset: IFieldsetCatalogItem = yield call(updateFieldset, { ...payload, signal: abortController.signal });
     yield put(setCurrentFieldset(updatedFieldset));
   } catch (error) {
     if (isRequestCanceled(error)) return;

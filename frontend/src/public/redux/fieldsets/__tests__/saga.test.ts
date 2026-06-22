@@ -15,7 +15,7 @@ import { initialState } from '../slice';
 import { history } from '../../../utils/history';
 import { ERoutes } from '../../../constants/routes';
 import { EFieldsetsSorting } from '../../../types/fieldset';
-import { makeFieldsetTemplate } from '../../../__stubs__/fieldsets.factory';
+import { makeFieldsetCatalogItem } from '../../../__stubs__/fieldsets.factory';
 import { isRequestCanceled } from '../../../utils/isRequestCanceled';
 
 jest.mock('../../../utils/getConfig', () => ({
@@ -132,7 +132,7 @@ describe('loadCurrentFieldsetSaga', () => {
   const FIELDSET_ID = 5;
 
   const makeFieldset = (overrides = {}) =>
-    makeFieldsetTemplate({
+    makeFieldsetCatalogItem({
       id: FIELDSET_ID,
       name: 'Test Fieldset',
       ...overrides,

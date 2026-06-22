@@ -1,24 +1,10 @@
 
 import { getFieldsetsCatalogByApiName } from '../fieldsets';
 import { IApplicationState } from '../../../types/redux';
-import { IFieldsetListItem, EFieldsetsSorting, EFieldLabelPosition } from '../../../types/fieldset';
+import { IFieldsetCatalogItem, EFieldsetsSorting } from '../../../types/fieldset';
+import { makeFieldsetCatalogItem } from '../../../__stubs__/fieldsets.factory';
 
-const makeListItem = (overrides: Partial<IFieldsetListItem> = {}): IFieldsetListItem => ({
-  id: 1,
-  apiName: 'fs-1',
-  name: 'Fieldset One',
-  description: '',
-  labelPosition: EFieldLabelPosition.Top,
-  layout: 'vertical',
-  order: 0,
-  kickoffId: null,
-  taskId: null,
-  rules: [],
-  fields: [],
-  ...overrides,
-});
-
-const makeState = (catalogItems: IFieldsetListItem[]): IApplicationState => ({
+const makeState = (catalogItems: IFieldsetCatalogItem[]): IApplicationState => ({
   fieldsets: {
     templateId: null,
     fieldsetsList: { count: 0, offset: 0, items: [] },
@@ -37,7 +23,7 @@ const makeState = (catalogItems: IFieldsetListItem[]): IApplicationState => ({
 
 describe('getFieldsetsCatalogByApiName', () => {
   it('returns the same Map object on repeated calls with the same state', () => {
-    const items = [makeListItem({ id: 1, apiName: 'fs-1' })];
+    const items = [makeFieldsetCatalogItem({ id: 1, apiName: 'fs-1' })];
     const state = makeState(items);
 
     const result1 = getFieldsetsCatalogByApiName(state);
@@ -47,11 +33,11 @@ describe('getFieldsetsCatalogByApiName', () => {
   });
 
   it('rebuilds the Map when items reference changes', () => {
-    const items1 = [makeListItem({ id: 1, apiName: 'fs-1' })];
+    const items1 = [makeFieldsetCatalogItem({ id: 1, apiName: 'fs-1' })];
     const state1 = makeState(items1);
     const result1 = getFieldsetsCatalogByApiName(state1);
 
-    const items2 = [makeListItem({ id: 2, apiName: 'fs-2' })];
+    const items2 = [makeFieldsetCatalogItem({ id: 2, apiName: 'fs-2' })];
     const state2 = makeState(items2);
     const result2 = getFieldsetsCatalogByApiName(state2);
 
@@ -61,7 +47,7 @@ describe('getFieldsetsCatalogByApiName', () => {
   });
 
   it('uses apiName as Map key', () => {
-    const items = [makeListItem({ id: 42, apiName: 'my-custom-api-name' })];
+    const items = [makeFieldsetCatalogItem({ id: 42, apiName: 'my-custom-api-name' })];
     const state = makeState(items);
 
     const result = getFieldsetsCatalogByApiName(state);
@@ -80,8 +66,8 @@ describe('getFieldsetsCatalogByApiName', () => {
 
   it('keeps last item on apiName collision', () => {
     const items = [
-      makeListItem({ id: 1, apiName: 'same-name', name: 'First' }),
-      makeListItem({ id: 2, apiName: 'same-name', name: 'Second' }),
+      makeFieldsetCatalogItem({ id: 1, apiName: 'same-name', name: 'First' }),
+      makeFieldsetCatalogItem({ id: 2, apiName: 'same-name', name: 'Second' }),
     ];
     const state = makeState(items);
 

@@ -3,9 +3,8 @@ import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 
 import { IFieldsetsStore, IFieldsetsList } from '../../types/redux';
 import {
-  IFieldsetTemplate, ICreateFieldsetParams,
+  IFieldsetCatalogItem, ICreateFieldsetParams,
   IUpdateFieldsetParams,
-  IFieldsetListItem,
   EFieldsetsSorting,
 } from '../../types/fieldset';
 import { TDeleteFieldsetPayload } from './types';
@@ -79,7 +78,7 @@ const fieldsetsSlice = createSlice({
       state.isCurrentFieldsetLoading = true;
     },
 
-    loadCurrentFieldsetSuccess: (state, action: PayloadAction<IFieldsetTemplate>) => {
+    loadCurrentFieldsetSuccess: (state, action: PayloadAction<IFieldsetCatalogItem>) => {
       state.currentFieldset = action.payload;
       state.isCurrentFieldsetLoading = false;
     },
@@ -93,7 +92,7 @@ const fieldsetsSlice = createSlice({
       state.isCurrentFieldsetLoading = false;
     },
 
-    setCurrentFieldset: (state, action: PayloadAction<IFieldsetTemplate>) => {
+    setCurrentFieldset: (state, action: PayloadAction<IFieldsetCatalogItem>) => {
       state.currentFieldset = action.payload;
       state.isCurrentFieldsetLoading = false;
 
@@ -114,10 +113,9 @@ const fieldsetsSlice = createSlice({
       if (state.currentFieldset && state.currentFieldset.id === action.payload.id) {
         if (action.payload.name !== undefined) state.currentFieldset.name = action.payload.name;
         if (action.payload.description !== undefined) state.currentFieldset.description = action.payload.description;
-        if (action.payload.label_position !== undefined) state.currentFieldset.labelPosition = action.payload.label_position;
+        if (action.payload.labelPosition !== undefined) state.currentFieldset.labelPosition = action.payload.labelPosition;
         if (action.payload.layout !== undefined) state.currentFieldset.layout = action.payload.layout;
-        if (action.payload.kickoff_id !== undefined) state.currentFieldset.kickoffId = action.payload.kickoff_id;
-        if (action.payload.task_id !== undefined) state.currentFieldset.taskId = action.payload.task_id;
+        if (action.payload.title !== undefined) state.currentFieldset.title = action.payload.title;
         if (action.payload.rules) state.currentFieldset.rules = action.payload.rules;
         if (action.payload.fields) state.currentFieldset.fields = action.payload.fields as any;
       }
@@ -136,7 +134,7 @@ const fieldsetsSlice = createSlice({
       state.isCatalogLoading = true;
     },
 
-    loadFieldsetsCatalogSuccess: (state, action: PayloadAction<IFieldsetListItem[]>) => {
+    loadFieldsetsCatalogSuccess: (state, action: PayloadAction<IFieldsetCatalogItem[]>) => {
       state.catalogAllFieldsets = action.payload;
       state.isCatalogLoading = false;
     },

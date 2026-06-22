@@ -1,5 +1,5 @@
 import { commonRequest } from '../commonRequest';
-import { IFieldsetTemplate, IUpdateFieldsetParams } from '../../types/fieldset';
+import { IFieldsetCatalogItem, IUpdateFieldsetParams } from '../../types/fieldset';
 import { getBrowserConfigEnv } from '../../utils/getConfig';
 import { mapRequestBody } from '../../utils/mappers';
 
@@ -10,7 +10,7 @@ export function updateFieldset({ id, signal, ...data }: IUpdateFieldsetParams) {
 
   const url = urls.fieldset.replace(':id', String(id));
 
-  return commonRequest<IFieldsetTemplate>(
+  return commonRequest<IFieldsetCatalogItem>(
     url,
     {
       method: 'PATCH',
