@@ -72,7 +72,7 @@ describe('getTaskListWithNewTask', () => {
     expect(resultTaskList.count).toEqual(4);
   });
 
-  it('inserts urgent task in the top of list if sorting is "Oldest first"', () => {
+  it('inserts urgent task before non-urgent tasks if sorting is "Oldest first"', () => {
     const initialTaskList: ITaskList = {
       items: [createMockTask({ id: 1 }), createMockTask({ id: 2 }), createMockTask({ id: 3 })],
       count: 3,
@@ -86,6 +86,28 @@ describe('getTaskListWithNewTask', () => {
     expect(resultTaskList.items.findIndex((task) => task.id === NEW_TASK_ID)).toEqual(0);
     expect(resultTaskList.offset).toEqual(4);
     expect(resultTaskList.count).toEqual(4);
+  });
+
+  it('inserts urgent task at the end of urgent block if sorting is "Oldest first" and all loaded tasks are urgent', () => {
+    const initialTaskList: ITaskList = {
+      items: [
+        createMockTask({ id: 1, isUrgent: true }),
+        createMockTask({ id: 2, isUrgent: true }),
+        createMockTask({ id: 3, isUrgent: true }),
+        createMockTask({ id: 4, isUrgent: true }),
+      ],
+      count: 4,
+      offset: 4,
+    };
+
+    const NEW_TASK_ID = 5;
+    const newTask = createMockTask({ id: NEW_TASK_ID, isUrgent: true });
+    const resultTaskList = getTaskListWithNewTask(initialTaskList, newTask, ETaskListSorting.DateAsc);
+
+    expect(resultTaskList.items.findIndex((task) => task.id === NEW_TASK_ID)).toEqual(4);
+    expect(resultTaskList.items.map((task) => task.id)).toEqual([1, 2, 3, 4, 5]);
+    expect(resultTaskList.offset).toEqual(5);
+    expect(resultTaskList.count).toEqual(5);
   });
 
   it('does not insert task if sorting is "Oldest first" and list is not fully loaded', () => {
