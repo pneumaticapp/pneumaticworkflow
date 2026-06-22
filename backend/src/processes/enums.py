@@ -762,9 +762,54 @@ class FieldSetLayout:
 class FieldSetRuleType:
 
     SUM_EQUAL = 'sum_equal'
+    VALIDATOR = 'validator'
 
     CHOICES = (
         (SUM_EQUAL, 'The sum is equal'),
+        (VALIDATOR, 'Validator'),
     )
 
-    LITERALS = Literal[SUM_EQUAL]
+    LITERALS = Literal[SUM_EQUAL, VALIDATOR]
+
+
+class FieldRuleType:
+
+    SHOW = 'show'
+    VALIDATOR = 'validator'
+
+    CHOICES = (
+        (SHOW, 'Show field'),
+        (VALIDATOR, 'Validate field'),
+    )
+
+    LITERALS = Literal[SHOW, VALIDATOR]
+
+
+class FieldRuleOperator:
+
+    EQUAL = 'equal'
+    MORE_THAN = 'more_than'
+    LESS_THAN = 'less_than'
+
+    CHOICES = (
+        (EQUAL, 'Equal'),
+        (MORE_THAN, 'More than'),
+        (LESS_THAN, 'Less than'),
+    )
+
+    LITERALS = Literal[EQUAL, MORE_THAN, LESS_THAN]
+
+
+class FieldSetRuleOperator:
+
+    SUM_EQUAL = 'sum_equal'
+    SUM_MORE_THAN = 'sum_more_than'
+    SUM_LESS_THAN = 'sum_less_than'
+
+    CHOICES = (
+        (SUM_EQUAL, 'Sum equal'),
+        (SUM_MORE_THAN, 'Sum more than'),
+        (SUM_LESS_THAN, 'Sum less than'),
+    )
+
+    LITERALS = Literal[SUM_EQUAL, SUM_MORE_THAN, SUM_LESS_THAN]

@@ -8,7 +8,7 @@ from src.processes.enums import (
 from src.processes.messages import fieldset as fs_messages
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
-    FieldsetTemplateRule,
+    FieldsetTemplateRuleOld,
 )
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.services.exceptions import (
@@ -705,7 +705,7 @@ def test__validate_rules__with_rules__ok(mocker):
         account=account,
         name='Fieldset',
     )
-    rule_1 = FieldsetTemplateRule.objects.create(
+    rule_1 = FieldsetTemplateRuleOld.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,
@@ -757,7 +757,7 @@ def test_update_rules__existing_rule__ok(mocker):
         account=account,
         name='Fieldset',
     )
-    rule_1 = FieldsetTemplateRule.objects.create(
+    rule_1 = FieldsetTemplateRuleOld.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,
@@ -880,13 +880,13 @@ def test_update_rules__orphan_rules__deleted(mocker):
         account=account,
         name='Fieldset',
     )
-    rule_1 = FieldsetTemplateRule.objects.create(
+    rule_1 = FieldsetTemplateRuleOld.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,
         value='100',
     )
-    rule_2 = FieldsetTemplateRule.objects.create(
+    rule_2 = FieldsetTemplateRuleOld.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,
@@ -917,10 +917,10 @@ def test_update_rules__orphan_rules__deleted(mocker):
     # assert
     fs_rule_init_mock.assert_called_once()
     fs_rule_update_mock.assert_called_once()
-    assert not FieldsetTemplateRule.objects.filter(
+    assert not FieldsetTemplateRuleOld.objects.filter(
         id=rule_2.id,
     ).exists()
-    assert FieldsetTemplateRule.objects.filter(
+    assert FieldsetTemplateRuleOld.objects.filter(
         id=rule_1.id,
     ).exists()
 
@@ -1333,7 +1333,7 @@ def test__replace_api_names__fields_and_rules__ok(mocker):
         [
             mocker.call(FieldsetTemplate.api_name_prefix),
             mocker.call(FieldTemplate.api_name_prefix),
-            mocker.call(FieldsetTemplateRule.api_name_prefix),
+            mocker.call(FieldsetTemplateRuleOld.api_name_prefix),
         ],
         any_order=True,
     )

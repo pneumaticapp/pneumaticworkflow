@@ -12,7 +12,7 @@ from src.processes.models.templates.fields import (
     FieldTemplateSelection,
 )
 from src.processes.models.templates.fieldset import (
-    FieldsetTemplateRule,
+    FieldsetTemplateRuleOld,
 )
 from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.event import WorkflowEvent
@@ -2549,7 +2549,7 @@ def test__link_rules__multiple_rules__ok():
         api_name=fieldset_api_name,
         rule_type=FieldSetRuleType.SUM_EQUAL,
     )
-    rule_tmpl_2 = FieldsetTemplateRule.objects.create(
+    rule_tmpl_2 = FieldsetTemplateRuleOld.objects.create(
         fieldset=fieldset_template,
         account=account,
         api_name=f'{fieldset_api_name}-rule-2',
@@ -2625,7 +2625,7 @@ def test__link_rules__partial_match__ok():
         api_name=fieldset_api_name,
         rule_type=FieldSetRuleType.SUM_EQUAL,
     )
-    rule_tmpl_2 = FieldsetTemplateRule.objects.create(
+    rule_tmpl_2 = FieldsetTemplateRuleOld.objects.create(
         fieldset=fieldset_template,
         account=account,
         api_name=f'{fieldset_api_name}-rule-2',

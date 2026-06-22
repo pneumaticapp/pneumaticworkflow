@@ -14,7 +14,7 @@ from src.processes.enums import (
 )
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
-    FieldsetTemplateRule,
+    FieldsetTemplateRuleOld,
 )
 from src.processes.models.templates.fields import FieldTemplate
 
@@ -93,7 +93,7 @@ def test_create_fieldset__all_fields__ok(api_client, mocker):
         api_name='f1',
         fieldset=fieldset,
     )
-    rule = FieldsetTemplateRule.objects.create(
+    rule = FieldsetTemplateRuleOld.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,
@@ -311,7 +311,7 @@ def test_create_fieldset__rule_with_one_field__ok(api_client, mocker):
         api_name=field_api_name,
         fieldset=fieldset,
     )
-    rule = FieldsetTemplateRule.objects.create(
+    rule = FieldsetTemplateRuleOld.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,
@@ -411,7 +411,7 @@ def test_create_fieldset__rule_with_two_fields__ok(api_client, mocker):
         api_name=field_2_api_name,
         fieldset=fieldset,
     )
-    rule = FieldsetTemplateRule.objects.create(
+    rule = FieldsetTemplateRuleOld.objects.create(
         account=account,
         fieldset=fieldset,
         type=FieldSetRuleType.SUM_EQUAL,

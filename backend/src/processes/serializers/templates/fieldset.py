@@ -6,7 +6,7 @@ from src.generics.fields import (
 from src.generics.mixins.serializers import CustomValidationErrorMixin
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
-    FieldsetTemplateRule,
+    FieldsetTemplateRuleOld,
 )
 from src.processes.serializers.templates.field import (
     FieldTemplateSerializer,
@@ -19,7 +19,7 @@ class FieldsetTemplateRuleSerializer(
 ):
 
     class Meta:
-        model = FieldsetTemplateRule
+        model = FieldsetTemplateRuleOld
         fields = (
             'type',
             'value',

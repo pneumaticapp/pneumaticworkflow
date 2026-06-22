@@ -9,7 +9,7 @@ from src.processes.enums import LabelPosition, FieldSetLayout
 from src.processes.models.templates.fields import FieldTemplate
 from src.processes.models.templates.fieldset import (
     FieldsetTemplate,
-    FieldsetTemplateRule,
+    FieldsetTemplateRuleOld,
 )
 from src.processes.services.exceptions import (
     FieldsetTemplateInUseException,
@@ -267,7 +267,7 @@ class FieldSetTemplateService(BaseModelService):
         updated_rules_data = []
         for rule_data in fieldset_data.get('rules', []):
             rule_data['api_name'] = create_api_name(
-                FieldsetTemplateRule.api_name_prefix,
+                FieldsetTemplateRuleOld.api_name_prefix,
             )
             rule_data['fields'] = [
                 fields_map[old_api_name]
