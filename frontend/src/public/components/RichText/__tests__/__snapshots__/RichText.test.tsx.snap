@@ -2,11 +2,9 @@
 
 exports[`RichText RichText and loom link in text flag return text with loom iframe 1`] = `
 <div
-  class="rich-editor-content container"
+  class="container"
 >
-  <p
-    class="lexical-rich-editor-paragraph"
-  >
+  <p>
     test1 
   </p>
   <div>
@@ -27,11 +25,9 @@ exports[`RichText RichText and loom link in text flag return text with loom ifra
 
 exports[`RichText RichText and youtube and loom link in text flag return text with youtube and loom iframe 1`] = `
 <div
-  class="rich-editor-content container"
+  class="container"
 >
-  <p
-    class="lexical-rich-editor-paragraph"
-  >
+  <p>
     test1 
   </p>
   <div>
@@ -63,11 +59,9 @@ exports[`RichText RichText and youtube and loom link in text flag return text wi
 
 exports[`RichText RichText and youtube in text flag return text with youtube iframe 1`] = `
 <div
-  class="rich-editor-content container"
+  class="container"
 >
-  <p
-    class="lexical-rich-editor-paragraph"
-  >
+  <p>
     test1 
   </p>
   <div>
@@ -88,41 +82,33 @@ exports[`RichText RichText and youtube in text flag return text with youtube ifr
 
 exports[`RichText renders correct html for mentions and links 1`] = `
 <div
-  class="rich-editor-content container"
+  class="container"
 >
-  <p
-    class="lexical-rich-editor-paragraph"
-  >
+  <p>
     Hello, 
     <span
-      class="lexical-rich-editor-mention"
+      class="mention"
     >
       @Jyoti Puri
     </span>
     , look here: link: 
     <a
-      class="lexical-rich-editor-link"
       href="http://pneumatic.app/"
       target="_blank"
     >
       http://pneumatic.app/
     </a>
-    <a />
   </p>
-  <a>
-    
+  
 
-  </a>
 </div>
 `;
 
 exports[`RichText renders correct html for plain text 1`] = `
 <div
-  class="rich-editor-content container"
+  class="container"
 >
-  <p
-    class="lexical-rich-editor-paragraph"
-  >
+  <p>
     Some plain text
   </p>
   
