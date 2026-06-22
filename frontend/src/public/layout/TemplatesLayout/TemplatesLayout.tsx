@@ -36,6 +36,7 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
   };
 
   const isDatasetDetail = /^\/datasets\/\d+\/?$/.test(history.location.pathname);
+  const isFieldsetDetail = /^\/fieldsets\/\d+\/?$/.test(history.location.pathname);
 
   const getActiveTab = () => {
     const path = history.location.pathname;
@@ -79,6 +80,18 @@ export function TemplatesLayout({ children }: ITemplatesLayoutProps) {
             className={styles['return-link']}
             label={formatMessage({ id: 'datasets.all-datasets' })}
             route={ERoutes.Datasets}
+          />
+        </div>
+      );
+    }
+
+    if (isFieldsetDetail) {
+      return (
+        <div className={styles['navbar-left__content']}>
+          <ReturnLink
+            className={styles['return-link']}
+            label={formatMessage({ id: 'fieldsets.all-fieldsets' })}
+            route={ERoutes.Fieldsets}
           />
         </div>
       );
