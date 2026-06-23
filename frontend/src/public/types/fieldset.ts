@@ -37,6 +37,22 @@ export interface IFieldsetCatalogItem {
   fields: IFieldsetField[];
 }
 
+export interface IFieldsetBinding extends Omit<IFieldsetCatalogItem, 'id'> {
+  sharedFieldsetId: number;
+}
+
+export interface IFieldsetBindingClient extends IFieldsetBinding {
+  apiNameBinding?: string;
+}
+
+export interface IFieldsetBindingMeta {
+  sharedFieldsetId: number;
+  order: number;
+  apiName?: string;
+  title?: string;
+  description?: string;
+}
+
 export interface IGetFieldsetsResponse {
   count: number;
   next: string | null;

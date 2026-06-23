@@ -15,6 +15,7 @@ import {
   IExtraField,
   ITaskFieldset,
 } from '../types/template';
+import { IFieldsetBindingClient, IFieldsetBindingMeta } from '../types/fieldset';
 import { getUrlParams } from './getUrlParams';
 import { DEFAULT_TEMPLATE_NAME } from '../components/TemplateEdit/constants';
 import { IFieldsetData } from '../types/template';
@@ -63,6 +64,12 @@ export const getNormalizedTemplate = (
   const normalizedKickoff = {
     ...getEmptyKickoff(),
     ...(template.kickoff || {}),
+    fieldsets: template.kickoff
+      ? template.kickoff.fieldsets.map((fieldset) => ({
+          ...fieldset,
+          apiNameBinding: fieldset.apiName,
+        }))
+      : [],
   };
   const normalizedTasks = [...template.tasks]
     .sort((a, b) => a.number - b.number)
@@ -135,6 +142,10 @@ export const getNormalizedTask = (
     uuid: createUUID(),
     conditions,
     rawDueDate,
+    fieldsets: task.fieldsets.map((fieldset) => ({
+      ...fieldset,
+      apiNameBinding: fieldset.apiName,
+    })),
   };
 };
 
@@ -251,6 +262,22 @@ export const cleanTemplateReferences = (
   };
 };
 
+function mapFieldsetForApi({
+  sharedFieldsetId,
+  order,
+  title,
+  description,
+  apiNameBinding,
+}: IFieldsetBindingClient): IFieldsetBindingMeta {
+  return {
+    sharedFieldsetId,
+    order,
+    title,
+    description,
+    ...(apiNameBinding ? { apiName: apiNameBinding } : {}),
+  };
+}
+
 export const mapTemplateRequest = (
   template: ITemplate,
   fieldsetsByApiName: ReadonlyMap<string, IFieldsetData>,
@@ -268,6 +295,7 @@ export const mapTemplateRequest = (
       delay: normalizeDuration(task.delay),
       conditions: normalizeConditionForBackend(task.conditions),
       rawDueDate: normalizeDueDateForBackend(task.rawDueDate),
+      fieldsets: (task.fieldsets as IFieldsetBindingClient[]).map(mapFieldsetForApi),
     };
   });
 
@@ -275,6 +303,10 @@ export const mapTemplateRequest = (
     ...cleanedTemplate,
     name: cleanedTemplate.name || DEFAULT_TEMPLATE_NAME,
     tasks: normilizedTasks,
+    kickoff: {
+      ...cleanedTemplate.kickoff,
+      fieldsets: (cleanedTemplate.kickoff.fieldsets as IFieldsetBindingClient[]).map(mapFieldsetForApi),
+    },
     publicSuccessUrl: cleanedTemplate.publicSuccessUrl || null,
   };
 };

@@ -7,7 +7,7 @@ import {
 } from '../components/TemplateEdit/TaskForm/Conditions';
 import { TUploadedFile } from '../utils/uploadFiles';
 import { TSystemField } from '../components/Workflows/WorkflowsTablePage/WorkflowsTable/types';
-import { EFieldLabelPosition } from './fieldset';
+import { EFieldLabelPosition, IFieldsetBindingClient, IFieldsetBindingMeta } from './fieldset';
 
 export interface ITemplate {
   id?: number;
@@ -30,6 +30,11 @@ export interface ITemplate {
   wfNameTemplate: string | null;
   tasksCount: number;
   performersCount: number;
+}
+
+export interface ITemplateClient extends ITemplate {
+  tasks: ITemplateTaskClient[];
+  kickoff: IKickoffClient;
 }
 
 export enum ETemplateOwnerRole {
@@ -85,6 +90,10 @@ export interface ITemplateTask {
   checklists: TOutputChecklist[];
   revertTask: string | null;
   ancestors: string[];
+}
+
+export interface ITemplateTaskClient extends ITemplateTask {
+  fieldsets: IFieldsetBindingClient[];
 }
 
 export type TDueDateRuleTarget = 'field' | 'workflow started' | 'task started' | 'task completed';
@@ -155,13 +164,19 @@ export interface ITemplateTaskResponse
   apiName?: string;
 }
 
-export interface ITemplateRequest extends Omit<ITemplate, 'tasks'> {
+export interface ITemplateRequest extends Omit<ITemplate, 'tasks' | 'kickoff'> {
   tasks: ITemplateTaskRequest[];
+  kickoff: ITemplateKickoffRequest;
 }
 
-export interface ITemplateTaskRequest extends Omit<ITemplateTask, 'uuid' | 'conditions' | 'rawDueDate'> {
+export interface ITemplateTaskRequest extends Omit<ITemplateTask, 'uuid' | 'conditions' | 'rawDueDate' | 'fieldsets'> {
   conditions: IConditionResponse[];
   rawDueDate: IDueDateAPI | null;
+  fieldsets: IFieldsetBindingMeta[];
+}
+
+export interface ITemplateKickoffRequest extends Omit<IKickoff, 'fieldsets'> {
+  fieldsets: IFieldsetBindingMeta[];
 }
 
 export interface IConditionResponse {
@@ -230,6 +245,10 @@ export interface IKickoff {
   description: string;
   fields: IExtraField[];
   fieldsets: ITaskFieldset[];
+}
+
+export interface IKickoffClient extends IKickoff {
+  fieldsets: IFieldsetBindingClient[];
 }
 
 /** Kickoff shape from template list APIs (GET /templates/, GET /templates/titles-by-owners) */
