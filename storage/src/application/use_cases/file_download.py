@@ -67,7 +67,7 @@ class DownloadFileUseCase:
         )
 
         # Stream file from S3
-        return self._storage_service.download_file(
+        return await self._storage_service.download_file(
             bucket_name=bucket_name,
             file_path=file_path,
             range_header=range_header,

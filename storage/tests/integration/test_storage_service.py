@@ -1,6 +1,6 @@
 """Tests for StorageService integration."""
 
-from unittest.mock import AsyncMock
+from unittest.mock import AsyncMock, Mock
 
 import pytest
 
@@ -65,6 +65,7 @@ async def test_download__valid_file__return_content(
 
     mock_body = AsyncMock()
     mock_body.iter_chunks = mock_iter_chunks
+    mock_body.close = Mock()
     mock_s3_client.get_object.return_value = {
         'Body': mock_body,
     }
@@ -74,10 +75,11 @@ async def test_download__valid_file__return_content(
 
     # act
     content = b''
-    async for chunk in service.download_file(
+    stream = await service.download_file(
         bucket_name='test-bucket',
         file_path='test-file.txt',
-    ):
+    )
+    async for chunk in stream:
         content += chunk
 
     # assert
@@ -102,6 +104,7 @@ async def test_download__chunked__return_all_chunks(
 
     mock_body = AsyncMock()
     mock_body.iter_chunks = mock_iter_chunks
+    mock_body.close = Mock()
     mock_s3_client.get_object.return_value = {
         'Body': mock_body,
     }
@@ -110,13 +113,11 @@ async def test_download__chunked__return_all_chunks(
     ).return_value = mock_s3_client
 
     # act
-    chunks = [
-        chunk
-        async for chunk in service.download_file(
-            bucket_name='test-bucket',
-            file_path='large-file.txt',
-        )
-    ]
+    stream = await service.download_file(
+        bucket_name='test-bucket',
+        file_path='large-file.txt',
+    )
+    chunks = [chunk async for chunk in stream]
 
     # assert
     assert chunks == [b'chunk1', b'chunk2']

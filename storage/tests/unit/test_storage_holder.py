@@ -419,11 +419,10 @@ async def test_download__no_such_key__not_found(
 
     # act
     with pytest.raises(StorageError) as exc_info:
-        async for _ in svc.download_file(
+        await svc.download_file(
             bucket_name='bucket',
             file_path='path',
-        ):
-            pass
+        )
 
     # assert
     assert exc_info.value.error_code.code == 'STORAGE_005'
@@ -442,11 +441,10 @@ async def test_download__internal_err__raise(
 
     # act
     with pytest.raises(StorageError) as exc_info:
-        async for _ in svc.download_file(
+        await svc.download_file(
             bucket_name='bucket',
             file_path='path',
-        ):
-            pass
+        )
 
     # assert
     assert exc_info.value.error_code.code == 'STORAGE_003'
@@ -465,17 +463,19 @@ async def test_download__with_range__range_in_kwargs(
 
     mock_body = AsyncMock()
     mock_body.iter_chunks = _fake_iter
+    mock_body.close = Mock()
     mock_s3.get_object = AsyncMock(
         return_value={'Body': mock_body},
     )
 
     # act
     chunks = []
-    async for chunk in svc.download_file(
+    stream = await svc.download_file(
         bucket_name='b',
         file_path='k',
         range_header='bytes=0-100',
-    ):
+    )
+    async for chunk in stream:
         chunks.append(chunk)
 
     # assert

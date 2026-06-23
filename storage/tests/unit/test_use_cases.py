@@ -2,7 +2,7 @@
 
 import io
 from datetime import UTC, datetime
-from unittest.mock import ANY, AsyncMock, Mock
+from unittest.mock import ANY, AsyncMock
 
 import pytest
 
@@ -293,7 +293,7 @@ async def test_get_stream__valid__return_stream(
     async def mock_download_generator():
         yield b'test content'
 
-    mock_storage_service.download_file = Mock(
+    mock_storage_service.download_file = AsyncMock(
         return_value=mock_download_generator(),
     )
     use_case = DownloadFileUseCase(

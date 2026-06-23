@@ -6,6 +6,7 @@ from collections.abc import AsyncGenerator
 
 import aioboto3
 from aiobotocore.config import AioConfig
+from aiobotocore.response import StreamingBody
 from botocore.exceptions import ClientError
 
 from src.shared_kernel.config import get_settings
@@ -60,6 +61,20 @@ class StorageService:
         # Persistent S3 client (lazy-initialized)
         self._s3_client: typing.Any | None = None
         self._s3_context: typing.Any | None = None
+
+    @staticmethod
+    async def _stream_s3_body(
+        body: StreamingBody,
+        chunk_size: int,
+    ) -> AsyncGenerator[bytes, None]:
+        """Yield chunks from S3 response body and handle disconnects."""
+        try:
+            async for chunk in body.iter_chunks(chunk_size=chunk_size):
+                yield chunk
+        except ClientError as stream_err:
+            raise asyncio.CancelledError from stream_err
+        finally:
+            body.close()
 
     async def _get_client(self) -> typing.Any:  # noqa: ANN401
         """Get or create persistent S3 client.
@@ -173,8 +188,8 @@ class StorageService:
             file_path: File path in storage.
             range_header: Optional HTTP Range header.
 
-        Yields:
-            bytes: File chunks.
+        Returns:
+            AsyncGenerator[bytes, None]: File chunks stream.
 
         Raises:
             StorageError: On download error.
@@ -192,12 +207,7 @@ class StorageService:
                 kwargs['Range'] = range_header
 
             response = await s3.get_object(**kwargs)
-
-            body = response['Body']
-            async for chunk in body.iter_chunks(
-                chunk_size=chunk_size,
-            ):
-                yield chunk
+            return self._stream_s3_body(response['Body'], chunk_size)
 
         except ClientError as e:
             error_code = e.response['Error']['Code']
