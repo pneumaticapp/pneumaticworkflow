@@ -106,34 +106,23 @@ class Command(BaseCommand):
         account_ids = options['account_ids']
 
         commands = [
-            ('migrate', ['storage']),
-            ('migrate', ['processes']),
-            ('fill_file_attachment_file_id', []),
-            ('migrate_file_attachment_to_attachment', []),
-            ('sync_files_to_file_service', []),
-            ('replace_storage_links_with_file_service', []),
+            'fill_file_attachment_file_id',
+            'migrate_file_attachment_to_attachment',
+            'sync_files_to_file_service',
+            'replace_storage_links_with_file_service',
         ]
 
-        for cmd, cmd_args in commands:
+        for cmd in commands:
             self.stdout.write(self.style.SUCCESS(
                 "\n==============================================",
             ))
-            if cmd == 'migrate':
-                self.stdout.write(self.style.SUCCESS(
-                    f"Running: manage.py {cmd} {cmd_args[0]}",
-                ))
-                self.stdout.write(self.style.SUCCESS(
-                    "==============================================\n",
-                ))
-                call_command(cmd, *cmd_args)
-            else:
-                self.stdout.write(self.style.SUCCESS(
-                    f"Running: manage.py {cmd} --account-ids={account_ids}",
-                ))
-                self.stdout.write(self.style.SUCCESS(
-                    "==============================================\n",
-                ))
-                call_command(cmd, account_ids=account_ids)
+            self.stdout.write(self.style.SUCCESS(
+                f"Running: manage.py {cmd} --account-ids={account_ids}",
+            ))
+            self.stdout.write(self.style.SUCCESS(
+                "==============================================\n",
+            ))
+            call_command(cmd, account_ids=account_ids)
 
         self.stdout.write(self.style.SUCCESS(
             '\n✅ All file migration steps completed successfully!',

@@ -535,6 +535,9 @@ services:
       KEY_PREFIX_REDIS: ${FILE_KEY_PREFIX_REDIS:-:1:}
       DJANGO_SECRET_KEY: ${DJANGO_SECRET_KEY:-django_secret_django_secret_django_secret}
       AUTH_TOKEN_ITERATIONS: ${FILE_AUTH_TOKEN_ITERATIONS:-1}
+    command: >
+      sh -c "poetry run alembic -c src/shared_kernel/database/alembic.ini upgrade head &&
+             poetry run python -m src.main"
     depends_on:
       file-postgres:
         condition: service_healthy

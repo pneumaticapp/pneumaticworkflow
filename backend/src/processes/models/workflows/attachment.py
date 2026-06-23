@@ -29,7 +29,7 @@ class FileAttachment(
     size = models.PositiveIntegerField(default=0)
     file_id = models.CharField(
         max_length=512,
-        unique=True,
+        db_index=True,
         null=True,
         blank=True,
     )

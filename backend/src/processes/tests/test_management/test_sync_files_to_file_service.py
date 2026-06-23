@@ -206,8 +206,8 @@ def test_sync__unknown_ext__octet_stream(
     user = create_test_admin()
     create_synced_fa(
         account=user.account,
-        file_id='ct.xyz',
-        name='data.xyz',
+        file_id='ct.zzq',
+        name='data.zzq',
     )
     mock_conn, mock_cursor = mock_file_db()
     mock_cursor.fetchone.side_effect = [(True,), None]
