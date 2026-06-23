@@ -206,6 +206,7 @@ if [ ! -f ".env" ]; then
         RABBITMQ_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
         SEAWEEDFS_ACCESS_KEY=$(openssl rand -base64 24 | tr -d "=+/" | cut -c1-20)
         SEAWEEDFS_SECRET_KEY=$(openssl rand -base64 48 | tr -d "=+/" | cut -c1-40)
+        FILE_POSTGRES_PASSWORD=$(openssl rand -base64 32 | tr -d "=+/" | cut -c1-25)
 
         # 2.5.2 Write passwords to .env
         sed -i "s|^#\?\s*POSTGRES_PASSWORD=.*|POSTGRES_PASSWORD=$POSTGRES_PASSWORD|"                  "$ENV_FILE"
@@ -214,6 +215,7 @@ if [ ! -f ".env" ]; then
         sed -i "s|^#\?\s*RABBITMQ_PASSWORD=.*|RABBITMQ_PASSWORD=$RABBITMQ_PASSWORD|"                  "$ENV_FILE"
         sed -i "s|^#\?\s*FILE_SEAWEEDFS_S3_ACCESS_KEY=.*|FILE_SEAWEEDFS_S3_ACCESS_KEY=$SEAWEEDFS_ACCESS_KEY|" "$ENV_FILE"
         sed -i "s|^#\?\s*FILE_SEAWEEDFS_S3_SECRET_KEY=.*|FILE_SEAWEEDFS_S3_SECRET_KEY=$SEAWEEDFS_SECRET_KEY|" "$ENV_FILE"
+        sed -i "s|^#\?\s*FILE_POSTGRES_PASSWORD=.*|FILE_POSTGRES_PASSWORD=$FILE_POSTGRES_PASSWORD|"   "$ENV_FILE"
 
     fi
 
@@ -298,6 +300,10 @@ if [ ! -f ".env" ]; then
         FORMS_URL="$HTTP_PROTOCOL://$SERVER_ADDRESS/forms"
     fi
     sed -i "s|^#\?\s*FORMS_URL=.*|FORMS_URL=$FORMS_URL|"  "$ENV_FILE"
+
+    # 2.11.1 Write file service URLs to .env
+    sed -i "s|^#\?\s*FILE_SERVICE_URL=.*|FILE_SERVICE_URL=$HTTP_PROTOCOL://$SERVER_ADDRESS/files|"     "$ENV_FILE"
+    sed -i "s|^#\?\s*FILE_FASTAPI_BASE_URL=.*|FILE_FASTAPI_BASE_URL=$HTTP_PROTOCOL://$SERVER_ADDRESS/files|" "$ENV_FILE"
 
     # 2.12 Mark setup as complete
     sed -i "/^SETUP_INCOMPLETE=/d" "$ENV_FILE"
