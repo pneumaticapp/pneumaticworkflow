@@ -120,7 +120,7 @@ class FieldSetTemplateService(BaseModelService):
 
         return self.create(
             **fieldset_data,
-            is_shared=True,
+            is_shared=False,
             shared_fieldset_id=shared_fieldset_id,
             order=order,
             kickoff_id=kickoff_id,
