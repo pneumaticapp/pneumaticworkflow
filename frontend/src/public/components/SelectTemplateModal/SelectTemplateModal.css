@@ -54,20 +54,13 @@
 }
 
 .item__body {
-  font-size: 13px;
-  line-height: 16px;
+  font-size: 1.3rem;
+  line-height: 1.6rem;
   color: var(--pneumatic-color-black48);
+}
 
-  @supports (-webkit-line-clamp: 2) {
-    /* stylelint-disable-next-line property-no-vendor-prefix, value-no-vendor-prefix */
-    display: -webkit-box;
-    overflow: hidden;
-    white-space: initial;
-    text-overflow: ellipsis;
-    -webkit-line-clamp: 2;
-    /* stylelint-disable-next-line property-no-vendor-prefix */
-    -webkit-box-orient: vertical;
-  }
+.item__body > div {
+  @mixin text-overflow 2;
 }
 
 .link {

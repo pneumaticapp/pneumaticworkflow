@@ -1,4 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { useSelector } from 'react-redux';
+
 import { useIntl } from 'react-intl';
 import classnames from 'classnames';
 import { InView } from 'react-intersection-observer';
@@ -14,6 +16,8 @@ import { RichText } from '../../../../RichText';
 import { Attachments } from '../../../../Attachments';
 import { parseMarkdownToFiles } from '../../../../../utils/parseMarkdownFiles';
 import { UserData } from '../../../../UserData';
+import { getUserById } from '../../../../UserData/utils/getUserById';
+import { getUsers } from '../../../../../redux/selectors/user';
 import {
   AddEmojiIcon,
   CommentDeleteIcon,
@@ -24,7 +28,7 @@ import {
 } from '../../../../icons';
 import { RichEditor } from '../../../../RichEditor';
 import { type TMentionData } from '../../../../RichEditor/types';
-import { IAccount, TUserListItem } from '../../../../../types/user';
+import { TUserListItem } from '../../../../../types/user';
 import { useStatePromise } from '../../../../../hooks/useStatePromise';
 import { IEditComment } from '../../../../../api/workflows/editComment';
 import { IWatchedComment } from '../../../../../api/workflows/watchedComment';
@@ -58,6 +62,7 @@ export function WorkflowLogTaskComment({
   mentions,
 }: TWorkflowLogTaskCommentProps) {
   const { formatMessage } = useIntl();
+  const users = useSelector(getUsers);
 
   const parsedAttachments = useMemo(() => parseMarkdownToFiles(text), [text]);
 
@@ -86,7 +91,7 @@ export function WorkflowLogTaskComment({
   const handleReactionComment = (value: string) => {
     if (workflowStatus === EWorkflowStatus.Finished) return;
 
-    if (value in reactions && reactions[value].indexOf(currentUserId as Pick<IAccount, 'id'>) !== -1) {
+    if (value in reactions && reactions[value].includes(currentUserId)) {
       deleteReactionComment({ id, value });
     } else {
       createReactionComment({ id, value });
@@ -258,19 +263,14 @@ export function WorkflowLogTaskComment({
     return typeMap[type];
   };
 
-  const renderListUsers = (list: Pick<IAccount, 'id'>[]) => {
+  const renderListUsers = (userIds: number[]) => {
     return (
       <ul className={styles['comment__watch-list']}>
-        {list.map((userWatch) => {
-          return (
-            <UserData userId={userWatch as number}>
-              {(user) => {
-                if (!user) return null;
-                const userName = getUserFullName(user);
+        {userIds.map((listedUserId) => {
+          const user = getUserById(users, listedUserId);
 
-                return <li>{userName}</li>;
-              }}
-            </UserData>
+          return (
+            <li key={listedUserId}>{user ? getUserFullName(user) : null}</li>
           );
         })}
       </ul>
@@ -278,10 +278,11 @@ export function WorkflowLogTaskComment({
   };
 
   const renderReaction = () => {
-    return Object.entries(reactions).map(([value, users]) => {
+    return Object.entries(reactions).map(([value, reactedUserIds]) => {
       return (
         <Tooltip
-          content={renderListUsers(users)}
+          key={value}
+          content={renderListUsers(reactedUserIds)}
           containerClassName={classnames(styles['comment__footer-item'], workflowModal && styles['is-modal'])}
         >
           <button
@@ -291,7 +292,7 @@ export function WorkflowLogTaskComment({
             className={styles['comment__footer-item']}
           >
             <div className={styles['comment__footer-item-emoji']}>{value}</div>
-            <span>{users.length}</span>
+            <span>{reactedUserIds.length}</span>
           </button>
         </Tooltip>
       );

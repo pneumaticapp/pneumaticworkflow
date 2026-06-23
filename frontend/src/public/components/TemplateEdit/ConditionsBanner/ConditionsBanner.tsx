@@ -12,7 +12,7 @@ export function ConditionsBanner() {
       lsKey={CONDITIONS_BANNER_LS_KEY}
       text={formatMessage({ id: 'templates.conditions-banner-text' })}
       buttonText={formatMessage({ id: 'templates.conditions-banner-button' })}
-      link="https://support.pneumatic.app/en/articles/5249989-conditional-workflow-logic"
+      link="https://support.pneumatic.app/articles/5249989-conditional-workflow-logic"
     />
   );
 }

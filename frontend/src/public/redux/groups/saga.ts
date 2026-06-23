@@ -1,23 +1,12 @@
 import { all, fork, takeEvery, put, select, debounce } from 'redux-saga/effects';
+import { PayloadAction } from '@reduxjs/toolkit';
 
 import { getErrorMessage } from '../../utils/getErrorMessage';
-
 import { logger } from '../../utils/logger';
-import { history } from '../../utils/history';
-import {
-  createGroupFailed,
-  updateGroupFailed,
-  EGroupsActions,
-  loadGroupsSuccess,
-  loadGroupSuccess,
-  TCreateGroup,
-  TDeleteGroup,
-  TUpdateGroup,
-  updateGroupSuccess,
-} from '../actions';
+import { getRouteParamId, history } from '../../utils/history';
 import { getGroups } from '../../api/team/getGroups';
-import { createGroup } from '../../api/team/createGroup';
-import { deleteGroup } from '../../api/team/deleteGroup';
+import { createGroup as createGroupApi } from '../../api/team/createGroup';
+import { deleteGroup as deleteGroupApi } from '../../api/team/deleteGroup';
 import { NotificationManager } from '../../components/UI/Notifications';
 import { getGroupsStore } from '../selectors/user';
 import { IGroupsStore } from '../../types/redux';
@@ -26,6 +15,23 @@ import { getGroup } from '../../api/team/getGroup';
 import { ERoutes } from '../../constants/routes';
 import { EResponseStatuses } from '../../constants/defaultValues';
 import { IGroup } from '../team/types';
+
+import {
+  loadGroups,
+  createGroup,
+  updateGroup,
+  updateUsersGroup,
+  deleteGroup,
+  loadGroup,
+  loadGroupsSuccess,
+  loadGroupSuccess,
+  createGroupFailed,
+  updateGroupFailed,
+  updateGroupSuccess,
+  groupsListSortingChanged,
+  removeGroupFromWs,
+  resetGroup,
+} from './slice';
 
 function* loadGroupsSaga() {
   try {
@@ -52,9 +58,9 @@ function* groupsListSortingChangedSaga() {
   yield fetchGroupsSaga();
 }
 
-function* createGroupSaga({ payload }: TCreateGroup) {
+function* createGroupSaga({ payload }: PayloadAction<IGroup>) {
   try {
-    yield createGroup(payload);
+    yield createGroupApi(payload);
     yield fetchGroupsSaga();
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
@@ -63,7 +69,7 @@ function* createGroupSaga({ payload }: TCreateGroup) {
   }
 }
 
-function* updateGroupSaga({ payload }: TUpdateGroup) {
+function* updateGroupSaga({ payload }: PayloadAction<IGroup>) {
   try {
     const group: IGroup = yield updateGroupApi(payload);
 
@@ -75,9 +81,9 @@ function* updateGroupSaga({ payload }: TUpdateGroup) {
   }
 }
 
-function* deleteGroupSaga({ payload }: TDeleteGroup) {
+function* deleteGroupSaga({ payload }: PayloadAction<Pick<IGroup, 'id'>>) {
   try {
-    yield deleteGroup(payload);
+    yield deleteGroupApi(payload);
     yield fetchGroupsSaga();
   } catch (error) {
     NotificationManager.warning({ message: getErrorMessage(error) });
@@ -85,9 +91,19 @@ function* deleteGroupSaga({ payload }: TDeleteGroup) {
   }
 }
 
-function* loadGroupSaga({ payload }: any) {
+function* handleGroupRemovedFromWs({ payload: groupId }: PayloadAction<number>) {
+  const openGroupId = getRouteParamId(ERoutes.GroupDetails);
+  if (openGroupId !== groupId) {
+    return;
+  }
+
+  yield put(resetGroup());
+  history.replace(ERoutes.Groups);
+}
+
+function* loadGroupSaga({ payload }: PayloadAction<number>) {
   try {
-    const group: IGroup = yield getGroup(payload);
+    const group: IGroup = yield getGroup(payload as unknown as Pick<IGroup, 'id'>);
     yield put(loadGroupSuccess(group));
   } catch (error) {
     const isGroupNotFound = error?.status === EResponseStatuses.NotFound;
@@ -103,31 +119,35 @@ function* loadGroupSaga({ payload }: any) {
 }
 
 export function* watchLoadGroup() {
-  yield takeEvery(EGroupsActions.LoadGroup, loadGroupSaga);
+  yield takeEvery(loadGroup.type, loadGroupSaga);
 }
 
 export function* watchLoadGroups() {
-  yield takeEvery(EGroupsActions.LoadGroups, loadGroupsSaga);
+  yield takeEvery(loadGroups.type, loadGroupsSaga);
 }
 
 export function* watchCreateGroup() {
-  yield takeEvery(EGroupsActions.CreateGroup, createGroupSaga);
+  yield takeEvery(createGroup.type, createGroupSaga);
 }
 
 export function* watchDeleteGroup() {
-  yield takeEvery(EGroupsActions.DeleteGroup, deleteGroupSaga);
+  yield takeEvery(deleteGroup.type, deleteGroupSaga);
 }
 
 export function* watchGroupsListSortingChanged() {
-  yield takeEvery(EGroupsActions.GroupsListSortingChanged, groupsListSortingChangedSaga);
+  yield takeEvery(groupsListSortingChanged.type, groupsListSortingChangedSaga);
 }
 
 export function* watchUpdateGroup() {
-  yield takeEvery(EGroupsActions.UpdateGroup, updateGroupSaga);
+  yield takeEvery(updateGroup.type, updateGroupSaga);
 }
 
 export function* watchUpdateUsersGroup() {
-  yield debounce(1000, EGroupsActions.UpdateUsersGroup, updateGroupSaga);
+  yield debounce(1000, updateUsersGroup.type, updateGroupSaga);
+}
+
+export function* watchRemoveGroupFromWs() {
+  yield takeEvery(removeGroupFromWs.type, handleGroupRemovedFromWs);
 }
 
 export function* rootSaga() {
@@ -139,5 +159,6 @@ export function* rootSaga() {
     fork(watchUpdateUsersGroup),
     fork(watchUpdateGroup),
     fork(watchGroupsListSortingChanged),
+    fork(watchRemoveGroupFromWs),
   ]);
 }

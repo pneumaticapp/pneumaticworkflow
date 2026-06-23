@@ -159,9 +159,7 @@ def test_orchestrator__runs_all_cmds_in_order(
     )
 
     # assert
-    assert mock_call.call_count == 6
-    mock_call.assert_any_call('migrate', 'storage')
-    mock_call.assert_any_call('migrate', 'processes')
+    assert mock_call.call_count == 4
 
 
 @patch(CALL_CMD_PATH)
@@ -187,11 +185,7 @@ def test_orchestrator__passes_account_ids(
     )
 
     # assert
-    custom_calls = [
-        c for c in mock_call.call_args_list
-        if c[0][0] != 'migrate'
-    ]
-    for c in custom_calls:
+    for c in mock_call.call_args_list:
         assert c[1].get('account_ids') == '42,43'
 
 
@@ -218,8 +212,15 @@ def test_orchestrator__migrate_correct_apps(
     )
 
     # assert
-    mock_call.assert_any_call('migrate', 'storage')
-    mock_call.assert_any_call('migrate', 'processes')
+    assert mock_call.call_count == 4
+    expected_cmds = [
+        'fill_file_attachment_file_id',
+        'migrate_file_attachment_to_attachment',
+        'sync_files_to_file_service',
+        'replace_storage_links_with_file_service',
+    ]
+    actual_cmds = [c[0][0] for c in mock_call.call_args_list]
+    assert actual_cmds == expected_cmds
 
 
 @patch(CALL_CMD_PATH)
@@ -248,7 +249,7 @@ def test_orchestrator__success_message(
     # assert
     assert '✅' in out.getvalue()
     assert 'completed successfully' in out.getvalue()
-    assert mock_call.call_count == 6
+    assert mock_call.call_count == 4
 
 
 # ── Fallback ─────────────────────────────────────────────────
