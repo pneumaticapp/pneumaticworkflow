@@ -151,6 +151,11 @@ class FieldTemplateRuleSet(
         max_length=50,
         choices=FieldRuleType.CHOICES,
     )
+    message = models.TextField(
+        null=True,
+        blank=True,
+        help_text='custom error message for a type="validator"',
+    )
     order = models.PositiveIntegerField(default=0)
 
     def __str__(self):

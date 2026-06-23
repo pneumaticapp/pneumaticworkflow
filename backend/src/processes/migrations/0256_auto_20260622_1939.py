@@ -58,6 +58,7 @@ class Migration(migrations.Migration):
                 ('is_deleted', models.BooleanField(default=False)),
                 ('api_name', models.CharField(max_length=200)),
                 ('type', models.CharField(choices=[('sum_equal', 'The sum is equal'), ('validator', 'Validator')], max_length=50)),
+                ('message',models.TextField(blank=True, help_text='custom error message for a type="validator"', null=True)),
                 ('order', models.PositiveIntegerField(default=0)),
             ],
             options={
@@ -110,6 +111,7 @@ class Migration(migrations.Migration):
                 ('is_deleted', models.BooleanField(default=False)),
                 ('api_name', models.CharField(max_length=200)),
                 ('type', models.CharField(choices=[('show', 'Show field'), ('validator', 'Validate field')], max_length=50)),
+                ('message', models.TextField(blank=True, help_text='custom error message for a type="validator"', null=True)),
                 ('order', models.PositiveIntegerField(default=0)),
             ],
             options={
