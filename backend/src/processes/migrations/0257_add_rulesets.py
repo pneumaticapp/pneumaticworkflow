@@ -9,7 +9,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('accounts', '0144_auto_20260609_1910'),
-        ('processes', '0255_rename_fieldsettemplate_rule_old'),
+        ('processes', '0256_rename_fieldsettemplate_rule_old'),
     ]
 
     operations = [
