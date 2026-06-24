@@ -3919,9 +3919,6 @@ def test_create__kickoff_with_empty_fieldsets__no_links_created(
     api_client,
 ):
 
-    """ Creating a template with empty fieldsets list does not
-        create any FieldsetTemplateKickoff records. """
-
     # arrange
     account = create_test_account()
     user = create_test_user(account=account)
@@ -3985,9 +3982,6 @@ def test_create__kickoff_without_fieldsets_key__no_links_created(
     mocker,
     api_client,
 ):
-
-    """ Creating a template without fieldsets key in kickoff does not
-        create any FieldsetTemplateKickoff records. """
 
     # arrange
     account = create_test_account()
@@ -4184,9 +4178,6 @@ def test_create__task_without_fieldsets_key__no_links_created(
     mocker,
     api_client,
 ):
-
-    """ Creating a template without fieldsets key in task does not
-        create any FieldsetTemplateTaskTemplate records. """
 
     # arrange
     account = create_test_account()
