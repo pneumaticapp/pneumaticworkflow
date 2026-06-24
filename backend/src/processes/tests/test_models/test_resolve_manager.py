@@ -481,7 +481,7 @@ def test_resolve_manager__empty_group__no_event__none():
 
     workflow = create_test_workflow(user=owner)
     source_task = workflow.tasks.get(number=1)
-    # Task cannot be completed by anyone вЂ” no TASK_COMPLETE event
+    # Task cannot be completed by anyone -- no TASK_COMPLETE event
 
     target_task = workflow.tasks.get(number=2)
     raw_perf = Mock(source_task_api_name=source_task.api_name)
@@ -501,7 +501,7 @@ def test_resolve_manager__source_not_completed__none():
     workflow = create_test_workflow(user=owner)
     source_task = workflow.tasks.get(number=1)
 
-    # keep source active (not completed) вЂ” no TASK_COMPLETE event
+    # keep source active (not completed) -- no TASK_COMPLETE event
     source_task.status = TaskStatus.ACTIVE
     source_task.save()
 

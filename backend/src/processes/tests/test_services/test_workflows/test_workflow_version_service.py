@@ -21,7 +21,6 @@ from src.processes.models.templates.fields import (
 )
 from src.processes.models.templates.owner import TemplateOwner
 from src.processes.models.templates.task import TaskTemplate
-from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.checklist import (
     Checklist,
     ChecklistSelection,
@@ -30,6 +29,7 @@ from src.processes.models.workflows.fields import (
     FieldSelection,
     TaskField,
 )
+from src.processes.models.workflows.attachment import FileAttachment
 from src.processes.models.workflows.task import Task
 from src.processes.models.workflows.workflow import Workflow
 from src.processes.services.tasks.checklist_selection import (
@@ -654,6 +654,7 @@ class TestWorkflowUpdateVersionService:
             user=user,
             is_active=True,
         )
+        markdown_value = '[attachment](http://file.png)'
         kickoff = template.kickoff_instance
         kickoff_field_template_1 = FieldTemplate.objects.create(
             type=FieldType.FILE,
@@ -671,10 +672,10 @@ class TestWorkflowUpdateVersionService:
             workflow=workflow,
             value='http://file.png',
             clear_value='http://clear-file.png',
-            markdown_value='[attachment](http://file.png)',
+            markdown_value=markdown_value,
             account=user.account,
         )
-        attachment = FileAttachment.objects.create(
+        FileAttachment.objects.create(
             name='attachment',
             url='http://file.png',
             workflow=workflow,
@@ -709,10 +710,7 @@ class TestWorkflowUpdateVersionService:
         assert task_1.description_template == (
             'Screenshot: {{ %s }}' % kickoff_field_template_1.api_name
         )
-        expected = (
-            f'Screenshot: [{attachment.name}]({attachment.url})'
-        )
-        assert task_1.description == expected
+        assert task_1.description == f'Screenshot: {markdown_value}'
 
     def test_update_from_version__add_user_to_current_task__ok(
         self,

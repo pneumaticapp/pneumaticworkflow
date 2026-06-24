@@ -15,6 +15,7 @@ import { UserOutput } from './UserOutput';
 import { flatten, isArrayWithItems } from '../../utils/helpers';
 import { Attachments } from '../Attachments';
 import { TUploadedFile } from '../../utils/uploadFiles';
+import { parseMarkdownToFiles } from '../../utils/parseMarkdownFiles';
 import { RichText } from '../RichText';
 
 import styles from './KickoffOutputs.css';
@@ -47,7 +48,11 @@ export function KickoffOutputs({
 
   if (isOnlyAttachmentsShown) {
     const fileOutputs = outputs.filter(({ type }) => type === EExtraFieldType.File);
-    const attachments = flatten(fileOutputs.map(({ attachments }) => attachments || [])) as TUploadedFile[];
+    const attachments = flatten(fileOutputs.map((field) => {
+      return isArrayWithItems(field.attachments)
+        ? field.attachments
+        : parseMarkdownToFiles(field.markdownValue);
+    })) as TUploadedFile[];
     return <Attachments attachments={attachments} />;
   }
 

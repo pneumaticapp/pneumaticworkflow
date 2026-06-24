@@ -1,13 +1,18 @@
 import { ECustomEditorEntities } from '../types';
-import { getAttachmentEntityType } from '../getAttachmentEntityType';
+import { getAttachmentEntityType, getAttachmentEntityTypeByFilename } from '../getAttachmentEntityType';
 
 jest.mock('../../../Attachments/utils/getAttachmentType', () => ({
   getAttachmentTypeByUrl: jest.fn(),
+  getAttachmentTypeByFilename: jest.fn(),
 }));
 
 const {
   getAttachmentTypeByUrl,
-}: { getAttachmentTypeByUrl: jest.Mock } = require('../../../Attachments/utils/getAttachmentType');
+  getAttachmentTypeByFilename,
+}: {
+  getAttachmentTypeByUrl: jest.Mock;
+  getAttachmentTypeByFilename: jest.Mock;
+} = require('../../../Attachments/utils/getAttachmentType');
 
 describe('getAttachmentEntityType', () => {
   beforeEach(() => {
@@ -63,5 +68,52 @@ describe('getAttachmentEntityType', () => {
         ECustomEditorEntities.File,
       );
     });
+  });
+});
+
+describe('getAttachmentEntityTypeByFilename', () => {
+  beforeEach(() => {
+    getAttachmentTypeByFilename.mockReset();
+  });
+
+  it('returns Image for image filename', () => {
+    getAttachmentTypeByFilename.mockReturnValue('image');
+    expect(getAttachmentEntityTypeByFilename('photo.jpg')).toBe(
+      ECustomEditorEntities.Image,
+    );
+  });
+
+  it('returns Video for video filename', () => {
+    getAttachmentTypeByFilename.mockReturnValue('video');
+    expect(getAttachmentEntityTypeByFilename('clip.mp4')).toBe(
+      ECustomEditorEntities.Video,
+    );
+  });
+
+  it('returns File for document filename', () => {
+    getAttachmentTypeByFilename.mockReturnValue('file');
+    expect(getAttachmentEntityTypeByFilename('report.pdf')).toBe(
+      ECustomEditorEntities.File,
+    );
+  });
+
+  it('returns Link when filename has no recognizable extension', () => {
+    getAttachmentTypeByFilename.mockReturnValue(null);
+    expect(getAttachmentEntityTypeByFilename('no-extension')).toBe(
+      ECustomEditorEntities.Link,
+    );
+  });
+
+  it('returns Link for empty filename', () => {
+    getAttachmentTypeByFilename.mockReturnValue(null);
+    expect(getAttachmentEntityTypeByFilename('')).toBe(
+      ECustomEditorEntities.Link,
+    );
+  });
+
+  it('calls getAttachmentTypeByFilename with the given filename', () => {
+    getAttachmentTypeByFilename.mockReturnValue('file');
+    getAttachmentEntityTypeByFilename('document.docx');
+    expect(getAttachmentTypeByFilename).toHaveBeenCalledWith('document.docx');
   });
 });

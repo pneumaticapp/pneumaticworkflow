@@ -3,6 +3,8 @@
 postgres
 redis
 rabbitmq
+file-postgres
+seaweedfs
 nginx/logs
 nginx/keys
 nginx/config/nginx.conf
@@ -15,10 +17,8 @@ frontend/test-results
 
 .vscode/
 .cursor/
+.cursorrules
 .cursorrules/
 .agents/
 .agent/
-.agents/
 .antigravity/
-
-

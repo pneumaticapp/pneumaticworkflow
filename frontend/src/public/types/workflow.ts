@@ -101,7 +101,6 @@ export interface IWorkflowLogItem {
   delay: IWorkflowDelay | null;
   targetUserId: number | null;
   targetGroupId: number | null;
-  attachments: [];
   watched: { date: string; userId: number }[];
   reactions: { [value: string]: number[] };
 }
@@ -226,10 +225,6 @@ export interface ITaskCommentItem {
   failed?: boolean;
   id?: number;
   attachments: TUploadedFile[];
-}
-
-export interface ITaskCommentAttachmentRequest {
-  id: number;
 }
 
 export enum EWorkflowsLogSorting {

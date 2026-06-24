@@ -50,6 +50,14 @@ http {
     }
 
     ##
+    # File service upstream (used by location /files/ in frontend/form servers)
+    ##
+
+    upstream file-service {
+      server pneumatic-file-service:8000;
+    }
+
+    ##
     # Frontend
     ##
 

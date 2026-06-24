@@ -306,10 +306,17 @@ const expectedKickoff = {
   ],
 };
 
-describe('getClonedKickoff.', () => {
-  it('should work', async () => {
-    const clonedKickoff = await getClonedKickoff(mockWorkflowDetailKickoff, templateKickoffMock);
+describe('getClonedKickoff', () => {
+  it('should clone kickoff with field selections normalized', () => {
+    const clonedKickoff = getClonedKickoff(mockWorkflowDetailKickoff, templateKickoffMock);
 
     expect(clonedKickoff).toStrictEqual(expectedKickoff);
+  });
+
+  it('returns synchronously (no Promise)', () => {
+    const result = getClonedKickoff(mockWorkflowDetailKickoff, templateKickoffMock);
+
+    expect(result).not.toBeInstanceOf(Promise);
+    expect(result.fields).toBeDefined();
   });
 });
