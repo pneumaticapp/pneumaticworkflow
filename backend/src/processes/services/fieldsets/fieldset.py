@@ -120,7 +120,7 @@ class FieldSetTemplateService(BaseModelService):
 
         return self.create(
             **fieldset_data,
-            is_shared=True,
+            is_shared=False,
             shared_fieldset_id=shared_fieldset_id,
             order=order,
             kickoff_id=kickoff_id,
@@ -247,7 +247,8 @@ class FieldSetTemplateService(BaseModelService):
             raise FieldsetTemplateInUseException
         self.instance.delete()
 
-    def _replace_api_names(self, shared_fieldset_data: dict) -> dict:
+    @staticmethod
+    def _replace_api_names(shared_fieldset_data: dict) -> dict:
 
         fieldset_data = deepcopy(shared_fieldset_data)
         fieldset_data['api_name'] = create_api_name(

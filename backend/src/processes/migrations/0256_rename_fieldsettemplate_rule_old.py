@@ -10,7 +10,7 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('processes', '0254_auto_20260609_1910'),
+        ('processes', '0255_add_shared_fieldsets'),
     ]
 
     operations = [

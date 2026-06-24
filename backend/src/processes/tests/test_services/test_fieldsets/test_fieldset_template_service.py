@@ -1836,7 +1836,7 @@ def test__create_from_shared__default_params__ok(mocker):
     create_mock.assert_called_once_with(
         api_name='new-fs',
         name='Fieldset',
-        is_shared=True,
+        is_shared=False,
         shared_fieldset_id=shared_fieldset_id,
         order=0,
         kickoff_id=None,
@@ -1904,7 +1904,7 @@ def test__create_from_shared__all_params__ok(mocker):
     create_mock.assert_called_once_with(
         api_name=api_name,
         name='Fieldset',
-        is_shared=True,
+        is_shared=False,
         shared_fieldset_id=shared_fieldset_id,
         order=order,
         kickoff_id=kickoff.id,
